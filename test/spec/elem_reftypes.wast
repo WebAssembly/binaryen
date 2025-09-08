@@ -260,4 +260,5 @@
     (table 0 (ref null $none_=>_none))
     (elem (i32.const 0) funcref)
   )
+  "invalid"
 )

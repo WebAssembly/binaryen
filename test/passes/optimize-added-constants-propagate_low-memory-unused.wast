@@ -303,7 +303,9 @@
     (local $x i32)
     (local $y i32)
     (if (local.get $z)
-      (local.set $y (i32.const -1)) ;; y is not ssa
+      (then
+        (local.set $y (i32.const -1)) ;; y is not ssa
+      )
     )
     (local.set $x
       (i32.add
@@ -345,10 +347,12 @@
       )
     )
     (if (i32.const 1)
-      (local.set $x ;; x is not ssa
-        (i32.add
-          (i32.const 2)
-          (local.get $y)
+      (then
+        (local.set $x ;; x is not ssa
+          (i32.add
+            (i32.const 2)
+            (local.get $y)
+          )
         )
       )
     )

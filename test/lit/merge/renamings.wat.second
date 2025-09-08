@@ -1,0 +1,144 @@
+(module
+  (type $array (array (mut (ref null func))))
+
+  ;; Test that the import remains
+  (import "elsewhere" "some.tag" (tag $imported (param f64)))
+
+  (tag $foo (param f32))
+
+  (tag $other (param f64))
+
+  (memory $foo 50 60)
+
+  (memory $other 70 80)
+
+  (data $other (i32.const 3) "ghi")
+
+  (data $bar (i32.const 4) "jkl")
+
+  (table $foo 50 60 funcref)
+
+  (table $other 70 80 funcref)
+
+  (elem $other func $foo $other)
+
+  (elem $bar func $other $foo)
+
+  (global $other i32 (i32.const 3))
+
+  (global $bar i32 (i32.const 4))
+
+  (export "foo" (func $foo))
+
+  (export "other" (func $other))
+
+  (export "keepalive" (func $uses.second))
+
+  (export "keepalive.tag" (tag $imported))
+
+  ;; Also test having a different name for the export as for the internal
+  ;; thing it refers to, to test we don't assume they are identical.
+  (export "other-b" (func $other))
+
+  (func $foo
+    (drop
+      (i32.const 3)
+    )
+  )
+
+  (func $other
+    (drop
+      (i32.const 4)
+    )
+  )
+
+  (func $uses.second (param $array (ref $array))
+    ;; Tags.
+    (try
+      (do)
+      (catch $foo
+        (drop
+          (pop f32)
+        )
+      )
+    )
+    (try
+      (do)
+      (catch $other
+        (drop
+          (pop f64)
+        )
+      )
+    )
+    (drop
+      (block $catch (result f32)
+        (try_table (catch $foo $catch)
+          (nop)
+        )
+        (f32.const 0.0)
+      )
+    )
+    (drop
+      (block $catch (result f64)
+        (try_table (catch $other $catch)
+          (nop)
+        )
+        (f64.const 0.0)
+      )
+    )
+
+    ;; Memories
+    (drop
+      (i32.load $foo
+        (i32.const 3)
+      )
+    )
+    (drop
+      (i32.load $other
+        (i32.const 4)
+      )
+    )
+
+    ;; Data segments
+    (data.drop $other)
+    (data.drop $bar)
+
+    ;; Tables
+    (drop
+      (table.get $foo
+        (i32.const 3)
+      )
+    )
+    (drop
+      (table.get $other
+        (i32.const 4)
+      )
+    )
+
+    ;; Element segments
+    (array.init_elem $array $other
+      (local.get $array)
+      (i32.const 7)
+      (i32.const 8)
+      (i32.const 9)
+    )
+    (array.init_elem $array $bar
+      (local.get $array)
+      (i32.const 10)
+      (i32.const 11)
+      (i32.const 12)
+    )
+
+    ;; Globals
+    (drop
+      (global.get $other)
+    )
+    (drop
+      (global.get $bar)
+    )
+
+    ;; Functions.
+    (call $foo)
+    (call $other)
+  )
+)

@@ -1,13 +1,13 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $0 (func))
+ (type $1 (func (param i32)))
  (import "env" "waka" (func $foo))
  (import "env" "waka" (func $wrong (param i32)))
  (table $0 2 2 funcref)
  (elem $0 (i32.const 0) $foo $foo)
- (export "baz" (func $0))
+ (export "baz" (func $baz))
  (start $foo)
- (func $0
+ (func $baz
   (call $foo)
   (call $foo)
   (call $wrong

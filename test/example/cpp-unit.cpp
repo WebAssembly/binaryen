@@ -637,6 +637,19 @@ void test_effects() {
     assert_equal(effects.readsMutableStruct, false);
     assert_equal(effects.writesStruct, false);
   }
+
+  {
+    EffectAnalyzer effects(options, module);
+
+    // If we break, then we transfer control flow.
+    effects.breakTargets.insert("block");
+    assert_equal(effects.transfersControlFlow(), true);
+
+    // Repeated walks accumulate effects, that is, old effects are not
+    // removed.
+    effects.walk(&nop);
+    assert_equal(effects.transfersControlFlow(), true);
+  }
 }
 
 void test_field() {

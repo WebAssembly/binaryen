@@ -88,7 +88,7 @@ assert(
     module
   )
   ==
-  binaryen.SideEffects.ReadsMemory | binaryen.SideEffects.ImplicitTrap
+  (binaryen.SideEffects.ReadsMemory | binaryen.SideEffects.ImplicitTrap)
 );
 assert(
   binaryen.getSideEffects(
@@ -99,7 +99,7 @@ assert(
     module
   )
   ==
-  binaryen.SideEffects.WritesMemory | binaryen.SideEffects.ImplicitTrap
+  (binaryen.SideEffects.WritesMemory | binaryen.SideEffects.ImplicitTrap)
 );
 assert(
   binaryen.getSideEffects(
@@ -121,7 +121,7 @@ assert(
     module
   )
   ==
-  binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
+  (binaryen.SideEffects.Calls | binaryen.SideEffects.Throws)
 );
 
 assert(

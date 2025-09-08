@@ -5,7 +5,7 @@
 
   ;; This global will remain as it is.
   (global $global1 (ref $array)
-    (array.new_fixed $array
+    (array.new_fixed $array 4
       (i32.const 10)
       (i32.const 20)
       (i32.const 30)
@@ -14,14 +14,14 @@
   )
 
   (global $global2 (ref $array)
-    (array.new_fixed $array
+    (array.new_fixed $array 2
       (i32.const 42)
       ;; This location will be written with a new value, 1337
       (i32.const 0)
     )
   )
 
-  (func "test1"
+  (func $test1 (export "test1")
     (array.set $array
       (global.get $global2)
       (i32.const 1)
@@ -29,7 +29,7 @@
     )
   )
 
-  (func "keepalive" (result i32)
+  (func $keepalive (export "keepalive") (result i32)
     (i32.add
       (array.get $array
         (global.get $global1)
@@ -42,4 +42,3 @@
     )
   )
 )
-

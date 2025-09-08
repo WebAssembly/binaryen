@@ -1,0 +1,121 @@
+function instantiate(info) {
+function asmFunc(imports) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
+ var env = imports.env;
+ var setTempRet0 = env.setTempRet0;
+ var i64toi32_i32$HIGH_BITS = 0;
+ // EMSCRIPTEN_START_FUNCS
+;
+ function $0($0_1) {
+  $0_1 = Math_fround($0_1);
+  return (Math_fround(Math_abs($0_1)) < Math_fround(2147483648.0) ? ~~$0_1 : -2147483648) | 0;
+ }
+ 
+ function $1($0_1) {
+  $0_1 = Math_fround($0_1);
+  return ($0_1 < Math_fround(4294967296.0) & $0_1 >= Math_fround(0.0) ? ~~$0_1 >>> 0 : 0) | 0;
+ }
+ 
+ function $2($0_1) {
+  $0_1 = +$0_1;
+  return (Math_abs($0_1) < 2147483647.0 ? ~~$0_1 : -2147483648) | 0;
+ }
+ 
+ function $3($0_1) {
+  $0_1 = +$0_1;
+  return ($0_1 < 4294967295.0 & $0_1 >= 0.0 ? ~~$0_1 >>> 0 : 0) | 0;
+ }
+ 
+ function legalstub$4($0_1) {
+  var $1_1 = 0, $2_1 = 0;
+  if (Math_fround(Math_abs($0_1)) < Math_fround(9223372036854775808.0)) {
+   $2_1 = ~~$0_1 >>> 0;
+   if (Math_fround(Math_abs($0_1)) >= Math_fround(1.0)) {
+    $1_1 = ~~($0_1 > Math_fround(0.0) ? Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0_1 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) : Math_fround(Math_ceil(Math_fround(Math_fround($0_1 - Math_fround(~~$0_1 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10))))) >>> 0
+   } else {
+    $1_1 = 0
+   }
+  } else {
+   $1_1 = -2147483648
+  }
+  i64toi32_i32$HIGH_BITS = $1_1;
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $2_1;
+ }
+ 
+ function legalstub$5($0_1) {
+  var $1_1 = 0, $2_1 = 0;
+  if ($0_1 < Math_fround(18446744073709551615.0) & $0_1 >= Math_fround(0.0)) {
+   $2_1 = ~~$0_1 >>> 0;
+   if (Math_fround(Math_abs($0_1)) >= Math_fround(1.0)) {
+    $1_1 = ~~($0_1 > Math_fround(0.0) ? Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0_1 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) : Math_fround(Math_ceil(Math_fround(Math_fround($0_1 - Math_fround(~~$0_1 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10))))) >>> 0
+   } else {
+    $1_1 = 0
+   }
+  } else {
+   $1_1 = 0
+  }
+  i64toi32_i32$HIGH_BITS = $1_1;
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $2_1;
+ }
+ 
+ function legalstub$6($0_1) {
+  var $1_1 = 0, $2_1 = 0;
+  if (Math_abs($0_1) < 9223372036854775808.0) {
+   $2_1 = ~~$0_1 >>> 0;
+   if (Math_abs($0_1) >= 1.0) {
+    $1_1 = ~~($0_1 > 0.0 ? Math_min(Math_floor($0_1 * 2.3283064365386963e-10), 4294967295.0) : Math_ceil(($0_1 - +(~~$0_1 >>> 0 >>> 0)) * 2.3283064365386963e-10)) >>> 0
+   } else {
+    $1_1 = 0
+   }
+  } else {
+   $1_1 = -2147483648
+  }
+  i64toi32_i32$HIGH_BITS = $1_1;
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $2_1;
+ }
+ 
+ function legalstub$7($0_1) {
+  var $1_1 = 0, $2_1 = 0;
+  if ($0_1 < 18446744073709551615.0 & $0_1 >= 0.0) {
+   $2_1 = ~~$0_1 >>> 0;
+   if (Math_abs($0_1) >= 1.0) {
+    $1_1 = ~~($0_1 > 0.0 ? Math_min(Math_floor($0_1 * 2.3283064365386963e-10), 4294967295.0) : Math_ceil(($0_1 - +(~~$0_1 >>> 0 >>> 0)) * 2.3283064365386963e-10)) >>> 0
+   } else {
+    $1_1 = 0
+   }
+  } else {
+   $1_1 = 0
+  }
+  i64toi32_i32$HIGH_BITS = $1_1;
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $2_1;
+ }
+ 
+ // EMSCRIPTEN_END_FUNCS
+;
+ return {
+  "i32_trunc_sat_f32_s": $0, 
+  "i32_trunc_sat_f32_u": $1, 
+  "i32_trunc_sat_f64_s": $2, 
+  "i32_trunc_sat_f64_u": $3, 
+  "i64_trunc_sat_f32_s": legalstub$4, 
+  "i64_trunc_sat_f32_u": legalstub$5, 
+  "i64_trunc_sat_f64_s": legalstub$6, 
+  "i64_trunc_sat_f64_u": legalstub$7
+ };
+}
+
+  return asmFunc(info);
+}

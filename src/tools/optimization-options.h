@@ -26,6 +26,22 @@
 namespace wasm {
 
 struct OptimizationOptions : public ToolOptions {
+  // By default we allow StackIR and enable it by default in higher optimization
+  // levels, but users can disallow it as well.
+  bool allowStackIR = true;
+
+  void parse(int argc, const char* argv[]) {
+    ToolOptions::parse(argc, argv);
+
+    // After parsing the arguments, update defaults based on the optimize/shrink
+    // levels.
+    if (allowStackIR &&
+        (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1)) {
+      passOptions.generateStackIR = true;
+      passOptions.optimizeStackIR = true;
+    }
+  }
+
   static constexpr const char* DEFAULT_OPT_PASSES = "O";
   static constexpr const int OS_OPTIMIZE_LEVEL = 2;
   static constexpr const int OS_SHRINK_LEVEL = 1;
@@ -34,6 +50,9 @@ struct OptimizationOptions : public ToolOptions {
   struct PassInfo {
     // The name of the pass to run.
     std::string name;
+
+    // The main argument of the pass, if applicable.
+    std::optional<std::string> argument;
 
     // The optimize and shrink levels to run the pass with, if specified. If not
     // specified then the defaults are used.
@@ -180,6 +199,16 @@ struct OptimizationOptions : public ToolOptions {
            [&](Options* o, const std::string& arguments) {
              passOptions.debugInfo = true;
            })
+      .add("--no-stack-ir",
+           "",
+           "do not use StackIR (even when it is the default)",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             allowStackIR = false;
+             passOptions.generateStackIR = false;
+             passOptions.optimizeStackIR = false;
+           })
       .add("--always-inline-max-function-size",
            "-aimfs",
            "Max size of functions that are always inlined (default " +
@@ -215,6 +244,17 @@ struct OptimizationOptions : public ToolOptions {
                              Index(-1),
                            "the help text here is written to assume -1");
              passOptions.inlining.oneCallerInlineMaxSize =
+               static_cast<Index>(atoi(argument.c_str()));
+           })
+      .add("--inline-max-combined-binary-size",
+           "-imcbs",
+           "Max size of combined functions after inlining. "
+           "Default: " +
+             std::to_string(InliningOptions().maxCombinedBinarySize),
+           OptimizationOptionsCategory,
+           Options::Arguments::One,
+           [this](Options* o, const std::string& argument) {
+             passOptions.inlining.maxCombinedBinarySize =
                static_cast<Index>(atoi(argument.c_str()));
            })
       .add("--inline-functions-with-loops",
@@ -282,7 +322,7 @@ struct OptimizationOptions : public ToolOptions {
            "-sp",
            "Skip a pass (do not run it)",
            OptimizationOptionsCategory,
-           Options::Arguments::One,
+           Options::Arguments::N,
            [this](Options*, const std::string& pass) {
              passOptions.passesToSkip.insert(pass);
            });
@@ -304,16 +344,45 @@ struct OptimizationOptions : public ToolOptions {
         //   --foo --pass-arg=foo@ARG
         Options::Arguments::Optional,
         [this, p](Options*, const std::string& arg) {
+          PassInfo info(p);
           if (!arg.empty()) {
-            if (passOptions.arguments.count(p)) {
-              Fatal() << "Cannot pass multiple pass arguments to " << p;
-            }
-            passOptions.arguments[p] = arg;
+            info.argument = arg;
           }
-          passes.push_back(p);
+
+          passes.push_back(info);
         },
         PassRegistry::get()->isPassHidden(p));
     }
+  }
+
+  // Pass arguments with the same name as the pass are stored per-instance on
+  // PassInfo, while all other arguments are stored globally on
+  // passOptions.arguments (which is what the overriden method on ToolOptions
+  // does).
+  void addPassArg(const std::string& key, const std::string& value) override {
+    // Scan the current pass list for the last defined instance of a pass named
+    // like the argument under consideration.
+    for (auto i = passes.rbegin(); i != passes.rend(); i++) {
+      if (i->name != key) {
+        continue;
+      }
+
+      if (i->argument.has_value()) {
+        Fatal() << i->name << " already set to " << *(i->argument);
+      }
+
+      // Found? Store the argument value there and return.
+      i->argument = value;
+      return;
+    }
+
+    // Not found? Store it globally if there is no pass with the same name.
+    if (!PassRegistry::get()->containsPass(key)) {
+      return ToolOptions::addPassArg(key, value);
+    }
+
+    // Not found, but we have a pass with the same name? Bail out.
+    Fatal() << "can't set " << key << ": pass not enabled";
   }
 
   bool runningDefaultOptimizationPasses() {
@@ -332,28 +401,50 @@ struct OptimizationOptions : public ToolOptions {
     if (debug) {
       passRunner.setDebug(true);
     }
+
+    // Flush anything in the current pass runner, and then reset it to a fresh
+    // state so it is ready for new things.
+    auto flush = [&]() {
+      passRunner.run();
+      passRunner.clear();
+    };
+
     for (auto& pass : passes) {
-      // We apply the pass's intended opt and shrink levels, if any.
-      auto oldOptimizeLevel = passRunner.options.optimizeLevel;
-      auto oldShrinkLevel = passRunner.options.shrinkLevel;
-      if (pass.optimizeLevel) {
-        passRunner.options.optimizeLevel = *pass.optimizeLevel;
-      }
-      if (pass.shrinkLevel) {
-        passRunner.options.shrinkLevel = *pass.shrinkLevel;
-      }
-
       if (pass.name == DEFAULT_OPT_PASSES) {
-        passRunner.addDefaultOptimizationPasses();
-      } else {
-        passRunner.add(pass.name);
-      }
+        // This is something like -O3 or -Oz. We must run this now, in order to
+        // set the proper opt and shrink levels. To do that, first reset the
+        // runner so that anything already queued is run (since we can only run
+        // after those things).
+        flush();
 
-      // Revert back to the default levels, if we changed them.
-      passRunner.options.optimizeLevel = oldOptimizeLevel;
-      passRunner.options.shrinkLevel = oldShrinkLevel;
+        // -O3/-Oz etc. always set their own optimize/shrinkLevels.
+        assert(pass.optimizeLevel);
+        assert(pass.shrinkLevel);
+
+        // Temporarily override the default levels.
+        assert(passRunner.options.optimizeLevel == passOptions.optimizeLevel);
+        assert(passRunner.options.shrinkLevel == passOptions.shrinkLevel);
+        passRunner.options.optimizeLevel = *pass.optimizeLevel;
+        passRunner.options.shrinkLevel = *pass.shrinkLevel;
+
+        // Run our optimizations now with the custom levels.
+        passRunner.addDefaultOptimizationPasses();
+        flush();
+
+        // Restore the default optimize/shrinkLevels.
+        passRunner.options.optimizeLevel = passOptions.optimizeLevel;
+        passRunner.options.shrinkLevel = passOptions.shrinkLevel;
+      } else {
+        // This is a normal pass. Add it to the queue for execution.
+        passRunner.add(pass.name, pass.argument);
+
+        // Normal passes do not set their own optimize/shrinkLevels.
+        assert(!pass.optimizeLevel);
+        assert(!pass.shrinkLevel);
+      }
     }
-    passRunner.run();
+
+    flush();
   }
 };
 

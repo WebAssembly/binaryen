@@ -42,6 +42,7 @@
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "param-utils.h"
@@ -55,6 +56,9 @@ namespace wasm {
 
 // Information for a function
 struct DAEFunctionInfo {
+  // Whether this needs to be recomputed. This begins as true for the first
+  // computation, and we reset it every time we touch the function.
+  bool stale = true;
   // The unused parameters, if any.
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
@@ -72,16 +76,17 @@ struct DAEFunctionInfo {
   // removed as well.
   bool hasTailCalls = false;
   std::unordered_set<Name> tailCallees;
-  // Whether the function can be called from places that
-  // affect what we can do. For now, any call we don't
-  // see inhibits our optimizations, but TODO: an export
-  // could be worked around by exporting a thunk that
-  // adds the parameter.
-  // This is atomic so that we can write to it from any function at any time
-  // during the parallel analysis phase which is run in DAEScanner.
-  std::atomic<bool> hasUnseenCalls;
+  // The set of functions that have calls from places that limit what we can do.
+  // For now, any call we don't see inhibits our optimizations, but TODO: an
+  // export could be worked around by exporting a thunk that adds the parameter.
+  //
+  // This is built up in parallel in each function, and combined at the end.
+  std::unordered_set<Name> hasUnseenCalls;
 
-  DAEFunctionInfo() { hasUnseenCalls = false; }
+  // Clears all data, which marks us as stale and in need of recomputation.
+  void clear() { *this = DAEFunctionInfo(); }
+
+  void markStale() { stale = true; }
 };
 
 using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
@@ -89,6 +94,7 @@ using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
 struct DAEScanner
   : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {
   bool isFunctionParallel() override { return true; }
+  bool modifiesBinaryenIR() override { return false; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<DAEScanner>(infoMap);
@@ -96,10 +102,12 @@ struct DAEScanner
 
   DAEScanner(DAEFunctionInfoMap* infoMap) : infoMap(infoMap) {}
 
+  // The map of all infos for all functions.
   DAEFunctionInfoMap* infoMap;
-  DAEFunctionInfo* info;
 
-  Index numParams;
+  // The info for the function this instance operates on. We stash this as an
+  // optimization.
+  DAEFunctionInfo* info = nullptr;
 
   void visitCall(Call* curr) {
     if (!getModule()->getFunction(curr->target)->imported()) {
@@ -130,34 +138,41 @@ struct DAEScanner
   }
 
   void visitRefFunc(RefFunc* curr) {
-    // We can't modify another function in parallel.
-    assert((*infoMap).count(curr->func));
+    // RefFunc may be visited from either a function, in which case |info| was
+    // set, or module-level code (in which case we use the null function name in
+    // the infoMap).
+    auto* currInfo = info ? info : &(*infoMap)[Name()];
+
     // Treat a ref.func as an unseen call, preventing us from changing the
     // function's type. If we did change it, it could be an observable
     // difference from the outside, if the reference escapes, for example.
     // TODO: look for actual escaping?
     // TODO: create a thunk for external uses that allow internal optimizations
-    (*infoMap)[curr->func].hasUnseenCalls = true;
+    currInfo->hasUnseenCalls.insert(curr->func);
   }
 
   // main entry point
 
   void doWalkFunction(Function* func) {
-    numParams = func->getNumParams();
+    // Set the info for this function.
     info = &((*infoMap)[func->name]);
+
+    if (!info->stale) {
+      // Nothing changed since last time.
+      return;
+    }
+
+    // Clear the data, mark us as no longer stale, and recompute everything.
+    info->clear();
+    info->stale = false;
+
+    auto numParams = func->getNumParams();
     PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(func);
-    // If there are relevant params, check if they are used. If we can't
-    // optimize the function anyhow, there's no point (note that our check here
-    // is technically racy - another thread could update hasUnseenCalls to true
-    // around when we check it - but that just means that we might or might not
-    // do some extra work, as we'll ignore the results later if we have unseen
-    // calls. That is, the check for hasUnseenCalls here is just a minor
-    // optimization to avoid pointless work. We can avoid that work if either
-    // we know there is an unseen call before the parallel analysis that we are
-    // part of, say if we are exported, or if another parallel function finds a
-    // RefFunc to us and updates it before we check it).
-    if (numParams > 0 && !info->hasUnseenCalls) {
-      auto usedParams = ParamUtils::getUsedParams(func);
+    // If there are params, check if they are used.
+    // TODO: This work could be avoided if we cannot optimize for other reasons.
+    //       That would require deferring this to later and checking that.
+    if (numParams > 0) {
+      auto usedParams = ParamUtils::getUsedParams(func, getModule());
       for (Index i = 0; i < numParams; i++) {
         if (usedParams.count(i) == 0) {
           info->unusedParams.insert(i);
@@ -174,66 +189,157 @@ struct DAE : public Pass {
 
   bool optimize = false;
 
+  Index numFunctions;
+
+  // Map of function names to indexes. This lets us use indexes below for speed.
+  std::unordered_map<Name, Index> indexes;
+
   void run(Module* module) override {
+    DAEFunctionInfoMap infoMap;
+    // Ensure all entries exist so the parallel threads don't modify the data
+    // structure.
+    for (auto& func : module->functions) {
+      infoMap[func->name];
+    }
+    // The null name represents module-level code (not in a function).
+    infoMap[Name()];
+
+    numFunctions = module->functions.size();
+
+    for (Index i = 0; i < numFunctions; i++) {
+      indexes[module->functions[i]->name] = i;
+    }
+
     // Iterate to convergence.
     while (1) {
-      if (!iteration(module)) {
+      if (!iteration(module, infoMap)) {
         break;
       }
     }
   }
 
-  bool iteration(Module* module) {
+  bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
     allDroppedCalls.clear();
 
-    DAEFunctionInfoMap infoMap;
-    // Ensure they all exist so the parallel threads don't modify the data
-    // structure.
-    for (auto& func : module->functions) {
-      infoMap[func->name];
-    }
-    DAEScanner scanner(&infoMap);
-    scanner.walkModuleCode(module);
-    for (auto& curr : module->exports) {
-      if (curr->kind == ExternalKind::Function) {
-        infoMap[curr->value].hasUnseenCalls = true;
+#if DAE_DEBUG
+    // Enable this path to mark all contents as stale at the start of each
+    // iteration, which can be used to check for staleness bugs (that is, bugs
+    // where something should have been marked stale, but wasn't). Note, though,
+    // that staleness bugs can easily cause serious issues with validation (e.g.
+    // if data is stale we may miss that there is an additional caller, that
+    // prevents refining argument types etc.), so this may not be terribly
+    // helpful.
+    if (getenv("ALWAYS_MARK_STALE")) {
+      for (auto& [_, info] : infoMap) {
+        info.markStale();
       }
     }
+#endif
+
+    DAEScanner scanner(&infoMap);
+    scanner.walkModuleCode(module);
     // Scan all the functions.
     scanner.run(getPassRunner(), module);
     // Combine all the info.
-    std::map<Name, std::vector<Call*>> allCalls;
-    std::unordered_set<Name> tailCallees;
-    for (auto& [_, info] : infoMap) {
+    struct CallContext {
+      Call* call;
+      Function* func;
+    };
+
+    std::vector<std::vector<Call*>> allCalls(numFunctions);
+    std::vector<bool> tailCallees(numFunctions);
+    std::vector<bool> hasUnseenCalls(numFunctions);
+
+    // Track the function in which relevant expressions exist. When we modify
+    // those expressions we will need to mark the function's info as stale.
+    std::unordered_map<Expression*, Name> expressionFuncs;
+    for (auto& [func, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
-        auto& allCallsToName = allCalls[name];
+        auto& allCallsToName = allCalls[indexes[name]];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
+        for (auto* call : calls) {
+          expressionFuncs[call] = func;
+        }
       }
       for (auto& callee : info.tailCallees) {
-        tailCallees.insert(callee);
+        tailCallees[indexes[callee]] = true;
       }
-      for (auto& [name, calls] : info.droppedCalls) {
-        allDroppedCalls[name] = calls;
+      for (auto& [call, dropp] : info.droppedCalls) {
+        allDroppedCalls[call] = dropp;
+      }
+      for (auto& name : info.hasUnseenCalls) {
+        hasUnseenCalls[indexes[name]] = true;
       }
     }
+    // Exports are considered unseen calls.
+    for (auto& curr : module->exports) {
+      if (curr->kind == ExternalKind::Function) {
+        hasUnseenCalls[indexes[*curr->getInternalName()]] = true;
+      }
+    }
+
+    // Track which functions we changed that are worth re-optimizing at the end.
+    std::unordered_set<Function*> worthOptimizing;
+
     // If we refine return types then we will need to do more type updating
     // at the end.
     bool refinedReturnTypes = false;
+
+    // If we find that localizing call arguments can help (by moving their
+    // effects outside, so ParamUtils::removeParameters can handle them), then
+    // we do that at the end and perform another cycle. It is simpler to just do
+    // another cycle than to track the locations of calls, which is tricky as
+    // localization might move a call (if a call happens to be another call's
+    // param). In practice it is rare to find call arguments we want to remove,
+    // and even more rare to find effects get in the way, so this should not
+    // cause much overhead.
+    //
+    // This set tracks the functions for whom calls to it should be modified.
+    std::unordered_set<Name> callTargetsToLocalize;
+
+    // As we optimize, we mark things as stale.
+    auto markStale = [&](Name func) {
+      // We only ever mark functions stale (not the global scope, which we never
+      // modify). An attempt to modify the global scope, identified by a null
+      // function name, is a logic bug.
+      assert(func.is());
+      infoMap[func].markStale();
+    };
+    auto markCallersStale = [&](const std::vector<Call*>& calls) {
+      for (auto* call : calls) {
+        markStale(expressionFuncs[call]);
+      }
+    };
+
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
-    for (auto& [name, calls] : allCalls) {
-      // We can only optimize if we see all the calls and can modify them.
-      if (infoMap[name].hasUnseenCalls) {
+    for (Index index = 0; index < numFunctions; index++) {
+      auto* func = module->functions[index].get();
+      if (func->imported()) {
         continue;
       }
-      auto* func = module->getFunction(name);
+      // We can only optimize if we see all the calls and can modify them.
+      if (hasUnseenCalls[index]) {
+        continue;
+      }
+      auto& calls = allCalls[index];
+      if (calls.empty()) {
+        // Nothing calls this, so it is not worth optimizing.
+        continue;
+      }
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
-      refineArgumentTypes(func, calls, module, infoMap[name]);
+      auto name = func->name;
+      if (refineArgumentTypes(func, calls, module, infoMap[name])) {
+        worthOptimizing.insert(func);
+        markStale(func->name);
+      }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
+        markStale(name);
+        markCallersStale(calls);
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -242,6 +348,9 @@ struct DAE : public Pass {
         // for that).
         infoMap[name].unusedParams.insert(i);
       }
+      if (!optimizedIndexes.empty()) {
+        markStale(func->name);
+      }
     }
     if (refinedReturnTypes) {
       // Changing a call expression's return type can propagate out to its
@@ -249,49 +358,63 @@ struct DAE : public Pass {
       // TODO: We could track in which functions we actually make changes.
       ReFinalize().run(getPassRunner(), module);
     }
-    // Track which functions we changed, and optimize them later if necessary.
-    std::unordered_set<Function*> changed;
     // We now know which parameters are unused, and can potentially remove them.
-    for (auto& [name, calls] : allCalls) {
-      if (infoMap[name].hasUnseenCalls) {
+    for (Index index = 0; index < numFunctions; index++) {
+      auto* func = module->functions[index].get();
+      if (func->imported()) {
         continue;
       }
-      auto* func = module->getFunction(name);
+      if (hasUnseenCalls[index]) {
+        continue;
+      }
       auto numParams = func->getNumParams();
       if (numParams == 0) {
         continue;
       }
-      auto removedIndexes = ParamUtils::removeParameters(
+      auto& calls = allCalls[index];
+      if (calls.empty()) {
+        continue;
+      }
+      auto name = func->name;
+      auto [removedIndexes, outcome] = ParamUtils::removeParameters(
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
         // Success!
-        changed.insert(func);
+        worthOptimizing.insert(func);
+        markStale(name);
+        markCallersStale(calls);
+      }
+      if (outcome == ParamUtils::RemovalOutcome::Failure) {
+        callTargetsToLocalize.insert(name);
       }
     }
     // We can also tell which calls have all their return values dropped. Note
     // that we can't do this if we changed anything so far, as we may have
     // modified allCalls (we can't modify a call site twice in one iteration,
     // once to remove a param, once to drop the return value).
-    if (changed.empty()) {
-      for (auto& func : module->functions) {
+    if (worthOptimizing.empty()) {
+      for (Index index = 0; index < numFunctions; index++) {
+        auto& func = module->functions[index];
+        if (func->imported()) {
+          continue;
+        }
         if (func->getResults() == Type::none) {
           continue;
         }
-        auto name = func->name;
-        if (infoMap[name].hasUnseenCalls) {
+        if (hasUnseenCalls[index]) {
           continue;
         }
+        auto name = func->name;
         if (infoMap[name].hasTailCalls) {
           continue;
         }
-        if (tailCallees.count(name)) {
+        if (tailCallees[index]) {
           continue;
         }
-        auto iter = allCalls.find(name);
-        if (iter == allCalls.end()) {
+        auto& calls = allCalls[index];
+        if (calls.empty()) {
           continue;
         }
-        auto& calls = iter->second;
         bool allDropped =
           std::all_of(calls.begin(), calls.end(), [&](Call* call) {
             return allDroppedCalls.count(call);
@@ -299,23 +422,47 @@ struct DAE : public Pass {
         if (!allDropped) {
           continue;
         }
-        removeReturnValue(func.get(), calls, module);
+        if (removeReturnValue(func.get(), calls, module)) {
+          // We should optimize the callers.
+          for (auto* call : calls) {
+            worthOptimizing.insert(module->getFunction(expressionFuncs[call]));
+          }
+        }
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
-        changed.insert(func.get());
+        worthOptimizing.insert(func.get());
+        markStale(name);
+        markCallersStale(calls);
       }
     }
-    if (optimize && !changed.empty()) {
-      OptUtils::optimizeAfterInlining(changed, module, getPassRunner());
+    if (!callTargetsToLocalize.empty()) {
+      ParamUtils::localizeCallsTo(
+        callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
+          markStale(func->name);
+        });
     }
-    return !changed.empty() || refinedReturnTypes;
+    if (optimize && !worthOptimizing.empty()) {
+      OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
+    }
+
+    return !worthOptimizing.empty() || refinedReturnTypes ||
+           !callTargetsToLocalize.empty();
   }
 
 private:
   std::unordered_map<Call*, Expression**> allDroppedCalls;
 
-  void
+  // Returns `true` if the caller should be optimized.
+  bool
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
+    // If the result type is uninhabitable, then the caller knows the call will
+    // never return. That useful information would be lost if we did nothing
+    // else when removing the return value, but we will insert an `unreachable`
+    // after the call in the caller to preserve the optimization effect. TODO:
+    // Do this for more complicated uninhabitable types such as non-nullable
+    // references to structs with non-nullable reference cycles.
+    bool wasReturnUninhabitable =
+      func->getResults().isNull() && func->getResults().isNonNullable();
     func->setResults(Type::none);
     // Remove the drops on the calls. Note that we must do this before updating
     // returns in ReturnUpdater, as there may be recursive calls of this
@@ -326,30 +473,22 @@ private:
       auto iter = allDroppedCalls.find(call);
       assert(iter != allDroppedCalls.end());
       Expression** location = iter->second;
-      *location = call;
+      if (wasReturnUninhabitable) {
+        Builder builder(*module);
+        *location = builder.makeSequence(call, builder.makeUnreachable());
+      } else {
+        *location = call;
+      }
       // Update the call's type.
       if (call->type != Type::unreachable) {
         call->type = Type::none;
       }
     }
     // Remove any return values.
-    struct ReturnUpdater : public PostWalker<ReturnUpdater> {
-      Module* module;
-      ReturnUpdater(Function* func, Module* module) : module(module) {
-        walk(func->body);
-      }
-      void visitReturn(Return* curr) {
-        auto* value = curr->value;
-        assert(value);
-        curr->value = nullptr;
-        Builder builder(*module);
-        replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
-      }
-    } returnUpdater(func, module);
-    // Remove any value flowing out.
-    if (func->body->type.isConcrete()) {
-      func->body = Builder(*module).makeDrop(func->body);
-    }
+    ReturnUtils::removeReturns(func, *module);
+    // It's definitely worth optimizing the caller after inserting the
+    // unreachable.
+    return wasReturnUninhabitable;
   }
 
   // Given a function and all the calls to it, see if we can refine the type of
@@ -358,12 +497,12 @@ private:
   //
   // This assumes that the function has no calls aside from |calls|, that is, it
   // is not exported or called from the table or by reference.
-  void refineArgumentTypes(Function* func,
+  bool refineArgumentTypes(Function* func,
                            const std::vector<Call*>& calls,
                            Module* module,
                            const DAEFunctionInfo& info) {
     if (!module->features.hasGC()) {
-      return;
+      return false;
     }
     auto numParams = func->getNumParams();
     std::vector<Type> newParamTypes;
@@ -393,7 +532,7 @@ private:
 
       // Nothing is sent here at all; leave such optimizations to DCE.
       if (!lub.noted()) {
-        return;
+        return false;
       }
       newParamTypes.push_back(lub.getLUB());
     }
@@ -402,7 +541,7 @@ private:
     // function body.
     auto newParams = Type(newParamTypes);
     if (newParams == func->getParams()) {
-      return;
+      return false;
     }
 
     // We can do this!
@@ -410,6 +549,8 @@ private:
 
     // Update the function's type.
     func->setParams(newParams);
+
+    return true;
   }
 
   // See if the types returned from a function allow us to define a more refined

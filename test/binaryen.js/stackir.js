@@ -8,8 +8,8 @@ var wast = `
    (block (result i32)
     (if (result i32)
      (local.get $0)
-     (local.get $0)
-     (i32.const 0)
+     (then (local.get $0))
+     (else (i32.const 0))
     )
    )
   )
@@ -26,4 +26,5 @@ console.log("=== default ===");
 console.log(module.emitStackIR());
 
 console.log("=== optimize ==="); // should omit the second block
-console.log(module.emitStackIR(true));
+binaryen.setOptimizeLevel(2);
+console.log(module.emitStackIR());

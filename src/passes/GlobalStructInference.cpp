@@ -48,9 +48,16 @@
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
 
+#include <variant>
+
+#include "ir/bits.h"
+#include "ir/debuginfo.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
+#include "ir/possible-constant.h"
 #include "ir/subtypes.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -58,6 +65,8 @@
 namespace wasm {
 
 namespace {
+
+static const Index DescriptorIndex = -1;
 
 struct GlobalStructInference : public Pass {
   // Only modifies struct.get operations.
@@ -130,12 +139,9 @@ struct GlobalStructInference : public Pass {
 
       auto type = global->init->type.getHeapType();
 
-      // The global's declared type must match the init's type. If not, say if
-      // we had a global declared as type |any| but that contains (ref $A), then
-      // that is not something we can optimize, as ref.eq on a global.get of
-      // that global will not validate. (This should not be a problem after
-      // GlobalSubtyping runs, which will specialize the type of the global.)
-      if (global->type != global->init->type) {
+      // The global's declared type must be equality comparable.
+      if (auto eq = wasm::HeapTypes::eq.getBasic(type.getShared());
+          !Type::isSubType(global->type, Type(eq, Nullable))) {
         unoptimizable.insert(type);
         continue;
       }
@@ -168,7 +174,7 @@ struct GlobalStructInference : public Pass {
         // empty, below.
         typeGlobals.erase(type);
 
-        auto super = type.getSuperType();
+        auto super = type.getDeclaredSuperType();
         if (!super) {
           break;
         }
@@ -182,7 +188,7 @@ struct GlobalStructInference : public Pass {
     for (auto& [type, globals] : typeGlobalsCopy) {
       auto curr = type;
       while (1) {
-        auto super = curr.getSuperType();
+        auto super = curr.getDeclaredSuperType();
         if (!super) {
           break;
         }
@@ -209,19 +215,113 @@ struct GlobalStructInference : public Pass {
       std::sort(globals.begin(), globals.end());
     }
 
-    // Optimize based on the above.
-    struct FunctionOptimizer
-      : public WalkerPass<PostWalker<FunctionOptimizer>> {
-      bool isFunctionParallel() override { return true; }
+    // We are looking for the case where we can pick between two values using a
+    // single comparison. More than two values, or more than a single
+    // comparison, lead to tradeoffs that may not be worth it.
+    //
+    // Note that situation may involve more than two globals. For example we may
+    // have three relevant globals, but two may have the same value. In that
+    // case we can compare against the third:
+    //
+    //  $global0: (struct.new $Type (i32.const 42))
+    //  $global1: (struct.new $Type (i32.const 42))
+    //  $global2: (struct.new $Type (i32.const 1337))
+    //
+    // (struct.get $Type (ref))
+    //   =>
+    // (select
+    //   (i32.const 1337)
+    //   (i32.const 42)
+    //   (ref.eq (ref) $global2))
+    //
+    // To discover these situations, we compute and group the possible values
+    // that can be read from a particular struct.get, using the following data
+    // structure.
+    struct Value {
+      // A value is either a constant, or if not, then we point to whatever
+      // expression it is.
+      std::variant<PossibleConstantValues, Expression*> content;
+      // The list of globals that have this Value. In the example from above,
+      // the Value for 42 would list globals = [$global0, $global1].
+      // TODO: SmallVector?
+      std::vector<Name> globals;
 
-      std::unique_ptr<Pass> create() override {
-        return std::make_unique<FunctionOptimizer>(parent);
+      bool isConstant() const {
+        return std::get_if<PossibleConstantValues>(&content);
       }
 
-      FunctionOptimizer(GlobalStructInference& parent) : parent(parent) {}
+      const PossibleConstantValues& getConstant() const {
+        assert(isConstant());
+        return std::get<PossibleConstantValues>(content);
+      }
+
+      Expression* getExpression() const {
+        assert(!isConstant());
+        return std::get<Expression*>(content);
+      }
+    };
+
+    // Constant expressions are easy to handle, and we can emit a select as in
+    // the last example. But we can handle non-constant ones too, by un-nesting
+    // the relevant global. Imagine we have this:
+    //
+    //  (global $g (struct.new $S
+    //    (struct.new $T ..)
+    //
+    // We have a nested struct.new here. That is not a constant value, but we
+    // can turn it into a global.get:
+    //
+    //  (global $g.nested (struct.new $T ..)
+    //  (global $g (struct.new $S
+    //    (global.get $g.nested)
+    //
+    // After this un-nesting we end up with a global.get of an immutable global,
+    // which is constant. Note that this adds a global and may increase code
+    // size slightly, but if it lets us infer constant values that may lead to
+    // devirtualization and other large benefits. Later passes can also re-nest.
+    //
+    // We do most of our optimization work in parallel, but we cannot add
+    // globals in parallel, so instead we note the places we need to un-nest in
+    // this data structure and process them at the end.
+    struct GlobalToUnnest {
+      // The global we want to refer to a nested part of, by un-nesting it. The
+      // global contains a struct.new, and we want to refer to one of the
+      // operands of the struct.new directly, which we can do by moving it out
+      // to its own new global.
+      Name global;
+      // The index of the struct.new in the global named |global|.
+      Index index;
+      // The global.get that should refer to the new global. At the end, after
+      // we create a new global and have a name for it, we update this get to
+      // point to it.
+      GlobalGet* get;
+    };
+    using GlobalsToUnnest = std::vector<GlobalToUnnest>;
+
+    struct FunctionOptimizer : PostWalker<FunctionOptimizer> {
+    private:
+      GlobalStructInference& parent;
+      GlobalsToUnnest& globalsToUnnest;
+
+    public:
+      FunctionOptimizer(GlobalStructInference& parent,
+                        GlobalsToUnnest& globalsToUnnest)
+        : parent(parent), globalsToUnnest(globalsToUnnest) {}
+
+      bool refinalize = false;
 
       void visitStructGet(StructGet* curr) {
-        auto type = curr->ref->type;
+        optimize(curr, curr->ref, curr->index);
+      }
+
+      void visitRefGetDesc(RefGetDesc* curr) {
+        optimize(curr, curr->ref, DescriptorIndex);
+      }
+
+      // Optimize an expression |curr| that reads from a reference |ref|, and a
+      // particular field index (which might be DescriptorIndex);
+      void optimize(Expression* curr, Expression*& ref, Index fieldIndex) {
+        auto type = ref->type;
         if (type == Type::unreachable) {
           return;
         }
@@ -241,10 +341,12 @@ struct GlobalStructInference : public Pass {
         assert(heapType.isStruct());
 
         // The field must be immutable.
-        auto fieldIndex = curr->index;
-        auto& field = heapType.getStruct().fields[fieldIndex];
-        if (field.mutable_ == Mutable) {
-          return;
+        std::optional<Field> field;
+        if (fieldIndex != DescriptorIndex) {
+          field = heapType.getStruct().fields[fieldIndex];
+          if (field->mutable_ == Mutable) {
+            return;
+          }
         }
 
         const auto& globals = iter->second;
@@ -261,81 +363,136 @@ struct GlobalStructInference : public Pass {
           // will unlock those other optimizations. Note we must trap if the ref
           // is null, so add RefAsNonNull here.
           auto global = globals[0];
-          curr->ref = builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type));
+          auto globalType = wasm.getGlobal(global)->type;
+          if (globalType != ref->type) {
+            // The struct.get will now read from something of the type of the
+            // global, which is different, so the field being read might be
+            // refined, which could change the struct.get's type.
+            refinalize = true;
+          }
+          // No need to worry about atomic gets here. We will still read from
+          // the same memory location as before and preserve all side effects
+          // (including synchronization) that were previously present. The
+          // memory location is immutable anyway, so there cannot be any writes
+          // to synchronize with in the first place.
+          ref = builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
+            builder.makeGlobalGet(global, globalType));
           return;
         }
 
-        // We are looking for the case where we can pick between two values
-        // using a single comparison. More than two values, or more than a
-        // single comparison, add tradeoffs that may not be worth it, and a
-        // single value (or no value) is already handled by other passes.
-        //
-        // That situation may involve more than two globals. For example we may
-        // have three relevant globals, but two may have the same value. In that
-        // case we can compare against the third:
-        //
-        //  $global0: (struct.new $Type (i32.const 42))
-        //  $global1: (struct.new $Type (i32.const 42))
-        //  $global2: (struct.new $Type (i32.const 1337))
-        //
-        // (struct.get $Type (ref))
-        //   =>
-        // (select
-        //   (i32.const 1337)
-        //   (i32.const 42)
-        //   (ref.eq (ref) $global2))
+        // TODO: SmallVector?
+        std::vector<Value> values;
 
-        // Find the constant values and which globals correspond to them.
-        // TODO: SmallVectors?
-        std::vector<Literal> values;
-        std::vector<std::vector<Name>> globalsForValue;
-
-        // Check if the relevant fields contain constants.
-        auto fieldType = field.type;
+        // Scan the relevant struct.new operands.
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
           auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
-          Literal value;
-          if (structNew->isWithDefault()) {
-            value = Literal::makeZero(fieldType);
+          // The value that is read from this struct.new.
+          Value value;
+
+          // Find the value read from the struct and represent it as a Value.
+          PossibleConstantValues constant;
+          if (field && structNew->isWithDefault()) {
+            constant.note(Literal::makeZero(field->type));
+            value.content = constant;
           } else {
-            auto* init = structNew->operands[fieldIndex];
-            if (!Properties::isConstantExpression(init)) {
-              // Non-constant; give up entirely.
-              return;
+            Expression* operand;
+            if (field) {
+              operand = structNew->operands[fieldIndex];
+            } else {
+              operand = structNew->desc;
             }
-            value = Properties::getLiteral(init);
+            constant.note(operand, wasm);
+            if (constant.isConstant()) {
+              value.content = constant;
+            } else {
+              value.content = operand;
+            }
           }
 
-          // Process the current value, comparing it against the previous.
-          auto found = std::find(values.begin(), values.end(), value);
-          if (found == values.end()) {
-            // This is a new value.
-            assert(values.size() <= 2);
+          // If the value is constant, it may be grouped as mentioned before.
+          // See if it matches anything we've seen before.
+          bool grouped = false;
+          if (value.isConstant()) {
+            for (auto& oldValue : values) {
+              if (oldValue.isConstant() &&
+                  oldValue.getConstant() == value.getConstant()) {
+                // Add us to this group.
+                oldValue.globals.push_back(global);
+                grouped = true;
+                break;
+              }
+            }
+          }
+          if (!grouped) {
+            // This is a new value, so create a new group, unless we've seen too
+            // many unique values. In that case, give up.
             if (values.size() == 2) {
-              // Adding this value would mean we have too many, so give up.
               return;
             }
+            value.globals.push_back(global);
             values.push_back(value);
-            globalsForValue.push_back({global});
-          } else {
-            // This is an existing value.
-            Index index = found - values.begin();
-            globalsForValue[index].push_back(global);
           }
         }
+
+        // Helper for optimization: Given a Value, returns what we should read
+        // for it.
+        auto getReadValue = [&](const Value& value) -> Expression* {
+          Expression* ret;
+          if (value.isConstant()) {
+            // This is known to be a constant, so simply emit an expression for
+            // that constant, and handle if the field is packed.
+            ret = value.getConstant().makeExpression(wasm);
+            if (field) {
+              ret = Bits::makePackedFieldGet(
+                ret, *field, curr->cast<StructGet>()->signed_, wasm);
+            }
+          } else {
+            // Otherwise, this is non-constant, so we are in the situation where
+            // we want to un-nest the value out of the struct.new it is in. Note
+            // that for later work, as we cannot add a global in parallel.
+
+            // There can only be one global in a value that is not constant,
+            // which is the global we want to read from.
+            assert(value.globals.size() == 1);
+
+            // Create a global.get with temporary name, leaving only the
+            // updating of the name to later work.
+            auto* get = builder.makeGlobalGet(value.globals[0],
+                                              value.getExpression()->type);
+
+            globalsToUnnest.emplace_back(
+              GlobalToUnnest{value.globals[0], fieldIndex, get});
+
+            ret = get;
+          }
+
+          // If the type is more refined, we must refinalize. For example, we
+          // might have a struct.get that normally returns anyref, and know that
+          // field contains null, so we return nullref.
+          if (ret->type != curr->type) {
+            refinalize = true;
+          }
+
+          // This value replaces the struct.get, so it should have the same
+          // source location.
+          debuginfo::copyOriginalToReplacement(curr, ret, getFunction());
+
+          return ret;
+        };
 
         // We have some globals (at least 2), and so must have at least one
         // value. And we have already exited if we have more than 2 values (see
         // the early return above) so that only leaves 1 and 2.
         if (values.size() == 1) {
           // The case of 1 value is simple: trap if the ref is null, and
-          // otherwise return the value.
+          // otherwise return the value. Since the field is immutable, there
+          // cannot have been any writes to it we must synchonize with, so we do
+          // not need a fence.
           replaceCurrent(builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeConstantExpression(values[0])));
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
+            getReadValue(values[0])));
           return;
         }
         assert(values.size() == 2);
@@ -343,11 +500,11 @@ struct GlobalStructInference : public Pass {
         // We have two values. Check that we can pick between them using a
         // single comparison. While doing so, ensure that the index we can check
         // on is 0, that is, the first value has a single global.
-        if (globalsForValue[0].size() == 1) {
+        if (values[0].globals.size() == 1) {
           // The checked global is already in index 0.
-        } else if (globalsForValue[1].size() == 1) {
+        } else if (values[1].globals.size() == 1) {
+          // Flip so the value to check is in index 0.
           std::swap(values[0], values[1]);
-          std::swap(globalsForValue[0], globalsForValue[1]);
         } else {
           // Both indexes have more than one option, so we'd need more than one
           // comparison. Give up.
@@ -355,22 +512,84 @@ struct GlobalStructInference : public Pass {
         }
 
         // Excellent, we can optimize here! Emit a select.
-        //
-        // Note that we must trap on null, so add a ref.as_non_null here.
-        auto checkGlobal = globalsForValue[0][0];
+
+        auto checkGlobal = values[0].globals[0];
+        // Compute the left and right values before the next line, as the order
+        // of their execution matters (they may note globals for un-nesting).
+        auto* left = getReadValue(values[0]);
+        auto* right = getReadValue(values[1]);
+        // Note that we must trap on null, so add a ref.as_non_null here. As
+        // before, the get cannot have synchronized with anything.
+        Expression* getGlobal =
+          builder.makeGlobalGet(checkGlobal, wasm.getGlobal(checkGlobal)->type);
         replaceCurrent(builder.makeSelect(
-          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
-                            builder.makeGlobalGet(
-                              checkGlobal, wasm.getGlobal(checkGlobal)->type)),
-          builder.makeConstantExpression(values[0]),
-          builder.makeConstantExpression(values[1])));
+          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref), getGlobal),
+          left,
+          right));
       }
 
-    private:
-      GlobalStructInference& parent;
+      void visitFunction(Function* func) {
+        if (refinalize) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
+      }
     };
 
-    FunctionOptimizer(*this).run(getPassRunner(), module);
+    // Find the optimization opportunitites in parallel.
+    ModuleUtils::ParallelFunctionAnalysis<GlobalsToUnnest> optimization(
+      *module, [&](Function* func, GlobalsToUnnest& globalsToUnnest) {
+        if (func->imported()) {
+          return;
+        }
+
+        FunctionOptimizer optimizer(*this, globalsToUnnest);
+        optimizer.walkFunctionInModule(func, module);
+      });
+
+    // Un-nest any globals as needed, using the deterministic order of the
+    // functions in the module.
+    Builder builder(*module);
+    auto addedGlobals = false;
+    for (auto& func : module->functions) {
+      // Each work item here is a global with a struct.new, from which we want
+      // to read a particular index, from a particular global.get.
+      for (auto& [globalName, index, get] : optimization.map[func.get()]) {
+        auto* global = module->getGlobal(globalName);
+        auto* structNew = global->init->cast<StructNew>();
+        assert(index < structNew->operands.size() || index == DescriptorIndex);
+        auto*& operand = index != DescriptorIndex ? structNew->operands[index]
+                                                  : structNew->desc;
+
+        // If we already un-nested this then we don't need to repeat that work.
+        if (auto* nestedGet = operand->dynCast<GlobalGet>()) {
+          // We already un-nested, and this global.get refers to the new global.
+          // Simply copy the target.
+          get->name = nestedGet->name;
+          assert(get->type == nestedGet->type);
+        } else {
+          // Add a new global, initialized to the operand.
+          std::string indexName =
+            index != DescriptorIndex ? std::to_string(index) : "desc";
+          auto newName = Names::getValidGlobalName(
+            *module, global->name.toString() + ".unnested." + indexName);
+          module->addGlobal(builder.makeGlobal(
+            newName, get->type, operand, Builder::Immutable));
+          // Replace the operand with a get of that new global, and update the
+          // original get to read the same.
+          operand = builder.makeGlobalGet(newName, get->type);
+          get->name = newName;
+          addedGlobals = true;
+        }
+      }
+    }
+
+    if (addedGlobals) {
+      // Sort the globals so that added ones appear before their uses.
+      PassRunner runner(module);
+      runner.add("reorder-globals-always");
+      runner.setIsNested(true);
+      runner.run();
+    }
   }
 };
 

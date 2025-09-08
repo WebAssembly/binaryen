@@ -24,7 +24,7 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function foo() {
   if (4294967252 / HEAPU32[0] | 0) {
    wasm2js_trap()
   }
@@ -37,7 +37,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "foo": $0
+  "foo": foo
  };
 }
 

@@ -23,48 +23,72 @@
     (local $x i32)
     (local $y i32)
     (drop
-      (if i32
+      (if (result i32)
         (i32.const 1)
-        (local.get $x)
-        (local.get $y)
+        (then
+          (local.get $x)
+        )
+        (else
+          (local.get $y)
+        )
       )
     )
     (if
       (i32.const 1)
-      (local.set $x (i32.const 1))
+      (then
+        (local.set $x (i32.const 1))
+      )
     )
     (drop (local.get $x))
     ;; same but with param
     (if
       (i32.const 1)
-      (local.set $p (i32.const 1))
+      (then
+        (local.set $p (i32.const 1))
+      )
     )
     (drop (local.get $p))
     ;; if-else
     (if
       (i32.const 1)
-      (local.set $x (i32.const 2))
-      (nop)
+      (then
+        (local.set $x (i32.const 2))
+      )
+      (else
+        (nop)
+      )
     )
     (drop (local.get $x))
     (if
       (i32.const 1)
-      (nop)
-      (local.set $x (i32.const 3))
+      (then
+        (nop)
+      )
+      (else
+        (local.set $x (i32.const 3))
+      )
     )
     (drop (local.get $x))
     (if
       (i32.const 1)
-      (local.set $x (i32.const 4))
-      (local.set $x (i32.const 5))
+      (then
+        (local.set $x (i32.const 4))
+      )
+      (else
+        (local.set $x (i32.const 5))
+      )
     )
     (drop (local.get $x))
     (if
       (i32.const 1)
-      (local.set $x (i32.const 6))
-      (block
-        (local.set $x (i32.const 7))
-        (local.set $x (i32.const 8))
+      (then
+        (local.set $x (i32.const 6))
+      )
+      (else
+        (block
+          (local.set $x (i32.const 7))
+          (local.set $x (i32.const 8))
+        )
       )
     )
     (drop (local.get $x))
@@ -72,9 +96,11 @@
   (func $if2 (param $x i32)
     (if
       (i32.const 1)
-      (block
-        (local.set $x (i32.const 1))
-        (drop (local.get $x)) ;; use between phi set and use
+      (then
+        (block
+          (local.set $x (i32.const 1))
+          (drop (local.get $x)) ;; use between phi set and use
+        )
       )
     )
     (drop (local.get $x))
@@ -88,14 +114,20 @@
     (local.set $x (i32.const 3)) ;; but this reaches a merge later
     (call $nomerge (local.get $x) (local.get $x))
     (if (i32.const 1)
-      (local.set $x (i32.const 4))
+      (then
+        (local.set $x (i32.const 4))
+      )
     )
     (call $nomerge (local.get $x) (local.get $x))
     (local.set $x (i32.const 5)) ;; this is good again
     (call $nomerge (local.get $x) (local.get $x))
     (if (i32.const 1)
-      (local.set $x (i32.const 6)) ;; these merge,
-      (local.set $x (i32.const 7)) ;; so no
+      (then
+        (local.set $x (i32.const 6)) ;; these merge,
+      )
+      (else
+        (local.set $x (i32.const 7)) ;; so no
+      )
     )
     (call $nomerge (local.get $x) (local.get $x))
   )

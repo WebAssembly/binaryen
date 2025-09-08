@@ -49,13 +49,28 @@
     (if
       (i32.const 1)
       ;; Superficially the order is right, but not really.
-      (local.set $x
-        (ref.func $helper)
+      (then
+        (local.set $x
+          (ref.func $helper)
+        )
       )
-      (local.get $x)
+      (else
+        (local.get $x)
+      )
     )
   )
 
   (func $helper)
 )
 
+;; CHECK: non-nullable local's sets must dominate gets
+(module
+  (func $tuple
+    ;; Since this tuple local has a non-nullable element, it is subject to the
+    ;; non-nullability rules.
+    (local $x (tuple i32 (ref any) i64))
+    (tuple.drop 3
+      (local.get $x)
+    )
+  )
+)

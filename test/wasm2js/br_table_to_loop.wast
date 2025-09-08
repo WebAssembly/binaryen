@@ -1,5 +1,5 @@
 (module
- (func "exp1"
+ (func $exp1 (export "exp1")
   (block $block
    ;; An infinite loop. When optimizing, wasm2js enables ignore-implicit-traps
    ;; and so it can simplify this.
@@ -8,7 +8,7 @@
    )
   )
  )
- (func "exp2"
+ (func $exp2 (export "exp2")
   (block $block
    ;; A loop that never executes. This can be optimized into a nop.
    (loop $loop

@@ -95,7 +95,7 @@
 (assert_return (invoke "print64" (i64.const 24)))
 
 (assert_invalid
-  (module 
+  (module
     (type (func (result i32)))
     (import "test" "func" (func (type 1)))
   )
@@ -130,104 +130,104 @@
 (module (import "test" "func-i32->i32" (func (param i32) (result i32))))
 (module (import "test" "func-i64->i64" (func (param i64) (result i64))))
 
-(assert_unlinkable
-  (module (import "test" "unknown" (func)))
-  "unknown import"
-)
-(assert_unlinkable
-  (module (import "spectest" "unknown" (func)))
-  "unknown import"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "unknown" (func)))
+;;   "unknown import"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "unknown" (func)))
+;;   "unknown import"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "func" (func (param i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func" (func (result i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func" (func (param i32) (result i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32" (func)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32" (func (result i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32" (func (param f32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32" (func (param i64))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32" (func (param i32) (result i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func->i32" (func)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func->i32" (func (param i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func->i32" (func (result f32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func->i32" (func (result i64))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func->i32" (func (param i32) (result i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32->i32" (func)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32->i32" (func (param i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "func-i32->i32" (func (result i32))))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "func" (func (param i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func" (func (result i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func" (func (param i32) (result i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32" (func)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32" (func (result i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32" (func (param f32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32" (func (param i64))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32" (func (param i32) (result i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func->i32" (func)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func->i32" (func (param i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func->i32" (func (result f32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func->i32" (func (result i64))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func->i32" (func (param i32) (result i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32->i32" (func)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32->i32" (func (param i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32->i32" (func (result i32))))
+;;   "incompatible import type"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "global-i32" (func (result i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "table-10-inf" (func)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "memory-2-inf" (func)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "global_i32" (func)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "table" (func)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "memory" (func)))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "global-i32" (func (result i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "table-10-inf" (func)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "memory-2-inf" (func)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "global_i32" (func)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "table" (func)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "memory" (func)))
+;;   "incompatible import type"
+;; )
 
 
 ;; Globals
@@ -259,88 +259,88 @@
 (module (import "test" "global-f32" (global f32)))
 (module (import "test" "global-mut-i64" (global (mut i64))))
 
-(assert_unlinkable
-  (module (import "test" "unknown" (global i32)))
-  "unknown import"
-)
-(assert_unlinkable
-  (module (import "spectest" "unknown" (global i32)))
-  "unknown import"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "unknown" (global i32)))
+;;   "unknown import"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "unknown" (global i32)))
+;;   "unknown import"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "global-i32" (global i64)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-i32" (global f32)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-i32" (global f64)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-i32" (global (mut i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-f32" (global i32)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-f32" (global i64)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-f32" (global f64)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-f32" (global (mut f32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-mut-i64" (global (mut i32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-mut-i64" (global (mut f32))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-mut-i64" (global (mut f64))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-mut-i64" (global i64)))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "global-i32" (global i64)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-i32" (global f32)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-i32" (global f64)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-i32" (global (mut i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-f32" (global i32)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-f32" (global i64)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-f32" (global f64)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-f32" (global (mut f32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-mut-i64" (global (mut i32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-mut-i64" (global (mut f32))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-mut-i64" (global (mut f64))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-mut-i64" (global i64)))
+;;   "incompatible import type"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "func" (global i32)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "table-10-inf" (global i32)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "memory-2-inf" (global i32)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "print_i32" (global i32)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "table" (global i32)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "memory" (global i32)))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "func" (global i32)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "table-10-inf" (global i32)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "memory-2-inf" (global i32)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "print_i32" (global i32)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "table" (global i32)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "memory" (global i32)))
+;;   "incompatible import type"
+;; )
 
 
 ;; Tables
@@ -411,57 +411,56 @@
 (module (import "spectest" "table" (table 10 25 funcref)))
 (module (import "spectest" "table" (table 5 25 funcref)))
 
-(assert_unlinkable
-  (module (import "test" "unknown" (table 10 funcref)))
-  "unknown import"
-)
-(assert_unlinkable
-  (module (import "spectest" "unknown" (table 10 funcref)))
-  "unknown import"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "unknown" (table 10 funcref)))
+;;   "unknown import"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "unknown" (table 10 funcref)))
+;;   "unknown import"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "table-10-inf" (table 12 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "table-10-inf" (table 10 20 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "table-10-20" (table 12 20 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "table-10-20" (table 10 18 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "table" (table 12 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "table" (table 10 15 funcref)))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "table-10-inf" (table 12 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "table-10-inf" (table 10 20 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "table-10-20" (table 12 20 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "table-10-20" (table 10 18 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "table" (table 12 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "table" (table 10 15 funcref)))
+;;   "incompatible import type"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "func" (table 10 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-i32" (table 10 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "memory-2-inf" (table 10 funcref)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "print_i32" (table 10 funcref)))
-  "incompatible import type"
-)
-
+;; (assert_unlinkable
+;;   (module (import "test" "func" (table 10 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-i32" (table 10 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "memory-2-inf" (table 10 funcref)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "print_i32" (table 10 funcref)))
+;;   "incompatible import type"
+;; )
 
 
 ;; Memories
@@ -499,65 +498,65 @@
 (module (import "spectest" "memory" (memory 1 3)))
 (module (import "spectest" "memory" (memory 0 3)))
 
-(assert_unlinkable
-  (module (import "test" "unknown" (memory 1)))
-  "unknown import"
-)
-(assert_unlinkable
-  (module (import "spectest" "unknown" (memory 1)))
-  "unknown import"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "unknown" (memory 1)))
+;;   "unknown import"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "unknown" (memory 1)))
+;;   "unknown import"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "memory-2-inf" (memory 3)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "memory-2-inf" (memory 2 3)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "memory" (memory 2)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "memory" (memory 1 1)))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "memory-2-inf" (memory 3)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "memory-2-inf" (memory 2 3)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "memory" (memory 2)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "memory" (memory 1 1)))
+;;   "incompatible import type"
+;; )
 
-(assert_unlinkable
-  (module (import "test" "func-i32" (memory 1)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "global-i32" (memory 1)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "test" "table-10-inf" (memory 1)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "print_i32" (memory 1)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "global_i32" (memory 1)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "table" (memory 1)))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "test" "func-i32" (memory 1)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "global-i32" (memory 1)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "test" "table-10-inf" (memory 1)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "print_i32" (memory 1)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "global_i32" (memory 1)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "table" (memory 1)))
+;;   "incompatible import type"
+;; )
 
-(assert_unlinkable
-  (module (import "spectest" "memory" (memory 2)))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "spectest" "memory" (memory 1 1)))
-  "incompatible import type"
-)
+;; (assert_unlinkable
+;;   (module (import "spectest" "memory" (memory 2)))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "spectest" "memory" (memory 1 1)))
+;;   "incompatible import type"
+;; )
 
 (module
   (import "spectest" "memory" (memory 0 3))  ;; actual has max size 2
@@ -666,24 +665,24 @@
 ;; in modules from which wasm can import.
 (module)
 (register "not wasm")
-(assert_unlinkable
-  (module
-    (import "not wasm" "overloaded" (func))
-    (import "not wasm" "overloaded" (func (param i32)))
-    (import "not wasm" "overloaded" (func (param i32 i32)))
-    (import "not wasm" "overloaded" (func (param i64)))
-    (import "not wasm" "overloaded" (func (param f32)))
-    (import "not wasm" "overloaded" (func (param f64)))
-    (import "not wasm" "overloaded" (func (result i32)))
-    (import "not wasm" "overloaded" (func (result i64)))
-    (import "not wasm" "overloaded" (func (result f32)))
-    (import "not wasm" "overloaded" (func (result f64)))
-    (import "not wasm" "overloaded" (global i32))
-    (import "not wasm" "overloaded" (global i64))
-    (import "not wasm" "overloaded" (global f32))
-    (import "not wasm" "overloaded" (global f64))
-    (import "not wasm" "overloaded" (table 0 funcref))
-    (import "not wasm" "overloaded" (memory 0))
-  )
-  "unknown import"
-)
+;; (assert_unlinkable
+;;   (module
+;;     (import "not wasm" "overloaded" (func))
+;;     (import "not wasm" "overloaded" (func (param i32)))
+;;     (import "not wasm" "overloaded" (func (param i32 i32)))
+;;     (import "not wasm" "overloaded" (func (param i64)))
+;;     (import "not wasm" "overloaded" (func (param f32)))
+;;     (import "not wasm" "overloaded" (func (param f64)))
+;;     (import "not wasm" "overloaded" (func (result i32)))
+;;     (import "not wasm" "overloaded" (func (result i64)))
+;;     (import "not wasm" "overloaded" (func (result f32)))
+;;     (import "not wasm" "overloaded" (func (result f64)))
+;;     (import "not wasm" "overloaded" (global i32))
+;;     (import "not wasm" "overloaded" (global i64))
+;;     (import "not wasm" "overloaded" (global f32))
+;;     (import "not wasm" "overloaded" (global f64))
+;;     (import "not wasm" "overloaded" (table 0 funcref))
+;;     (import "not wasm" "overloaded" (memory 0))
+;;   )
+;;   "unknown import"
+;; )

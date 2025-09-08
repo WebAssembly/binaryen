@@ -18,9 +18,9 @@
 // Condensing a module with multiple memories into a module with a single memory
 // for browsers that don’t support multiple memories.
 //
-// This pass also disables multi-memories so that the target features section in
+// This pass also disables multimemory so that the target features section in
 // the emitted module does not report the use of MultiMemories. Disabling the
-// multi-memories feature also prevents later passes from adding additional
+// multimemory feature also prevents later passes from adding additional
 // memories.
 //
 // The offset computation in function maybeMakeBoundsCheck is not precise
@@ -40,6 +40,7 @@
 // the same semantics as v8, which is to bounds check all Atomic instructions
 // the same way and trap for out-of-bounds.
 
+#include "ir/abstract.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "wasm-builder.h"
@@ -108,7 +109,7 @@ struct MultiMemoryLowering : public Pass {
           return;
         }
       }
-      super::walkFunction(func);
+      Super::walkFunction(func);
     }
 
     void visitMemoryGrow(MemoryGrow* curr) {
@@ -377,7 +378,7 @@ struct MultiMemoryLowering : public Pass {
   };
 
   void run(Module* module) override {
-    module->features.disable(FeatureSet::MultiMemories);
+    module->features.disable(FeatureSet::MultiMemory);
 
     // If there are no memories or 1 memory, skip this pass
     if (module->memories.size() <= 1) {
@@ -429,7 +430,7 @@ struct MultiMemoryLowering : public Pass {
   Memory& getFirstMemory() { return *wasm->memories[0]; }
 
   void prepCombinedMemory() {
-    pointerType = getFirstMemory().indexType;
+    pointerType = getFirstMemory().addressType;
     memoryInfo = pointerType == Type::i32 ? Builder::MemoryInfo::Memory32
                                           : Builder::MemoryInfo::Memory64;
     isShared = getFirstMemory().shared;
@@ -438,7 +439,7 @@ struct MultiMemoryLowering : public Pass {
       // We are assuming that each memory is configured the same as the first
       // and assert if any of the memories does not match this configuration
       assert(memory->shared == isShared);
-      assert(memory->indexType == pointerType);
+      assert(memory->addressType == pointerType);
 
       // TODO: handle memory import for memories other than the first
       if (memory->name != getFirstMemory().name && memory->imported()) {
@@ -472,7 +473,7 @@ struct MultiMemoryLowering : public Pass {
     // Ensuring only the first memory is an exported memory
     for (auto& exp : wasm->exports) {
       if (exp->kind == ExternalKind::Memory &&
-          exp->value == getFirstMemory().name) {
+          *exp->getInternalName() == getFirstMemory().name) {
         isExported = true;
       } else if (exp->kind == ExternalKind::Memory) {
         Fatal() << "MultiMemoryLowering: only the first memory can be exported";
@@ -689,7 +690,7 @@ struct MultiMemoryLowering : public Pass {
   void addCombinedMemory() {
     auto memory = Builder::makeMemory(combinedMemory);
     memory->shared = isShared;
-    memory->indexType = pointerType;
+    memory->addressType = pointerType;
     memory->initial = totalInitialPages;
     memory->max = totalMaxPages;
     if (isImported) {
@@ -705,7 +706,7 @@ struct MultiMemoryLowering : public Pass {
         // We checked in prepCombinedMemory that any memory exports are for
         // the first memory, so setting the exports to the combinedMemory means
         // calling JS will not have to worry about offsets
-        exp->value = combinedMemory;
+        *exp->getInternalName() = combinedMemory;
       }
     }
   }

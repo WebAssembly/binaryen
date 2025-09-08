@@ -72,14 +72,11 @@ bool usesExpressions(ElementSegment* curr, Module* module) {
       return entry->is<RefFunc>();
     });
 
-  // If the table has a specialized (non-MVP) type, then the segment must
-  // declare a type that is a subtype of that, so it must use the post-MVP form
-  // of using expressions.
-  bool hasTableOfSpecializedType =
-    curr->table.is() &&
-    module->getTable(curr->table)->type != Type(HeapType::func, Nullable);
+  // If the segment has a specialized (non-MVP) type, then it must use the
+  // post-MVP form of using expressions.
+  bool hasSpecializedType = curr->type != Type(HeapType::func, Nullable);
 
-  return !allElementsRefFunc || hasTableOfSpecializedType;
+  return !allElementsRefFunc || hasSpecializedType;
 }
 
 } // namespace wasm::TableUtils

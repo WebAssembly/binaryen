@@ -1,0 +1,13 @@
+(module
+ (type $0 (func))
+ (type $1 (func (result funcref)))
+ (import "env" "f2" (func $f2 (type $0)))
+ (import "env" "f1" (func $f1 (type $0)))
+ (global $g funcref (ref.func $f1))
+ (elem declare func $f2)
+ (export "g" (global $g))
+ (export "f" (func $f))
+ (func $f (type $1) (result funcref)
+  (ref.func $f2)
+ )
+)

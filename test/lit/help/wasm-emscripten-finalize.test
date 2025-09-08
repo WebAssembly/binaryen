@@ -20,9 +20,6 @@
 ;; CHECK-NEXT:                                        output file. In this mode if no output
 ;; CHECK-NEXT:                                        file is specified, we write to stdout.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --global-base                        The address at which static globals were
-;; CHECK-NEXT:                                        placed
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --side-module                        Input is an emscripten side module
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
@@ -41,8 +38,6 @@
 ;; CHECK-NEXT:   --output-source-map,-osm             Emit source map to the specified file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output-source-map-url,-osu         Emit specified string as source map URL
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --separate-data-segments             Separate data segments to a file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --check-stack-overflow               Check for stack overflows every time the
 ;; CHECK-NEXT:                                        stack is extended
@@ -104,6 +99,18 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory-opt             Enable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
@@ -128,10 +135,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-memory64                   Disable memory64
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-gc-nn-locals                Enable GC non-null locals
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-gc-nn-locals               Disable GC non-null locals
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
@@ -144,9 +147,27 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                    Disable strings
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-multi-memories              Enable multi-memories
+;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-multi-memories             Disable multi-memories
+;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-stack-switching             Enable stack switching
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-stack-switching            Disable stack switching
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-shared-everything           Enable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-shared-everything          Disable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:
@@ -157,7 +178,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
 ;; CHECK-NEXT:                                        passes being run. Must be in the form
-;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass
+;; CHECK-NEXT:                                        then it applies to the closest instance
+;; CHECK-NEXT:                                        of that pass before us. If KEY is not the
+;; CHECK-NEXT:                                        name of a pass then it is a global option
+;; CHECK-NEXT:                                        that applies to all pass instances that
+;; CHECK-NEXT:                                        read it.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does
 ;; CHECK-NEXT:                                        not inspect or interact with GC and
@@ -165,6 +191,15 @@
 ;; CHECK-NEXT:                                        passed out. The outside may hold on to
 ;; CHECK-NEXT:                                        them and pass them back in, but not
 ;; CHECK-NEXT:                                        inspect their contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the
+;; CHECK-NEXT:                                        input (useful for debugging and testing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-stack-ir                  optimize StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-stack-ir                     print StackIR during writing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:

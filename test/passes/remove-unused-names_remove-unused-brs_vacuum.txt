@@ -7,7 +7,7 @@
  (type $7 (func (param i32 i32)))
  (type $1 (func (param f64) (result i32)))
  (type $13 (func (param i32 i32 i32 i32 i32)))
- (type $i32_=>_i64 (func (param i32) (result i64)))
+ (type $16 (func (param i32) (result i64)))
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table $timport$0 18 18 funcref))
  (import "env" "ABORT" (global $import$2 i32))
@@ -68,28 +68,38 @@
   (local $var$8 i32)
   (if
    (local.get $var$4)
-   (block $label$3
-    (block
-     (if
-      (local.get $var$8)
-      (loop $label$8
-       (if
-        (local.get $var$3)
-        (br $label$8)
-       )
-      )
+   (then
+    (block $label$3
+     (block
       (if
-       (i32.eqz
-        (local.get $var$6)
+       (local.get $var$8)
+       (then
+        (loop $label$8
+         (if
+          (local.get $var$3)
+          (then
+           (br $label$8)
+          )
+         )
+        )
        )
-       (br $label$3)
+       (else
+        (if
+         (i32.eqz
+          (local.get $var$6)
+         )
+         (then
+          (br $label$3)
+         )
+        )
+       )
       )
-     )
-     (drop
-      (call $23
-       (local.get $var$7)
-       (local.get $var$4)
-       (local.get $var$0)
+      (drop
+       (call $23
+        (local.get $var$7)
+        (local.get $var$4)
+        (local.get $var$0)
+       )
       )
      )
     )

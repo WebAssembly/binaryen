@@ -1,0 +1,9 @@
+;; Verify that we support strings in the binary format even without GC.
+
+;; RUN: wasm-opt --enable-reference-types  --enable-strings --roundtrip %s
+
+(module
+ (func $0
+  (local $0 stringref)
+ )
+)

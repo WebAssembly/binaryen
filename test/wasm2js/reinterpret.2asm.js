@@ -40,32 +40,32 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $1($0) {
-  $0 = $0 | 0;
-  return ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(2, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(2)) | 0) == ($0 | 0) | 0;
+ function $0($0_1) {
+  $0_1 = $0_1 | 0;
+  return ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(2, $0_1), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(2)) | 0) == ($0_1 | 0) | 0;
  }
  
- function $2($0, $0$hi) {
-  $0 = $0 | 0;
+ function $1($0_1, $0$hi) {
+  $0_1 = $0_1 | 0;
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0, $3$hi = 0;
   i64toi32_i32$0 = $0$hi;
-  wasm2js_scratch_store_i32(0 | 0, $0 | 0);
+  wasm2js_scratch_store_i32(0 | 0, $0_1 | 0);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
   wasm2js_scratch_store_f64(+(+wasm2js_scratch_load_f64()));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$0 = $3$hi;
-  return (wasm2js_scratch_load_i32(0 | 0) | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
+  return (wasm2js_scratch_load_i32(0 | 0) | 0 | 0) == ($0_1 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
  }
  
- function legalstub$2($0, $1_1) {
-  $0 = $0 | 0;
+ function legalstub$1($0_1, $1_1) {
+  $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10 = 0, $3 = 0, $3$hi = 0, $6$hi = 0;
   i64toi32_i32$0 = 0;
-  $3 = $0;
+  $3 = $0_1;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
   i64toi32_i32$2 = $1_1;
@@ -85,12 +85,12 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $6$hi;
   i64toi32_i32$3 = $10;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  return $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
  return {
-  "i32_roundtrip": $1, 
-  "i64_roundtrip": legalstub$2
+  "i32_roundtrip": $0, 
+  "i64_roundtrip": legalstub$1
  };
 }
 

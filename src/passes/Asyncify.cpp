@@ -49,13 +49,13 @@
 //    for obvious reasons, while Emterpreter-Async proved it is tolerable to
 //    have *some* overhead, if the transform can be applied selectively.
 //
-// The specific transform implemented here is nicknamed "Bysyncify" (as it is
-// in BinarYen, and "B" comes after "A"). It is simpler than old Asyncify but
-// has low overhead when properly optimized. Old Asyncify worked at the CFG
-// level and added branches there; new Asyncify on the other hand works on the
-// structured control flow of wasm and simply "skips over" code when rewinding
-// the stack, and jumps out when unwinding. The transformed code looks
+// This new Asyncify transformation implemented here is simpler than old
+// Asyncify but has low overhead when properly optimized. Old Asyncify worked at
+// the CFG level and added branches there; new Asyncify on the other hand works
+// on the structured control flow of wasm and simply "skips over" code when
+// rewinding the stack, and jumps out when unwinding. The transformed code looks
 // conceptually like this:
+// (We have three phases: normal, unwinding, and rewinding)
 //
 //   void foo(int x) {
 //     // new prelude
@@ -63,13 +63,13 @@
 //       loadLocals();
 //     }
 //     // main body starts here
-//     if (!rewinding) {
+//     if (normal) {
 //       // some code we must skip while rewinding
 //       x = x + 1;
 //       x = x / 2;
 //     }
 //     // If rewinding, do this call only if it is the right one.
-//     if (!rewinding or nextCall == 0) {
+//     if (normal or check_call_index(0)) { // 0 is index of this bar() call
 //       bar(x);
 //       if (unwinding) {
 //         noteUnWound(0);
@@ -77,7 +77,7 @@
 //         return;
 //       }
 //     }
-//     if (!rewinding) {
+//     if (normal) {
 //       // more code we must skip while rewinding
 //       while (x & 7) {
 //         x = x + 1;
@@ -123,11 +123,12 @@
 // indexes of calls. In the example above, we saw index "0" for calling "bar"
 // from "foo". When unwinding, the indexes are added to the stack; when
 // rewinding, they are popped off; the current asyncify stack location is
-// undated while doing both operations. The asyncify stack is also used to
+// updated while doing both operations. The asyncify stack is also used to
 // save locals. Note that the stack end location is provided, which is for
 // error detection.
 //
-// Note: all pointers are assumed to be 4-byte aligned.
+// Note: all pointers are assumed to be 4-byte (wasm32) / 8-byte (wasm64)
+// aligned.
 //
 // When you start an unwinding operation, you must set the initial fields
 // of the data structure, that is, set the current stack location to the
@@ -163,28 +164,28 @@
 //    calls, so that you know when to start an asynchronous operation and
 //    when to propagate results back.
 //
-// These four functions are exported so that you can call them from the
+// These five functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
 // couldn't have called them before they were created by this pass. To work
 // around that, you can create imports to asyncify.start_unwind,
-// asyncify.stop_unwind, asyncify.start_rewind, and asyncify.stop_rewind;
-// if those exist when this pass runs then it will turn those into direct
-// calls to the functions that it creates. Note that when doing everything
-// in wasm like this, Asyncify must not instrument your "runtime" support
-// code, that is, the code that initiates unwinds and rewinds and stops them.
-// If it did, the unwind would not stop until you left the wasm module
-// entirely, etc. Therefore we do not instrument a function if it has
-// a call to the four asyncify_* methods. Note that you may need to disable
-// inlining if that would cause code that does need to be instrumented
-// show up in that runtime code.
+// asyncify.stop_unwind, asyncify.start_rewind, asyncify.stop_rewind, and
+// asyncify.get_state; if those exist when this pass runs then it will turn
+// those into direct calls to the functions that it creates. Note that when
+// doing everything in wasm like this, Asyncify must not instrument your
+// "runtime" support code, that is, the code that initiates unwinds and rewinds
+// and stops them. If it did, the unwind would not stop until you left the wasm
+// module entirely, etc. Therefore we do not instrument a function if it has a
+// call to the four asyncify_* methods. Note that you may need to disable
+// inlining if that would cause code that does need to be instrumented show up
+// in that runtime code.
 //
 // To use this API, call asyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
 // other host environment on the outside that called into wasm. When you
 // return there after unwinding, call asyncify_stop_unwind. Then when
 // you want to rewind, call asyncify_start_rewind, and then call the same
-// initial function you called before, so that unwinding can begin. The
-// unwinding will reach the same function from which you started, since
+// initial function you called before, so that rewinding can begin. The
+// rewinding will reach the same function from which you started, since
 // we are recreating the call stack. At that point you should call
 // asyncify_stop_rewind and then execution can resume normally.
 //
@@ -221,13 +222,13 @@
 //
 //   --pass-arg=asyncify-ignore-imports
 //
-//      Ignore all imports (except for bynsyncify.*), that is, assume none of
-//      them can start an unwind/rewind. (This is effectively the same as
-//      providing asyncify-imports with a list of non-existent imports.)
+//      Ignore all imports (except for asyncify.*), that is, assume none of them
+//      can start an unwind/rewind. (This is effectively the same as providing
+//      asyncify-imports with a list of non-existent imports.)
 //
 //   --pass-arg=asyncify-ignore-indirect
 //
-//      Ignore all indirect calls. This implies that you know an call stack
+//      Ignore all indirect calls. This implies that you know the call stack
 //      will never need to be unwound with an indirect call somewhere in it.
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
@@ -242,6 +243,10 @@
 //
 //      Logs out instrumentation decisions to the console. This can help figure
 //      out why a certain function was instrumented.
+//
+//   --pass-arg=asyncify-memory@memory
+//      Picks which exported memory of the module to store and load data from
+//      and to (useful if the module contains multiple memories).
 //
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
@@ -271,6 +276,13 @@
 //      this is only useful if you use ignore-indirect and use this to fix up
 //      some indirect calls that *do* need to be instrumented, or if you will
 //      do some later transform of the code that adds more call paths, etc.
+//
+//   --pass-arg=asyncify-propagate-addlist
+//
+//      The default behaviour of the addlist does not propagate instrumentation
+//      status. If this option is set then functions which call a function in
+//      the addlist will also be instrumented, and those that call them and so
+//      on.
 //
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
@@ -314,6 +326,7 @@
 #include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "passes/pass-utils.h"
 #include "support/file.h"
 #include "support/string.h"
 #include "wasm-builder.h"
@@ -444,7 +457,7 @@ public:
     // The lists contain human-readable strings. Turn them into the
     // internal escaped names for later comparisons
     for (auto& name : list) {
-      auto escaped = WasmBinaryBuilder::escape(name);
+      auto escaped = WasmBinaryReader::escape(name);
       unescaped[escaped.toString()] = name;
       if (name.find('*') != std::string::npos) {
         patterns.insert(escaped.toString());
@@ -503,7 +516,10 @@ class ModuleAnalyzer {
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // The function name.
     Name name;
-    // If this function can start an unwind/rewind.
+    // If this function can start an unwind/rewind. We only set this in cases
+    // where we need to know that fact and also that we need to instrument code
+    // to handle it (as a result, we do not set it for the bottommost runtime,
+    // which needs no instrumentation).
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
     // and starts a rewinding. If so, we do not instrument it, see above.
@@ -529,11 +545,11 @@ public:
                  bool canIndirectChangeState,
                  const String::Split& removeListInput,
                  const String::Split& addListInput,
+                 bool propagateAddList,
                  const String::Split& onlyListInput,
-                 bool asserts,
                  bool verbose)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      fakeGlobals(module), asserts(asserts), verbose(verbose) {
+      fakeGlobals(module), verbose(verbose) {
 
     PatternMatcher removeList("remove", module, removeListInput);
     PatternMatcher addList("add", module, addListInput);
@@ -671,20 +687,61 @@ public:
       module.removeFunction(name);
     }
 
+    auto handleAddList = [&](ModuleAnalyzer::Map& map) {
+      if (!addListInput.empty()) {
+        for (auto& func : module.functions) {
+          if (addList.match(func->name) && removeList.match(func->name)) {
+            Fatal() << func->name
+                    << " is found in the add-list and in the remove-list";
+          }
+
+          if (!func->imported() && addList.match(func->name)) {
+            auto& info = map[func.get()];
+            if (verbose && !info.canChangeState) {
+              std::cout << "[asyncify] " << func->name
+                        << " is in the add-list, add\n";
+            }
+            info.canChangeState = true;
+            info.addedFromList = true;
+          }
+        }
+      }
+    };
+
+    // When propagateAddList is enabled, we should check a add-list before
+    // scannerpropagateBack so that callers of functions in add-list should also
+    // be instrumented.
+    if (propagateAddList) {
+      handleAddList(scanner.map);
+    }
+
+    // The order of propagation in |propagateBack| is non-deterministic, so sort
+    // the loggings we intend to do.
+    std::vector<std::string> loggings;
+
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
-                          [verbose](Info& info, Function* reason) {
-                            if (verbose && !info.canChangeState) {
-                              std::cout << "[asyncify] " << info.name
-                                        << " can change the state due to "
-                                        << reason->name << "\n";
+                          [](Info& info) { info.canChangeState = true; },
+                          [&](const Info& info, Function* reason) {
+                            if (verbose) {
+                              std::stringstream str;
+                              str << "[asyncify] " << info.name
+                                  << " can change the state due to "
+                                  << reason->name << "\n";
+                              loggings.push_back(str.str());
                             }
-                            info.canChangeState = true;
                           },
                           scanner.IgnoreNonDirectCalls);
+
+    if (!loggings.empty()) {
+      std::sort(loggings.begin(), loggings.end());
+      for (auto& logging : loggings) {
+        std::cout << logging;
+      }
+    }
 
     map.swap(scanner.map);
 
@@ -707,18 +764,10 @@ public:
       }
     }
 
-    if (!addListInput.empty()) {
-      for (auto& func : module.functions) {
-        if (!func->imported() && addList.match(func->name)) {
-          auto& info = map[func.get()];
-          if (verbose && !info.canChangeState) {
-            std::cout << "[asyncify] " << func->name
-                      << " is in the add-list, add\n";
-          }
-          info.canChangeState = true;
-          info.addedFromList = true;
-        }
-      }
+    // When propagateAddList is disabled, which is default behavior,
+    // functions in add-list are just prepended to instrumented functions.
+    if (!propagateAddList) {
+      handleAddList(map);
     }
 
     removeList.checkPatternsMatches();
@@ -784,7 +833,6 @@ public:
   }
 
   FakeGlobalHelper fakeGlobals;
-  bool asserts;
   bool verbose;
 };
 
@@ -841,59 +889,6 @@ public:
                       makeGlobalGet(ASYNCIFY_STATE, Type::i32),
                       makeConst(Literal(int32_t(value))));
   }
-
-  Expression* makeNegatedStateCheck(State value) {
-    return makeUnary(Abstract::getUnary(pointerType, Abstract::EqZ),
-                     makeStateCheck(value));
-  }
-};
-
-// Proxy that runs wrapped pass for instrumented functions only
-struct InstrumentedProxy : public Pass {
-  std::unique_ptr<Pass> create() override {
-    return std::make_unique<InstrumentedProxy>(analyzer, pass->create());
-  }
-
-  InstrumentedProxy(ModuleAnalyzer* analyzer, std::unique_ptr<Pass> pass)
-    : analyzer(analyzer), pass(std::move(pass)) {}
-
-  bool isFunctionParallel() override { return pass->isFunctionParallel(); }
-
-  void runOnFunction(Module* module, Function* func) override {
-    if (!analyzer->needsInstrumentation(func)) {
-      return;
-    }
-    if (pass->getPassRunner() == nullptr) {
-      pass->setPassRunner(getPassRunner());
-    }
-    pass->runOnFunction(module, func);
-  }
-
-  bool modifiesBinaryenIR() override { return pass->modifiesBinaryenIR(); }
-
-  bool invalidatesDWARF() override { return pass->invalidatesDWARF(); }
-
-  bool requiresNonNullableLocalFixups() override {
-    return pass->requiresNonNullableLocalFixups();
-  }
-
-private:
-  ModuleAnalyzer* analyzer;
-  std::unique_ptr<Pass> pass;
-};
-
-struct InstrumentedPassRunner : public PassRunner {
-  InstrumentedPassRunner(Module* wasm, ModuleAnalyzer* analyzer)
-    : PassRunner(wasm), analyzer(analyzer) {}
-
-protected:
-  void doAdd(std::unique_ptr<Pass> pass) override {
-    PassRunner::doAdd(
-      std::unique_ptr<Pass>(new InstrumentedProxy(analyzer, std::move(pass))));
-  }
-
-private:
-  ModuleAnalyzer* analyzer;
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
@@ -962,21 +957,27 @@ private:
     // reach the right part when rewinding, which is done by always skipping
     // forward. For example, for an if we do this:
     //
-    //    if (condition()) {
+    //    if (cond) { // cond is either a const or a local.get in a flat IR
     //      side1();
     //    } else {
     //      side2();
     //    }
     // =>
-    //    if (!rewinding) {
-    //      temp = condition();
+    //    if (rewinding || cond) {
+    //      new_side1();
     //    }
-    //    if (rewinding || temp) {
-    //      side1();
+    //    if (rewinding || !cond) {
+    //      new_side2();
     //    }
-    //    if (rewinding || !temp) {
-    //      side2();
-    //    }
+    // where new_sideN is
+    // if (normal || check_call_index(callIndex)) {
+    //   sideN();
+    // }
+    // when sideN can change the state, and
+    // if (normal) {
+    //   sideN();
+    // }
+    // when it does not. (See makeCallSupport() for details.)
     //
     // This way we will linearly get through all the code in the function,
     // if we are rewinding. In a similar way we skip over breaks, etc.; just
@@ -990,7 +991,8 @@ private:
     // node in two phases as follows:
     //
     //  1. The "Scan" phase finds children we need to process (ones that may
-    //     change the state), and adds Scan tasks for them to the work stack.
+    //     change the state), adds Scan tasks for them to the work stack, and
+    //     process call instructions.
     //  2. The "Finish" phase runs after all children have been Scanned and
     //     Finished. It pops the children's results from the results stack (if
     //     there were relevant children), and then it pushes its own result.
@@ -1132,6 +1134,8 @@ private:
         results.push_back(loop);
         continue;
       } else if (doesCall(curr)) {
+        // We reach here only in Scan phase, but we in effect "Finish" calls
+        // here as well.
         results.push_back(makeCallSupport(curr));
         continue;
       }
@@ -1180,9 +1184,9 @@ private:
     // TODO: we can read the next call index once in each function (but should
     //       avoid saving/restoring that local later)
     curr = builder->makeIf(
-      builder->makeIf(builder->makeStateCheck(State::Normal),
-                      builder->makeConst(int32_t(1)),
-                      makeCallIndexPeek(index)),
+      builder->makeBinary(OrInt32,
+                          builder->makeStateCheck(State::Normal),
+                          makeCallIndexPeek(index)),
       builder->makeSequence(curr, makePossibleUnwind(index, set)));
     return curr;
   }
@@ -1347,11 +1351,10 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
                                                 Type::i32,
                                                 asyncifyMemory))));
     } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
-      replaceCurrent(builder->makeBinary(
-        EqInt32,
-        builder->makeLocalGet(rewindIndex, Type::i32),
-        builder->makeConst(
-          Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))));
+      replaceCurrent(
+        builder->makeBinary(EqInt32,
+                            builder->makeLocalGet(rewindIndex, Type::i32),
+                            curr->operands[0]));
     }
   }
 
@@ -1605,56 +1608,75 @@ static std::string getFullImportName(Name module, Name base) {
 }
 
 struct Asyncify : public Pass {
+  // Adds calls.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
-    auto& options = getPassOptions();
-    bool optimize = options.optimizeLevel > 0;
+    bool optimize = getPassOptions().optimizeLevel > 0;
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("asyncify-imports", "")));
-    auto ignoreImports =
-      options.getArgumentOrDefault("asyncify-ignore-imports", "");
+      getArgumentOrDefault("asyncify-imports", "")));
+    auto ignoreImports = getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
-    String::Split listedImports(stateChangingImports, ",");
+    String::Split listedImports(stateChangingImports,
+                                String::Split::NewLineOr(","));
     // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
     // to false.
-    auto canIndirectChangeState =
-      !options.hasArgument("asyncify-ignore-indirect");
+    auto canIndirectChangeState = !hasArgument("asyncify-ignore-indirect");
     std::string removeListInput =
-      options.getArgumentOrDefault("asyncify-removelist", "");
+      getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      removeListInput = options.getArgumentOrDefault("asyncify-blacklist", "");
+      removeListInput = getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split removeList(
-      String::trim(read_possible_response_file(removeListInput)), ",");
-    String::Split addList(
-      String::trim(read_possible_response_file(
-        options.getArgumentOrDefault("asyncify-addlist", ""))),
-      ",");
-    std::string onlyListInput =
-      options.getArgumentOrDefault("asyncify-onlylist", "");
+      String::trim(read_possible_response_file(removeListInput)),
+      String::Split::NewLineOr(","));
+    String::Split addList(String::trim(read_possible_response_file(
+                            getArgumentOrDefault("asyncify-addlist", ""))),
+                          String::Split::NewLineOr(","));
+    std::string onlyListInput = getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      onlyListInput = options.getArgumentOrDefault("asyncify-whitelist", "");
+      onlyListInput = getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
-      String::trim(read_possible_response_file(onlyListInput)), ",");
-    auto asserts = options.hasArgument("asyncify-asserts");
-    auto verbose = options.hasArgument("asyncify-verbose");
-    auto relocatable = options.hasArgument("asyncify-relocatable");
-    auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
+      String::trim(read_possible_response_file(onlyListInput)),
+      String::Split::NewLineOr(","));
+    auto asserts = hasArgument("asyncify-asserts");
+    auto verbose = hasArgument("asyncify-verbose");
+    auto relocatable = hasArgument("asyncify-relocatable");
+    auto secondaryMemory = hasArgument("asyncify-in-secondary-memory");
+    auto propagateAddList = hasArgument("asyncify-propagate-addlist");
 
     // Ensure there is a memory, as we need it.
+
     if (secondaryMemory) {
       auto secondaryMemorySizeString =
-        options.getArgumentOrDefault("asyncify-secondary-memory-size", "1");
+        getArgumentOrDefault("asyncify-secondary-memory-size", "1");
       Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
       asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
     } else {
-      MemoryUtils::ensureExists(module);
-      asyncifyMemory = module->memories[0]->name;
+      if (module->memories.size() <= 1) {
+        MemoryUtils::ensureExists(module);
+        asyncifyMemory = module->memories[0]->name;
+      } else {
+        auto asyncifyMemoryValue =
+          getArgumentOrDefault("asyncify-memory", "memory");
+        for (auto& theExport : module->exports) {
+          if (theExport->kind == ExternalKind::Memory &&
+              theExport->name == asyncifyMemoryValue) {
+            asyncifyMemory = *theExport->getInternalName();
+            break;
+          }
+        }
+        if (!asyncifyMemory) {
+          Fatal() << "Please specify which of the multiple memories to use, "
+                     "with --pass-arg=asyncify-memory@memory";
+        }
+      }
     }
     pointerType =
       module->getMemory(asyncifyMemory)->is64() ? Type::i64 : Type::i32;
@@ -1687,26 +1709,35 @@ struct Asyncify : public Pass {
                             canIndirectChangeState,
                             removeList,
                             addList,
+                            propagateAddList,
                             onlyList,
-                            asserts,
                             verbose);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module, relocatable);
+
+    // Compute the set of functions we will instrument. All of the passes we run
+    // below only need to run there.
+    PassUtils::FuncSet instrumentedFuncs;
+    for (auto& func : module->functions) {
+      if (analyzer.needsInstrumentation(func.get())) {
+        instrumentedFuncs.insert(func.get());
+      }
+    }
 
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
     // practical to add code around each call, without affecting
     // anything else.
     {
-      InstrumentedPassRunner runner(module, &analyzer);
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
       runner.add("flatten");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
       // unreachable code here.
       runner.add("dce");
       if (optimize) {
-        // Optimizing before BsyncifyFlow is crucial, especially coalescing,
+        // Optimizing before AsyncifyFlow is crucial, especially coalescing,
         // because the flow changes add many branches, break up if-elses, etc.,
         // all of which extend the live ranges of locals. In other words, it is
         // not possible to coalesce well afterwards.
@@ -1740,7 +1771,7 @@ struct Asyncify : public Pass {
     // restore those locals). We also and optimize after as well to simplify
     // the code as much as possible.
     {
-      InstrumentedPassRunner runner(module, &analyzer);
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
@@ -1870,7 +1901,9 @@ struct ModAsyncify
   void doWalkFunction(Function* func) {
     // Find the asyncify state name.
     auto* unwind = this->getModule()->getExport(ASYNCIFY_STOP_UNWIND);
-    auto* unwindFunc = this->getModule()->getFunction(unwind->value);
+    auto* unwindFunc = this->getModule()->getFunction(
+      ((unwind->kind == ExternalKind::Function)) ? *unwind->getInternalName()
+                                                 : Name());
     FindAll<GlobalSet> sets(unwindFunc->body);
     assert(sets.list.size() == 1);
     asyncifyStateName = sets.list[0]->name;
@@ -1878,7 +1911,7 @@ struct ModAsyncify
     this->walk(func->body);
   }
 
-  // Note that we don't just implement GetGlobal as we may know the value is
+  // Note that we don't just implement GlobalGet as we may know the value is
   // *not* 0, 1, or 2, but not know the actual value. So what we can say depends
   // on the comparison being done on it, and so we implement Binary and
   // Select.
@@ -1927,12 +1960,30 @@ struct ModAsyncify
     if (!get || get->name != asyncifyStateName) {
       return;
     }
-    // This is a comparison of the state to zero, which means we are checking
+    // This is a comparison of the normal state, which means we are checking
     // "if running normally, run this code, but if rewinding, ignore it". If
     // we know we'll never rewind, we can optimize this.
     if (neverRewind) {
       Builder builder(*this->getModule());
       curr->condition = builder.makeConst(int32_t(0));
+    }
+  }
+
+  void visitUnary(Unary* curr) {
+    if (curr->op != EqZInt32) {
+      return;
+    }
+    auto* get = curr->value->dynCast<GlobalGet>();
+    if (!get || get->name != asyncifyStateName) {
+      return;
+    }
+    // This is a comparison of the state to zero, which means we are checking
+    // "if running normally, run this code, but if rewinding, ignore it". If
+    // we know we'll never rewind, we can optimize this.
+    if (neverRewind) {
+      Builder builder(*this->getModule());
+      // The whole expression will be 1 because it is (i32.eqz (i32.const 0))
+      this->replaceCurrent(builder.makeConst(int32_t(1)));
     }
   }
 

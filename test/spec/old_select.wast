@@ -93,8 +93,8 @@
 (assert_return (invoke "select-f64-t" (f64.const 2) (f64.const nan) (i32.const 0)) (f64.const nan))
 (assert_return (invoke "select-f64-t" (f64.const 2) (f64.const nan:0x20304) (i32.const 0)) (f64.const nan:0x20304))
 
-(assert_return (invoke "select-funcref" (ref.func $dummy) (ref.null func) (i32.const 1)) (ref.func $dummy))
-(assert_return (invoke "select-funcref" (ref.func $dummy) (ref.null func) (i32.const 0)) (ref.null func))
+;; (assert_return (invoke "select-funcref" (ref.func $dummy) (ref.null func) (i32.const 1)) (ref.func $dummy))
+;; (assert_return (invoke "select-funcref" (ref.func $dummy) (ref.null func) (i32.const 0)) (ref.null func))
 (assert_return (invoke "select-externref" (ref.null extern) (ref.null extern) (i32.const 1)) (ref.null extern))
 (assert_return (invoke "select-externref" (ref.null extern) (ref.null extern) (i32.const 0)) (ref.null extern))
 

@@ -7,8 +7,8 @@
   (block (result i32)
    (if (result i32)
     (local.get $0)
-    (local.get $0)
-    (i32.const 0)
+    (then (local.get $0))
+    (else (i32.const 0))
    )
   )
  )
@@ -22,8 +22,12 @@
  (func $test (param $0 i32) (result i32)
   (if (result i32)
    (local.get $0)
-   (local.get $0)
-   (i32.const 0)
+   (then
+    (local.get $0)
+   )
+   (else
+    (i32.const 0)
+   )
   )
  )
 )
@@ -34,7 +38,7 @@ shrinkLevel=1
 (module
  (type $i (func (param i32) (result i32)))
  (export "test" (func $test))
- (func $test (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $test (param $0 i32) (result i32)
   (local.get $0)
  )
 )
@@ -56,7 +60,7 @@ shrinkLevel=1
 (module
  (type $i (func (param i32) (result i32)))
  (export "test" (func $test))
- (func $test (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $test (param $0 i32) (result i32)
   (local.get $0)
  )
 )

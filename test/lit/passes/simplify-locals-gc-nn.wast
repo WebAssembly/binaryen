@@ -2,10 +2,10 @@
 ;; RUN: wasm-opt %s --simplify-locals -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $test-nn (type $none_=>_none)
+  ;; CHECK:      (func $test-nn (type $0)
   ;; CHECK-NEXT:  (local $nn anyref)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nn
   ;; CHECK-NEXT:     (ref.as_non_null
@@ -49,10 +49,70 @@
     )
   )
 
-  ;; CHECK:      (func $test-nullable (type $none_=>_none)
+  ;; CHECK:      (func $test-nn-tuple (type $0)
+  ;; CHECK-NEXT:  (local $nn (tuple i32 anyref i64))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (local.set $nn
+  ;; CHECK-NEXT:     (tuple.make 3
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i64.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (tuple.drop 3
+  ;; CHECK-NEXT:     (tuple.make 3
+  ;; CHECK-NEXT:      (tuple.extract 3 0
+  ;; CHECK-NEXT:       (local.get $nn)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (tuple.extract 3 1
+  ;; CHECK-NEXT:        (local.get $nn)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (tuple.extract 3 2
+  ;; CHECK-NEXT:       (local.get $nn)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-nn-tuple
+    ;; Same as above, but now the local is a tuple containing a non-nullable element
+    (local $nn (tuple i32 (ref any) i64))
+    (local.set $nn
+      (tuple.make 3
+        (i32.const 0)
+        (ref.as_non_null
+          (ref.null any)
+        )
+        (i64.const 0)
+      )
+    )
+    (try
+      (do
+        (tuple.drop 3
+          (local.get $nn)
+        )
+      )
+      (catch_all
+        (tuple.drop 3
+          (local.get $nn)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-nullable (type $0)
   ;; CHECK-NEXT:  (local $nullable anyref)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nullable
   ;; CHECK-NEXT:     (ref.as_non_null
@@ -85,6 +145,34 @@
       (catch_all
         (drop
           (local.get $nullable)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-return-tuple-nn (type $0)
+  ;; CHECK-NEXT:  (local $temp (tuple (ref func) nullref))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-return-tuple-nn
+    (local $temp (tuple (ref func) (ref null none)))
+    ;; We should not emit a return value for this if, as the tuple has a non-
+    ;; nullable element, so it is nondefaultable.
+    ;;
+    ;; Instead, we can remove the local.set entirely, as it has no gets.
+    (if
+      (i32.const 0)
+      (then
+        (local.set $temp
+          (tuple.make 2
+            (ref.func $if-return-tuple-nn)
+            (ref.null none)
+          )
         )
       )
     )

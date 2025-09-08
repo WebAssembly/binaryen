@@ -1,0 +1,18 @@
+(module
+  ;; Test that the import remains
+  (import "import" "mem" (memory $imported 10000))
+
+  (memory $other 100)
+
+  (memory $bar 1000)
+
+  (data $a (memory $other) (i32.const 0) "a2")
+
+  (data $b (memory $bar) (i32.const 0) "b2")
+
+  (export "keepalive" (memory $other))
+
+  (export "keepalive1" (memory $bar))
+
+  (export "keepalive2" (memory $imported))
+)

@@ -1,0 +1,9 @@
+{
+  "version":3,
+  "file": "foo.wasm",
+  "sources":[],
+  "names":[],
+  "mappings": "",
+  "sourceRoot": "/foo/bar",
+  "sourcesContent": ["#include <stdio.h> int main()\n{ printf(\"Gr\u00fc\u00df Gott, Welt!\"); return 0;}"]
+}

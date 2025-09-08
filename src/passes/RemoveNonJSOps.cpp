@@ -42,10 +42,10 @@
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
+#include "parser/wat-parser.h"
 #include "passes/intrinsics-module.h"
 #include "support/insert_ordered.h"
 #include "wasm-builder.h"
-#include "wasm-s-parser.h"
 
 namespace wasm {
 
@@ -79,11 +79,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     //
     // TODO: only do this once per invocation of wasm2asm
     Module intrinsicsModule;
-    std::string input(IntrinsicsModuleWast);
-    SExpressionParser parser(const_cast<char*>(input.c_str()));
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(
-      intrinsicsModule, *root[0], IRProfile::Normal);
+    [[maybe_unused]] auto parsed =
+      WATParser::parseModule(intrinsicsModule, IntrinsicsModuleWast);
+    assert(!parsed.getErr());
 
     std::set<Name> neededFunctions;
 

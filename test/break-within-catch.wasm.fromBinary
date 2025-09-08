@@ -1,10 +1,10 @@
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
- (tag $tag$0 (param i32))
+ (type $0 (func (param i32)))
+ (type $1 (func))
+ (tag $tag$0 (type $0) (param i32))
  (func $0
-  (block $label$2
-   (try $label$3
+  (block $label
+   (try
     (do
      (nop)
     )
@@ -12,7 +12,7 @@
      (drop
       (pop i32)
      )
-     (br $label$2)
+     (br $label)
     )
    )
   )

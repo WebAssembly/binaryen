@@ -7,14 +7,14 @@
 ;; things.
 
 (module
-  ;; NO_OPT:      (type $none_=>_i32 (func (result i32)))
+  ;; NO_OPT:      (type $0 (func (result i32)))
 
-  ;; NO_OPT:      (func $foo (type $none_=>_i32) (result i32)
+  ;; NO_OPT:      (func $foo (type $0) (result i32)
   ;; NO_OPT-NEXT:  (i32.const 1)
   ;; NO_OPT-NEXT: )
-  ;; DO_OPT:      (type $none_=>_i32 (func (result i32)))
+  ;; DO_OPT:      (type $0 (func (result i32)))
 
-  ;; DO_OPT:      (func $foo (type $none_=>_i32) (result i32)
+  ;; DO_OPT:      (func $foo (type $0) (result i32)
   ;; DO_OPT-NEXT:  (i32.const 1)
   ;; DO_OPT-NEXT: )
   (func $foo (result i32)
@@ -22,7 +22,7 @@
     (i32.const 1)
   )
 
-  ;; NO_OPT:      (func $bar (type $none_=>_i32) (result i32)
+  ;; NO_OPT:      (func $bar (type $0) (result i32)
   ;; NO_OPT-NEXT:  (drop
   ;; NO_OPT-NEXT:   (block $out (result i32)
   ;; NO_OPT-NEXT:    (block (result i32)
@@ -42,7 +42,7 @@
   ;; NO_OPT-NEXT:  )
   ;; NO_OPT-NEXT:  (i32.const 1)
   ;; NO_OPT-NEXT: )
-  ;; DO_OPT:      (func $bar (type $none_=>_i32) (result i32)
+  ;; DO_OPT:      (func $bar (type $0) (result i32)
   ;; DO_OPT-NEXT:  (drop
   ;; DO_OPT-NEXT:   (call $foo)
   ;; DO_OPT-NEXT:  )

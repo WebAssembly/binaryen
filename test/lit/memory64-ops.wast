@@ -6,7 +6,7 @@
   ;; CHECK:      (memory $mem i64 1)
   (memory $mem i64 1)
 
-  ;; CHECK:      (func $get_heap_size (type $none_=>_i64) (result i64)
+  ;; CHECK:      (func $get_heap_size (type $0) (result i64)
   ;; CHECK-NEXT:  (i64.shl
   ;; CHECK-NEXT:   (memory.size)
   ;; CHECK-NEXT:   (i64.const 16)
@@ -19,7 +19,7 @@
     )
   )
 
-  ;; CHECK:      (func $grow-heap (type $none_=>_i64) (result i64)
+  ;; CHECK:      (func $grow-heap (type $0) (result i64)
   ;; CHECK-NEXT:  (memory.grow
   ;; CHECK-NEXT:   (i64.const 32)
   ;; CHECK-NEXT:  )

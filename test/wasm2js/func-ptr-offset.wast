@@ -8,7 +8,7 @@
   (func $t3 (type $T) (i32.const 3))
 
   (func (export "call") (param i32) (result i32)
-    (call_indirect (type $T) (local.get $0))
+    (call_indirect (type $T) (local.get 0))
   )
 )
 

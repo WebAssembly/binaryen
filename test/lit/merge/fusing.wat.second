@@ -1,0 +1,41 @@
+(module
+  ;; Use the same internal name as in first, so $other.foo will need to be
+  ;; deduplicated.
+  (import "first" "foo" (func $other.foo))
+
+  ;; Use a different prefix than in first ($main instead of $other).
+  (import "first" "bar" (func $main.bar))
+
+  (import "first" "mem" (memory $other.mem 1))
+
+  (import "first" "exn" (tag $exn))
+
+  (memory $second.mem 2)
+
+  (export "mem" (memory $second.mem))
+
+  (func $second.foo (export "foo")
+    (call $other.foo)
+    (drop
+      (i32.const 3)
+    )
+  )
+
+  ;; Use the same internal name as in first, so this will need to be
+  ;; deduplicated.
+  (func $bar (export "bar")
+    (call $main.bar)
+    (drop
+      (i32.const 4)
+    )
+  )
+
+  (func $keepalive2 (export "keepalive2") (result i32)
+    ;; Load from the memory imported from the second module.
+    (i32.load $other.mem
+      (i32.const 10)
+    )
+  )
+
+  (func $keepalive3 (export "keepalive3") (throw $exn))
+)

@@ -15,23 +15,33 @@
   (func $ifs (param $x i32) (result i32)
     (if
       (local.get $x)
-      (if
-        (local.get $x)
-        (return (i32.const 2))
-        (return (i32.const 3))
+      (then
+        (if
+          (local.get $x)
+          (then
+            (return (i32.const 2))
+          )
+          (else
+            (return (i32.const 3))
+          )
+        )
       )
     )
     (if
       (local.get $x)
-      (return (i32.const 4))
+      (then
+        (return (i32.const 4))
+      )
     )
     (return (i32.const 5))
   )
   (func $loops (param $x i32)
     (if (local.get $x)
-      (loop $top
-        (call $trivial)
-        (br $top)
+      (then
+        (loop $top
+          (call $trivial)
+          (br $top)
+        )
       )
     )
     (loop $top2
@@ -40,7 +50,7 @@
     )
     (loop $top3
       (call $trivial)
-      (if (local.get $x) (br $top3))
+      (if (local.get $x) (then (br $top3)))
     )
   )
   (func $br-out (param $x i32)
@@ -51,16 +61,22 @@
   )
   (func $unreachable (param $x i32)
     (if (local.get $x)
-      (if (local.get $x)
-        (block
-          (call $unreachable (i32.const 1))
-          (unreachable)
-          (call $unreachable (i32.const 2))
-        )
-        (block
-          (call $unreachable (i32.const 3))
-          (return)
-          (call $unreachable (i32.const 4))
+      (then
+        (if (local.get $x)
+          (then
+            (block
+              (call $unreachable (i32.const 1))
+              (unreachable)
+              (call $unreachable (i32.const 2))
+            )
+          )
+          (else
+            (block
+              (call $unreachable (i32.const 3))
+              (return)
+              (call $unreachable (i32.const 4))
+            )
+          )
         )
       )
     )
@@ -97,16 +113,24 @@
     )
     (call $before-and-after (i32.const 11))
     (if (local.get $x)
-      (call $before-and-after (i32.const 12))
+      (then
+        (call $before-and-after (i32.const 12))
+      )
     )
     (call $before-and-after (i32.const 13))
     (if (local.get $x)
-      (call $before-and-after (i32.const 14))
-      (call $before-and-after (i32.const 15))
+      (then
+        (call $before-and-after (i32.const 14))
+      )
+      (else
+        (call $before-and-after (i32.const 15))
+      )
     )
     (if (local.get $x)
-      (block
-        (call $before-and-after (i32.const 16))
+      (then
+        (block
+          (call $before-and-after (i32.const 16))
+        )
       )
     )
     (call $before-and-after (i32.const 17))
@@ -148,8 +172,12 @@
   )
   (func $no-return
     (if (i32.const 1)
-      (drop (i32.const 2))
-      (drop (i32.const 3))
+      (then
+        (drop (i32.const 2))
+      )
+      (else
+        (drop (i32.const 3))
+      )
     )
   )
   (func $if-br-wat (param $x i32)
@@ -159,12 +187,18 @@
    (block $label$2
     (if
      (local.get $x)
-     (call $if-br-wat
-      (i32.const 1)
+     (then
+      (call $if-br-wat
+       (i32.const 1)
+      )
      )
-     (if
-      (local.get $x)
-      (br $label$2) ;; waka
+     (else
+      (if
+       (local.get $x)
+       (then
+        (br $label$2) ;; waka
+       )
+      )
      )
     )
     (call $if-br-wat

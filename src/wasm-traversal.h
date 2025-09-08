@@ -27,6 +27,7 @@
 #ifndef wasm_wasm_traversal_h
 #define wasm_wasm_traversal_h
 
+#include "ir/debuginfo.h"
 #include "support/small_vector.h"
 #include "support/threads.h"
 #include "wasm.h"
@@ -123,16 +124,8 @@ struct Walker : public VisitorType {
   Expression* replaceCurrent(Expression* expression) {
     // Copy debug info, if present.
     if (currFunction) {
-      auto& debugLocations = currFunction->debugLocations;
-      if (!debugLocations.empty()) {
-        auto* curr = getCurrent();
-        auto iter = debugLocations.find(curr);
-        if (iter != debugLocations.end()) {
-          auto location = iter->second;
-          debugLocations.erase(iter);
-          debugLocations[expression] = location;
-        }
-      }
+      debuginfo::copyOriginalToReplacement(
+        getCurrent(), expression, currFunction);
     }
     return *replacep = expression;
   }
@@ -236,17 +229,17 @@ struct Walker : public VisitorType {
         self->walkTag(curr.get());
       }
     }
-    for (auto& curr : module->tables) {
-      self->walkTable(curr.get());
-    }
     for (auto& curr : module->elementSegments) {
       self->walkElementSegment(curr.get());
     }
-    for (auto& curr : module->memories) {
-      self->walkMemory(curr.get());
+    for (auto& curr : module->tables) {
+      self->walkTable(curr.get());
     }
     for (auto& curr : module->dataSegments) {
       self->walkDataSegment(curr.get());
+    }
+    for (auto& curr : module->memories) {
+      self->walkMemory(curr.get());
     }
   }
 
@@ -363,13 +356,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
   self->maybePushTask(SubType::scan, &cast->field);
 
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -386,9 +376,8 @@ using ExpressionStack = SmallVector<Expression*, 10>;
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
-  ControlFlowWalker() = default;
-
-  ExpressionStack controlFlowStack; // contains blocks, loops, and ifs
+  // contains blocks, loops, ifs, trys, and try_tables
+  ExpressionStack controlFlowStack;
 
   // Uses the control flow stack to find the target of a break to a name
   Expression* findBreakTarget(Name name) {
@@ -405,8 +394,9 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
           return curr;
         }
       } else {
-        // an if or try, ignorable
-        assert(curr->template is<If>() || curr->template is<Try>());
+        // an if, try, or try_table, ignorable
+        assert(curr->template is<If>() || curr->template is<Try>() ||
+               curr->template is<TryTable>());
       }
       if (i == 0) {
         return nullptr;
@@ -432,7 +422,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
       case Expression::Id::LoopId:
-      case Expression::Id::TryId: {
+      case Expression::Id::TryId:
+      case Expression::Id::TryTableId: {
         self->pushTask(SubType::doPostVisitControlFlow, currp);
         break;
       }
@@ -446,7 +437,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
       case Expression::Id::LoopId:
-      case Expression::Id::TryId: {
+      case Expression::Id::TryId:
+      case Expression::Id::TryTableId: {
         self->pushTask(SubType::doPreVisitControlFlow, currp);
         break;
       }
@@ -515,6 +507,53 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     // also update the stack
     expressionStack.back() = expression;
     return expression;
+  }
+};
+
+// Traversal keeping track of try depth
+
+// This is used to keep track of whether we are in the scope of an
+// exception handler. This matters since return_call is not equivalent
+// to return + call within an exception handler. If another kind of
+// handler scope is added, this code will need to be updated.
+template<typename SubType, typename VisitorType = Visitor<SubType>>
+struct TryDepthWalker : public PostWalker<SubType, VisitorType> {
+  TryDepthWalker() = default;
+
+  size_t tryDepth = 0;
+
+  static void doEnterTry(SubType* self, Expression** currp) {
+    self->tryDepth++;
+  }
+
+  static void doLeaveTry(SubType* self, Expression** currp) {
+    self->tryDepth--;
+  }
+
+  static void scan(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+
+    if (curr->is<Try>()) {
+      self->pushTask(SubType::doVisitTry, currp);
+      auto& catchBodies = curr->cast<Try>()->catchBodies;
+      for (int i = int(catchBodies.size()) - 1; i >= 0; i--) {
+        self->pushTask(SubType::scan, &catchBodies[i]);
+      }
+      self->pushTask(SubType::doLeaveTry, currp);
+      self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+      self->pushTask(SubType::doEnterTry, currp);
+      return;
+    }
+
+    if (curr->is<TryTable>()) {
+      self->pushTask(SubType::doLeaveTry, currp);
+    }
+
+    PostWalker<SubType, VisitorType>::scan(self, currp);
+
+    if (curr->is<TryTable>()) {
+      self->pushTask(SubType::doEnterTry, currp);
+    }
   }
 };
 

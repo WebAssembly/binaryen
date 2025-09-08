@@ -83,18 +83,17 @@ struct JSPI : public Pass {
   void run(Module* module) override {
     Builder builder(*module);
 
-    auto& options = getPassOptions();
     // Find which imports can suspend.
-    auto stateChangingImports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("jspi-imports", "")));
+    auto stateChangingImports = String::trim(
+      read_possible_response_file(getArgumentOrDefault("jspi-imports", "")));
     String::Split listedImports(stateChangingImports, ",");
 
     // Find which exports should create a promise.
-    auto stateChangingExports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("jspi-exports", "")));
+    auto stateChangingExports = String::trim(
+      read_possible_response_file(getArgumentOrDefault("jspi-exports", "")));
     String::Split listedExports(stateChangingExports, ",");
 
-    bool wasmSplit = options.hasArgument("jspi-split-module");
+    bool wasmSplit = hasArgument("jspi-split-module");
     if (wasmSplit) {
       // Make an import for the load secondary module function so a JSPI wrapper
       // version will be created.
@@ -127,7 +126,8 @@ struct JSPI : public Pass {
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function &&
           canChangeState(ex->name.toString(), listedExports)) {
-        auto* func = module->getFunction(ex->value);
+        auto* name = ex->getInternalName();
+        auto* func = module->getFunction(*name);
         Name wrapperName;
         auto iter = wrappedExports.find(func->name);
         if (iter == wrappedExports.end()) {
@@ -136,7 +136,7 @@ struct JSPI : public Pass {
         } else {
           wrapperName = iter->second;
         }
-        ex->value = wrapperName;
+        *name = wrapperName;
       }
     }
 

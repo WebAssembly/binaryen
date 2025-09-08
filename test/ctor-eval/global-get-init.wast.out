@@ -1,7 +1,7 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (export "test1" (func $test1))
- (func $test1 (type $none_=>_none)
+ (func $test1 (type $0)
   (nop)
  )
 )

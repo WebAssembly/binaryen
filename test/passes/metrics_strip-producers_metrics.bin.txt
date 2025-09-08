@@ -1,3 +1,4 @@
+Metrics
 total
  [exports]      : 1       
  [funcs]        : 1       
@@ -9,6 +10,7 @@ total
  [total]        : 1       
  [vars]         : 0       
  Nop            : 1       
+Metrics
 total
  [exports]      : 1       
  [funcs]        : 1       
@@ -21,7 +23,7 @@ total
  [vars]         : 0       
  Nop            : 1       
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (export "a" (func $0))
  (func $0
   (nop)

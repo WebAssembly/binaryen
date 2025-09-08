@@ -1,0 +1,22 @@
+(module
+  (start $start)
+
+  (func $start (export "start")
+    ;; Test that locals are handled properly. This function has an i32 local,
+    ;; and the other start has an f64 with the same name.
+    (local $x i32)
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (i32.const 1)
+    )
+  )
+
+  (func $user (export "user")
+    ;; These calls must go to the function $start here (with body "1") and not
+    ;; to the modified start that has the third module's content merged in.
+    (call $start)
+    (call $start)
+  )
+)

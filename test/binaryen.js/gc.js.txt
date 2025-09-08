@@ -1,0 +1,116 @@
+(module
+ (type $0 (array (mut i8)))
+ (type $1 (struct (field (mut i16)) (field (mut f64))))
+ (type $2 (array (mut funcref)))
+ (type $3 (func (param i32 i32) (result i32)))
+ (type $4 (func))
+ (global $struct-global (mut (ref null $1)) (struct.new_default $1))
+ (global $array-global (mut (ref null $0)) (array.new_default $0
+  (i32.const 4)
+ ))
+ (global $funcArray-global (mut (ref null $2)) (array.new_default $2
+  (i32.const 4)
+ ))
+ (memory $0 1)
+ (data $0 (i32.const 0) "\04\03\02\01")
+ (table $0 1 funcref)
+ (elem $0 (i32.const 0) $add)
+ (func $add (type $3) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $main (type $4)
+  (drop
+   (struct.new $1
+    (i32.const 1)
+    (f64.const 2.3)
+   )
+  )
+  (drop
+   (struct.new_default $1)
+  )
+  (drop
+   (struct.get_s $1 0
+    (global.get $struct-global)
+   )
+  )
+  (struct.set $1 1
+   (global.get $struct-global)
+   (f64.const 1.23)
+  )
+  (drop
+   (array.new $0
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (array.new_default $0
+    (i32.const 1)
+   )
+  )
+  (drop
+   (array.new_fixed $0 3
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (array.new_data $0 $0
+    (i32.const 0)
+    (i32.const 4)
+   )
+  )
+  (drop
+   (array.new_elem $2 $0
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (array.get_s $0
+    (global.get $array-global)
+    (i32.const 0)
+   )
+  )
+  (array.set $0
+   (global.get $array-global)
+   (i32.const 1)
+   (i32.const 2)
+  )
+  (drop
+   (array.len
+    (global.get $array-global)
+   )
+  )
+  (array.fill $0
+   (global.get $array-global)
+   (i32.const 0)
+   (i32.const 1)
+   (i32.const 2)
+  )
+  (array.copy $0 $0
+   (global.get $array-global)
+   (i32.const 0)
+   (global.get $array-global)
+   (i32.const 1)
+   (i32.const 2)
+  )
+  (array.init_data $0 $0
+   (global.get $array-global)
+   (i32.const 0)
+   (i32.const 1)
+   (i32.const 2)
+  )
+  (array.init_elem $2 $0
+   (global.get $funcArray-global)
+   (i32.const 0)
+   (i32.const 1)
+   (i32.const 2)
+  )
+ )
+)
+

@@ -31,6 +31,7 @@ struct ToolOptions : public Options {
   PassOptions passOptions;
 
   bool quiet = false;
+  bool preserveTypeOrder = false;
   IRProfile profile = IRProfile::Normal;
 
   constexpr static const char* ToolOptionsCategory = "Tool options";
@@ -81,7 +82,16 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::MutableGlobals, "mutable globals")
       .addFeature(FeatureSet::TruncSat, "nontrapping float-to-int operations")
       .addFeature(FeatureSet::SIMD, "SIMD operations and types")
-      .addFeature(FeatureSet::BulkMemory, "bulk memory operations")
+      .addFeature(FeatureSet::BulkMemory,
+                  "bulk memory operations",
+                  FeatureSet(FeatureSet::BulkMemoryOpt))
+      .addFeature(FeatureSet::BulkMemoryOpt,
+                  "memory.copy and memory.fill",
+                  FeatureSet::None,
+                  FeatureSet(FeatureSet::BulkMemory))
+      .addFeature(FeatureSet::CallIndirectOverlong,
+                  "LEB encoding of call-indirect (Ignored for compatibility as "
+                  "it has no effect on Binaryen)")
       .addFeature(FeatureSet::ExceptionHandling,
                   "exception handling operations")
       .addFeature(FeatureSet::TailCall, "tail call operations")
@@ -89,11 +99,15 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Multivalue, "multivalue functions")
       .addFeature(FeatureSet::GC, "garbage collection")
       .addFeature(FeatureSet::Memory64, "memory64")
-      .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
       .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
       .addFeature(FeatureSet::ExtendedConst, "extended const expressions")
       .addFeature(FeatureSet::Strings, "strings")
-      .addFeature(FeatureSet::MultiMemories, "multi-memories")
+      .addFeature(FeatureSet::MultiMemory, "multimemory")
+      .addFeature(FeatureSet::StackSwitching, "stack switching")
+      .addFeature(FeatureSet::SharedEverything, "shared-everything threads")
+      .addFeature(FeatureSet::FP16, "float 16 operations")
+      .addFeature(FeatureSet::CustomDescriptors,
+                  "custom descriptors (RTTs) and exact references")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",
@@ -125,7 +139,10 @@ struct ToolOptions : public Options {
       .add("--pass-arg",
            "-pa",
            "An argument passed along to optimization passes being run. Must be "
-           "in the form KEY@VALUE",
+           "in the form KEY@VALUE.  If KEY is the name of a pass then it "
+           "applies to the closest instance of that pass before us. If KEY is "
+           "not the name of a pass then it is a global option that applies to "
+           "all pass instances that read it.",
            ToolOptionsCategory,
            Options::Arguments::N,
            [this](Options*, const std::string& argument) {
@@ -138,7 +155,8 @@ struct ToolOptions : public Options {
                key = argument.substr(0, colon);
                value = argument.substr(colon + 1);
              }
-             passOptions.arguments[key] = value;
+
+             addPassArg(key, value);
            })
       .add(
         "--closed-world",
@@ -151,20 +169,60 @@ struct ToolOptions : public Options {
         Options::Arguments::Zero,
         [this](Options*, const std::string&) {
           passOptions.closedWorld = true;
-        });
+        })
+      .add(
+        "--preserve-type-order",
+        "",
+        "Preserve the order of types from the input (useful for debugging and "
+        "testing)",
+        ToolOptionsCategory,
+        Options::Arguments::Zero,
+        [&](Options* o, const std::string& arguments) {
+          preserveTypeOrder = true;
+        })
+      .add("--generate-stack-ir",
+           "",
+           "generate StackIR during writing",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             passOptions.generateStackIR = true;
+           })
+      .add("--optimize-stack-ir",
+           "",
+           "optimize StackIR during writing",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             // Also generate StackIR, to have something to optimize.
+             passOptions.generateStackIR = true;
+             passOptions.optimizeStackIR = true;
+           })
+      .add("--print-stack-ir",
+           "",
+           "print StackIR during writing",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             // Also generate StackIR, to have something to print.
+             passOptions.generateStackIR = true;
+             passOptions.printStackIR = &std::cout;
+           });
   }
 
   ToolOptions& addFeature(FeatureSet::Feature feature,
-                          const std::string& description) {
+                          const std::string& description,
+                          FeatureSet impliedEnable = FeatureSet::None,
+                          FeatureSet impliedDisable = FeatureSet::None) {
     (*this)
       .add(std::string("--enable-") + FeatureSet::toString(feature),
            "",
            std::string("Enable ") + description,
            ToolOptionsCategory,
            Arguments::Zero,
-           [this, feature](Options*, const std::string&) {
-             enabledFeatures.set(feature, true);
-             disabledFeatures.set(feature, false);
+           [this, feature, impliedEnable](Options*, const std::string&) {
+             enabledFeatures.set(feature | impliedEnable, true);
+             disabledFeatures.set(feature | impliedEnable, false);
            })
 
       .add(std::string("--disable-") + FeatureSet::toString(feature),
@@ -172,17 +230,29 @@ struct ToolOptions : public Options {
            std::string("Disable ") + description,
            ToolOptionsCategory,
            Arguments::Zero,
-           [this, feature](Options*, const std::string&) {
-             enabledFeatures.set(feature, false);
-             disabledFeatures.set(feature, true);
+           [this, feature, impliedDisable](Options*, const std::string&) {
+             enabledFeatures.set(feature | impliedDisable, false);
+             disabledFeatures.set(feature | impliedDisable, true);
            });
     return *this;
   }
 
-  void applyFeatures(Module& module) const {
+  void applyOptionsBeforeParse(Module& module) const {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
   }
+
+  void applyOptionsAfterParse(Module& module) const {
+    if (!preserveTypeOrder) {
+      module.typeIndices.clear();
+    }
+  }
+
+  virtual void addPassArg(const std::string& key, const std::string& value) {
+    passOptions.arguments[key] = value;
+  }
+
+  virtual ~ToolOptions() = default;
 
 private:
   FeatureSet enabledFeatures = FeatureSet::Default;

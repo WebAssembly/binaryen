@@ -1,6 +1,6 @@
 (module
  (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
+ (type $1 (func))
  (table $0 46 funcref)
  (elem $0 (i32.const 9) $1)
  (elem $1 (i32.const 9) $0)
@@ -11,7 +11,7 @@
  (func $1 (type $none_=>_i32) (result i32)
   (i32.const 65)
  )
- (func $2 (type $none_=>_none)
+ (func $2 (type $1)
   (drop
    (call_indirect $0 (type $none_=>_i32)
     (i32.const 9)

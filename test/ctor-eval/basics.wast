@@ -1,12 +1,13 @@
 (module
   (type $v (func))
-  (memory 256 256)
+  (memory $m 256 256)
   (data (i32.const 10) "waka waka waka waka waka")
   (table 1 1 funcref)
   (elem (i32.const 0) $call-indirect)
-  (export "test1" $test1)
-  (export "test2" $test2)
-  (export "test3" $test3)
+  (export "test1" (func $test1))
+  (export "test2" (func $test2))
+  (export "test3" (func $test3))
+  (export "memory" (memory $m)) ;; export memory so we can see the updated data
   (func $test1
     (drop (i32.const 0)) ;; no work at all, really
     (call $safe-to-call) ;; safe to call

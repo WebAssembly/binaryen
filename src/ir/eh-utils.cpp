@@ -84,7 +84,7 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         } else {
           isPopNested = true;
         }
-      } else if (firstChild->is<Try>()) {
+      } else if (firstChild->is<Try>() || firstChild->is<TryTable>()) {
         isPopNested = true;
       } else {
         WASM_UNREACHABLE("Unexpected control flow expression");
@@ -111,7 +111,7 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
   for (Index i = 0; i < try_->catchTags.size(); i++) {
     Name tagName = try_->catchTags[i];
     auto* tag = wasm.getTag(tagName);
-    if (tag->sig.params == Type::none) {
+    if (tag->params() == Type::none) {
       continue;
     }
 
@@ -148,8 +148,9 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
   }
 }
 
-void handleBlockNestedPops(Function* func, Module& wasm) {
-  if (!wasm.features.hasExceptionHandling()) {
+void handleBlockNestedPops(Function* func, Module& wasm, FeaturePolicy policy) {
+  if (policy == FeaturePolicy::SkipIfNoEH &&
+      !wasm.features.hasExceptionHandling()) {
     return;
   }
   FindAll<Try> trys(func->body);

@@ -58,30 +58,29 @@
 (module
  (type $bytes (array (mut i8)))
  (type $void_func (func))
- (type $struct (struct (field (mut i32))))
- (type $i32_=>_none (func (param i32)))
- (type $extendedstruct (struct_subtype (field (mut i32)) (field f64) $struct))
+ (type $struct (sub (struct (field (mut i32)))))
+ (type $3 (func (param i32)))
  (type $int_func (func (result i32)))
- (import "fuzzing-support" "log-i32" (func $log (param i32)))
- (export "structs" (func $0))
- (export "arrays" (func $1))
- (export "br_on_cast" (func $2))
- (export "br_on_failed_cast-1" (func $3))
- (export "br_on_failed_cast-2" (func $4))
- (export "cast-null-anyref-to-gc" (func $5))
- (export "br-on_non_null" (func $7))
- (export "br-on_non_null-2" (func $8))
- (export "ref-as-func-of-func" (func $7))
- (export "cast-on-func" (func $11))
- (export "array-alloc-failure" (func $7))
- (export "init-array-packed" (func $13))
- (export "array-copy" (func $15))
- (export "array.new_fixed" (func $16))
- (export "array.new_fixed-packed" (func $17))
- (export "static-casts" (func $18))
- (export "static-br_on_cast" (func $2))
- (export "static-br_on_cast_fail" (func $20))
- (func $0 (type $void_func) (; has Stack IR ;)
+ (import "fuzzing-support" "log-i32" (func $log (type $3) (param i32)))
+ (export "structs" (func $structs))
+ (export "arrays" (func $arrays))
+ (export "br_on_cast" (func $br_on_cast))
+ (export "br_on_failed_cast-1" (func $br_on_failed_cast-1))
+ (export "br_on_failed_cast-2" (func $br_on_failed_cast-2))
+ (export "cast-null-anyref-to-gc" (func $cast-null-anyref-to-gc))
+ (export "br-on_non_null" (func $br-on_non_null))
+ (export "br-on_non_null-2" (func $br-on_non_null-2))
+ (export "ref-as-func-of-func" (func $br-on_non_null))
+ (export "cast-on-func" (func $cast-on-func))
+ (export "array-alloc-failure" (func $br-on_non_null))
+ (export "init-array-packed" (func $init-array-packed))
+ (export "array-copy" (func $array-copy))
+ (export "array.new_fixed" (func $array.new_fixed))
+ (export "array.new_fixed-packed" (func $array.new_fixed-packed))
+ (export "static-casts" (func $static-casts))
+ (export "static-br_on_cast" (func $br_on_cast))
+ (export "static-br_on_cast_fail" (func $static-br_on_cast_fail))
+ (func $structs (type $void_func)
   (local $0 i32)
   (call $log
    (i32.const 0)
@@ -98,17 +97,16 @@
    (i32.const 100)
   )
  )
- (func $1 (type $void_func) (; has Stack IR ;)
-  (local $0 (ref $bytes))
-  (call $log
-   (array.len
-    (local.tee $0
-     (array.new $bytes
-      (i32.const 42)
-      (i32.const 50)
-     )
-    )
+ (func $arrays (type $void_func)
+  (local $0 (ref (exact $bytes)))
+  (local.set $0
+   (array.new $bytes
+    (i32.const 42)
+    (i32.const 50)
    )
+  )
+  (call $log
+   (i32.const 50)
   )
   (call $log
    (array.get_u $bytes
@@ -140,34 +138,24 @@
    )
   )
  )
- (func $2 (type $void_func) (; has Stack IR ;)
+ (func $br_on_cast (type $void_func)
   (call $log
    (i32.const 3)
   )
  )
- (func $3 (type $void_func) (; has Stack IR ;)
-  (local $0 (ref $struct))
+ (func $br_on_failed_cast-1 (type $void_func)
+  (local $0 (ref (exact $struct)))
   (local.set $0
    (struct.new_default $struct)
   )
-  (drop
-   (block $any (result (ref null $struct))
-    (call $log
-     (i32.const 1)
-    )
-    (drop
-     (br_on_cast_fail $any $extendedstruct
-      (local.get $0)
-     )
-    )
-    (call $log
-     (i32.const 999)
-    )
-    (ref.null none)
+  (block $any
+   (call $log
+    (i32.const 1)
    )
+   (br $any)
   )
  )
- (func $4 (type $void_func) (; has Stack IR ;)
+ (func $br_on_failed_cast-2 (type $void_func)
   (call $log
    (i32.const 1)
   )
@@ -175,25 +163,21 @@
    (i32.const 999)
   )
  )
- (func $5 (type $void_func) (; has Stack IR ;)
+ (func $cast-null-anyref-to-gc (type $void_func)
   (call $log
    (i32.const 0)
   )
  )
- (func $7 (type $void_func) (; has Stack IR ;)
+ (func $br-on_non_null (type $void_func)
   (nop)
  )
- (func $8 (type $void_func) (; has Stack IR ;)
-  (drop
-   (block
-    (call $log
-     (i32.const 1)
-    )
-    (unreachable)
-   )
+ (func $br-on_non_null-2 (type $void_func)
+  (call $log
+   (i32.const 1)
   )
+  (unreachable)
  )
- (func $11 (type $void_func) (; has Stack IR ;)
+ (func $cast-on-func (type $void_func)
   (call $log
    (i32.const 0)
   )
@@ -205,7 +189,7 @@
   )
   (unreachable)
  )
- (func $13 (type $int_func) (; has Stack IR ;) (result i32)
+ (func $init-array-packed (type $int_func) (result i32)
   (array.get_u $bytes
    (array.new $bytes
     (i32.const -43)
@@ -214,9 +198,9 @@
    (i32.const 10)
   )
  )
- (func $15 (type $void_func) (; has Stack IR ;)
-  (local $0 (ref $bytes))
-  (local $1 (ref $bytes))
+ (func $array-copy (type $void_func)
+  (local $0 (ref (exact $bytes)))
+  (local $1 (ref (exact $bytes)))
   (array.set $bytes
    (local.tee $1
     (array.new_default $bytes
@@ -269,42 +253,31 @@
    )
   )
  )
- (func $16 (type $void_func) (; has Stack IR ;)
-  (local $0 (ref $bytes))
-  (call $log
-   (array.len
-    (local.tee $0
-     (array.new_fixed $bytes
-      (i32.const 42)
-      (i32.const 50)
-     )
-    )
-   )
+ (func $array.new_fixed (type $void_func)
+  (local $0 i32)
+  (local $1 i32)
+  (local.set $0
+   (i32.const 42)
+  )
+  (local.set $1
+   (i32.const 50)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 0)
-   )
+   (i32.const 2)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 1)
-   )
+   (i32.const 42)
+  )
+  (call $log
+   (i32.const 50)
   )
  )
- (func $17 (type $void_func) (; has Stack IR ;)
+ (func $array.new_fixed-packed (type $void_func)
   (call $log
-   (array.get_u $bytes
-    (array.new_fixed $bytes
-     (i32.const -11512)
-    )
-    (i32.const 0)
-   )
+   (i32.const 8)
   )
  )
- (func $18 (type $void_func) (; has Stack IR ;)
+ (func $static-casts (type $void_func)
   (call $log
    (i32.const 1)
   )
@@ -324,7 +297,7 @@
    (i32.const 1)
   )
  )
- (func $20 (type $void_func) (; has Stack IR ;)
+ (func $static-br_on_cast_fail (type $void_func)
   (call $log
    (i32.const -2)
   )
@@ -390,9 +363,9 @@ ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]
 (module
- (type $none_=>_i32 (func (result i32)))
- (export "foo" (func $0))
- (func $0 (type $none_=>_i32) (; has Stack IR ;) (result i32)
+ (type $0 (func (result i32)))
+ (export "foo" (func $foo))
+ (func $foo (type $0) (result i32)
   (i32.const 0)
  )
 )

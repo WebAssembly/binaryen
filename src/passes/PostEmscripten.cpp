@@ -27,6 +27,7 @@
 #include <ir/table-utils.h>
 #include <pass.h>
 #include <shared-constants.h>
+#include <support/debug.h>
 #include <wasm-builder.h>
 #include <wasm-emscripten.h>
 #include <wasm.h>
@@ -95,12 +96,11 @@ static void calcSegmentOffsets(Module& wasm,
             return;
           }
         }
-        auto it = offsets.find(curr->segment);
-        if (it != offsets.end()) {
+        if (offsets.find(curr->segment) != offsets.end()) {
           Fatal() << "Cannot get offset of passive segment initialized "
                      "multiple times";
         }
-        offsets[curr->segment] = dest->value.getInteger();
+        offsets[curr->segment] = dest->value.getUnsigned();
       }
     } searcher(passiveOffsets);
     searcher.walkModule(&wasm);
@@ -134,7 +134,9 @@ static void removeSegment(Module& wasm, Name segment) {
 }
 
 static Address getExportedAddress(Module& wasm, Export* export_) {
-  Global* g = wasm.getGlobal(export_->value);
+  Global* g = wasm.getGlobal((export_->kind == ExternalKind::Global)
+                               ? *export_->getInternalName()
+                               : Name());
   auto* addrConst = g->init->dynCast<Const>();
   return addrConst->value.getUnsigned();
 }
@@ -186,10 +188,13 @@ IString EM_JS_PREFIX("__em_js__");
 IString EM_JS_DEPS_PREFIX("__em_lib_deps_");
 
 struct EmJsWalker : public PostWalker<EmJsWalker> {
+  bool sideModule;
   std::vector<Export> toRemove;
 
+  EmJsWalker(bool sideModule) : sideModule(sideModule) {}
+
   void visitExport(Export* curr) {
-    if (curr->name.startsWith(EM_JS_PREFIX)) {
+    if (!sideModule && curr->name.startsWith(EM_JS_PREFIX)) {
       toRemove.push_back(*curr);
     }
     if (curr->name.startsWith(EM_JS_DEPS_PREFIX)) {
@@ -212,17 +217,17 @@ struct PostEmscripten : public Pass {
     std::vector<Address> segmentOffsets; // segment index => address offset
     calcSegmentOffsets(module, segmentOffsets);
 
-    auto& options = getPassOptions();
-    auto sideModule = options.hasArgument("post-emscripten-side-module");
+    auto sideModule = hasArgument("post-emscripten-side-module");
     if (!sideModule) {
+      removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
+      removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
+
       // Side modules read EM_ASM data from the module based on these exports
       // so we need to keep them around in that case.
-      removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
       module.removeExport("__start_em_asm");
       module.removeExport("__stop_em_asm");
     }
 
-    removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
     removeData(
       module, segmentOffsets, "__start_em_lib_deps", "__stop_em_lib_deps");
     module.removeExport("__start_em_js");
@@ -232,13 +237,15 @@ struct PostEmscripten : public Pass {
   }
 
   void removeEmJsExports(Module& module) {
-    EmJsWalker walker;
+    auto sideModule = hasArgument("post-emscripten-side-module");
+    EmJsWalker walker(sideModule);
     walker.walkModule(&module);
-    for (const Export& exp : walker.toRemove) {
+    for (Export& exp : walker.toRemove) {
       if (exp.kind == ExternalKind::Function) {
-        module.removeFunction(exp.value);
+        module.removeFunction(*exp.getInternalName());
       } else {
-        module.removeGlobal(exp.value);
+        assert(exp.kind == ExternalKind::Global);
+        module.removeGlobal(*exp.getInternalName());
       }
       module.removeExport(exp.name);
     }
@@ -282,11 +289,11 @@ struct PostEmscripten : public Pass {
       });
 
     // Assume a non-direct call might throw.
-    analyzer.propagateBack(
-      [](const Info& info) { return info.canThrow; },
-      [](const Info& info) { return true; },
-      [](Info& info, Function* reason) { info.canThrow = true; },
-      analyzer.NonDirectCallsHaveProperty);
+    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
+                           [](const Info& info) { return true; },
+                           [](Info& info) { info.canThrow = true; },
+                           [](const Info& info, Function* reason) {},
+                           analyzer.NonDirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
@@ -311,7 +318,7 @@ struct PostEmscripten : public Pass {
         // The first operand is the function pointer index, which must be
         // constant if we are to optimize it statically.
         if (auto* index = curr->operands[0]->dynCast<Const>()) {
-          size_t indexValue = index->value.geti32();
+          size_t indexValue = index->value.getUnsigned();
           if (indexValue >= flatTable.names.size()) {
             // UB can lead to indirect calls to invalid pointers.
             return;

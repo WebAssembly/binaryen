@@ -65,7 +65,7 @@ struct PrintCallGraph : public Pass {
     // Exports
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        Function* func = module->getFunction(curr->value);
+        Function* func = module->getFunction(*curr->getInternalName());
         o << "  \"" << func->name
           << "\" [style=\"filled\", fillcolor=\"gray\"];\n";
       }
@@ -96,7 +96,7 @@ struct PrintCallGraph : public Pass {
     CallPrinter printer(module);
 
     // Indirect Targets
-    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name name) {
       auto* func = module->getFunction(name);
       o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
     });

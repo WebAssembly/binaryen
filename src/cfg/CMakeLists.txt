@@ -3,4 +3,4 @@ set(cfg_SOURCES
   Relooper.cpp
   ${cfg_HEADERS}
 )
-add_library(cfg OBJECT ${cfg_SOURCES})
+target_sources(binaryen PRIVATE ${cfg_SOURCES})

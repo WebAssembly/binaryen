@@ -32,10 +32,8 @@
  (export "__threwValue" (global $global$1))
  (export "dynCall_vii" (func $dynCall_vii))
  (func $__wasm_call_ctors
-  (nop)
  )
  (func $__wasm_apply_data_relocs
-  (nop)
  )
  (func $_start
   (local $0 i32)

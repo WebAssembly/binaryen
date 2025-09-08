@@ -55,6 +55,10 @@ struct CoalesceLocals
     return std::make_unique<CoalesceLocals>();
   }
 
+  // Branches outside of the function can be ignored, as we only look at locals
+  // which vanish when we leave.
+  bool ignoreBranchesOutsideOfFunc = true;
+
   // main entry point
 
   void doWalkFunction(Function* func);
@@ -94,17 +98,17 @@ struct CoalesceLocals
     interferences.set(low, high, true);
   }
 
-  void unInterfere(Index i, Index j) {
-    interferences.set(std::min(i, j), std::max(i, j), false);
-  }
-
   bool interferes(Index i, Index j) {
     return interferences.get(std::min(i, j), std::max(i, j));
   }
+
+private:
+  // In some cases we need to refinalize at the end.
+  bool refinalize = false;
 };
 
 void CoalesceLocals::doWalkFunction(Function* func) {
-  super::doWalkFunction(func);
+  Super::doWalkFunction(func);
   // prioritize back edges
   increaseBackEdgePriorities();
   // use liveness to find interference
@@ -114,6 +118,10 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   pickIndices(indices);
   // apply indices
   applyIndices(indices, func->body);
+
+  if (refinalize) {
+    ReFinalize().walkFunctionInModule(func, getModule());
+  }
 }
 
 // A copy on a backedge can be especially costly, forcing us to branch just to
@@ -559,21 +567,13 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
             drop->value = value;
             *action.origin = drop;
           } else {
-            // This is a tee, and so, as earlier in this function, we must be
-            // careful of subtyping. Above we simply avoided the problem by
-            // leaving it for other passes, but we do want to remove ineffective
-            // stores - nothing else does that as well as this pass. Instead,
-            // create a block to cast back to the original type, which avoids
-            // changing types here, and leave it to other passes to refine types
-            // and remove the block.
             auto originalType = (*action.origin)->type;
             if (originalType != set->value->type) {
-              (*action.origin) =
-                Builder(*getModule()).makeBlock({set->value}, originalType);
-            } else {
-              // No special handling, just use the value.
-              *action.origin = set->value;
+              // The value had a more refined type, which we must propagate at
+              // the end.
+              refinalize = true;
             }
+            *action.origin = set->value;
           }
           continue;
         }

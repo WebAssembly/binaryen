@@ -2,7 +2,7 @@
  (type $0 (func (param i32 i32) (result i32)))
  (type $1 (func))
  (type $2 (func (result i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $3 (func (param i32 i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
@@ -19,7 +19,6 @@
  (export "main" (func $main))
  (export "__set_stack_limits" (func $__set_stack_limits))
  (func $__wasm_call_ctors
-  (nop)
  )
  (func $foo (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
@@ -44,7 +43,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $3)
@@ -81,7 +82,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $4)
@@ -115,7 +118,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $1)
@@ -151,7 +156,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $2)

@@ -131,13 +131,13 @@ struct StackSignature {
   //
   // As an example of the first rule, consider this instruction sequence:
   //
-  //   ref.as_func
+  //   ref.cast (ref i31)
   //   drop
   //   i32.add
   //
   // The most specific type you could give this sequence is [i32, i32, anyref]
   // -> [i32]. But it could also be used in a context that expects [i32, i32,
-  // funcref] -> [i32] because ref.as_func can accept funcref or any other
+  // structref] -> [i32] because ref.cast can accept structref or any other
   // subtype of anyref. That's where the contravariance comes from. This
   // instruction sequence could also be used anywhere that expects [f32, i32,
   // i32, anyref] -> [f32, i32] because the f32 simply stays on the stack
@@ -145,7 +145,7 @@ struct StackSignature {
   //
   // For the second rule, consider this sequence:
   //
-  //   ref.as_func
+  //   ref.cast (ref i31)
   //   drop
   //   i32.add
   //   unreachable

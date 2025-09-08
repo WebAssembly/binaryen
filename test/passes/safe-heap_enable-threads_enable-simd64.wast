@@ -1,5 +1,5 @@
 (module
- (memory (shared i64 100 100))
+ (memory i64 100 100 shared)
  (func $loads
   (drop (i32.load (i64.const 1)))
   (drop (i32.atomic.load (i64.const 1)))
@@ -48,7 +48,7 @@
  (import "env" "emscripten_get_sbrk_ptr" (func $foo (result i64)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
- (memory $0 (shared i64 100 100))
+ (memory $0 i64 100 100 shared)
  (func $actions
   (drop (i32.load (i64.const 1)))
   (i32.store (i64.const 1) (i32.const 100))

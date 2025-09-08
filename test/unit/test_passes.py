@@ -13,7 +13,6 @@ class PassesTest(utils.BinaryenTestCase):
             hello_wat = self.input_path('hello_world.wat')
             log = shared.run_process(shared.WASM_OPT + [hello_wat] + args,
                                      stderr=subprocess.PIPE).stderr
-            print(log)
             passes = re.findall(r'running pass: ([\w-]+)\.\.\.', log)
             return passes
         finally:

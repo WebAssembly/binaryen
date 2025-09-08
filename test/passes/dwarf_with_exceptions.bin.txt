@@ -1,14 +1,14 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32) (result i32)))
  (import "env" "_Z3foov" (func $foo\28\29))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
- (tag $tag$0 (param i32))
+ (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
@@ -20,8 +20,8 @@
    ;; code offset: 0x8
    (global.get $__stack_pointer)
   )
-  ;; code offset: 0x10
-  (try $label$9
+  ;; code offset: 0x18
+  (try
    (do
     ;; code offset: 0x12
     (call $foo\28\29)
@@ -45,8 +45,8 @@
       (local.get $1)
      )
     )
-    ;; code offset: 0x31
-    (try $label$8
+    ;; code offset: 0x41
+    (try $label
      (do
       ;; code offset: 0x33
       (call $foo\28\29)
@@ -58,8 +58,8 @@
      )
      ;; code offset: 0x41
      (catch_all
-      ;; code offset: 0x42
-      (try $label$7
+      ;; code offset: 0x63
+      (try
        (do
         ;; code offset: 0x44
         (call $__cxa_end_catch)
@@ -92,7 +92,7 @@
        )
       )
       ;; code offset: 0x6c
-      (rethrow $label$8)
+      (rethrow $label)
      )
     )
     ;; code offset: 0x6f
@@ -274,7 +274,7 @@ DWARF debug info
 
 Contains section .debug_info (63 bytes)
 Contains section .debug_abbrev (41 bytes)
-Contains section .debug_line (162 bytes)
+Contains section .debug_line (136 bytes)
 Contains section .debug_str (178 bytes)
 
 .debug_abbrev contents:
@@ -326,7 +326,7 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x0000009e
+    total_length: 0x00000084
          version: 4
  prologue_length: 0x00000031
  min_inst_length: 1
@@ -366,51 +366,36 @@ file_names[  1]:
             0x000000000000000e      4      5      1   0             0  is_stmt prologue_end
 
 
-0x00000052: 00 DW_LNE_set_address (0x0000000000000012)
-0x00000059: 03 DW_LNS_advance_line (5)
-0x0000005b: 05 DW_LNS_set_column (3)
-0x0000005d: 01 DW_LNS_copy
-            0x0000000000000012      5      3      1   0             0  is_stmt
-
-
-0x0000005e: 00 DW_LNE_set_address (0x000000000000001f)
-0x00000065: 03 DW_LNS_advance_line (6)
-0x00000067: 05 DW_LNS_set_column (5)
-0x00000069: 01 DW_LNS_copy
+0x00000052: 00 DW_LNE_set_address (0x000000000000001f)
+0x00000059: 03 DW_LNS_advance_line (6)
+0x0000005b: 01 DW_LNS_copy
             0x000000000000001f      6      5      1   0             0  is_stmt
 
 
-0x0000006a: 00 DW_LNE_set_address (0x000000000000003e)
-0x00000071: 03 DW_LNS_advance_line (7)
-0x00000073: 05 DW_LNS_set_column (3)
-0x00000075: 06 DW_LNS_negate_stmt
-0x00000076: 01 DW_LNS_copy
+0x0000005c: 00 DW_LNE_set_address (0x000000000000003e)
+0x00000063: 03 DW_LNS_advance_line (7)
+0x00000065: 05 DW_LNS_set_column (3)
+0x00000067: 06 DW_LNS_negate_stmt
+0x00000068: 01 DW_LNS_copy
             0x000000000000003e      7      3      1   0             0 
 
 
-0x00000077: 00 DW_LNE_set_address (0x0000000000000041)
-0x0000007e: 01 DW_LNS_copy
+0x00000069: 00 DW_LNE_set_address (0x0000000000000041)
+0x00000070: 01 DW_LNS_copy
             0x0000000000000041      7      3      1   0             0 
 
 
-0x0000007f: 00 DW_LNE_set_address (0x0000000000000044)
-0x00000086: 03 DW_LNS_advance_line (8)
-0x00000088: 05 DW_LNS_set_column (1)
-0x0000008a: 06 DW_LNS_negate_stmt
-0x0000008b: 01 DW_LNS_copy
+0x00000071: 00 DW_LNE_set_address (0x0000000000000044)
+0x00000078: 03 DW_LNS_advance_line (8)
+0x0000007a: 05 DW_LNS_set_column (1)
+0x0000007c: 06 DW_LNS_negate_stmt
+0x0000007d: 01 DW_LNS_copy
             0x0000000000000044      8      1      1   0             0  is_stmt
 
 
-0x0000008c: 00 DW_LNE_set_address (0x0000000000000045)
-0x00000093: 01 DW_LNS_copy
-            0x0000000000000045      8      1      1   0             0  is_stmt
-
-
-0x00000094: 00 DW_LNE_set_address (0x00000000ffffff64)
-0x0000009b: 03 DW_LNS_advance_line (7)
-0x0000009d: 05 DW_LNS_set_column (3)
-0x0000009f: 00 DW_LNE_end_sequence
-            0x00000000ffffff64      7      3      1   0             0  is_stmt end_sequence
+0x0000007e: 00 DW_LNE_set_address (0x0000000000000045)
+0x00000085: 00 DW_LNE_end_sequence
+            0x0000000000000045      8      1      1   0             0  is_stmt end_sequence
 
 
 .debug_str contents:
@@ -420,16 +405,16 @@ file_names[  1]:
 0x00000081: "_Z21dwarf_with_exceptionsv"
 0x0000009c: "dwarf_with_exceptions"
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32) (result i32)))
  (import "env" "_Z3foov" (func $foo\28\29))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
- (tag $tag$0 (param i32))
+ (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
@@ -441,8 +426,8 @@ file_names[  1]:
    ;; code offset: 0xa
    (global.get $__stack_pointer)
   )
-  ;; code offset: 0xe
-  (try $label$9
+  ;; code offset: 0x12
+  (try
    (do
     ;; code offset: 0x10
     (call $foo\28\29)
@@ -466,8 +451,8 @@ file_names[  1]:
       (local.get $1)
      )
     )
-    ;; code offset: 0x1f
-    (try $label$8
+    ;; code offset: 0x27
+    (try $label
      (do
       ;; code offset: 0x21
       (call $foo\28\29)
@@ -479,8 +464,8 @@ file_names[  1]:
      )
      ;; code offset: 0x27
      (catch_all
-      ;; code offset: 0x28
-      (try $label$7
+      ;; code offset: 0x39
+      (try
        (do
         ;; code offset: 0x2a
         (call $__cxa_end_catch)
@@ -513,7 +498,7 @@ file_names[  1]:
        )
       )
       ;; code offset: 0x3e
-      (rethrow $label$8)
+      (rethrow $label)
      )
     )
     ;; code offset: 0x41
@@ -537,7 +522,7 @@ file_names[  1]:
  )
  ;; custom section ".debug_info", size 63
  ;; custom section ".debug_abbrev", size 41
- ;; custom section ".debug_line", size 162
+ ;; custom section ".debug_line", size 136
  ;; custom section ".debug_str", size 178
  ;; custom section "producers", size 134
  ;; features section: mutable-globals, sign-ext, exception-handling

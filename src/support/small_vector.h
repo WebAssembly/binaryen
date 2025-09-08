@@ -24,10 +24,27 @@
 
 #include <array>
 #include <cassert>
-#include <iterator>
 #include <vector>
 
+#include "support/parent_index_iterator.h"
+
 namespace wasm {
+
+// We don't understand this warning, only here and only on aarch64 and riscv64,
+// we suspect it's spurious so disabling for now.
+//
+// For context: https://github.com/WebAssembly/binaryen/issues/6311
+
+#if defined(__aarch64__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
+// https://github.com/WebAssembly/binaryen/issues/6410
+#if defined(__riscv) && __riscv_xlen == 64
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
 
 template<typename T, size_t N> class SmallVector {
   // fixed-space storage
@@ -41,12 +58,32 @@ public:
   using value_type = T;
 
   SmallVector() {}
+  SmallVector(const SmallVector<T, N>& other)
+    : usedFixed(other.usedFixed), fixed(other.fixed), flexible(other.flexible) {
+  }
+  SmallVector(SmallVector<T, N>&& other)
+    : usedFixed(other.usedFixed), fixed(std::move(other.fixed)),
+      flexible(std::move(other.flexible)) {}
   SmallVector(std::initializer_list<T> init) {
     for (T item : init) {
       push_back(item);
     }
   }
   SmallVector(size_t initialSize) { resize(initialSize); }
+
+  SmallVector<T, N>& operator=(const SmallVector<T, N>& other) {
+    usedFixed = other.usedFixed;
+    fixed = other.fixed;
+    flexible = other.flexible;
+    return *this;
+  }
+
+  SmallVector<T, N>& operator=(SmallVector<T, N>&& other) {
+    usedFixed = other.usedFixed;
+    fixed = std::move(other.fixed);
+    flexible = std::move(other.flexible);
+    return *this;
+  }
 
   T& operator[](size_t i) {
     if (i < N) {
@@ -147,48 +184,42 @@ public:
 
   // iteration
 
-  template<typename Parent, typename Iterator> struct IteratorBase {
+  struct Iterator : ParentIndexIterator<SmallVector<T, N>*, Iterator> {
     using value_type = T;
-    using difference_type = long;
+    using pointer = T*;
     using reference = T&;
 
-    Parent* parent;
-    size_t index;
-
-    IteratorBase(Parent* parent, size_t index) : parent(parent), index(index) {}
-
-    bool operator!=(const Iterator& other) const {
-      return index != other.index || parent != other.parent;
-    }
-
-    void operator++() { index++; }
-
-    Iterator& operator+=(difference_type off) {
-      index += off;
-      return *this;
-    }
-
-    const Iterator operator+(difference_type off) const {
-      return Iterator(*this) += off;
-    }
-  };
-
-  struct Iterator : IteratorBase<SmallVector<T, N>, Iterator> {
     Iterator(SmallVector<T, N>* parent, size_t index)
-      : IteratorBase<SmallVector<T, N>, Iterator>(parent, index) {}
-    value_type& operator*() { return (*this->parent)[this->index]; }
+      : ParentIndexIterator<SmallVector<T, N>*, Iterator>{parent, index} {}
+    Iterator(const Iterator& other) = default;
+
+    T& operator*() { return (*this->parent)[this->index]; }
   };
 
-  struct ConstIterator : IteratorBase<const SmallVector<T, N>, ConstIterator> {
+  struct ConstIterator
+    : ParentIndexIterator<const SmallVector<T, N>*, ConstIterator> {
+    using value_type = const T;
+    using pointer = const T*;
+    using reference = const T&;
+
     ConstIterator(const SmallVector<T, N>* parent, size_t index)
-      : IteratorBase<const SmallVector<T, N>, ConstIterator>(parent, index) {}
-    const value_type& operator*() const { return (*this->parent)[this->index]; }
+      : ParentIndexIterator<const SmallVector<T, N>*, ConstIterator>{parent,
+                                                                     index} {}
+    ConstIterator(const ConstIterator& other) = default;
+
+    const T& operator*() const { return (*this->parent)[this->index]; }
   };
 
   Iterator begin() { return Iterator(this, 0); }
   Iterator end() { return Iterator(this, size()); }
   ConstIterator begin() const { return ConstIterator(this, 0); }
   ConstIterator end() const { return ConstIterator(this, size()); }
+
+  void erase(Iterator a, Iterator b) {
+    // Atm we only support erasing at the end, which is very efficient.
+    assert(b == end());
+    resize(a.index);
+  }
 };
 
 // A SmallVector for which some values may be read before they are written, and
@@ -214,6 +245,14 @@ struct ZeroInitSmallVector : public SmallVector<T, N> {
     }
   }
 };
+
+#if defined(__aarch64__)
+#pragma GCC diagnostic pop
+#endif
+
+#if defined(__riscv) && __riscv_xlen == 64
+#pragma GCC diagnostic pop
+#endif
 
 } // namespace wasm
 

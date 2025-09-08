@@ -16,7 +16,7 @@
   )
 
   (func $get (param $i i32) (param $v (ref $vec)) (result i32)
-    (call_ref $f (ref.cast null $f (array.get $vec (local.get $v) (local.get $i))))
+    (call_ref $f (ref.cast (ref null $f) (array.get $vec (local.get $v) (local.get $i))))
   )
   (func (export "get") (param $i i32) (result i32)
     (call $get (local.get $i) (call $new))
@@ -24,7 +24,7 @@
 
   (func $set_get (param $i i32) (param $v (ref $mvec)) (param $y i32) (result i32)
     (array.set $mvec (local.get $v) (local.get $i) (array.get $mvec (local.get $v) (local.get $y)))
-    (call_ref $f (ref.cast null $f (array.get $mvec (local.get $v) (local.get $i))))
+    (call_ref $f (ref.cast (ref null $f) (array.get $mvec (local.get $v) (local.get $i))))
   )
   (func (export "set_get") (param $i i32) (param $y i32) (result i32)
     (call $set_get

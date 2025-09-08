@@ -1,5 +1,5 @@
 (module
- (type $NamedStruct (struct ))
+ (type $NamedStruct (struct))
  (type $ref?|$NamedStruct|_=>_none (func (param (ref null $NamedStruct))))
  (export "export" (func $0))
  (func $0 (type $ref?|$NamedStruct|_=>_none) (param $0 (ref null $NamedStruct))

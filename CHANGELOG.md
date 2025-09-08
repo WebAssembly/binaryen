@@ -15,11 +15,236 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v124
+----
+
+ - Add Custom Descriptors support. (Fuzzing: #7796)
+ - Add Stack Switching support. (Fuzzing: #7834)
+ - Add Compilation Hints + Branch Hinting support. (Fuzzing #7704)
+ - Build mimalloc with `MI_NO_OPT_ARCH` to fix Raspberry Pi 4 on Arm64. (#7837)
+ - `wasm-split`'s `--multi-split` mode now supports more options:
+   `--no-placeholders`, `--import-namespace`, `--emit-module-names`,
+   `--emit-text`, `--symbolmap`, and `--placeholdermap`. Because
+   `--no-placeholders` is false by default and until now `--multi-split` didn't
+   use placeholders at all, this is a breaking change. If you want to continue
+   to do multi-split without placeholders, you need to explicitly specify
+   `--no-placeholders`. (#7781, #7789, #7792)
+ - InstrumentMemory: Allow filtering by instruction, and instrument memory.grow.
+   (#7388)
+ - Add support for more source map fields, "sourcesContent", "file", and
+   "sourceRoot". (#7473)
+ - [GC] Add a TypeRefiningGUFA pass. (#7433)
+ - [C/JS APIs] Allow JS and C to read the start function of a module (#7424)
+ - Add a `--string-lifting` pass that raises imported string operations and
+   constants into stringref in Binaryen IR (which can then be fully optimized,
+   and typically lowered back down with `--string-lowering`). (#7389)
+ - Fuzzer: Improve handling of small inputs and their debugging using a new
+   `BINARYEN_FUZZER_MAX_BYTES` env var. (#7832)
+
+v123
+----
+
+ - We now support "exact" references from the custom descriptors proposal,
+   and emit such references when the feature is enabled. As a result, using
+   `-all` will enable that feature (among all others), and cause GC-using
+   binaries to use that feature, which most VMs do not yet support. To avoid
+   such VM errors, either enable only the features you want, or disable it:
+   `-all --disable-custom-descriptors`.
+ - Use mimalloc allocator for Linux static builds, making our official release
+   binaries a lot faster. (#7378)
+ - Add an option to preserve imports and exports in the fuzzer (for fuzzer
+   harnesses where they only want Binaryen to modify their given testcases, not
+   generate new things in them). (#7300)
+ - `string` is now a subtype of `ext` (rather than `any`). This allows better
+   transformations for strings, like an inverse of StringLowering, but will
+   error on codebases that depend on being able to pass strings into anyrefs.
+   (#7373)
+ - Require the type of RefFunc expressions to match the type of the referenced
+   function. It is no longer valid to type them as funcref in the IR. (#7376)
+ - The C and JS APIs for creating RefFunc expressions now take a HeapType
+   instead of a Type.
+ - MergeSimilarFunctions: Do a return_call when possible (necessary for
+   correctness in wasm files that depend on calls for control flow). (#7350)
+
+v122
+----
+
+ - The heap type associated with a tag is now preserved through optimization.
+   (#7220)
+ - The "typed-continuations" features is renamed "stack-switching" and the
+   latest instructions are experimentally supported. (#7041)
+ - WasmGC branches that send extra values can now be parsed via lowering to use
+   scratch locals. (#7202)
+ - Add experimental support for atomic struct get and set (#7155) and RMW
+   (#7225) operations.
+
+v121
+----
+
+ - BinaryenSelect no longer takes a type parameter. (#7097)
+ - AutoDrop APIs have been removed. (#7106)
+ - bulk-memory-opt and call-indirect-overlong features are added for parity with
+   LLVM. (#7139)
+ - WasmGC optimizations now run significantly faster and scale better with
+   available threads. (#7142)
+ - Binaryen now supports parsing control flow structures with parameter types by
+   lowering them away in the parsers. (#7149)
+
+v120
+----
+
+ - Remove closed world validation checks. These checks were causing more harm
+   than good. All valid code will now validate with `--closed-world` (but also
+   it now provides fewer warnings to users that enable closed world on code
+   which does not conform to the requirements of that mode, which can lead to
+   changes in runtime behavior; for the long-term plans, see #6965). (#7019)
+ - Many compile time speedups were implemented (2x overall improvement), see
+   https://github.com/WebAssembly/binaryen/issues/4165#issuecomment-2372548271
+ - Several `exnref` (newest version of Wasm EH) optimizations: #7013, #6996,
+   #6997, #6983, #6980
+ - Source Maps: Support 5 segment mappings. (#6795)
+ - [wasm-split] Add a multi-split mode. (#6943)
+ - Add a `--preserve-type-order` option that minimizes text format changes in
+   type ordering. (#6916)
+ - Add a J2CL specific pass that moves itable entries to vtables. (#6888)
+
+v119
+----
+
+ - Passes can now receive individual pass arguments, that is --foo=A --foo=B for
+   a pass foo will run the pass twice (which was possible before) and will now
+   run it first with argument A and second with B. --pass-arg=foo@BAR will now
+   apply to the most recent --foo pass on the commandline, if foo is a pass
+   (while global pass arguments - that are not the name of a pass - remain, as
+   before, global for all passes). (#6687)
+ - The Metrics pass now takes an optional argument to use as the title,
+   `--metrics=text` will show that text before the metrics. Each instance of
+   Metrics can have unique text, `--metrics=before -O3 --metrics=after`. (#6792)
+ - Add C and JS APIs to control more pass options (trapsNeverHappen,
+   closedWorld, generateStackIR, optimizeStackIR, and the list of skipped
+   passes). (#6713)
+ - A C APIs for getting/setting the type of Functions (#6721).
+ - Allow using `--skip-pass` on the commandline multiple times (#6714).
+ - The instructions relaxed_fma and relaxed_fnma have been renamed to
+   relaxed_madd and relaxed_nmadd.
+ - Add a new `--heap-store-optimization` pass. (#6882)
+ - Add a pass for minimizing recursion groups. (#6832)
+
+
+v118
+----
+
+ - StackIR is now handled entirely during binary writing (#6568). This is
+   mostly not noticeable, except that:
+   - Text output no longer notes `(; has Stack IR ;)` (as Stack IR only exists
+     during binary writing).
+   - `--generate-stack-ir`, `--optimize-stack-ir`, and `--print-stack-ir` are
+     now flags and not passes. That means the order of operations may seem
+     different, as they apply during binary writing (or, if no binary is written
+     but we were still asked to print StackIR, `wasm-opt` does it at the very
+     end).
+   - Whether to generate, optimize, and print StackIR is now noted as part of
+     the PassOptions. As a result `BinaryenModulePrintStackIR` and similar APIs
+     do not receive an `optimize` flag, as they read the PassOption
+     `optimizeStackIR` instead.
+ - The new, standards-compliant text parser is now the default.
+ - Source map comments on `else` branches must now be placed above the
+   instruction inside the `else` branch rather than on the `else` branch itself.
+ - Source map locations from instructions are no longer automatically propagated
+   to function epilogues.
+ - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
+   to configure which features to enable in the parser. (#6380)
+ - The build-time option to use legacy WasmGC opcodes is removed. (#5874)
+ - The strings in `string.const` instructions must now be valid WTF-8.
+ - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+ - C API: Support adding data segments individually (#6346)
+ - Add sourcemap support to wasm-metadce and wasm-merge (#6372).
+ - Fix semantics of return calls (#6448, #6451, #6464, #6470, #6474).
+ - Add table64 lowering pass (#6595).
+ - Add TraceCalls instrumentation pass (#6619).
+
+v117
+----
+
+ - Add a WebAssembly build to release (#6351)
+ - Add Linux aarch64 build to release (#6334).
+ - The text format for tuple instructions now requires immediates. For example,
+   to make a tuple of two elements, use `tuple.make 2` (#6169) (#6172) (#6170).
+ - The text format for `if` expressions now requires `then` and `else` to
+   introduce the two branch arms, matching the spec (#6201).
+ - Fuzzer: Remove --emit-js-shell logic and reuse fuzz_shell.js instead (#6310).
+ - [EH] Add --experimental-new-eh option to wasm-opt (#6270) (#6210).
+ - Add StringLowering pass, from stringref to imported-strings (#6271).
+ - C API: Add BinaryenFunctionAppendVar (#6213).
+ - Add J2CL optimization pass (#6151).
+ - Add no-inline IR annotation, and passes to set it based on function name
+   (#6146).
+ - C API: Add BinaryenTableGetType and BinaryenTableSetType (#6137).
+ - Add an Unsubtyping optimization (#5982).
+ - Compute full transitive closure in GlobalEffects (#5992).
+ - Add passes to finalize or unfinalize types (#5944).
+ - Add a tuple optimization pass (#5937).
+
+v116
+----
+
+ - "I31New" changed to "RefI31" everywhere it appears in the C API and similarly
+   "i31.new" has been replaced with "ref.i31" in the JS API and in printed
+   output (#5930, #3931).
+ - The standard WasmGC opcodes are now on by default (#5873).
+
+v115
+----
+
+- The nonstandard, experimental gc-nn-locals feature has been removed now that
+  standard non-nullable locals are supported. (#5080)
+- Print all debug annotations when `BINARYEN_PRINT_FULL`. (#5904)
+- Use the standard text format for WasmGC now that things are stable there.
+  (#5894, #5889, #5852, #5801)
+- Rename multimemory flag to `--multimemory` to match its naming in LLVM.
+  (#5890)
+- Allow opting into standard GC encodings at compile time. (#5868)
+- Remove legacy WasmGC instructions. (#5861)
+- GUFA: Infer using TrapsNeverHappen. (#5850)
+- Add a pass to reorder functions by name, which can be useful for debugging
+  (e.g. comparisons after optimizations), `--reorder-functions-by-name`. (#5811)
+- C API: Add `BinaryenAddFunctionWithHeapType` which is like
+  `BinaryenAddFunction` but takes a heap type. The old function is kept for
+  backwards compatibility and as a convenience. (#5829)
+- Work on new optimization framework using lattices. (#5784, #5794, #5800,
+  #5817, #5831, #5849)
+- Heap types are now final by default and openness must be opted into both in
+  the text and binary formats as well as in the TypeBuilder API. (#5918)
+
+v114
+----
+
+- Fix a bug where e.g. -O3 -Oz ran the -O3 with the opt levels of -Oz, which
+  could inhibit inlining, for example. While this is a bugfix, it affects how
+  commandline options are interpreted, so if you depended on the old behavior
+  this may be a breaking change. That is, the old behavior made -O3 -Oz run the
+  first -O3 with -Oz's opt levels, and the new behavior is to run -O3 with the
+  proper (-O3) opt levels. This is a followup to #5333 from a previous release.
+  (#5787)
+- Add pass to remove Exception Handling instructions (#5770).
+
+
+v113
+----
+
+- Add a `wasm-merge` tool. This is a full rewrite of the previous `wasm-merge`
+  tool that was removed from the tree in the past. The new version is much
+  simpler after recent improvements to multi-memory and multi-table. The
+  rewrite was motivated by new use cases for merging modules in the context of
+  WasmGC.
 - Some C and JS API functions now refer to data and element segments by name
   instead of index.
-- The --nominal and --hybrid command line options and related API functions have
-  been removed. The only supported type system is now the standard isorecursive
-  (i.e. hybrid) type system.
+- The `--nominal` and `--hybrid` command line options and related API functions
+  have been removed. The only supported type system is now the standard
+  isorecursive (i.e. hybrid) type system. (#5672)
+- Add a "mayNotReturn" effect (#5711).
+- Disable the memory64 feature in Memory64Lowering.cpp (#5679).
+- Disable sign extension in SignExtLowering.cpp (#5676).
 
 v112
 ----

@@ -25,7 +25,6 @@
  (export "main" (func $main))
  (export "dynCall_vii" (func $dynCall_vii))
  (func $__wasm_call_ctors
-  (nop)
  )
  (func $__original_main (result i32)
   (local $0 i32)

@@ -18,11 +18,28 @@
 #include "pass.h"
 #include "wasm.h"
 
+//
+// Attempt to merge segments to fit within a specified limit.
+//
+// By default this limit is equal to the one commonly used by wasm VMs
+// (see wasm-limits.h), but it can be changed with the option below:
+//
+//   --pass-arg=limit-segments@max-data-segments
+//
+//       Specify a custom maximum number of data segments.
+//
+
 namespace wasm {
 
 struct LimitSegments : public Pass {
   void run(Module* module) override {
-    if (!MemoryUtils::ensureLimitedSegments(*module)) {
+    Index maxDataSegments;
+    if (hasArgument("limit-segments")) {
+      maxDataSegments = std::stoul(getArgument("limit-segments", ""));
+    } else {
+      maxDataSegments = WebLimitations::MaxDataSegments;
+    }
+    if (!MemoryUtils::ensureLimitedSegments(*module, maxDataSegments)) {
       std::cerr << "Unable to merge segments. "
                 << "wasm VMs may not accept this binary" << std::endl;
     }

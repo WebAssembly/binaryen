@@ -1,8 +1,0 @@
-(module
- (type $none_=>_none (func))
- (import "env" "test2" (global $gimport$0 i32))
- (import "env" "test1" (func $fimport$0))
- (export "test1" (func $fimport$0))
- (export "test2" (global $gimport$0))
-)
-

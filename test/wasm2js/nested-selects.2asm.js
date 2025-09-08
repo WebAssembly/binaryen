@@ -10,13 +10,13 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $1($0) {
-  $0 = $0 | 0;
-  return (($0 | 0) < (0 | 0) ? -1 : ($0 | 0) > (0 | 0) ? 1 : 0) | 0;
+ function $0($0_1) {
+  $0_1 = $0_1 | 0;
+  return (($0_1 | 0) < (0 | 0) ? -1 : ($0_1 | 0) > (0 | 0) ? 1 : 0) | 0;
  }
  
  return {
-  "sign": $1
+  "sign": $0
  };
 }
 

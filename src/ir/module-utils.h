@@ -17,159 +17,52 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
-#include "ir/element-utils.h"
-#include "ir/find_all.h"
-#include "ir/manipulation.h"
-#include "ir/properties.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
-// name of the function (otherwise the original name is copied).
-inline Function*
-copyFunction(Function* func, Module& out, Name newName = Name()) {
-  auto ret = std::make_unique<Function>();
-  ret->name = newName.is() ? newName : func->name;
-  ret->type = func->type;
-  ret->vars = func->vars;
-  ret->localNames = func->localNames;
-  ret->localIndices = func->localIndices;
-  ret->debugLocations = func->debugLocations;
-  ret->body = ExpressionManipulator::copy(func->body, out);
-  ret->module = func->module;
-  ret->base = func->base;
-  // TODO: copy Stack IR
-  assert(!func->stackIR);
-  return out.addFunction(std::move(ret));
-}
+// name of the function (otherwise the original name is copied). When specified,
+// fileIndexMap and symbolNameIndexMap are used to rename source map filename
+// and symbol name indices when copying the function from one module to another
+// one.
+Function* copyFunction(
+  Function* func,
+  Module& out,
+  Name newName = Name(),
+  std::optional<std::vector<Index>> fileIndexMap = std::nullopt,
+  std::optional<std::vector<Index>> symbolNameIndexMap = std::nullopt);
 
-inline Global* copyGlobal(Global* global, Module& out) {
-  auto* ret = new Global();
-  ret->name = global->name;
-  ret->type = global->type;
-  ret->mutable_ = global->mutable_;
-  ret->module = global->module;
-  ret->base = global->base;
-  if (global->imported()) {
-    ret->init = nullptr;
-  } else {
-    ret->init = ExpressionManipulator::copy(global->init, out);
-  }
-  out.addGlobal(ret);
-  return ret;
-}
+// As above, but does not add the copy to the module.
+std::unique_ptr<Function> copyFunctionWithoutAdd(
+  Function* func,
+  Module& out,
+  Name newName = Name(),
+  std::optional<std::vector<Index>> fileIndexMap = std::nullopt,
+  std::optional<std::vector<Index>> symbolNameIndexMap = std::nullopt);
 
-inline Tag* copyTag(Tag* tag, Module& out) {
-  auto* ret = new Tag();
-  ret->name = tag->name;
-  ret->sig = tag->sig;
-  out.addTag(ret);
-  return ret;
-}
+Global* copyGlobal(Global* global, Module& out);
 
-inline ElementSegment* copyElementSegment(const ElementSegment* segment,
-                                          Module& out) {
-  auto copy = [&](std::unique_ptr<ElementSegment>&& ret) {
-    ret->name = segment->name;
-    ret->hasExplicitName = segment->hasExplicitName;
-    ret->type = segment->type;
-    ret->data.reserve(segment->data.size());
-    for (auto* item : segment->data) {
-      ret->data.push_back(ExpressionManipulator::copy(item, out));
-    }
+Tag* copyTag(Tag* tag, Module& out);
 
-    return out.addElementSegment(std::move(ret));
-  };
+ElementSegment* copyElementSegment(const ElementSegment* segment, Module& out);
 
-  if (segment->table.isNull()) {
-    return copy(std::make_unique<ElementSegment>());
-  } else {
-    auto offset = ExpressionManipulator::copy(segment->offset, out);
-    return copy(std::make_unique<ElementSegment>(segment->table, offset));
-  }
-}
+Table* copyTable(const Table* table, Module& out);
 
-inline Table* copyTable(const Table* table, Module& out) {
-  auto ret = std::make_unique<Table>();
-  ret->name = table->name;
-  ret->hasExplicitName = table->hasExplicitName;
-  ret->type = table->type;
-  ret->module = table->module;
-  ret->base = table->base;
+Memory* copyMemory(const Memory* memory, Module& out);
 
-  ret->initial = table->initial;
-  ret->max = table->max;
+DataSegment* copyDataSegment(const DataSegment* segment, Module& out);
 
-  return out.addTable(std::move(ret));
-}
+// Copies named toplevel module items (things of kind ModuleItemKind). See
+// copyModule() for something that also copies exports, the start function, etc.
+void copyModuleItems(const Module& in, Module& out);
 
-inline Memory* copyMemory(const Memory* memory, Module& out) {
-  auto ret = Builder::makeMemory(memory->name);
-  ret->hasExplicitName = memory->hasExplicitName;
-  ret->initial = memory->initial;
-  ret->max = memory->max;
-  ret->shared = memory->shared;
-  ret->indexType = memory->indexType;
+void copyModule(const Module& in, Module& out);
 
-  return out.addMemory(std::move(ret));
-}
-
-inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
-  auto ret = Builder::makeDataSegment();
-  ret->name = segment->name;
-  ret->hasExplicitName = segment->hasExplicitName;
-  ret->memory = segment->memory;
-  ret->isPassive = segment->isPassive;
-  if (!segment->isPassive) {
-    auto offset = ExpressionManipulator::copy(segment->offset, out);
-    ret->offset = offset;
-  }
-  ret->data = segment->data;
-
-  return out.addDataSegment(std::move(ret));
-}
-
-inline void copyModule(const Module& in, Module& out) {
-  // we use names throughout, not raw pointers, so simple copying is fine
-  // for everything *but* expressions
-  for (auto& curr : in.exports) {
-    out.addExport(new Export(*curr));
-  }
-  for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out);
-  }
-  for (auto& curr : in.globals) {
-    copyGlobal(curr.get(), out);
-  }
-  for (auto& curr : in.tags) {
-    copyTag(curr.get(), out);
-  }
-  for (auto& curr : in.elementSegments) {
-    copyElementSegment(curr.get(), out);
-  }
-  for (auto& curr : in.tables) {
-    copyTable(curr.get(), out);
-  }
-  for (auto& curr : in.memories) {
-    copyMemory(curr.get(), out);
-  }
-  for (auto& curr : in.dataSegments) {
-    copyDataSegment(curr.get(), out);
-  }
-  out.start = in.start;
-  out.customSections = in.customSections;
-  out.debugInfoFileNames = in.debugInfoFileNames;
-  out.features = in.features;
-  out.typeNames = in.typeNames;
-}
-
-inline void clearModule(Module& wasm) {
-  wasm.~Module();
-  new (&wasm) Module;
-}
+void clearModule(Module& wasm);
 
 // Renaming
 
@@ -177,51 +70,9 @@ inline void clearModule(Module& wasm) {
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this to redirect all of its uses.
-template<typename T> inline void renameFunctions(Module& wasm, T& map) {
-  // Update the function itself.
-  for (auto& [oldName, newName] : map) {
-    if (Function* func = wasm.getFunctionOrNull(oldName)) {
-      assert(!wasm.getFunctionOrNull(newName) || func->name == newName);
-      func->name = newName;
-    }
-  }
-  wasm.updateMaps();
+template<typename T> void renameFunctions(Module& wasm, T& map);
 
-  // Update all references to it.
-  struct Updater : public WalkerPass<PostWalker<Updater>> {
-    bool isFunctionParallel() override { return true; }
-
-    T& map;
-
-    void maybeUpdate(Name& name) {
-      if (auto iter = map.find(name); iter != map.end()) {
-        name = iter->second;
-      }
-    }
-
-    Updater(T& map) : map(map) {}
-
-    std::unique_ptr<Pass> create() override {
-      return std::make_unique<Updater>(map);
-    }
-
-    void visitCall(Call* curr) { maybeUpdate(curr->target); }
-
-    void visitRefFunc(RefFunc* curr) { maybeUpdate(curr->func); }
-  };
-
-  Updater updater(map);
-  updater.maybeUpdate(wasm.start);
-  PassRunner runner(&wasm);
-  updater.run(&runner, &wasm);
-  updater.runOnModuleCode(&runner, &wasm);
-}
-
-inline void renameFunction(Module& wasm, Name oldName, Name newName) {
-  std::map<Name, Name> map;
-  map[oldName] = newName;
-  renameFunctions(wasm, map);
-}
+void renameFunction(Module& wasm, Name oldName, Name newName);
 
 // Convenient iteration over imported/non-imported module elements
 
@@ -354,6 +205,62 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
   iterImportedTags(wasm, visitor);
 }
 
+// Iterates over all importable module items. The visitor provided should have
+// signature void(ExternalKind, Importable*).
+template<typename T> inline void iterImportable(Module& wasm, T visitor) {
+  for (auto& curr : wasm.functions) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Function, curr.get());
+    }
+  }
+  for (auto& curr : wasm.tables) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Table, curr.get());
+    }
+  }
+  for (auto& curr : wasm.memories) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Memory, curr.get());
+    }
+  }
+  for (auto& curr : wasm.globals) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Global, curr.get());
+    }
+  }
+  for (auto& curr : wasm.tags) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Tag, curr.get());
+    }
+  }
+}
+
+// Iterates over all module items. The visitor provided should have signature
+// void(ModuleItemKind, Named*).
+template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
+  for (auto& curr : wasm.functions) {
+    visitor(ModuleItemKind::Function, curr.get());
+  }
+  for (auto& curr : wasm.tables) {
+    visitor(ModuleItemKind::Table, curr.get());
+  }
+  for (auto& curr : wasm.memories) {
+    visitor(ModuleItemKind::Memory, curr.get());
+  }
+  for (auto& curr : wasm.globals) {
+    visitor(ModuleItemKind::Global, curr.get());
+  }
+  for (auto& curr : wasm.tags) {
+    visitor(ModuleItemKind::Tag, curr.get());
+  }
+  for (auto& curr : wasm.dataSegments) {
+    visitor(ModuleItemKind::DataSegment, curr.get());
+  }
+  for (auto& curr : wasm.elementSegments) {
+    visitor(ModuleItemKind::ElementSegment, curr.get());
+  }
+}
+
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
@@ -374,12 +281,21 @@ struct ParallelFunctionAnalysis {
   using Func = std::function<void(Function*, T&)>;
 
   ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
-    // Fill in map, as we operate on it in parallel (each function to its own
+    // Fill in the map as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
       map[func.get()];
     }
 
+    doAnalysis(work);
+  }
+
+  // Perform an analysis by operating on each function, in parallel.
+  //
+  // This is called from the constructor (with the work function given there),
+  // and can also be called later as well if the user has additional operations
+  // to perform.
+  void doAnalysis(Func work) {
     // Run on the imports first. TODO: parallelize this too
     for (auto& func : wasm.functions) {
       if (func->imported()) {
@@ -485,11 +401,20 @@ template<typename T> struct CallGraphPropertyAnalysis {
   //
   // hasProperty() - Check if the property is present.
   // canHaveProperty() - Check if the property could be present.
-  // addProperty() - Adds the property. This receives a second parameter which
-  //                 is the function due to which we are adding the property.
+  // addProperty() - Adds the property.
+  // logVisit() - Log each visit of the propagation. This is called before
+  //              we check if the function already has the property.
+  //
+  // Note that the order of propagation here is *not* deterministic, for
+  // efficiency reasons (specifically, |calledBy| is unordered and also is
+  // generated by |callsTo| which is likewise unordered). If the order matters
+  // we could add an ordered variant of this. For now, users that care about
+  // ordering in the middle need to handle this (e.g. Asyncify - if we add such
+  // an ordered variant, we could use it there).
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
-                     std::function<void(T&, Function*)> addProperty,
+                     std::function<void(T&)> addProperty,
+                     std::function<void(const T&, Function*)> logVisit,
                      NonDirectCalls nonDirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
@@ -497,23 +422,58 @@ template<typename T> struct CallGraphPropertyAnalysis {
       if (hasProperty(map[func.get()]) ||
           (nonDirectCalls == NonDirectCallsHaveProperty &&
            map[func.get()].hasNonDirectCall)) {
-        addProperty(map[func.get()], func.get());
+        addProperty(map[func.get()]);
         work.push(func.get());
       }
     }
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        // If we don't already have the property, and we are not forbidden
-        // from getting it, then it propagates back to us now.
-        if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
-          addProperty(map[caller], func);
+        // Skip functions forbidden from getting this property.
+        if (!canHaveProperty(map[caller])) {
+          continue;
+        }
+        // Log now, even if the function already has the property.
+        logVisit(map[caller], func);
+        // If we don't already have the property, then add it now, and propagate
+        // further.
+        if (!hasProperty(map[caller])) {
+          addProperty(map[caller]);
           work.push(caller);
         }
       }
     }
   }
 };
+
+// Which types to collect.
+//
+//   AllTypes - Any type anywhere reachable from anything.
+//
+//   UsedIRTypes - Same as AllTypes, but excludes types reachable only because
+//   they are in a rec group with some other used type and types that are only
+//   used from other unreachable types.
+//
+//   BinaryTypes - Only types that need to appear in the module's type section.
+//
+enum class TypeInclusion { AllTypes, UsedIRTypes, BinaryTypes };
+
+// Whether to classify collected types as public and private.
+enum class VisibilityHandling { NoVisibility, FindVisibility };
+
+// Whether a type is public or private. If visibility is not analyzed, the
+// visibility will be Unknown instead.
+enum class Visibility { Unknown, Public, Private };
+
+struct HeapTypeInfo {
+  Index useCount = 0;
+  Visibility visibility = Visibility::Unknown;
+};
+
+InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
+  Module& wasm,
+  TypeInclusion inclusion = TypeInclusion::AllTypes,
+  VisibilityHandling visibility = VisibilityHandling::NoVisibility);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.

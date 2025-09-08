@@ -73,6 +73,14 @@ inline FeatureSet get(UnaryOp op) {
       ret.setSignExt();
       break;
     }
+    case RelaxedTruncSVecF32x4ToVecI32x4:
+    case RelaxedTruncUVecF32x4ToVecI32x4:
+    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+    case RelaxedTruncZeroUVecF64x2ToVecI32x4: {
+      ret.setSIMD();
+      ret.setRelaxedSIMD();
+      break;
+    }
     default: {}
   }
   return ret;
@@ -157,6 +165,16 @@ inline FeatureSet get(BinaryOp op) {
     case MinVecF64x2:
     case MaxVecF64x2: {
       ret.setSIMD();
+      break;
+    }
+    case RelaxedMinVecF32x4:
+    case RelaxedMaxVecF32x4:
+    case RelaxedMinVecF64x2:
+    case RelaxedMaxVecF64x2:
+    case RelaxedSwizzleVecI8x16:
+    case RelaxedQ15MulrSVecI16x8: {
+      ret.setSIMD();
+      ret.setRelaxedSIMD();
       break;
     }
     default: {}

@@ -4,7 +4,7 @@
   (memory 256 256)
   (data (i32.const 10) "_________________")
 
-  (export "test1" $test1)
+  (export "test1" (func $test1))
 
   (func $test1
     (local $temp i32)

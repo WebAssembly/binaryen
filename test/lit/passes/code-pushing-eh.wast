@@ -4,10 +4,10 @@
 ;; The tests in this file test EffectAnalyzer, which is used by CodePushing.
 
 (module
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $1) (param i32))
   (tag $e (param i32))
 
-  ;; CHECK:      (func $cannot-push-past-call (type $none_=>_none)
+  ;; CHECK:      (func $cannot-push-past-call (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -28,7 +28,7 @@
   (func $cannot-push-past-call
     (local $x i32)
     (block $out
-      ;; This local.set cannot be pushed down, because the call below can throw
+      ;; This local.set cannot be pushed down, because the call below can throw.
       (local.set $x (i32.const 1))
       (call $cannot-push-past-call)
       (drop (i32.const 1))
@@ -37,7 +37,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-throw (type $none_=>_none)
+  ;; CHECK:      (func $cannot-push-past-throw (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -70,17 +70,17 @@
     )
   )
 
-  ;; CHECK:      (func $can-push-past-try (type $none_=>_none)
+  ;; CHECK:      (func $can-push-past-try_table (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (try $try
-  ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (throw $e
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:   (block $tryend
+  ;; CHECK-NEXT:    (block $catch
+  ;; CHECK-NEXT:     (try_table (catch_all $catch)
+  ;; CHECK-NEXT:      (throw $e
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (catch_all
-  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (br $tryend)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -97,17 +97,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $can-push-past-try
+  (func $can-push-past-try_table
     (local $x i32)
     (block $out
       ;; This local.set can be pushed down, because the 'throw' below is going
-      ;; to be caught by the inner catch_all
+      ;; to be caught by the inner catch_all.
       (local.set $x (i32.const 1))
-      (try
-        (do
-          (throw $e (i32.const 0))
+      (block $tryend
+        (block $catch
+          (try_table (catch_all $catch)
+            (throw $e (i32.const 0))
+          )
+          (br $tryend)
         )
-        (catch_all)
       )
       (drop (i32.const 1))
       (br_if $out (i32.const 2))
@@ -115,24 +117,23 @@
     )
   )
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $cannot-push-past-try (type $none_=>_none)
+  ;; CHECK:      (func $cannot-push-past-try_table (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (try $try
-  ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (call $foo)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (catch $e
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (pop i32)
+  ;; CHECK-NEXT:   (block $tryend
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $catch (result i32)
+  ;; CHECK-NEXT:      (try_table (catch $e $catch)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $tryend)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -147,18 +148,20 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cannot-push-past-try
+  (func $cannot-push-past-try_table
     (local $x i32)
     (block $out
       ;; This local.set cannot be pushed down, because the exception thrown by
-      ;; 'call $foo' below may not be caught by 'catch $e'
+      ;; 'call $foo' below may not be caught by 'catch $e'.
       (local.set $x (i32.const 1))
-      (try
-        (do
-          (call $foo)
-        )
-        (catch $e
-          (drop (pop i32))
+      (block $tryend
+        (drop
+          (block $catch (result i32)
+            (try_table (catch $e $catch)
+              (call $foo)
+            )
+            (br $tryend)
+          )
         )
       )
       (drop (i32.const 1))
@@ -167,127 +170,22 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-rethrow-within-catch (type $none_=>_none)
+  ;; CHECK:      (func $cannot-push-past-throw_ref-within-catch (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (try $l0
-  ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (throw $e
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (catch_all
-  ;; CHECK-NEXT:     (rethrow $l0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br_if $out
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cannot-push-past-rethrow-within-catch
-    (local $x i32)
-    (block $out
-      ;; This local.set cannot be pushed down, because there is 'rethrow' within
-      ;; the inner catch_all
-      (local.set $x (i32.const 1))
-      (try $l0
-        (do
-          (throw $e (i32.const 0))
-        )
-        (catch_all
-          (rethrow $l0)
-        )
-      )
-      (drop (i32.const 1))
-      (br_if $out (i32.const 2))
-      (drop (local.get $x))
-    )
-  )
-
-  ;; CHECK:      (func $can-push-past-try-delegate (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (try $l
-  ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (try $try
-  ;; CHECK-NEXT:      (do
+  ;; CHECK-NEXT:   (block $tryend
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (block $catch (result exnref)
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $catch)
   ;; CHECK-NEXT:       (throw $e
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (delegate $l)
+  ;; CHECK-NEXT:      (br $tryend)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (catch_all
-  ;; CHECK-NEXT:     (nop)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br_if $out
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $can-push-past-try-delegate
-    (local $x i32)
-    (block $out
-      ;; This local.set can be pushed down, because the 'throw' below is going
-      ;; to be caught by the catch_all
-      (local.set $x (i32.const 1))
-      (try $l
-        (do
-          (try
-            (do
-              (throw $e (i32.const 0))
-            )
-            (delegate $l)
-          )
-        )
-        (catch_all)
-      )
-      (drop (i32.const 1))
-      (br_if $out (i32.const 2))
-      (drop (local.get $x))
-    )
-  )
-
-  ;; CHECK:      (func $cannot-push-past-try-delegate (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (try $l
-  ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (try $try
-  ;; CHECK-NEXT:      (do
-  ;; CHECK-NEXT:       (throw $e
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (delegate 2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (catch_all
-  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -301,22 +199,21 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cannot-push-past-try-delegate
+  (func $cannot-push-past-throw_ref-within-catch
     (local $x i32)
     (block $out
-      ;; This local.set cannot be pushed down, because the 'delegate' bypasses
-      ;; the catch_all, making the whole 'try' throwable.
+      ;; This local.set cannot be pushed down, because there is 'throw_ref'
+      ;; within the catch handler.
       (local.set $x (i32.const 1))
-      (try $l
-        (do
-          (try
-            (do
+      (block $tryend
+        (throw_ref
+          (block $catch (result exnref)
+            (try_table (catch_all_ref $catch)
               (throw $e (i32.const 0))
             )
-            (delegate 2)
+            (br $tryend)
           )
         )
-        (catch_all)
       )
       (drop (i32.const 1))
       (br_if $out (i32.const 2))
@@ -324,13 +221,15 @@
     )
   )
 
-  ;; CHECK:      (func $can-push-past-conditional-throw (type $i32_=>_none) (param $param i32)
+  ;; CHECK:      (func $can-push-past-conditional-throw (type $1) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $param)
-  ;; CHECK-NEXT:    (throw $e
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (throw $e
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
@@ -351,13 +250,15 @@
       (local.set $x (i32.const 1))
       (if
         (local.get $param)
-        (throw $e (i32.const 0))
+        (then
+          (throw $e (i32.const 0))
+        )
       )
       (drop (local.get $x))
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-conditional-throw-extra-use (type $i32_=>_none) (param $param i32)
+  ;; CHECK:      (func $cannot-push-past-conditional-throw-extra-use (type $1) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (local.set $x
@@ -365,8 +266,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $param)
-  ;; CHECK-NEXT:    (throw $e
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (throw $e
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -385,7 +288,9 @@
       (local.set $x (i32.const 1))
       (if
         (local.get $param)
-        (throw $e (i32.const 0))
+        (then
+          (throw $e (i32.const 0))
+        )
       )
       (drop (local.get $x))
     )

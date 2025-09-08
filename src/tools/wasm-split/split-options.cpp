@@ -61,6 +61,9 @@ std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
     case WasmSplitOptions::Mode::Split:
       o << "split";
       break;
+    case WasmSplitOptions::Mode::MultiSplit:
+      o << "multi-split";
+      break;
     case WasmSplitOptions::Mode::Instrument:
       o << "instrument";
       break;
@@ -91,7 +94,14 @@ WasmSplitOptions::WasmSplitOptions()
          "Split an input module into two output modules. The default mode.",
          WasmSplitOption,
          Options::Arguments::Zero,
-         [&](Options* o, const std::string& arugment) { mode = Mode::Split; })
+         [&](Options* o, const std::string& argument) { mode = Mode::Split; })
+    .add(
+      "--multi-split",
+      "",
+      "Split an input module into an arbitrary number of output modules.",
+      WasmSplitOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { mode = Mode::MultiSplit; })
     .add(
       "--instrument",
       "",
@@ -129,7 +139,7 @@ WasmSplitOptions::WasmSplitOptions()
     .add("--keep-funcs",
          "",
          "Comma-separated list of functions to keep in the primary module. The "
-         "rest will be split out. Cannot be used with --profile or "
+         "rest will be split out. Can be used alongside --profile and "
          "--split-funcs. You can also pass a file with one function per line "
          "by passing @filename.",
          WasmSplitOption,
@@ -137,19 +147,41 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            keepFuncs = parseNameList(argument);
+           hasKeepFuncs = true;
          })
     .add("--split-funcs",
          "",
          "Comma-separated list of functions to split out to the secondary "
-         "module. The rest will be kept. Cannot be used with --profile or "
-         "--keep-funcs. You can also pass a file with one function per line "
+         "module. The rest will be kept. Can be used alongside --profile and "
+         "--keep-funcs. This takes precedence over other split options. "
+         "You can also pass a file with one function per line "
          "by passing @filename.",
          WasmSplitOption,
          {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            splitFuncs = parseNameList(argument);
+           hasSplitFuncs = true;
          })
+    .add(
+      "--manifest",
+      "",
+      "File describing the functions to be split into each module. Each "
+      "section separated by a blank line begins with the base name of an "
+      "output module, which is followed by a list of functions to place in "
+      "that module, one per line.",
+      WasmSplitOption,
+      {Mode::MultiSplit},
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { manifestFile = argument; })
+    .add("--out-prefix",
+         "",
+         "Prefix prepended to module names in the manifest file to create "
+         "output file names.",
+         WasmSplitOption,
+         {Mode::MultiSplit},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { outPrefix = argument; })
     .add("--primary-output",
          "-o1",
          "Output file for the primary module.",
@@ -172,15 +204,24 @@ WasmSplitOptions::WasmSplitOptions()
          "",
          "Write a symbol map file for each of the output modules.",
          WasmSplitOption,
-         {Mode::Split},
+         {Mode::Split, Mode::MultiSplit},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { symbolMap = true; })
+    .add(
+      "--no-placeholders",
+      "",
+      "Do not import placeholder functions. Calls to secondary functions will "
+      "fail before the secondary module has been instantiated.",
+      WasmSplitOption,
+      {Mode::Split, Mode::MultiSplit},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { usePlaceholders = false; })
     .add(
       "--placeholdermap",
       "",
       "Write a file mapping placeholder indices to the function names.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { placeholderMap = true; })
     .add("--import-namespace",
@@ -190,7 +231,7 @@ WasmSplitOptions::WasmSplitOptions()
          "module into the secondary module. In instrument mode, refers to the "
          "namespace from which to import the secondary memory, if any.",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument},
+         {Mode::Split, Mode::Instrument, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
@@ -277,7 +318,7 @@ WasmSplitOptions::WasmSplitOptions()
       "removed once simpler ways of naming modules are widely available. See "
       "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
       WasmSplitOption,
-      {Mode::Split, Mode::Instrument},
+      {Mode::Split, Mode::MultiSplit, Mode::Instrument},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
     .add("--initial-table",
@@ -296,14 +337,14 @@ WasmSplitOptions::WasmSplitOptions()
          "-S",
          "Emit text instead of binary for the output file or files.",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument},
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
     .add("--debuginfo",
          "-g",
          "Emit names section in wasm binary (or full debuginfo in wast)",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument},
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
@@ -312,7 +353,7 @@ WasmSplitOptions::WasmSplitOptions()
          "-o",
          "Output file.",
          WasmSplitOption,
-         {Mode::Instrument, Mode::MergeProfiles},
+         {Mode::Instrument, Mode::MergeProfiles, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { output = argument; })
     .add("--unescape",
@@ -397,6 +438,7 @@ bool WasmSplitOptions::validate() {
   }
   switch (mode) {
     case Mode::Split:
+    case Mode::MultiSplit:
     case Mode::Instrument:
       if (inputFiles.size() > 1) {
         fail("Cannot have more than one input file.");
@@ -418,18 +460,6 @@ bool WasmSplitOptions::validate() {
       std::stringstream msg;
       msg << "Option " << opt << " cannot be used in " << mode << " mode.";
       fail(msg.str());
-    }
-  }
-
-  if (mode == Mode::Split) {
-    if (profileFile.size() && keepFuncs.size()) {
-      fail("Cannot use both --profile and --keep-funcs.");
-    }
-    if (profileFile.size() && splitFuncs.size()) {
-      fail("Cannot use both --profile and --split-funcs.");
-    }
-    if (keepFuncs.size() && splitFuncs.size()) {
-      fail("Cannot use both --keep-funcs and --split-funcs.");
     }
   }
 

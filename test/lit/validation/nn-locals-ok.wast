@@ -1,6 +1,6 @@
 ;; Test for validation of non-nullable locals
 
-;; RUN: wasm-opt -all --enable-gc-nn-locals %s --print | filecheck %s
+;; RUN: wasm-opt -all %s --print | filecheck %s
 
 ;; CHECK: (module
 

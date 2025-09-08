@@ -14,6 +14,7 @@
 
 import filecmp
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -87,6 +88,9 @@ def untar(tarfile, outdir):
             shutil.rmtree(tmpdir)
 
 
+QUOTED = re.compile(r'\(module\s*(\$\S*)?\s+(quote|binary)')
+
+
 def split_wast(wastFile):
     # if it's a binary, leave it as is, we can't split it
     wast = None
@@ -124,6 +128,7 @@ def split_wast(wastFile):
         return j
 
     i = 0
+    ignoring_quoted = False
     while i >= 0:
         start = wast.find('(', i)
         if start >= 0 and wast[start + 1] == ';':
@@ -141,11 +146,17 @@ def split_wast(wastFile):
             break
         i = to_end(start + 1)
         chunk = wast[start:i]
+        if QUOTED.match(chunk):
+            # There may be assertions after this quoted module, but we aren't
+            # returning the module, so we need to skip the assertions as well.
+            ignoring_quoted = True
+            continue
         if chunk.startswith('(module'):
+            ignoring_quoted = False
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):
             continue
-        elif chunk.startswith(('(assert', '(invoke', '(register')):
+        elif chunk.startswith(('(assert', '(invoke', '(register')) and not ignoring_quoted:
             # ret may be empty if there are some asserts before the first
             # module. in that case these are asserts *without* a module, which
             # are valid (they may check something that doesn't refer to a module
@@ -159,7 +170,7 @@ def split_wast(wastFile):
 # write a split wast from split_wast. the wast may be binary if the original
 # file was binary
 def write_wast(filename, wast, asserts=[]):
-    if type(wast) == bytes:
+    if type(wast) is bytes:
         assert not asserts
         with open(filename, 'wb') as o:
             o.write(wast)
@@ -171,7 +182,7 @@ def write_wast(filename, wast, asserts=[]):
 def run_command(cmd, expected_status=0, stderr=None,
                 expected_err=None, err_contains=False, err_ignore=None):
     if expected_err is not None:
-        assert stderr == subprocess.PIPE or stderr is None,\
+        assert stderr == subprocess.PIPE or stderr is None, \
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
     print('executing: ', ' '.join(cmd))
@@ -193,15 +204,3 @@ def run_command(cmd, expected_status=0, stderr=None,
 def node_has_webassembly(cmd):
     cmd = [cmd, '-e', 'process.stdout.write(typeof WebAssembly)']
     return run_command(cmd) == 'object'
-
-
-def js_test_wrap():
-    # common wrapper code for JS tests, waiting for binaryen.js to become ready
-    # and providing common utility used by all tests:
-    return '''
-        (async function __in_test_code__() {
-            var binaryen = await Binaryen()
-            function assert(x) { if (!x) throw Error('Test assertion failed'); }
-            %TEST%
-        })();
-    '''

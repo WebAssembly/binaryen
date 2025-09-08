@@ -6,19 +6,20 @@
 ;; RUN: wasm-opt %s --legalize-js-interface --pass-arg=legalize-js-interface-exported-helpers -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
-
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-
-  ;; CHECK:      (import "env" "imported" (func $legalimport$imported (result i32)))
-
-  ;; CHECK:      (export "get_i64" (func $legalstub$get_i64))
   (export "get_i64" (func $get_i64))
   (import "env" "imported" (func $imported (result i64)))
   (export "__set_temp_ret" (func $__set_temp_ret))
   (export "__get_temp_ret" (func $__get_temp_ret))
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $1 (func (result i64)))
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (import "env" "imported" (func $legalimport$imported (result i32)))
+
+  ;; CHECK:      (export "get_i64" (func $legalstub$get_i64))
+
   ;; CHECK:      (func $get_i64 (result i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $legalfunc$imported)
@@ -30,7 +31,6 @@
     (i64.const 0)
   )
   ;; CHECK:      (func $__set_temp_ret (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $__set_temp_ret (param i32))
   ;; CHECK:      (func $__get_temp_ret (result i32)

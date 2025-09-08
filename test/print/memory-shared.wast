@@ -1,3 +1,3 @@
 (module
- (memory $0 (shared 23 256))
+ (memory $0 23 256 shared)
 )

@@ -34,6 +34,7 @@
 
 #include "call-utils.h"
 #include "ir/drop.h"
+#include "ir/find_all.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -129,7 +130,7 @@ private:
       return CallUtils::Unknown{};
     }
 
-    Index index = c->value.geti32();
+    Address index = c->value.getUnsigned();
 
     // Check if index is invalid, or the type is wrong.
     auto& flatTable = *table.flatTable;
@@ -202,7 +203,7 @@ struct Directize : public Pass {
 
     // TODO: consider a per-table option here
     auto initialContentsImmutable =
-      getPassOptions().hasArgument("directize-initial-contents-immutable");
+      hasArgument("directize-initial-contents-immutable");
 
     // Set up the initial info.
     TableInfoMap tables;
@@ -222,7 +223,7 @@ struct Directize : public Pass {
 
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Table) {
-        tables[ex->value].mayBeModified = true;
+        tables[*ex->getInternalName()].mayBeModified = true;
       }
     }
 
@@ -250,9 +251,27 @@ struct Directize : public Pass {
         if (func->imported()) {
           return;
         }
-        for (auto* set : FindAll<TableSet>(func->body).list) {
-          tablesWithSet.insert(set->table);
-        }
+
+        struct Finder : public PostWalker<Finder> {
+          TablesWithSet& tablesWithSet;
+
+          Finder(TablesWithSet& tablesWithSet) : tablesWithSet(tablesWithSet) {}
+
+          void visitTableSet(TableSet* curr) {
+            tablesWithSet.insert(curr->table);
+          }
+          void visitTableFill(TableFill* curr) {
+            tablesWithSet.insert(curr->table);
+          }
+          void visitTableCopy(TableCopy* curr) {
+            tablesWithSet.insert(curr->destTable);
+          }
+          void visitTableInit(TableInit* curr) {
+            tablesWithSet.insert(curr->table);
+          }
+        };
+
+        Finder(tablesWithSet).walkFunction(func);
       });
 
     for (auto& [_, names] : analysis.map) {

@@ -37,6 +37,9 @@ struct SpillPointers
   : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
   bool isFunctionParallel() override { return true; }
 
+  // Adds writes to memory.
+  bool addsEffects() override { return true; }
+
   std::unique_ptr<Pass> create() override {
     return std::make_unique<SpillPointers>();
   }
@@ -66,7 +69,7 @@ struct SpillPointers
   // main entry point
 
   void doWalkFunction(Function* func) {
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
     spillPointers();
   }
 
@@ -76,7 +79,7 @@ struct SpillPointers
   Type pointerType;
 
   void spillPointers() {
-    pointerType = getModule()->memories[0]->indexType;
+    pointerType = getModule()->memories[0]->addressType;
 
     // we only care about possible pointers
     auto* func = getFunction();

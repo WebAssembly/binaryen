@@ -2,7 +2,7 @@
   (global $global1 (mut i32) (i32.const 10))
   (global $global2 (mut i32) (i32.const 20))
 
-  (func "test1" (param $any (ref null any))
+  (func $test1 (export "test1") (param $any (ref null any))
     ;; This is ok to call: when ignoring external input we assume 0 for the
     ;; parameters, and this parameter is nullable.
     (drop
@@ -13,7 +13,7 @@
     )
   )
 
-  (func "test2" (param $any (ref any))
+  (func $test2 (export "test2") (param $any (ref any))
     ;; This is *not* ok to call: when ignoring external input we assume 0 for
     ;; the parameters, and this parameter is not nullable.
     (drop
@@ -24,7 +24,7 @@
     )
   )
 
-  (func "keepalive" (result i32)
+  (func $keepalive (export "keepalive") (result i32)
     (i32.add
       (global.get $global1)
       (global.get $global2)

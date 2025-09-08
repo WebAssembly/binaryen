@@ -27,18 +27,22 @@
     (drop
      (if (result f64)
       (i32.const 1)
-      (block (result f64)
-       (nop)
-       (f64.load
-        (i32.const 19)
+      (then
+       (block (result f64)
+        (nop)
+        (f64.load
+         (i32.const 19)
+        )
        )
       )
-      (block
-       (drop
-        (f64.const 1)
+      (else
+       (block
+        (drop
+         (f64.const 1)
+        )
+        (br $label$1)
+        (nop)
        )
-       (br $label$1)
-       (nop)
       )
      )
     )

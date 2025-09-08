@@ -79,7 +79,7 @@ def parse_args(args):
         help=('If specified, all unfreed (but still referenced) pointers at the'
               ' end of execution are considered memory leaks. Default: disabled.'))
     parser.add_argument(
-        '--spec-test', action='append', nargs='*', default=[], dest='spec_tests',
+        '--spec-test', action='append', default=[], dest='spec_tests',
         help='Names specific spec tests to run.')
     parser.add_argument(
         'positional_args', metavar='TEST_SUITE', nargs='*',
@@ -96,8 +96,8 @@ def parse_args(args):
     # TODO Allow each script to inherit the default set of options and add its
     # own custom options on top of that
     parser.add_argument(
-        '--auto-initial-contents', dest='auto_initial_contents',
-        action='store_true', default=False,
+        '--no-auto-initial-contents', dest='auto_initial_contents',
+        action='store_false', default=True,
         help='Select important initial contents automaticaly in fuzzer. '
              'Default: disabled.')
 
@@ -159,7 +159,6 @@ if not options.out_dir:
 
 if not os.path.exists(options.out_dir):
     os.makedirs(options.out_dir)
-os.chdir(options.out_dir)
 
 
 # Finds the given executable 'program' in PATH.
@@ -192,17 +191,14 @@ def which(program):
                     return exe_file + '.bat'
 
 
-WATERFALL_BUILD_DIR = os.path.join(options.binaryen_test, 'wasm-install')
-BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
-
 NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
             which('gcc') or which('clang'))
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
-NODEJS = os.getenv('NODE', which('node') or which('nodejs'))
+NODEJS = os.environ.get('NODE') or which('node') or which('nodejs')
 MOZJS = which('mozjs') or which('spidermonkey')
 
-V8 = which('v8') or which('d8')
+V8 = os.environ.get('V8') or which('v8') or which('d8')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
@@ -258,13 +254,10 @@ def has_shell_timeout():
 # See https://github.com/v8/v8/blob/master/src/wasm/wasm-feature-flags.h
 V8_OPTS = [
     '--wasm-staging',
-    '--experimental-wasm-eh',
     '--experimental-wasm-compilation-hints',
-    '--experimental-wasm-gc',
-    '--experimental-wasm-typed-funcref',
-    '--experimental-wasm-memory64',
-    '--experimental-wasm-extended-const',
-    '--experimental-wasm-nn-locals',
+    '--experimental-wasm-stringref',
+    '--experimental-wasm-fp16',
+    '--experimental-wasm-custom-descriptors',
 ]
 
 # external tools
@@ -322,7 +315,7 @@ class Py2CalledProcessError(subprocess.CalledProcessError):
 
 
 def run_process(cmd, check=True, input=None, capture_output=False, decode_output=True, *args, **kw):
-    if input and type(input) == str:
+    if input and type(input) is str:
         input = bytes(input, 'utf-8')
     if capture_output:
         kw['stdout'] = subprocess.PIPE
@@ -365,7 +358,7 @@ def fail_if_not_contained(actual, expected):
 
 
 def fail_if_not_identical_to_file(actual, expected_file):
-    binary = expected_file.endswith(".wasm") or type(actual) == bytes
+    binary = expected_file.endswith(".wasm") or type(actual) is bytes
     with open(expected_file, 'rb' if binary else 'r') as f:
         fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
@@ -387,13 +380,16 @@ def get_tests(test_dir, extensions=[], recursive=False):
         tests += glob.glob(os.path.join(test_dir, star + ext), recursive=True)
     if options.test_name_filter:
         tests = fnmatch.filter(tests, options.test_name_filter)
+    tests = [item for item in tests if os.path.isfile(item)]
     return sorted(tests)
 
 
-if not options.spec_tests:
-    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+if options.spec_tests:
+    options.spec_tests = [os.path.abspath(t) for t in options.spec_tests]
 else:
-    options.spec_tests = options.spec_tests[:]
+    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'], recursive=True)
+
+os.chdir(options.out_dir)
 
 # 11/27/2019: We updated the spec test suite to upstream spec repo. For some
 # files that started failing after this update, we added the new files to this
@@ -404,66 +400,103 @@ else:
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
 SPEC_TESTS_TO_SKIP = [
-    # Stacky code / notation
-    'block.wast',
-    'call.wast',
-    'float_exprs.wast',
-    'globals.wast',
-    'loop.wast',
-    'nop.wast',
-    'select.wast',
-    'stack.wast',
-    'unwind.wast',
+    # Requires us to write our own floating point parser
+    'const.wast',
 
-    # Binary module
-    'binary.wast',
-    'binary-leb128.wast',
-    'custom.wast',
-
-    # Empty 'then' or 'else' in 'if'
-    'if.wast',
-    'local_set.wast',
-    'store.wast',
-
-    # No module in a file
-    'token.wast',
-    'utf8-custom-section-id.wast',
-    'utf8-import-field.wast',
-    'utf8-import-module.wast',
-    'utf8-invalid-encoding.wast',
-
-    # 'register' command
+    # Unlinkable module accepted
     'linking.wast',
 
-    # Misc. unsupported constructs
-    'call_indirect.wast',  # Empty (param) and (result)
-    'const.wast',  # Unparenthesized expression
-    'data.wast',  # Various unsupported (data) notations
-    'elem.wast',  # Unsupported 'offset' syntax in (elem)
-    'exports.wast',  # Multiple inlined exports for a function
-    'func.wast',  # Forward named type reference
-    'skip-stack-guard-page.wast',  # Hexadecimal style (0x..) in memory offset
+    # Invalid module accepted
+    'unreached-invalid.wast',
 
-    # Untriaged: We don't know the cause of the error yet
-    'address.wast',  # wasm2js 'assert_return' failure
-    'br_if.wast',  # Validation error
-    'float_literals.wast',  # 'assert_return' failure
-    'int_literals.wast',  # 'assert_return' failure
-    'local_tee.wast',  # Validation failure
-    'memory_grow.wast',  # 'assert_return' failure
-    'start.wast',  # Assertion failure
-    'type.wast',  # 'assertion_invalid' failure
-    'unreachable.wast',  # Validation failure
-    'unreached-invalid.wast'  # 'assert_invalid' failure
+    # Test invalid
+    'elem.wast',
+]
+SPEC_TESTSUITE_TESTS_TO_SKIP = [
+    'address.wast',  # 64-bit offset allowed by memory64
+    'align.wast',    # Alignment bit 6 used by multi-memory
+    'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
+    'comments.wast',  # Issue with carriage returns being treated as newlines
+    'const.wast',    # Hex float constant not recognized as out of range
+    'conversions.wast',  # Promoted NaN should be canonical
+    'data.wast',    # Constant global references allowed by GC
+    'elem.wast',    # Requires modeling empty declarative segments
+    'f32.wast',     # Adding -0 and -nan should give a canonical NaN
+    'f64.wast',     # Adding -0 and -nan should give a canonical NaN
+    'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
+    'float_misc.wast',   # Rounding wrong on f64.sqrt
+    'func.wast',    # Duplicate parameter names not properly rejected
+    'global.wast',  # Globals allowed to refer to previous globals by GC
+    'if.wast',      # Requires more precise unreachable validation
+    'imports.wast',  # Requires wast `register` support
+    'linking.wast',  # Requires wast `register` support
+    'memory.wast',   # Multiple memories now allowed
+    'annotations.wast',  # String annotations IDs should be allowed
+    'id.wast',       # Empty IDs should be disallowed
+    'throw.wast',    # Requires try_table interpretation
+    'try_catch.wast',  # Requires wast `register` support
+    'tag.wast',      # Non-empty tag results allowed by stack switching
+    'try_table.wast',  # Requires try_table interpretation
+    # 'br_on_non_null.wast',  # Requires sending values on br_on_non_null
+    # 'br_on_null.wast',      # Requires sending values on br_on_null
+    'local_init.wast',  # Requires local validation to respect unnamed blocks
+    'ref_func.wast',   # Requires rejecting undeclared functions references
+    'ref_is_null.wast',  # Requires ref.null wast constants
+    'ref_null.wast',     # Requires ref.null wast constants
+    'return_call_indirect.wast',  # Requires more precise unreachable validation
+    'select.wast',  # Requires ref.null wast constants
+    'table.wast',  # Requires support for table default elements
+    'type-equivalence.wast',  # Recursive types allowed by GC
+    'unreached-invalid.wast',  # Requires more precise unreachable validation
+    'array.wast',  # Requires support for table default elements
+    'br_if.wast',  # Requires more precise branch validation
+    'br_on_cast.wast',  # Requires host references to not be externalized i31refs
+    'br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs
+    'extern.wast',    # Requires ref.host wast constants
+    'i31.wast',       # Requires support for table default elements
+    'ref_cast.wast',  # Requires host references to not be externalized i31refs
+    'ref_test.wast',  # Requires host references to not be externalized i31refs
+    'struct.wast',    # Duplicate field names not properly rejected
+    'type-rec.wast',  # Requires wast `register` support
+    'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
+    'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
+    'memory64.wast',        # Multiple memories now allowed
+    'table_init.wast',      # Requires support for elem.drop
+    'imports0.wast',        # Requires wast `register` support
+    'imports2.wast',        # Requires wast `register` support
+    'imports3.wast',        # Requires wast `register` support
+    'linking0.wast',        # Requires wast `register` support
+    'linking3.wast',        # Requires wast `register` support
+    'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
+    'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
+    'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
+    'relaxed_dot_product.wast',   # Requires wast `either` support
+    'relaxed_laneselect.wast',    # Requires wast `either` support
+    'relaxed_madd_nmadd.wast',    # Requires wast `either` support
+    'relaxed_min_max.wast',       # Requires wast `either` support
+    'simd_address.wast',          # 64-bit offset allowed by memory64
+    'simd_const.wast',            # Hex float constant not recognized as out of range
+    'simd_conversions.wast',      # Promoted NaN should be canonical
+    'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f32x4_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f32x4_rounding.wast',   # Ceil of NaN should give a canonical NaN
+    'simd_f64x2.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f64x2_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f64x2_rounding.wast',   # Ceil of NaN should give a canonical NaN
+    'simd_i32x4_cmp.wast',        # UBSan error on integer overflow
+    'simd_i32x4_arith2.wast',     # UBSan error on integer overflow
+    'simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
+    'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
-                      in SPEC_TESTS_TO_SKIP]
-
+                      in (SPEC_TESTSUITE_TESTS_TO_SKIP if 'testsuite' in t
+                          else SPEC_TESTS_TO_SKIP)]
 
 # check utilities
 
+
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary', original_wast=None):
+                        binary_suffix='.fromBinary'):
     # checks we can convert the wast to binary and back
 
     print('         (binary format check)')
@@ -482,7 +515,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     assert os.path.exists('ab.wast')
 
     # make sure it is a valid wast
-    cmd = WASM_OPT + ['ab.wast', '-all']
+    cmd = WASM_OPT + ['ab.wast', '-all', '-q']
     print('            ', ' '.join(cmd))
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
@@ -526,3 +559,19 @@ def skip_if_on_windows(name):
         print('skipping test "%s" on windows' % name)
         return True
     return False
+
+
+test_suffixes = ['*.wasm', '*.wast', '*.wat']
+
+
+# return a list of all the tests in the entire test suite
+def get_all_tests():
+    core_tests = get_tests(get_test_dir('.'), test_suffixes)
+    passes_tests = get_tests(get_test_dir('passes'), test_suffixes)
+    spec_tests = get_tests(get_test_dir('spec'), test_suffixes)
+    wasm2js_tests = get_tests(get_test_dir('wasm2js'), test_suffixes)
+    lld_tests = get_tests(get_test_dir('lld'), test_suffixes)
+    unit_tests = get_tests(get_test_dir(os.path.join('unit', 'input')), test_suffixes)
+    lit_tests = get_tests(get_test_dir('lit'), test_suffixes, recursive=True)
+
+    return core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests

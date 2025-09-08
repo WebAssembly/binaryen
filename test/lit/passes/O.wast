@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt -O -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (type $i64_=>_none (func (param i64)))
+  ;; CHECK:      (type $2 (func (param i64)))
 
   ;; CHECK:      (export "ret" (func $ret))
 
@@ -20,14 +20,16 @@
 
   ;; CHECK:      (export "end-if-else-call" (func $end-if-else-call))
 
-  ;; CHECK:      (func $ret (; has Stack IR ;) (result i32)
+  ;; CHECK:      (func $ret (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $ret)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $ret)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 999)
@@ -36,9 +38,11 @@
     (block $out (result i32)
       (drop (call $ret))
       (if (call $ret)
-        (return
+        (then
           (return
-            (i32.const 1)
+            (return
+              (i32.const 1)
+            )
           )
         )
       )
@@ -46,7 +50,7 @@
       (unreachable)
     )
   )
-  ;; CHECK:      (func $if-0-unreachable-to-none (; has Stack IR ;) (param $0 i64)
+  ;; CHECK:      (func $if-0-unreachable-to-none (param $0 i64)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $if-0-unreachable-to-none (export "waka") (param $var$0 i64)
@@ -55,12 +59,16 @@
    (block $label$1
     (if
      (i32.const 0)
-     (br $label$1)
-     (unreachable)
+     (then
+      (br $label$1)
+     )
+     (else
+      (unreachable)
+     )
     )
    )
   )
-  ;; CHECK:      (func $many-selects (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $many-selects (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const -1073741824)
   ;; CHECK-NEXT:   (select
@@ -83,22 +91,28 @@
      (local.get $0)
      (i32.const -1073741824)
     )
-    (local.set $0
-     (i32.const -1073741824)
-    )
-    (if
-     (i32.gt_s
-      (local.get $0)
-      (i32.const 1073741823)
-     )
+    (then
      (local.set $0
-      (i32.const 1073741823)
+      (i32.const -1073741824)
+     )
+    )
+    (else
+     (if
+      (i32.gt_s
+       (local.get $0)
+       (i32.const 1073741823)
+      )
+      (then
+       (local.set $0
+        (i32.const 1073741823)
+       )
+      )
      )
     )
    )
    (local.get $0)
   )
-  ;; CHECK:      (func $end-if-else (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $end-if-else (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (local.get $0)
@@ -108,24 +122,32 @@
   (func $end-if-else (export "end-if-else") (param $x i32) (result i32)
     (if
       (local.get $x)
-      (local.set $x
-        (i32.const 1)
+      (then
+        (local.set $x
+          (i32.const 1)
+        )
       )
     )
     (local.get $x)
   )
-  ;; CHECK:      (func $end-if-else-call (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $end-if-else-call (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (call $ret)
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $ret)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $end-if-else-call (export "end-if-else-call") (param $x i32) (result i32)
     (if
       (local.get $x)
-      (local.set $x
-        (call $ret)
+      (then
+        (local.set $x
+          (call $ret)
+        )
       )
     )
     (local.get $x)

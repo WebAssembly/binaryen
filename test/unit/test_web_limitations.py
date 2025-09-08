@@ -20,3 +20,19 @@ class WebLimitations(utils.BinaryenTestCase):
                                input=module, capture_output=True)
         self.assertIn('Some VMs may not accept this binary because it has a large number of parameters in function foo.',
                       p.stderr)
+
+    def test_many_locals(self):
+        """Test that we warn on large numbers of locals, which Web VMs
+        disallow."""
+
+        params = '(local i32) ' * 50_001
+        module = '''
+        (module
+         (func $foo %s
+         )
+        )
+        ''' % params
+        p = shared.run_process(shared.WASM_OPT + ['-o', os.devnull],
+                               input=module, capture_output=True)
+        self.assertIn('Some VMs may not accept this binary because it has a large number of locals in function foo.',
+                      p.stderr)

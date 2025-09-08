@@ -7,8 +7,12 @@
     )
     (if
      (i32.const -10)
-     (br $block$3$break)
-     (br $block$2$break)
+     (then
+      (br $block$3$break)
+     )
+     (else
+      (br $block$2$break)
+     )
     )
    )
    (block

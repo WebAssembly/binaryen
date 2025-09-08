@@ -4,12 +4,12 @@
 (module
  ;; The signature should be refined to a single self-referential type.
 
- ;; CHECK:      (type $refined (func (param (ref $refined)) (result (ref $refined))))
- (type $refined (func (param (ref $refined)) (result (ref $refined))))
+ ;; CHECK:      (type $refined (func (param (ref (exact $refined))) (result (ref (exact $refined)))))
+ (type $refined (func (param (ref (exact $refined))) (result (ref (exact $refined)))))
 
  ;; CHECK:      (elem declare func $foo)
 
- ;; CHECK:      (func $foo (type $refined) (param $0 (ref $refined)) (result (ref $refined))
+ ;; CHECK:      (func $foo (type $refined) (param $0 (ref (exact $refined))) (result (ref (exact $refined)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (ref.func $foo)
@@ -31,16 +31,16 @@
  ;; The signatures should be refined to a pair of mutually self-referential types.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $1 (func (param f32 (ref $1)) (result (ref $0))))
+ ;; CHECK-NEXT:  (type $1 (func (param f32 (ref (exact $1))) (result (ref (exact $0)))))
 
- ;; CHECK:       (type $0 (func (param i32 (ref $0)) (result (ref $1))))
+ ;; CHECK:       (type $0 (func (param i32 (ref (exact $0))) (result (ref (exact $1)))))
  (type $0 (func (param i32 funcref) (result funcref)))
  (type $1 (func (param f32 funcref) (result funcref)))
 
 
  ;; CHECK:      (elem declare func $bar $foo)
 
- ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
+ ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref (exact $0))) (result (ref (exact $1)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (i32.const 0)
@@ -59,7 +59,7 @@
   (ref.func $bar)
  )
 
- ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref $1)) (result (ref $0))
+ ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref (exact $1))) (result (ref (exact $0)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $bar
  ;; CHECK-NEXT:    (f32.const 0)
@@ -85,16 +85,16 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $1 (func (param (ref $0))))
+  ;; CHECK-NEXT:  (type $1 (func (param (ref (exact $0)))))
 
-  ;; CHECK:       (type $0 (func (param (ref $0))))
+  ;; CHECK:       (type $0 (func (param (ref (exact $0)))))
   (type $0 (func (param funcref)))
   (type $1 (func (param funcref)))
  )
 
  ;; CHECK:      (elem declare func $foo)
 
- ;; CHECK:      (func $foo (type $0) (param $0 (ref $0))
+ ;; CHECK:      (func $foo (type $0) (param $0 (ref (exact $0)))
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (ref.func $foo)
  ;; CHECK-NEXT:  )
@@ -105,7 +105,7 @@
   )
  )
 
- ;; CHECK:      (func $bar (type $1) (param $0 (ref $0))
+ ;; CHECK:      (func $bar (type $1) (param $0 (ref (exact $0)))
  ;; CHECK-NEXT:  (call $bar
  ;; CHECK-NEXT:   (ref.func $foo)
  ;; CHECK-NEXT:  )
@@ -122,11 +122,11 @@
  ;; another type that refers to them.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $2 (func (param (ref $0)) (result (ref $1))))
+ ;; CHECK-NEXT:  (type $2 (func (param (ref (exact $0))) (result (ref (exact $1)))))
 
- ;; CHECK:       (type $1 (func (param f32 (ref $1)) (result (ref $0))))
+ ;; CHECK:       (type $1 (func (param f32 (ref (exact $1))) (result (ref (exact $0)))))
 
- ;; CHECK:       (type $0 (func (param i32 (ref $0)) (result (ref $1))))
+ ;; CHECK:       (type $0 (func (param i32 (ref (exact $0))) (result (ref (exact $1)))))
  (type $0 (func (param i32 funcref) (result funcref)))
 
  (type $1 (func (param f32 funcref) (result funcref)))
@@ -136,7 +136,7 @@
 
  ;; CHECK:      (elem declare func $bar $foo)
 
- ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
+ ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref (exact $0))) (result (ref (exact $1)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (i32.const 0)
@@ -155,7 +155,7 @@
   (ref.func $bar)
  )
 
- ;; CHECK:      (func $baz (type $2) (param $0 (ref $0)) (result (ref $1))
+ ;; CHECK:      (func $baz (type $2) (param $0 (ref (exact $0))) (result (ref (exact $1)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $quux
  ;; CHECK-NEXT:    (ref.func $foo)
@@ -172,7 +172,7 @@
   (ref.func $bar)
  )
 
- ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref $1)) (result (ref $0))
+ ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref (exact $1))) (result (ref (exact $0)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $bar
  ;; CHECK-NEXT:    (f32.const 0)
@@ -191,7 +191,7 @@
   (ref.func $foo)
  )
 
- ;; CHECK:      (func $quux (type $2) (param $0 (ref $0)) (result (ref $1))
+ ;; CHECK:      (func $quux (type $2) (param $0 (ref (exact $0))) (result (ref (exact $1)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $baz
  ;; CHECK-NEXT:    (ref.func $foo)

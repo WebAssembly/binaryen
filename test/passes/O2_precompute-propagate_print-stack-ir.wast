@@ -1,5 +1,5 @@
 (module
- (func "func" (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i64) (result i64)
+ (func $func (export "func") (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i64) (result i64)
   (local $var$4 i32)
   (block $label$1
    (local.set $var$3
@@ -15,4 +15,3 @@
   (local.get $var$3)
  )
 )
-

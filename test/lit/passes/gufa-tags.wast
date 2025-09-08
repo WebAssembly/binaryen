@@ -3,23 +3,23 @@
 
 ;; Two tags with different values.
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (type $f32_=>_none (func (param f32)))
+  ;; CHECK:      (type $1 (func (param f32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $3 (func (result i32)))
 
-  ;; CHECK:      (tag $tag$i32 (param i32))
+  ;; CHECK:      (tag $tag$i32 (type $0) (param i32))
   (tag $tag$i32 (param i32))
-  ;; CHECK:      (tag $tag$f32 (param f32))
+  ;; CHECK:      (tag $tag$f32 (type $1) (param f32))
   (tag $tag$f32 (param f32))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $tag$i32
   ;; CHECK-NEXT:     (i32.const 42)
@@ -76,9 +76,9 @@
     )
   )
 
-  ;; CHECK:      (func $bar (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $bar (type $3) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )

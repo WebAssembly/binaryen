@@ -32,10 +32,9 @@ namespace wasm {
 // ability to use the generator as a function to print Types and HeapTypes to
 // streams.
 template<typename Subclass> struct TypeNameGeneratorBase {
+  TypeNameGeneratorBase() { assertValidUsage(); }
+
   TypeNames getNames(HeapType type) {
-    static_assert(&TypeNameGeneratorBase<Subclass>::getNames !=
-                    &Subclass::getNames,
-                  "Derived class must implement getNames");
     WASM_UNREACHABLE("Derived class must implement getNames");
   }
   HeapType::Printed operator()(HeapType type) {
@@ -46,6 +45,18 @@ template<typename Subclass> struct TypeNameGeneratorBase {
     return type.print(
       [&](HeapType ht) { return static_cast<Subclass*>(this)->getNames(ht); });
   }
+
+private:
+  constexpr void assertValidUsage() {
+#if !defined(__GNUC__) || __GNUC__ >= 14
+    // Check that the subclass provides `getNames` with the correct type.
+    using Self = TypeNameGeneratorBase<Subclass>;
+    static_assert(
+      static_cast<TypeNames (Self::*)(HeapType)>(&Self::getNames) !=
+        static_cast<TypeNames (Self::*)(HeapType)>(&Subclass::getNames),
+      "Derived class must implement getNames");
+#endif
+  }
 };
 
 // Generates names like "func.0", "struct.1", "array.2", etc. Struct fields are
@@ -53,6 +64,7 @@ template<typename Subclass> struct TypeNameGeneratorBase {
 struct DefaultTypeNameGenerator
   : TypeNameGeneratorBase<DefaultTypeNameGenerator> {
   size_t funcCount = 0;
+  size_t contCount = 0;
   size_t structCount = 0;
   size_t arrayCount = 0;
 
@@ -94,6 +106,9 @@ struct IndexedTypeNameGenerator
   }
 };
 
+// Deduction guide.
+template<typename T> IndexedTypeNameGenerator(T&) -> IndexedTypeNameGenerator<>;
+
 // Prints heap types stored in a module, falling back to the given
 // FallbackGenerator if the module does not have a name for type type.
 template<typename FallbackGenerator = DefaultTypeNameGenerator>
@@ -120,6 +135,9 @@ struct ModuleTypeNameGenerator
     return fallback.getNames(type);
   }
 };
+
+// Deduction guide.
+ModuleTypeNameGenerator(const Module&) -> ModuleTypeNameGenerator<>;
 
 } // namespace wasm
 

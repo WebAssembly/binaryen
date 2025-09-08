@@ -22,15 +22,19 @@
 //  * Fields that are never read from can be removed entirely.
 //
 
-#include "ir/effects.h"
+#include "ir/eh-utils.h"
 #include "ir/localize.h"
+#include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/permutations.h"
 #include "wasm-builder.h"
+#include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -40,6 +44,10 @@ namespace {
 
 // Information about usage of a field.
 struct FieldInfo {
+  // This represents a normal write for normal fields. For a descriptor, we only
+  // note "dangerous" writes, specifically ones which might trap (when the
+  // descriptor in a struct.new is nullable), which is a special situation we
+  // must avoid.
   bool hasWrite = false;
   bool hasRead = false;
 
@@ -57,6 +65,10 @@ struct FieldInfo {
       changed = true;
     }
     return changed;
+  }
+
+  void dump(std::ostream& o) {
+    o << "[write: " << hasWrite << " hasRead: " << hasRead << ']';
   }
 };
 
@@ -77,6 +89,11 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
+    if (index == StructUtils::DescriptorIndex && expr->type.isNonNullable()) {
+      // A non-dangerous write to a descriptor, which as mentioned above, we do
+      // not track.
+      return;
+    }
     info.noteWrite();
   }
 
@@ -91,6 +108,11 @@ struct FieldInfoScanner
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     info.noteRead();
+  }
+
+  void noteRMW(Expression* expr, HeapType type, Index index, FieldInfo& info) {
+    info.noteRead();
+    info.noteWrite();
   }
 };
 
@@ -113,6 +135,9 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
+  // The types that no longer need a descriptor.
+  std::unordered_set<HeapType> haveUnneededDescriptors;
+
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -121,6 +146,8 @@ struct GlobalTypeOptimization : public Pass {
     if (!getPassOptions().closedWorld) {
       Fatal() << "GTO requires --closed-world";
     }
+
+    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
@@ -131,8 +158,23 @@ struct GlobalTypeOptimization : public Pass {
 
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
-    // TODO: combine newInfos as well, once we have a need for that (we will
-    //       when we do things like subtyping).
+
+    // Custom descriptor handling: We need to look at struct.news, which
+    // normally we ignore (nothing in a struct.new can cause fields to remain
+    // mutable, or force the field to stay around. We cannot ignore them with CD
+    // because struct.news can now trap, and removing the descriptor could
+    // change things, so we must be careful. (Without traps, though, this is
+    // unnecessary.)
+    if (module->features.hasCustomDescriptors() && !trapsNeverHappen) {
+      for (auto& [func, infos] : functionNewInfos) {
+        for (auto& [type, info] : infos) {
+          if (info.desc.hasWrite) {
+            // Copy the descriptor write to the info we will propagate below.
+            combinedSetGetInfos[type].desc.noteWrite();
+          }
+        }
+      }
+    }
 
     // Propagate information to super and subtypes on set/get infos:
     //
@@ -160,20 +202,30 @@ struct GlobalTypeOptimization : public Pass {
     //    subtypes (as wasm only allows the type to differ if the fields are
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
-    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    auto subSupers = combinedSetGetInfos;
-    propagator.propagateToSuperAndSubTypes(subSupers);
-    auto subs = std::move(combinedSetGetInfos);
-    propagator.propagateToSubTypes(subs);
+    SubTypes subTypes(*module);
+    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(subTypes);
+    auto dataFromSubsAndSupersMap = combinedSetGetInfos;
+    propagator.propagateToSuperAndSubTypes(dataFromSubsAndSupersMap);
+    auto dataFromSupersMap = std::move(combinedSetGetInfos);
+    propagator.propagateToSubTypes(dataFromSupersMap);
 
-    // Process the propagated info.
-    for (auto type : propagator.subTypes.types) {
-      if (!type.isStruct()) {
+    // Find the public types, which we must not modify.
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
+
+    // Process the propagated info. We look at supertypes first, as the order of
+    // fields in a supertype is a constraint on what subtypes can do. That is,
+    // we decide for each supertype what the optimal order is, and consider that
+    // fixed, and then subtypes can decide how to sort fields that they append.
+    for (auto type :
+         HeapTypeOrdering::supertypesFirst(propagator.subTypes.types)) {
+      if (!type.isStruct() || publicTypesSet.count(type)) {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      auto& subSuper = subSupers[type];
-      auto& sub = subs[type];
+      auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[type];
+      auto& dataFromSupers = dataFromSupersMap[type];
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
@@ -182,9 +234,34 @@ struct GlobalTypeOptimization : public Pass {
           continue;
         }
 
-        if (subSuper[i].hasWrite) {
+        if (dataFromSubsAndSupers[i].hasWrite) {
           // A set exists.
           continue;
+        }
+
+        // The propagation analysis ensures we update immutability in all
+        // supers and subs in concert, but it does not take into account
+        // visibility, so do that here: we can only become immutable if the
+        // parent can as well.
+        auto super = type.getDeclaredSuperType();
+        if (super) {
+          // The super may not contain the field, which is fine, so only check
+          // here if the field does exist in both.
+          if (i < super->getStruct().fields.size()) {
+            // No entry in canBecomeImmutable means nothing in the parent can
+            // become immutable, so check for both that and for an entry with
+            // "false".
+            auto iter = canBecomeImmutable.find(*super);
+            if (iter == canBecomeImmutable.end()) {
+              continue;
+            }
+            // The vector is grown only when needed to contain a "true" value,
+            // so |i| being out of bounds indicates "false".
+            auto& superVec = iter->second;
+            if (i >= superVec.size() || !superVec[i]) {
+              continue;
+            }
+          }
         }
 
         // No set exists. Mark it as something we can make immutable.
@@ -193,61 +270,213 @@ struct GlobalTypeOptimization : public Pass {
         vec[i] = true;
       }
 
-      // Process removability. We check separately for the ability to
-      // remove in a general way based on sub+super-propagated info (that is,
-      // fields that are not used in sub- or super-types, and so we can
-      // definitely remove them from all the relevant types) and also in the
-      // specific way that only works for removing at the end, which as
-      // mentioned above only looks at super-types.
+      // Process removability.
       std::set<Index> removableIndexes;
       for (Index i = 0; i < fields.size(); i++) {
-        if (!subSuper[i].hasRead) {
+        // If there is no read whatsoever, in either subs or supers, then we can
+        // remove the field. That is so even if there are writes (it would be a
+        // pointless "write-only field").
+        auto hasNoReadsAnywhere = !dataFromSubsAndSupers[i].hasRead;
+
+        // Check for reads or writes in ourselves and our supers. If there are
+        // none, then operations only happen in our strict subtypes, and those
+        // subtypes can define the field there, and we don't need it here.
+        auto hasNoReadsOrWritesInSupers =
+          !dataFromSupers[i].hasRead && !dataFromSupers[i].hasWrite;
+
+        if (hasNoReadsAnywhere || hasNoReadsOrWritesInSupers) {
           removableIndexes.insert(i);
         }
       }
-      for (int i = int(fields.size()) - 1; i >= 0; i--) {
-        // Unlike above, a write would stop us here: above we propagated to both
-        // sub- and super-types, which means if we see no reads then there is no
-        // possible read of the data at all. But here we just propagated to
-        // subtypes, and so we need to care about the case where the parent
-        // writes to a field but does not read from it - we still need those
-        // writes to happen as children may read them. (Note that if no child
-        // reads this field, and since we check for reads in parents here, that
-        // means the field is not read anywhere at all, and we would have
-        // handled that case in the previous loop anyhow.)
-        if (!sub[i].hasRead && !sub[i].hasWrite) {
-          removableIndexes.insert(i);
-        } else {
-          // Once we see something we can't remove, we must stop, as we can only
-          // remove from the end in this case.
-          break;
-        }
-      }
-      if (!removableIndexes.empty()) {
-        auto& indexesAfterRemoval = indexesAfterRemovals[type];
-        indexesAfterRemoval.resize(fields.size());
-        Index skip = 0;
-        for (Index i = 0; i < fields.size(); i++) {
-          if (!removableIndexes.count(i)) {
-            indexesAfterRemoval[i] = i - skip;
+
+      // We need to compute the new set of indexes if we are removing fields, or
+      // if our parent removed fields. In the latter case, our parent may have
+      // reordered fields even if we ourselves are not removing anything, and we
+      // must update to match the parent's order.
+      auto super = type.getDeclaredSuperType();
+      auto superHasUpdates = super && indexesAfterRemovals.count(*super);
+      if (!removableIndexes.empty() || superHasUpdates) {
+        // We are removing fields. Reorder them to allow that, as in the general
+        // case we can only remove fields from the end, so that if our subtypes
+        // still need the fields they can append them. For example:
+        //
+        //  type A     = { x: i32, y: f64 };
+        //  type B : A = { x: 132, y: f64, z: v128 };
+        //
+        // If field x is used in B but never in A then we want to remove it, but
+        // we cannot end up with this:
+        //
+        //  type A     = { y: f64 };
+        //  type B : A = { x: 132, y: f64, z: v128 };
+        //
+        // Here B no longer extends A's fields. Instead, we reorder A, which
+        // then imposes the same order on B's fields:
+        //
+        //  type A     = { y: f64, x: i32 };
+        //  type B : A = { y: f64, x: i32, z: v128 };
+        //
+        // And after that, it is safe to remove x in A: B will then append it,
+        // just like it appends z, leading to this:
+        //
+        //  type A     = { y: f64 };
+        //  type B : A = { y: f64, x: i32, z: v128 };
+        //
+        std::vector<Index> indexesAfterRemoval(fields.size());
+
+        // The next new index to use.
+        Index next = 0;
+
+        // If we have a super, then we extend it, and must match its fields.
+        // That is, we can only append fields: we cannot reorder or remove any
+        // field that is in the super.
+        Index numSuperFields = 0;
+        if (super) {
+          // We have visited the super before. Get the information about its
+          // fields.
+          std::vector<Index> superIndexes;
+          auto iter = indexesAfterRemovals.find(*super);
+          if (iter != indexesAfterRemovals.end()) {
+            superIndexes = iter->second;
           } else {
+            // We did not store any information about the parent, because we
+            // found nothing to optimize there. That means it is not removing or
+            // reordering anything, so its new indexes are trivial.
+            superIndexes = makeIdentity(super->getStruct().fields.size());
+          }
+
+          numSuperFields = superIndexes.size();
+
+          // Fields we keep but the super removed will be handled at the end.
+          std::vector<Index> keptFieldsNotInSuper;
+
+          // Go over the super fields and handle them.
+          for (Index i = 0; i < superIndexes.size(); ++i) {
+            auto superIndex = superIndexes[i];
+            if (superIndex == RemovedField) {
+              if (removableIndexes.count(i)) {
+                // This was removed in the super, and in us as well.
+                indexesAfterRemoval[i] = RemovedField;
+              } else {
+                // This was removed in the super, but we actually need it. It
+                // must appear after all other super fields, when we get to the
+                // proper index for that, later. That is, we are reordering.
+                keptFieldsNotInSuper.push_back(i);
+              }
+            } else {
+              // The super kept this field, so we must keep it as well. This can
+              // happen when we need the field in both, but also in the corner
+              // case where we don't need the field but the super is public.
+
+              // We need to keep it at the same index so we remain compatible.
+              indexesAfterRemoval[i] = superIndex;
+              // Update |next| to refer to the next available index. Due to
+              // possible reordering in the parent, we may not see indexes in
+              // order here, so just take the max at each point in time.
+              next = std::max(next, superIndex + 1);
+            }
+          }
+
+          // Handle fields we keep but the super removed.
+          for (auto i : keptFieldsNotInSuper) {
+            indexesAfterRemoval[i] = next++;
+          }
+        }
+
+        // Go over the fields only defined in us, and not in any super.
+        for (Index i = numSuperFields; i < fields.size(); ++i) {
+          if (removableIndexes.count(i)) {
             indexesAfterRemoval[i] = RemovedField;
-            skip++;
+          } else {
+            indexesAfterRemoval[i] = next++;
+          }
+        }
+
+        // Only store the new indexes we computed if we found something
+        // interesting. We might not, if e.g. our parent removes fields and we
+        // add them back in the exact order we started with. In such cases,
+        // avoid wasting memory and also time later.
+        if (indexesAfterRemoval != makeIdentity(indexesAfterRemoval.size())) {
+          indexesAfterRemovals[type] = indexesAfterRemoval;
+        }
+      }
+
+      // Process the descriptor.
+      if (auto desc = type.getDescriptorType()) {
+        // To remove a descriptor, it must not be used in subtypes. It must also
+        // have no write (see above, we note only dangerous writes which might
+        // trap), as if it could trap, we'd have no easy way to remove it in a
+        // global scope.
+        // TODO: We could check and handle the global scope specifically, but
+        //       the trapsNeverHappen flag avoids this problem entirely anyhow.
+        //
+        // This does not handle descriptor subtyping, see below.
+        if (!dataFromSupers.desc.hasRead &&
+            (!dataFromSupers.desc.hasWrite || trapsNeverHappen)) {
+          haveUnneededDescriptors.insert(type);
+        }
+      }
+    }
+
+    // Handle descriptor subtyping:
+    //
+    //   A -> A.desc
+    //        ^
+    //   B -> B.desc
+    //
+    // Here the descriptors subtype, but *not* the describees. We cannot
+    // remove A's descriptor without also removing $B's, so we need to propagate
+    // that "must remain a descriptor" property among descriptors.
+    if (!haveUnneededDescriptors.empty()) {
+      StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
+        descPropagator(subTypes);
+
+      // Populate the initial data: Any descriptor we did not see was unneeded,
+      // is needed.
+      StructUtils::TypeHierarchyPropagator<
+        StructUtils::CombinableBool>::StructMap map;
+      for (auto type : subTypes.types) {
+        if (auto desc = type.getDescriptorType()) {
+          if (!haveUnneededDescriptors.count(type)) {
+            // This descriptor type is needed.
+            map[*desc].value = true;
           }
         }
       }
+
+      // Propagate.
+      descPropagator.propagateToSuperAndSubTypes(map);
+
+      // Remove optimization opportunities that the propagation ruled out.
+      // TODO: We could do better here,
+      //
+      //         A -> A.desc              A    A.desc <- A2
+      //              ^           =>           ^
+      //         B -> B.desc              B -> B.desc
+      //
+      // Starting from the left, we can remove A's descriptor *but keep A.desc
+      // as being a descriptor*, by making it describe a new type A2. That would
+      // keep subtyping working for the descriptors, and later passes could
+      // remove the unused A2.
+      for (auto& [type, info] : map) {
+        if (info.value) {
+          auto described = type.getDescribedType();
+          assert(described);
+          haveUnneededDescriptors.erase(*described);
+        }
+      }
     }
 
-    // If we found fields that can be removed, remove them from instructions.
+    // If we found things that can be removed, remove them from instructions.
     // (Note that we must do this first, while we still have the old heap types
     // that we can identify, and only after this should we update all the types
     // throughout the module.)
-    if (!indexesAfterRemovals.empty()) {
-      removeFieldsInInstructions(*module);
+    if (!indexesAfterRemovals.empty() || !haveUnneededDescriptors.empty()) {
+      updateInstructions(*module);
     }
 
     // Update the types in the entire module.
-    if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty()) {
+    if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty() ||
+        !haveUnneededDescriptors.empty()) {
       updateTypes(*module);
     }
   }
@@ -274,15 +503,16 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
-        // Remove fields where we can.
+        // Remove/reorder fields where we can.
         auto remIter = parent.indexesAfterRemovals.find(oldStructType);
         if (remIter != parent.indexesAfterRemovals.end()) {
           auto& indexesAfterRemoval = remIter->second;
           Index removed = 0;
+          auto copy = newFields;
           for (Index i = 0; i < newFields.size(); i++) {
             auto newIndex = indexesAfterRemoval[i];
             if (newIndex != RemovedField) {
-              newFields[newIndex] = newFields[i];
+              newFields[newIndex] = copy[i];
             } else {
               removed++;
             }
@@ -311,6 +541,26 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
       }
+
+      void modifyTypeBuilderEntry(TypeBuilder& typeBuilder,
+                                  Index i,
+                                  HeapType oldType) override {
+        if (!oldType.isStruct()) {
+          return;
+        }
+
+        // Remove an unneeded descriptor.
+        if (parent.haveUnneededDescriptors.count(oldType)) {
+          typeBuilder.setDescriptor(i, std::nullopt);
+        }
+
+        // Remove an unneeded describes.
+        if (auto described = oldType.getDescribedType()) {
+          if (parent.haveUnneededDescriptors.count(*described)) {
+            typeBuilder.setDescribed(i, std::nullopt);
+          }
+        }
+      }
     };
 
     TypeRewriter(wasm, *this).update();
@@ -318,7 +568,7 @@ struct GlobalTypeOptimization : public Pass {
 
   // After updating the types to remove certain fields, we must also remove
   // them from struct instructions.
-  void removeFieldsInInstructions(Module& wasm) {
+  void updateInstructions(Module& wasm) {
     struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
 
@@ -330,62 +580,85 @@ struct GlobalTypeOptimization : public Pass {
         return std::make_unique<FieldRemover>(parent);
       }
 
+      bool needEHFixups = false;
+
+      // Expressions that might trap that have been removed from module-level
+      // initializers. These need to be placed in new globals to preserve any
+      // instantiation-time traps.
+      std::vector<Expression*> removedTrappingInits;
+
       void visitStructNew(StructNew* curr) {
         if (curr->type == Type::unreachable) {
           return;
         }
-        if (curr->isWithDefault()) {
-          // Nothing to do, a default was written and will no longer be.
-          return;
-        }
 
-        auto iter = parent.indexesAfterRemovals.find(curr->type.getHeapType());
-        if (iter == parent.indexesAfterRemovals.end()) {
-          return;
-        }
-        auto& indexesAfterRemoval = iter->second;
+        auto type = curr->type.getHeapType();
+        auto removeDesc = parent.haveUnneededDescriptors.count(type);
 
-        auto& operands = curr->operands;
-        assert(indexesAfterRemoval.size() == operands.size());
-
-        // Check for side effects in removed fields. If there are any, we must
-        // use locals to save the values (while keeping them in order).
-        bool useLocals = false;
-        for (Index i = 0; i < operands.size(); i++) {
-          auto newIndex = indexesAfterRemoval[i];
-          if (newIndex == RemovedField &&
-              EffectAnalyzer(getPassOptions(), *getModule(), operands[i])
-                .hasUnremovableSideEffects()) {
-            useLocals = true;
-            break;
+        // There may be no indexes to remove, if we are only removing the
+        // descriptor.
+        std::vector<Index>* indexesAfterRemoval = nullptr;
+        // There are also no indexes to remove if we only write default values.
+        if (!curr->isWithDefault()) {
+          auto iter = parent.indexesAfterRemovals.find(type);
+          if (iter != parent.indexesAfterRemovals.end()) {
+            indexesAfterRemoval = &iter->second;
           }
         }
-        if (useLocals) {
-          auto* func = getFunction();
-          if (!func) {
-            Fatal() << "TODO: side effects in removed fields in globals\n";
-          }
-          auto* block = Builder(*getModule()).makeBlock();
-          auto sets =
-            ChildLocalizer(curr, func, getModule(), getPassOptions()).sets;
-          block->list.set(sets);
-          block->list.push_back(curr);
-          block->finalize(curr->type);
-          replaceCurrent(block);
+
+        // Ensure any children with non-trivial effects are replaced with
+        // local.gets, so that we can remove/reorder to our hearts' content.
+        // We can only do this inside functions. Outside of functions, we
+        // preserve traps during instantiation by creating new globals to hold
+        // removed and potentially-trapping operands instead.
+        auto* func = getFunction();
+        if (func) {
+          ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
+          replaceCurrent(localizer.getReplacement());
+          // Adding a block here requires EH fixups.
+          needEHFixups = true;
         }
 
-        // Remove the unneeded operands.
-        Index removed = 0;
-        for (Index i = 0; i < operands.size(); i++) {
-          auto newIndex = indexesAfterRemoval[i];
-          if (newIndex != RemovedField) {
-            assert(newIndex < operands.size());
-            operands[newIndex] = operands[i];
+        if (indexesAfterRemoval) {
+          // Remove and reorder operands.
+          auto& operands = curr->operands;
+          assert(indexesAfterRemoval->size() == operands.size());
+
+          Index removed = 0;
+          std::vector<Expression*> old(operands.begin(), operands.end());
+          for (Index i = 0; i < operands.size(); ++i) {
+            auto newIndex = (*indexesAfterRemoval)[i];
+            if (newIndex != RemovedField) {
+              assert(newIndex < operands.size());
+              operands[newIndex] = old[i];
+            } else {
+              ++removed;
+              if (!func &&
+                  EffectAnalyzer(getPassOptions(), *getModule(), old[i]).trap) {
+                removedTrappingInits.push_back(old[i]);
+              }
+            }
+          }
+          if (removed) {
+            operands.resize(operands.size() - removed);
           } else {
-            removed++;
+            // If we didn't remove anything then we must have reordered (or else
+            // we have done pointless work).
+            assert(*indexesAfterRemoval !=
+                   makeIdentity(indexesAfterRemoval->size()));
           }
         }
-        operands.resize(operands.size() - removed);
+
+        if (removeDesc) {
+          // We already handled the case of a possible trap here, so we can
+          // remove the descriptor, but must be careful of nested effects (our
+          // descriptor may be ok to remove, but a nested struct.new may not).
+          if (!func &&
+              EffectAnalyzer(getPassOptions(), *getModule(), curr->desc).trap) {
+            removedTrappingInits.push_back(curr->desc);
+          }
+          curr->desc = nullptr;
+        }
       }
 
       void visitStructSet(StructSet* curr) {
@@ -403,13 +676,18 @@ struct GlobalTypeOptimization : public Pass {
           // operations here: the trap on a null ref happens after the value,
           // which might have side effects.
           Builder builder(*getModule());
-          auto flipped = getResultOfFirst(curr->ref,
-                                          builder.makeDrop(curr->value),
-                                          getFunction(),
-                                          getModule(),
-                                          getPassOptions());
-          replaceCurrent(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped)));
+          auto* flipped = getResultOfFirst(curr->ref,
+                                           builder.makeDrop(curr->value),
+                                           getFunction(),
+                                           getModule(),
+                                           getPassOptions());
+          needEHFixups = true;
+          Expression* replacement =
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped));
+          // We only remove fields with no reads, so if this set is atomic,
+          // there are no reads it can possibly synchronize with and we do not
+          // need a fence.
+          replaceCurrent(replacement);
         }
       }
 
@@ -422,6 +700,12 @@ struct GlobalTypeOptimization : public Pass {
         // We must not remove a field that is read from.
         assert(newIndex != RemovedField);
         curr->index = newIndex;
+      }
+
+      void visitFunction(Function* curr) {
+        if (needEHFixups) {
+          EHUtils::handleBlockNestedPops(curr, *getModule());
+        }
       }
 
     private:
@@ -441,6 +725,16 @@ struct GlobalTypeOptimization : public Pass {
     FieldRemover remover(*this);
     remover.run(getPassRunner(), &wasm);
     remover.runOnModuleCode(getPassRunner(), &wasm);
+
+    // Insert globals necessary to preserve instantiation-time trapping of
+    // removed expressions.
+    for (Index i = 0; i < remover.removedTrappingInits.size(); ++i) {
+      auto* curr = remover.removedTrappingInits[i];
+      auto name = Names::getValidGlobalName(
+        wasm, std::string("gto-removed-") + std::to_string(i));
+      wasm.addGlobal(
+        Builder::makeGlobal(name, curr->type, curr, Builder::Immutable));
+    }
   }
 };
 

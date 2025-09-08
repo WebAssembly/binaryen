@@ -19,6 +19,7 @@
 //
 
 #include <ir/block-utils.h>
+#include <ir/branch-hints.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/iteration.h>
@@ -87,7 +88,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // Some instructions have special handling in visit*, and we should do
       // nothing for them here.
       if (curr->is<Drop>() || curr->is<Block>() || curr->is<If>() ||
-          curr->is<Loop>() || curr->is<Try>()) {
+          curr->is<Loop>() || curr->is<Try>() || curr->is<TryTable>()) {
         return curr;
       }
       // Check if this expression itself has side effects, ignoring children.
@@ -130,9 +131,56 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitBlock(Block* curr) {
+    auto& list = curr->list;
+
+    // If traps are assumed to never happen, we can remove code on paths that
+    // must reach a trap:
+    //
+    //  (block
+    //    (i32.store ..)
+    //    (br_if ..)      ;; execution branches here, so the first store remains
+    //    (i32.store ..)  ;; this store can be removed
+    //    (unreachable);
+    //  )
+    //
+    // For this to be useful we need to have at least 2 elements: something to
+    // remove, and an unreachable.
+    if (getPassOptions().trapsNeverHappen && list.size() >= 2) {
+      // Go backwards. When we find a trap, mark the things before it as heading
+      // to a trap.
+      auto headingToTrap = false;
+      for (int i = list.size() - 1; i >= 0; i--) {
+        if (list[i]->is<Unreachable>()) {
+          headingToTrap = true;
+          continue;
+        }
+
+        if (!headingToTrap) {
+          continue;
+        }
+
+        // Check if we may no longer be heading to a trap. We can only optimize
+        // if the trap will actually be reached. Two situations can prevent that
+        // here: Control flow might branch away, or we might hang (which can
+        // happen in a call or a loop).
+        //
+        // We also cannot remove a pop as it is necessary for structural
+        // reasons.
+        EffectAnalyzer effects(getPassOptions(), *getModule(), list[i]);
+        if (effects.transfersControlFlow() || effects.calls ||
+            effects.mayNotReturn || effects.danglingPop) {
+          headingToTrap = false;
+          continue;
+        }
+
+        // This code can be removed! Turn it into a nop, and leave it for the
+        // code lower down to finish cleaning up.
+        ExpressionManipulator::nop(list[i]);
+      }
+    }
+
     // compress out nops and other dead code
     int skip = 0;
-    auto& list = curr->list;
     size_t size = list.size();
     for (size_t z = 0; z < size; z++) {
       auto* child = list[z];
@@ -210,6 +258,38 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return;
     }
     // from here on, we can assume the condition executed
+
+    // In trapsNeverHappen mode, a definitely-trapping arm can be assumed to not
+    // happen. Such conditional code can be assumed to never be reached in this
+    // mode.
+    //
+    // Ignore the case of an unreachable if, such as having both arms be
+    // unreachable. In that case we'd need to fix up the IR to avoid changing
+    // the type; leave that for DCE to simplify first. After checking that
+    // curr->type != unreachable, we can assume that only one of the arms is
+    // unreachable (at most).
+    if (getPassOptions().trapsNeverHappen && curr->type != Type::unreachable) {
+      auto optimizeArm = [&](Expression* arm, Expression* otherArm) {
+        if (!arm->is<Unreachable>()) {
+          return false;
+        }
+        Builder builder(*getModule());
+        Expression* rep = builder.makeDrop(curr->condition);
+        if (otherArm) {
+          rep = builder.makeSequence(rep, otherArm);
+        }
+        replaceCurrent(rep);
+        return true;
+      };
+
+      // As mentioned above, do not try to optimize both arms; leave that case
+      // for DCE.
+      if (optimizeArm(curr->ifTrue, curr->ifFalse) ||
+          (curr->ifFalse && optimizeArm(curr->ifFalse, curr->ifTrue))) {
+        return;
+      }
+    }
+
     if (curr->ifFalse) {
       if (curr->ifFalse->is<Nop>()) {
         curr->ifFalse = nullptr;
@@ -218,6 +298,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         curr->ifFalse = nullptr;
         curr->condition =
           Builder(*getModule()).makeUnary(EqZInt32, curr->condition);
+        BranchHints::flip(curr, getFunction());
       } else if (curr->ifTrue->is<Drop>() && curr->ifFalse->is<Drop>()) {
         // instead of dropping both sides, drop the if, if they are the same
         // type
@@ -353,6 +434,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         !EffectAnalyzer(getPassOptions(), *getModule(), curr)
            .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr);
+    }
+  }
+
+  void visitTryTable(TryTable* curr) {
+    // If try_table's body does not throw, the whole try_table can be replaced
+    // with the try_table's body.
+    if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
+      replaceCurrent(curr->body);
+      return;
     }
   }
 

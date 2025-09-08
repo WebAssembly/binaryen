@@ -45,7 +45,6 @@
   )
 
   ;; CHECK:      (func $helper
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper)
 )

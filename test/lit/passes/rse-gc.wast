@@ -2,18 +2,17 @@
 ;; RUN: wasm-opt %s --rse -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $A (struct (field structref)))
- (type $A (struct (field (ref null struct))))
+ ;; CHECK:      (type $A (sub (struct (field structref))))
+ (type $A (sub (struct (field (ref null struct)))))
 
  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
  ;; nullable).
- ;; CHECK:      (type $B (struct_subtype (field (ref struct)) $A))
- (type $B (struct_subtype (field (ref struct)) $A))
+ ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
+ (type $B (sub $A (struct (field (ref struct)))))
 
- ;; CHECK:      (func $test (type $none_=>_none)
+ ;; CHECK:      (func $test (type $3)
  ;; CHECK-NEXT:  (local $single (ref func))
- ;; CHECK-NEXT:  (local $tuple ((ref any) (ref any)))
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (local $tuple (tuple (ref any) (ref any)))
  ;; CHECK-NEXT: )
  (func $test
   ;; A non-nullable local. The pass should ignore it (as we cannot optimize
@@ -21,10 +20,10 @@
   ;; it, so no sets can be redundant in that sense).
   (local $single (ref func))
   ;; A non-nullable tuple.
-  (local $tuple ((ref any) (ref any)))
+  (local $tuple (tuple (ref any) (ref any)))
  )
 
- ;; CHECK:      (func $needs-refinalize (type $ref|$B|_=>_anyref) (param $b (ref $B)) (result anyref)
+ ;; CHECK:      (func $needs-refinalize (type $4) (param $b (ref $B)) (result anyref)
  ;; CHECK-NEXT:  (local $a (ref null $A))
  ;; CHECK-NEXT:  (local.set $a
  ;; CHECK-NEXT:   (local.get $b)
@@ -49,10 +48,10 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined (type $ref?|$A|_i32_=>_none) (param $A (ref null $A)) (param $x i32)
+ ;; CHECK:      (func $pick-refined (type $5) (param $A (ref null $A)) (param $x i32)
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast null $B
+ ;; CHECK-NEXT:   (ref.cast (ref null $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -64,11 +63,15 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $B)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $B)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $B)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $B)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
@@ -81,7 +84,7 @@
  (func $pick-refined (param $A (ref null $A)) (param $x i32)
   (local $B (ref null $B))
   (local.set $B
-   (ref.cast null $B
+   (ref.cast (ref null $B)
     (local.get $A)
    )
   )
@@ -95,11 +98,15 @@
   )
   (if
    (local.get $x)
-   (drop
-    (local.get $A)
+   (then
+    (drop
+     (local.get $A)
+    )
    )
-   (drop
-    (local.get $B)
+   (else
+    (drop
+     (local.get $B)
+    )
    )
   )
   (drop
@@ -110,10 +117,10 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined-nn (type $ref|$A|_=>_none) (param $A (ref $A))
+ ;; CHECK:      (func $pick-refined-nn (type $2) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast $B
+ ;; CHECK-NEXT:   (ref.cast (ref $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -129,7 +136,7 @@
   ;; As above, but now the types are both non-nullable. We should still switch
   ;; to $B.
   (local.set $B
-   (ref.cast $B
+   (ref.cast (ref $B)
     (local.get $A)
    )
   )
@@ -141,10 +148,10 @@
   )
  )
 
- ;; CHECK:      (func $avoid-unrefined (type $ref|$A|_=>_none) (param $A (ref $A))
+ ;; CHECK:      (func $avoid-unrefined (type $2) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast $B
+ ;; CHECK-NEXT:   (ref.cast (ref $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -161,7 +168,7 @@
   ;; nullable, that means neither is a subtype of the other, and we will make
   ;; no changes.
   (local.set $B
-   (ref.cast $B
+   (ref.cast (ref $B)
     (local.get $A)
    )
   )
@@ -173,7 +180,7 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined-earlier (type $ref|$A|_=>_none) (param $A (ref $A))
+ ;; CHECK:      (func $pick-refined-earlier (type $2) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $A2 (ref null $A))
  ;; CHECK-NEXT:  (local.set $A2
  ;; CHECK-NEXT:   (local.get $A)
@@ -200,7 +207,7 @@
   )
  )
 
- ;; CHECK:      (func $different-choices (type $ref|$A|_=>_none) (param $non-nullable (ref $A))
+ ;; CHECK:      (func $different-choices (type $2) (param $non-nullable (ref $A))
  ;; CHECK-NEXT:  (local $nullable (ref null $A))
  ;; CHECK-NEXT:  (local.set $nullable
  ;; CHECK-NEXT:   (local.get $non-nullable)
@@ -248,7 +255,7 @@
   )
  )
 
- ;; CHECK:      (func $string (type $none_=>_none)
+ ;; CHECK:      (func $string (type $3)
  ;; CHECK-NEXT:  (local $s stringref)
  ;; CHECK-NEXT:  (local $t stringref)
  ;; CHECK-NEXT:  (drop

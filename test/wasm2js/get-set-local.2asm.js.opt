@@ -10,12 +10,12 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function legalstub$1($0, $1, $2) {
+ function legalstub$0($0, $1, $2) {
   return !$2 & ($0 | 0) == ($1 | 0);
  }
  
  return {
-  "check_extend_ui32": legalstub$1
+  "check_extend_ui32": legalstub$0
  };
 }
 

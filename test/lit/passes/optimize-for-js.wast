@@ -3,7 +3,7 @@
 ;; RUN:  | filecheck %s
 
 (module
- ;; CHECK:      (func $is-power-of-2_32 (type $i32_=>_i32) (param $x i32) (result i32)
+ ;; CHECK:      (func $is-power-of-2_32 (type $1) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (i32.and
  ;; CHECK-NEXT:   (i32.eqz
  ;; CHECK-NEXT:    (i32.eqz
@@ -27,7 +27,7 @@
    (i32.const 1)
   )
  )
- ;; CHECK:      (func $is-power-of-2_expr_32 (type $i64_=>_i32) (param $x i64) (result i32)
+ ;; CHECK:      (func $is-power-of-2_expr_32 (type $0) (param $x i64) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (i32.and
  ;; CHECK-NEXT:   (i32.eqz
@@ -56,7 +56,7 @@
    (i32.const 1)
   )
  )
- ;; CHECK:      (func $is-power-of-2_64 (type $i64_=>_i32) (param $x i64) (result i32)
+ ;; CHECK:      (func $is-power-of-2_64 (type $0) (param $x i64) (result i32)
  ;; CHECK-NEXT:  (i32.and
  ;; CHECK-NEXT:   (i32.eqz
  ;; CHECK-NEXT:    (i64.eqz

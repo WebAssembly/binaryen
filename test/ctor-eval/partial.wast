@@ -4,12 +4,12 @@
   (memory 256 256)
   (data (i32.const 10) "_________________")
 
-  (export "test1" $test1)
+  (export "test1" (func $test1))
 
   ;; Use the function in an additional export. We should still get the same
   ;; results if we call this one, so it should point to identical contents as
   ;; earlier
-  (export "keepalive" $test1)
+  (export "keepalive" (func $test1))
 
   (func $test1
     ;; A safe store, should alter memory

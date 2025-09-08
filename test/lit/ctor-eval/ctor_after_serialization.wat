@@ -7,18 +7,10 @@
 ;; contains the serialization of the struct.new instruction).
 
 (module
- ;; CHECK:      (type $A (struct ))
+ ;; CHECK:      (type $A (struct))
  (type $A (struct))
 
- ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
-
- ;; CHECK:      (type $none_=>_none (func))
-
- ;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new_default $A))
-
- ;; CHECK:      (export "new" (func $new_2))
  (export "new" (func $new))
- ;; CHECK:      (export "nop" (func $nop_3))
  (export "nop" (func $nop))
 
  (func $new (result (ref any))
@@ -30,34 +22,35 @@
  )
 )
 
-;; CHECK:      (func $new_2 (type $none_=>_ref|any|) (result (ref any))
+;; CHECK:      (type $1 (func (result (ref any))))
+
+;; CHECK:      (type $2 (func))
+
+;; CHECK:      (global $ctor-eval$global (ref (exact $A)) (struct.new_default $A))
+
+;; CHECK:      (export "new" (func $new_2))
+
+;; CHECK:      (export "nop" (func $nop_3))
+
+;; CHECK:      (func $new_2 (type $1) (result (ref any))
 ;; CHECK-NEXT:  (global.get $ctor-eval$global)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $nop_3 (type $none_=>_none)
+;; CHECK:      (func $nop_3 (type $2)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module
  ;; As above, but now there is an existing global with the name that we want to
  ;; use. We should not collide.
 
- ;; CHECK:      (type $A (struct ))
+ ;; CHECK:      (type $A (struct))
  (type $A (struct))
 
- ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
-
- ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
-
- ;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new_default $A))
  (global $ctor-eval$global (ref $A)
   (struct.new_default $A)
  )
 
- ;; CHECK:      (global $ctor-eval$global_1 (ref $A) (struct.new_default $A))
-
- ;; CHECK:      (export "new" (func $new_2))
  (export "new" (func $new))
- ;; CHECK:      (export "nop" (func $nop_3))
  (export "nop" (func $nop))
 
  (func $new (result (ref any))
@@ -69,10 +62,22 @@
   (global.get $ctor-eval$global)
  )
 )
-;; CHECK:      (func $new_2 (type $none_=>_ref|any|) (result (ref any))
-;; CHECK-NEXT:  (global.get $ctor-eval$global_1)
+;; CHECK:      (type $1 (func (result (ref any))))
+
+;; CHECK:      (type $2 (func (result anyref)))
+
+;; CHECK:      (global $ctor-eval$global_3 (ref (exact $A)) (struct.new_default $A))
+
+;; CHECK:      (global $ctor-eval$global_2 (ref (exact $A)) (struct.new_default $A))
+
+;; CHECK:      (export "new" (func $new_2))
+
+;; CHECK:      (export "nop" (func $nop_3))
+
+;; CHECK:      (func $new_2 (type $1) (result (ref any))
+;; CHECK-NEXT:  (global.get $ctor-eval$global_2)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $nop_3 (type $none_=>_anyref) (result anyref)
-;; CHECK-NEXT:  (global.get $ctor-eval$global)
+;; CHECK:      (func $nop_3 (type $2) (result anyref)
+;; CHECK-NEXT:  (global.get $ctor-eval$global_3)
 ;; CHECK-NEXT: )

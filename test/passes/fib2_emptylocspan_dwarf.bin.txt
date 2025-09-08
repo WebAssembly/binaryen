@@ -613,10 +613,10 @@ file_names[  1]:
 00000000 00000044 0000004a
 00000000 <End of list>
 (module
- (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $0 (func))
+ (type $1 (func (param i32) (result i32)))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "__indirect_function_table" (table $timport$0 1 funcref))
  (global $global$0 (mut i32) (i32.const 5243904))
@@ -637,9 +637,9 @@ file_names[  1]:
    (i32.const 1)
   )
   ;; code offset: 0x12
-  (block $label$1
+  (block $block
    ;; code offset: 0x19
-   (br_if $label$1
+   (br_if $block
     ;; code offset: 0x18
     (i32.lt_s
      ;; code offset: 0x14
@@ -659,7 +659,7 @@ file_names[  1]:
     (i32.const 0)
    )
    ;; code offset: 0x23
-   (loop $label$2
+   (loop $label
     ;; code offset: 0x2c
     (local.set $1
      ;; code offset: 0x2b
@@ -679,7 +679,7 @@ file_names[  1]:
      (local.get $4)
     )
     ;; code offset: 0x3c
-    (br_if $label$2
+    (br_if $label
      ;; code offset: 0x3b
      (i32.ne
       ;; code offset: 0x37

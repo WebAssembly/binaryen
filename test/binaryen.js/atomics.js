@@ -1,6 +1,6 @@
 var wast = `
 (module
-  (memory $0 (shared 1 1))
+  (memory $0 1 1 shared)
 )
 `;
 

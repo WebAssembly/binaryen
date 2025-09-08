@@ -3,14 +3,14 @@
 ;; RUN: foreach %s %t wasm-opt --dae --all-features -tnh -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct (field i32))))
 
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+  ;; CHECK:      (type $2 (func (param (ref null $struct))))
 
-  ;; CHECK:      (func $target (type $none_=>_none)
+  ;; CHECK:      (func $target (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -18,7 +18,7 @@
     (nop)
   )
 
-  ;; CHECK:      (func $caller (type $ref?|$struct|_=>_none) (param $ref (ref null $struct))
+  ;; CHECK:      (func $caller (type $2) (param $ref (ref null $struct))
   ;; CHECK-NEXT:  (call $target)
   ;; CHECK-NEXT: )
   (func $caller (param $ref (ref null $struct))
@@ -34,38 +34,68 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
-  ;; CHECK-NEXT:  (call $target
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller
-    ;; Removing this parameter would require the type of the call to change from
-    ;; unreachable to none. We don't handle such complexity and ignore such
-    ;; cases.
+    ;; Removing this parameter would make the type of the call change from
+    ;; unreachable to none. But the call itself is in unreachable code, so we
+    ;; will replace it with an unreachable (and then, once the call is gone, the
+    ;; target can be better optimized; however, no other calls remain here, so
+    ;; the pass does nothing as it considers it dead at that point).
+    ;;
+    ;; This test verifies we do the proper thing even in TNH mode, as in TNH
+    ;; mode |unreachable| seems to have no effects, but for validation reasons
+    ;; we must still replace the call here.
     (call $target
       (unreachable)
     )
   )
 
-  ;; CHECK:      (func $target (type $i32_=>_none) (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK:      (func $target (type $1) (param $0 i32)
   ;; CHECK-NEXT: )
   (func $target (param i32)
   )
 )
 
-;; As above, but use a return_call. We can optimize that, since return_calls
-;; have type unreachable anyhow, and the optimization would not change the type.
+;; As above but the called target has a result.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
-  ;; CHECK-NEXT:  (return_call $target)
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
+
+  ;; CHECK:      (func $caller (type $0) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $caller (result i32)
+    ;; Again, the call is replaced by an unreachable.
+    (call $target
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $target (type $1) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $target (param i32) (result i32)
+    (i32.const 42)
+  )
+)
+
+;; As above, but use a return_call. We can optimize that too (return_calls have
+;; type unreachable anyhow, and the optimization would not change the type, so
+;; it is even simpler).
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32)))
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller
     (return_call $target
@@ -73,20 +103,18 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK:      (func $target (type $1) (param $0 i32)
   ;; CHECK-NEXT: )
   (func $target (param i32)
   )
 )
 
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (func $target (type $i32_=>_none) (param $0 i32)
+  ;; CHECK:      (func $target (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local.set $1
   ;; CHECK-NEXT:   (f64.const 4.2)
@@ -102,7 +130,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $1)
   ;; CHECK-NEXT:  (call $target
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )

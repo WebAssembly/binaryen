@@ -1,8 +1,8 @@
 (module
-  (memory 1 2)
   (import "env" "sleep" (func $sleep))
+  (memory 1 2)
   (export "memory" (memory 0))
-  (func "many_locals" (param $x i32) (result i32)
+  (func $many_locals (export "many_locals") (param $x i32) (result i32)
     (local $y i32)
     (local $z i32)
     (local.set $y
@@ -19,4 +19,3 @@
     )
   )
 )
-

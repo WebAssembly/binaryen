@@ -139,7 +139,9 @@ void ThreadPool::initialize(size_t num) {
 }
 
 size_t ThreadPool::getNumCores() {
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+  // In an Emscripten build without pthreads support, avoid the overhead of
+  // including support code for the below runtime checks.
   return 1;
 #else
   size_t num = std::max(1U, std::thread::hardware_concurrency());

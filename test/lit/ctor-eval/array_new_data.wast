@@ -2,37 +2,37 @@
 ;; RUN: wasm-ctor-eval %s --ctors=test --kept-exports=test --quiet -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $[i8] (array i8))
- (type $[i8] (array i8))
+ ;; CHECK:      (type $"[i8]" (array i8))
+ (type $"[i8]" (array i8))
 
- ;; CHECK:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
+ ;; CHECK:      (memory $0 16 17 shared)
+ (memory $0 16 17 shared)
  ;; CHECK:      (data $0 (i32.const 40) "")
  (data $0 (i32.const 40) "")
  ;; CHECK:      (data $1 (i32.const 0) "")
  (data $1 (i32.const 0) "")
 
- (func "test"
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (func $test (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.new_data $"[i8]" $1
+ ;; CHECK-NEXT:    (i32.const 16)
+ ;; CHECK-NEXT:    (i32.const 8)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (export "test")
   ;; An array.new_data cannot be evalled since ctor-eval flattens memory segments
   ;; atm. In fact the module would not validate as we refer to segment 1 here
   ;; but after flattening only segment 0 exists.
   (drop
-   (array.new_data $[i8] $1
+   (array.new_data $"[i8]" $1
     (i32.const 16)
     (i32.const 8)
    )
   )
  )
 )
-;; CHECK:      (export "test" (func $0))
-
-;; CHECK:      (func $0 (type $none_=>_none)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (array.new_data $[i8] $1
-;; CHECK-NEXT:    (i32.const 16)
-;; CHECK-NEXT:    (i32.const 8)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )

@@ -9,23 +9,35 @@ on:
       - kripken/*
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   lint:
     name: lint
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
+    env:
+      # Keep this in sync with clang-format-diff.sh
+      LLVM_VERSION: 17
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
+        fetch-depth: 0
     - name: install tools
       run: |
-        sudo pip3 install -r requirements-dev.txt
-        sudo apt-get install clang-format clang-tidy
+        pip3 install -r requirements-dev.txt
+        sudo apt install lsb-release wget software-properties-common gnupg
+        wget https://apt.llvm.org/llvm.sh
+        sudo chmod +x llvm.sh
+        sudo ./llvm.sh ${LLVM_VERSION}
+        sudo apt-get install clang-format clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
     - run: flake8
     - run: ./scripts/clang-format-diff.sh
     - name: clang-tidy
@@ -39,12 +51,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest, windows-11-arm]
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -65,7 +77,12 @@ jobs:
 
     - name: install ninja (win)
       run: choco install ninja
-      if: matrix.os == 'windows-latest'
+      if: startsWith(matrix.os, 'windows')
+
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
 
     - name: mkdir
       run: mkdir -p out
@@ -75,13 +92,13 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
 
     - name: cmake (macos)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=x86_64
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install '-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
       # -G "Visual Studio 15 2017"
       run: cmake -S . -B out -DCMAKE_INSTALL_PREFIX=out/install
-      if: matrix.os == 'windows-latest'
+      if: startsWith(matrix.os, 'windows')
 
     - name: build
       run: cmake --build out --config Release -v
@@ -91,10 +108,10 @@ jobs:
 
     - name: strip
       run: find out/install/ -type f -perm -u=x -exec strip -x {} +
-      if: matrix.os != 'windows-latest'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: build-${{ matrix.os }}
         path: out/install
@@ -109,14 +126,18 @@ jobs:
     name: clang (LTO)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
     - name: install Python dev dependencies
       run: pip3 install -r requirements-dev.txt
     - name: cmake
@@ -130,6 +151,34 @@ jobs:
     - name: test
       run: python check.py --binaryen-bin=out/bin
 
+  # Copied and modified from build-clang
+  build-fuzztest:
+    name: clang with fuzztest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DBUILD_FUZZTEST=ON
+    - name: build
+      run: cmake --build out -v
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
   # TODO(sbc): Find a way to reduce the duplicate between these sanitizer jobs
   build-asan:
     name: asan
@@ -137,21 +186,32 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
+      CC: "clang-18"
+      CXX: "clang++-18"
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
+    - name: install clang 18
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
     - name: install Python dev dependencies
       run: pip3 install -r requirements-dev.txt
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
@@ -162,17 +222,17 @@ jobs:
   # Keep in sync with build_release.yml
   build-alpine:
     name: alpine
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: start docker
       run: |
-        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
+        docker run -w /src -dit --platform=linux/arm64 --name alpine -v $PWD:/src node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
 
@@ -181,12 +241,16 @@ jobs:
         ./alpine.sh apk update
         ./alpine.sh apk add build-base cmake git python3 py3-pip clang ninja
 
+    - name: avoid d8 tests (jsvu is not compatible with alpine)
+      run: |
+        ./alpine.sh rm -Rf test/lit/d8
+
     - name: install python dev dependencies
-      run: ./alpine.sh pip3 install -r requirements-dev.txt
+      run: ./alpine.sh pip3 install --break-system-packages -r requirements-dev.txt
 
     - name: cmake
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install
+        ./alpine.sh cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DBUILD_MIMALLOC=ON -DCMAKE_INSTALL_PREFIX=install
 
     - name: build
       run: |
@@ -204,14 +268,18 @@ jobs:
       CC: "clang"
       CXX: "clang++"
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
     - name: install Python dev dependencies
       run: pip3 install -r requirements-dev.txt
     - name: cmake
@@ -230,21 +298,32 @@ jobs:
     env:
       COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
+      CC: "clang-18"
+      CXX: "clang++-18"
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
+    - name: install clang 18
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
     - name: install Python dev dependencies
       run: pip3 install -r requirements-dev.txt
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
@@ -259,10 +338,10 @@ jobs:
       # Format: https://github.com/<fork>/emscripten/tree/<refspec>
       EMSCRIPTEN_REPO: ""
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: install ninja
@@ -292,10 +371,10 @@ jobs:
     name: mingw
     runs-on: windows-latest
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: cmake
@@ -304,3 +383,95 @@ jobs:
         cmake -S . -B out -G "MSYS Makefiles"
     - name: build
       run: cmake --build out
+
+  # Duplicates build-asan.  Please keep in sync
+  build-gcov:
+    name: coverage
+    runs-on: ubuntu-latest
+    env:
+      COMPILER_FLAGS: "-fprofile-arcs -ftest-coverage"
+      CC: "gcc"
+      CXX: "g++"
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS -DCMAKE_BUILD_TYPE=Debug"
+    - name: build
+      run: cmake --build out
+    - name: test
+      run: |
+        python check.py --binaryen-bin=out/bin lit
+        python check.py --binaryen-bin=out/bin gtest
+    - name: upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        gcov: true
+
+  # Duplicates build-asan.  Please keep in sync
+  build-cxx20:
+    name: c++20
+    # Make sure we can still build on older Ubuntu
+    runs-on: ubuntu-22.04
+    env:
+      CC: "gcc"
+      CXX: "g++"
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20
+    - name: build
+      run: cmake --build out
+    - name: test
+      run: |
+        python check.py --binaryen-bin=out/bin lit
+        python check.py --binaryen-bin=out/bin gtest
+
+  # Ensures we can build in no-asserts mode (just building).
+  build-noasserts:
+    name: noasserts
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DBYN_ENABLE_ASSERTIONS=OFF
+    - name: build
+      run: cmake --build out -v

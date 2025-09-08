@@ -6,14 +6,14 @@
 ;; A global that is written its initial value in all subsequent writes can
 ;; remove those writes.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $global-0 i32 (i32.const 0))
   (global $global-0 (mut i32) (i32.const 0))
   ;; CHECK:      (global $global-1 i32 (i32.const 1))
   (global $global-1 (mut i32) (i32.const 1))
 
-  ;; CHECK:      (func $sets (type $none_=>_none)
+  ;; CHECK:      (func $sets (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -37,7 +37,7 @@
     (global.set $global-1 (i32.const 1))
   )
 
-  ;; CHECK:      (func $gets (type $none_=>_none)
+  ;; CHECK:      (func $gets (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -54,16 +54,16 @@
 
 ;; As above, but now we write other values.
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $global-0 (mut i32) (i32.const 0))
   (global $global-0 (mut i32) (i32.const 0))
   ;; CHECK:      (global $global-1 (mut i32) (i32.const 1))
   (global $global-1 (mut i32) (i32.const 1))
 
-  ;; CHECK:      (func $sets (type $i32_=>_none) (param $unknown i32)
+  ;; CHECK:      (func $sets (type $0) (param $unknown i32)
   ;; CHECK-NEXT:  (global.set $global-0
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -85,7 +85,7 @@
     (global.set $global-1 (local.get $unknown)) ;; a totally unknown value
   )
 
-  ;; CHECK:      (func $gets (type $none_=>_none)
+  ;; CHECK:      (func $gets (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $global-0)
   ;; CHECK-NEXT:  )
@@ -102,9 +102,9 @@
 ;; Globals without constant initial values.
 (module
   ;; An imported global.
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (import "env" "import_global" (global $global-0 i32))
   (import "env" "import_global" (global $global-0 i32))
@@ -113,7 +113,7 @@
   ;; CHECK:      (global $global-1 (mut i32) (global.get $global-0))
   (global $global-1 (mut i32) (global.get $global-0))
 
-  ;; CHECK:      (func $sets (type $i32_=>_none) (param $unknown i32)
+  ;; CHECK:      (func $sets (type $0) (param $unknown i32)
   ;; CHECK-NEXT:  (global.set $global-1
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -122,7 +122,7 @@
     (global.set $global-1 (i32.const 1))
   )
 
-  ;; CHECK:      (func $gets (type $none_=>_none)
+  ;; CHECK:      (func $gets (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $global-0)
   ;; CHECK-NEXT:  )

@@ -263,12 +263,9 @@ public:
   void operator=(SubType& other) { set(other); }
 
   void swap(SubType& other) {
-    data = other.data;
-    usedElements = other.usedElements;
-    allocatedElements = other.allocatedElements;
-
-    other.data = nullptr;
-    other.usedElements = other.allocatedElements = 0;
+    std::swap(data, other.data);
+    std::swap(usedElements, other.usedElements);
+    std::swap(allocatedElements, other.allocatedElements);
   }
 
   // iteration
@@ -403,7 +400,15 @@ public:
   ArenaVector(MixedArena& allocator) : allocator(allocator) {}
 
   ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
-    *this = other;
+    swap(other);
+  }
+
+  ArenaVector<T>& operator=(ArenaVector<T>&& other) {
+    if (this != &other) {
+      this->clear();
+      this->swap(other);
+    }
+    return *this;
   }
 
   void allocate(size_t size) {

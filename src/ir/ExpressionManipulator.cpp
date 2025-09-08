@@ -62,9 +62,10 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
   tasks.push_back({castOriginal->field, &castCopy->field});
 
+// Iterate in reverse order here so we visit children in normal order.
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   castCopy->field.resize(castOriginal->field.size());                          \
-  for (Index i = 0; i < castOriginal->field.size(); i++) {                     \
+  for (auto i = int64_t(castOriginal->field.size()) - 1; i >= 0; i--) {        \
     tasks.push_back({castOriginal->field[i], &castCopy->field[i]});            \
   }
 
@@ -94,8 +95,10 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field) COPY_VECTOR(field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field) COPY_VECTOR(field)
+#define DELEGATE_FIELD_TYPE_VECTOR(id, field) COPY_VECTOR(field)
 
 #define DELEGATE_FIELD_INT_ARRAY(id, field) COPY_ARRAY(field)
+#define DELEGATE_FIELD_INT_VECTOR(id, field) COPY_VECTOR(field)
 
 #include "wasm-delegations-fields.def"
 

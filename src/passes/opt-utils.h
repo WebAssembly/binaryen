@@ -20,40 +20,47 @@
 #include <functional>
 #include <unordered_set>
 
-#include <ir/element-utils.h>
-#include <ir/module-utils.h>
-#include <pass.h>
-#include <wasm.h>
+#include "ir/element-utils.h"
+#include "ir/module-utils.h"
+#include "pass.h"
+#include "passes/pass-utils.h"
+#include "wasm-validator.h"
+#include "wasm.h"
 
-namespace wasm {
+namespace wasm::OptUtils {
 
-namespace OptUtils {
+// Given a PassRunner, applies a set of useful passes that make sense to run
+// after inlining.
+inline void addUsefulPassesAfterInlining(PassRunner& runner) {
+  // Propagating constants makes a lot of sense after inlining, as new constants
+  // may have arrived.
+  runner.add("precompute-propagate");
+  // Do all the usual stuff.
+  runner.addDefaultFunctionOptimizationPasses();
+}
 
-// Run useful optimizations after inlining new code into a set
-// of functions.
-inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
+// Run useful optimizations after inlining new code into a set of functions.
+inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
-  // save the full list of functions on the side
-  std::vector<std::unique_ptr<Function>> all;
-  all.swap(module->functions);
-  module->updateFunctionsMap();
-  for (auto& func : funcs) {
-    module->addFunction(func);
+  // In pass-debug mode, validate before and after these optimizations. This
+  // helps catch bugs in the middle of passes like inlining and dae. We do this
+  // at level 2+ and not 1 so that this extra validation is not added to the
+  // timings that level 1 reports.
+  if (PassRunner::getPassDebug() >= 2) {
+    if (!WasmValidator().validate(*module, parentRunner->options)) {
+      Fatal() << "invalid wasm before optimizeAfterInlining";
+    }
   }
-  PassRunner runner(module, parentRunner->options);
+  PassUtils::FilteredPassRunner runner(module, funcs, parentRunner->options);
   runner.setIsNested(true);
-  runner.setValidateGlobally(false); // not a full valid module
-  // this is especially useful after inlining
-  runner.add("precompute-propagate");
-  runner.addDefaultFunctionOptimizationPasses(); // do all the usual stuff
+  addUsefulPassesAfterInlining(runner);
   runner.run();
-  // restore all the funcs
-  for (auto& func : module->functions) {
-    func.release();
+  if (PassRunner::getPassDebug() >= 2) {
+    if (!WasmValidator().validate(*module, parentRunner->options)) {
+      Fatal() << "invalid wasm after optimizeAfterInlining";
+    }
   }
-  all.swap(module->functions);
-  module->updateFunctionsMap();
 }
 
 struct FunctionRefReplacer
@@ -97,12 +104,11 @@ inline void replaceFunctions(PassRunner* runner,
   // replace in exports
   for (auto& exp : module.exports) {
     if (exp->kind == ExternalKind::Function) {
-      maybeReplace(exp->value);
+      maybeReplace(*exp->getInternalName());
     }
   }
 }
 
-} // namespace OptUtils
-} // namespace wasm
+} // namespace wasm::OptUtils
 
 #endif // wasm_passes_opt_utils_h

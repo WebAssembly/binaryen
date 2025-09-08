@@ -14,43 +14,73 @@
  * limitations under the License.
  */
 
+#include "passes/param-utils.h"
+#include "cfg/liveness-traversal.h"
+#include "ir/eh-utils.h"
 #include "ir/function-utils.h"
-#include "ir/local-graph.h"
+#include "ir/localize.h"
 #include "ir/possible-constant.h"
 #include "ir/type-updating.h"
+#include "pass.h"
 #include "support/sorted_vector.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm::ParamUtils {
 
-std::unordered_set<Index> getUsedParams(Function* func) {
-  LocalGraph localGraph(func);
+std::unordered_set<Index> getUsedParams(Function* func, Module* module) {
+  // To find which params are used, compute liveness at the entry.
+  // TODO: We could write bespoke code here rather than reuse LivenessWalker, as
+  //       we only need liveness at the entry. The code below computes it for
+  //       the param indexes in the entire function. However, there are usually
+  //       very few params (compared to locals, which we ignore here), so this
+  //       may be fast enough, and is very simple.
+  struct ParamLiveness
+    : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
+    using Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
 
-  std::unordered_set<Index> usedParams;
+    // Branches outside of the function can be ignored, as we only look at
+    // locals, which vanish when we leave.
+    bool ignoreBranchesOutsideOfFunc = true;
 
-  for (auto& [get, sets] : localGraph.getSetses) {
-    if (!func->isParam(get->index)) {
-      continue;
-    }
-
-    for (auto* set : sets) {
-      // A nullptr value indicates there is no LocalSet* that sets the value,
-      // so it must be the parameter value.
-      if (!set) {
-        usedParams.insert(get->index);
+    // Ignore unreachable code and non-params.
+    static void doVisitLocalGet(ParamLiveness* self, Expression** currp) {
+      auto* get = (*currp)->cast<LocalGet>();
+      if (self->currBasicBlock && self->getFunction()->isParam(get->index)) {
+        Super::doVisitLocalGet(self, currp);
       }
     }
+    static void doVisitLocalSet(ParamLiveness* self, Expression** currp) {
+      auto* set = (*currp)->cast<LocalSet>();
+      if (self->currBasicBlock && self->getFunction()->isParam(set->index)) {
+        Super::doVisitLocalSet(self, currp);
+      }
+    }
+  } walker;
+  walker.setModule(module);
+  walker.walkFunction(func);
+
+  if (!walker.entry) {
+    // Empty function: nothing is used.
+    return {};
   }
 
+  // We now have a sorted vector of the live params at the entry. Convert that
+  // to a set.
+  auto& sortedLiveness = walker.entry->contents.start;
+  std::unordered_set<Index> usedParams;
+  for (auto live : sortedLiveness) {
+    usedParams.insert(live);
+  }
   return usedParams;
 }
 
-bool removeParameter(const std::vector<Function*>& funcs,
-                     Index index,
-                     const std::vector<Call*>& calls,
-                     const std::vector<CallRef*>& callRefs,
-                     Module* module,
-                     PassRunner* runner) {
+RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
+                               Index index,
+                               const std::vector<Call*>& calls,
+                               const std::vector<CallRef*>& callRefs,
+                               Module* module,
+                               PassRunner* runner) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
 #ifndef NDEBUG
@@ -74,28 +104,31 @@ bool removeParameter(const std::vector<Function*>& funcs,
   // propagating that out, or by appending an unreachable after the call, but
   // for simplicity just ignore such cases; if we are called again later then
   // if DCE ran meanwhile then we could optimize.
-  auto hasBadEffects = [&](auto* call) {
-    auto& operands = call->operands;
-    bool hasUnremovable =
-      EffectAnalyzer(runner->options, *module, operands[index])
-        .hasUnremovableSideEffects();
-    bool wouldChangeType = call->type == Type::unreachable && !call->isReturn &&
-                           operands[index]->type == Type::unreachable;
-    return hasUnremovable || wouldChangeType;
+  auto checkEffects = [&](auto* call) {
+    auto* operand = call->operands[index];
+
+    if (operand->type == Type::unreachable) {
+      return Failure;
+    }
+
+    bool hasUnremovable = EffectAnalyzer(runner->options, *module, operand)
+                            .hasUnremovableSideEffects();
+
+    return hasUnremovable ? Failure : Success;
   };
-  bool callParamsAreValid =
-    std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      return hasBadEffects(call);
-    });
-  if (!callParamsAreValid) {
-    return false;
+
+  for (auto* call : calls) {
+    auto result = checkEffects(call);
+    if (result != Success) {
+      return result;
+    }
   }
-  bool callRefParamsAreValid =
-    std::none_of(callRefs.begin(), callRefs.end(), [&](CallRef* call) {
-      return hasBadEffects(call);
-    });
-  if (!callRefParamsAreValid) {
-    return false;
+
+  for (auto* call : callRefs) {
+    auto result = checkEffects(call);
+    if (result != Success) {
+      return result;
+    }
   }
 
   // The type must be valid for us to handle as a local (since we
@@ -104,7 +137,7 @@ bool removeParameter(const std::vector<Function*>& funcs,
   //       local
   bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(index));
   if (!typeIsValid) {
-    return false;
+    return Failure;
   }
 
   // We can do it!
@@ -161,17 +194,18 @@ bool removeParameter(const std::vector<Function*>& funcs,
     call->operands.erase(call->operands.begin() + index);
   }
 
-  return true;
+  return Success;
 }
 
-SortedVector removeParameters(const std::vector<Function*>& funcs,
-                              SortedVector indexes,
-                              const std::vector<Call*>& calls,
-                              const std::vector<CallRef*>& callRefs,
-                              Module* module,
-                              PassRunner* runner) {
+std::pair<SortedVector, RemovalOutcome>
+removeParameters(const std::vector<Function*>& funcs,
+                 SortedVector indexes,
+                 const std::vector<Call*>& calls,
+                 const std::vector<CallRef*>& callRefs,
+                 Module* module,
+                 PassRunner* runner) {
   if (indexes.empty()) {
-    return {};
+    return {{}, Success};
   }
 
   assert(funcs.size() > 0);
@@ -188,8 +222,8 @@ SortedVector removeParameters(const std::vector<Function*>& funcs,
   SortedVector removed;
   while (1) {
     if (indexes.has(i)) {
-      if (removeParameter(funcs, i, calls, callRefs, module, runner)) {
-        // Success!
+      auto outcome = removeParameter(funcs, i, calls, callRefs, module, runner);
+      if (outcome == Success) {
         removed.insert(i);
       }
     }
@@ -198,7 +232,11 @@ SortedVector removeParameters(const std::vector<Function*>& funcs,
     }
     i--;
   }
-  return removed;
+  RemovalOutcome finalOutcome = Success;
+  if (removed.size() < indexes.size()) {
+    finalOutcome = Failure;
+  }
+  return {removed, finalOutcome};
 }
 
 SortedVector applyConstantValues(const std::vector<Function*>& funcs,
@@ -244,6 +282,109 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   }
 
   return optimized;
+}
+
+void localizeCallsTo(const std::unordered_set<Name>& callTargets,
+                     Module& wasm,
+                     PassRunner* runner,
+                     std::function<void(Function*)> onChange) {
+  struct LocalizerPass : public WalkerPass<PostWalker<LocalizerPass>> {
+    bool isFunctionParallel() override { return true; }
+    // May add non-nullable locals, but fixups are never needed as they are
+    // immediately used in the code right after.
+    bool requiresNonNullableLocalFixups() override { return false; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<LocalizerPass>(callTargets, onChange);
+    }
+
+    const std::unordered_set<Name>& callTargets;
+    std::function<void(Function*)> onChange;
+
+    LocalizerPass(const std::unordered_set<Name>& callTargets,
+                  std::function<void(Function*)> onChange)
+      : callTargets(callTargets), onChange(onChange) {}
+
+    void visitCall(Call* curr) {
+      if (!callTargets.count(curr->target)) {
+        return;
+      }
+
+      ChildLocalizer localizer(
+        curr, getFunction(), *getModule(), getPassOptions());
+      auto* replacement = localizer.getReplacement();
+      if (replacement != curr) {
+        replaceCurrent(replacement);
+        optimized = true;
+        onChange(getFunction());
+      }
+    }
+
+    bool optimized = false;
+
+    void visitFunction(Function* curr) {
+      if (optimized) {
+        // Localization can add blocks, which might move pops.
+        EHUtils::handleBlockNestedPops(curr, *getModule());
+      }
+    }
+  };
+
+  LocalizerPass(callTargets, onChange).run(runner, &wasm);
+}
+
+void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
+                     Module& wasm,
+                     PassRunner* runner) {
+  struct LocalizerPass : public WalkerPass<PostWalker<LocalizerPass>> {
+    bool isFunctionParallel() override { return true; }
+    // See above.
+    bool requiresNonNullableLocalFixups() override { return false; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<LocalizerPass>(callTargets);
+    }
+
+    const std::unordered_set<HeapType>& callTargets;
+
+    LocalizerPass(const std::unordered_set<HeapType>& callTargets)
+      : callTargets(callTargets) {}
+
+    void visitCall(Call* curr) {
+      handleCall(curr, getModule()->getFunction(curr->target)->type);
+    }
+
+    void visitCallRef(CallRef* curr) {
+      auto type = curr->target->type;
+      if (type.isRef()) {
+        handleCall(curr, type.getHeapType());
+      }
+    }
+
+    void handleCall(Expression* call, HeapType type) {
+      if (!callTargets.count(type)) {
+        return;
+      }
+
+      ChildLocalizer localizer(
+        call, getFunction(), *getModule(), getPassOptions());
+      auto* replacement = localizer.getReplacement();
+      if (replacement != call) {
+        replaceCurrent(replacement);
+        optimized = true;
+      }
+    }
+
+    bool optimized = false;
+
+    void visitFunction(Function* curr) {
+      if (optimized) {
+        EHUtils::handleBlockNestedPops(curr, *getModule());
+      }
+    }
+  };
+
+  LocalizerPass(callTargets).run(runner, &wasm);
 }
 
 } // namespace wasm::ParamUtils

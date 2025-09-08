@@ -1,0 +1,23 @@
+[
+  {
+    "name": "root",
+    "reaches": ["f", "g"],
+    "root": true
+  },
+  {
+    "name": "f",
+    "export": "f"
+  },
+  {
+    "name": "g",
+    "export": "g"
+  },
+  {
+    "name": "f1",
+    "import": ["env", "f1"]
+  },
+  {
+    "name": "f2",
+    "import": ["env", "f2"]
+  },
+]

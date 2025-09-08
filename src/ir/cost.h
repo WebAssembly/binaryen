@@ -31,11 +31,21 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
 
   CostType cost;
 
-  // A cost that is extremely high, something that is far, far more expensive
-  // than a fast operation like an add. This cost is so high it is unacceptable
-  // to add any more of it, say by an If=>Select operation (which would execute
-  // both arms; if either arm contains an unacceptable cost, we do not do it).
-  static const CostType Unacceptable = 100;
+  // The cost of a "slow" atomic operation like RMW.
+  static const CostType AtomicCost = 10;
+
+  // The cost of throwing a wasm exception. This does not include the cost of
+  // catching it (which might be in another function than the one we are
+  // considering).
+  static const CostType ThrowCost = 10;
+
+  // The cost of a cast. This can vary depending on the engine and on the type,
+  // but usually requires some loads and comparisons.
+  static const CostType CastCost = 5;
+
+  // Generational GC can be very efficient, but even so allocations have a high
+  // cost due to shortening the time to the next collection.
+  static const CostType AllocationCost = 100;
 
   CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
 
@@ -85,26 +95,32 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitGlobalGet(GlobalGet* curr) { return 1; }
   CostType visitGlobalSet(GlobalSet* curr) { return 2 + visit(curr->value); }
   CostType visitLoad(Load* curr) {
-    return 1 + visit(curr->ptr) + 10 * curr->isAtomic;
+    return 1 + visit(curr->ptr) + AtomicCost * curr->isAtomic;
   }
   CostType visitStore(Store* curr) {
-    return 2 + visit(curr->ptr) + visit(curr->value) + 10 * curr->isAtomic;
+    return 2 + visit(curr->ptr) + visit(curr->value) +
+           AtomicCost * curr->isAtomic;
   }
   CostType visitAtomicRMW(AtomicRMW* curr) {
-    return Unacceptable + visit(curr->ptr) + visit(curr->value);
+    return AtomicCost + visit(curr->ptr) + visit(curr->value);
   }
   CostType visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    return Unacceptable + visit(curr->ptr) + visit(curr->expected) +
+    return AtomicCost + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->replacement);
   }
   CostType visitAtomicWait(AtomicWait* curr) {
-    return Unacceptable + visit(curr->ptr) + visit(curr->expected) +
+    return AtomicCost + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->timeout);
   }
   CostType visitAtomicNotify(AtomicNotify* curr) {
-    return Unacceptable + visit(curr->ptr) + visit(curr->notifyCount);
+    return AtomicCost + visit(curr->ptr) + visit(curr->notifyCount);
   }
-  CostType visitAtomicFence(AtomicFence* curr) { return Unacceptable; }
+  CostType visitAtomicFence(AtomicFence* curr) { return AtomicCost; }
+  CostType visitPause(Pause* curr) {
+    // When used properly, pause only makes things more efficient, so we do not
+    // model it as having any cost.
+    return 0;
+  }
   CostType visitConst(Const* curr) { return 1; }
   CostType visitUnary(Unary* curr) {
     CostType ret = 0;
@@ -177,6 +193,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case SplatVecI16x8:
       case SplatVecI32x4:
       case SplatVecI64x2:
+      case SplatVecF16x8:
       case SplatVecF32x4:
       case SplatVecF64x2:
       case NotVec128:
@@ -198,6 +215,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case NegVecI64x2:
       case AllTrueVecI64x2:
       case BitmaskVecI64x2:
+      case AbsVecF16x8:
+      case NegVecF16x8:
+      case SqrtVecF16x8:
+      case CeilVecF16x8:
+      case FloorVecF16x8:
+      case TruncVecF16x8:
+      case NearestVecF16x8:
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:
@@ -242,6 +266,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case RelaxedTruncUVecF32x4ToVecI32x4:
       case RelaxedTruncZeroSVecF64x2ToVecI32x4:
       case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+      case TruncSatSVecF16x8ToVecI16x8:
+      case TruncSatUVecF16x8ToVecI16x8:
+      case ConvertSVecI16x8ToVecF16x8:
+      case ConvertUVecI16x8ToVecF16x8:
         ret = 1;
         break;
       case InvalidUnary:
@@ -263,7 +291,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case DivUInt32:
       case RemSInt32:
       case RemUInt32:
-        ret = curr->right->is<Const>() ? 2 : 3;
+        ret = curr->right->is<Const>() ? 5 : 6;
         break;
       case AndInt32:
       case OrInt32:
@@ -284,7 +312,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case DivUInt64:
       case RemSInt64:
       case RemUInt64:
-        ret = curr->right->is<Const>() ? 3 : 4;
+        ret = curr->right->is<Const>() ? 7 : 8;
         break;
       case AndInt64:
       case OrInt64:
@@ -390,6 +418,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LeSVecI64x2:
       case GtSVecI64x2:
       case GeSVecI64x2:
+      case EqVecF16x8:
+      case NeVecF16x8:
+      case LtVecF16x8:
+      case LeVecF16x8:
+      case GtVecF16x8:
+      case GeVecF16x8:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:
@@ -461,6 +495,22 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case ExtMulHighSVecI64x2:
       case ExtMulLowUVecI64x2:
       case ExtMulHighUVecI64x2:
+      case AddVecF16x8:
+      case SubVecF16x8:
+        ret = 1;
+        break;
+      case MulVecF16x8:
+        ret = 2;
+        break;
+      case DivVecF16x8:
+        ret = 3;
+        break;
+      case MinVecF16x8:
+      case MaxVecF16x8:
+      case PMinVecF16x8:
+      case PMaxVecF16x8:
+        ret = 1;
+        break;
       case AddVecF32x4:
       case SubVecF32x4:
         ret = 1;
@@ -516,7 +566,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitReturn(Return* curr) { return maybeVisit(curr->value); }
   CostType visitMemorySize(MemorySize* curr) { return 1; }
   CostType visitMemoryGrow(MemoryGrow* curr) {
-    return Unacceptable + visit(curr->delta);
+    // TODO: This should perhaps be higher for shared memories.
+    return 20 + visit(curr->delta);
   }
   CostType visitMemoryInit(MemoryInit* curr) {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
@@ -544,10 +595,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LaneselectI16x8:
       case LaneselectI32x4:
       case LaneselectI64x2:
-      case RelaxedFmaVecF32x4:
-      case RelaxedFmsVecF32x4:
-      case RelaxedFmaVecF64x2:
-      case RelaxedFmsVecF64x2:
+      case RelaxedMaddVecF16x8:
+      case RelaxedNmaddVecF16x8:
+      case RelaxedMaddVecF32x4:
+      case RelaxedNmaddVecF32x4:
+      case RelaxedMaddVecF64x2:
+      case RelaxedNmaddVecF64x2:
       case DotI8x16I7x16AddSToVecI32x4:
         ret = 1;
         break;
@@ -572,20 +625,35 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitTableSize(TableSize* curr) { return 1; }
   CostType visitTableGrow(TableGrow* curr) {
-    return Unacceptable + visit(curr->value) + visit(curr->delta);
+    return 20 + visit(curr->value) + visit(curr->delta);
   }
+  CostType visitTableFill(TableFill* curr) {
+    return 6 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
+  }
+  CostType visitTableCopy(TableCopy* curr) {
+    return 6 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
+  }
+  CostType visitTableInit(TableInit* curr) {
+    return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
+  }
+  CostType visitElemDrop(ElemDrop* curr) { return 6; }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
   }
+  CostType visitTryTable(TryTable* curr) {
+    // We assume no exception will be thrown in most cases
+    return visit(curr->body);
+  }
   CostType visitThrow(Throw* curr) {
-    CostType ret = Unacceptable;
+    CostType ret = ThrowCost;
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  CostType visitRethrow(Rethrow* curr) { return Unacceptable; }
+  CostType visitRethrow(Rethrow* curr) { return ThrowCost; }
+  CostType visitThrowRef(ThrowRef* curr) { return ThrowCost; }
   CostType visitTupleMake(TupleMake* curr) {
     CostType ret = 0;
     for (auto* child : curr->operands) {
@@ -598,33 +666,40 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitNop(Nop* curr) { return 0; }
   CostType visitUnreachable(Unreachable* curr) { return 0; }
   CostType visitDataDrop(DataDrop* curr) { return 5; }
-  CostType visitI31New(I31New* curr) { return 3 + visit(curr->value); }
+  CostType visitRefI31(RefI31* curr) { return 3 + visit(curr->value); }
   CostType visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
   CostType visitRefTest(RefTest* curr) {
-    // Casts have a very high cost because in the VM they end up implemented as
-    // a combination of loads and branches. Given they contain branches, we do
-    // not want to add any more such work.
-    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref);
+    return CastCost + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   CostType visitRefCast(RefCast* curr) {
-    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref);
+    return CastCost + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
+  CostType visitRefGetDesc(RefGetDesc* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   CostType visitBrOn(BrOn* curr) {
-    // BrOn of a null can be fairly fast, but anything else is a cast check
-    // basically, and an unacceptable cost.
-    CostType base =
-      curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : Unacceptable;
-    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref);
+    // BrOn of a null can be fairly fast, but anything else is a cast check.
+    switch (curr->op) {
+      case BrOnNull:
+      case BrOnNonNull:
+        return 2 + nullCheckCost(curr->ref) + visit(curr->ref);
+      case BrOnCast:
+      case BrOnCastFail:
+        return CastCost + visit(curr->ref);
+      case BrOnCastDesc:
+      case BrOnCastDescFail:
+        // These are not as expensive as full casts, since they just do a
+        // identity check on the descriptor.
+        return 2 + visit(curr->ref) + visit(curr->desc);
+    }
+    WASM_UNREACHABLE("unexpected op");
   }
   CostType visitStructNew(StructNew* curr) {
-    // While allocation itself is almost free with generational GC, there is
-    // at least some baseline cost, plus writing the fields. (If we use default
-    // values for the fields, then it is possible they are all 0 and if so, we
-    // can get that almost for free as well, so don't add anything there.)
-    CostType ret = 4 + curr->operands.size();
+    CostType ret = AllocationCost + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
+    ret += maybeVisit(curr->desc);
     return ret;
   }
   CostType visitStructGet(StructGet* curr) {
@@ -633,17 +708,25 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitStructSet(StructSet* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
   }
+  CostType visitStructRMW(StructRMW* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->value);
+  }
+  CostType visitStructCmpxchg(StructCmpxchg* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->expected) + visit(curr->replacement);
+  }
   CostType visitArrayNew(ArrayNew* curr) {
-    return 4 + visit(curr->size) + maybeVisit(curr->init);
+    return AllocationCost + visit(curr->size) + maybeVisit(curr->init);
   }
   CostType visitArrayNewData(ArrayNewData* curr) {
-    return 4 + visit(curr->offset) + visit(curr->size);
+    return AllocationCost + visit(curr->offset) + visit(curr->size);
   }
   CostType visitArrayNewElem(ArrayNewElem* curr) {
-    return 4 + visit(curr->offset) + visit(curr->size);
+    return AllocationCost + visit(curr->offset) + visit(curr->size);
   }
   CostType visitArrayNewFixed(ArrayNewFixed* curr) {
-    CostType ret = 4;
+    CostType ret = AllocationCost;
     for (auto* child : curr->values) {
       ret += visit(child);
     }
@@ -676,43 +759,93 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->offset) +
            visit(curr->size);
   }
+  CostType visitArrayRMW(ArrayRMW* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
+  }
+  CostType visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->expected) +
+           visit(curr->replacement);
+  }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {
-    return 8 + visit(curr->ptr) + maybeVisit(curr->length) +
-           maybeVisit(curr->start) + maybeVisit(curr->end);
+    return 8 + visit(curr->ref) + maybeVisit(curr->start) +
+           maybeVisit(curr->end);
   }
-  CostType visitStringConst(StringConst* curr) { return 4; }
+  CostType visitStringConst(StringConst* curr) {
+    // We do not use AllocationCost here because these will end up imported as
+    // constants from the outside, after string lowering (and even natively, a
+    // VM can implement them as global constants).
+    return 4;
+  }
   CostType visitStringMeasure(StringMeasure* curr) {
     return 6 + visit(curr->ref);
   }
   CostType visitStringEncode(StringEncode* curr) {
-    return 6 + visit(curr->ref) + visit(curr->ptr);
+    return AllocationCost + 2 + visit(curr->str) + visit(curr->array) +
+           visit(curr->start);
   }
   CostType visitStringConcat(StringConcat* curr) {
-    return 10 + visit(curr->left) + visit(curr->right);
+    return AllocationCost + 6 + visit(curr->left) + visit(curr->right);
   }
   CostType visitStringEq(StringEq* curr) {
     // "3" is chosen since strings might or might not be interned in the engine.
     return 3 + visit(curr->left) + visit(curr->right);
   }
-  CostType visitStringAs(StringAs* curr) { return 4 + visit(curr->ref); }
-  CostType visitStringWTF8Advance(StringWTF8Advance* curr) {
-    return 4 + visit(curr->ref) + visit(curr->pos) + visit(curr->bytes);
+  CostType visitStringTest(StringTest* curr) {
+    // "3" copied from `visitStringEq`.
+    return 3 + visit(curr->ref);
   }
   CostType visitStringWTF16Get(StringWTF16Get* curr) {
     return 1 + visit(curr->ref) + visit(curr->pos);
   }
-  CostType visitStringIterNext(StringIterNext* curr) {
-    return 2 + visit(curr->ref);
-  }
-  CostType visitStringIterMove(StringIterMove* curr) {
-    return 4 + visit(curr->ref) + visit(curr->num);
-  }
   CostType visitStringSliceWTF(StringSliceWTF* curr) {
     return 8 + visit(curr->ref) + visit(curr->start) + visit(curr->end);
   }
-  CostType visitStringSliceIter(StringSliceIter* curr) {
-    return 8 + visit(curr->ref) + visit(curr->num);
+
+  CostType visitContNew(ContNew* curr) {
+    return AllocationCost + 10 + visit(curr->func);
+  }
+  CostType visitContBind(ContBind* curr) {
+    // cont.bind may need to allocate a buffer to hold the arguments.
+    CostType ret = AllocationCost;
+    ret += visit(curr->cont);
+    for (auto* arg : curr->operands) {
+      ret += visit(arg);
+    }
+    return ret;
+  }
+  CostType visitSuspend(Suspend* curr) {
+    CostType ret = 12;
+    for (auto* arg : curr->operands) {
+      ret += visit(arg);
+    }
+    return ret;
+  }
+  CostType visitResume(Resume* curr) {
+    // Inspired by indirect calls, but twice the cost.
+    CostType ret = 12 + visit(curr->cont);
+    for (auto* arg : curr->operands) {
+      ret += visit(arg);
+    }
+    return ret;
+  }
+  CostType visitResumeThrow(ResumeThrow* curr) {
+    // Inspired by indirect calls, but twice the cost.
+    CostType ret = 12 + visit(curr->cont);
+    for (auto* arg : curr->operands) {
+      ret += visit(arg);
+    }
+    return ret;
+  }
+  CostType visitStackSwitch(StackSwitch* curr) {
+    // Inspired by indirect calls, but twice the cost.
+    CostType ret = 12 + visit(curr->cont);
+    for (auto* arg : curr->operands) {
+      ret += visit(arg);
+    }
+    return ret;
   }
 
 private:

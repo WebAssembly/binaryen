@@ -5,10 +5,9 @@
   (table 2 2 funcref)
   (elem (i32.const 0) $foo $bar)
   (start $bar)
-  (func "baz"
+  (func $baz (export "baz")
     (call $foo)
     (call $bar)
     (call $wrong (i32.const 1))
   )
 )
-

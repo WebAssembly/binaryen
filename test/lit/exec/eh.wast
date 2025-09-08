@@ -7,58 +7,39 @@
 
   ;; CHECK:      [fuzz-exec] calling throw
   ;; CHECK-NEXT: [exception thrown: e-i32 1]
-  (func "throw"
+  (func $throw (export "throw")
     (throw $e-i32 (i32.const 1))
   )
 
-  ;; CHECK:      [fuzz-exec] calling try-catch
-  (func "try-catch"
-    (try
-      (do
-        (throw $e-i32 (i32.const 2))
-      )
-      (catch $e-i32
-        (drop (pop i32))
-      )
-    )
-  )
-
-  ;; CHECK:      [fuzz-exec] calling catchless-try
-  ;; CHECK-NEXT: [exception thrown: e-i32 3]
-  (func "catchless-try"
-    (try
-      (do
-        (throw $e-i32 (i32.const 3))
-      )
-    )
-  )
-
-  ;; CHECK:      [fuzz-exec] calling try-delegate
-  ;; CHECK-NEXT: [exception thrown: e-i32 4]
-  (func "try-delegate"
-    (try $l0
-      (do
-        (try
-          (do
-            (throw $e-i32 (i32.const 4))
+  ;; CHECK:      [fuzz-exec] calling try_table-catch
+  (func $try_table-catch (export "try_table-catch")
+    (block $tryend
+      (drop
+        (block $catch (result i32)
+          (try_table (catch $e-i32 $catch)
+            (throw $e-i32 (i32.const 2))
           )
-          (delegate $l0)
+          (br $tryend)
         )
       )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling catchless-try_table
+  ;; CHECK-NEXT: [exception thrown: e-i32 3]
+  (func $catchless-try_table (export "catchless-try_table")
+    (try_table
+      (throw $e-i32 (i32.const 3))
     )
   )
 )
 ;; CHECK:      [fuzz-exec] calling throw
 ;; CHECK-NEXT: [exception thrown: e-i32 1]
 
-;; CHECK:      [fuzz-exec] calling try-catch
+;; CHECK:      [fuzz-exec] calling try_table-catch
 
-;; CHECK:      [fuzz-exec] calling catchless-try
+;; CHECK:      [fuzz-exec] calling catchless-try_table
 ;; CHECK-NEXT: [exception thrown: e-i32 3]
-
-;; CHECK:      [fuzz-exec] calling try-delegate
-;; CHECK-NEXT: [exception thrown: e-i32 4]
-;; CHECK-NEXT: [fuzz-exec] comparing catchless-try
+;; CHECK-NEXT: [fuzz-exec] comparing catchless-try_table
 ;; CHECK-NEXT: [fuzz-exec] comparing throw
-;; CHECK-NEXT: [fuzz-exec] comparing try-catch
-;; CHECK-NEXT: [fuzz-exec] comparing try-delegate
+;; CHECK-NEXT: [fuzz-exec] comparing try_table-catch

@@ -1,3 +1,4 @@
+Metrics
 total
  [exports]      : 1       
  [funcs]        : 1       
@@ -12,6 +13,7 @@ total
  Const          : 1       
  LocalGet       : 1       
  LocalSet       : 1       
+Metrics
 total
  [exports]      : 1       
  [funcs]        : 1       
@@ -27,7 +29,7 @@ total
  LocalGet       : 1       
  LocalSet       : 1       
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (export "foo" (func $0))
  (func $0 (result i32)
   (local $0 i32)

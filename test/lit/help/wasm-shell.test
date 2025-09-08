@@ -6,14 +6,6 @@
 ;; CHECK-NEXT: ================================================================================
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
-;; CHECK-NEXT: wasm-shell options:
-;; CHECK-NEXT: -------------------
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --entry,-e Call the entry point after parsing the module
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --skip,-s  Skip input on certain lines (comma-separated-list)
-;; CHECK-NEXT:
-;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:

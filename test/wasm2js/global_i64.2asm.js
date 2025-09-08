@@ -17,7 +17,7 @@ function asmFunc(imports) {
   $0$hi = $0$hi | 0;
  }
  
- function $1() {
+ function exp() {
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = f$hi;
   call(f | 0, i64toi32_i32$0 | 0);
@@ -27,7 +27,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "exp": $1
+  "exp": exp
  };
 }
 

@@ -5,7 +5,7 @@
 
 (module
  (global $global$0 (mut f64) (f64.const -32768))
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $0 (func (param i32)))
 
  ;; CHECK:      (global $global$1 (mut i32) (i32.const 100))
  (global $global$1 (mut i32) (i32.const 100))
@@ -16,7 +16,9 @@
  (func $0
   (if
    (global.get $global$1)
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (global.set $global$1
    (i32.const 0)
@@ -29,8 +31,12 @@
        (i32.load16_u offset=3
         (i32.const 0)
        )
-       (i32.const 1)
-       (i32.const 0)
+       (then
+        (i32.const 1)
+       )
+       (else
+        (i32.const 0)
+       )
       )
      )
      (unreachable)
@@ -41,7 +47,9 @@
  ;; CHECK:      (func $1 (param $0 i32)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (global.get $global$1)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (global.set $global$1
  ;; CHECK-NEXT:   (i32.const 0)
@@ -52,7 +60,9 @@
  ;; CHECK-NEXT:     (i32.const 3)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $1 (param $var$0 i32)

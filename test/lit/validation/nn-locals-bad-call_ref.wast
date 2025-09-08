@@ -1,8 +1,8 @@
 ;; Test for validation of non-nullable locals
 
-;; RUN: not wasm-opt -all --enable-gc-nn-locals %s 2>&1 | filecheck %s
+;; RUN: not wasm-opt -all %s 2>&1 | filecheck %s
 
-;; CHECK: non-nullable local must not read null
+;; CHECK: non-nullable local's sets must dominate gets
 
 (module
   (tag $tag (param i32))
@@ -17,7 +17,7 @@
       )
       (catch $tag
         (drop
-          (pop (i32))
+          (pop i32)
         )
         ;; The path to here is from a possible exception thrown in the call_ref.
         ;; This is a regression test for call_ref not being seen as possibly

@@ -40,10 +40,9 @@ template<typename InputType> inline Nop* nop(InputType* target) {
 }
 
 template<typename InputType>
-inline RefNull* refNull(InputType* target, Type type) {
-  assert(type.isNullable() && type.getHeapType().isBottom());
+inline RefNull* refNull(InputType* target, HeapType type) {
   auto* ret = convert<InputType, RefNull>(target);
-  ret->finalize(type);
+  ret->finalize(Type(type.getBottom(), Nullable));
   return ret;
 }
 
@@ -64,6 +63,21 @@ inline OutputType* convert(InputType* input, MixedArena& allocator) {
   return output;
 }
 
+// Copy using a flexible custom copy function. This function is called on each
+// expression before copying it. If it returns a non-null value then that is
+// used (effectively overriding the normal copy), and if it is null then we do a
+// normal copy.
+//
+// The order of iteration here is *pre*-order, that is, parents before children,
+// so that it is possible to override an expression and all its children.
+// Children themselves are visited in normal order. For example, this is the
+// order of the following expression:
+//
+//  (i32.add     ;; visited first (and children not visited, if overridden)
+//    (call $a)  ;; visited second
+//    (call $b)  ;; visited third
+//  )
+//
 using CustomCopier = std::function<Expression*(Expression*)>;
 Expression*
 flexibleCopy(Expression* original, Module& wasm, CustomCopier custom);

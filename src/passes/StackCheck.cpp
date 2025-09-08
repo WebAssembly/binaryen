@@ -126,6 +126,9 @@ private:
 };
 
 struct StackCheck : public Pass {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
     Global* stackPointer = getStackPointerGlobal(*module);
     if (!stackPointer) {
@@ -138,8 +141,7 @@ struct StackCheck : public Pass {
     auto stackLimitName = Names::getValidGlobalName(*module, "__stack_limit");
 
     Name handler;
-    auto handlerName =
-      getPassOptions().getArgumentOrDefault("stack-check-handler", "");
+    auto handlerName = getArgumentOrDefault("stack-check-handler", "");
     if (handlerName != "") {
       handler = handlerName;
       importStackOverflowHandler(
@@ -149,17 +151,17 @@ struct StackCheck : public Pass {
     Builder builder(*module);
 
     // Add the globals.
-    Type indexType =
-      module->memories.empty() ? Type::i32 : module->memories[0]->indexType;
+    Type addressType =
+      module->memories.empty() ? Type::i32 : module->memories[0]->addressType;
     auto stackBase =
       module->addGlobal(builder.makeGlobal(stackBaseName,
                                            stackPointer->type,
-                                           builder.makeConstPtr(0, indexType),
+                                           builder.makeConstPtr(0, addressType),
                                            Builder::Mutable));
     auto stackLimit =
       module->addGlobal(builder.makeGlobal(stackLimitName,
                                            stackPointer->type,
-                                           builder.makeConstPtr(0, indexType),
+                                           builder.makeConstPtr(0, addressType),
                                            Builder::Mutable));
 
     // Instrument all the code.

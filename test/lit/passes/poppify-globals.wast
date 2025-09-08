@@ -3,9 +3,9 @@
 ;; RUN: wasm-opt %s --poppify --no-validation -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32_i64_f32 (func (result i32 i64 f32)))
+  ;; CHECK:      (type $0 (func (result i32 i64 f32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $foo (mut i32) (i32.const 0))
   (global $foo (mut i32) (i32.const 0))
@@ -13,11 +13,11 @@
   ;; CHECK:      (global $tuple$1 f64 (f64.const 0))
   (global $tuple$1 f64 (f64.const 0)) ;; interfering name!
 
-  (global $tuple (mut (i32 i64 f32))
-    (tuple.make (global.get $foo) (i64.const 1) (f32.const 2))
+  (global $tuple (mut (tuple i32 i64 f32))
+    (tuple.make 3 (global.get $foo) (i64.const 1) (f32.const 2))
   )
 
-  (global $other-tuple (i32 i64 f32) (global.get $tuple))
+  (global $other-tuple (tuple i32 i64 f32) (global.get $tuple))
 
   ;; CHECK:      (global $tuple$2 (mut f32) (f32.const 2))
 
@@ -31,7 +31,7 @@
 
   ;; CHECK:      (global $other-tuple$0 i32 (global.get $tuple$0))
 
-  ;; CHECK:      (func $global-get-tuple (type $none_=>_i32_i64_f32) (result i32 i64 f32)
+  ;; CHECK:      (func $global-get-tuple (type $0) (result i32 i64 f32)
   ;; CHECK-NEXT:  (global.get $tuple$0)
   ;; CHECK-NEXT:  (global.get $tuple$1_4)
   ;; CHECK-NEXT:  (global.get $tuple$2)
@@ -40,7 +40,7 @@
     (global.get $tuple)
   )
 
-  ;; CHECK:      (func $global-set-tuple (type $none_=>_none)
+  ;; CHECK:      (func $global-set-tuple (type $1)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT:  (i64.const 1)
   ;; CHECK-NEXT:  (f32.const 2)
@@ -56,7 +56,7 @@
   ;; CHECK-NEXT: )
   (func $global-set-tuple
     (global.set $tuple
-      (tuple.make
+      (tuple.make 3
         (i32.const 0)
         (i64.const 1)
         (f32.const 2)

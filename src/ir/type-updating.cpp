@@ -18,9 +18,9 @@
 #include "find_all.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "support/topological_sort.h"
-#include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -28,91 +28,170 @@ namespace wasm {
 
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeRewriter::update() {
+void GlobalTypeRewriter::update(
+  const std::vector<HeapType>& additionalPrivateTypes) {
+  mapTypes(rebuildTypes(
+    getSortedTypes(getPrivatePredecessors(additionalPrivateTypes))));
+}
+
+GlobalTypeRewriter::PredecessorGraph GlobalTypeRewriter::getPrivatePredecessors(
+  const std::vector<HeapType>& additionalPrivateTypes) {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type
-  // will be located in the builder. Sort the private types so that supertypes
-  // come before their subtypes.
-  Index i = 0;
-  auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
+  // will be located in the builder.
+  auto typeInfo = ModuleUtils::collectHeapTypeInfo(
+    wasm,
+    ModuleUtils::TypeInclusion::UsedIRTypes,
+    ModuleUtils::VisibilityHandling::FindVisibility);
 
-  // Topological sort to have supertypes first, but we have to account for the
-  // fact that we may be replacing the supertypes to get the order correct.
-  struct SupertypesFirst
-    : HeapTypeOrdering::SupertypesFirstBase<SupertypesFirst> {
-    GlobalTypeRewriter& parent;
+  std::unordered_set<HeapType> additionalSet(additionalPrivateTypes.begin(),
+                                             additionalPrivateTypes.end());
 
-    SupertypesFirst(GlobalTypeRewriter& parent,
-                    const std::vector<HeapType>& types)
-      : SupertypesFirstBase(types), parent(parent) {}
-    std::optional<HeapType> getSuperType(HeapType type) {
-      return parent.getSuperType(type);
-    }
+  // Check if a type is private, given the info for it.
+  auto isPublicGivenInfo = [&](HeapType type, auto& info) {
+    return info.visibility != ModuleUtils::Visibility::Private &&
+           !additionalSet.count(type);
   };
 
-  for (auto type : SupertypesFirst(*this, privateTypes)) {
+  // Check if a type is private, looking for its info (if there is none, it is
+  // not private).
+  auto isPublic = [&](HeapType type) {
+    auto it = typeInfo.find(type);
+    if (it == typeInfo.end()) {
+      return false;
+    }
+    return isPublicGivenInfo(type, it->second);
+  };
+
+  // For each type, note all the predecessors it must have, i.e., that must
+  // appear before it. That includes supertypes and described types.
+  std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>> preds;
+  preds.reserve(typeInfo.size());
+  for (auto& [type, info] : typeInfo) {
+    if (isPublicGivenInfo(type, info)) {
+      continue;
+    }
+    preds.push_back({type, {}});
+
+    // Check for a (private) supertype.
+    if (auto super = getDeclaredSuperType(type); super && !isPublic(*super)) {
+      preds.back().second.push_back(*super);
+    }
+
+    // Check for a (private) described type.
+    if (auto desc = type.getDescribedType()) {
+      // It is not possible for a a described type to be public while its
+      // descriptor is private, or vice versa.
+      assert(!isPublic(*desc));
+      preds.back().second.push_back(*desc);
+    }
+  }
+
+  return preds;
+}
+
+std::vector<HeapType>
+GlobalTypeRewriter::getSortedTypes(PredecessorGraph preds) {
+  std::vector<HeapType> sorted;
+  if (wasm.typeIndices.empty()) {
+    sorted = TopologicalSort::sortOf(preds.begin(), preds.end());
+  } else {
+    sorted = TopologicalSort::minSortOf(
+      preds.begin(), preds.end(), [&](Index a, Index b) {
+        auto typeA = preds[a].first;
+        auto typeB = preds[b].first;
+        // Preserve type order.
+        auto itA = wasm.typeIndices.find(typeA);
+        auto itB = wasm.typeIndices.find(typeB);
+        bool hasA = itA != wasm.typeIndices.end();
+        bool hasB = itB != wasm.typeIndices.end();
+        if (hasA != hasB) {
+          // Types with preserved indices must be
+          // sorted before (after in this reversed
+          // comparison) types without indices to
+          // maintain transitivity.
+          return !hasA;
+        }
+        if (hasA && *itA != *itB) {
+          return !(itA->second < itB->second);
+        }
+        // Break ties by the arbitrary order we
+        // have collected the types in.
+        return a > b;
+      });
+  }
+  std::reverse(sorted.begin(), sorted.end());
+  return sorted;
+}
+
+GlobalTypeRewriter::TypeMap
+GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
+  Index i = 0;
+  for (auto type : types) {
     typeIndices[type] = i++;
   }
 
   if (typeIndices.size() == 0) {
-    return;
+    return {};
   }
+
   typeBuilder.grow(typeIndices.size());
 
-  // All the input types are distinct, so we need to make sure the output types
-  // are distinct as well. Further, the new types may have more recursions than
-  // the original types, so the old recursion groups may not be sufficient any
-  // more. Both of these problems are solved by putting all the new types into a
-  // single large recursion group.
+  // All the input types are distinct, so we need to make sure the output
+  // types are distinct as well. Further, the new types may have more
+  // recursions than the original types, so the old recursion groups may not
+  // be sufficient any more. Both of these problems are solved by putting all
+  // the new types into a single large recursion group.
   typeBuilder.createRecGroup(0, typeBuilder.size());
 
   // Create the temporary heap types.
   i = 0;
+  auto map = [&](HeapType type) -> HeapType {
+    if (auto it = typeIndices.find(type); it != typeIndices.end()) {
+      return typeBuilder[it->second];
+    }
+    return type;
+  };
   for (auto [type, _] : typeIndices) {
-    if (type.isSignature()) {
-      auto sig = type.getSignature();
-      TypeList newParams, newResults;
-      for (auto t : sig.params) {
-        newParams.push_back(getTempType(t));
+    typeBuilder[i].copy(type, map);
+    switch (type.getKind()) {
+      case HeapTypeKind::Func: {
+        auto newSig = HeapType(typeBuilder[i]).getSignature();
+        modifySignature(type, newSig);
+        typeBuilder[i] = newSig;
+        break;
       }
-      for (auto t : sig.results) {
-        newResults.push_back(getTempType(t));
+      case HeapTypeKind::Struct: {
+        auto newStruct = HeapType(typeBuilder[i]).getStruct();
+        modifyStruct(type, newStruct);
+        typeBuilder[i] = newStruct;
+        break;
       }
-      Signature newSig(typeBuilder.getTempTupleType(newParams),
-                       typeBuilder.getTempTupleType(newResults));
-      modifySignature(type, newSig);
-      typeBuilder[i] = newSig;
-    } else if (type.isStruct()) {
-      auto struct_ = type.getStruct();
-      // Start with a copy to get mutability/packing/etc.
-      auto newStruct = struct_;
-      for (auto& field : newStruct.fields) {
-        field.type = getTempType(field.type);
+      case HeapTypeKind::Array: {
+        auto newArray = HeapType(typeBuilder[i]).getArray();
+        modifyArray(type, newArray);
+        typeBuilder[i] = newArray;
+        break;
       }
-      modifyStruct(type, newStruct);
-      typeBuilder[i] = newStruct;
-    } else if (type.isArray()) {
-      auto array = type.getArray();
-      // Start with a copy to get mutability/packing/etc.
-      auto newArray = array;
-      newArray.element.type = getTempType(newArray.element.type);
-      modifyArray(type, newArray);
-      typeBuilder[i] = newArray;
-    } else {
-      WASM_UNREACHABLE("bad type");
+      case HeapTypeKind::Cont: {
+        auto newCont = HeapType(typeBuilder[i]).getContinuation();
+        modifyContinuation(type, newCont);
+        typeBuilder[i] = newCont;
+        break;
+      }
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
 
-    // Apply a super, if there is one
-    if (auto super = getSuperType(type)) {
-      if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
-        assert(it->second < i);
-        typeBuilder[i].subTypeOf(typeBuilder[it->second]);
-      } else {
-        typeBuilder[i].subTypeOf(*super);
-      }
+    if (auto super = getDeclaredSuperType(type)) {
+      typeBuilder[i].subTypeOf(map(*super));
+    } else {
+      typeBuilder[i].subTypeOf(std::nullopt);
     }
-    i++;
+
+    modifyTypeBuilderEntry(typeBuilder, i, type);
+    ++i;
   }
 
   auto buildResults = typeBuilder.build();
@@ -124,21 +203,17 @@ void GlobalTypeRewriter::update() {
 #endif
   auto& newTypes = *buildResults;
 
+  // TODO: It is possible that the newly built rec group matches some public rec
+  // group. If that is the case, we need to try a different permutation of the
+  // types or add a brand type to distinguish the private types.
+
   // Map the old types to the new ones.
   TypeMap oldToNewTypes;
   for (auto [type, index] : typeIndices) {
     oldToNewTypes[type] = newTypes[index];
   }
-
-  // Update type names (doing it before mapTypes can help debugging there, but
-  // has no other effect; mapTypes does not look at type names).
-  for (auto& [old, new_] : oldToNewTypes) {
-    if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
-      wasm.typeNames[new_] = it->second;
-    }
-  }
-
-  mapTypes(oldToNewTypes);
+  mapTypeNamesAndIndices(oldToNewTypes);
+  return oldToNewTypes;
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
@@ -158,11 +233,11 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
 
     Type getNew(Type type) {
       if (type.isRef()) {
-        return Type(getNew(type.getHeapType()), type.getNullability());
+        return type.with(getNew(type.getHeapType()));
       }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
-        for (auto& t : tuple.types) {
+        for (auto& t : tuple) {
           t = getNew(t);
         }
         return Type(tuple);
@@ -171,18 +246,11 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
     }
 
     HeapType getNew(HeapType type) {
-      if (type.isBasic()) {
-        return type;
-      }
       auto iter = oldToNewTypes.find(type);
       if (iter != oldToNewTypes.end()) {
         return iter->second;
       }
       return type;
-    }
-
-    Signature getNew(Signature sig) {
-      return Signature(getNew(sig.params), getNew(sig.results));
     }
 
     void visitExpression(Expression* curr) {
@@ -224,13 +292,10 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #include "wasm-delegations-fields.def"
@@ -263,7 +328,38 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
     global->type = updater.getNew(global->type);
   }
   for (auto& tag : wasm.tags) {
-    tag->sig = updater.getNew(tag->sig);
+    tag->type = updater.getNew(tag->type);
+  }
+}
+
+void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
+  // Update type names to avoid duplicates.
+  std::unordered_set<Name> typeNames;
+  for (auto& [type, info] : wasm.typeNames) {
+    typeNames.insert(info.name);
+  }
+  for (auto& [old, new_] : oldToNewTypes) {
+    if (old == new_) {
+      // The type is being mapped to itself; no need to rename anything.
+      continue;
+    }
+
+    if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
+      auto& oldNames = it->second;
+      wasm.typeNames[new_] = oldNames;
+      // Use the existing name in the new type, as usually it completely
+      // replaces the old. Rename the old name in a unique way to avoid
+      // confusion in the case that it remains used.
+      auto deduped = Names::getValidName(
+        oldNames.name, [&](Name test) { return !typeNames.count(test); });
+      oldNames.name = deduped;
+      typeNames.insert(deduped);
+    }
+    if (auto it = wasm.typeIndices.find(old); it != wasm.typeIndices.end()) {
+      // It's ok if we end up with duplicate indices. Ties will be resolved in
+      // some arbitrary manner.
+      wasm.typeIndices[new_] = it->second;
+    }
   }
 }
 
@@ -273,23 +369,30 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
-      return typeBuilder.getTempRefType(typeBuilder[it->second],
-                                        type.getNullability());
+    auto tempHeapType = getTempHeapType(heapType);
+    if (tempHeapType != heapType) {
+      return typeBuilder.getTempRefType(
+        tempHeapType, type.getNullability(), type.getExactness());
     }
     // This type is not one that is eligible for optimizing. That is fine; just
     // use it unmodified.
     return type;
   }
   if (type.isTuple()) {
-    auto& tuple = type.getTuple();
-    auto newTuple = tuple;
-    for (auto& t : newTuple.types) {
+    auto newTuple = type.getTuple();
+    for (auto& t : newTuple) {
       t = getTempType(t);
     }
     return typeBuilder.getTempTupleType(newTuple);
   }
   WASM_UNREACHABLE("bad type");
+}
+
+HeapType GlobalTypeRewriter::getTempHeapType(HeapType type) {
+  if (auto it = typeIndices.find(type); it != typeIndices.end()) {
+    return typeBuilder[it->second];
+  }
+  return type;
 }
 
 Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
@@ -299,25 +402,22 @@ Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
 namespace TypeUpdating {
 
 bool canHandleAsLocal(Type type) {
-  // Defaultable types are always ok. For non-nullable types, we can handle them
-  // using defaultable ones + ref.as_non_nulls.
-  return type.isDefaultable() || type.isRef();
+  // TODO: Inline this into its callers.
+  return type.isConcrete();
 }
 
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
-  if (wasm.features.hasGCNNLocals()) {
-    // We have nothing to fix up: all locals are allowed.
-    return;
-  }
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so no non-nullable ones at all.
     return;
   }
   bool hasNonNullable = false;
-  for (auto type : func->vars) {
-    if (type.isNonNullable()) {
-      hasNonNullable = true;
-      break;
+  for (auto varType : func->vars) {
+    for (auto type : varType) {
+      if (type.isNonNullable()) {
+        hasNonNullable = true;
+        break;
+      }
     }
   }
   if (!hasNonNullable) {
@@ -337,7 +437,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     // LocalStructuralDominance should have only looked at non-nullable indexes
     // since we told it to ignore nullable ones. Also, params always dominate
     // and should not appear here.
-    assert(func->getLocalType(index).isNonNullable());
+    assert(func->getLocalType(index).isNonNullable() ||
+           func->getLocalType(index).isTuple());
     assert(!func->isParam(index));
   }
   if (badIndexes.empty()) {
@@ -368,8 +469,24 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     }
     if (badIndexes.count(set->index)) {
       auto type = func->getLocalType(set->index);
-      set->type = Type(type.getHeapType(), Nullable);
-      *setp = builder.makeRefAs(RefAsNonNull, set);
+      auto validType = getValidLocalType(type, wasm.features);
+      if (type.isRef()) {
+        set->type = validType;
+        *setp = builder.makeRefAs(RefAsNonNull, set);
+      } else {
+        assert(type.isTuple());
+        set->makeSet();
+        std::vector<Expression*> elems(type.size());
+        for (size_t i = 0, size = type.size(); i < size; ++i) {
+          elems[i] = builder.makeTupleExtract(
+            builder.makeLocalGet(set->index, validType), i);
+          if (type[i].isNonNullable()) {
+            elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
+          }
+        }
+        *setp =
+          builder.makeSequence(set, builder.makeTupleMake(std::move(elems)));
+      }
     }
   }
 
@@ -382,20 +499,41 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 }
 
 Type getValidLocalType(Type type, FeatureSet features) {
-  // TODO: this should handle tuples with a non-nullable item
-  assert(canHandleAsLocal(type));
-  if (type.isNonNullable() && !features.hasGCNNLocals()) {
-    type = Type(type.getHeapType(), Nullable);
+  assert(type.isConcrete());
+  if (type.isNonNullable()) {
+    return type.with(Nullable);
+  }
+  if (type.isTuple()) {
+    std::vector<Type> elems(type.size());
+    for (size_t i = 0, size = type.size(); i < size; ++i) {
+      elems[i] = getValidLocalType(type[i], features);
+    }
+    return Type(std::move(elems));
   }
   return type;
 }
 
 Expression* fixLocalGet(LocalGet* get, Module& wasm) {
-  if (get->type.isNonNullable() && !wasm.features.hasGCNNLocals()) {
+  if (get->type.isNonNullable()) {
     // The get should now return a nullable value, and a ref.as_non_null
     // fixes that up.
     get->type = getValidLocalType(get->type, wasm.features);
     return Builder(wasm).makeRefAs(RefAsNonNull, get);
+  }
+  if (get->type.isTuple()) {
+    auto type = get->type;
+    get->type = getValidLocalType(type, wasm.features);
+    std::vector<Expression*> elems(type.size());
+    Builder builder(wasm);
+    for (Index i = 0, size = type.size(); i < size; ++i) {
+      auto* elemGet =
+        i == 0 ? get : builder.makeLocalGet(get->index, get->type);
+      elems[i] = builder.makeTupleExtract(elemGet, i);
+      if (type[i].isNonNullable()) {
+        elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
+      }
+    }
+    return builder.makeTupleMake(std::move(elems));
   }
   return get;
 }

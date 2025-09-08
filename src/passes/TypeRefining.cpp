@@ -18,8 +18,16 @@
 // Apply more specific subtypes to type fields where possible, where all the
 // writes to that field in the entire program allow doing so.
 //
+// TODO: handle arrays and not just structs.
+//
+// The GUFA variant of this uses GUFA to infer types, which performs a (slow)
+// whole-program inference, rather than just scan struct/array operations by
+// themselves.
+//
 
+#include "ir/find_all.h"
 #include "ir/lubs.h"
+#include "ir/possible-contents.h"
 #include "ir/struct-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -53,16 +61,29 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    info.note(expr->type);
+    if (index == StructUtils::DescriptorIndex) {
+      // We cannot continue on below, where we index into the vector of values.
+      return;
+    }
+
+    auto noted = expr->type;
+    // Do not introduce new exact fields that might requires invalid
+    // casts. Keep any existing exact fields, though.
+    if (type.getStruct().fields[index].type.isInexact()) {
+      noted = noted.withInexactIfNoCustomDescs(getModule()->features);
+    }
+    info.note(noted);
   }
 
   void
   noteDefault(Type fieldType, HeapType type, Index index, FieldInfo& info) {
-    // Default values do not affect what the heap type of a field can be turned
-    // into. Note them, however, as they force us to keep the type nullable.
+    // Default values must be noted, so that we know there is content there.
     if (fieldType.isRef()) {
-      info.note(Type(fieldType.getHeapType().getBottom(), Nullable));
+      // All we need to note here is nullability (the field must remain
+      // nullable), but not anything else about the type.
+      fieldType = Type(fieldType.getHeapType().getBottom(), Nullable);
     }
+    info.note(fieldType);
   }
 
   void noteCopy(HeapType type, Index index, FieldInfo& info) {
@@ -72,6 +93,11 @@ struct FieldInfoScanner
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     // Nothing to do for a read, we just care about written values.
+  }
+
+  void noteRMW(Expression* expr, HeapType type, Index index, FieldInfo& info) {
+    // We must not refine past the RMW value type.
+    info.note(expr->type);
   }
 
   Properties::FallthroughBehavior getFallthroughBehavior() {
@@ -97,7 +123,15 @@ struct TypeRefining : public Pass {
   // Only affects GC type declarations and struct.gets.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  bool gufa;
+
+  TypeRefining(bool gufa) : gufa(gufa) {}
+
+  // The final information we inferred about struct usage, that we then use to
+  // optimize.
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
+
+  using Propagator = StructUtils::TypeHierarchyPropagator<FieldInfo>;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -108,6 +142,20 @@ struct TypeRefining : public Pass {
       Fatal() << "TypeRefining requires --closed-world";
     }
 
+    Propagator propagator(*module);
+
+    // Compute our main data structure, finalInfos, either normally or using
+    // GUFA.
+    if (!gufa) {
+      computeFinalInfos(module, propagator);
+    } else {
+      computeFinalInfosGUFA(module, propagator);
+    }
+
+    useFinalInfos(module, propagator);
+  }
+
+  void computeFinalInfos(Module* module, Propagator& propagator) {
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
@@ -125,17 +173,85 @@ struct TypeRefining : public Pass {
     // able to contain that type. Propagate things written using set to subtypes
     // as well, as the reference might be to a supertype if the field is present
     // there.
-    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     // Combine everything together.
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
+  }
 
+  void computeFinalInfosGUFA(Module* module, Propagator& propagator) {
+    // Compute the oracle, then simply apply it.
+    // TODO: Consider doing this in GUFA.cpp, where we already computed the
+    //       oracle. That would require refactoring out the rest of this pass to
+    //       a shared location. Alternatively, perhaps we can reuse the computed
+    //       oracle, but any pass that changes anything would need to invalidate
+    //       it...
+    ContentOracle oracle(*module, getPassOptions());
+    auto allTypes = ModuleUtils::collectHeapTypes(*module);
+    for (auto type : allTypes) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        auto& infos = finalInfos[type];
+        for (Index i = 0; i < fields.size(); i++) {
+          auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
+          // Do not introduce new exact fields that might requires invalid
+          // casts. Keep any existing exact fields, though.
+          if (!fields[i].type.isExact()) {
+            gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
+          }
+          infos[i] = LUBFinder(gufaType);
+        }
+      }
+    }
+
+    // Take into account possible problems. This pass only refines struct
+    // fields, and when we refine in a way that exceeds the wasm type system
+    // then we fix that up with a cast (see below). However, we cannot use casts
+    // in all places, specifically in globals, so we must account for that.
+    for (auto& global : module->globals) {
+      if (global->imported()) {
+        continue;
+      }
+
+      // Find StructNews, which are the one thing that can appear in a global
+      // init that is affected by our optimizations.
+      for (auto* structNew : FindAll<StructNew>(global->init).list) {
+        if (structNew->isWithDefault()) {
+          continue;
+        }
+
+        auto type = structNew->type.getHeapType();
+        auto& infos = finalInfos[type];
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          // We are in a situation like this:
+          //
+          //  (struct.new $A
+          //   (global.get or such
+          //
+          // To avoid ending up requiring a cast later, the type of our child
+          // must fit perfectly in the field it is written to.
+          auto childType = structNew->operands[i]->type;
+          infos[i].note(childType);
+        }
+      }
+    }
+
+    // Propagate to supertypes, so no field is less refined than its super.
+    propagator.propagateToSuperTypes(finalInfos);
+  }
+
+  void useFinalInfos(Module* module, Propagator& propagator) {
     // While we do the following work, see if we have anything to optimize, so
     // that we can avoid wasteful work later if not.
     bool canOptimize = false;
+
+    // We cannot modify public types.
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
 
     // We have combined all the information we have about writes to the fields,
     // but we still need to make sure that the new types makes sense. In
@@ -148,12 +264,20 @@ struct TypeRefining : public Pass {
     auto& subTypes = propagator.subTypes;
     UniqueDeferredQueue<HeapType> work;
     for (auto type : subTypes.types) {
-      if (type.isStruct() && !type.getSuperType()) {
+      if (type.isStruct() && !type.getDeclaredSuperType()) {
         work.push(type);
       }
     }
     while (!work.empty()) {
       auto type = work.pop();
+
+      for (auto subType : subTypes.getImmediateSubTypes(type)) {
+        work.push(subType);
+      }
+
+      if (publicTypesSet.count(type)) {
+        continue;
+      }
 
       // First, find fields that have nothing written to them at all, and set
       // their value to their old type. We must pick some type for the field,
@@ -170,10 +294,17 @@ struct TypeRefining : public Pass {
       }
 
       // Next ensure proper subtyping of this struct's fields versus its super.
-      if (auto super = type.getSuperType()) {
+      if (auto super = type.getDeclaredSuperType()) {
         auto& superFields = super->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
-          auto newSuperType = finalInfos[*super][i].getLUB();
+          // The super's new type is either what we propagated, or, if it is
+          // public, unchanged since we cannot optimize it
+          Type newSuperType;
+          if (!publicTypesSet.count(*super)) {
+            newSuperType = finalInfos[*super][i].getLUB();
+          } else {
+            newSuperType = superFields[i].type;
+          }
           auto& info = finalInfos[type][i];
           auto newType = info.getLUB();
           if (!Type::isSubType(newType, newSuperType)) {
@@ -215,10 +346,6 @@ struct TypeRefining : public Pass {
           canOptimize = true;
         }
       }
-
-      for (auto subType : subTypes.getStrictSubTypes(type)) {
-        work.push(subType);
-      }
     }
 
     if (canOptimize) {
@@ -250,53 +377,53 @@ struct TypeRefining : public Pass {
       }
 
       void visitStructGet(StructGet* curr) {
-        if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+        if (curr->ref->type == Type::unreachable) {
           return;
         }
 
-        auto oldType = curr->ref->type.getHeapType();
-        auto newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
-        if (Type::isSubType(newFieldType, curr->type)) {
-          // This is the normal situation, where the new type is a refinement of
-          // the old type. Apply that type so that the type of the struct.get
-          // matches what is in the refined field. ReFinalize will later
-          // propagate this to parents.
-          //
-          // Note that ReFinalize will also apply the type of the field itself
-          // to a struct.get, so our doing it here in this pass is usually
-          // redundant. But ReFinalize also updates other types while doing so,
-          // which can cause a problem:
-          //
-          //  (struct.get $A
-          //    (block (result (ref null $A))
-          //      (ref.null any)
-          //    )
-          //  )
-          //
-          // Here ReFinalize will turn the block's result into a bottom type,
-          // which means it won't know a type for the struct.get at that point.
-          // Doing it in this pass avoids that issue, as we have all the
-          // necessary information. (ReFinalize will still get into the
-          // situation where it doesn't know how to update the type of the
-          // struct.get, but it will just leave the existing type - it assumes
-          // no update is needed - which will be correct, since we've updated it
-          // ourselves here, before.)
-          curr->type = newFieldType;
-        } else {
-          // This instruction is invalid, so it must be the result of the
-          // situation described above: we ignored the read during our
-          // inference, and optimized accordingly, and so now we must remove it
-          // to keep the module validating. It doesn't matter what we emit here,
-          // since there are no struct.new or struct.sets for this type, so this
-          // code is logically unreachable.
-          //
-          // Note that we emit an unreachable here, which changes the type, and
-          // so we should refinalize. However, we will be refinalizing later
-          // anyhow in updateTypes, so there is no need.
+        Type newFieldType;
+        if (!curr->ref->type.isNull()) {
+          auto oldType = curr->ref->type.getHeapType();
+          newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
+        }
+
+        if (curr->ref->type.isNull() || newFieldType == Type::unreachable ||
+            !Type::isSubType(newFieldType, curr->type)) {
+          // This get will trap, or cannot be reached: either the ref is null,
+          // or the field is never written any contents, or the contents we see
+          // are invalid (they passed through some fallthrough that will trap at
+          // runtime). Emit unreachable code here.
           Builder builder(*getModule());
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                               builder.makeUnreachable()));
+          return;
         }
+
+        // This is the normal situation, where the new type is a refinement of
+        // the old type. Apply that type so that the type of the struct.get
+        // matches what is in the refined field. ReFinalize will later
+        // propagate this to parents.
+        //
+        // Note that ReFinalize will also apply the type of the field itself
+        // to a struct.get, so our doing it here in this pass is usually
+        // redundant. But ReFinalize also updates other types while doing so,
+        // which can cause a problem:
+        //
+        //  (struct.get $A
+        //    (block (result (ref null $A))
+        //      (ref.null any)
+        //    )
+        //  )
+        //
+        // Here ReFinalize will turn the block's result into a bottom type,
+        // which means it won't know a type for the struct.get at that point.
+        // Doing it in this pass avoids that issue, as we have all the
+        // necessary information. (ReFinalize will still get into the
+        // situation where it doesn't know how to update the type of the
+        // struct.get, but it will just leave the existing type - it assumes
+        // no update is needed - which will be correct, since we've updated it
+        // ourselves here, before.)
+        curr->type = newFieldType;
       }
     };
 
@@ -331,11 +458,80 @@ struct TypeRefining : public Pass {
     TypeRewriter(wasm, *this).update();
 
     ReFinalize().run(getPassRunner(), &wasm);
+
+    // After refinalizing, we may still have situations that do not validate.
+    // In some cases we can infer something more precise than can be represented
+    // in wasm, like here:
+    //
+    //  (try (result A)
+    //    (struct.get ..) ;; returns B.
+    //  (catch
+    //    (const A)
+    //  )
+    //
+    // The try body cannot throw, so the catch is never reached, and we can
+    // infer the fallthrough has the subtype B. But in wasm the type of the try
+    // must remain the supertype A. If that try is written into a StructSet that
+    // we refined, that will error.
+    //
+    // To fix this, we add a cast here, and expect that other passes will remove
+    // the cast after other optimizations simplify things (in this example, the
+    // catch can be removed).
+    struct WriteUpdater : public WalkerPass<PostWalker<WriteUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      // Only affects struct.new/sets.
+      bool requiresNonNullableLocalFixups() override { return false; }
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<WriteUpdater>();
+      }
+
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable || curr->isWithDefault()) {
+          return;
+        }
+
+        auto& fields = curr->type.getHeapType().getStruct().fields;
+
+        for (Index i = 0; i < fields.size(); i++) {
+          auto*& operand = curr->operands[i];
+          auto fieldType = fields[i].type;
+          if (!Type::isSubType(operand->type, fieldType)) {
+            operand = Builder(*getModule()).makeRefCast(operand, fieldType);
+          }
+        }
+      }
+
+      void visitStructSet(StructSet* curr) {
+        if (curr->type == Type::unreachable) {
+          // Ignore unreachable code.
+          return;
+        }
+        auto type = curr->ref->type.getHeapType();
+        if (type.isBottom()) {
+          // Ignore a bottom type.
+          return;
+        }
+
+        auto fieldType = type.getStruct().fields[curr->index].type;
+
+        if (!Type::isSubType(curr->value->type, fieldType)) {
+          curr->value =
+            Builder(*getModule()).makeRefCast(curr->value, fieldType);
+        }
+      }
+    };
+
+    WriteUpdater updater;
+    updater.run(getPassRunner(), &wasm);
+    updater.runOnModuleCode(getPassRunner(), &wasm);
   }
 };
 
 } // anonymous namespace
 
-Pass* createTypeRefiningPass() { return new TypeRefining(); }
+Pass* createTypeRefiningPass() { return new TypeRefining(false); }
+Pass* createTypeRefiningGUFAPass() { return new TypeRefining(true); }
 
 } // namespace wasm

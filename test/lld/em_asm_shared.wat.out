@@ -28,10 +28,8 @@
  (export "__start_em_asm" (global $global$3))
  (export "__stop_em_asm" (global $global$4))
  (func $__wasm_call_ctors
-  (nop)
  )
  (func $__wasm_apply_data_relocs
-  (nop)
  )
  (func $__original_main (result i32)
   (local $0 i32)

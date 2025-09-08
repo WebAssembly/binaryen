@@ -51,7 +51,7 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
     // Do not remove names referenced in a table
     std::set<Name> indirectNames;
     ElementUtils::iterAllElementFunctionNames(
-      curr, [&](Name& name) { indirectNames.insert(name); });
+      curr, [&](Name name) { indirectNames.insert(name); });
     for (auto& name : names) {
       if (indirectNames.find(name) == indirectNames.end()) {
         curr->removeFunction(name);

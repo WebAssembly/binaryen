@@ -25,7 +25,7 @@ function asmFunc(imports) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var global$0 = -44;
- function $0() {
+ function foo() {
   if ((global$0 >>> 0) / ((HEAP32[0 >> 2] | 0) >>> 0) | 0) {
    wasm2js_trap()
   }
@@ -38,7 +38,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "foo": $0
+  "foo": foo
  };
 }
 

@@ -8,10 +8,9 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (func $__original_main (param $0 i32) (param $1 i32) (result i32)
-  (nop)
+  (i32.const 0)
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main (local.get $0) (local.get $1))
  )
 )
-

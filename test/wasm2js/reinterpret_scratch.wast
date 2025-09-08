@@ -1,6 +1,6 @@
 (module
  (memory $0 1 1)
- (func "foo" (result i32)
+ (func $foo (export "foo") (result i32)
   (local $0 f32)
   (i64.store align=4
    (i32.reinterpret_f32 ;; i32 0

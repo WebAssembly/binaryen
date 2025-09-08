@@ -2,39 +2,43 @@
 ;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip -S -o - | filecheck %s
 
 (module
- (type ${i32} (struct (field i32)))
+ (type $"{i32}" (struct (field i32)))
  ;; CHECK:      (export "export" (func $test))
  (export "export" (func $test))
- ;; CHECK:      (func $test (type $none_=>_none)
- ;; CHECK-NEXT:  (local $0 (ref $\7bi32\7d))
+ ;; CHECK:      (func $test (type $1)
+ ;; CHECK-NEXT:  (local $scratch (ref (exact $\7bi32\7d)))
  ;; CHECK-NEXT:  (call $help
- ;; CHECK-NEXT:   (block (result (ref $\7bi32\7d))
- ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:   (block (result (ref (exact $\7bi32\7d)))
+ ;; CHECK-NEXT:    (local.set $scratch
  ;; CHECK-NEXT:     (struct.new_default $\7bi32\7d)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (call $other)
+ ;; CHECK-NEXT:    (local.get $scratch)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test
   (call $help
-   (struct.new_default ${i32})
-   ;; Stack IR optimizations can remove this block, leaving a nop in an odd
+   (struct.new_default $"{i32}")
+   ;; Stack IR optimizations can remove this block, leaving a call in an odd
    ;; "stacky" location. On load, we will use a local to work around that. It
    ;; is fine for the local to be non-nullable since the get is later in that
    ;; same block.
    (block $block (result i32)
-    (nop)
+    (call $other)
     (i32.const 1)
    )
   )
  )
- ;; CHECK:      (func $help (type $ref|$\7bi32\7d|_i32_=>_none) (param $3 (ref $\7bi32\7d)) (param $4 i32)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK:      (func $help (type $2) (param $3 (ref $\7bi32\7d)) (param $4 i32)
  ;; CHECK-NEXT: )
- (func $help (param $3 (ref ${i32})) (param $4 i32)
+ (func $help (param $3 (ref $"{i32}")) (param $4 i32)
   (nop)
+ )
+
+ ;; CHECK:      (func $other (type $1)
+ ;; CHECK-NEXT: )
+ (func $other
  )
 )

@@ -15,13 +15,18 @@
  */
 
 #include "ir/memory-utils.h"
+#include "support/stdckdint.h"
 #include "wasm.h"
 
 namespace wasm::MemoryUtils {
 
 bool flatten(Module& wasm) {
-  // Flatten does not currently have support for multi-memories
-  if (wasm.memories.size() > 1) {
+  // If there are no memories then they are already flat, in the empty sense.
+  if (wasm.memories.empty()) {
+    return true;
+  }
+  // Flatten does not currently have support for multimemory
+  if (wasm.memories.size() != 1) {
     return false;
   }
   // The presence of any instruction that cares about segment identity is a
@@ -50,13 +55,10 @@ bool flatten(Module& wasm) {
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
@@ -97,13 +99,18 @@ bool flatten(Module& wasm) {
   for (auto& segment : dataSegments) {
     auto* offset = segment->offset->dynCast<Const>();
     Index start = offset->value.getInteger();
-    Index end = start + segment->data.size();
+    Index size = segment->data.size();
+    Index end;
+    if (std::ckd_add(&end, start, size)) {
+      return false;
+    }
     if (end > data.size()) {
       data.resize(end);
     }
     std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);
   }
-  dataSegments[0]->offset->cast<Const>()->value = Literal(int32_t(0));
+  dataSegments[0]->offset->cast<Const>()->value =
+    Literal::makeFromInt32(0, wasm.memories[0]->addressType);
   dataSegments[0]->data.swap(data);
   wasm.removeDataSegments(
     [&](DataSegment* curr) { return curr->name != dataSegments[0]->name; });

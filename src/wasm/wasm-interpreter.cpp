@@ -2,25 +2,9 @@
 
 namespace wasm {
 
-#ifdef WASM_INTERPRETER_DEBUG
-int Indenter::indentLevel = 0;
-
-Indenter::Indenter(const char* entry) : entryName(entry) { ++indentLevel; }
-Indenter::~Indenter() {
-  print();
-  std::cout << "exit " << entryName << '\n';
-  --indentLevel;
-}
-void Indenter::print() {
-  std::cout << indentLevel << ':';
-  for (int i = 0; i <= indentLevel; ++i) {
-    std::cout << ' ';
-  }
-}
-#endif // WASM_INTERPRETER_DEBUG
-
 std::ostream& operator<<(std::ostream& o, const WasmException& exn) {
-  return o << exn.tag << " " << exn.values;
+  auto exnData = exn.exn.getExnData();
+  return o << exnData->tag << " " << exnData->payload;
 }
 
 } // namespace wasm

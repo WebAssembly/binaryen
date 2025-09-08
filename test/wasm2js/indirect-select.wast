@@ -1,7 +1,7 @@
 (module
   (type $none_=>_i32 (func (result i32)))
   (import "env" "table" (table $timport 6 funcref))
-  (func "foo-true" (param $x i32) (result i32)
+  (func $foo-true (export "foo-true") (param $x i32) (result i32)
     (call_indirect (type $none_=>_i32)
       (select
         (i32.const 1)
@@ -10,7 +10,7 @@
       )
     )
   )
-  (func "foo-false" (param $x i32) (result i32)
+  (func $foo-false (export "foo-false") (param $x i32) (result i32)
     (call_indirect (type $none_=>_i32)
       (select
         (i32.const 0)

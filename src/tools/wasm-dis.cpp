@@ -18,8 +18,11 @@
 // wasm2asm console tool
 //
 
+#include "parsing.h"
+#include "source-map.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "wasm-features.h"
 #include "wasm-io.h"
 
 #include "tool-options.h"
@@ -64,9 +67,13 @@ int main(int argc, const char* argv[]) {
     std::cerr << "parsing binary..." << std::endl;
   }
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
+  auto enabledFeatures = wasm.features;
+  wasm.features = FeatureSet::All;
+
+  auto moduleReader = ModuleReader();
   try {
-    ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
+    moduleReader.readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     std::cerr << '\n';
@@ -82,12 +89,12 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in parsing wasm source mapping";
   }
 
-  // TODO: Validation. However, validating would mean that users are forced to
-  //       run with  wasm-dis -all  or such, to enable the features (unless the
-  //       features section is present, but that's rare in general). It would be
-  //       better to have an "autodetect" code path that enables used features
-  //       eventually.
-
+  options.applyOptionsAfterParse(wasm);
+  // If the features section is present, restore it. If not, restore the command
+  // line + default features.
+  wasm.features = wasm.hasFeaturesSection
+                    ? moduleReader.getFeaturesSectionFeatures()
+                    : enabledFeatures;
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }

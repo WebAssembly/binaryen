@@ -6,18 +6,18 @@
 ;; of $0 and $1, so we want to merge them and pass ref.funcs of $2 and $3.
 ;; However, their nominal types differ, so in nominal typing we cannot do so.
 (module
- ;; CHECK:      (type $type$0 (func))
- (type $type$0 (func_subtype func))
- (type $type$1 (func_subtype func))
- (type $type$2 (func_subtype func))
- (type $type$3 (func_subtype (param f32) (result f32) func))
- (type $type$4 (func_subtype (param f64) (result f64) func))
- ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
+ ;; CHECK:      (type $type$0 (sub (func)))
+ (type $type$0 (sub (func)))
+ (type $type$1 (sub (func)))
+ (type $type$2 (sub (func)))
+ (type $type$3 (sub (func (param f32) (result f32))))
+ (type $type$4 (sub (func (param f64) (result f64))))
+ ;; CHECK:      (type $1 (func (param (ref $type$0))))
 
  ;; CHECK:      (elem declare func $2 $3)
 
  ;; CHECK:      (func $0 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -41,7 +41,7 @@
   (nop)
  )
  ;; CHECK:      (func $1 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -86,7 +86,7 @@
  )
 )
 
-;; CHECK:      (func $byn$mgfn-shared$0 (type $ref|$type$0|_=>_none) (param $0 (ref $type$0))
+;; CHECK:      (func $byn$mgfn-shared$0 (type $1) (param $0 (ref $type$0))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -110,23 +110,23 @@
 (module
  ;; As above, but now the nominal types do match, so we can optimize in all
  ;; modes.
- ;; CHECK:      (type $type$0 (func))
- (type $type$0 (func_subtype func))
- (type $type$1 (func_subtype func))
- (type $type$3 (func_subtype (param f32) (result f32) func))
- (type $type$4 (func_subtype (param f64) (result f64) func))
+ ;; CHECK:      (type $type$0 (sub (func)))
+ (type $type$0 (sub (func)))
+ (type $type$1 (sub (func)))
+ (type $type$3 (sub (func (param f32) (result f32))))
+ (type $type$4 (sub (func (param f64) (result f64))))
 
- ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
+ ;; CHECK:      (type $1 (func (param (ref $type$0))))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
- ;; CHECK:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
+ ;; CHECK:      (memory $0 16 17 shared)
+ (memory $0 16 17 shared)
 
  ;; CHECK:      (elem declare func $2 $3)
 
  ;; CHECK:      (func $0 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -150,7 +150,7 @@
   (nop)
  )
  ;; CHECK:      (func $1 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -194,7 +194,7 @@
   )
  )
 )
-;; CHECK:      (func $byn$mgfn-shared$0 (type $ref|$type$0|_=>_none) (param $0 (ref $type$0))
+;; CHECK:      (func $byn$mgfn-shared$0 (type $1) (param $0 (ref $type$0))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)

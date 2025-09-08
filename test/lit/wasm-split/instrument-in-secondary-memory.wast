@@ -1,8 +1,8 @@
-;; RUN: wasm-split %s --instrument --in-secondary-memory --enable-threads --enable-multi-memories -S -o - | filecheck %s
+;; RUN: wasm-split %s --instrument --in-secondary-memory --enable-threads --enable-multimemory -S -o - | filecheck %s
 
 ;; Check that the output round trips and validates as well
-;; RUN: wasm-split %s --instrument --in-secondary-memory --enable-threads --enable-multi-memories -g -o %t.wasm
-;; RUN: wasm-opt --enable-threads --enable-multi-memories %t.wasm -S -o -
+;; RUN: wasm-split %s --instrument --in-secondary-memory --enable-threads --enable-multimemory -g -o %t.wasm
+;; RUN: wasm-opt --enable-threads --enable-multimemory %t.wasm -S -o -
 
 (module
   (import "env" "foo" (func $foo))
@@ -17,7 +17,7 @@
 )
 
 ;; Check that a memory import has been added for secondary memory
-;; CHECK: (import "env" "profile-data" (memory $profile-data (shared 1 1)))
+;; CHECK: (import "env" "profile-data" (memory $profile-data 1 1 shared))
 
 ;; And the profiling function exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
@@ -52,7 +52,7 @@
 ;; CHECK-NEXT:    (local.get $size)
 ;; CHECK-NEXT:    (i32.const 16)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (block
+;; CHECK-NEXT:   (then
 ;; CHECK-NEXT:    (i64.store $0 align=1
 ;; CHECK-NEXT:     (local.get $addr)
 ;; CHECK-NEXT:     (i64.const {{.*}})

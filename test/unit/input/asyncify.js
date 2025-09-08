@@ -3,6 +3,9 @@ function assert(x, y) {
   if (!x) throw (y || 'assertion failed') + '\n' + new Error().stack;
 }
 
+// This is the reason we have a package.json file alongside us, to tell node
+// that we are not an ES6 module (as a parent directory might have one with
+// type: "module" which would then cause breakage).
 var fs = require('fs');
 
 function sleepTests() {

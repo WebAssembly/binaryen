@@ -68,6 +68,10 @@ struct RedundantSetElimination
     return std::make_unique<RedundantSetElimination>();
   }
 
+  // Branches outside of the function can be ignored, as we only look at locals
+  // which vanish when we leave.
+  bool ignoreBranchesOutsideOfFunc = true;
+
   Index numLocals;
 
   // In rare cases we make a change to a type that requires a refinalize.

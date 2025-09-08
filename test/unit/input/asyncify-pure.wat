@@ -1,10 +1,10 @@
 (module
-  (memory 1 1)
   (import "spectest" "print" (func $print (param i32)))
   (import "asyncify" "start_unwind" (func $asyncify_start_unwind (param i32)))
   (import "asyncify" "stop_unwind" (func $asyncify_stop_unwind))
   (import "asyncify" "start_rewind" (func $asyncify_start_rewind (param i32)))
   (import "asyncify" "stop_rewind" (func $asyncify_stop_rewind))
+  (memory 1 1)
   (global $sleeping (mut i32) (i32.const 0))
   (start $runtime)
   (func $main
@@ -23,17 +23,21 @@
     (call $print (i32.const 1000))
     (if
       (i32.eqz (global.get $sleeping))
-      (block
-        (call $print (i32.const 2000))
-        (global.set $sleeping (i32.const 1))
-        (i32.store (i32.const 16) (i32.const 24))
-        (i32.store (i32.const 20) (i32.const 1024))
-        (call $asyncify_start_unwind (i32.const 16))
+      (then
+        (block
+          (call $print (i32.const 2000))
+          (global.set $sleeping (i32.const 1))
+          (i32.store (i32.const 16) (i32.const 24))
+          (i32.store (i32.const 20) (i32.const 1024))
+          (call $asyncify_start_unwind (i32.const 16))
+        )
       )
-      (block
-        (call $print (i32.const 3000))
-        (call $asyncify_stop_rewind)
-        (global.set $sleeping (i32.const 0))
+      (else
+        (block
+          (call $print (i32.const 3000))
+          (call $asyncify_stop_rewind)
+          (global.set $sleeping (i32.const 0))
+        )
       )
     )
     (call $print (i32.const 4000))
@@ -59,4 +63,3 @@
   (func $DOS_ReadFile\28unsigned\20short\2c\20unsigned\20char*\2c\20unsigned\20short*\2c\20bool\29 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
   )
 )
-

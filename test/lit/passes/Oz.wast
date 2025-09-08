@@ -5,13 +5,13 @@
 
 (module
   (memory 100 100)
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $2 (func (param i32 i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_v128 (func (result v128)))
+  ;; CHECK:      (type $3 (func (result v128)))
 
   ;; CHECK:      (memory $0 100 100)
 
@@ -37,7 +37,7 @@
 
   ;; CHECK:      (export "precompute-simd" (func $precompute-simd))
 
-  ;; CHECK:      (func $basics (type $i32_i32_=>_i32) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $basics (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.tee $0
   ;; CHECK-NEXT:    (i32.add
@@ -48,7 +48,7 @@
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $basics (export "localcse") (param $x i32) ($param $y i32) (result i32) ;; -O3 does localcse
+  (func $basics (export "localcse") (param $x i32) (param $y i32) (result i32) ;; -O3 does localcse
     (local $x2 i32)
     (local $y2 i32)
     (local.set $x2
@@ -59,7 +59,7 @@
     )
     (i32.add (local.get $x2) (local.get $y2))
   )
-  ;; CHECK:      (func $8 (type $i32_i32_i32_i32_=>_i32) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+  ;; CHECK:      (func $8 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (local.tee $0
   ;; CHECK-NEXT:    (i32.add
@@ -131,7 +131,7 @@
     )
   )
 
-  ;; CHECK:      (func $9 (type $i32_=>_i32) (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $9 (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.mul
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const -4)
@@ -147,7 +147,7 @@
     )
   )
 
-  ;; CHECK:      (func $10 (type $i32_=>_i32) (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $10 (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.shl
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 31)
@@ -163,11 +163,13 @@
     )
   )
 
-  ;; CHECK:      (func $11 (type $i32_=>_i32) (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $11 (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -175,9 +177,13 @@
   (func $11 (export "eliminate-redundant-checks-1") (param $0 i32) (result i32)
     (if
       (local.get $0)
-      (if
-        (local.get $0)
-        (return (local.get $0))
+      (then
+        (if
+          (local.get $0)
+          (then
+            (return (local.get $0))
+          )
+        )
       )
     )
     (i32.const 0)
@@ -189,17 +195,19 @@
         (i32.const 0)
         (local.get $0)
       )
-      (return (local.get $0))
+      (then
+        (return (local.get $0))
+      )
     )
     (i32.const 0)
   )
-  ;; CHECK:      (func $12 (type $i32_i32_=>_i32) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $12 (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -207,9 +215,13 @@
   (func $12 (export "eliminate-redundant-checks-2") (param $0 i32) (param $1 i32) (result i32)
     (if
       (local.tee $1 (local.get $0))
-      (if
-        (local.get $1)
-        (return (local.get $1))
+      (then
+        (if
+          (local.get $1)
+          (then
+            (return (local.get $1))
+          )
+        )
       )
     )
     (i32.const 0)
@@ -221,19 +233,23 @@
         (i32.const 0)
         (local.get $1)
       )
-      (return (local.get $1))
+      (then
+        (return (local.get $1))
+      )
     )
     (i32.const 0)
   )
-  ;; CHECK:      (func $13 (type $i32_i32_=>_i32) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $13 (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -245,20 +261,24 @@
         (i32.const 0)
         (local.tee $1 (local.get $0))
       )
-      (return (local.get $1))
+      (then
+        (return (local.get $1))
+      )
     )
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $14 (type $i32_i32_=>_i32) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $14 (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -270,12 +290,14 @@
         (local.get $1)
         (local.tee $1 (local.get $0))
       )
-      (return (local.get $1))
+      (then
+        (return (local.get $1))
+      )
     )
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $precompute-simd (type $none_=>_v128) (; has Stack IR ;) (result v128)
+  ;; CHECK:      (func $precompute-simd (type $3) (result v128)
   ;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   ;; CHECK-NEXT: )
   (func $precompute-simd (export "precompute-simd") (result v128)

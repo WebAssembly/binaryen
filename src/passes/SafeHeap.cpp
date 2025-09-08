@@ -85,7 +85,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     auto memory = getModule()->getMemory(curr->memory);
     replaceCurrent(builder.makeCall(
       getLoadName(curr),
-      {curr->ptr, builder.makeConstPtr(curr->offset.addr, memory->indexType)},
+      {curr->ptr, builder.makeConstPtr(curr->offset.addr, memory->addressType)},
       curr->type));
   }
 
@@ -99,7 +99,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     replaceCurrent(builder.makeCall(
       getStoreName(curr),
       {curr->ptr,
-       builder.makeConstPtr(curr->offset.addr, memory->indexType),
+       builder.makeConstPtr(curr->offset.addr, memory->addressType),
        curr->value},
       Type::none));
   }
@@ -131,6 +131,8 @@ static std::set<Name> findCalledFunctions(Module* module, Name startFunc) {
 }
 
 struct SafeHeap : public Pass {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
 
   void run(Module* module) override {
     assert(!module->memories.empty());
@@ -154,16 +156,17 @@ struct SafeHeap : public Pass {
 
   void addImports(Module* module) {
     ImportInfo info(*module);
-    auto indexType = module->memories[0]->indexType;
+    auto addressType = module->memories[0]->addressType;
     if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
-    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
-      getSbrkPtr = existing->value;
+    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR);
+               existing && existing->kind == ExternalKind::Function) {
+      getSbrkPtr = *existing->getInternalName();
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        GET_SBRK_PTR, Signature(Type::none, indexType), {});
+        GET_SBRK_PTR, Signature(Type::none, addressType), {});
       getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
       import->base = GET_SBRK_PTR;
@@ -281,23 +284,25 @@ struct SafeHeap : public Pass {
     }
     // pointer, offset
     auto memory = module->getMemory(style.memory);
-    auto indexType = memory->indexType;
-    auto funcSig = Signature({indexType, indexType}, style.type);
-    auto func = Builder::makeFunction(name, funcSig, {indexType});
+    auto addressType = memory->addressType;
+    auto funcSig = Signature({addressType, addressType}, style.type);
+    auto func = Builder::makeFunction(name, funcSig, {addressType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
+    // stash the sum of the pointer (0) and the size (1) in a local (2)
     block->list.push_back(builder.makeLocalSet(
       2,
       builder.makeBinary(memory->is64() ? AddInt64 : AddInt32,
-                         builder.makeLocalGet(0, indexType),
-                         builder.makeLocalGet(1, indexType))));
+                         builder.makeLocalGet(0, addressType),
+                         builder.makeLocalGet(1, addressType))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(makeBoundsCheck(style.type,
                                           builder,
+                                          0,
                                           2,
                                           style.bytes,
                                           module,
-                                          memory->indexType,
+                                          memory->addressType,
                                           memory->is64(),
                                           memory->name));
     // check proper alignment
@@ -308,7 +313,7 @@ struct SafeHeap : public Pass {
     // do the load
     auto* load = module->allocator.alloc<Load>();
     *load = style; // basically the same as the template we are given!
-    load->ptr = builder.makeLocalGet(2, indexType);
+    load->ptr = builder.makeLocalGet(2, addressType);
     Expression* last = load;
     if (load->isAtomic && load->signed_) {
       // atomic loads cannot be signed, manually sign it
@@ -328,26 +333,27 @@ struct SafeHeap : public Pass {
       return;
     }
     auto memory = module->getMemory(style.memory);
-    auto indexType = memory->indexType;
+    auto addressType = memory->addressType;
     bool is64 = memory->is64();
     // pointer, offset, value
     auto funcSig =
-      Signature({indexType, indexType, style.valueType}, Type::none);
-    auto func = Builder::makeFunction(name, funcSig, {indexType});
+      Signature({addressType, addressType, style.valueType}, Type::none);
+    auto func = Builder::makeFunction(name, funcSig, {addressType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       3,
       builder.makeBinary(is64 ? AddInt64 : AddInt32,
-                         builder.makeLocalGet(0, indexType),
-                         builder.makeLocalGet(1, indexType))));
+                         builder.makeLocalGet(0, addressType),
+                         builder.makeLocalGet(1, addressType))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(makeBoundsCheck(style.valueType,
                                           builder,
+                                          0,
                                           3,
                                           style.bytes,
                                           module,
-                                          indexType,
+                                          addressType,
                                           is64,
                                           memory->name));
     // check proper alignment
@@ -359,7 +365,7 @@ struct SafeHeap : public Pass {
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
     store->memory = memory->name;
-    store->ptr = builder.makeLocalGet(3, indexType);
+    store->ptr = builder.makeLocalGet(3, addressType);
     store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
     block->finalize(Type::none);
@@ -373,8 +379,8 @@ struct SafeHeap : public Pass {
                              Module* module,
                              Name memoryName) {
     auto memory = module->getMemory(memoryName);
-    auto indexType = memory->indexType;
-    Expression* ptrBits = builder.makeLocalGet(local, indexType);
+    auto addressType = memory->addressType;
+    Expression* ptrBits = builder.makeLocalGet(local, addressType);
     if (memory->is64()) {
       ptrBits = builder.makeUnary(WrapInt64, ptrBits);
     }
@@ -384,12 +390,17 @@ struct SafeHeap : public Pass {
       builder.makeCall(alignfault, {}, Type::none));
   }
 
+  // Constructs a bounds check. This receives the indexes of two locals: the
+  // pointer local, which contains the pointer we are checking, and the sum
+  // local which contains the pointer added to the number of bytes being
+  // accessed.
   Expression* makeBoundsCheck(Type type,
                               Builder& builder,
-                              Index local,
+                              Index ptrLocal,
+                              Index sumLocal,
                               Index bytes,
                               Module* module,
-                              Type indexType,
+                              Type addressType,
                               bool is64,
                               Name memory) {
     bool lowMemUnused = getPassOptions().lowMemoryUnused;
@@ -398,34 +409,48 @@ struct SafeHeap : public Pass {
     auto upperBound = lowMemUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
-      brkLocation =
-        builder.makeCall(sbrk, {builder.makeConstPtr(0, indexType)}, indexType);
+      brkLocation = builder.makeCall(
+        sbrk, {builder.makeConstPtr(0, addressType)}, addressType);
     } else {
       Expression* sbrkPtr;
       if (dynamicTopPtr.is()) {
-        sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, indexType);
+        sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, addressType);
       } else {
-        sbrkPtr = builder.makeCall(getSbrkPtr, {}, indexType);
+        sbrkPtr = builder.makeCall(getSbrkPtr, {}, addressType);
       }
       auto size = is64 ? 8 : 4;
       brkLocation =
-        builder.makeLoad(size, false, 0, size, sbrkPtr, indexType, memory);
+        builder.makeLoad(size, false, 0, size, sbrkPtr, addressType, memory);
     }
     auto gtuOp = is64 ? GtUInt64 : GtUInt32;
     auto addOp = is64 ? AddInt64 : AddInt32;
+    auto* upperCheck =
+      builder.makeBinary(upperOp,
+                         builder.makeLocalGet(sumLocal, addressType),
+                         builder.makeConstPtr(upperBound, addressType));
+    auto* lowerCheck = builder.makeBinary(
+      gtuOp,
+      builder.makeBinary(addOp,
+                         builder.makeLocalGet(sumLocal, addressType),
+                         builder.makeConstPtr(bytes, addressType)),
+      brkLocation);
+    // Check for an overflow when adding the pointer and the size, using the
+    // rule that for any unsigned x and y,
+    //    x + y < x    <=>   x + y overflows
+    auto* overflowCheck =
+      builder.makeBinary(is64 ? LtUInt64 : LtUInt32,
+                         builder.makeLocalGet(sumLocal, addressType),
+                         builder.makeLocalGet(ptrLocal, addressType));
+    // Add an unreachable right after the call to segfault for performance
+    // reasons: the call never returns, and this helps optimizations benefit
+    // from that.
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
-        builder.makeBinary(upperOp,
-                           builder.makeLocalGet(local, indexType),
-                           builder.makeConstPtr(upperBound, indexType)),
-        builder.makeBinary(
-          gtuOp,
-          builder.makeBinary(addOp,
-                             builder.makeLocalGet(local, indexType),
-                             builder.makeConstPtr(bytes, indexType)),
-          brkLocation)),
-      builder.makeCall(segfault, {}, Type::none));
+        upperCheck,
+        builder.makeBinary(OrInt32, lowerCheck, overflowCheck)),
+      builder.makeSequence(builder.makeCall(segfault, {}, Type::none),
+                           builder.makeUnreachable()));
   }
 };
 

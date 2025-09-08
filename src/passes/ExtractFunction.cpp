@@ -58,8 +58,11 @@ static void extract(PassRunner* runner, Module* module, Name name) {
 }
 
 struct ExtractFunction : public Pass {
+  // Turns functions into imported functions.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
-    Name name = getPassOptions().getArgument(
+    Name name = getArgument(
       "extract-function",
       "ExtractFunction usage:  wasm-opt --extract-function=FUNCTION_NAME");
     extract(getPassRunner(), module, name);
@@ -67,11 +70,13 @@ struct ExtractFunction : public Pass {
 };
 
 struct ExtractFunctionIndex : public Pass {
+  // See above.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
-    std::string index =
-      getPassOptions().getArgument("extract-function-index",
-                                   "ExtractFunctionIndex usage: wasm-opt "
-                                   "--extract-function-index=FUNCTION_INDEX");
+    std::string index = getArgument("extract-function-index",
+                                    "ExtractFunctionIndex usage: wasm-opt "
+                                    "--extract-function-index=FUNCTION_INDEX");
     for (char c : index) {
       if (!std::isdigit(c)) {
         Fatal() << "Expected numeric function index";

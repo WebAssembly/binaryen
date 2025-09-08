@@ -67,9 +67,16 @@ struct GlobalRefining : public Pass {
     // In closed world we cannot change the types of exports, as we might change
     // from a public type to a private that would cause a validation error.
     // TODO We could refine to a type that is still public, however.
+    //
+    // We are also limited in open world: in that mode we must assume that
+    // another module might import our exported globals with the current type
+    // (that type is a contract between them), and in such a case the type of
+    // mutable globals must match precisely (the same rule as for mutable struct
+    // fields in subtypes - the types must match exactly, or else a write in
+    // one place could store a type considered in valid in another place).
     std::unordered_set<Name> unoptimizable;
-    if (getPassOptions().closedWorld) {
-      for (auto* global : ExportUtils::getExportedGlobals(*module)) {
+    for (auto* global : ExportUtils::getExportedGlobals(*module)) {
+      if (getPassOptions().closedWorld || global->mutable_) {
         unoptimizable.insert(global->name);
       }
     }
@@ -143,8 +150,9 @@ struct GlobalRefining : public Pass {
           ReFinalize().walkFunctionInModule(curr, &wasm);
         }
       }
-    };
-    GetUpdater(*this, *module).run(getPassRunner(), module);
+    } updater(*this, *module);
+    updater.run(getPassRunner(), module);
+    updater.runOnModuleCode(getPassRunner(), module);
   }
 };
 

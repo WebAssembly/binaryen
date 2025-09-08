@@ -2,7 +2,7 @@
  (func $zed (param i32)
   (call $zed (local.get 0))
  )
- (func "foo1" (param $x i32)
+ (func $foo1 (export "foo1") (param $x i32)
   (block $a
    (block $b
     (block $c
@@ -29,7 +29,7 @@
   (call $zed (i32.const -9))
   (call $zed (i32.const -10))
  )
- (func "foo2" (param $x i32)
+ (func $foo2 (export "foo2") (param $x i32)
   (block $a
    (block $b
     (block $c
@@ -56,7 +56,7 @@
   (call $zed (i32.const -9))
   (call $zed (i32.const -10))
  )
- (func "foo3" (param $x i32)
+ (func $foo3 (export "foo3") (param $x i32)
   (block $a
    (block $b
     (block $c
@@ -83,7 +83,7 @@
   (call $zed (i32.const -9))
   (call $zed (i32.const -10))
  )
- (func "foo4" (param $x i32)
+ (func $foo4 (export "foo4") (param $x i32)
   (block $a
    (block $b
     (block $c
@@ -112,4 +112,3 @@
   (call $zed (i32.const -10))
  )
 )
-

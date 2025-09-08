@@ -151,24 +151,36 @@ private:
 };
 
 struct FuncCastEmulation : public Pass {
+  // Changes the ABI, which alters which indirect calls will trap (normally,
+  // this should prevent traps, but it depends on code this is linked to at
+  // runtime in the case of dynamic linking etc.).
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
-    Index numParams = std::stoul(
-      getPassOptions().getArgumentOrDefault("max-func-params", "16"));
+    Index numParams = std::stoul(getArgumentOrDefault("max-func-params", "16"));
     // we just need the one ABI function type for all indirect calls
     HeapType ABIType(
       Signature(Type(std::vector<Type>(numParams, Type::i64)), Type::i64));
     // Add a thunk for each function in the table, and do the call through it.
-    std::unordered_map<Name, Name> funcThunks;
-    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
-      auto iter = funcThunks.find(name);
-      if (iter == funcThunks.end()) {
-        auto thunk = makeThunk(name, module, numParams);
-        funcThunks[name] = thunk;
-        name = thunk;
-      } else {
-        name = iter->second;
+    std::unordered_map<Name, Function*> funcThunks;
+    for (auto& segment : module->elementSegments) {
+      if (!segment->type.isFunction()) {
+        continue;
       }
-    });
+      for (Index i = 0; i < segment->data.size(); ++i) {
+        auto* ref = segment->data[i]->dynCast<RefFunc>();
+        if (!ref) {
+          continue;
+        }
+        auto [iter, inserted] = funcThunks.insert({ref->func, nullptr});
+        if (inserted) {
+          iter->second = makeThunk(ref->func, module, numParams);
+        }
+        auto* thunk = iter->second;
+        ref->func = thunk->name;
+        ref->finalize(thunk->type);
+      }
+    }
 
     // update call_indirects
     ParallelFuncCastEmulation(ABIType, numParams).run(getPassRunner(), module);
@@ -176,7 +188,7 @@ struct FuncCastEmulation : public Pass {
 
 private:
   // Creates a thunk for a function, casting args and return value as needed.
-  Name makeThunk(Name name, Module* module, Index numParams) {
+  Function* makeThunk(Name name, Module* module, Index numParams) {
     Name thunk = std::string("byn$fpcast-emu$") + name.toString();
     if (module->getFunctionOrNull(thunk)) {
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in "
@@ -202,8 +214,8 @@ private:
                            Signature(Type(thunkParams), Type::i64),
                            {}, // no vars
                            toABI(call, module));
-    module->addFunction(std::move(thunkFunc));
-    return thunk;
+    thunkFunc->hasExplicitName = true;
+    return module->addFunction(std::move(thunkFunc));
   }
 };
 

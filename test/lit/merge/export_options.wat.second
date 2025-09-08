@@ -1,0 +1,15 @@
+(module
+  (func $func1 (export "func")
+    ;; This export will conflict.
+    (drop
+      (i32.const 1)
+    )
+  )
+
+  (func $func2 (export "other")
+    ;; This export will not conflict.
+    (drop
+      (i32.const 2)
+    )
+  )
+)

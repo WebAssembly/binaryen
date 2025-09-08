@@ -26,6 +26,14 @@ Random::Random(std::vector<char>&& bytes_, FeatureSet features)
   if (bytes.empty()) {
     bytes.push_back(0);
   }
+  if (auto* maxBytes = getenv("BINARYEN_FUZZER_MAX_BYTES")) {
+    unsigned max = atoi(maxBytes);
+    if (max < bytes.size()) {
+      std::cerr << "fuzzer: resizing from " << bytes.size() << " to " << max
+                << '\n';
+      bytes.resize(max);
+    }
+  }
 }
 
 int8_t Random::get() {
@@ -58,6 +66,9 @@ float Random::getFloat() { return Literal(get32()).reinterpretf32(); }
 double Random::getDouble() { return Literal(get64()).reinterpretf64(); }
 
 uint32_t Random::upTo(uint32_t x) {
+  if (finished()) {
+    return 0;
+  }
   if (x == 0) {
     return 0;
   }

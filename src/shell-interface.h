@@ -125,15 +125,15 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       auto inst = getImportInstance(import);
       auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
-      if (!exportedGlobal) {
+      if (!exportedGlobal || exportedGlobal->kind != ExternalKind::Global) {
         Fatal() << "importGlobals: unknown import: " << import->module.str
                 << "." << import->name.str;
       }
-      globals[import->name] = inst->globals[exportedGlobal->value];
+      globals[import->name] = inst->globals[*exportedGlobal->getInternalName()];
     });
   }
 
-  Literals callImport(Function* import, Literals& arguments) override {
+  Flow callImport(Function* import, const Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -148,51 +148,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;
-  }
-
-  Literals callTable(Name tableName,
-                     Index index,
-                     HeapType sig,
-                     Literals& arguments,
-                     Type results,
-                     ModuleRunner& instance) override {
-
-    auto it = tables.find(tableName);
-    if (it == tables.end()) {
-      trap("callTable on non-existing table");
-    }
-
-    auto& table = it->second;
-    if (index >= table.size()) {
-      trap("callTable overflow");
-    }
-    Function* func = nullptr;
-    if (table[index].isFunction() && !table[index].isNull()) {
-      func = instance.wasm.getFunctionOrNull(table[index].getFunc());
-    }
-    if (!func) {
-      trap("uninitialized table element");
-    }
-    if (sig != func->type) {
-      trap("callIndirect: function types don't match");
-    }
-    if (func->getParams().size() != arguments.size()) {
-      trap("callIndirect: bad # of arguments");
-    }
-    size_t i = 0;
-    for (const auto& param : func->getParams()) {
-      if (!Type::isSubType(arguments[i++].type, param)) {
-        trap("callIndirect: bad argument type");
-      }
-    }
-    if (func->getResults() != results) {
-      trap("callIndirect: bad result type");
-    }
-    if (func->imported()) {
-      return callImport(func, arguments);
-    } else {
-      return instance.callFunctionInternal(func->name, arguments);
-    }
   }
 
   int8_t load8s(Address addr, Name memoryName) override {
@@ -287,7 +242,8 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return (Index)tables[tableName].size();
   }
 
-  void tableStore(Name tableName, Index index, const Literal& entry) override {
+  void
+  tableStore(Name tableName, Address index, const Literal& entry) override {
     auto& table = tables[tableName];
     if (index >= table.size()) {
       trap("out of bounds table access");
@@ -296,7 +252,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     }
   }
 
-  Literal tableLoad(Name tableName, Index index) override {
+  Literal tableLoad(Name tableName, Address index) override {
     auto it = tables.find(tableName);
     if (it == tables.end()) {
       trap("tableGet on non-existing table");

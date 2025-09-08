@@ -10,57 +10,57 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function legalstub$1($0, $1, $2, $3) {
+ function legalstub$0($0, $1, $2, $3) {
   return ($0 | 0) == ($2 | 0) & ($1 | 0) == ($3 | 0);
  }
  
- function legalstub$2($0, $1, $2, $3) {
+ function legalstub$1($0, $1, $2, $3) {
   return ($0 | 0) != ($2 | 0) | ($1 | 0) != ($3 | 0);
  }
  
- function legalstub$3($0, $1, $2, $3) {
+ function legalstub$2($0, $1, $2, $3) {
   return ($1 | 0) >= ($3 | 0) & $0 >>> 0 >= $2 >>> 0 | ($1 | 0) > ($3 | 0);
  }
  
- function legalstub$4($0, $1, $2, $3) {
+ function legalstub$3($0, $1, $2, $3) {
   return $0 >>> 0 > $2 >>> 0 & ($1 | 0) >= ($3 | 0) | ($1 | 0) > ($3 | 0);
  }
  
- function legalstub$5($0, $1, $2, $3) {
+ function legalstub$4($0, $1, $2, $3) {
   return ($1 | 0) <= ($3 | 0) & $0 >>> 0 <= $2 >>> 0 | ($1 | 0) < ($3 | 0);
  }
  
- function legalstub$6($0, $1, $2, $3) {
+ function legalstub$5($0, $1, $2, $3) {
   return $0 >>> 0 < $2 >>> 0 & ($1 | 0) <= ($3 | 0) | ($1 | 0) < ($3 | 0);
  }
  
- function legalstub$7($0, $1, $2, $3) {
+ function legalstub$6($0, $1, $2, $3) {
   return ($1 | 0) == ($3 | 0) & $0 >>> 0 >= $2 >>> 0 | $1 >>> 0 > $3 >>> 0;
  }
  
- function legalstub$8($0, $1, $2, $3) {
+ function legalstub$7($0, $1, $2, $3) {
   return ($1 | 0) == ($3 | 0) & $0 >>> 0 > $2 >>> 0 | $1 >>> 0 > $3 >>> 0;
  }
  
- function legalstub$9($0, $1, $2, $3) {
+ function legalstub$8($0, $1, $2, $3) {
   return ($1 | 0) == ($3 | 0) & $0 >>> 0 <= $2 >>> 0 | $1 >>> 0 < $3 >>> 0;
  }
  
- function legalstub$10($0, $1, $2, $3) {
+ function legalstub$9($0, $1, $2, $3) {
   return ($1 | 0) == ($3 | 0) & $0 >>> 0 < $2 >>> 0 | $1 >>> 0 < $3 >>> 0;
  }
  
  return {
-  "eq_i64": legalstub$1, 
-  "ne_i64": legalstub$2, 
-  "ge_s_i64": legalstub$3, 
-  "gt_s_i64": legalstub$4, 
-  "le_s_i64": legalstub$5, 
-  "lt_s_i64": legalstub$6, 
-  "ge_u_i64": legalstub$7, 
-  "gt_u_i64": legalstub$8, 
-  "le_u_i64": legalstub$9, 
-  "lt_u_i64": legalstub$10
+  "eq_i64": legalstub$0, 
+  "ne_i64": legalstub$1, 
+  "ge_s_i64": legalstub$2, 
+  "gt_s_i64": legalstub$3, 
+  "le_s_i64": legalstub$4, 
+  "lt_s_i64": legalstub$5, 
+  "ge_u_i64": legalstub$6, 
+  "gt_u_i64": legalstub$7, 
+  "le_u_i64": legalstub$8, 
+  "lt_u_i64": legalstub$9
  };
 }
 

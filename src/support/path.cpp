@@ -19,8 +19,38 @@
 //
 
 #include "support/path.h"
+#ifdef USE_WSTRING_PATHS
+#include "windows.h"
+#endif
 
 namespace wasm::Path {
+
+#ifdef USE_WSTRING_PATHS
+PathString to_path(const std::string& s) { return string_to_wstring(s); }
+
+std::wstring string_to_wstring(const std::string& s) {
+  const char* inptr = s.data();
+  size_t inlen = s.size();
+  size_t outlen = MultiByteToWideChar(CP_UTF8, 0, inptr, inlen, NULL, 0);
+  std::wstring outstr(outlen, 0);
+  const LPWSTR outptr = outstr.data();
+  MultiByteToWideChar(CP_UTF8, 0, inptr, inlen, outptr, outlen);
+  return outstr;
+}
+
+std::string wstring_to_string(const std::wstring& s) {
+  const wchar_t* inptr = s.data();
+  size_t inlen = s.size();
+  size_t outlen =
+    WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, NULL, 0, NULL, NULL);
+  std::string outstr(outlen, 0);
+  const LPSTR outptr = outstr.data();
+  WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, outptr, outlen, NULL, NULL);
+  return outstr;
+}
+#else
+PathString to_path(const std::string& s) { return s; }
+#endif
 
 char getPathSeparator() {
   // TODO: use c++17's path separator

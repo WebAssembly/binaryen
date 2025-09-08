@@ -1,0 +1,12 @@
+;; A module with a wasm64 table. We must copy it properly when we merge.
+(module
+ (table $table i64 15 15 funcref)
+
+ (elem $0 (i64.const 0) $second)
+
+ (export "table" (table $table))
+
+ (func $second)
+)
+
+

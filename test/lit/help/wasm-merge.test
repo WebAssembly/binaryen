@@ -1,0 +1,201 @@
+;; RUN: wasm-merge --help | filecheck %s
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-merge INFILE1 NAME1 INFILE2 NAME2 [..]
+;; CHECK-NEXT:
+;; CHECK-NEXT: Merge wasm files into one.
+;; CHECK-NEXT:
+;; CHECK-NEXT: For example,
+;; CHECK-NEXT:
+;; CHECK-NEXT:   wasm-merge foo.wasm foo bar.wasm bar -o merged.wasm
+;; CHECK-NEXT:
+;; CHECK-NEXT: will read foo.wasm and bar.wasm, with names 'foo' and 'bar' respectively, so if
+;; CHECK-NEXT: the second imports from 'foo', we will see that as an import from the first
+;; CHECK-NEXT: module after the merge. The merged output will be written to merged.wasm.
+;; CHECK-NEXT:
+;; CHECK-NEXT: Note that filenames and modules names are interleaved (which is hopefully less
+;; CHECK-NEXT: confusing).
+;; CHECK-NEXT:
+;; CHECK-NEXT: Input source maps can be specified by adding an -ism option right after the
+;; CHECK-NEXT: module name:
+;; CHECK-NEXT:
+;; CHECK-NEXT:   wasm-merge foo.wasm foo -ism foo.wasm.map ...
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: wasm-merge options:
+;; CHECK-NEXT: -------------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output,-o                          Output file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --input-source-map,-ism              Consume source maps from the specified
+;; CHECK-NEXT:                                        files
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map,-osm             Emit source map to the specified file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map-url,-osu         Emit specified string as source map URL
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --rename-export-conflicts,-rec       Rename exports to avoid conflicts (rather
+;; CHECK-NEXT:                                        than error)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --skip-export-conflicts,-sec         Skip exports that conflict with previous
+;; CHECK-NEXT:                                        ones
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
+;; CHECK-NEXT:                                        output file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debuginfo,-g                       Emit names section and debug info
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --all-features,-all                  Enable all features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --detect-features                    (deprecated - this flag does nothing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
+;; CHECK-NEXT:                                        warnings.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
+;; CHECK-NEXT:                                        purposes.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-threads                     Enable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-threads                    Disable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-mutable-globals             Enable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-mutable-globals            Disable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-simd                        Enable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-simd                       Disable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory-opt             Enable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-tail-call                   Enable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-tail-call                  Disable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-reference-types             Enable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-reference-types            Disable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multivalue                  Enable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multivalue                 Disable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc                          Enable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc                         Disable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-memory64                    Enable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-memory64                   Disable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-strings                     Enable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-strings                    Disable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-stack-switching             Enable stack switching
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-stack-switching            Disable stack switching
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-shared-everything           Enable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-shared-everything          Disable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-NEXT:                                        correct
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
+;; CHECK-NEXT:                                        passes being run. Must be in the form
+;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass
+;; CHECK-NEXT:                                        then it applies to the closest instance
+;; CHECK-NEXT:                                        of that pass before us. If KEY is not the
+;; CHECK-NEXT:                                        name of a pass then it is a global option
+;; CHECK-NEXT:                                        that applies to all pass instances that
+;; CHECK-NEXT:                                        read it.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does
+;; CHECK-NEXT:                                        not inspect or interact with GC and
+;; CHECK-NEXT:                                        function references, even if they are
+;; CHECK-NEXT:                                        passed out. The outside may hold on to
+;; CHECK-NEXT:                                        them and pass them back in, but not
+;; CHECK-NEXT:                                        inspect their contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the
+;; CHECK-NEXT:                                        input (useful for debugging and testing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-stack-ir                  optimize StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-stack-ir                     print StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --version                            Output version information and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --help,-h                            Show this help message and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debug,-d                           Print debug information to stderr
+;; CHECK-NEXT:

@@ -25,6 +25,7 @@ extern Name STACK_POINTER;
 extern Name MODULE;
 extern Name START;
 extern Name FUNC;
+extern Name CONT;
 extern Name PARAM;
 extern Name RESULT;
 extern Name MEMORY;
@@ -61,6 +62,7 @@ extern Name PRINT;
 extern Name EXIT;
 extern Name SHARED;
 extern Name TAG;
+extern Name TUPLE;
 
 } // namespace wasm
 

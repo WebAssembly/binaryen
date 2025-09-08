@@ -37,10 +37,10 @@
 (invoke "fill" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 
 ;; Writing 0 bytes outside of memory limit is NOT allowed.
-(assert_trap (invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
+(assert_trap (invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0)) "oob")
 
 ;; Negative size
-(assert_trap (invoke "fill" (i32.const 15) (i32.const 14) (i32.const -2)))
+(assert_trap (invoke "fill" (i32.const 15) (i32.const 14) (i32.const -2)) "oob")
 (assert_return (invoke "load8_u" (i32.const 15)) (i32.const 0))
 
 ;; memory.copy
@@ -88,7 +88,7 @@
 (assert_return (invoke "load8_u" (i32.const 16)) (i32.const 0))
 
 ;; Overlap, source < dest but size is out of bounds
-(assert_trap (invoke "copy" (i32.const 13) (i32.const 11) (i32.const -1)))
+(assert_trap (invoke "copy" (i32.const 13) (i32.const 11) (i32.const -1)) "oob")
 (assert_return (invoke "load8_u" (i32.const 10)) (i32.const 0))
 (assert_return (invoke "load8_u" (i32.const 11)) (i32.const 0xaa))
 (assert_return (invoke "load8_u" (i32.const 12)) (i32.const 0xbb))
@@ -106,8 +106,8 @@
 (invoke "copy" (i32.const 0) (i32.const 0x10000) (i32.const 0))
 
 ;; Copying 0 bytes outside of memory limit is NOT allowed.
-(assert_trap (invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
-(assert_trap (invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0)))
+(assert_trap (invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0)) "oob")
+(assert_trap (invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0)) "oob")
 
 ;; memory.init
 (module
@@ -143,8 +143,9 @@
 (invoke "init" (i32.const 0) (i32.const 4) (i32.const 0))
 
 ;; Writing 0 bytes outside of memory / segment limit is NOT allowed.
-(assert_trap (invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
-(assert_trap (invoke "init" (i32.const 0) (i32.const 5) (i32.const 0)))
+(assert_trap (invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0)) "oob")
+
+(assert_trap (invoke "init" (i32.const 0) (i32.const 5) (i32.const 0)) "oob")
 
 ;; OK to access 0 bytes at offset 0 in a dropped segment.
 (invoke "init" (i32.const 0) (i32.const 0) (i32.const 0))

@@ -245,7 +245,9 @@
   (func $conditional
     (loop $loop
       (if (i32.const 0)
-        (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
+        (then
+          (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
+        )
       )
       (br_if $loop (i32.const 1))
     )
@@ -253,7 +255,9 @@
   (func $conditional1 (result i32)
     (loop $loop
       (if (call $conditional1)
-        (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
+        (then
+          (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
+        )
                               ;; also anyhow the whole if also cannot, due to the call
       )
       (br_if $loop (i32.const 1))

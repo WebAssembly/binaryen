@@ -37,10 +37,17 @@ inline bool equal(Function* left, Function* right) {
       return false;
     }
   }
-  if (!left->imported() && !right->imported()) {
-    return ExpressionAnalyzer::equal(left->body, right->body);
+  // We could in principle compare metadata here, but intentionally do not, as
+  // for optimization purposes we do want to e.g. merge functions that differ
+  // only in metadata (following LLVM's example). If we have a non-optimization
+  // reason for comparing metadata here then we could add a flag for it.
+  if (left->imported() && right->imported()) {
+    return true;
   }
-  return left->imported() && right->imported();
+  if (left->imported() || right->imported()) {
+    return false;
+  }
+  return ExpressionAnalyzer::equal(left->body, right->body);
 }
 
 } // namespace wasm::FunctionUtils

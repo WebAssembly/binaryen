@@ -4,21 +4,21 @@
 ;; RUN: foreach %s %t wasm-opt --instrument-locals --all-features --disable-gc -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i32_i64_=>_i64 (func (param i32 i32 i64) (result i64)))
+  ;; CHECK:      (type $1 (func (param i32 i32 i64) (result i64)))
 
-  ;; CHECK:      (type $i32_i32_f32_=>_f32 (func (param i32 i32 f32) (result f32)))
+  ;; CHECK:      (type $2 (func (param i32 i32 f32) (result f32)))
 
-  ;; CHECK:      (type $i32_i32_f64_=>_f64 (func (param i32 i32 f64) (result f64)))
+  ;; CHECK:      (type $3 (func (param i32 i32 f64) (result f64)))
 
-  ;; CHECK:      (type $i32_i32_funcref_=>_funcref (func (param i32 i32 funcref) (result funcref)))
+  ;; CHECK:      (type $4 (func (param i32 i32 funcref) (result funcref)))
 
-  ;; CHECK:      (type $i32_i32_externref_=>_externref (func (param i32 i32 externref) (result externref)))
+  ;; CHECK:      (type $5 (func (param i32 i32 externref) (result externref)))
 
-  ;; CHECK:      (type $i32_i32_v128_=>_v128 (func (param i32 i32 v128) (result v128)))
+  ;; CHECK:      (type $6 (func (param i32 i32 v128) (result v128)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $7 (func))
 
   ;; CHECK:      (import "env" "get_i32" (func $get_i32 (param i32 i32 i32) (result i32)))
 

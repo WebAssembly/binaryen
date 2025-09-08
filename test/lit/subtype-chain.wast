@@ -7,22 +7,22 @@
 ;; types.
 
 (module
-  ;; CHECK:      (type $root (struct ))
-  (type $root (struct))
+  ;; CHECK:      (type $root (sub (struct)))
+  (type $root (sub (struct)))
 
-  ;; CHECK:      (type $trunk (struct_subtype (field i32) $root))
-  (type $trunk (struct_subtype i32 $root))
+  ;; CHECK:      (type $trunk (sub $root (struct (field i32))))
+  (type $trunk (sub $root (struct i32)))
 
-  ;; CHECK:      (type $branch (struct_subtype (field i32) (field i64) $trunk))
-  (type $branch (struct_subtype i32 i64 $trunk))
+  ;; CHECK:      (type $branch (sub $trunk (struct (field i32) (field i64))))
+  (type $branch (sub $trunk (struct i32 i64)))
 
-  ;; CHECK:      (type $twig (struct_subtype (field i32) (field i64) (field f32) $branch))
-  (type $twig (struct_subtype i32 i64 f32 $branch))
+  ;; CHECK:      (type $twig (sub $branch (struct (field i32) (field i64) (field f32))))
+  (type $twig (sub $branch (struct i32 i64 f32)))
 
-  ;; CHECK:      (type $leaf (struct_subtype (field i32) (field i64) (field f32) (field f64) $twig))
-  (type $leaf (struct_subtype i32 i64 f32 f64 $twig))
+  ;; CHECK:      (type $leaf (sub $twig (struct (field i32) (field i64) (field f32) (field f64))))
+  (type $leaf (sub $twig (struct i32 i64 f32 f64)))
 
-  ;; CHECK:      (func $make-root (type $ref|$leaf|_=>_ref?|$root|) (param $leaf (ref $leaf)) (result (ref null $root))
+  ;; CHECK:      (func $make-root (type $5) (param $leaf (ref $leaf)) (result (ref null $root))
   ;; CHECK-NEXT:  (local.get $leaf)
   ;; CHECK-NEXT: )
   (func $make-root (param $leaf (ref $leaf)) (result (ref null $root))

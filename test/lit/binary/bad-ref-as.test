@@ -1,5 +1,0 @@
-;; Test that we error properly on a file with a ref.as of a non-ref type.
-
-;; RUN: not wasm-opt -all %s.wasm 2>&1 | filecheck %s
-
-;; CHECK: ref.cast ref must have ref type

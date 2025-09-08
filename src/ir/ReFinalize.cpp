@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "ir/branch-utils.h"
-#include "ir/find_all.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -23,21 +21,6 @@ namespace wasm {
 static Type getValueType(Expression* value) {
   return value ? value->type : Type::none;
 }
-
-namespace {
-
-// Handles a branch fixup for visitBlock: if the branch goes to the
-// target name, give it a value which is unreachable.
-template<typename T>
-void handleBranchForVisitBlock(T* curr, Name name, Module* module) {
-  if (BranchUtils::getUniqueTargets(curr).count(name)) {
-    assert(!curr->value);
-    Builder builder(*module);
-    curr->value = builder.makeUnreachable();
-  }
-}
-
-} // anonymous namespace
 
 void ReFinalize::visitBlock(Block* curr) {
   if (curr->list.size() == 0) {
@@ -75,7 +58,8 @@ void ReFinalize::visitLoop(Loop* curr) { curr->finalize(); }
 void ReFinalize::visitBreak(Break* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == Type::unreachable) {
+  if (valueType == Type::unreachable ||
+      getValueType(curr->condition) == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     updateBreakValueType(curr->name, valueType);
@@ -84,7 +68,8 @@ void ReFinalize::visitBreak(Break* curr) {
 void ReFinalize::visitSwitch(Switch* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == Type::unreachable) {
+  if (valueType == Type::unreachable ||
+      getValueType(curr->condition) == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     for (auto target : curr->targets) {
@@ -106,6 +91,7 @@ void ReFinalize::visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicFence(AtomicFence* curr) { curr->finalize(); }
+void ReFinalize::visitPause(Pause* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
@@ -139,23 +125,35 @@ void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
+void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
+void ReFinalize::visitTableCopy(TableCopy* curr) { curr->finalize(); }
+void ReFinalize::visitTableInit(TableInit* curr) { curr->finalize(); }
+void ReFinalize::visitElemDrop(ElemDrop* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
+void ReFinalize::visitTryTable(TryTable* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->catchDests.size(); i++) {
+    updateBreakValueType(curr->catchDests[i], curr->sentTypes[i]);
+  }
+}
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
+void ReFinalize::visitThrowRef(ThrowRef* curr) { curr->finalize(); }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitTupleMake(TupleMake* curr) { curr->finalize(); }
 void ReFinalize::visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
-void ReFinalize::visitI31New(I31New* curr) { curr->finalize(); }
+void ReFinalize::visitRefI31(RefI31* curr) { curr->finalize(); }
 void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
 void ReFinalize::visitCallRef(CallRef* curr) { curr->finalize(); }
 void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }
 void ReFinalize::visitRefCast(RefCast* curr) { curr->finalize(); }
+void ReFinalize::visitRefGetDesc(RefGetDesc* curr) { curr->finalize(); }
 void ReFinalize::visitBrOn(BrOn* curr) {
   curr->finalize();
   if (curr->type == Type::unreachable) {
-    replaceUntaken(curr->ref, nullptr);
+    replaceUntaken(curr->ref, curr->desc);
   } else {
     updateBreakValueType(curr->name, curr->getSentType());
   }
@@ -163,6 +161,8 @@ void ReFinalize::visitBrOn(BrOn* curr) {
 void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
+void ReFinalize::visitStructRMW(StructRMW* curr) { curr->finalize(); }
+void ReFinalize::visitStructCmpxchg(StructCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }
@@ -174,6 +174,8 @@ void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitArrayFill(ArrayFill* curr) { curr->finalize(); }
 void ReFinalize::visitArrayInitData(ArrayInitData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayInitElem(ArrayInitElem* curr) { curr->finalize(); }
+void ReFinalize::visitArrayRMW(ArrayRMW* curr) { curr->finalize(); }
+void ReFinalize::visitArrayCmpxchg(ArrayCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 void ReFinalize::visitStringNew(StringNew* curr) { curr->finalize(); }
 void ReFinalize::visitStringConst(StringConst* curr) { curr->finalize(); }
@@ -181,17 +183,25 @@ void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
 void ReFinalize::visitStringEncode(StringEncode* curr) { curr->finalize(); }
 void ReFinalize::visitStringConcat(StringConcat* curr) { curr->finalize(); }
 void ReFinalize::visitStringEq(StringEq* curr) { curr->finalize(); }
-void ReFinalize::visitStringAs(StringAs* curr) { curr->finalize(); }
-void ReFinalize::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  curr->finalize();
-}
+void ReFinalize::visitStringTest(StringTest* curr) { curr->finalize(); }
 void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) { curr->finalize(); }
-void ReFinalize::visitStringIterNext(StringIterNext* curr) { curr->finalize(); }
-void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
-void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
+void ReFinalize::visitContNew(ContNew* curr) { curr->finalize(); }
+void ReFinalize::visitContBind(ContBind* curr) { curr->finalize(); }
+void ReFinalize::visitSuspend(Suspend* curr) { curr->finalize(getModule()); }
+void ReFinalize::visitResume(Resume* curr) {
   curr->finalize();
+  for (size_t i = 0; i < curr->handlerBlocks.size(); i++) {
+    updateBreakValueType(curr->handlerBlocks[i], curr->sentTypes[i]);
+  }
 }
+void ReFinalize::visitResumeThrow(ResumeThrow* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->handlerBlocks.size(); i++) {
+    updateBreakValueType(curr->handlerBlocks[i], curr->sentTypes[i]);
+  }
+}
+void ReFinalize::visitStackSwitch(StackSwitch* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
@@ -212,29 +222,26 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
   }
 }
 
-// Replace an untaken branch/switch with an unreachable value.
-// A condition may also exist and may or may not be unreachable.
-void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
-  assert(value->type == Type::unreachable);
-  auto* replacement = value;
-  if (condition) {
-    Builder builder(*getModule());
-    // Even if we have
-    //  (block
-    //   (unreachable)
-    //   (i32.const 1)
-    //  )
-    // we want the block type to be unreachable. That is valid as
-    // the value is unreachable, and necessary since the type of
-    // the condition did not have an impact before (the break/switch
-    // type was unreachable), and might not fit in.
-    if (condition->type.isConcrete()) {
-      condition = builder.makeDrop(condition);
+// Replace a branch/switch that is untaken because it is unreachable with an
+// unreachable non-branching expression. There is one or both of a value and
+// condition/descriptor, at least one of which is unreachable.
+void ReFinalize::replaceUntaken(Expression* value, Expression* otherChild) {
+  assert((value && value->type == Type::unreachable) ||
+         (otherChild && otherChild->type == Type::unreachable));
+  Builder builder(*getModule());
+  if (value && otherChild) {
+    if (value->type.isConcrete()) {
+      value = builder.makeDrop(value);
+    } else if (otherChild->type.isConcrete()) {
+      otherChild = builder.makeDrop(otherChild);
     }
-    replacement = builder.makeSequence(value, condition);
-    assert(replacement->type.isBasic() && "Basic type expected");
+    replaceCurrent(builder.makeBlock({value, otherChild}, Type::unreachable));
+  } else if (value) {
+    replaceCurrent(value);
+  } else {
+    assert(otherChild);
+    replaceCurrent(otherChild);
   }
-  replaceCurrent(replacement);
 }
 
 } // namespace wasm

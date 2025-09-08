@@ -1,0 +1,9 @@
+RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
+
+;; Check that we get the expected error.
+
+;; CHECK: data count and data sections disagree on size
+
+;; Check that we print out the module rather than hitting an assertion error.
+
+;; CHECK: (module

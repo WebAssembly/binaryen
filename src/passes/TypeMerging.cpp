@@ -36,14 +36,17 @@
 // passes in between.
 //
 
+#include <algorithm>
+#include <unordered_map>
+
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/dfa_minimization.h"
 #include "support/small_set.h"
 #include "support/topological_sort.h"
-#include "wasm-builder.h"
-#include "wasm-type-ordering.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 #define TYPE_MERGING_DEBUG 0
@@ -71,6 +74,11 @@ using CastTypes = SmallUnorderedSet<HeapType, 5>;
 struct CastFinder : public PostWalker<CastFinder> {
   CastTypes castTypes;
 
+  // For each cast target, record whether there is an exact cast. Exact casts
+  // will additionally prevent subtypes from being merged into the cast target.
+  // TODO: Use a SmallMap to combine this with `castTypes`.
+  CastTypes exactCastTypes;
+
   // If traps never happen, then ref.cast and call_indirect can never
   // differentiate between types since they always succeed. Take advantage of
   // that by not having those instructions inhibit merges in TNH mode.
@@ -83,6 +91,9 @@ struct CastFinder : public PostWalker<CastFinder> {
   template<typename T> void visitCast(T* curr) {
     if (auto type = curr->getCastType(); type != Type::unreachable) {
       castTypes.insert(type.getHeapType());
+      if (type.isExact()) {
+        exactCastTypes.insert(type.getHeapType());
+      }
     }
   }
 
@@ -107,6 +118,17 @@ struct CastFinder : public PostWalker<CastFinder> {
   }
 };
 
+HeapType getBaseDescribedType(HeapType type) {
+  while (true) {
+    if (auto next = type.getDescribedType()) {
+      type = *next;
+      continue;
+    }
+    break;
+  }
+  return type;
+}
+
 // We are going to treat the type graph as a partitioned DFA where each type is
 // a state with transitions to its children. We will partition the DFA states so
 // that types that may be mergeable will be in the same partition and types that
@@ -126,8 +148,9 @@ struct TypeMerging : public Pass {
   // All private original types.
   std::unordered_set<HeapType> privateTypes;
 
-  // Types that are distinguished by cast instructions.
+  // Types that are distinguished by casts and exact casts.
   CastTypes castTypes;
+  CastTypes exactCastTypes;
 
   // The list of remaining types that have not been merged into other types.
   // Candidates for further merging.
@@ -143,6 +166,35 @@ struct TypeMerging : public Pass {
     return type;
   }
 
+  std::vector<HeapType>
+  mergeableSupertypesFirst(const std::vector<HeapType>& types) {
+    // Topological sort so that supertypes come first. Since we treat descriptor
+    // chains as units represented by their base described types, we must handle
+    // the case where one chain has multiple unrelated chains as supertypes.
+    InsertOrderedMap<HeapType, std::vector<HeapType>> subtypes;
+    for (auto type : types) {
+      // Skip descriptor types, since they will be considered as a unit with
+      // their base described types.
+      if (type.getDescribedType()) {
+        continue;
+      }
+      subtypes.insert({type, {}});
+    }
+    // Find the base described type (`superBase`) for each supertype in the
+    // chain starting at `subBase`.
+    for (auto [subBase, _] : subtypes) {
+      for (auto type : subBase.getDescriptorChain()) {
+        if (auto super = type.getDeclaredSuperType()) {
+          auto superBase = getMerged(getBaseDescribedType(*super));
+          if (auto it = subtypes.find(superBase); it != subtypes.end()) {
+            it->second.push_back(subBase);
+          }
+        }
+      }
+    }
+    return TopologicalSort::sortOf(subtypes.begin(), subtypes.end());
+  }
+
   void run(Module* module_) override;
 
   // We will do two different kinds of merging: First, we will merge types into
@@ -153,26 +205,16 @@ struct TypeMerging : public Pass {
   enum MergeKind { Supertypes, Siblings };
   bool merge(MergeKind kind);
 
-  CastTypes findCastTypes();
+  // Split a partition into potentially multiple partitions for each
+  // disconnected group of types it contains.
+  std::vector<std::vector<HeapType>>
+  splitSupertypePartition(const std::vector<HeapType>&);
+
+  // Return the cast types and the exact cast types.
+  std::pair<CastTypes, CastTypes> findCastTypes();
   std::vector<HeapType> getPublicChildren(HeapType type);
   DFA::State<HeapType> makeDFAState(HeapType type);
   void applyMerges();
-};
-
-struct MergeableSupertypesFirst
-  : HeapTypeOrdering::SupertypesFirstBase<MergeableSupertypesFirst> {
-  TypeMerging& merging;
-
-  template<typename T>
-  MergeableSupertypesFirst(TypeMerging& merging, const T& types)
-    : SupertypesFirstBase(types), merging(merging) {}
-
-  std::optional<HeapType> getSuperType(HeapType type) {
-    if (auto super = type.getSuperType()) {
-      return merging.getMerged(*super);
-    }
-    return std::nullopt;
-  }
 };
 
 // Hash and equality-compare HeapTypes based on their top-level structure (i.e.
@@ -182,6 +224,7 @@ bool shapeEq(HeapType a, HeapType b);
 bool shapeEq(const Struct& a, const Struct& b);
 bool shapeEq(Array a, Array b);
 bool shapeEq(Signature a, Signature b);
+bool shapeEq(Continuation a, Continuation b);
 bool shapeEq(Field a, Field b);
 bool shapeEq(Type a, Type b);
 bool shapeEq(const Tuple& a, const Tuple& b);
@@ -190,6 +233,7 @@ size_t shapeHash(HeapType a);
 size_t shapeHash(const Struct& a);
 size_t shapeHash(Array a);
 size_t shapeHash(Signature a);
+size_t shapeHash(Continuation a);
 size_t shapeHash(Field a);
 size_t shapeHash(Type a);
 size_t shapeHash(const Tuple& a);
@@ -202,6 +246,30 @@ struct ShapeEq {
 
 struct ShapeHash {
   size_t operator()(const HeapType& type) const { return shapeHash(type); }
+};
+
+// The supertypes of each type in a descriptor chain. Hash and equality-compare
+// them using real identity to identify siblings chains that share the same
+// supertypes.
+using ChainSupers = std::vector<std::optional<HeapType>>;
+
+struct ChainSupersEq {
+  bool operator()(const ChainSupers& a, const ChainSupers& b) const {
+    return a == b;
+  }
+};
+
+struct ChainSupersHash {
+  size_t operator()(const ChainSupers& supers) const {
+    auto digest = wasm::hash(supers.size());
+    for (auto& super : supers) {
+      wasm::rehash(digest, !!super);
+      if (super) {
+        wasm::rehash(digest, *super);
+      }
+    }
+    return digest;
+  }
 };
 
 void TypeMerging::run(Module* module_) {
@@ -220,7 +288,9 @@ void TypeMerging::run(Module* module_) {
   mergeable = ModuleUtils::getPrivateHeapTypes(*module);
   privateTypes =
     std::unordered_set<HeapType>(mergeable.begin(), mergeable.end());
-  castTypes = findCastTypes();
+  auto casts = findCastTypes();
+  castTypes = std::move(casts.first);
+  exactCastTypes = std::move(casts.second);
 
   // Merging supertypes or siblings can unlock more sibling merging
   // opportunities, but merging siblings can never unlock more supertype merging
@@ -230,14 +300,37 @@ void TypeMerging::run(Module* module_) {
   // Merging can unlock more sibling merging opportunities because two identical
   // types cannot be merged until their respective identical parents have been
   // merged in a previous step, making them siblings.
-  merge(Supertypes);
+  //
+  // If we merge siblings, we also need to refinalize because the LUB of merged
+  // siblings is the merged type rather than their common supertype after the
+  // merge. This can happen in merge(Siblings), but also in merge(Supertypes),
+  // since we may end up merging B1 to its super A, and also B2 to the same
+  // super A, ending up with B1 and B2 now equal - in that case the siblings are
+  // now both equal (to the parent), allowing an exact LUB:
+  //
+  //  (select (result A))
+  //   (B1)
+  //   (B2)
+  //  )
+  // =>
+  //  (select (result (exact A))) ;; result is now exact
+  //   (A) ;; both are
+  //   (A) ;; now A
+  //  )
+  //
+  bool refinalize = merge(Supertypes);
   for (int i = 0; i < MAX_ITERATIONS; ++i) {
     if (!merge(Siblings)) {
       break;
     }
+    refinalize = true;
   }
 
   applyMerges();
+
+  if (refinalize) {
+    ReFinalize().run(getPassRunner(), module);
+  }
 }
 
 bool TypeMerging::merge(MergeKind kind) {
@@ -246,8 +339,9 @@ bool TypeMerging::merge(MergeKind kind) {
   Partitions partitions;
 
 #if TYPE_MERGING_DEBUG
+  auto printedPrivateTypes = ModuleUtils::getPrivateHeapTypes(*module);
   using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
-  Fallback printPrivate(ModuleUtils::getPrivateHeapTypes(*module), "private.");
+  Fallback printPrivate(printedPrivateTypes, "private.");
   ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
   auto dumpPartitions = [&]() {
     size_t i = 0;
@@ -259,6 +353,7 @@ bool TypeMerging::merge(MergeKind kind) {
       std::cerr << "\n";
     }
   };
+
 #endif // TYPE_MERGING_DEBUG
 
   // Map each type to its partition in the list.
@@ -268,8 +363,10 @@ bool TypeMerging::merge(MergeKind kind) {
   // that siblings that refine the supertype in the same way can be assigned to
   // the same partition and potentially merged.
   std::unordered_map<
-    std::optional<HeapType>,
-    std::unordered_map<HeapType, Partitions::iterator, ShapeHash, ShapeEq>>
+    std::vector<std::optional<HeapType>>,
+    std::unordered_map<HeapType, Partitions::iterator, ShapeHash, ShapeEq>,
+    ChainSupersHash,
+    ChainSupersEq>
     shapePartitions;
 
   // Ensure the type has a partition and return a reference to it. Since we
@@ -287,12 +384,16 @@ bool TypeMerging::merge(MergeKind kind) {
   // Similar to the above, but look up or create a partition associated with the
   // type's supertype and top-level shape rather than its identity.
   auto ensureShapePartition = [&](HeapType type) -> Partitions::iterator {
-    auto super = type.getSuperType();
-    if (super) {
-      super = getMerged(*super);
+    ChainSupers supers;
+    for (auto t : type.getDescriptorChain()) {
+      auto super = t.getDeclaredSuperType();
+      if (super) {
+        super = getMerged(*super);
+      }
+      supers.push_back(super);
     }
     auto [it, inserted] =
-      shapePartitions[super].insert({type, partitions.end()});
+      shapePartitions[supers].insert({type, partitions.end()});
     if (inserted) {
       it->second = partitions.insert(partitions.end(), Partition{});
     }
@@ -301,33 +402,49 @@ bool TypeMerging::merge(MergeKind kind) {
 
   // For each type, either create a new partition or add to its supertype's
   // partition.
-  for (auto type : MergeableSupertypesFirst(*this, mergeable)) {
+  for (auto type : mergeableSupertypesFirst(mergeable)) {
+    assert(!type.getDescribedType());
     // We need partitions for any public children of this type since those
-    // children will participate in the DFA we're creating.
-    for (auto child : getPublicChildren(type)) {
-      ensurePartition(child);
+    // children will participate in the DFA we're creating. We use the base
+    // described type of the child because that's the type that the DFA state
+    // for the current type will point to.
+    for (auto t : type.getDescriptorChain()) {
+      for (auto child : getPublicChildren(t)) {
+        ensurePartition(getBaseDescribedType(child));
+      }
     }
     // If the type is distinguished by the module or public, we cannot merge it,
     // so create a new partition for it.
-    if (castTypes.count(type) || !privateTypes.count(type)) {
+    auto chain = type.getDescriptorChain();
+    bool hasCast =
+      std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
+        return castTypes.count(t);
+      });
+    if (hasCast || !privateTypes.count(type)) {
       ensurePartition(type);
       continue;
     }
 
     switch (kind) {
       case Supertypes: {
-        auto super = type.getSuperType();
-        if (super && shapeEq(type, *super)) {
-          // The current type and its supertype have the same top-level
-          // structure and are not distinguished, so add the current type to its
-          // supertype's partition.
-          auto it = ensurePartition(*super);
-          it->push_back(makeDFAState(type));
-          typePartitions[type] = it;
-        } else {
-          // Otherwise, create a new partition for this type.
+        auto super = type.getDeclaredSuperType();
+        bool superHasExactCast =
+          super &&
+          std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
+            auto super = t.getDeclaredSuperType();
+            return super && exactCastTypes.count(*super);
+          });
+        if (!super || !shapeEq(type, *super) || superHasExactCast) {
+          // Create a new partition for this type and bail.
           ensurePartition(type);
+          break;
         }
+        // The current type and its supertype have the same top-level
+        // structure and are not distinguished, so add the current type to its
+        // supertype's partition.
+        auto it = ensurePartition(*super);
+        it->push_back(makeDFAState(type));
+        typePartitions[type] = it;
         break;
       }
       case Siblings: {
@@ -342,7 +459,16 @@ bool TypeMerging::merge(MergeKind kind) {
   }
 
 #if TYPE_MERGING_DEBUG
-  std::cerr << "Initial partitions:\n";
+  std::cerr << "Initial partitions (";
+  switch (kind) {
+    case Supertypes:
+      std::cerr << "supertypes";
+      break;
+    case Siblings:
+      std::cerr << "siblings";
+      break;
+  }
+  std::cerr << "):\n";
   dumpPartitions();
 #endif
 
@@ -352,16 +478,46 @@ bool TypeMerging::merge(MergeKind kind) {
   auto refinedPartitions = DFA::refinePartitions(dfa);
 
 #if TYPE_MERGING_DEBUG
-  std::cerr << "Refined partitions:\n";
-  size_t i = 0;
-  for (auto& partition : refinedPartitions) {
-    std::cerr << i++ << ": " << print(partition[0]) << "\n";
-    for (size_t j = 1; j < partition.size(); ++j) {
-      std::cerr << "   " << print(partition[j]) << "\n";
+  auto dumpRefinedPartitions = [&]() {
+    size_t i = 0;
+    for (auto& partition : refinedPartitions) {
+      std::cerr << i++ << ": " << print(partition[0]) << "\n";
+      for (size_t j = 1; j < partition.size(); ++j) {
+        std::cerr << "   " << print(partition[j]) << "\n";
+      }
+      std::cerr << "\n";
     }
-    std::cerr << "\n";
-  }
+  };
+  std::cerr << "Refined partitions:\n";
+  dumpRefinedPartitions();
 #endif
+
+  if (kind == Supertypes) {
+    // It's possible that a partition has been split such that a common ancestor
+    // ended up in one of the new partitions, leaving unrelated types grouped
+    // together in the other new partition. Since we are only supposed to be
+    // merging types into their supertypes, merging such unrelated types would
+    // be unsafe. Post-process the refined partitions to manually split any
+    // partitions containing unrelated types.
+    //
+    // Normally splitting partitions like this would require re-running DFA
+    // minimization afterward, but in this case it is not possible that the
+    // manual splits cause types in any other partition to become
+    // differentiatable. A type and its subtype cannot differ by referring to
+    // different, unrelated types in the same position because then they would
+    // not be in a valid subtype relationship.
+    std::vector<std::vector<HeapType>> newPartitions;
+    for (const auto& partitionTypes : refinedPartitions) {
+      auto split = splitSupertypePartition(partitionTypes);
+      newPartitions.insert(newPartitions.end(), split.begin(), split.end());
+    }
+    refinedPartitions = newPartitions;
+
+#if TYPE_MERGING_DEBUG
+    std::cerr << "Manually split partitions:\n";
+    dumpRefinedPartitions();
+#endif
+  }
 
   // Merge each refined partition into a single type. We should only merge into
   // supertypes or siblings because if we try to merge into a subtype then we
@@ -370,7 +526,7 @@ bool TypeMerging::merge(MergeKind kind) {
   std::vector<HeapType> newMergeable;
   bool merged = false;
   for (const auto& partition : refinedPartitions) {
-    auto target = *MergeableSupertypesFirst(*this, partition).begin();
+    auto target = mergeableSupertypesFirst(partition).front();
     newMergeable.push_back(target);
     for (auto type : partition) {
       if (type != target) {
@@ -399,17 +555,45 @@ bool TypeMerging::merge(MergeKind kind) {
   return merged;
 }
 
-CastTypes TypeMerging::findCastTypes() {
-  ModuleUtils::ParallelFunctionAnalysis<CastTypes> analysis(
-    *module, [&](Function* func, CastTypes& castTypes) {
-      if (func->imported()) {
-        return;
-      }
+std::vector<std::vector<HeapType>>
+TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
+  if (types.size() == 1) {
+    // Cannot split a partition containing just one type.
+    return {types};
+  }
+  std::unordered_set<HeapType> includedTypes(types.begin(), types.end());
+  std::vector<std::vector<HeapType>> partitions;
+  std::unordered_map<HeapType, Index> partitionIndices;
+  for (auto type : mergeableSupertypesFirst(types)) {
+    auto super = type.getDeclaredSuperType();
+    if (super && includedTypes.count(*super)) {
+      // We must already have a partition for the supertype we can add to.
+      auto index = partitionIndices.at(*super);
+      partitions[index].push_back(type);
+      partitionIndices[type] = index;
+    } else {
+      // This is a new root type. Create a new partition.
+      auto index = partitions.size();
+      partitions.push_back({type});
+      partitionIndices[type] = index;
+    }
+  }
+  return partitions;
+}
 
-      CastFinder finder(getPassOptions());
-      finder.walk(func->body);
-      castTypes = std::move(finder.castTypes);
-    });
+std::pair<CastTypes, CastTypes> TypeMerging::findCastTypes() {
+  ModuleUtils::ParallelFunctionAnalysis<std::pair<CastTypes, CastTypes>>
+    analysis(*module,
+             [&](Function* func, std::pair<CastTypes, CastTypes>& castTypes) {
+               if (func->imported()) {
+                 return;
+               }
+
+               CastFinder finder(getPassOptions());
+               finder.walk(func->body);
+               castTypes = {std::move(finder.castTypes),
+                            std::move(finder.exactCastTypes)};
+             });
 
   // Also find cast types in the module scope (not possible in the current
   // spec, but do it to be future-proof).
@@ -418,12 +602,17 @@ CastTypes TypeMerging::findCastTypes() {
 
   // Accumulate all the castTypes.
   auto& allCastTypes = moduleFinder.castTypes;
-  for (auto& [k, castTypes] : analysis.map) {
+  auto& allExactCastTypes = moduleFinder.exactCastTypes;
+  for (auto& [k, types] : analysis.map) {
+    auto& [castTypes, exactCastTypes] = types;
     for (auto type : castTypes) {
       allCastTypes.insert(type);
     }
+    for (auto type : exactCastTypes) {
+      allExactCastTypes.insert(type);
+    }
   }
-  return allCastTypes;
+  return {std::move(allCastTypes), std::move(allExactCastTypes)};
 }
 
 std::vector<HeapType> TypeMerging::getPublicChildren(HeapType type) {
@@ -438,11 +627,29 @@ std::vector<HeapType> TypeMerging::getPublicChildren(HeapType type) {
 
 DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
   std::vector<HeapType> succs;
-  for (auto child : type.getHeapTypeChildren()) {
-    // Both private and public heap type children participate in the DFA and are
-    // eligible to be successors.
-    if (!child.isBasic()) {
-      succs.push_back(getMerged(child));
+  // Both private and public heap type children participate in the DFA and are
+  // eligible to be successors, except that public types are terminal states
+  // that do not have successors. This is sufficient because public types are
+  // always in their own singleton partitions, so they already differentiate
+  // types that reach them without needing to consider their children. In the
+  // other direction, including the children is not necessary to differentiate
+  // types reached by the public types because all such reachable types are also
+  // public and not eligible to be merged.
+  //
+  // For private types, full descriptor chains are included in a single DFA
+  // represented by their base described type.
+  if (privateTypes.count(type)) {
+    assert(!type.getDescribedType());
+    for (auto t : type.getDescriptorChain()) {
+      for (auto child : t.getHeapTypeChildren()) {
+        if (!child.isBasic()) {
+          // The child's partition is represented by the base of its descriptor
+          // chain. Different child types in the same descriptor chain are
+          // differentiated by including their chain index in the hashed
+          // top-level shape of the parent.
+          succs.push_back(getMerged(getBaseDescribedType(child)));
+        }
+      }
     }
   }
   return {type, std::move(succs)};
@@ -453,44 +660,105 @@ void TypeMerging::applyMerges() {
     return;
   }
 
-  // Flatten merges, which might be an arbitrary tree at this point.
+  // Flatten merges, which might be an arbitrary tree at this point. Also expand
+  // the mapping to cover every type in each descriptor chain.
+  std::unordered_map<HeapType, HeapType> replacements;
   for (auto [type, _] : merges) {
-    merges[type] = getMerged(type);
+    auto target = getMerged(type);
+    auto chain = type.getDescriptorChain();
+    auto targetChain = target.getDescriptorChain();
+    auto targetIt = targetChain.begin();
+    for (auto it = chain.begin(); it != chain.end(); ++it) {
+      assert(targetIt != targetChain.end());
+      replacements[*it] = *targetIt++;
+    }
   }
 
   // We found things to optimize! Rewrite types in the module to apply those
   // changes.
-  TypeMapper(*module, merges).map();
+  TypeMapper(*module, replacements).map();
 }
 
 bool shapeEq(HeapType a, HeapType b) {
   // Check whether `a` and `b` have the same top-level structure, including the
   // position and identity of any children that are not included as transitions
-  // in the DFA, i.e. any children that are not nontrivial references.
-  if (a.isStruct() && b.isStruct()) {
-    return shapeEq(a.getStruct(), b.getStruct());
+  // in the DFA, i.e. any children that are not nontrivial references. We treat
+  // full descriptor chains as single units, so compare the shape of every type
+  // in the chains rooted at `a` and `b`.
+  assert(!a.getDescribedType() && !b.getDescribedType());
+  auto chainA = a.getDescriptorChain();
+  auto chainB = b.getDescriptorChain();
+  auto itA = chainA.begin();
+  auto itB = chainB.begin();
+  while (itA != chainA.end() && itB != chainB.end()) {
+    a = *itA++;
+    b = *itB++;
+    if (a.isOpen() != b.isOpen()) {
+      return false;
+    }
+    if (a.isShared() != b.isShared()) {
+      return false;
+    }
+    // Ignore supertype because we want to be able to merge into parents.
+    auto aKind = a.getKind();
+    auto bKind = b.getKind();
+    if (aKind != bKind) {
+      return false;
+    }
+    switch (aKind) {
+      case HeapTypeKind::Func:
+        if (!shapeEq(a.getSignature(), b.getSignature())) {
+          return false;
+        }
+        break;
+      case HeapTypeKind::Struct:
+        if (!shapeEq(a.getStruct(), b.getStruct())) {
+          return false;
+        }
+        break;
+      case HeapTypeKind::Array:
+        if (!shapeEq(a.getArray(), b.getArray())) {
+          return false;
+        }
+        break;
+      case HeapTypeKind::Cont:
+        if (!shapeEq(a.getContinuation(), b.getContinuation())) {
+          return false;
+        }
+        break;
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
+    }
   }
-  if (a.isArray() && b.isArray()) {
-    return shapeEq(a.getArray(), b.getArray());
-  }
-  if (a.isSignature() && b.isSignature()) {
-    return shapeEq(a.getSignature(), b.getSignature());
-  }
-  return false;
+  return itA == chainA.end() && itB == chainB.end();
 }
 
 size_t shapeHash(HeapType a) {
-  size_t digest;
-  if (a.isStruct()) {
-    digest = hash(0);
-    hash_combine(digest, shapeHash(a.getStruct()));
-  } else if (a.isArray()) {
-    digest = hash(1);
-    hash_combine(digest, shapeHash(a.getArray()));
-  } else if (a.isSignature()) {
-    digest = hash(2);
-    hash_combine(digest, shapeHash(a.getSignature()));
-  } else {
+  assert(!a.getDescribedType());
+  size_t digest = 0xA76F35EC;
+  for (auto type : a.getDescriptorChain()) {
+    rehash(digest, 0xCC6B0DD9);
+    rehash(digest, type.isOpen());
+    rehash(digest, type.isShared());
+    // Ignore supertype because we want to be able to merge into parents.
+    auto kind = type.getKind();
+    rehash(digest, kind);
+    switch (kind) {
+      case HeapTypeKind::Func:
+        hash_combine(digest, shapeHash(type.getSignature()));
+        continue;
+      case HeapTypeKind::Struct:
+        hash_combine(digest, shapeHash(type.getStruct()));
+        continue;
+      case HeapTypeKind::Array:
+        hash_combine(digest, shapeHash(type.getArray()));
+        continue;
+      case HeapTypeKind::Cont:
+        hash_combine(digest, shapeHash(type.getContinuation()));
+        continue;
+      case HeapTypeKind::Basic:
+        continue;
+    }
     WASM_UNREACHABLE("unexpected kind");
   }
   return digest;
@@ -530,6 +798,10 @@ size_t shapeHash(Signature a) {
   return digest;
 }
 
+bool shapeEq(Continuation a, Continuation b) { return shapeEq(a.type, b.type); }
+
+size_t shapeHash(Continuation a) { return shapeHash(a.type); }
+
 bool shapeEq(Field a, Field b) {
   return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
          shapeEq(a.type, b.type);
@@ -540,6 +812,18 @@ size_t shapeHash(Field a) {
   rehash(digest, (int)a.mutable_);
   hash_combine(digest, shapeHash(a.type));
   return digest;
+}
+
+Index chainIndex(HeapType type) {
+  Index i = 0;
+  while (true) {
+    if (auto next = type.getDescribedType()) {
+      type = *next;
+      ++i;
+      continue;
+    }
+    return i;
+  }
 }
 
 bool shapeEq(Type a, Type b) {
@@ -560,6 +844,16 @@ bool shapeEq(Type a, Type b) {
     return false;
   }
   if (a.getNullability() != b.getNullability()) {
+    return false;
+  }
+  if (a.getExactness() != b.getExactness()) {
+    return false;
+  }
+  // Since partition refinement treats descriptor chains as units, it cannot
+  // differentiate between different types in the same chain. Two types in the
+  // same chain will never be merged, so we can differentiate them here by index
+  // in their chain instead.
+  if (chainIndex(a.getHeapType()) != chainIndex(b.getHeapType())) {
     return false;
   }
   return true;
@@ -583,15 +877,17 @@ size_t shapeHash(Type a) {
   }
   rehash(digest, 4);
   rehash(digest, (int)a.getNullability());
+  rehash(digest, (int)a.getExactness());
+  rehash(digest, chainIndex(a.getHeapType()));
   return digest;
 }
 
 bool shapeEq(const Tuple& a, const Tuple& b) {
-  if (a.types.size() != b.types.size()) {
+  if (a.size() != b.size()) {
     return false;
   }
-  for (size_t i = 0; i < a.types.size(); ++i) {
-    if (!shapeEq(a.types[i], b.types[i])) {
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (!shapeEq(a[i], b[i])) {
       return false;
     }
   }
@@ -599,8 +895,8 @@ bool shapeEq(const Tuple& a, const Tuple& b) {
 }
 
 size_t shapeHash(const Tuple& a) {
-  auto digest = hash(a.types.size());
-  for (auto type : a.types) {
+  auto digest = hash(a.size());
+  for (auto type : a) {
     hash_combine(digest, shapeHash(type));
   }
   return digest;

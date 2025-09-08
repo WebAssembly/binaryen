@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt --dce --vacuum --remove-unused-names -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $f32_f32_=>_f32 (func (param f32 f32) (result f32)))
+  ;; CHECK:      (type $1 (func (param f32 f32) (result f32)))
 
-  ;; CHECK:      (type $i64_=>_i64 (func (param i64) (result i64)))
+  ;; CHECK:      (type $2 (func (param i64) (result i64)))
 
   ;; CHECK:      (func $__Z12serveroptionPc (result i32)
   ;; CHECK-NEXT:  (return
@@ -49,8 +49,12 @@
  ;; CHECK-NEXT:    (local.get $var$1)
  ;; CHECK-NEXT:    (i64.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $set-unreachable (param $var$0 i64) (result i64)
@@ -64,11 +68,15 @@
        (local.get $var$1)
        (i64.const 0)
       )
-      (unreachable)
-      (local.set $var$2
-       (i64.mul
-        (unreachable)
-        (local.get $var$2)
+      (then
+       (unreachable)
+      )
+      (else
+       (local.set $var$2
+        (i64.mul
+         (unreachable)
+         (local.get $var$2)
+        )
        )
       )
      )

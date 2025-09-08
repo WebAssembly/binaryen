@@ -2,8 +2,59 @@
 ;; CHECK: ================================================================================
 ;; CHECK-NEXT: wasm-reduce INFILE
 ;; CHECK-NEXT:
-;; CHECK-NEXT: Reduce a wasm file to a smaller one that has the same behavior on a given
-;; CHECK-NEXT: command
+;; CHECK-NEXT: Reduce a wasm file to a smaller one with the same behavior on a given command.
+;; CHECK-NEXT:
+;; CHECK-NEXT: Typical usage:
+;; CHECK-NEXT:
+;; CHECK-NEXT:   wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w.wasm
+;; CHECK-NEXT:
+;; CHECK-NEXT: The original file orig.wasm is where we begin. We then repeatedly test a small
+;; CHECK-NEXT: reduction of it by writing that modification to the 'test file' (specified by
+;; CHECK-NEXT: '--test'), and we run the command, in this example 'bash a.sh'. That command
+;; CHECK-NEXT: should use the test file (and not the original file or any other one). Whenever
+;; CHECK-NEXT: the reduction works, we write that new smaller file to the 'working file'
+;; CHECK-NEXT: (specified by '--working'). The reduction 'works' if it correctly preserves the
+;; CHECK-NEXT: behavior of the command on the original input, specifically, that it has the
+;; CHECK-NEXT: same stdout and the result return code. Each time reduction works we continue to
+;; CHECK-NEXT: reduce from that point (and each time it fails, we go back and try something
+;; CHECK-NEXT: else).
+;; CHECK-NEXT:
+;; CHECK-NEXT: As mentioned above, the command should run on the test file. That is, the first
+;; CHECK-NEXT: thing that wasm-reduce does on the example above is, effectively,
+;; CHECK-NEXT:
+;; CHECK-NEXT:   cp orig.wasm t.wasm
+;; CHECK-NEXT:   bash a.sh
+;; CHECK-NEXT:
+;; CHECK-NEXT: In other words, it copies the original to the test file, and runs the command.
+;; CHECK-NEXT: Whatever the command does, we will preserve as we copy progressively smaller
+;; CHECK-NEXT: files to t.wasm. As we make progress, the smallest file will be written to
+;; CHECK-NEXT: the working file, w.wasm, and when reduction is done you will find the final
+;; CHECK-NEXT: result there.
+;; CHECK-NEXT:
+;; CHECK-NEXT: Comparison to creduce:
+;; CHECK-NEXT:
+;; CHECK-NEXT: 1. creduce requires the command to return 0. wasm-reduce is often used to reduce
+;; CHECK-NEXT:    crashes, which have non-zero return codes, so it is natural to allow any
+;; CHECK-NEXT:    return code. As mentioned above, we preserve the return code as we reduce.
+;; CHECK-NEXT: 2. creduce ignores stdout. wasm-reduce preserves stdout as it reduces, as part
+;; CHECK-NEXT:    of the principle of preserving the original behavior of the command (if your
+;; CHECK-NEXT:    stdout varies in uninteresting ways, your command can be a script that runs
+;; CHECK-NEXT:    the real command and captures stdout to /dev/null, or filters it).
+;; CHECK-NEXT: 3. creduce tramples the original input file as it reduces. wasm-reduce never
+;; CHECK-NEXT:    modifies the input (to avoid mistakes that cause data loss). Instead,
+;; CHECK-NEXT:    when reductions work we write to the 'working file' as mentioned above, and
+;; CHECK-NEXT:    the final reduction will be there.
+;; CHECK-NEXT: 4. creduce runs the command in a temp directory. That is safer in general, but
+;; CHECK-NEXT:    it is not how the original command ran, and in particular forces additional
+;; CHECK-NEXT:    work if you have multiple files (which, for wasm-reduce, is common, e.g. if
+;; CHECK-NEXT:    the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
+;; CHECK-NEXT:    command in the current directory (of course, your command can be a script
+;; CHECK-NEXT:    that changes directory to anywhere else).
+;; CHECK-NEXT:
+;; CHECK-NEXT: More documentation can be found at
+;; CHECK-NEXT:
+;; CHECK-NEXT:   https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
+;; CHECK-NEXT:
 ;; CHECK-NEXT: ================================================================================
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
@@ -17,9 +68,9 @@
 ;; CHECK-NEXT:                                        (TODO: stderr), and we reduce while
 ;; CHECK-NEXT:                                        keeping those unchanged.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --test,-t                            Test file (this will be written to to
-;; CHECK-NEXT:                                        test, the given command should read it
-;; CHECK-NEXT:                                        when we call it)
+;; CHECK-NEXT:   --test,-t                            Test file (this will be written to test,
+;; CHECK-NEXT:                                        the given command should read it when we
+;; CHECK-NEXT:                                        call it)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --working,-w                         Working file (this will contain the
 ;; CHECK-NEXT:                                        current good state while doing temporary
@@ -50,6 +101,9 @@
 ;; CHECK-NEXT:   --extra-flags,-ef                    Extra commandline flags to pass to
 ;; CHECK-NEXT:                                        wasm-opt while reducing. (default:
 ;; CHECK-NEXT:                                        --enable-all)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --save-all-working,-saw              Save all intermediate working files, as
+;; CHECK-NEXT:                                        $WORKING.0, .1, .2 etc
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
@@ -93,6 +147,18 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory-opt             Enable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
@@ -117,10 +183,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-memory64                   Disable memory64
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-gc-nn-locals                Enable GC non-null locals
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-gc-nn-locals               Disable GC non-null locals
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
@@ -133,9 +195,27 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                    Disable strings
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-multi-memories              Enable multi-memories
+;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-multi-memories             Disable multi-memories
+;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-stack-switching             Enable stack switching
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-stack-switching            Disable stack switching
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-shared-everything           Enable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-shared-everything          Disable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:
@@ -146,7 +226,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
 ;; CHECK-NEXT:                                        passes being run. Must be in the form
-;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass
+;; CHECK-NEXT:                                        then it applies to the closest instance
+;; CHECK-NEXT:                                        of that pass before us. If KEY is not the
+;; CHECK-NEXT:                                        name of a pass then it is a global option
+;; CHECK-NEXT:                                        that applies to all pass instances that
+;; CHECK-NEXT:                                        read it.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does
 ;; CHECK-NEXT:                                        not inspect or interact with GC and
@@ -154,6 +239,15 @@
 ;; CHECK-NEXT:                                        passed out. The outside may hold on to
 ;; CHECK-NEXT:                                        them and pass them back in, but not
 ;; CHECK-NEXT:                                        inspect their contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the
+;; CHECK-NEXT:                                        input (useful for debugging and testing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-stack-ir                  optimize StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-stack-ir                     print StackIR during writing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:

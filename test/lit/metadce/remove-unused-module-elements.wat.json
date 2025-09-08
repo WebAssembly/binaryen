@@ -1,0 +1,13 @@
+[
+  {
+    "name": "root",
+    "reaches": [
+      "used"
+    ],
+    "root": true
+  },
+  {
+    "name": "used",
+    "export": "used"
+  }
+]

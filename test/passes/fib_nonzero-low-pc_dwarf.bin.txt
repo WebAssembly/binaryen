@@ -509,8 +509,8 @@ file_names[  1]:
 0x00000096: "next"
 0x0000009b: "i"
 (module
- (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func))
+ (type $1 (func (param i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))
@@ -539,9 +539,9 @@ file_names[  1]:
    (i32.const 1)
   )
   ;; code offset: 0x19
-  (block $label$1
+  (block $block
    ;; code offset: 0x20
-   (br_if $label$1
+   (br_if $block
     ;; code offset: 0x1f
     (i32.le_s
      ;; code offset: 0x1b
@@ -561,7 +561,7 @@ file_names[  1]:
     (i32.const 1)
    )
    ;; code offset: 0x2a
-   (loop $label$2
+   (loop $label
     ;; code offset: 0x33
     (local.set $1
      ;; code offset: 0x32
@@ -601,7 +601,7 @@ file_names[  1]:
      (local.get $4)
     )
     ;; code offset: 0x4a
-    (br_if $label$2
+    (br_if $label
      ;; code offset: 0x49
      (i32.eqz
       ;; code offset: 0x47

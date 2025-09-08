@@ -28,13 +28,14 @@
 // have no side effects.
 //
 
-#include <ir/iteration.h>
-#include <ir/properties.h>
-#include <ir/type-updating.h>
-#include <pass.h>
-#include <vector>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/eh-utils.h"
+#include "ir/iteration.h"
+#include "ir/properties.h"
+#include "ir/type-updating.h"
+#include "pass.h"
+#include "vector"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -55,12 +56,16 @@ struct DeadCodeElimination
   // as we remove code, we must keep the types of other nodes valid
   TypeUpdater typeUpdater;
 
+  // Information used to decide whether we need EH fixups at the end
+  bool hasPop = false;     // Do we have a 'pop' in this function?
+  bool addedBlock = false; // Have we added blocks in this function?
+
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
     if (old == expression) {
       return expression;
     }
-    super::replaceCurrent(expression);
+    Super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
     return expression;
@@ -72,6 +77,10 @@ struct DeadCodeElimination
   }
 
   void visitExpression(Expression* curr) {
+    if (curr->is<Pop>()) {
+      hasPop = true;
+    }
+
     if (!Properties::isControlFlowStructure(curr)) {
       // Control flow structures require special handling, but others are
       // simple.
@@ -104,6 +113,7 @@ struct DeadCodeElimination
           if (remainingChildren.size() == 1) {
             replaceCurrent(remainingChildren[0]);
           } else {
+            addedBlock = true;
             replaceCurrent(builder.makeBlock(remainingChildren));
           }
         }
@@ -175,8 +185,23 @@ struct DeadCodeElimination
           tryy->body->type == Type::unreachable && allCatchesUnreachable) {
         typeUpdater.changeType(tryy, Type::unreachable);
       }
+    } else if (auto* tryTable = curr->dynCast<TryTable>()) {
+      // try_table can finish normally only if its body finishes normally.
+      if (tryTable->type != Type::unreachable &&
+          tryTable->body->type == Type::unreachable) {
+        typeUpdater.changeType(tryTable, Type::unreachable);
+      }
     } else {
       WASM_UNREACHABLE("unimplemented DCE control flow structure");
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    // We conservatively run the EH pop fixup if this function has a 'pop' and
+    // if we have ever added blocks in the optimization, which may have moved
+    // pops into the blocks.
+    if (hasPop && addedBlock) {
+      EHUtils::handleBlockNestedPops(curr, *getModule());
     }
   }
 };

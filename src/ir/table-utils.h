@@ -20,6 +20,7 @@
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
+#include "support/stdckdint.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -39,8 +40,14 @@ struct FlatTable {
           valid = false;
           return;
         }
-        Index start = offset->cast<Const>()->value.geti32();
-        Index end = start + segment->data.size();
+        Index start = offset->cast<Const>()->value.getInteger();
+        Index size = segment->data.size();
+        Index end;
+        if (std::ckd_add(&end, start, size) || end > table.initial) {
+          // Overflow.
+          valid = false;
+          return;
+        }
         if (end > names.size()) {
           names.resize(end);
         }

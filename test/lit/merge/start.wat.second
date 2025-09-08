@@ -1,0 +1,15 @@
+(module
+  (start $start)
+
+  (func $start (export "start")
+    (drop
+      (i32.const 1)
+    )
+  )
+
+  (func $user (export "user")
+    ;; These calls must go to the function $start here (with body "1").
+    (call $start)
+    (call $start)
+  )
+)

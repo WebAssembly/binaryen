@@ -1,6 +1,6 @@
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func))
+ (type $1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)
@@ -122,9 +122,9 @@
     (local.get $15)
    )
   )
-  (block $label$1
-   (block $label$2
-    (br_if $label$2
+  (block $block1
+   (block $block
+    (br_if $block
      (local.get $16)
     )
     (local.set $17
@@ -135,7 +135,7 @@
     (local.set $18
      (local.get $17)
     )
-    (br $label$1)
+    (br $block1)
    )
    (local.set $19
     (i32.const -2147483648)
@@ -158,8 +158,8 @@
  ;; custom section "producers", size 172
 )
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func))
+ (type $1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)
@@ -340,10 +340,11 @@
    )
   )
   ;; code offset: 0xa9
-  (block $label$1
-   (block $label$2
+  (block $block1
+   ;; code offset: 0xab
+   (block $block
     ;; code offset: 0xaf
-    (br_if $label$2
+    (br_if $block
      ;; code offset: 0xad
      (local.get $16)
     )
@@ -361,7 +362,7 @@
      (local.get $17)
     )
     ;; code offset: 0xba
-    (br $label$1)
+    (br $block1)
    )
    ;; code offset: 0xc3
    (local.set $19
@@ -392,8 +393,8 @@
  ;; custom section "producers", size 172
 )
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func))
+ (type $1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)
@@ -515,9 +516,9 @@
     (local.get $7)
    )
   )
-  (block $label$1
-   (block $label$2
-    (br_if $label$2
+  (block $block1
+   (block $block
+    (br_if $block
      (local.get $8)
     )
     (local.set $9
@@ -528,7 +529,7 @@
     (local.set $10
      (local.get $9)
     )
-    (br $label$1)
+    (br $block1)
    )
    (local.set $11
     (i32.const -2147483648)
@@ -547,8 +548,8 @@
  ;; custom section "producers", size 172
 )
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func))
+ (type $1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)
@@ -670,9 +671,9 @@
     (local.get $7)
    )
   )
-  (block $label$1
-   (block $label$2
-    (br_if $label$2
+  (block $block1
+   (block $block
+    (br_if $block
      (local.get $8)
     )
     (local.set $9
@@ -683,7 +684,7 @@
     (local.set $10
      (local.get $9)
     )
-    (br $label$1)
+    (br $block1)
    )
    (local.set $11
     (i32.const -2147483648)

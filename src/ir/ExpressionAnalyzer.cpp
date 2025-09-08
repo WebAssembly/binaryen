@@ -205,7 +205,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   }
 
 #define DELEGATE_FIELD_INT_ARRAY(id, field) COMPARE_LIST(field)
+#define DELEGATE_FIELD_INT_VECTOR(id, field) COMPARE_LIST(field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field) COMPARE_LIST(field)
+#define DELEGATE_FIELD_TYPE_VECTOR(id, field) COMPARE_LIST(field)
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
   if (castLeft->field.is() != castRight->field.is()) {                         \
@@ -317,7 +319,7 @@ struct Hasher {
 #define DELEGATE_FIELD_INT(id, field) HASH_FIELD(field)
 #define DELEGATE_FIELD_LITERAL(id, field) HASH_FIELD(field)
 
-#define DELEGATE_FIELD_NAME(id, field) visitNonScopeName(cast->field)
+#define DELEGATE_FIELD_NAME(id, field) visitNonScopeName(cast->field);
 #define DELEGATE_FIELD_TYPE(id, field) visitType(cast->field);
 #define DELEGATE_FIELD_HEAPTYPE(id, field) visitHeapType(cast->field);
 #define DELEGATE_FIELD_ADDRESS(id, field) visitAddress(cast->field);

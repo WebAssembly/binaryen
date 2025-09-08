@@ -1,4 +1,4 @@
-;; RUN: not wasm-opt %s --new-wat-parser -all 2>&1 | filecheck %s
+;; RUN: not wasm-opt %s -all 2>&1 | filecheck %s
 
 ;; CHECK: global initializer should only refer to previous globals
 

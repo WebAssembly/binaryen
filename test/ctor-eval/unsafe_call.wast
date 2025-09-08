@@ -1,7 +1,7 @@
 (module
   (memory 256 256)
   (data (i32.const 10) "waka waka waka waka waka")
-  (export "test1" $test1)
+  (export "test1" (func $test1))
   (func $test1
     (call $unsafe-to-call) ;; unsafe to call
     (i32.store (i32.const 12) (i32.const 115)) ;; a safe store, should alter memory

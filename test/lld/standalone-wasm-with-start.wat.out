@@ -1,5 +1,5 @@
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 66112))
  (global $global$1 i32 (i32.const 66112))
  (global $global$2 i32 (i32.const 576))
@@ -11,9 +11,9 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (func $_start (result i32)
-  (nop)
+  (i32.const 0)
  )
  (func $foo (result i32)
-  (nop)
+  (i32.const 0)
  )
 )

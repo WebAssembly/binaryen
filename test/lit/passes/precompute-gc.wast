@@ -4,7 +4,7 @@
 ;; RUN:   | filecheck %s
 
 (module
- ;; CHECK:      (type $empty (struct ))
+ ;; CHECK:      (type $empty (struct))
  (type $empty (struct))
 
  ;; CHECK:      (type $struct (struct (field (mut i32))))
@@ -13,18 +13,26 @@
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
 
+ ;; CHECK:      (type $referrer (struct (field (mut (ref null $empty)))))
+ (type $referrer (struct (field (mut (ref null $empty)))))
+
  ;; CHECK:      (type $func-return-i32 (func (result i32)))
+
+ ;; CHECK:      (type $array-i32 (array (mut i32)))
 
  ;; CHECK:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
 
  (type $struct_i8 (struct (field i8)))
 
- (type $array16 (array (mut i16)))
-
  (type $func-return-i32 (func (result i32)))
 
- ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (type $array-i32 (array (mut i32)))
+
+ ;; CHECK:      (type $array-ref (array (mut (ref null $array-i32))))
+ (type $array-ref (array (mut (ref null $array-i32))))
+
+ ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (type $6) (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
  ;; CHECK:      (func $test-fallthrough (type $func-return-i32) (result i32)
@@ -45,7 +53,7 @@
    ;; the fallthrough value should be used. for that to be possible with a block
    ;; we need for it not to have a name, which is why --remove-unused-names is
    ;; run
-   (block (result (funcref))
+   (block (result funcref)
     ;; make a call so the block is not trivially removable
     (drop
      (call $test-fallthrough)
@@ -59,7 +67,7 @@
   )
  )
 
- ;; CHECK:      (func $load-from-struct (type $none_=>_none)
+ ;; CHECK:      (func $load-from-struct (type $2)
  ;; CHECK-NEXT:  (local $x (ref null $struct))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (struct.new $struct
@@ -121,18 +129,22 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $load-from-struct-bad-merge (type $i32_=>_none) (param $i i32)
+ ;; CHECK:      (func $load-from-struct-bad-merge (type $6) (param $i i32)
  ;; CHECK-NEXT:  (local $x (ref null $struct))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $i)
- ;; CHECK-NEXT:   (local.set $x
- ;; CHECK-NEXT:    (struct.new $struct
- ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $x
+ ;; CHECK-NEXT:     (struct.new $struct
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $x
- ;; CHECK-NEXT:    (struct.new $struct
- ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $x
+ ;; CHECK-NEXT:     (struct.new $struct
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -147,14 +159,18 @@
   ;; a merge of two different $x values cannot be precomputed
   (if
    (local.get $i)
-   (local.set $x
-    (struct.new $struct
-     (i32.const 1)
+   (then
+    (local.set $x
+     (struct.new $struct
+      (i32.const 1)
+     )
     )
    )
-   (local.set $x
-    (struct.new $struct
-     (i32.const 2)
+   (else
+    (local.set $x
+     (struct.new $struct
+      (i32.const 2)
+     )
     )
    )
   )
@@ -162,7 +178,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $modify-gc-heap (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+ ;; CHECK:      (func $modify-gc-heap (type $7) (param $x (ref null $struct))
  ;; CHECK-NEXT:  (struct.set $struct 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.add
@@ -186,7 +202,7 @@
  )
  ;; --fuzz-exec verifies the output of this function, checking that the change
  ;; makde in modify-gc-heap is not ignored
- ;; CHECK:      (func $load-from-struct-bad-escape (type $none_=>_none)
+ ;; CHECK:      (func $load-from-struct-bad-escape (type $2)
  ;; CHECK-NEXT:  (local $x (ref null $struct))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (struct.new $struct
@@ -216,7 +232,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $load-from-struct-bad-arrive (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+ ;; CHECK:      (func $load-from-struct-bad-arrive (type $7) (param $x (ref null $struct))
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (struct.get $struct 0
  ;; CHECK-NEXT:    (local.get $x)
@@ -229,7 +245,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $ref-comparisons (type $ref?|$struct|_ref?|$struct|_=>_none) (param $x (ref null $struct)) (param $y (ref null $struct))
+ ;; CHECK:      (func $ref-comparisons (type $13) (param $x (ref null $struct)) (param $y (ref null $struct))
  ;; CHECK-NEXT:  (local $z (ref null $struct))
  ;; CHECK-NEXT:  (local $w (ref null $struct))
  ;; CHECK-NEXT:  (call $log
@@ -331,11 +347,13 @@
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local.set $tempresult
- ;; CHECK-NEXT:   (ref.eq
- ;; CHECK-NEXT:    (local.tee $tempref
- ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $tempref
+ ;; CHECK-NEXT:      (struct.new_default $empty)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.const 1)
@@ -343,7 +361,8 @@
  (func $propagate-equal (result i32)
   (local $tempresult i32)
   (local $tempref (ref null $empty))
-  ;; assign the result, so that propagate calculates the ref.eq
+  ;; We can compute a 1 here, as the ref.eq compares a struct to itself. We must
+  ;; keep the tee around, however.
   (local.set $tempresult
    (ref.eq
     ;; allocate one struct
@@ -353,8 +372,7 @@
     (local.get $tempref)
    )
   )
-  ;; we can compute a 1 here as the ref.eq compares a struct to itself. note
-  ;; that the ref.eq itself cannot be precomputed away (as it has side effects).
+  ;; We can propagate 1 to here.
   (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-unequal (type $func-return-i32) (result i32)
@@ -382,7 +400,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-uncertain-param (type $ref|$empty|_=>_i32) (param $input (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-uncertain-param (type $8) (param $input (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local.set $tempresult
@@ -407,7 +425,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-different-params (type $ref|$empty|_ref|$empty|_=>_i32) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-different-params (type $14) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local.set $tempresult
  ;; CHECK-NEXT:   (ref.eq
@@ -429,7 +447,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-same-param (type $ref|$empty|_=>_i32) (param $input (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-same-param (type $8) (param $input (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local.set $tempresult
  ;; CHECK-NEXT:   (ref.eq
@@ -466,8 +484,10 @@
  ;; CHECK-NEXT:   (call $helper
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $tempref
- ;; CHECK-NEXT:    (struct.new_default $empty)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $tempref
+ ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $tempresult
@@ -494,8 +514,10 @@
    (call $helper
     (i32.const 0)
    )
-   (local.set $tempref
-    (struct.new $empty)
+   (then
+    (local.set $tempref
+     (struct.new $empty)
+    )
    )
   )
   (local.set $tempresult
@@ -507,7 +529,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-uncertain-loop (type $none_=>_none)
+ ;; CHECK:      (func $propagate-uncertain-loop (type $2)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
@@ -564,7 +586,7 @@
   )
  )
 
- ;; CHECK:      (func $propagate-certain-loop (type $none_=>_none)
+ ;; CHECK:      (func $propagate-certain-loop (type $2)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
@@ -612,7 +634,7 @@
   )
  )
 
- ;; CHECK:      (func $propagate-certain-loop-2 (type $none_=>_none)
+ ;; CHECK:      (func $propagate-certain-loop-2 (type $2)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
@@ -660,7 +682,7 @@
   )
  )
 
- ;; CHECK:      (func $propagate-possibly-certain-loop (type $none_=>_none)
+ ;; CHECK:      (func $propagate-possibly-certain-loop (type $2)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
@@ -669,8 +691,10 @@
  ;; CHECK-NEXT:    (call $helper
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $tempref
- ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (local.set $tempref
+ ;; CHECK-NEXT:      (struct.new_default $empty)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $stashedref
@@ -702,8 +726,10 @@
     (call $helper
      (i32.const 0)
     )
-    (local.set $tempref
-     (struct.new $empty)
+    (then
+     (local.set $tempref
+      (struct.new $empty)
+     )
     )
    )
    (local.set $stashedref
@@ -723,20 +749,20 @@
   )
  )
 
- ;; CHECK:      (func $helper (type $i32_=>_i32) (param $0 i32) (result i32)
+ ;; CHECK:      (func $helper (type $15) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $helper (param i32) (result i32)
   (unreachable)
  )
 
- ;; CHECK:      (func $odd-cast-and-get (type $none_=>_none)
+ ;; CHECK:      (func $odd-cast-and-get (type $2)
  ;; CHECK-NEXT:  (local $temp (ref null $B))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
@@ -751,7 +777,7 @@
   ;; ref.cast null instruction has, that is, the value is a null of type $B). So this
   ;; is an odd cast that "works".
   (local.set $temp
-   (ref.cast null $B
+   (ref.cast (ref null $B)
     (ref.null $A)
    )
   )
@@ -764,16 +790,16 @@
   )
  )
 
- ;; CHECK:      (func $odd-cast-and-get-tuple (type $none_=>_none)
- ;; CHECK-NEXT:  (local $temp ((ref null $B) i32))
+ ;; CHECK:      (func $odd-cast-and-get-tuple (type $2)
+ ;; CHECK-NEXT:  (local $temp (tuple (ref null $B) i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (i32.const 10)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
@@ -782,11 +808,11 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $odd-cast-and-get-tuple
-  (local $temp ((ref null $B) i32))
+  (local $temp (tuple (ref null $B) i32))
   ;; As above, but with a tuple.
   (local.set $temp
-   (tuple.make
-    (ref.cast null $B
+   (tuple.make 2
+    (ref.cast (ref null $B)
      (ref.null $A)
     )
     (i32.const 10)
@@ -794,23 +820,23 @@
   )
   (drop
    (struct.get $B 0
-    (tuple.extract 0
+    (tuple.extract 2 0
      (local.get $temp)
     )
    )
   )
  )
 
- ;; CHECK:      (func $receive-f64 (type $f64_=>_none) (param $0 f64)
+ ;; CHECK:      (func $receive-f64 (type $16) (param $0 f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $receive-f64 (param f64)
   (unreachable)
  )
 
- ;; CHECK:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
+ ;; CHECK:      (func $odd-cast-and-get-non-null (type $17) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (ref.cast $func-return-i32
+ ;; CHECK-NEXT:   (ref.cast (ref nofunc)
  ;; CHECK-NEXT:    (ref.func $receive-f64)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -823,7 +849,7 @@
  (func $odd-cast-and-get-non-null (param $temp (ref $func-return-i32))
   ;; Try to cast a function to an incompatible type.
   (local.set $temp
-   (ref.cast $func-return-i32
+   (ref.cast (ref $func-return-i32)
     (ref.func $receive-f64)
    )
   )
@@ -836,8 +862,8 @@
   )
  )
 
- ;; CHECK:      (func $new_block_unreachable (type $none_=>_anyref) (result anyref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK:      (func $new_block_unreachable (type $10) (result anyref)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (unreachable)
@@ -857,10 +883,10 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-on-creation (type $none_=>_ref|$empty|) (result (ref $empty))
- ;; CHECK-NEXT:  (block $label (result (ref $empty))
+ ;; CHECK:      (func $br_on_cast-on-creation (type $18) (result (ref $empty))
+ ;; CHECK-NEXT:  (block $label (result (ref (exact $empty)))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $label $empty
+ ;; CHECK-NEXT:    (br_on_cast $label (ref (exact $empty)) (ref (exact $empty))
  ;; CHECK-NEXT:     (struct.new_default $empty)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -870,7 +896,7 @@
  (func $br_on_cast-on-creation (result (ref $empty))
   (block $label (result (ref $empty))
    (drop
-    (br_on_cast $label $empty
+    (br_on_cast $label anyref (ref $empty)
      (struct.new_default $empty)
     )
    )
@@ -878,7 +904,7 @@
   )
  )
 
- ;; CHECK:      (func $ref.is_null (type $i32_=>_none) (param $param i32)
+ ;; CHECK:      (func $ref.is_null (type $6) (param $param i32)
  ;; CHECK-NEXT:  (local $ref (ref null $empty))
  ;; CHECK-NEXT:  (local.set $ref
  ;; CHECK-NEXT:   (struct.new_default $empty)
@@ -898,8 +924,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $param)
- ;; CHECK-NEXT:   (local.set $ref
- ;; CHECK-NEXT:    (struct.new_default $empty)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $ref
+ ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
@@ -938,8 +966,10 @@
   )
   (if
    (local.get $param)
-   (local.set $ref
-    (struct.new $empty)
+   (then
+    (local.set $ref
+     (struct.new $empty)
+    )
    )
   )
   (drop
@@ -952,7 +982,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-set (type $none_=>_ref|func|) (result (ref func))
+ ;; CHECK:      (func $remove-set (type $19) (result (ref func))
  ;; CHECK-NEXT:  (local $nn funcref)
  ;; CHECK-NEXT:  (local $i i32)
  ;; CHECK-NEXT:  (loop $loop
@@ -995,7 +1025,7 @@
   )
  )
 
- ;; CHECK:      (func $strings (type $ref|string|_=>_none) (param $param (ref string))
+ ;; CHECK:      (func $strings (type $20) (param $param (ref string))
  ;; CHECK-NEXT:  (local $s (ref string))
  ;; CHECK-NEXT:  (local.set $s
  ;; CHECK-NEXT:   (string.const "hello, world")
@@ -1030,6 +1060,441 @@
   (struct.get_s $struct_i8 0
    (struct.new $struct_i8
     (i32.const 0x12345678)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable (type $10) (result anyref)
+ ;; CHECK-NEXT:  (local $x (ref any))
+ ;; CHECK-NEXT:  (local.tee $x
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $x)
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable (result anyref)
+  (local $x (ref any))
+  ;; We cannot read a non-nullable local without setting it first, but it is ok
+  ;; to do so here because we are in unreachable code. We should also not error
+  ;; about this get seeming to read the default value from the function entry
+  ;; (because it does not, as the entry is not reachable from it). Nothing is
+  ;; expected to be optimized here.
+
+  ;; This unreachable set is needed for the later get to validate.
+  (local.set $x
+   (unreachable)
+  )
+  ;; This if is needed so we have an interesting enough CFG that a possible
+  ;; assertion can be hit about reading the default value from the entry in a
+  ;; later block.
+  (if
+   (i32.const 1)
+   (then
+    (unreachable)
+   )
+  )
+  (local.get $x)
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-entry (type $11) (param $x i32) (param $y (ref any))
+ ;; CHECK-NEXT:  (local $0 (ref any))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable-entry (param $x i32) (param $y (ref any))
+  (local $0 (ref any))
+  ;; As above, but now the first basic block is unreachable, and we need to
+  ;; detect that specifically, as the block after it *does* have entries even
+  ;; though it is unreachable (it is a loop, and has itself as an entry).
+  (unreachable)
+  (local.set $0
+   (local.get $y)
+  )
+  (loop $loop
+   (br_if $loop
+    (local.get $x)
+   )
+   (drop
+    (local.get $0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-later-loop (type $11) (param $x i32) (param $y (ref any))
+ ;; CHECK-NEXT:  (local $0 (ref any))
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable-later-loop (param $x i32) (param $y (ref any))
+  (local $0 (ref any))
+  ;; This |if| is added, which means the loop is later in the function.
+  ;; Otherwise this is the same as before.
+  (if
+   (local.get $x)
+   (then
+    (nop)
+   )
+  )
+  (unreachable)
+  (local.set $0
+   (local.get $y)
+  )
+  (loop $loop
+   (br_if $loop
+    (local.get $x)
+   )
+   (drop
+    (local.get $0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-tuple (type $21) (result anyref i32)
+ ;; CHECK-NEXT:  (local $x (tuple (ref any) i32))
+ ;; CHECK-NEXT:  (local.tee $x
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $x)
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable-tuple (result anyref i32)
+  ;; As $get-nonnullable-in-unreachable but the local is a tuple (so we need to
+  ;; check isDefaultable, and not just isNullable).
+  (local $x (tuple (ref any) i32))
+  (local.set $x
+   (unreachable)
+  )
+  (if
+   (i32.const 1)
+   (then
+    (unreachable)
+   )
+  )
+  (local.get $x)
+ )
+
+ ;; CHECK:      (func $propagate-array-effects (type $2)
+ ;; CHECK-NEXT:  (local $1 (ref $array-i32))
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $3 (ref $array-i32))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $2
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (block (result i32)
+ ;; CHECK-NEXT:         (drop
+ ;; CHECK-NEXT:          (array.new $array-ref
+ ;; CHECK-NEXT:           (local.tee $1
+ ;; CHECK-NEXT:            (array.new_default $array-i32
+ ;; CHECK-NEXT:             (i32.const 0)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:           (i32.const 0)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (i32.const 0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (local.tee $3
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-array-effects
+  (local $1 (ref $array-i32))
+  (local $2 i32)
+  (local $3 (ref $array-i32))
+  ;; This dropped expression has several local operations that lead to
+  ;; propagateLocals doing several passes. While doing so, it will try to
+  ;; precompute the value of the outer $array.new. That contains a nested
+  ;; tee, so we cannot replace it with the value we compute, but we do know its
+  ;; value (the canonical allocation for that array.new location). We ignore the
+  ;; local.tee's effect when computing that, but we should not cache the result
+  ;; of that computation and use it for when we *do* care about effects, because
+  ;; if we did then we'd think that entire array.new has no effects, and can be
+  ;; optimized away, together with large chunks of the rest of the code.
+  ;;
+  ;; We should not optimize away any local.tee (but we can remove things like
+  ;; the i32.lt_u).
+  (drop
+   (i32.lt_u
+    (local.tee $2
+     (select
+      (i32.const 0)
+      (block (result i32)
+       (drop
+        (array.new $array-ref
+         (local.tee $1
+          (array.new_default $array-i32
+           (i32.const 0)
+          )
+         )
+         (i32.const 0)
+        )
+       )
+       (i32.const 0)
+      )
+      (i32.const 0)
+     )
+    )
+    (array.len
+     (local.tee $3
+      (local.get $1)
+     )
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nested-struct-ref.eq (type $2)
+ ;; CHECK-NEXT:  (local $A (ref $referrer))
+ ;; CHECK-NEXT:  (local $B (ref $empty))
+ ;; CHECK-NEXT:  (local $A2 (ref $referrer))
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (local.set $A2
+ ;; CHECK-NEXT:   (local.tee $A
+ ;; CHECK-NEXT:    (struct.new $referrer
+ ;; CHECK-NEXT:     (local.tee $B
+ ;; CHECK-NEXT:      (struct.new_default $empty)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $nested-struct-ref.eq
+  (local $A (ref $referrer))
+  (local $B (ref $empty))
+  (local $A2 (ref $referrer))
+  (local $temp i32)
+  ;; Create $A, and copy to $A2.
+  (local.set $A2
+   (local.tee $A
+    (struct.new $referrer
+     (local.tee $B
+      (struct.new_default $empty)
+     )
+    )
+   )
+  )
+  ;; They should be equal, so this can be 1.
+  (local.set $temp
+   (ref.eq
+    (local.get $A)
+    (local.get $A2)
+   )
+  )
+  ;; $A and $B are of course different.
+  (local.set $temp
+   (ref.eq
+    (local.get $A)
+    (local.get $B)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nested-struct-ref.eq-tee (type $2)
+ ;; CHECK-NEXT:  (local $A (ref $referrer))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $A
+ ;; CHECK-NEXT:      (struct.new $referrer
+ ;; CHECK-NEXT:       (struct.new_default $empty)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $nested-struct-ref.eq-tee
+  (local $A (ref $referrer))
+  ;; As above, but immediately ref.eq the tee'd value with a get of itself. This
+  ;; can be computed to 1, but we must keep the tee effect.
+  (drop
+   (ref.eq
+    (local.tee $A
+     (struct.new $referrer
+      (struct.new_default $empty)
+     )
+    )
+    (local.get $A)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nested-struct-ref.eq-tee-2 (type $2)
+ ;; CHECK-NEXT:  (local $A (ref $referrer))
+ ;; CHECK-NEXT:  (local $B (ref $empty))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $A
+ ;; CHECK-NEXT:      (struct.new $referrer
+ ;; CHECK-NEXT:       (local.tee $B
+ ;; CHECK-NEXT:        (struct.new_default $empty)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $nested-struct-ref.eq-tee-2
+  (local $A (ref $referrer))
+  (local $B (ref $empty))
+  ;; As above but with an extra nested tee, causing more cache usage. We can
+  ;; optimize in the same way.
+  (drop
+   (ref.eq
+    (local.tee $A
+     (struct.new $referrer
+      (local.tee $B
+       (struct.new_default $empty)
+      )
+     )
+    )
+    (local.get $A)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nested-struct-ref.eq-tee-3 (type $2)
+ ;; CHECK-NEXT:  (local $A (ref $referrer))
+ ;; CHECK-NEXT:  (local $A2 (ref $referrer))
+ ;; CHECK-NEXT:  (local $B (ref $empty))
+ ;; CHECK-NEXT:  (local $B2 (ref $empty))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $A
+ ;; CHECK-NEXT:      (struct.new $referrer
+ ;; CHECK-NEXT:       (local.tee $B
+ ;; CHECK-NEXT:        (local.tee $B
+ ;; CHECK-NEXT:         (struct.new_default $empty)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $A2
+ ;; CHECK-NEXT:      (local.get $A)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $nested-struct-ref.eq-tee-3
+  (local $A (ref $referrer))
+  (local $A2 (ref $referrer))
+  (local $B (ref $empty))
+  (local $B2 (ref $empty))
+  ;; As above but with yet more nested tees, causing more cache usage.
+  ;; We can optimize in the same way.
+  (drop
+   (ref.eq
+    (local.tee $A
+     (struct.new $referrer
+      (local.tee $B
+       (local.tee $B
+        (struct.new_default $empty)
+       )
+      )
+     )
+    )
+    (local.tee $A2
+     (local.get $A)
+    )
+   )
+  )
+  ;; Use the extra tee. We can optimize to 1 here.
+  (call $log
+   (ref.eq
+    (local.get $A)
+    (local.get $A2)
+   )
+  )
+  ;; This evaluates to 0.
+  (call $log
+   (ref.eq
+    (local.get $A)
+    (local.get $B)
+   )
+  )
+  ;; And this to 1.
+  (call $log
+   (ref.eq
+    (local.get $B)
+    (local.get $B)
    )
   )
  )

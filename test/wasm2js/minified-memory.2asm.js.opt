@@ -22,7 +22,7 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function foo() {
   return HEAP32[0];
  }
  
@@ -53,7 +53,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "foo": $0
+  "foo": foo
  };
 }
 

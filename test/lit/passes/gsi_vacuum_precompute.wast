@@ -22,19 +22,19 @@
 (module
  (rec
    ;; CHECK:      (rec
-   ;; CHECK-NEXT:  (type $vtable (struct (field funcref)))
-   (type $vtable (struct_subtype (field funcref) data))
-   ;; CHECK:       (type $itable1 (struct (field (ref $vtable))))
-   (type $itable1 (struct_subtype (field (ref $vtable)) data))
-   ;; CHECK:       (type $itable2 (struct (field (ref $vtable))))
-   (type $itable2 (struct_subtype (field (ref $vtable)) data))
+   ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
+   (type $vtable (sub (struct (field funcref))))
+   ;; CHECK:       (type $itable1 (sub (struct (field (ref $vtable)))))
+   (type $itable1 (sub (struct (field (ref $vtable)))))
+   ;; CHECK:       (type $itable2 (sub (struct (field (ref $vtable)))))
+   (type $itable2 (sub (struct (field (ref $vtable)))))
  )
 
  ;; Two $vtable instances are created, in separate enclosing objects.
 
- ;; CHECK:      (type $ref|any|_=>_funcref (func (param (ref any)) (result funcref)))
+ ;; CHECK:      (type $3 (func (param (ref any)) (result funcref)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $4 (func))
 
  ;; CHECK:      (global $itable1 (ref $itable1) (struct.new $itable1
  ;; CHECK-NEXT:  (struct.new $vtable
@@ -64,38 +64,38 @@
 
  ;; CHECK:      (export "test-B" (func $test-B))
 
- ;; CHECK:      (func $test-A (type $ref|any|_=>_funcref) (param $ref (ref any)) (result funcref)
+ ;; CHECK:      (func $test-A (type $3) (param $ref (ref any)) (result funcref)
  ;; CHECK-NEXT:  (ref.func $func1)
  ;; CHECK-NEXT: )
  (func $test-A (export "test-A") (param $ref (ref any)) (result funcref)
   (struct.get $vtable 0    ;; this is a reference to $func1
    (struct.get $itable1 0  ;; this is the sub-object in the global $itable1
-    (ref.cast $itable1
+    (ref.cast (ref $itable1)
      (local.get $ref)       ;; this can be inferred to be the global $itable1
     )
    )
   )
  )
 
- ;; CHECK:      (func $test-B (type $ref|any|_=>_funcref) (param $ref (ref any)) (result funcref)
+ ;; CHECK:      (func $test-B (type $3) (param $ref (ref any)) (result funcref)
  ;; CHECK-NEXT:  (ref.func $func2)
  ;; CHECK-NEXT: )
  (func $test-B (export "test-B") (param $ref (ref any)) (result funcref)
   (struct.get $vtable 0    ;; this is a reference to $func2
    (struct.get $itable2 0  ;; this is the sub-object in the global $itable2
-    (ref.cast $itable2
+    (ref.cast (ref $itable2)
      (local.get $ref)       ;; this can be inferred to be the global $itable2
     )
    )
   )
  )
 
- ;; CHECK:      (func $func1 (type $none_=>_none)
+ ;; CHECK:      (func $func1 (type $4)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $func1)
 
- ;; CHECK:      (func $func2 (type $none_=>_none)
+ ;; CHECK:      (func $func2 (type $4)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $func2)

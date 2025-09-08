@@ -1,0 +1,8 @@
+(module
+  ;;@ b:7:8
+  (func (export "g")
+     ;;@ b:9:10:MyClass::g
+     (nop)
+     ;;@ b:11:12
+  )
+)

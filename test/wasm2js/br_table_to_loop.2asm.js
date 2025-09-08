@@ -10,7 +10,7 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function exp1() {
   block : {
    loop : while (1) switch (1 | 0) {
    case 1:
@@ -21,7 +21,7 @@ function asmFunc(imports) {
   }
  }
  
- function $1() {
+ function exp2() {
   block : {
    loop : while (1) switch (1 | 0) {
    case 1:
@@ -33,8 +33,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "exp1": $0, 
-  "exp2": $1
+  "exp1": exp1, 
+  "exp2": exp2
  };
 }
 

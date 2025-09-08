@@ -3,8 +3,8 @@
 
 #include "ir/module-splitting.h"
 #include "ir/stack-utils.h"
+#include "parser/wat-parser.h"
 #include "wasm-features.h"
-#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 
@@ -13,13 +13,9 @@ using namespace wasm;
 std::unique_ptr<Module> parse(char* module) {
   auto wasm = std::make_unique<Module>();
   wasm->features = FeatureSet::All;
-  try {
-    SExpressionParser parser(module);
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    Fatal() << "error in parsing wasm text";
+  auto parsed = WATParser::parseModule(*wasm, module);
+  if (auto* err = parsed.getErr()) {
+    Fatal() << err->msg << "\n";
   }
   return wasm;
 }
@@ -32,14 +28,21 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   valid = validator.validate(*primary);
   assert(valid && "before invalid!");
 
+  std::set<Name> splitFuncs;
+  for (auto& func : primary->functions) {
+    splitFuncs.insert(func->name);
+  }
+
   std::cout << "Before:\n";
   std::cout << *primary.get();
 
   std::cout << "Keeping: ";
   if (keptFuncs.size()) {
     auto it = keptFuncs.begin();
+    splitFuncs.erase(*it);
     std::cout << *it++;
     while (it != keptFuncs.end()) {
+      splitFuncs.erase(*it);
       std::cout << ", " << *it++;
     }
   } else {
@@ -48,7 +51,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   std::cout << "\n";
 
   ModuleSplitting::Config config;
-  config.primaryFuncs = keptFuncs;
+  config.secondaryFuncs = std::move(splitFuncs);
   config.newExportPrefix = "%";
   auto secondary = splitFunctions(*primary, config).secondary;
 
@@ -73,7 +76,7 @@ int main() {
   // Global stuff
   do_test({}, R"(
     (module
-     (memory $mem (shared 3 42))
+     (memory $mem 3 42 shared)
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
      (tag $e (param i32))
@@ -82,7 +85,7 @@ int main() {
   // Imported global stuff
   do_test({}, R"(
     (module
-     (import "env" "mem" (memory $mem (shared 3 42)))
+     (import "env" "mem" (memory $mem 3 42 shared))
      (import "env" "tab" (table $tab 3 42 funcref))
      (import "env" "glob" (global $glob (mut i32)))
      (import "env" "e" (tag $e (param i32)))
@@ -91,7 +94,7 @@ int main() {
   // Exported global stuff
   do_test({}, R"(
     (module
-     (memory $mem (shared 3 42))
+     (memory $mem 3 42 shared)
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
      (tag $e (param i32))
@@ -447,7 +450,6 @@ void test_minimized_exports() {
   Module primary;
   primary.features = FeatureSet::All;
 
-  std::set<Name> keep;
   Expression* callBody = nullptr;
 
   Builder builder(primary);
@@ -457,7 +459,6 @@ void test_minimized_exports() {
     Name name = std::to_string(i);
     primary.addFunction(
       Builder::makeFunction(name, funcType, {}, builder.makeNop()));
-    keep.insert(name);
     callBody =
       builder.blockify(callBody, builder.makeCall(name, {}, Type::none));
 
@@ -474,7 +475,7 @@ void test_minimized_exports() {
   primary.addFunction(Builder::makeFunction("call", funcType, {}, callBody));
 
   ModuleSplitting::Config config;
-  config.primaryFuncs = std::move(keep);
+  config.secondaryFuncs = {"call"};
   config.newExportPrefix = "%";
   config.minimizeNewExportNames = true;
 

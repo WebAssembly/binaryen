@@ -99,7 +99,7 @@ function test_features() {
   console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);
-  console.log("Features.MultiMemories: " + binaryen.Features.MultiMemories);
+  console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -157,7 +157,7 @@ function test_ids() {
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("TupleMakeId: " + binaryen.TupleMakeId);
   console.log("TupleExtractId: " + binaryen.TupleExtractId);
-  console.log("I31NewId: " + binaryen.I31NewId);
+  console.log("RefI31Id: " + binaryen.RefI31Id);
   console.log("I31GetId: " + binaryen.I31GetId);
   console.log("CallRefId: " + binaryen.CallRefId);
   console.log("RefTestId: " + binaryen.RefTestId);
@@ -179,13 +179,8 @@ function test_ids() {
   console.log("StringEncode: " + binaryen.StringEncodeId);
   console.log("StringConcat: " + binaryen.StringConcatId);
   console.log("StringEq: " + binaryen.StringEqId);
-  console.log("StringAs: " + binaryen.StringAsId);
-  console.log("StringWTF8Advance: " + binaryen.StringWTF8AdvanceId);
   console.log("StringWTF16Get: " + binaryen.StringWTF16GetId);
-  console.log("StringIterNext: " + binaryen.StringIterNextId);
-  console.log("StringIterMove: " + binaryen.StringIterMoveId);
   console.log("StringSliceWTF: " + binaryen.StringSliceWTFId);
-  console.log("StringSliceIter: " + binaryen.StringSliceIterId);
 }
 
 function test_core() {
@@ -196,11 +191,13 @@ function test_core() {
   // Memory
   module.setMemory(1, 256, "mem", [
     {
+      name: "x0",
       passive: false,
       offset: module.i32.const(10),
       data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: "y1",
       passive: true,
       offset: null,
       data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
@@ -228,6 +225,10 @@ function test_core() {
       temp10 = makeInt32(1), temp11 = makeInt32(3), temp12 = makeInt32(5),
       temp13 = makeInt32(10), temp14 = makeInt32(11),
       temp15 = makeInt32(110), temp16 = makeInt64(111);
+
+  // Create a function to reference.
+  module.addFunction("foobar", iIfF, binaryen.i32, [], module.i32.const(0));
+  var foobarType = binaryen.Function(module.getFunction("foobar")).getType();
 
   var valueList = [
     // Unary
@@ -555,14 +556,14 @@ function test_core() {
     module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
-    module.memory.init("0", makeInt32(1024), makeInt32(0), makeInt32(12)),
-    module.data.drop("0"),
+    module.memory.init("x0", makeInt32(1024), makeInt32(0), makeInt32(12)),
+    module.data.drop("x0"),
     module.memory.copy(makeInt32(2048), makeInt32(1024), makeInt32(12)),
     module.memory.fill(makeInt32(0), makeInt32(42), makeInt32(1024)),
     // All the rest
     module.block('', []), // block with no name
     module.if(temp1, temp2, temp3),
-    module.if(temp4, temp5),
+    module.if(temp4, module.drop(temp5)),
     module.loop("in", makeInt32(0)),
     module.loop(null, makeInt32(0)),
     module.break("the-value", temp6, temp7),
@@ -600,8 +601,8 @@ function test_core() {
     // Reference types
     module.ref.is_null(module.ref.null(binaryen.externref)),
     module.ref.is_null(module.ref.null(binaryen.funcref)),
-    module.ref.is_null(module.ref.func("kitchen()sinker", binaryen.funcref)),
-    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker", binaryen.funcref), binaryen.funcref),
+    module.ref.is_null(module.ref.func("foobar", foobarType)),
+    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("foobar", foobarType)),
 
     // GC
     module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
@@ -660,25 +661,22 @@ function test_core() {
     module.i31ref.pop(),
     module.structref.pop(),
     module.stringref.pop(),
-    module.stringview_wtf8.pop(),
-    module.stringview_wtf16.pop(),
-    module.stringview_iter.pop(),
 
     // Memory
     module.memory.size(),
     module.memory.grow(makeInt32(0)),
 
     // GC
-    module.i31.new(
+    module.ref.i31(
       module.i32.const(0)
     ),
     module.i31.get_s(
-      module.i31.new(
+      module.ref.i31(
         module.i32.const(1)
       )
     ),
     module.i31.get_u(
-      module.i31.new(
+      module.ref.i31(
         module.i32.const(2)
       )
     ),
@@ -692,6 +690,14 @@ function test_core() {
   console.log("getExpressionInfo=" + JSON.stringify(cleanInfo(binaryen.getExpressionInfo(valueList[3]))));
   console.log(binaryen.emitText(valueList[3])); // test printing a standalone expression
 
+  // Add drops of concrete expressions, except the last.
+  for (var i = 0; i < valueList.length - 1; i++) {
+    var type = binaryen.Expression.getType(valueList[i]);
+    if (type != binaryen.none && type != binaryen.unreachable) {
+      valueList[i] = module.drop(valueList[i]);
+    }
+  }
+
   console.log("getExpressionInfo(i32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i32.const(5))));
   console.log("getExpressionInfo(i64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i64.const(6, 7))));
   console.log("getExpressionInfo(f32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f32.const(8.5))));
@@ -704,10 +710,10 @@ function test_core() {
   }
 
   // Make the main body of the function. and one block with a return value, one without
-  var value = module.block("the-value", valueList);
+  var value = module.block("the-value", valueList, binaryen.i32);
   var droppedValue = module.drop(value);
   var nothing = module.block("the-nothing", [ droppedValue ]);
-  var body = module.block("the-body", [ nothing, makeInt32(42) ]);
+  var body = module.block("the-body", [ nothing, makeInt32(42) ], binaryen.i32);
 
   // Create the function
   var sinker = module.addFunction("kitchen()sinker", iIfF, binaryen.i32, [ binaryen.i32 ], body);
@@ -754,14 +760,11 @@ function test_core() {
   // Start function. One per module
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
   module.setStart(starter);
-
-  // A bunch of our code needs drop, auto-add it
-  module.autoDrop();
+  assert(module.getStart() == starter);
 
   var features = binaryen.Features.All;
   module.setFeatures(features);
   assert(module.getFeatures() == features);
-  console.log(module.emitText());
 
   // Verify it validates
   assert(module.validate());
@@ -1090,6 +1093,7 @@ function test_for_each() {
   }
 
   var expected_offsets = [10, 125, null];
+  var expected_names = ["x0", "y1", "z2"];
   var expected_data = ["hello, world", "segment data 2", "hello, passive"];
   var expected_passive = [false, false, true];
 
@@ -1105,23 +1109,26 @@ function test_for_each() {
 
   module.setMemory(1, 256, "mem", [
     {
+      name: expected_names[0],
       passive: expected_passive[0],
       offset: module.i32.const(expected_offsets[0]),
       data: expected_data[0].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: expected_names[1],
       passive: expected_passive[1],
       offset: module.global.get("a-global"),
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: expected_names[2],
       passive: expected_passive[2],
       offset: expected_offsets[2],
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
-    var segment = module.getMemorySegmentInfoByIndex(i);
+    var segment = module.getMemorySegmentInfo(expected_names[i]);
     assert(expected_offsets[i] === segment.offset);
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);

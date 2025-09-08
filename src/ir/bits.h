@@ -107,6 +107,30 @@ inline Expression* makeSignExt(Expression* value, Index bytes, Module& wasm) {
   }
 }
 
+// Given a value that is read from a field, as a replacement for a
+// StructGet/ArrayGet that we inferred the value of, and given the signedness of
+// the get and the field info, if we are doing a signed read of a packed field
+// then sign-extend it, or if it is unsigned then truncate. This fixes up cases
+// where we can replace the StructGet/ArrayGet with the value we know must be
+// there (without making any assumptions about |value|, that is, we do not
+// assume it has been truncated already).
+inline Expression* makePackedFieldGet(Expression* value,
+                                      const Field& field,
+                                      bool signed_,
+                                      Module& wasm) {
+  if (!field.isPacked()) {
+    return value;
+  }
+
+  if (signed_) {
+    return makeSignExt(value, field.getByteSize(), wasm);
+  }
+
+  Builder builder(wasm);
+  auto mask = Bits::lowBitMask(field.getByteSize() * 8);
+  return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
+}
+
 // getMaxBits() helper that has pessimistic results for the bits used in locals.
 struct DummyLocalInfoProvider {
   Index getMaxBitsForLocal(LocalGet* get) {
@@ -163,7 +187,9 @@ Index getMaxBits(Expression* curr,
             return 32;
           }
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return 32;
       }
@@ -171,7 +197,9 @@ Index getMaxBits(Expression* curr,
         int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (auto* c = binary->right->dynCast<Const>()) {
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return maxBitsLeft;
       }
@@ -258,7 +286,9 @@ Index getMaxBits(Expression* curr,
             return 64;
           }
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return 64;
       }
@@ -266,7 +296,9 @@ Index getMaxBits(Expression* curr,
         int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (auto* c = binary->right->dynCast<Const>()) {
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return maxBitsLeft;
       }
@@ -423,6 +455,10 @@ Index getMaxBits(Expression* curr,
     // if unsigned, then we have a limit
     if (LoadUtils::isSignRelevant(load) && !load->signed_) {
       return 8 * load->bytes;
+    }
+  } else if (auto* block = curr->dynCast<Block>()) {
+    if (!block->name.is() && !block->list.empty() && block->type.isConcrete()) {
+      return getMaxBits(block->list.back(), localInfoProvider);
     }
   }
   switch (curr->type.getBasic()) {

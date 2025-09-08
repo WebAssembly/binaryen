@@ -44,7 +44,7 @@ static Load* getSingleLoad(LocalGraph* localGraph,
   std::set<LocalGet*> seen;
   seen.insert(get);
   while (1) {
-    auto& sets = localGraph->getSetses[get];
+    auto& sets = localGraph->getSets(get);
     if (sets.size() != 1) {
       return nullptr;
     }
@@ -121,7 +121,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
       if (info.reinterpreted && canReplaceWithReinterpret(load)) {
         // We should use another load here, to avoid reinterprets.
         auto mem = getModule()->getMemory(load->memory);
-        info.ptrLocal = Builder::addVar(func, mem->indexType);
+        info.ptrLocal = Builder::addVar(func, mem->addressType);
         info.reinterpretedLocal =
           Builder::addVar(func, load->type.reinterpret());
       } else {
@@ -176,8 +176,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
           Builder builder(*module);
           auto* ptr = curr->ptr;
           auto mem = getModule()->getMemory(curr->memory);
-          auto indexType = mem->indexType;
-          curr->ptr = builder.makeLocalGet(info.ptrLocal, indexType);
+          auto addressType = mem->addressType;
+          curr->ptr = builder.makeLocalGet(info.ptrLocal, addressType);
           // Note that the other load can have its sign set to false - if the
           // original were an integer, the other is a float anyhow; and if
           // original were a float, we don't know what sign to use.
@@ -186,7 +186,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
              builder.makeLocalSet(
                info.reinterpretedLocal,
                makeReinterpretedLoad(
-                 curr, builder.makeLocalGet(info.ptrLocal, indexType))),
+                 curr, builder.makeLocalGet(info.ptrLocal, addressType))),
              curr}));
         }
       }

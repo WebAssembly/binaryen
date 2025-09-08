@@ -1,0 +1,37 @@
+(module
+  (type $vec (array funcref))
+
+  (table $foo 100 funcref)
+
+  (table $other 1000 funcref)
+
+  (elem $a (table $foo) (i32.const 0) func)
+
+  (elem $b (table $other) (i32.const 0) func)
+
+  (func $keepalive2 (export "keepalive2")
+    (drop
+      (table.get $foo
+        (i32.const 1)
+      )
+    )
+    (drop
+      (table.get $other
+        (i32.const 1)
+      )
+    )
+    ;; GC operations are the only things that can keep alive an elem segment.
+    (drop
+      (array.new_elem $vec $a
+        (i32.const 5)
+        (i32.const 6)
+      )
+    )
+    (drop
+      (array.new_elem $vec $b
+        (i32.const 7)
+        (i32.const 8)
+      )
+    )
+  )
+)

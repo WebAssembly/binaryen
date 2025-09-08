@@ -7,7 +7,7 @@
  (memory $0 i64 1 4294967296)
 
 
-  ;; CHECK:      (func $load_i64 (type $none_=>_i64) (result i64)
+  ;; CHECK:      (func $load_i64 (type $0) (result i64)
   ;; CHECK-NEXT:  (i64.load
   ;; CHECK-NEXT:   (i64.const 579)
   ;; CHECK-NEXT:  )
@@ -18,7 +18,7 @@
     )
   )
 
-  ;; CHECK:      (func $load_overflow_i64 (type $none_=>_i64) (result i64)
+  ;; CHECK:      (func $load_overflow_i64 (type $0) (result i64)
   ;; CHECK-NEXT:  (i64.load offset=32
   ;; CHECK-NEXT:   (i64.const -16)
   ;; CHECK-NEXT:  )
@@ -29,7 +29,7 @@
     )
   )
 
-  ;; CHECK:      (func $store (type $none_=>_none)
+  ;; CHECK:      (func $store (type $1)
   ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i64.const 579)
   ;; CHECK-NEXT:   (i64.const 123)
@@ -42,7 +42,7 @@
     )
   )
 
-  ;; CHECK:      (func $store_overflow (type $none_=>_none)
+  ;; CHECK:      (func $store_overflow (type $1)
   ;; CHECK-NEXT:  (i64.store offset=32
   ;; CHECK-NEXT:   (i64.const -16)
   ;; CHECK-NEXT:   (i64.const 123)

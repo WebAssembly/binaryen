@@ -32,8 +32,8 @@ from scripts.test import wasm_opt
 def get_changelog_version():
     with open(os.path.join(shared.options.binaryen_root, 'CHANGELOG.md')) as f:
         lines = f.readlines()
-    lines = [l for l in lines if len(l.split()) == 1]
-    lines = [l for l in lines if l.startswith('v')]
+    lines = [line for line in lines if len(line.split()) == 1]
+    lines = [line for line in lines if line.startswith('v')]
     version = lines[0][1:]
     print("Parsed CHANGELOG.md version: %s" % version)
     return int(version)
@@ -43,11 +43,11 @@ def run_version_tests():
     print('[ checking --version ... ]\n')
 
     not_executable_suffix = ['.DS_Store', '.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest']
-    not_executable_prefix = ['binaryen-lit', 'binaryen-unittests']
+    executable_prefix = ['wasm']
     bin_files = [os.path.join(shared.options.binaryen_bin, f) for f in os.listdir(shared.options.binaryen_bin)]
     executables = [f for f in bin_files if os.path.isfile(f) and
                    not any(f.endswith(s) for s in not_executable_suffix) and
-                   not any(os.path.basename(f).startswith(s) for s in not_executable_prefix)]
+                   any(os.path.basename(f).startswith(s) for s in executable_prefix)]
     executables = sorted(executables)
     assert len(executables)
 
@@ -82,7 +82,7 @@ def run_wasm_dis_tests():
 
         # also verify there are no validation errors
         def check():
-            cmd = shared.WASM_OPT + [t, '-all']
+            cmd = shared.WASM_OPT + [t, '-all', '-q']
             support.run_command(cmd)
 
         shared.with_pass_debug(check)
@@ -166,7 +166,7 @@ def run_wasm_reduce_tests():
     if 'fsanitize=thread' not in str(os.environ):
         print('\n[ checking wasm-reduce fuzz testcase ]\n')
         # TODO: re-enable multivalue once it is better optimized
-        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
+        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'lit/basic/signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
         support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
@@ -195,7 +195,7 @@ def run_spec_tests():
 
         def run_opt_test(wast):
             # check optimization validation
-            cmd = shared.WASM_OPT + [wast, '-O', '-all']
+            cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
             support.run_command(cmd)
 
         def check_expected(actual, expected):
@@ -213,7 +213,7 @@ def run_spec_tests():
         try:
             actual = run_spec_test(wast)
         except Exception as e:
-            if ('wasm-validator error' in str(e) or 'parse exception' in str(e)) and '.fail.' in base:
+            if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in base:
                 print('<< test failed as expected >>')
                 continue  # don't try all the binary format stuff TODO
             else:
@@ -221,38 +221,29 @@ def run_spec_tests():
 
         check_expected(actual, expected)
 
-        # skip binary checks for tests that reuse previous modules by name, as that's a wast-only feature
-        if 'exports.wast' in base:  # FIXME
-            continue
-
         run_spec_test(wast)
 
         # check binary format. here we can verify execution of the final
         # result, no need for an output verification
-        # some wast files cannot be split:
-        #     * comments.wast: contains characters that are not valid utf-8,
-        #       so our string splitting code fails there
+        actual = ''
+        with open(base, 'w') as transformed_spec_file:
+            for i, (module, asserts) in enumerate(support.split_wast(wast)):
+                if not module:
+                    # Skip any initial assertions that don't have a module
+                    continue
+                print(f'        testing split module {i}')
+                split_name = os.path.splitext(base)[0] + f'_split{i}.wast'
+                support.write_wast(split_name, module)
+                run_opt_test(split_name)    # also that our optimizer doesn't break on it
+                result_wast_file = shared.binary_format_check(split_name, verify_final_result=False)
+                with open(result_wast_file) as f:
+                    result_wast = f.read()
+                    # add the asserts, and verify that the test still passes
+                    transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
-        # FIXME Remove reference type tests from this list after nullref is
-        # implemented in V8
-        if base not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
-            split_num = 0
-            actual = ''
-            with open('spec.wast', 'w') as transformed_spec_file:
-                for module, asserts in support.split_wast(wast):
-                    print('        testing split module', split_num)
-                    split_num += 1
-                    support.write_wast('split.wast', module, asserts)
-                    run_opt_test('split.wast')    # also that our optimizer doesn't break on it
-                    result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
-                    with open(result_wast_file) as f:
-                        result_wast = f.read()
-                        # add the asserts, and verify that the test still passes
-                        transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
-
-            # compare all the outputs to the expected output
-            actual = run_spec_test('spec.wast')
-            check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
+        # compare all the outputs to the expected output
+        actual = run_spec_test(base)
+        check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
 
 
 def run_validator_tests():

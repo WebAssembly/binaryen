@@ -2,17 +2,19 @@
 ;; RUN: wasm-opt %s --code-pushing -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 funcref) (result i32)))
 
-  ;; CHECK:      (func $if-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-nop (param $p i32)
@@ -21,19 +23,25 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (nop)
+      (then
+        (nop)
+      )
     )
   )
 
-  ;; CHECK:      (func $if-nop-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-nop-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-nop-nop (param $p i32)
@@ -41,17 +49,21 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (nop)
-      (nop) ;; add a nop here compared to the last testcase (no output change)
+      (then
+        (nop)
+      )
+      (else
+        (nop) ;; add a nop here compared to the last testcase (no output change)
+      )
     )
   )
 
-  ;; CHECK:      (func $if-use (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -67,16 +79,18 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $if-use-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -84,7 +98,9 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-use-nop (param $p i32)
@@ -92,18 +108,24 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (drop (local.get $x))
-      (nop) ;; add a nop here compared to the last testcase (no output change)
+      (then
+        (drop (local.get $x))
+      )
+      (else
+        (nop) ;; add a nop here compared to the last testcase (no output change)
+      )
     )
   )
 
-  ;; CHECK:      (func $if-else-use (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-else-use (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -119,12 +141,16 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (nop)
-      (drop (local.get $x))
+      (then
+        (nop)
+      )
+      (else
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $unpushed-interference (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $unpushed-interference (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -135,8 +161,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -150,22 +178,28 @@
     (local.set $y (local.get $x))
     (if
       (local.get $p)
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $if-use-use (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-use (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -175,20 +209,26 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (drop (local.get $x))
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
+      (else
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $if-use-after (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -201,22 +241,28 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-use-after-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -227,22 +273,30 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (drop (local.get $x))
-      (nop) ;; add a nop here compared to the last testcase (no output change)
+      (then
+        (drop (local.get $x))
+      )
+      (else
+        (nop) ;; add a nop here compared to the last testcase (no output change)
+      )
     )
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-else-use-after (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-else-use-after (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -254,18 +308,22 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (nop)
-      (drop (local.get $x)) ;; now the use in the if is in the else arm
+      (then
+        (nop)
+      )
+      (else
+        (drop (local.get $x)) ;; now the use in the if is in the else arm
+      )
     )
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-use-after-unreachable (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after-unreachable (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -273,7 +331,9 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -285,19 +345,25 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (drop (local.get $x))
-      (return)
+      (then
+        (drop (local.get $x))
+      )
+      (else
+        (return)
+      )
     )
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-use-after-unreachable-else (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after-unreachable-else (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -315,13 +381,17 @@
     (local.set $x (i32.const 1))
     (if
       (local.get $p)
-      (return) ;; as above, but with arms flipped
-      (drop (local.get $x))
+      (then
+        (return) ;; as above, but with arms flipped
+      )
+      (else
+        (drop (local.get $x))
+      )
     )
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $optimize-many (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $optimize-many (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local $z i32)
@@ -330,7 +400,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -344,7 +414,7 @@
   ;; CHECK-NEXT:     (local.get $z)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (local.set $y
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
@@ -364,15 +434,19 @@
     (local.set $z (i32.const 3))
     (if
       (local.get $p)
-      (block
-        (drop (local.get $x))
-        (drop (local.get $z))
+      (then
+        (block
+          (drop (local.get $x))
+          (drop (local.get $z))
+        )
       )
-      (drop (local.get $y))
+      (else
+        (drop (local.get $y))
+      )
     )
   )
 
-  ;; CHECK:      (func $past-other (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-other (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (nop)
@@ -381,7 +455,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (local.get $t)
   ;; CHECK-NEXT:    )
@@ -399,11 +473,13 @@
     (drop (i32.const 2))
     (if
       (local.get $p)
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $past-other-no (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-other-no (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -416,8 +492,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -429,11 +507,13 @@
     (drop (local.tee $t (i32.const 2)))
     (if
       (local.get $p)
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $past-condition-no (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-condition-no (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -443,8 +523,10 @@
   ;; CHECK-NEXT:   (local.tee $t
   ;; CHECK-NEXT:    (local.get $p)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -455,11 +537,13 @@
     (local.set $x (local.get $t))
     (if
       (local.tee $t (local.get $p))
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $past-condition-no-2 (type $none_=>_none)
+  ;; CHECK:      (func $past-condition-no-2 (type $3)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -467,8 +551,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -479,11 +565,13 @@
     (local.set $x (local.get $t))
     (if
       (local.get $x)
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $past-condition-no-3 (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-condition-no-3 (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -493,8 +581,10 @@
   ;; CHECK-NEXT:   (local.tee $x
   ;; CHECK-NEXT:    (local.get $p)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -505,11 +595,13 @@
     (local.set $x (local.get $t))
     (if
       (local.tee $x (local.get $p))
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $if-condition-return (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-condition-return (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -517,7 +609,7 @@
   ;; CHECK-NEXT:    (return)
   ;; CHECK-NEXT:    (local.get $p)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -537,11 +629,13 @@
                  ;; anyhow.
         (local.get $p)
       )
-      (drop (local.get $x))
+      (then
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $if-condition-break-used (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-condition-break-used (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -552,8 +646,10 @@
   ;; CHECK-NEXT:     (br $out)
   ;; CHECK-NEXT:     (local.get $p)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return)
@@ -573,14 +669,16 @@
           (br $out)
           (local.get $p)
         )
-        (drop (local.get $x))
+        (then
+          (drop (local.get $x))
+        )
       )
       (return)
     )
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $one-push-prevents-another (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $one-push-prevents-another (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -589,10 +687,12 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (local.set $y
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -611,12 +711,16 @@
     (local.set $y (local.get $x))
     (if
       (local.get $p)
-      (drop (local.get $x))
-      (drop (local.get $y))
+      (then
+        (drop (local.get $x))
+      )
+      (else
+        (drop (local.get $y))
+      )
     )
   )
 
-  ;; CHECK:      (func $one-push-prevents-another-flipped (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $one-push-prevents-another-flipped (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -625,7 +729,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $y
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -633,8 +737,10 @@
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -647,17 +753,21 @@
     (local.set $y (local.get $x))
     (if
       (local.get $p)
-      (drop (local.get $y))
-      (drop (local.get $x))
+      (then
+        (drop (local.get $y))
+      )
+      (else
+        (drop (local.get $x))
+      )
     )
   )
 
-  ;; CHECK:      (func $sink-call (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $sink-call (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $temp
   ;; CHECK-NEXT:     (call $call.without.effects
   ;; CHECK-NEXT:      (i32.const 1234)
@@ -684,14 +794,16 @@
     )
     (if
       (local.get $p)
-      (return
-        (local.get $temp)
+      (then
+        (return
+          (local.get $temp)
+        )
       )
     )
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $no-sink-call (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -701,8 +813,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $temp)
@@ -721,14 +835,16 @@
     )
     (if
       (local.get $p)
-      (return
-        (local.get $temp)
+      (then
+        (return
+          (local.get $temp)
+        )
       )
     )
     (local.get $temp) ;; this line changed.
   )
 
-  ;; CHECK:      (func $no-sink-call-2 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call-2 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -738,8 +854,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
@@ -758,15 +876,17 @@
     )
     (if
       (local.get $p)
-      (return
-        (local.get $temp)
+      (then
+        (return
+          (local.get $temp)
+        )
       )
     )
     (nop) ;; this line was added.
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $no-sink-call-3 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call-3 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -776,8 +896,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
@@ -800,8 +922,10 @@
     )
     (if
       (local.get $p)
-      (return
-        (local.get $temp)
+      (then
+        (return
+          (local.get $temp)
+        )
       )
     )
     (nop)
@@ -812,12 +936,12 @@
     (i32.const 0) ;; this line was added.
   )
 
-  ;; CHECK:      (func $sink-call-3 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $sink-call-3 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $temp
   ;; CHECK-NEXT:     (call $call.without.effects
   ;; CHECK-NEXT:      (i32.const 1234)
@@ -850,8 +974,10 @@
     )
     (if
       (local.get $p)
-      (return
-        (local.get $temp)
+      (then
+        (return
+          (local.get $temp)
+        )
       )
     )
     (nop)
@@ -862,7 +988,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $no-sink-call-sub (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call-sub (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $other i32)
   ;; CHECK-NEXT:  (local.set $temp
@@ -875,8 +1001,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -897,26 +1025,32 @@
     )
     (if
       (local.get $p)
-      (return
-        (local.get $temp)
+      (then
+        (return
+          (local.get $temp)
+        )
       )
     )
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $ref-into-if (type $ref|any|_=>_none) (param $0 (ref any))
+  ;; CHECK:      (func $ref-into-if (type $4) (param $0 (ref any))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (block $label$3
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (block $label$3
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -938,10 +1072,14 @@
     )
     (if
       (i32.const 1)
-      (unreachable)
-      (block $label$3
-        (drop
-          (local.get $1)
+      (then
+        (unreachable)
+      )
+      (else
+        (block $label$3
+          (drop
+            (local.get $1)
+          )
         )
       )
     )

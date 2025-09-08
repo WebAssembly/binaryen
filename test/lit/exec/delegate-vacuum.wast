@@ -9,7 +9,7 @@
  (tag $tag$0 (param i32))
  ;; CHECK:      [fuzz-exec] calling export-1
  ;; CHECK-NEXT: [exception thrown: tag$0 0]
- (func "export-1"
+ (func $export-1 (export "export-1")
   (try
    (do
     (try
@@ -30,7 +30,7 @@
  )
  ;; CHECK:      [fuzz-exec] calling export-2
  ;; CHECK-NEXT: [trap unreachable]
- (func "export-2"
+ (func $export-2 (export "export-2")
   (call $inner)
   (unreachable)
  )

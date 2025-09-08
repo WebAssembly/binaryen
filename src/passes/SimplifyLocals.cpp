@@ -321,9 +321,9 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    // Certain expressions cannot be sinked into 'try', and so at the start of
-    // 'try' we forget about them.
-    if (curr->is<Try>()) {
+    // Certain expressions cannot be sinked into 'try'/'try_table', and so at
+    // the start of 'try'/'try_table' we forget about them.
+    if (curr->is<Try>() || curr->is<TryTable>()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
         // Expressions that may throw cannot be moved into a try (which might
@@ -794,12 +794,14 @@ struct SimplifyLocals
     // In other words, local.get is not necessarily free of effects if the local
     // is non-nullable - it must have been set already. We could check that
     // here, but running that linear-time check may not be worth it as this
-    // optimization is fairly minor, so just skip the non-nullable case.
+    // optimization is fairly minor, so just skip the non-nullable case (and in
+    // general, the non-defaultable case, of say a tuple with a non-nullable
+    // element).
     //
     // TODO investigate more
     Index goodIndex = sinkables.begin()->first;
     auto localType = this->getFunction()->getLocalType(goodIndex);
-    if (localType.isNonNullable()) {
+    if (!localType.isDefaultable()) {
       return;
     }
 
@@ -997,9 +999,14 @@ struct SimplifyLocals
     // will inhibit us creating an if return value.
     struct EquivalentOptimizer
       : public LinearExecutionWalker<EquivalentOptimizer> {
+
+      // It is ok to look at adjacent blocks together, as if a later part of a
+      // block is not reached that is fine - changes we make there would not be
+      // reached in that case.
+      bool connectAdjacentBlocks = true;
+
       std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
-      Module* module;
       PassOptions passOptions;
 
       bool anotherCycle = false;
@@ -1016,6 +1023,8 @@ struct SimplifyLocals
       }
 
       void visitLocalSet(LocalSet* curr) {
+        auto* module = this->getModule();
+
         // Remove trivial copies, even through a tee
         auto* value =
           Properties::getFallthrough(curr->value, passOptions, *module);
@@ -1024,6 +1033,9 @@ struct SimplifyLocals
             // This is an unnecessary copy!
             if (removeEquivalentSets) {
               if (curr->isTee()) {
+                if (curr->value->type != curr->type) {
+                  refinalize = true;
+                }
                 this->replaceCurrent(curr->value);
               } else {
                 this->replaceCurrent(Builder(*module).makeDrop(curr->value));
@@ -1076,15 +1088,15 @@ struct SimplifyLocals
             }
 
             auto bestType = func->getLocalType(best);
-            auto indexType = func->getLocalType(index);
-            if (!Type::isSubType(indexType, bestType)) {
+            auto addressType = func->getLocalType(index);
+            if (!Type::isSubType(addressType, bestType)) {
               // This is less refined than the current best; ignore.
               continue;
             }
 
             // This is better if it has a more refined type, or if it has more
             // uses.
-            if (indexType != bestType ||
+            if (addressType != bestType ||
                 getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
               best = index;
             }
@@ -1120,11 +1132,10 @@ struct SimplifyLocals
     };
 
     EquivalentOptimizer eqOpter;
-    eqOpter.module = this->getModule();
     eqOpter.passOptions = this->getPassOptions();
     eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
-    eqOpter.walkFunction(func);
+    eqOpter.walkFunctionInModule(func, this->getModule());
     if (eqOpter.refinalize) {
       ReFinalize().walkFunctionInModule(func, this->getModule());
     }

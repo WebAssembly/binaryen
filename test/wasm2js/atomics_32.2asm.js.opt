@@ -110,7 +110,7 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function test() {
   Atomics.compareExchange(HEAP8, 1024, 1, 2) | 0;
   Atomics.compareExchange(HEAP16, 512, 1, 2) | 0;
   Atomics.compareExchange(HEAP32, 256, 1, 2) | 0;
@@ -143,7 +143,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "test": $0
+  "test": test
  };
 }
 

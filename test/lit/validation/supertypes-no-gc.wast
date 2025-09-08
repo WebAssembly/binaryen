@@ -5,8 +5,8 @@
 ;; CHECK: all used types should be allowed
 
 (module
-  (type $f1 (func_subtype func))
-  (type $f2 (func_subtype $f1))
+  (type $f1 (sub (func)))
+  (type $f2 (sub $f1 (func)))
 
   (func $test (type $f2)
     (unreachable)

@@ -43,6 +43,18 @@ Name LOGGER("log_execution");
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
   std::unordered_map<Function*, Index> functionOrdinals;
   std::set<Index> usedFunctionOrdinals;
+  // The module name the logger function is imported from.
+  IString loggerModule;
+
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
+
+  void run(Module* module) override {
+    loggerModule = getArgumentOrDefault("log-execution", "");
+    Super::run(module);
+  }
+
+  void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body); }
 
   Index nextFreeIndex = 0;
 
@@ -89,6 +101,9 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     auto import =
       Builder::makeFunction(LOGGER, Signature(Type::i32, Type::none), {});
 
+    if (loggerModule != "") {
+      import->module = loggerModule;
+    } else {
     // Import the log function from import "env" if the module
     // imports other functions from that name.
     for (auto& func : curr->functions) {
@@ -105,6 +120,12 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
           import->module = func->module;
           break;
         }
+      }
+    }
+
+      // If no function was found, use ENV.
+      if (!import->module) {
+        import->module = ENV;
       }
     }
 

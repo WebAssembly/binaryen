@@ -29,8 +29,7 @@ class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
-      funcEffectsMap(passOptions.funcEffectsMap), module(module),
+      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
       features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
@@ -47,20 +46,17 @@ public:
 
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
-  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
   FeatureSet features;
 
   // Walk an expression and all its children.
   void walk(Expression* ast) {
-    pre();
     InternalAnalyzer(*this).walk(ast);
     post();
   }
 
   // Visit an expression, without any children.
   void visit(Expression* ast) {
-    pre();
     InternalAnalyzer(*this).visit(ast);
     post();
   }
@@ -69,8 +65,22 @@ public:
   // noticeable from the perspective of the caller, that is, effects that are
   // only noticeable during the call, but "vanish" when the call stack is
   // unwound.
+  //
+  // Unlike walking just the body, walking the function will also
+  // include the effects of any return calls the function makes. For that
+  // reason, it is a bug if a user of this code calls walk(Expression*) and not
+  // walk(Function*) if their intention is to scan an entire function body.
+  // Putting it another way, a return_call is syntax sugar for a return and a
+  // call, where the call executes at the function scope, so there is a
+  // meaningful difference between scanning an expression and scanning
+  // the entire function body.
   void walk(Function* func) {
     walk(func->body);
+
+    // Effects of return-called functions will be visible to the caller.
+    if (hasReturnCallThrow) {
+      throws_ = true;
+    }
 
     // We can ignore branching out of the function body - this can only be
     // a return, and that is only noticeable in the function, not outside.
@@ -144,6 +154,22 @@ public:
   // Whether this code may "hang" and not eventually complete. An infinite loop,
   // or a continuation that is never continued, are examples of that.
   bool mayNotReturn = false;
+
+  // Since return calls return out of the body of the function before performing
+  // their call, they are indistinguishable from normal returns from the
+  // perspective of their surrounding code, and the return-callee's effects only
+  // become visible when considering the effects of the whole function
+  // containing the return call. To model this correctly, stash the callee's
+  // effects on the side and only merge them in after walking a full function
+  // body.
+  //
+  // We currently do this stashing only for the throw effect, but in principle
+  // we could do it for all effects if it made a difference. (Only throw is
+  // noticeable now because the only thing that can change between doing the
+  // call here and doing it outside at the function exit is the scoping of
+  // try-catch blocks. If future wasm scoping additions are added, we may need
+  // more here.)
+  bool hasReturnCallThrow = false;
 
   // Helper functions to check for various effect types
 
@@ -219,8 +245,39 @@ public:
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
-  // checks if these effects would invalidate another set (e.g., if we write, we
-  // invalidate someone that reads, they can't be moved past us)
+  // Checks if these effects would invalidate another set of effects (e.g., if
+  // we write, we invalidate someone that reads).
+  //
+  // This assumes the things whose effects we are comparing will both execute,
+  // at least if neither of them transfers control flow away. That is, we assume
+  // that there is no transfer of control flow *between* them: we are comparing
+  // things appear after each other, perhaps with some other code in the middle,
+  // but that code does not transfer control flow. It is not valid to call this
+  // method in other situations, like this:
+  //
+  //   A
+  //   (br_if 0 (local.get 0)) ;; this may transfer control flow away
+  //   B
+  //
+  // Calling this method in that situation is invalid because only A may
+  // execute and not B. The following are examples of situations where it is
+  // valid to call this method:
+  //
+  //   A
+  //   ;; nothing in between them at all
+  //   B
+  //
+  //   A
+  //   (local.set 0 (i32.const 0)) ;; something in between without a possible
+  //                               ;; control flow transfer
+  //   B
+  //
+  // That the things being compared both execute only matters in the case of
+  // traps-never-happen: in that mode we can move traps but only if doing so
+  // would not make them start to appear when they did not. In the second
+  // example we can't reorder A and B if B traps, but in the first example we
+  // can reorder them even if B traps (even if A has a global effect like a
+  // global.set, since we assume B does not trap in traps-never-happen).
   bool invalidates(const EffectAnalyzer& other) {
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
@@ -266,11 +323,6 @@ public:
         return true;
       }
     }
-    // We are ok to reorder implicit traps, but not conditionalize them.
-    if ((trap && other.transfersControlFlow()) ||
-        (other.trap && transfersControlFlow())) {
-      return true;
-    }
     // Note that the above includes disallowing the reordering of a trap with an
     // exception (as an exception can transfer control flow inside the current
     // function, so transfersControlFlow would be true) - while we allow the
@@ -278,10 +330,17 @@ public:
     // anything.
     assert(!((trap && other.throws()) || (throws() && other.trap)));
     // We can't reorder an implicit trap in a way that could alter what global
-    // state is modified.
-    if ((trap && other.writesGlobalState()) ||
-        (other.trap && writesGlobalState())) {
-      return true;
+    // state is modified. However, in trapsNeverHappen mode we assume traps do
+    // not occur in practice, which lets us ignore this, at least in the case
+    // that the code executes. As mentioned above, we assume that there is no
+    // transfer of control flow between the things we are comparing, so all we
+    // need to do is check for such transfers in them.
+    if (!trapsNeverHappen || transfersControlFlow() ||
+        other.transfersControlFlow()) {
+      if ((trap && other.writesGlobalState()) ||
+          (other.trap && writesGlobalState())) {
+        return true;
+      }
     }
     return false;
   }
@@ -303,6 +362,7 @@ public:
     isAtomic = isAtomic || other.isAtomic;
     throws_ = throws_ || other.throws_;
     danglingPop = danglingPop || other.danglingPop;
+    mayNotReturn = mayNotReturn || other.mayNotReturn;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -369,6 +429,14 @@ private:
         self->pushTask(doStartTry, currp);
         return;
       }
+      if (auto* tryTable = curr->dynCast<TryTable>()) {
+        // We need to increment try depth before starting.
+        self->pushTask(doEndTryTable, currp);
+        self->pushTask(doVisitTryTable, currp);
+        self->pushTask(scan, &tryTable->body);
+        self->pushTask(doStartTryTable, currp);
+        return;
+      }
       PostWalker<InternalAnalyzer, OverriddenVisitor<InternalAnalyzer>>::scan(
         self, currp);
     }
@@ -410,6 +478,24 @@ private:
       self->parent.catchDepth--;
     }
 
+    static void doStartTryTable(InternalAnalyzer* self, Expression** currp) {
+      auto* curr = (*currp)->cast<TryTable>();
+      // We only count 'try_table's with a 'catch_all' because instructions
+      // within a 'try_table' without a 'catch_all' can still throw outside of
+      // the try.
+      if (curr->hasCatchAll()) {
+        self->parent.tryDepth++;
+      }
+    }
+
+    static void doEndTryTable(InternalAnalyzer* self, Expression** currp) {
+      auto* curr = (*currp)->cast<TryTable>();
+      if (curr->hasCatchAll()) {
+        assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
+        self->parent.tryDepth--;
+      }
+    }
+
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
         parent.breakTargets.erase(curr->name); // these were internal breaks
@@ -435,43 +521,65 @@ private:
         return;
       }
 
-      if (curr->isReturn) {
-        parent.branchesOut = true;
+      // Get the target's effects, if they exist. Note that we must handle the
+      // case of the function not yet existing (we may be executed in the middle
+      // of a pass, which may have built up calls but not the targets of those
+      // calls; in such a case, we do not find the targets and therefore assume
+      // we know nothing about the effects, which is safe).
+      const EffectAnalyzer* targetEffects = nullptr;
+      if (auto* target = parent.module.getFunctionOrNull(curr->target)) {
+        targetEffects = target->effects.get();
       }
 
-      if (parent.funcEffectsMap) {
-        auto iter = parent.funcEffectsMap->find(curr->target);
-        if (iter != parent.funcEffectsMap->end()) {
-          // We have effect information for this call target, and can just use
-          // that. The one change we may want to make is to remove throws_, if
-          // the target function throws and we know that will be caught anyhow,
-          // the same as the code below for the general path.
-          const auto& targetEffects = iter->second;
-          if (targetEffects.throws_ && parent.tryDepth > 0) {
-            auto filteredEffects = targetEffects;
-            filteredEffects.throws_ = false;
-            parent.mergeIn(filteredEffects);
-          } else {
-            // Just merge in all the effects.
-            parent.mergeIn(targetEffects);
-          }
-          return;
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+        // When EH is enabled, any call can throw.
+        if (parent.features.hasExceptionHandling() &&
+            (!targetEffects || targetEffects->throws())) {
+          parent.hasReturnCallThrow = true;
         }
       }
 
+      if (targetEffects) {
+        // We have effect information for this call target, and can just use
+        // that. The one change we may want to make is to remove throws_, if the
+        // target function throws and we know that will be caught anyhow, the
+        // same as the code below for the general path. We can always filter out
+        // throws for return calls because they are already more precisely
+        // captured by `branchesOut`, which models the return, and
+        // `hasReturnCallThrow`, which models the throw that will happen after
+        // the return.
+        if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
+          auto filteredEffects = *targetEffects;
+          filteredEffects.throws_ = false;
+          parent.mergeIn(filteredEffects);
+        } else {
+          // Just merge in all the effects.
+          parent.mergeIn(*targetEffects);
+        }
+        return;
+      }
+
       parent.calls = true;
-      // When EH is enabled, any call can throw.
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+      // When EH is enabled, any call can throw. Skip this for return calls
+      // because the throw is already more precisely captured by the combination
+      // of `hasReturnCallThrow` and `branchesOut`.
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0 &&
+          !curr->isReturn) {
         parent.throws_ = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
       parent.calls = true;
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws_ = true;
-      }
       if (curr->isReturn) {
         parent.branchesOut = true;
+        if (parent.features.hasExceptionHandling()) {
+          parent.hasReturnCallThrow = true;
+        }
+      }
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 && !curr->isReturn)) {
+        parent.throws_ = true;
       }
     }
     void visitLocalGet(LocalGet* curr) {
@@ -533,6 +641,11 @@ private:
       // set these to true.
       parent.readsMemory = true;
       parent.writesMemory = true;
+      parent.isAtomic = true;
+    }
+    void visitPause(Pause* curr) {
+      // It's not much of a problem if pause gets reordered with anything, but
+      // we don't want it to be removed entirely.
       parent.isAtomic = true;
     }
     void visitSIMDExtract(SIMDExtract* curr) {}
@@ -661,9 +774,28 @@ private:
       parent.readsTable = true;
       parent.writesTable = true;
     }
+    void visitTableFill(TableFill* curr) {
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
+    void visitTableCopy(TableCopy* curr) {
+      parent.readsTable = true;
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
+    void visitTableInit(TableInit* curr) {
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
+    void visitElemDrop(ElemDrop* curr) { parent.writesTable = true; }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
         parent.delegateTargets.insert(curr->delegateTarget);
+      }
+    }
+    void visitTryTable(TryTable* curr) {
+      for (auto name : curr->catchDests) {
+        parent.breakTargets.insert(name);
       }
     }
     void visitThrow(Throw* curr) {
@@ -672,6 +804,11 @@ private:
       }
     }
     void visitRethrow(Rethrow* curr) {
+      if (parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
+    void visitThrowRef(ThrowRef* curr) {
       if (parent.tryDepth == 0) {
         parent.throws_ = true;
       }
@@ -687,7 +824,7 @@ private:
     }
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {}
-    void visitI31New(I31New* curr) {}
+    void visitRefI31(RefI31* curr) {}
     void visitI31Get(I31Get* curr) {
       // traps when the ref is null
       if (curr->i31->type.isNullable()) {
@@ -695,29 +832,52 @@ private:
       }
     }
     void visitCallRef(CallRef* curr) {
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+        if (parent.features.hasExceptionHandling()) {
+          parent.hasReturnCallThrow = true;
+        }
+      }
       if (curr->target->type.isNull()) {
         parent.trap = true;
         return;
-      }
-      parent.calls = true;
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws_ = true;
-      }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
       }
       // traps when the call target is null
       if (curr->target->type.isNullable()) {
         parent.implicitTrap = true;
       }
+
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 && !curr->isReturn)) {
+        parent.throws_ = true;
+      }
     }
     void visitRefTest(RefTest* curr) {}
+    void maybeHandleDescriptor(Expression* desc) {
+      if (desc) {
+        // Traps when the descriptor is null.
+        if (desc->type.isNull()) {
+          parent.trap = true;
+        } else if (desc->type.isNullable()) {
+          parent.implicitTrap = true;
+        }
+      }
+    }
     void visitRefCast(RefCast* curr) {
-      // Traps if the ref is not null and the cast fails.
+      // Traps if the cast fails.
+      parent.implicitTrap = true;
+      maybeHandleDescriptor(curr->desc);
+    }
+    void visitRefGetDesc(RefGetDesc* curr) {
+      // Traps if the ref is null.
       parent.implicitTrap = true;
     }
-    void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
-    void visitStructNew(StructNew* curr) {}
+    void visitBrOn(BrOn* curr) {
+      parent.breakTargets.insert(curr->name);
+      maybeHandleDescriptor(curr->desc);
+    }
+    void visitStructNew(StructNew* curr) { maybeHandleDescriptor(curr->desc); }
     void visitStructGet(StructGet* curr) {
       if (curr->ref->type == Type::unreachable) {
         return;
@@ -736,6 +896,18 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
+      switch (curr->order) {
+        case MemoryOrder::Unordered:
+          break;
+        case MemoryOrder::SeqCst:
+          // Synchronizes with other threads.
+          parent.isAtomic = true;
+          break;
+        case MemoryOrder::AcqRel:
+          // Only synchronizes if other threads can read the field.
+          parent.isAtomic = curr->ref->type.getHeapType().isShared();
+          break;
+      }
     }
     void visitStructSet(StructSet* curr) {
       if (curr->ref->type.isNull()) {
@@ -747,6 +919,35 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
+      if (curr->order != MemoryOrder::Unordered) {
+        parent.isAtomic = true;
+      }
+    }
+    void visitStructRMW(StructRMW* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsMutableStruct = true;
+      parent.writesStruct = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
+    void visitStructCmpxchg(StructCmpxchg* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsMutableStruct = true;
+      parent.writesStruct = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
@@ -819,8 +1020,34 @@ private:
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+    void visitArrayRMW(ArrayRMW* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsArray = true;
+      parent.writesArray = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
+    void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsArray = true;
+      parent.writesArray = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
     void visitRefAs(RefAs* curr) {
-      if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+      if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
         // These conversions are infallible.
         return;
       }
@@ -836,23 +1063,10 @@ private:
       // cycle may be needed in some cases.
     }
     void visitStringNew(StringNew* curr) {
-      // traps when out of bounds in linear memory or ref is null
+      // traps when ref is null
       parent.implicitTrap = true;
-      switch (curr->op) {
-        case StringNewUTF8:
-        case StringNewWTF8:
-        case StringNewReplace:
-        case StringNewWTF16:
-          parent.readsMemory = true;
-          break;
-        case StringNewUTF8Array:
-        case StringNewWTF8Array:
-        case StringNewReplaceArray:
-        case StringNewWTF16Array:
-          parent.readsArray = true;
-          break;
-        default: {
-        }
+      if (curr->op != StringNewFromCodePoint) {
+        parent.readsArray = true;
       }
     }
     void visitStringConst(StringConst* curr) {}
@@ -863,69 +1077,96 @@ private:
     void visitStringEncode(StringEncode* curr) {
       // traps when ref is null or we write out of bounds.
       parent.implicitTrap = true;
-      switch (curr->op) {
-        case StringEncodeUTF8:
-        case StringEncodeWTF8:
-        case StringEncodeWTF16:
-          parent.writesMemory = true;
-          break;
-        case StringEncodeUTF8Array:
-        case StringEncodeWTF8Array:
-        case StringEncodeWTF16Array:
-          parent.writesArray = true;
-          break;
-        default: {
-        }
-      }
+      parent.writesArray = true;
     }
     void visitStringConcat(StringConcat* curr) {
       // traps when an input is null.
       parent.implicitTrap = true;
     }
-    void visitStringEq(StringEq* curr) {}
-    void visitStringAs(StringAs* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
+    void visitStringEq(StringEq* curr) {
+      if (curr->op == StringEqCompare) {
+        // traps when either input is null.
+        if (curr->left->type.isNullable() || curr->right->type.isNullable()) {
+          parent.implicitTrap = true;
+        }
+      }
     }
-    void visitStringWTF8Advance(StringWTF8Advance* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
+    void visitStringTest(StringTest* curr) {}
     void visitStringWTF16Get(StringWTF16Get* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
-    }
-    void visitStringIterNext(StringIterNext* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-      // modifies state in the iterator. we model that as accessing heap memory
-      // in an array atm TODO consider adding a new effect type for this (we
-      // added one for arrays because struct/array operations often interleave,
-      // say with vtable accesses, but it's not clear adding overhead to this
-      // class is worth it for string iters)
-      parent.readsArray = true;
-      parent.writesArray = true;
-    }
-    void visitStringIterMove(StringIterMove* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-      // see StringIterNext.
-      parent.readsArray = true;
-      parent.writesArray = true;
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
     }
-    void visitStringSliceIter(StringSliceIter* curr) {
-      // traps when ref is null.
+    void visitContNew(ContNew* curr) {
+      // traps when curr->func is null ref.
       parent.implicitTrap = true;
+    }
+    void visitContBind(ContBind* curr) {
+      // traps when curr->cont is null ref.
+      parent.implicitTrap = true;
+
+      // The input continuation is modified, as it will trap if resumed. This is
+      // a globally-noticeable effect, which we model as a call for now, but we
+      // could in theory use something more refined here (|modifiesContinuation|
+      // perhaps, to parallel |writesMemory| etc.).
+      parent.calls = true;
+    }
+    void visitSuspend(Suspend* curr) {
+      // Similar to resume/call: Suspending means that we execute arbitrary
+      // other code before we may resume here.
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+
+      // A suspend may go unhandled and therefore trap.
+      parent.implicitTrap = true;
+    }
+    void visitResume(Resume* curr) {
+      // This acts as a kitchen sink effect.
+      parent.calls = true;
+
+      // resume instructions accept nullable continuation references and trap
+      // on null.
+      parent.implicitTrap = true;
+
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
+    void visitResumeThrow(ResumeThrow* curr) {
+      // This acts as a kitchen sink effect.
+      parent.calls = true;
+
+      // resume_throw instructions accept nullable continuation
+      // references and trap on null.
+      parent.implicitTrap = true;
+
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
+    void visitStackSwitch(StackSwitch* curr) {
+      // This acts as a kitchen sink effect.
+      parent.calls = true;
+
+      // switch instructions accept nullable continuation references
+      // and trap on null.
+      parent.implicitTrap = true;
+
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
     }
   };
 
 public:
   // Helpers
 
+  // See comment on invalidate() for the assumptions on the inputs here.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
                          Expression* a,
@@ -1022,11 +1263,6 @@ public:
   }
 
 private:
-  void pre() {
-    breakTargets.clear();
-    delegateTargets.clear();
-  }
-
   void post() {
     assert(tryDepth == 0);
 
@@ -1053,5 +1289,9 @@ public:
 };
 
 } // namespace wasm
+
+namespace std {
+std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects);
+} // namespace std
 
 #endif // wasm_ir_effects_h

@@ -33,6 +33,10 @@
 // must fail unless it allows null.
 //
 
+#include <memory>
+
+#include "ir/drop.h"
+#include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -106,6 +110,16 @@ struct AbstractTypeRefining : public Pass {
       }
     }
 
+    // Assume all public types are created, which makes them non-abstract and
+    // hence ignored below.
+    // TODO: In principle we could assume such types are not created outside the
+    //       module, given closed world, but we'd also need to make sure that
+    //       we don't need to make any changes to public types that refer to
+    //       them.
+    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+      createdTypes.insert(type);
+    }
+
     SubTypes subTypes(*module);
 
     // Compute createdTypesOrSubTypes by starting with the created types and
@@ -113,7 +127,7 @@ struct AbstractTypeRefining : public Pass {
     createdTypesOrSubTypes = createdTypes;
     for (auto type : subTypes.getSubTypesFirstSort()) {
       // If any of our subtypes are created, so are we.
-      for (auto subType : subTypes.getStrictSubTypes(type)) {
+      for (auto subType : subTypes.getImmediateSubTypes(type)) {
         if (createdTypesOrSubTypes.count(subType)) {
           createdTypesOrSubTypes.insert(type);
           break;
@@ -159,7 +173,7 @@ struct AbstractTypeRefining : public Pass {
       }
 
       std::optional<HeapType> refinedType;
-      auto& typeSubTypes = subTypes.getStrictSubTypes(type);
+      auto& typeSubTypes = subTypes.getImmediateSubTypes(type);
       if (typeSubTypes.size() == 1) {
         // There is only a single possibility, so we can definitely use that
         /// one.
@@ -256,29 +270,30 @@ struct AbstractTypeRefining : public Pass {
       return;
     }
 
-    // A TypeMapper that handles the patterns we have in our mapping, where we
-    // end up mapping a type to a *subtype*. We need to properly create
-    // supertypes while doing this rewriting. For example, say we have this:
+    // We may need to apply some preliminary optimizations to ensure we maintain
+    // validity and correctness when we rewrite the types.
+    preoptimize(*module, mapping);
+
+    // Rewriting types can usually rewrite subtype relationships. For example,
+    // if we have this:
     //
-    //  A :> B :> C
+    //  C <: B <: A
     //
-    // Say we see B is never created, so we want to map B to its subtype C. C's
-    // supertype must now be A.
+    // And we see that B is never created, we would naively map B to its subtype
+    // C. But if we rewrote C's supertype, C would declare itself to be its own
+    // supertype, which is not allowed. We could fix this by walking up the
+    // supertype chain to find a supertype that is not being rewritten, but
+    // changing subtype relationships and keeping descriptor chains valid is
+    // nontrivial. Instead, avoid changing subtype relationships entirely: leave
+    // that for Unsubtyping.
     class AbstractTypeRefiningTypeMapper : public TypeMapper {
     public:
       AbstractTypeRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
         : TypeMapper(wasm, mapping) {}
 
-      std::optional<HeapType> getSuperType(HeapType oldType) override {
-        auto super = oldType.getSuperType();
-
-        // Go up the chain of supertypes, skipping things we are mapping away,
-        // as those things will not appear in the output. This skips B in the
-        // example above.
-        while (super && mapping.count(*super)) {
-          super = super->getSuperType();
-        }
-        return super;
+      std::optional<HeapType> getDeclaredSuperType(HeapType oldType) override {
+        // We do not want to update subtype relationships.
+        return oldType.getDeclaredSuperType();
       }
     };
 
@@ -288,6 +303,161 @@ struct AbstractTypeRefining : public Pass {
     // cast may lead to a struct.get reading a more refined type using that
     // type.
     ReFinalize().run(getPassRunner(), module);
+  }
+
+  void preoptimize(Module& module, const TypeMapper::TypeUpdates& mapping) {
+    if (!module.features.hasCustomDescriptors()) {
+      // No descriptor casts, exact casts, or allocations with descriptors to
+      // fix up.
+      return;
+    }
+
+    struct Preoptimizer : WalkerPass<PostWalker<Preoptimizer>> {
+      const TypeMapper::TypeUpdates& mapping;
+
+      Preoptimizer(const TypeMapper::TypeUpdates& mapping) : mapping(mapping) {}
+
+      bool isFunctionParallel() override { return true; }
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Preoptimizer>(mapping);
+      }
+
+      Block* localizeChildren(Expression* curr) {
+        return ChildLocalizer(
+                 curr, getFunction(), *getModule(), getPassOptions())
+          .getChildrenReplacement();
+      }
+
+      std::optional<HeapType> getOptimized(Type type) {
+        if (!type.isRef()) {
+          return std::nullopt;
+        }
+        auto heapType = type.getHeapType();
+        auto it = mapping.find(heapType);
+        if (it == mapping.end()) {
+          return std::nullopt;
+        }
+        assert(it->second != heapType);
+        return it->second;
+      }
+
+      // We may have casts like this:
+      //
+      //   (ref.cast_desc (ref null $optimized-to-bottom)
+      //     (some struct...)
+      //     (some desc...)
+      //   )
+      //
+      // We will optimize the cast target to nullref, but then ReFinalize would
+      // fix up the cast target back to $optimized-to-bottom. Optimize out the
+      // cast (which we know must either be a null check or unconditional trap)
+      // to avoid this reintroduction of the optimized type.
+      //
+      // Separately, we may have exact casts like this:
+      //
+      //   (br_on_cast anyref $l (ref (exact $uninstantiated)) ... )
+      //
+      // We know such casts will fail (or will pass only for null values), but
+      // with traps-never-happen, we might optimize them to this:
+      //
+      //   (br_on_cast anyref $l (ref (exact $instantiated-subtype)) ... )
+      //
+      // This might cause the casts to incorrectly start succeeding. To avoid
+      // that, optimize them out first.
+      void visitRefCast(RefCast* curr) {
+        auto optimized = getOptimized(curr->type);
+        if (!optimized) {
+          return;
+        }
+        // Exact casts to any optimized type and descriptor casts whose types
+        // will be optimized to bottom either admit null or fail
+        // unconditionally. Optimize to a cast to bottom, reusing curr and
+        // preserving nullability. We may need to move the ref value past the
+        // descriptor value, if any.
+        Builder builder(*getModule());
+        if (curr->type.isExact() || (curr->desc && optimized->isBottom())) {
+          if (curr->desc) {
+            if (curr->desc->type.isNullable() &&
+                !getPassOptions().trapsNeverHappen) {
+              curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
+            }
+            Block* replacement = localizeChildren(curr);
+            curr->desc = nullptr;
+            curr->type = curr->type.with(optimized->getBottom());
+            replacement->list.push_back(curr);
+            replacement->type = curr->type;
+            replaceCurrent(replacement);
+          } else {
+            curr->type = curr->type.with(optimized->getBottom());
+          }
+        }
+      }
+
+      void visitBrOn(BrOn* curr) {
+        if (curr->op == BrOnNull || curr->op == BrOnNonNull) {
+          return;
+        }
+        auto optimized = getOptimized(curr->castType);
+        if (!optimized) {
+          return;
+        }
+        // Optimize the same way we optimize ref.cast*.
+        Builder builder(*getModule());
+        bool isFail = curr->op == BrOnCastDescFail;
+        if (curr->castType.isExact() || (curr->desc && optimized->isBottom())) {
+          if (curr->desc) {
+            if (curr->desc->type.isNullable() &&
+                !getPassOptions().trapsNeverHappen) {
+              curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
+            }
+            Block* replacement = localizeChildren(curr);
+            // Reuse `curr` as a br_on_cast to nullref. Leave further
+            // optimization of the branch to RemoveUnusedBrs.
+            curr->desc = nullptr;
+            curr->castType = curr->castType.with(optimized->getBottom());
+            if (isFail) {
+              curr->op = BrOnCastFail;
+              curr->type = curr->castType;
+            } else {
+              curr->op = BrOnCast;
+            }
+            replacement->list.push_back(curr);
+            replacement->type = curr->type;
+            replaceCurrent(replacement);
+          } else {
+            curr->castType = curr->castType.with(optimized->getBottom());
+          }
+        }
+      }
+
+      void visitStructNew(StructNew* curr) {
+        if (!curr->desc) {
+          return;
+        }
+        auto optimized = getOptimized(curr->desc->type);
+        if (!optimized) {
+          return;
+        }
+        // The descriptor type is not instantiated, so there is no way this
+        // allocation can succeed. We need to remove it to avoid leaving it with
+        // a mismatched descriptor type after type rewriting. If we are in a
+        // function context, replace it with unreachable, taking care to
+        // preserve any side effects. If we're not in a function context, then
+        // we cannot use things like blocks or drops, but there are also no
+        // effects besides traps, so we can just replace the descriptor with a
+        // null.
+        Builder builder(*getModule());
+        if (getFunction()) {
+          replaceCurrent(getDroppedChildrenAndAppend(
+            curr, *getModule(), getPassOptions(), builder.makeUnreachable()));
+        } else {
+          curr->desc = builder.makeRefNull(HeapType::none);
+        }
+      }
+    } preoptimizer(mapping);
+    preoptimizer.run(getPassRunner(), &module);
+    preoptimizer.runOnModuleCode(getPassRunner(), &module);
   }
 };
 

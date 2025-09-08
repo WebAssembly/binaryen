@@ -18,10 +18,10 @@
 // wasm2asm console tool
 //
 
+#include "parser/wat-parser.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "wasm-io.h"
-#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
 #include "tool-options.h"
@@ -44,7 +44,7 @@ int main(int argc, const char* argv[]) {
   options
     .add("--output",
          "-o",
-         "Output file (stdout if not specified)",
+         "Output file",
          WasmAsOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
@@ -107,22 +107,14 @@ int main(int argc, const char* argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
 
-  try {
-    if (options.debug) {
-      std::cerr << "s-parsing..." << std::endl;
-    }
-    SExpressionParser parser(const_cast<char*>(input.c_str()));
-    Element& root = *parser.root;
-    if (options.debug) {
-      std::cerr << "w-parsing..." << std::endl;
-    }
-    SExpressionWasmBuilder builder(wasm, *root[0], options.profile);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    Fatal() << "error in parsing input";
+  auto parsed = WATParser::parseModule(wasm, input);
+  if (auto* err = parsed.getErr()) {
+    Fatal() << err->msg;
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   if (options.extra["validate"] != "none") {
     if (options.debug) {
@@ -139,7 +131,7 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "writing..." << std::endl;
   }
-  ModuleWriter writer;
+  ModuleWriter writer(options.passOptions);
   writer.setBinary(true);
   writer.setDebugInfo(debugInfo);
   if (sourceMapFilename.size()) {

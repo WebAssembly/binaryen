@@ -1,0 +1,7 @@
+(module
+  (func $func1 (export "func")
+    (drop
+      (i32.const 1)
+    )
+  )
+)

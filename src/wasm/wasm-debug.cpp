@@ -18,7 +18,22 @@
 #include "wasm.h"
 
 #ifdef BUILD_LLVM_DWARF
+
+#ifdef __clang__
+// DWARFEmitter.h transitively includes llvm/ADT/iterator.h, which uses
+// std::iterator, which is deprecated in C++17. This can trigger a deprecation
+// warning which if -Werror is enabled can cause the build to fail. That warning
+// is suppressed while including DWARFEmitter.h to allow the build to succeed.
+#pragma clang diagnostic push
+#pragma clang diagnostic warning "-Wdeprecated-declarations"
+#endif
+
 #include "llvm/ObjectYAML/DWARFEmitter.h"
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 

@@ -37,7 +37,7 @@
 namespace wasm {
 
 template<typename SubType, typename VisitorType, typename Contents>
-struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
+struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   // public interface
 
@@ -46,22 +46,18 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     std::vector<BasicBlock*> out, in;
   };
 
-  // The entry block at the function's start. This always exists.
-  BasicBlock* entry;
+  // The entry block at the function's start. This always exists, although it
+  // might be empty if the function is empty.
+  BasicBlock* entry = nullptr;
 
-  // The exit block at the end, where control flow reaches the end of the
-  // function. If the function has a control flow path that flows out (that is,
-  // exits the function without a return or an unreachable or such), then that
-  // control flow path ends in this block. In particular, if the function flows
-  // out a value (as opposed to only returning values using an explicit return)
-  // then that value would be at the end of this block.
-  // Put another way, this block has a control flow edge out of the function,
-  // and that edge is not because of a return. (Hence an analysis that cares
-  // about reaching the end of the function must not only look for returns, but
-  // also the end of this block.)
-  // Note: It is possible for this block to not exist, if the function ends in
-  // a return or an unreachable.
-  BasicBlock* exit;
+  // The exit block for the function: either the single block that returns or
+  // flows values out of the function, or an empty synthetic block that is a
+  // successor of all such blocks. This block may not exist if a function
+  // traps, infinitely loops, throws, or otherwise never exits normally.
+  //
+  // Analyses that care about reaching the end of the function can just look at
+  // this block instead of all the individual returns.
+  BasicBlock* exit = nullptr;
 
   // override this with code to create a BasicBlock if necessary
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -87,15 +83,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // analysis on the CFG once it is constructed).
   BasicBlock* currBasicBlock;
   // a block or loop => its branches
-  std::map<Expression*, std::vector<BasicBlock*>> branches;
+  std::map<Name, std::vector<BasicBlock*>> branches;
   // stack of the last blocks of if conditions + the last blocks of if true
   // bodies
-  std::vector<BasicBlock*> ifStack;
+  std::vector<BasicBlock*> ifLastBlockStack;
   // stack of the first blocks of loops
-  std::vector<BasicBlock*> loopStack;
+  std::vector<BasicBlock*> loopLastBlockStack;
 
   // stack of the last blocks of try bodies
-  std::vector<BasicBlock*> tryStack;
+  std::vector<BasicBlock*> tryLastBlockStack;
   // Stack of the blocks that contain a throwing instruction, and therefore they
   // can reach the first blocks of catches that throwing instructions should
   // unwind to at any moment. That is, the topmost item in this vector relates
@@ -103,8 +99,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // that can reach catch blocks (each item is assumed to be able to reach any
   // of the catches, although that could be improved perhaps).
   std::vector<std::vector<BasicBlock*>> throwingInstsStack;
-  // stack of 'Try' expressions corresponding to throwingInstsStack.
-  std::vector<Expression*> unwindExprStack;
+  // stack of 'Try'/'TryTable' expressions corresponding to throwingInstsStack.
+  std::vector<Expression*> tryStack;
   // A stack for each try, where each entry is a list of blocks, one for each
   // catch, used during processing. We start by assigning the start blocks to
   // here, and then read those at the appropriate time; when we finish a catch
@@ -142,7 +138,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     if (!curr->name.is()) {
       return;
     }
-    auto iter = self->branches.find(curr);
+    auto iter = self->branches.find(curr->name);
     if (iter == self->branches.end()) {
       return;
     }
@@ -158,18 +154,45 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     for (auto* origin : origins) {
       self->link(origin, self->currBasicBlock);
     }
-    self->branches.erase(curr);
+    self->branches.erase(curr->name);
+  }
+
+  // Whether we have created a synthetic, empty exit block for multiple other
+  // exit blocks to flow to.
+  bool hasSyntheticExit = false;
+
+  static void doEndReturn(SubType* self, Expression** currp) {
+    auto* last = self->currBasicBlock;
+    self->startUnreachableBlock();
+    if (!self->exit) {
+      // This is our first exit block and may be our only exit block, so just
+      // set it.
+      self->exit = last;
+    } else if (!self->hasSyntheticExit) {
+      // We now have multiple exit blocks, so we need to create a synthetic one.
+      // It will be added to the list of basic blocks at the end of the
+      // function.
+      auto* lastExit = self->exit;
+      self->exit = self->makeBasicBlock();
+      self->link(lastExit, self->exit);
+      self->link(last, self->exit);
+      self->hasSyntheticExit = true;
+    } else {
+      // We already have a synthetic exit block. Just link it up.
+      self->link(last, self->exit);
+    }
   }
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
     self->link(last, self->startBasicBlock()); // ifTrue
-    self->ifStack.push_back(last);          // the block before the ifTrue
+    self->ifLastBlockStack.push_back(last);    // the block before the ifTrue
   }
 
   static void doStartIfFalse(SubType* self, Expression** currp) {
-    self->ifStack.push_back(self->currBasicBlock); // the ifTrue fallthrough
-    self->link(self->ifStack[self->ifStack.size() - 2],
+    self->ifLastBlockStack.push_back(
+      self->currBasicBlock); // the ifTrue fallthrough
+    self->link(self->ifLastBlockStack[self->ifLastBlockStack.size() - 2],
                self->startBasicBlock()); // before if -> ifFalse
   }
 
@@ -181,13 +204,13 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->link(last, self->currBasicBlock);
     if ((*currp)->cast<If>()->ifFalse) {
       // we just linked ifFalse, need to link ifTrue to the end
-      self->link(self->ifStack.back(), self->currBasicBlock);
-      self->ifStack.pop_back();
+      self->link(self->ifLastBlockStack.back(), self->currBasicBlock);
+      self->ifLastBlockStack.pop_back();
     } else {
       // no ifFalse, so add a fallthrough for if the if is not taken
-      self->link(self->ifStack.back(), self->currBasicBlock);
+      self->link(self->ifLastBlockStack.back(), self->currBasicBlock);
     }
-    self->ifStack.pop_back();
+    self->ifLastBlockStack.pop_back();
   }
 
   static void doStartLoop(SubType* self, Expression** currp) {
@@ -196,7 +219,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // a loop with no backedges would still be counted here, but oh well
     self->loopTops.push_back(self->currBasicBlock);
     self->link(last, self->currBasicBlock);
-    self->loopStack.push_back(self->currBasicBlock);
+    self->loopLastBlockStack.push_back(self->currBasicBlock);
   }
 
   static void doEndLoop(SubType* self, Expression** currp) {
@@ -205,14 +228,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     auto* curr = (*currp)->cast<Loop>();
     // branches to the top of the loop
     if (curr->name.is()) {
-      auto* loopStart = self->loopStack.back();
-      auto& origins = self->branches[curr];
+      auto* loopStart = self->loopLastBlockStack.back();
+      auto& origins = self->branches[curr->name];
       for (auto* origin : origins) {
         self->link(origin, loopStart);
       }
-      self->branches.erase(curr);
+      self->branches.erase(curr->name);
     }
-    self->loopStack.pop_back();
+    self->loopLastBlockStack.pop_back();
   }
 
   static void doEndBranch(SubType* self, Expression** currp) {
@@ -220,8 +243,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     auto branchTargets = BranchUtils::getUniqueTargets(curr);
     // Add branches to the targets.
     for (auto target : branchTargets) {
-      self->branches[self->findBreakTarget(target)].push_back(
-        self->currBasicBlock);
+      self->branches[target].push_back(self->currBasicBlock);
     }
     if (curr->type != Type::unreachable) {
       auto* last = self->currBasicBlock;
@@ -232,11 +254,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
-    // If the innermost try does not have a catch_all clause, an exception
-    // thrown can be caught by any of its outer catch block. And if that outer
-    // try-catch also does not have a catch_all, this continues until we
-    // encounter a try-catch_all. Create a link to all those possible catch
-    // unwind destinations.
+    // If the innermost try/try_table does not have a catch_all clause, an
+    // exception thrown can be caught by any of its outer catch block. And if
+    // that outer try/try_table also does not have a catch_all, this continues
+    // until we encounter a try/try_table-catch_all. Create a link to all those
+    // possible catch unwind destinations.
     // TODO This can be more precise for `throw`s if we compare tag types and
     // create links to outer catch BBs only when the exception is not caught.
     // TODO This can also be more precise if we analyze the structure of nested
@@ -257,47 +279,79 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // catch $e3
     //   ...
     // end
-    assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
+    assert(self->tryStack.size() == self->throwingInstsStack.size());
     for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
-      auto* tryy = self->unwindExprStack[i]->template cast<Try>();
-      if (tryy->isDelegate()) {
-        // If this delegates to the caller, there is no possibility that this
-        // instruction can throw to outer catches.
-        if (tryy->delegateTarget == DELEGATE_CALLER_TARGET) {
-          break;
-        }
-        // If this delegates to an outer try, we skip catches between this try
-        // and the target try.
-        [[maybe_unused]] bool found = false;
-        for (int j = i - 1; j >= 0; j--) {
-          if (self->unwindExprStack[j]->template cast<Try>()->name ==
-              tryy->delegateTarget) {
-            i = j;
-            found = true;
+      if (auto* tryy = self->tryStack[i]->template dynCast<Try>()) {
+        if (tryy->isDelegate()) {
+          // If this delegates to the caller, there is no possibility that this
+          // instruction can throw to outer catches.
+          if (tryy->delegateTarget == DELEGATE_CALLER_TARGET) {
             break;
           }
+          // If this delegates to an outer try, we skip catches between this try
+          // and the target try.
+          [[maybe_unused]] bool found = false;
+          for (int j = i - 1; j >= 0; j--) {
+            if (self->tryStack[j]->template cast<Try>()->name ==
+                tryy->delegateTarget) {
+              i = j;
+              found = true;
+              break;
+            }
+          }
+          assert(found);
+          continue;
         }
-        assert(found);
-        continue;
       }
 
       // Exception thrown. Note outselves so that we will create a link to each
-      // catch within the try when we get there.
+      // catch within the try / each destination block within the try_table when
+      // we get there.
       self->throwingInstsStack[i].push_back(self->currBasicBlock);
 
-      // If this try has catch_all, there is no possibility that this
-      // instruction can throw to outer catches. Stop here.
-      if (tryy->hasCatchAll()) {
-        break;
+      if (auto* tryy = self->tryStack[i]->template dynCast<Try>()) {
+        // If this try has catch_all, there is no possibility that this
+        // instruction can throw to outer catches. Stop here.
+        if (tryy->hasCatchAll()) {
+          break;
+        }
+      } else if (auto* tryTable =
+                   self->tryStack[i]->template dynCast<TryTable>()) {
+        if (tryTable->hasCatchAll()) {
+          break;
+        }
+      } else {
+        WASM_UNREACHABLE("invalid throwingInstsStack item");
       }
       i--;
     }
   }
 
+  // We can optionally ignore branches to outside of the function. Such a branch
+  // does not link two basic blocks (since the target is outside of the
+  // function), but it can cause us to end the current basic block and link to a
+  // new one, just in order to preserve the property that blocks do not have
+  // instructions in the middle that can transfer control flow somewhere. That
+  // property is useful to have in general, but if a user of this code just does
+  // not care about what happens when we leave the current function (say, if it
+  // only reads locals, which are gone anyhow if we leave) then it can flip this
+  // option to avoid creating new blocks just for such branches.
+  //
+  // The main situation where this matters is calls, which can throw if EH is
+  // enabled. With this set to ignore, we don't create new basic blocks just
+  // because of that, which can save a significant amount of overhead (~10%).
+  bool ignoreBranchesOutsideOfFunc = false;
+
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->throwingInstsStack.empty()) {
-      // exception not thrown. link to the continuation BB
+    if (!self->throwingInstsStack.empty() ||
+        !self->ignoreBranchesOutsideOfFunc) {
+      // |doEndThrowingInst| added a link from the current block to a catch, so
+      // we must end the current block and start another. Or, we are not
+      // ignoring branches to outside of the function, so even without a branch
+      // to a catch we want to start a new basic block here, to preserve the
+      // property that control flow transfers (both within the function or to
+      // the outside) can only happen at the end of basic blocks.
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock());
     }
@@ -306,11 +360,12 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doStartTry(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
     self->throwingInstsStack.emplace_back();
-    self->unwindExprStack.push_back(curr);
+    self->tryStack.push_back(curr);
   }
 
   static void doStartCatches(SubType* self, Expression** currp) {
-    self->tryStack.push_back(self->currBasicBlock); // last block of try body
+    self->tryLastBlockStack.push_back(
+      self->currBasicBlock); // last block of try body
 
     // Now that we are starting the catches, create the basic blocks that they
     // begin with.
@@ -332,7 +387,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     }
 
     self->throwingInstsStack.pop_back();
-    self->unwindExprStack.pop_back();
+    self->tryStack.pop_back();
     self->catchIndexStack.push_back(0);
   }
 
@@ -356,8 +411,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       self->link(last, self->currBasicBlock);
     }
     // try body's last block -> continuation block
-    self->link(self->tryStack.back(), self->currBasicBlock);
-    self->tryStack.pop_back();
+    self->link(self->tryLastBlockStack.back(), self->currBasicBlock);
+    self->tryLastBlockStack.pop_back();
     self->processCatchStack.pop_back();
     self->catchIndexStack.pop_back();
   }
@@ -365,6 +420,54 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doEndThrow(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
     self->startUnreachableBlock();
+  }
+
+  static void doStartTryTable(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<TryTable>();
+    self->throwingInstsStack.emplace_back();
+    self->tryStack.push_back(curr);
+  }
+
+  static void doEndTryTable(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<TryTable>();
+
+    auto catchTargets = BranchUtils::getUniqueTargets(curr);
+    // Add catch destinations to the targets.
+    for (auto target : catchTargets) {
+      auto& preds = self->throwingInstsStack.back();
+      for (auto* pred : preds) {
+        self->branches[target].push_back(pred);
+      }
+    }
+
+    self->throwingInstsStack.pop_back();
+    self->tryStack.pop_back();
+  }
+
+  static void doEndResume(SubType* self, Expression** currp) {
+    auto* module = self->getModule();
+    if (!module || module->features.hasExceptionHandling()) {
+      // This resume might throw, so run the code to handle that.
+      doEndThrowingInst(self, currp);
+    }
+    auto handlerBlocks = BranchUtils::getUniqueTargets(*currp);
+    // Add branches to the targets.
+    for (auto target : handlerBlocks) {
+      self->branches[target].push_back(self->currBasicBlock);
+    }
+  }
+
+  static bool isReturnCall(Expression* curr) {
+    switch (curr->_id) {
+      case Expression::Id::CallId:
+        return curr->cast<Call>()->isReturn;
+      case Expression::Id::CallIndirectId:
+        return curr->cast<CallIndirect>()->isReturn;
+      case Expression::Id::CallRefId:
+        return curr->cast<CallRef>()->isReturn;
+      default:
+        WASM_UNREACHABLE("not a call");
+    }
   }
 
   static void scan(SubType* self, Expression** currp) {
@@ -394,9 +497,20 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId:
       case Expression::Id::CallRefId: {
-        self->pushTask(SubType::doEndCall, currp);
+        if (isReturnCall(curr)) {
+          self->pushTask(SubType::doEndReturn, currp);
+        } else {
+          auto* module = self->getModule();
+          if (!module || module->features.hasExceptionHandling()) {
+            // This call might throw, so run the code to handle that.
+            self->pushTask(SubType::doEndCall, currp);
+          }
+        }
         break;
       }
+      case Expression::Id::ReturnId:
+        self->pushTask(SubType::doEndReturn, currp);
+        break;
       case Expression::Id::TryId: {
         self->pushTask(SubType::doEndTry, currp);
         auto& catchBodies = curr->cast<Try>()->catchBodies;
@@ -410,9 +524,28 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doStartTry, currp);
         return; // don't do anything else
       }
+      case Expression::Id::TryTableId: {
+        self->pushTask(SubType::doEndTryTable, currp);
+        break;
+      }
       case Expression::Id::ThrowId:
-      case Expression::Id::RethrowId: {
+      case Expression::Id::RethrowId:
+      case Expression::Id::ThrowRefId: {
         self->pushTask(SubType::doEndThrow, currp);
+        break;
+      }
+      case Expression::Id::ResumeId:
+      case Expression::Id::ResumeThrowId: {
+        self->pushTask(SubType::doEndResume, currp);
+        break;
+      }
+      case Expression::Id::SuspendId:
+      case Expression::Id::StackSwitchId: {
+        auto* module = self->getModule();
+        if (!module || module->features.hasExceptionHandling()) {
+          // This might throw, so run the code to handle that.
+          self->pushTask(SubType::doEndCall, currp);
+        }
         break;
       }
       default: {
@@ -424,11 +557,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       }
     }
 
-    ControlFlowWalker<SubType, VisitorType>::scan(self, currp);
+    PostWalker<SubType, VisitorType>::scan(self, currp);
 
     switch (curr->_id) {
       case Expression::Id::LoopId: {
         self->pushTask(SubType::doStartLoop, currp);
+        break;
+      }
+      case Expression::Id::TryTableId: {
+        self->pushTask(SubType::doStartTryTable, currp);
         break;
       }
       default: {}
@@ -438,18 +575,31 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   void doWalkFunction(Function* func) {
     basicBlocks.clear();
     debugIds.clear();
+    exit = nullptr;
+    hasSyntheticExit = false;
 
     startBasicBlock();
     entry = currBasicBlock;
-    ControlFlowWalker<SubType, VisitorType>::doWalkFunction(func);
-    exit = currBasicBlock;
+    PostWalker<SubType, VisitorType>::doWalkFunction(func);
+
+    // The last block, if it exists, implicitly returns.
+    if (currBasicBlock) {
+      auto* self = static_cast<SubType*>(this);
+      self->doEndReturn(self, nullptr);
+    }
+
+    // If we have a synthetic exit block, add it to the list of basic blocks
+    // here so it always comes at the end.
+    if (hasSyntheticExit) {
+      basicBlocks.push_back(std::unique_ptr<BasicBlock>(exit));
+    }
 
     assert(branches.size() == 0);
-    assert(ifStack.size() == 0);
-    assert(loopStack.size() == 0);
-    assert(tryStack.size() == 0);
+    assert(ifLastBlockStack.size() == 0);
+    assert(loopLastBlockStack.size() == 0);
+    assert(tryLastBlockStack.size() == 0);
     assert(throwingInstsStack.size() == 0);
-    assert(unwindExprStack.size() == 0);
+    assert(tryStack.size() == 0);
     assert(processCatchStack.size() == 0);
   }
 

@@ -61,6 +61,25 @@ namespace wasm {
 //                     not track what they might be, so we must assume the worst
 //                     in the calling code.
 //
+// This is a lattice, but it is not a distributive lattice
+// (https://en.wikipedia.org/wiki/Lattice_(order)#Distributivity):
+//
+//   Cone(ref func) ^ [(ref.func $foo) u (ref.null func)] =
+//   Cone(ref func) ^ Cone(ref null func) =            ;; best shape that can
+//                                                     ;; hold both a ref.func
+//                                                     ;; and a null
+//   Cone(ref func)
+//
+// while
+//
+//   [Cone(ref func) ^ (ref.func $foo)] u [Cone(ref func) ^ (ref.null func)] =
+//   (ref.func $foo) u none =
+//   (ref.func $foo)
+//
+// "Fixing" this would require us to support a shape that includes both a
+// ref.func and a null, and does not "forget" the ref.func as Cone does. It is
+// not clear if that would be worth the complexity and overhead.
+//
 class PossibleContents {
   struct None : public std::monostate {};
 
@@ -76,6 +95,9 @@ class PossibleContents {
     // The contents flowing out will be a Global, but of a non-nullable type,
     // unlike the original global.
     Type type;
+    // TODO: Consider adding a depth here, or merging this with ConeType in some
+    //       way. In principle, not having depth info can lead to loss of
+    //       precision.
     bool operator==(const GlobalInfo& other) const {
       return name == other.name && type == other.type;
     }
@@ -104,9 +126,12 @@ class PossibleContents {
 
   static constexpr Index FullDepth = -1;
 
-  // Internal convenience for creating a cone type of unbounded depth, i.e., the
-  // full cone of all subtypes for that type.
-  static ConeType FullConeType(Type type) { return ConeType{type, FullDepth}; }
+  // Internal convenience for creating a cone type carrying no information
+  // besides the type. For exact references, the depth is 0 and for all other
+  // types the depth is unbounded and includes all possible subtypes.
+  static ConeType DefaultConeType(Type type) {
+    return type.isExact() ? ExactType(type) : ConeType{type, FullDepth};
+  }
 
   template<typename T> PossibleContents(T value) : value(value) {}
 
@@ -126,10 +151,11 @@ public:
   static PossibleContents exactType(Type type) {
     return PossibleContents{ExactType(type)};
   }
-  // Helper for a cone with unbounded depth, i.e., the full cone of all subtypes
-  // for that type.
-  static PossibleContents fullConeType(Type type) {
-    return PossibleContents{FullConeType(type)};
+  // Helper for a cone with default depth for the given type. For exact
+  // references this is depth 0 and for all other this tyis is unbounded depth
+  // and includes all possible subtypes.
+  static PossibleContents coneType(Type type) {
+    return PossibleContents{DefaultConeType(type)};
   }
   static PossibleContents coneType(Type type, Index depth) {
     return PossibleContents{ConeType{type, depth}};
@@ -143,7 +169,7 @@ public:
 
     if (type.isRef()) {
       // For a reference, subtyping matters.
-      return fullConeType(type);
+      return coneType(type);
     }
 
     if (type == Type::unreachable) {
@@ -176,9 +202,8 @@ public:
   }
 
   // Removes anything not in |other| from this object, so that it ends up with
-  // only their intersection. Currently this only handles an intersection with a
-  // full cone.
-  void intersectWithFullCone(const PossibleContents& other);
+  // only their intersection.
+  void intersect(const PossibleContents& other);
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isLiteral() const { return std::get_if<Literal>(&value); }
@@ -230,7 +255,7 @@ public:
     if (auto* literal = std::get_if<Literal>(&value)) {
       return ExactType(literal->type);
     } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
-      return FullConeType(global->type);
+      return DefaultConeType(global->type);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       return *coneType;
     } else if (std::get_if<None>(&value)) {
@@ -299,6 +324,25 @@ public:
     }
   }
 
+  // For possible contents of a tuple type, get one of the items.
+  PossibleContents getTupleItem(Index i) {
+    auto type = getType();
+    assert(type.isTuple());
+    if (std::get_if<Literal>(&value)) {
+      WASM_UNREACHABLE("TODO: use Literals");
+    } else if (std::get_if<GlobalInfo>(&value)) {
+      WASM_UNREACHABLE("TODO");
+    } else if ([[maybe_unused]] auto* cone = std::get_if<ConeType>(&value)) {
+      // Return a full cone of the appropriate type, as we lack depth info for
+      // the separate items in the tuple (tuples themselves have no subtyping,
+      // so the tuple's depth must be 0, i.e., an exact type).
+      assert(cone->depth == 0);
+      return coneType(type[i]);
+    } else {
+      WASM_UNREACHABLE("not a tuple");
+    }
+  }
+
   size_t hash() const {
     // First hash the index of the variant, then add the internals for each.
     size_t ret = std::hash<size_t>()(value.index());
@@ -306,8 +350,9 @@ public:
       // Nothing to add.
     } else if (isLiteral()) {
       rehash(ret, getLiteral());
-    } else if (isGlobal()) {
-      rehash(ret, getGlobal());
+    } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
+      rehash(ret, global->name);
+      rehash(ret, global->type);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       rehash(ret, coneType->type);
       rehash(ret, coneType->depth);
@@ -381,27 +426,21 @@ struct ParamLocation {
   }
 };
 
+// The location of a value in a local.
+struct LocalLocation {
+  Function* func;
+  Index index;
+  bool operator==(const LocalLocation& other) const {
+    return func == other.func && index == other.index;
+  }
+};
+
 // The location of one of the results of a function.
 struct ResultLocation {
   Function* func;
   Index index;
   bool operator==(const ResultLocation& other) const {
     return func == other.func && index == other.index;
-  }
-};
-
-// The location of a break target in a function, identified by its name.
-struct BreakTargetLocation {
-  Function* func;
-  Name target;
-  // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
-  // That is, if the branch target has a tuple type, then each branch to that
-  // location sends a tuple, and we'll have a separate BreakTargetLocation for
-  // each, indexed by the index in the tuple that the branch sends.
-  Index tupleIndex;
-  bool operator==(const BreakTargetLocation& other) const {
-    return func == other.func && target == other.target &&
-           tupleIndex == other.tupleIndex;
   }
 };
 
@@ -434,10 +473,17 @@ struct SignatureResultLocation {
 // The location of contents in a struct or array (i.e., things that can fit in a
 // dataref). Note that this is specific to this type - it does not include data
 // about subtypes or supertypes.
+//
+// We store the truncated bits here when the field is packed. That is, if -1 is
+// written to an i8 then the value here will be 0xff. StructGet/ArrayGet
+// operations that read a signed value must then perform a sign-extend
+// operation.
 struct DataLocation {
   HeapType type;
   // The index of the field in a struct, or 0 for an array (where we do not
-  // attempt to differentiate by index).
+  // attempt to differentiate by index). A special index is used for the
+  // descriptor field.
+  static const Index DescriptorIndex = -1;
   Index index;
   bool operator==(const DataLocation& other) const {
     return type == other.type && index == other.index;
@@ -456,11 +502,22 @@ struct TagLocation {
   }
 };
 
-// A null value. This is used as the location of the default value of a var in a
-// function, a null written to a struct field in struct.new_with_default, etc.
+// A null value of a particular type. For example, a nullable local reads from
+// the corresponding NullLocation, for its default value.
 struct NullLocation {
   Type type;
   bool operator==(const NullLocation& other) const {
+    return type == other.type;
+  }
+};
+
+// A location that contains anything of a particular type. This is used as a
+// root of the graph, a source of values we will never learn anything about, and
+// must assume they can be anything of that type (e.g., the return of a call to
+// an import).
+struct TypeLocation {
+  Type type;
+  bool operator==(const TypeLocation& other) const {
     return type == other.type;
   }
 };
@@ -495,14 +552,15 @@ struct ConeReadLocation {
 // have.
 using Location = std::variant<ExpressionLocation,
                               ParamLocation,
+                              LocalLocation,
                               ResultLocation,
-                              BreakTargetLocation,
                               GlobalLocation,
                               SignatureParamLocation,
                               SignatureResultLocation,
                               DataLocation,
                               TagLocation,
                               NullLocation,
+                              TypeLocation,
                               ConeReadLocation>;
 
 } // namespace wasm
@@ -535,17 +593,17 @@ template<> struct hash<wasm::ParamLocation> {
   }
 };
 
-template<> struct hash<wasm::ResultLocation> {
-  size_t operator()(const wasm::ResultLocation& loc) const {
+template<> struct hash<wasm::LocalLocation> {
+  size_t operator()(const wasm::LocalLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
       {size_t(loc.func), loc.index});
   }
 };
 
-template<> struct hash<wasm::BreakTargetLocation> {
-  size_t operator()(const wasm::BreakTargetLocation& loc) const {
-    return std::hash<std::tuple<size_t, wasm::Name, wasm::Index>>{}(
-      {size_t(loc.func), loc.target, loc.tupleIndex});
+template<> struct hash<wasm::ResultLocation> {
+  size_t operator()(const wasm::ResultLocation& loc) const {
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.func), loc.index});
   }
 };
 
@@ -589,6 +647,12 @@ template<> struct hash<wasm::NullLocation> {
   }
 };
 
+template<> struct hash<wasm::TypeLocation> {
+  size_t operator()(const wasm::TypeLocation& loc) const {
+    return std::hash<wasm::Type>{}(loc.type);
+  }
+};
+
 template<> struct hash<wasm::ConeReadLocation> {
   size_t operator()(const wasm::ConeReadLocation& loc) const {
     return std::hash<std::tuple<wasm::HeapType, wasm::Index, wasm::Index>>{}(
@@ -605,6 +669,13 @@ namespace wasm {
 // values - and propagates them to the locations they reach. After the
 // analysis the user of this class can ask which contents are possible at any
 // location.
+//
+// This algorithm is so simple as to not really be worth a name, but if you are
+// familiar with Abstract Interpretation then it can be seen as an efficient way
+// to implement Abstract Interpretation with a transfer function that mostly
+// just combines values. A more detailed comparison between the algorithms can
+// be found in the PDF at /media/just_flow_stuff.pdf (the algorithm implemented
+// here is called "Just Flow Stuff").
 //
 // This focuses on useful information for the typical user of this API.
 // Specifically, we find out:
@@ -635,11 +706,15 @@ namespace wasm {
 // here.
 class ContentOracle {
   Module& wasm;
+  const PassOptions& options;
 
   void analyze();
 
 public:
-  ContentOracle(Module& wasm) : wasm(wasm) { analyze(); }
+  ContentOracle(Module& wasm, const PassOptions& options)
+    : wasm(wasm), options(options) {
+    analyze();
+  }
 
   // Get the contents possible at a location.
   PossibleContents getContents(Location location) {

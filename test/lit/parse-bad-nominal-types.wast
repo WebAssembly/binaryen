@@ -2,62 +2,17 @@
 
 ;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
 
-;; CHECK: [parse exception: unknown supertype (at 2:35)]
+;; CHECK: 2:28: error: unknown type identifier
 (module
-  (type $bad-func (func) (extends $bad))
+  (type $bad-func (sub $bad (func)))
 )
 
-;; CHECK: [parse exception: unknown supertype (at 2:39)]
+;; CHECK: 2:30: error: unknown type identifier
 (module
-  (type $bad-struct (struct) (extends $bad))
+  (type $bad-struct (sub $bad (struct)))
 )
 
-;; CHECK: [parse exception: unknown supertype (at 2:41)]
+;; CHECK: 2:29: error: unknown type identifier
 (module
-  (type $bad-array (array i32) (extends $bad))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:33)]
-(module
-  (type $bad-func (func_subtype $bad))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:37)]
-(module
-  (type $bad-struct (struct_subtype $bad))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:39)]
-(module
-  (type $bad-array (array_subtype i32 $bad))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:32)]
-(module
-  (type $bad-func (func_subtype any))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:36)]
-(module
-  (type $bad-struct (struct_subtype any))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:38)]
-(module
-  (type $bad-array (array_subtype i32 any))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:32)]
-(module
-  (type $bad-func (func_subtype data))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:36)]
-(module
-  (type $bad-struct (struct_subtype func))
-)
-
-;; CHECK: [parse exception: unknown supertype (at 2:38)]
-(module
-  (type $bad-array (array_subtype i32 func))
+  (type $bad-array (sub $bad (array i32)))
 )

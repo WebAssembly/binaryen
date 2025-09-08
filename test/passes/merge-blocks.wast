@@ -44,9 +44,11 @@
       (drop
         (block $x (result i32)
           (if (i32.const 100)
-            (block
-              (drop (br_if $x (i32.const 1) (i32.const 2)))
-              (nop)
+            (then
+              (block
+                (drop (br_if $x (i32.const 1) (i32.const 2)))
+                (nop)
+              )
             )
           )
           (i32.const 0)
@@ -113,9 +115,11 @@
    (block $label
     (if
      (i32.const 1)
-     (block
-      (drop (i32.const 2))
-      (drop (i32.const 3))
+     (then
+      (block
+       (drop (i32.const 2))
+       (drop (i32.const 3))
+      )
      )
     )
    )
@@ -124,9 +128,11 @@
    (block $label
     (if
      (br $label) ;; use outside of arm
-     (block
-      (drop (i32.const 2))
-      (drop (i32.const 3))
+     (then
+      (block
+       (drop (i32.const 2))
+       (drop (i32.const 3))
+      )
      )
     )
    )
@@ -135,7 +141,9 @@
    (block $label
     (if
      (i32.const 1)
-     (br $label)
+     (then
+      (br $label)
+     )
     )
    )
   )
@@ -143,8 +151,12 @@
    (block $label
     (if
      (i32.const 1)
-     (br $label)
-     (drop (i32.const 3))
+     (then
+      (br $label)
+     )
+     (else
+      (drop (i32.const 3))
+     )
     )
    )
   )
@@ -152,8 +164,12 @@
    (block $label
     (if
      (i32.const 1)
-     (drop (i32.const 3))
-     (br $label)
+     (then
+      (drop (i32.const 3))
+     )
+     (else
+      (br $label)
+     )
     )
    )
   )
@@ -161,8 +177,12 @@
    (block $label
     (if
      (i32.const 1)
-     (br $label)
-     (br $label)
+     (then
+      (br $label)
+     )
+     (else
+      (br $label)
+     )
     )
    )
   )
@@ -170,8 +190,12 @@
    (block $label
     (if
      (i32.const 1)
-     (drop (i32.const 2))
-     (drop (i32.const 3))
+     (then
+      (drop (i32.const 2))
+     )
+     (else
+      (drop (i32.const 3))
+     )
     )
    )
   )
@@ -179,8 +203,12 @@
    (block $label (result i32)
     (if (result i32)
      (i32.const 1)
-     (i32.const 2)
-     (i32.const 3)
+     (then
+      (i32.const 2)
+     )
+     (else
+      (i32.const 3)
+     )
     )
    )
   )
@@ -193,7 +221,9 @@
         (block $label$4
          (unreachable)
         )
-        (br $label$3)
+        (then
+         (br $label$3)
+        )
        )
       )
       (unreachable)
@@ -205,31 +235,43 @@
    (block $label$1
     (if
      (unreachable) ;; unreachable condition
-     (nop)
-     (unreachable)
+     (then
+      (nop)
+     )
+     (else
+      (unreachable)
+     )
     )
    )
   )
   (func $propagate-type-if-we-optimize
    (if
     (i32.const 1)
-    (nop)
-    (block
-     (drop
-      (loop $label$3 (result i64)
-       (br_if $label$3
-        (block $label$4 (result i32)
-         (if
-          (i32.const 0)
-          (unreachable)
-          (unreachable)
+    (then
+     (nop)
+    )
+    (else
+     (block
+      (drop
+       (loop $label$3 (result i64)
+        (br_if $label$3
+         (block $label$4 (result i32)
+          (if
+           (i32.const 0)
+           (then
+            (unreachable)
+           )
+           (else
+            (unreachable)
+           )
+          )
          )
         )
+        (i64.const -9)
        )
-       (i64.const -9)
       )
+      (unreachable)
      )
-     (unreachable)
     )
    )
   )
