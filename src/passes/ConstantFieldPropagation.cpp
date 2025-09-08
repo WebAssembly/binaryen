@@ -115,9 +115,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
   PossibleConstantValues getInfo(HeapType type, Index index, Exactness exact) {
-    // If the reference is inexact, we must consider subtypes, who we
-    // propagated for that purpose.
-    auto& infos = exact == Inexact ? propagatedInfos : rawNewInfos;
+    // If the reference is exact and the field immutable, then we are reading
+    // exactly what was written to struct.news and nothing else.
+    auto mutable_ = index == StructUtils::DescriptorIndex
+                      ? Immutable
+                      : GCTypeUtils::getField(type, index)->mutable_;
+    auto& infos =
+      (exact == Inexact || mutable_ == Mutable) ? propagatedInfos : rawNewInfos;
     if (auto it = infos.find(type); it != infos.end()) {
       // There is information on this type, fetch it.
       return it->second[index];
