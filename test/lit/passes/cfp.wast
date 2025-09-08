@@ -2499,6 +2499,371 @@
   )
 )
 
+(module
+  ;; Same as above but now the fields are mutable.
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $A (sub (struct (field (mut i32)))))
+   (type $A (sub (struct (field (mut i32)))))
+   ;; CHECK:       (type $B (sub $A (struct (field (mut i32)))))
+   (type $B (sub $A (struct (field (mut i32)))))
+  )
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (func $test (type $2) (param $0 i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $A-exact (ref (exact $A)))
+  ;; CHECK-NEXT:  (local $B-exact (ref (exact $B)))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (local.tee $A-exact
+  ;; CHECK-NEXT:    (struct.new $A
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (local.tee $B-exact
+  ;; CHECK-NEXT:    (struct.new $B
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A-exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B-exact)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $0 i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $A-exact (ref (exact $A)))
+    (local $B-exact (ref (exact $B)))
+    (local.set $A
+      (local.tee $A-exact
+        (struct.new $A
+          (i32.const 10)
+        )
+      )
+    )
+    (local.set $B
+      (local.tee $B-exact
+        (struct.new $B
+          (i32.const 20)
+        )
+      )
+    )
+    ;; We can optimize an inexact $B, but not $A.
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
+    )
+    ;; We should be able to optimize both exact references TODO.
+    (drop
+      (struct.get $A 0
+        (local.get $A-exact)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B-exact)
+      )
+    )
+  )
+)
+
+(module
+  ;; Same as above but now we add no-op sets.
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $A (sub (struct (field (mut i32)))))
+   (type $A (sub (struct (field (mut i32)))))
+   ;; CHECK:       (type $B (sub $A (struct (field (mut i32)))))
+   (type $B (sub $A (struct (field (mut i32)))))
+  )
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (func $test (type $2) (param $0 i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $A-exact (ref (exact $A)))
+  ;; CHECK-NEXT:  (local $B-exact (ref (exact $B)))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (local.tee $A-exact
+  ;; CHECK-NEXT:    (struct.new $A
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (local.tee $B-exact
+  ;; CHECK-NEXT:    (struct.new $B
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $A-exact)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:   (local.get $B-exact)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A-exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $B-exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $0 i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $A-exact (ref (exact $A)))
+    (local $B-exact (ref (exact $B)))
+    (local.set $A
+      (local.tee $A-exact
+        (struct.new $A
+          (i32.const 10)
+        )
+      )
+    )
+    (local.set $B
+      (local.tee $B-exact
+        (struct.new $B
+          (i32.const 20)
+        )
+      )
+    )
+    ;; No-op exact sets should not inhibit optimization.
+    (struct.set $A 0
+      (local.get $A-exact)
+      (i32.const 10)
+    )
+    (struct.set $B 0
+      (local.get $B-exact)
+      (i32.const 20)
+    )
+    ;; We should be able to optimize an inexact $B, but not $A TODO.
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
+    )
+    ;; We should be able to optimize both exact references TODO.
+    (drop
+      (struct.get $A 0
+        (local.get $A-exact)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B-exact)
+      )
+    )
+  )
+)
+
+(module
+  ;; Sets to a subtype should not affect exact gets of a supertype or sibling.
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $A (sub (struct (field (mut i32)))))
+   (type $A (sub (struct (field (mut i32)))))
+   ;; CHECK:       (type $B (sub $A (struct (field (mut i32)))))
+   (type $B (sub $A (struct (field (mut i32)))))
+   ;; CHECK:       (type $C (sub $A (struct (field (mut i32)))))
+   (type $C (sub $A (struct (field (mut i32)))))
+  )
+
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param (ref $B))))
+
+  ;; CHECK:      (type $5 (func (param (ref $A) (ref $B) (ref $C))))
+
+  ;; CHECK:      (type $6 (func (param (ref (exact $A)) (ref (exact $B)) (ref (exact $C)))))
+
+  ;; CHECK:      (func $news (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $news
+    (drop
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $B
+        (i32.const 20)
+      )
+    )
+    (drop
+      (struct.new $C
+        (i32.const 30)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $set-B (type $4) (param $B (ref $B))
+  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:   (local.get $B)
+  ;; CHECK-NEXT:   (i32.const 666)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set-B (param $B (ref $B))
+    ;; Inhibits optimizations on B and inexact A only.
+    (struct.set $B 0
+      (local.get $B)
+      (i32.const 666)
+    )
+  )
+
+  ;; CHECK:      (func $inexact-gets (type $5) (param $A (ref $A)) (param $B (ref $B)) (param $C (ref $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 0
+  ;; CHECK-NEXT:    (local.get $C)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $inexact-gets (param $A (ref $A)) (param $B (ref $B)) (param $C (ref $C))
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
+    )
+    ;; This should be optimizable TODO.
+    (drop
+      (struct.get $C 0
+        (local.get $C)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $exact-gets (type $6) (param $A-exact (ref (exact $A))) (param $B-exact (ref (exact $B))) (param $C-exact (ref (exact $C)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A-exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $B-exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 0
+  ;; CHECK-NEXT:    (local.get $C-exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $exact-gets (param $A-exact (ref (exact $A)))
+                    (param $B-exact (ref (exact $B)))
+                    (param $C-exact (ref (exact $C)))
+    (drop
+      ;; This should be optimizable TODO.
+      (struct.get $A 0
+        (local.get $A-exact)
+      )
+    )
+    ;; Not optimizable.
+    (drop
+      (struct.get $B 0
+        (local.get $B-exact)
+      )
+    )
+    ;; This should be optimizable TODO.
+    (drop
+      (struct.get $C 0
+        (local.get $C-exact)
+      )
+    )
+  )
+)
+
 ;; A type with two subtypes. A copy on the parent can affect either child.
 (module
   (rec
