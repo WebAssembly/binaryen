@@ -113,9 +113,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     return heapType;
   }
 
-  PossibleConstantValues
-  getInfo(HeapType type, Exactness exactness, Index index) {
-    if (auto it = propagatedInfos.find({type, exactness});
+  PossibleConstantValues getInfo(HeapType type, Index index, Exactness exact) {
+    if (auto it = propagatedInfos.find({type, exact});
         it != propagatedInfos.end()) {
       // There is information on this type, fetch it.
       return it->second[index];
@@ -179,7 +178,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // there is any information for this heap type at all. If there isn't, it is
     // as if nothing was ever noted for that field.
     PossibleConstantValues info =
-      getInfo(heapType, ref->type.getExactness(), index);
+      getInfo(heapType, index, ref->type.getExactness());
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
@@ -502,12 +501,9 @@ struct ConstantFieldPropagation : public Pass {
     // Prepare data we will need later.
     SubTypes subTypes(*module);
 
-    PCVStructValuesMap rawNewInfos;
-    if (refTest) {
-      // The refTest optimizations require the raw new infos (see above), but we
-      // can skip copying here if we'll never read this.
-      rawNewInfos = combinedNewInfos;
-    }
+    // Copy the unpropagated data before we propagate. We use this in precise
+    // lookups.
+    auto rawNewInfos = combinedNewInfos;
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in

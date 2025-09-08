@@ -2389,6 +2389,116 @@
   )
 )
 
+(module
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
+   (type $A (sub (struct (field i32))))
+   ;; CHECK:       (type $B (sub $A (struct (field i32))))
+   (type $B (sub $A (struct (field i32))))
+  )
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (func $test (type $2) (param $0 i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $A-exact (ref (exact $A)))
+  ;; CHECK-NEXT:  (local $B-exact (ref (exact $B)))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (local.tee $A-exact
+  ;; CHECK-NEXT:    (struct.new $A
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (local.tee $B-exact
+  ;; CHECK-NEXT:    (struct.new $B
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A-exact)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B-exact)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $0 i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $A-exact (ref (exact $A)))
+    (local $B-exact (ref (exact $B)))
+    (local.set $A
+      (local.tee $A-exact
+        (struct.new $A
+          (i32.const 10)
+        )
+      )
+    )
+    (local.set $B
+      (local.tee $B-exact
+        (struct.new $B
+          (i32.const 20)
+        )
+      )
+    )
+    ;; We can optimize an inexact $B, but not $A.
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
+    )
+    ;; We can optimize both exact references.
+    (drop
+      (struct.get $A 0
+        (local.get $A-exact)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B-exact)
+      )
+    )
+  )
+)
+
 ;; A type with two subtypes. A copy on the parent can affect either child.
 (module
   (rec
@@ -2943,6 +3053,50 @@
     (drop
       (struct.atomic.get $unwritten 0
         (local.get 0)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (local $A.exact (ref (exact $A)))
+  ;; CHECK-NEXT:  (local.set $A.exact
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $A.exact)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A.exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A.exact (ref (exact $A)))
+    (local.set $A.exact
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    ;; This set prevents us from optimizing. We should not be confused by the
+    ;; exactness of the ref.
+    (struct.set $A 0
+      (local.get $A.exact)
+      (i32.const 20)
+    )
+    (drop
+      (struct.get $A 0
+        (local.get $A.exact)
       )
     )
   )
