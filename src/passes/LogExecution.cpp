@@ -30,9 +30,9 @@
 
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
-#include <unordered_map>
-#include <set>
 #include <pass.h>
+#include <set>
+#include <unordered_map>
 #include <wasm-builder.h>
 #include <wasm.h>
 
@@ -104,24 +104,24 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     if (loggerModule != "") {
       import->module = loggerModule;
     } else {
-    // Import the log function from import "env" if the module
-    // imports other functions from that name.
-    for (auto& func : curr->functions) {
-      if (func->imported() && func->module == ENV) {
-        import->module = func->module;
-        break;
-      }
-    }
-
-    // If not, then pick the import name of the first function we find.
-    if (!import->module) {
+      // Import the log function from import "env" if the module
+      // imports other functions from that name.
       for (auto& func : curr->functions) {
-        if (func->imported()) {
+        if (func->imported() && func->module == ENV) {
           import->module = func->module;
           break;
         }
       }
-    }
+
+      // If not, then pick the import name of the first function we find.
+      if (!import->module) {
+        for (auto& func : curr->functions) {
+          if (func->imported()) {
+            import->module = func->module;
+            break;
+          }
+        }
+      }
 
       // If no function was found, use ENV.
       if (!import->module) {
@@ -176,7 +176,8 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
       }
 
       // Skip over index numbers that were used in the previous pass.
-      while(usedFunctionOrdinals.find(nextFreeIndex) != usedFunctionOrdinals.end()) {
+      while (usedFunctionOrdinals.find(nextFreeIndex) !=
+             usedFunctionOrdinals.end()) {
         ++nextFreeIndex;
       }
 
