@@ -140,7 +140,7 @@ struct GlobalTypeOptimization : public Pass {
   // Descriptor types that are not needed by their described types but that
   // still need to be descriptors for their own subtypes and supertypes to be
   // valid. We will keep them descriptors by having them describe trivial new
-  // placeholder types
+  // placeholder types.
   InsertOrderedMap<HeapType, Index> descriptorsOfPlaceholders;
 
   void run(Module* module) override {
@@ -572,9 +572,6 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        if (auto it = parent.descriptorsOfPlaceholders.find(oldType);
-            it != parent.descriptorsOfPlaceholders.end()) {
-        }
 
         // Remove an unneeded describee or describe a placeholder type.
         if (auto described = oldType.getDescribedType()) {
