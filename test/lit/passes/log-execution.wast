@@ -83,11 +83,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $log_execution
-  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (i32.const 11)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (loop
   ;; CHECK-NEXT:     (call $log_execution
-  ;; CHECK-NEXT:      (i32.const 11)
+  ;; CHECK-NEXT:      (i32.const 10)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
