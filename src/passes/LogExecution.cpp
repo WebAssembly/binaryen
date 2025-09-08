@@ -54,8 +54,6 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     Super::run(module);
   }
 
-  void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body); }
-
   Index nextFreeIndex = 0;
 
   // Tries to convert a string (containing a number) to a function index.
