@@ -106,3 +106,83 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc (struct))))
+    (type $super (sub (descriptor $super.desc (struct))))
+    ;; CHECK:       (type $super.desc (sub (describes $super (struct))))
+    (type $super.desc (sub (describes $super (struct))))
+
+    ;; CHECK:       (type $func (func (param i32) (result i32)))
+    (type $func (func (param i32) (result i32)))
+
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc (struct))))
+    (type $sub (sub $super (descriptor $sub.desc (struct))))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+  )
+
+  ;; CHECK:      (type $5 (func (result (ref (exact $super.desc)))))
+
+  ;; CHECK:      (global $A (ref (exact $super.desc)) (struct.new_default $super.desc))
+  (global $A (ref (exact $super.desc)) (struct.new $super.desc))
+
+  ;; CHECK:      (global $B (ref (exact $sub.desc)) (struct.new_default $sub.desc))
+  (global $B (ref (exact $sub.desc)) (struct.new $sub.desc))
+
+  ;; CHECK:      (func $test (type $5) (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $super
+  ;; CHECK-NEXT:    (global.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $sub
+  ;; CHECK-NEXT:    (global.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.get $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref (exact $super.desc)))
+    (drop
+      (struct.new_default $super
+        (global.get $A)
+      )
+    )
+    (drop
+      (struct.new_default $sub
+      (global.get $B)
+      )
+    )
+    ;; We read from an exact $super here, so the type of the ref.get_desc is
+    ;; exact as well. If we ignore that in the optimization, we might think that
+    ;; the two struct.news before us are two possible values, one from $super and
+    ;; one from $sub, and if we emitted a ref.test between those values, we'd get
+    ;; a non-exact value that does not validate.
+    ;;
+    ;; Instead, we should look only at $super itself, and optimize to $A.
+    (ref.get_desc $super
+      (block (result (ref null (exact $super)))
+        (ref.null $super)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func (type $func) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $func (type $func) (param $0 i32) (result i32)
+    (i32.const 42)
+  )
+)
+
