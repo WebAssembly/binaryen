@@ -432,11 +432,21 @@ struct PCVScanner
     info.note(Literal::makeZero(fieldType));
   }
 
-  void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
-    // Note copies, as they must be considered later. See the comment on the
-    // propagation of values below.
-    // TODO: Take into account exactness here.
-    functionCopyInfos[getFunction()][{type, Inexact}][index] = true;
+  void noteCopy(StructGet* get,
+                Type type,
+                Index index,
+                PossibleConstantValues& info) {
+    // We currently only treat copies from a field to itself specially. See the
+    // comments on value propagation below.
+    // TODO: generalize this.
+    if (get->ref->type.getHeapType() == type.getHeapType() &&
+        get->index == index) {
+      // TODO: Use exactness from `type`.
+      auto ht = std::make_pair(type.getHeapType(), Inexact);
+      functionCopyInfos[getFunction()][ht][index] = true;
+    } else {
+      info.noteUnknown();
+    }
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {

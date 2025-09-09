@@ -101,7 +101,7 @@ struct FieldInfoScanner
     info.noteWrite();
   }
 
-  void noteCopy(HeapType type, Index index, FieldInfo& info) {
+  void noteCopy(StructGet* get, Type type, Index index, FieldInfo& info) {
     info.noteWrite();
   }
 
