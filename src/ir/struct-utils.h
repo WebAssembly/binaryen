@@ -84,7 +84,9 @@ template<typename T> struct StructValues : public std::vector<T> {
   T desc;
 };
 
-// Maps heap types to a StructValues for that heap type.
+// Maps heap types to a StructValues for that heap type. Includes exactness in
+// the key to allow differentiating between values for exact and inexact
+// references to each type.
 //
 // Also provides a combineInto() helper that combines one map into another. This
 // depends on the underlying T defining a combine() method.
