@@ -105,6 +105,7 @@ struct StructValuesMap
     return values;
   }
 
+  // Convenience operator for inexact queries.
   StructValues<T>& operator[](HeapType type) {
     return (*this)[{type, Inexact}];
   }
@@ -414,6 +415,8 @@ public:
   }
 
 private:
+  // `includeExact` is whether to propagate to exact subtypes only because there
+  // are no exact supertypes.
   void propagate(StructValuesMap<T>& combinedInfos,
                  bool toSubTypes,
                  bool toSuperTypes,
@@ -455,14 +458,7 @@ private:
         // Propagate shared fields to the subtypes, which may just be the exact
         // version of the same type.
         auto numFields = type.getStruct().fields.size();
-        std::vector<std::pair<HeapType, Exactness>> subs;
-        if (includeExact) {
-          subs.emplace_back(type, Exact);
-        }
-        for (auto subType : subTypes.getImmediateSubTypes(type)) {
-          subs.emplace_back(subType, Inexact);
-        }
-        for (auto sub : subs) {
+        auto handleSubtype = [&](std::pair<HeapType, Exactness> sub) {
           auto& subInfos = combinedInfos[sub];
           for (Index i = 0; i < numFields; i++) {
             if (subInfos[i].combine(infos[i])) {
@@ -473,6 +469,12 @@ private:
           if (subInfos.desc.combine(infos.desc)) {
             work.push(sub);
           }
+        };
+        if (includeExact) {
+          handleSubtype({type, Exact});
+        }
+        for (auto subType : subTypes.getImmediateSubTypes(type)) {
+          handleSubtype({subType, Inexact});
         }
       }
     }

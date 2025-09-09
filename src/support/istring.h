@@ -84,7 +84,7 @@ public:
   bool startsWith(IString str) const { return startsWith(str.str); }
 
   // Disambiguate for string literals.
-  template<int N> bool startsWith(const char (&str)[N]) {
+  template<int N> bool startsWith(const char (&str)[N]) const {
     return startsWith(std::string_view(str));
   }
 
