@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - The --mod-asyncify-never-unwind and --mod-asyncify-always-and-only-unwind
+   passed were deleted.  They only existed to support the lazy code loading
+   support in emscripten that was removed. (#7893)
+
 v124
 ----
 

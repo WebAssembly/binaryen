@@ -314,13 +314,6 @@ void PassRegistry::registerPasses() {
   registerPass("minimize-rec-groups",
                "Split types into minimal recursion groups",
                createMinimizeRecGroupsPass);
-  registerPass("mod-asyncify-always-and-only-unwind",
-               "apply the assumption that asyncify imports always unwind, "
-               "and we never rewind",
-               createModAsyncifyAlwaysOnlyUnwindPass);
-  registerPass("mod-asyncify-never-unwind",
-               "apply the assumption that asyncify never unwinds",
-               createModAsyncifyNeverUnwindPass);
   registerPass("monomorphize",
                "creates specialized versions of functions",
                createMonomorphizePass);
