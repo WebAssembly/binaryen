@@ -415,6 +415,8 @@ public:
   }
 
 private:
+  // `includeExact` is whether to propagate to exact subtypes only because there
+  // are no exact supertypes.
   void propagate(StructValuesMap<T>& combinedInfos,
                  bool toSubTypes,
                  bool toSuperTypes,
