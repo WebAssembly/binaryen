@@ -456,14 +456,7 @@ private:
         // Propagate shared fields to the subtypes, which may just be the exact
         // version of the same type.
         auto numFields = type.getStruct().fields.size();
-        std::vector<std::pair<HeapType, Exactness>> subs;
-        if (includeExact) {
-          subs.emplace_back(type, Exact);
-        }
-        for (auto subType : subTypes.getImmediateSubTypes(type)) {
-          subs.emplace_back(subType, Inexact);
-        }
-        for (auto sub : subs) {
+        auto handleSubtype = [&](std::pair<HeapType, Exactness> sub) {
           auto& subInfos = combinedInfos[sub];
           for (Index i = 0; i < numFields; i++) {
             if (subInfos[i].combine(infos[i])) {
@@ -474,6 +467,12 @@ private:
           if (subInfos.desc.combine(infos.desc)) {
             work.push(sub);
           }
+        };
+        if (includeExact) {
+          handleSubtype({type, Exact});
+        }
+        for (auto subType : subTypes.getImmediateSubTypes(type)) {
+          handleSubtype({subType, Inexact});
         }
       }
     }
