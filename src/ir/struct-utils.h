@@ -105,6 +105,7 @@ struct StructValuesMap
     return values;
   }
 
+  // Convenience operator for inexact queries.
   StructValues<T>& operator[](HeapType type) {
     return (*this)[{type, Inexact}];
   }
