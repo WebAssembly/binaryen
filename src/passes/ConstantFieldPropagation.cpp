@@ -51,16 +51,54 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
+#include <unordered_set>
+
 #include "ir/bits.h"
 #include "ir/gc-type-utils.h"
 #include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/hash.h"
 #include "support/small_vector.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
+
+namespace wasm {
+
+namespace {
+
+struct CopyInfo {
+  HeapType type;
+  Exactness exact;
+  Index index;
+  bool isSigned;
+
+  bool operator==(const CopyInfo& other) const {
+    return type == other.type && exact == other.exact && index == other.index &&
+           isSigned == other.isSigned;
+  }
+};
+
+} // anonymous namespace
+
+} // namespace wasm
+
+namespace std {
+
+template<> struct hash<wasm::CopyInfo> {
+  size_t operator()(const wasm::CopyInfo& copy) const {
+    auto digest = wasm::hash(copy.type);
+    wasm::rehash(digest, copy.exact);
+    wasm::rehash(digest, copy.index);
+    wasm::rehash(digest, copy.isSigned);
+    return digest;
+  }
+};
+
+} // namespace std
 
 namespace wasm {
 
@@ -74,6 +112,25 @@ using BoolStructValuesMap =
   StructUtils::StructValuesMap<StructUtils::CombinableBool>;
 using BoolFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<StructUtils::CombinableBool>;
+
+using StructFieldPairs =
+  std::unordered_set<std::pair<StructField, StructField>>;
+
+// TODO: Deduplicate with Lattice infrastructure.
+template<typename T> struct CombinableSet : std::unordered_set<T> {
+  bool combine(const CombinableSet<T>& other) {
+    auto originalSize = this->size();
+    this->insert(other.begin(), other.end());
+    return this->size() != originalSize;
+  }
+};
+
+// For each field, the set of fields it is copied to.
+using CopiesStructValuesMap =
+  StructUtils::StructValuesMap<CombinableSet<CopyInfo>>;
+
+using CopiesFunctionStructValuesMap =
+  StructUtils::FunctionStructValuesMap<CombinableSet<CopyInfo>>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -413,7 +470,7 @@ struct PCVScanner
 
   PCVScanner(PCVFunctionStructValuesMap& functionNewInfos,
              PCVFunctionStructValuesMap& functionSetInfos,
-             BoolFunctionStructValuesMap& functionCopyInfos)
+             CopiesFunctionStructValuesMap& functionCopyInfos)
     : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
         functionNewInfos, functionSetInfos),
       functionCopyInfos(functionCopyInfos) {}
@@ -436,17 +493,11 @@ struct PCVScanner
                 Type type,
                 Index index,
                 PossibleConstantValues& info) {
-    // We currently only treat copies from a field to itself specially. See the
-    // comments on value propagation below.
-    // TODO: generalize this.
-    if (get->ref->type.getHeapType() == type.getHeapType() &&
-        get->index == index) {
-      // TODO: Use exactness from `type`.
-      auto ht = std::make_pair(type.getHeapType(), Inexact);
-      functionCopyInfos[getFunction()][ht][index] = true;
-    } else {
-      info.noteUnknown();
-    }
+    auto srcType = get->ref->type.getHeapType();
+    auto srcExact = get->ref->type.getExactness();
+    auto srcIndex = get->index;
+    functionCopyInfos[getFunction()][{srcType, srcExact}][srcIndex].insert(
+      {type.getHeapType(), type.getExactness(), index, get->signed_});
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
@@ -463,7 +514,7 @@ struct PCVScanner
     info.noteUnknown();
   }
 
-  BoolFunctionStructValuesMap& functionCopyInfos;
+  CopiesFunctionStructValuesMap& functionCopyInfos;
 };
 
 struct ConstantFieldPropagation : public Pass {
@@ -483,7 +534,10 @@ struct ConstantFieldPropagation : public Pass {
     // Find and analyze all writes inside each function.
     PCVFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
-    BoolFunctionStructValuesMap functionCopyInfos(*module);
+    CopiesFunctionStructValuesMap functionCopyInfos(*module);
+    for (auto& func : module->functions) {
+      functionCopyInfos[func.get()];
+    }
     PCVScanner scanner(functionNewInfos, functionSetInfos, functionCopyInfos);
     auto* runner = getPassRunner();
     scanner.run(runner, module);
@@ -493,106 +547,141 @@ struct ConstantFieldPropagation : public Pass {
     PCVStructValuesMap combinedSetInfos;
     functionNewInfos.combineInto(combinedSetInfos);
     functionSetInfos.combineInto(combinedSetInfos);
-    BoolStructValuesMap combinedCopyInfos;
+    CopiesStructValuesMap combinedCopyInfos;
     functionCopyInfos.combineInto(combinedCopyInfos);
 
-    // Handle subtyping. |combinedSetInfos| so far contains data that represents
-    // each struct.new and struct.set's operation on the struct type used in
-    // that instruction. That is, if we do a struct.set to type T, the value was
-    // noted for type T. But our actual goal is to answer questions about
-    // struct.gets. Specifically, when later we see:
+    // Perform an analysis to compute the readable values for each triple of
+    // heap type, exactness, and field index. The readable values are
+    // determined by the written values and copies.
     //
-    //  (struct.get $A x (REF-1))
+    // Whenever we have a write like this:
     //
-    // Then we want to be aware of all the relevant struct.sets, that is, the
-    // sets that can write data that this get reads. Given a set
+    //   (struct.set $super x (... ref ...) (... value ...))
     //
-    //  (struct.set $B x (REF-2) (..value..))
+    // The dynamic type of the struct we are writing to may be any subtype of
+    // the type of the ref. For example, if the ref has type (ref $super),
+    // then the write may go to an object of type (ref $super) or (ref $sub).
+    // In contrast, if the ref has an exact type, then we know the write
+    // cannot go to an object of type (ref $sub), which is not a subtype of
+    // (ref (exact $super)). The set of values that may have been written to a
+    // field is therefore the join of all the values we observe being written
+    // to that field in all supertypes of the written reference. The written
+    // values are propagated down to subtypes.
     //
-    // then
+    // Similarly, whenever we have a read like this:
     //
-    //  1. If $B is a subtype of $A, it is relevant: the get might read from a
-    //     struct of type $B (i.e., REF-1 and REF-2 might be identical, and both
-    //     be a struct of type $B).
-    //  2. If $B is a supertype of $A that still has the field x then it may
-    //     also be relevant: since $A is a subtype of $B, the set may write to a
-    //     struct of type $A (and again, REF-1 and REF-2 may be identical).
+    //   (struct.get $super x (... ref ...))
     //
-    // Thus, if either $A <: $B or $B <: $A then we must consider the get and
-    // set to be relevant to each other. To make our later lookups for gets
-    // efficient, we therefore propagate information about the possible values
-    // in each field to both subtypes and supertypes.
+    // The dynamic type of the struct we are reading from may be any subtype
+    // of the type of the ref. The set of values that we might read from a
+    // field is therefore the join of all the values that may have been
+    // written to that field in all subtypes of the read reference. The read
+    // values are propagated up to supertypes.
     //
-    // Values written in struct.news are equivalent to values written to exact
-    // references. In both cases, the propagation to subtypes will not do
-    // anything because an exact reference has no non-trivial subtypes. This
-    // works out because a set of a field of an exact reference (or an
-    // allocation) cannot ever affect the value read out of a subtype's field.
-    //
-    // An exception to the above are copies. If a field is copied then even
-    // struct.new information cannot be assumed to be precise:
-    //
-    //   // A :> B :> C
-    //   ..
-    //   new B(20);
-    //   ..
-    //   A1->f0 = A2->f0; // Either of these might refer to an A, B, or C.
-    //   ..
-    //   foo(A->f0);      // These can contain 20,
-    //   foo(C->f0);      // if the copy read from B.
-    //
-    // The handling of copies is explained below.
+    // Copies are interesting because they invert the normal dependence of
+    // readable values on written values. A copy is a write of a read, so the
+    // writable values depends on the readable values. Because of this cyclic
+    // dependency, we must iteratively update our knowledge of the written and
+    // readable values until we reach a fixed point.
     SubTypes subTypes(*module);
     StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
       subTypes);
 
-    // Compute the values without accounting for copies.
-    PCVStructValuesMap noCopySetInfos = combinedSetInfos;
-    propagator.propagateToSubTypes(noCopySetInfos);
-    propagator.propagateToSuperTypes(noCopySetInfos);
+    PCVStructValuesMap written = std::move(combinedSetInfos);
+    propagator.propagateToSubTypes(written);
+    PCVStructValuesMap readable = written;
+    propagator.propagateToSuperTypes(readable);
 
-    // Now account for copies. A copy takes a value from any subtype
-    // of the copy source to any subtype of the copy destination. Since we last
-    // propagated to supertypes, we know the propagated values increase
-    // monotonically as you go up the type hierarchy. The propagated value in a
-    // field therefore overapproximates the values in the corresponding field in
-    // all the subtypes. So for each copy, we can use the propagated value as
-    // the copied value. Then we will propagate set values again, this time
-    // including the copied values. We only need to repeat the propagation once;
-    // if the second propagation discovers greater values in the copied fields,
-    // it can only be because those greater values were propagated from a
-    // supertype. In that case, the greater value has also been propagated to
-    // all subtypes, so repeating the process will not further change anything.
+    // Now apply copies and propagate the new information until we have a
+    // fixed point. We could just join the copied values into `written`,
+    // propagate all of `written` down again, and recompute `readable`,
+    // but that would do more work than necessary since most fields are not
+    // going to be involved in copies. We will handle the propagation manually
+    // instead.
     //
-    // TODO: Track separate sources and destinations of copies rather than
-    // special-casing copies to self. This would let propagation discover
-    // greater copied values from unrelated types or even different field
-    // indices, so we would have to repeatedly propagate taking into account the
-    // latest discovered copied values until reaching a fixed point.
-    for (auto& [type, copied] : combinedCopyInfos) {
-      for (Index i = 0; i < copied.size(); ++i) {
-        if (copied[i]) {
-          combinedSetInfos[type][i].combine(noCopySetInfos[type][i]);
+    // Since the analysis records untruncated values for packed fields, we must
+    // be careful to truncate and sign extend copy source values as necessary.
+    // We generally don't truncate values based on their destination because
+    // that would regress propagation of globals when they are not copied.
+    // TODO: Track truncations in the analysis itself to propagate them through
+    // copies, even of globals.
+    UniqueDeferredQueue<CopyInfo> work;
+    auto applyCopiesTo = [&](auto& dsts, const Field& src, const auto& val) {
+      for (auto& dst : dsts) {
+        auto packed = val;
+        packed.packForField(src, dst.isSigned);
+        if (written[{dst.type, dst.exact}][dst.index].combine(packed)) {
+          work.push(dst);
+        }
+      }
+    };
+    auto applyCopiesFrom =
+      [&](HeapType src, Exactness exact, Index index, const auto& val) {
+        if (auto it = combinedCopyInfos.find({src, exact});
+            it != combinedCopyInfos.end()) {
+          const auto& srcField = src.getStruct().fields[index];
+          applyCopiesTo(it->second[index], srcField, val);
+        }
+      };
+    // For each copy, take the readable values at its source and join them to
+    // the written values at its destination. Record the written values that
+    // change so we can propagate the new information afterward.
+    for (auto& [srcType, fields] : combinedCopyInfos) {
+      for (Index srcField = 0; srcField < fields.size(); ++srcField) {
+        const auto& field = srcType.first.getStruct().fields[srcType.second];
+        applyCopiesTo(fields[srcField], field, readable[srcType][srcField]);
+      }
+    }
+    while (work.size()) {
+      // Propagate down from dst in both written and readable, then
+      // propagate up from dst in readable only. Whenever we make a change in
+      // readable, see if there are copies to apply. If there are copies and
+      // they make changes, then we have more propagation work to do later.
+      auto dst = work.pop();
+      assert(dst.index != StructUtils::DescriptorIndex);
+      auto val = written[{dst.type, dst.exact}][dst.index];
+      val.packForField(dst.type.getStruct().fields[dst.index]);
+      // Make the copied value readable.
+      if (readable[{dst.type, dst.exact}][dst.index].combine(val)) {
+        applyCopiesFrom(dst.type, dst.exact, dst.index, val);
+      }
+      if (dst.exact == Inexact) {
+        // Propagate down to subtypes.
+        written[{dst.type, Exact}][dst.index].combine(val);
+        subTypes.iterSubTypes(dst.type, [&](HeapType sub, Index depth) {
+          written[{sub, Inexact}][dst.index].combine(val);
+          written[{sub, Exact}][dst.index].combine(val);
+          if (readable[{sub, Inexact}][dst.index].combine(val)) {
+            applyCopiesFrom(sub, Inexact, dst.index, val);
+          }
+          if (readable[{sub, Exact}][dst.index].combine(val)) {
+            applyCopiesFrom(sub, Exact, dst.index, val);
+          }
+        });
+      } else {
+        // The copy destination is exact, so there are no subtypes to
+        // propagate to, but we do need to propagate up to the inexact type.
+        if (readable[{dst.type, Inexact}][dst.index].combine(val)) {
+          applyCopiesFrom(dst.type, Inexact, dst.index, val);
+        }
+      }
+      // Propagate up to the supertypes.
+      for (auto super = dst.type.getDeclaredSuperType(); super;
+           super = super->getDeclaredSuperType()) {
+        auto& readableSuperFields = readable[{*super, Inexact}];
+        if (dst.index >= readableSuperFields.size()) {
+          break;
+        }
+        if (readableSuperFields[dst.index].combine(val)) {
+          applyCopiesFrom(*super, Inexact, dst.index, val);
         }
       }
     }
 
-    // Propagate the values again, now including values readable by copies.
-    // RefTest optimization manually checks the values in every subtype to
-    // make sure they match, so there's no need to propagate values up for that.
-    // Snapshot the info before propagating up for use in RefTest
-    // optimization.
-    PCVStructValuesMap refTestInfos;
-    propagator.propagateToSubTypes(combinedSetInfos);
-    if (refTest) {
-      refTestInfos = combinedSetInfos;
-    }
-    propagator.propagateToSuperTypes(combinedSetInfos);
-
     // Optimize.
-    // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedSetInfos, refTestInfos, subTypes, refTest)
-      .run(runner, module);
+    // TODO: Skip this if we cannot optimize anything.
+    FunctionOptimizer(readable, written, subTypes, refTest).run(runner, module);
+    return;
   }
 };
 
