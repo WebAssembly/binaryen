@@ -449,17 +449,16 @@ private:
         }
       }
 
-      if (toSubTypes) {
+      if (toSubTypes && exactness == Inexact) {
         // Propagate shared fields to the subtypes, which may just be the exact
         // version of the same type.
         auto numFields = type.getStruct().fields.size();
         std::vector<std::pair<HeapType, Exactness>> subs;
-        if (includeExact && exactness == Inexact) {
-          subs = {{type, Exact}};
-        } else {
-          for (auto subType : subTypes.getImmediateSubTypes(type)) {
-            subs.emplace_back(subType, Inexact);
-          }
+        if (includeExact) {
+          subs.emplace_back(type, Exact);
+        }
+        for (auto subType : subTypes.getImmediateSubTypes(type)) {
+          subs.emplace_back(subType, Inexact);
         }
         for (auto sub : subs) {
           auto& subInfos = combinedInfos[sub];
