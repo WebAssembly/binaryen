@@ -91,15 +91,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // subtyping and new infos (information about struct.news).
   std::unique_ptr<Pass> create() override {
     return std::make_unique<FunctionOptimizer>(
-      propagatedInfos, subTypes, rawNewInfos, refTest);
+      propagatedInfos, refTestInfos, subTypes, refTest);
   }
 
   FunctionOptimizer(const PCVStructValuesMap& propagatedInfos,
+                    const PCVStructValuesMap& refTestInfos,
                     const SubTypes& subTypes,
-                    const PCVStructValuesMap& rawNewInfos,
                     bool refTest)
-    : propagatedInfos(propagatedInfos), subTypes(subTypes),
-      rawNewInfos(rawNewInfos), refTest(refTest) {}
+    : propagatedInfos(propagatedInfos), refTestInfos(refTestInfos),
+      subTypes(subTypes), refTest(refTest) {}
 
   template<typename T> std::optional<HeapType> getRelevantHeapType(T* ref) {
     auto type = ref->type;
@@ -210,7 +210,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // on simply applying a constant. However, we can try to use a ref.test, if
     // that is allowed.
     if (!info.isConstant()) {
-      if (refTest) {
+      if (refTest && !ref->type.isExact()) {
         optimizeUsingRefTest(curr, ref, index);
       }
       return;
@@ -232,22 +232,6 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   void optimizeUsingRefTest(Expression* curr, Expression* ref, Index index) {
     auto refType = ref->type;
     auto refHeapType = refType.getHeapType();
-
-    // We only handle immutable fields in this function, as we will be looking
-    // at |rawNewInfos|. That is, we are trying to see when a type and its
-    // subtypes have different values (so that we can differentiate between them
-    // using a ref.test), and those differences are lost in |propagatedInfos|,
-    // which has propagated to relevant types so that we can do a single check
-    // to see what value could be there. So we need to use something more
-    // precise, |rawNewInfos|, which tracks the values written to struct.news,
-    // where we know the type exactly (unlike with a struct.set). But for that
-    // reason the field must be immutable, so that it is valid to only look at
-    // the struct.news. (A more complex flow analysis could do better here, but
-    // would be far beyond the scope of this pass.)
-    if (index != StructUtils::DescriptorIndex &&
-        GCTypeUtils::getField(refType, index)->mutable_ == Mutable) {
-      return;
-    }
 
     // We seek two possible constant values. For each we track the constant and
     // the types that have that constant. For example, if we have types A, B, C
@@ -283,13 +267,17 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         return;
       }
 
-      auto iter = rawNewInfos.find({type, Exact});
-      if (iter == rawNewInfos.end()) {
-        // This type has no struct.news, so we can ignore it: it is abstract.
+      auto iter = refTestInfos.find({type, Exact});
+      if (iter == refTestInfos.end()) {
+        // This type has no allocations, so we can ignore it: it is abstract.
         return;
       }
 
       auto value = iter->second[index];
+      if (!value.hasNoted()) {
+        // Also abstract and ignorable.
+        return;
+      }
       if (!value.isConstant()) {
         // The value here is not constant, so give up entirely.
         fail = true;
@@ -409,8 +397,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
 private:
   const PCVStructValuesMap& propagatedInfos;
+  const PCVStructValuesMap& refTestInfos;
   const SubTypes& subTypes;
-  const PCVStructValuesMap& rawNewInfos;
   const bool refTest;
 
   bool changed = false;
@@ -492,20 +480,13 @@ struct ConstantFieldPropagation : public Pass {
     scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
-    PCVStructValuesMap combinedNewInfos, combinedSetInfos;
-    functionNewInfos.combineInto(combinedNewInfos);
+    PCVStructValuesMap combinedSetInfos;
+    functionNewInfos.combineInto(combinedSetInfos);
     functionSetInfos.combineInto(combinedSetInfos);
     BoolStructValuesMap combinedCopyInfos;
     functionCopyInfos.combineInto(combinedCopyInfos);
 
-    // Prepare data we will need later.
-    SubTypes subTypes(*module);
-
-    // Copy the unpropagated data before we propagate. We use this in precise
-    // lookups.
-    auto rawNewInfos = combinedNewInfos;
-
-    // Handle subtyping. |combinedInfo| so far contains data that represents
+    // Handle subtyping. |combinedSetInfos| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
     // that instruction. That is, if we do a struct.set to type T, the value was
     // noted for type T. But our actual goal is to answer questions about
@@ -532,10 +513,11 @@ struct ConstantFieldPropagation : public Pass {
     // efficient, we therefore propagate information about the possible values
     // in each field to both subtypes and supertypes.
     //
-    // struct.new on the other hand knows exactly what type is being written to,
-    // and so given a get of $A and a new of $B, the new is relevant for the get
-    // iff $A is a subtype of $B, so we only need to propagate in one direction
-    // there, to supertypes.
+    // Values written in struct.news are equivalent to values written to exact
+    // references. In both cases, the propagation to subtypes will not do
+    // anything because an exact reference has no non-trivial subtypes. This
+    // works out because a set of a field of an exact reference (or an
+    // allocation) cannot ever affect the value read out of a subtype's field.
     //
     // An exception to the above are copies. If a field is copied then even
     // struct.new information cannot be assumed to be precise:
@@ -549,36 +531,57 @@ struct ConstantFieldPropagation : public Pass {
     //   foo(A->f0);      // These can contain 20,
     //   foo(C->f0);      // if the copy read from B.
     //
-    // To handle that, copied fields are treated like struct.set ones (by
-    // copying the struct.new data to struct.set). Note that we must propagate
-    // copying to subtypes first, as in the example above the struct.new values
-    // of subtypes must be taken into account (that is, A or a subtype is being
-    // copied, so we want to do the same thing for B and C as well as A, since
-    // a copy of A means it could be a copy of B or C).
-    StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
-      boolPropagator(subTypes);
-    boolPropagator.propagateToSubTypesWithExact(combinedCopyInfos);
+    // The handling of copies is explained below.
+    SubTypes subTypes(*module);
+    StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
+      subTypes);
+
+    // Compute the values without accounting for copies.
+    PCVStructValuesMap noCopySetInfos = combinedSetInfos;
+    propagator.propagateToSubTypesWithExact(noCopySetInfos);
+    propagator.propagateToSuperTypes(noCopySetInfos);
+
+    // Now account for copies. A copy takes a value from any subtype
+    // of the copy source to any subtype of the copy destination. Since we last
+    // propagated to supertypes, we know the propagated values increase
+    // monotonically as you go up the type hierarchy. The propagated value in a
+    // field therefore overapproximates the values in the corresponding field in
+    // all the subtypes. So for each copy, we can use the propagated value as
+    // the copied value. Then we will propagate set values again, this time
+    // including the copied values. We only need to repeat the propagation once;
+    // if the second propagation discovers greater values in the copied fields,
+    // it can only be because those greater values were propagated from a
+    // supertype. In that case, the greater value has also been propagated to
+    // all subtypes, so repeating the process will not further change anything.
+    //
+    // TODO: Track separate sources and destinations of copies rather than
+    // special-casing copies to self. This would let propagation discover
+    // greater copied values from unrelated types or even different field
+    // indices, so we would have to repeatedly propagate taking into account the
+    // latest discovered copied values until reaching a fixed point.
     for (auto& [type, copied] : combinedCopyInfos) {
-      for (Index i = 0; i < copied.size(); i++) {
+      for (Index i = 0; i < copied.size(); ++i) {
         if (copied[i]) {
-          combinedSetInfos[type][i].combine(combinedNewInfos[type][i]);
+          combinedSetInfos[type][i].combine(noCopySetInfos[type][i]);
         }
       }
     }
 
-    StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
-      subTypes);
-    propagator.propagateToSuperTypes(combinedNewInfos);
-    propagator.propagateToSuperAndSubTypesWithExact(combinedSetInfos);
-
-    // Combine both sources of information to the final information that gets
-    // care about.
-    PCVStructValuesMap combinedInfos = std::move(combinedNewInfos);
-    combinedSetInfos.combineInto(combinedInfos);
+    // Propagate the values again, now including values readable by copies.
+    // RefTest optimization manually checks the values in every subtype to
+    // make sure they match, so there's no need to propagate values up for that.
+    // Snapshot the info before propagating up for use in RefTest
+    // optimization.
+    PCVStructValuesMap refTestInfos;
+    propagator.propagateToSubTypesWithExact(combinedSetInfos);
+    if (refTest) {
+      refTestInfos = combinedSetInfos;
+    }
+    propagator.propagateToSuperTypes(combinedSetInfos);
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedInfos, subTypes, rawNewInfos, refTest)
+    FunctionOptimizer(combinedSetInfos, refTestInfos, subTypes, refTest)
       .run(runner, module);
   }
 };

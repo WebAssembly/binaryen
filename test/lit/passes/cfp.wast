@@ -2331,19 +2331,25 @@
   ;; CHECK-NEXT:  (local $B (ref $B))
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (select (result (ref null $A))
-  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:    (block (result (ref null $A))
-  ;; CHECK-NEXT:     (local.tee $B
-  ;; CHECK-NEXT:      (struct.new $B
-  ;; CHECK-NEXT:       (i32.const 20)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.tee $B
+  ;; CHECK-NEXT:     (struct.new $B
+  ;; CHECK-NEXT:      (i32.const 20)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (struct.new $A
-  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    (select (result (ref null $A))
+  ;; CHECK-NEXT:     (block (result (ref null $A))
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $A
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2360,22 +2366,29 @@
     ;; that we track the copied value even though the copy is on $A but it
     ;; affects $B.
     (struct.set $A 0
-      ;; This select is used to keep the type that reaches the struct.set $A,
-      ;; and not $B, so it looks like a perfect copy of $A->$A.
+      ;; Use selects to make sure the types reaching the set and get are not more
+      ;; precise than (ref null $A). This will look like a perfect copy of
+      ;; $A->$A.
       (select (result (ref null $A))
-        (ref.null none)
         (block (result (ref null $A))
-          (local.tee $B
-            (struct.new $B
-              (i32.const 20)
-            )
+          (ref.null none)
+        )
+        (local.tee $B
+          (struct.new $B
+            (i32.const 20)
           )
         )
         (i32.const 0)
       )
       (struct.get $A 0
-        (struct.new $A
-          (i32.const 10)
+        (select (result (ref null $A))
+          (block (result (ref null $A))
+            (ref.null none)
+          )
+          (struct.new $A
+            (i32.const 10)
+          )
+          (i32.const 0)
         )
       )
     )
@@ -2655,18 +2668,33 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (local.get $A-exact)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A-exact)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (local.get $B-exact)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B-exact)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2698,7 +2726,7 @@
       (local.get $B-exact)
       (i32.const 20)
     )
-    ;; We should be able to optimize an inexact $B, but not $A TODO.
+    ;; We should be able to optimize an inexact $B, but not $A.
     (drop
       (struct.get $A 0
         (local.get $A)
@@ -2804,8 +2832,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $C 0
-  ;; CHECK-NEXT:    (local.get $C)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $C)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2820,7 +2853,7 @@
         (local.get $B)
       )
     )
-    ;; This should be optimizable TODO.
+    ;; This should be optimizable.
     (drop
       (struct.get $C 0
         (local.get $C)
@@ -2830,8 +2863,13 @@
 
   ;; CHECK:      (func $exact-gets (type $6) (param $A-exact (ref (exact $A))) (param $B-exact (ref (exact $B))) (param $C-exact (ref (exact $C)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (local.get $A-exact)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A-exact)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2840,8 +2878,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $C 0
-  ;; CHECK-NEXT:    (local.get $C-exact)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $C-exact)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2849,7 +2892,7 @@
                     (param $B-exact (ref (exact $B)))
                     (param $C-exact (ref (exact $C)))
     (drop
-      ;; This should be optimizable TODO.
+      ;; This should be optimizable.
       (struct.get $A 0
         (local.get $A-exact)
       )
@@ -2860,7 +2903,7 @@
         (local.get $B-exact)
       )
     )
-    ;; This should be optimizable TODO.
+    ;; This should be optimizable.
     (drop
       (struct.get $C 0
         (local.get $C-exact)
@@ -3030,8 +3073,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B2 0
-  ;; CHECK-NEXT:    (local.get $B2)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -3073,8 +3121,7 @@
         (local.get $B1)
       )
     )
-    ;; The copy can't refer to a $B2, so we can optimize here. TODO (but GUFA
-    ;; can do this)
+    ;; The copy can't refer to a $B2, so we can optimize here.
     (drop
       (struct.get $B2 0
         (local.get $B2)
@@ -3132,8 +3179,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B1 0
-  ;; CHECK-NEXT:    (local.get $B1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -3179,8 +3231,7 @@
         (local.get $A)
       )
     )
-    ;; The copy can't refer to a $B1, so we can optimize here. TODO (but GUFA
-    ;; can do this)
+    ;; The copy can't refer to a $B1, so we can optimize here.
     (drop
       (struct.get $B1 0
         (local.get $B1)
@@ -3287,16 +3338,9 @@
 
   ;; CHECK:      (func $get-B (type $9) (param $B (ref null $B)) (result (ref null $Y))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $B)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $B)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $get-B (param $B (ref null $B)) (result (ref null $Y))
     ;; This should not be optimized to a global.get: no $B is created, and we
