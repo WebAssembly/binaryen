@@ -572,7 +572,6 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-
         // Remove an unneeded describee or describe a placeholder type.
         if (auto described = oldType.getDescribedType()) {
           if (parent.haveUnneededDescriptors.count(*described)) {
