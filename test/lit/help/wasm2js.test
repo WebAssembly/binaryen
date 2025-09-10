@@ -256,13 +256,6 @@
 ;; CHECK-NEXT:   --minimize-rec-groups                         Split types into minimal
 ;; CHECK-NEXT:                                                 recursion groups
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --mod-asyncify-always-and-only-unwind         apply the assumption that
-;; CHECK-NEXT:                                                 asyncify imports always unwind,
-;; CHECK-NEXT:                                                 and we never rewind
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --mod-asyncify-never-unwind                   apply the assumption that
-;; CHECK-NEXT:                                                 asyncify never unwinds
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --monomorphize                                creates specialized versions of
 ;; CHECK-NEXT:                                                 functions
 ;; CHECK-NEXT:
@@ -337,9 +330,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-full                                  print in full s-expression
 ;; CHECK-NEXT:                                                 format
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --print-function-map                          print a map of function indexes
-;; CHECK-NEXT:                                                 to names
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-minified                              print in minified s-expression
 ;; CHECK-NEXT:                                                 format
@@ -492,8 +482,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --stub-unsupported-js                         stub out unsupported JS
 ;; CHECK-NEXT:                                                 operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --table64-lowering                            alias for memory64-lowering
 ;; CHECK-NEXT:

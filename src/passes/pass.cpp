@@ -314,13 +314,6 @@ void PassRegistry::registerPasses() {
   registerPass("minimize-rec-groups",
                "Split types into minimal recursion groups",
                createMinimizeRecGroupsPass);
-  registerPass("mod-asyncify-always-and-only-unwind",
-               "apply the assumption that asyncify imports always unwind, "
-               "and we never rewind",
-               createModAsyncifyAlwaysOnlyUnwindPass);
-  registerPass("mod-asyncify-never-unwind",
-               "apply the assumption that asyncify never unwinds",
-               createModAsyncifyNeverUnwindPass);
   registerPass("monomorphize",
                "creates specialized versions of functions",
                createMonomorphizePass);
@@ -397,17 +390,6 @@ void PassRegistry::registerPasses() {
     "print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass(
     "print-call-graph", "print call graph", createPrintCallGraphPass);
-
-  // Register PrintFunctionMap using its normal name.
-  registerPass("print-function-map",
-               "print a map of function indexes to names",
-               createPrintFunctionMapPass);
-  // Also register it as "symbolmap" so that  wasm-opt --symbolmap=foo  is the
-  // same as  wasm-as --symbolmap=foo  even though the latter is not a pass
-  // (wasm-as cannot run arbitrary passes).
-  // TODO: switch emscripten to this name, then remove the old one
-  registerPass(
-    "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
 
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
