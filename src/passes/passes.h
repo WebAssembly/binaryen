@@ -121,8 +121,6 @@ Pass* createOptimizeForJSPass();
 Pass* createOutliningPass();
 #endif
 Pass* createPickLoadSignsPass();
-Pass* createModAsyncifyAlwaysOnlyUnwindPass();
-Pass* createModAsyncifyNeverUnwindPass();
 Pass* createLLVMNonTrappingFPToIntLoweringPass();
 Pass* createPoppifyPass();
 Pass* createPostEmscriptenPass();
@@ -131,7 +129,6 @@ Pass* createPrecomputePropagatePass();
 Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();
-Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRandomizeBranchHintsPass();
 Pass* createRemoveNonJSOpsPass();
