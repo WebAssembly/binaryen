@@ -30,10 +30,9 @@
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/permutations.h"
-#include "wasm-builder.h"
 #include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -137,6 +136,12 @@ struct GlobalTypeOptimization : public Pass {
 
   // The types that no longer need a descriptor.
   std::unordered_set<HeapType> haveUnneededDescriptors;
+
+  // Descriptor types that are not needed by their described types but that
+  // still need to be descriptors for their own subtypes and supertypes to be
+  // valid. We will keep them descriptors by having them describe trivial new
+  // placeholder types.
+  InsertOrderedMap<HeapType, Index> descriptorsOfPlaceholders;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -423,9 +428,11 @@ struct GlobalTypeOptimization : public Pass {
     //        ^
     //   B -> B.desc
     //
-    // Here the descriptors subtype, but *not* the describees. We cannot
-    // remove A's descriptor without also removing $B's, so we need to propagate
-    // that "must remain a descriptor" property among descriptors.
+    // Say we want to optimize A to no longer have a descriptor. Then A.desc
+    // will no longer describe A. But A.desc still needs to be a descriptor for
+    // it to remain a valid supertype of B.desc. To allow the optimization of A
+    // to proceed, we will introduce a placeholder type for A.desc to describe,
+    // keeping it a descriptor type.
     if (!haveUnneededDescriptors.empty()) {
       StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
         descPropagator(subTypes);
@@ -433,35 +440,31 @@ struct GlobalTypeOptimization : public Pass {
       // Populate the initial data: Any descriptor we did not see was unneeded,
       // is needed.
       StructUtils::TypeHierarchyPropagator<
-        StructUtils::CombinableBool>::StructMap map;
+        StructUtils::CombinableBool>::StructMap remainingDesciptors;
       for (auto type : subTypes.types) {
         if (auto desc = type.getDescriptorType()) {
           if (!haveUnneededDescriptors.count(type)) {
             // This descriptor type is needed.
-            map[*desc].value = true;
+            remainingDesciptors[*desc].value = true;
           }
         }
       }
 
       // Propagate.
-      descPropagator.propagateToSuperAndSubTypes(map);
+      descPropagator.propagateToSuperAndSubTypes(remainingDesciptors);
 
-      // Remove optimization opportunities that the propagation ruled out.
-      // TODO: We could do better here,
-      //
-      //         A -> A.desc              A    A.desc <- A2
-      //              ^           =>           ^
-      //         B -> B.desc              B -> B.desc
-      //
-      // Starting from the left, we can remove A's descriptor *but keep A.desc
-      // as being a descriptor*, by making it describe a new type A2. That would
-      // keep subtyping working for the descriptors, and later passes could
-      // remove the unused A2.
-      for (auto& [type, info] : map) {
-        if (info.value) {
-          auto described = type.getDescribedType();
-          assert(described);
-          haveUnneededDescriptors.erase(*described);
+      // Determine the set of descriptor types that will need placeholder
+      // describees. Do not iterate directly on remainingDescriptors because it
+      // is not deterministically ordered.
+      for (auto type : subTypes.types) {
+        if (auto it = remainingDesciptors.find(type);
+            it != remainingDesciptors.end() && it->second.value) {
+          auto desc = type.getDescribedType();
+          assert(desc);
+          if (haveUnneededDescriptors.count(*desc)) {
+            descriptorsOfPlaceholders.insert(
+              {type, descriptorsOfPlaceholders.size()});
+          }
         }
       }
     }
@@ -484,10 +487,22 @@ struct GlobalTypeOptimization : public Pass {
   void updateTypes(Module& wasm) {
     class TypeRewriter : public GlobalTypeRewriter {
       GlobalTypeOptimization& parent;
+      InsertOrderedMap<HeapType, Index>::iterator placeholderIt;
 
     public:
       TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm), parent(parent),
+          placeholderIt(parent.descriptorsOfPlaceholders.begin()) {}
+
+      std::vector<HeapType> getSortedTypes(PredecessorGraph preds) override {
+        auto types = GlobalTypeRewriter::getSortedTypes(std::move(preds));
+        // Prefix the types with placeholders to be overwritten with the
+        // placeholder describees.
+        HeapType placeholder = Struct{};
+        types.insert(
+          types.begin(), parent.descriptorsOfPlaceholders.size(), placeholder);
+        return types;
+      }
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         auto& newFields = struct_.fields;
@@ -549,16 +564,29 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
+        // Until we've created all the placeholders, create a placeholder
+        // describee type for the next descriptor that needs one.
+        if (placeholderIt != parent.descriptorsOfPlaceholders.end()) {
+          typeBuilder[i].descriptor(getTempHeapType(placeholderIt->first));
+          ++placeholderIt;
+          return;
+        }
+
+        // Remove an unneeded describee or describe a placeholder type.
+        if (auto described = oldType.getDescribedType()) {
+          if (parent.haveUnneededDescriptors.count(*described)) {
+            if (auto it = parent.descriptorsOfPlaceholders.find(oldType);
+                it != parent.descriptorsOfPlaceholders.end()) {
+              typeBuilder[i].describes(typeBuilder[it->second]);
+            } else {
+              typeBuilder[i].describes(std::nullopt);
+            }
+          }
+        }
+
         // Remove an unneeded descriptor.
         if (parent.haveUnneededDescriptors.count(oldType)) {
           typeBuilder.setDescriptor(i, std::nullopt);
-        }
-
-        // Remove an unneeded describes.
-        if (auto described = oldType.getDescribedType()) {
-          if (parent.haveUnneededDescriptors.count(*described)) {
-            typeBuilder.setDescribed(i, std::nullopt);
-          }
         }
       }
     };
