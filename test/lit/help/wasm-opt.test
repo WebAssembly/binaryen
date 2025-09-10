@@ -391,9 +391,6 @@
 ;; CHECK-NEXT:   --print-full                                  print in full s-expression
 ;; CHECK-NEXT:                                                 format
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --print-function-map                          print a map of function indexes
-;; CHECK-NEXT:                                                 to names
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-minified                              print in minified s-expression
 ;; CHECK-NEXT:                                                 format
 ;; CHECK-NEXT:
@@ -545,8 +542,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --stub-unsupported-js                         stub out unsupported JS
 ;; CHECK-NEXT:                                                 operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --table64-lowering                            alias for memory64-lowering
 ;; CHECK-NEXT:
