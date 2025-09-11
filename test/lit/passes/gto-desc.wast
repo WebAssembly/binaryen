@@ -783,7 +783,7 @@
 )
 
 ;; As above, but add a use of $A's descriptor. We cannot remove a descriptor
-;; without removing it from subtypes, so we cannot optimize anything.
+;; without removing it from supertypes, so we cannot optimize anything.
 (module
   (rec
     ;; CHECK:      (rec
@@ -864,13 +864,16 @@
   )
 )
 
-;; As above, but use $B's. This also stops everything.
+;; As above, but use $B's. Now we can optimize $A's descriptor, but we need to
+;; give it a placeholder type to describe.
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK-NEXT:  (type $0 (descriptor $A.desc (struct)))
+
+    ;; CHECK:       (type $A (sub (struct)))
     (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $0 (struct))))
     (type $A.desc (sub (describes $A (struct))))
 
     ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
@@ -884,9 +887,9 @@
     (type $C.desc (sub $B.desc (describes $C (struct))))
   )
 
-  ;; CHECK:      (type $6 (func))
+  ;; CHECK:       (type $7 (func))
 
-  ;; CHECK:      (func $test (type $6)
+  ;; CHECK:      (func $test (type $7)
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (local $A.desc (ref $A.desc))
   ;; CHECK-NEXT:  (local $B (ref $B))
@@ -894,9 +897,7 @@
   ;; CHECK-NEXT:  (local $C (ref $C))
   ;; CHECK-NEXT:  (local $C.desc (ref $C.desc))
   ;; CHECK-NEXT:  (local.set $A
-  ;; CHECK-NEXT:   (struct.new_default $A
-  ;; CHECK-NEXT:    (struct.new_default $A.desc)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $B
   ;; CHECK-NEXT:   (struct.new_default $B
@@ -945,18 +946,22 @@
   )
 )
 
-;; As above, with $C.
+;; As above, with $C. Now we optimize $A and $B with placeholders.
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK-NEXT:  (type $0 (descriptor $A.desc (struct)))
+
+    ;; CHECK:       (type $1 (descriptor $B.desc (struct)))
+
+    ;; CHECK:       (type $A (sub (struct)))
     (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $0 (struct))))
     (type $A.desc (sub (describes $A (struct))))
 
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B (sub $A (struct)))
     (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $1 (struct))))
     (type $B.desc (sub $A.desc (describes $B (struct))))
 
     ;; CHECK:       (type $C (sub $B (descriptor $C.desc (struct))))
@@ -965,9 +970,9 @@
     (type $C.desc (sub $B.desc (describes $C (struct))))
   )
 
-  ;; CHECK:      (type $6 (func))
+  ;; CHECK:       (type $8 (func))
 
-  ;; CHECK:      (func $test (type $6)
+  ;; CHECK:      (func $test (type $8)
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (local $A.desc (ref $A.desc))
   ;; CHECK-NEXT:  (local $B (ref $B))
@@ -975,14 +980,10 @@
   ;; CHECK-NEXT:  (local $C (ref $C))
   ;; CHECK-NEXT:  (local $C.desc (ref $C.desc))
   ;; CHECK-NEXT:  (local.set $A
-  ;; CHECK-NEXT:   (struct.new_default $A
-  ;; CHECK-NEXT:    (struct.new_default $A.desc)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $B
-  ;; CHECK-NEXT:   (struct.new_default $B
-  ;; CHECK-NEXT:    (struct.new_default $B.desc)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $C
   ;; CHECK-NEXT:   (struct.new_default $C
