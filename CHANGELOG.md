@@ -18,8 +18,6 @@ Current Trunk
  - The --mod-asyncify-never-unwind and --mod-asyncify-always-and-only-unwind
    passed were deleted.  They only existed to support the lazy code loading
    support in emscripten that was removed. (#7893)
- - The --print-symbol-map/--symbolmap flags we removed. They only existed to
-   support an emscripten feature which was re-implemented downstream. (#7862)
 
 v124
 ----
