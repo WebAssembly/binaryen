@@ -91,6 +91,7 @@ set(passes_SOURCES
   Print.cpp
   PrintCallGraph.cpp
   PrintFeatures.cpp
+  PrintFunctionMap.cpp
   RoundTrip.cpp
   SetGlobals.cpp
   SignaturePruning.cpp
