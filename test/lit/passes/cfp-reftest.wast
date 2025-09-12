@@ -279,18 +279,18 @@
   )
 )
 
-;; Almost optimizable, but the field is mutable, so we can't.
+;; The field is mutable, but we can still optimize.
 (module
   ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
   (type $struct (sub (struct (mut i32))))
-  ;; CHECK:      (type $1 (func))
-
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
   (type $substruct (sub $struct (struct (mut i32) f64)))
 
+  ;; CHECK:      (type $2 (func))
+
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
 
-  ;; CHECK:      (func $create (type $1)
+  ;; CHECK:      (func $create (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -317,6 +317,167 @@
     )
   )
   ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (ref.test (ref $substruct)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $struct (ref null $struct)) (result i32)
+    ;; We cannot optimize here.
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+)
+
+;; No-op sets do not inhibit optimization.
+(module
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
+  (type $struct (sub (struct (mut i32))))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
+  (type $substruct (sub $struct (struct (mut i32) f64)))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (param (ref null (exact $struct)) (ref null $substruct))))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (func $create (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (i32.const 20)
+        (f64.const 3.14159)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sets (type $3) (param $struct-exact (ref null (exact $struct))) (param $substruct (ref null $substruct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct-exact)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $substruct 0
+  ;; CHECK-NEXT:   (local.get $substruct)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sets (param $struct-exact (ref null (exact $struct))) (param $substruct (ref null $substruct))
+    (struct.set $struct 0
+      (local.get $struct-exact)
+      (i32.const 10)
+    )
+    (struct.set $substruct 0
+      (local.get $substruct)
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $get (type $4) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (ref.test (ref $substruct)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $struct (ref null $struct)) (result i32)
+    ;; We cannot optimize here.
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+)
+
+;; Same as above, except now the set to $struct is inexact so we cannot
+;; optimize.
+(module
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
+  (type $struct (sub (struct (mut i32))))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
+  (type $substruct (sub $struct (struct (mut i32) f64)))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (param (ref null $struct) (ref null $substruct))))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (func $create (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (i32.const 20)
+        (f64.const 3.14159)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sets (type $3) (param $struct (ref null $struct)) (param $substruct (ref null $substruct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $substruct 0
+  ;; CHECK-NEXT:   (local.get $substruct)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sets (param $struct (ref null $struct)) (param $substruct (ref null $substruct))
+    (struct.set $struct 0
+      (local.get $struct)
+      (i32.const 10)
+    )
+    (struct.set $substruct 0
+      (local.get $substruct)
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $get (type $4) (param $struct (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (struct.get $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
