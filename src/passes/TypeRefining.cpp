@@ -86,9 +86,16 @@ struct FieldInfoScanner
     info.note(fieldType);
   }
 
-  void noteCopy(HeapType type, Index index, FieldInfo& info) {
-    // Copies do not add any type requirements at all: the type will always be
-    // read and written to a place with the same type.
+  void noteCopy(StructGet* get, Type type, Index index, FieldInfo& info) {
+    // Copies with identical sources and destinations do not add any type
+    // requirements.
+    auto srcType = get->ref->type.getHeapType();
+    auto dstType = type.getHeapType();
+    if (srcType == dstType && get->index == index) {
+      return;
+    }
+    // Otherwise we must note the written type.
+    noteExpression(get, dstType, index, info);
   }
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
