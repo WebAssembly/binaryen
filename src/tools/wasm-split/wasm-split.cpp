@@ -406,23 +406,23 @@ void multiSplitModule(const WasmSplitOptions& options) {
       newSection = true;
       continue;
     }
-    Name func = WasmBinaryReader::escape(line);
+    Name name = WasmBinaryReader::escape(line);
     if (newSection) {
-      currModule = func;
-      currFuncs = &moduleFuncs[func];
+      currModule = name;
+      currFuncs = &moduleFuncs[name];
       newSection = false;
       continue;
     }
     assert(currFuncs);
-    currFuncs->insert(func);
-    auto [it, inserted] = funcModules.insert({func, currModule});
+    currFuncs->insert(name);
+    auto [it, inserted] = funcModules.insert({name, currModule});
     if (!inserted && it->second != currModule) {
-      Fatal() << "Function " << func << "cannot be assigned to module "
+      Fatal() << "Function " << name << "cannot be assigned to module "
               << currModule << "; it is already assigned to module "
               << it->second << '\n';
     }
-    if (inserted && !options.quiet && !wasm.getFunctionOrNull(func)) {
-      std::cerr << "warning: Function " << func << " does not exist\n";
+    if (inserted && !options.quiet && !wasm.getFunctionOrNull(name)) {
+      std::cerr << "warning: Function " << name << " does not exist\n";
     }
   }
 
