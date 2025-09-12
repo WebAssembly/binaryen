@@ -210,9 +210,9 @@ struct GlobalTypeOptimization : public Pass {
     SubTypes subTypes(*module);
     StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(subTypes);
     auto dataFromSubsAndSupersMap = combinedSetGetInfos;
-    propagator.propagateToSuperAndSubTypesWithExact(dataFromSubsAndSupersMap);
+    propagator.propagateToSuperAndSubTypes(dataFromSubsAndSupersMap);
     auto dataFromSupersMap = std::move(combinedSetGetInfos);
-    propagator.propagateToSubTypesWithExact(dataFromSupersMap);
+    propagator.propagateToSubTypes(dataFromSupersMap);
 
     // Find the public types, which we must not modify.
     auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
@@ -229,6 +229,8 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
+      // Use the exact entry because information from the inexact entry will
+      // have been propagated down into it but not vice versa.
       auto ht = std::make_pair(type, Exact);
       auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[ht];
       auto& dataFromSupers = dataFromSupersMap[ht];

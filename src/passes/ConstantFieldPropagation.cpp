@@ -557,7 +557,7 @@ struct ConstantFieldPropagation : public Pass {
     // a copy of A means it could be a copy of B or C).
     StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
       boolPropagator(subTypes);
-    boolPropagator.propagateToSubTypesWithExact(combinedCopyInfos);
+    boolPropagator.propagateToSubTypes(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {
         if (copied[i]) {
@@ -569,7 +569,7 @@ struct ConstantFieldPropagation : public Pass {
     StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
       subTypes);
     propagator.propagateToSuperTypes(combinedNewInfos);
-    propagator.propagateToSuperAndSubTypesWithExact(combinedSetInfos);
+    propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
     // Combine both sources of information to the final information that gets
     // care about.
