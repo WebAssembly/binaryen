@@ -105,11 +105,6 @@ struct StructValuesMap
     return values;
   }
 
-  // Convenience operator for inexact queries.
-  StructValues<T>& operator[](HeapType type) {
-    return (*this)[{type, Inexact}];
-  }
-
   void combineInto(StructValuesMap<T>& combinedInfos) const {
     for (auto& [type, info] : *this) {
       for (Index i = 0; i < info.size(); i++) {
@@ -385,19 +380,13 @@ public:
   // Propagate given a StructValuesMap, which means we need to take into
   // account fields.
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
-    propagate(infos, false, true, true);
+    propagate(infos, false, true);
   }
   void propagateToSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true, false, false);
-  }
-  void propagateToSubTypesWithExact(StructValuesMap<T>& infos) {
-    propagate(infos, true, false, true);
+    propagate(infos, true, false);
   }
   void propagateToSuperAndSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true, true, false);
-  }
-  void propagateToSuperAndSubTypesWithExact(StructValuesMap<T>& infos) {
-    propagate(infos, true, true, true);
+    propagate(infos, true, true);
   }
 
   // Propagate on a simpler map of structs and infos (that is, not using
@@ -415,12 +404,9 @@ public:
   }
 
 private:
-  // N.B. `includeExact` is only whether to propagate to exact subtypes because
-  // there are no exact supertypes.
   void propagate(StructValuesMap<T>& combinedInfos,
                  bool toSubTypes,
-                 bool toSuperTypes,
-                 bool includeExact) {
+                 bool toSuperTypes) {
     UniqueDeferredQueue<std::pair<HeapType, Exactness>> work;
     for (auto& [ht, _] : combinedInfos) {
       work.push(ht);
@@ -470,9 +456,7 @@ private:
             work.push(sub);
           }
         };
-        if (includeExact) {
-          handleSubtype({type, Exact});
-        }
+        handleSubtype({type, Exact});
         for (auto subType : subTypes.getImmediateSubTypes(type)) {
           handleSubtype({subType, Inexact});
         }

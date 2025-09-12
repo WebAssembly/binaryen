@@ -538,7 +538,7 @@ struct ConstantFieldPropagation : public Pass {
 
     // Compute the values without accounting for copies.
     PCVStructValuesMap noCopySetInfos = combinedSetInfos;
-    propagator.propagateToSubTypesWithExact(noCopySetInfos);
+    propagator.propagateToSubTypes(noCopySetInfos);
     propagator.propagateToSuperTypes(noCopySetInfos);
 
     // Now account for copies. A copy takes a value from any subtype
@@ -573,7 +573,7 @@ struct ConstantFieldPropagation : public Pass {
     // Snapshot the info before propagating up for use in RefTest
     // optimization.
     PCVStructValuesMap refTestInfos;
-    propagator.propagateToSubTypesWithExact(combinedSetInfos);
+    propagator.propagateToSubTypes(combinedSetInfos);
     if (refTest) {
       refTestInfos = combinedSetInfos;
     }
