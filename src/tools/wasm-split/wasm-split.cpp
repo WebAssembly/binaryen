@@ -390,14 +390,14 @@ void multiSplitModule(const WasmSplitOptions& options) {
   parseInput(wasm, options);
 
   // Map module names to the functions that should be in the modules.
-  std::map<std::string, std::unordered_set<std::string>> moduleFuncs;
+  std::map<Name, std::unordered_set<Name>> moduleFuncs;
   // The module for which we are currently parsing a set of functions.
-  std::string currModule;
+  Name currModule;
   // The set of functions we are currently inserting into.
-  std::unordered_set<std::string>* currFuncs = nullptr;
+  std::unordered_set<Name>* currFuncs = nullptr;
   // Map functions to their modules to ensure no function is assigned to
   // multiple modules.
-  std::unordered_map<std::string, std::string> funcModules;
+  std::unordered_map<Name, Name> funcModules;
 
   std::string line;
   bool newSection = true;
@@ -406,22 +406,23 @@ void multiSplitModule(const WasmSplitOptions& options) {
       newSection = true;
       continue;
     }
+    Name name = WasmBinaryReader::escape(line);
     if (newSection) {
-      currModule = line;
-      currFuncs = &moduleFuncs[line];
+      currModule = name;
+      currFuncs = &moduleFuncs[name];
       newSection = false;
       continue;
     }
     assert(currFuncs);
-    currFuncs->insert(line);
-    auto [it, inserted] = funcModules.insert({line, currModule});
+    currFuncs->insert(name);
+    auto [it, inserted] = funcModules.insert({name, currModule});
     if (!inserted && it->second != currModule) {
-      Fatal() << "Function " << line << "cannot be assigned to module "
+      Fatal() << "Function " << name << "cannot be assigned to module "
               << currModule << "; it is already assigned to module "
               << it->second << '\n';
     }
-    if (inserted && !options.quiet && !wasm.getFunctionOrNull(line)) {
-      std::cerr << "warning: Function " << line << " does not exist\n";
+    if (inserted && !options.quiet && !wasm.getFunctionOrNull(name)) {
+      std::cerr << "warning: Function " << name << " does not exist\n";
     }
   }
 
@@ -443,8 +444,8 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
     config.secondaryFuncs = std::set<Name>(funcs.begin(), funcs.end());
     auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-    auto moduleName =
-      options.outPrefix + mod + (options.emitBinary ? ".wasm" : ".wast");
+    auto moduleName = options.outPrefix + mod.toString() +
+                      (options.emitBinary ? ".wasm" : ".wast");
     if (options.symbolMap) {
       writeSymbolMap(*splitResults.secondary, moduleName + ".symbols");
     }
