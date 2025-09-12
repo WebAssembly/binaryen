@@ -1027,6 +1027,90 @@
   )
 )
 
+;; Here we cannot optimize with placeholders because the public supertype needs
+;; to keep its descriptor and its subtypes therefore need to keep their related
+;; descriptors.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $public (sub (descriptor $public.desc (struct))))
+    (type $public (sub (descriptor $public.desc (struct))))
+    ;; CHECK:       (type $public.desc (sub (describes $public (struct))))
+    (type $public.desc (sub (describes $public (struct))))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $unused (sub $public (descriptor $unused.desc (struct))))
+    (type $unused (sub $public (descriptor $unused.desc (struct))))
+    ;; CHECK:       (type $unused.desc (sub $public.desc (describes $unused (struct))))
+    (type $unused.desc (sub $public.desc (describes $unused (struct))))
+
+    ;; CHECK:       (type $used (sub $unused (descriptor $used.desc (struct))))
+    (type $used (sub $unused (descriptor $used.desc (struct))))
+    ;; CHECK:       (type $used.desc (sub $unused.desc (describes $used (struct))))
+    (type $used.desc (sub $unused.desc (describes $used (struct))))
+  )
+
+  ;; CHECK:      (type $6 (func (param (ref $used)) (result (ref $used.desc))))
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (export "public") (ref null $public) (ref.null none))
+
+  ;; CHECK:      (export "public" (global $public))
+
+  ;; CHECK:      (func $use (type $6) (param $used (ref $used)) (result (ref $used.desc))
+  ;; CHECK-NEXT:  (ref.get_desc $used
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $used (ref $used)) (result (ref $used.desc))
+    (ref.get_desc $used
+      (local.get $used)
+    )
+  )
+)
+
+;; Now the public supertype does not have a descriptor, so we can still
+;; optimize.
+(module
+  (rec
+    ;; CHECK:      (type $public (sub (struct)))
+    (type $public (sub (struct)))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $1 (descriptor $unused.desc (struct)))
+
+    ;; CHECK:       (type $unused (sub $public (struct)))
+    (type $unused (sub $public (descriptor $unused.desc (struct))))
+    ;; CHECK:       (type $unused.desc (sub (describes $1 (struct))))
+    (type $unused.desc (sub (describes $unused (struct))))
+
+    ;; CHECK:       (type $used (sub $unused (descriptor $used.desc (struct))))
+    (type $used (sub $unused (descriptor $used.desc (struct))))
+    ;; CHECK:       (type $used.desc (sub $unused.desc (describes $used (struct))))
+    (type $used.desc (sub $unused.desc (describes $used (struct))))
+  )
+
+  ;; CHECK:       (type $6 (func (param (ref $used)) (result (ref $used.desc))))
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (export "public") (ref null $public) (ref.null none))
+
+  ;; CHECK:      (export "public" (global $public))
+
+  ;; CHECK:      (func $use (type $6) (param $used (ref $used)) (result (ref $used.desc))
+  ;; CHECK-NEXT:  (ref.get_desc $used
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $used (ref $used)) (result (ref $used.desc))
+    (ref.get_desc $used
+      (local.get $used)
+    )
+  )
+)
+
 ;; Sibling types $A and $B. The supertype that connects them should not stop us
 ;; from optimizing $B here, even though $A cannot be optimized.
 (module

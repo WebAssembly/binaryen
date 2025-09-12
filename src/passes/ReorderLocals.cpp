@@ -67,7 +67,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
       newToOld[i] = i;
     }
     // sort, keeping params in front (where they will not be moved)
-    sort(
+    std::sort(
       newToOld.begin(), newToOld.end(), [this, curr](Index a, Index b) -> bool {
         if (curr->isParam(a) && !curr->isParam(b)) {
           return true;

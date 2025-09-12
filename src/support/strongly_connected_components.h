@@ -39,7 +39,7 @@ template<typename It, typename Class> struct SCCs {
   SCCs(It inputIt, It inputEnd) : inputIt(inputIt), inputEnd(inputEnd) {}
 
 private:
-  using T = typename It::value_type;
+  using T = typename std::iterator_traits<It>::value_type;
 
   // The iterators over the graph we are calculating the SCCs for.
   It inputIt;
