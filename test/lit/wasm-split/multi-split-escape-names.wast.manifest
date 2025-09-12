@@ -1,0 +1,8 @@
+1
+wasm::Type::getFeatures() const
+
+2
+wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)
+
+3
+std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)

@@ -398,7 +398,6 @@ void PassRegistry::registerPasses() {
   // Also register it as "symbolmap" so that  wasm-opt --symbolmap=foo  is the
   // same as  wasm-as --symbolmap=foo  even though the latter is not a pass
   // (wasm-as cannot run arbitrary passes).
-  // TODO: switch emscripten to this name, then remove the old one
   registerPass(
     "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
 
