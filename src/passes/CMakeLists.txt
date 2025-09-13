@@ -116,6 +116,7 @@ set(passes_SOURCES
   ReorderLocals.cpp
   ReorderTypes.cpp
   ReReloop.cpp
+  TailCall.cpp
   TrapMode.cpp
   TypeGeneralizing.cpp
   TypeRefining.cpp
