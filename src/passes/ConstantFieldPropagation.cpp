@@ -53,7 +53,6 @@
 
 #include "ir/bits.h"
 #include "ir/gc-type-utils.h"
-#include "ir/module-utils.h"
 #include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
@@ -115,14 +114,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
   PossibleConstantValues getInfo(HeapType type, Index index, Exactness exact) {
-    // If the reference is exact and the field immutable, then we are reading
-    // exactly what was written to struct.news and nothing else.
-    auto mutable_ = index == StructUtils::DescriptorIndex
-                      ? Immutable
-                      : GCTypeUtils::getField(type, index)->mutable_;
-    auto& infos =
-      (exact == Inexact || mutable_ == Mutable) ? propagatedInfos : rawNewInfos;
-    if (auto it = infos.find(type); it != infos.end()) {
+    if (auto it = propagatedInfos.find({type, exact});
+        it != propagatedInfos.end()) {
       // There is information on this type, fetch it.
       return it->second[index];
     }
@@ -290,7 +283,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         return;
       }
 
-      auto iter = rawNewInfos.find(type);
+      auto iter = rawNewInfos.find({type, Exact});
       if (iter == rawNewInfos.end()) {
         // This type has no struct.news, so we can ignore it: it is abstract.
         return;
@@ -454,7 +447,8 @@ struct PCVScanner
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
     // Note copies, as they must be considered later. See the comment on the
     // propagation of values below.
-    functionCopyInfos[getFunction()][type][index] = true;
+    // TODO: Take into account exactness here.
+    functionCopyInfos[getFunction()][{type, Inexact}][index] = true;
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
