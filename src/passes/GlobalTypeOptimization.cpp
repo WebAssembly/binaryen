@@ -229,8 +229,10 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      // Use the exact entry because information from the inexact entry will
-      // have been propagated down into it but not vice versa.
+      // Use the exact entry because information from the inexact entry in
+      // dataFromSupersMap will have been propagated down into it but not vice
+      // versa. (This doesn't matter or dataFromSubsAndSupers because the exact
+      // and inexact entries will have the same data.)
       auto ht = std::make_pair(type, Exact);
       auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[ht];
       auto& dataFromSupers = dataFromSupersMap[ht];
