@@ -1919,17 +1919,24 @@ TypePrinter::print(HeapType type,
   const auto& struct_ = type.getStruct();
   os << "(struct";
   if (auto desc = type.getDescriptorType()) {
-    os << " (field $vtable ";
-    print(Type(*desc, NonNullable));
+    os << " (field $vtable";
+    // print(Type(*desc, NonNullable));
     os << ')';
   }
   for (Index i = 0; i < struct_.fields.size(); ++i) {
     // TODO: move this to the function for printing fields.
     os << " (field ";
+    bool isVTable = false;
     if (auto it = fieldNames.find(i); it != fieldNames.end()) {
-      it->second.print(os) << ' ';
+      if (it->second == Name("vtable")) {
+        isVTable = true;
+      }
+      it->second.print(os);
     }
-    print(struct_.fields[i]);
+    if (!isVTable) {
+      os << ' ';
+      print(struct_.fields[i]);
+    }
     os << ')';
   }
   return os << ")";

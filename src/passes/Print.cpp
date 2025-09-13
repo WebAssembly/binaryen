@@ -3518,6 +3518,12 @@ void PrintSExpression::visitModule(Module* curr) {
         incIndent();
       }
     }
+    if (auto it = curr->typeNames.find(type); it != curr->typeNames.end()) {
+      auto name = it->second.name.str;
+      if (name.find(".vtable") == name.size() - 7) {
+        continue;
+      }
+    }
     doIndent(o, indent);
     o << typePrinter(type) << maybeNewLine;
   }
