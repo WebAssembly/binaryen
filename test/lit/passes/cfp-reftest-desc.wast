@@ -161,7 +161,7 @@
     )
     (drop
       (struct.new_default $sub
-      (global.get $B)
+        (global.get $B)
       )
     )
     ;; We read from an exact $super here, so the type of the ref.get_desc is
@@ -185,4 +185,3 @@
     (i32.const 42)
   )
 )
-
