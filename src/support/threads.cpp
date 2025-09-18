@@ -20,12 +20,21 @@
 #include <iostream>
 #include <string>
 
+#ifdef __linux__
+#include <sched.h> // For sched_getaffinity
+#endif
+
 #include "compiler-support.h"
+#include "support/debug.h"
 #include "threads.h"
 #include "utilities.h"
 
 // debugging tools
 
+// DEBUG_TYPE is for BYN_TRACE macro.  This tracing can be enabled at runtime
+#define DEBUG_TYPE "threads"
+
+// BINARYEN_THREAD_DEBUG is a build-time setting for detailed thread tracing
 #ifdef BINARYEN_THREAD_DEBUG
 static std::mutex debug;
 #define DEBUG_THREAD(x)                                                        \
@@ -145,9 +154,24 @@ size_t ThreadPool::getNumCores() {
   return 1;
 #else
   size_t num = std::max(1U, std::thread::hardware_concurrency());
+#ifdef __linux__
+  // On linux we can do better since we can get the number of CPU that are
+  // actually usable by the current process.
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  if (sched_getaffinity(0, sizeof(cpu_set), &cpu_set) == 0) {
+    num = 0;
+    for (int i = 0; i < CPU_SETSIZE; i++) {
+      if (CPU_ISSET(i, &cpu_set)) {
+        num++;
+      }
+    }
+  }
+#endif
   if (getenv("BINARYEN_CORES")) {
     num = std::stoi(getenv("BINARYEN_CORES"));
   }
+  BYN_TRACE("getNumCores: " << num << "\n");
   return num;
 #endif
 }

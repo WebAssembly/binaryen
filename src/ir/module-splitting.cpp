@@ -89,7 +89,7 @@ template<class F> void forEachElement(Module& module, F f) {
     Name base = "";
     Index offset = 0;
     if (auto* c = segment->offset->dynCast<Const>()) {
-      offset = c->value.geti32();
+      offset = c->value.getInteger();
     } else if (auto* g = segment->offset->dynCast<GlobalGet>()) {
       base = g->name;
     }
@@ -129,11 +129,15 @@ struct TableSlotManager {
 
 Expression* TableSlotManager::Slot::makeExpr(Module& module) {
   Builder builder(module);
-  auto makeIndex = [&]() { return builder.makeConst(int32_t(index)); };
+  auto* table = module.getTable(tableName);
+  auto makeIndex = [&]() {
+    return builder.makeConst(Literal::makeFromInt32(index, table->addressType));
+  };
   if (global.size()) {
-    Expression* getBase = builder.makeGlobalGet(global, Type::i32);
+    Expression* getBase = builder.makeGlobalGet(global, table->addressType);
+    auto addOp = table->is64() ? AddInt64 : AddInt32;
     return index == 0 ? getBase
-                      : builder.makeBinary(AddInt32, getBase, makeIndex());
+                      : builder.makeBinary(addOp, getBase, makeIndex());
   } else {
     return makeIndex();
   }
@@ -209,7 +213,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
     for (auto& segment : activeTableSegments) {
       assert(segment->offset->is<Const>() &&
              "Unexpected non-const segment offset with multiple segments");
-      Index segmentBase = segment->offset->cast<Const>()->value.geti32();
+      Index segmentBase = segment->offset->cast<Const>()->value.getInteger();
       if (segmentBase + segment->data.size() >= maxIndex) {
         maxIndex = segmentBase + segment->data.size();
         activeSegment = segment;
@@ -233,10 +237,13 @@ Table* TableSlotManager::makeTable() {
 }
 
 ElementSegment* TableSlotManager::makeElementSegment() {
+  Builder builder(module);
+  Expression* offset =
+    builder.makeConst(Literal::makeFromInt32(0, activeTable->addressType));
   return module.addElementSegment(Builder::makeElementSegment(
     Names::getValidElementSegmentName(module, Name::fromInt(0)),
     activeTable->name,
-    Builder(module).makeConst(int32_t(0))));
+    offset));
 }
 
 TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
@@ -801,7 +808,8 @@ void ModuleSplitter::setupTablePatching() {
   Index currBase = replacedElems.begin()->first;
   std::vector<Expression*> currData;
   auto finishSegment = [&]() {
-    auto* offset = Builder(secondary).makeConst(int32_t(currBase));
+    auto* offset = Builder(secondary).makeConst(
+      Literal::makeFromInt32(currBase, secondaryTable->addressType));
     auto secondarySeg = std::make_unique<ElementSegment>(
       secondaryTable->name, offset, secondaryTable->type, currData);
     Name name = Names::getValidElementSegmentName(
