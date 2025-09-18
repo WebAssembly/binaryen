@@ -190,35 +190,35 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc (struct))))
-    (type $super (sub (descriptor $super.desc (struct))))
-    ;; CHECK:       (type $super.desc (sub (describes $super (struct))))
-    (type $super.desc (sub (describes $super (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
 
-    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc (struct))))
-    (type $sub (sub $super (descriptor $sub.desc (struct))))
-    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct))))
-    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 
   ;; CHECK:      (type $4 (func (param anyref)))
 
-  ;; CHECK:      (global $sub.desc (ref $sub.desc) (struct.new_default $sub.desc))
-  (global $sub.desc (ref $sub.desc) (struct.new $sub.desc))
+  ;; CHECK:      (global $B.desc (ref $B.desc) (struct.new_default $B.desc))
+  (global $B.desc (ref $B.desc) (struct.new $B.desc))
 
-  ;; CHECK:      (global $super.desc (ref $super.desc) (struct.new_default $super.desc))
-  (global $super.desc (ref $super.desc) (struct.new $super.desc))
+  ;; CHECK:      (global $A.desc (ref $A.desc) (struct.new_default $A.desc))
+  (global $A.desc (ref $A.desc) (struct.new $A.desc))
 
   ;; CHECK:      (func $test (type $4) (param $any anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref $super)
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc (ref $sub)
+  ;; CHECK-NEXT:   (ref.cast_desc (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
-  ;; CHECK-NEXT:    (global.get $sub.desc)
+  ;; CHECK-NEXT:    (global.get $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -226,12 +226,12 @@
     ;; The second cast here is optimizable: it can only be to a single type with
     ;; no subtypes, so we can use ref.cast_desc.
     (drop
-      (ref.cast (ref $super)
+      (ref.cast (ref $A)
         (local.get $any)
       )
     )
     (drop
-      (ref.cast (ref $sub)
+      (ref.cast (ref $B)
         (local.get $any)
       )
     )
