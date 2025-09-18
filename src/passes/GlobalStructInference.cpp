@@ -557,7 +557,7 @@ struct GlobalStructInference : public Pass {
         }
 
         // Check if the type has no subtypes, as a ref.cast_desc will find
-        // precisely that type and nothing else.
+        // precisely that type and nothing else. TODO: exact types too
         if (!parent.subTypes->getStrictSubTypes(heapType).empty()) {
           return;
         }
@@ -580,8 +580,6 @@ struct GlobalStructInference : public Pass {
           builder.makeGlobalGet(global, wasm.getGlobal(global)->type);
         auto* castDesc = builder.makeRefCast(curr->ref, getGlobal, curr->type);
         replaceCurrent(castDesc);
-
-        // TODO nullable cast?
       }
 
       void visitFunction(Function* func) {
