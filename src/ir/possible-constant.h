@@ -86,6 +86,9 @@ public:
   // identify a constant value here.
   void noteUnknown() { value = Many(); }
 
+  // Modify the possible constant to account for being written to or read from a
+  // possibly-packed field. When used to model a read, `isSigned` controls
+  // whether the value will be sign-extended or not.
   void packForField(const Field& field, bool isSigned = false) {
     if (field.type != Type::i32 || !field.isPacked()) {
       return;
