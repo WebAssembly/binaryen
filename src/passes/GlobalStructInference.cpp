@@ -543,6 +543,7 @@ struct GlobalStructInference : public Pass {
         // casts are usually more efficient than normal ones (and even more so
         // if we get lucky and are in a loop, where the global.get of the
         // descriptor can be hoisted).
+        // TODO: only do this when shrinkLevel == 0?
 
         // Check if we have a descriptor.
         auto type = curr->type;

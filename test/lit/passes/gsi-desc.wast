@@ -186,3 +186,55 @@
   )
 )
 
+;; Two types with descriptors and subtyping between them.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc (struct))))
+    (type $super (sub (descriptor $super.desc (struct))))
+    ;; CHECK:       (type $super.desc (sub (describes $super (struct))))
+    (type $super.desc (sub (describes $super (struct))))
+
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc (struct))))
+    (type $sub (sub $super (descriptor $sub.desc (struct))))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+  )
+
+  ;; CHECK:      (type $4 (func (param anyref)))
+
+  ;; CHECK:      (global $sub.desc (ref $sub.desc) (struct.new_default $sub.desc))
+  (global $sub.desc (ref $sub.desc) (struct.new $sub.desc))
+
+  ;; CHECK:      (global $super.desc (ref $super.desc) (struct.new_default $super.desc))
+  (global $super.desc (ref $super.desc) (struct.new $super.desc))
+
+  ;; CHECK:      (func $test (type $4) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref $super)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref $sub)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (global.get $sub.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $any anyref)
+    ;; The second cast here is optimizable: it can only be to a single type with
+    ;; no subtypes, so we can use ref.cast_desc.
+    (drop
+      (ref.cast (ref $super)
+        (local.get $any)
+      )
+    )
+    (drop
+      (ref.cast (ref $sub)
+        (local.get $any)
+      )
+    )
+  )
+)
+
