@@ -2228,6 +2228,7 @@ opt_choices = [
     ('-O1',), ('-O2',), ('-O3',), ('-O4',), ('-Os',), ('-Oz',),
     ("--abstract-type-refining",),
     ("--cfp",),
+    ("--cfp-reftest",),
     ("--coalesce-locals",),
     # XXX slow, non-default ("--coalesce-locals-learning",),
     ("--code-pushing",),

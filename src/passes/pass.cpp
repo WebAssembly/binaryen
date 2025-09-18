@@ -763,7 +763,12 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("remove-unused-module-elements");
     if (options.closedWorld) {
       addIfNoDWARFIssues("remove-unused-types");
-      addIfNoDWARFIssues("cfp");
+      // Allow ref.tests in cfp if we are aggressively optimizing for speed.
+      if (options.optimizeLevel >= 3) {
+        addIfNoDWARFIssues("cfp-reftest");
+      } else {
+        addIfNoDWARFIssues("cfp");
+      }
       addIfNoDWARFIssues("gsi");
       addIfNoDWARFIssues("abstract-type-refining");
       addIfNoDWARFIssues("unsubtyping");
