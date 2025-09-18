@@ -723,6 +723,8 @@
     (local $super (ref null $super))
     (local $struct (ref null $struct))
     (local $sub (ref null $sub))
+    ;; We never wrote to $super, so the only value we can read from it is what
+    ;; was written to $struct (which also may have been a $sub at runtime).
     (drop
       (struct.get $super 0
         (local.get $super)
