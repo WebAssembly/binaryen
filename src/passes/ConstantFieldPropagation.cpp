@@ -626,10 +626,11 @@ struct ConstantFieldPropagation : public Pass {
     // For each copy, take the readable values at its source and join them to
     // the written values at its destination. Record the written values that
     // change so we can propagate the new information afterward.
-    for (auto& [srcType, fields] : combinedCopyInfos) {
+    for (auto& [src, fields] : combinedCopyInfos) {
+      auto [srcType, srcExact] = src;
       for (Index srcField = 0; srcField < fields.size(); ++srcField) {
-        const auto& field = srcType.first.getStruct().fields[srcType.second];
-        applyCopiesTo(fields[srcField], field, readable[srcType][srcField]);
+        const auto& field = srcType.getStruct().fields[srcField];
+        applyCopiesTo(fields[srcField], field, readable[src][srcField]);
       }
     }
     while (work.size()) {

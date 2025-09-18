@@ -992,7 +992,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $init
-    ;; Same as above, but now with a different value in $sub1.
+    ;; Same as above, but now with a different value in the subtype $sub1. We
+    ;; also add an additional subtype, $sub2, which can still be optimized.
     (drop
       (struct.new $other
         (i32.const 10)
@@ -1064,6 +1065,9 @@
     (local $struct (ref null $struct))
     (local $sub1 (ref null $sub1))
     (local $sub2 (ref null $sub2))
+    ;; The copy might have written to $sub1 or $sub2, but only $sub2 does not
+    ;; already have another conflicting value. We can optimize $sub2 but not
+    ;; $sub1.
     (drop
       (struct.get $super 0
         (local.get $super)
