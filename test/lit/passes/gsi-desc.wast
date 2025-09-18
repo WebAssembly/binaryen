@@ -342,3 +342,38 @@
   )
 )
 
+;; Two descriptor instances in globals.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func (param anyref)))
+
+  ;; CHECK:      (global $A.desc (ref $A.desc) (struct.new_default $A.desc))
+  (global $A.desc (ref $A.desc) (struct.new $A.desc))
+
+  ;; CHECK:      (global $A.desc2 (ref $A.desc) (struct.new_default $A.desc))
+  (global $A.desc2 (ref $A.desc) (struct.new $A.desc))
+
+  ;; CHECK:      (func $test (type $2) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $any anyref)
+    ;; We do not optimize here. TODO: we could with a select
+    (drop
+      (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+  )
+)
+
