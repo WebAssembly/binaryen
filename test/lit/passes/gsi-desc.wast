@@ -342,6 +342,35 @@
   )
 )
 
+;; Zero descriptor instances in globals.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func (param anyref)))
+
+  ;; CHECK:      (func $test (type $2) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $any anyref)
+    ;; We do not optimize here. TODO: we could make this trap
+    (drop
+      (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+  )
+)
+
 ;; Two descriptor instances in globals.
 (module
   (rec
@@ -408,6 +437,40 @@
     ;; We do not handle casts to types without descriptors.
     (drop
       (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+  )
+)
+
+;; Nullable cast.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func (param anyref)))
+
+  ;; CHECK:      (global $A.desc (ref $A.desc) (struct.new_default $A.desc))
+  (global $A.desc (ref $A.desc) (struct.new $A.desc))
+
+  ;; CHECK:      (func $test (type $2) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref null $A)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (global.get $A.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $any anyref)
+    ;; The cast is nullable, which we can still optimize: null will succeed as
+    ;; expected.
+    (drop
+      (ref.cast (ref null $A)
         (local.get $any)
       )
     )
