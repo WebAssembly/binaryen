@@ -79,6 +79,8 @@ struct GlobalStructInference : public Pass {
   // optimizable it will have an entry here, and not if not.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
+  std::unique_ptr<SubTypes> subTypes;
+
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -206,6 +208,12 @@ struct GlobalStructInference : public Pass {
     if (typeGlobals.empty()) {
       // We found nothing we can optimize.
       return;
+    }
+
+    // When CD is enabled, we can optimize to ref.get_desc, depending on the
+    // presence of subtypes.
+    if (module->features.hasCustomDescriptors()) {
+      subTypes = std::make_unique<SubTypes>(*module);
     }
 
     // The above loop on typeGlobalsCopy is on an unsorted data structure, and
@@ -526,6 +534,53 @@ struct GlobalStructInference : public Pass {
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref), getGlobal),
           left,
           right));
+      }
+
+      void visitRefCast(RefCast* curr) {
+        // When we see (ref.cast $T), and the type has a descriptor, and that
+        // desceriptor only has a single global, then we can do (ref.cast_desc)
+        // using the descriptor. Descriptor XXX
+        // casts are usually more efficient than normal ones (and even more so
+        // if we get lucky and are in a loop, where the global.get of the
+        // descriptor can be hoisted).
+
+        // Check if we have a descriptor.
+        auto type = curr->type;
+        if (type == Type::unreachable) {
+          return;
+        }
+        auto heapType = type.getHeapType();
+        auto desc = heapType.getDescriptorType();
+        if (!desc) {
+          return;
+        }
+
+        // Check if the type has no subtypes, as a ref.cast_desc will find
+        // precisely that type and nothing else.
+        if (!parent.subTypes->getStrictSubTypes(heapType).empty()) {
+          return;
+        }
+
+        // Check if we have a single global for the descriptor.
+        auto iter = parent.typeGlobals.find(*desc);
+        if (iter == parent.typeGlobals.end()) {
+          return;
+        }
+        const auto& globals = iter->second;
+        if (globals.size() != 1) {
+          return;
+        }
+
+        // We can optimize!
+        auto global = globals[0];
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+        auto* getGlobal =
+          builder.makeGlobalGet(global, wasm.getGlobal(global)->type);
+        auto* castDesc = builder.makeRefCast(curr->ref, getGlobal, curr->type);
+        replaceCurrent(castDesc);
+
+        // TODO nullable cast?
       }
 
       void visitFunction(Function* func) {
