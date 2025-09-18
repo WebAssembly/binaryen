@@ -1,4 +1,5 @@
 import os
+import sys
 import lit.formats
 
 config.name = "Binaryen lit tests"
@@ -25,6 +26,9 @@ for tool in ('not', 'foreach'):
     tool_file = config.binaryen_src_root + '/scripts/' + tool + '.py'
     python = sys.executable.replace('\\', '/')
     config.substitutions.append((tool, python + ' ' + tool_file))
+
+if 'linux' in sys.platform:
+    config.available_features.add('linux')
 
 # Finds the given executable 'program' in PATH.
 # Operates like the Unix tool 'which'.
