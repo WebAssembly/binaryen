@@ -203,11 +203,11 @@
 
   ;; CHECK:      (type $4 (func (param anyref)))
 
-  ;; CHECK:      (global $B.desc (ref $B.desc) (struct.new_default $B.desc))
-  (global $B.desc (ref $B.desc) (struct.new $B.desc))
-
   ;; CHECK:      (global $A.desc (ref $A.desc) (struct.new_default $A.desc))
   (global $A.desc (ref $A.desc) (struct.new $A.desc))
+
+  ;; CHECK:      (global $B.desc (ref $B.desc) (struct.new_default $B.desc))
+  (global $B.desc (ref $B.desc) (struct.new $B.desc))
 
   ;; CHECK:      (func $test (type $4) (param $any anyref)
   ;; CHECK-NEXT:  (drop
@@ -225,6 +225,110 @@
   (func $test (param $any anyref)
     ;; The second cast here is optimizable: it can only be to a single type with
     ;; no subtypes, so we can use ref.cast_desc.
+    (drop
+      (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+    (drop
+      (ref.cast (ref $B)
+        (local.get $any)
+      )
+    )
+  )
+)
+
+;; As above, but without subtyping between $A and $B.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+
+    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
+    (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:      (type $4 (func (param anyref)))
+
+  ;; CHECK:      (global $A.desc (ref $A.desc) (struct.new_default $A.desc))
+  (global $A.desc (ref $A.desc) (struct.new $A.desc))
+
+  ;; CHECK:      (global $B.desc (ref $B.desc) (struct.new_default $B.desc))
+  (global $B.desc (ref $B.desc) (struct.new $B.desc))
+
+  ;; CHECK:      (func $test (type $4) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref $B)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (global.get $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $any anyref)
+    ;; We still cannot optimize $A: while $A has no subtypes, the descriptor
+    ;; $A.desc has a subtype. We could optimize this TODO
+    (drop
+      (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+    (drop
+      (ref.cast (ref $B)
+        (local.get $any)
+      )
+    )
+  )
+)
+
+;; As above, but without subtyping between $A.desc and $B.desc.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+
+    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
+    (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub (describes $B (struct))))
+    (type $B.desc (sub (describes $B (struct))))
+  )
+
+  ;; CHECK:      (type $4 (func (param anyref)))
+
+  ;; CHECK:      (global $A.desc (ref $A.desc) (struct.new_default $A.desc))
+  (global $A.desc (ref $A.desc) (struct.new $A.desc))
+
+  ;; CHECK:      (global $B.desc (ref $B.desc) (struct.new_default $B.desc))
+  (global $B.desc (ref $B.desc) (struct.new $B.desc))
+
+  ;; CHECK:      (func $test (type $4) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref $A)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (global.get $A.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref $B)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (global.get $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $any anyref)
+    ;; We can fully optimize these two independent cases.
     (drop
       (ref.cast (ref $A)
         (local.get $any)
