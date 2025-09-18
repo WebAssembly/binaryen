@@ -366,12 +366,26 @@
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $any anyref)
     ;; We do not optimize here. TODO: we could with a select
     (drop
       (ref.cast (ref $A)
         (local.get $any)
+      )
+    )
+    ;; We do not error on unreachable casts.
+    (drop
+      (ref.cast (ref $A)
+        (unreachable)
       )
     )
   )
