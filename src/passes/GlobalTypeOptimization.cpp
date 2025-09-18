@@ -578,7 +578,9 @@ struct GlobalTypeOptimization : public Pass {
         // Until we've created all the placeholders, create a placeholder
         // describee type for the next descriptor that needs one.
         if (placeholderIt != parent.descriptorsOfPlaceholders.end()) {
-          typeBuilder[i].descriptor(getTempHeapType(placeholderIt->first));
+          auto descriptor = placeholderIt->first;
+          typeBuilder[i].descriptor(getTempHeapType(descriptor));
+          typeBuilder[i].setShared(descriptor.getShared());
           ++placeholderIt;
           return;
         }
