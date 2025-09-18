@@ -1173,8 +1173,33 @@
   )
 )
 
+;; Here we would optimize $unused with a placeholder, except that we don't
+;; include it in the output at all because it is unused. We should not get
+;; confused and try to emit a placeholder for it anyway.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $public (sub (descriptor $public.desc (struct))))
+  (type $public (sub (descriptor $public.desc (struct))))
+  ;; CHECK:       (type $public.desc (sub (describes $public (struct))))
+  (type $public.desc (sub (describes $public (struct))))
+ )
+ (rec
+  (type $unused (descriptor $unused.desc (struct)))
+  (type $unused.desc (sub $public.desc (describes $unused (struct))))
+  ;; CHECK:      (type $private (struct))
+  (type $private (struct))
+ )
+
+ ;; CHECK:      (global $public (ref null $public) (ref.null none))
+ (global $public (export "public") (ref null $public) (ref.null none))
+ ;; CHECK:      (global $private (ref null $private) (ref.null none))
+ (global $private (ref null $private) (ref.null none))
+)
+
 ;; Sibling types $A and $B. The supertype that connects them should not stop us
 ;; from optimizing $B here, even though $A cannot be optimized.
+;; CHECK:      (export "public" (global $public))
 (module
   (rec
     ;; CHECK:      (rec
