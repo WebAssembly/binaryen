@@ -493,14 +493,14 @@ struct PCVScanner
   }
 
   void noteCopy(StructGet* get,
-                Type type,
-                Index index,
-                PossibleConstantValues& info) {
+                Type dstType,
+                Index dstIndex,
+                PossibleConstantValues& dstInfo) {
     auto srcType = get->ref->type.getHeapType();
     auto srcExact = get->ref->type.getExactness();
     auto srcIndex = get->index;
     functionCopyInfos[getFunction()][{srcType, srcExact}][srcIndex].insert(
-      {type.getHeapType(), type.getExactness(), index, get->signed_});
+      {dstType.getHeapType(), dstType.getExactness(), dstIndex, get->signed_});
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
