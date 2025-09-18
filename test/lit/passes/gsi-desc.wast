@@ -391,3 +391,26 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $0 (func (param anyref)))
+
+  ;; CHECK:      (type $A (sub (struct)))
+  (type $A (sub (struct)))
+
+  ;; CHECK:      (func $test (type $0) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $any anyref)
+    ;; We do not handle casts to types without descriptors.
+    (drop
+      (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+  )
+)
+
