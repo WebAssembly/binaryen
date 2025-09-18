@@ -538,9 +538,6 @@ struct ConstantFieldPropagation : public Pass {
     PCVFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
     CopiesFunctionStructValuesMap functionCopyInfos(*module);
-    for (auto& func : module->functions) {
-      functionCopyInfos[func.get()];
-    }
     PCVScanner scanner(functionNewInfos, functionSetInfos, functionCopyInfos);
     auto* runner = getPassRunner();
     scanner.run(runner, module);
