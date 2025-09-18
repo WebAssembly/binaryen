@@ -70,6 +70,9 @@ namespace wasm {
 
 namespace {
 
+// The destination reference type and field index of a copy, as well as whether
+// the copy read is signed (in the case of packed fields). This will be used to
+// propagate copied values from their sources to destinations in the analysis.
 struct CopyInfo {
   HeapType type;
   Exactness exact;
