@@ -214,6 +214,9 @@ private:
   // All tags that are valid as exception tags (which cannot have results).
   std::vector<Tag*> exceptionTags;
 
+  // All types that have a descriptor.
+  std::vector<HeapType> describedTypes;
+
   Index numAddedFunctions = 0;
 
   // The name of an empty tag.
@@ -502,6 +505,7 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+  Expression* makeRefGetDesc(Type type);
   Expression* makeBrOn(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
@@ -545,7 +549,9 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
-  HeapType getArrayTypeForString();
+
+  // Given a HeapType, get a Type that uses it.
+  Type getType(HeapType heapType);
 
   // Utilities
   Name getTargetName(Expression* target);

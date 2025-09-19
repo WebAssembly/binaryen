@@ -525,12 +525,15 @@ void TranslateToFuzzReader::setupHeapTypes() {
     }
   }
 
-  // Compute struct and array fields.
+  // Compute struct and array fields and other data.
   for (auto type : interestingHeapTypes) {
     if (type.isStruct()) {
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         typeStructFields[fields[i].type].push_back(StructField{type, i});
+      }
+      if (type.getDescriptorType()) {
+        describedTypes.push_back(type);
       }
     } else if (type.isArray()) {
       typeArrays[type.getArray().element.type].push_back(type);
@@ -2203,6 +2206,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefCast);
+    }
+    if (!describedTypes.empty()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefGetDesc);
     }
   }
   if (wasm.features.hasGC()) {
@@ -4881,7 +4888,16 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
   }
-  return builder.makeRefCast(make(refType), type);
+  Expression* descRef = nullptr;
+  if (auto desc = refType.getHeapType().getDescriptorType()) {
+    descRef = make(Type(*desc, getNullability(), refType.getExactness()));
+  }
+  return builder.makeRefCast(make(refType), descRef, type);
+}
+
+Expression* TranslateToFuzzReader::makeRefGetDesc(Type type) {
+  auto refType = pick(describedTypes);
+  return builder.makeRefGetDesc(make(getType(refType)));
 }
 
 Expression* TranslateToFuzzReader::makeBrOn(Type type) {
@@ -5654,6 +5670,10 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
     superType = Type(heapType, Nullable);
   }
   return superType;
+}
+
+Type TranslateToFuzzReader::getType(HeapType heapType) {
+  return Type(heapType, getNullability(), getExactness());
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
