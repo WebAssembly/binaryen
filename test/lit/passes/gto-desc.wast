@@ -1111,6 +1111,68 @@
   )
 )
 
+;; Now we can optimize $A with a placeholder, but the placeholder must be
+;; shared.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $0 (shared (descriptor $A.desc (struct))))
+
+    ;; CHECK:       (type $A (sub (shared (struct))))
+    (type $A (sub (shared (descriptor $A.desc (struct)))))
+    ;; CHECK:       (type $A.desc (sub (shared (describes $0 (struct)))))
+    (type $A.desc (sub (shared (describes $A (struct)))))
+
+    ;; CHECK:       (type $B (sub $A (shared (descriptor $B.desc (struct)))))
+    (type $B (sub $A (shared (descriptor $B.desc (struct)))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (shared (describes $B (struct)))))
+    (type $B.desc (sub $A.desc (shared (describes $B (struct)))))
+  )
+
+  ;; CHECK:       (type $5 (func))
+
+  ;; CHECK:      (func $test (type $5)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $A.desc (ref $A.desc))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $B.desc (ref $B.desc))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:    (struct.new_default $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $B
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $A.desc (ref $A.desc))
+    (local $B (ref $B))
+    (local $B.desc (ref $B.desc))
+    (local.set $A
+      (struct.new $A
+        (struct.new $A.desc)
+      )
+    )
+    (local.set $B
+      (struct.new $B
+        (struct.new $B.desc)
+      )
+    )
+    (drop
+      (ref.get_desc $B
+        (local.get $B)
+      )
+    )
+  )
+)
+
 ;; Sibling types $A and $B. The supertype that connects them should not stop us
 ;; from optimizing $B here, even though $A cannot be optimized.
 (module
