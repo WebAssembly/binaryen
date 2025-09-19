@@ -538,11 +538,10 @@ struct GlobalStructInference : public Pass {
 
       void visitRefCast(RefCast* curr) {
         // When we see (ref.cast $T), and the type has a descriptor, and that
-        // desceriptor only has a single global, then we can do (ref.cast_desc)
-        // using the descriptor. Descriptor XXX
-        // casts are usually more efficient than normal ones (and even more so
-        // if we get lucky and are in a loop, where the global.get of the
-        // descriptor can be hoisted).
+        // descriptor only has a single global, then we can do (ref.cast_desc)
+        // using the descriptor. Descriptor casts are usually more efficient
+        // than normal ones (and even more so if we get lucky and are in a loop,
+        // where the global.get of the descriptor can be hoisted).
         // TODO: only do this when shrinkLevel == 0?
 
         // Check if we have a descriptor.
@@ -556,9 +555,10 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
-        // Check if the type has no subtypes, as a ref.cast_desc will find
-        // precisely that type and nothing else. TODO: exact types too
-        if (!parent.subTypes->getStrictSubTypes(heapType).empty()) {
+        // Check if the type has no (relevant) subtypes, as a ref.cast_desc will
+        // find precisely that type and nothing else.
+        if (!type.isExact() &&
+            !parent.subTypes->getStrictSubTypes(heapType).empty()) {
           return;
         }
 

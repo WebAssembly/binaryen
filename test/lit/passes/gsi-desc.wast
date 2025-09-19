@@ -236,6 +236,34 @@
       )
     )
   )
+
+  ;; CHECK:      (func $test-exact (type $4) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $A))
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref $B)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (global.get $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-exact (param $any anyref)
+    ;; When using exact casts, we can optimize both. TODO: atm we do not
+    ;; optimize $A, as we propagate on |typeGlobals|.
+    (drop
+      (ref.cast (ref (exact $A))
+        (local.get $any)
+      )
+    )
+    (drop
+      (ref.cast (ref (exact $B))
+        (local.get $any)
+      )
+    )
+  )
 )
 
 ;; As above, but without subtyping between $A and $B.
