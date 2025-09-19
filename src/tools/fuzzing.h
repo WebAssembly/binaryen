@@ -214,9 +214,6 @@ private:
   // All tags that are valid as exception tags (which cannot have results).
   std::vector<Tag*> exceptionTags;
 
-  // All types that have a descriptor.
-  std::vector<HeapType> describedTypes;
-
   Index numAddedFunctions = 0;
 
   // The name of an empty tag.

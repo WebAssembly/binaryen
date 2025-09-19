@@ -525,15 +525,12 @@ void TranslateToFuzzReader::setupHeapTypes() {
     }
   }
 
-  // Compute struct and array fields and other data.
+  // Compute struct and array fields.
   for (auto type : interestingHeapTypes) {
     if (type.isStruct()) {
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         typeStructFields[fields[i].type].push_back(StructField{type, i});
-      }
-      if (type.getDescriptorType()) {
-        describedTypes.push_back(type);
       }
     } else if (type.isArray()) {
       typeArrays[type.getArray().element.type].push_back(type);
@@ -2207,7 +2204,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefCast);
     }
-    if (!describedTypes.empty()) {
+    if (heapType.getDescribedType()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefGetDesc);
     }
@@ -4896,8 +4893,10 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeRefGetDesc(Type type) {
-  auto refType = pick(describedTypes);
-  return builder.makeRefGetDesc(make(getType(refType)));
+  auto described = type.getHeapType().getDescribedType();
+  assert(described);
+  auto refType = getType(*described);
+  return builder.makeRefGetDesc(make(refType));
 }
 
 Expression* TranslateToFuzzReader::makeBrOn(Type type) {
