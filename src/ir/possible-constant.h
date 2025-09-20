@@ -20,6 +20,7 @@
 #include <variant>
 
 #include "ir/properties.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -85,6 +86,45 @@ public:
   // identify a constant value here.
   void noteUnknown() { value = Many(); }
 
+  // Modify the possible constant to account for being written to or read from a
+  // possibly-packed field. When used to model a read, `isSigned` controls
+  // whether the value will be sign-extended or not.
+  void packForField(const Field& field, bool isSigned = false) {
+    if (field.type != Type::i32 || !field.isPacked()) {
+      return;
+    }
+    if (!isConstant()) {
+      // Nothing to pack.
+      return;
+    }
+    if (isConstantGlobal()) {
+      // Cannot track global and bit masking simultaneously, so give up.
+      noteUnknown();
+      return;
+    }
+    assert(isConstantLiteral());
+    auto val = getConstantLiteral();
+    assert(val.type == Type::i32);
+    switch (field.packedType) {
+      case Field::i8:
+        if (isSigned) {
+          value = val.extendS8();
+        } else {
+          value = val.and_(Literal(uint32_t(0xff)));
+        }
+        break;
+      case Field::i16:
+        if (isSigned) {
+          value = val.extendS16();
+        } else {
+          value = val.and_(Literal(uint32_t(0xffff)));
+        }
+        break;
+      case Field::not_packed:
+        WASM_UNREACHABLE("unexpected packed type");
+    }
+  }
+
   // Combine the information in a given PossibleConstantValues to this one. This
   // is the same as if we have called note*() on us with all the history of
   // calls to that other object.
@@ -107,28 +147,6 @@ public:
     if (other.value != value) {
       value = Many();
       return true;
-    }
-
-    // Nulls compare equal, and we could consider any of the input nulls as the
-    // combination of the two (as any of them would be valid to place in the
-    // location we are working to optimize). In order to have simple symmetric
-    // behavior here, which does not depend on the order of the inputs, use the
-    // LUB.
-    if (isNull() && other.isNull()) {
-      auto type = getConstantLiteral().type.getHeapType();
-      auto otherType = other.getConstantLiteral().type.getHeapType();
-      auto lub = HeapType::getLeastUpperBound(type, otherType);
-      if (!lub) {
-        // TODO: Remove this workaround once we have bottom types to assign to
-        // null literals.
-        value = Many();
-        return true;
-      }
-      if (*lub != type) {
-        value = Literal::makeNull(*lub);
-        return true;
-      }
-      return false;
     }
 
     return false;
