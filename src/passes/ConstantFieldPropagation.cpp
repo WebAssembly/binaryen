@@ -270,6 +270,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // on simply applying a constant. However, we can try to use a ref.test, if
     // that is allowed.
     if (!info.isConstant()) {
+      // Note that if the reference is exact, we never need to use a ref.test
+      // because there will not be multiple subtypes to select between.
       if (refTest && !ref->type.isExact()) {
         optimizeUsingRefTest(curr, ref, index);
       }
