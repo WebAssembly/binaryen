@@ -4622,7 +4622,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $copy (param $src (ref $struct)) (param $dst (ref $struct))
-    ;; Copy from index 1 to index 2 in the same type.
+    ;; Copy from index 1 to index 2 in the same type. The copied value will
+    ;; conflict with the initial value and inhibit optimization.
     (struct.set $struct 2
       (local.get $dst)
       (struct.get $struct 1
@@ -4779,6 +4780,126 @@
   ;; CHECK-NEXT:  (local $sub1 (ref null $sub1))
   ;; CHECK-NEXT:  (local $sub2 (ref null $sub2))
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 2
+  ;; CHECK-NEXT:    (local.get $super)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 2
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub1 2
+  ;; CHECK-NEXT:    (local.get $sub1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $sub2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-2
+    (local $super (ref null $super))
+    (local $struct (ref null $struct))
+    (local $sub1 (ref null $sub1))
+    (local $sub2 (ref null $sub2))
+    (drop
+      (struct.get $super 2
+        (local.get $super)
+      )
+    )
+    (drop
+      (struct.get $struct 2
+        (local.get $struct)
+      )
+    )
+    (drop
+      (struct.get $sub1 2
+        (local.get $sub1)
+      )
+    )
+    (drop
+      (struct.get $sub2 2
+        (local.get $sub2)
+      )
+    )
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $super (sub (struct (field (mut i32) (mut i32) (mut i32)))))
+    ;; CHECK:       (type $struct (sub $super (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $struct (sub $super (struct (field (mut i32) (mut i32) (mut i32)))))
+    ;; CHECK:       (type $sub1 (sub $struct (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $sub1 (sub $struct (struct (field (mut i32) (mut i32) (mut i32)))))
+    ;; CHECK:       (type $sub2 (sub $struct (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $sub2 (sub $struct (struct (field (mut i32) (mut i32) (mut i32)))))
+  )
+
+  ;; CHECK:      (type $4 (func))
+
+  ;; CHECK:      (type $5 (func (param (ref $struct) (ref $struct))))
+
+  ;; CHECK:      (func $init (type $4)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub1
+  ;; CHECK-NEXT:    (i32.const 666)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $init
+    ;; Same as above, except now field 2 is initialized with the same value as
+    ;; field 1, so the copy will not do anything.
+    (drop
+      (struct.new $sub1
+        (i32.const 666)
+        (i32.const 10)
+        (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $copy (type $5) (param $src (ref $struct)) (param $dst (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 2
+  ;; CHECK-NEXT:   (local.get $dst)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $src)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $copy (param $src (ref $struct)) (param $dst (ref $struct))
+    ;; Copy from index 1 to index 2 in the same type.
+    (struct.set $struct 2
+      (local.get $dst)
+      (struct.get $struct 1
+        (local.get $src)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-2 (type $4)
+  ;; CHECK-NEXT:  (local $super (ref null $super))
+  ;; CHECK-NEXT:  (local $struct (ref null $struct))
+  ;; CHECK-NEXT:  (local $sub1 (ref null $sub1))
+  ;; CHECK-NEXT:  (local $sub2 (ref null $sub2))
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
@@ -4809,6 +4930,126 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $sub2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-2
+    (local $super (ref null $super))
+    (local $struct (ref null $struct))
+    (local $sub1 (ref null $sub1))
+    (local $sub2 (ref null $sub2))
+    (drop
+      (struct.get $super 2
+        (local.get $super)
+      )
+    )
+    (drop
+      (struct.get $struct 2
+        (local.get $struct)
+      )
+    )
+    (drop
+      (struct.get $sub1 2
+        (local.get $sub1)
+      )
+    )
+    (drop
+      (struct.get $sub2 2
+        (local.get $sub2)
+      )
+    )
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $super (sub (struct (field (mut i32) (mut i32) (mut i32)))))
+    ;; CHECK:       (type $struct (sub $super (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $struct (sub $super (struct (field (mut i32) (mut i32) (mut i32)))))
+    ;; CHECK:       (type $sub1 (sub $struct (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $sub1 (sub $struct (struct (field (mut i32) (mut i32) (mut i32)))))
+    ;; CHECK:       (type $sub2 (sub $struct (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    (type $sub2 (sub $struct (struct (field (mut i32) (mut i32) (mut i32)))))
+  )
+
+  ;; CHECK:      (type $4 (func))
+
+  ;; CHECK:      (type $5 (func (param (ref $sub1) (ref $sub1))))
+
+  ;; CHECK:      (func $init (type $4)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub1
+  ;; CHECK-NEXT:    (i32.const 666)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $init
+    ;; We're back to initializing field 2 with a different value.
+    (drop
+      (struct.new $sub1
+        (i32.const 666)
+        (i32.const 10)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $copy (type $5) (param $src (ref $sub1)) (param $dst (ref $sub1))
+  ;; CHECK-NEXT:  (struct.set $sub1 2
+  ;; CHECK-NEXT:   (local.get $dst)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $src)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $copy (param $src (ref $sub1)) (param $dst (ref $sub1))
+    ;; Copy from index 1 to index 2, but now on $sub1, so we will be able to
+    ;; optimize $sub2.
+    (struct.set $sub1 2
+      (local.get $dst)
+      (struct.get $sub1 1
+        (local.get $src)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-2 (type $4)
+  ;; CHECK-NEXT:  (local $super (ref null $super))
+  ;; CHECK-NEXT:  (local $struct (ref null $struct))
+  ;; CHECK-NEXT:  (local $sub1 (ref null $sub1))
+  ;; CHECK-NEXT:  (local $sub2 (ref null $sub2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 2
+  ;; CHECK-NEXT:    (local.get $super)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 2
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub1 2
+  ;; CHECK-NEXT:    (local.get $sub1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $sub2)
@@ -4823,22 +5064,22 @@
     (local $sub1 (ref null $sub1))
     (local $sub2 (ref null $sub2))
     (drop
-      (struct.get $super 1
+      (struct.get $super 2
         (local.get $super)
       )
     )
     (drop
-      (struct.get $struct 1
+      (struct.get $struct 2
         (local.get $struct)
       )
     )
     (drop
-      (struct.get $sub1 1
+      (struct.get $sub1 2
         (local.get $sub1)
       )
     )
     (drop
-      (struct.get $sub2 1
+      (struct.get $sub2 2
         (local.get $sub2)
       )
     )
