@@ -328,7 +328,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct (ref null $struct)) (result i32)
-    ;; We cannot optimize here.
     (struct.get $struct 0
       (local.get $struct)
     )
@@ -408,7 +407,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct (ref null $struct)) (result i32)
-    ;; We cannot optimize here.
     (struct.get $struct 0
       (local.get $struct)
     )

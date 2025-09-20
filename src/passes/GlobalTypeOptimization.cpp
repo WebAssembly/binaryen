@@ -141,7 +141,7 @@ struct GlobalTypeOptimization : public Pass {
   // still need to be descriptors for their own subtypes and supertypes to be
   // valid. We will keep them descriptors by having them describe trivial new
   // placeholder types.
-  InsertOrderedMap<HeapType, Index> descriptorsOfPlaceholders;
+  std::vector<HeapType> descriptorsOfPlaceholders;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -473,8 +473,7 @@ struct GlobalTypeOptimization : public Pass {
           auto desc = type.getDescribedType();
           assert(desc);
           if (haveUnneededDescriptors.count(*desc)) {
-            descriptorsOfPlaceholders.insert(
-              {type, descriptorsOfPlaceholders.size()});
+            descriptorsOfPlaceholders.push_back(type);
           }
         }
       }
@@ -498,20 +497,30 @@ struct GlobalTypeOptimization : public Pass {
   void updateTypes(Module& wasm) {
     class TypeRewriter : public GlobalTypeRewriter {
       GlobalTypeOptimization& parent;
+      InsertOrderedMap<HeapType, Index> placeholderIndices;
       InsertOrderedMap<HeapType, Index>::iterator placeholderIt;
 
     public:
       TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
         : GlobalTypeRewriter(wasm), parent(parent),
-          placeholderIt(parent.descriptorsOfPlaceholders.begin()) {}
+          placeholderIt(placeholderIndices.begin()) {}
 
       std::vector<HeapType> getSortedTypes(PredecessorGraph preds) override {
         auto types = GlobalTypeRewriter::getSortedTypes(std::move(preds));
+        // Some of the descriptors of placeholders may not end up being used at
+        // all, so we will not rebuild them. Record the used types that need
+        // placeholder describees and assign them placeholder indices.
+        std::unordered_set<HeapType> typeSet(types.begin(), types.end());
+        for (auto desc : parent.descriptorsOfPlaceholders) {
+          if (typeSet.count(desc)) {
+            placeholderIndices.insert({desc, placeholderIndices.size()});
+          }
+        }
+        placeholderIt = placeholderIndices.begin();
         // Prefix the types with placeholders to be overwritten with the
         // placeholder describees.
         HeapType placeholder = Struct{};
-        types.insert(
-          types.begin(), parent.descriptorsOfPlaceholders.size(), placeholder);
+        types.insert(types.begin(), placeholderIndices.size(), placeholder);
         return types;
       }
 
@@ -577,10 +586,11 @@ struct GlobalTypeOptimization : public Pass {
 
         // Until we've created all the placeholders, create a placeholder
         // describee type for the next descriptor that needs one.
-        if (placeholderIt != parent.descriptorsOfPlaceholders.end()) {
+        if (placeholderIt != placeholderIndices.end()) {
           auto descriptor = placeholderIt->first;
           typeBuilder[i].descriptor(getTempHeapType(descriptor));
           typeBuilder[i].setShared(descriptor.getShared());
+
           ++placeholderIt;
           return;
         }
@@ -588,8 +598,8 @@ struct GlobalTypeOptimization : public Pass {
         // Remove an unneeded describee or describe a placeholder type.
         if (auto described = oldType.getDescribedType()) {
           if (parent.haveUnneededDescriptors.count(*described)) {
-            if (auto it = parent.descriptorsOfPlaceholders.find(oldType);
-                it != parent.descriptorsOfPlaceholders.end()) {
+            if (auto it = placeholderIndices.find(oldType);
+                it != placeholderIndices.end()) {
               typeBuilder[i].describes(typeBuilder[it->second]);
             } else {
               typeBuilder[i].describes(std::nullopt);
