@@ -4893,7 +4893,14 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   Expression* descRef = nullptr;
   if (auto desc = refType.getHeapType().getDescriptorType();
       desc && Type::isSubType(refType, type)) {
-    descRef = make(Type(*desc, getNullability(), refType.getExactness()));
+    descRef = make(refType.with(*desc));
+    // descRef may be a subtype of the type we asked make() for, and if so then
+    // it might have a different described type - perhaps even an unrelated one,
+    // if the descriptors subtype but not the describees. Use an exact type to
+    // fix that up.
+    if (!Type::isSubType(descRef->type, type)) {
+      descRef = make(refType.with(*desc).with(Exact));
+    }
   }
   return builder.makeRefCast(make(refType), descRef, type);
 }
