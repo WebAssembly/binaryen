@@ -2112,8 +2112,10 @@ Expression* TranslateToFuzzReader::make(Type type) {
     ret = _makeunreachable();
   }
   if (!Type::isSubType(ret->type, type)) {
-    Fatal() << "Did not generate the right subtype of " << ModuleType(wasm, type)
-            << ", instead we have " << ModuleType(wasm, ret->type) << " : " << ModuleExpression(wasm, ret) << '\n';
+    Fatal() << "Did not generate the right subtype of "
+            << ModuleType(wasm, type) << ", instead we have "
+            << ModuleType(wasm, ret->type) << " : "
+            << ModuleExpression(wasm, ret) << '\n';
   }
   nesting--;
   return ret;
