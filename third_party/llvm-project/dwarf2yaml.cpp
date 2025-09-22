@@ -118,7 +118,11 @@ void dumpDebugRanges(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
 void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
   // This blindly grabs the first CU, which should be ok since they all have
   // the same address size?
-  auto CU = DCtx.normal_units().begin()->get();
+  auto CUS = DCtx.normal_units();
+  if (CUS.empty()) {
+    return ;
+  }
+  auto CU = CUS.begin()->get();
   uint8_t savedAddressByteSize = CU->getFormParams().AddrSize;  // XXX BINARYEN
   DWARFDataExtractor locsData(DCtx.getDWARFObj(), DCtx.getDWARFObj().getLocSection(),
                               DCtx.isLittleEndian(), savedAddressByteSize);
