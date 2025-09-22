@@ -2112,8 +2112,8 @@ Expression* TranslateToFuzzReader::make(Type type) {
     ret = _makeunreachable();
   }
   if (!Type::isSubType(ret->type, type)) {
-    Fatal() << "Did not generate the right subtype of " << type
-            << ", instead we have " << ret->type << " : " << *ret << '\n';
+    Fatal() << "Did not generate the right subtype of " << ModuleType(wasm, type)
+            << ", instead we have " << ModuleType(wasm, ret->type) << " : " << ModuleExpression(wasm, ret) << '\n';
   }
   nesting--;
   return ret;
@@ -4885,8 +4885,12 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
   }
+  // Descriptor casts emit a type that depends on the descriptor, so we can only
+  // create one if that type would fit |type| which is what we must emit at the
+  // end.
   Expression* descRef = nullptr;
-  if (auto desc = refType.getHeapType().getDescriptorType()) {
+  if (auto desc = refType.getHeapType().getDescriptorType();
+      desc && Type::isSubType(refType, type)) {
     descRef = make(Type(*desc, getNullability(), refType.getExactness()));
   }
   return builder.makeRefCast(make(refType), descRef, type);
@@ -4895,7 +4899,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
 Expression* TranslateToFuzzReader::makeRefGetDesc(Type type) {
   auto described = type.getHeapType().getDescribedType();
   assert(described);
-  auto refType = getType(*described);
+  auto refType = type.with(*described);
   return builder.makeRefGetDesc(make(refType));
 }
 
