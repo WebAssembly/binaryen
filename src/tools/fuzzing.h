@@ -547,9 +547,6 @@ private:
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
 
-  // Given a HeapType, get a Type that uses it.
-  Type getType(HeapType heapType);
-
   // Utilities
   Name getTargetName(Expression* target);
   Type getTargetType(Expression* target);

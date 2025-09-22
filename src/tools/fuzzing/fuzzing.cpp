@@ -5677,10 +5677,6 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
   return superType;
 }
 
-Type TranslateToFuzzReader::getType(HeapType heapType) {
-  return Type(heapType, getNullability(), getExactness());
-}
-
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
   if (auto* block = target->dynCast<Block>()) {
     return block->name;
