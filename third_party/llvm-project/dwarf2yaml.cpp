@@ -120,7 +120,7 @@ void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
   // the same address size?
   auto CUS = DCtx.normal_units();
   if (CUS.empty()) {
-    return ;
+    return;
   }
   auto CU = CUS.begin()->get();
   uint8_t savedAddressByteSize = CU->getFormParams().AddrSize;  // XXX BINARYEN
