@@ -494,6 +494,9 @@ struct GlobalTypeOptimization : public Pass {
   void updateTypes(Module& wasm) {
     class TypeRewriter : public GlobalTypeRewriter {
       GlobalTypeOptimization& parent;
+      // Differentiate the first occurrence of a descriptor of a placeholder
+      // type, which is actually saving space for the placeholder itself, and
+      // the next occurrence, which is real.
       bool sawPlaceholder = false;
 
     public:
