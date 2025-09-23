@@ -2024,8 +2024,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             block->list.push_back(curr);
             block->finalize();
             BranchHints::clear(curr, getFunction());
-            // The type changed, so refinalize.
-            refinalize = true;
           } else {
             // the branch is never taken, allow control flow to fall through
             if (curr->value) {
@@ -2034,6 +2032,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
           }
           replaceCurrent(block);
+          // The type changes if we make the break unconditional (it becomes
+          // unreachable), but a change may also happen if we see the break is
+          // not taken, as then the target block may have no more breaks, and
+          // become unreachable. Either way, refinalize.
+          refinalize = true;
         }
       }
     };
