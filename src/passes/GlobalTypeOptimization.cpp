@@ -589,6 +589,11 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
+        // Remove an unneeded descriptor.
+        if (parent.haveUnneededDescriptors.count(oldType)) {
+          typeBuilder[i].descriptor(std::nullopt);
+        }
+
         // Remove an unneeded describee or describe a placeholder type.
         if (auto described = oldType.getDescribedType()) {
           if (parent.haveUnneededDescriptors.count(*described)) {
@@ -613,11 +618,6 @@ struct GlobalTypeOptimization : public Pass {
               typeBuilder[i].describes(std::nullopt);
             }
           }
-        }
-
-        // Remove an unneeded descriptor.
-        if (parent.haveUnneededDescriptors.count(oldType)) {
-          typeBuilder[i].descriptor(std::nullopt);
         }
       }
     };

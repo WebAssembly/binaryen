@@ -1251,8 +1251,40 @@
   )
 )
 
+;; Regression test for a bug where a placeholder was not set up to be described
+;; by its intended descriptor if that intended descriptor also happened to have
+;; its own unneeded descriptor.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $public (descriptor $public.desc (struct)))
+  (type $public (descriptor $public.desc (struct)))
+  ;; CHECK:       (type $public.desc (sub (describes $public (struct))))
+  (type $public.desc (sub (describes $public (struct))))
+ )
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $private (struct))
+  (type $private (descriptor $private.desc (struct)))
+  ;; CHECK:       (type $3 (sub (descriptor $private.desc (struct))))
+
+  ;; CHECK:       (type $private.desc (sub $public.desc (describes $3 (struct))))
+  (type $private.desc (sub $public.desc (describes $private (descriptor $private.meta (struct)))))
+  ;; CHECK:       (type $private.meta (struct))
+  (type $private.meta (describes $private.desc (struct)))
+ )
+
+ ;; Force $private.desc to remain a descriptor.
+ ;; CHECK:      (global $public (ref null $public) (ref.null none))
+ (global $public (export "public") (ref null $public) (ref.null none))
+
+ ;; CHECK:      (global $private (ref null $private) (ref.null none))
+ (global $private (ref null $private) (ref.null none))
+)
+
 ;; Sibling types $A and $B. The supertype that connects them should not stop us
 ;; from optimizing $B here, even though $A cannot be optimized.
+;; CHECK:      (export "public" (global $public))
 (module
   (rec
     ;; CHECK:      (rec
