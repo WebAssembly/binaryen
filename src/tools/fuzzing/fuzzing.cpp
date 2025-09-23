@@ -1768,7 +1768,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // anything of the same hierarchy. That is, we do not need to limit
         // ourselves to subtypes of the current type, but can also allow
         // supertypes.
-        if (auto* parent = getParent()) {
+        if (auto* parent = getParent()) { XXX use subtypingdiscoverer
           if (auto* parentCast = parent->dynCast<RefCast>()) {
             // We are the child of a cast. Check we are the right one, and do
             // not do this often.
