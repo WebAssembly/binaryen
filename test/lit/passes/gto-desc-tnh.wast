@@ -103,13 +103,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $0 (descriptor $A.desc (struct)))
-
-    ;; CHECK:       (type $A (sub (struct)))
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
     ;; T_N_H:      (rec
     ;; T_N_H-NEXT:  (type $A (sub (struct)))
     (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $0 (struct))))
+    ;; CHECK:       (type $1 (sub (descriptor $A.desc (struct))))
+
+    ;; CHECK:       (type $A.desc (sub (describes $1 (struct))))
     ;; T_N_H:       (type $A.desc (sub (struct)))
     (type $A.desc (sub (describes $A (struct ))))
 
@@ -155,13 +155,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $0 (descriptor $B.desc (struct)))
-
-    ;; CHECK:       (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
     ;; T_N_H:      (rec
-    ;; T_N_H-NEXT:  (type $0 (descriptor $B.desc (struct)))
-
-    ;; T_N_H:       (type $A (sub (descriptor $A.desc (struct))))
+    ;; T_N_H-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
     (type $A (sub (descriptor $A.desc (struct))))
     ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
     ;; T_N_H:       (type $A.desc (sub (describes $A (struct))))
@@ -170,8 +166,12 @@
     ;; CHECK:       (type $B (sub (struct)))
     ;; T_N_H:       (type $B (sub (struct)))
     (type $B (sub (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $0 (struct))))
-    ;; T_N_H:       (type $B.desc (sub $A.desc (describes $0 (struct))))
+    ;; CHECK:       (type $3 (sub (descriptor $B.desc (struct))))
+
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $3 (struct))))
+    ;; T_N_H:       (type $3 (sub (descriptor $B.desc (struct))))
+
+    ;; T_N_H:       (type $B.desc (sub $A.desc (describes $3 (struct))))
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 

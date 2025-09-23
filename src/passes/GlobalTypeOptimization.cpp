@@ -31,7 +31,6 @@
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "pass.h"
-#include "support/insert_ordered.h"
 #include "support/permutations.h"
 #include "wasm-type-ordering.h"
 #include "wasm-type.h"
@@ -141,7 +140,7 @@ struct GlobalTypeOptimization : public Pass {
   // still need to be descriptors for their own subtypes and supertypes to be
   // valid. We will keep them descriptors by having them describe trivial new
   // placeholder types.
-  std::vector<HeapType> descriptorsOfPlaceholders;
+  std::unordered_set<HeapType> descriptorsOfPlaceholders;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -465,15 +464,13 @@ struct GlobalTypeOptimization : public Pass {
       descPropagator.propagateToSuperAndSubTypes(remainingDesciptors);
 
       // Determine the set of descriptor types that will need placeholder
-      // describees. Do not iterate directly on remainingDescriptors because it
-      // is not deterministically ordered.
-      for (auto type : subTypes.types) {
-        if (auto it = remainingDesciptors.find(type);
-            it != remainingDesciptors.end() && it->second.value) {
+      // describees.
+      for (auto [type, kept] : remainingDesciptors) {
+        if (kept.value) {
           auto desc = type.getDescribedType();
           assert(desc);
           if (haveUnneededDescriptors.count(*desc)) {
-            descriptorsOfPlaceholders.push_back(type);
+            descriptorsOfPlaceholders.insert(type);
           }
         }
       }
@@ -497,31 +494,39 @@ struct GlobalTypeOptimization : public Pass {
   void updateTypes(Module& wasm) {
     class TypeRewriter : public GlobalTypeRewriter {
       GlobalTypeOptimization& parent;
-      InsertOrderedMap<HeapType, Index> placeholderIndices;
-      InsertOrderedMap<HeapType, Index>::iterator placeholderIt;
+      // Differentiate the first occurrence of a descriptor of a placeholder
+      // type, which is actually saving space for the placeholder itself, and
+      // the next occurrence, which is real.
+      bool sawPlaceholder = false;
 
     public:
       TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
-        : GlobalTypeRewriter(wasm), parent(parent),
-          placeholderIt(placeholderIndices.begin()) {}
+        : GlobalTypeRewriter(wasm), parent(parent) {}
 
       std::vector<HeapType> getSortedTypes(PredecessorGraph preds) override {
         auto types = GlobalTypeRewriter::getSortedTypes(std::move(preds));
-        // Some of the descriptors of placeholders may not end up being used at
-        // all, so we will not rebuild them. Record the used types that need
-        // placeholder describees and assign them placeholder indices.
-        std::unordered_set<HeapType> typeSet(types.begin(), types.end());
-        for (auto desc : parent.descriptorsOfPlaceholders) {
-          if (typeSet.count(desc)) {
-            placeholderIndices.insert({desc, placeholderIndices.size()});
+        // Intersperse placeholder types throughout the sorted types. Each
+        // descriptor type that needs a placeholder describee will be duplicated
+        // in the list of sorted types. The first appearance will be modified to
+        // become the placeholder describee and the subsequent appearance will
+        // be modified to describe the preceding placeholder. We represent the
+        // placeholder slots here using their intended descriptor types for two
+        // reasons: first, it lets us easily recognize the placeholder slots
+        // in modifyTypeBuilderEntry. Second, it ensures that the type-to-index
+        // mapping created in GlobalTypeRewriter::rebuiltTypes does not end up
+        // mapping the placeholder types to any index, since their mappings are
+        // immediately overwritten by the following "real" occurrences of the
+        // descriptor types.
+        std::vector<HeapType> typesWithPlaceholders;
+        for (auto type : types) {
+          if (parent.descriptorsOfPlaceholders.count(type)) {
+            // Insert the type an extra time to make space for the placeholder.
+            typesWithPlaceholders.push_back(type);
           }
+          typesWithPlaceholders.push_back(type);
         }
-        placeholderIt = placeholderIndices.begin();
-        // Prefix the types with placeholders to be overwritten with the
-        // placeholder describees.
-        HeapType placeholder = Struct{};
-        types.insert(types.begin(), placeholderIndices.size(), placeholder);
-        return types;
+
+        return typesWithPlaceholders;
       }
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
@@ -584,32 +589,35 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        // Until we've created all the placeholders, create a placeholder
-        // describee type for the next descriptor that needs one.
-        if (placeholderIt != placeholderIndices.end()) {
-          auto descriptor = placeholderIt->first;
-          typeBuilder[i].descriptor(getTempHeapType(descriptor));
-          typeBuilder[i].setShared(descriptor.getShared());
-
-          ++placeholderIt;
-          return;
+        // Remove an unneeded descriptor.
+        if (parent.haveUnneededDescriptors.count(oldType)) {
+          typeBuilder[i].descriptor(std::nullopt);
         }
 
         // Remove an unneeded describee or describe a placeholder type.
         if (auto described = oldType.getDescribedType()) {
           if (parent.haveUnneededDescriptors.count(*described)) {
-            if (auto it = placeholderIndices.find(oldType);
-                it != placeholderIndices.end()) {
-              typeBuilder[i].describes(typeBuilder[it->second]);
+            if (parent.descriptorsOfPlaceholders.count(oldType)) {
+              if (!sawPlaceholder) {
+                // This is the placeholder describee. Set its descriptor to be
+                // the succeeding real descriptor type.
+                typeBuilder[i] = Struct{};
+                typeBuilder[i].setShared(described->getShared());
+                typeBuilder[i].descriptor(typeBuilder[i + 1]);
+                typeBuilder[i].describes(std::nullopt);
+                typeBuilder[i].subTypeOf(std::nullopt);
+                sawPlaceholder = true;
+              } else {
+                // This is the real placedholder-describing descriptor type.
+                // Have it describe the preceding placeholder describee.
+                typeBuilder[i].describes(typeBuilder[i - 1]);
+                sawPlaceholder = false;
+              }
             } else {
+              // This type no longer needs its describee.
               typeBuilder[i].describes(std::nullopt);
             }
           }
-        }
-
-        // Remove an unneeded descriptor.
-        if (parent.haveUnneededDescriptors.count(oldType)) {
-          typeBuilder.setDescriptor(i, std::nullopt);
         }
       }
     };
