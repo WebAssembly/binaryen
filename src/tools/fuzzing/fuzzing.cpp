@@ -1719,31 +1719,32 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // reasonable chance of making some changes.
   percentChance = std::max(percentChance, Index(3));
 
-  struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
-    TranslateToFuzzReader& parent;
+  struct Modder
+    : public ExpressionStackWalker<Modder, UnifiedExpressionVisitor<Modder>> {
+    TranslateToFuzzReader& fuzzer;
     Index percentChance;
 
     // Whether to replace with unreachable. This can lead to less code getting
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    Modder(TranslateToFuzzReader& parent, Index percentChance)
-      : parent(parent), percentChance(percentChance) {
+    Modder(TranslateToFuzzReader& fuzzer, Index percentChance)
+      : fuzzer(fuzzer), percentChance(percentChance) {
       // If the parent allows it then sometimes replace with an unreachable, and
       // sometimes not. Even if we allow it, only do it in certain functions
       // (half the time) and only do it rarely (see below).
-      allowUnreachable = parent.allowAddingUnreachableCode && parent.oneIn(2);
+      allowUnreachable = fuzzer.allowAddingUnreachableCode && fuzzer.oneIn(2);
     }
 
     void visitExpression(Expression* curr) {
-      if (parent.upTo(100) < percentChance &&
-          parent.canBeArbitrarilyReplaced(curr)) {
+      if (fuzzer.upTo(100) < percentChance &&
+          fuzzer.canBeArbitrarilyReplaced(curr)) {
         // We can replace in various modes, see below. Generate a random number
         // up to 100 to help us there.
-        int mode = parent.upTo(100);
+        int mode = fuzzer.upTo(100);
 
         if (allowUnreachable && mode < 5) {
-          replaceCurrent(parent.make(Type::unreachable));
+          replaceCurrent(fuzzer.make(Type::unreachable));
           return;
         }
 
@@ -1752,12 +1753,30 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // not, changing an offset, etc.
         if (auto* c = curr->dynCast<Const>()) {
           if (mode < 50) {
-            c->value = parent.tweak(c->value);
+            c->value = fuzzer.tweak(c->value);
           } else {
             // Just replace the entire thing.
-            replaceCurrent(parent.make(curr->type));
+            replaceCurrent(fuzzer.make(curr->type));
           }
           return;
+        }
+
+        // We normally replace with the same type (or subtype).
+        auto replacementType = curr->type;
+
+        // ref.cast is interesting in that we can replace the reference with
+        // anything of the same hierarchy. That is, we do not need to limit
+        // ourselves to subtypes of the current type, but can also allow
+        // supertypes.
+        if (auto* parent = getParent()) {
+          if (auto* parentCast = parent->dynCast<RefCast>()) {
+            // We are the child of a cast. Check we are the right one, and do
+            // not do this often.
+            if (parentCast->ref == curr && (mode & 8) && curr->type.isRef()) {
+              auto heapType = curr->type.getHeapType();
+              replacementType = curr->type.with(heapType.getTop());
+            }
+          }
         }
 
         // Generate a replacement for the expression, and by default replace all
@@ -1768,7 +1787,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // labels, but we'll fix that up later. Note also that make() picks a
         // subtype, so this has a chance to replace us with anything that is
         // valid to put here.
-        auto* rep = parent.make(curr->type);
+        auto* rep = fuzzer.make(replacementType);
         if (mode < 33 && rep->type != Type::none) {
           // This has a non-none type. Replace the output, keeping the
           // expression and its children in a drop. This "interposes" between
@@ -1816,7 +1835,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
           } else {
             // Drop curr and append.
             rep =
-              parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
+              fuzzer.builder.makeSequence(fuzzer.builder.makeDrop(curr), rep);
           }
         } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
           ChildIterator children(curr);
@@ -1841,13 +1860,13 @@ void TranslateToFuzzReader::mutate(Function* func) {
             //    (NEW)
             //  )
             //
-            auto* block = parent.builder.makeBlock();
+            auto* block = fuzzer.builder.makeBlock();
             for (auto* child : children) {
               // Only drop the child if we can't replace it as one of NEW's
               // children. This does a linear scan of |rep| which is the reason
               // for the above limit on the number of children.
               if (!replaceChildWith(rep, child)) {
-                block->list.push_back(parent.builder.makeDrop(child));
+                block->list.push_back(fuzzer.builder.makeDrop(child));
               }
             }
 
