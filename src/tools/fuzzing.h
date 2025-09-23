@@ -502,6 +502,7 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+  Expression* makeRefGetDesc(Type type);
   Expression* makeBrOn(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
@@ -545,7 +546,6 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
-  HeapType getArrayTypeForString();
 
   // Utilities
   Name getTargetName(Expression* target);
