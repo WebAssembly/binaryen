@@ -6957,7 +6957,7 @@
       )
     )
     ;; Now the value does not match and we don't optimize, even though we could
-    ;; in principal.
+    ;; in principle.
     (struct.get $A 0
       (local.get $A)
     )
