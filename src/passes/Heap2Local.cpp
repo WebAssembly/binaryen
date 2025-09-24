@@ -891,7 +891,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       } else {
         assert(allocIsCastRef);
         if (!Type::isSubType(allocation->type, curr->type)) {
-          // The cast fails, so it must trap.
+          // The cast fails, so it must trap. We mark such failing casts as
+          // fully consuming their inputs, so we cannot just emit the explicit
+          // descriptor equality check below because it would appear to be able
+          // to propagate the optimized allocation on to the parent (as a null
+          // value, which might not validate).
           replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
                                           builder.makeDrop(curr->desc),
                                           builder.makeUnreachable()));
