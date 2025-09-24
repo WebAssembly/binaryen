@@ -898,3 +898,51 @@
   )
 )
 
+;; A definitely-failing descriptor cast. We have two pairs of descriptor/
+;; describee, and create an $A2 that we try to cast to the unrelated $A.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+
+    ;; CHECK:       (type $A2 (descriptor $B2 (struct)))
+    (type $A2 (descriptor $B2 (struct)))
+    ;; CHECK:       (type $B2 (describes $A2 (struct)))
+    (type $B2 (describes $A2 (struct)))
+  )
+
+  ;; CHECK:      (type $4 (func (result (ref $A))))
+
+  ;; CHECK:      (func $A (type $4) (result (ref $A))
+  ;; CHECK-NEXT:  (local $0 (ref (exact $B2)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $B2)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (struct.new_default $B2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $A (result (ref $A))
+    (ref.cast_desc (ref $A)
+      (struct.new_default $A2
+        (struct.new_default $B2)
+      )
+      (struct.new_default $B)
+    )
+  )
+)

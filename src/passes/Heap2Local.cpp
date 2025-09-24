@@ -890,17 +890,28 @@ struct Struct2Local : PostWalker<Struct2Local> {
         }
       } else {
         assert(allocIsCastRef);
-        // The cast succeeds iff the optimized allocation's descriptor is the
-        // same as the given descriptor and traps otherwise.
-        auto type = allocation->desc->type;
-        replaceCurrent(builder.blockify(
-          builder.makeDrop(curr->ref),
-          builder.makeIf(
-            builder.makeRefEq(
-              curr->desc,
-              builder.makeLocalGet(localIndexes[fields.size()], type)),
-            builder.makeRefNull(allocation->type.getHeapType()),
-            builder.makeUnreachable())));
+        if (!Type::isSubType(allocation->type, curr->type)) {
+          // The cast fails, so it must trap. We mark such failing casts as
+          // fully consuming their inputs, so we cannot just emit the explicit
+          // descriptor equality check below because it would appear to be able
+          // to propagate the optimized allocation on to the parent (as a null
+          // value, which might not validate).
+          replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->desc),
+                                          builder.makeUnreachable()));
+        } else {
+          // The cast succeeds iff the optimized allocation's descriptor is the
+          // same as the given descriptor and traps otherwise.
+          auto type = allocation->desc->type;
+          replaceCurrent(builder.blockify(
+            builder.makeDrop(curr->ref),
+            builder.makeIf(
+              builder.makeRefEq(
+                curr->desc,
+                builder.makeLocalGet(localIndexes[fields.size()], type)),
+              builder.makeRefNull(allocation->type.getHeapType()),
+              builder.makeUnreachable())));
+        }
       }
     } else {
       // We know this RefCast receives our allocation, so we can see whether it
