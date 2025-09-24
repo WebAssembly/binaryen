@@ -869,11 +869,11 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $0 (descriptor $A.desc (struct)))
-
-    ;; CHECK:       (type $A (sub (struct)))
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
     (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $0 (struct))))
+    ;; CHECK:       (type $1 (sub (descriptor $A.desc (struct))))
+
+    ;; CHECK:       (type $A.desc (sub (describes $1 (struct))))
     (type $A.desc (sub (describes $A (struct))))
 
     ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
@@ -950,18 +950,18 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $0 (descriptor $A.desc (struct)))
-
-    ;; CHECK:       (type $1 (descriptor $B.desc (struct)))
-
-    ;; CHECK:       (type $A (sub (struct)))
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
     (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $0 (struct))))
+    ;; CHECK:       (type $1 (sub (descriptor $A.desc (struct))))
+
+    ;; CHECK:       (type $A.desc (sub (describes $1 (struct))))
     (type $A.desc (sub (describes $A (struct))))
 
     ;; CHECK:       (type $B (sub $A (struct)))
     (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $1 (struct))))
+    ;; CHECK:       (type $4 (sub (descriptor $B.desc (struct))))
+
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $4 (struct))))
     (type $B.desc (sub $A.desc (describes $B (struct))))
 
     ;; CHECK:       (type $C (sub $B (descriptor $C.desc (struct))))
@@ -1079,11 +1079,11 @@
   )
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $1 (descriptor $unused.desc (struct)))
-
-    ;; CHECK:       (type $unused (sub $public (struct)))
+    ;; CHECK-NEXT:  (type $unused (sub $public (struct)))
     (type $unused (sub $public (descriptor $unused.desc (struct))))
-    ;; CHECK:       (type $unused.desc (sub (describes $1 (struct))))
+    ;; CHECK:       (type $2 (sub (descriptor $unused.desc (struct))))
+
+    ;; CHECK:       (type $unused.desc (sub (describes $2 (struct))))
     (type $unused.desc (sub (describes $unused (struct))))
 
     ;; CHECK:       (type $used (sub $unused (descriptor $used.desc (struct))))
@@ -1116,11 +1116,11 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $0 (shared (descriptor $A.desc (struct))))
-
-    ;; CHECK:       (type $A (sub (shared (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (shared (struct))))
     (type $A (sub (shared (descriptor $A.desc (struct)))))
-    ;; CHECK:       (type $A.desc (sub (shared (describes $0 (struct)))))
+    ;; CHECK:       (type $1 (sub (shared (descriptor $A.desc (struct)))))
+
+    ;; CHECK:       (type $A.desc (sub (shared (describes $1 (struct)))))
     (type $A.desc (sub (shared (describes $A (struct)))))
 
     ;; CHECK:       (type $B (sub $A (shared (descriptor $B.desc (struct)))))
@@ -1177,22 +1177,107 @@
 ;; include it in the output at all because it is unused. We should not get
 ;; confused and try to emit a placeholder for it anyway.
 (module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $public (sub (descriptor $public.desc (struct))))
+    (type $public (sub (descriptor $public.desc (struct))))
+    ;; CHECK:       (type $public.desc (sub (describes $public (struct))))
+    (type $public.desc (sub (describes $public (struct))))
+  )
+  (rec
+    (type $unused (descriptor $unused.desc (struct)))
+    (type $unused.desc (sub $public.desc (describes $unused (struct))))
+    ;; CHECK:      (type $private (struct))
+    (type $private (struct))
+  )
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (export "public") (ref null $public) (ref.null none))
+  ;; CHECK:      (global $private (ref null $private) (ref.null none))
+  (global $private (ref null $private) (ref.null none))
+)
+
+;; Regression test for a bug where we accidentally replaced empty struct types
+;; with placeholders.
+;; CHECK:      (export "public" (global $public))
+(module
+  ;; CHECK:      (type $public (struct))
+  (type $public (struct))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (descriptor $super.desc (struct))))
+    ;; CHECK:       (type $2 (sub (descriptor $super.desc (struct))))
+
+    ;; CHECK:       (type $super.desc (sub (describes $2 (struct))))
+    (type $super.desc (sub (describes $super (struct))))
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc (struct))))
+    (type $sub (sub $super (descriptor $sub.desc (struct))))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+  )
+
+  ;; CHECK:       (type $6 (func (param (ref $sub))))
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (export "public") (ref null $public) (ref.null none))
+
+  ;; CHECK:      (export "public" (global $public))
+
+  ;; CHECK:      (func $test (type $6) (param $sub (ref $sub))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $sub
+  ;; CHECK-NEXT:    (local.get $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $public)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $sub (ref $sub))
+    ;; Use $sub's descriptor to keep it a descriptor. This forces $super.desc to
+    ;; describe a placeholder.
+    (drop
+      (ref.get_desc $sub
+        (local.get $sub)
+      )
+    )
+    ;; We should not accidentally replace this trivial struct with the
+    ;; placeholder, which would cause a validation failure because we do not
+    ;; supply a descriptor in this allocation.
+    (drop
+      (struct.new_default $public)
+    )
+  )
+)
+
+;; Regression test for a bug where a placeholder was not set up to be described
+;; by its intended descriptor if that intended descriptor also happened to have
+;; its own unneeded descriptor.
+(module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $public (sub (descriptor $public.desc (struct))))
-  (type $public (sub (descriptor $public.desc (struct))))
+  ;; CHECK-NEXT:  (type $public (descriptor $public.desc (struct)))
+  (type $public (descriptor $public.desc (struct)))
   ;; CHECK:       (type $public.desc (sub (describes $public (struct))))
   (type $public.desc (sub (describes $public (struct))))
  )
  (rec
-  (type $unused (descriptor $unused.desc (struct)))
-  (type $unused.desc (sub $public.desc (describes $unused (struct))))
-  ;; CHECK:      (type $private (struct))
-  (type $private (struct))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $private (struct))
+  (type $private (descriptor $private.desc (struct)))
+  ;; CHECK:       (type $3 (sub (descriptor $private.desc (struct))))
+
+  ;; CHECK:       (type $private.desc (sub $public.desc (describes $3 (struct))))
+  (type $private.desc (sub $public.desc (describes $private (descriptor $private.meta (struct)))))
+  ;; CHECK:       (type $private.meta (struct))
+  (type $private.meta (describes $private.desc (struct)))
  )
 
+ ;; Force $private.desc to remain a descriptor.
  ;; CHECK:      (global $public (ref null $public) (ref.null none))
  (global $public (export "public") (ref null $public) (ref.null none))
+
  ;; CHECK:      (global $private (ref null $private) (ref.null none))
  (global $private (ref null $private) (ref.null none))
 )

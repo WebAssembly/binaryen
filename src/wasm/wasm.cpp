@@ -1075,7 +1075,7 @@ void RefCast::finalize() {
       return;
     }
     // The cast heap type and exactness is determined by the descriptor's type.
-    // Its nullability can be improved if the input valus is non-nullable.
+    // Its nullability can be improved if the input value is non-nullable.
     auto heapType = desc->type.getHeapType().getDescribedType();
     assert(heapType);
     auto exactness = desc->type.getExactness();

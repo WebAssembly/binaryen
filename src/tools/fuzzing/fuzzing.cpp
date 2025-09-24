@@ -2131,8 +2131,10 @@ Expression* TranslateToFuzzReader::make(Type type) {
     ret = _makeunreachable();
   }
   if (!Type::isSubType(ret->type, type)) {
-    Fatal() << "Did not generate the right subtype of " << type
-            << ", instead we have " << ret->type << " : " << *ret << '\n';
+    Fatal() << "Did not generate the right subtype of "
+            << ModuleType(wasm, type) << ", instead we have "
+            << ModuleType(wasm, ret->type) << " : "
+            << ModuleExpression(wasm, ret) << '\n';
   }
   nesting--;
   return ret;
@@ -2222,6 +2224,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefCast);
+    }
+    if (heapType.getDescribedType()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefGetDesc);
     }
   }
   if (wasm.features.hasGC()) {
@@ -4900,7 +4906,33 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
   }
-  return builder.makeRefCast(make(refType), type);
+  auto* ref = make(refType);
+
+  // Emit a non-descriptor cast if we have to, or otherwise half the time.
+  auto desc = type.getHeapType().getDescriptorType();
+  if (!desc || oneIn(2)) {
+    return builder.makeRefCast(ref, type);
+  }
+
+  // Emit a descriptor for a descriptor cast.
+  auto* descRef = make(type.with(*desc));
+  auto* ret = builder.makeRefCast(ref, descRef, type);
+  // descRef may be a subtype of the type we asked make() for, and if so then
+  // it might have a different described type - perhaps even an unrelated one,
+  // if the descriptors subtype but not the describees. Use an exact type to
+  // fix that up.
+  if (!Type::isSubType(ret->type, type)) {
+    descRef = make(type.with(*desc).with(Exact));
+    ret = builder.makeRefCast(ref, descRef, type);
+  }
+  return ret;
+}
+
+Expression* TranslateToFuzzReader::makeRefGetDesc(Type type) {
+  auto described = type.getHeapType().getDescribedType();
+  assert(described);
+  auto refType = type.with(*described);
+  return builder.makeRefGetDesc(make(refType));
 }
 
 Expression* TranslateToFuzzReader::makeBrOn(Type type) {
