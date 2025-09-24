@@ -1780,7 +1780,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
           childTypes[sub] = super->type;
         }
         void noteNonFlowSubtype(Expression* sub, Type super) {
-          childTypes[sub] = super->type;
+          childTypes[sub] = super;
         }
         void noteCast(HeapType src, HeapType dst) {}
         void noteCast(Expression* src, Type dst) {}
