@@ -1786,6 +1786,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         void noteCast(Expression* src, Type dst) {}
         void noteCast(Expression* src, Expression* dst) {}
       } collector;
+      collector.setFunction(parent.funcContext->func);
       collector.visit(curr);
 
       for (auto*& child : ChildIterator(curr)) {
@@ -1799,7 +1800,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
           type =
             child->type.with(child->type.getHeapType().getTop()).with(Nullable);
         }
+auto old = child->type;
         child = getReplacement(child);
+assert(Type::isSubType(child->type, old));
       }
     }
 
