@@ -32,8 +32,8 @@
  ;; CHECK-NEXT:     ;;@
  ;; CHECK-NEXT:     (unreachable) (; unreachable ;)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   ) ;; end if (; none ;)
- ;; CHECK-NEXT:  ) ;; end loop loop (; none ;)
+ ;; CHECK-NEXT:   ) ;; end if (; unreachable ;)
+ ;; CHECK-NEXT:  ) ;; end loop loop (; unreachable ;)
  ;; CHECK-NEXT: )
  (func $test
   (loop $loop
