@@ -33,6 +33,8 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     random(std::move(input), wasm.features),
     publicTypeValidator(wasm.features) {
 
+  haveInitialFunctions = !wasm.functions.empty();
+
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
   // - there's no point in logging anyref because it is opaque
@@ -1391,6 +1393,14 @@ void TranslateToFuzzReader::processFunctions() {
   const int RESOLUTION = 10;
   auto chance = upTo(RESOLUTION + 1);
 
+  // We do not want to always add new functions, if there are initial ones:
+  // adding many additional functions will cause a lot of global properties to
+  // change, e.g., if the initial content was a carefully crafted testcase
+  // showing some situation of reads and writes between struct fields, adding
+  // many new functions will likely add reads and writes to all the fields,
+  // preventing global operations like field removal or immutabilification.
+  auto allowNew = !haveInitialFunctions || !oneIn(10);
+
   // Keep working while we have random data.
   while (!random.finished()) {
     if (!moddable.empty() && upTo(RESOLUTION) < chance) {
@@ -1403,7 +1413,7 @@ void TranslateToFuzzReader::processFunctions() {
       // place, and truncating.
       moddable[index] = moddable.back();
       moddable.pop_back();
-    } else {
+    } else if (allowNew) {
       // Add a new function
       auto* func = addFunction();
       addInvocations(func);
@@ -1413,6 +1423,10 @@ void TranslateToFuzzReader::processFunctions() {
       if (allowOOB) {
         moddable.push_back(func);
       }
+    } else {
+      // If we found nothing to do, consume some data so that we make progress
+      // towards the loop ending.
+      get();
     }
   }
 
