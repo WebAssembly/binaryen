@@ -19,6 +19,7 @@
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
+#include "ir/subtype-exprs.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "support/string.h"
@@ -1749,133 +1750,182 @@ void TranslateToFuzzReader::mutate(Function* func) {
       allowUnreachable = parent.allowAddingUnreachableCode && parent.oneIn(2);
     }
 
+    void visitFunction(Function* curr) {
+      // TODO: replace the toplevel with very low chance
+    }
+
     void visitExpression(Expression* curr) {
-      if (parent.upTo(100) < percentChance &&
-          parent.canBeArbitrarilyReplaced(curr)) {
-        // We can replace in various modes, see below. Generate a random number
-        // up to 100 to help us there.
-        int mode = parent.upTo(100);
+      // Replace some children. Find the types we can replace them with: usually
+      // a subtype of themselves, but sometimes we can do something less
+      // refined.
+      struct Collector
+        : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>> {
 
-        if (allowUnreachable && mode < 5) {
-          replaceCurrent(parent.make(Type::unreachable));
-          return;
+        // Maps children to the types we can replace them with.
+        std::unordered_map<Expression*, Type> childTypes;
+
+        // We only care about constraints on Expression* things.
+        void noteSubtype(Type sub, Type super) {}
+        void noteSubtype(HeapType sub, HeapType super) {}
+
+        void noteSubtype(Type sub, Expression* super) {
+          // The expression must be a supertype of a fixed type. Nothing to do.
         }
-
-        // For constants, perform only a small tweaking in some cases.
-        // TODO: more minor tweaks to immediates, like making a load atomic or
-        // not, changing an offset, etc.
-        if (auto* c = curr->dynCast<Const>()) {
-          if (mode < 50) {
-            c->value = parent.tweak(c->value);
-          } else {
-            // Just replace the entire thing.
-            replaceCurrent(parent.make(curr->type));
-          }
-          return;
+        void noteSubtype(Expression* sub, Type super) {
+          // The expression must be a subtype of a fixed type: note it.
+          childTypes[sub] = super;
         }
-
-        // Generate a replacement for the expression, and by default replace all
-        // of |curr| (including children) with that replacement, but in some
-        // cases we can do more subtle things.
-        //
-        // Note that such a replacement is not always valid due to nesting of
-        // labels, but we'll fix that up later. Note also that make() picks a
-        // subtype, so this has a chance to replace us with anything that is
-        // valid to put here.
-        auto* rep = parent.make(curr->type);
-        if (mode < 33 && rep->type != Type::none) {
-          // This has a non-none type. Replace the output, keeping the
-          // expression and its children in a drop. This "interposes" between
-          // this expression and its parent, something like this:
-          //
-          //    (D
-          //      (A
-          //        (B)
-          //        (C)
-          //      )
-          //    )
-          ////
-          //    => ;; keep A, replace it in the parent
-          //
-          //    (D
-          //      (block
-          //        (drop
-          //          (A
-          //            (B)
-          //            (C)
-          //          )
-          //        )
-          //        (NEW)
-          //      )
-          //    )
-          //
-          // We also sometimes try to insert A as a child of NEW, so we actually
-          // interpose directly:
-          //
-          //    (D
-          //      (NEW
-          //        (A
-          //          (B)
-          //          (C)
-          //        )
-          //      )
-          //    )
-          //
-          // We do not do that all the time, as inserting a drop is actually an
-          // important situation to test: the drop makes the output of A unused,
-          // which may let optimizations remove it.
-          if ((mode & 1) && replaceChildWith(rep, curr)) {
-            // We managed to replace one of the children with curr, and have
-            // nothing more to do.
-          } else {
-            // Drop curr and append.
-            rep =
-              parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
-          }
-        } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
-          ChildIterator children(curr);
-          auto numChildren = children.getNumChildren();
-          if (numChildren > 0 && numChildren < 5) {
-            // This is a normal (non-control-flow) expression with at least one
-            // child (and not an excessive amount of them; see the processing
-            // below). "Interpose" between the children and this expression by
-            // keeping them and replacing the parent |curr|. We do this by
-            // generating drops of the children, like this:
-            //
-            //  (A
-            //    (B)
-            //    (C)
-            //  )
-            //
-            //  => ;; keep children, replace A
-            //
-            //  (block
-            //    (drop (B))
-            //    (drop (C))
-            //    (NEW)
-            //  )
-            //
-            auto* block = parent.builder.makeBlock();
-            for (auto* child : children) {
-              // Only drop the child if we can't replace it as one of NEW's
-              // children. This does a linear scan of |rep| which is the reason
-              // for the above limit on the number of children.
-              if (!replaceChildWith(rep, child)) {
-                block->list.push_back(parent.builder.makeDrop(child));
-              }
-            }
-
-            if (!block->list.empty()) {
-              // We need the block, that is, we did not find a place for all the
-              // children.
-              block->list.push_back(rep);
-              block->finalize();
-              rep = block;
-            }
-          }
+        void noteSubtype(Expression* sub, Expression* super) {
+          // The expression must be a subtype of another expression: note it.
+          childTypes[sub] = super->type;
         }
-        replaceCurrent(rep);
+        void noteNonFlowSubtype(Expression* sub, Type super) {
+          childTypes[sub] = super->type;
+        }
+        void noteCast(HeapType src, HeapType dst) {}
+        void noteCast(Expression* src, Type dst) {}
+        void noteCast(Expression* src, Expression* dst) {}
+      } collector;
+      collector.visit(curr);
+
+      for (auto*& child : ChildIterator(curr)) {
+        if (!child->type.isRef() ||
+            !parent.canBeArbitrarilyReplaced(curr) ||
+            parent.upTo(100) >= percentChance) {
+          continue;
+        }
+        auto type = collector.childTypes[child];
+        if (type == Type::none) {
+          // No constraint: We can use the top type.
+          type = child->type.with(child->type.getHeapType().getTop()).with(Nullable);
+        }
+        child = getReplacement(child);
       }
+    }
+
+    Expression* getReplacement(Expression* curr) {
+      // We can replace in various modes, see below. Generate a random number
+      // up to 100 to help us there.
+      int mode = parent.upTo(100);
+
+      if (allowUnreachable && mode < 5) {
+        return parent.make(Type::unreachable);
+      }
+
+      // For constants, perform only a small tweaking in some cases.
+      // TODO: more minor tweaks to immediates, like making a load atomic or
+      // not, changing an offset, etc.
+      if (auto* c = curr->dynCast<Const>()) {
+        if (mode < 50) {
+          c->value = parent.tweak(c->value);
+          return c;
+        } else {
+          // Just replace the entire thing.
+          return parent.make(curr->type);
+        }
+      }
+
+      // Generate a replacement for the expression, and by default replace all
+      // of |curr| (including children) with that replacement, but in some
+      // cases we can do more subtle things.
+      //
+      // Note that such a replacement is not always valid due to nesting of
+      // labels, but we'll fix that up later. Note also that make() picks a
+      // subtype, so this has a chance to replace us with anything that is
+      // valid to put here.
+      auto* rep = parent.make(curr->type);
+      if (mode < 33 && rep->type != Type::none) {
+        // This has a non-none type. Replace the output, keeping the
+        // expression and its children in a drop. This "interposes" between
+        // this expression and its parent, something like this:
+        //
+        //    (D
+        //      (A
+        //        (B)
+        //        (C)
+        //      )
+        //    )
+        ////
+        //    => ;; keep A, replace it in the parent
+        //
+        //    (D
+        //      (block
+        //        (drop
+        //          (A
+        //            (B)
+        //            (C)
+        //          )
+        //        )
+        //        (NEW)
+        //      )
+        //    )
+        //
+        // We also sometimes try to insert A as a child of NEW, so we actually
+        // interpose directly:
+        //
+        //    (D
+        //      (NEW
+        //        (A
+        //          (B)
+        //          (C)
+        //        )
+        //      )
+        //    )
+        //
+        // We do not do that all the time, as inserting a drop is actually an
+        // important situation to test: the drop makes the output of A unused,
+        // which may let optimizations remove it.
+        if ((mode & 1) && replaceChildWith(rep, curr)) {
+          // We managed to replace one of the children with curr, and have
+          // nothing more to do.
+        } else {
+          // Drop curr and append.
+          rep =
+            parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
+        }
+      } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
+        ChildIterator children(curr);
+        auto numChildren = children.getNumChildren();
+        if (numChildren > 0 && numChildren < 5) {
+          // This is a normal (non-control-flow) expression with at least one
+          // child (and not an excessive amount of them; see the processing
+          // below). "Interpose" between the children and this expression by
+          // keeping them and replacing the parent |curr|. We do this by
+          // generating drops of the children, like this:
+          //
+          //  (A
+          //    (B)
+          //    (C)
+          //  )
+          //
+          //  => ;; keep children, replace A
+          //
+          //  (block
+          //    (drop (B))
+          //    (drop (C))
+          //    (NEW)
+          //  )
+          //
+          auto* block = parent.builder.makeBlock();
+          for (auto* child : children) {
+            // Only drop the child if we can't replace it as one of NEW's
+            // children. This does a linear scan of |rep| which is the reason
+            // for the above limit on the number of children.
+            if (!replaceChildWith(rep, child)) {
+              block->list.push_back(parent.builder.makeDrop(child));
+            }
+          }
+
+          if (!block->list.empty()) {
+            // We need the block, that is, we did not find a place for all the
+            // children.
+            block->list.push_back(rep);
+            block->finalize();
+            rep = block;
+          }
+        }
+      }
+      return rep;
     }
   };
 
