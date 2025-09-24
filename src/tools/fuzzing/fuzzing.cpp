@@ -1789,15 +1789,15 @@ void TranslateToFuzzReader::mutate(Function* func) {
       collector.visit(curr);
 
       for (auto*& child : ChildIterator(curr)) {
-        if (!child->type.isRef() ||
-            !parent.canBeArbitrarilyReplaced(curr) ||
+        if (!child->type.isRef() || !parent.canBeArbitrarilyReplaced(curr) ||
             parent.upTo(100) >= percentChance) {
           continue;
         }
         auto type = collector.childTypes[child];
         if (type == Type::none) {
           // No constraint: We can use the top type.
-          type = child->type.with(child->type.getHeapType().getTop()).with(Nullable);
+          type =
+            child->type.with(child->type.getHeapType().getTop()).with(Nullable);
         }
         child = getReplacement(child);
       }
@@ -1880,8 +1880,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
           // nothing more to do.
         } else {
           // Drop curr and append.
-          rep =
-            parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
+          rep = parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
         }
       } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
         ChildIterator children(curr);
