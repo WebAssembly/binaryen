@@ -247,7 +247,7 @@
   ;; CHECK-NEXT:   (struct.new_default $super.desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
@@ -261,10 +261,18 @@
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $desc)
+  ;; CHECK-NEXT:    (if (result nullref)
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -287,7 +295,7 @@
   ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
@@ -299,10 +307,18 @@
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $desc)
+  ;; CHECK-NEXT:    (if (result nullref)
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -321,7 +337,7 @@
   ;; CHECK-NEXT:  (local $1 (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (local $2 (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
@@ -335,12 +351,20 @@
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:    (if (result nullref)
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -874,33 +898,31 @@
   )
 )
 
-;; A descriptor chain, and the cast is non-nullable. All the allocations can be
-;; moved to locals, and must be handled properly (trapping, in this case;
-;; returning a null would lead to a validation error).
+;; A definitely-failing descriptor cast. We have two pairs of descriptor/
+;; describee, and create an $A2 that we try to cast to the unrelated $A.
 (module
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
     (type $A (descriptor $B (struct)))
-    ;; CHECK:       (type $B (describes $A (descriptor $C (struct))))
-    (type $B (describes $A (descriptor $C (struct))))
-    ;; CHECK:       (type $C (sub (describes $B (struct))))
-    (type $C (sub (describes $B (struct))))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+
+    ;; CHECK:       (type $A2 (descriptor $B2 (struct)))
+    (type $A2 (descriptor $B2 (struct)))
+    ;; CHECK:       (type $B2 (describes $A2 (struct)))
+    (type $B2 (describes $A2 (struct)))
   )
 
-  ;; CHECK:      (type $3 (func (result (ref (exact $A)))))
+  ;; CHECK:      (type $4 (func (result (ref $A))))
 
-  ;; CHECK:      (func $A (type $3) (result (ref (exact $A)))
-  ;; CHECK-NEXT:  (local $0 nullref)
-  ;; CHECK-NEXT:  (local $1 nullref)
-  ;; CHECK-NEXT:  (local $2 (ref (exact $C)))
-  ;; CHECK-NEXT:  (local $3 (ref (exact $C)))
+  ;; CHECK:      (func $A (type $4) (result (ref $A))
+  ;; CHECK-NEXT:  (local $0 (ref (exact $B2)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $B2)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new_default $B2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (local.get $1)
@@ -910,26 +932,17 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (struct.new_default $C)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $3)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $A (result (ref (exact $A)))
-    (ref.cast_desc (ref (exact $A))
-      (struct.new_default $B
-        (ref.null none)
+  (func $A (result (ref $A))
+    (ref.cast_desc (ref $A)
+      (struct.new_default $A2
+        (struct.new_default $B2)
       )
-      (struct.new_default $B
-        (struct.new_default $C)
-      )
+      (struct.new_default $B)
     )
   )
 )
-

@@ -890,14 +890,14 @@ struct Struct2Local : PostWalker<Struct2Local> {
         }
       } else {
         assert(allocIsCastRef);
-        // The cast succeeds iff the optimized allocation's descriptor is the
-        // same as the given descriptor and traps otherwise.
-        if (curr->type.isNonNullable()) {
-          // No null is possible; trap.
+        if (!Type::isSubType(allocation->type, curr->type)) {
+          // The cast fails, so it must trap.
           replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
                                           builder.makeDrop(curr->desc),
                                           builder.makeUnreachable()));
         } else {
+          // The cast succeeds iff the optimized allocation's descriptor is the
+          // same as the given descriptor and traps otherwise.
           auto type = allocation->desc->type;
           replaceCurrent(builder.blockify(
             builder.makeDrop(curr->ref),
