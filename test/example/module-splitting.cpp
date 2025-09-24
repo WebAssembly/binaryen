@@ -51,9 +51,10 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   std::cout << "\n";
 
   ModuleSplitting::Config config;
-  config.secondaryFuncs = std::move(splitFuncs);
+  config.moduleToFuncs["secondary"] = std::move(splitFuncs);
   config.newExportPrefix = "%";
-  auto secondary = splitFunctions(*primary, config).secondary;
+  auto results = splitFunctions(*primary, config);
+  auto& secondary = results.secondaryPtrMap["secondary"];
 
   std::cout << "After:\n";
   std::cout << *primary.get();
@@ -475,11 +476,12 @@ void test_minimized_exports() {
   primary.addFunction(Builder::makeFunction("call", funcType, {}, callBody));
 
   ModuleSplitting::Config config;
-  config.secondaryFuncs = {"call"};
+  config.moduleToFuncs["secondary"] = {"call"};
   config.newExportPrefix = "%";
   config.minimizeNewExportNames = true;
 
-  auto secondary = splitFunctions(primary, config).secondary;
+  auto results = splitFunctions(primary, config);
+  auto& secondary = results.secondaryPtrMap["secondary"];
   std::cout << "Minimized names primary:\n";
   std::cout << primary << "\n";
   std::cout << "Minimized names secondary:\n";
