@@ -219,6 +219,9 @@ private:
   // The name of an empty tag.
   Name trivialTag;
 
+  // Whether we were given initial functions.
+  bool haveInitialFunctions;
+
   // RAII helper for managing the state used to create a single function.
   struct FunctionCreationContext {
     TranslateToFuzzReader& parent;
