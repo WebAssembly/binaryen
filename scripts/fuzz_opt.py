@@ -1584,7 +1584,7 @@ class Split(TestCaseHandler):
              '--split-funcs', ','.join(split_funcs),
              # make the new exports easily identifiable, as we need to remove
              # them (see below)
-             '--export-prefix=__fuzz_split',
+             '--export-prefix=__fuzz_split_',
              '--primary-output', primary,
              '--secondary-output', secondary] + split_feature_opts)
 
