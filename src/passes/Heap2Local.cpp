@@ -945,6 +945,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
     auto descIndex = localIndexes[fields.size()];
     Expression* value = builder.makeLocalGet(descIndex, descType);
     replaceCurrent(builder.blockify(builder.makeDrop(curr->ref), value));
+
+    // After removing the ref.get_desc, a null may be falling through,
+    // requiring refinalization to update parents.
+    refinalize = true;
   }
 
   void visitStructSet(StructSet* curr) {
