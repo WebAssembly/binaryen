@@ -417,9 +417,11 @@ if (secondBinary) {
   });
 }
 
-// Compile and instantiate a wasm file.
-function build(binary) {
-  if (secondBinary) {
+// Compile and instantiate a wasm file. Receives the binary to build, and
+// whether it is the second one.
+function build(binary, second) {
+  if (second) {
+    assert(secondBinary);
     // Provide the primary module's exports to the secondary.
     imports['primary'] = exports;
   }
@@ -432,6 +434,14 @@ function build(binary) {
   } catch (e) {
     console.log('exception thrown: failed to instantiate module: ' + e);
     quit();
+  }
+
+  // Do not add the second instance's exports to the list, as that would be
+  // noticeable by calls to call-export-*. When fuzzing, we want the original
+  // module's exports to be provided from the primary module, and it is the only
+  // interface to the outside.
+  if (second) {
+    return;
   }
 
   // Update the exports. Note that this adds onto |exports| and |exportList|,
@@ -564,7 +574,7 @@ build(binary);
 
 // Build the second wasm, if one was provided.
 if (secondBinary) {
-  build(secondBinary);
+  build(secondBinary, true);
 }
 
 // Run.
