@@ -1582,8 +1582,8 @@ class Split(TestCaseHandler):
 
         run([in_bin('wasm-split'), wasm, '--split',
              '--split-funcs', ','.join(split_funcs),
-             # make the new exports easily identifiable, as we need to remove
-             # them (see below)
+             # make the new exports easily identifiable, as we need to ignore
+             # them in part of fuzz_shell.js
              '--export-prefix=__fuzz_split_',
              '--primary-output', primary,
              '--secondary-output', secondary] + split_feature_opts)
