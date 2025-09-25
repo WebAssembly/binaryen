@@ -211,7 +211,7 @@
   ;; CHECK-NEXT:  (local $1 (ref (exact $sub.desc)))
   ;; CHECK-NEXT:  (block (result (ref (exact $sub.desc)))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block (result (ref null $super))
+  ;; CHECK-NEXT:    (block (result nullref)
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (struct.new_default $sub.desc)
@@ -1001,6 +1001,58 @@
         (struct.new_default $B2)
       )
       (struct.new_default $B)
+    )
+  )
+)
+
+(module
+  (rec
+    (type $A (descriptor $B (struct)))
+    (type $B (sub (describes $A (struct))))
+  )
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (local $0 (ref none))
+  ;; CHECK-NEXT:  (local $1 (ref none))
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_null $block
+  ;; CHECK-NEXT:     (block (result (ref none))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (ref.as_non_null
+  ;; CHECK-NEXT:          (ref.null none)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $0
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; After removing the ref.get_desc, the null descriptor falls through, and
+    ;; we must update the br_on_null's type, or internal validation errors.
+    (block $block
+      (drop
+        (br_on_null $block
+          (ref.get_desc $A
+            (struct.new_default $A
+              (ref.null none)
+            )
+          )
+        )
+      )
+      (unreachable)
     )
   )
 )
