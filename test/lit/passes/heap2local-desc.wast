@@ -54,9 +54,9 @@
 
   ;; CHECK:      (func $dropped (type $10)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 (ref null (exact $descriptor)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $descriptor)))
   ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (local $3 (ref null (exact $descriptor)))
+  ;; CHECK-NEXT:  (local $3 (ref (exact $descriptor)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
@@ -88,8 +88,8 @@
 
   ;; CHECK:      (func $dropped-default (type $10)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 (ref null (exact $descriptor)))
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $descriptor)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $descriptor)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $descriptor)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
@@ -241,8 +241,8 @@
 
   ;; CHECK:      (func $cast-desc-success (type $10)
   ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
-  ;; CHECK-NEXT:  (local $1 (ref null (exact $super.desc)))
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local.set $desc
   ;; CHECK-NEXT:   (struct.new_default $super.desc)
   ;; CHECK-NEXT:  )
@@ -334,8 +334,8 @@
   )
 
   ;; CHECK:      (func $cast-desc-fail-reverse (type $11) (param $desc (ref null (exact $super.desc)))
-  ;; CHECK-NEXT:  (local $1 (ref null (exact $super.desc)))
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
@@ -639,8 +639,8 @@
 
   ;; CHECK:      (func $cast-desc-and-ref (type $14) (param $desc (ref null (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (local $middle (ref null (exact $chain-middle)))
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $chain-descriptor)))
-  ;; CHECK-NEXT:  (local $3 (ref null (exact $chain-descriptor)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $chain-descriptor)))
+  ;; CHECK-NEXT:  (local $3 (ref (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $3
@@ -687,8 +687,8 @@
 
   ;; CHECK:      (func $cast-desc-and-ref-nullable (type $14) (param $desc (ref null (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (local $middle (ref null (exact $chain-middle)))
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $chain-descriptor)))
-  ;; CHECK-NEXT:  (local $3 (ref null (exact $chain-descriptor)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $chain-descriptor)))
+  ;; CHECK-NEXT:  (local $3 (ref (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $3
@@ -871,8 +871,8 @@
   ;; CHECK:      (type $3 (func (param (ref null (exact $desc))) (result (ref (exact $desc)))))
 
   ;; CHECK:      (func $null (type $2) (result (ref (exact $desc)))
-  ;; CHECK-NEXT:  (local $0 nullref)
-  ;; CHECK-NEXT:  (local $1 nullref)
+  ;; CHECK-NEXT:  (local $0 (ref none))
+  ;; CHECK-NEXT:  (local $1 (ref none))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
@@ -886,9 +886,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.as_non_null
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
   (func $null (result (ref (exact $desc)))
     ;; Read a null descriptor from a struct.new we can convert to locals. We do
@@ -902,8 +900,8 @@
   )
 
   ;; CHECK:      (func $nullable-param (type $3) (param $desc (ref null (exact $desc))) (result (ref (exact $desc)))
-  ;; CHECK-NEXT:  (local $1 (ref null (exact $desc)))
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
@@ -917,9 +915,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.as_non_null
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $nullable-param (param $desc (ref null (exact $desc))) (result (ref (exact $desc)))
     ;; Read a null descriptor from a nullable param.
@@ -932,8 +928,8 @@
 
   ;; CHECK:      (func $nullable-local (type $2) (result (ref (exact $desc)))
   ;; CHECK-NEXT:  (local $desc (ref null (exact $desc)))
-  ;; CHECK-NEXT:  (local $1 (ref null (exact $desc)))
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
@@ -947,9 +943,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.as_non_null
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $nullable-local (result (ref (exact $desc)))
     (local $desc (ref null (exact $desc)))

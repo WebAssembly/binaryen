@@ -778,8 +778,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       contents.push_back(builder.makeLocalSet(localIndexes[i], val));
     }
     if (curr->desc) {
-      auto* val =
-        builder.makeLocalGet(tempIndexes[numTemps - 1], descType);
+      auto* val = builder.makeLocalGet(tempIndexes[numTemps - 1], descType);
       contents.push_back(
         builder.makeLocalSet(localIndexes[fields.size()], val));
     }
