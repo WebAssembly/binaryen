@@ -1582,6 +1582,9 @@ class Split(TestCaseHandler):
 
         run([in_bin('wasm-split'), wasm, '--split',
              '--split-funcs', ','.join(split_funcs),
+             # make the new exports easily identifiable, as we need to remove
+             # them (see below)
+             '--export-prefix=__fuzz_split',
              '--primary-output', primary,
              '--secondary-output', secondary] + split_feature_opts)
 
