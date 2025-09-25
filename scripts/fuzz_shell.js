@@ -419,6 +419,11 @@ if (secondBinary) {
 
 // Compile and instantiate a wasm file.
 function build(binary) {
+  if (secondBinary) {
+    // Provide the primary module's exports to the secondary.
+    imports['primary'] = exports;
+  }
+
   var module = new WebAssembly.Module(binary);
 
   var instance;
