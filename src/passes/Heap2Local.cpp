@@ -604,6 +604,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
   Builder builder;
   const FieldList& fields;
 
+  // The descriptor can arrive as nullable, but we trap if it is null, so there
+  // is only something to store if it is non-nullable, and we store it that way.
+  Type descType;
+
   Struct2Local(StructNew* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
@@ -616,7 +620,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       localIndexes.push_back(builder.addVar(func, field.type));
     }
     if (allocation->desc) {
-      localIndexes.push_back(builder.addVar(func, allocation->desc->type));
+      descType = allocation->desc->type.with(NonNullable);
+      localIndexes.push_back(builder.addVar(func, descType));
     }
 
     // Replace the things we need to using the visit* methods.
@@ -744,7 +749,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       }
     }
     if (curr->desc) {
-      tempIndexes.push_back(builder.addVar(func, curr->desc->type));
+      tempIndexes.push_back(builder.addVar(func, descType));
     }
 
     // Store the initial values into the temp locals.
@@ -774,7 +779,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
     if (curr->desc) {
       auto* val =
-        builder.makeLocalGet(tempIndexes[numTemps - 1], curr->desc->type);
+        builder.makeLocalGet(tempIndexes[numTemps - 1], descType);
       contents.push_back(
         builder.makeLocalSet(localIndexes[fields.size()], val));
     }
@@ -902,13 +907,12 @@ struct Struct2Local : PostWalker<Struct2Local> {
         } else {
           // The cast succeeds iff the optimized allocation's descriptor is the
           // same as the given descriptor and traps otherwise.
-          auto type = allocation->desc->type;
           replaceCurrent(builder.blockify(
             builder.makeDrop(curr->ref),
             builder.makeIf(
               builder.makeRefEq(
                 curr->desc,
-                builder.makeLocalGet(localIndexes[fields.size()], type)),
+                builder.makeLocalGet(localIndexes[fields.size()], descType)),
               builder.makeRefNull(allocation->type.getHeapType()),
               builder.makeUnreachable())));
         }
@@ -939,13 +943,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    auto type = allocation->desc->type;
-    Expression* value = builder.makeLocalGet(localIndexes[fields.size()], type);
-    if (!Type::isSubType(value->type, curr->type)) {
-      // Fix up nullability.
-      value = builder.makeRefAs(RefAsNonNull, value);
-      assert(Type::isSubType(value->type, curr->type));
-    }
+    auto descIndex = localIndexes[fields.size()];
+    Expression* value = builder.makeLocalGet(descIndex, descType);
     replaceCurrent(builder.blockify(builder.makeDrop(curr->ref), value));
   }
 
