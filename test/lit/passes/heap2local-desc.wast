@@ -211,7 +211,7 @@
   ;; CHECK-NEXT:  (local $1 (ref (exact $sub.desc)))
   ;; CHECK-NEXT:  (block (result (ref (exact $sub.desc)))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:    (block (result (ref null $super))
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (struct.new_default $sub.desc)
@@ -868,7 +868,9 @@
 
   ;; CHECK:      (type $2 (func (result (ref (exact $desc)))))
 
-  ;; CHECK:      (func $test (type $2) (result (ref (exact $desc)))
+  ;; CHECK:      (type $3 (func (param (ref null (exact $desc))) (result (ref (exact $desc)))))
+
+  ;; CHECK:      (func $null (type $2) (result (ref (exact $desc)))
   ;; CHECK-NEXT:  (local $0 nullref)
   ;; CHECK-NEXT:  (local $1 nullref)
   ;; CHECK-NEXT:  (drop
@@ -884,15 +886,77 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (result (ref (exact $desc)))
+  (func $null (result (ref (exact $desc)))
     ;; Read a null descriptor from a struct.new we can convert to locals. We do
     ;; not end up with a (ref (exact $desc)) here, since this will trap, so we
     ;; emit an unreachable.
     (ref.get_desc $struct
       (struct.new_default $struct
         (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nullable-param (type $3) (param $desc (ref null (exact $desc))) (result (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $1 (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (local $2 (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nullable-param (param $desc (ref null (exact $desc))) (result (ref (exact $desc)))
+    ;; Read a null descriptor from a nullable param.
+    (ref.get_desc $struct
+      (struct.new_default $struct
+        (local.get $desc)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nullable-local (type $2) (result (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $desc (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (local $1 (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (local $2 (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nullable-local (result (ref (exact $desc)))
+    (local $desc (ref null (exact $desc)))
+    ;; Read a null descriptor from a nullable local.
+    (ref.get_desc $struct
+      (struct.new_default $struct
+        (local.get $desc)
       )
     )
   )

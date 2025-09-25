@@ -941,15 +941,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     auto type = allocation->desc->type;
     Expression* value = builder.makeLocalGet(localIndexes[fields.size()], type);
-    if (type != curr->type) {
-      // We know exactly the allocation that flows into this expression, so we
-      // know the exact type of the descriptor. This type may be more precise
-      // than the static type of this expression.
-      refinalize = true;
-      if (type.isNull()) {
-        // This traps.
-        value = builder.makeUnreachable();
-      }
+    if (!Type::isSubType(value->type, curr->type)) {
+      // Fix up nullability.
+      value = builder.makeRefAs(RefAsNonNull, value);
+      assert(Type::isSubType(value->type, curr->type));
     }
     replaceCurrent(builder.blockify(builder.makeDrop(curr->ref), value));
   }
