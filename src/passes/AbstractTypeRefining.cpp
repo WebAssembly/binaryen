@@ -397,7 +397,7 @@ struct AbstractTypeRefining : public Pass {
       // If we optimize away a descriptor type, then we must fix up any
       // ref.get_desc of it, as ReFinalize would fix us up to return it. This
       // can only happen when no such descriptor is created, which means the
-      // instruction will trap (so struct with such a descriptor was created).
+      // instruction will trap (no struct with such a descriptor was created).
       void visitRefGetDesc(RefGetDesc* curr) {
         auto optimized = getOptimized(curr->type);
         if (!optimized) {
