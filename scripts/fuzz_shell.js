@@ -434,8 +434,8 @@ if (secondBinary) {
 
 // Compile and instantiate a wasm file. Receives the binary to build, and
 // whether it is the second one.
-function build(binary, second) {
-  if (fuzzSplit && second) {
+function build(binary, isSecond) {
+  if (fuzzSplit && isSecond) {
     assert(secondBinary);
     // Provide the primary module's exports to the secondary.
     imports['primary'] = exports;
@@ -455,7 +455,7 @@ function build(binary, second) {
   // noticeable by calls to call-export-*. When fuzzing wasm-split, we want the
   // original module's exports to be provided from the primary module, and it is
   // the only interface to the outside.
-  if (fuzzSplit && second) {
+  if (fuzzSplit && isSecond) {
     return;
   }
 
