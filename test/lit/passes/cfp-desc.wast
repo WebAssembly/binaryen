@@ -428,6 +428,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (result (ref (exact $B)))
+    ;; We need to add a ref.as_non_null on the descriptor that is read, as the
+    ;; function result is non-nullable.
     (ref.get_desc $A
       (struct.new_default $A
         (ref.null none)
