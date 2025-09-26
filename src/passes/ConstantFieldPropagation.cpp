@@ -220,6 +220,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   void visitRefGetDesc(RefGetDesc* curr) {
     optimizeRead(curr, curr->ref, StructUtils::DescriptorIndex);
+
+    // RefGetDesc has the interesting property that we can write a value into
+    // the field that cannot be read from it: it is valid to write a null, but
+    // a null can never be read (it would have trapped on the write). Fix that
+    // up as needed to not break validation.
+    if (!Type::isSubType(getCurrent()->type, curr->type)) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeRefAs(RefAsNonNull, getCurrent()));
+    }
   }
 
   void optimizeRead(Expression* curr,
