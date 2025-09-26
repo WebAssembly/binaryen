@@ -1786,6 +1786,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         void noteCast(Expression* src, Type dst) {}
         void noteCast(Expression* src, Expression* dst) {}
       } collector;
+      collector.setModule(&parent.wasm);
       collector.setFunction(parent.funcContext->func);
       collector.visit(curr);
 
