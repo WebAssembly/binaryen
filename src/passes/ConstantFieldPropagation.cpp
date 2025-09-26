@@ -494,6 +494,10 @@ struct PCVScanner
                       Index index,
                       PossibleConstantValues& info) {
     info.note(expr, *getModule());
+    // TODO: For descriptors we can ignore nullable values that are written, as
+    //       they trap. That is, if one place writes a null and another writes a
+    //       global, only the global is readable, and we can optimize there -
+    //       the null is not a second value.
   }
 
   void noteDefault(Type fieldType,
