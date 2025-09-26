@@ -37,6 +37,12 @@
 #include "support/insert_ordered.h"
 #endif
 
+#if UNSUBTYPING_DEBUG
+#define DBG(x) x
+#else
+#define DBG(x)
+#endif
+
 // Compute and use the minimal subtype relation required to maintain module
 // validity and behavior. This minimal relation will be a subset of the original
 // subtype relation. Start by walking the IR and collecting pairs of types that
@@ -122,6 +128,16 @@ template<typename T> using Set = InsertOrderedSet<T>;
 template<typename K, typename V> using Map = std::unordered_map<K, V>;
 template<typename T> using Set = std::unordered_set<T>;
 #endif
+
+#if UNSUBTYPING_DEBUG
+Name getTypeName(Module& wasm, HeapType type) {
+  if (auto it = wasm.typeNames.find(type); it != wasm.typeNames.end()) {
+    return it->second.name;
+  }
+  return Name("(unnamed)");
+}
+#endif
+
 // A tree (or rather a forest) of types with the ability to query and set
 // supertypes in constant time and efficiently iterate over supertypes and
 // subtypes.
@@ -272,6 +288,22 @@ struct TypeTree {
 
   Subtypes subtypes(HeapType type) { return {this, getIndex(type)}; }
 
+#if UNSUBTYPING_DEBUG
+  void dump(Module& wasm) {
+    for (auto& node : nodes) {
+      std::cerr << getTypeName(wasm, node.type);
+      if (auto super = getSupertype(node.type)) {
+        std::cerr << " <: " << getTypeName(wasm, *super);
+      }
+      std::cerr << ", children:";
+      for (auto child : node.children) {
+        std::cerr << " " << getTypeName(wasm, nodes[child].type);
+      }
+      std::cerr << '\n';
+    }
+  }
+#endif
+
 private:
   Index getIndex(HeapType type) {
     auto [it, inserted] = indices.insert({type, nodes.size()});
@@ -293,7 +325,10 @@ struct Unsubtyping : Pass {
   // Map from cast source types to their destinations.
   Map<HeapType, std::vector<HeapType>> casts;
 
+  DBG(Module* wasm = nullptr);
+
   void run(Module* wasm) override {
+    DBG(this->wasm = wasm);
     if (!wasm->features.hasGC()) {
       return;
     }
@@ -310,6 +345,7 @@ struct Unsubtyping : Pass {
       process(sub, super);
     }
 
+    DBG(types.dump(*wasm));
     rewriteTypes(*wasm);
 
     // Cast types may be refinable if their source and target types are no
@@ -324,6 +360,8 @@ struct Unsubtyping : Pass {
     if (sub == super || sub.isBottom()) {
       return;
     }
+    DBG(std::cerr << "noting " << getTypeName(*wasm, sub)
+                  << " <: " << getTypeName(*wasm, super) << '\n');
     work.push_back({sub, super});
   }
 
@@ -482,6 +520,8 @@ struct Unsubtyping : Pass {
   }
 
   void process(HeapType sub, HeapType super) {
+    DBG(std::cerr << "processing " << getTypeName(*wasm, sub)
+                  << " <: " << getTypeName(*wasm, super) << '\n');
     assert(HeapType::isSubType(sub, super));
     auto oldSuper = types.getSupertype(sub);
     if (oldSuper) {
