@@ -54,18 +54,17 @@ var exportsToCall;
 // get the same behavior from split modules as before the split.
 var fuzzSplit = false;
 
-while (argv.length > 0) {
-  var last = argv[argv.length - 1];
-  if (last.startsWith('exports:')) {
-    exportsToCall = last.substr('exports:'.length).split(',');
-    argv.pop();
-    continue;
-  } else if (last == '--fuzz-split') {
+for (var i = 0; i < argv.length; i++) {
+  var curr = argv[i];
+  if (curr.startsWith('exports:')) {
+    exportsToCall = curr.substr('exports:'.length).split(',');
+    argv.splice(i, 1);
+    i--;
+  } else if (curr == '--fuzz-split') {
     fuzzSplit = true;
-    argv.pop();
-    continue;
+    argv.splice(i, 1);
+    i--;
   }
-  break;
 }
 
 // If a second parameter is given, it is a second binary that we will link in
