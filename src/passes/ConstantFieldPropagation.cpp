@@ -220,6 +220,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   void visitRefGetDesc(RefGetDesc* curr) {
     optimizeRead(curr, curr->ref, StructUtils::DescriptorIndex);
+
+    // RefGetDesc has the interesting property that we can write a value into
+    // the field that cannot be read from it: it is valid to write a null, but
+    // a null can never be read (it would have trapped on the write). Fix that
+    // up as needed to not break validation.
+    if (!Type::isSubType(getCurrent()->type, curr->type)) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeRefAs(RefAsNonNull, getCurrent()));
+    }
   }
 
   void optimizeRead(Expression* curr,
@@ -485,6 +494,10 @@ struct PCVScanner
                       Index index,
                       PossibleConstantValues& info) {
     info.note(expr, *getModule());
+    // TODO: For descriptors we can ignore nullable values that are written, as
+    //       they trap. That is, if one place writes a null and another writes a
+    //       global, only the global is readable, and we can optimize there -
+    //       the null is not a second value.
   }
 
   void noteDefault(Type fieldType,
