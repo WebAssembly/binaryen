@@ -403,3 +403,38 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+  )
+  ;; CHECK:      (type $2 (func (result (ref (exact $B)))))
+
+  ;; CHECK:      (func $test (type $2) (result (ref (exact $B)))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new_default $A
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref (exact $B)))
+    ;; We need to add a ref.as_non_null on the descriptor that is read, as the
+    ;; function result is non-nullable.
+    (ref.get_desc $A
+      (struct.new_default $A
+        (ref.null none)
+      )
+    )
+  )
+)
+
