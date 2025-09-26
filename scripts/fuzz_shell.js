@@ -60,7 +60,7 @@ while (argv.length > 0) {
     exportsToCall = last.substr('exports:'.length).split(',');
     argv.pop();
     continue;
-  } else if (last.startsWith('--fuzz-split')) {
+  } else if (last == '--fuzz-split') {
     fuzzSplit = true;
     argv.pop();
     continue;
