@@ -534,7 +534,6 @@ struct Unsubtyping : Pass {
       }
       if (HeapType::isSubType(*oldSuper, super)) {
         // sub <: oldSuper <: super
-        processDescribed(sub, *oldSuper, super);
         noteSubtype(*oldSuper, super);
         // We already handled sub <: oldSuper, so we're done.
         return;
@@ -544,7 +543,6 @@ struct Unsubtyping : Pass {
       // super will already be in the same tree when we process them below, so
       // when we process casts we will know that we only need to process up to
       // oldSuper.
-      processDescribed(sub, super, *oldSuper);
       process(super, *oldSuper);
     }
 
@@ -554,42 +552,6 @@ struct Unsubtyping : Pass {
     // definitions and casts.
     processDefinitions(sub, super);
     processCasts(sub, super, oldSuper);
-  }
-
-  void processDescribed(HeapType sub, HeapType mid, HeapType super) {
-    // We are establishing sub <: mid <: super. If super describes the immediate
-    // supertype of the type sub describes, then once we insert mid between them
-    // we would have this:
-    //
-    // A -> super
-    // ^     ^
-    // |    mid
-    // |     ^
-    // C -> sub
-    //
-    // This violates the requirement that the descriptor of C's immediate
-    // supertype must be the immediate supertype of C's descriptor. To fix it,
-    // we have to find the type B that mid describes and insert it between A and
-    // C:
-    //
-    // A -> super
-    // ^     ^
-    // B -> mid
-    // ^     ^
-    // C -> sub
-    //
-    // We do this eagerly before we establish sub <: mid <: super so that if
-    // establishing that subtyping requires recursively establishing other
-    // subtypings, we can depend on the invariant that the described types are
-    // always set up correctly beforehand.
-    auto subDescribed = sub.getDescribedType();
-    auto superDescribed = super.getDescribedType();
-    if (subDescribed && superDescribed &&
-        types.getSupertype(*subDescribed) == superDescribed) {
-      auto midDescribed = mid.getDescribedType();
-      assert(midDescribed);
-      process(*subDescribed, *midDescribed);
-    }
   }
 
   void processDefinitions(HeapType sub, HeapType super) {
@@ -624,6 +586,11 @@ struct Unsubtyping : Pass {
     }
     if (auto desc = sub.getDescriptorType()) {
       if (auto superDesc = super.getDescriptorType()) {
+        noteSubtype(*desc, *superDesc);
+      }
+    }
+    if (auto desc = sub.getDescribedType()) {
+      if (auto superDesc = super.getDescribedType()) {
         noteSubtype(*desc, *superDesc);
       }
     }
