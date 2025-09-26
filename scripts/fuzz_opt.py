@@ -1619,7 +1619,12 @@ class Split(TestCaseHandler):
 
         # get the output from the split modules, linking them using JS
         # TODO run liftoff/turboshaft/etc.
-        linked_output = run_d8_wasm(primary, args=[secondary, exports_to_call])
+        args = [
+            secondary,
+            exports_to_call,
+            '--fuzz-split',
+        ]
+        linked_output = run_d8_wasm(primary, args=args)
         linked_output = fix_output(linked_output)
 
         # see D8.can_compare_to_self: we cannot compare optimized outputs if
