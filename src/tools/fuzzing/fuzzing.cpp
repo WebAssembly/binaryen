@@ -1771,10 +1771,21 @@ void TranslateToFuzzReader::mutate(Function* func) {
     void noteNonFlowSubtype(Expression* sub, Type super) {
       noteSubtype(sub, super);
     }
-    // TODO: casts, use top
+
+    // Casts always accept the top type.
     void noteCast(HeapType src, HeapType dst) {}
-    void noteCast(Expression* src, Type dst) {}
-    void noteCast(Expression* src, Expression* dst) {}
+    void noteCast(Expression* src, Type dst) {
+      if (!src || !dst.isRef()) {
+        return;
+      }
+      childTypes[src] = dst.with(dst.getHeapType().getTop()).with(Nullable);
+    }
+    void noteCast(Expression* src, Expression* dst) {
+      if (!dst) {
+        return;
+      }
+      noteCast(src, dst->type);
+    }
   } finder;
   finder.walkFunctionInModule(func, &wasm);
 
