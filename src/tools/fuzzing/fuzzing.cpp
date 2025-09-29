@@ -1813,11 +1813,6 @@ void TranslateToFuzzReader::mutate(Function* func) {
           // We can only be given a less-refined type (certainly we can replace
           // curr with its own type).
           assert(Type::isSubType(curr->type, type));
-          if (type != curr->type) {
-            std::cout << *curr << " 2with " << type << " in " << *getFunction()
-                      << '\n';
-            abort();
-          }
         }
       }
 
