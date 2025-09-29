@@ -891,6 +891,7 @@ struct Unsubtyping : Pass {
       Rewriter(const TypeTree& types) : types(types) {}
 
       bool isFunctionParallel() override { return true; }
+      // Only introduces locals that are set immediately before they are used.
       bool requiresNonNullableLocalFixups() override { return false; }
       std::unique_ptr<Pass> create() override {
         return std::make_unique<Rewriter>(types);
