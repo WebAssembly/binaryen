@@ -1737,20 +1737,28 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // First, find things to replace and their types. SubtypingDiscoverer needs to
   // do this in a single, full walk (as types of children depend on parents, and
   // even block targets).
-  struct Finder : public PostWalker<Finder, ControlFlowWalker<SubtypingDiscoverer<Finder>>> {
-    // Maps children we can replace to the types we can replace them with.
+  struct Finder : public ControlFlowWalker<Finder, SubtypingDiscoverer<Finder>> {
+    // Maps children we can replace to the types we can replace them with. We
+    // only store nontrivial ones (i.e., where the type is not just the child's
+    // type).
     std::unordered_map<Expression*, Type> childTypes;
 
     // We only care about constraints on Expression* things.
-    void noteSubtype(Type sub, Type super) {}
-    void noteSubtype(HeapType sub, HeapType super) {}
+    void noteSubtype(Type sub, Type super) {
+    }
+    void noteSubtype(HeapType sub, HeapType super) {
+    }
 
     void noteSubtype(Type sub, Expression* super) {
       // The expression must be a supertype of a fixed type. Nothing to do.
     }
     void noteSubtype(Expression* sub, Type super) {
-      // This is an opportunity to replace sub with a subtype of a fixed type.
-      childTypes[sub] = super;
+      if (super.isRef() && sub->type != super) {
+        // This is a nontrivial opportunity to replace sub with a given type.
+        childTypes[sub] = super;
+std::cout << "note " << *sub << " 2with " << super   <<" in " << *getFunction() << '\n';
+abort();
+      }
     }
     void noteSubtype(Expression* sub, Expression* super) {
       // The expression must be a subtype of another expression: note it.
@@ -1759,6 +1767,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
     void noteNonFlowSubtype(Expression* sub, Type super) {
       noteSubtype(sub, super);
     }
+    // TODO: casts, use top
     void noteCast(HeapType src, HeapType dst) {}
     void noteCast(Expression* src, Type dst) {}
     void noteCast(Expression* src, Expression* dst) {}
@@ -1797,19 +1806,17 @@ void TranslateToFuzzReader::mutate(Function* func) {
       auto type = curr->type;
 //std::cout << "on " << type << '\n';
       if (type.isRef()) {
-        type = finder.childTypes[curr];
-        if (type == Type::none) {
-          // No constraint was reported. This is something SubtypingDiscoverer
-          // does not fully handle, so assume the worst.
-          type = curr->type;
-        }
-        // We can only be given a less-refined type (certainly we can replace
-        // curr with its own type).
-        assert(Type::isSubType(curr->type, type));
+        auto iter = finder.childTypes.find(curr);
+        if (iter != finder.childTypes.end()) {
+          type = iter->second;
+          // We can only be given a less-refined type (certainly we can replace
+          // curr with its own type).
+          assert(Type::isSubType(curr->type, type));
 if (type != curr->type) {
 std::cout << *curr << " 2with " << type <<" in " << *getFunction() << '\n';
 abort();
 }
+        }
       }
 
       // We can replace in various modes, see below. Generate a random number
