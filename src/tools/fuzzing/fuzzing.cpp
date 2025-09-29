@@ -1799,12 +1799,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
       if (type.isRef()) {
         type = finder.childTypes[curr];
         if (type == Type::none) {
-          // No constraint: We can use the top type.
-//std::cout << "  go?\n";
-          type =
-            curr->type.with(curr->type.getHeapType().getTop()).with(Nullable);
-std::cout << *curr << " with " << type << " in " << *getFunction() << '\n';
-abort();
+          // No constraint was reported. This is something SubtypingDiscoverer
+          // does not fully handle, so assume the worst.
+          type = curr->type;
         }
         // We can only be given a less-refined type (certainly we can replace
         // curr with its own type).
