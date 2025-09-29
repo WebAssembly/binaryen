@@ -1737,17 +1737,16 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // First, find things to replace and their types. SubtypingDiscoverer needs to
   // do this in a single, full walk (as types of children depend on parents, and
   // even block targets).
-  struct Finder : public ControlFlowWalker<Finder, SubtypingDiscoverer<Finder>> {
+  struct Finder
+    : public ControlFlowWalker<Finder, SubtypingDiscoverer<Finder>> {
     // Maps children we can replace to the types we can replace them with. We
     // only store nontrivial ones (i.e., where the type is not just the child's
     // type).
     std::unordered_map<Expression*, Type> childTypes;
 
     // We only care about constraints on Expression* things.
-    void noteSubtype(Type sub, Type super) {
-    }
-    void noteSubtype(HeapType sub, HeapType super) {
-    }
+    void noteSubtype(Type sub, Type super) {}
+    void noteSubtype(HeapType sub, HeapType super) {}
 
     void noteSubtype(Type sub, Expression* super) {
       // The expression must be a supertype of a fixed type. Nothing to do.
@@ -1806,7 +1805,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
       // Find the type to replace with.
       auto type = curr->type;
-//std::cout << "on " << type << '\n';
+      // std::cout << "on " << type << '\n';
       if (type.isRef()) {
         auto iter = finder.childTypes.find(curr);
         if (iter != finder.childTypes.end()) {
@@ -1814,10 +1813,11 @@ void TranslateToFuzzReader::mutate(Function* func) {
           // We can only be given a less-refined type (certainly we can replace
           // curr with its own type).
           assert(Type::isSubType(curr->type, type));
-if (type != curr->type) {
-std::cout << *curr << " 2with " << type <<" in " << *getFunction() << '\n';
-abort();
-}
+          if (type != curr->type) {
+            std::cout << *curr << " 2with " << type << " in " << *getFunction()
+                      << '\n';
+            abort();
+          }
         }
       }
 
