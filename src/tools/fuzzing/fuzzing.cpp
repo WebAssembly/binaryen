@@ -1753,15 +1753,20 @@ void TranslateToFuzzReader::mutate(Function* func) {
       // The expression must be a supertype of a fixed type. Nothing to do.
     }
     void noteSubtype(Expression* sub, Type super) {
+      // |sub| may not exist if it is a break target, and that break target has
+      // not yet been fixed up, which happens after mutate().
+      if (!sub) {
+        return;
+      }
       if (super.isRef() && sub->type != super) {
         // This is a nontrivial opportunity to replace sub with a given type.
         childTypes[sub] = super;
-std::cout << "note " << *sub << " 2with " << super   <<" in " << *getFunction() << '\n';
-abort();
       }
     }
     void noteSubtype(Expression* sub, Expression* super) {
-      // The expression must be a subtype of another expression: note it.
+      if (!super) {
+        return;
+      }
       noteSubtype(sub, super->type);
     }
     void noteNonFlowSubtype(Expression* sub, Type super) {
@@ -1771,9 +1776,6 @@ abort();
     void noteCast(HeapType src, HeapType dst) {}
     void noteCast(Expression* src, Type dst) {}
     void noteCast(Expression* src, Expression* dst) {}
-
-    // TODO: For things with no constraint, we can use the top type. Maybe
-    //       easier to do below.
   } finder;
   finder.walkFunctionInModule(func, &wasm);
 
