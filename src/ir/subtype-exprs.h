@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -52,8 +53,9 @@ namespace wasm {
 //                                          subtype of anothers, for example,
 //                                          a block and its last child.
 //
-//  * noteCast(HeapType, HeapType) - A fixed type is cast to another, for
-//                                   example, in a CallIndirect.
+//  * noteCast(HeapType, Type) - A fixed type is cast to another, for example,
+//                               in a CallIndirect. The destination is a Type
+//                               rather than HeapType because it may be exact.
 //  * noteCast(Expression, Type) - An expression's type is cast to a fixed type,
 //                                 for example, in RefTest.
 //  * noteCast(Expression, Expression) - An expression's type is cast to
@@ -165,7 +167,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       //       this is a trivial situation that is not worth optimizing.
       self()->noteSubtype(tableType, curr->heapType);
     } else if (HeapType::isSubType(curr->heapType, tableType)) {
-      self()->noteCast(tableType, curr->heapType);
+      self()->noteCast(tableType, Type(curr->heapType, NonNullable, Inexact));
     } else {
       // The types are unrelated and the cast will fail. We can keep the types
       // unrelated.
