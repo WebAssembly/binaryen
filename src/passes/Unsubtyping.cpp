@@ -129,15 +129,6 @@ template<typename K, typename V> using Map = std::unordered_map<K, V>;
 template<typename T> using Set = std::unordered_set<T>;
 #endif
 
-#if UNSUBTYPING_DEBUG
-Name getTypeName(Module& wasm, HeapType type) {
-  if (auto it = wasm.typeNames.find(type); it != wasm.typeNames.end()) {
-    return it->second.name;
-  }
-  return Name("(unnamed)");
-}
-#endif
-
 // A tree (or rather a forest) of types with the ability to query and set
 // supertypes in constant time and efficiently iterate over supertypes and
 // subtypes.
@@ -291,13 +282,13 @@ struct TypeTree {
 #if UNSUBTYPING_DEBUG
   void dump(Module& wasm) {
     for (auto& node : nodes) {
-      std::cerr << getTypeName(wasm, node.type);
+      std::cerr << ModuleHeapType(wasm, node.type);
       if (auto super = getSupertype(node.type)) {
-        std::cerr << " <: " << getTypeName(wasm, *super);
+        std::cerr << " <: " << ModuleHeapType(wasm, *super);
       }
       std::cerr << ", children:";
       for (auto child : node.children) {
-        std::cerr << " " << getTypeName(wasm, nodes[child].type);
+        std::cerr << " " << ModuleHeapType(wasm, nodes[child].type);
       }
       std::cerr << '\n';
     }
@@ -360,8 +351,8 @@ struct Unsubtyping : Pass {
     if (sub == super || sub.isBottom()) {
       return;
     }
-    DBG(std::cerr << "noting " << getTypeName(*wasm, sub)
-                  << " <: " << getTypeName(*wasm, super) << '\n');
+    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, sub)
+                  << " <: " << ModuleHeapType(*wasm, super) << '\n');
     work.push_back({sub, super});
   }
 
@@ -520,8 +511,8 @@ struct Unsubtyping : Pass {
   }
 
   void process(HeapType sub, HeapType super) {
-    DBG(std::cerr << "processing " << getTypeName(*wasm, sub)
-                  << " <: " << getTypeName(*wasm, super) << '\n');
+    DBG(std::cerr << "processing " << ModuleHeapType(*wasm, sub)
+                  << " <: " << ModuleHeapType(*wasm, super) << '\n');
     assert(HeapType::isSubType(sub, super));
     auto oldSuper = types.getSupertype(sub);
     if (oldSuper) {
