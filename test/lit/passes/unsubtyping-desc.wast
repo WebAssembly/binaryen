@@ -49,14 +49,13 @@
     (type $A (sub (descriptor $A.desc (struct))))
     ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
     (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
     (type $B (sub $A (descriptor $B.desc (struct))))
     ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 
-  ;; Now we directly require B.desc <: A.desc. This does *not* imply B <: A, so
-  ;; we can optimize $B (but not $B.desc).
+  ;; Now we require B.desc <: A.desc, which similarly implies B <: A.
   ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
   (global $B.desc (ref null $B.desc) (ref.null none))
   ;; CHECK:      (global $A.desc (ref null $A.desc) (global.get $B.desc))
@@ -133,4 +132,77 @@
   (global $bot-top (ref null $top) (struct.new $bot (ref.null none)))
   ;; CHECK:      (global $bot-mid-desc (ref null $mid.desc) (struct.new_default $bot.desc))
   (global $bot-mid-desc (ref null $mid.desc) (struct.new $bot.desc))
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc (struct))))
+    (type $mid (sub $top (descriptor $mid.desc (struct))))
+    ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+  )
+
+  ;; Now go the other direction:
+  ;;
+  ;; top ---> top.desc
+  ;;                 ^
+  ;; mid -> mid.desc |(2)
+  ;; ^ (1)           |
+  ;; bot ---> bot.desc
+  ;;
+  ;; bot.desc <: top.desc implies bot <: top, but we already have bot <: mid, so
+  ;; that gives us bot <: mid <: top. This is only valid if we also have
+  ;; bot.desc <: mid.desc <: top.desc.
+
+  ;; CHECK:      (global $bot-mid (ref null $mid) (struct.new_default $bot
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $bot-mid (ref null $mid) (struct.new $bot (ref.null none)))
+  ;; CHECK:      (global $bot-top-desc (ref null $top.desc) (struct.new_default $bot.desc))
+  (global $bot-top-desc (ref null $top.desc) (struct.new $bot.desc))
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc (struct))))
+    (type $mid (sub $top (descriptor $mid.desc (struct))))
+    ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+  )
+
+  ;; Same as above, but the order of the initial subtypings is reversed.
+  ;;
+  ;; top ---> top.desc
+  ;;                 ^
+  ;; mid -> mid.desc |(1)
+  ;; ^ (2)           |
+  ;; bot ---> bot.desc
+  ;;
+  ;; bot.desc <: top.desc implies bot <: top. When we add bot <: mid, that gives
+  ;;  us bot <: mid <: top. This is only valid if we also have
+  ;; bot.desc <: mid.desc <: top.desc.
+  ;; CHECK:      (global $bot-top-desc (ref null $top.desc) (struct.new_default $bot.desc))
+  (global $bot-top-desc (ref null $top.desc) (struct.new $bot.desc))
+  ;; CHECK:      (global $bot-mid (ref null $mid) (struct.new_default $bot
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $bot-mid (ref null $mid) (struct.new $bot (ref.null none)))
 )
