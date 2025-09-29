@@ -1795,13 +1795,24 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
       // Find the type to replace with.
       auto type = curr->type;
+//std::cout << "on " << type << '\n';
       if (type.isRef()) {
         type = finder.childTypes[curr];
         if (type == Type::none) {
           // No constraint: We can use the top type.
+//std::cout << "  go?\n";
           type =
-            type.with(type.getHeapType().getTop()).with(Nullable);
+            curr->type.with(curr->type.getHeapType().getTop()).with(Nullable);
+std::cout << *curr << " with " << type << " in " << *getFunction() << '\n';
+abort();
         }
+        // We can only be given a less-refined type (certainly we can replace
+        // curr with its own type).
+        assert(Type::isSubType(curr->type, type));
+if (type != curr->type) {
+std::cout << *curr << " 2with " << type <<" in " << *getFunction() << '\n';
+abort();
+}
       }
 
       // We can replace in various modes, see below. Generate a random number
