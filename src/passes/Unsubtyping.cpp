@@ -724,7 +724,7 @@ struct Unsubtyping : Pass {
 
     // If the supertype has a descriptor type, then the subtype must be
     // described by a corresponding subtype of the supertype's descriptor. (On
-    // the other hand, no further requirements are placed on the superytpe if
+    // the other hand, no further requirements are placed on the supertype if
     // the subtype has a descriptor.)
     if (auto desc = types.getDescriptor(super)) {
       auto subDesc = sub.getDescriptorType();
