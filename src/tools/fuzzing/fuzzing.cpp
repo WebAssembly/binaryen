@@ -1929,7 +1929,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
     }
   };
 
-  Modder modder(*this, percentChance);
+  Modder modder(*this, percentChance, finder);
   modder.walkFunctionInModule(func, &wasm);
 }
 
