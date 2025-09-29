@@ -523,7 +523,6 @@ struct PrintExpressionContents
   }
   void visitLocalGet(LocalGet* curr) {
     printMedium(o, "local.get ");
-    std::cout << "locget " << curr << ' ';
     printLocal(curr->index, currFunction, o);
   }
   void visitLocalSet(LocalSet* curr) {
