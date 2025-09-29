@@ -1561,6 +1561,7 @@ void TranslateToFuzzReader::modFunction(Function* func) {
   //       still want to run them some of the time, at least, so that we
   //       check variations on initial testcases even at the risk of OOB.
   recombine(func);
+  fixAfterChanges(func);
   mutate(func);
   fixAfterChanges(func);
 }
@@ -1752,20 +1753,12 @@ void TranslateToFuzzReader::mutate(Function* func) {
       // The expression must be a supertype of a fixed type. Nothing to do.
     }
     void noteSubtype(Expression* sub, Type super) {
-      // |sub| may not exist if it is a break target, and that break target has
-      // not yet been fixed up, which happens after mutate().
-      if (!sub) {
-        return;
-      }
       if (super.isRef() && sub->type != super) {
         // This is a nontrivial opportunity to replace sub with a given type.
         childTypes[sub] = super;
       }
     }
     void noteSubtype(Expression* sub, Expression* super) {
-      if (!super) {
-        return;
-      }
       noteSubtype(sub, super->type);
     }
     void noteNonFlowSubtype(Expression* sub, Type super) {
