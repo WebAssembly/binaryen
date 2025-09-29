@@ -1582,6 +1582,9 @@ class Split(TestCaseHandler):
 
         run([in_bin('wasm-split'), wasm, '--split',
              '--split-funcs', ','.join(split_funcs),
+             # make the new exports easily identifiable, as we need to ignore
+             # them in part of fuzz_shell.js
+             '--export-prefix=__fuzz_split_',
              '--primary-output', primary,
              '--secondary-output', secondary] + split_feature_opts)
 
@@ -1616,7 +1619,12 @@ class Split(TestCaseHandler):
 
         # get the output from the split modules, linking them using JS
         # TODO run liftoff/turboshaft/etc.
-        linked_output = run_d8_wasm(primary, args=[secondary, exports_to_call])
+        args = [
+            secondary,
+            exports_to_call,
+            '--fuzz-split',
+        ]
+        linked_output = run_d8_wasm(primary, args=args)
         linked_output = fix_output(linked_output)
 
         # see D8.can_compare_to_self: we cannot compare optimized outputs if
