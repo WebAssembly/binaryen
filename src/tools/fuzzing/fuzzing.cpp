@@ -1795,12 +1795,12 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
       // Find the type to replace with.
       auto type = curr->type;
-      if (type.isRef() {
-        type = collector.childTypes[child];
+      if (type.isRef()) {
+        type = finder.childTypes[curr];
         if (type == Type::none) {
           // No constraint: We can use the top type.
           type =
-            child->type.with(child->type.getHeapType().getTop()).with(Nullable);
+            type.with(type.getHeapType().getTop()).with(Nullable);
         }
       }
 
