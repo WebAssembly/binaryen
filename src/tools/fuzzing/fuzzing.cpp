@@ -1809,7 +1809,8 @@ void TranslateToFuzzReader::mutate(Function* func) {
       int mode = parent.upTo(100);
 
       if (allowUnreachable && mode < 5) {
-        return parent.make(Type::unreachable);
+        replaceCurrent(parent.make(Type::unreachable));
+        return;
       }
 
       // For constants, perform only a small tweaking in some cases.
@@ -1818,11 +1819,11 @@ void TranslateToFuzzReader::mutate(Function* func) {
       if (auto* c = curr->dynCast<Const>()) {
         if (mode < 50) {
           c->value = parent.tweak(c->value);
-          return c;
         } else {
           // Just replace the entire thing.
-          return parent.make(type);
+          replaceCurrent(parent.make(type));
         }
+        return;
       }
 
       // Generate a replacement for the expression, and by default replace all
@@ -1924,7 +1925,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
           }
         }
       }
-      return rep;
+      replaceCurrent(rep);
     }
   };
 
