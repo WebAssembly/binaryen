@@ -1209,6 +1209,41 @@
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
 (module
+  ;; We could optimize away the descriptor since its only use is unreachable,
+  ;; but instead we do nothing and depend on other passes clean up the
+  ;; unreachable code first.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (describes $struct (struct))))
+    (type $desc (sub (describes $struct (struct))))
+  )
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $struct (ref $struct))
+  ;; CHECK-NEXT:  (local $desc (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (struct.new_default $desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $struct (ref $struct))
+    (local $desc (ref $desc))
+    (drop
+      (ref.cast_desc (ref $struct)
+        (unreachable)
+        (struct.new $desc)
+      )
+    )
+  )
+)
+
+(module
 ;; This will be invalid soon, but in the meantime we should not be confused when
 ;; the types described by two related descriptors are unrelated.
   (rec
