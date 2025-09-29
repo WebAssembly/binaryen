@@ -3903,4 +3903,12 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair) {
   return o;
 }
 
+std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair) {
+  if (auto it = pair.first.typeNames.find(pair.second);
+      it != pair.first.typeNames.end()) {
+    return o << it->second.name;
+  }
+  return o << "(unnamed)";
+}
+
 } // namespace std
