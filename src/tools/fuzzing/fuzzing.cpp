@@ -1734,80 +1734,76 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // reasonable chance of making some changes.
   percentChance = std::max(percentChance, Index(3));
 
+  // First, find things to replace and their types. SubtypingDiscoverer needs to
+  // do this in a single, full walk (as types of children depend on parents, and
+  // even block targets).
+  struct Finder : public PostWalker<Finder, ControlFlowWalker<SubtypingDiscoverer<Finder>>> {
+    // Maps children we can replace to the types we can replace them with.
+    std::unordered_map<Expression*, Type> childTypes;
+
+    // We only care about constraints on Expression* things.
+    void noteSubtype(Type sub, Type super) {}
+    void noteSubtype(HeapType sub, HeapType super) {}
+
+    void noteSubtype(Type sub, Expression* super) {
+      // The expression must be a supertype of a fixed type. Nothing to do.
+    }
+    void noteSubtype(Expression* sub, Type super) {
+      // This is an opportunity to replace sub with a subtype of a fixed type.
+      childTypes[sub] = super;
+    }
+    void noteSubtype(Expression* sub, Expression* super) {
+      // The expression must be a subtype of another expression: note it.
+      noteSubtype(sub, super->type);
+    }
+    void noteNonFlowSubtype(Expression* sub, Type super) {
+      noteSubtype(sub, super);
+    }
+    void noteCast(HeapType src, HeapType dst) {}
+    void noteCast(Expression* src, Type dst) {}
+    void noteCast(Expression* src, Expression* dst) {}
+
+    // TODO: For things with no constraint, we can use the top type. Maybe
+    //       easier to do below.
+  } finder;
+  finder.walkFunctionInModule(func, &wasm);
+
+  // Next, modify things.
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     TranslateToFuzzReader& parent;
     Index percentChance;
+    Finder& finder;
 
     // Whether to replace with unreachable. This can lead to less code getting
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    Modder(TranslateToFuzzReader& parent, Index percentChance)
-      : parent(parent), percentChance(percentChance) {
+    Modder(TranslateToFuzzReader& parent, Index percentChance, Finder& finder)
+      : parent(parent), percentChance(percentChance), finder(finder) {
       // If the parent allows it then sometimes replace with an unreachable, and
       // sometimes not. Even if we allow it, only do it in certain functions
       // (half the time) and only do it rarely (see below).
       allowUnreachable = parent.allowAddingUnreachableCode && parent.oneIn(2);
     }
 
-    void visitFunction(Function* curr) {
-      // TODO: replace the toplevel with very low chance
-    }
-
     void visitExpression(Expression* curr) {
-      // Replace some children. Find the types we can replace them with: usually
-      // a subtype of themselves, but sometimes we can do something less
-      // refined.
-      struct Collector
-        : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>> {
+      // See if we want to replace it.
+      if (!parent.canBeArbitrarilyReplaced(curr) ||
+          parent.upTo(100) >= percentChance) {
+        return;
+      }
 
-        // Maps children to the types we can replace them with.
-        std::unordered_map<Expression*, Type> childTypes;
-
-        // We only care about constraints on Expression* things.
-        void noteSubtype(Type sub, Type super) {}
-        void noteSubtype(HeapType sub, HeapType super) {}
-
-        void noteSubtype(Type sub, Expression* super) {
-          // The expression must be a supertype of a fixed type. Nothing to do.
-        }
-        void noteSubtype(Expression* sub, Type super) {
-          // The expression must be a subtype of a fixed type: note it.
-          childTypes[sub] = super;
-        }
-        void noteSubtype(Expression* sub, Expression* super) {
-          // The expression must be a subtype of another expression: note it.
-          childTypes[sub] = super->type;
-        }
-        void noteNonFlowSubtype(Expression* sub, Type super) {
-          childTypes[sub] = super;
-        }
-        void noteCast(HeapType src, HeapType dst) {}
-        void noteCast(Expression* src, Type dst) {}
-        void noteCast(Expression* src, Expression* dst) {}
-      } collector;
-      collector.setModule(&parent.wasm);
-      collector.setFunction(parent.funcContext->func);
-      collector.visit(curr);
-
-      for (auto*& child : ChildIterator(curr)) {
-        if (!child->type.isRef() || !parent.canBeArbitrarilyReplaced(curr) ||
-            parent.upTo(100) >= percentChance) {
-          continue;
-        }
-        auto type = collector.childTypes[child];
+      // Find the type to replace with.
+      auto type = curr->type;
+      if (type.isRef() {
+        type = collector.childTypes[child];
         if (type == Type::none) {
           // No constraint: We can use the top type.
           type =
             child->type.with(child->type.getHeapType().getTop()).with(Nullable);
         }
-auto old = child->type;
-        child = getReplacement(child);
-assert(Type::isSubType(child->type, old));
       }
-    }
 
-    Expression* getReplacement(Expression* curr) {
       // We can replace in various modes, see below. Generate a random number
       // up to 100 to help us there.
       int mode = parent.upTo(100);
@@ -1825,7 +1821,7 @@ assert(Type::isSubType(child->type, old));
           return c;
         } else {
           // Just replace the entire thing.
-          return parent.make(curr->type);
+          return parent.make(type);
         }
       }
 
@@ -1837,7 +1833,7 @@ assert(Type::isSubType(child->type, old));
       // labels, but we'll fix that up later. Note also that make() picks a
       // subtype, so this has a chance to replace us with anything that is
       // valid to put here.
-      auto* rep = parent.make(curr->type);
+      auto* rep = parent.make(type);
       if (mode < 33 && rep->type != Type::none) {
         // This has a non-none type. Replace the output, keeping the
         // expression and its children in a drop. This "interposes" between
