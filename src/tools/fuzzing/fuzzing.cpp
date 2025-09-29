@@ -1561,7 +1561,6 @@ void TranslateToFuzzReader::modFunction(Function* func) {
   //       still want to run them some of the time, at least, so that we
   //       check variations on initial testcases even at the risk of OOB.
   recombine(func);
-  fixAfterChanges(func);
   mutate(func);
   fixAfterChanges(func);
 }
@@ -1735,6 +1734,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // reasonable chance of making some changes.
   percentChance = std::max(percentChance, Index(3));
 
+  // Half the time, use the SubtypingDiscoverer below.
+  bool useSubtypingDiscoverer = r & 1;
+
   // First, find things to replace and their types. SubtypingDiscoverer needs to
   // do this in a single, full walk (as types of children depend on parents, and
   // even block targets).
@@ -1771,7 +1773,17 @@ void TranslateToFuzzReader::mutate(Function* func) {
     void noteCast(Expression* src, Type dst) {}
     void noteCast(Expression* src, Expression* dst) {}
   } finder;
-  finder.walkFunctionInModule(func, &wasm);
+
+  if (useSubtypingDiscoverer) {
+    // We read the IR here, and it must be totally valid - e.g. breaks have a
+    // proper break target - or else we'd hit internal errors. Fix it up first.
+    // (Otherwise, fixing it up is done once after mutation, and in that case
+    // we can mutate the IR in simple ways but not read it using
+    // useSubtypingDiscoverer). We avoid always doing this second fixup as it
+    // may bias the code in some ways.
+    fixAfterChanges(func);
+    finder.walkFunctionInModule(func, &wasm);
+  }
 
   // Next, modify things.
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
