@@ -1020,3 +1020,48 @@
     )
   )
 )
+
+(module
+  ;; $B is never created. When removing it from the result of the function, we
+  ;; must remove the ref.get_desc too (otherwise it would return a non-
+  ;; validating type for the new result; and it traps anyhow).
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B (struct))))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B (struct))))
+    (type $A (sub (descriptor $B (struct))))
+    ;; YESTNH:       (type $B (describes $A (struct)))
+    ;; NO_TNH:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+  )
+
+  ;; YESTNH:       (type $2 (func (result (ref none))))
+
+  ;; YESTNH:      (func $test (type $2) (result (ref none))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default $A
+  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:       (type $2 (func (result (ref none))))
+
+  ;; NO_TNH:      (func $test (type $2) (result (ref none))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.new_default $A
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $test (result (ref (exact $B)))
+    (ref.get_desc $A
+      (struct.new_default $A
+        (ref.null none)
+      )
+    )
+  )
+)
+
