@@ -849,7 +849,11 @@ struct Unsubtyping : Pass {
     // Add all the edges. Don't worry about duplicating existing edges because
     // checking whether they're necessary now would be about as expensive as
     // discarding them later.
-    noteSubtype(*sub, *super);
+    // TODO: We will be able to assume this once we update the descriptor
+    // validation rules.
+    if (HeapType::isSubType(*sub, *super)) {
+      noteSubtype(*sub, *super);
+    }
     noteSubtype(*subDesc, *superDesc);
     noteDescriptor(*super, *superDesc);
     noteDescriptor(*sub, *subDesc);
