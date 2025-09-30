@@ -1772,7 +1772,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
   } finder;
 
   if (oneIn(2)) {
-    // We read the IR here, and it must be totally valid - e.g. breaks have a
+    // |finder| reads the IR, and it must be totally valid - e.g. breaks have a
     // proper break target - or else we'd hit internal errors. Fix it up first.
     // (Otherwise, fixing it up is done once after mutation, and in that case
     // we can mutate the IR in simple ways but not read it using
@@ -1809,7 +1809,6 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
       // Find the type to replace with.
       auto type = curr->type;
-      // std::cout << "on " << type << '\n';
       if (type.isRef()) {
         auto iter = finder.childTypes.find(curr);
         if (iter != finder.childTypes.end()) {
