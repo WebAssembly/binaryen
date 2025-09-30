@@ -644,6 +644,7 @@ struct Unsubtyping : Pass {
         info.descriptors.insert({*desc, type});
       }
       void visitRefGetDesc(RefGetDesc* curr) {
+        Super::visitRefGetDesc(curr);
         if (!curr->ref->type.isStruct()) {
           return;
         }
@@ -664,6 +665,7 @@ struct Unsubtyping : Pass {
         noteDescriptor(curr->desc->type.getHeapType());
       }
       void visitStructNew(StructNew* curr) {
+        Super::visitStructNew(curr);
         if (curr->type == Type::unreachable || !curr->desc) {
           return;
         }
