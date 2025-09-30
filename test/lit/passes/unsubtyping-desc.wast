@@ -17,18 +17,100 @@
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 
-  ;; CHECK:      (global $A (ref null $A) (ref.null none))
-  (global $A (ref null $A) (ref.null none))
-  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
-  (global $A.desc (ref null $A.desc) (ref.null none))
+  ;; CHECK:      (global $A (ref null $A) (struct.new_default $A))
+  (global $A (ref null $A) (struct.new $A (struct.new $A.desc)))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (struct.new_default $A.desc))
+  (global $A.desc (ref null $A.desc) (struct.new $A.desc))
   ;; CHECK:      (global $B (ref null $B) (struct.new_default $B))
-  (global $B (ref null $B) (struct.new $B (ref.null none)))
-  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
-  (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B (ref null $B) (struct.new $B (struct.new $B.desc)))
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (struct.new_default $B.desc))
+  (global $B.desc (ref null $B.desc) (struct.new $B.desc))
 )
 
-;; Now we require the descriptors for both types. We should still be able to
-;; optimize the subtype relationship.
+;; Now we require the descriptor to preserve the traps in the globals.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (global $A.desc (ref null (exact $A.desc)) (struct.new_default $A.desc))
+  (global $A.desc (ref null (exact $A.desc)) (struct.new $A.desc))
+  ;; CHECK:      (global $A (ref null $A) (struct.new_default $A
+  ;; CHECK-NEXT:  (global.get $A.desc)
+  ;; CHECK-NEXT: ))
+  (global $A (ref null $A) (struct.new $A (global.get $A.desc)))
+)
+
+;; But traps on null descriptors inside a function can be fixed up, so they
+;; don't require keeping the descriptors.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref null (exact $A.desc)))))
+
+  ;; CHECK:      (func $nullable-descs (type $2) (param $A.desc (ref null (exact $A.desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A.desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nullable-descs (param $A.desc (ref null (exact $A.desc)))
+    (drop
+      (struct.new $A
+        (local.get $A.desc)
+      )
+    )
+  )
+)
+
+;; No fixup is necessary if the descriptor cannot be null in the first place.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref (exact $A.desc)))))
+
+  ;; CHECK:      (func $nullable-descs (type $2) (param $A.desc (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nullable-descs (param $A.desc (ref (exact $A.desc)))
+    (drop
+      ;; Now the descriptor is non-null.
+      (struct.new $A
+        (local.get $A.desc)
+      )
+    )
+  )
+)
+
+;; Now we require the descriptors for both types explicitly in a function. We
+;; should still be able to optimize the subtype relationship.
 (module
   (rec
     ;; CHECK:      (rec
@@ -1011,8 +1093,14 @@
   )
 
   ;; CHECK:      (func $func-null (type $2)
+  ;; CHECK-NEXT:  (local $0 (ref none))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

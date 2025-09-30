@@ -535,8 +535,13 @@ struct Unsubtyping : Pass {
       : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>> {
       using Super =
         ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>>;
+
       Info& info;
-      Collector(Info& info) : info(info) {}
+      bool trapsNeverHappen;
+
+      Collector(Info& info, bool trapsNeverHappen)
+        : info(info), trapsNeverHappen(trapsNeverHappen) {}
+
       void noteSubtype(Type sub, Type super) {
         if (sub.isTuple()) {
           assert(super.isTuple() && sub.size() == super.size());
@@ -650,13 +655,30 @@ struct Unsubtyping : Pass {
         }
         noteDescriptor(curr->desc->type.getHeapType());
       }
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable || !curr->desc) {
+          return;
+        }
+        // Normally we do not treat struct.new as requiring a descriptor, even
+        // if it has one. We are happy to optimize out descriptors that are set
+        // in allocations and then never used. But if the descriptor is nullable
+        // and outside a function context and we assume it may be null and cause
+        // a trap, then we have no way to preserve that trap without keeping the
+        // descriptor around.
+        if (!trapsNeverHappen && !getFunction() &&
+            curr->desc->type.isNullable()) {
+          noteDescribed(curr->type.getHeapType());
+        }
+      }
     };
+
+    bool trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     // Collect subtyping constraints and casts from functions in parallel.
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       wasm, [&](Function* func, Info& info) {
         if (!func->imported()) {
-          Collector(info).walkFunctionInModule(func, &wasm);
+          Collector(info, trapsNeverHappen).walkFunctionInModule(func, &wasm);
         }
       });
 
@@ -670,7 +692,7 @@ struct Unsubtyping : Pass {
     }
 
     // Collect constraints from module-level code as well.
-    Collector collector(collectedInfo);
+    Collector collector(collectedInfo, trapsNeverHappen);
     collector.walkModuleCode(&wasm);
     collector.setModule(&wasm);
     for (auto& global : wasm.globals) {
@@ -918,6 +940,12 @@ struct Unsubtyping : Pass {
         // ChildLocalizer. Outside a function context just drop the operand
         // because there can be no side effects anyway.
         if (auto* func = getFunction()) {
+          // Preserve a trap from a null descriptor if necessary.
+          if (!getPassOptions().trapsNeverHappen &&
+              curr->desc->type.isNullable()) {
+            curr->desc =
+              Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
+          }
           auto* block =
             ChildLocalizer(curr, func, *getModule(), getPassOptions())
               .getChildrenReplacement();
