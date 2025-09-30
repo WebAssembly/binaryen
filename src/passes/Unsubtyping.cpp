@@ -582,7 +582,10 @@ struct Unsubtyping : Pass {
     }
     if (auto desc = sub.getDescribedType()) {
       if (auto superDesc = super.getDescribedType()) {
-        noteSubtype(*desc, *superDesc);
+        // We will be able to assume this once we fix the validation rules.
+        if (HeapType::isSubType(*desc, *superDesc)) {
+          noteSubtype(*desc, *superDesc);
+        }
       }
     }
   }
