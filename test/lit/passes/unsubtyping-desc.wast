@@ -206,3 +206,22 @@
   ;; CHECK-NEXT: ))
   (global $bot-mid (ref null $mid) (struct.new $bot (ref.null none)))
 )
+
+;; This will be invalid soon, but in the meantime we should not be confused when
+;; the types described by two related descriptors are unrelated.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $super (struct)))
+    (type $A (descriptor $super (struct)))
+    ;; CHECK:       (type $B (descriptor $sub (struct)))
+    (type $B (descriptor $sub (struct)))
+    ;; CHECK:       (type $super (sub (describes $A (struct))))
+    (type $super (sub (describes $A (struct))))
+    ;; CHECK:       (type $sub (sub $super (describes $B (struct))))
+    (type $sub (sub $super (describes $B (struct))))
+  )
+  ;; CHECK:      (global $public (ref null $B) (ref.null none))
+  (global $public (export "public") (ref null $B) (ref.null none))
+)
+;; CHECK:      (export "public" (global $public))
