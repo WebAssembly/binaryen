@@ -502,9 +502,8 @@ struct Unsubtyping : Pass {
   }
 
   void noteDescriptor(HeapType described, HeapType descriptor) {
-    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, described)
-                  << " described by " << ModuleHeapType(*wasm, descriptor)
-                  << '\n');
+    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, described) << " -> "
+                  << ModuleHeapType(*wasm, descriptor) << '\n');
     work.push_back({Kind::Descriptor, described, descriptor});
   }
 
@@ -722,33 +721,16 @@ struct Unsubtyping : Pass {
 
     types.setSupertype(sub, super);
 
-    // If the supertype has a descriptor type, then the subtype must be
-    // described by a corresponding subtype of the supertype's descriptor. (On
-    // the other hand, no further requirements are placed on the supertype if
-    // the subtype has a descriptor.)
-    if (auto desc = types.getDescriptor(super)) {
-      auto subDesc = sub.getDescriptorType();
-      assert(subDesc);
-      noteDescriptor(sub, *subDesc);
-      noteSubtype(*subDesc, *desc);
+    // Complete the descriptor squares to the left and right of the new
+    // subtyping edge if those squares can possibly exist based on the original
+    // types.
+    if (super.getDescribedType()) {
+      completeDescriptorSquare(
+        types.getDescribed(super), super, types.getDescribed(sub), sub);
     }
-    // If the supertype describes a type, then the subtype must describe a
-    // corresponding subtype of the supertype's described type.
-    if (auto desc = types.getDescribed(super)) {
-      auto subDesc = sub.getDescribedType();
-      assert(subDesc);
-      noteDescriptor(*subDesc, sub);
-      noteSubtype(*subDesc, *desc);
-    }
-    // If the subtype describes a type, then the supertype must describe the
-    // supertype of the subtype's described type.
-    if (!super.isBasic()) {
-      if (auto desc = types.getDescribed(sub)) {
-        auto superDesc = super.getDescribedType();
-        assert(superDesc);
-        noteDescriptor(*superDesc, super);
-        noteSubtype(*desc, *superDesc);
-      }
+    if (super.getDescriptorType()) {
+      completeDescriptorSquare(
+        super, types.getDescriptor(super), sub, types.getDescriptor(sub));
     }
 
     // Find the implied subtypings from the type definitions and casts.
@@ -757,6 +739,8 @@ struct Unsubtyping : Pass {
   }
 
   void processDescriptor(HeapType described, HeapType descriptor) {
+    DBG(std::cerr << "processing " << ModuleHeapType(*wasm, described) << " -> "
+                  << ModuleHeapType(*wasm, descriptor) << '\n');
     assert(described.getDescriptorType() &&
            *described.getDescriptorType() == descriptor);
     if (auto oldDesc = types.getDescriptor(described)) {
@@ -767,32 +751,16 @@ struct Unsubtyping : Pass {
 
     types.setDescriptor(described, descriptor);
 
-    // Every immediate subtype of the described type must also be described by a
-    // corresponding immediate subtype of the descriptor. (On the other hand,
-    // no further requirements are placed on the supertype of the described
-    // type.)
+    // Complete the descriptor squares above and below the new descriptor edge.
+    completeDescriptorSquare(
+      std::nullopt, types.getSupertype(descriptor), described, descriptor);
     for (auto sub : types.immediateSubtypes(described)) {
-      auto subDesc = sub.getDescriptorType();
-      assert(subDesc);
-      noteDescriptor(sub, *subDesc);
-      noteSubtype(*subDesc, descriptor);
+      completeDescriptorSquare(
+        described, descriptor, sub, types.getDescriptor(sub));
     }
-    // Every immediate subtype of the descriptor type must also describe a
-    // corresponding immediate subtype of the described typed.
-    for (auto sub : types.immediateSubtypes(descriptor)) {
-      auto subDesc = sub.getDescribedType();
-      assert(subDesc);
-      noteDescriptor(*subDesc, sub);
-      noteSubtype(*subDesc, described);
-    }
-    // The immediate superytpe of the descriptor, if it exists, must describe
-    // the immediate supertype of the described type.
-    if (auto superDescriptor = types.getSupertype(descriptor);
-        superDescriptor && !superDescriptor->isBasic()) {
-      auto superDescribed = superDescriptor->getDescribedType();
-      assert(superDescribed);
-      noteDescriptor(*superDescribed, *superDescriptor);
-      noteSubtype(described, *superDescribed);
+    for (auto subDesc : types.immediateSubtypes(descriptor)) {
+      completeDescriptorSquare(
+        described, descriptor, types.getDescribed(subDesc), subDesc);
     }
   }
 
@@ -850,6 +818,41 @@ struct Unsubtyping : Pass {
         }
       }
     }
+  }
+
+  void completeDescriptorSquare(std::optional<HeapType> super,
+                                std::optional<HeapType> superDesc,
+                                std::optional<HeapType> sub,
+                                std::optional<HeapType> subDesc) {
+    if ((super && super->isBasic()) || (superDesc && superDesc->isBasic())) {
+      // Basic types do not have descriptors or described types, so do not form
+      // descriptor squares.
+      return;
+    }
+    if (bool(super) + bool(superDesc) + bool(sub) + bool(subDesc) < 3) {
+      // We must have two adjacent edges (involving at least 3 types) for there
+      // to be any further requirements.
+      return;
+    }
+    // There may be up to one missing type. Look it up using its original
+    // descriptor relation with the present types and add the missing edges.
+    if (!super) {
+      super = superDesc->getDescribedType();
+    } else if (!sub) {
+      sub = subDesc->getDescribedType();
+    } else if (!subDesc) {
+      subDesc = sub->getDescriptorType();
+    } else if (!superDesc) {
+      // This is the only type that is allowed to be missing.
+      return;
+    }
+    // Add all the edges. Don't worry about duplicating existing edges because
+    // checking whether they're necessary now would be about as expensive as
+    // discarding them later.
+    noteSubtype(*sub, *super);
+    noteSubtype(*subDesc, *superDesc);
+    noteDescriptor(*super, *superDesc);
+    noteDescriptor(*sub, *subDesc);
   }
 
   void rewriteTypes(Module& wasm) {
