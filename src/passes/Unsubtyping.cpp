@@ -502,9 +502,8 @@ struct Unsubtyping : Pass {
   }
 
   void noteDescriptor(HeapType described, HeapType descriptor) {
-    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, described)
-                  << " described by " << ModuleHeapType(*wasm, descriptor)
-                  << '\n');
+    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, described) << " -> "
+                  << ModuleHeapType(*wasm, descriptor) << '\n');
     work.push_back({Kind::Descriptor, described, descriptor});
   }
 
@@ -536,8 +535,13 @@ struct Unsubtyping : Pass {
       : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>> {
       using Super =
         ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>>;
+
       Info& info;
-      Collector(Info& info) : info(info) {}
+      bool trapsNeverHappen;
+
+      Collector(Info& info, bool trapsNeverHappen)
+        : info(info), trapsNeverHappen(trapsNeverHappen) {}
+
       void noteSubtype(Type sub, Type super) {
         if (sub.isTuple()) {
           assert(super.isTuple() && sub.size() == super.size());
@@ -659,13 +663,30 @@ struct Unsubtyping : Pass {
         }
         noteDescriptor(curr->desc->type.getHeapType());
       }
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable || !curr->desc) {
+          return;
+        }
+        // Normally we do not treat struct.new as requiring a descriptor, even
+        // if it has one. We are happy to optimize out descriptors that are set
+        // in allocations and then never used. But if the descriptor is nullable
+        // and outside a function context and we assume it may be null and cause
+        // a trap, then we have no way to preserve that trap without keeping the
+        // descriptor around.
+        if (!trapsNeverHappen && !getFunction() &&
+            curr->desc->type.isNullable()) {
+          noteDescribed(curr->type.getHeapType());
+        }
+      }
     };
+
+    bool trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     // Collect subtyping constraints and casts from functions in parallel.
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       wasm, [&](Function* func, Info& info) {
         if (!func->imported()) {
-          Collector(info).walkFunctionInModule(func, &wasm);
+          Collector(info, trapsNeverHappen).walkFunctionInModule(func, &wasm);
         }
       });
 
@@ -679,7 +700,7 @@ struct Unsubtyping : Pass {
     }
 
     // Collect constraints from module-level code as well.
-    Collector collector(collectedInfo);
+    Collector collector(collectedInfo, trapsNeverHappen);
     collector.walkModuleCode(&wasm);
     collector.setModule(&wasm);
     for (auto& global : wasm.globals) {
@@ -730,33 +751,16 @@ struct Unsubtyping : Pass {
 
     types.setSupertype(sub, super);
 
-    // If the supertype has a descriptor type, then the subtype must be
-    // described by a corresponding subtype of the supertype's descriptor. (On
-    // the other hand, no further requirements are placed on the superytpe if
-    // the subtype has a descriptor.)
-    if (auto desc = types.getDescriptor(super)) {
-      auto subDesc = sub.getDescriptorType();
-      assert(subDesc);
-      noteDescriptor(sub, *subDesc);
-      noteSubtype(*subDesc, *desc);
+    // Complete the descriptor squares to the left and right of the new
+    // subtyping edge if those squares can possibly exist based on the original
+    // types.
+    if (super.getDescribedType()) {
+      completeDescriptorSquare(
+        types.getDescribed(super), super, types.getDescribed(sub), sub);
     }
-    // If the supertype describes a type, then the subtype must describe a
-    // corresponding subtype of the supertype's described type.
-    if (auto desc = types.getDescribed(super)) {
-      auto subDesc = sub.getDescribedType();
-      assert(subDesc);
-      noteDescriptor(*subDesc, sub);
-      noteSubtype(*subDesc, *desc);
-    }
-    // If the subtype describes a type, then the supertype must describe the
-    // supertype of the subtype's described type.
-    if (!super.isBasic()) {
-      if (auto desc = types.getDescribed(sub)) {
-        auto superDesc = super.getDescribedType();
-        assert(superDesc);
-        noteDescriptor(*superDesc, super);
-        noteSubtype(*desc, *superDesc);
-      }
+    if (super.getDescriptorType()) {
+      completeDescriptorSquare(
+        super, types.getDescriptor(super), sub, types.getDescriptor(sub));
     }
 
     // Find the implied subtypings from the type definitions and casts.
@@ -765,6 +769,8 @@ struct Unsubtyping : Pass {
   }
 
   void processDescriptor(HeapType described, HeapType descriptor) {
+    DBG(std::cerr << "processing " << ModuleHeapType(*wasm, described) << " -> "
+                  << ModuleHeapType(*wasm, descriptor) << '\n');
     assert(described.getDescriptorType() &&
            *described.getDescriptorType() == descriptor);
     if (auto oldDesc = types.getDescriptor(described)) {
@@ -775,32 +781,16 @@ struct Unsubtyping : Pass {
 
     types.setDescriptor(described, descriptor);
 
-    // Every immediate subtype of the described type must also be described by a
-    // corresponding immediate subtype of the descriptor. (On the other hand,
-    // no further requirements are placed on the supertype of the described
-    // type.)
+    // Complete the descriptor squares above and below the new descriptor edge.
+    completeDescriptorSquare(
+      std::nullopt, types.getSupertype(descriptor), described, descriptor);
     for (auto sub : types.immediateSubtypes(described)) {
-      auto subDesc = sub.getDescriptorType();
-      assert(subDesc);
-      noteDescriptor(sub, *subDesc);
-      noteSubtype(*subDesc, descriptor);
+      completeDescriptorSquare(
+        described, descriptor, sub, types.getDescriptor(sub));
     }
-    // Every immediate subtype of the descriptor type must also describe a
-    // corresponding immediate subtype of the described typed.
-    for (auto sub : types.immediateSubtypes(descriptor)) {
-      auto subDesc = sub.getDescribedType();
-      assert(subDesc);
-      noteDescriptor(*subDesc, sub);
-      noteSubtype(*subDesc, described);
-    }
-    // The immediate superytpe of the descriptor, if it exists, must describe
-    // the immediate supertype of the described type.
-    if (auto superDescriptor = types.getSupertype(descriptor);
-        superDescriptor && !superDescriptor->isBasic()) {
-      auto superDescribed = superDescriptor->getDescribedType();
-      assert(superDescribed);
-      noteDescriptor(*superDescribed, *superDescriptor);
-      noteSubtype(described, *superDescribed);
+    for (auto subDesc : types.immediateSubtypes(descriptor)) {
+      completeDescriptorSquare(
+        described, descriptor, types.getDescribed(subDesc), subDesc);
     }
   }
 
@@ -860,6 +850,45 @@ struct Unsubtyping : Pass {
     }
   }
 
+  void completeDescriptorSquare(std::optional<HeapType> super,
+                                std::optional<HeapType> superDesc,
+                                std::optional<HeapType> sub,
+                                std::optional<HeapType> subDesc) {
+    if ((super && super->isBasic()) || (superDesc && superDesc->isBasic())) {
+      // Basic types do not have descriptors or described types, so do not form
+      // descriptor squares.
+      return;
+    }
+    if (bool(super) + bool(superDesc) + bool(sub) + bool(subDesc) < 3) {
+      // We must have two adjacent edges (involving at least 3 types) for there
+      // to be any further requirements.
+      return;
+    }
+    // There may be up to one missing type. Look it up using its original
+    // descriptor relation with the present types and add the missing edges.
+    if (!super) {
+      super = superDesc->getDescribedType();
+    } else if (!sub) {
+      sub = subDesc->getDescribedType();
+    } else if (!subDesc) {
+      subDesc = sub->getDescriptorType();
+    } else if (!superDesc) {
+      // This is the only type that is allowed to be missing.
+      return;
+    }
+    // Add all the edges. Don't worry about duplicating existing edges because
+    // checking whether they're necessary now would be about as expensive as
+    // discarding them later.
+    // TODO: We will be able to assume this once we update the descriptor
+    // validation rules.
+    if (HeapType::isSubType(*sub, *super)) {
+      noteSubtype(*sub, *super);
+    }
+    noteSubtype(*subDesc, *superDesc);
+    noteDescriptor(*super, *superDesc);
+    noteDescriptor(*sub, *subDesc);
+  }
+
   void rewriteTypes(Module& wasm) {
     struct Rewriter : GlobalTypeRewriter {
       Unsubtyping& parent;
@@ -899,6 +928,7 @@ struct Unsubtyping : Pass {
       Rewriter(const TypeTree& types) : types(types) {}
 
       bool isFunctionParallel() override { return true; }
+      // Only introduces locals that are set immediately before they are used.
       bool requiresNonNullableLocalFixups() override { return false; }
       std::unique_ptr<Pass> create() override {
         return std::make_unique<Rewriter>(types);
@@ -918,6 +948,12 @@ struct Unsubtyping : Pass {
         // ChildLocalizer. Outside a function context just drop the operand
         // because there can be no side effects anyway.
         if (auto* func = getFunction()) {
+          // Preserve a trap from a null descriptor if necessary.
+          if (!getPassOptions().trapsNeverHappen &&
+              curr->desc->type.isNullable()) {
+            curr->desc =
+              Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
+          }
           auto* block =
             ChildLocalizer(curr, func, *getModule(), getPassOptions())
               .getChildrenReplacement();
