@@ -1536,7 +1536,7 @@ FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
 # files, which adds coverage for ClusterFuzz (which sometimes runs two wasm
 # files in that way).
 class Split(TestCaseHandler):
-    frequency = 1  # TODO: adjust lower when we actually enable this
+    frequency = 0.1
 
     def handle(self, wasm):
         # get the list of function names, some of which we will decide to split
@@ -2121,8 +2121,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-    # TODO: enable when stable enough, and adjust |frequency| (see above)
-    # Split(),
+    Split(),
     RoundtripText(),
     ClusterFuzz(),
     Two(),
