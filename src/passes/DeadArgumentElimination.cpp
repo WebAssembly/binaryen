@@ -51,6 +51,7 @@
 #include "support/sorted_vector.h"
 #include "wasm-builder.h"
 #include "wasm.h"
+#include "wasm-type.h"
 
 namespace wasm {
 
@@ -590,8 +591,7 @@ private:
 
     // If this is exported, we cannot refine to an exact type without the
     // custom descriptors feature being enabled.
-    if (isExported && module->features.hasReferenceTypes() &&
-        !module->features.hasCustomDescriptors()) {
+    if (isExported && !module->features.hasCustomDescriptors()) {
       // Remove exactness.
       std::vector<Type> inexact;
       for (auto t : newType) {
@@ -603,12 +603,20 @@ private:
       }
     }
 
-    func->setResults(newType);
+    // We must explicitly subtype the old type.
+    TypeBuilder builder(1);
+    builder.setHeapType(0, Signature(func->getParams(), newType));
+    builder.setSubType(0, func->type);
+    auto result = builder.build();
+    assert(!result.getError());
+    func->type = (*result)[0];
+
     for (auto* call : calls) {
       if (call->type != Type::unreachable) {
         call->type = newType;
       }
     }
+
     return true;
   }
 };
