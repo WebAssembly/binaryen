@@ -1489,7 +1489,7 @@ Function* TranslateToFuzzReader::addFunction() {
   // Pick params and results. There may be an interesting heap type we can use.
   std::optional<HeapType> funcType;
   auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
-  if (!funcTypes.empty()) {
+  if (!funcTypes.empty() && oneIn(2)) {
     auto type = pick(funcTypes);
     if (type.getSignature().params.size() < (size_t)fuzzParams->MAX_PARAMS) {
       // This is suitable for us.
