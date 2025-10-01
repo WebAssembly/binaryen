@@ -308,6 +308,37 @@ struct Flatten
           }
         }
 
+      } else if (auto* br = curr->dynCast<BrOn>()) {
+        if (br->op == BrOnOp::BrOnNull) {
+          auto nullableType = br->ref->type;
+          auto nonNullableType = nullableType.with(Nullability::NonNullable);
+          Index nonNullableTemp =
+            builder.addVar(getFunction(), nonNullableType);
+
+          Index nullableTemp = builder.addVar(getFunction(), nullableType);
+          ourPreludes.push_back(builder.makeLocalSet(nullableTemp, br->ref));
+
+          Index isNullTemp = builder.addVar(getFunction(), Type::i32);
+          ourPreludes.push_back(
+            builder.makeLocalSet(isNullTemp,
+                                 builder.makeRefIsNull(builder.makeLocalGet(
+                                   nullableTemp, nullableType))));
+
+          ourPreludes.push_back(builder.makeBreak(
+            br->name, nullptr, builder.makeLocalGet(isNullTemp, Type::i32)));
+
+          ourPreludes.push_back(builder.makeLocalSet(
+            nonNullableTemp,
+            builder.makeRefAs(
+              RefAsOp::RefAsNonNull,
+              builder.makeLocalGet(nullableTemp, nullableType))));
+
+          replaceCurrent(
+            builder.makeLocalGet(nonNullableTemp, nonNullableType));
+        } else {
+          Fatal() << "Unsupported instruction for Flatten: "
+                  << getExpressionName(curr);
+        }
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
@@ -333,7 +364,7 @@ struct Flatten
       }
     }
 
-    if (curr->is<BrOn>() || curr->is<TryTable>()) {
+    if (curr->is<TryTable>()) {
       Fatal() << "Unsupported instruction for Flatten: "
               << getExpressionName(curr);
     }
