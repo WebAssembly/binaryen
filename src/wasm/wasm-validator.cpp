@@ -2944,6 +2944,18 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
 void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.cast requires gc [--enable-gc]");
+
+  // Require descriptors to be valid even if the ref is unreachable.
+  if (curr->desc && curr->desc->type != Type::unreachable) {
+    auto descType = curr->desc->type;
+    bool isNull = descType.isNull();
+    bool isDescriptor =
+      descType.isRef() && descType.getHeapType().getDescribedType();
+    shouldBeTrue(isNull || isDescriptor,
+                 curr,
+                 "ref.cast_desc descriptor must be a descriptor reference");
+  }
+
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -3006,11 +3018,7 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   }
 
   auto described = descriptor.getDescribedType();
-  if (!shouldBeTrue(bool(described),
-                    curr,
-                    "ref.cast_desc descriptor should have a described type")) {
-    return;
-  }
+  assert(described && "already checked descriptor");
   shouldBeEqual(*described,
                 curr->type.getHeapType(),
                 curr,
