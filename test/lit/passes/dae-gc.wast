@@ -292,3 +292,20 @@
  )
 )
 
+;; We do not refine the result if the type is final/closed, as we can't
+;; subtype it.
+(module
+ ;; CHECK:      (type $func (func (result anyref)))
+ (type $func (func (result anyref)))
+
+ ;; CHECK:      (type $A (struct))
+ (type $A (struct))
+
+ ;; CHECK:      (func $export (type $func) (result anyref)
+ ;; CHECK-NEXT:  (struct.new_default $A)
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (type $func) (result anyref)
+  (struct.new $A)
+ )
+)
+
