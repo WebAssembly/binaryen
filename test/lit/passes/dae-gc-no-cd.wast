@@ -3,13 +3,25 @@
 
 ;; We cannot refine to an exact type in an export, as CD is disabled.
 (module
+ ;; CHECK:      (type $A (struct))
  (type $A (struct))
 
+ ;; CHECK:      (func $export (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (struct.new_default $A)
+ ;; CHECK-NEXT: )
  (func $export (export "export") (result anyref)
+  ;; We can refine to (ref $A), but not an exact one.
   (struct.new $A)
  )
 
+ ;; CHECK:      (func $export-tuple (type $2) (result (ref $A) i32)
+ ;; CHECK-NEXT:  (tuple.make 2
+ ;; CHECK-NEXT:   (struct.new_default $A)
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $export-tuple (export "export-tuple") (result anyref i32)
+  ;; Ditto, but the ref is in a tuple.
   (tuple.make 2
    (struct.new $A)
    (i32.const 42)

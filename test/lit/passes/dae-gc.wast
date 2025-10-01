@@ -268,8 +268,12 @@
 
 ;; We can refine to an exact type in an export, as CD is enabled.
 (module
+ ;; CHECK:      (type $A (struct))
  (type $A (struct))
 
+ ;; CHECK:      (func $export (type $1) (result (ref (exact $A)))
+ ;; CHECK-NEXT:  (struct.new_default $A)
+ ;; CHECK-NEXT: )
  (func $export (export "export") (result anyref)
   (struct.new $A)
  )

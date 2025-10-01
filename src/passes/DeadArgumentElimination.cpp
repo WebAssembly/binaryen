@@ -584,29 +584,32 @@ private:
       return false;
     }
     auto newType = lub.getLUB();
+    if (newType == func->getResults()) {
+      return false;
+    }
 
     // If this is exported, we cannot refine to an exact type without the
     // custom descriptors feature being enabled.
     if (isExported && module->features.hasReferenceTypes() &&
         !module->features.hasCustomDescriptors()) {
       // Remove exactness.
-      SmallVector<Type, 1> inexact;
+      std::vector<Type> inexact;
       for (auto t : newType) {
-        inexact.push_back(t.with(Inexact));
+        inexact.push_back(t.isRef() ? t.with(Inexact) : t);
       }
       newType = Type(inexact);
+      if (newType == func->getResults()) {
+        return false;
+      }
     }
 
-    if (newType != func->getResults()) {
-      func->setResults(newType);
-      for (auto* call : calls) {
-        if (call->type != Type::unreachable) {
-          call->type = newType;
-        }
+    func->setResults(newType);
+    for (auto* call : calls) {
+      if (call->type != Type::unreachable) {
+        call->type = newType;
       }
-      return true;
     }
-    return false;
+    return true;
   }
 };
 
