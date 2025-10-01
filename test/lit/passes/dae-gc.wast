@@ -265,3 +265,13 @@
   )
  )
 )
+
+;; We can refine to an exact type in an export, as CD is enabled.
+(module
+ (type $A (struct))
+
+ (func $export (export "export") (result anyref)
+  (struct.new $A)
+ )
+)
+

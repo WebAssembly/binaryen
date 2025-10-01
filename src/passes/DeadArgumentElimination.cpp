@@ -339,7 +339,7 @@ struct DAE : public Pass {
       // Refine return types as well. Note that exports do *not* prevent this!
       // It is valid to export a function that returns something even more
       // refined.
-      if (refineReturnTypes(func, calls, module)) {
+      if (refineReturnTypes(func, calls, module, isExported[index])) {
         refinedReturnTypes = true;
         markStale(name);
         markCallersStale(calls);
@@ -577,12 +577,26 @@ private:
   //       the middle, etc.
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
-                         Module* module) {
+                         Module* module,
+                         bool isExported) {
     auto lub = LUB::getResultsLUB(func, *module);
     if (!lub.noted()) {
       return false;
     }
     auto newType = lub.getLUB();
+
+    // If this is exported, we cannot refine to an exact type without the
+    // custom descriptors feature being enabled.
+    if (isExported && module->features.hasReferenceTypes() &&
+        !module->features.hasCustomDescriptors()) {
+      // Remove exactness.
+      SmallVector<Type, 1> inexact;
+      for (auto t : newType) {
+        inexact.push_back(t.with(Inexact));
+      }
+      newType = Type(inexact);
+    }
+
     if (newType != func->getResults()) {
       func->setResults(newType);
       for (auto* call : calls) {
