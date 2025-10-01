@@ -76,12 +76,9 @@ struct DAEFunctionInfo {
   // removed as well.
   bool hasTailCalls = false;
   std::unordered_set<Name> tailCallees;
-  // The set of functions that have calls from places that limit what we can do.
-  // For now, any call we don't see inhibits our optimizations, but TODO: an
-  // export could be worked around by exporting a thunk that adds the parameter.
-  //
-  // This is built up in parallel in each function, and combined at the end.
-  std::unordered_set<Name> hasUnseenCalls;
+  // The set of functions that have their reference taken (which means there may
+  // be non-direct calls, limiting what we can do).
+  std::unordered_set<Name> hasRef;
 
   // Clears all data, which marks us as stale and in need of recomputation.
   void clear() { *this = DAEFunctionInfo(); }
@@ -143,12 +140,9 @@ struct DAEScanner
     // the infoMap).
     auto* currInfo = info ? info : &(*infoMap)[Name()];
 
-    // Treat a ref.func as an unseen call, preventing us from changing the
-    // function's type. If we did change it, it could be an observable
-    // difference from the outside, if the reference escapes, for example.
     // TODO: look for actual escaping?
     // TODO: create a thunk for external uses that allow internal optimizations
-    currInfo->hasUnseenCalls.insert(curr->func);
+    currInfo->hasRef.insert(curr->func);
   }
 
   // main entry point
@@ -248,7 +242,7 @@ struct DAE : public Pass {
 
     std::vector<std::vector<Call*>> allCalls(numFunctions);
     std::vector<bool> tailCallees(numFunctions);
-    std::vector<bool> hasUnseenCalls(numFunctions);
+    std::vector<bool> hasRef(numFunctions);
 
     // Track the function in which relevant expressions exist. When we modify
     // those expressions we will need to mark the function's info as stale.
@@ -267,14 +261,17 @@ struct DAE : public Pass {
       for (auto& [call, dropp] : info.droppedCalls) {
         allDroppedCalls[call] = dropp;
       }
-      for (auto& name : info.hasUnseenCalls) {
-        hasUnseenCalls[indexes[name]] = true;
+      for (auto& name : info.hasRef) {
+        hasRef[indexes[name]] = true;
       }
     }
-    // Exports are considered unseen calls.
+
+    // Exports limit some optimizations, for example, we cannot add or refine
+    // parameters. TODO: we could export a thunk that adds the parameter etc.
+    std::vector<bool> isExported(numFunctions);
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        hasUnseenCalls[indexes[*curr->getInternalName()]] = true;
+        isExported[indexes[*curr->getInternalName()]] = true;
       }
     }
 
@@ -318,8 +315,8 @@ struct DAE : public Pass {
       if (func->imported()) {
         continue;
       }
-      // We can only optimize if we see all the calls and can modify them.
-      if (hasUnseenCalls[index]) {
+      // References prevent optimization.
+      if (hasRef[index]) {
         continue;
       }
       auto& calls = allCalls[index];
@@ -327,29 +324,39 @@ struct DAE : public Pass {
         // Nothing calls this, so it is not worth optimizing.
         continue;
       }
-      // Refine argument types before doing anything else. This does not
-      // affect whether an argument is used or not, it just refines the type
-      // where possible.
       auto name = func->name;
-      if (refineArgumentTypes(func, calls, module, infoMap[name])) {
-        worthOptimizing.insert(func);
-        markStale(func->name);
+      // Exports prevent refining of argument types, as we don't see all the
+      // calls.
+      if (!isExported[index]) {
+        // Refine argument types before doing anything else. This does not
+        // affect whether an argument is used or not, it just refines the type
+        // where possible.
+        if (refineArgumentTypes(func, calls, module, infoMap[name])) {
+          worthOptimizing.insert(func);
+          markStale(func->name);
+        }
       }
-      // Refine return types as well.
+      // Refine return types as well. Note that exports do *not* prevent this!
+      // It is valid to export a function that returns something even more
+      // refined.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
         markStale(name);
         markCallersStale(calls);
       }
-      auto optimizedIndexes =
-        ParamUtils::applyConstantValues({func}, calls, {}, module);
-      for (auto i : optimizedIndexes) {
-        // Mark it as unused, which we know it now is (no point to re-scan just
-        // for that).
-        infoMap[name].unusedParams.insert(i);
-      }
-      if (!optimizedIndexes.empty()) {
-        markStale(func->name);
+      // Exports prevent applying of constant values, as we don't see all the
+      // calls.
+      if (!isExported[index]) {
+        auto optimizedIndexes =
+          ParamUtils::applyConstantValues({func}, calls, {}, module);
+        for (auto i : optimizedIndexes) {
+          // Mark it as unused, which we know it now is (no point to re-scan just
+          // for that).
+          infoMap[name].unusedParams.insert(i);
+        }
+        if (!optimizedIndexes.empty()) {
+          markStale(func->name);
+        }
       }
     }
     if (refinedReturnTypes) {
@@ -364,7 +371,7 @@ struct DAE : public Pass {
       if (func->imported()) {
         continue;
       }
-      if (hasUnseenCalls[index]) {
+      if (hasRef[index] || isExported[index]) {
         continue;
       }
       auto numParams = func->getNumParams();
@@ -401,7 +408,7 @@ struct DAE : public Pass {
         if (func->getResults() == Type::none) {
           continue;
         }
-        if (hasUnseenCalls[index]) {
+        if (hasRef[index] || isExported[index]) {
           continue;
         }
         auto name = func->name;

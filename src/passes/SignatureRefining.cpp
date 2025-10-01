@@ -26,7 +26,6 @@
 // type, and all call_refs using it).
 //
 
-#include "ir/export-utils.h"
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"

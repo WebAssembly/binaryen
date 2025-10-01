@@ -195,3 +195,39 @@
   (nop)
  )
 )
+
+;; Function results can be refined, even if exported.
+(module
+ ;; CHECK:      (func $export (type $0) (param $x anyref) (result (ref any))
+ ;; CHECK-NEXT:  (ref.as_non_null
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (param $x anyref) (result anyref)
+  (ref.as_non_null
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $caller (type $1)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $export
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller
+  ;; Send a non-null param as well, but an export's params cannot be
+  ;; refined. Also drop the result, and again, an export's result cannot be
+  ;; removed.
+  (drop
+   (call $export
+    (ref.as_non_null
+     (ref.null any)
+    )
+   )
+  )
+ )
+)
