@@ -50,8 +50,8 @@
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
 #include "wasm-builder.h"
-#include "wasm.h"
 #include "wasm-type.h"
+#include "wasm.h"
 
 namespace wasm {
 
