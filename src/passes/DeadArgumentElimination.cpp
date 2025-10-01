@@ -350,8 +350,8 @@ struct DAE : public Pass {
         auto optimizedIndexes =
           ParamUtils::applyConstantValues({func}, calls, {}, module);
         for (auto i : optimizedIndexes) {
-          // Mark it as unused, which we know it now is (no point to re-scan just
-          // for that).
+          // Mark it as unused, which we know it now is (no point to re-scan
+          // just for that).
           infoMap[name].unusedParams.insert(i);
         }
         if (!optimizedIndexes.empty()) {
