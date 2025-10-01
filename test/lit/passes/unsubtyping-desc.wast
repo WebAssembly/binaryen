@@ -71,7 +71,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $nullable-descs (param $A.desc (ref null (exact $A.desc)))
+  (func $nullable-desc (param $A.desc (ref null (exact $A.desc)))
     (drop
       (struct.new $A
         (local.get $A.desc)
@@ -89,7 +89,6 @@
     ;; CHECK:       (type $A.desc (sub (struct)))
     (type $A.desc (sub (describes $A (struct))))
   )
-
   ;; CHECK:       (type $2 (func (param (ref (exact $A.desc)))))
 
   ;; CHECK:      (func $nullable-descs (type $2) (param $A.desc (ref (exact $A.desc)))
@@ -99,7 +98,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $nullable-descs (param $A.desc (ref (exact $A.desc)))
+  (func $nonnullable-desc (param $A.desc (ref (exact $A.desc)))
     (drop
       ;; Now the descriptor is non-null.
       (struct.new $A
@@ -346,7 +345,7 @@
 
 ;; Now we still require B.desc <: A.desc, but now it is B.desc we require to
 ;; remain a descriptor. This still requires A <: B and for A.desc to remain a
-;; descriptor as well, so we cannot optimize
+;; descriptor as well, so we cannot optimize.
 (module
   (rec
     ;; CHECK:      (rec
