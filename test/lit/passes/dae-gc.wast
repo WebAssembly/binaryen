@@ -245,3 +245,23 @@
   )
  )
 )
+
+;; A ref.func stops an export's results from being be refined.
+(module
+ ;; CHECK:      (func $export (type $0) (param $x anyref) (result anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.func $export)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.as_non_null
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (param $x anyref) (result anyref)
+  (drop
+   (ref.func $export)
+  )
+  (ref.as_non_null
+   (local.get $x)
+  )
+ )
+)
