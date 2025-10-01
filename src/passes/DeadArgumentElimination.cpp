@@ -266,8 +266,8 @@ struct DAE : public Pass {
       }
     }
 
-    // Exports limit some optimizations, for example, we cannot add or refine
-    // parameters. TODO: we could export a thunk that adds the parameter etc.
+    // Exports limit some optimizations, for example, we cannot remove or refine
+    // parameters. TODO: we could export a thunk that drops the parameter etc.
     std::vector<bool> isExported(numFunctions);
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
