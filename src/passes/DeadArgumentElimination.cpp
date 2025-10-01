@@ -618,7 +618,7 @@ private:
       builder[0].subTypeOf(func->type);
       // Make this subtype open like the super. This is not necessary, but might
       // allow more work later after other changes, in theory.
-      builder.setOpen(0, true);
+      builder[0].setOpen();
       auto result = builder.build();
       assert(!result.getError());
       func->type = (*result)[0];
