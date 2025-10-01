@@ -58,7 +58,7 @@
 
   ;; CHECK:       (type $2 (func (param (ref null (exact $A.desc)))))
 
-  ;; CHECK:      (func $nullable-descs (type $2) (param $A.desc (ref null (exact $A.desc)))
+  ;; CHECK:      (func $nullable-desc (type $2) (param $A.desc (ref null (exact $A.desc)))
   ;; CHECK-NEXT:  (local $1 (ref (exact $A.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $A)))
@@ -71,7 +71,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $nullable-descs (param $A.desc (ref null (exact $A.desc)))
+  (func $nullable-desc (param $A.desc (ref null (exact $A.desc)))
     (drop
       (struct.new $A
         (local.get $A.desc)
@@ -89,17 +89,16 @@
     ;; CHECK:       (type $A.desc (sub (struct)))
     (type $A.desc (sub (describes $A (struct))))
   )
-
   ;; CHECK:       (type $2 (func (param (ref (exact $A.desc)))))
 
-  ;; CHECK:      (func $nullable-descs (type $2) (param $A.desc (ref (exact $A.desc)))
+  ;; CHECK:      (func $nonnullable-desc (type $2) (param $A.desc (ref (exact $A.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $A)))
   ;; CHECK-NEXT:    (struct.new_default $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $nullable-descs (param $A.desc (ref (exact $A.desc)))
+  (func $nonnullable-desc (param $A.desc (ref (exact $A.desc)))
     (drop
       ;; Now the descriptor is non-null.
       (struct.new $A
@@ -346,7 +345,7 @@
 
 ;; Now we still require B.desc <: A.desc, but now it is B.desc we require to
 ;; remain a descriptor. This still requires A <: B and for A.desc to remain a
-;; descriptor as well, so we cannot optimize
+;; descriptor as well, so we cannot optimize.
 (module
   (rec
     ;; CHECK:      (rec
@@ -1166,9 +1165,52 @@
   )
 )
 
+;; When the possibly-trapping global allocations are nested inside other
+;; allocations that will be removed, they need to be moved to new globals.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (sub (struct)))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (descriptor $meta (struct))))
+    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
+    ;; CHECK:       (type $meta (sub (describes $desc (struct))))
+    (type $meta (sub (describes $desc (struct))))
+  )
+
+  ;; CHECK:      (global $g (ref $struct) (struct.new_default $struct))
+  (global $g (ref $struct) (struct.new $struct (struct.new $desc (ref.null none))))
+)
+
+;; CHECK:      (global $unsubtyping-removed-0 (ref (exact $desc)) (struct.new_default $desc
+;; CHECK-NEXT:  (ref.null none)
+;; CHECK-NEXT: ))
+(module
+  ;; Same, but now the nesting is under a non-descriptor field.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field (ref $struct)))))
+    (type $A (sub (struct (field (ref $struct)))))
+    ;; CHECK:       (type $struct (sub (struct)))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (descriptor $meta (struct))))
+    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
+    ;; CHECK:       (type $meta (sub (describes $desc (struct))))
+    (type $meta (sub (describes $desc (struct))))
+  )
+
+  ;; CHECK:      (global $g (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: ))
+  (global $g (ref $A) (struct.new $A (struct.new $struct (struct.new $desc (ref.null none)))))
+)
+
+;; CHECK:      (global $unsubtyping-removed-0 (ref (exact $desc)) (struct.new_default $desc
+;; CHECK-NEXT:  (ref.null none)
+;; CHECK-NEXT: ))
+(module
 ;; This will be invalid soon, but in the meantime we should not be confused when
 ;; the types described by two related descriptors are unrelated.
-(module
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (descriptor $super (struct)))

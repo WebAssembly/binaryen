@@ -25,8 +25,10 @@
 #include <unordered_set>
 #endif
 
+#include "ir/effects.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -675,10 +677,15 @@ struct Unsubtyping : Pass {
         // and outside a function context and we assume it may be null and cause
         // a trap, then we have no way to preserve that trap without keeping the
         // descriptor around.
-        if (!trapsNeverHappen && !getFunction() &&
-            curr->desc->type.isNullable()) {
-          noteDescribed(curr->type.getHeapType());
+        if (trapsNeverHappen || getFunction() ||
+            curr->desc->type.isNonNullable()) {
+          return;
         }
+        // We must preserve the potential trap. When we update the instructions
+        // later we will move this allocation to a new global if necessary to
+        // preserve the potential trap even if a parent of the current
+        // expression is removed.
+        noteDescribed(curr->type.getHeapType());
       }
     };
 
@@ -927,6 +934,11 @@ struct Unsubtyping : Pass {
     struct Rewriter : WalkerPass<PostWalker<Rewriter>> {
       const TypeTree& types;
 
+      // Allocations that might trap that have been removed from module-level
+      // initializers. These need to be placed in new globals to preserve any
+      // instantiation-time traps.
+      std::vector<Expression*> removedTrappingInits;
+
       Rewriter(const TypeTree& types) : types(types) {}
 
       bool isFunctionParallel() override { return true; }
@@ -962,15 +974,32 @@ struct Unsubtyping : Pass {
           block->list.push_back(curr);
           block->type = curr->type;
           replaceCurrent(block);
+        } else {
+          // We are dropping this descriptor, but it might have a potential trap
+          // nested inside it. In that case we need to preserve the trap by
+          // moving this descriptor to a new global.
+          if (curr->desc->is<StructNew>() &&
+              EffectAnalyzer(getPassOptions(), *getModule(), curr->desc).trap) {
+            removedTrappingInits.push_back(curr->desc);
+          }
         }
         curr->desc = nullptr;
       }
     };
 
-    PassRunner runner(getPassRunner());
-    runner.add(std::make_unique<Rewriter>(types));
-    runner.run();
-    Rewriter(types).runOnModuleCode(getPassRunner(), &wasm);
+    Rewriter rewriter(types);
+    rewriter.run(getPassRunner(), &wasm);
+    rewriter.runOnModuleCode(getPassRunner(), &wasm);
+
+    // Insert globals necessary to preserve instantiation-time trapping of
+    // removed allocations.
+    for (Index i = 0; i < rewriter.removedTrappingInits.size(); ++i) {
+      auto* curr = rewriter.removedTrappingInits[i];
+      auto name = Names::getValidGlobalName(
+        wasm, std::string("unsubtyping-removed-") + std::to_string(i));
+      wasm.addGlobal(
+        Builder::makeGlobal(name, curr->type, curr, Builder::Immutable));
+    }
   }
 };
 

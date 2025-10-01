@@ -47,3 +47,35 @@
     )
   )
 )
+
+;; Nested allocations do not need to be moved to new globals when traps never
+;; happen.
+(module
+  (rec
+    ;; CHECK:      (type $struct (sub (struct)))
+    (type $struct (sub (descriptor $desc (struct))))
+    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
+    (type $meta (sub (describes $desc (struct))))
+  )
+
+  ;; CHECK:      (global $g (ref $struct) (struct.new_default $struct))
+  (global $g (ref $struct) (struct.new $struct (struct.new $desc (ref.null none))))
+)
+
+;; Same, but now the nesting is under a non-descriptor field.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field (ref $struct)))))
+    (type $A (sub (struct (field (ref $struct)))))
+    ;; CHECK:       (type $struct (sub (struct)))
+    (type $struct (sub (descriptor $desc (struct))))
+    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
+    (type $meta (sub (describes $desc (struct))))
+  )
+
+  ;; CHECK:      (global $g (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: ))
+  (global $g (ref $A) (struct.new $A (struct.new $struct (struct.new $desc (ref.null none)))))
+)
