@@ -58,7 +58,7 @@
 
   ;; CHECK:       (type $2 (func (param (ref null (exact $A.desc)))))
 
-  ;; CHECK:      (func $nullable-descs (type $2) (param $A.desc (ref null (exact $A.desc)))
+  ;; CHECK:      (func $nullable-desc (type $2) (param $A.desc (ref null (exact $A.desc)))
   ;; CHECK-NEXT:  (local $1 (ref (exact $A.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $A)))
@@ -91,7 +91,7 @@
   )
   ;; CHECK:       (type $2 (func (param (ref (exact $A.desc)))))
 
-  ;; CHECK:      (func $nullable-descs (type $2) (param $A.desc (ref (exact $A.desc)))
+  ;; CHECK:      (func $nonnullable-desc (type $2) (param $A.desc (ref (exact $A.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $A)))
   ;; CHECK-NEXT:    (struct.new_default $A)
