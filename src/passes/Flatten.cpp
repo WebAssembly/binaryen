@@ -348,9 +348,45 @@ struct Flatten
               nullptr,
               builder.makeLocalGet(isNotNullTemp, Type::i32)));
           }
+        } else if (br->op == BrOnCast) {
+          auto sourceType = br->ref->type;
+          auto targetType = br->castType;
+
+          Index sourceTypeTemp = builder.addVar(getFunction(), sourceType);
+          ourPreludes.push_back(builder.makeLocalSet(sourceTypeTemp, br->ref));
+
+          Index typeTestTemp = builder.addVar(getFunction(), Type::i32);
+          ourPreludes.push_back(builder.makeLocalSet(
+            typeTestTemp,
+            builder.makeRefTest(
+              builder.makeLocalGet(sourceTypeTemp, sourceType), targetType)));
+
+          Expression* failValue =
+            builder.makeLocalGet(sourceTypeTemp, sourceType);
+          if (br->castType.isNullable()) {
+            failValue = builder.makeRefAs(RefAsOp::RefAsNonNull, failValue);
+          }
+
+          Index failTemp = builder.addVar(getFunction(), failValue->type);
+
+          Index targetTemp = getTempForBreakTarget(br->name, targetType);
+
+          std::vector<Expression*> successBlock;
+          successBlock.push_back(builder.makeLocalSet(
+            targetTemp,
+            builder.makeRefCast(
+              builder.makeLocalGet(sourceTypeTemp, sourceType), targetType)));
+          successBlock.push_back(builder.makeBreak(br->name));
+
+          ourPreludes.push_back(
+            builder.makeIf(builder.makeLocalGet(typeTestTemp, Type::i32),
+                           builder.makeBlock(successBlock)));
+
+          ourPreludes.push_back(builder.makeLocalSet(failTemp, failValue));
+
+          replaceCurrent(builder.makeLocalGet(failTemp, failValue->type));
         } else {
-          Fatal() << "Unsupported instruction for Flatten: "
-                  << getExpressionName(curr);
+          Fatal() << "Unsupported instruction for Flatten: BrOn " << br->op;
         }
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
