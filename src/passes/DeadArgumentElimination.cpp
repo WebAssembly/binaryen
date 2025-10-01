@@ -614,8 +614,8 @@ private:
     } else {
       // We must explicitly subtype the old type.
       TypeBuilder builder(1);
-      builder.setHeapType(0, Signature(func->getParams(), newType));
-      builder.setSubType(0, func->type);
+      builder[0] = Signature(func->getParams(), newType);
+      builder[0].subTypeOf(func->type);
       // Make this subtype open like the super. This is not necessary, but might
       // allow more work later after other changes, in theory.
       builder.setOpen(0, true);
