@@ -309,7 +309,7 @@ struct Flatten
         }
 
       } else if (auto* br = curr->dynCast<BrOn>()) {
-        if (br->op == BrOnOp::BrOnNull) {
+        if (br->op == BrOnOp::BrOnNull || br->op == BrOnOp::BrOnNonNull) {
           auto nullableType = br->ref->type;
           auto nonNullableType = nullableType.with(Nullability::NonNullable);
           Index nonNullableTemp =
@@ -324,17 +324,30 @@ struct Flatten
                                  builder.makeRefIsNull(builder.makeLocalGet(
                                    nullableTemp, nullableType))));
 
-          ourPreludes.push_back(builder.makeBreak(
-            br->name, nullptr, builder.makeLocalGet(isNullTemp, Type::i32)));
+          if (br->op == BrOnOp::BrOnNull) {
+            ourPreludes.push_back(builder.makeBreak(
+              br->name, nullptr, builder.makeLocalGet(isNullTemp, Type::i32)));
 
-          ourPreludes.push_back(builder.makeLocalSet(
-            nonNullableTemp,
-            builder.makeRefAs(
-              RefAsOp::RefAsNonNull,
-              builder.makeLocalGet(nullableTemp, nullableType))));
+            ourPreludes.push_back(builder.makeLocalSet(
+              nonNullableTemp,
+              builder.makeRefAs(
+                RefAsOp::RefAsNonNull,
+                builder.makeLocalGet(nullableTemp, nullableType))));
 
-          replaceCurrent(
-            builder.makeLocalGet(nonNullableTemp, nonNullableType));
+            replaceCurrent(
+              builder.makeLocalGet(nonNullableTemp, nonNullableType));
+          } else { // BrOnNonNull
+            Index isNotNullTemp = builder.addVar(getFunction(), Type::i32);
+            ourPreludes.push_back(builder.makeLocalSet(
+              isNotNullTemp,
+              builder.makeUnary(UnaryOp::EqZInt32,
+                                builder.makeLocalGet(isNullTemp, Type::i32))));
+
+            replaceCurrent(builder.makeBreak(
+              br->name,
+              nullptr,
+              builder.makeLocalGet(isNotNullTemp, Type::i32)));
+          }
         } else {
           Fatal() << "Unsupported instruction for Flatten: "
                   << getExpressionName(curr);
