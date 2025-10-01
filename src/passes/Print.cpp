@@ -321,7 +321,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void printUnreachableReplacement(Expression* curr);
   bool maybePrintUnreachableReplacement(Expression* curr, Type type);
   void visitRefCast(RefCast* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+    if ((curr->desc && curr->desc->type != Type::unreachable) ||
+        !maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
@@ -2224,7 +2225,20 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "ref.cast ");
     }
-    printType(curr->type);
+    if (curr->type != Type::unreachable) {
+      printType(curr->type);
+    } else {
+      // We can still recover a valid result type from the type of the
+      // descriptor.
+      auto described = curr->desc->type.getHeapType().getDescribedType();
+      if (described) {
+        printType(
+          Type(*described, NonNullable, curr->desc->type.getExactness()));
+      } else {
+        // Invalid, so it doesn't matter what we print.
+        printType(Type::unreachable);
+      }
+    }
   }
   void visitRefGetDesc(RefGetDesc* curr) {
     printMedium(o, "ref.get_desc ");
