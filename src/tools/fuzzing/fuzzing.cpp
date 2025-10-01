@@ -1486,16 +1486,32 @@ Function* TranslateToFuzzReader::addFunction() {
   auto allocation = std::make_unique<Function>();
   auto* func = allocation.get();
   func->name = Names::getValidFunctionName(wasm, "func");
-  Index numParams = upToSquared(fuzzParams->MAX_PARAMS);
-  std::vector<Type> params;
-  params.reserve(numParams);
-  for (Index i = 0; i < numParams; i++) {
-    auto type = getSingleConcreteType();
-    params.push_back(type);
+
+  // Pick params and results. There may be an interesting heap type we can use.
+  std::optional<HeapType> funcType;
+  auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
+  if (!funcTypes.empty() && oneIn(2)) {
+    auto type = pick(funcTypes);
+    if (type.getSignature().params.size() < (size_t)fuzzParams->MAX_PARAMS) {
+      // This is suitable for us.
+      funcType = type;
+    }
   }
-  auto paramType = Type(params);
-  auto resultType = getControlFlowType();
-  func->type = Signature(paramType, resultType);
+  if (!funcType) {
+    // Generate a new type on the fly.
+    Index numParams = upToSquared(fuzzParams->MAX_PARAMS);
+    std::vector<Type> params;
+    params.reserve(numParams);
+    for (Index i = 0; i < numParams; i++) {
+      auto type = getSingleConcreteType();
+      params.push_back(type);
+    }
+    auto paramType = Type(params);
+    auto resultType = getControlFlowType();
+    funcType = Signature(paramType, resultType);
+  }
+  func->type = *funcType;
+
   Index numVars = upToSquared(fuzzParams->MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
@@ -1525,6 +1541,8 @@ Function* TranslateToFuzzReader::addFunction() {
   // at least one, though, to keep each testcase interesting. Avoid non-
   // nullable params, as those cannot be constructed by the fuzzer on the
   // outside.
+  auto paramType = func->getParams();
+  auto resultType = func->getResults();
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
       return t.isDefaultable() && isValidPublicType(t);
