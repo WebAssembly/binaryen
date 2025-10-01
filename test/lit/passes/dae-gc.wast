@@ -198,18 +198,21 @@
 
 ;; Function results can be refined, even if exported.
 (module
- ;; CHECK:      (func $export (type $0) (param $x anyref) (result (ref any))
+ ;; CHECK:      (type $func (sub (func (param anyref) (result anyref))))
+ (type $func (sub (func (param anyref) (result anyref))))
+
+ ;; CHECK:      (func $export (type $1) (param $x anyref) (result (ref any))
  ;; CHECK-NEXT:  (ref.as_non_null
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $export (export "export") (param $x anyref) (result anyref)
+ (func $export (export "export") (type $func) (param $x anyref) (result anyref)
   (ref.as_non_null
    (local.get $x)
   )
  )
 
- ;; CHECK:      (func $caller (type $1)
+ ;; CHECK:      (func $caller (type $2)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $export
  ;; CHECK-NEXT:    (ref.as_non_null
@@ -234,12 +237,15 @@
 
 ;; An export's results can be refined even without any calls to it.
 (module
- ;; CHECK:      (func $export (type $0) (param $x anyref) (result (ref any))
+ ;; CHECK:      (type $func (sub (func (param anyref) (result anyref))))
+ (type $func (sub (func (param anyref) (result anyref))))
+
+ ;; CHECK:      (func $export (type $1) (param $x anyref) (result (ref any))
  ;; CHECK-NEXT:  (ref.as_non_null
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $export (export "export") (param $x anyref) (result anyref)
+ (func $export (export "export") (type $func) (param $x anyref) (result anyref)
   (ref.as_non_null
    (local.get $x)
   )
@@ -248,7 +254,10 @@
 
 ;; A ref.func stops an export's results from being be refined.
 (module
- ;; CHECK:      (func $export (type $0) (param $x anyref) (result anyref)
+ ;; CHECK:      (type $func (sub (func (param anyref) (result anyref))))
+ (type $func (sub (func (param anyref) (result anyref))))
+
+ ;; CHECK:      (func $export (type $func) (param $x anyref) (result anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $export)
  ;; CHECK-NEXT:  )
@@ -256,7 +265,7 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $export (export "export") (param $x anyref) (result anyref)
+ (func $export (export "export") (type $func) (param $x anyref) (result anyref)
   (drop
    (ref.func $export)
   )
@@ -269,12 +278,16 @@
 ;; We can refine to an exact type in an export, as CD is enabled.
 (module
  ;; CHECK:      (type $A (struct))
+
+ ;; CHECK:      (type $func (sub (func (result anyref))))
+ (type $func (sub (func (result anyref))))
+
  (type $A (struct))
 
- ;; CHECK:      (func $export (type $1) (result (ref (exact $A)))
+ ;; CHECK:      (func $export (type $2) (result (ref (exact $A)))
  ;; CHECK-NEXT:  (struct.new_default $A)
  ;; CHECK-NEXT: )
- (func $export (export "export") (result anyref)
+ (func $export (export "export") (type $func) (result anyref)
   (struct.new $A)
  )
 )

@@ -580,6 +580,12 @@ private:
                          const std::vector<Call*>& calls,
                          Module* module,
                          bool isExported) {
+    if (isExported && !func->type.isOpen()) {
+      // We must subtype the current type, so that imports of it work, but it is
+      // closed.
+      return false;
+    }
+
     auto lub = LUB::getResultsLUB(func, *module);
     if (!lub.noted()) {
       return false;
@@ -603,13 +609,20 @@ private:
       }
     }
 
-    // We must explicitly subtype the old type.
-    TypeBuilder builder(1);
-    builder.setHeapType(0, Signature(func->getParams(), newType));
-    builder.setSubType(0, func->type);
-    auto result = builder.build();
-    assert(!result.getError());
-    func->type = (*result)[0];
+    if (!isExported) {
+      func->setResults(newType);
+    } else {
+      // We must explicitly subtype the old type.
+      TypeBuilder builder(1);
+      builder.setHeapType(0, Signature(func->getParams(), newType));
+      builder.setSubType(0, func->type);
+      // Make this subtype open like the super. This is not necessary, but might
+      // allow more work later after other changes, in theory.
+      builder.setOpen(0, true);
+      auto result = builder.build();
+      assert(!result.getError());
+      func->type = (*result)[0];
+    }
 
     for (auto* call : calls) {
       if (call->type != Type::unreachable) {

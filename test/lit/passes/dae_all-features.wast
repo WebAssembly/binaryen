@@ -468,7 +468,7 @@
 (module
  ;; CHECK:      (type $0 (func (param funcref i32 f64) (result i64)))
 
- ;; CHECK:      (type $1 (func (param f32) (result (ref (exact $0)))))
+ ;; CHECK:      (type $1 (func (param f32) (result funcref)))
 
  ;; CHECK:      (elem declare func $0)
 
@@ -482,7 +482,7 @@
   (nop)
   (unreachable)
  )
- ;; CHECK:      (func $export (type $1) (param $0 f32) (result (ref (exact $0)))
+ ;; CHECK:      (func $export (type $1) (param $0 f32) (result funcref)
  ;; CHECK-NEXT:  (ref.func $0)
  ;; CHECK-NEXT: )
  (func $export (export "export") (param $0 f32) (result funcref)
