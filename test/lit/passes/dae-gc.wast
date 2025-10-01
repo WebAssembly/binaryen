@@ -231,3 +231,17 @@
   )
  )
 )
+
+;; An export's results can be refined even without any calls to it.
+(module
+ ;; CHECK:      (func $export (type $0) (param $x anyref) (result (ref any))
+ ;; CHECK-NEXT:  (ref.as_non_null
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (param $x anyref) (result anyref)
+  (ref.as_non_null
+   (local.get $x)
+  )
+ )
+)

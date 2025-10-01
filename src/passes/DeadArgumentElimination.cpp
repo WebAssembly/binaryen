@@ -320,7 +320,7 @@ struct DAE : public Pass {
         continue;
       }
       auto& calls = allCalls[index];
-      if (calls.empty()) {
+      if (calls.empty() && !isExported[index]) {
         // Nothing calls this, so it is not worth optimizing.
         continue;
       }
