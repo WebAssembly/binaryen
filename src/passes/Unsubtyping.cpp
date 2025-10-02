@@ -17,13 +17,18 @@
 #define UNSUBTYPING_DEBUG 0
 
 #include <cstddef>
+#include <iterator>
+#include <memory>
 
 #if !UNSUBTYPING_DEBUG
 #include <unordered_map>
 #include <unordered_set>
 #endif
 
+#include "ir/effects.h"
+#include "ir/localize.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -43,18 +48,19 @@
 #define DBG(x)
 #endif
 
-// Compute and use the minimal subtype relation required to maintain module
-// validity and behavior. This minimal relation will be a subset of the original
-// subtype relation. Start by walking the IR and collecting pairs of types that
-// need to be in the subtype relation for each expression to validate. For
+// Compute and use the minimal subtype (and descriptor) relations required to
+// maintain module validity and behavior. This minimal relation will be a subset
+// of the original subtype (and descriptor) relations. Start by walking the IR
+// and collecting pairs of types that need to be in the subtype relation for
+// each expression to validate (or require a type to have a descriptor). For
 // example, a local.set requires that the type of its operand be a subtype of
 // the local's type. Casts do not generate subtypings at this point because it
 // is not necessary for the cast target to be a subtype of the cast source for
 // the cast to validate.
 //
-// From that initial subtype relation, we then start finding new subtypings that
-// are required by the subtypings we have found already. These transitively
-// required subtypings come from two sources.
+// From that initial subtype relation, we then start finding new subtypings (and
+// descriptors) that are required by the subtypings we have found already. These
+// transitively required subtypings (and descriptors) come from three sources.
 //
 // The first source is type definitions. Consider these type definitions:
 //
@@ -111,11 +117,28 @@
 // types of values that can flow into casts as we learn about new subtypes of
 // cast sources.
 //
-// Starting with the initial subtype relation determined by walking the IR,
-// repeatedly search for new subtypings by analyzing type definitions and casts
-// until we reach a fixed point. This is the minimal subtype relation that
-// preserves module validity and behavior that can be found without a more
-// precise analysis of types that might flow into each cast.
+// The third source of transitive subtyping requirements is the discovery of
+// required descriptors (and vice versa). Subtyping and descriptors combine to
+// form this diagram, where rightward arrows mean "described by":
+//
+//   A -> A.desc
+//   ^    ^
+//   |    |
+//   B -> B.desc
+//
+// If any three of these types exist in these relations with the others, then
+// the validation rules require that the fourth type also exist and be in these
+// relations. The only exception is that A.desc is allowed to be missing. This
+// complex and recursive relationship between subtyping and descriptor relations
+// is why we optimize out unneeded descriptors in this pass rather than e.g.
+// GlobalTypeOptimization.
+//
+// Starting with the initial subtype and descriptor relations determined by
+// walking the IR, repeatedly search for new subtypings and descriptors by
+// analyzing type definitions and casts until we reach a fixed point. This is
+// the minimal subtype/descriptor relation that preserves module validity and
+// behavior that can be found without a more precise analysis of types that
+// might flow into each cast.
 
 namespace wasm {
 
@@ -144,6 +167,9 @@ struct TypeTree {
     Index indexInParent = 0;
     // The indices of the children (subtypes) in the list of nodes.
     std::vector<Index> children;
+    // The index of the described and descriptor types, if they are necessary.
+    std::optional<Index> described;
+    std::optional<Index> descriptor;
 
     Node(HeapType type, Index index) : type(type), parent(index) {}
   };
@@ -175,13 +201,50 @@ struct TypeTree {
     parentNode.children.push_back(childIndex);
   }
 
-  std::optional<HeapType> getSupertype(HeapType type) {
-    auto index = getIndex(type);
-    auto parentIndex = nodes[index].parent;
-    if (parentIndex == index) {
+  std::optional<HeapType> getSupertype(HeapType type) const {
+    auto index = maybeGetIndex(type);
+    if (!index) {
+      return std::nullopt;
+    }
+    auto parentIndex = nodes[*index].parent;
+    if (parentIndex == *index) {
       return std::nullopt;
     }
     return nodes[parentIndex].type;
+  }
+
+  void setDescriptor(HeapType described, HeapType descriptor) {
+    auto describedIndex = getIndex(described);
+    auto descriptorIndex = getIndex(descriptor);
+    auto& describedNode = nodes[describedIndex];
+    auto& descriptorNode = nodes[descriptorIndex];
+    // We only ever set the descriptor once.
+    assert(!describedNode.descriptor);
+    assert(!descriptorNode.described);
+    describedNode.descriptor = descriptorIndex;
+    descriptorNode.described = describedIndex;
+  }
+
+  std::optional<HeapType> getDescriptor(HeapType type) const {
+    auto index = maybeGetIndex(type);
+    if (!index) {
+      return std::nullopt;
+    }
+    if (auto descIndex = nodes[*index].descriptor) {
+      return nodes[*descIndex].type;
+    }
+    return std::nullopt;
+  }
+
+  std::optional<HeapType> getDescribed(HeapType type) const {
+    auto index = maybeGetIndex(type);
+    if (!index) {
+      return std::nullopt;
+    }
+    if (auto descIndex = nodes[*index].described) {
+      return nodes[*descIndex].type;
+    }
+    return std::nullopt;
   }
 
   struct SupertypeIterator {
@@ -194,10 +257,10 @@ struct TypeTree {
     TypeTree* parent;
     std::optional<Index> index;
 
-    bool operator==(const SupertypeIterator& other) {
+    bool operator==(const SupertypeIterator& other) const {
       return index == other.index;
     }
-    bool operator!=(const SupertypeIterator& other) {
+    bool operator!=(const SupertypeIterator& other) const {
       return !(*this == other);
     }
     const HeapType& operator*() const { return parent->nodes[*index].type; }
@@ -226,6 +289,50 @@ struct TypeTree {
   };
 
   Supertypes supertypes(HeapType type) { return {this, getIndex(type)}; }
+
+  struct ImmediateSubtypeIterator {
+    using value_type = const HeapType;
+    using difference_type = std::ptrdiff_t;
+    using reference = const HeapType&;
+    using pointer = const HeapType*;
+    using iterator_category = std::input_iterator_tag;
+
+    TypeTree* parent;
+    std::vector<Index>::const_iterator child;
+
+    bool operator==(const ImmediateSubtypeIterator& other) const {
+      return child == other.child;
+    }
+    bool operator!=(const ImmediateSubtypeIterator& other) const {
+      return !(*this == other);
+    }
+    const HeapType& operator*() const { return parent->nodes[*child].type; }
+    const HeapType* operator->() const { return &*(*this); }
+    ImmediateSubtypeIterator& operator++() {
+      ++child;
+      return *this;
+    }
+    ImmediateSubtypeIterator operator++(int) {
+      auto it = *this;
+      ++(*this);
+      return it;
+    }
+  };
+
+  struct ImmediateSubtypes {
+    TypeTree* parent;
+    Index index;
+    ImmediateSubtypeIterator begin() {
+      return {parent, parent->nodes[index].children.begin()};
+    }
+    ImmediateSubtypeIterator end() {
+      return {parent, parent->nodes[index].children.end()};
+    }
+  };
+
+  ImmediateSubtypes immediateSubtypes(HeapType type) {
+    return {this, getIndex(type)};
+  }
 
   struct SubtypeIterator {
     using value_type = const HeapType;
@@ -286,6 +393,12 @@ struct TypeTree {
       if (auto super = getSupertype(node.type)) {
         std::cerr << " <: " << ModuleHeapType(wasm, *super);
       }
+      if (auto desc = getDescribed(node.type)) {
+        std::cerr << ", describes " << ModuleHeapType(wasm, *desc);
+      }
+      if (auto desc = getDescriptor(node.type)) {
+        std::cerr << ", descriptor " << ModuleHeapType(wasm, *desc);
+      }
       std::cerr << ", children:";
       for (auto child : node.children) {
         std::cerr << " " << ModuleHeapType(wasm, nodes[child].type);
@@ -303,11 +416,20 @@ private:
     }
     return it->second;
   }
+
+  std::optional<Index> maybeGetIndex(HeapType type) const {
+    if (auto it = indices.find(type); it != indices.end()) {
+      return it->second;
+    }
+    return std::nullopt;
+  }
 };
 
 struct Unsubtyping : Pass {
+  // The kind of work to process.
+  enum class Kind { Subtype, Descriptor };
   // (sub, super) pairs that we have discovered but not yet processed.
-  std::vector<std::pair<HeapType, HeapType>> work;
+  std::vector<std::tuple<Kind, HeapType, HeapType>> work;
 
   // Record the type tree with supertype and subtype relations in such a way
   // that we can add new supertype relationships in constant time.
@@ -331,12 +453,23 @@ struct Unsubtyping : Pass {
 
     // Find further subtypings and iterate to a fixed point.
     while (!work.empty()) {
-      auto [sub, super] = work.back();
+      auto [kind, a, b] = work.back();
       work.pop_back();
-      process(sub, super);
+      switch (kind) {
+        case Kind::Subtype:
+          processSubtype(a, b);
+          break;
+        case Kind::Descriptor:
+          processDescriptor(a, b);
+          break;
+      }
     }
 
     DBG(types.dump(*wasm));
+    // If we removed a descriptor from a type, we may need to update its
+    // allocation sites accordingly.
+    fixupAllocations(*wasm);
+
     rewriteTypes(*wasm);
 
     // Cast types may be refinable if their source and target types are no
@@ -353,7 +486,7 @@ struct Unsubtyping : Pass {
     }
     DBG(std::cerr << "noting " << ModuleHeapType(*wasm, sub)
                   << " <: " << ModuleHeapType(*wasm, super) << '\n');
-    work.push_back({sub, super});
+    work.push_back({Kind::Subtype, sub, super});
   }
 
   void noteSubtype(Type sub, Type super) {
@@ -370,11 +503,20 @@ struct Unsubtyping : Pass {
     noteSubtype(sub.getHeapType(), super.getHeapType());
   }
 
+  void noteDescriptor(HeapType described, HeapType descriptor) {
+    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, described) << " -> "
+                  << ModuleHeapType(*wasm, descriptor) << '\n');
+    work.push_back({Kind::Descriptor, described, descriptor});
+  }
+
   void analyzePublicTypes(Module& wasm) {
     // We cannot change supertypes for anything public.
     for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
       if (auto super = type.getDeclaredSuperType()) {
         noteSubtype(type, *super);
+      }
+      if (auto desc = type.getDescriptorType()) {
+        noteDescriptor(type, *desc);
       }
     }
   }
@@ -386,12 +528,22 @@ struct Unsubtyping : Pass {
 
       // Observed (sub, super) subtype constraints.
       Set<std::pair<HeapType, HeapType>> subtypings;
+
+      // Observed (described, descriptor) requirements.
+      Set<std::pair<HeapType, HeapType>> descriptors;
     };
 
     struct Collector
       : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>> {
+      using Super =
+        ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>>;
+
       Info& info;
-      Collector(Info& info) : info(info) {}
+      bool trapsNeverHappen;
+
+      Collector(Info& info, bool trapsNeverHappen)
+        : info(info), trapsNeverHappen(trapsNeverHappen) {}
+
       void noteSubtype(Type sub, Type super) {
         if (sub.isTuple()) {
           assert(super.isTuple() && sub.size() == super.size());
@@ -473,13 +625,69 @@ struct Unsubtyping : Pass {
           noteCast(src->type.getHeapType(), dst->type.getHeapType());
         }
       }
+
+      // Visitors for finding required descriptors.
+      void noteDescribed(HeapType type) {
+        auto desc = type.getDescriptorType();
+        assert(desc);
+        info.descriptors.insert({type, *desc});
+      }
+      void noteDescriptor(HeapType type) {
+        auto desc = type.getDescribedType();
+        assert(desc);
+        info.descriptors.insert({*desc, type});
+      }
+      void visitRefGetDesc(RefGetDesc* curr) {
+        Super::visitRefGetDesc(curr);
+        if (!curr->ref->type.isStruct()) {
+          return;
+        }
+        noteDescribed(curr->ref->type.getHeapType());
+      }
+      void visitRefCast(RefCast* curr) {
+        Super::visitRefCast(curr);
+        if (!curr->desc || !curr->desc->type.isStruct()) {
+          return;
+        }
+        noteDescriptor(curr->desc->type.getHeapType());
+      }
+      void visitBrOn(BrOn* curr) {
+        Super::visitBrOn(curr);
+        if (!curr->desc || !curr->desc->type.isStruct()) {
+          return;
+        }
+        noteDescriptor(curr->desc->type.getHeapType());
+      }
+      void visitStructNew(StructNew* curr) {
+        Super::visitStructNew(curr);
+        if (curr->type == Type::unreachable || !curr->desc) {
+          return;
+        }
+        // Normally we do not treat struct.new as requiring a descriptor, even
+        // if it has one. We are happy to optimize out descriptors that are set
+        // in allocations and then never used. But if the descriptor is nullable
+        // and outside a function context and we assume it may be null and cause
+        // a trap, then we have no way to preserve that trap without keeping the
+        // descriptor around.
+        if (trapsNeverHappen || getFunction() ||
+            curr->desc->type.isNonNullable()) {
+          return;
+        }
+        // We must preserve the potential trap. When we update the instructions
+        // later we will move this allocation to a new global if necessary to
+        // preserve the potential trap even if a parent of the current
+        // expression is removed.
+        noteDescribed(curr->type.getHeapType());
+      }
     };
+
+    bool trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     // Collect subtyping constraints and casts from functions in parallel.
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       wasm, [&](Function* func, Info& info) {
         if (!func->imported()) {
-          Collector(info).walkFunctionInModule(func, &wasm);
+          Collector(info, trapsNeverHappen).walkFunctionInModule(func, &wasm);
         }
       });
 
@@ -488,10 +696,12 @@ struct Unsubtyping : Pass {
       collectedInfo.casts.insert(info.casts.begin(), info.casts.end());
       collectedInfo.subtypings.insert(info.subtypings.begin(),
                                       info.subtypings.end());
+      collectedInfo.descriptors.insert(info.descriptors.begin(),
+                                       info.descriptors.end());
     }
 
     // Collect constraints from module-level code as well.
-    Collector collector(collectedInfo);
+    Collector collector(collectedInfo, trapsNeverHappen);
     collector.walkModuleCode(&wasm);
     collector.setModule(&wasm);
     for (auto& global : wasm.globals) {
@@ -508,9 +718,12 @@ struct Unsubtyping : Pass {
     for (auto [src, dst] : collectedInfo.casts) {
       casts[src].push_back(dst);
     }
+    for (auto [described, descriptor] : collectedInfo.descriptors) {
+      noteDescriptor(described, descriptor);
+    }
   }
 
-  void process(HeapType sub, HeapType super) {
+  void processSubtype(HeapType sub, HeapType super) {
     DBG(std::cerr << "processing " << ModuleHeapType(*wasm, sub)
                   << " <: " << ModuleHeapType(*wasm, super) << '\n');
     assert(HeapType::isSubType(sub, super));
@@ -534,15 +747,52 @@ struct Unsubtyping : Pass {
       // super will already be in the same tree when we process them below, so
       // when we process casts we will know that we only need to process up to
       // oldSuper.
-      process(super, *oldSuper);
+      processSubtype(super, *oldSuper);
     }
 
     types.setSupertype(sub, super);
 
-    // We have a new supertype. Find the implied subtypings from the type
-    // definitions and casts.
+    // Complete the descriptor squares to the left and right of the new
+    // subtyping edge if those squares can possibly exist based on the original
+    // types.
+    if (super.getDescribedType()) {
+      completeDescriptorSquare(
+        types.getDescribed(super), super, types.getDescribed(sub), sub);
+    }
+    if (super.getDescriptorType()) {
+      completeDescriptorSquare(
+        super, types.getDescriptor(super), sub, types.getDescriptor(sub));
+    }
+
+    // Find the implied subtypings from the type definitions and casts.
     processDefinitions(sub, super);
     processCasts(sub, super, oldSuper);
+  }
+
+  void processDescriptor(HeapType described, HeapType descriptor) {
+    DBG(std::cerr << "processing " << ModuleHeapType(*wasm, described) << " -> "
+                  << ModuleHeapType(*wasm, descriptor) << '\n');
+    assert(described.getDescriptorType() &&
+           *described.getDescriptorType() == descriptor);
+    if (auto oldDesc = types.getDescriptor(described)) {
+      // We already know about this descriptor.
+      assert(*oldDesc == descriptor);
+      return;
+    }
+
+    types.setDescriptor(described, descriptor);
+
+    // Complete the descriptor squares above and below the new descriptor edge.
+    completeDescriptorSquare(
+      std::nullopt, types.getSupertype(descriptor), described, descriptor);
+    for (auto sub : types.immediateSubtypes(described)) {
+      completeDescriptorSquare(
+        described, descriptor, sub, types.getDescriptor(sub));
+    }
+    for (auto subDesc : types.immediateSubtypes(descriptor)) {
+      completeDescriptorSquare(
+        described, descriptor, types.getDescribed(subDesc), subDesc);
+    }
   }
 
   void processDefinitions(HeapType sub, HeapType super) {
@@ -575,19 +825,6 @@ struct Unsubtyping : Pass {
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
-    if (auto desc = sub.getDescriptorType()) {
-      if (auto superDesc = super.getDescriptorType()) {
-        noteSubtype(*desc, *superDesc);
-      }
-    }
-    if (auto desc = sub.getDescribedType()) {
-      if (auto superDesc = super.getDescribedType()) {
-        // We will be able to assume this once we fix the validation rules.
-        if (HeapType::isSubType(*desc, *superDesc)) {
-          noteSubtype(*desc, *superDesc);
-        }
-      }
-    }
   }
 
   void
@@ -614,6 +851,45 @@ struct Unsubtyping : Pass {
     }
   }
 
+  void completeDescriptorSquare(std::optional<HeapType> super,
+                                std::optional<HeapType> superDesc,
+                                std::optional<HeapType> sub,
+                                std::optional<HeapType> subDesc) {
+    if ((super && super->isBasic()) || (superDesc && superDesc->isBasic())) {
+      // Basic types do not have descriptors or described types, so do not form
+      // descriptor squares.
+      return;
+    }
+    if (bool(super) + bool(superDesc) + bool(sub) + bool(subDesc) < 3) {
+      // We must have two adjacent edges (involving at least 3 types) for there
+      // to be any further requirements.
+      return;
+    }
+    // There may be up to one missing type. Look it up using its original
+    // descriptor relation with the present types and add the missing edges.
+    if (!super) {
+      super = superDesc->getDescribedType();
+    } else if (!sub) {
+      sub = subDesc->getDescribedType();
+    } else if (!subDesc) {
+      subDesc = sub->getDescriptorType();
+    } else if (!superDesc) {
+      // This is the only type that is allowed to be missing.
+      return;
+    }
+    // Add all the edges. Don't worry about duplicating existing edges because
+    // checking whether they're necessary now would be about as expensive as
+    // discarding them later.
+    // TODO: We will be able to assume this once we update the descriptor
+    // validation rules.
+    if (HeapType::isSubType(*sub, *super)) {
+      noteSubtype(*sub, *super);
+    }
+    noteSubtype(*subDesc, *superDesc);
+    noteDescriptor(*super, *superDesc);
+    noteDescriptor(*sub, *subDesc);
+  }
+
   void rewriteTypes(Module& wasm) {
     struct Rewriter : GlobalTypeRewriter {
       Unsubtyping& parent;
@@ -626,8 +902,96 @@ struct Unsubtyping : Pass {
         }
         return std::nullopt;
       }
+      void modifyTypeBuilderEntry(TypeBuilder& typeBuilder,
+                                  Index i,
+                                  HeapType oldType) override {
+        if (!parent.types.getDescribed(oldType)) {
+          typeBuilder[i].describes(std::nullopt);
+        }
+        if (!parent.types.getDescriptor(oldType)) {
+          typeBuilder[i].descriptor(std::nullopt);
+        }
+      }
     };
     Rewriter(*this, wasm).update();
+  }
+
+  void fixupAllocations(Module& wasm) {
+    if (!wasm.features.hasCustomDescriptors()) {
+      return;
+    }
+    // TODO: Consider running the fixup only if we are actually removing any
+    // descriptors. This would require a better way of detecting this than
+    // collecing and iterating over all the types, though.
+    struct Rewriter : WalkerPass<PostWalker<Rewriter>> {
+      const TypeTree& types;
+
+      // Allocations that might trap that have been removed from module-level
+      // initializers. These need to be placed in new globals to preserve any
+      // instantiation-time traps.
+      std::vector<Expression*> removedTrappingInits;
+
+      Rewriter(const TypeTree& types) : types(types) {}
+
+      bool isFunctionParallel() override { return true; }
+      // Only introduces locals that are set immediately before they are used.
+      bool requiresNonNullableLocalFixups() override { return false; }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Rewriter>(types);
+      }
+
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+        if (!curr->desc) {
+          return;
+        }
+        if (types.getDescriptor(curr->type.getHeapType())) {
+          return;
+        }
+        // We need to drop the descriptor argument. In a function context, use
+        // ChildLocalizer. Outside a function context just drop the operand
+        // because there can be no side effects anyway.
+        if (auto* func = getFunction()) {
+          // Preserve a trap from a null descriptor if necessary.
+          if (!getPassOptions().trapsNeverHappen &&
+              curr->desc->type.isNullable()) {
+            curr->desc =
+              Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
+          }
+          auto* block =
+            ChildLocalizer(curr, func, *getModule(), getPassOptions())
+              .getChildrenReplacement();
+          block->list.push_back(curr);
+          block->type = curr->type;
+          replaceCurrent(block);
+        } else {
+          // We are dropping this descriptor, but it might have a potential trap
+          // nested inside it. In that case we need to preserve the trap by
+          // moving this descriptor to a new global.
+          if (curr->desc->is<StructNew>() &&
+              EffectAnalyzer(getPassOptions(), *getModule(), curr->desc).trap) {
+            removedTrappingInits.push_back(curr->desc);
+          }
+        }
+        curr->desc = nullptr;
+      }
+    };
+
+    Rewriter rewriter(types);
+    rewriter.run(getPassRunner(), &wasm);
+    rewriter.runOnModuleCode(getPassRunner(), &wasm);
+
+    // Insert globals necessary to preserve instantiation-time trapping of
+    // removed allocations.
+    for (Index i = 0; i < rewriter.removedTrappingInits.size(); ++i) {
+      auto* curr = rewriter.removedTrappingInits[i];
+      auto name = Names::getValidGlobalName(
+        wasm, std::string("unsubtyping-removed-") + std::to_string(i));
+      wasm.addGlobal(
+        Builder::makeGlobal(name, curr->type, curr, Builder::Immutable));
+    }
   }
 };
 

@@ -2,6 +2,114 @@
 ;; RUN: foreach %s %t wasm-opt -all --closed-world --preserve-type-order \
 ;; RUN:     --unsubtyping --remove-unused-types -all -S -o - | filecheck %s
 
+;; There is nothing requiring the subtype relationship or descriptors, so we
+;; should optimize both.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $B (sub (struct)))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub (struct)))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:      (global $A (ref null $A) (struct.new_default $A))
+  (global $A (ref null $A) (struct.new $A (struct.new $A.desc)))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (struct.new_default $A.desc))
+  (global $A.desc (ref null $A.desc) (struct.new $A.desc))
+  ;; CHECK:      (global $B (ref null $B) (struct.new_default $B))
+  (global $B (ref null $B) (struct.new $B (struct.new $B.desc)))
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (struct.new_default $B.desc))
+  (global $B.desc (ref null $B.desc) (struct.new $B.desc))
+)
+
+;; Now we require the descriptor to preserve the traps in the globals.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (global $A.desc (ref null (exact $A.desc)) (struct.new_default $A.desc))
+  (global $A.desc (ref null (exact $A.desc)) (struct.new $A.desc))
+  ;; CHECK:      (global $A (ref null $A) (struct.new_default $A
+  ;; CHECK-NEXT:  (global.get $A.desc)
+  ;; CHECK-NEXT: ))
+  (global $A (ref null $A) (struct.new $A (global.get $A.desc)))
+)
+
+;; But traps on null descriptors inside a function can be fixed up, so they
+;; don't require keeping the descriptors.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref null (exact $A.desc)))))
+
+  ;; CHECK:      (func $nullable-desc (type $2) (param $A.desc (ref null (exact $A.desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A.desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nullable-desc (param $A.desc (ref null (exact $A.desc)))
+    (drop
+      (struct.new $A
+        (local.get $A.desc)
+      )
+    )
+  )
+)
+
+;; No fixup is necessary if the descriptor cannot be null in the first place.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+  ;; CHECK:       (type $2 (func (param (ref (exact $A.desc)))))
+
+  ;; CHECK:      (func $nonnullable-desc (type $2) (param $A.desc (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nonnullable-desc (param $A.desc (ref (exact $A.desc)))
+    (drop
+      ;; Now the descriptor is non-null.
+      (struct.new $A
+        (local.get $A.desc)
+      )
+    )
+  )
+)
+
+;; Now we require the descriptors for both types explicitly in a function. We
+;; should still be able to optimize the subtype relationship.
 (module
   (rec
     ;; CHECK:      (rec
@@ -15,13 +123,187 @@
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 
-  ;; There is nothing requiring the subtype relationship, so we should optimize.
+  ;; CHECK:       (type $4 (func (param (ref $A) (ref $B))))
+
+  ;; CHECK:      (global $A (ref null $A) (ref.null none))
+  (global $A (ref null $A) (ref.null none))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
+  (global $A.desc (ref null $A.desc) (ref.null none))
+  ;; CHECK:      (global $B (ref null $B) (ref.null none))
+  (global $B (ref null $B) (ref.null none))
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+
+  ;; CHECK:      (func $require-descs (type $4) (param $A (ref $A)) (param $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $A
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $B
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-descs (param $A (ref $A)) (param $B (ref $B))
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
+      )
+    )
+    (drop
+      (ref.get_desc $B
+        (local.get $B)
+      )
+    )
+  )
+)
+
+;; Now we require B <: A, but not either descriptor, so no subtyping is required
+;; between the descriptors.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $B (sub $A (struct)))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub (struct)))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:      (global $B (ref null $B) (struct.new_default $B))
+  (global $B (ref null $B) (struct.new $B (struct.new $B.desc)))
+  ;; CHECK:      (global $A (ref null $A) (global.get $B))
+  (global $A (ref null $A) (global.get $B))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
+  (global $A.desc (ref null $A.desc) (ref.null none))
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+)
+
+;; Now we require B <: A, and that A.desc remain A's descriptor. This requires
+;; that B.desc remain B's descriptor and that B.desc <: A.desc, so we cannot
+;; optimize.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $A))))
+
+  ;; CHECK:      (global $B (ref null $B) (struct.new_default $B
+  ;; CHECK-NEXT:  (struct.new_default $B.desc)
+  ;; CHECK-NEXT: ))
+  (global $B (ref null $B) (struct.new $B (struct.new $B.desc)))
+  ;; CHECK:      (global $A (ref null $A) (global.get $B))
+  (global $A (ref null $A) (global.get $B))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
+  (global $A.desc (ref null $A.desc) (ref.null none))
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+
+  ;; CHECK:      (func $require-desc (type $4) (param $A (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $A
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $A (ref $A))
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
+      )
+    )
+  )
+)
+
+;; Now we require B <: A, and that B.desc remain B's descriptor (this was A and
+;; A.desc before). This imposes no further requirements, so we can optimize away
+;; A's descriptor and B.desc's supertype.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $B))))
+
+  ;; CHECK:      (global $B (ref null $B) (struct.new_default $B
+  ;; CHECK-NEXT:  (struct.new_default $B.desc)
+  ;; CHECK-NEXT: ))
+  (global $B (ref null $B) (struct.new $B (struct.new $B.desc)))
+  ;; CHECK:      (global $A (ref null $A) (global.get $B))
+  (global $A (ref null $A) (global.get $B))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
+  (global $A.desc (ref null $A.desc) (ref.null none))
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+
+  ;; CHECK:      (func $require-desc (type $4) (param $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $B
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $B (ref $B))
+    (drop
+      ;; This changed.
+      (ref.get_desc $B
+        (local.get $B)
+      )
+    )
+  )
+)
+
+;; Now we require B.desc <: A.desc, but we don't require them to remain
+;; descriptors, so we can still optimize out B's superytpe.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $B (sub (struct)))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (struct)))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (global.get $B.desc))
+  (global $A.desc (ref null $A.desc) (global.get $B.desc))
   ;; CHECK:      (global $A (ref null $A) (ref.null none))
   (global $A (ref null $A) (ref.null none))
   ;; CHECK:      (global $B (ref null $B) (ref.null none))
   (global $B (ref null $B) (ref.null none))
 )
 
+;; Now we still require B.desc <: A.desc, but now we require A.desc to remain a
+;; descriptor. This requires A <: B and for B.desc to remain a descriptor as
+;; well, so we cannot optimize
 (module
   (rec
     ;; CHECK:      (rec
@@ -34,34 +316,346 @@
     ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
+  ;; CHECK:       (type $4 (func (param (ref $A))))
 
-  ;; Now we require B <: A, which implies B.desc <: A.desc.
-  ;; CHECK:      (global $B (ref null $B) (ref.null none))
-  (global $B (ref null $B) (ref.null none))
-  ;; CHECK:      (global $A (ref null $A) (global.get $B))
-  (global $A (ref null $A) (global.get $B))
-)
-
-(module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
-  )
-
-  ;; Now we require B.desc <: A.desc, which similarly implies B <: A.
   ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
   (global $B.desc (ref null $B.desc) (ref.null none))
   ;; CHECK:      (global $A.desc (ref null $A.desc) (global.get $B.desc))
   (global $A.desc (ref null $A.desc) (global.get $B.desc))
+  ;; CHECK:      (global $A (ref null $A) (ref.null none))
+  (global $A (ref null $A) (ref.null none))
+  ;; CHECK:      (global $B (ref null $B) (ref.null none))
+  (global $B (ref null $B) (ref.null none))
+
+  ;; CHECK:      (func $require-desc (type $4) (param $A (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $A
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $A (ref $A))
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
+      )
+    )
+  )
 )
 
+;; Now we still require B.desc <: A.desc, but now it is B.desc we require to
+;; remain a descriptor. This still requires A <: B and for A.desc to remain a
+;; descriptor as well, so we cannot optimize.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+  ;; CHECK:       (type $4 (func (param (ref $B))))
+
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (global.get $B.desc))
+  (global $A.desc (ref null $A.desc) (global.get $B.desc))
+  ;; CHECK:      (global $A (ref null $A) (ref.null none))
+  (global $A (ref null $A) (ref.null none))
+  ;; CHECK:      (global $B (ref null $B) (ref.null none))
+  (global $B (ref null $B) (ref.null none))
+
+  ;; CHECK:      (func $require-desc (type $4) (param $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $B
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $B (ref $B))
+    (drop
+      (ref.get_desc $B
+        (local.get $B)
+      )
+    )
+  )
+)
+
+;; ref.cast_desc requires a descriptor and also still affects subtyping like a
+;; normal cast.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $bot (sub $top (descriptor $bot.desc (struct))))
+    (type $bot (sub $top (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $bot.desc (sub $top.desc (describes $bot (struct))))
+    (type $bot.desc (sub $top.desc (describes $bot (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param anyref (ref $top.desc))))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot
+  ;; CHECK-NEXT:  (struct.new_default $bot.desc)
+  ;; CHECK-NEXT: ))
+  (global $bot-sub-any anyref (struct.new $bot (struct.new $bot.desc)))
+
+  ;; CHECK:      (func $ref.cast_desc (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref null $top)
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (local.get $top.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.cast_desc (param $any anyref) (param $top.desc (ref $top.desc))
+    (drop
+      (ref.cast_desc (ref null $top)
+        (local.get $any)
+        (local.get $top.desc)
+      )
+    )
+  )
+)
+
+;; If the ref.cast_desc is exact, then it doesn't need to transitively require
+;; any subtypings except that the cast destination is a subtype of the cast
+;; source. TODO.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $bot (sub $top (descriptor $bot.desc (struct))))
+    (type $bot (sub $top (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $bot.desc (sub $top.desc (describes $bot (struct))))
+    (type $bot.desc (sub $top.desc (describes $bot (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param anyref (ref (exact $top.desc)))))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot
+  ;; CHECK-NEXT:  (struct.new_default $bot.desc)
+  ;; CHECK-NEXT: ))
+  (global $bot-sub-any anyref (struct.new $bot (struct.new $bot.desc)))
+
+  ;; CHECK:      (func $ref.cast_desc (type $4) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref null (exact $top))
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (local.get $top.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.cast_desc (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+    (drop
+      ;; This is now exact.
+      (ref.cast_desc (ref null (exact $top))
+        (local.get $any)
+        (local.get $top.desc)
+      )
+    )
+  )
+)
+
+;; br_on_cast_desc requires a descriptor and also still affects subtyping like a
+;; normal cast.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $bot (sub $top (descriptor $bot.desc (struct))))
+    (type $bot (sub $top (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $bot.desc (sub $top.desc (describes $bot (struct))))
+    (type $bot.desc (sub $top.desc (describes $bot (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param anyref (ref $top.desc))))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot
+  ;; CHECK-NEXT:  (struct.new_default $bot.desc)
+  ;; CHECK-NEXT: ))
+  (global $bot-sub-any anyref (struct.new $bot (struct.new $bot.desc)))
+
+  ;; CHECK:      (func $br_on_cast_desc (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_desc $l anyref (ref null $top)
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:     (local.get $top.desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_desc (param $any anyref) (param $top.desc (ref $top.desc))
+    (drop
+      (block $l (result anyref)
+        (br_on_cast_desc $l anyref (ref null $top)
+          (local.get $any)
+          (local.get $top.desc)
+        )
+      )
+    )
+  )
+)
+
+;; If the br_on_cast_desc is exact, then it doesn't need to transitively require
+;; any subtypings except that the cast destination is a subtype of the cast
+;; source. TODO.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $bot (sub $top (descriptor $bot.desc (struct))))
+    (type $bot (sub $top (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $bot.desc (sub $top.desc (describes $bot (struct))))
+    (type $bot.desc (sub $top.desc (describes $bot (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param anyref (ref (exact $top.desc)))))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot
+  ;; CHECK-NEXT:  (struct.new_default $bot.desc)
+  ;; CHECK-NEXT: ))
+  (global $bot-sub-any anyref (struct.new $bot (struct.new $bot.desc)))
+
+  ;; CHECK:      (func $br_on_cast_desc (type $4) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_desc $l anyref (ref null (exact $top))
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:     (local.get $top.desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_desc (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+    (drop
+      (block $l (result anyref)
+        ;; This is now exact.
+        (br_on_cast_desc $l anyref (ref null (exact $top))
+          (local.get $any)
+          (local.get $top.desc)
+        )
+      )
+    )
+  )
+)
+
+;; br_on_cast_desc_fail requires a descriptor and also still affects subtyping
+;; like a normal cast.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $bot (sub $top (descriptor $bot.desc (struct))))
+    (type $bot (sub $top (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $bot.desc (sub $top.desc (describes $bot (struct))))
+    (type $bot.desc (sub $top.desc (describes $bot (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param anyref (ref $top.desc))))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot
+  ;; CHECK-NEXT:  (struct.new_default $bot.desc)
+  ;; CHECK-NEXT: ))
+  (global $bot-sub-any anyref (struct.new $bot (struct.new $bot.desc)))
+
+  ;; CHECK:      (func $br_on_cast_desc_fail (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l anyref (ref null $top)
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:     (local.get $top.desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_desc_fail (param $any anyref) (param $top.desc (ref $top.desc))
+    (drop
+      (block $l (result anyref)
+        (br_on_cast_desc_fail $l anyref (ref null $top)
+          (local.get $any)
+          (local.get $top.desc)
+        )
+      )
+    )
+  )
+)
+
+;; If the br_on_cast_desc_fail is exact, then it doesn't need to transitively
+;; require any subtypings except that the cast destination is a subtype of the
+;; cast source. TODO.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $bot (sub $top (descriptor $bot.desc (struct))))
+    (type $bot (sub $top (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $bot.desc (sub $top.desc (describes $bot (struct))))
+    (type $bot.desc (sub $top.desc (describes $bot (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param anyref (ref (exact $top.desc)))))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot
+  ;; CHECK-NEXT:  (struct.new_default $bot.desc)
+  ;; CHECK-NEXT: ))
+  (global $bot-sub-any anyref (struct.new $bot (struct.new $bot.desc)))
+
+  ;; CHECK:      (func $br_on_cast_desc_fail (type $4) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l anyref (ref null (exact $top))
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:     (local.get $top.desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_desc_fail (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+    (drop
+      (block $l (result anyref)
+        ;; This is now exact.
+        (br_on_cast_desc_fail $l anyref (ref null (exact $top))
+          (local.get $any)
+          (local.get $top.desc)
+        )
+      )
+    )
+  )
+)
+
+;; top ->(0) top.desc
+;; ^
+;; |(2) mid  mid.desc
+;; |          ^(1)
+;; bot       bot.desc
+;;
+;; bot <: top implies bot.desc <: top.desc, but we already have
+;; bot.desc <: mid.desc, so that gives us bot.desc <: mid.desc <: top.desc.
+;; This is only valid if we also have bot <: mid <: top.
 (module
   (rec
     ;; CHECK:      (rec
@@ -78,16 +672,7 @@
     ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
     (type $bot.desc (sub $mid.desc (describes $bot (struct))))
   )
-
-  ;; top -> top.desc
-  ;; ^
-  ;; |(2) mid -> mid.desc
-  ;; |            ^ (1)
-  ;; bot -> bot.desc
-  ;;
-  ;; bot <: top implies bot.desc <: top.desc, but we already have
-  ;; bot.desc <: mid.desc, so that gives us bot.desc <: mid.desc <: top.desc.
-  ;; This is only valid if we also have bot <: mid <: top.
+  ;; CHECK:       (type $6 (func (param (ref $top))))
 
   ;; CHECK:      (global $bot-mid-desc (ref null $mid.desc) (struct.new_default $bot.desc))
   (global $bot-mid-desc (ref null $mid.desc) (struct.new $bot.desc))
@@ -95,8 +680,35 @@
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $bot-top (ref null $top) (struct.new $bot (ref.null none)))
+
+  ;; CHECK:      (func $require-desc (type $6) (param $top (ref $top))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $top
+  ;; CHECK-NEXT:    (local.get $top)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $top (ref $top))
+    (drop
+      ;; This is enough to require all the descriptors to remain descriptors.
+      (ref.get_desc $top
+        (local.get $top)
+      )
+    )
+  )
 )
 
+;; Same as above, but the order of the initial subtypings is reversed.
+;;
+;; top ->(0) top.desc
+;; ^
+;; |(1) mid  mid.desc
+;; |          ^(2)
+;; bot       bot.desc
+;;
+;; bot <: top implies bot.desc <: top.desc. When we add bot.desc <: mid.desc,
+;; that gives us bot.desc <: mid.desc <: top.desc. This is only valid if we
+;; also have bot <: mid <: top.
 (module
   (rec
     ;; CHECK:      (rec
@@ -113,18 +725,7 @@
     ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
     (type $bot.desc (sub $mid.desc (describes $bot (struct))))
   )
-
-  ;; Same as above, but the order of the initial subtypings is reversed.
-  ;;
-  ;; top -> top.desc
-  ;; ^
-  ;; |(1) mid -> mid.desc
-  ;; |            ^ (2)
-  ;; bot -> bot.desc
-  ;;
-  ;; bot <: top implies bot.desc <: top.desc. When we add bot.desc <: mid.desc,
-  ;; that gives us bot.desc <: mid.desc <: top.desc. This is only valid if we
-  ;; also have bot <: mid <: top.
+  ;; CHECK:       (type $6 (func (param (ref $top))))
 
   ;; CHECK:      (global $bot-top (ref null $top) (struct.new_default $bot
   ;; CHECK-NEXT:  (ref.null none)
@@ -132,8 +733,89 @@
   (global $bot-top (ref null $top) (struct.new $bot (ref.null none)))
   ;; CHECK:      (global $bot-mid-desc (ref null $mid.desc) (struct.new_default $bot.desc))
   (global $bot-mid-desc (ref null $mid.desc) (struct.new $bot.desc))
+
+  ;; CHECK:      (func $require-desc (type $6) (param $top (ref $top))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $top
+  ;; CHECK-NEXT:    (local.get $top)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $top (ref $top))
+    (drop
+      ;; This is enough to require all the descriptors to remain descriptors.
+      (ref.get_desc $top
+        (local.get $top)
+      )
+    )
+  )
 )
 
+;; Same as above, but now we initially require bot.desc to remain a descriptor
+;; rather than top.desc. This means we can now optimize out top's descriptor and
+;; mid.desc's supertype.
+;;
+;; top       top.desc
+;; ^
+;; |(1) mid  mid.desc
+;; |          ^ (2)
+;; bot ->(0) bot.desc
+;;
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (struct)))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc (struct))))
+    (type $mid (sub $top (descriptor $mid.desc (struct))))
+    ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (struct)))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $mid.desc (sub (describes $mid (struct))))
+    (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+  )
+  ;; CHECK:       (type $6 (func (param (ref $bot))))
+
+  ;; CHECK:      (global $bot-top (ref null $top) (struct.new_default $bot
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $bot-top (ref null $top) (struct.new $bot (ref.null none)))
+  ;; CHECK:      (global $bot-mid-desc (ref null $mid.desc) (struct.new_default $bot.desc))
+  (global $bot-mid-desc (ref null $mid.desc) (struct.new $bot.desc))
+
+  ;; CHECK:      (global $top.desc (ref null $top.desc) (ref.null none))
+  (global $top.desc (ref null $top.desc) (ref.null none))
+
+  ;; CHECK:      (func $require-desc (type $6) (param $bot (ref $bot))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $bot
+  ;; CHECK-NEXT:    (local.get $bot)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $bot (ref $bot))
+    (drop
+      (ref.get_desc $bot
+        (local.get $bot)
+      )
+    )
+  )
+)
+
+;; Now go the other direction:
+;;
+;; top ->(0) top.desc
+;;                 ^
+;; mid    mid.desc |(2)
+;; ^ (1)           |
+;; bot       bot.desc
+;;
+;; bot.desc <: top.desc implies bot <: top, but we already have bot <: mid, so
+;; that gives us bot <: mid <: top. This is only valid if we also have
+;; bot.desc <: mid.desc <: top.desc.
 (module
   (rec
     ;; CHECK:      (rec
@@ -151,17 +833,7 @@
     (type $bot.desc (sub $mid.desc (describes $bot (struct))))
   )
 
-  ;; Now go the other direction:
-  ;;
-  ;; top ---> top.desc
-  ;;                 ^
-  ;; mid -> mid.desc |(2)
-  ;; ^ (1)           |
-  ;; bot ---> bot.desc
-  ;;
-  ;; bot.desc <: top.desc implies bot <: top, but we already have bot <: mid, so
-  ;; that gives us bot <: mid <: top. This is only valid if we also have
-  ;; bot.desc <: mid.desc <: top.desc.
+  ;; CHECK:       (type $6 (func (param (ref $top))))
 
   ;; CHECK:      (global $bot-mid (ref null $mid) (struct.new_default $bot
   ;; CHECK-NEXT:  (ref.null none)
@@ -169,8 +841,35 @@
   (global $bot-mid (ref null $mid) (struct.new $bot (ref.null none)))
   ;; CHECK:      (global $bot-top-desc (ref null $top.desc) (struct.new_default $bot.desc))
   (global $bot-top-desc (ref null $top.desc) (struct.new $bot.desc))
+
+  ;; CHECK:      (func $require-desc (type $6) (param $top (ref $top))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $top
+  ;; CHECK-NEXT:    (local.get $top)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $top (ref $top))
+    (drop
+      ;; This is enough to require all the descriptors to remain descriptors.
+      (ref.get_desc $top
+        (local.get $top)
+      )
+    )
+  )
 )
 
+;; Same as above, but the order of the initial subtypings is reversed.
+;;
+;; top ->(0) top.desc
+;;                 ^
+;; mid    mid.desc |(1)
+;; ^ (2)           |
+;; bot       bot.desc
+;;
+;; bot.desc <: top.desc implies bot <: top. When we add bot <: mid, that gives
+;;  us bot <: mid <: top. This is only valid if we also have
+;; bot.desc <: mid.desc <: top.desc.
 (module
   (rec
     ;; CHECK:      (rec
@@ -188,28 +887,339 @@
     (type $bot.desc (sub $mid.desc (describes $bot (struct))))
   )
 
-  ;; Same as above, but the order of the initial subtypings is reversed.
-  ;;
-  ;; top ---> top.desc
-  ;;                 ^
-  ;; mid -> mid.desc |(1)
-  ;; ^ (2)           |
-  ;; bot ---> bot.desc
-  ;;
-  ;; bot.desc <: top.desc implies bot <: top. When we add bot <: mid, that gives
-  ;;  us bot <: mid <: top. This is only valid if we also have
-  ;; bot.desc <: mid.desc <: top.desc.
+  ;; CHECK:       (type $6 (func (param (ref $top))))
+
   ;; CHECK:      (global $bot-top-desc (ref null $top.desc) (struct.new_default $bot.desc))
   (global $bot-top-desc (ref null $top.desc) (struct.new $bot.desc))
   ;; CHECK:      (global $bot-mid (ref null $mid) (struct.new_default $bot
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $bot-mid (ref null $mid) (struct.new $bot (ref.null none)))
+
+  ;; CHECK:      (func $require-desc (type $6) (param $top (ref $top))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $top
+  ;; CHECK-NEXT:    (local.get $top)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $top (ref $top))
+    (drop
+      ;; This is enough to require all the descriptors to remain descriptors.
+      (ref.get_desc $top
+        (local.get $top)
+      )
+    )
+  )
 )
 
+;; Same as above, but now we initially require bot.desc to remain a descriptor
+;; rather than top.desc. We still cannot optimize anything.
+;;
+;; top       top.desc
+;;                 ^
+;; mid    mid.desc |(1)
+;; ^ (2)           |
+;; bot ->(0) bot.desc
+;;
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc (struct))))
+    (type $mid (sub $top (descriptor $mid.desc (struct))))
+    ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+  )
+
+  ;; CHECK:       (type $6 (func (param (ref $bot))))
+
+  ;; CHECK:      (global $bot-top-desc (ref null $top.desc) (struct.new_default $bot.desc))
+  (global $bot-top-desc (ref null $top.desc) (struct.new $bot.desc))
+  ;; CHECK:      (global $bot-mid (ref null $mid) (struct.new_default $bot
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $bot-mid (ref null $mid) (struct.new $bot (ref.null none)))
+
+  ;; CHECK:      (func $require-desc (type $6) (param $bot (ref $bot))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $bot
+  ;; CHECK-NEXT:    (local.get $bot)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc (param $bot (ref $bot))
+    (drop
+      ;; This is enough to require all the descriptors to remain descriptors.
+      (ref.get_desc $bot
+        (local.get $bot)
+      )
+    )
+  )
+)
+
+;; Test the case where a newly discovered descriptor has a supertype that now
+;; needs to be a descriptor as well. Set this up:
+;;
+;; top       top.desc
+;;            ^ (0)
+;; mid       mid.desc
+;;            ^ (1)
+;; bot ->(0) bot.desc
+;;
+;; The discovery of bot.desc < mid.desc requires mid -> mid.desc because we
+;; already have bot -> bot.desc at that point. The discovery of mid -> mid.desc
+;; then requires mid <: top and top -> top.desc because we already have
+;; mid.desc <: top.desc.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc (struct))))
+    (type $mid (sub $top (descriptor $mid.desc (struct))))
+    ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    ;; CHECK:       (type $X (sub (struct (field (ref null $mid.desc)))))
+    (type $X (sub (struct (field (ref null $mid.desc)))))
+    ;; CHECK:       (type $Y (sub $X (struct (field (ref null $bot.desc)))))
+    (type $Y (sub $X (struct (field (ref null $bot.desc)))))
+  )
+
+  ;; X <: Y implies bot.desc <: mid.desc (but the indirection delays the
+  ;; processing of the latter).
+  ;; CHECK:       (type $8 (func))
+
+  ;; CHECK:      (global $Y-sub-X (ref $X) (struct.new $Y
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $Y-sub-X (ref $X) (struct.new $Y (ref.null none)))
+
+  ;; mid.desc <: top.desc.
+  ;; CHECK:      (global $mid.desc-sub-top.desc (ref $top.desc) (struct.new_default $mid.desc))
+  (global $mid.desc-sub-top.desc (ref $top.desc) (struct.new $mid.desc))
+
+  ;; CHECK:      (func $require-desc (type $8)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $bot
+  ;; CHECK-NEXT:    (struct.new_default $bot
+  ;; CHECK-NEXT:     (struct.new_default $bot.desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-desc
+    ;; Require bot described-by bot.desc.
+    (drop
+      (ref.get_desc $bot
+        (struct.new $bot
+          (struct.new $bot.desc)
+        )
+      )
+    )
+  )
+)
+
+;; When we optimize out descriptors, we may need to update allocations.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (struct))
+    (type $struct (descriptor $desc (struct)))
+    ;; CHECK:       (type $desc (struct))
+    (type $desc (describes $struct (struct)))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (import "" "" (func $effect (type $2)))
+  (import "" "" (func $effect))
+
+  ;; CHECK:      (global $global (ref null $struct) (struct.new_default $struct))
+  (global $global (ref null $struct) (struct.new $struct (struct.new $desc)))
+
+  ;; CHECK:      (func $func (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (drop
+      (struct.new $struct
+        (struct.new $desc)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func-effect (type $2)
+  ;; CHECK-NEXT:  (local $0 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (struct.new_default $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func-effect
+    (drop
+      (struct.new $struct
+        (block (result (ref (exact $desc)))
+          (call $effect)
+          (struct.new $desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func-null (type $2)
+  ;; CHECK-NEXT:  (local $0 (ref none))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func-null
+    (drop
+      (struct.new $struct
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func-unreachable (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func-unreachable
+    (drop
+      (struct.new $struct
+        (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
+    (type $struct (descriptor $desc (struct)))
+    ;; CHECK:       (type $desc (describes $struct (struct)))
+    (type $desc (describes $struct (struct)))
+  )
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $struct (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:    (struct.new_default $desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $struct
+  ;; CHECK-NEXT:    (struct.new_default $struct
+  ;; CHECK-NEXT:     (struct.new_default $desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct
+    (drop
+      ;; Processing this subtyping when the subtype ($desc) is a descriptor
+      ;; and the supertype does not have a descriptor because it is abstract
+      ;; should not cause problems.
+      (block (result (ref eq))
+        (struct.new_default $desc)
+      )
+    )
+    (drop
+      (ref.get_desc $struct
+        (struct.new_default $struct
+          (struct.new_default $desc)
+        )
+      )
+    )
+  )
+)
+
+;; When the possibly-trapping global allocations are nested inside other
+;; allocations that will be removed, they need to be moved to new globals.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (sub (struct)))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (descriptor $meta (struct))))
+    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
+    ;; CHECK:       (type $meta (sub (describes $desc (struct))))
+    (type $meta (sub (describes $desc (struct))))
+  )
+
+  ;; CHECK:      (global $g (ref $struct) (struct.new_default $struct))
+  (global $g (ref $struct) (struct.new $struct (struct.new $desc (ref.null none))))
+)
+
+;; CHECK:      (global $unsubtyping-removed-0 (ref (exact $desc)) (struct.new_default $desc
+;; CHECK-NEXT:  (ref.null none)
+;; CHECK-NEXT: ))
+(module
+  ;; Same, but now the nesting is under a non-descriptor field.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field (ref $struct)))))
+    (type $A (sub (struct (field (ref $struct)))))
+    ;; CHECK:       (type $struct (sub (struct)))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (descriptor $meta (struct))))
+    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
+    ;; CHECK:       (type $meta (sub (describes $desc (struct))))
+    (type $meta (sub (describes $desc (struct))))
+  )
+
+  ;; CHECK:      (global $g (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: ))
+  (global $g (ref $A) (struct.new $A (struct.new $struct (struct.new $desc (ref.null none)))))
+)
+
+;; CHECK:      (global $unsubtyping-removed-0 (ref (exact $desc)) (struct.new_default $desc
+;; CHECK-NEXT:  (ref.null none)
+;; CHECK-NEXT: ))
+(module
 ;; This will be invalid soon, but in the meantime we should not be confused when
 ;; the types described by two related descriptors are unrelated.
-(module
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (descriptor $super (struct)))
