@@ -761,6 +761,18 @@ struct GlobalTypeOptimization : public Pass {
         curr->index = newIndex;
       }
 
+      void visitRefCast(RefCast* curr) {
+        // Unreachable ref.cast_desc instructions would not have been counted as
+        // reading the descriptor field, so their descriptor operands may no
+        // longer be descriptors. This is invalid, so replace such casts
+        // entirely.
+        if (curr->type == Type::unreachable && curr->desc &&
+            curr->desc->type != Type::unreachable) {
+          assert(curr->ref->type == Type::unreachable);
+          replaceCurrent(curr->ref);
+        }
+      }
+
       void visitFunction(Function* curr) {
         if (needEHFixups) {
           EHUtils::handleBlockNestedPops(curr, *getModule());

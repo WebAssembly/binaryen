@@ -638,11 +638,11 @@
   )
 )
 
-;; top -> top.desc
+;; top ->(0) top.desc
 ;; ^
-;; |(2) mid -> mid.desc
-;; |            ^ (1)
-;; bot -> bot.desc
+;; |(2) mid  mid.desc
+;; |          ^(1)
+;; bot       bot.desc
 ;;
 ;; bot <: top implies bot.desc <: top.desc, but we already have
 ;; bot.desc <: mid.desc, so that gives us bot.desc <: mid.desc <: top.desc.
@@ -691,11 +691,11 @@
 
 ;; Same as above, but the order of the initial subtypings is reversed.
 ;;
-;; top -> top.desc
+;; top ->(0) top.desc
 ;; ^
-;; |(1) mid -> mid.desc
-;; |            ^ (2)
-;; bot -> bot.desc
+;; |(1) mid  mid.desc
+;; |          ^(2)
+;; bot       bot.desc
 ;;
 ;; bot <: top implies bot.desc <: top.desc. When we add bot.desc <: mid.desc,
 ;; that gives us bot.desc <: mid.desc <: top.desc. This is only valid if we
@@ -746,11 +746,11 @@
 ;; rather than top.desc. This means we can now optimize out top's descriptor and
 ;; mid.desc's supertype.
 ;;
-;; top -> top.desc
+;; top       top.desc
 ;; ^
-;; |(1) mid -> mid.desc
-;; |            ^ (2)
-;; bot -> bot.desc
+;; |(1) mid  mid.desc
+;; |          ^ (2)
+;; bot ->(0) bot.desc
 ;;
 (module
   (rec
@@ -798,11 +798,11 @@
 
 ;; Now go the other direction:
 ;;
-;; top ---> top.desc
+;; top ->(0) top.desc
 ;;                 ^
-;; mid -> mid.desc |(2)
+;; mid    mid.desc |(2)
 ;; ^ (1)           |
-;; bot ---> bot.desc
+;; bot       bot.desc
 ;;
 ;; bot.desc <: top.desc implies bot <: top, but we already have bot <: mid, so
 ;; that gives us bot <: mid <: top. This is only valid if we also have
@@ -852,11 +852,11 @@
 
 ;; Same as above, but the order of the initial subtypings is reversed.
 ;;
-;; top ---> top.desc
+;; top ->(0) top.desc
 ;;                 ^
-;; mid -> mid.desc |(1)
+;; mid    mid.desc |(1)
 ;; ^ (2)           |
-;; bot ---> bot.desc
+;; bot       bot.desc
 ;;
 ;; bot.desc <: top.desc implies bot <: top. When we add bot <: mid, that gives
 ;;  us bot <: mid <: top. This is only valid if we also have
@@ -907,11 +907,11 @@
 ;; Same as above, but now we initially require bot.desc to remain a descriptor
 ;; rather than top.desc. We still cannot optimize anything.
 ;;
-;; top ---> top.desc
+;; top       top.desc
 ;;                 ^
-;; mid -> mid.desc |(1)
+;; mid    mid.desc |(1)
 ;; ^ (2)           |
-;; bot ---> bot.desc
+;; bot ->(0) bot.desc
 ;;
 (module
   (rec
