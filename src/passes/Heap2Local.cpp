@@ -973,6 +973,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // We must not modify unreachable code here, as we will replace it with a
+      // local.get, which has a concrete type (another option could be to run
+      // DCE and not only ReFinalize - DCE will propagate an unreachable out of
+      // a concrete block, like we emit here - but we can just ignore such
+      // code).
+      return;
+    }
+
     auto& field = fields[curr->index];
     auto type = field.type;
     if (type != curr->type) {
