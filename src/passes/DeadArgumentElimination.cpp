@@ -611,7 +611,7 @@ private:
 
     // We also must not make private types public. That could be a problem
     // without custom descriptors (private exact types are ok - they are lowered
-    // away - but not publicones), and also in general, making more things
+    // away - but not public ones). And also in general, making more things
     // public has downsides to later opts, that this one doesn't justify.
     if (isExported) {
       if (!privateTypes) {
