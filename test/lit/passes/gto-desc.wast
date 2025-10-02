@@ -1396,3 +1396,34 @@
   )
 )
 
+;; We can optimize away the descriptor since its only use is unreachable, but
+;; we must update that use to remain valid despite being unreachable.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (sub (struct)))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (struct)))
+    (type $desc (sub (describes $struct (struct))))
+  )
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $struct (ref $struct))
+  ;; CHECK-NEXT:  (local $desc (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $struct (ref $struct))
+    (local $desc (ref $desc))
+    (drop
+      (ref.cast_desc (ref $struct)
+        (unreachable)
+        (struct.new $desc)
+      )
+    )
+  )
+)
+
