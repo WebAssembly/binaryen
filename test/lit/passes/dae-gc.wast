@@ -312,7 +312,11 @@
 
  ;; CHECK:      (type $2 (sub $func (func (result (ref (exact $A))))))
 
+ ;; CHECK:      (type $3 (func (result (ref $A))))
+
  ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (export "export2" (func $export2))
 
  ;; CHECK:      (func $export (type $2) (result (ref (exact $A)))
  ;; CHECK-NEXT:  (struct.new_default $A)
@@ -320,16 +324,57 @@
  (func $export (export "export") (type $func) (result anyref)
   (struct.new $A)
  )
+
+ ;; CHECK:      (func $export2 (type $3) (result (ref $A))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $export2 (export "export2") (result (ref $A))
+  ;; Make $A public, so we are ok to refine $export.
+  (unreachable)
+ )
 )
 
 ;; We do not refine the result if the type is final/closed, as we can't
 ;; subtype it.
 (module
+ ;; CHECK:      (type $A (struct))
+
  ;; CHECK:      (type $func (func (result anyref)))
  (type $func (func (result anyref)))
 
+ (type $A (struct))
+
+ ;; CHECK:      (type $2 (func (result (ref $A))))
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (export "export2" (func $export2))
+
+ ;; CHECK:      (func $export (type $func) (result anyref)
+ ;; CHECK-NEXT:  (struct.new_default $A)
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (type $func) (result anyref)
+  (struct.new $A)
+ )
+
+ ;; CHECK:      (func $export2 (type $2) (result (ref $A))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $export2 (export "export2") (result (ref $A))
+  ;; Make $A public, so we are ok to refine $export.
+  (unreachable)
+ )
+)
+
+;; We do not refine the result if the type is private, as that would make it
+;; public.
+(module
+ ;; CHECK:      (type $func (sub (func (result anyref))))
+
  ;; CHECK:      (type $A (struct))
  (type $A (struct))
+
+ (type $func (sub (func (result anyref))))
 
  ;; CHECK:      (export "export" (func $export))
 
@@ -340,3 +385,4 @@
   (struct.new $A)
  )
 )
+
