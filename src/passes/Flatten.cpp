@@ -37,6 +37,7 @@
 // local, but in principle there's no reason it couldn't be. For now, error on
 // this.
 
+#include "wasm-type.h"
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/eh-utils.h>
@@ -335,10 +336,20 @@ struct Flatten
               builder.makeUnary(UnaryOp::EqZInt32,
                                 builder.makeLocalGet(isNullTemp, Type::i32))));
 
-            replaceCurrent(builder.makeBreak(
-              br->name,
-              nullptr,
-              builder.makeLocalGet(isNotNullTemp, Type::i32)));
+            Index breakTargetTemp = getTempForBreakTarget(
+              br->name, nullableType.with(Nullability::NonNullable));
+
+            std::vector<Expression*> successBlock;
+            successBlock.push_back(builder.makeLocalSet(
+              breakTargetTemp,
+              builder.makeRefAs(
+                RefAsOp::RefAsNonNull,
+                builder.makeLocalGet(nullableTemp, nullableType))));
+            successBlock.push_back(builder.makeBreak(br->name));
+
+            replaceCurrent(
+              builder.makeIf(builder.makeLocalGet(isNotNullTemp, Type::i32),
+                             builder.makeBlock(successBlock)));
           }
         } else if (br->op == BrOnCast || br->op == BrOnCastFail) {
           auto sourceType = br->ref->type;

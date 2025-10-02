@@ -15,8 +15,8 @@
   ;; CHECK-NEXT:  (local $2 (ref null $s))
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (local $5 (ref (exact $s)))
-  ;; CHECK-NEXT:  (local $6 (ref null $s))
+  ;; CHECK-NEXT:  (local $5 (ref null $s))
+  ;; CHECK-NEXT:  (local $6 (ref (exact $s)))
   ;; CHECK-NEXT:  (local $7 (ref $s))
   ;; CHECK-NEXT:  (block $label0
   ;; CHECK-NEXT:   (local.set $1
@@ -35,19 +35,27 @@
   ;; CHECK-NEXT:     (local.get $3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br_if $label0
+  ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $4)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $5
-  ;; CHECK-NEXT:    (struct.new_default $s)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (local.set $5
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $label0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $6
-  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:    (struct.new_default $s)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $6)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $7
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $6)
+  ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
