@@ -361,15 +361,17 @@ struct Flatten
             builder.makeRefTest(
               builder.makeLocalGet(sourceTypeTemp, sourceType), targetType)));
 
+          // On cast failure the source type is made non-nullable if the target
+          // type is nullable.
           Expression* failValue =
             builder.makeLocalGet(sourceTypeTemp, sourceType);
           if (br->castType.isNullable()) {
             failValue = builder.makeRefAs(RefAsOp::RefAsNonNull, failValue);
           }
 
-          Index breakTargetTemp = getTempForBreakTarget(br->name, targetType);
-
           if (br->op == BrOnCast) {
+            Index breakTargetTemp = getTempForBreakTarget(br->name, targetType);
+
             std::vector<Expression*> successBlock;
             successBlock.push_back(builder.makeLocalSet(
               breakTargetTemp,
@@ -385,6 +387,9 @@ struct Flatten
             ourPreludes.push_back(builder.makeLocalSet(failTemp, failValue));
             replaceCurrent(builder.makeLocalGet(failTemp, failValue->type));
           } else { // br_on_cast_fail
+            Index breakTargetTemp =
+              getTempForBreakTarget(br->name, failValue->type);
+
             std::vector<Expression*> failureBlock;
             failureBlock.push_back(
               builder.makeLocalSet(breakTargetTemp, failValue));
