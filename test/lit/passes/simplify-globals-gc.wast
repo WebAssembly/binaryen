@@ -55,3 +55,32 @@
  )
 )
 
+;; One global reads another, and should contain the same value. We should not
+;; erroneously optimize the global.get to a struct.new, as struct.new generates
+;; a new value each time, and the export allows that difference to be noticed.
+(module
+ ;; CHECK:      (type $struct (struct))
+ (type $struct (struct))
+
+ ;; CHECK:      (global $A (ref $struct) (struct.new_default $struct))
+ (global $A (ref $struct) (struct.new_default $struct))
+
+ ;; CHECK:      (global $B (ref $struct) (global.get $A))
+ (global $B (ref $struct) (global.get $A))
+
+ ;; CHECK:      (export "A" (global $A))
+ (export "A" (global $A))
+)
+
+;; Without that export, we only use $A once, and can fold it into that use.
+(module
+ ;; CHECK:      (type $struct (struct))
+ (type $struct (struct))
+
+ ;; CHECK:      (global $A (ref $struct) (struct.new_default $struct))
+ (global $A (ref $struct) (struct.new_default $struct))
+
+ ;; CHECK:      (global $B (ref $struct) (struct.new_default $struct))
+ (global $B (ref $struct) (global.get $A))
+)
+
