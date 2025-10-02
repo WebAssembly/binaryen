@@ -609,6 +609,25 @@ private:
       }
     }
 
+    // We also must not make private types public. That could be a problem
+    // without custom descriptors (private exact types are ok - they are lowered
+    // away - but not publicones), and also in general, making more things
+    // public has downsides to later opts, that this one doesn't justify.
+    if (isExported) {
+      if (!privateTypes) {
+        privateTypes.emplace();
+        for (auto type : ModuleUtils::getPrivateHeapTypes(*module)) {
+          privateTypes->insert(type);
+        }
+      }
+
+      for (auto t : newType) {
+        if (t.isRef() && privateTypes->count(t.getHeapType())) {
+          return false;
+        }
+      }
+    }
+
     if (!isExported) {
       func->setResults(newType);
     } else {
@@ -632,6 +651,9 @@ private:
 
     return true;
   }
+
+  // Created on first use.
+  std::optional<std::unordered_set<HeapType>> privateTypes;
 };
 
 Pass* createDAEPass() { return new DAE(); }

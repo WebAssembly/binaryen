@@ -13,7 +13,7 @@
 
  (type $A (struct))
 
- ;; CHECK:      (func $export (type $3) (result (ref $A))
+ ;; CHECK:      (func $export (type $func) (result anyref)
  ;; CHECK-NEXT:  (struct.new_default $A)
  ;; CHECK-NEXT: )
  (func $export (export "export") (type $func) (result anyref)
@@ -21,7 +21,7 @@
   (struct.new $A)
  )
 
- ;; CHECK:      (func $export-tuple (type $4) (result (ref $A) i32)
+ ;; CHECK:      (func $export-tuple (type $func2) (result anyref i32)
  ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (struct.new_default $A)
  ;; CHECK-NEXT:   (i32.const 42)
@@ -33,6 +33,29 @@
    (struct.new $A)
    (i32.const 42)
   )
+ )
+)
+
+;; We can refine the array result to $array. However, doing so brings in the
+;; entire rec group of $array, which includes an exact type, which is not
+;; allowed when custom descriptors are disabled.
+(module
+ ;; CHECK:      (type $func (sub (func (result (ref array)))))
+ (type $func (sub (func (result (ref array)))))
+
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $array (array i8))
+  (type $array (array i8))
+  ;; CHECK:       (type $unused (func (result (ref (exact $array)))))
+  (type $unused (func (result (ref (exact $array)))))
+ )
+
+ ;; CHECK:      (func $test (type $func) (result (ref array))
+ ;; CHECK-NEXT:  (array.new_fixed $array 0)
+ ;; CHECK-NEXT: )
+ (func $test (export "test") (type $func) (result (ref array))
+  (array.new_fixed $array 0)
  )
 )
 
