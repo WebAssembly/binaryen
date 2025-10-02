@@ -58,6 +58,8 @@
 ;; One global reads another, and should contain the same value. We should not
 ;; erroneously optimize the global.get to a struct.new, as struct.new generates
 ;; a new value each time, and the export allows that difference to be noticed.
+;; TODO: We could flip the export to read $B instead, basically considering it
+;;       a use that we can modify, like global.gets that we already do.
 (module
  ;; CHECK:      (type $struct (struct))
  (type $struct (struct))
