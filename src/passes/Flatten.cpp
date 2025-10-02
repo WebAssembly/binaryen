@@ -311,9 +311,6 @@ struct Flatten
       } else if (auto* br = curr->dynCast<BrOn>()) {
         if (br->op == BrOnOp::BrOnNull || br->op == BrOnOp::BrOnNonNull) {
           auto nullableType = br->ref->type;
-          auto nonNullableType = nullableType.with(Nullability::NonNullable);
-          Index nonNullableTemp =
-            builder.addVar(getFunction(), nonNullableType);
 
           Index nullableTemp = builder.addVar(getFunction(), nullableType);
           ourPreludes.push_back(builder.makeLocalSet(nullableTemp, br->ref));
@@ -328,14 +325,9 @@ struct Flatten
             ourPreludes.push_back(builder.makeBreak(
               br->name, nullptr, builder.makeLocalGet(isNullTemp, Type::i32)));
 
-            ourPreludes.push_back(builder.makeLocalSet(
-              nonNullableTemp,
-              builder.makeRefAs(
-                RefAsOp::RefAsNonNull,
-                builder.makeLocalGet(nullableTemp, nullableType))));
-
-            replaceCurrent(
-              builder.makeLocalGet(nonNullableTemp, nonNullableType));
+            replaceCurrent(builder.makeRefAs(
+              RefAsOp::RefAsNonNull,
+              builder.makeLocalGet(nullableTemp, nullableType)));
           } else { // br_on_non_null
             Index isNotNullTemp = builder.addVar(getFunction(), Type::i32);
             ourPreludes.push_back(builder.makeLocalSet(
