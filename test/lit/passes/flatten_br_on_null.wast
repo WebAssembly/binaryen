@@ -12,54 +12,50 @@
 
   ;; CHECK:      (func $br_on_null (type $1) (param $x (ref null $s)) (result (ref $s))
   ;; CHECK-NEXT:  (local $1 (ref null $s))
-  ;; CHECK-NEXT:  (local $2 (ref $s))
-  ;; CHECK-NEXT:  (local $3 (ref null $s))
-  ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (local $5 (ref $s))
-  ;; CHECK-NEXT:  (local $6 (ref (exact $s)))
+  ;; CHECK-NEXT:  (local $2 (ref null $s))
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 (ref $s))
+  ;; CHECK-NEXT:  (local $5 (ref (exact $s)))
+  ;; CHECK-NEXT:  (local $6 (ref $s))
   ;; CHECK-NEXT:  (local $7 (ref $s))
-  ;; CHECK-NEXT:  (local $8 (ref $s))
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $label0
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (ref.is_null
-  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br_if $label0
-  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:     (local.get $3)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $5
-  ;; CHECK-NEXT:     (local.get $2)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return
-  ;; CHECK-NEXT:     (local.get $5)
+  ;; CHECK-NEXT:     (local.get $4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:   (local.set $5
   ;; CHECK-NEXT:    (struct.new_default $s)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $7
-  ;; CHECK-NEXT:    (local.get $6)
+  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $8
-  ;; CHECK-NEXT:   (local.get $7)
+  ;; CHECK-NEXT:  (local.set $7
+  ;; CHECK-NEXT:   (local.get $6)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (local.get $8)
+  ;; CHECK-NEXT:   (local.get $7)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $br_on_null (param $x (ref null $s)) (result (ref $s))
