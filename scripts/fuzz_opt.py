@@ -602,6 +602,7 @@ def note_ignored_vm_run(reason, extra_text='', amount=1):
     ignored_vm_run_reasons[reason] += amount
 
 
+# Run a VM command, and filter out known issues.
 def run_vm(cmd):
     def filter_known_issues(output):
         known_issues = [
@@ -1807,7 +1808,7 @@ class Two(TestCaseHandler):
         # see that that behavior remains even after optimizations.
         output = run_d8_wasm(wasm, args=[second_wasm])
 
-        if output == IGNORE: # XXX check no 'primary' in error
+        if output == IGNORE:
             # There is no point to continue since we can't compare this output
             # to anything.
             return
@@ -1816,6 +1817,20 @@ class Two(TestCaseHandler):
             # We may fail to instantiate the modules for valid reasons, such as
             # an active segment being out of bounds. There is no point to
             # continue in such cases, as no exports are called.
+
+            # But, check 'primary' is not in the V8 error. That might indicate a
+            # problem in the imports of --fuzz-import. To do this, run the d8
+            # command directly, without the usual filtering of run_d8_wasm.
+            cmd = [shared.V8] + shared.V8_OPTS + get_v8_extra_flags() + [
+                get_fuzz_shell_js(),
+                '--',
+                wasm,
+                second_wasm
+            ]
+            out = run(cmd)
+            assert '"primary"' not in out, out
+
+            note_ignored_vm_run('Two instantiate error')
             return
 
         # Make sure that fuzz_shell.js actually executed all exports from both
