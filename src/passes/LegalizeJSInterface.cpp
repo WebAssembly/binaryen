@@ -395,7 +395,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
           func->body =
             builder.makeConstantExpression(Literal::makeZeros(sig.results));
         } else {
-          // We have nothing better than the trap here.
+          // We have nothing better than to trap here.
           func->body = builder.makeUnreachable();
         }
       }
