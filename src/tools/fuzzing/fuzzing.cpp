@@ -24,6 +24,7 @@
 #include "ir/type-updating.h"
 #include "support/string.h"
 #include "tools/fuzzing/heap-types.h"
+#include "wasm-io.h"
 
 namespace wasm {
 
@@ -1171,15 +1172,21 @@ void TranslateToFuzzReader::useImportedModule() {
   Module imported;
   ModuleReader().read(*importedModule, imported);
 
-  // Add some of the module's functions as imports, at a random rate.
+  // Add some of the module's exported functions as imports, at a random rate.
   auto rate = upTo(100);
-  for (auto& func : imported.functions) {
-    if (upTo(100) < rate) {
-      auto name = Names::getValidFunctionName(wasm, func->name);
-      // We can import it as its own type, or any (declared) supertype.
-      auto type = getSuperType(func->type);
-      wasm.addFunction(std::move(builder.makeFunction(name, type, {}));
+  for (auto& exp : imported.exports) {
+    if (exp->kind != ExternalKind::Function || upTo(100) < rate) {
+      continue;
     }
+
+    auto* func = imported->getFunction(exp->value);
+    auto name = Names::getValidFunctionName(wasm, func->name);
+    // We can import it as its own type, or any (declared) supertype.
+    auto type = getSuperType(func->type);
+    auto func = builder.makeFunction(name, type, {});
+    func->module = "primary";
+    func->base = exportName;
+    wasm.addFunction(std::move(func));
   }
 
   // TODO: All other imports: globals, memories, tables, etc. We must, as we do

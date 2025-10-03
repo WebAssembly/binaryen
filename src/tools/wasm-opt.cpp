@@ -344,7 +344,7 @@ For more on how to optimize effectively, see
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
     if (!fuzzImport.empty()) {
-      reader.setFuzzImport(fuzzImport);
+      reader.setImportedModule(fuzzImport);
     }
     reader.build();
     if (options.passOptions.validate) {
