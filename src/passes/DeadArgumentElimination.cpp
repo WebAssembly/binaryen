@@ -50,7 +50,6 @@
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
 #include "wasm-builder.h"
-#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -77,9 +76,12 @@ struct DAEFunctionInfo {
   // removed as well.
   bool hasTailCalls = false;
   std::unordered_set<Name> tailCallees;
-  // The set of functions that have their reference taken (which means there may
-  // be non-direct calls, limiting what we can do).
-  std::unordered_set<Name> hasRef;
+  // The set of functions that have calls from places that limit what we can do.
+  // For now, any call we don't see inhibits our optimizations, but TODO: an
+  // export could be worked around by exporting a thunk that adds the parameter.
+  //
+  // This is built up in parallel in each function, and combined at the end.
+  std::unordered_set<Name> hasUnseenCalls;
 
   // Clears all data, which marks us as stale and in need of recomputation.
   void clear() { *this = DAEFunctionInfo(); }
@@ -141,9 +143,12 @@ struct DAEScanner
     // the infoMap).
     auto* currInfo = info ? info : &(*infoMap)[Name()];
 
+    // Treat a ref.func as an unseen call, preventing us from changing the
+    // function's type. If we did change it, it could be an observable
+    // difference from the outside, if the reference escapes, for example.
     // TODO: look for actual escaping?
     // TODO: create a thunk for external uses that allow internal optimizations
-    currInfo->hasRef.insert(curr->func);
+    currInfo->hasUnseenCalls.insert(curr->func);
   }
 
   // main entry point
@@ -243,7 +248,7 @@ struct DAE : public Pass {
 
     std::vector<std::vector<Call*>> allCalls(numFunctions);
     std::vector<bool> tailCallees(numFunctions);
-    std::vector<bool> hasRef(numFunctions);
+    std::vector<bool> hasUnseenCalls(numFunctions);
 
     // Track the function in which relevant expressions exist. When we modify
     // those expressions we will need to mark the function's info as stale.
@@ -262,17 +267,14 @@ struct DAE : public Pass {
       for (auto& [call, dropp] : info.droppedCalls) {
         allDroppedCalls[call] = dropp;
       }
-      for (auto& name : info.hasRef) {
-        hasRef[indexes[name]] = true;
+      for (auto& name : info.hasUnseenCalls) {
+        hasUnseenCalls[indexes[name]] = true;
       }
     }
-
-    // Exports limit some optimizations, for example, we cannot remove or refine
-    // parameters. TODO: we could export a thunk that drops the parameter etc.
-    std::vector<bool> isExported(numFunctions);
+    // Exports are considered unseen calls.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        isExported[indexes[*curr->getInternalName()]] = true;
+        hasUnseenCalls[indexes[*curr->getInternalName()]] = true;
       }
     }
 
@@ -316,48 +318,38 @@ struct DAE : public Pass {
       if (func->imported()) {
         continue;
       }
-      // References prevent optimization.
-      if (hasRef[index]) {
+      // We can only optimize if we see all the calls and can modify them.
+      if (hasUnseenCalls[index]) {
         continue;
       }
       auto& calls = allCalls[index];
-      if (calls.empty() && !isExported[index]) {
+      if (calls.empty()) {
         // Nothing calls this, so it is not worth optimizing.
         continue;
       }
+      // Refine argument types before doing anything else. This does not
+      // affect whether an argument is used or not, it just refines the type
+      // where possible.
       auto name = func->name;
-      // Exports prevent refining of argument types, as we don't see all the
-      // calls.
-      if (!isExported[index]) {
-        // Refine argument types before doing anything else. This does not
-        // affect whether an argument is used or not, it just refines the type
-        // where possible.
-        if (refineArgumentTypes(func, calls, module, infoMap[name])) {
-          worthOptimizing.insert(func);
-          markStale(func->name);
-        }
+      if (refineArgumentTypes(func, calls, module, infoMap[name])) {
+        worthOptimizing.insert(func);
+        markStale(func->name);
       }
-      // Refine return types as well. Note that exports do *not* prevent this!
-      // It is valid to export a function that returns something even more
-      // refined.
-      if (refineReturnTypes(func, calls, module, isExported[index])) {
+      // Refine return types as well.
+      if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
         markStale(name);
         markCallersStale(calls);
       }
-      // Exports prevent applying of constant values, as we don't see all the
-      // calls.
-      if (!isExported[index]) {
-        auto optimizedIndexes =
-          ParamUtils::applyConstantValues({func}, calls, {}, module);
-        for (auto i : optimizedIndexes) {
-          // Mark it as unused, which we know it now is (no point to re-scan
-          // just for that).
-          infoMap[name].unusedParams.insert(i);
-        }
-        if (!optimizedIndexes.empty()) {
-          markStale(func->name);
-        }
+      auto optimizedIndexes =
+        ParamUtils::applyConstantValues({func}, calls, {}, module);
+      for (auto i : optimizedIndexes) {
+        // Mark it as unused, which we know it now is (no point to re-scan just
+        // for that).
+        infoMap[name].unusedParams.insert(i);
+      }
+      if (!optimizedIndexes.empty()) {
+        markStale(func->name);
       }
     }
     if (refinedReturnTypes) {
@@ -372,7 +364,7 @@ struct DAE : public Pass {
       if (func->imported()) {
         continue;
       }
-      if (hasRef[index] || isExported[index]) {
+      if (hasUnseenCalls[index]) {
         continue;
       }
       auto numParams = func->getNumParams();
@@ -409,7 +401,7 @@ struct DAE : public Pass {
         if (func->getResults() == Type::none) {
           continue;
         }
-        if (hasRef[index] || isExported[index]) {
+        if (hasUnseenCalls[index]) {
           continue;
         }
         auto name = func->name;
@@ -578,59 +570,22 @@ private:
   //       the middle, etc.
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
-                         Module* module,
-                         bool isExported) {
-    if (isExported && !func->type.isOpen()) {
-      // We must subtype the current type, so that imports of it work, but it is
-      // closed.
-      return false;
-    }
-
+                         Module* module) {
     auto lub = LUB::getResultsLUB(func, *module);
     if (!lub.noted()) {
       return false;
     }
     auto newType = lub.getLUB();
-    if (newType == func->getResults()) {
-      return false;
-    }
-
-    // If this is exported, we cannot refine to an exact type without the
-    // custom descriptors feature being enabled.
-    if (isExported && !module->features.hasCustomDescriptors()) {
-      // Remove exactness.
-      std::vector<Type> inexact;
-      for (auto t : newType) {
-        inexact.push_back(t.isRef() ? t.with(Inexact) : t);
-      }
-      newType = Type(inexact);
-      if (newType == func->getResults()) {
-        return false;
-      }
-    }
-
-    if (!isExported) {
+    if (newType != func->getResults()) {
       func->setResults(newType);
-    } else {
-      // We must explicitly subtype the old type.
-      TypeBuilder builder(1);
-      builder[0] = Signature(func->getParams(), newType);
-      builder[0].subTypeOf(func->type);
-      // Make this subtype open like the super. This is not necessary, but might
-      // allow more work later after other changes, in theory.
-      builder[0].setOpen();
-      auto result = builder.build();
-      assert(!result.getError());
-      func->type = (*result)[0];
-    }
-
-    for (auto* call : calls) {
-      if (call->type != Type::unreachable) {
-        call->type = newType;
+      for (auto* call : calls) {
+        if (call->type != Type::unreachable) {
+          call->type = newType;
+        }
       }
+      return true;
     }
-
-    return true;
+    return false;
   }
 };
 
