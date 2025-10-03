@@ -850,19 +850,19 @@
   ;; invalid allocations of its described type.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    ;; YESTNH-NEXT:  (type $struct (sub (descriptor $uninstantiated (struct))))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
-    (type $struct (descriptor $uninstantiated (struct)))
+    ;; NO_TNH-NEXT:  (type $struct (sub (descriptor $uninstantiated (struct))))
+    (type $struct (sub (descriptor $uninstantiated (struct))))
     ;; YESTNH:       (type $uninstantiated (sub (describes $struct (struct))))
     ;; NO_TNH:       (type $uninstantiated (sub (describes $struct (struct))))
     (type $uninstantiated (sub (describes $struct (struct))))
-    ;; YESTNH:       (type $other (descriptor $instantiated (struct)))
-    ;; NO_TNH:       (type $other (descriptor $instantiated (struct)))
-    (type $other (descriptor $instantiated (struct)))
-    ;; YESTNH:       (type $instantiated (sub $uninstantiated (describes $other (struct))))
-    ;; NO_TNH:       (type $instantiated (sub $uninstantiated (describes $other (struct))))
-    (type $instantiated (sub $uninstantiated (describes $other (struct))))
+    ;; YESTNH:       (type $sub (sub $struct (descriptor $instantiated (struct))))
+    ;; NO_TNH:       (type $sub (sub $struct (descriptor $instantiated (struct))))
+    (type $sub (sub $struct (descriptor $instantiated (struct))))
+    ;; YESTNH:       (type $instantiated (sub $uninstantiated (describes $sub (struct))))
+    ;; NO_TNH:       (type $instantiated (sub $uninstantiated (describes $sub (struct))))
+    (type $instantiated (sub $uninstantiated (describes $sub (struct))))
   )
 
   ;; YESTNH:       (type $4 (func (result (ref $struct))))

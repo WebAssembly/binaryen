@@ -196,24 +196,22 @@ struct HeapTypeGeneratorImpl {
     assert(remaining >= numPlannedDescriptors);
     size_t remainingUncommitted = remaining - numPlannedDescriptors;
 
-    if (!super && i >= numRoots && rand.oneIn(2)) {
-      // Try to pick a supertype. The supertype must be a descriptor type if and
-      // only if we are currently generating a descriptor type. Furthermore, we
-      // must have space left in the current chain if it exists, or else in the
-      // rec group, to mirror the supertype's descriptor chain, if it has one.
-      // Finally, if this is a descriptor, the sharedness of the described type
-      // and supertype must match.
-      size_t maxChain =
-        isDescriptor ? descriptorChainLengths[i] : remainingUncommitted;
+    // Possibly choose a supertype. If the current type is a descriptor type,
+    // then either we already determined its supertype based on its described
+    // type, or there is no valid supertype to give it. A valid supertype would
+    // have to describe the supertype of the current described type, but if the
+    // supertype chain had such an entry, we would already have found it above.
+    if (!super && !isDescriptor && i >= numRoots && rand.oneIn(2)) {
+      // Try to pick a supertype. The supertype must not be a descriptor type,
+      // and we must have space left in the rec group to mirror the supertype's
+      // descriptor chain, if it has one.
       std::vector<Index> candidates;
       candidates.reserve(i);
       for (Index candidate = 0; candidate < i; ++candidate) {
-        bool descMatch = bool(describedIndices[candidate]) == isDescriptor;
-        bool chainMatch = descriptorChainLengths[candidate] <= maxChain;
-        bool shareMatch = !isDescriptor ||
-                          HeapType(builder[candidate]).getShared() ==
-                            HeapType(builder[*describedIndices[i]]).getShared();
-        if (descMatch && chainMatch && shareMatch) {
+        if (describedIndices[candidate]) {
+          continue;
+        }
+        if (descriptorChainLengths[candidate] <= remainingUncommitted) {
           candidates.push_back(candidate);
         }
       }
