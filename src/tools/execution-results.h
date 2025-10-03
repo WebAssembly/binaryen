@@ -55,8 +55,9 @@ private:
   ModuleRunner* instance = nullptr;
 
 public:
-  LoggingExternalInterface(Loggings& loggings, Module& wasm)
-    : loggings(loggings), wasm(wasm) {
+  LoggingExternalInterface(Loggings& loggings, Module& wasm,
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
+    : ShellExternalInterface(linkedInstances_), loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = *exp->getInternalName();
@@ -185,6 +186,8 @@ public:
       } else if (import->base == "getTempRet0") {
         return {Literal(state.tempRet0)};
       }
+    } else if (auto* inst = getImportInstance(import)) {
+      return inst->callExport(import->base, arguments);
     }
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
               << import->module << " . " << import->base << '\n';
@@ -290,9 +293,9 @@ struct ExecutionResults {
 
       if (second) {
         // Link and run the second module.
-        LoggingExternalInterface secondInterface(loggings, *second);
         std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
         linkedInstances["primary"] = instance;
+        LoggingExternalInterface secondInterface(loggings, *second, linkedInstances);
         auto secondInstance = std::make_shared<ModuleRunner>(*second, &secondInterface, linkedInstances);
         runModule(*second, *secondInstance, secondInterface);
       }
