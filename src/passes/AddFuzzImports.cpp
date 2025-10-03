@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 WebAssembly Community Group participants
+ * Copyright 2025 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 //
 
 #include "pass.h"
+#include "support/hash.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -41,10 +42,14 @@ struct AddFuzzImports : public Pass {
     ModuleReader reader;
     reader.read(inputFile, wasm);
 
-    addImports(*module, input);
+    addImports(*module, input, getSeed(inputFile));
   }
 
-  void addImports(Module& wasm, Module& imported) {
+  size_t getSeed(Name name) {
+    return hash(name);
+  }
+
+  void addImports(Module& wasm, Module& imported, size_t seed) {
   }
 };
 
