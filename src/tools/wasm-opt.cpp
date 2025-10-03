@@ -86,6 +86,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzMemory = true;
   bool fuzzOOB = true;
   bool fuzzPreserveImportsAndExports = false;
+  std::string fuzzImport;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
   std::string inputSourceMapFilename;
@@ -200,6 +201,14 @@ For more on how to optimize effectively, see
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {
            fuzzPreserveImportsAndExports = true;
+         })
+    .add("--fuzz-import",
+         "",
+         "a module to use as an import in -ttf mode",
+         WasmOptOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           fuzzImport = arguments;
          })
     .add("--emit-spec-wrapper",
          "-esw",
@@ -334,6 +343,9 @@ For more on how to optimize effectively, see
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
+    if (!fuzzImport.empty()) {
+      reader.setFuzzImport(fuzzImport);
+    }
     reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, options.passOptions)) {

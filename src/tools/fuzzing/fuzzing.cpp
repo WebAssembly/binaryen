@@ -361,7 +361,12 @@ void TranslateToFuzzReader::build() {
   addImportLoggingSupport();
   addImportCallingSupport();
   addImportSleepSupport();
+
+  // First, modify initial functions. That includes removing imports. Then,
+  // use the imported module, which are function imports that we allow.
   modifyInitialFunctions();
+  useImportedModule();
+
   processFunctions();
   if (fuzzParams->HANG_LIMIT > 0) {
     addHangLimitSupport();
@@ -1156,6 +1161,31 @@ void TranslateToFuzzReader::addHashMemorySupport() {
         "memory", wasm.memories[0]->name, ExternalKind::Memory));
     }
   }
+}
+
+void TranslateToFuzzReader::useImportedModule() {
+  if (!importedModule) {
+    return;
+  }
+
+  Module imported;
+  ModuleReader().read(*importedModule, imported);
+
+  // Add some of the module's functions as imports, at a random rate.
+  auto rate = upTo(100);
+  for (auto& func : imported.functions) {
+    if (upTo(100) < rate) {
+      auto name = Names::getValidFunctionName(wasm, func->name);
+      // We can import it as its own type, or any (declared) supertype.
+      auto type = getSuperType(func->type);
+      wasm.addFunction(std::move(builder.makeFunction(name, type, {}));
+    }
+  }
+
+  // TODO: All other imports: globals, memories, tables, etc. We must, as we do
+  //       with functions, take care to run this *after* the removal of those
+  //       imports (as normally we remove them all, as the fuzzer harness will
+  //       not provide them, but an imported module is the exception).
 }
 
 TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(
