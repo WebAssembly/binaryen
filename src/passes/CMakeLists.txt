@@ -18,6 +18,7 @@ set(passes_SOURCES
   string-utils.cpp
   test_passes.cpp
   AbstractTypeRefining.cpp
+  AddFuzzImports.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
   AvoidReinterprets.cpp

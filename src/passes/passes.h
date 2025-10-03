@@ -197,6 +197,7 @@ Pass* createUnteePass();
 Pass* createVacuumPass();
 
 // Test passes:
+Pass* createAddFuzzImportsPass();
 Pass* createCatchPopFixupPass();
 
 } // namespace wasm
