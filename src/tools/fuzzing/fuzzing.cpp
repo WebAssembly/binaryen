@@ -1165,9 +1165,11 @@ void TranslateToFuzzReader::addHashMemorySupport() {
 }
 
 void TranslateToFuzzReader::useImportedModule() {
+std::cout << "a1\n";
   if (!importedModule) {
     return;
   }
+std::cout << "a2\n";
 
   Module imported;
   ModuleReader().read(*importedModule, imported);
@@ -1175,9 +1177,11 @@ void TranslateToFuzzReader::useImportedModule() {
   // Add some of the module's exported functions as imports, at a random rate.
   auto rate = upTo(100);
   for (auto& exp : imported.exports) {
+std::cout << "a3\n";
     if (exp->kind != ExternalKind::Function || upTo(100) < rate) {
       continue;
     }
+std::cout << "a4\n";
 
     auto* func = imported.getFunction(*exp->getInternalName());
     auto name = Names::getValidFunctionName(wasm, func->name);
