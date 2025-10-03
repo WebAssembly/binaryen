@@ -585,9 +585,6 @@ void PassRegistry::registerPasses() {
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 
   // Register passes used for internal testing. These don't show up in --help.
-  registerTestPass("add-fuzz-imports",
-                   "adds imports to a given module (for fuzzing)",
-                   createAddFuzzImportsPass);
   registerTestPass("catch-pop-fixup",
                    "fixup nested pops within catches",
                    createCatchPopFixupPass);
