@@ -362,7 +362,7 @@ For more on how to optimize effectively, see
       second.features = wasm.features;
       ModuleReader().read(fuzzExecSecond, second);
 
-      results.get(wasm, second);
+      results.get(wasm, &second);
     }
   }
 

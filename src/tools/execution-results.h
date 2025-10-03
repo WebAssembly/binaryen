@@ -281,7 +281,7 @@ struct ExecutionResults {
 
   // Get results of executing a module. Optionally, provide a second module to
   // link with it (like fuzz_shell's second module).
-  void get(Module& wasm, std::optional<Module&> second=std::nullopt) {
+  void get(Module& wasm, Module* second=nullptr) {
     try {
       // Run the first module.
       LoggingExternalInterface interface(loggings, wasm);
