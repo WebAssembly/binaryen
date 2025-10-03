@@ -1784,7 +1784,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
     // TODO: Many casts can accept the top type. We may need to use visit*(), to
     //       handle each expression class separately.
-    void noteCast(HeapType src, HeapType dst) {}
+    void noteCast(HeapType src, Type dst) {}
     void noteCast(Expression* src, Type dst) {}
     void noteCast(Expression* src, Expression* dst) {}
   } finder;

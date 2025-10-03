@@ -599,13 +599,21 @@ struct Unsubtyping : Pass {
         // Otherwise, we must take this into account.
         noteSubtype(sub, super);
       }
-      void noteCast(HeapType src, HeapType dst) {
+      void noteCast(HeapType src, Type dstType) {
+        auto dst = dstType.getHeapType();
         // Casts to self and casts that must fail because they have incompatible
         // types are uninteresting.
         if (dst == src) {
           return;
         }
         if (HeapType::isSubType(dst, src)) {
+          if (dstType.isExact()) {
+            // This cast only tests that the exact destination type is a subtype
+            // of the source type and does not impose additional requirements on
+            // subtypes of the destination type like a normal cast does.
+            info.subtypings.insert({dst, src});
+            return;
+          }
           info.casts.insert({src, dst});
           return;
         }
@@ -617,12 +625,12 @@ struct Unsubtyping : Pass {
       }
       void noteCast(Expression* src, Type dst) {
         if (src->type.isRef() && dst.isRef()) {
-          noteCast(src->type.getHeapType(), dst.getHeapType());
+          noteCast(src->type.getHeapType(), dst);
         }
       }
       void noteCast(Expression* src, Expression* dst) {
         if (src->type.isRef() && dst->type.isRef()) {
-          noteCast(src->type.getHeapType(), dst->type.getHeapType());
+          noteCast(src->type.getHeapType(), dst->type);
         }
       }
 
