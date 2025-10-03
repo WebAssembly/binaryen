@@ -79,6 +79,7 @@ int main(int argc, const char* argv[]) {
   bool converge = false;
   bool fuzzExecBefore = false;
   bool fuzzExecAfter = false;
+  std::string fuzzExecSecond;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
   std::string initialFuzz;
@@ -148,6 +149,14 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) {
            fuzzExecBefore = fuzzExecAfter = true;
          })
+    .add(
+      "--fuzz-exec-second",
+      "",
+      "A second module to link with the first, for fuzz-exec-before (only "
+      "before, as optimizations are not applied to it)",
+      WasmOptOption,
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) { fuzzExecSecond = arguments; })
     .add("--extra-fuzz-command",
          "-efc",
          "An extra command to run on the output before and after optimizing. "
@@ -345,7 +354,16 @@ For more on how to optimize effectively, see
 
   ExecutionResults results;
   if (fuzzExecBefore) {
-    results.get(wasm);
+    if (fuzzExecSecond.empty()) {
+      results.get(wasm);
+    } else {
+      // Add the second module.
+      Module second;
+      second.features = wasm.features;
+      ModuleReader().read(fuzzExecSecond, second);
+
+      results.get(wasm, second);
+    }
   }
 
   if (emitSpecWrapper.size() > 0) {
