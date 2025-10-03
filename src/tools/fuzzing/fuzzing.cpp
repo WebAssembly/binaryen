@@ -1179,14 +1179,14 @@ void TranslateToFuzzReader::useImportedModule() {
       continue;
     }
 
-    auto* func = imported.getFunction(exp->getInternalName());
+    auto* func = imported.getFunction(*exp->getInternalName());
     auto name = Names::getValidFunctionName(wasm, func->name);
     // We can import it as its own type, or any (declared) supertype.
     auto type = getSuperType(func->type);
-    auto func = builder.makeFunction(name, type, {});
-    func->module = "primary";
-    func->base = exp->name;
-    wasm.addFunction(std::move(func));
+    auto import = builder.makeFunction(name, type, {});
+    import->module = "primary";
+    import->base = exp->name;
+    wasm.addFunction(std::move(import));
   }
 
   // TODO: All other imports: globals, memories, tables, etc. We must, as we do
