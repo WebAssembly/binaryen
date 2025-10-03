@@ -202,14 +202,13 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) {
            fuzzPreserveImportsAndExports = true;
          })
-    .add("--fuzz-import",
-         "",
-         "a module to use as an import in -ttf mode",
-         WasmOptOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& arguments) {
-           fuzzImport = arguments;
-         })
+    .add(
+      "--fuzz-import",
+      "",
+      "a module to use as an import in -ttf mode",
+      WasmOptOption,
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) { fuzzImport = arguments; })
     .add("--emit-spec-wrapper",
          "-esw",
          "Emit a wasm spec interpreter wrapper file that can run the wasm with "

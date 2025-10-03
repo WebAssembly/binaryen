@@ -1181,7 +1181,8 @@ void TranslateToFuzzReader::useImportedModule() {
     }
 
     auto* func = imported.getFunction(*exp->getInternalName());
-    auto name = Names::getValidFunctionName(wasm, "primary_" + exp->name.toString());
+    auto name =
+      Names::getValidFunctionName(wasm, "primary_" + exp->name.toString());
     // We can import it as its own type, or any (declared) supertype.
     auto type = getSuperType(func->type);
     auto import = builder.makeFunction(name, type, {});

@@ -162,7 +162,7 @@ private:
 
   // An optional module to import from.
   std::optional<std::string> importedModule;
-  
+
   // Whether we allow the fuzzer to add unreachable code when generating changes
   // to existing code. This is randomized during startup, but could be an option
   // like the above options eventually if we find that useful.
