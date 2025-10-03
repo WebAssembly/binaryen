@@ -391,9 +391,12 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
         Builder builder(*module);
         if (sig.results == Type::none) {
           func->body = builder.makeNop();
-        } else {
+        } else if (sig.results.isDefaultable()) {
           func->body =
             builder.makeConstantExpression(Literal::makeZeros(sig.results));
+        } else {
+          // We have nothing better than to trap here.
+          func->body = builder.makeUnreachable();
         }
       }
 
