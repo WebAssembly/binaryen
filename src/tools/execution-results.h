@@ -55,7 +55,9 @@ private:
   ModuleRunner* instance = nullptr;
 
 public:
-  LoggingExternalInterface(Loggings& loggings, Module& wasm,
+  LoggingExternalInterface(
+    Loggings& loggings,
+    Module& wasm,
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
     : ShellExternalInterface(linkedInstances_), loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
@@ -284,7 +286,7 @@ struct ExecutionResults {
 
   // Get results of executing a module. Optionally, provide a second module to
   // link with it (like fuzz_shell's second module).
-  void get(Module& wasm, Module* second=nullptr) {
+  void get(Module& wasm, Module* second = nullptr) {
     try {
       // Run the first module.
       LoggingExternalInterface interface(loggings, wasm);
@@ -295,8 +297,10 @@ struct ExecutionResults {
         // Link and run the second module.
         std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
         linkedInstances["primary"] = instance;
-        LoggingExternalInterface secondInterface(loggings, *second, linkedInstances);
-        auto secondInstance = std::make_shared<ModuleRunner>(*second, &secondInterface, linkedInstances);
+        LoggingExternalInterface secondInterface(
+          loggings, *second, linkedInstances);
+        auto secondInstance = std::make_shared<ModuleRunner>(
+          *second, &secondInterface, linkedInstances);
         runModule(*second, *secondInstance, secondInterface);
       }
     } catch (const TrapException&) {

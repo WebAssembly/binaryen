@@ -105,8 +105,8 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   ModuleRunner* getImportInstance(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
-      Fatal() << "getImportInstance: unknown import: " << import->module.str << "."
-              << import->base.str;
+      Fatal() << "getImportInstance: unknown import: " << import->module.str
+              << "." << import->base.str;
     }
     return it->second.get();
   }

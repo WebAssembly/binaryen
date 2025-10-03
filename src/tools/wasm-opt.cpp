@@ -149,14 +149,15 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) {
            fuzzExecBefore = fuzzExecAfter = true;
          })
-    .add(
-      "--fuzz-exec-second",
-      "",
-      "A second module to link with the first, for fuzz-exec-before (only "
-      "before, as optimizations are not applied to it)",
-      WasmOptOption,
-      Options::Arguments::One,
-      [&](Options* o, const std::string& arguments) { fuzzExecSecond = arguments; })
+    .add("--fuzz-exec-second",
+         "",
+         "A second module to link with the first, for fuzz-exec-before (only "
+         "before, as optimizations are not applied to it)",
+         WasmOptOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           fuzzExecSecond = arguments;
+         })
     .add("--extra-fuzz-command",
          "-efc",
          "An extra command to run on the output before and after optimizing. "
