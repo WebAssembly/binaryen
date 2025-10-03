@@ -435,7 +435,7 @@ if (secondBinary) {
 // Compile and instantiate a wasm file. Receives the binary to build, and
 // whether it is the second one.
 function build(binary, isSecond) {
-  if (fuzzSplit && isSecond) {
+  if (isSecond) {
     assert(secondBinary);
     // Provide the primary module's exports to the secondary.
     imports['primary'] = exports;

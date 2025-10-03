@@ -753,6 +753,7 @@ class TestCaseHandler:
     # care about their relationship.
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.handle(before_wasm)
+        print('\n')
         self.handle(after_wasm)
 
     def can_run_on_wasm(self, wasm):
@@ -1806,7 +1807,7 @@ class Two(TestCaseHandler):
         # see that that behavior remains even after optimizations.
         output = run_d8_wasm(wasm, args=[second_wasm])
 
-        if output == IGNORE:
+        if output == IGNORE: # XXX check no 'primary' in error
             # There is no point to continue since we can't compare this output
             # to anything.
             return
