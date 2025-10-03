@@ -188,9 +188,11 @@ public:
       } else if (import->base == "getTempRet0") {
         return {Literal(state.tempRet0)};
       }
-    } else if (auto* inst = getImportInstance(import)) {
-      return inst->callExport(import->base, arguments);
+    } else if (linkedInstances.count(import->module)) {
+      // This is from a recognized module.
+      return getImportInstance(import)->callExport(import->base, arguments);
     }
+    // Anything else, we ignore.
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
               << import->module << " . " << import->base << '\n';
     return {};
