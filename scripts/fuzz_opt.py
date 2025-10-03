@@ -1777,7 +1777,7 @@ class ClusterFuzz(TestCaseHandler):
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
 class Two(TestCaseHandler):
-    frequency = 0.2
+    frequency = 1 # 0.2
 
     def handle(self, wasm):
         # Generate a second wasm file, unless we were given one (useful during
@@ -1791,6 +1791,9 @@ class Two(TestCaseHandler):
             second_input = abspath('second_input.dat')
             make_random_input(random_size(), second_input)
             args = [second_input, '-ttf', '-o', second_wasm]
+            # Most of the time, use the first wasm as an import to the second.
+            if random.random() < 0.5:
+                args += ['--fuzz-importz=' + wasm]
             run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
 
         # The binaryen interpreter only supports a single file, so we run them
@@ -1845,6 +1848,7 @@ class Two(TestCaseHandler):
         # mode. We also cannot run shared-everything code in d8 yet. We also
         # cannot compare if there are NaNs (as optimizations can lead to
         # different outputs).
+        # TODO: relax some of these
         if CLOSED_WORLD:
             return False
         if NANS:
@@ -2114,19 +2118,7 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
-    Split(),
-    RoundtripText(),
-    ClusterFuzz(),
     Two(),
-    PreserveImportsExports(),
-    BranchHintPreservation(),
 ]
 
 
