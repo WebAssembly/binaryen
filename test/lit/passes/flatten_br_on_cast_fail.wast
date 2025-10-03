@@ -4,10 +4,10 @@
 ;; RUN: foreach %s %t wasm-opt --flatten --all-features -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $s (sub (struct)))
- (type $s (sub (struct)))
- ;; CHECK:      (type $t (sub $s (struct)))
- (type $t (sub $s (struct)))
+  ;; CHECK:      (type $s (sub (struct)))
+  (type $s (sub (struct)))
+  ;; CHECK:      (type $t (sub $s (struct)))
+  (type $t (sub $s (struct)))
 
   ;; CHECK:      (type $2 (func (param (ref $s)) (result (ref $t))))
 
@@ -86,7 +86,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $br_on_cast_fail (param $x (ref $s)) (result (ref $t))
-    (drop (block $label0 (result (ref $s))
-      (return (br_on_cast_fail $label0 (ref $s) (ref $t) (local.get $x)))))
-    (struct.new $t))
+    (drop
+      (block $label0 (result (ref $s))
+        (return
+          (br_on_cast_fail $label0 (ref $s) (ref $t)
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (struct.new $t)
   )
+)

@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --flatten --all-features -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $s (sub (struct)))
- (type $s (sub (struct)))
- (type $t (sub $s (struct)))
+  ;; CHECK:      (type $s (sub (struct)))
+  (type $s (sub (struct)))
+  (type $t (sub $s (struct)))
 
   ;; CHECK:      (type $1 (func (param (ref null $s)) (result (ref $s))))
 
@@ -60,6 +60,10 @@
   ;; CHECK-NEXT: )
   (func $br_on_null (param $x (ref null $s)) (result (ref $s))
     (block $label0
-      (return (br_on_null $label0 (local.get $x))))
-    (struct.new $s))
+      (return
+        (br_on_null $label0 (local.get $x))
+      )
+    )
+    (struct.new $s)
   )
+)
