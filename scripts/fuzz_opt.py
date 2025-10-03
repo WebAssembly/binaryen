@@ -754,6 +754,7 @@ class TestCaseHandler:
     # care about their relationship.
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.handle(before_wasm)
+        # Add some visual space between the independent parts.
         print('\n')
         self.handle(after_wasm)
 
