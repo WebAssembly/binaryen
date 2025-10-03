@@ -1793,7 +1793,7 @@ class Two(TestCaseHandler):
             args = [second_input, '-ttf', '-o', second_wasm]
             # Most of the time, use the first wasm as an import to the second.
             if random.random() < 0.5:
-                args += ['--fuzz-importz=' + wasm]
+                args += ['--fuzz-import=' + wasm]
             run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
 
         # The binaryen interpreter only supports a single file, so we run them
