@@ -1780,7 +1780,7 @@ class ClusterFuzz(TestCaseHandler):
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
 class Two(TestCaseHandler):
-    frequency = 1 # 0.2
+    frequency = 0.2
 
     def handle(self, wasm):
         # Generate a second wasm file, unless we were given one (useful during
@@ -1795,7 +1795,7 @@ class Two(TestCaseHandler):
             make_random_input(random_size(), second_input)
             args = [second_input, '-ttf', '-o', second_wasm]
             # Most of the time, use the first wasm as an import to the second.
-            if random.random() < 0.5:
+            if random.random() < 0.8:
                 args += ['--fuzz-import=' + wasm]
             run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
 
