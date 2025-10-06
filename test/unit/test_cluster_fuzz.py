@@ -287,9 +287,9 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print()
 
         # Primary imports appear in half of second files.
-        print('number of primary imports should be around 16 +- 4')
+        print('number of primary imports should be around 22 +- 4')
         print(f'number of primary_imports: {seen_primary_imports}')
-        assert seen_primary_imports >= 2, 'must see some primary import'
+        assert seen_primary_imports >= 2, 'must see some primary imports'
 
         print()
 
@@ -322,7 +322,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 js = f.read()
             seen_builds.append(js.count('build(binary);'))
             seen_calls.append(re.findall(call_exports_regex, js))
-            seen_second_builds.append(js.count('build(secondBinary);'))
+            seen_second_builds.append(js.count('build(secondBinary, true);'))
 
             # If JSPI is enabled, the async and await keywords should be
             # enabled (uncommented).
