@@ -325,7 +325,7 @@ def main(argv):
     for temp in temp_files:
         os.remove(temp)
 
-    print(f'Cleaned up.')
+    print('Cleaned up.')
 
 
 if __name__ == '__main__':
