@@ -142,11 +142,9 @@ struct FuncData {
 
   // A way to execute this function. We use this when it is called.
   using Call = std::function<Flow(Literals)>;
-  std::optional<Call> call;
+  Call call;
 
-  FuncData(Name name,
-           void* self = nullptr,
-           std::optional<Call> call = std::nullopt)
+  FuncData(Name name, void* self = nullptr, Call call = {})
     : name(name), self(self), call(call) {}
 
   bool operator==(const FuncData& other) const {
@@ -155,7 +153,7 @@ struct FuncData {
 
   Flow doCall(Literals arguments) {
     assert(call);
-    return (*call)(arguments);
+    return call(arguments);
   }
 };
 
