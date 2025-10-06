@@ -55,8 +55,11 @@ private:
   ModuleRunner* instance = nullptr;
 
 public:
-  LoggingExternalInterface(Loggings& loggings, Module& wasm)
-    : loggings(loggings), wasm(wasm) {
+  LoggingExternalInterface(
+    Loggings& loggings,
+    Module& wasm,
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
+    : ShellExternalInterface(linkedInstances_), loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = *exp->getInternalName();
@@ -185,7 +188,11 @@ public:
       } else if (import->base == "getTempRet0") {
         return {Literal(state.tempRet0)};
       }
+    } else if (linkedInstances.count(import->module)) {
+      // This is from a recognized module.
+      return getImportInstance(import)->callExport(import->base, arguments);
     }
+    // Anything else, we ignore.
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
               << import->module << " . " << import->base << '\n';
     return {};
@@ -279,35 +286,24 @@ struct ExecutionResults {
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
 
-  // get results of execution
-  void get(Module& wasm) {
-    LoggingExternalInterface interface(loggings, wasm);
+  // Get results of executing a module. Optionally, provide a second module to
+  // link with it (like fuzz_shell's second module).
+  void get(Module& wasm, Module* second = nullptr) {
     try {
-      ModuleRunner instance(wasm, &interface);
-      // This is not an optimization: we want to execute anything, even relaxed
-      // SIMD instructions.
-      instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
-      instance.instantiate();
-      interface.setModuleRunner(&instance);
-      // execute all exported methods (that are therefore preserved through
-      // opts)
-      for (auto& exp : wasm.exports) {
-        if (exp->kind != ExternalKind::Function) {
-          continue;
-        }
-        std::cout << "[fuzz-exec] calling " << exp->name << "\n";
-        auto* func = wasm.getFunction(*exp->getInternalName());
-        FunctionResult ret = run(func, wasm, instance);
-        results[exp->name] = ret;
-        if (auto* values = std::get_if<Literals>(&ret)) {
-          // ignore the result if we hit an unreachable and returned no value
-          if (values->size() > 0) {
-            std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-            for (auto value : *values) {
-              printValue(value);
-            }
-          }
-        }
+      // Run the first module.
+      LoggingExternalInterface interface(loggings, wasm);
+      auto instance = std::make_shared<ModuleRunner>(wasm, &interface);
+      runModule(wasm, *instance, interface);
+
+      if (second) {
+        // Link and run the second module.
+        std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+        linkedInstances["primary"] = instance;
+        LoggingExternalInterface secondInterface(
+          loggings, *second, linkedInstances);
+        auto secondInstance = std::make_shared<ModuleRunner>(
+          *second, &secondInterface, linkedInstances);
+        runModule(*second, *secondInstance, secondInterface);
       }
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).
@@ -316,6 +312,36 @@ struct ExecutionResults {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
+    }
+  }
+
+  void runModule(Module& wasm,
+                 ModuleRunner& instance,
+                 LoggingExternalInterface& interface) {
+    // This is not an optimization: we want to execute anything, even relaxed
+    // SIMD instructions.
+    instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
+    instance.instantiate();
+    interface.setModuleRunner(&instance);
+    // execute all exported methods (that are therefore preserved through
+    // opts)
+    for (auto& exp : wasm.exports) {
+      if (exp->kind != ExternalKind::Function) {
+        continue;
+      }
+      std::cout << "[fuzz-exec] calling " << exp->name << "\n";
+      auto* func = wasm.getFunction(*exp->getInternalName());
+      FunctionResult ret = run(func, wasm, instance);
+      results[exp->name] = ret;
+      if (auto* values = std::get_if<Literals>(&ret)) {
+        // ignore the result if we hit an unreachable and returned no value
+        if (values->size() > 0) {
+          std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
+          for (auto value : *values) {
+            printValue(value);
+          }
+        }
+      }
     }
   }
 

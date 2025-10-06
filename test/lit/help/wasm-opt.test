@@ -38,6 +38,11 @@
 ;; CHECK-NEXT:                                                 after optimization, helping
 ;; CHECK-NEXT:                                                 fuzzing find bugs
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-exec-second                            A second module to link with the
+;; CHECK-NEXT:                                                 first, for fuzz-exec-before
+;; CHECK-NEXT:                                                 (only before, as optimizations
+;; CHECK-NEXT:                                                 are not applied to it)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --extra-fuzz-command,-efc                     An extra command to run on the
 ;; CHECK-NEXT:                                                 output before and after
 ;; CHECK-NEXT:                                                 optimizing. The output is

@@ -1209,20 +1209,36 @@
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
 (module
-;; This will be invalid soon, but in the meantime we should not be confused when
-;; the types described by two related descriptors are unrelated.
+  ;; We could optimize away the descriptor since its only use is unreachable,
+  ;; but instead we do nothing and depend on other passes clean up the
+  ;; unreachable code first.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (descriptor $super (struct)))
-    (type $A (descriptor $super (struct)))
-    ;; CHECK:       (type $B (descriptor $sub (struct)))
-    (type $B (descriptor $sub (struct)))
-    ;; CHECK:       (type $super (sub (describes $A (struct))))
-    (type $super (sub (describes $A (struct))))
-    ;; CHECK:       (type $sub (sub $super (describes $B (struct))))
-    (type $sub (sub $super (describes $B (struct))))
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (describes $struct (struct))))
+    (type $desc (sub (describes $struct (struct))))
   )
-  ;; CHECK:      (global $public (ref null $B) (ref.null none))
-  (global $public (export "public") (ref null $B) (ref.null none))
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $struct (ref $struct))
+  ;; CHECK-NEXT:  (local $desc (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (struct.new_default $desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $struct (ref $struct))
+    (local $desc (ref $desc))
+    (drop
+      (ref.cast_desc (ref $struct)
+        (unreachable)
+        (struct.new $desc)
+      )
+    )
+  )
 )
-;; CHECK:      (export "public" (global $public))

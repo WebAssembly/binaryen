@@ -95,16 +95,19 @@
   )
 )
 
-(module
-  (type $super (sub (struct)))
-  (rec
-    (type $other (sub (descriptor $super-desc (struct))))
-    (type $super-desc (sub (describes $other (struct))))
+(assert_invalid
+  (module
+    (type $super (sub (struct)))
+    (rec
+      (type $other (sub (descriptor $super-desc (struct))))
+      (type $super-desc (sub (describes $other (struct))))
+    )
+    (rec
+      (type $sub (sub $super (descriptor $sub-desc (struct))))
+      (type $sub-desc (sub $super-desc (describes $sub (struct))))
+    )
   )
-  (rec
-    (type $sub (sub $super (descriptor $sub-desc (struct))))
-    (type $sub-desc (sub $super-desc (describes $sub (struct))))
-  )
+  "supertype of descriptor type must describe supertype of described type"
 )
 
 (assert_invalid
