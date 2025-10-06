@@ -1791,8 +1791,13 @@ class Two(TestCaseHandler):
             # TODO: should we de-nan this etc. as with the primary?
             shutil.copyfile(given, second_wasm)
         else:
+            # generate a second wasm file to merge. pick a smaller size when
+            # the main wasm file is smaller, so reduction shrinks this too.
+            wasm_size = os.stat(wasm).st_size
+            second_size = min(wasm_size, random_size())
+
             second_input = abspath('second_input.dat')
-            make_random_input(random_size(), second_input)
+            make_random_input(second_size, second_input)
             args = [second_input, '-ttf', '-o', second_wasm]
             # Most of the time, use the first wasm as an import to the second.
             if random.random() < 0.8:
@@ -1806,7 +1811,7 @@ class Two(TestCaseHandler):
         # *between* the wasm files, through JS APIs like call-export*. So all we
         # do here is see the combined, linked behavior, and then later below we
         # see that that behavior remains even after optimizations.
-        output = run_bynterp(wasm, args=[f'--fuzz-exec-second={second_wasm}z'])
+        output = run_bynterp(wasm, args=['--fuzz-exec-before', f'--fuzz-exec-second={second_wasm}'])
 
         if output == IGNORE:
             # There is no point to continue since we can't compare this output
@@ -1819,7 +1824,7 @@ class Two(TestCaseHandler):
         calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
         if calls_in_output == 0:
             print(f'warning: no calls in output. output:\n{output}')
-        assert calls_in_output == len(exports)
+        assert calls_in_output == len(exports), exports
 
         output = fix_output(output)
 
@@ -1834,7 +1839,7 @@ class Two(TestCaseHandler):
             wasms[wasm_index] = new_name
 
         # Run again, and compare the output
-        optimized_output = run_bynterp(wasms[0], args=[f'--fuzz-exec-second={wasms[1]}'])
+        optimized_output = run_bynterp(wasms[0], args=['--fuzz-exec-before', f'--fuzz-exec-second={wasms[1]}'])
         optimized_output = fix_output(optimized_output)
 
         compare(output, optimized_output, 'Two')
