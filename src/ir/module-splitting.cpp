@@ -46,10 +46,10 @@
 //      import them in the secondary module.
 //
 // Functions can be used or referenced three ways in a WebAssembly module: they
-// can be exported, called, or placed in a table. The above procedure introduces
-// a layer of indirection to each of those mechanisms that removes all
-// references to secondary functions from the primary module but restores the
-// original program's semantics once the secondary module is instantiated.
+// can be exported, called, or referenced with ref.func. The above procedure
+// introduces a layer of indirection to each of those mechanisms that removes
+// all references to secondary functions from the primary module but restores
+// the original program's semantics once the secondary module is instantiated.
 //
 // The code as currently written makes a couple assumptions about the module
 // that is being split:
