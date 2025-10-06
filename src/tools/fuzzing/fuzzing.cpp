@@ -1592,7 +1592,7 @@ Function* TranslateToFuzzReader::addFunction() {
     wasm.addExport(
       Builder::makeExport(func->name, func->name, ExternalKind::Function));
   }
-  // add some to an elem segment
+  // add some to an elem segment TODO we could do this for imported funcs too
   while (oneIn(3) && !random.finished()) {
     auto type = Type(func->type, NonNullable);
     std::vector<ElementSegment*> compatibleSegments;
