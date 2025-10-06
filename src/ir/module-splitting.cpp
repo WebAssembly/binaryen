@@ -18,15 +18,15 @@
 //
 //   1. Create the new secondary module.
 //
-//   2. Export globals, tags, tables, and memories from the primary module and
-//      import them in the secondary module.
+//   2. Move the deferred functions from the primary to the secondary module.
 //
-//   3. Move the deferred functions from the primary to the secondary module.
-//
-//   4. For any secondary function exported from the primary module, export in
+//   3. For any secondary function exported from the primary module, export in
 //      its place a trampoline function that makes an indirect call to its
 //      placeholder function (and eventually to the original secondary
 //      function), allocating a new table slot for the placeholder if necessary.
+//
+//   4. Replace all references to secondary functions in the primary module's
+//      table segments with references to imported placeholder functions.
 //
 //   5. Rewrite direct calls from primary functions to secondary functions to be
 //      indirect calls to their placeholder functions (and eventually to their
@@ -37,22 +37,19 @@
 //      export the primary function if it is not already exported and import it
 //      into the secondary module.
 //
-//   7. Replace all references to secondary functions in the primary module's
-//      table segments with references to imported placeholder functions.
-//
-//   8. Create new active table segments in the secondary module that will
+//   7. Create new active table segments in the secondary module that will
 //      replace all the placeholder function references in the table with
 //      references to their corresponding secondary functions upon
 //      instantiation.
+//
+//   8. Export globals, tags, tables, and memories from the primary module and
+//      import them in the secondary module.
 //
 // Functions can be used or referenced three ways in a WebAssembly module: they
 // can be exported, called, or placed in a table. The above procedure introduces
 // a layer of indirection to each of those mechanisms that removes all
 // references to secondary functions from the primary module but restores the
-// original program's semantics once the secondary module is instantiated. As
-// more mechanisms that reference functions are added in the future, such as
-// ref.func instructions, they will have to be modified to use a similar layer
-// of indirection.
+// original program's semantics once the secondary module is instantiated.
 //
 // The code as currently written makes a couple assumptions about the module
 // that is being split:
@@ -64,13 +61,11 @@
 //
 //   2. It assumes that either all table segment offsets are constants or there
 //      is exactly one segment that may have a non-constant offset. It also
-//      assumes that all segments are active segments (although Binaryen does
-//      not yet support passive table segments anyway).
+//      assumes that all segments are active segments.
 
 #include "ir/module-splitting.h"
 #include "asmjs/shared-constants.h"
 #include "ir/export-utils.h"
-#include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
