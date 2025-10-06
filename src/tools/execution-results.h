@@ -290,21 +290,29 @@ struct ExecutionResults {
   // link with it (like fuzz_shell's second module).
   void get(Module& wasm, Module* second = nullptr) {
     try {
-      // Run the first module.
+      // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
       auto instance = std::make_shared<ModuleRunner>(wasm, &interface);
-      runModule(wasm, *instance, interface);
 
+      // Instantiate the second, if there is one (we instantiate both before
+      // running anything, so that we match the behavior of fuzz_shell.js).
+      std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+      std::unique_ptr<LoggingExternalInterface> secondInterface;
+      std::shared_ptr<ModuleRunner> secondInstance;
       if (second) {
-        // Link and run the second module.
-        std::cout << "[fuzz-exec] running second module\n";
-        std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+        // Link and instantiate the second module.
         linkedInstances["primary"] = instance;
-        LoggingExternalInterface secondInterface(
+        secondInterface = std::make_unique<LoggingExternalInterface>(
           loggings, *second, linkedInstances);
-        auto secondInstance = std::make_shared<ModuleRunner>(
-          *second, &secondInterface, linkedInstances);
-        runModule(*second, *secondInstance, secondInterface);
+        secondInstance = std::make_shared<ModuleRunner>(
+          *second, secondInterface.get(), linkedInstances);
+      }
+
+      // Run.
+      runModule(wasm, *instance, interface);
+      if (second) {
+        std::cout << "[fuzz-exec] running second module\n";
+        runModule(*second, *secondInstance, *secondInterface);
       }
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).
@@ -322,12 +330,7 @@ struct ExecutionResults {
     // This is not an optimization: we want to execute anything, even relaxed
     // SIMD instructions.
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
-    try {
-      instance.instantiate();
-    } catch (const TrapException& t) {
-      std::cout << "[fuzz-exec] stopping after instantiation error\n";
-      return;
-    }
+    instance.instantiate();
     interface.setModuleRunner(&instance);
     // execute all exported methods (that are therefore preserved through
     // opts)
