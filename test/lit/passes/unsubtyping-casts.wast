@@ -563,3 +563,104 @@
   )
  )
 )
+
+;; Exact casts do not impose requirements on subtypes of the destination type.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (struct)))
+    (type $top (sub (struct)))
+    ;; CHECK:       (type $bot (sub (struct)))
+    (type $bot (sub $top (struct)))
+  )
+
+  ;; CHECK:       (type $2 (func (param anyref)))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot))
+  (global $bot-sub-any anyref (struct.new $bot))
+
+  ;; CHECK:      (func $ref.cast-exact (type $2) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref null (exact $top))
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.cast-exact (param $any anyref)
+    (drop
+      (ref.cast (ref null (exact $top))
+        (local.get $any)
+      )
+    )
+  )
+)
+
+;; Same, but now with a br_on_cast.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (struct)))
+    (type $top (sub (struct)))
+    ;; CHECK:       (type $bot (sub (struct)))
+    (type $bot (sub $top (struct)))
+  )
+
+  ;; CHECK:       (type $2 (func (param anyref)))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot))
+  (global $bot-sub-any anyref (struct.new $bot))
+
+  ;; CHECK:      (func $br_on_cast-exact (type $2) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast $l anyref (ref (exact $top))
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast-exact (param $any anyref)
+    (drop
+      (block $l (result anyref)
+        (br_on_cast $l anyref (ref (exact $top))
+          (local.get $any)
+        )
+      )
+    )
+  )
+)
+
+;; Same, but now with a br_on_cast_fail.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (struct)))
+    (type $top (sub (struct)))
+    ;; CHECK:       (type $bot (sub (struct)))
+    (type $bot (sub $top (struct)))
+  )
+
+  ;; CHECK:       (type $2 (func (param anyref)))
+
+  ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot))
+  (global $bot-sub-any anyref (struct.new $bot))
+
+  ;; CHECK:      (func $br_on_cast_fail-exact (type $2) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_fail $l anyref (ref (exact $top))
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_fail-exact (param $any anyref)
+    (drop
+      (block $l (result anyref)
+        (br_on_cast_fail $l anyref (ref (exact $top))
+          (local.get $any)
+        )
+      )
+    )
+  )
+)

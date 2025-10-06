@@ -2389,10 +2389,12 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return false;
     }
   }
-  // A supertype of a type must have a describes clause iff the type has a
-  // describes clause.
-  if (bool(sub.described) != bool(super.described)) {
-    return false;
+  // A supertype of a type with a (describes $x) clause must have a (describes
+  // $y) clause where $y is the declared supertype of $x.
+  if (sub.described) {
+    if (!super.described || sub.described->supertype != super.described) {
+      return false;
+    }
   }
   SubTyper typer;
   switch (sub.kind) {

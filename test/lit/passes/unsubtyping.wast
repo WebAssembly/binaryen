@@ -1892,3 +1892,31 @@
   )
  )
 )
+
+;; Even though our analysis has its own visitor for StructNew, it should still
+;; be able to collect subtype constraints from StructNews.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct (field (ref null $A)))))
+  (type $A (sub (struct (field (ref null $A)))))
+  ;; CHECK:       (type $B (sub $A (struct (field (ref null $A)))))
+  (type $B (sub $A (struct (field (ref null $A)))))
+
+  ;; CHECK:       (type $2 (func (param (ref null $B))))
+
+  ;; CHECK:      (func $test (type $2) (param $B (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $B (ref null $B))
+    (drop
+      ;; This requires B <: A.
+      (struct.new $A
+        (local.get $B)
+      )
+    )
+  )
+)

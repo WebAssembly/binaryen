@@ -22,6 +22,7 @@
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
 #include "wasm-validator.h"
 #include "gtest/gtest.h"
 
@@ -60,6 +61,30 @@ TEST(ValidatorTest, ReturnUnreachable) {
                          Signature(Type::none, Type::none),
                          {},
                          builder.makeReturn(builder.makeUnreachable()));
+
+  auto flags =
+    WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
+  EXPECT_FALSE(WasmValidator{}.validate(func.get(), module, flags));
+}
+
+TEST(ValidatorTest, UnreachableCastDesc) {
+  // The parser will error trying to parse a ref.cast_desc with a non-matching
+  // descriptor type, so we must construct the IR directly to test the
+  // validator.
+  Module module;
+  module.features = FeatureSet::All;
+  Builder builder(module);
+
+  auto func = builder.makeFunction(
+    "func",
+    {},
+    Signature(Type::none, Type::none),
+    {},
+    builder.makeDrop(builder.makeRefCast(builder.makeUnreachable(),
+                                         builder.makeStructNew(Struct{}, {}),
+                                         Type::unreachable)));
+
+  ASSERT_EQ(func->body->type, Type(Type::unreachable));
 
   auto flags =
     WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
