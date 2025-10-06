@@ -324,9 +324,12 @@ struct ExecutionResults {
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
     try {
       instance.instantiate();
-    } catch (const TrapException&) {
-      std::cout << "exception thrown: failed to instantiate module\n";
-      throw;
+    } catch (const TrapException& t) {
+      // Print the exception,  also prefixed to note it is an instantiation
+      // failure specifically.
+      std::cout << "exception thrown: failed to instantiate module" << t
+                << "\n";
+      return;
     }
     interface.setModuleRunner(&instance);
     // execute all exported methods (that are therefore preserved through
