@@ -135,9 +135,9 @@ temp_files = []
 # Receives the testcase index and the output dir.
 #
 # Also returns the name of the wasm file.
-def get_wasm_contents(i, output_dir, extra_args=[]):
-    input_data_file_path = os.path.join(output_dir, f'{i}.input')
-    wasm_file_path = os.path.join(output_dir, f'{i}.wasm')
+def get_wasm_contents(name, output_dir, extra_args=[]):
+    input_data_file_path = os.path.join(output_dir, f'{name}.input')
+    wasm_file_path = os.path.join(output_dir, f'{name}.wasm')
 
     # wasm-opt may fail to run in rare cases (when the fuzzer emits code it
     # detects as invalid). Just try again in such a case.
@@ -219,7 +219,7 @@ def get_js_file_contents(i, output_dir):
         if system_random.random() < 0.8:
             args = [f'--fuzz-import={wasm_file}']
         second_wasm_contents, second_wasm_file = \
-            get_wasm_contents(i, output_dir, args)
+            get_wasm_contents(f'{i}_second', output_dir, args)
         pre += f'var secondBinary = {second_wasm_contents};\n'
         bytes += second_wasm_contents.count(',')
 
@@ -323,8 +323,7 @@ def main(argv):
     print(f'Created {num} testcases.')
 
     for temp in temp_files:
-        if os.path.exists(temp):
-            os.remove(temp)
+        os.remove(temp)
 
     print(f'Cleaned up.')
 
