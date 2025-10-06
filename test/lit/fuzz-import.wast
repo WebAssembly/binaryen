@@ -2,7 +2,7 @@
 
 ;; Generate fuzz output using this wat as initial contents, and importing the
 ;; side file.
-;; RUN: wasm-opt %s.ttf --initial-fuzz=%s -all -ttf --fuzz-import=%s.import.wast \
+;; RUN: wasm-opt %s.ttf --initial-fuzz=%s -all -ttf --fuzz-import=%s.import \
 ;; RUN:          -S -o - | filecheck %s
 
 (module
