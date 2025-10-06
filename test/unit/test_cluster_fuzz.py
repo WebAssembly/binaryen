@@ -165,8 +165,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
         seen_sizes = []
         seen_exports = []
 
-        # Second wasm files are also emitted sometimes.
+        # Second wasm files are also emitted sometimes, and sometimes they
+        # import the primary module.
         seen_second_sizes = []
+        seen_primary_imports = 0
 
         # The number of struct.news appears in the metrics report like this:
         #
@@ -230,6 +232,12 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # sizes, is enough).
                 seen_second_sizes.append(os.path.getsize(second_binary_file))
 
+                # The primary module should be imported sometimes.
+                wat = subprocess.check_output(
+                    shared.WASM_DIS + [second_binary_file], text=True)
+                if '(import "primary" ' in wat:
+                    seen_primary_imports += 1
+
         print()
 
         print('struct.news can vary a lot, but should be ~10')
@@ -275,6 +283,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # interesting wasm file.
         self.assertGreaterEqual(max(seen_second_sizes), 500)
         self.assertGreater(statistics.stdev(seen_second_sizes), 0)
+
+        print()
+
+        # Primary imports appear in half of second files.
+        print('number of primary imports should be around 16 +- 4')
+        print(f'number of primary_imports: {seen_primary_imports}')
+        assert seen_primary_imports >= 2, 'must see some primary import'
 
         print()
 
