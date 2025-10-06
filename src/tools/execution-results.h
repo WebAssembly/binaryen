@@ -297,6 +297,7 @@ struct ExecutionResults {
 
       if (second) {
         // Link and run the second module.
+        std::cout << "[fuzz-exec] running second module\n";
         std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
         linkedInstances["primary"] = instance;
         LoggingExternalInterface secondInterface(
@@ -321,7 +322,12 @@ struct ExecutionResults {
     // This is not an optimization: we want to execute anything, even relaxed
     // SIMD instructions.
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
-    instance.instantiate();
+    try {
+      instance.instantiate();
+    } catch (const TrapException&) {
+      std::cout << "exception thrown: failed to instantiate module\n";
+      throw;
+    }
     interface.setModuleRunner(&instance);
     // execute all exported methods (that are therefore preserved through
     // opts)

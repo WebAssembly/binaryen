@@ -1813,6 +1813,13 @@ class Two(TestCaseHandler):
         # see that that behavior remains even after optimizations.
         output = run_bynterp(wasm, args=['--fuzz-exec-before', f'--fuzz-exec-second={second_wasm}'])
 
+        if INSTANTIATE_ERROR in output:
+            # We may fail to instantiate the modules for valid reasons, such as
+            # an active segment being out of bounds. There is no point to
+            # continue in such cases, as no exports are called.
+            note_ignored_vm_run('Two instantiate error')
+            return
+
         if output == IGNORE:
             # There is no point to continue since we can't compare this output
             # to anything.
@@ -1857,11 +1864,7 @@ class Two(TestCaseHandler):
             return
 
         if output.startswith(INSTANTIATE_ERROR):
-            # We may fail to instantiate the modules for valid reasons, such as
-            # an active segment being out of bounds. There is no point to
-            # continue in such cases, as no exports are called.
-
-            # But, check 'primary' is not in the V8 error. That might indicate a
+            # Check 'primary' is not in the V8 error. That might indicate a
             # problem in the imports of --fuzz-import. To do this, run the d8
             # command directly, without the usual filtering of run_d8_wasm.
             cmd = [shared.V8] + shared.V8_OPTS + get_v8_extra_flags() + [
@@ -1873,7 +1876,7 @@ class Two(TestCaseHandler):
             out = run(cmd)
             assert '"primary"' not in out, out
 
-            note_ignored_vm_run('Two instantiate error')
+            note_ignored_vm_run('Two-V8 instantiate error')
             return
 
         output = fix_output(output)
