@@ -1056,3 +1056,91 @@
     )
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct (field v128))))
+    (type $A (descriptor $B (struct (field v128))))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $B (ref null $B))
+  ;; CHECK-NEXT:  (local $v v128)
+  ;; CHECK-NEXT:  (local $2 v128)
+  ;; CHECK-NEXT:  (local $3 (ref none))
+  ;; CHECK-NEXT:  (local $4 (ref none))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.tee $v
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $4
+  ;; CHECK-NEXT:         (ref.as_non_null
+  ;; CHECK-NEXT:          (ref.null none)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $2
+  ;; CHECK-NEXT:         (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $3
+  ;; CHECK-NEXT:         (local.get $4)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $B (ref null $B))
+    (local $v v128)
+
+    ;; We can optimize a few times here. As we do so, the local.set becomes
+    ;; unreachable, as its descriptor is null. Later work will replace the
+    ;; nested struct.get there, which was unreachable, with a local.get of a
+    ;; v128, a concrete type, causing an error as now the local.set is
+    ;; unreachable but the child is not. To avoid this problem, we should not
+    ;; modify unreachable code.
+
+    (drop
+      (ref.as_non_null
+        (local.tee $B
+          (struct.new_default $B)
+        )
+      )
+    )
+    (local.set $v
+      (struct.get $A 0
+        (ref.cast_desc (ref $A)
+          (struct.new_default $A
+            (ref.as_non_null
+              (ref.null none)
+            )
+          )
+          (ref.as_non_null
+            (local.get $B)
+          )
+        )
+      )
+    )
+  )
+)
+
