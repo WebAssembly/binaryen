@@ -1674,7 +1674,7 @@ INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
 # like ClusterFuzz does, and that generates its own random data. If a bug is
 # caught here, it must be reduced manually.
 class ClusterFuzz(TestCaseHandler):
-    frequency = 0.1
+    frequency = 1
 
     # Use handle_pair over handle because we don't use these wasm files anyhow,
     # we generate our own using run.py. If we used handle, we'd be called twice
@@ -2154,7 +2154,19 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
+    CtorEval(),
+    Merge(),
+    Split(),
+    RoundtripText(),
+    ClusterFuzz(),
     Two(),
+    PreserveImportsExports(),
+    BranchHintPreservation(),
 ]
 
 
