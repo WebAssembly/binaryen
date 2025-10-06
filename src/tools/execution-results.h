@@ -325,10 +325,7 @@ struct ExecutionResults {
     try {
       instance.instantiate();
     } catch (const TrapException& t) {
-      // Print the exception,  also prefixed to note it is an instantiation
-      // failure specifically.
-      std::cout << "exception thrown: failed to instantiate module" << t
-                << "\n";
+      std::cout << "[fuzz-exec] stopping after instantiation error\n";
       return;
     }
     interface.setModuleRunner(&instance);

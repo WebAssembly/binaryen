@@ -1660,8 +1660,11 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
-# The error shown when a module fails to instantiate.
+# The error shown in V8 when a module fails to instantiate.
 INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
+
+# The logging Binaryen emits with fuzz-exec hits an instantiation error.
+BYN_INSTANTIATE_ERROR = '[fuzz-exec] stopping after instantiation error'
 
 
 # Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
@@ -1813,7 +1816,7 @@ class Two(TestCaseHandler):
         # see that that behavior remains even after optimizations.
         output = run_bynterp(wasm, args=['--fuzz-exec-before', f'--fuzz-exec-second={second_wasm}'])
 
-        if INSTANTIATE_ERROR in output:
+        if BYN_INSTANTIATE_ERROR in output:
             # We may fail to instantiate the modules for valid reasons, such as
             # an active segment being out of bounds. There is no point to
             # continue in such cases, as no exports are called.
