@@ -1,5 +1,5 @@
 
-;; RUN: wasm-opt %s -all --fuzz-exec-before --fuzz-exec-second=%s.second.wast -q -o /dev/null 2>&1 | filecheck %s
+;; RUN: wasm-opt %s -all --fuzz-exec-before --fuzz-exec-second=%s.second -q -o /dev/null 2>&1 | filecheck %s
 
 (module
   (func $first (export "first") (result i32)
