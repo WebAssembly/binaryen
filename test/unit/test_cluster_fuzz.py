@@ -286,7 +286,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        # Primary imports appear in half of second files.
+        # Primary imports appear in most second files.
         print('number of primary imports should be around 22 +- 4')
         print(f'number of primary_imports: {seen_primary_imports}')
         assert seen_primary_imports >= 2, 'must see some primary imports'
