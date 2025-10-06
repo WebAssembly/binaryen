@@ -1780,7 +1780,7 @@ class ClusterFuzz(TestCaseHandler):
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
 class Two(TestCaseHandler):
-    frequency = 0.2
+    frequency = 1 # 0.5
 
     def handle(self, wasm):
         # Generate a second wasm file, unless we were given one (useful during
@@ -1799,19 +1799,56 @@ class Two(TestCaseHandler):
                 args += ['--fuzz-import=' + wasm]
             run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
 
-        # The binaryen interpreter only supports a single file, so we run them
-        # from JS using fuzz_shell.js's support for two files.
+        # Run the wasm.
         #
         # Note that we *cannot* run each wasm file separately and compare those
         # to the combined output, as fuzz_shell.js intentionally allows calls
         # *between* the wasm files, through JS APIs like call-export*. So all we
         # do here is see the combined, linked behavior, and then later below we
         # see that that behavior remains even after optimizations.
-        output = run_d8_wasm(wasm, args=[second_wasm])
+        output = run_bynterp(wasm, args=[f'--fuzz-exec-second={second_wasm}z'])
 
         if output == IGNORE:
             # There is no point to continue since we can't compare this output
             # to anything.
+            return
+
+        # Make sure that we actually executed all exports from both
+        # wasm files.
+        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
+        if calls_in_output == 0:
+            print(f'warning: no calls in output. output:\n{output}')
+        assert calls_in_output == len(exports)
+
+        output = fix_output(output)
+
+        # Optimize at least one of the two.
+        wasms = [wasm, second_wasm]
+        for i in range(random.randint(1, 2)):
+            wasm_index = random.randint(0, 1)
+            name = wasms[wasm_index]
+            new_name = name + f'.opt{i}.wasm'
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
+            wasms[wasm_index] = new_name
+
+        # Run again, and compare the output
+        optimized_output = run_bynterp(wasms[0], args=[f'--fuzz-exec-second={wasms[1]}'])
+        optimized_output = fix_output(optimized_output)
+
+        compare(output, optimized_output, 'Two')
+
+        # If we can, also test in V8. We also cannot compare if there are NaNs
+        # (as optimizations can lead to different outputs), and we must
+        # disallow some features.
+        # TODO: relax some of these
+        if NANS or not all_disallowed(['shared-everything', 'strings', 'stack-switching']):
+            return
+
+        output = run_d8_wasm(wasm, args=[second_wasm])
+
+        if output == IGNORE:
             return
 
         if output.startswith(INSTANTIATE_ERROR):
@@ -1834,43 +1871,17 @@ class Two(TestCaseHandler):
             note_ignored_vm_run('Two instantiate error')
             return
 
-        # Make sure that fuzz_shell.js actually executed all exports from both
-        # wasm files.
-        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
-        calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
-        if calls_in_output == 0:
-            print(f'warning: no calls in output. output:\n{output}')
-        assert calls_in_output == len(exports)
-
         output = fix_output(output)
 
-        # Optimize at least one of the two.
-        wasms = [wasm, second_wasm]
-        for i in range(random.randint(1, 2)):
-            wasm_index = random.randint(0, 1)
-            name = wasms[wasm_index]
-            new_name = name + f'.opt{i}.wasm'
-            opts = get_random_opts()
-            run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
-            wasms[wasm_index] = new_name
-
-        # Run again, and compare the output
         optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
         optimized_output = fix_output(optimized_output)
 
-        compare(output, optimized_output, 'Two')
+        compare(output, optimized_output, 'Two-V8')
 
     def can_run_on_wasm(self, wasm):
         # We cannot optimize wasm files we are going to link in closed world
-        # mode. We also cannot run shared-everything code in d8 yet. We also
-        # cannot compare if there are NaNs (as optimizations can lead to
-        # different outputs).
-        # TODO: relax some of these
-        if CLOSED_WORLD:
-            return False
-        if NANS:
-            return False
-        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
+        # mode.
+        return not CLOSED_WORLD
 
 
 # Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
@@ -2135,19 +2146,7 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
-    Split(),
-    RoundtripText(),
-    ClusterFuzz(),
     Two(),
-    PreserveImportsExports(),
-    BranchHintPreservation(),
 ]
 
 
