@@ -1674,7 +1674,7 @@ INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
 # like ClusterFuzz does, and that generates its own random data. If a bug is
 # caught here, it must be reduced manually.
 class ClusterFuzz(TestCaseHandler):
-    frequency = 1
+    frequency = 0.1
 
     # Use handle_pair over handle because we don't use these wasm files anyhow,
     # we generate our own using run.py. If we used handle, we'd be called twice
@@ -1780,7 +1780,9 @@ class ClusterFuzz(TestCaseHandler):
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
 class Two(TestCaseHandler):
-    frequency = 1 # 0.5
+    # Run at relatively high priority, as this is the main place we check cross-
+    # module interactions.
+    frequency = 1
 
     def handle(self, wasm):
         # Generate a second wasm file, unless we were given one (useful during
