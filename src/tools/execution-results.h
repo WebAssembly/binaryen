@@ -137,7 +137,7 @@ public:
           if (arguments[0].geti32() == 0) {
             throwJSException();
           } else {
-            auto payload = std::make_shared<ExnData>(wasmTag, arguments);
+            auto payload = std::make_shared<ExnData>(&wasmTag, arguments);
             throwException(WasmException{Literal(payload)});
           }
         } else if (import->base == "table-get") {
