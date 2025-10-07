@@ -45,6 +45,9 @@
 //   8. Export globals, tags, tables, and memories from the primary module and
 //      import them in the secondary module.
 //
+//   9. Run RemoveUnusedModuleElements pass on the secondary module in order to
+//      remove unused imports.
+//
 // Functions can be used or referenced three ways in a WebAssembly module: they
 // can be exported, called, or referenced with ref.func. The above procedure
 // introduces a layer of indirection to each of those mechanisms that removes
