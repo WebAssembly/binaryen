@@ -165,8 +165,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
         seen_sizes = []
         seen_exports = []
 
-        # Second wasm files are also emitted sometimes.
+        # Second wasm files are also emitted sometimes, and sometimes they
+        # import the primary module.
         seen_second_sizes = []
+        seen_primary_imports = 0
 
         # The number of struct.news appears in the metrics report like this:
         #
@@ -230,6 +232,12 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # sizes, is enough).
                 seen_second_sizes.append(os.path.getsize(second_binary_file))
 
+                # The primary module should be imported sometimes.
+                wat = subprocess.check_output(
+                    shared.WASM_DIS + [second_binary_file], text=True)
+                if '(import "primary" ' in wat:
+                    seen_primary_imports += 1
+
         print()
 
         print('struct.news can vary a lot, but should be ~10')
@@ -278,6 +286,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
+        # Primary imports appear in most second files.
+        print('number of primary imports should be around 22 +- 4')
+        print(f'number of primary_imports: {seen_primary_imports}')
+        assert seen_primary_imports >= 2, 'must see some primary imports'
+
+        print()
+
         # To check for interesting JS file contents, we'll note how many times
         # we build and run the wasm, and other things like JSPI.
         seen_builds = []
@@ -307,7 +322,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 js = f.read()
             seen_builds.append(js.count('build(binary);'))
             seen_calls.append(re.findall(call_exports_regex, js))
-            seen_second_builds.append(js.count('build(secondBinary);'))
+            seen_second_builds.append(js.count('build(secondBinary, true);'))
 
             # If JSPI is enabled, the async and await keywords should be
             # enabled (uncommented).

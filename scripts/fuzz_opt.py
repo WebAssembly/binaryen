@@ -602,6 +602,7 @@ def note_ignored_vm_run(reason, extra_text='', amount=1):
     ignored_vm_run_reasons[reason] += amount
 
 
+# Run a VM command, and filter out known issues.
 def run_vm(cmd):
     def filter_known_issues(output):
         known_issues = [
@@ -753,6 +754,8 @@ class TestCaseHandler:
     # care about their relationship.
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.handle(before_wasm)
+        # Add some visual space between the independent parts.
+        print('\n')
         self.handle(after_wasm)
 
     def can_run_on_wasm(self, wasm):
@@ -1791,6 +1794,9 @@ class Two(TestCaseHandler):
             second_input = abspath('second_input.dat')
             make_random_input(random_size(), second_input)
             args = [second_input, '-ttf', '-o', second_wasm]
+            # Most of the time, use the first wasm as an import to the second.
+            if random.random() < 0.8:
+                args += ['--fuzz-import=' + wasm]
             run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
 
         # The binaryen interpreter only supports a single file, so we run them
@@ -1812,6 +1818,20 @@ class Two(TestCaseHandler):
             # We may fail to instantiate the modules for valid reasons, such as
             # an active segment being out of bounds. There is no point to
             # continue in such cases, as no exports are called.
+
+            # But, check 'primary' is not in the V8 error. That might indicate a
+            # problem in the imports of --fuzz-import. To do this, run the d8
+            # command directly, without the usual filtering of run_d8_wasm.
+            cmd = [shared.V8] + shared.V8_OPTS + get_v8_extra_flags() + [
+                get_fuzz_shell_js(),
+                '--',
+                wasm,
+                second_wasm
+            ]
+            out = run(cmd)
+            assert '"primary"' not in out, out
+
+            note_ignored_vm_run('Two instantiate error')
             return
 
         # Make sure that fuzz_shell.js actually executed all exports from both
@@ -1845,6 +1865,7 @@ class Two(TestCaseHandler):
         # mode. We also cannot run shared-everything code in d8 yet. We also
         # cannot compare if there are NaNs (as optimizations can lead to
         # different outputs).
+        # TODO: relax some of these
         if CLOSED_WORLD:
             return False
         if NANS:

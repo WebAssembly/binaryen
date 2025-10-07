@@ -24,6 +24,7 @@
 #include "ir/type-updating.h"
 #include "support/string.h"
 #include "tools/fuzzing/heap-types.h"
+#include "wasm-io.h"
 
 namespace wasm {
 
@@ -361,7 +362,12 @@ void TranslateToFuzzReader::build() {
   addImportLoggingSupport();
   addImportCallingSupport();
   addImportSleepSupport();
+
+  // First, modify initial functions. That includes removing imports. Then,
+  // use the imported module, which are function imports that we allow.
   modifyInitialFunctions();
+  useImportedModule();
+
   processFunctions();
   if (fuzzParams->HANG_LIMIT > 0) {
     addHangLimitSupport();
@@ -1158,6 +1164,39 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
 }
 
+void TranslateToFuzzReader::useImportedModule() {
+  if (!importedModule) {
+    return;
+  }
+
+  Module imported;
+  imported.features = FeatureSet::All;
+  ModuleReader().read(*importedModule, imported);
+
+  // Add some of the module's exported functions as imports, at a random rate.
+  auto rate = upTo(100);
+  for (auto& exp : imported.exports) {
+    if (exp->kind != ExternalKind::Function || upTo(100) > rate) {
+      continue;
+    }
+
+    auto* func = imported.getFunction(*exp->getInternalName());
+    auto name =
+      Names::getValidFunctionName(wasm, "primary_" + exp->name.toString());
+    // We can import it as its own type, or any (declared) supertype.
+    auto type = getSuperType(func->type);
+    auto import = builder.makeFunction(name, type, {});
+    import->module = "primary";
+    import->base = exp->name;
+    wasm.addFunction(std::move(import));
+  }
+
+  // TODO: All other imports: globals, memories, tables, etc. We must, as we do
+  //       with functions, take care to run this *after* the removal of those
+  //       imports (as normally we remove them all, as the fuzzer harness will
+  //       not provide them, but an imported module is the exception).
+}
+
 TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(
   TranslateToFuzzReader& parent, Function* func)
   : parent(parent), func(func) {
@@ -1553,7 +1592,7 @@ Function* TranslateToFuzzReader::addFunction() {
     wasm.addExport(
       Builder::makeExport(func->name, func->name, ExternalKind::Function));
   }
-  // add some to an elem segment
+  // add some to an elem segment TODO we could do this for imported funcs too
   while (oneIn(3) && !random.finished()) {
     auto type = Type(func->type, NonNullable);
     std::vector<ElementSegment*> compatibleSegments;

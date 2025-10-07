@@ -123,6 +123,9 @@ def get_random_initial_content():
 # allows us to debug any such failures that we run into.
 retry = True
 
+# Temporary files to clean up
+temp_files = []
+
 
 # Generate a random wasm file, and return a string that creates a typed array of
 # those bytes, suitable for use in a JS file, in the form
@@ -130,9 +133,11 @@ retry = True
 #   new Uint8Array([..wasm_contents..])
 #
 # Receives the testcase index and the output dir.
-def get_wasm_contents(i, output_dir):
-    input_data_file_path = os.path.join(output_dir, f'{i}.input')
-    wasm_file_path = os.path.join(output_dir, f'{i}.wasm')
+#
+# Also returns the name of the wasm file.
+def get_wasm_contents(name, output_dir, extra_args=[]):
+    input_data_file_path = os.path.join(output_dir, f'{name}.input')
+    wasm_file_path = os.path.join(output_dir, f'{name}.wasm')
 
     # wasm-opt may fail to run in rare cases (when the fuzzer emits code it
     # detects as invalid). Just try again in such a case.
@@ -144,7 +149,7 @@ def get_wasm_contents(i, output_dir):
 
         # Generate a command to use wasm-opt with the proper args to generate
         # wasm content from the input data.
-        cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS
+        cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS + extra_args
         cmd += ['-o', wasm_file_path, input_data_file_path]
 
         # Sometimes use a file from the initial content testcases.
@@ -177,16 +182,19 @@ def get_wasm_contents(i, output_dir):
     with open(wasm_file_path, 'rb') as file:
         wasm_contents = file.read()
 
-    # Clean up temp files.
-    os.remove(wasm_file_path)
-    os.remove(input_data_file_path)
+    # Note temp files.
+    global temp_files
+    temp_files += [
+        wasm_file_path,
+        input_data_file_path
+    ]
 
     # Convert to a string, and wrap into a typed array.
     wasm_contents = ','.join([str(c) for c in wasm_contents])
     js = f'new Uint8Array([{wasm_contents}])'
     if initial_content:
         js = f'{js} /* using initial content {os.path.basename(initial_content)} */'
-    return js
+    return js, wasm_file_path
 
 
 # Returns the contents of a .js fuzz file, given the index of the testcase and
@@ -198,7 +206,7 @@ def get_js_file_contents(i, output_dir):
 
     # Prepend the wasm contents, so they are used (rather than the normal
     # mechanism where the wasm file's name is provided in argv).
-    wasm_contents = get_wasm_contents(i, output_dir)
+    wasm_contents, wasm_file = get_wasm_contents(i, output_dir)
     pre = f'var binary = {wasm_contents};\n'
     bytes = wasm_contents.count(',')
 
@@ -206,9 +214,14 @@ def get_js_file_contents(i, output_dir):
     has_second = False
     if system_random.random() < 0.333:
         has_second = True
-        wasm_contents = get_wasm_contents(i, output_dir)
-        pre += f'var secondBinary = {wasm_contents};\n'
-        bytes += wasm_contents.count(',')
+        # Most of the time, import the first file.
+        args = []
+        if system_random.random() < 0.8:
+            args = [f'--fuzz-import={wasm_file}']
+        second_wasm_contents, second_wasm_file = \
+            get_wasm_contents(f'{i}_second', output_dir, args)
+        pre += f'var secondBinary = {second_wasm_contents};\n'
+        bytes += second_wasm_contents.count(',')
 
     js = pre + '\n' + js
 
@@ -243,7 +256,9 @@ def get_js_file_contents(i, output_dir):
     ]
     if has_second:
         extra_js_operations += [
-            'build(secondBinary)',
+            # Build the second binary, marking it as second so it imports the
+            # first.
+            'build(secondBinary, true)',
         ]
 
     for i in range(num):
@@ -306,6 +321,11 @@ def main(argv):
         print(f'Created testcase: {testcase_file_path}')
 
     print(f'Created {num} testcases.')
+
+    for temp in temp_files:
+        os.remove(temp)
+
+    print('Cleaned up.')
 
 
 if __name__ == '__main__':

@@ -132,6 +132,9 @@ public:
   void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
     preserveImportsAndExports = preserveImportsAndExports_;
   }
+  void setImportedModule(std::string importedModule_) {
+    importedModule = importedModule_;
+  }
 
   void build();
 
@@ -156,6 +159,9 @@ private:
   // exports, which is useful if the tool using us only wants us to mutate an
   // existing testcase (using initial-content).
   bool preserveImportsAndExports = false;
+
+  // An optional module to import from.
+  std::optional<std::string> importedModule;
 
   // Whether we allow the fuzzer to add unreachable code when generating changes
   // to existing code. This is randomized during startup, but could be an option
@@ -364,6 +370,8 @@ private:
   void modFunction(Function* func);
 
   void addHangLimitChecks(Function* func);
+
+  void useImportedModule();
 
   // Recombination and mutation
 
