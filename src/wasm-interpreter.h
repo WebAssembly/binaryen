@@ -163,6 +163,8 @@ struct FuncData {
 // The data of a (ref exn) literal.
 struct ExnData {
   // The tag of this exn data.
+  // TODO: Add self, like in FuncData, to handle the case of a module that is
+  //       instantiated multiple times.
   Tag* tag;
 
   // The payload of this exn data.
