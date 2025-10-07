@@ -4388,7 +4388,7 @@ public:
   Flow visitThrow(Throw* curr) {
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{self()->getCanonicalTag(curr->tag), arguments});
+    throwException(WasmException{self()->makeExnData(self()->getCanonicalTag(curr->tag), arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
