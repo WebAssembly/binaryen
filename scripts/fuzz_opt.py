@@ -1866,21 +1866,10 @@ class Two(TestCaseHandler):
         if output == IGNORE:
             return
 
-        if output.startswith(INSTANTIATE_ERROR):
-            # Check 'primary' is not in the V8 error. That might indicate a
-            # problem in the imports of --fuzz-import. To do this, run the d8
-            # command directly, without the usual filtering of run_d8_wasm.
-            cmd = [shared.V8] + shared.V8_OPTS + get_v8_extra_flags() + [
-                get_fuzz_shell_js(),
-                '--',
-                wasm,
-                second_wasm
-            ]
-            out = run(cmd)
-            assert '"primary"' not in out, out
-
-            note_ignored_vm_run('Two-V8 instantiate error')
-            return
+        # We ruled out things we must ignore, like host limitations, and also
+        # exited earlier on a deterministic instantiation error, so there should
+        # be no such error in V8.
+        assert not output.startswith(INSTANTIATE_ERROR)
 
         output = fix_output(output)
 
