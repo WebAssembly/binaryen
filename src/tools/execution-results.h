@@ -84,7 +84,7 @@ public:
     }
   }
 
-  Tag* getHostTag(Name name) override {
+  Tag* getImportedTag(Name name) override {
     if (name == jsTag.name) {
       return &jsTag;
     } else if (name == wasmTag.name) {
