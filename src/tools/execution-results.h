@@ -335,8 +335,7 @@ struct ExecutionResults {
     interface.setModuleRunner(&instance);
   }
 
-  void callExports(Module& wasm,
-                   ModuleRunner& instance) {
+  void callExports(Module& wasm, ModuleRunner& instance) {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {
