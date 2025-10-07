@@ -1900,7 +1900,16 @@ public:
   Flow visitElemDrop(ElemDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitThrow(Throw* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrow(Throw* curr) {
+    // Single-module implementation. This is used from Precompute, for example.
+    // It is overriden in ModuleRunner to add logic for finding the proper
+    // imported tag (which single-module cases don't care about).
+    Literals arguments;
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
+    throwException(WasmException{
+      self()->makeExnData(self()->getModule()->getTag(curr->tag), arguments)});
+    WASM_UNREACHABLE("throw");
+  }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrowRef(ThrowRef* curr) {
     VISIT(flow, curr->exnref)
