@@ -4698,8 +4698,6 @@ public:
         // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
         if (auto* tag = currContinuation->exceptionTag) {
-          // XXX tag->name lacks cross-module support
-          // TODO: find the original tag through imports, like we do for globals
           throwException(WasmException{
             self()->makeExnData(tag, currContinuation->resumeArguments)});
         }
