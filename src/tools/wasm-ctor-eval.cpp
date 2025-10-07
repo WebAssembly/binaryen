@@ -317,7 +317,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                                 import->module.toString() + "." +
                                 import->base.toString() + extra);
     };
-    return Literal(std::make_shared<FuncData>(import->base, nullptr, f),
+    // Use a null instance because these are either host functions or imported
+    // from unknown sources.
+    return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
                    import->type);
   }
 

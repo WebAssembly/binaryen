@@ -79,6 +79,9 @@ public:
   }
 
   Literal getImportedFunction(Function* import) override {
+    if (linkedInstances.count(import->module)) {
+      return getImportInstance(import)->getExportedFunction(import->base);
+    }
     auto f = [import, this](const Literals& arguments) -> Flow {
       if (import->module == "fuzzing-support") {
         if (import->base.startsWith("log")) {
@@ -191,16 +194,14 @@ public:
         } else if (import->base == "getTempRet0") {
           return {Literal(state.tempRet0)};
         }
-      } else if (linkedInstances.count(import->module)) {
-        // This is from a recognized module.
-        return getImportInstance(import)->callExport(import->base, arguments);
       }
       // Anything else, we ignore.
       std::cerr << "[LoggingExternalInterface ignoring an unknown import "
                 << import->module << " . " << import->base << '\n';
       return {};
     };
-    return Literal(std::make_shared<FuncData>(import->base, nullptr, f),
+    // Use a null instance because this is a host function.
+    return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
                    import->type);
   }
 

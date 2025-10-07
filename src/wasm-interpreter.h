@@ -131,13 +131,16 @@ public:
 };
 
 struct FuncData {
-  // Name of the function in the module.
+  // Name of the function in the instance that defines it, if available, or
+  // otherwise the internal name of a function import.
   Name name;
 
-  // The interpreter instance we are in. This is only used for equality
-  // comparisons, as two functions are equal iff they have the same name and are
-  // in the same instance (in particular, we do *not* compare the |call| field
-  // below, which is an execution detail).
+  // The interpreter instance this function closes over, if any. (There might
+  // not be an interpreter instance if this is a host function or an import from
+  // an unknown source.) This is only used for equality comparisons, as two
+  // functions are equal iff they have the same name and are defined by the same
+  // instance (in particular, we do *not* compare the |call| field below, which
+  // is an execution detail).
   void* self;
 
   // A way to execute this function. We use this when it is called.
@@ -3170,7 +3173,7 @@ public:
     }
     return Literal(std::make_shared<FuncData>(
                      func->name,
-                     nullptr,
+                     this,
                      [this, func](const Literals& arguments) -> Flow {
                        return callFunction(func->name, arguments);
                      }),

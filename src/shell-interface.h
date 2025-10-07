@@ -137,8 +137,9 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     // TODO: We should perhaps restrict the types with which the well-known
     // functions can be imported.
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
+      // Use a null instance because these are host functions.
       return Literal(
-        std::make_shared<FuncData>(import->base,
+        std::make_shared<FuncData>(import->name,
                                    nullptr,
                                    [](const Literals& arguments) -> Flow {
                                      for (auto argument : arguments) {
@@ -149,7 +150,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
                                    }),
         import->type);
     } else if (import->module == ENV && import->base == EXIT) {
-      return Literal(std::make_shared<FuncData>(import->base,
+      return Literal(std::make_shared<FuncData>(import->name,
                                                 nullptr,
                                                 [](const Literals&) -> Flow {
                                                   // XXX hack for torture tests
