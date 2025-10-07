@@ -2913,9 +2913,7 @@ public:
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
     // among the linked ModuleRunner instances.
-    virtual Tag* getHostTag(Name name) {
-      WASM_UNREACHABLE("missing host tag");
-    }
+    virtual Tag* getHostTag(Name name) { WASM_UNREACHABLE("missing host tag"); }
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -4397,7 +4395,8 @@ public:
   Flow visitThrow(Throw* curr) {
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{self()->makeExnData(self()->getCanonicalTag(curr->tag), arguments)});
+    throwException(WasmException{
+      self()->makeExnData(self()->getCanonicalTag(curr->tag), arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
