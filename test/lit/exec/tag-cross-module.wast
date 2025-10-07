@@ -7,6 +7,8 @@
 (module
  (tag $tag (param structref))
 
+ (export "primary-tag" (tag $tag))
+
  (func $func (export "func") (result i32)
   (throw $tag
    (ref.null struct)
@@ -16,6 +18,9 @@
 
 ;; CHECK: [fuzz-exec] calling func
 ;; CHECK-NEXT: [exception thrown: tag nullref]
-;; CHECK-NEXT: [fuzz-exec] calling func2
+;; CHECK-NEXT: [fuzz-exec] calling func2-internal
 ;; CHECK-NEXT: [exception thrown: tag nullref]
+;; CHECK-NEXT: [fuzz-exec] calling func2-imported
+;; CHECK-NEXT: func2-imported => null
+
 

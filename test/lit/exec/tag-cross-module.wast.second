@@ -1,11 +1,26 @@
 (module
  (import "primary" "func" (func $import (result i32)))
 
+ (import "primary" "primary-tag" (tag $ptag (param structref)))
+
  (tag $tag (param (ref array)))
 
- (func $func2 (export "func2") (result (ref array))
+ (func $func2-internal (export "func2-internal") (result (ref array))
+  ;; Try to catch the internal tag. This fails to catch.
   (block $block (result (ref array))
    (try_table (catch $tag $block)
+    (drop
+     (call $import)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ (func $func2-imported (export "func2-imported") (result structref)
+  ;; Try to catch the imported tag. This successfully catches.
+  (block $block (result structref)
+   (try_table (catch $ptag $block)
     (drop
      (call $import)
     )
