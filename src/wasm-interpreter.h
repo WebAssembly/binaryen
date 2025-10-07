@@ -131,17 +131,20 @@ public:
 };
 
 struct FuncData {
-  // Name of the function in the module.
+  // Name of the function in the instance that defines it, if available, or
+  // otherwise the internal name of a function import.
   Name name;
 
-  // The interpreter instance we are in. This is only used for equality
-  // comparisons, as two functions are equal iff they have the same name and are
-  // in the same instance (in particular, we do *not* compare the |call| field
-  // below, which is an execution detail).
+  // The interpreter instance this function closes over, if any. (There might
+  // not be an interpreter instance if this is a host function or an import from
+  // an unknown source.) This is only used for equality comparisons, as two
+  // functions are equal iff they have the same name and are defined by the same
+  // instance (in particular, we do *not* compare the |call| field below, which
+  // is an execution detail).
   void* self;
 
   // A way to execute this function. We use this when it is called.
-  using Call = std::function<Flow(Literals)>;
+  using Call = std::function<Flow(const Literals&)>;
   Call call;
 
   FuncData(Name name, void* self = nullptr, Call call = {})
@@ -151,7 +154,7 @@ struct FuncData {
     return name == other.name && self == other.self;
   }
 
-  Flow doCall(Literals arguments) {
+  Flow doCall(const Literals& arguments) {
     assert(call);
     return call(arguments);
   }
@@ -2896,7 +2899,7 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Flow callImport(Function* import, const Literals& arguments) = 0;
+    virtual Literal getImportedFunction(Function* import) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -3153,17 +3156,32 @@ public:
 
   // call an exported function
   Flow callExport(Name name, const Literals& arguments) {
-    Export* export_ = wasm.getExportOrNull(name);
-    if (!export_ || export_->kind != ExternalKind::Function) {
-      externalInterface->trap("callExport not found");
-    }
-    return callFunction(*export_->getInternalName(), arguments);
+    return getExportedFunction(name).getFuncData()->doCall(arguments);
   }
 
   Flow callExport(Name name) { return callExport(name, Literals()); }
 
+  Literal getExportedFunction(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Function) {
+      externalInterface->trap("exported function not found");
+    }
+    Function* func = wasm.getFunctionOrNull(*export_->getInternalName());
+    assert(func);
+    if (func->imported()) {
+      return externalInterface->getImportedFunction(func);
+    }
+    return Literal(std::make_shared<FuncData>(
+                     func->name,
+                     this,
+                     [this, func](const Literals& arguments) -> Flow {
+                       return callFunction(func->name, arguments);
+                     }),
+                   func->type);
+  }
+
   // get an exported global
-  Literals getExport(Name name) {
+  Literals getExportedGlobal(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
       externalInterface->trap("getExport external not found");
@@ -4697,7 +4715,9 @@ public:
 
       if (function->imported()) {
         // TODO: Allow imported functions to tail call as well.
-        return externalInterface->callImport(function, arguments);
+        return externalInterface->getImportedFunction(function)
+          .getFuncData()
+          ->doCall(arguments);
       }
 
       FunctionScope scope(function, arguments, *self());
