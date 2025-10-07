@@ -1900,7 +1900,7 @@ public:
   Flow visitThrow(Throw* curr) {
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{makeExnData(curr->tag, arguments)});
+    throwException(WasmException{getCanonicalTag(curr->tag), arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
@@ -4347,7 +4347,7 @@ public:
 
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        auto* tag = self()->getModule()->getTag(curr->catchTags[i]);
+        auto* tag = self()->getCanonicalTag(curr->catchTags[i]);
         if (tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
@@ -4372,7 +4372,7 @@ public:
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
         if (!catchTag.is() ||
-            self()->getModule()->getTag(catchTag) == exnData->tag) {
+            self()->getCanonicalTag(catchTag) == exnData->tag) {
           Flow ret;
           ret.breakTo = curr->catchDests[i];
           if (catchTag.is()) {
