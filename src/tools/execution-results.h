@@ -42,13 +42,11 @@ private:
   Name exportedTable;
   Module& wasm;
 
-  // The name of the imported fuzzing tag for wasm.
-  Name wasmTag;
+  // The imported fuzzing tag for wasm.
+  Tag wasmTag;
 
-  // The name of the imported tag for js exceptions. If it is not imported, we
-  // use a default name here (which should differentiate it from any wasm
-  // exceptions).
-  Name jsTag = "__private";
+  // The imported tag for js exceptions.
+  Tag jsTag;
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
@@ -67,12 +65,20 @@ public:
       }
     }
 
+    // Default names for tags.
+    wasmTag.module = "fuzzing-support";
+    wasmTag.base = wasmTag.name = "wasmtag";
+
+    jsTag.module = "fuzzing-support";
+    jsTag.base = "jstag";
+    jsTag.name = "__private";
+
     for (auto& tag : wasm.tags) {
       if (tag->module == "fuzzing-support") {
         if (tag->base == "wasmtag") {
-          wasmTag = tag->name;
+          wasmTag.name = tag->name;
         } else if (tag->base == "jstag") {
-          jsTag = tag->name;
+          jsTag.name = tag->name;
         }
       }
     }
@@ -117,7 +123,7 @@ public:
         if (arguments[0].geti32() == 0) {
           throwJSException();
         } else {
-          auto payload = std::make_shared<ExnData>(wasmTag, arguments);
+          auto payload = std::make_shared<ExnData>(&wasmTag, arguments);
           throwException(WasmException{Literal(payload)});
         }
       } else if (import->base == "table-get") {
@@ -206,7 +212,7 @@ public:
     auto empty = HeapType(Struct{});
     auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
     Literals arguments = {inner.externalize()};
-    auto payload = std::make_shared<ExnData>(jsTag, arguments);
+    auto payload = std::make_shared<ExnData>(&jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
 
