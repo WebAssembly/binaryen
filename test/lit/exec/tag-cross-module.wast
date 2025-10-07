@@ -9,6 +9,8 @@
 (module
  (tag $tag (param structref))
 
+ ;; CHECK:      [fuzz-exec] calling func
+ ;; CHECK-NEXT: [exception thrown: tag nullref]
  (func $func (export "func") (result i32)
   (throw $tag
    (ref.null struct)
