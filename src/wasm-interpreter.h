@@ -3214,6 +3214,18 @@ public:
     return iter->second;
   }
 
+  Tag* getExportedTag(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Tag) {
+      externalInterface->trap("exported tag not found");
+    }
+    auto* tag = wasm.getTag(*export_->getInternalName());
+    if (tag->imported()) {
+      tag = externalInterface->getImportedTag(name);
+    }
+    return tag;
+  }
+
   std::string printFunctionStack() {
     std::string ret = "/== (binaryen interpreter stack trace)\n";
     for (int i = int(functionStack.size()) - 1; i >= 0; i--) {
@@ -3471,8 +3483,7 @@ protected:
         return externalInterface->getImportedTag(name);
       }
       inst = iter->second.get();
-      auto* tagExport = inst->wasm.getExport(tag->base);
-      tag = inst->wasm.getTag(*tagExport->getInternalName());
+      tag = inst->getExportedTag(tag->base);
     }
     return tag;
   }
