@@ -1897,12 +1897,7 @@ public:
   Flow visitElemDrop(ElemDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitThrow(Throw* curr) {
-    Literals arguments;
-    VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{getCanonicalTag(curr->tag), arguments)});
-    WASM_UNREACHABLE("throw");
-  }
+  Flow visitThrow(Throw* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrowRef(ThrowRef* curr) {
     VISIT(flow, curr->exnref)
@@ -4390,6 +4385,12 @@ public:
       throw;
     }
   }
+  Flow visitThrow(Throw* curr) {
+    Literals arguments;
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
+    throwException(WasmException{self()->getCanonicalTag(curr->tag), arguments});
+    WASM_UNREACHABLE("throw");
+  }
   Flow visitRethrow(Rethrow* curr) {
     for (int i = exceptionStack.size() - 1; i >= 0; i--) {
       if (exceptionStack[i].second == curr->target) {
@@ -4458,9 +4459,8 @@ public:
       assert(self()->restoredValuesMap.empty());
       // Throw, if we were resumed by resume_throw;
       if (auto* tag = currContinuation->exceptionTag) {
-        // XXX tag->name lacks cross-module support
         throwException(WasmException{
-          self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+          self()->makeExnData(tag, currContinuation->resumeArguments)});
       }
       return currContinuation->resumeArguments;
     }
