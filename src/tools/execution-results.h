@@ -84,6 +84,15 @@ public:
     }
   }
 
+  Tag* getHostTag(Name name) override {
+    if (name == jsTag.name) {
+      return &jsTag;
+    } else if (name == wasmTag.name) {
+      return &wasmTag;
+    }
+    Fatal() << "missing host tag " << name;
+  }
+
   Flow callImport(Function* import, const Literals& arguments) override {
     if (import->module == "fuzzing-support") {
       if (import->base.startsWith("log")) {

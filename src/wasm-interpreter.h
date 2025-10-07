@@ -2911,6 +2911,11 @@ public:
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
+    // Get the Tag instance for a tag implemented in the host, that is, not
+    // among the linked ModuleRunner instances.
+    virtual Tag* getHostTag(Name name) {
+      WASM_UNREACHABLE("missing host tag");
+    }
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -3434,7 +3439,11 @@ protected:
     auto* inst = self();
     auto* tag = inst->wasm.getTag(name);
     while (tag->imported()) {
-      inst = inst->linkedInstances.at(tag->module).get();
+      auto iter = inst->linkedInstances.find(tag->module);
+      if (iter == inst->linkedInstances.end()) {
+        return externalInterface->getHostTag(name);
+      }
+      inst = iter->second.get();
       auto* tagExport = inst->wasm.getExport(tag->base);
       tag = inst->wasm.getTag(*tagExport->getInternalName());
     }
