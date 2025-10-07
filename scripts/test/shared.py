@@ -493,7 +493,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
 ]
 
 
-def _filter_spec_test(test):
+def _can_run_spec_test(test):
     if 'testsuite' in test:
         for proposal in SPEC_TESTSUITE_PROPOSALS_TO_SKIP:
             if proposal in test:
@@ -502,7 +502,7 @@ def _filter_spec_test(test):
     return os.path.basename(test) not in SPEC_TESTS_TO_SKIP
 
 
-options.spec_tests = [t for t in options.spec_tests if _filter_spec_test(t)]
+options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
 
 
 # check utilities
