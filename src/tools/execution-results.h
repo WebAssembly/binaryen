@@ -293,6 +293,7 @@ struct ExecutionResults {
       // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
       auto instance = std::make_shared<ModuleRunner>(wasm, &interface);
+      instantiate(*instance, interface);
 
       // Instantiate the second, if there is one (we instantiate both before
       // running anything, so that we match the behavior of fuzz_shell.js).
@@ -306,13 +307,14 @@ struct ExecutionResults {
           loggings, *second, linkedInstances);
         secondInstance = std::make_shared<ModuleRunner>(
           *second, secondInterface.get(), linkedInstances);
+        instantiate(*secondInstance, *secondInterface);
       }
 
       // Run.
-      runModule(wasm, *instance, interface);
+      callExports(wasm, *instance);
       if (second) {
         std::cout << "[fuzz-exec] running second module\n";
-        runModule(*second, *secondInstance, *secondInterface);
+        callExports(*second, *secondInstance);
       }
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).
@@ -324,14 +326,17 @@ struct ExecutionResults {
     }
   }
 
-  void runModule(Module& wasm,
-                 ModuleRunner& instance,
-                 LoggingExternalInterface& interface) {
+  void instantiate(ModuleRunner& instance,
+                   LoggingExternalInterface& interface) {
     // This is not an optimization: we want to execute anything, even relaxed
     // SIMD instructions.
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
     instance.instantiate();
     interface.setModuleRunner(&instance);
+  }
+
+  void callExports(Module& wasm,
+                   ModuleRunner& instance) {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {
