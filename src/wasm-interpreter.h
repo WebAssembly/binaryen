@@ -332,7 +332,7 @@ protected:
   }
 
   // Same as makeGCData but for ExnData.
-  Literal makeExnData(Name tag, const Literals& payload) {
+  Literal makeExnData(Tag* tag, const Literals& payload) {
     auto allocation = std::make_shared<ExnData>(tag, payload);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
@@ -4347,7 +4347,8 @@ public:
 
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        if (curr->catchTags[i] == exnData->tag) {
+        auto* tag = self()->getModule()->getTag(curr->catchTags[i]);
+        if (tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
@@ -4370,7 +4371,8 @@ public:
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
-        if (!catchTag.is() || catchTag == exnData->tag) {
+        if (!catchTag.is() ||
+            self()->getModule()->getTag(catchTag) == exnData->tag) {
           Flow ret;
           ret.breakTo = curr->catchDests[i];
           if (catchTag.is()) {
@@ -4662,8 +4664,9 @@ public:
         self()->continuationStore->resuming = false;
         if (auto* tag = currContinuation->exceptionTag) {
           // XXX tag->name lacks cross-module support
+          // TODO: find the original tag through imports, like we do for globals
           throwException(WasmException{
-            self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+            self()->makeExnData(tag, currContinuation->resumeArguments)});
         }
       }
     }
