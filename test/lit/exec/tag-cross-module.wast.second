@@ -1,0 +1,17 @@
+(module
+ (import "primary" "func" (func $import (result i32)))
+
+ (tag $tag (param (ref array)))
+
+ (func $func2 (export "func2") (result (ref array))
+  (block $block (result (ref array))
+   (try_table (catch $tag $block)
+    (drop
+     (call $import)
+    )
+   )
+   (unreachable)
+  )
+ )
+)
+

@@ -157,6 +157,17 @@ struct FuncData {
   }
 };
 
+// The data of a (ref exn) literal.
+struct ExnData {
+  // The tag of this exn data.
+  Tag* tag;
+
+  // The payload of this exn data.
+  Literals payload;
+
+  ExnData(Tag* tag, Literals payload) : tag(tag), payload(payload) {}
+};
+
 // Suspend/resume support.
 //
 // As we operate directly on our structured IR, we do not have a program counter
