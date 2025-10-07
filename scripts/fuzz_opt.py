@@ -1814,7 +1814,7 @@ class Two(TestCaseHandler):
         output = run_bynterp(wasm, args=['--fuzz-exec-before', f'--fuzz-exec-second={second_wasm}'])
 
         # Check if we trapped during instantiation.
-        if traps_in_instantiation(output);
+        if traps_in_instantiation(output):
             # We may fail to instantiate the modules for valid reasons, such as
             # an active segment being out of bounds. There is no point to
             # continue in such cases, as no exports are called.
