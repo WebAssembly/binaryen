@@ -245,7 +245,7 @@ struct Shell {
       }
       auto& instance = it->second;
       try {
-        return instance->getExport(get->name);
+        return instance->getExportedGlobal(get->name);
       } catch (TrapException&) {
         return TrapResult{};
       } catch (...) {
