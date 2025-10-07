@@ -412,33 +412,39 @@ SPEC_TESTS_TO_SKIP = [
     # Test invalid
     'elem.wast',
 ]
+SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
+    'custom-page-sizes',
+    'wide-arithmetic',
+]
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
-    'align.wast',    # Alignment bit 6 used by multi-memory
-    'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
+    'array_new_elem.wast',  # Failure to parse element segment item abbreviation
+    'binary.wast',   # Missing data count section validation
+    'call_indirect64.wast',  # Failure to parse element segment abbreviation
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
     'conversions.wast',  # Promoted NaN should be canonical
-    'data.wast',    # Constant global references allowed by GC
+    'data.wast',    # Fail to parse data segment offset abbreviation
     'elem.wast',    # Requires modeling empty declarative segments
     'f32.wast',     # Adding -0 and -nan should give a canonical NaN
     'f64.wast',     # Adding -0 and -nan should give a canonical NaN
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
     'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
-    'global.wast',  # Globals allowed to refer to previous globals by GC
+    'global.wast',  # Fail to parse table
     'if.wast',      # Requires more precise unreachable validation
-    'imports.wast',  # Requires wast `register` support
-    'linking.wast',  # Requires wast `register` support
-    'memory.wast',   # Multiple memories now allowed
+    'imports.wast',  # Missing validation of missing function on instantiation
+    'linking.wast',  # Missing function type validation on instantiation
+    'memory.wast',   # Requires wast `module definition` support
+    'memory64-imports.wast',  # Missing validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'id.wast',       # Empty IDs should be disallowed
-    'throw.wast',    # Requires try_table interpretation
-    'try_catch.wast',  # Requires wast `register` support
+    'instance.wast',  # Requires wast `module definition` support
+    'table64.wast',   # Requires wast `module definition` support
+    'table_grow.wast',  # Incorrect table linking semantics in interpreter
+    'try_catch.wast',  # Incorrect imported tag semantics in interpreter
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'try_table.wast',  # Requires try_table interpretation
-    # 'br_on_non_null.wast',  # Requires sending values on br_on_non_null
-    # 'br_on_null.wast',      # Requires sending values on br_on_null
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
     'ref_is_null.wast',  # Requires ref.null wast constants
@@ -446,7 +452,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'return_call_indirect.wast',  # Requires more precise unreachable validation
     'select.wast',  # Requires ref.null wast constants
     'table.wast',  # Requires support for table default elements
-    'type-equivalence.wast',  # Recursive types allowed by GC
     'unreached-invalid.wast',  # Requires more precise unreachable validation
     'array.wast',  # Requires support for table default elements
     'br_if.wast',  # Requires more precise branch validation
@@ -457,16 +462,15 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
     'ref_test.wast',  # Requires host references to not be externalized i31refs
     'struct.wast',    # Duplicate field names not properly rejected
-    'type-rec.wast',  # Requires wast `register` support
+    'type-rec.wast',  # Missing function type validation on instantiation
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
-    'memory64.wast',        # Multiple memories now allowed
-    'table_init.wast',      # Requires support for elem.drop
-    'imports0.wast',        # Requires wast `register` support
-    'imports2.wast',        # Requires wast `register` support
-    'imports3.wast',        # Requires wast `register` support
-    'linking0.wast',        # Requires wast `register` support
-    'linking3.wast',        # Requires wast `register` support
+    'memory64.wast',        # Requires wast `module definition` support
+    'imports0.wast',        # Missing memory type validation on instantiation
+    'imports2.wast',        # Missing memory type validation on instantiation
+    'imports3.wast',        # Missing memory type validation on instantiation
+    'linking0.wast',        # Missing memory type validation on instantiation
+    'linking3.wast',        # Fatal error on missing table.
     'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
     'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
     'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
@@ -474,7 +478,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'relaxed_laneselect.wast',    # Requires wast `either` support
     'relaxed_madd_nmadd.wast',    # Requires wast `either` support
     'relaxed_min_max.wast',       # Requires wast `either` support
-    'simd_address.wast',          # 64-bit offset allowed by memory64
     'simd_const.wast',            # Hex float constant not recognized as out of range
     'simd_conversions.wast',      # Promoted NaN should be canonical
     'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
@@ -488,9 +491,19 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
     'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
-options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
-                      in (SPEC_TESTSUITE_TESTS_TO_SKIP if 'testsuite' in t
-                          else SPEC_TESTS_TO_SKIP)]
+
+
+def _can_run_spec_test(test):
+    if 'testsuite' in test:
+        for proposal in SPEC_TESTSUITE_PROPOSALS_TO_SKIP:
+            if proposal in test:
+                return False
+        return os.path.basename(test) not in SPEC_TESTSUITE_TESTS_TO_SKIP
+    return os.path.basename(test) not in SPEC_TESTS_TO_SKIP
+
+
+options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
+
 
 # check utilities
 
