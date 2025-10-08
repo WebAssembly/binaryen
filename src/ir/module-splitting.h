@@ -47,7 +47,12 @@ namespace wasm::ModuleSplitting {
 static const Name LOAD_SECONDARY_MODULE("__load_secondary_module");
 
 struct Config {
-  // Module names to the functions that should be in the modules.
+  // Module names to the set of functions to split into that secondary module.
+
+  // The set of functions to split into the secondary module. All others are
+  // kept in the primary module. Must not include the start function if it
+  // exists. May or may not include imported functions, which are always kept in
+  // the primary module regardless.
   std::map<Name, std::set<Name>> moduleToFuncs;
   // Whether to import placeholder functions into the primary module that will
   // be called when a secondary function is called before the secondary module

@@ -453,13 +453,13 @@ void multiSplitModule(const WasmSplitOptions& options) {
       secondary.name = Path::getBaseName(moduleName);
     }
     writeModule(secondary, moduleName, options);
-    if (options.symbolMap) {
-      writeSymbolMap(wasm, options.output + ".symbols");
-    }
-    if (options.placeholderMap) {
-      writePlaceholderMap(
-        wasm, splitResults.placeholderMap, options.output + ".placeholders");
-    }
+  }
+  if (options.symbolMap) {
+    writeSymbolMap(wasm, options.output + ".symbols");
+  }
+  if (options.placeholderMap) {
+    writePlaceholderMap(
+      wasm, splitResults.placeholderMap, options.output + ".placeholders");
   }
   writeModule(wasm, options.output, options);
 }

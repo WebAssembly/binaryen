@@ -292,7 +292,6 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
 
 struct ModuleSplitter {
   const Config& config;
-  // TODO unordered_map possible?
   std::map<Name, std::unique_ptr<Module>> secondaryPtrMap;
 
   Module& primary;
@@ -630,7 +629,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       // Add ref.func to the map when
       // 1. ref.func's target func is in one of the secondary modules and
       // 2. the current module is a different module (either the primary module
-      //    or a different second module)
+      //    or a different secondary module)
       if (parent.allSecondryFuncs.count(curr->func) &&
           (curModule == &parent.primary ||
            curModule->name != parent.funcToModule.at(curr->func))) {
@@ -725,32 +724,31 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
 
 void ModuleSplitter::exportImportCalledPrimaryFunctions() {
   // Find primary functions called/referred in the secondary module.
-  //   using RefFuncMap = InsertOrderedMap<Name, std::vector<RefFunc*>>;
   using CalledPrimaryToModules = std::map<Name, std::set<Module*>>;
   for (auto& [mod, secondaryPtr] : secondaryPtrMap) {
     Module* secondary = secondaryPtr.get();
     ModuleUtils::ParallelFunctionAnalysis<CalledPrimaryToModules> callCollector(
       *secondary,
-      [&](Function* func, CalledPrimaryToModules& calledPrimaryFuncs) {
+      [&](Function* func, CalledPrimaryToModules& calledPrimaryToModules) {
         struct CallCollector : PostWalker<CallCollector> {
           const std::unordered_set<Name>& primaryFuncs;
-          CalledPrimaryToModules& calledPrimaryFuncs;
+          CalledPrimaryToModules& calledPrimaryToModules;
           CallCollector(const std::unordered_set<Name>& primaryFuncs,
-                        CalledPrimaryToModules& calledPrimaryFuncs)
+                        CalledPrimaryToModules& calledPrimaryToModules)
             : primaryFuncs(primaryFuncs),
-              calledPrimaryFuncs(calledPrimaryFuncs) {}
+              calledPrimaryToModules(calledPrimaryToModules) {}
           void visitCall(Call* curr) {
             if (primaryFuncs.count(curr->target)) {
-              calledPrimaryFuncs[curr->target].insert(getModule());
+              calledPrimaryToModules[curr->target].insert(getModule());
             }
           }
           void visitRefFunc(RefFunc* curr) {
             if (primaryFuncs.count(curr->func)) {
-              calledPrimaryFuncs[curr->func].insert(getModule());
+              calledPrimaryToModules[curr->func].insert(getModule());
             }
           }
         };
-        CallCollector collector(primaryFuncs, calledPrimaryFuncs);
+        CallCollector collector(primaryFuncs, calledPrimaryToModules);
         collector.setModule(secondary);
         collector.walkFunction(func);
       });
