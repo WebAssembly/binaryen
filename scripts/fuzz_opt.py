@@ -1258,7 +1258,7 @@ def wasm_notices_export_changes(wasm):
         return True
 
     if '(import "fuzzing-support" "table-' in wat and '(export "table" (table ' in wat:
-        # The table-get/set imports are sensitive to the "table" export
+        # The table-get/set imports are sensitive to the "table" export.
         return True
 
     return False
