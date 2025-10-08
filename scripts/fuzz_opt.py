@@ -1858,9 +1858,13 @@ class Two(TestCaseHandler):
             run([in_bin('wasm-opt'), merged, '-o', merged_opt, '-all'] + opts)
             merged = merged_opt
 
-        merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
+        if not wasm_notices_export_changes(merged):
+            # wasm-merge combines exports, which can alter their indexes and
+            # lead to noticeable differences if the wasm is sensitive to such
+            # things. We only compare the output if that is not an issue.
+            merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
 
-        self.compare_to_merged_output(output, merged_output)
+            self.compare_to_merged_output(output, merged_output)
 
         # The rest of the testing here depends on being to optimize the
         # two modules independently, which closed-world can break.
@@ -1886,8 +1890,6 @@ class Two(TestCaseHandler):
         optimized_output = fix_output(optimized_output)
 
         compare(output, optimized_output, 'Two-Opt')
-
-        # marge and opt with closed world!
 
         # If we can, also test in V8. We also cannot compare if there are NaNs
         # (as optimizations can lead to different outputs), and we must
