@@ -1836,8 +1836,6 @@ class Two(TestCaseHandler):
             print(f'warning: no calls in output. output:\n{output}')
         assert calls_in_output == len(exports), exports
 
-        output = fix_output(output)
-
         # Merge the files and run them that way. The result should be the same,
         # even if we optimize.
         merged = abspath('merged.wasm')
@@ -1862,7 +1860,8 @@ class Two(TestCaseHandler):
 
         # Remove the extra logging that --fuzz-exec-second adds, we now have a
         # single module.
-        clean_output = output.replace('[fuzz-exec] running second module', '')
+        clean_output = output.replace('[fuzz-exec] running second module\n', '')
+        clean_output = fix_output(clean_output)
 
         compare(clean_output, merged_output, 'Two-Merged')
 
@@ -1870,6 +1869,9 @@ class Two(TestCaseHandler):
         # two modules independently, which closed-world can break.
         if CLOSED_WORLD:
             return
+
+        # Fix up the normal output for later comparisons.
+        output = fix_output(output)
 
         # We can optimize and compare the results. Optimize at least one of
         # the two.
