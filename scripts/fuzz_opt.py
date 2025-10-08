@@ -1840,7 +1840,7 @@ class Two(TestCaseHandler):
         # even if we optimize.
         merged = abspath('merged.wasm')
         run([in_bin('wasm-merge'), wasm, 'primary', second_wasm, 'secondary',
-            '-o', merged, '--skip-export-conflicts', '-all'])
+            '-o', merged, '--rename-export-conflicts', '-all'])
 
         # XXX export conflicts?
         # and:
@@ -1848,7 +1848,10 @@ class Two(TestCaseHandler):
         #    note_ignored_vm_run('dupe_tags')
         #    return
 
-        # Usually also optimize the merged module
+        # Usually also optimize the merged module. Optimizations are very
+        # interesting here, because after merging we can safely do even closed-
+        # world optimizations, making very aggressive changes that should still
+        # behave the same as before merging.
         if random.random() < 0.8:
             merged_opt = abspath('merged.opt.wasm')
             opts = get_random_opts()
@@ -1856,14 +1859,8 @@ class Two(TestCaseHandler):
             merged = merged_opt
 
         merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
-        merged_output = fix_output(merged_output)
 
-        # Remove the extra logging that --fuzz-exec-second adds, we now have a
-        # single module.
-        clean_output = output.replace('[fuzz-exec] running second module\n', '')
-        clean_output = fix_output(clean_output)
-
-        compare(clean_output, merged_output, 'Two-Merged')
+        compare_to_merged_output(output, merged_output)
 
         # The rest of the testing here depends on being to optimize the
         # two modules independently, which closed-world can break.
@@ -1915,6 +1912,58 @@ class Two(TestCaseHandler):
         optimized_output = fix_output(optimized_output)
 
         compare(output, optimized_output, 'Two-V8')
+
+    def compare_to_merged_output(self, output, merged_output):
+        # Comparing the original output from two files to the output after
+        # merging them is not trivial. First, remove the extra logging that
+        # --fuzz-exec-second adds.
+        output = output.replace('[fuzz-exec] running second module\n', '')
+
+        # Fix up both outputs.
+        output = fix_output(output)
+        merged_output = fix_output(merged_output)
+
+        # Finally, align the export names. We merged with
+        # --rename-export-conflicts, so that all exports remain exported,
+        # allowing a full comparison, but we do need to handle the different
+        # names. We do so by matching the export names in the logging.
+        output_lines = output.splitlines()
+        merged_output_lines = output.splitlines()
+
+        if len(output_lines) != len(merged_output_lines):
+            # The line counts don't even match. Just compare them, which will
+            # emit a nice error for that.
+            compare(output, merged_output, 'Two-Counts')
+            assert False, 'we should have errored on the line counts'
+
+        for i in range(len(output_lines)):
+            a = output_lines[i]
+            b = merged_output_lines[i]
+            if a == b:
+                continue
+            if a.startswith(FUZZ_EXEC_CALL_PREFIX):
+                # Fix up
+                #   [fuzz-exec] calling foo/bar
+                # for different foo/bar. Just copy the original.
+                assert b.startswith(FUZZ_EXEC_CALL_PREFIX)
+                merged_output_lines[i] = output_lines[i]
+                continue
+            if a.startswith(FUZZ_EXEC_NOTE_RESULT):
+                # Fix up
+                #   [fuzz-exec] note result: foo/bar => 42
+                # for different foo/bar. We do not want to copy the result here,
+                # which might differ (that would be a bug we want to find).
+                assert b.startswith(FUZZ_EXEC_NOTE_RESULT)
+                assert a.count(' => ') == 1
+                assert b.count(' => ') == 1
+                a_prefix, a_result = a.split(' => ')
+                b_prefix, b_result = b.split(' => ')
+                # Copy a's prefix with b's result.
+                merged_output_lines[i] = a_prefix + ' => ' + b_result
+
+        merged_output = '\n'.join(merged_output_lines)
+
+        compare(output, merged_output, 'Two-Merged')
 
 
 # Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
