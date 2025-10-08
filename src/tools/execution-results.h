@@ -65,32 +65,24 @@ public:
       }
     }
 
-    // Default names for tags.
+    // Set up tags. (Setting these values is useful for debugging - making the
+    // Tag objects valid - and also appears in fuzz-exec logging.)
     wasmTag.module = "fuzzing-support";
-    wasmTag.base = wasmTag.name = "wasmtag";
+    wasmTag.base = "wasmtag";
+    wasmTag.name = "imported-wasm-tag";
 
     jsTag.module = "fuzzing-support";
     jsTag.base = "jstag";
-    jsTag.name = "__private";
-
-    for (auto& tag : wasm.tags) {
-      if (tag->module == "fuzzing-support") {
-        if (tag->base == "wasmtag") {
-          wasmTag.name = tag->name;
-        } else if (tag->base == "jstag") {
-          jsTag.name = tag->name;
-        }
-      }
-    }
+    jsTag.name = "imported-js-tag";
   }
 
-  Tag* getImportedTag(Name name) override {
-    if (name == jsTag.name) {
-      return &jsTag;
-    } else if (name == wasmTag.name) {
-      return &wasmTag;
+  Tag* getImportedTag(Tag* tag) override {
+    for (auto* imported : {&wasmTag, &jsTag}) {
+      if (imported->module == tag->module && imported->base == tag->base) {
+        return imported;
+      }
     }
-    Fatal() << "missing host tag " << name;
+    Fatal() << "missing host tag " << tag->module << '.' << tag->base;
   }
 
   Literal getImportedFunction(Function* import) override {

@@ -22,7 +22,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling handled
- ;; CHECK-NEXT: [exception thrown: __private externref]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $handled (export "handled")
   (drop
    (block $block (result (ref $cont))

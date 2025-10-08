@@ -2926,8 +2926,8 @@ public:
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
-    // among the linked ModuleRunner instances.
-    virtual Tag* getImportedTag(Name name) {
+    // among the linked ModuleRunner instances, but imported from the host.
+    virtual Tag* getImportedTag(Tag* tag) {
       WASM_UNREACHABLE("missing imported tag");
     }
 
@@ -3223,7 +3223,7 @@ public:
     }
     auto* tag = wasm.getTag(*export_->getInternalName());
     if (tag->imported()) {
-      tag = externalInterface->getImportedTag(name);
+      tag = externalInterface->getImportedTag(tag);
     }
     return tag;
   }
@@ -3484,7 +3484,7 @@ protected:
     }
     auto iter = inst->linkedInstances.find(tag->module);
     if (iter == inst->linkedInstances.end()) {
-      return externalInterface->getImportedTag(name);
+      return externalInterface->getImportedTag(tag);
     }
     inst = iter->second.get();
     return inst->getExportedTag(tag->base);
