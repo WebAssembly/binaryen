@@ -3,7 +3,7 @@
 
  (import "primary" "sub" (func $import (type $second-super)))
 
- (func $b
+ (func $caller (export "caller")
   (call_ref $second-super
    (ref.func $import)
   )

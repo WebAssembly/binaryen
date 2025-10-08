@@ -5,10 +5,27 @@
 ;; Export a function with a subtype. It is imported using the supertype, and
 ;; after we merge, the type must be updated.
 (module
+ ;; CHECK:      (type $super (sub (func)))
  (type $super (sub (func)))
+ ;; CHECK:      (type $sub (sub final $super (func)))
  (type $sub (sub final $super (func)))
 
+ ;; CHECK:      (type $2 (func))
+
+ ;; CHECK:      (elem declare func $sub)
+
+ ;; CHECK:      (export "sub" (func $sub))
+
+ ;; CHECK:      (export "caller" (func $caller))
+
+ ;; CHECK:      (func $sub (type $sub)
+ ;; CHECK-NEXT: )
  (func $sub (export "sub") (type $sub)
  )
 )
 
+;; CHECK:      (func $caller (type $2)
+;; CHECK-NEXT:  (call_ref $super
+;; CHECK-NEXT:   (ref.func $sub)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
