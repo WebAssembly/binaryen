@@ -1928,7 +1928,7 @@ class Two(TestCaseHandler):
         # allowing a full comparison, but we do need to handle the different
         # names. We do so by matching the export names in the logging.
         output_lines = output.splitlines()
-        merged_output_lines = output.splitlines()
+        merged_output_lines = merged_output.splitlines()
 
         if len(output_lines) != len(merged_output_lines):
             # The line counts don't even match. Just compare them, which will
@@ -1947,8 +1947,7 @@ class Two(TestCaseHandler):
                 # for different foo/bar. Just copy the original.
                 assert b.startswith(FUZZ_EXEC_CALL_PREFIX)
                 merged_output_lines[i] = output_lines[i]
-                continue
-            if a.startswith(FUZZ_EXEC_NOTE_RESULT):
+            elif a.startswith(FUZZ_EXEC_NOTE_RESULT):
                 # Fix up
                 #   [fuzz-exec] note result: foo/bar => 42
                 # for different foo/bar. We do not want to copy the result here,
