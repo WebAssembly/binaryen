@@ -1914,7 +1914,7 @@ public:
       // module we can't tell if two tags are the same or not.
       return NONCONSTANT_FLOW;
     }
-    throwException(WasmException{tag, self()->makeExnData(tag, arguments)});
+    throwException(WasmException{self()->makeExnData(tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
