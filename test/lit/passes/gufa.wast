@@ -1154,3 +1154,108 @@
     )
   )
 )
+
+;; We cannot know the types of imported functions, so we should not be able to
+;; optimize this exact cast.
+(module
+  ;; CHECK:      (type $func (sub (func)))
+  (type $func (sub (func)))
+  (type $sub (sub $func (func)))
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (import "" "" (func $f (type $func)))
+  (import "" "" (func $f (type $func)))
+  ;; CHECK:      (elem declare func $f)
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $1) (result i32)
+  ;; CHECK-NEXT:  (ref.test (ref (exact $func))
+  ;; CHECK-NEXT:   (ref.func $f)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (result i32)
+    (ref.test (ref (exact $func))
+      (ref.func $f)
+    )
+  )
+)
+
+;; As above, but now the cast is to a subtype. We should not be able to optimize
+;; this either.
+;; TODO: We misoptimize this. Fix it!
+(module
+  ;; CHECK:      (type $func (sub (func)))
+  (type $func (sub (func)))
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (type $sub (sub $func (func)))
+  (type $sub (sub $func (func)))
+  ;; CHECK:      (import "" "" (func $f (type $func)))
+  (import "" "" (func $f (type $func)))
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $1) (result i32)
+  ;; CHECK-NEXT:  (ref.test (ref $sub)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (result i32)
+    (ref.test (ref $sub)
+      ;; TODO: Remove this block. It is currently necessary because we
+      ;; incorrectly type the function reference as exact, so without the block
+      ;; the cast type above would be "improved" to (ref nofunc).
+      (block (result (ref $func))
+        (ref.func $f)
+      )
+    )
+  )
+)
+
+;; This is another exact cast, but now the imported type is final, so we know
+;; it will succeed.
+(module
+  ;; CHECK:      (type $func (func))
+  (type $func (sub final (func)))
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (import "" "" (func $f (type $func)))
+  (import "" "" (func $f (type $func)))
+  ;; CHECK:      (elem declare func $f)
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $1) (result i32)
+  ;; CHECK-NEXT:  (ref.test (ref (exact $func))
+  ;; CHECK-NEXT:   (ref.func $f)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (result i32)
+    (ref.test (ref (exact $func))
+      (ref.func $f)
+    )
+  )
+)
+
+;; Now we use a ref.cast instead of a ref.test with the exact cast to the final
+;; type. We cannot optimize even though we know the cast will succeed because
+;; the Wasm type of the function reference is inexact.
+;; TODO: We misoptimize here, too!
+(module
+  ;; CHECK:      (type $func (func))
+  (type $func (sub final (func)))
+  ;; CHECK:      (type $1 (func (result funcref)))
+
+  ;; CHECK:      (import "" "" (func $f (type $func)))
+  (import "" "" (func $f (type $func)))
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $1) (result funcref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (result funcref)
+    (ref.cast (ref (exact $func))
+      (ref.func $f)
+    )
+  )
+)

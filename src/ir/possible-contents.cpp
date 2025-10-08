@@ -27,6 +27,7 @@
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "support/insert_ordered.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace std {
@@ -641,9 +642,9 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    addRoot(curr,
-            PossibleContents::literal(
-              Literal::makeFunc(curr->func, curr->type.getHeapType())));
+    addRoot(
+      curr,
+      PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
 
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
@@ -1859,8 +1860,8 @@ void TNHOracle::infer() {
         //       as other opts will make this call direct later, after which a
         //       lot of other optimizations become possible anyhow.
         auto target = possibleTargets[0]->name;
-        info.inferences[call->target] = PossibleContents::literal(
-          Literal::makeFunc(target, wasm.getFunction(target)->type));
+        info.inferences[call->target] =
+          PossibleContents::literal(Literal::makeFunc(target, wasm));
         continue;
       }
 

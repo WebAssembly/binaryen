@@ -346,7 +346,7 @@ public:
     Execute,
   };
 
-  Literal makeFuncData(Name name, HeapType type) {
+  Literal makeFuncData(Name name, Type type) {
     // Identify the interpreter, but do not provide a way to actually call the
     // function.
     auto allocation = std::make_shared<FuncData>(name, this);
@@ -1870,7 +1870,7 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
-    return self()->makeFuncData(curr->func, curr->type.getHeapType());
+    return self()->makeFuncData(curr->func, curr->type);
   }
   Flow visitRefEq(RefEq* curr) {
     VISIT(flow, curr->left)
@@ -3177,7 +3177,7 @@ public:
                      [this, func](const Literals& arguments) -> Flow {
                        return callFunction(func->name, arguments);
                      }),
-                   func->type);
+                   Type(func->type, NonNullable, Exact));
   }
 
   // get an exported global
@@ -3459,12 +3459,12 @@ public:
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
     auto* func = wasm.getFunction(curr->target);
-    auto funcType = func->type;
+    auto funcType = Type(func->type, NonNullable, Exact);
     if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
       // The call.without.effects intrinsic is a call to an import that actually
       // calls the given function reference that is the final argument.
       target = arguments.back().getFunc();
-      funcType = arguments.back().type.getHeapType();
+      funcType = funcType.with(arguments.back().type.getHeapType());
       arguments.pop_back();
     }
 
@@ -4419,8 +4419,9 @@ public:
     }
     auto funcName = funcValue.getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
+    auto funcType = Type(func->type, NonNullable, Exact);
     return Literal(std::make_shared<ContData>(
-      self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
+      self()->makeFuncData(funcName, funcType), curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
@@ -4767,7 +4768,8 @@ public:
         // not the original function that was called, and the original has been
         // returned from already; we should call the last return_called
         // function).
-        auto target = self()->makeFuncData(name, function->type);
+        auto funcType = Type(function->type, NonNullable, Exact);
+        auto target = self()->makeFuncData(name, funcType);
         self()->pushResumeEntry({target}, "function-target");
       }
 
@@ -4916,7 +4918,7 @@ public:
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
 
-  Literal makeFuncData(Name name, HeapType type) {
+  Literal makeFuncData(Name name, Type type) {
     // As the super's |makeFuncData|, but here we also provide a way to
     // actually call the function.
     auto allocation =
