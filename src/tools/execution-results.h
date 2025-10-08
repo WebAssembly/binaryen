@@ -70,10 +70,12 @@ public:
     wasmTag.module = "fuzzing-support";
     wasmTag.base = "wasmtag";
     wasmTag.name = "imported-wasm-tag";
+    wasmTag.type = Signature(Type::i32, Type::none);
 
     jsTag.module = "fuzzing-support";
     jsTag.base = "jstag";
     jsTag.name = "imported-js-tag";
+    jsTag.type = Signature(Type(HeapType::ext, Nullable), Type::none);
   }
 
   Tag* getImportedTag(Tag* tag) override {
