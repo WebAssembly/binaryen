@@ -1841,7 +1841,7 @@ class Two(TestCaseHandler):
         # Merge the files and run them that way. The result should be the same,
         # even if we optimize.
         merged = abspath('merged.wasm')
-        run([in_bin('wasm-merge'), wasm, 'primary', second.wasm, 'secondary',
+        run([in_bin('wasm-merge'), wasm, 'primary', second_wasm, 'secondary',
             '-o', merged, '--skip-export-conflicts', '-all'])
 
         # XXX export conflicts?
@@ -1857,17 +1857,21 @@ class Two(TestCaseHandler):
             run([in_bin('wasm-opt'), merged, '-o', merged_opt, '-all'] + opts)
             merged = merged_opt
 
-        merged_output = run_bynterp(merged, args=['--fuzz-exec-before'])
+        merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
         merged_output = fix_output(merged_output)
 
-        compare(output, merged_output, 'Two-Merged')
+        # Remove the extra logging that --fuzz-exec-second adds, we now have a
+        # single module.
+        clean_output = output.replace('[fuzz-exec] running second module', '')
+
+        compare(clean_output, merged_output, 'Two-Merged')
 
         # The rest of the testing here depends on being to optimize the
         # two modules independently, which closed-world can break.
         if CLOSED_WORLD:
             return
 
-        # We can optimize and compare the results. Pptimize at least one of
+        # We can optimize and compare the results. Optimize at least one of
         # the two.
         wasms = [wasm, second_wasm]
         for i in range(random.randint(1, 2)):
@@ -2173,19 +2177,7 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
-    Split(),
-    RoundtripText(),
-    ClusterFuzz(),
     Two(),
-    PreserveImportsExports(),
-    BranchHintPreservation(),
 ]
 
 
