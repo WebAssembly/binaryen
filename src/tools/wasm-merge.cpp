@@ -99,6 +99,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/utils.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "wasm-builder.h"
@@ -557,6 +558,30 @@ void fuseImportsAndExports(const PassOptions& options) {
   updateNames(merged, kindNameUpdates);
 }
 
+// Things may have been imported using supertypes, which means they can get
+// refined after merging.
+void updateTypes(Module& wasm) {
+  struct Updater : public WalkerPass<PostWalker<Updater>> {
+    bool isFunctionParallel() override { return true; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Updater>();
+    }
+
+    void visitRefFunc(RefFunc* curr) {
+      curr->finalize(getModule()->getFunction(curr->func)->type);
+    }
+
+    void visitFunction(Function* curr) {
+      ReFinalize().walkFunctionInModule(curr, getModule());
+    }
+  } updater;
+
+  PassRunner runner(&wasm);
+  updater.run(&runner, &wasm);
+  updater.runOnModuleCode(&runner, &wasm);
+}
+
 // Merges an input module into an existing target module. The input module can
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
@@ -764,6 +789,9 @@ Input source maps can be specified by adding an -ism option right after the modu
   // Fuse imports and exports now that everything is all together in the merged
   // module.
   fuseImportsAndExports(options.passOptions);
+
+  // Update types after combing and linking everything.
+  updateTypes(merged);
 
   {
     PassRunner passRunner(&merged);
