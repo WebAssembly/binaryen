@@ -2927,7 +2927,9 @@ public:
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
     // among the linked ModuleRunner instances.
-    virtual Tag* getImportedTag(Name name) { WASM_UNREACHABLE("missing imported tag"); }
+    virtual Tag* getImportedTag(Name name) {
+      WASM_UNREACHABLE("missing imported tag");
+    }
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
