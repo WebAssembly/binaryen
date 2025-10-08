@@ -1908,8 +1908,13 @@ public:
     // imported tag (which single-module cases don't care about).
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{
-      self()->makeExnData(self()->getModule()->getTag(curr->tag), arguments)});
+    auto* tag = self()->getModule()->getTag(curr->tag);
+    if (tag->imported()) {
+      // The same tag can be imported twice, so by looking at only the current
+      // module we can't tell if two tags are the same or not.
+      return NONCONSTANT_FLOW;
+    }
+    throwException(WasmException{tag, self()->makeExnData(tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
