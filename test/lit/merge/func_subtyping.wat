@@ -3,7 +3,8 @@
 ;; RUN: wasm-merge %s primary %s.second secondary --skip-export-conflicts -all -S -o - | filecheck %s
 
 ;; Export a function with a subtype. It is imported using the supertype, and
-;; after we merge, the type must be updated.
+;; after we merge, the type must be updated. That update will then propagate to
+;; the call_ref.
 (module
  ;; CHECK:      (type $super (sub (func)))
  (type $super (sub (func)))
@@ -25,7 +26,7 @@
 )
 
 ;; CHECK:      (func $caller (type $2)
-;; CHECK-NEXT:  (call_ref $super
+;; CHECK-NEXT:  (call_ref $sub
 ;; CHECK-NEXT:   (ref.func $sub)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
