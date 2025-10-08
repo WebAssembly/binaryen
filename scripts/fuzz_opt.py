@@ -1860,7 +1860,7 @@ class Two(TestCaseHandler):
 
         merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
 
-        compare_to_merged_output(output, merged_output)
+        self.compare_to_merged_output(output, merged_output)
 
         # The rest of the testing here depends on being to optimize the
         # two modules independently, which closed-world can break.
