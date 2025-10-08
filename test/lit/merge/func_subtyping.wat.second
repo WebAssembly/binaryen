@@ -1,0 +1,12 @@
+(module
+ (type $second-super (sub (func)))
+
+ (import "primary" "sub" (func $import (type $second-super)))
+
+ (func $b
+  (call_ref $second-super
+   (ref.func $import)
+  )
+ )
+)
+
