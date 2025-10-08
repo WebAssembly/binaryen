@@ -3479,15 +3479,15 @@ protected:
   Tag* getCanonicalTag(Name name) {
     auto* inst = self();
     auto* tag = inst->wasm.getTag(name);
-    while (tag->imported()) {
-      auto iter = inst->linkedInstances.find(tag->module);
-      if (iter == inst->linkedInstances.end()) {
-        return externalInterface->getImportedTag(name);
-      }
-      inst = iter->second.get();
-      tag = inst->getExportedTag(tag->base);
+    if (!tag->imported()) {
+      return tag;
     }
-    return tag;
+    auto iter = inst->linkedInstances.find(tag->module);
+    if (iter == inst->linkedInstances.end()) {
+      return externalInterface->getImportedTag(name);
+    }
+    inst = iter->second.get();
+    return inst->getExportedTag(tag->base);
   }
 
 public:
