@@ -1062,6 +1062,12 @@ void TranslateToFuzzReader::addImportTableSupport() {
     return;
   }
 
+  // Do not always export the table even if we can, as it inhibits some things
+  // in the fuzzer.
+  if (!random.oneIn(3)) {
+    return;
+  }
+
   // Export the table.
   wasm.addExport(
     builder.makeExport("table", funcrefTableName, ExternalKind::Table));

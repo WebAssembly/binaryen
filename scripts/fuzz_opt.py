@@ -1247,14 +1247,21 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
     run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
 
 
-# Check if a wasm file would notice changes to exports. Normally removing an
-# export that is not called, for example, would not be observable, but if the
-# "call-export*" functions are present then such changes can break us.
+# Check if a wasm file would notice normally-unnoticeable changes to exports,
+# such as removing one that is not called.
 def wasm_notices_export_changes(wasm):
-    # we could be more precise here and disassemble the wasm to look for an
-    # actual import with name "call-export*", but looking for the string should
-    # have practically no false positives.
-    return b'call-export' in open(wasm, 'rb').read()
+    wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+
+    if '(import "fuzzing-support" "call-export' in wat:
+        # The call-export* imports are sensitive to the number and identity of
+        # exports.
+        return True
+
+    if '(import "fuzzing-support" "table-' in wat and '(export "table" (table ' in wat:
+        # The table-get/set imports are sensitive to the "table" export
+        return True
+
+    return False
 
 
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
