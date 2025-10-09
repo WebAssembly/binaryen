@@ -3561,15 +3561,14 @@ public:
       trap("non-function target in call_indirect");
     }
 
-    auto* func = self()->getModule()->getFunction(funcref.getFunc());
-    if (!HeapType::isSubType(func->type, curr->heapType)) {
+    if (!HeapType::isSubType(funcref.type.getHeapType(), curr->heapType)) {
       trap("callIndirect: non-subtype");
     }
 
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(calling table)\n";
 #endif
-    Flow ret = callFunction(funcref.getFunc(), arguments);
+    Flow ret = funcref.getFuncData()->doCall(arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
