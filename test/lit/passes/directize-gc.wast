@@ -18,13 +18,13 @@
  ;; CHECK:      (table $table 93 funcref)
  (table $table 93 funcref)
 
- ;; CHECK:      (elem $elem (i32.const 0) $sub)
- (elem $elem (i32.const 0) $sub)
+ ;; CHECK:      (elem $elem (i32.const 0) $target)
+ (elem $elem (i32.const 0) $target)
 
  ;; CHECK:      (export "caller" (func $caller))
 
  ;; CHECK:      (func $caller (type $0)
- ;; CHECK-NEXT:  (call $sub)
+ ;; CHECK-NEXT:  (call $target)
  ;; CHECK-NEXT: )
  (func $caller (export "caller")
   ;; This turns into a direct call.
@@ -33,9 +33,9 @@
   )
  )
 
- ;; CHECK:      (func $sub (type $sub)
+ ;; CHECK:      (func $target (type $sub)
  ;; CHECK-NEXT: )
- (func $sub (type $sub)
+ (func $target (type $sub)
  )
 )
 
@@ -47,15 +47,15 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (func)))
   (type $super (sub (func)))
-  ;; CHECK:       (type $sub (sub (func)))
-  (type $sub (sub (func)))
+  ;; CHECK:       (type $other (sub (func)))
+  (type $other (sub (func)))
  )
 
  ;; CHECK:      (table $table 93 funcref)
  (table $table 93 funcref)
 
- ;; CHECK:      (elem $elem (i32.const 0) $sub)
- (elem $elem (i32.const 0) $sub)
+ ;; CHECK:      (elem $elem (i32.const 0) $target)
+ (elem $elem (i32.const 0) $target)
 
  ;; CHECK:      (export "caller" (func $caller))
 
@@ -69,9 +69,46 @@
   )
  )
 
- ;; CHECK:      (func $sub (type $sub)
+ ;; CHECK:      (func $target (type $other)
  ;; CHECK-NEXT: )
- (func $sub (type $sub)
+ (func $target (type $other)
+ )
+)
+
+;; Reverse the subtyping: Call a supertype with a subtype. This call should
+;; fail.
+(module
+ (rec
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:       (type $sub (sub final $super (func)))
+  (type $sub (sub final $super (func)))
+ )
+
+ ;; CHECK:      (table $table 93 funcref)
+ (table $table 93 funcref)
+
+ ;; CHECK:      (elem $elem (i32.const 0) $target)
+ (elem $elem (i32.const 0) $target)
+
+ ;; CHECK:      (export "caller" (func $caller))
+
+ ;; CHECK:      (func $caller (type $0)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $caller (export "caller")
+  ;; This turns into a direct call.
+  (call_indirect (type $sub)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $target (type $super)
+ ;; CHECK-NEXT: )
+ (func $target (type $super)
  )
 )
 
