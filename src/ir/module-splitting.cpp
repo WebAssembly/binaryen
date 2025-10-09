@@ -26,9 +26,9 @@
 //      placeholder function (and eventually to the original secondary
 //      function), allocating a new table slot for the placeholder if necessary.
 //
-//   4. Replace all references to each secondary module's functions in the primary module's and
-//      each other secondary module's table segments with references to imported
-//      placeholder functions.
+//   4. Replace all references to each secondary module's functions in the
+//      primary module's and each other secondary module's table segments with
+//      references to imported placeholder functions.
 //
 //   5. Rewrite direct calls from primary functions to secondary functions to be
 //      indirect calls to their placeholder functions (and eventually to their
@@ -473,14 +473,14 @@ void ModuleSplitter::classifyFunctions() {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
-      allSecondryFuncs.insert(func->name);
+      allSecondaryFuncs.insert(func->name);
     }
   }
 
   // Move functions to each secondary module and create the reverse map
-  for (auto& [mod, funcs] : config.moduleToFuncs) {
+  for (auto& [mod, configFuncs] : config.moduleToFuncs) {
     auto& funcs = moduleToFuncs[mod];
-    for (auto func : funcs) {
+    for (auto func : configFuncs) {
       if (allSecondaryFuncs.count(func)) {
         funcs.insert(func);
       }
@@ -588,7 +588,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        !allSecondryFuncs.count(*ex->getInternalName())) {
+        !allSecondaryFuncs.count(*ex->getInternalName())) {
       continue;
     }
     Name trampoline = getTrampoline(*ex->getInternalName());
@@ -630,9 +630,9 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       // 1. ref.func's target func is in one of the secondary modules and
       // 2. the current module is a different module (either the primary module
       //    or a different secondary module)
-      if (parent.allSecondryFuncs.count(curr->func) &&
-          (curModule == &parent.primary ||
-           curModule->name != parent.funcToModule.at(curr->func))) {
+      if (parent.allSecondaryFuncs.count(curr->func) &&
+          (currModule == &parent.primary ||
+           currModule->name != parent.funcToModule.at(curr->func))) {
         map[curr->func].push_back(curr);
       }
     }
@@ -689,14 +689,14 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
     CallIndirector(ModuleSplitter& parent) : parent(parent) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
-      if (!parent.allSecondryFuncs.count(curr->target)) {
+      if (!parent.allSecondaryFuncs.count(curr->target)) {
         return;
       }
       // Return if the current module is the same module as the call's target,
       // because we don't need a call_indirect within the same module.
       Module* currModule = getModule();
-      if (curModule != &parent.primary &&
-          curModule->name == parent.funcToModule.at(curr->target)) {
+      if (currModule != &parent.primary &&
+          currModule->name == parent.funcToModule.at(curr->target)) {
         return;
       }
 
@@ -780,7 +780,7 @@ void ModuleSplitter::setupTablePatching() {
       if (!ref) {
         return;
       }
-      if (!allSecondryFuncs.count(ref->func)) {
+      if (!allSecondaryFuncs.count(ref->func)) {
         return;
       }
       assert(table == tableManager.activeTable->name);
