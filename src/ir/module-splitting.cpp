@@ -748,9 +748,8 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
             }
           }
         };
-        CallCollector collector(primaryFuncs, calledPrimaryToModules);
-        collector.setModule(secondary);
-        collector.walkFunction(func);
+        CallCollector(primaryFuncs, calledPrimaryToModules)
+          .walkFunctionInModule(func, secondary);
       });
 
     CalledPrimaryToModules calledPrimaryToModules;
