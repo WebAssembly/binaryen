@@ -559,7 +559,7 @@ Name ModuleSplitter::getTrampoline(Name funcName) {
   auto func = builder.makeFunction(trampoline, oldFunc->type, {}, call);
   func->hasExplicitName = oldFunc->hasExplicitName;
   primary.addFunction(std::move(func));
-  primaryFuncs.insert(trampoline);
+ // primaryFuncs.insert(trampoline);
   return trampoline;
 }
 
