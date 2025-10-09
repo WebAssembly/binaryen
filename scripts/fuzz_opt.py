@@ -1667,7 +1667,7 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
-# The error shown when a module fails to instantiate.
+# The error shown in V8 when a module fails to instantiate.
 INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
 
 
@@ -1787,7 +1787,9 @@ class ClusterFuzz(TestCaseHandler):
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
 class Two(TestCaseHandler):
-    frequency = 0.2
+    # Run at relatively high priority, as this is the main place we check cross-
+    # module interactions.
+    frequency = 1
 
     def handle(self, wasm):
         # Generate a second wasm file, unless we were given one (useful during
@@ -1798,56 +1800,48 @@ class Two(TestCaseHandler):
             # TODO: should we de-nan this etc. as with the primary?
             shutil.copyfile(given, second_wasm)
         else:
+            # generate a second wasm file to merge. pick a smaller size when
+            # the main wasm file is smaller, so reduction shrinks this too.
+            wasm_size = os.stat(wasm).st_size
+            second_size = min(wasm_size, random_size())
+
             second_input = abspath('second_input.dat')
-            make_random_input(random_size(), second_input)
+            make_random_input(second_size, second_input)
             args = [second_input, '-ttf', '-o', second_wasm]
             # Most of the time, use the first wasm as an import to the second.
             if random.random() < 0.8:
                 args += ['--fuzz-import=' + wasm]
             run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
 
-        # The binaryen interpreter only supports a single file, so we run them
-        # from JS using fuzz_shell.js's support for two files.
+        # Run the wasm.
         #
         # Note that we *cannot* run each wasm file separately and compare those
         # to the combined output, as fuzz_shell.js intentionally allows calls
         # *between* the wasm files, through JS APIs like call-export*. So all we
         # do here is see the combined, linked behavior, and then later below we
         # see that that behavior remains even after optimizations.
-        output = run_d8_wasm(wasm, args=[second_wasm])
+        output = run_bynterp(wasm, args=['--fuzz-exec-before', f'--fuzz-exec-second={second_wasm}'])
+
+        # Check if we trapped during instantiation.
+        if traps_in_instantiation(output):
+            # We may fail to instantiate the modules for valid reasons, such as
+            # an active segment being out of bounds. There is no point to
+            # continue in such cases, as no exports are called.
+            note_ignored_vm_run('Two instantiate error')
+            return
 
         if output == IGNORE:
             # There is no point to continue since we can't compare this output
             # to anything.
             return
 
-        if output.startswith(INSTANTIATE_ERROR):
-            # We may fail to instantiate the modules for valid reasons, such as
-            # an active segment being out of bounds. There is no point to
-            # continue in such cases, as no exports are called.
-
-            # But, check 'primary' is not in the V8 error. That might indicate a
-            # problem in the imports of --fuzz-import. To do this, run the d8
-            # command directly, without the usual filtering of run_d8_wasm.
-            cmd = [shared.V8] + shared.V8_OPTS + get_v8_extra_flags() + [
-                get_fuzz_shell_js(),
-                '--',
-                wasm,
-                second_wasm
-            ]
-            out = run(cmd)
-            assert '"primary"' not in out, out
-
-            note_ignored_vm_run('Two instantiate error')
-            return
-
-        # Make sure that fuzz_shell.js actually executed all exports from both
+        # Make sure that we actually executed all exports from both
         # wasm files.
         exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
         calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
         if calls_in_output == 0:
             print(f'warning: no calls in output. output:\n{output}')
-        assert calls_in_output == len(exports)
+        assert calls_in_output == len(exports), exports
 
         output = fix_output(output)
 
@@ -1862,22 +1856,39 @@ class Two(TestCaseHandler):
             wasms[wasm_index] = new_name
 
         # Run again, and compare the output
-        optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
+        optimized_output = run_bynterp(wasms[0], args=['--fuzz-exec-before', f'--fuzz-exec-second={wasms[1]}'])
         optimized_output = fix_output(optimized_output)
 
         compare(output, optimized_output, 'Two')
 
+        # If we can, also test in V8. We also cannot compare if there are NaNs
+        # (as optimizations can lead to different outputs), and we must
+        # disallow some features.
+        # TODO: relax some of these
+        if NANS or not all_disallowed(['shared-everything', 'strings', 'stack-switching']):
+            return
+
+        output = run_d8_wasm(wasm, args=[second_wasm])
+
+        if output == IGNORE:
+            return
+
+        # We ruled out things we must ignore, like host limitations, and also
+        # exited earlier on a deterministic instantiation error, so there should
+        # be no such error in V8.
+        assert not output.startswith(INSTANTIATE_ERROR)
+
+        output = fix_output(output)
+
+        optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
+        optimized_output = fix_output(optimized_output)
+
+        compare(output, optimized_output, 'Two-V8')
+
     def can_run_on_wasm(self, wasm):
         # We cannot optimize wasm files we are going to link in closed world
-        # mode. We also cannot run shared-everything code in d8 yet. We also
-        # cannot compare if there are NaNs (as optimizations can lead to
-        # different outputs).
-        # TODO: relax some of these
-        if CLOSED_WORLD:
-            return False
-        if NANS:
-            return False
-        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
+        # mode.
+        return not CLOSED_WORLD
 
 
 # Test --fuzz-preserve-imports-exports, which never modifies imports or exports.

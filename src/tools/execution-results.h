@@ -306,20 +306,31 @@ struct ExecutionResults {
   // link with it (like fuzz_shell's second module).
   void get(Module& wasm, Module* second = nullptr) {
     try {
-      // Run the first module.
+      // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
       auto instance = std::make_shared<ModuleRunner>(wasm, &interface);
-      runModule(wasm, *instance, interface);
+      instantiate(*instance, interface);
 
+      // Instantiate the second, if there is one (we instantiate both before
+      // running anything, so that we match the behavior of fuzz_shell.js).
+      std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+      std::unique_ptr<LoggingExternalInterface> secondInterface;
+      std::shared_ptr<ModuleRunner> secondInstance;
       if (second) {
-        // Link and run the second module.
-        std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+        // Link and instantiate the second module.
         linkedInstances["primary"] = instance;
-        LoggingExternalInterface secondInterface(
+        secondInterface = std::make_unique<LoggingExternalInterface>(
           loggings, *second, linkedInstances);
-        auto secondInstance = std::make_shared<ModuleRunner>(
-          *second, &secondInterface, linkedInstances);
-        runModule(*second, *secondInstance, secondInterface);
+        secondInstance = std::make_shared<ModuleRunner>(
+          *second, secondInterface.get(), linkedInstances);
+        instantiate(*secondInstance, *secondInterface);
+      }
+
+      // Run.
+      callExports(wasm, *instance);
+      if (second) {
+        std::cout << "[fuzz-exec] running second module\n";
+        callExports(*second, *secondInstance);
       }
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).
@@ -331,14 +342,16 @@ struct ExecutionResults {
     }
   }
 
-  void runModule(Module& wasm,
-                 ModuleRunner& instance,
-                 LoggingExternalInterface& interface) {
+  void instantiate(ModuleRunner& instance,
+                   LoggingExternalInterface& interface) {
     // This is not an optimization: we want to execute anything, even relaxed
     // SIMD instructions.
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
     instance.instantiate();
     interface.setModuleRunner(&instance);
+  }
+
+  void callExports(Module& wasm, ModuleRunner& instance) {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {
