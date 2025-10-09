@@ -412,9 +412,10 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
     Name name = WasmBinaryReader::escape(line);
     if (newSection) {
-      currModule = Names::getValidName(name, [&](Name n) {
-        return moduleNameSet.find(n) == moduleNameSet.end();
-      });
+      if (moduleNameSet.count(name)) {
+        Fatal() << "Module name " << name << " is listed more than once\n";
+      }
+      currModule = name;
       moduleNameSet.insert(currModule);
       moduleNames.push_back(currModule);
       config.secondaryFuncs.emplace_back(std::set<Name>());
