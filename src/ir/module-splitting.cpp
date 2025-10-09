@@ -26,8 +26,8 @@
 //      placeholder function (and eventually to the original secondary
 //      function), allocating a new table slot for the placeholder if necessary.
 //
-//   4. Replace all references to secondary functions in the primary module's or
-//      different secondary module's table segments with references to imported
+//   4. Replace all references to each secondary module's functions in the primary module's and
+//      each other secondary module's table segments with references to imported
 //      placeholder functions.
 //
 //   5. Rewrite direct calls from primary functions to secondary functions to be
@@ -37,7 +37,7 @@
 //
 //   6. For each primary function directly called from a secondary function,
 //      export the primary function if it is not already exported and import it
-//      into the secondary module using it.
+//      into each secondary module using it.
 //
 //   7. For each secondary module, create new active table segments in the
 //      module that will replace all the placeholder function references in the
@@ -297,7 +297,7 @@ struct ModuleSplitter {
   Module& primary;
 
   std::unordered_set<Name> primaryFuncs;
-  std::unordered_set<Name> allSecondryFuncs;
+  std::unordered_set<Name> allSecondaryFuncs;
   std::map<Name, std::set<Name>> moduleToFuncs;
   std::unordered_map<Name, Name> funcToModule;
 
@@ -479,10 +479,10 @@ void ModuleSplitter::classifyFunctions() {
 
   // Move functions to each secondary module and create the reverse map
   for (auto& [mod, funcs] : config.moduleToFuncs) {
-    moduleToFuncs[mod];
+    auto& funcs = moduleToFuncs[mod];
     for (auto func : funcs) {
-      if (allSecondryFuncs.count(func)) {
-        moduleToFuncs[mod].insert(func);
+      if (allSecondaryFuncs.count(func)) {
+        funcs.insert(func);
       }
     }
   }
@@ -625,7 +625,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     InsertOrderedMap<Name, std::vector<RefFunc*>> map;
 
     void visitRefFunc(RefFunc* curr) {
-      Module* curModule = getModule();
+      Module* currModule = getModule();
       // Add ref.func to the map when
       // 1. ref.func's target func is in one of the secondary modules and
       // 2. the current module is a different module (either the primary module
@@ -694,7 +694,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       }
       // Return if the current module is the same module as the call's target,
       // because we don't need a call_indirect within the same module.
-      Module* curModule = getModule();
+      Module* currModule = getModule();
       if (curModule != &parent.primary &&
           curModule->name == parent.funcToModule.at(curr->target)) {
         return;
@@ -723,7 +723,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
 }
 
 void ModuleSplitter::exportImportCalledPrimaryFunctions() {
-  // Find primary functions called/referred in the secondary module.
+  // Find primary functions called/referred to from the secondary modules.
   using CalledPrimaryToModules = std::map<Name, std::set<Module*>>;
   for (auto& [mod, secondaryPtr] : secondaryPtrMap) {
     Module* secondary = secondaryPtr.get();
