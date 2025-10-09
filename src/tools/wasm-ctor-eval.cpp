@@ -368,6 +368,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     if (!Properties::isConstantExpression(value)) {
       throw FailToEvalException("tableLoad of non-literal");
     }
+    if (auto* r = value->dynCast<RefFunc>()) {
+      return instance->makeFuncData(r->func, r->type.getHeapType());
+    }
     return Properties::getLiteral(value);
   }
 
