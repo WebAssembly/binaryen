@@ -785,18 +785,6 @@ struct GCData {
     : type(type), values(std::move(values)), desc(desc) {}
 };
 
-// The data of a (ref exn) literal.
-struct ExnData {
-  // The tag of this exn data.
-  // TODO: handle cross-module calls using something other than a Name here.
-  Name tag;
-
-  // The payload of this exn data.
-  Literals payload;
-
-  ExnData(Name tag, Literals payload) : tag(tag), payload(payload) {}
-};
-
 } // namespace wasm
 
 namespace std {

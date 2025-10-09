@@ -323,6 +323,10 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                    import->type);
   }
 
+  Tag* getImportedTag(Tag* tag) override {
+    WASM_UNREACHABLE("missing imported tag");
+  }
+
   // We assume the table is not modified FIXME
   Literal tableLoad(Name tableName, Address index) override {
     auto* table = wasm->getTableOrNull(tableName);
