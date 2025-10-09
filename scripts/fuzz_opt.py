@@ -1849,12 +1849,6 @@ class Two(TestCaseHandler):
         run([in_bin('wasm-merge'), wasm, 'primary', second_wasm, 'secondary',
             '-o', merged, '--rename-export-conflicts', '-all'])
 
-        # XXX export conflicts?
-        # and:
-        #if wasm_has_duplicate_tags(merged):
-        #    note_ignored_vm_run('dupe_tags')
-        #    return
-
         # Usually also optimize the merged module. Optimizations are very
         # interesting here, because after merging we can safely do even closed-
         # world optimizations, making very aggressive changes that should still
