@@ -2229,7 +2229,19 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
+    CtorEval(),
+    Merge(),
+    Split(),
+    RoundtripText(),
+    ClusterFuzz(),
     Two(),
+    PreserveImportsExports(),
+    BranchHintPreservation(),
 ]
 
 
