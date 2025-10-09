@@ -1789,7 +1789,7 @@ class ClusterFuzz(TestCaseHandler):
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
-    frequency = 1
+    frequency = 1 # TODO: We may want even higher priority here
 
     def handle(self, wasm):
         # Generate a second wasm file, unless we were given one (useful during
