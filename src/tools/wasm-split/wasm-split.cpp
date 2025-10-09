@@ -329,7 +329,7 @@ void splitModule(const WasmSplitOptions& options) {
 
   // Actually perform the splitting
   ModuleSplitting::Config config;
-  config.moduleToFuncs["secondary"] = std::move(splitFuncs);
+  config.secondaryFuncs.push_back(std::move(splitFuncs));
   if (options.importNamespace.size()) {
     config.importNamespace = options.importNamespace;
   }
@@ -343,7 +343,7 @@ void splitModule(const WasmSplitOptions& options) {
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
   config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-  auto& secondary = splitResults.secondaryPtrMap["secondary"];
+  auto& secondary = *splitResults.secondaries.begin();
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize, /*secondary=*/true);
@@ -400,18 +400,25 @@ void multiSplitModule(const WasmSplitOptions& options) {
   ModuleSplitting::Config config;
   std::string line;
   bool newSection = true;
-  std::unordered_set<Name> moduleNames;
+  std::vector<Name> moduleNames;
+  std::unordered_set<Name> moduleNameSet;
   while (std::getline(manifest, line)) {
     if (line.empty()) {
       newSection = true;
+      if (currFuncs->empty()) {
+        std::cerr << "warning: Module " << currModule << " will be empty\n";
+      }
       continue;
     }
     Name name = WasmBinaryReader::escape(line);
     if (newSection) {
-      currModule = Names::getValidName(
-        name, [&](Name n) { return moduleNames.find(n) == moduleNames.end(); });
-      moduleNames.insert(currModule);
-      currFuncs = &config.moduleToFuncs[currModule];
+      currModule = Names::getValidName(name, [&](Name n) {
+        return moduleNameSet.find(n) == moduleNameSet.end();
+      });
+      moduleNameSet.insert(currModule);
+      moduleNames.push_back(currModule);
+      config.secondaryFuncs.emplace_back(std::set<Name>());
+      currFuncs = &config.secondaryFuncs.back();
       newSection = false;
       continue;
     }
@@ -435,19 +442,14 @@ void multiSplitModule(const WasmSplitOptions& options) {
     wasm.name = Path::getBaseName(options.output);
   }
 
-  for (auto& [mod, funcs] : config.moduleToFuncs) {
-    if (!options.quiet && funcs.empty()) {
-      std::cerr << "warning: Module " << mod << " will be empty\n";
-    }
-  }
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-  for (auto& [mod, funcs] : config.moduleToFuncs) {
-    Module& secondary = *splitResults.secondaryPtrMap[mod];
-    auto moduleName = options.outPrefix + mod.toString() +
+  assert(moduleNames.size() == splitResults.secondaries.size());
+  for (Index i = 0, n = moduleNames.size(); i < n; i++) {
+    auto& secondary = *splitResults.secondaries[i];
+    auto moduleName = options.outPrefix + moduleNames[i].toString() +
                       (options.emitBinary ? ".wasm" : ".wast");
     if (options.symbolMap) {
-      writeSymbolMap(*splitResults.secondaryPtrMap[mod],
-                     moduleName + ".symbols");
+      writeSymbolMap(secondary, moduleName + ".symbols");
     }
     if (options.emitModuleNames) {
       secondary.name = Path::getBaseName(moduleName);

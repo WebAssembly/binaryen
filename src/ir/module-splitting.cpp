@@ -292,14 +292,13 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
 
 struct ModuleSplitter {
   const Config& config;
-  std::map<Name, std::unique_ptr<Module>> secondaryPtrMap;
+  std::vector<std::unique_ptr<Module>> secondaries;
 
   Module& primary;
 
   std::unordered_set<Name> primaryFuncs;
   std::unordered_set<Name> allSecondaryFuncs;
-  std::map<Name, std::set<Name>> moduleToFuncs;
-  std::unordered_map<Name, Name> funcToModule;
+  std::unordered_map<Name, Index> funcToSecondaryIndex;
 
   TableSlotManager tableManager;
 
@@ -320,8 +319,7 @@ struct ModuleSplitter {
   std::unordered_map<Name, Name> trampolineMap;
 
   // Initialization helpers
-  static std::unique_ptr<Module> initSecondary(const Module& primary,
-                                               Name name);
+  static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::unordered_map<Name, Name>
   initExportedPrimaryFuncs(const Module& primary);
 
@@ -390,13 +388,11 @@ void ModuleSplitter::setupJSPI() {
     LOAD_SECONDARY_STATUS, LOAD_SECONDARY_STATUS, ExternalKind::Global));
 }
 
-std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary,
-                                                      Name name) {
+std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
   // Create the secondary module and copy trivial properties.
   auto secondary = std::make_unique<Module>();
   secondary->features = primary.features;
   secondary->hasFeaturesSection = primary.hasFeaturesSection;
-  secondary->name = name;
   return secondary;
 }
 
@@ -459,7 +455,7 @@ void ModuleSplitter::classifyFunctions() {
   }
 
   std::unordered_set<Name> configSecondaryFuncs;
-  for (auto& [mod, funcs] : config.moduleToFuncs) {
+  for (auto& funcs : config.secondaryFuncs) {
     configSecondaryFuncs.insert(funcs.begin(), funcs.end());
   }
   for (auto& func : primary.functions) {
@@ -474,21 +470,6 @@ void ModuleSplitter::classifyFunctions() {
     } else {
       assert(func->name != primary.start && "The start function must be kept");
       allSecondaryFuncs.insert(func->name);
-    }
-  }
-
-  // Move functions to each secondary module and create the reverse map
-  for (auto& [mod, configFuncs] : config.moduleToFuncs) {
-    auto& funcs = moduleToFuncs[mod];
-    for (auto func : configFuncs) {
-      if (allSecondaryFuncs.count(func)) {
-        funcs.insert(func);
-      }
-    }
-  }
-  for (auto& [mod, funcs] : moduleToFuncs) {
-    for (auto func : funcs) {
-      funcToModule[func] = mod;
     }
   }
 }
@@ -541,14 +522,17 @@ void ModuleSplitter::exportImportFunction(Name funcName,
 
 void ModuleSplitter::moveSecondaryFunctions() {
   // Move the specified functions from the primary to the secondary modules.
-  for (auto& [mod, funcNames] : moduleToFuncs) {
-    auto [it, _] = secondaryPtrMap.emplace(mod, initSecondary(primary, mod));
-    Module& secondary = *(it->second);
+  for (auto& funcNames : config.secondaryFuncs) {
+    auto secondary = initSecondary(primary);
     for (auto funcName : funcNames) {
-      auto* func = primary.getFunction(funcName);
-      ModuleUtils::copyFunction(func, secondary);
-      primary.removeFunction(funcName);
+      if (allSecondaryFuncs.count(funcName)) {
+        auto* func = primary.getFunction(funcName);
+        ModuleUtils::copyFunction(func, *secondary);
+        primary.removeFunction(funcName);
+        funcToSecondaryIndex[funcName] = secondaries.size();
+      }
     }
+    secondaries.push_back(std::move(secondary));
   }
 }
 
@@ -559,7 +543,7 @@ Name ModuleSplitter::getTrampoline(Name funcName) {
   }
 
   Builder builder(primary);
-  Module& secondary = *secondaryPtrMap[funcToModule[funcName]];
+  Module& secondary = *secondaries.at(funcToSecondaryIndex.at(funcName));
   auto* oldFunc = secondary.getFunction(funcName);
   auto trampoline = Names::getValidFunctionName(
     primary, std::string("trampoline_") + funcName.toString());
@@ -632,13 +616,14 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       //    or a different secondary module)
       if (parent.allSecondaryFuncs.count(curr->func) &&
           (currModule == &parent.primary ||
-           currModule->name != parent.funcToModule.at(curr->func))) {
+           parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->func))
+               .get() != currModule)) {
         map[curr->func].push_back(curr);
       }
     }
   } gatherer(*this);
   gatherer.walkModule(&primary);
-  for (auto& [mod, secondaryPtr] : secondaryPtrMap) {
+  for (auto& secondaryPtr : secondaries) {
     gatherer.walkModule(secondaryPtr.get());
   }
 
@@ -696,14 +681,14 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       // because we don't need a call_indirect within the same module.
       Module* currModule = getModule();
       if (currModule != &parent.primary &&
-          currModule->name == parent.funcToModule.at(curr->target)) {
+          parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->target))
+              .get() == currModule) {
         return;
       }
 
       Builder builder(*getModule());
-      Name moduleName = parent.funcToModule.at(curr->target);
-      auto* func =
-        parent.secondaryPtrMap.at(moduleName)->getFunction(curr->target);
+      Index secIndex = parent.funcToSecondaryIndex.at(curr->target);
+      auto* func = parent.secondaries.at(secIndex)->getFunction(curr->target);
       auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
 
       replaceCurrent(parent.maybeLoadSecondary(
@@ -717,7 +702,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   };
   CallIndirector callIndirector(*this);
   callIndirector.walkModule(&primary);
-  for (auto& [mod, secondaryPtr] : secondaryPtrMap) {
+  for (auto& secondaryPtr : secondaries) {
     callIndirector.walkModule(secondaryPtr.get());
   }
 }
@@ -725,7 +710,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
 void ModuleSplitter::exportImportCalledPrimaryFunctions() {
   // Find primary functions called/referred to from the secondary modules.
   using CalledPrimaryToModules = std::map<Name, std::set<Module*>>;
-  for (auto& [mod, secondaryPtr] : secondaryPtrMap) {
+  for (auto& secondaryPtr : secondaries) {
     Module* secondary = secondaryPtr.get();
     ModuleUtils::ParallelFunctionAnalysis<CalledPrimaryToModules> callCollector(
       *secondary,
@@ -785,7 +770,7 @@ void ModuleSplitter::setupTablePatching() {
       assert(table == tableManager.activeTable->name);
 
       placeholderMap[table][index] = ref->func;
-      Module& secondary = *secondaryPtrMap[funcToModule[ref->func]];
+      Module& secondary = *secondaries.at(funcToSecondaryIndex.at(ref->func));
       auto* secondaryFunc = secondary.getFunction(ref->func);
       moduleToReplacedElems[&secondary][index] = secondaryFunc;
       if (!config.usePlaceholders) {
@@ -930,7 +915,7 @@ void ModuleSplitter::shareImportableItems() {
   // TODO: Be more selective by only sharing global items that are actually used
   // in the secondary module, just like we do for functions.
 
-  for (auto& [_, secondaryPtr] : secondaryPtrMap) {
+  for (auto& secondaryPtr : secondaries) {
     Module& secondary = *secondaryPtr;
     for (auto& memory : primary.memories) {
       auto secondaryMemory = ModuleUtils::copyMemory(memory.get(), secondary);
@@ -977,7 +962,7 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
   // TODO: It would be better to be more selective about only exporting and
   // importing those items that the secondary module needs. This would reduce
   // code size in the primary module as well.
-  for (auto& [_, secondaryPtr] : secondaryPtrMap) {
+  for (auto& secondaryPtr : secondaries) {
     PassRunner runner(secondaryPtr.get());
     runner.add("remove-unused-module-elements");
     runner.run();
@@ -988,11 +973,7 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
 
 Results splitFunctions(Module& primary, const Config& config) {
   ModuleSplitter split(primary, config);
-  // Remove the temporary names we used during splitting
-  for (auto& [_, secondaryPtr] : split.secondaryPtrMap) {
-    secondaryPtr->name = Name();
-  }
-  return {std::move(split.secondaryPtrMap), std::move(split.placeholderMap)};
+  return {std::move(split.secondaries), std::move(split.placeholderMap)};
 }
 
 } // namespace wasm::ModuleSplitting
