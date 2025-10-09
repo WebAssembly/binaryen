@@ -1783,9 +1783,9 @@ class ClusterFuzz(TestCaseHandler):
         tar.close()
 
 
-# Tests linking two wasm files at runtime, and that optimizations do not break
-# anything. This is similar to Split(), but rather than split a wasm file into
-# two and link them at runtime, this starts with two separate wasm files.
+# Generates two wasm and tests interesting interactions between them. This is a
+# little similar to Split(), but rather than split one wasm file into two and
+# test that, we start with two.
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
@@ -1844,7 +1844,8 @@ class Two(TestCaseHandler):
         assert calls_in_output == len(exports), exports
 
         # Merge the files and run them that way. The result should be the same,
-        # even if we optimize.
+        # even if we optimize. TODO: merge (no pun intended) the rest of Merge
+        # into here.
         merged = abspath('merged.wasm')
         run([in_bin('wasm-merge'), wasm, 'primary', second_wasm, 'secondary',
             '-o', merged, '--rename-export-conflicts', '-all'])
