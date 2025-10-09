@@ -3561,6 +3561,8 @@ public:
       trap("non-function target in call_indirect");
     }
 
+    // TODO: Throw a non-constant exception if the reference is to an imported
+    //       function that has a supertype of the expected type.
     if (!HeapType::isSubType(funcref.type.getHeapType(), curr->heapType)) {
       trap("callIndirect: non-subtype");
     }
