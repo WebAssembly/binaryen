@@ -42,13 +42,11 @@ private:
   Name exportedTable;
   Module& wasm;
 
-  // The name of the imported fuzzing tag for wasm.
-  Name wasmTag;
+  // The imported fuzzing tag for wasm.
+  Tag wasmTag;
 
-  // The name of the imported tag for js exceptions. If it is not imported, we
-  // use a default name here (which should differentiate it from any wasm
-  // exceptions).
-  Name jsTag = "__private";
+  // The imported tag for js exceptions.
+  Tag jsTag;
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
@@ -67,15 +65,26 @@ public:
       }
     }
 
-    for (auto& tag : wasm.tags) {
-      if (tag->module == "fuzzing-support") {
-        if (tag->base == "wasmtag") {
-          wasmTag = tag->name;
-        } else if (tag->base == "jstag") {
-          jsTag = tag->name;
-        }
+    // Set up tags. (Setting these values is useful for debugging - making the
+    // Tag objects valid - and also appears in fuzz-exec logging.)
+    wasmTag.module = "fuzzing-support";
+    wasmTag.base = "wasmtag";
+    wasmTag.name = "imported-wasm-tag";
+    wasmTag.type = Signature(Type::i32, Type::none);
+
+    jsTag.module = "fuzzing-support";
+    jsTag.base = "jstag";
+    jsTag.name = "imported-js-tag";
+    jsTag.type = Signature(Type(HeapType::ext, Nullable), Type::none);
+  }
+
+  Tag* getImportedTag(Tag* tag) override {
+    for (auto* imported : {&wasmTag, &jsTag}) {
+      if (imported->module == tag->module && imported->base == tag->base) {
+        return imported;
       }
     }
+    Fatal() << "missing host tag " << tag->module << '.' << tag->base;
   }
 
   Literal getImportedFunction(Function* import) override {
@@ -122,7 +131,7 @@ public:
           if (arguments[0].geti32() == 0) {
             throwJSException();
           } else {
-            auto payload = std::make_shared<ExnData>(wasmTag, arguments);
+            auto payload = std::make_shared<ExnData>(&wasmTag, arguments);
             throwException(WasmException{Literal(payload)});
           }
         } else if (import->base == "table-get") {
@@ -213,7 +222,7 @@ public:
     auto empty = HeapType(Struct{});
     auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
     Literals arguments = {inner.externalize()};
-    auto payload = std::make_shared<ExnData>(jsTag, arguments);
+    auto payload = std::make_shared<ExnData>(&jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
 
