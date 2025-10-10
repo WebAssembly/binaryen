@@ -1038,6 +1038,8 @@
 
   ;; YESTNH:       (type $2 (func (result (ref none))))
 
+  ;; YESTNH:       (type $3 (func (param (ref $A)) (result (ref none))))
+
   ;; YESTNH:      (func $test (type $2) (result (ref none))
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (struct.new_default $A
@@ -1047,6 +1049,8 @@
   ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:       (type $2 (func (result (ref none))))
+
+  ;; NO_TNH:       (type $3 (func (param (ref $A)) (result (ref none))))
 
   ;; NO_TNH:      (func $test (type $2) (result (ref none))
   ;; NO_TNH-NEXT:  (drop
@@ -1061,6 +1065,126 @@
       (struct.new_default $A
         (ref.null none)
       )
+    )
+  )
+
+  ;; YESTNH:      (func $inexact (type $3) (param $inexact (ref $A)) (result (ref none))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (local.get $inexact)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $inexact (type $3) (param $inexact (ref $A)) (result (ref none))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (local.get $inexact)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $inexact (param $inexact (ref $A)) (result (ref $B))
+    ;; As above, but now the input type is inexact. There are no subtypes, so
+    ;; we still optimize.
+    (ref.get_desc $A
+      (local.get $inexact)
+    )
+  )
+)
+
+(module
+  ;; As above, but now there are subtypes $A.sub, $B.sub.
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B (struct))))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B (struct))))
+    (type $A (sub (descriptor $B (struct))))
+    ;; YESTNH:       (type $B (sub (describes $A (struct))))
+    ;; NO_TNH:       (type $B (sub (describes $A (struct))))
+    (type $B (sub (describes $A (struct))))
+
+    ;; YESTNH:       (type $A.sub (sub $A (descriptor $B.sub (struct))))
+    ;; NO_TNH:       (type $A.sub (sub $A (descriptor $B.sub (struct))))
+    (type $A.sub (sub $A (descriptor $B.sub (struct))))
+    ;; YESTNH:       (type $B.sub (sub $B (describes $A.sub (struct))))
+    ;; NO_TNH:       (type $B.sub (sub $B (describes $A.sub (struct))))
+    (type $B.sub (sub $B (describes $A.sub (struct))))
+  )
+
+  ;; YESTNH:       (type $4 (func))
+
+  ;; YESTNH:       (type $5 (func (result (ref (exact $B.sub)))))
+
+  ;; YESTNH:       (type $6 (func (param (ref $A)) (result (ref $B.sub))))
+
+  ;; YESTNH:      (func $create (type $4)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default $A.sub
+  ;; YESTNH-NEXT:    (struct.new_default $B.sub)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:       (type $4 (func))
+
+  ;; NO_TNH:       (type $5 (func (result (ref (exact $B)))))
+
+  ;; NO_TNH:       (type $6 (func (param (ref $A)) (result (ref $B))))
+
+  ;; NO_TNH:      (func $create (type $4)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.new_default $A.sub
+  ;; NO_TNH-NEXT:    (struct.new_default $B.sub)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $create
+    ;; Make the subtypes not abstract.
+    (drop
+      (struct.new_default $A.sub
+        (struct.new_default $B.sub)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $test (type $5) (result (ref (exact $B.sub)))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default $A
+  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $test (type $5) (result (ref (exact $B)))
+  ;; NO_TNH-NEXT:  (ref.get_desc $A
+  ;; NO_TNH-NEXT:   (struct.new_default $A
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $test (result (ref (exact $B)))
+    ;; We can still optimize here, thanks to exactness (when TNH).
+    (ref.get_desc $A
+      (struct.new_default $A
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $inexact (type $6) (param $inexact (ref $A)) (result (ref $B.sub))
+  ;; YESTNH-NEXT:  (ref.get_desc $A.sub
+  ;; YESTNH-NEXT:   (ref.cast (ref $A.sub)
+  ;; YESTNH-NEXT:    (local.get $inexact)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $inexact (type $6) (param $inexact (ref $A)) (result (ref $B))
+  ;; NO_TNH-NEXT:  (ref.get_desc $A
+  ;; NO_TNH-NEXT:   (local.get $inexact)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $inexact (param $inexact (ref $A)) (result (ref $B))
+    ;; We do not optimize to an unreachable here, as the inexact reference may
+    ;; contain an $A.sub. We optimize to that, using a cast (in TNH).
+    (ref.get_desc $A
+      (local.get $inexact)
     )
   )
 )
