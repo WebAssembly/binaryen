@@ -2,13 +2,9 @@
 ;; RUN: filecheck %s --check-prefix MAP < %t.wasm.placeholders
 
 ;; MAP:      table 0
-;; MAP-NEXT: 0:A
-;; MAP-NEXT:
-;; MAP-NEXT: table 1
 ;; MAP-NEXT: 0:B
-;; MAP-NEXT:
-;; MAP-NEXT: table 2
-;; MAP-NEXT: 0:C
+;; MAP-NEXT: 1:C
+;; MAP-NEXT: 2:A
 
 (module
  (type $ret-i32 (func (result i32)))

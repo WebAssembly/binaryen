@@ -329,7 +329,7 @@ void splitModule(const WasmSplitOptions& options) {
 
   // Actually perform the splitting
   ModuleSplitting::Config config;
-  config.secondaryFuncs = std::move(splitFuncs);
+  config.secondaryFuncs.push_back(std::move(splitFuncs));
   if (options.importNamespace.size()) {
     config.importNamespace = options.importNamespace;
   }
@@ -343,7 +343,7 @@ void splitModule(const WasmSplitOptions& options) {
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
   config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-  auto& secondary = splitResults.secondary;
+  auto& secondary = *splitResults.secondaries.begin();
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize, /*secondary=*/true);
@@ -389,27 +389,37 @@ void multiSplitModule(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
 
-  // Map module names to the functions that should be in the modules.
-  std::map<Name, std::unordered_set<Name>> moduleFuncs;
   // The module for which we are currently parsing a set of functions.
   Name currModule;
   // The set of functions we are currently inserting into.
-  std::unordered_set<Name>* currFuncs = nullptr;
+  std::set<Name>* currFuncs = nullptr;
   // Map functions to their modules to ensure no function is assigned to
   // multiple modules.
   std::unordered_map<Name, Name> funcModules;
 
+  ModuleSplitting::Config config;
   std::string line;
   bool newSection = true;
+  std::vector<Name> moduleNames;
+  std::unordered_set<Name> moduleNameSet;
   while (std::getline(manifest, line)) {
     if (line.empty()) {
       newSection = true;
+      if (currFuncs->empty() && !options.quiet) {
+        std::cerr << "warning: Module " << currModule << " will be empty\n";
+      }
       continue;
     }
     Name name = WasmBinaryReader::escape(line);
     if (newSection) {
+      if (moduleNameSet.count(name)) {
+        Fatal() << "Module name " << name << " is listed more than once\n";
+      }
       currModule = name;
-      currFuncs = &moduleFuncs[name];
+      moduleNameSet.insert(currModule);
+      moduleNames.push_back(currModule);
+      config.secondaryFuncs.emplace_back(std::set<Name>());
+      currFuncs = &config.secondaryFuncs.back();
       newSection = false;
       continue;
     }
@@ -426,7 +436,6 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
   }
 
-  ModuleSplitting::Config config;
   config.usePlaceholders = options.usePlaceholders;
   config.importNamespace = options.importNamespace;
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
@@ -434,34 +443,26 @@ void multiSplitModule(const WasmSplitOptions& options) {
     wasm.name = Path::getBaseName(options.output);
   }
 
-  std::unordered_map<Name, std::map<size_t, Name>> placeholderMap;
-  for (auto& [mod, funcs] : moduleFuncs) {
-    if (options.verbose) {
-      std::cerr << "Splitting module " << mod << '\n';
-    }
-    if (!options.quiet && funcs.empty()) {
-      std::cerr << "warning: Module " << mod << " will be empty\n";
-    }
-    config.secondaryFuncs = std::set<Name>(funcs.begin(), funcs.end());
-    auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-    auto moduleName = options.outPrefix + mod.toString() +
+  auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
+  assert(moduleNames.size() == splitResults.secondaries.size());
+  for (Index i = 0, n = moduleNames.size(); i < n; i++) {
+    auto& secondary = *splitResults.secondaries[i];
+    auto moduleName = options.outPrefix + moduleNames[i].toString() +
                       (options.emitBinary ? ".wasm" : ".wast");
     if (options.symbolMap) {
-      writeSymbolMap(*splitResults.secondary, moduleName + ".symbols");
-    }
-    if (options.placeholderMap) {
-      placeholderMap.merge(splitResults.placeholderMap);
+      writeSymbolMap(secondary, moduleName + ".symbols");
     }
     if (options.emitModuleNames) {
-      splitResults.secondary->name = Path::getBaseName(moduleName);
+      secondary.name = Path::getBaseName(moduleName);
     }
-    writeModule(*splitResults.secondary, moduleName, options);
+    writeModule(secondary, moduleName, options);
   }
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.output + ".symbols");
   }
   if (options.placeholderMap) {
-    writePlaceholderMap(wasm, placeholderMap, options.output + ".placeholders");
+    writePlaceholderMap(
+      wasm, splitResults.placeholderMap, options.output + ".placeholders");
   }
   writeModule(wasm, options.output, options);
 }
