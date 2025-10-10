@@ -418,7 +418,8 @@ struct AbstractTypeRefining : public Pass {
           // descriptor is fetched. Add a cast so that we validate.
           auto subDescribed = subDescriptor.getDescribedType();
           assert(subDescribed);
-          curr->ref = builder.makeRefCast(curr->ref, curr->ref->type.with(*subDescribed));
+          curr->ref =
+            builder.makeRefCast(curr->ref, curr->ref->type.with(*subDescribed));
         }
       }
 
