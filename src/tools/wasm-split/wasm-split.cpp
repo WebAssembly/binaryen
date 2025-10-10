@@ -405,7 +405,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
   while (std::getline(manifest, line)) {
     if (line.empty()) {
       newSection = true;
-      if (currFuncs->empty()) {
+      if (currFuncs->empty() && !options.quiet) {
         std::cerr << "warning: Module " << currModule << " will be empty\n";
       }
       continue;
