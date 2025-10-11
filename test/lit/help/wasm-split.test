@@ -76,7 +76,7 @@
 ;; CHECK-NEXT:                                        placeholder indices to the function
 ;; CHECK-NEXT:                                        names.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --import-namespace                   [split, instrument, multi-split] When
+;; CHECK-NEXT:   --import-namespace                   [split, multi-split, instrument] When
 ;; CHECK-NEXT:                                        provided as an option for module
 ;; CHECK-NEXT:                                        splitting, the namespace from which to
 ;; CHECK-NEXT:                                        import objects from the primary module
