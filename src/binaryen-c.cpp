@@ -157,7 +157,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     }
   }
   if (heapType.isSignature()) {
-    return Literal::makeFunc(Name(x.func), heapType);
+    return Literal::makeFunc(Name(x.func), type);
   }
   assert(heapType.isData());
   WASM_UNREACHABLE("TODO: gc data");

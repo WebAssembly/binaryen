@@ -30,6 +30,7 @@
 
 namespace wasm {
 
+class Module;
 class Literals;
 struct FuncData;
 struct GCData;
@@ -70,6 +71,9 @@ class Literal {
 
 public:
   // Type of the literal. Immutable because the literal's payload depends on it.
+  // For references to defined heap types, this is almost always an exact type.
+  // The exception is references to imported functions, since the function
+  // provided at instantiation time may have a subtype of the import type.
   const Type type;
 
   Literal() : v128(), type(Type::none) {}
@@ -90,7 +94,7 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(std::shared_ptr<FuncData> funcData, HeapType type);
+  explicit Literal(std::shared_ptr<FuncData> funcData, Type type);
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   explicit Literal(std::shared_ptr<ExnData> exnData);
   explicit Literal(std::shared_ptr<ContData> contData);
@@ -252,7 +256,8 @@ public:
   }
   // Simple way to create a function from the name and type, without a full
   // FuncData.
-  static Literal makeFunc(Name func, HeapType type);
+  static Literal makeFunc(Name func, Type type);
+  static Literal makeFunc(Name func, Module& wasm);
   static Literal makeI31(int32_t value, Shareability share) {
     auto lit = Literal(Type(HeapTypes::i31.getBasic(share), NonNullable));
     lit.i32 = value | 0x80000000;
