@@ -93,9 +93,9 @@
 ;; CHECK-NEXT:                                        module before any placeholder functions
 ;; CHECK-NEXT:                                        have been called.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --export-prefix                      [split] An identifying prefix to prepend
-;; CHECK-NEXT:                                        to new export names created by module
-;; CHECK-NEXT:                                        splitting.
+;; CHECK-NEXT:   --export-prefix                      [split, multi-split] An identifying
+;; CHECK-NEXT:                                        prefix to prepend to new export names
+;; CHECK-NEXT:                                        created by module splitting.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --profile-export                     [instrument] The export name of the
 ;; CHECK-NEXT:                                        function the embedder calls to write the

@@ -6,8 +6,9 @@
 ;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=MOD2
 ;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=MOD3
 
-;; Check if --import-namespace and --no-placeholders options work.
-;; RUN: wasm-split -all -g --multi-split %s --manifest %s.manifest --out-prefix=%t --import-namespace=custom_env --no-placeholders -o %t.wasm
+;; Check if --import-namespace, --export-prefix, and  --no-placeholders options
+;; work.
+;; RUN: wasm-split -all -g --multi-split %s --manifest %s.manifest --out-prefix=%t --import-namespace=custom_env --export-prefix='%' --no-placeholders -o %t.wasm
 ;; RUN: wasm-dis %t.wasm | filecheck %s --check-prefix=PRIMARY-OPTIONS
 ;; RUN: wasm-dis %t1.wasm | filecheck %s --check-prefix=MOD1-OPTIONS
 ;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=MOD2-OPTIONS
@@ -66,11 +67,11 @@
 
  ;; MOD1-OPTIONS:      (type $2 (func (result i32)))
 
- ;; MOD1-OPTIONS:      (import "custom_env" "table" (table $timport$0 3 funcref))
+ ;; MOD1-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
 
- ;; MOD1-OPTIONS:      (import "custom_env" "trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD1-OPTIONS:      (import "custom_env" "%trampoline_B" (func $trampoline_B (result i64)))
 
- ;; MOD1-OPTIONS:      (import "custom_env" "trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD1-OPTIONS:      (import "custom_env" "%trampoline_C" (func $trampoline_C (result f32)))
 
  ;; MOD1-OPTIONS:      (elem $0 (i32.const 2) $A)
 
@@ -149,11 +150,11 @@
 
  ;; MOD2-OPTIONS:      (type $2 (func (result i64)))
 
- ;; MOD2-OPTIONS:      (import "custom_env" "table" (table $timport$0 3 funcref))
+ ;; MOD2-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
 
- ;; MOD2-OPTIONS:      (import "custom_env" "trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD2-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (result i32)))
 
- ;; MOD2-OPTIONS:      (import "custom_env" "trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD2-OPTIONS:      (import "custom_env" "%trampoline_C" (func $trampoline_C (result f32)))
 
  ;; MOD2-OPTIONS:      (elem $0 (i32.const 0) $B)
 
@@ -232,11 +233,11 @@
 
  ;; MOD3-OPTIONS:      (type $2 (func (result f32)))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "table" (table $timport$0 3 funcref))
+ ;; MOD3-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD3-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (result i32)))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD3-OPTIONS:      (import "custom_env" "%trampoline_B" (func $trampoline_B (result i64)))
 
  ;; MOD3-OPTIONS:      (elem $0 (i32.const 1) $C)
 
@@ -317,13 +318,13 @@
 
 ;; PRIMARY-OPTIONS:      (elem $0 (table $0) (i32.const 0) funcref (item (ref.null nofunc)) (item (ref.null nofunc)) (item (ref.null nofunc)))
 
-;; PRIMARY-OPTIONS:      (export "trampoline_B" (func $trampoline_B))
+;; PRIMARY-OPTIONS:      (export "%trampoline_B" (func $trampoline_B))
 
-;; PRIMARY-OPTIONS:      (export "trampoline_C" (func $trampoline_C))
+;; PRIMARY-OPTIONS:      (export "%trampoline_C" (func $trampoline_C))
 
-;; PRIMARY-OPTIONS:      (export "trampoline_A" (func $trampoline_A))
+;; PRIMARY-OPTIONS:      (export "%trampoline_A" (func $trampoline_A))
 
-;; PRIMARY-OPTIONS:      (export "table" (table $0))
+;; PRIMARY-OPTIONS:      (export "%table" (table $0))
 
 ;; PRIMARY-OPTIONS:      (func $trampoline_B (result i64)
 ;; PRIMARY-OPTIONS-NEXT:  (call_indirect (type $ret-i64)
