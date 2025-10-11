@@ -222,6 +222,16 @@ void writePlaceholderMap(
   }
 }
 
+void setCommonSplitConfigs(ModuleSplitting::Config& config,
+                           const WasmSplitOptions& options) {
+  config.usePlaceholders = options.usePlaceholders;
+  config.minimizeNewExportNames = !options.passOptions.debugInfo;
+  if (options.importNamespace.size()) {
+    config.importNamespace = options.importNamespace;
+  }
+  // TODO Add more configs here
+}
+
 void splitModule(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
@@ -329,18 +339,14 @@ void splitModule(const WasmSplitOptions& options) {
 
   // Actually perform the splitting
   ModuleSplitting::Config config;
+  setCommonSplitConfigs(config, options);
   config.secondaryFuncs.push_back(std::move(splitFuncs));
-  if (options.importNamespace.size()) {
-    config.importNamespace = options.importNamespace;
-  }
   if (options.placeholderNamespace.size()) {
     config.placeholderNamespace = options.placeholderNamespace;
   }
   if (options.exportPrefix.size()) {
     config.newExportPrefix = options.exportPrefix;
   }
-  config.usePlaceholders = options.usePlaceholders;
-  config.minimizeNewExportNames = !options.passOptions.debugInfo;
   config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
   auto& secondary = *splitResults.secondaries.begin();
@@ -398,6 +404,8 @@ void multiSplitModule(const WasmSplitOptions& options) {
   std::unordered_map<Name, Name> funcModules;
 
   ModuleSplitting::Config config;
+  setCommonSplitConfigs(config, options);
+
   std::string line;
   bool newSection = true;
   std::vector<Name> moduleNames;
@@ -436,9 +444,6 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
   }
 
-  config.usePlaceholders = options.usePlaceholders;
-  config.importNamespace = options.importNamespace;
-  config.minimizeNewExportNames = !options.passOptions.debugInfo;
   if (options.emitModuleNames && !wasm.name) {
     wasm.name = Path::getBaseName(options.output);
   }

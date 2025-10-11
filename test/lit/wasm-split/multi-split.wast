@@ -34,11 +34,11 @@
 
  ;; MOD1:      (type $2 (func (result i32)))
 
- ;; MOD1:      (import "" "table" (table $timport$0 3 funcref))
+ ;; MOD1:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD1:      (import "" "trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD1:      (import "primary" "trampoline_B" (func $trampoline_B (result i64)))
 
- ;; MOD1:      (import "" "trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD1:      (import "primary" "trampoline_C" (func $trampoline_C (result f32)))
 
  ;; MOD1:      (elem $0 (i32.const 2) $A)
 
@@ -117,11 +117,11 @@
 
  ;; MOD2:      (type $2 (func (result i64)))
 
- ;; MOD2:      (import "" "table" (table $timport$0 3 funcref))
+ ;; MOD2:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD2:      (import "" "trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD2:      (import "primary" "trampoline_A" (func $trampoline_A (result i32)))
 
- ;; MOD2:      (import "" "trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD2:      (import "primary" "trampoline_C" (func $trampoline_C (result f32)))
 
  ;; MOD2:      (elem $0 (i32.const 0) $B)
 
@@ -200,11 +200,11 @@
 
  ;; MOD3:      (type $2 (func (result f32)))
 
- ;; MOD3:      (import "" "table" (table $timport$0 3 funcref))
+ ;; MOD3:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD3:      (import "" "trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD3:      (import "primary" "trampoline_A" (func $trampoline_A (result i32)))
 
- ;; MOD3:      (import "" "trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD3:      (import "primary" "trampoline_B" (func $trampoline_B (result i64)))
 
  ;; MOD3:      (elem $0 (i32.const 1) $C)
 
