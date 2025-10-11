@@ -232,7 +232,9 @@ void setCommonSplitConfigs(ModuleSplitting::Config& config,
   if (options.exportPrefix.size()) {
     config.newExportPrefix = options.exportPrefix;
   }
-  // TODO Add more configs here
+  if (options.placeholderNamespace.size()) {
+    config.placeholderNamespace = options.placeholderNamespace;
+  }
 }
 
 void splitModule(const WasmSplitOptions& options) {
@@ -344,9 +346,6 @@ void splitModule(const WasmSplitOptions& options) {
   ModuleSplitting::Config config;
   setCommonSplitConfigs(config, options);
   config.secondaryFuncs.push_back(std::move(splitFuncs));
-  if (options.placeholderNamespace.size()) {
-    config.placeholderNamespace = options.placeholderNamespace;
-  }
   config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
   auto& secondary = *splitResults.secondaries.begin();

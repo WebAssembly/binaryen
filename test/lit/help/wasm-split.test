@@ -84,9 +84,9 @@
 ;; CHECK-NEXT:                                        mode, refers to the namespace from which
 ;; CHECK-NEXT:                                        to import the secondary memory, if any.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --placeholder-namespace              [split] The namespace from which to
-;; CHECK-NEXT:                                        import placeholder functions into the
-;; CHECK-NEXT:                                        primary module.
+;; CHECK-NEXT:   --placeholder-namespace              [split, multi-split] The namespace from
+;; CHECK-NEXT:                                        which to import placeholder functions
+;; CHECK-NEXT:                                        into the primary module.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --jspi                               [split] Transform the module to support
 ;; CHECK-NEXT:                                        asynchronously loading the secondary

@@ -241,7 +241,7 @@ WasmSplitOptions::WasmSplitOptions()
          "The namespace from which to import placeholder functions into "
          "the primary module.",
          WasmSplitOption,
-         {Mode::Split},
+         {Mode::Split, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespace = argument;
