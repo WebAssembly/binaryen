@@ -352,6 +352,7 @@ void TranslateToFuzzReader::build() {
   setupHeapTypes();
   setupTables();
   setupGlobals();
+  useImportedGlobals();
   if (wasm.features.hasExceptionHandling()) {
     setupTags();
     addImportThrowingSupport();
@@ -366,7 +367,7 @@ void TranslateToFuzzReader::build() {
   // First, modify initial functions. That includes removing imports. Then,
   // use the imported module, which are function imports that we allow.
   modifyInitialFunctions();
-  useImportedModule();
+  useImportedFunctions();
 
   processFunctions();
   if (fuzzParams->HANG_LIMIT > 0) {
@@ -625,6 +626,20 @@ void TranslateToFuzzReader::setupTables() {
   }
 }
 
+void TranslateToFuzzReader::useGlobalLater(Global* global) {
+  auto type = global->type;
+  auto name = global->name;
+  globalsByType[type].push_back(name);
+  if (global->mutable_) {
+    mutableGlobalsByType[type].push_back(name);
+  } else {
+    immutableGlobalsByType[type].push_back(name);
+    if (global->imported()) {
+      importedImmutableGlobalsByType[type].push_back(name);
+    }
+  }
+}
+
 void TranslateToFuzzReader::setupGlobals() {
   // If there were initial wasm contents, there may be imported globals. That
   // would be a problem in the fuzzer harness as we'd error if we do not
@@ -650,20 +665,6 @@ void TranslateToFuzzReader::setupGlobals() {
       }
     }
   }
-
-  auto useGlobalLater = [&](Global* global) {
-    auto type = global->type;
-    auto name = global->name;
-    globalsByType[type].push_back(name);
-    if (global->mutable_) {
-      mutableGlobalsByType[type].push_back(name);
-    } else {
-      immutableGlobalsByType[type].push_back(name);
-      if (global->imported()) {
-        importedImmutableGlobalsByType[type].push_back(name);
-      }
-    }
-  };
 
   // Randomly assign some globals from initial content to be ignored for the
   // fuzzer to use. Such globals will only be used from initial content. This is
@@ -1172,23 +1173,26 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
 }
 
-void TranslateToFuzzReader::useImportedModule() {
+void TranslateToFuzzReader::setImportedModule(std::string importedModuleName) {
+  importedModule.emplace();
+
+  importedModule->features = FeatureSet::All;
+  ModuleReader().read(importedModuleName, *importedModule);
+}
+
+void TranslateToFuzzReader::useImportedFunctions() {
   if (!importedModule) {
     return;
   }
 
-  Module imported;
-  imported.features = FeatureSet::All;
-  ModuleReader().read(*importedModule, imported);
-
   // Add some of the module's exported functions as imports, at a random rate.
   auto rate = upTo(100);
-  for (auto& exp : imported.exports) {
+  for (auto& exp : importedModule->exports) {
     if (exp->kind != ExternalKind::Function || upTo(100) > rate) {
       continue;
     }
 
-    auto* func = imported.getFunction(*exp->getInternalName());
+    auto* func = importedModule->getFunction(*exp->getInternalName());
     auto name =
       Names::getValidFunctionName(wasm, "primary_" + exp->name.toString());
     // We can import it as its own type, or any (declared) supertype.
@@ -1199,11 +1203,38 @@ void TranslateToFuzzReader::useImportedModule() {
     wasm.addFunction(std::move(import));
   }
 
-  // TODO: All other imports: globals, memories, tables, etc. We must, as we do
+  // TODO: All other imports: memories, tables, etc. We must, as we do
   //       with functions, take care to run this *after* the removal of those
   //       imports (as normally we remove them all, as the fuzzer harness will
   //       not provide them, but an imported module is the exception).
 }
+
+void TranslateToFuzzReader::useImportedGlobals() {
+  if (!importedModule) {
+    return;
+  }
+
+  // Add some of the module's exported globals as imports, at a random rate.
+  auto rate = upTo(100);
+  for (auto& exp : importedModule->exports) {
+    if (exp->kind != ExternalKind::Global || upTo(100) > rate) {
+      continue;
+    }
+
+    auto* global = importedModule->getGlobal(*exp->getInternalName());
+    auto name =
+      Names::getValidGlobalName(wasm, "primary_" + exp->name.toString());
+    // We can import it as its own type, or any (declared) supertype.
+    auto type = getSuperType(global->type);
+    // XXX
+    auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable; //XXX
+    auto import = builder.makeGlobal(name, type, nullptr, mutability);
+    import->module = "primary";
+    import->base = exp->name;
+    wasm.addGlobal(std::move(import));
+  }
+}
+
 
 TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(
   TranslateToFuzzReader& parent, Function* func)
