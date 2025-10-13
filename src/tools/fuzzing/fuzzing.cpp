@@ -1248,7 +1248,6 @@ void TranslateToFuzzReader::useImportedGlobals() {
     import->module = "primary";
     import->base = exp->name;
     wasm.addGlobal(std::move(import));
-assert(0);
   }
 }
 
@@ -5871,6 +5870,9 @@ HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
 }
 
 Type TranslateToFuzzReader::getSuperType(Type type) {
+  if (!type.isRef()) {
+    return type;
+  }
   auto heapType = getSuperType(type.getHeapType());
   auto nullability = getSuperType(type.getNullability());
   auto superType = Type(heapType, nullability);
