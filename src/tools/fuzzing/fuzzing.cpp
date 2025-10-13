@@ -723,7 +723,7 @@ void TranslateToFuzzReader::setupGlobals() {
     if (type.isTuple()) {
       canExport = false;
     }
-    if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
+      if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
       canExport = false;
     }
     for (auto t : type) {
@@ -733,7 +733,8 @@ void TranslateToFuzzReader::setupGlobals() {
       }
     }
     if (canExport && oneIn(2)) {
-      wasm.addExport(Builder::makeExport(name, name, ExternalKind::Global));
+      auto exportName = Names::getValidExportName(wasm, name);
+      wasm.addExport(Builder::makeExport(exportName, name, ExternalKind::Global));
     }
   }
 }
