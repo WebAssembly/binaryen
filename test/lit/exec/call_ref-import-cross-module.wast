@@ -5,7 +5,7 @@
 ;; send to JS to be call_ref'd.
 
 (module $primary
- (import "fuzzing-support" "log" (func $log (param i32)))
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
  (func $get (export "get") (result funcref)
   (call $log (i32.const 10))
