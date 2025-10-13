@@ -260,7 +260,7 @@ WasmSplitOptions::WasmSplitOptions()
       "An identifying prefix to prepend to new export names created "
       "by module splitting.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { exportPrefix = argument; })
     .add("--profile-export",
