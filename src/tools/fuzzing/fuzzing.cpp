@@ -1247,7 +1247,7 @@ void TranslateToFuzzReader::useImportedGlobals() {
     auto import = builder.makeGlobal(name, type, nullptr, mutability);
     import->module = "primary";
     import->base = exp->name;
-    wasm.addGlobal(std::move(import));
+    useGlobalLater(wasm.addGlobal(std::move(import)));
   }
 }
 
