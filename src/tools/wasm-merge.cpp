@@ -572,6 +572,8 @@ void updateTypes(Module& wasm) {
       curr->finalize(getModule()->getFunction(curr->func)->type);
     }
 
+    // TODO globals, fuzzer should find first
+
     void visitFunction(Function* curr) {
       ReFinalize().walkFunctionInModule(curr, getModule());
     }
