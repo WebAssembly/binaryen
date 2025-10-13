@@ -237,9 +237,11 @@ public:
       throwJSException();
     }
     auto funcName = *exp->getInternalName();
-    return callFunctionAsJS([&](Literals arguments) {
-      return instance->callFunction(funcName, arguments);
-    }, wasm.getFunction(funcName)->type);
+    return callFunctionAsJS(
+      [&](Literals arguments) {
+        return instance->callFunction(funcName, arguments);
+      },
+      wasm.getFunction(funcName)->type);
   }
 
   Literals callRefAsJS(Literal ref) {
@@ -247,15 +249,15 @@ public:
       // Not a callable ref.
       throwJSException();
     }
-    return callFunctionAsJS([&](Literals arguments) {
-      return ref.getFuncData()->doCall(arguments);
-    }, ref.type.getHeapType());
+    return callFunctionAsJS(
+      [&](Literals arguments) { return ref.getFuncData()->doCall(arguments); },
+      ref.type.getHeapType());
   }
 
   // Call a function in a "JS-ey" manner, adding arguments as needed, and
   // throwing if necessary, the same way JS does. We are given a method that
   // does the actual call, and the type we are calling.
-  Literals callFunctionAsJS(std::function<Flow (Literals)> doCall,
+  Literals callFunctionAsJS(std::function<Flow(Literals)> doCall,
                             HeapType type) {
     auto sig = type.getSignature();
 
