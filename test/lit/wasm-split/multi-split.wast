@@ -14,6 +14,11 @@
 ;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=MOD2-OPTIONS
 ;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=MOD3-OPTIONS
 
+;; Check if --placeholder-namespace option works.
+;; work.
+;; RUN: wasm-split -all -g --multi-split %s --manifest %s.manifest --out-prefix=%t --placeholder-namespace=placeholder_env -o %t.wasm
+;; RUN: wasm-dis %t.wasm | filecheck %s --check-prefix=PRIMARY-PLACEHOLDER-NAMESPACE
+
 (module
  ;; PRIMARY:      (type $ret-i64 (func (result i64)))
 
@@ -25,6 +30,11 @@
  ;; PRIMARY-OPTIONS:      (type $ret-f32 (func (result f32)))
 
  ;; PRIMARY-OPTIONS:      (type $ret-i32 (func (result i32)))
+ ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (type $ret-i64 (func (result i64)))
+
+ ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (type $ret-f32 (func (result f32)))
+
+ ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (type $ret-i32 (func (result i32)))
  (type $ret-i32 (func (result i32)))
  (type $ret-i64 (func (result i64)))
  (type $ret-f32 (func (result f32)))
@@ -343,3 +353,39 @@
 ;; PRIMARY-OPTIONS-NEXT:   (i32.const 2)
 ;; PRIMARY-OPTIONS-NEXT:  )
 ;; PRIMARY-OPTIONS-NEXT: )
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env" "0" (func $placeholder_0 (result i64)))
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env" "1" (func $placeholder_1 (result f32)))
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env" "2" (func $placeholder_2 (result i32)))
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (table $0 3 funcref)
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (elem $0 (i32.const 0) $placeholder_0 $placeholder_1 $placeholder_2)
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (export "trampoline_B" (func $trampoline_B))
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (export "trampoline_C" (func $trampoline_C))
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (export "trampoline_A" (func $trampoline_A))
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (export "table" (table $0))
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (func $trampoline_B (result i64)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  (call_indirect (type $ret-i64)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:   (i32.const 0)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  )
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT: )
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (func $trampoline_C (result f32)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  (call_indirect (type $ret-f32)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:   (i32.const 1)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  )
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT: )
+
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (func $trampoline_A (result i32)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  (call_indirect (type $ret-i32)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:   (i32.const 2)
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  )
+;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT: )
