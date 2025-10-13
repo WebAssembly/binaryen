@@ -1247,8 +1247,7 @@ void TranslateToFuzzReader::useImportedGlobals() {
       Names::getValidGlobalName(wasm, "primary_" + exp->name.toString());
     // We can import it as its own type, or any (declared) supertype.
     auto type = getSuperType(global->type);
-    // XXX
-    auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable; // XXX
+    auto mutability = global->mutable_ ? Builder::Mutable : Builder::Immutable;
     auto import = builder.makeGlobal(name, type, nullptr, mutability);
     import->module = "primary";
     import->base = exp->name;
