@@ -720,6 +720,9 @@ void TranslateToFuzzReader::setupGlobals() {
     // Export some globals, where we can.
     auto canExport = (mutability == Builder::Immutable ||
                                     wasm.features.hasMutableGlobals());
+    if (type.isTuple()) {
+      canExport = false;
+    }
     if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
       canExport = false;
     }
