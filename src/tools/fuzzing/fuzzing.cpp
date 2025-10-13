@@ -718,12 +718,12 @@ void TranslateToFuzzReader::setupGlobals() {
     useGlobalLater(wasm.addGlobal(std::move(global)));
 
     // Export some globals, where we can.
-    auto canExport = (mutability == Builder::Immutable ||
-                                    wasm.features.hasMutableGlobals());
+    auto canExport =
+      (mutability == Builder::Immutable || wasm.features.hasMutableGlobals());
     if (type.isTuple()) {
       canExport = false;
     }
-      if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
+    if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
       canExport = false;
     }
     for (auto t : type) {
@@ -734,7 +734,8 @@ void TranslateToFuzzReader::setupGlobals() {
     }
     if (canExport && oneIn(2)) {
       auto exportName = Names::getValidExportName(wasm, name);
-      wasm.addExport(Builder::makeExport(exportName, name, ExternalKind::Global));
+      wasm.addExport(
+        Builder::makeExport(exportName, name, ExternalKind::Global));
     }
   }
 }
@@ -1247,14 +1248,13 @@ void TranslateToFuzzReader::useImportedGlobals() {
     // We can import it as its own type, or any (declared) supertype.
     auto type = getSuperType(global->type);
     // XXX
-    auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable; //XXX
+    auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable; // XXX
     auto import = builder.makeGlobal(name, type, nullptr, mutability);
     import->module = "primary";
     import->base = exp->name;
     useGlobalLater(wasm.addGlobal(std::move(import)));
   }
 }
-
 
 TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(
   TranslateToFuzzReader& parent, Function* func)
