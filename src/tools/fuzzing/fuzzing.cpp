@@ -725,9 +725,6 @@ void TranslateToFuzzReader::setupGlobals() {
     if (mutability == Builder::Mutable && !wasm.features.hasMutableGlobals()) {
       continue;
     }
-    //if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
-    //  continue;
-    //}
     if (oneIn(2)) {
       auto exportName = Names::getValidExportName(wasm, name);
       wasm.addExport(
