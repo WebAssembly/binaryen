@@ -718,21 +718,16 @@ void TranslateToFuzzReader::setupGlobals() {
     useGlobalLater(wasm.addGlobal(std::move(global)));
 
     // Export some globals, where we can.
-    auto canExport =
-      (mutability == Builder::Immutable || wasm.features.hasMutableGlobals());
-    if (type.isTuple()) {
-      canExport = false;
+    if (preserveImportsAndExports || type.isTuple() || !isValidPublicType(t)) {
+      continue;
     }
-    if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
-      canExport = false;
+    if (mutability == Builder::mutable_ && !wasm.features.hasMutableGlobals()) {
+      continue;
     }
-    for (auto t : type) {
-      if (!isValidPublicType(t)) {
-        canExport = false;
-        break;
-      }
-    }
-    if (canExport && oneIn(2)) {
+    //if (type.isExact() && !wasm.features.hasCustomDescriptors()) {
+    //  continue;
+    //}
+    if (oneIn(2)) {
       auto exportName = Names::getValidExportName(wasm, name);
       wasm.addExport(
         Builder::makeExport(exportName, name, ExternalKind::Global));
