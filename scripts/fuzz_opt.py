@@ -1795,6 +1795,10 @@ class ClusterFuzz(TestCaseHandler):
 #
 # in the env. That will keep the secondary wasm fixed as you reduce the primary
 # one.
+#
+# It is better to reduce the second one first, as then it will import less from
+# the first (otherwise, when the second one imports many things, the first will
+# fail to remove exports that are used).
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
