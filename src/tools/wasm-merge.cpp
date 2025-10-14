@@ -480,7 +480,7 @@ void fuseImportsAndExports(const PassOptions& options) {
                                               [import->module][import->base];
       if (internalName.is()) {
         auto* export_ = merged.getFunction(internalName);
-        if (!HeapType::isSubType(export_->type, import->type)) {
+        if (!Type::isSubType(export_->type, import->type)) {
           reportTypeMismatch(valid, "function", import);
           std::cerr << "type " << export_->type << " is not a subtype of "
                     << import->type << ".\n";
@@ -569,7 +569,7 @@ void updateTypes(Module& wasm) {
     }
 
     void visitRefFunc(RefFunc* curr) {
-      curr->finalize(getModule()->getFunction(curr->func)->type);
+      curr->finalize(getModule()->getFunction(curr->func)->type.getHeapType());
     }
 
     void visitFunction(Function* curr) {
