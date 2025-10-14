@@ -76,7 +76,10 @@ struct GlobalRefining : public Pass {
     // fields in subtypes - the types must match exactly, or else a write in
     // one place could store a type considered in valid in another place).
     std::unordered_set<Name> unoptimizable;
-    for (auto* global : ExportUtils::getExportedGlobals(*module)) {
+    auto exportedGlobalsVec = ExportUtils::getExportedGlobals(*module);
+    std::unordered_set<Global*> exportedGlobals(exportedGlobalsVec.begin(),
+                                                exportedGlobalsVec.end());
+    for (auto* global : exportedGlobalsVec) {
       if (getPassOptions().closedWorld || global->mutable_) {
         unoptimizable.insert(global->name);
       }
@@ -84,6 +87,7 @@ struct GlobalRefining : public Pass {
 
     bool optimized = false;
 
+    // We must avoid exporting invalid types. Note all exports to help there.
     PublicTypeValidator publicTypeValidator(module->features);
 
     for (auto& global : module->globals) {
@@ -105,7 +109,12 @@ struct GlobalRefining : public Pass {
 
       auto oldType = global->type;
       auto newType = lub.getLUB();
-      if (newType == oldType ||
+      if (newType == oldType) {
+        continue;
+      }
+
+      // Do not make invalid types public.
+      if (exportedGlobals.count(global.get()) &&
           !publicTypeValidator.isValidPublicType(newType)) {
         continue;
       }

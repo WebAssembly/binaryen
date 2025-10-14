@@ -2,9 +2,11 @@
 
 ;; RUN: foreach %s %t wasm-opt --global-refining -all --disable-custom-descriptors -S -o - | filecheck %s
 
-;; We cannot refine the global's type, as then it would make the rec group
+;; We cannot refine $global's type, as then it would make the rec group
 ;; public, and that includes an exact type, which is invalid without custom
 ;; descriptors.
+;;
+;; We can refine $unexported, though, as it makes nothing public.
 (module
  (rec
   ;; CHECK:      (rec
@@ -16,6 +18,9 @@
 
  ;; CHECK:      (global $global (ref eq) (array.new_fixed $array 0))
  (global $global (ref eq) (array.new_fixed $array 0))
+
+ ;; CHECK:      (global $unexported (ref (exact $array)) (array.new_fixed $array 0))
+ (global $unexported (ref eq) (array.new_fixed $array 0))
 
  ;; CHECK:      (export "global" (global $global))
  (export "global" (global $global))
