@@ -976,7 +976,8 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->name = callExportImportName;
     func->module = "fuzzing-support";
     func->base = "call-export";
-    func->type = Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Exact);
+    func->type =
+      Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Exact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1007,7 +1008,9 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       // As call-export, there is a flags param that allows us to catch+rethrow
       // all exceptions.
       func->type =
-        Type(Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none), NonNullable, Exact);
+        Type(Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none),
+             NonNullable,
+             Exact);
       wasm.addFunction(std::move(func));
     }
 
@@ -1020,7 +1023,9 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->name = callRefCatchImportName;
       func->module = "fuzzing-support";
       func->base = "call-ref-catch";
-      func->type = Type(Signature(Type(HeapType::func, Nullable), Type::i32), NonNullable, Exact);
+      func->type = Type(Signature(Type(HeapType::func, Nullable), Type::i32),
+                        NonNullable,
+                        Exact);
       wasm.addFunction(std::move(func));
     }
   }
@@ -1081,7 +1086,9 @@ void TranslateToFuzzReader::addImportTableSupport() {
     func->name = tableGetImportName;
     func->module = "fuzzing-support";
     func->base = "table-get";
-    func->type = Type(Signature({Type::i32}, Type(HeapType::func, Nullable)), NonNullable, Exact);
+    func->type = Type(Signature({Type::i32}, Type(HeapType::func, Nullable)),
+                      NonNullable,
+                      Exact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1093,7 +1100,9 @@ void TranslateToFuzzReader::addImportTableSupport() {
     func->module = "fuzzing-support";
     func->base = "table-set";
     func->type =
-      Type(Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none), NonNullable, Exact);
+      Type(Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none),
+           NonNullable,
+           Exact);
     wasm.addFunction(std::move(func));
   }
 }
@@ -1113,7 +1122,8 @@ void TranslateToFuzzReader::addImportSleepSupport() {
   func->name = sleepImportName;
   func->module = "fuzzing-support";
   func->base = "sleep";
-  func->type = Type(Signature({Type::i32, Type::i32}, Type::i32), NonNullable, Exact);
+  func->type =
+    Type(Signature({Type::i32, Type::i32}, Type::i32), NonNullable, Exact);
   wasm.addFunction(std::move(func));
 }
 
@@ -1159,7 +1169,10 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   auto* body = builder.makeBlock(contents);
   hashMemoryName = Names::getValidFunctionName(wasm, "hashMemory");
   auto* hasher = wasm.addFunction(builder.makeFunction(
-    hashMemoryName, Type(Signature(Type::none, Type::i32), NonNullable, Exact), {Type::i32}, body));
+    hashMemoryName,
+    Type(Signature(Type::none, Type::i32), NonNullable, Exact),
+    {Type::i32},
+    body));
 
   if (!preserveImportsAndExports && !wasm.getExportOrNull("hashMemory")) {
     wasm.addExport(
@@ -1610,7 +1623,8 @@ Function* TranslateToFuzzReader::addFunction() {
       }
     });
     auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
-    randomElem->data.push_back(builder.makeRefFunc(func->name, func->type.getHeapType()));
+    randomElem->data.push_back(
+      builder.makeRefFunc(func->name, func->type.getHeapType()));
   }
   numAddedFunctions++;
   return func;
@@ -2184,7 +2198,8 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return;
   }
-  auto invoker = builder.makeFunction(name, Type(Signature(), NonNullable, Exact), {});
+  auto invoker =
+    builder.makeFunction(name, Type(Signature(), NonNullable, Exact), {});
   Block* body = builder.makeBlock();
   invoker->body = body;
   FunctionCreationContext context(*this, invoker.get());
@@ -2886,7 +2901,10 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
   }
   // TODO: half the time make a completely random item with that type.
   return builder.makeCallRef(
-    builder.makeRefFunc(target->name, target->type.getHeapType()), args, type, isReturn);
+    builder.makeRefFunc(target->name, target->type.getHeapType()),
+    args,
+    type,
+    isReturn);
 }
 
 Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
@@ -3507,7 +3525,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     assert(heapType.getBasic(Unshared) == HeapType::func);
     // With high probability, use the last created function if possible.
     // Otherwise, continue on to select some other function.
-    if (funcContext && funcContext->func->type.getHeapType().getShared() == share &&
+    if (funcContext &&
+        funcContext->func->type.getHeapType().getShared() == share &&
         !oneIn(4)) {
       auto* target = funcContext->func;
       return builder.makeRefFunc(target->name, target->type.getHeapType());
@@ -3555,8 +3574,11 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   auto* body = heapType.getSignature().results == Type::none
                  ? (Expression*)builder.makeNop()
                  : (Expression*)builder.makeUnreachable();
-  auto* func = wasm.addFunction(builder.makeFunction(
-    Names::getValidFunctionName(wasm, "ref_func_target"), Type(heapType, NonNullable, Exact), {}, body));
+  auto* func = wasm.addFunction(
+    builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
+                         Type(heapType, NonNullable, Exact),
+                         {},
+                         body));
   return builder.makeRefFunc(func->name, heapType);
 }
 
