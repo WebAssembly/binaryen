@@ -22,6 +22,7 @@
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/public-type-validator.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-type.h"
@@ -83,6 +84,8 @@ struct GlobalRefining : public Pass {
 
     bool optimized = false;
 
+    PublicTypeValidator publicTypeValidator(module->features);
+
     for (auto& global : module->globals) {
       if (global->imported() || unoptimizable.count(global->name)) {
         continue;
@@ -102,12 +105,15 @@ struct GlobalRefining : public Pass {
 
       auto oldType = global->type;
       auto newType = lub.getLUB();
-      if (newType != oldType) {
-        // We found an improvement!
-        assert(Type::isSubType(newType, oldType));
-        global->type = newType;
-        optimized = true;
+      if (newType == oldType ||
+          !publicTypeValidator.isValidPublicType(newType)) {
+        continue;
       }
+
+      // We found an improvement!
+      assert(Type::isSubType(newType, oldType));
+      global->type = newType;
+      optimized = true;
     }
 
     if (!optimized) {
