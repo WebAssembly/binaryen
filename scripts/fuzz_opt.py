@@ -1786,32 +1786,32 @@ class ClusterFuzz(TestCaseHandler):
 # Tests linking two wasm files at runtime, and that optimizations do not break
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
+#
+# TODO: Document fuzzing
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
     frequency = 1
 
     def handle(self, wasm):
-        # Generate a second wasm file, unless we were given one (useful during
-        # reduction).
+        # Generate a second wasm file. (For fuzzing, we may be given one, but we
+        # still generate it to avoid changes to random numbers later; we just
+        # discard it after.)
         second_wasm = abspath('second.wasm')
-        given = os.environ.get('BINARYEN_SECOND_WASM')
-        if given:
-            # TODO: should we de-nan this etc. as with the primary?
-            shutil.copyfile(given, second_wasm)
-        else:
-            # generate a second wasm file to merge. pick a smaller size when
-            # the main wasm file is smaller, so reduction shrinks this too.
-            wasm_size = os.stat(wasm).st_size
-            second_size = min(wasm_size, random_size())
+        second_input = abspath('second_input.dat')
+        make_random_input(second_size, second_input)
+        args = [second_input, '-ttf']
+        # Most of the time, use the first wasm as an import to the second.
+        if random.random() < 0.8:
+            args += ['--fuzz-import=' + wasm]
 
-            second_input = abspath('second_input.dat')
-            make_random_input(second_size, second_input)
-            args = [second_input, '-ttf', '-o', second_wasm]
-            # Most of the time, use the first wasm as an import to the second.
-            if random.random() < 0.8:
-                args += ['--fuzz-import=' + wasm]
-            run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
+        given = os.environ.get('BINARYEN_SECOND_WASM')
+        if not given:
+            # Finish generating it.
+            run([in_bin('wasm-opt'), '-o', second_wasm] + args + GEN_ARGS + FEATURE_OPTS)
+        else:
+            # Use the given one.
+            shutil.copyfile(given, second_wasm)
 
         # Run the wasm.
         #
