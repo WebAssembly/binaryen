@@ -1787,7 +1787,14 @@ class ClusterFuzz(TestCaseHandler):
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
 #
-# TODO: Document fuzzing
+# Fuzzing failures here is a little trickier, as there are two wasm files.
+# First, reduce on the primary file, by finding the secondary one in the log
+# (usually out/test/second.wasm), copy that to the side, and add
+#
+#   BINARYEN_SECOND_WASM=${saved_second}
+#
+# in the env. That will keep the secondary wasm fixed as you reduce the primary
+# one.
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
@@ -1815,7 +1822,7 @@ class Two(TestCaseHandler):
             print('Generate second wasm')
             run([in_bin('wasm-opt'), '-o', second_wasm] + args + GEN_ARGS + FEATURE_OPTS)
         else:
-            print('Use given second wasm')
+            print(f'Use given second wasm {given}')
             shutil.copyfile(given, second_wasm)
 
         # Run the wasm.
