@@ -1807,10 +1807,10 @@ class Two(TestCaseHandler):
 
         given = os.environ.get('BINARYEN_SECOND_WASM')
         if not given:
-            # Finish generating it.
+            print('Generate second wasm')
             run([in_bin('wasm-opt'), '-o', second_wasm] + args + GEN_ARGS + FEATURE_OPTS)
         else:
-            # Use the given one.
+            print('Use given second wasm')
             shutil.copyfile(given, second_wasm)
 
         # Run the wasm.
