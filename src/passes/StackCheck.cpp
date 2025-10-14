@@ -41,7 +41,8 @@ importStackOverflowHandler(Module& module, Name name, Signature sig) {
   ImportInfo info(module);
 
   if (!info.getImportedFunction(ENV, name)) {
-    auto import = Builder::makeFunction(name, sig, {});
+    auto import =
+      Builder::makeFunction(name, Type(sig, NonNullable, Exact), {});
     import->module = ENV;
     import->base = name;
     module.addFunction(std::move(import));
@@ -171,7 +172,9 @@ struct StackCheck : public Pass {
     // Generate the exported function.
     auto limitsFunc = builder.makeFunction(
       SET_STACK_LIMITS,
-      Signature({stackPointer->type, stackPointer->type}, Type::none),
+      Type(Signature({stackPointer->type, stackPointer->type}, Type::none),
+           NonNullable,
+           Exact),
       {});
     auto* getBase = builder.makeLocalGet(0, stackPointer->type);
     auto* storeBase = builder.makeGlobalSet(stackBaseName, getBase);

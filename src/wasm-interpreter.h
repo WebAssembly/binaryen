@@ -3464,14 +3464,14 @@ public:
       // The call.without.effects intrinsic is a call to an import that actually
       // calls the given function reference that is the final argument.
       target = arguments.back().getFunc();
-      funcType = arguments.back().type.getHeapType();
+      funcType = arguments.back().type;
       arguments.pop_back();
     }
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      arguments.push_back(self()->makeFuncData(target, funcType));
+      arguments.push_back(self()->makeFuncData(target, funcType.getHeapType()));
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
@@ -3522,7 +3522,7 @@ public:
     }
 
     auto* func = self()->getModule()->getFunction(funcref.getFunc());
-    if (!HeapType::isSubType(func->type, curr->heapType)) {
+    if (!HeapType::isSubType(func->type.getHeapType(), curr->heapType)) {
       trap("callIndirect: non-subtype");
     }
 
@@ -4420,7 +4420,8 @@ public:
     auto funcName = funcValue.getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
     return Literal(std::make_shared<ContData>(
-      self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
+      self()->makeFuncData(func->name, func->type.getHeapType()),
+      curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
@@ -4767,7 +4768,7 @@ public:
         // not the original function that was called, and the original has been
         // returned from already; we should call the last return_called
         // function).
-        auto target = self()->makeFuncData(name, function->type);
+        auto target = self()->makeFuncData(name, function->type.getHeapType());
         self()->pushResumeEntry({target}, "function-target");
       }
 

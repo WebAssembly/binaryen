@@ -551,7 +551,9 @@ struct MultiMemoryLowering : public Pass {
     Name name = memoryName.toString() + "_grow";
     Name functionName = Names::getValidFunctionName(*wasm, name);
     auto function = Builder::makeFunction(
-      functionName, Signature(pointerType, pointerType), {});
+      functionName,
+      Type(Signature(pointerType, pointerType), NonNullable, Exact),
+      {});
     function->setLocalName(0, "page_delta");
     auto pageSizeConst = [&]() {
       return builder.makeConst(Literal(Memory::kPageSize));
@@ -643,7 +645,9 @@ struct MultiMemoryLowering : public Pass {
     Name name = memoryName.toString() + "_size";
     Name functionName = Names::getValidFunctionName(*wasm, name);
     auto function = Builder::makeFunction(
-      functionName, Signature(Type::none, pointerType), {});
+      functionName,
+      Type(Signature(Type::none, pointerType), NonNullable, Exact),
+      {});
     Expression* functionBody;
     auto pageSizeConst = [&]() {
       return builder.makeConst(Literal(Memory::kPageSize));

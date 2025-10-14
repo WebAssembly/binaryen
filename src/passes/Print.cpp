@@ -3079,9 +3079,9 @@ void PrintSExpression::handleSignature(Function* curr,
   printMajor(o, "func ");
   curr->name.print(o);
   if ((currModule && currModule->features.hasGC()) ||
-      requiresExplicitFuncType(curr->type)) {
+      requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
-    printHeapTypeName(curr->type) << ')';
+    printHeapTypeName(curr->type.getHeapType()) << ')';
   }
   bool inParam = false;
   Index i = 0;

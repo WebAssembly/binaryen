@@ -143,7 +143,8 @@ private:
       body = builder.makeRefAs(ExternConvertAny, call);
     }
 
-    module->addFunction(builder.makeFunction(stubName, type, {}, body));
+    module->addFunction(
+      builder.makeFunction(stubName, Type(type, NonNullable, Exact), {}, body));
 
     return stubName;
   }

@@ -149,7 +149,8 @@ struct DeNaN : public WalkerPass<
                Literal literal,
                std::optional<BinaryOp> op = {}) {
     Builder builder(*module);
-    auto func = Builder::makeFunction(name, Signature(type, type), {});
+    auto func = Builder::makeFunction(
+      name, Type(Signature(type, type), NonNullable, Exact), {});
     // Compare the value to itself to check if it is a NaN, and return 0 if
     // so:
     //

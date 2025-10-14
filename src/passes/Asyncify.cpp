@@ -1852,7 +1852,10 @@ private:
         builder.makeUnreachable()));
       body->finalize();
       auto func = builder.makeFunction(
-        name, Signature(Type(params), Type::none), {}, body);
+        name,
+        Type(Signature(Type(params), Type::none), NonNullable, Exact),
+        {},
+        body);
       module->addFunction(std::move(func));
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };
@@ -1862,11 +1865,11 @@ private:
     makeFunction(ASYNCIFY_START_REWIND, true, State::Rewinding);
     makeFunction(ASYNCIFY_STOP_REWIND, false, State::Normal);
 
-    module->addFunction(
-      builder.makeFunction(ASYNCIFY_GET_STATE,
-                           Signature(Type::none, Type::i32),
-                           {},
-                           builder.makeGlobalGet(ASYNCIFY_STATE, Type::i32)));
+    module->addFunction(builder.makeFunction(
+      ASYNCIFY_GET_STATE,
+      Type(Signature(Type::none, Type::i32), NonNullable, Exact),
+      {},
+      builder.makeGlobalGet(ASYNCIFY_STATE, Type::i32)));
     module->addExport(builder.makeExport(
       ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
   }

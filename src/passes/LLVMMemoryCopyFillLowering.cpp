@@ -83,7 +83,9 @@ struct LLVMMemoryCopyFillLowering
     auto memCopyFunc = b.makeFunction(
       memCopyFuncName,
       {{"dst", Type::i32}, {"src", Type::i32}, {"size", Type::i32}},
-      Signature({Type::i32, Type::i32, Type::i32}, {Type::none}),
+      Type(Signature({Type::i32, Type::i32, Type::i32}, Type::none),
+           NonNullable,
+           Exact),
       {{"start", Type::i32},
        {"end", Type::i32},
        {"step", Type::i32},
@@ -93,7 +95,9 @@ struct LLVMMemoryCopyFillLowering
     auto memFillFunc = b.makeFunction(
       memFillFuncName,
       {{"dst", Type::i32}, {"val", Type::i32}, {"size", Type::i32}},
-      Signature({Type::i32, Type::i32, Type::i32}, {Type::none}),
+      Type(Signature({Type::i32, Type::i32, Type::i32}, Type::none),
+           NonNullable,
+           Exact),
       {});
     memFillFunc->body = b.makeBlock();
     module->addFunction(memFillFunc.release());

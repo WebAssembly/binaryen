@@ -153,7 +153,7 @@ private:
       return CallUtils::Trap{};
     }
     auto* func = getModule()->getFunction(name);
-    if (original->heapType != func->type) {
+    if (original->heapType != func->type.getHeapType()) {
       return CallUtils::Trap{};
     }
     return CallUtils::Known{name};
