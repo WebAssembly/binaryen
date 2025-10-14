@@ -60,7 +60,8 @@ public:
                                                 HeapType type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
-    return makeFunction(name, Type(type, NonNullable, Exact), std::move(vars), body);
+    return makeFunction(
+      name, Type(type, NonNullable, Exact), std::move(vars), body);
   }
 
   static std::unique_ptr<Function> makeFunction(Name name,
