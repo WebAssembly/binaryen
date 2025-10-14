@@ -1806,11 +1806,7 @@ class Two(TestCaseHandler):
         # discard it after.)
         second_wasm = abspath('second.wasm')
         second_input = abspath('second_input.dat')
-
-        # XXX
-        wasm_size = os.stat(wasm).st_size
-        second_size = min(wasm_size, random_size())
-
+        second_size = random_size()
         make_random_input(second_size, second_input)
         args = [second_input, '-ttf']
         # Most of the time, use the first wasm as an import to the second.
