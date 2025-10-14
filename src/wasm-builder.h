@@ -90,6 +90,15 @@ public:
     return func;
   }
 
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                std::vector<NameType>&& params,
+                                                HeapType type,
+                                                std::vector<NameType>&& vars,
+                                                Expression* body = nullptr) {
+    return makeFunction(
+      name, std::move(params), Type(type, NonNullable, Exact), std::move(vars), body);
+  }
+
   static std::unique_ptr<Table> makeTable(Name name,
                                           Type type = Type(HeapType::func,
                                                            Nullable),
