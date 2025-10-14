@@ -95,8 +95,11 @@ public:
                                                 HeapType type,
                                                 std::vector<NameType>&& vars,
                                                 Expression* body = nullptr) {
-    return makeFunction(
-      name, std::move(params), Type(type, NonNullable, Exact), std::move(vars), body);
+    return makeFunction(name,
+                        std::move(params),
+                        Type(type, NonNullable, Exact),
+                        std::move(vars),
+                        body);
   }
 
   static std::unique_ptr<Table> makeTable(Name name,

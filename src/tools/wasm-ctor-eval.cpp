@@ -1294,7 +1294,8 @@ start_eval:
       // signature. If there is a mismatch, shift the local indices to make room
       // for the unused parameters.
       std::vector<Type> localTypes;
-      auto originalParams = originalFuncType.getHeapType().getSignature().params;
+      auto originalParams =
+        originalFuncType.getHeapType().getSignature().params;
       if (originalParams != func->getParams()) {
         // Add locals for the body to use instead of using the params.
         for (auto type : func->getParams()) {

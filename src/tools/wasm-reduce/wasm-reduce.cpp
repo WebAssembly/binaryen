@@ -1033,8 +1033,11 @@ struct Reducer
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->type = Type(Signature(funcType.getHeapType().getSignature().params,
-                                 child->type), NonNullable, Exact);
+          func->type =
+            Type(Signature(funcType.getHeapType().getSignature().params,
+                           child->type),
+                 NonNullable,
+                 Exact);
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!
