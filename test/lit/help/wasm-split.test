@@ -76,7 +76,7 @@
 ;; CHECK-NEXT:                                        placeholder indices to the function
 ;; CHECK-NEXT:                                        names.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --import-namespace                   [split, instrument, multi-split] When
+;; CHECK-NEXT:   --import-namespace                   [split, multi-split, instrument] When
 ;; CHECK-NEXT:                                        provided as an option for module
 ;; CHECK-NEXT:                                        splitting, the namespace from which to
 ;; CHECK-NEXT:                                        import objects from the primary module
@@ -84,18 +84,18 @@
 ;; CHECK-NEXT:                                        mode, refers to the namespace from which
 ;; CHECK-NEXT:                                        to import the secondary memory, if any.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --placeholder-namespace              [split] The namespace from which to
-;; CHECK-NEXT:                                        import placeholder functions into the
-;; CHECK-NEXT:                                        primary module.
+;; CHECK-NEXT:   --placeholder-namespace              [split, multi-split] The namespace from
+;; CHECK-NEXT:                                        which to import placeholder functions
+;; CHECK-NEXT:                                        into the primary module.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --jspi                               [split] Transform the module to support
 ;; CHECK-NEXT:                                        asynchronously loading the secondary
 ;; CHECK-NEXT:                                        module before any placeholder functions
 ;; CHECK-NEXT:                                        have been called.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --export-prefix                      [split] An identifying prefix to prepend
-;; CHECK-NEXT:                                        to new export names created by module
-;; CHECK-NEXT:                                        splitting.
+;; CHECK-NEXT:   --export-prefix                      [split, multi-split] An identifying
+;; CHECK-NEXT:                                        prefix to prepend to new export names
+;; CHECK-NEXT:                                        created by module splitting.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --profile-export                     [instrument] The export name of the
 ;; CHECK-NEXT:                                        function the embedder calls to write the

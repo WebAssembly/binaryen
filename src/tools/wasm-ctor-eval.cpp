@@ -323,6 +323,10 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                    import->type.getHeapType());
   }
 
+  Tag* getImportedTag(Tag* tag) override {
+    WASM_UNREACHABLE("missing imported tag");
+  }
+
   // We assume the table is not modified FIXME
   Literal tableLoad(Name tableName, Address index) override {
     auto* table = wasm->getTableOrNull(tableName);
@@ -363,6 +367,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     }
     if (!Properties::isConstantExpression(value)) {
       throw FailToEvalException("tableLoad of non-literal");
+    }
+    if (auto* r = value->dynCast<RefFunc>()) {
+      return instance->makeFuncData(r->func, r->type.getHeapType());
     }
     return Properties::getLiteral(value);
   }

@@ -160,6 +160,19 @@ struct FuncData {
   }
 };
 
+// The data of a (ref exn) literal.
+struct ExnData {
+  // The tag of this exn data.
+  // TODO: Add self, like in FuncData, to handle the case of a module that is
+  //       instantiated multiple times.
+  Tag* tag;
+
+  // The payload of this exn data.
+  Literals payload;
+
+  ExnData(Tag* tag, Literals payload) : tag(tag), payload(payload) {}
+};
+
 // Suspend/resume support.
 //
 // As we operate directly on our structured IR, we do not have a program counter
@@ -324,7 +337,7 @@ protected:
   }
 
   // Same as makeGCData but for ExnData.
-  Literal makeExnData(Name tag, const Literals& payload) {
+  Literal makeExnData(Tag* tag, const Literals& payload) {
     auto allocation = std::make_shared<ExnData>(tag, payload);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
@@ -1890,9 +1903,18 @@ public:
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
+    // Single-module implementation. This is used from Precompute, for example.
+    // It is overriden in ModuleRunner to add logic for finding the proper
+    // imported tag (which single-module cases don't care about).
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{makeExnData(curr->tag, arguments)});
+    auto* tag = self()->getModule()->getTag(curr->tag);
+    if (tag->imported()) {
+      // The same tag can be imported twice, so by looking at only the current
+      // module we can't tell if two tags are the same or not.
+      return NONCONSTANT_FLOW;
+    }
+    throwException(WasmException{self()->makeExnData(tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
@@ -2908,6 +2930,9 @@ public:
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
+    // Get the Tag instance for a tag implemented in the host, that is, not
+    // among the linked ModuleRunner instances, but imported from the host.
+    virtual Tag* getImportedTag(Tag* tag) = 0;
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -3194,6 +3219,18 @@ public:
     return iter->second;
   }
 
+  Tag* getExportedTag(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Tag) {
+      externalInterface->trap("exported tag not found");
+    }
+    auto* tag = wasm.getTag(*export_->getInternalName());
+    if (tag->imported()) {
+      tag = externalInterface->getImportedTag(tag);
+    }
+    return tag;
+  }
+
   std::string printFunctionStack() {
     std::string ret = "/== (binaryen interpreter stack trace)\n";
     for (int i = int(functionStack.size()) - 1; i >= 0; i--) {
@@ -3445,12 +3482,15 @@ protected:
   Tag* getCanonicalTag(Name name) {
     auto* inst = self();
     auto* tag = inst->wasm.getTag(name);
-    while (tag->imported()) {
-      inst = inst->linkedInstances.at(tag->module).get();
-      auto* tagExport = inst->wasm.getExport(tag->base);
-      tag = inst->wasm.getTag(*tagExport->getInternalName());
+    if (!tag->imported()) {
+      return tag;
     }
-    return tag;
+    auto iter = inst->linkedInstances.find(tag->module);
+    if (iter == inst->linkedInstances.end()) {
+      return externalInterface->getImportedTag(tag);
+    }
+    inst = iter->second.get();
+    return inst->getExportedTag(tag->base);
   }
 
 public:
@@ -3521,15 +3561,16 @@ public:
       trap("non-function target in call_indirect");
     }
 
-    auto* func = self()->getModule()->getFunction(funcref.getFunc());
-    if (!HeapType::isSubType(func->type.getHeapType(), curr->heapType)) {
+    // TODO: Throw a non-constant exception if the reference is to an imported
+    //       function that has a supertype of the expected type.
+    if (!HeapType::isSubType(funcref.type.getHeapType(), curr->heapType)) {
       trap("callIndirect: non-subtype");
     }
 
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(calling table)\n";
 #endif
-    Flow ret = callFunction(funcref.getFunc(), arguments);
+    Flow ret = funcref.getFuncData()->doCall(arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
@@ -4354,7 +4395,8 @@ public:
 
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        if (curr->catchTags[i] == exnData->tag) {
+        auto* tag = self()->getCanonicalTag(curr->catchTags[i]);
+        if (tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
@@ -4377,7 +4419,8 @@ public:
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
-        if (!catchTag.is() || catchTag == exnData->tag) {
+        if (!catchTag.is() ||
+            self()->getCanonicalTag(catchTag) == exnData->tag) {
           Flow ret;
           ret.breakTo = curr->catchDests[i];
           if (catchTag.is()) {
@@ -4394,6 +4437,13 @@ public:
       // This exception is not caught by this try_table. Rethrow it.
       throw;
     }
+  }
+  Flow visitThrow(Throw* curr) {
+    Literals arguments;
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
+    throwException(WasmException{
+      self()->makeExnData(self()->getCanonicalTag(curr->tag), arguments)});
+    WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
     for (int i = exceptionStack.size() - 1; i >= 0; i--) {
@@ -4464,9 +4514,8 @@ public:
       assert(self()->restoredValuesMap.empty());
       // Throw, if we were resumed by resume_throw;
       if (auto* tag = currContinuation->exceptionTag) {
-        // XXX tag->name lacks cross-module support
         throwException(WasmException{
-          self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+          self()->makeExnData(tag, currContinuation->resumeArguments)});
       }
       return currContinuation->resumeArguments;
     }
@@ -4669,9 +4718,8 @@ public:
         // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
         if (auto* tag = currContinuation->exceptionTag) {
-          // XXX tag->name lacks cross-module support
           throwException(WasmException{
-            self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+            self()->makeExnData(tag, currContinuation->resumeArguments)});
         }
       }
     }

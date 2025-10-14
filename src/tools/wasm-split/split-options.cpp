@@ -231,7 +231,7 @@ WasmSplitOptions::WasmSplitOptions()
          "module into the secondary module. In instrument mode, refers to the "
          "namespace from which to import the secondary memory, if any.",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument, Mode::MultiSplit},
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
@@ -241,7 +241,7 @@ WasmSplitOptions::WasmSplitOptions()
          "The namespace from which to import placeholder functions into "
          "the primary module.",
          WasmSplitOption,
-         {Mode::Split},
+         {Mode::Split, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespace = argument;
@@ -260,7 +260,7 @@ WasmSplitOptions::WasmSplitOptions()
       "An identifying prefix to prepend to new export names created "
       "by module splitting.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { exportPrefix = argument; })
     .add("--profile-export",

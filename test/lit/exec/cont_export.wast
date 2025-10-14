@@ -24,7 +24,7 @@
 
   ;; CHECK:      [fuzz-exec] calling call-call-export
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
-  ;; CHECK-NEXT: [exception thrown: __private externref]
+  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
   (func $call-call-export (export "call-call-export")
     ;; Call suspend as an export. We cannot suspend through JS, so we throw.
     (call $call-export
@@ -35,7 +35,7 @@
 
   ;; CHECK:      [fuzz-exec] calling handled
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
-  ;; CHECK-NEXT: [exception thrown: __private externref]
+  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
   (func $handled (export "handled")
     ;; As above, but inside a continuation, so it would be handled - if we could
     ;; suspend though JS. But we can't, so we throw.
