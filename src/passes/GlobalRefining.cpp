@@ -86,8 +86,6 @@ struct GlobalRefining : public Pass {
     }
 
     bool optimized = false;
-
-    // We must avoid exporting invalid types. Note all exports to help there.
     PublicTypeValidator publicTypeValidator(module->features);
 
     for (auto& global : module->globals) {
