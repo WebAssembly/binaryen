@@ -690,7 +690,8 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       Builder builder(*getModule());
       Index secIndex = parent.funcToSecondaryIndex.at(curr->target);
       auto* func = parent.secondaries.at(secIndex)->getFunction(curr->target);
-      auto tableSlot = parent.tableManager.getSlot(curr->target, func->type.getHeapType());
+      auto tableSlot =
+        parent.tableManager.getSlot(curr->target, func->type.getHeapType());
 
       replaceCurrent(parent.maybeLoadSecondary(
         builder,
@@ -829,7 +830,8 @@ void ModuleSplitter::setupTablePatching() {
           // primarySeg->data[i] is a placeholder, so use the secondary
           // function.
           auto* func = replacement->second;
-          auto* ref = Builder(secondary).makeRefFunc(func->name, func->type.getHeapType());
+          auto* ref = Builder(secondary).makeRefFunc(func->name,
+                                                     func->type.getHeapType());
           secondaryElems.push_back(ref);
           ++replacement;
         } else if (auto* get = primarySeg->data[i]->dynCast<RefFunc>()) {
