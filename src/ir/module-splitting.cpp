@@ -829,7 +829,7 @@ void ModuleSplitter::setupTablePatching() {
           // primarySeg->data[i] is a placeholder, so use the secondary
           // function.
           auto* func = replacement->second;
-          auto* ref = Builder(secondary).makeRefFunc(func->name, func->type);
+          auto* ref = Builder(secondary).makeRefFunc(func->name, func->type.getHeapType());
           secondaryElems.push_back(ref);
           ++replacement;
         } else if (auto* get = primarySeg->data[i]->dynCast<RefFunc>()) {
@@ -871,7 +871,7 @@ void ModuleSplitter::setupTablePatching() {
       }
       auto* func = curr->second;
       currData.push_back(
-        Builder(secondary).makeRefFunc(func->name, func->type));
+        Builder(secondary).makeRefFunc(func->name, func->type.getHeapType()));
     }
     if (currData.size()) {
       finishSegment();
