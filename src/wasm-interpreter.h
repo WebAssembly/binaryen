@@ -3177,7 +3177,7 @@ public:
                      [this, func](const Literals& arguments) -> Flow {
                        return callFunction(func->name, arguments);
                      }),
-                   func->type);
+                   func->type.getHeapType());
   }
 
   // get an exported global

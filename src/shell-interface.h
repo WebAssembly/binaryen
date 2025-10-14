@@ -146,17 +146,19 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
                                        std::cout << argument << " : "
                                                  << argument.type << '\n';
                                      }
+                                     return Flow();
+                                   }),
         import->type.getHeapType());
     } else if (import->module == ENV && import->base == EXIT) {
-        return Literal(std::make_shared<FuncData>(import->name,
-                                                  nullptr,
-                                                  [](const Literals&) -> Flow {
-                                                    // XXX hack for torture
-                                                    // tests
-                                                    std::cout << "exit()\n";
-                                                    throw ExitException();
-                                                  }),
-                       import->type.getHeapType());    } else if (auto* inst = getImportInstance(import)) {
+      return Literal(std::make_shared<FuncData>(import->name,
+                                                nullptr,
+                                                [](const Literals&) -> Flow {
+                                                  // XXX hack for torture tests
+                                                  std::cout << "exit()\n";
+                                                  throw ExitException();
+                                                }),
+                     import->type.getHeapType());
+    } else if (auto* inst = getImportInstance(import)) {
       return inst->getExportedFunction(import->base);
     }
     Fatal() << "getImportedFunction: unknown import: " << import->module.str
