@@ -57,6 +57,13 @@ public:
   }
 
   static std::unique_ptr<Function> makeFunction(Name name,
+                                                HeapType type,
+                                                std::vector<Type>&& vars,
+                                                Expression* body = nullptr) {
+    return makeFunction(name, Type(type, NonNullable, Exact), std::move(vars), body);
+  }
+
+  static std::unique_ptr<Function> makeFunction(Name name,
                                                 std::vector<NameType>&& params,
                                                 Type type,
                                                 std::vector<NameType>&& vars,
