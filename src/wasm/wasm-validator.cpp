@@ -2939,6 +2939,10 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
                  "ref.test of exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
   }
+
+  shouldBeFalse(curr->ref->type.isContinuation(),
+                curr,
+                "ref.test cannot cast continuation");
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
@@ -3001,10 +3005,10 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
 
   shouldBeFalse(curr->ref->type.isContinuation(),
                 curr,
-                "continuations cannot be cast from");
+                "ref.cast cannot cast continuation");
   shouldBeFalse(curr->type.isContinuation(),
                 curr,
-                "continuations cannot be cast to");
+                "ref.cast cannot cast to continuation");
 
   if (!curr->desc) {
     return;
@@ -3129,6 +3133,12 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                      "br_on_cast* to exact type requires custom descriptors "
                      "[--enable-custom-descriptors]");
       }
+      shouldBeFalse(curr->ref->type.isContinuation(),
+                    curr,
+                    "br_on cannot cast continuation");
+      shouldBeFalse(curr->castType.isContinuation(),
+                    curr,
+                    "br_on cannot cast to continuation");
       break;
     }
   }
