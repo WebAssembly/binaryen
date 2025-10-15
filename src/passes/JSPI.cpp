@@ -217,7 +217,7 @@ private:
     auto wrapperFunc = Builder::makeFunction(
       wrapperName,
       std::move(namedWrapperParams),
-      Type(HeapType(Signature(Type(wrapperParams), resultsType)),
+      Type(Signature(Type(wrapperParams), resultsType),
            NonNullable,
            Exact),
       {},
