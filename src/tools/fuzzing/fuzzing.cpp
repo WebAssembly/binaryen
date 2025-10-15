@@ -1760,6 +1760,12 @@ void TranslateToFuzzReader::recombine(Function* func) {
 // be placed as either of the children of the i32.add. This tramples the
 // existing content there. Returns true if we found a place.
 static bool replaceChildWith(Expression* expr, Expression* with) {
+  // Casts can get broken if we replace with something not castable.
+  if (!with->type.isCastable()) {
+    if (expr->is<RefCast>() || expr->is<RefTest>() || expr->is<BrOn>()) {
+      return false; // TODO verify
+    }
+  }
   for (auto*& child : ChildIterator(expr)) {
     // To replace, we must have an appropriate type, and we cannot replace a
     // Pop under any circumstances.
@@ -2024,6 +2030,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     Fixer(Module& wasm, TranslateToFuzzReader& parent)
       : wasm(wasm), parent(parent) {}
 
+    using Super = ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>>;
+
     // Track seen names to find duplication, which is invalid.
     std::set<Name> seen;
 
@@ -2114,6 +2122,29 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
           return false;
         }
         i--;
+      }
+    }
+
+    // Fix up casts: Our changes may have put an uncastable type in a cast.
+    void visitRefCast(RefCast* curr) {
+      fixCast(curr, curr->ref);
+    }
+    void visitRefTest(RefTest* curr) {
+      fixCast(curr, curr->ref);
+    }
+    void visitBrOn(BrOn* curr) {
+      if (curr->op == BrOnCast || 
+          curr->op == BrOnCastFail ||
+          curr->op == BrOnCastDesc ||
+          curr->op == BrOnCastDescFail) {
+        fixCast(curr, curr->ref);
+      }
+    }
+    void fixCast(Expression* curr, Expression* ref) {
+      if (!ref->type.isCastable()) {
+        replaceCurrent(parent.makeTrivial(curr->type)); // TODO verify
+      } else {
+        Super::visitExpression(curr);
       }
     }
   };
@@ -2347,10 +2378,12 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeCompoundRef);
     }
-    // Exact casts are only allowed with custom descriptors enabled.
-    if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
-      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                  &Self::makeRefCast);
+    if (type.isCastable()) {
+      // Exact casts are only allowed with custom descriptors enabled.
+      if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
+        options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                    &Self::makeRefCast);
+      }
     }
     if (heapType.getDescribedType()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
