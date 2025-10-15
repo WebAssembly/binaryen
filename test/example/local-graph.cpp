@@ -73,7 +73,8 @@ int main() {
 
   {
     Function foo;
-    foo.type = Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Exact);
+    foo.type =
+      Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Exact);
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::i32);
     foo.body = builder.makeBlock({
