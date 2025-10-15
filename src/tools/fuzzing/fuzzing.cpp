@@ -1205,7 +1205,8 @@ void TranslateToFuzzReader::useImportedModule() {
     auto name =
       Names::getValidFunctionName(wasm, "primary_" + exp->name.toString());
     // We can import it as its own type, or any (declared) supertype.
-    auto type = getSuperType(func->type);
+    // TODO: this will be inexact eventually
+    auto type = getSuperType(func->type).with(NonNullable).with(Exact);
     auto import = builder.makeFunction(name, type, {});
     import->module = "primary";
     import->base = exp->name;
