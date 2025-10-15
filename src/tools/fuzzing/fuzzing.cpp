@@ -2030,8 +2030,6 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     Fixer(Module& wasm, TranslateToFuzzReader& parent)
       : wasm(wasm), parent(parent) {}
 
-    using Super = ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>>;
-
     // Track seen names to find duplication, which is invalid.
     std::set<Name> seen;
 
@@ -2139,14 +2137,14 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
           curr->op == BrOnCastDescFail) {
         fixCast(curr, curr->ref);
       } else {
-        Super::visitExpression(curr);
+        visitExpression(curr);
       }
     }
     void fixCast(Expression* curr, Expression* ref) {
       if (!ref->type.isCastable()) {
         replaceCurrent(parent.makeTrivial(curr->type)); // TODO verify
       } else {
-        Super::visitExpression(curr);
+        visitExpression(curr);
       }
     }
   };
