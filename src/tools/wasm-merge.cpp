@@ -480,7 +480,7 @@ void fuseImportsAndExports(const PassOptions& options) {
                                               [import->module][import->base];
       if (internalName.is()) {
         auto* export_ = merged.getFunction(internalName);
-        // TODO: use HeapType subtyping when exactness handling is complete
+        // TODO: use Type subtyping when exactness handling is complete.
         if (!HeapType::isSubType(export_->type.getHeapType(),
                                  import->type.getHeapType())) {
           reportTypeMismatch(valid, "function", import);
