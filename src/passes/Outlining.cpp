@@ -726,9 +726,7 @@ struct Outlining : public Pass {
       sig += StackSignature(exprs[exprIdx]);
     }
     module->addFunction(Builder::makeFunction(
-      func,
-      Type(Signature(sig.params, sig.results), NonNullable, Exact),
-      {}));
+      func, Type(Signature(sig.params, sig.results), NonNullable, Exact), {}));
     return func;
   }
 

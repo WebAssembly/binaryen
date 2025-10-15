@@ -217,9 +217,7 @@ private:
     auto wrapperFunc = Builder::makeFunction(
       wrapperName,
       std::move(namedWrapperParams),
-      Type(Signature(Type(wrapperParams), resultsType),
-           NonNullable,
-           Exact),
+      Type(Signature(Type(wrapperParams), resultsType), NonNullable, Exact),
       {},
       block);
     return module->addFunction(std::move(wrapperFunc))->name;

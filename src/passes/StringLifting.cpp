@@ -134,8 +134,7 @@ struct StringLifting : public Pass {
       // TODO: Check exactness here too.
       auto type = func->type;
       if (func->base == "fromCharCodeArray") {
-        if (type.getHeapType() !=
-            Signature({array16, i32, i32}, refExtern)) {
+        if (type.getHeapType() != Signature({array16, i32, i32}, refExtern)) {
           Fatal() << "StringLifting: bad type for fromCharCodeArray: " << type;
         }
         fromCharCodeArrayImport = func->name;
@@ -154,15 +153,13 @@ struct StringLifting : public Pass {
         concatImport = func->name;
         found = true;
       } else if (func->base == "intoCharCodeArray") {
-        if (type.getHeapType() !=
-            Signature({externref, array16, i32}, i32)) {
+        if (type.getHeapType() != Signature({externref, array16, i32}, i32)) {
           Fatal() << "StringLifting: bad type for intoCharCodeArray: " << type;
         }
         intoCharCodeArrayImport = func->name;
         found = true;
       } else if (func->base == "equals") {
-        if (type.getHeapType() !=
-            Signature({externref, externref}, i32)) {
+        if (type.getHeapType() != Signature({externref, externref}, i32)) {
           Fatal() << "StringLifting: bad type for equals: " << type;
         }
         equalsImport = func->name;
@@ -174,8 +171,7 @@ struct StringLifting : public Pass {
         testImport = func->name;
         found = true;
       } else if (func->base == "compare") {
-        if (type.getHeapType() !=
-            Signature({externref, externref}, i32)) {
+        if (type.getHeapType() != Signature({externref, externref}, i32)) {
           Fatal() << "StringLifting: bad type for compare: " << type;
         }
         compareImport = func->name;
@@ -187,15 +183,13 @@ struct StringLifting : public Pass {
         lengthImport = func->name;
         found = true;
       } else if (func->base == "charCodeAt") {
-        if (type.getHeapType() !=
-            Signature({externref, i32}, i32)) {
+        if (type.getHeapType() != Signature({externref, i32}, i32)) {
           Fatal() << "StringLifting: bad type for charCodeAt: " << type;
         }
         charCodeAtImport = func->name;
         found = true;
       } else if (func->base == "substring") {
-        if (type.getHeapType() !=
-            Signature({externref, i32, i32}, refExtern)) {
+        if (type.getHeapType() != Signature({externref, i32, i32}, refExtern)) {
           Fatal() << "StringLifting: bad type for substring: " << type;
         }
         substringImport = func->name;
