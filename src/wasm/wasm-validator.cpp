@@ -2999,6 +2999,13 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                  "[--enable-custom-descriptors]");
   }
 
+  shouldBeFalse(curr->ref->type.isContinuation(),
+                curr,
+                "continuations cannot be cast from");
+  shouldBeFalse(curr->type.isContinuation(),
+                curr,
+                "continuations cannot be cast to");
+
   if (!curr->desc) {
     return;
   }
