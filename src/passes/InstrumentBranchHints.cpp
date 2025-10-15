@@ -198,9 +198,7 @@ struct InstrumentBranchHints
     // Add our import.
     auto* func = module->addFunction(Builder::makeFunction(
       Names::getValidFunctionName(*module, BASE),
-      Type(Signature({Type::i32, Type::i32, Type::i32}, Type::none),
-           NonNullable,
-           Exact),
+      Signature({Type::i32, Type::i32, Type::i32}, Type::none),
       {}));
     func->module = MODULE;
     func->base = BASE;

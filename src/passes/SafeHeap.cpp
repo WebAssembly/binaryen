@@ -166,9 +166,7 @@ struct SafeHeap : public Pass {
       sbrk = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        GET_SBRK_PTR,
-        Type(Signature(Type::none, addressType), NonNullable, Exact),
-        {});
+        GET_SBRK_PTR, Signature(Type::none, addressType), {});
       getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
       import->base = GET_SBRK_PTR;
@@ -178,9 +176,7 @@ struct SafeHeap : public Pass {
       segfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        SEGFAULT_IMPORT,
-        Type(Signature(Type::none, Type::none), NonNullable, Exact),
-        {});
+        SEGFAULT_IMPORT, Signature(Type::none, Type::none), {});
       segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
@@ -190,9 +186,7 @@ struct SafeHeap : public Pass {
       alignfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        ALIGNFAULT_IMPORT,
-        Type(Signature(Type::none, Type::none), NonNullable, Exact),
-        {});
+        ALIGNFAULT_IMPORT, Signature(Type::none, Type::none), {});
 
       alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
@@ -292,8 +286,7 @@ struct SafeHeap : public Pass {
     auto memory = module->getMemory(style.memory);
     auto addressType = memory->addressType;
     auto funcSig = Signature({addressType, addressType}, style.type);
-    auto func = Builder::makeFunction(
-      name, Type(funcSig, NonNullable, Exact), {addressType});
+    auto func = Builder::makeFunction(name, funcSig, {addressType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     // stash the sum of the pointer (0) and the size (1) in a local (2)
@@ -342,10 +335,10 @@ struct SafeHeap : public Pass {
     auto memory = module->getMemory(style.memory);
     auto addressType = memory->addressType;
     bool is64 = memory->is64();
+    // pointer, offset, value
     auto funcSig =
       Signature({addressType, addressType, style.valueType}, Type::none);
-    auto func = Builder::makeFunction(
-      name, Type(funcSig, NonNullable, Exact), {addressType});
+    auto func = Builder::makeFunction(name, funcSig, {addressType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
