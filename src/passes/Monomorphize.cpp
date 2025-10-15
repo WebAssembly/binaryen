@@ -792,7 +792,8 @@ struct Monomorphize : public Pass {
     // If we were dropped then we are pulling the drop into the monomorphized
     // function, which means we return nothing.
     auto newResults = context.dropped ? Type::none : func->getResults();
-    newFunc->type = Signature(Type(newParams), newResults);
+    newFunc->type =
+      Type(Signature(Type(newParams), newResults), NonNullable, Exact);
 
     // We must update local indexes: the new function has a potentially
     // different number of parameters, and parameters are at the very bottom of

@@ -537,7 +537,7 @@ private:
     }
     Type getResultType() {
       if (auto* func = getFunction()) {
-        return func->type.getSignature().results;
+        return func->getResults();
       }
       if (auto* block = getBlock()) {
         return block->type;

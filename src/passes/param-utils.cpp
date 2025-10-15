@@ -351,7 +351,8 @@ void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
       : callTargets(callTargets) {}
 
     void visitCall(Call* curr) {
-      handleCall(curr, getModule()->getFunction(curr->target)->type);
+      handleCall(curr,
+                 getModule()->getFunction(curr->target)->type.getHeapType());
     }
 
     void visitCallRef(CallRef* curr) {
