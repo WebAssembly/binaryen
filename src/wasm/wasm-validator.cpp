@@ -2940,9 +2940,9 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
                  "[--enable-custom-descriptors]");
   }
 
-  shouldBeFalse(curr->ref->type.isContinuation(),
-                curr,
-                "ref.test cannot cast continuation");
+  shouldBeTrue(curr->ref->type.isCastable(),
+               curr,
+               "ref.test cannot cast invalid type");
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
@@ -3003,12 +3003,12 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                  "[--enable-custom-descriptors]");
   }
 
-  shouldBeFalse(curr->ref->type.isContinuation(),
-                curr,
-                "ref.cast cannot cast continuation");
-  shouldBeFalse(curr->type.isContinuation(),
-                curr,
-                "ref.cast cannot cast to continuation");
+  shouldBeTrue(curr->ref->type.isCastable(),
+               curr,
+               "ref.cast cannot cast invalid type");
+  shouldBeTrue(curr->type.isCastable(),
+               curr,
+               "ref.cast cannot cast to invalid type");
 
   if (!curr->desc) {
     return;
@@ -3133,12 +3133,12 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                      "br_on_cast* to exact type requires custom descriptors "
                      "[--enable-custom-descriptors]");
       }
-      shouldBeFalse(curr->ref->type.isContinuation(),
-                    curr,
-                    "br_on cannot cast continuation");
-      shouldBeFalse(curr->castType.isContinuation(),
-                    curr,
-                    "br_on cannot cast to continuation");
+      shouldBeTrue(curr->ref->type.isCastable(),
+                   curr,
+                   "br_on cannot cast invalid type");
+      shouldBeTrue(curr->castType.isCastable(),
+                   curr,
+                   "br_on cannot cast to invalid type");
       break;
     }
   }
