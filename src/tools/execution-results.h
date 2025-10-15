@@ -241,7 +241,7 @@ public:
       [&](Literals arguments) {
         return instance->callFunction(funcName, arguments);
       },
-      wasm.getFunction(funcName)->type);
+      wasm.getFunction(funcName)->type.getHeapType());
   }
 
   Literals callRefAsJS(Literal ref) {
