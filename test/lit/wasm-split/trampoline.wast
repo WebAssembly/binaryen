@@ -6,7 +6,7 @@
 (module
  ;; PRIMARY:      (type $0 (func (param i32) (result i32)))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (param i32) (result i32)))
 
  ;; PRIMARY:      (table $table 1 1 funcref)
  (table $table 1 1 funcref)

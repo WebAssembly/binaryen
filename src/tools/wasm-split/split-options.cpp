@@ -236,15 +236,25 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
          })
-    .add("--placeholder-namespace",
+    .add("--placeholder-namespace-prefix",
          "",
-         "The namespace from which to import placeholder functions into "
-         "the primary module.",
+         "The prefix for the namespaces from which to import placeholder "
+         "functions into the primary module. The namespaces will be "
+         "concatenations of the prefix and the module name.",
          WasmSplitOption,
          {Mode::Split, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
-           placeholderNamespace = argument;
+           placeholderNamespacePrefix = argument;
+         })
+    .add("--placeholder-namespace",
+         "",
+         "The same as --placeholder-namespace-prefix.",
+         WasmSplitOption,
+         {Mode::Split, Mode::MultiSplit},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           placeholderNamespacePrefix = argument;
          })
     .add("--jspi",
          "",

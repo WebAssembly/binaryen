@@ -53,6 +53,8 @@ struct Config {
   // may not include imported functions, which are always kept in the primary
   // module regardless.
   std::vector<std::set<Name>> secondaryFuncs;
+  // A vector of names of the secondary modules.
+  std::vector<Name> secondaryNames;
   // Whether to import placeholder functions into the primary module that will
   // be called when a secondary function is called before the secondary module
   // has been loaded.
@@ -60,9 +62,9 @@ struct Config {
   // The namespace from which to import primary functions into the secondary
   // module.
   Name importNamespace = "primary";
-  // The namespace from which to import placeholder functions into the primary
-  // module. Ignored if `usePlaceholders` is false.
-  Name placeholderNamespace = "placeholder";
+  // The prefix of the namespaces from which to import placeholder functions
+  // into the primary module. Ignored if `usePlaceholders` is false.
+  Name placeholderNamespacePrefix = "placeholder";
   // The prefix to attach to the name of any newly created exports. This can be
   // used to differentiate between "real" exports of the module and exports that
   // should only be consumed by the secondary module.
