@@ -540,6 +540,7 @@ private:
   // Getters for Types
   Type getSingleConcreteType();
   Type getReferenceType();
+  Type getCastableReferenceType();
   Type getEqReferenceType();
   Type getMVPType();
   Type getTupleType();

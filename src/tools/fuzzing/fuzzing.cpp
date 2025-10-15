@@ -4970,8 +4970,8 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   switch (upTo(3)) {
     case 0:
       // Totally random.
-      refType = getReferenceType();
-      castType = getReferenceType();
+      refType = getCastableReferenceType();
+      castType = getCastableReferenceType();
       // They must share a bottom type in order to validate.
       if (refType.getHeapType().getBottom() ==
           castType.getHeapType().getBottom()) {
@@ -4982,12 +4982,12 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       [[fallthrough]];
     case 1:
       // Cast is a subtype of ref.
-      refType = getReferenceType();
+      refType = getCastableReferenceType();
       castType = getSubType(refType);
       break;
     case 2:
       // Ref is a subtype of cast.
-      castType = getReferenceType();
+      castType = getCastableReferenceType();
       refType = getSubType(castType);
       break;
     default:
@@ -5011,7 +5011,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   switch (upTo(3)) {
     case 0:
       // Totally random.
-      refType = getReferenceType();
+      refType = getCastableReferenceType();
       // They must share a bottom type in order to validate.
       if (refType.getHeapType().getBottom() == type.getHeapType().getBottom()) {
         break;
@@ -5116,7 +5116,11 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   // We are sending a reference type to the target. All other BrOn variants can
   // do that.
   assert(targetType.isRef());
-  auto op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+  // BrOnNonNull can handle sending any reference. The casts are more limited.
+  auto op = BrOnNonNull;
+  if (targetType.isCastable()) {
+    op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+  }
   Type castType = Type::none;
   Type refType;
   switch (op) {
@@ -5559,6 +5563,21 @@ Type TranslateToFuzzReader::getReferenceType() {
                 .add(FeatureSet::Strings,
                      Type(HeapType::string, Nullable),
                      Type(HeapType::string, NonNullable)));
+}
+
+Type TranslateToFuzzReader::getCastableReferenceType() {
+  auto type = getReferenceType();
+  if (!type.isCastable()) {
+    // Avoid continuations in a simple way (this is rare, so being precise is
+    // not crucial).
+    assert(type.isContinuation());
+    if (oneIn(4)) {
+      type = getSubType(Type(HeapType::func, Nullable));
+    } else {
+      type = getEqReferenceType();
+    }
+  }
+  return type;
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
