@@ -651,12 +651,13 @@ struct InfoCollector
     // actually have a RefFunc.
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      info.links.push_back(
-        {SignatureParamLocation{func->type, i}, ParamLocation{func, i}});
+      info.links.push_back({SignatureParamLocation{func->type.getHeapType(), i},
+                            ParamLocation{func, i}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
-        {ResultLocation{func, i}, SignatureResultLocation{func->type, i}});
+        {ResultLocation{func, i},
+         SignatureResultLocation{func->type.getHeapType(), i}});
     }
 
     if (!options.closedWorld) {
@@ -1759,9 +1760,9 @@ void TNHOracle::infer() {
         continue;
       }
       while (1) {
-        typeFunctions[type].push_back(func.get());
-        if (auto super = type.getDeclaredSuperType()) {
-          type = *super;
+        typeFunctions[type.getHeapType()].push_back(func.get());
+        if (auto super = type.getHeapType().getDeclaredSuperType()) {
+          type = type.with(*super);
         } else {
           break;
         }
@@ -1859,8 +1860,9 @@ void TNHOracle::infer() {
         //       as other opts will make this call direct later, after which a
         //       lot of other optimizations become possible anyhow.
         auto target = possibleTargets[0]->name;
-        info.inferences[call->target] = PossibleContents::literal(
-          Literal::makeFunc(target, wasm.getFunction(target)->type));
+        info.inferences[call->target] =
+          PossibleContents::literal(Literal::makeFunc(
+            target, wasm.getFunction(target)->type.getHeapType()));
         continue;
       }
 

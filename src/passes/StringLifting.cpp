@@ -131,63 +131,65 @@ struct StringLifting : public Pass {
       if (!func->imported() || func->module != WasmStringsModule) {
         continue;
       }
+      // TODO: Check exactness here too.
       auto type = func->type;
       if (func->base == "fromCharCodeArray") {
-        if (type != Signature({array16, i32, i32}, refExtern)) {
+        if (type.getHeapType() != Signature({array16, i32, i32}, refExtern)) {
           Fatal() << "StringLifting: bad type for fromCharCodeArray: " << type;
         }
         fromCharCodeArrayImport = func->name;
         found = true;
       } else if (func->base == "fromCodePoint") {
-        if (type != Signature(i32, refExtern)) {
+        if (type.getHeapType() != Signature(i32, refExtern)) {
           Fatal() << "StringLifting: bad type for fromCodePoint: " << type;
         }
         fromCodePointImport = func->name;
         found = true;
       } else if (func->base == "concat") {
-        if (type != Signature({externref, externref}, refExtern)) {
+        if (type.getHeapType() !=
+            Signature({externref, externref}, refExtern)) {
           Fatal() << "StringLifting: bad type for concat: " << type;
         }
         concatImport = func->name;
         found = true;
       } else if (func->base == "intoCharCodeArray") {
-        if (type != Signature({externref, array16, i32}, i32)) {
+        if (type.getHeapType() != Signature({externref, array16, i32}, i32)) {
           Fatal() << "StringLifting: bad type for intoCharCodeArray: " << type;
         }
         intoCharCodeArrayImport = func->name;
         found = true;
       } else if (func->base == "equals") {
-        if (type != Signature({externref, externref}, i32)) {
+        if (type.getHeapType() != Signature({externref, externref}, i32)) {
           Fatal() << "StringLifting: bad type for equals: " << type;
         }
         equalsImport = func->name;
         found = true;
       } else if (func->base == "test") {
-        if (type != Signature({externref}, i32)) {
+        if (type.getHeapType() != Signature({externref}, i32)) {
           Fatal() << "StringLifting: bad type for test: " << type;
         }
         testImport = func->name;
         found = true;
       } else if (func->base == "compare") {
-        if (type != Signature({externref, externref}, i32)) {
+        if (type.getHeapType() != Signature({externref, externref}, i32)) {
           Fatal() << "StringLifting: bad type for compare: " << type;
         }
         compareImport = func->name;
         found = true;
       } else if (func->base == "length") {
-        if (type != Signature({externref}, i32)) {
+        if (type.getHeapType() != Signature({externref}, i32)) {
           Fatal() << "StringLifting: bad type for length: " << type;
         }
         lengthImport = func->name;
         found = true;
       } else if (func->base == "charCodeAt") {
-        if (type != Signature({externref, i32}, i32)) {
+        if (type.getHeapType() != Signature({externref, i32}, i32)) {
           Fatal() << "StringLifting: bad type for charCodeAt: " << type;
         }
         charCodeAtImport = func->name;
         found = true;
       } else if (func->base == "substring") {
-        if (type != Signature({externref, i32, i32}, refExtern)) {
+        if (type.getHeapType() != Signature({externref, i32, i32}, refExtern)) {
           Fatal() << "StringLifting: bad type for substring: " << type;
         }
         substringImport = func->name;

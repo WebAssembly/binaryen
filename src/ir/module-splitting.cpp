@@ -370,9 +370,10 @@ void ModuleSplitter::setupJSPI() {
     primary.removeExport(LOAD_SECONDARY_MODULE);
   } else {
     // Add an imported function to load the secondary module.
-    auto import = Builder::makeFunction(ModuleSplitting::LOAD_SECONDARY_MODULE,
-                                        Signature(Type::none, Type::none),
-                                        {});
+    auto import = Builder::makeFunction(
+      ModuleSplitting::LOAD_SECONDARY_MODULE,
+      Type(Signature(Type::none, Type::none), NonNullable, Exact),
+      {});
     import->module = ENV;
     import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
     primary.addFunction(std::move(import));
@@ -689,14 +690,15 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       Builder builder(*getModule());
       Index secIndex = parent.funcToSecondaryIndex.at(curr->target);
       auto* func = parent.secondaries.at(secIndex)->getFunction(curr->target);
-      auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
+      auto tableSlot =
+        parent.tableManager.getSlot(curr->target, func->type.getHeapType());
 
       replaceCurrent(parent.maybeLoadSecondary(
         builder,
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
-                                 func->type,
+                                 func->type.getHeapType(),
                                  curr->isReturn)));
     }
   };
@@ -786,7 +788,8 @@ void ModuleSplitter::setupTablePatching() {
         primary, std::string("placeholder_") + placeholder->base.toString());
       placeholder->hasExplicitName = true;
       placeholder->type = secondaryFunc->type;
-      elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
+      elem = Builder(primary).makeRefFunc(placeholder->name,
+                                          placeholder->type.getHeapType());
       primary.addFunction(std::move(placeholder));
     });
 
@@ -827,7 +830,8 @@ void ModuleSplitter::setupTablePatching() {
           // primarySeg->data[i] is a placeholder, so use the secondary
           // function.
           auto* func = replacement->second;
-          auto* ref = Builder(secondary).makeRefFunc(func->name, func->type);
+          auto* ref = Builder(secondary).makeRefFunc(func->name,
+                                                     func->type.getHeapType());
           secondaryElems.push_back(ref);
           ++replacement;
         } else if (auto* get = primarySeg->data[i]->dynCast<RefFunc>()) {
@@ -869,7 +873,7 @@ void ModuleSplitter::setupTablePatching() {
       }
       auto* func = curr->second;
       currData.push_back(
-        Builder(secondary).makeRefFunc(func->name, func->type));
+        Builder(secondary).makeRefFunc(func->name, func->type.getHeapType()));
     }
     if (currData.size()) {
       finishSegment();

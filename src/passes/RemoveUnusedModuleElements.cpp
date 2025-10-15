@@ -378,7 +378,7 @@ struct Analyzer {
         for (auto* item : segment->data) {
           if (auto* refFunc = item->dynCast<RefFunc>()) {
             auto* func = module->getFunction(refFunc->func);
-            if (HeapType::isSubType(func->type, type)) {
+            if (HeapType::isSubType(func->type.getHeapType(), type)) {
               use({ModuleElementKind::Function, refFunc->func});
               segmentReferenced = true;
             }
@@ -402,7 +402,7 @@ struct Analyzer {
     // case where the target function is referenced but not used.
     auto element = ModuleElement{ModuleElementKind::Function, func};
 
-    auto type = module->getFunction(func)->type;
+    auto type = module->getFunction(func)->type.getHeapType();
     if (calledSignatures.count(type)) {
       // We must not have a type in both calledSignatures and
       // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
