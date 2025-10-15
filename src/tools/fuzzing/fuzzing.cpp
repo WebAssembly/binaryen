@@ -2138,6 +2138,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
           curr->op == BrOnCastDesc ||
           curr->op == BrOnCastDescFail) {
         fixCast(curr, curr->ref);
+      } else {
+        Super::visitExpression(curr);
       }
     }
     void fixCast(Expression* curr, Expression* ref) {
