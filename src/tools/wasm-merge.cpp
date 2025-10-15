@@ -480,7 +480,8 @@ void fuseImportsAndExports(const PassOptions& options) {
                                               [import->module][import->base];
       if (internalName.is()) {
         auto* export_ = merged.getFunction(internalName);
-        if (!Type::isSubType(export_->type, import->type)) {
+        if (!HeapType::isSubType(export_->type.getHeapType(),
+                                 import->type.getHeapType())) {
           reportTypeMismatch(valid, "function", import);
           std::cerr << "type " << export_->type << " is not a subtype of "
                     << import->type << ".\n";
