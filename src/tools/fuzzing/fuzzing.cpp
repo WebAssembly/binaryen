@@ -5570,12 +5570,12 @@ Type TranslateToFuzzReader::getCastableReferenceType() {
   if (!type.isCastable()) {
     // Avoid continuations in a simple way (this is rare, so being precise is
     // not crucial).
-    assert(type.isContinuation());
     if (oneIn(4)) {
       type = getSubType(Type(HeapType::func, Nullable));
     } else {
       type = getEqReferenceType();
     }
+    assert(type.isCastable());
   }
   return type;
 }

@@ -184,7 +184,7 @@ public:
     return isBasic() && getBasic(Unshared) == type;
   }
 
-  bool isCastable() { return !isContinuation(); }
+  bool isCastable();
 
   Signature getSignature() const;
   Continuation getContinuation() const;
@@ -417,7 +417,7 @@ public:
     return isRef() && getHeapType().isContinuation();
   }
   bool isDefaultable() const;
-  bool isCastable() { return isRef() && !isContinuation(); }
+  bool isCastable();
 
   // TODO: Allow this only for reference types.
   Nullability getNullability() const {

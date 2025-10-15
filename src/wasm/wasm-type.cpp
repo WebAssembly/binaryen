@@ -623,6 +623,10 @@ bool Type::isDefaultable() const {
   return isConcrete() && !isNonNullable();
 }
 
+bool Type::isCastable() {
+  return isRef() && getHeapType().isCastable();
+}
+
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
@@ -887,6 +891,10 @@ Shareability HeapType::getShared() const {
   } else {
     return getHeapTypeInfo(*this)->share;
   }
+}
+
+bool HeapType::isCastable() {
+  return !isContinuation() && !isMaybeShared(HeapType::cont);
 }
 
 Signature HeapType::getSignature() const {
