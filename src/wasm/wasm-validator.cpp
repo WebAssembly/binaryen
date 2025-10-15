@@ -2385,8 +2385,9 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   if (!shouldBeTrue(!!func, curr, "function argument of ref.func must exist")) {
     return;
   }
-  shouldBeEqual(curr->type,
-                func->type,
+  // TODO: Compare the full Type
+  shouldBeEqual(curr->type.getHeapType(),
+                func->type.getHeapType(),
                 curr,
                 "function reference type must match referenced function type");
   shouldBeTrue(
