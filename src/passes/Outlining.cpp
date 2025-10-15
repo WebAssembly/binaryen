@@ -727,7 +727,7 @@ struct Outlining : public Pass {
     }
     module->addFunction(Builder::makeFunction(
       func,
-      Type(HeapType(Signature(sig.params, sig.results)), NonNullable, Exact),
+      Type(Signature(sig.params, sig.results), NonNullable, Exact),
       {}));
     return func;
   }
