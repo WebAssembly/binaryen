@@ -529,6 +529,7 @@ void fuseImportsAndExports(const PassOptions& options) {
                     << " is different from import type " << import->type
                     << ".\n";
         }
+        // TODO: use HeapType subtyping when exactness handling is complete
         if (!export_->mutable_ &&
             !Type::isSubType(export_->type, import->type)) {
           reportTypeMismatch(valid, "global", import);
