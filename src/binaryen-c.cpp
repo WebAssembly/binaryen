@@ -6020,7 +6020,7 @@ void BinaryenFunctionSetBody(BinaryenFunctionRef func,
   ((Function*)func)->body = (Expression*)body;
 }
 BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func) {
-  return ((Function*)func)->type.getID();
+  return ((Function*)func)->type.getHeapType().getID();
 }
 void BinaryenFunctionSetType(BinaryenFunctionRef func, BinaryenHeapType type) {
   ((Function*)func)->type = Type(HeapType(type), NonNullable, Exact);
