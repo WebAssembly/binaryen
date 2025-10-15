@@ -894,7 +894,8 @@ Shareability HeapType::getShared() const {
 }
 
 bool HeapType::isCastable() {
-  return !isContinuation() && !isMaybeShared(HeapType::cont);
+  return !isContinuation() && !isMaybeShared(HeapType::cont) &&
+         !isMaybeShared(HeapType::nocont);
 }
 
 Signature HeapType::getSignature() const {

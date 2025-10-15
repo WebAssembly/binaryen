@@ -2910,6 +2910,11 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
 void FunctionValidator::visitRefTest(RefTest* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.test requires gc [--enable-gc]");
+
+  shouldBeTrue(curr->castType.isCastable(),
+               curr,
+               "ref.test cannot cast to invalid type");
+
   if (curr->ref->type == Type::unreachable) {
     return;
   }
