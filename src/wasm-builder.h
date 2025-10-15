@@ -1409,8 +1409,7 @@ public:
     Signature sig = func->getSig();
     std::vector<Type> params(sig.params.begin(), sig.params.end());
     params.push_back(type);
-    func->type =
-      func->type.with(Signature(Type(params), sig.results));
+    func->type = func->type.with(Signature(Type(params), sig.results));
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;
