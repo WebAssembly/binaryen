@@ -135,7 +135,11 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       visitRefCast(&cast);
     } else {
       // We need locals. Earlier we stashed the stack, so we just need to
-      // restore the value from there (note we don't restore the condition).
+      // restore the value from there (note we don't restore the condition),
+      // after dropping the br_if's unrefined values.
+      for (auto _ : type) {
+        o << int8_t(BinaryConsts::Drop);
+      }
       assert(typesOnStack.back() == Type::i32);
       typesOnStack.pop_back();
       restoreStack(typesOnStack);
