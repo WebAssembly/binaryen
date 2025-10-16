@@ -91,6 +91,8 @@ void BinaryInstWriter::visitBreak(Break* curr) {
     }      
   };
 
+  std::vector<Type> typesOnStack;
+
   auto needHandling = brIfsNeedingHandling.count(curr); 
   if (needHandling) { // TODO make it a set
     // Tuples always need scratch locals. Uncastable types do as well (see
@@ -105,13 +107,13 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // enough for each, in a contiguous range, so we just increment as we go.
       //
       // Work on the types on the stack: the value + condition.
-      std::vector<Type> typesOnStack;
       if (type.isTuple()) {
         typesOnStack = type.getTuple();
       } else {
         typesOnStack.push_back(type);
       }
       typesOnStack.push_back(Type::i32);
+
       stashStack(typesOnStack);
       restoreStack(typesOnStack);
       // The stack is now as if we didn't change anything, but we
@@ -134,7 +136,9 @@ void BinaryInstWriter::visitBreak(Break* curr) {
     } else {
       // We need locals. Earlier we stashed the stack, so we just need to
       // restore the value from there (note we don't restore the condition).
-      restoreStack(curr->type);
+      assert(typesOnStack.back() == Type::i32);
+      typesOnStack.pop_back();
+      restoreStack(typesOnStack);
     }
   }
 }
