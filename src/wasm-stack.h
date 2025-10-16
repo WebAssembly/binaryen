@@ -175,8 +175,8 @@ private:
   // Each br_if present as a key here is mapped to the unrefined type for it.
   // That is, the br_if has a type in Binaryen IR that is too refined, and the
   // map contains the unrefined one (which we need to know the local types, as
-  // we'll stash the unrefined values and then cast them).
-  std::unordered_map<Break*, Type> brIfsNeedingHandling;
+  // we'll stash the unrefined values and then cast them). XXX
+  std::unordered_set<Break*> brIfsNeedingHandling;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
