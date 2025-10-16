@@ -81,7 +81,7 @@
   ;; After the roundtrip here we should see stashing of the continuation into a
   ;; local, rather than a cast.
   (block $label (result contref)
-   (call $receive_cont ;; ensure the value flowing out is fully refined
+   (call $receive_cont
     (br_if $label
      (cont.new $cont
       (ref.func $suspend)
@@ -101,6 +101,80 @@
  ;; CHECK:      (func $receive_cont (type $5) (param $0 (ref $cont))
  ;; CHECK-NEXT: )
  (func $receive_cont (param (ref $cont))
+ )
+
+ ;; As above, but with tuples.
+
+ ;; CHECK:      (func $br_if_gc (type $2) (param $ref (ref any)) (result anyref)
+ ;; CHECK-NEXT:  (block $block (result anyref)
+ ;; CHECK-NEXT:   (call $receive_any
+ ;; CHECK-NEXT:    (ref.cast (ref any)
+ ;; CHECK-NEXT:     (br_if $block
+ ;; CHECK-NEXT:      (local.get $ref)
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_if_gc_tuple (param $ref (ref any)) (result anyref i32)
+  ;; We use locals here, avoiding casts - since we are using locals anyhow, we
+  ;; don't need any casts (we stash the refined values).
+  (block $label (result anyref i32)
+   (br_if $label
+    (tuple.make 2
+     (local.get $ref)
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_if_cont (type $3) (result contref)
+ ;; CHECK-NEXT:  (local $0 (ref (exact $cont)))
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (local $scratch (ref (exact $cont)))
+ ;; CHECK-NEXT:  (block $block (result contref)
+ ;; CHECK-NEXT:   (local.set $0
+ ;; CHECK-NEXT:    (block (result (ref (exact $cont)))
+ ;; CHECK-NEXT:     (local.set $scratch
+ ;; CHECK-NEXT:      (cont.new $cont
+ ;; CHECK-NEXT:       (ref.func $suspend)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.set $1
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $scratch)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_if $block
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (call $receive_cont
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_if_cont_tuple (result contref i32)
+  ;; As above, locals are used (and here, casts would also be invalid).
+  (block $label (result contref i32)
+   (br_if $label
+    (tuple.make 2
+     (cont.new $cont
+      (ref.func $suspend)
+     )
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
  )
 )
 
