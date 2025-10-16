@@ -2124,17 +2124,11 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     }
 
     // Fix up casts: Our changes may have put an uncastable type in a cast.
-    void visitRefCast(RefCast* curr) {
-      fixCast(curr, curr->ref);
-    }
-    void visitRefTest(RefTest* curr) {
-      fixCast(curr, curr->ref);
-    }
+    void visitRefCast(RefCast* curr) { fixCast(curr, curr->ref); }
+    void visitRefTest(RefTest* curr) { fixCast(curr, curr->ref); }
     void visitBrOn(BrOn* curr) {
-      if (curr->op == BrOnCast || 
-          curr->op == BrOnCastFail ||
-          curr->op == BrOnCastDesc ||
-          curr->op == BrOnCastDescFail) {
+      if (curr->op == BrOnCast || curr->op == BrOnCastFail ||
+          curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail) {
         fixCast(curr, curr->ref);
       } else {
         visitExpression(curr);

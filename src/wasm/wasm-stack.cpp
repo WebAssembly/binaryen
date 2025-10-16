@@ -88,12 +88,12 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       auto t = types[i];
       auto localIndex = scratchLocals[t] + --currScratchTypeUses[t];
       o << int8_t(BinaryConsts::LocalGet) << U32LEB(localIndex);
-    }      
+    }
   };
 
   std::vector<Type> typesOnStack;
 
-  auto needHandling = brIfsNeedingHandling.count(curr); 
+  auto needHandling = brIfsNeedingHandling.count(curr);
   if (needHandling) { // TODO make it a set
     // Tuples always need scratch locals. Uncastable types do as well (see
     // below).

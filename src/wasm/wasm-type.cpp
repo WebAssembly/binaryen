@@ -623,9 +623,7 @@ bool Type::isDefaultable() const {
   return isConcrete() && !isNonNullable();
 }
 
-bool Type::isCastable() {
-  return isRef() && getHeapType().isCastable();
-}
+bool Type::isCastable() { return isRef() && getHeapType().isCastable(); }
 
 unsigned Type::getByteSize() const {
   // TODO: alignment?
