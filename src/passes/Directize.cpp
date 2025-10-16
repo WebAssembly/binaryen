@@ -190,9 +190,8 @@ private:
     // Everything looks good!
     auto name = std::get<CallUtils::Known>(info).target;
     auto results = getModule()->getFunction(name)->getResults();
-    replaceCurrent(
-      Builder(*getModule())
-        .makeCall(name, operands, results, original->isReturn));
+    replaceCurrent(Builder(*getModule())
+                     .makeCall(name, operands, results, original->isReturn));
 
     // When we call a function of a subtype of the call_indirect's call type, we
     // may be refining results.
