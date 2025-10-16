@@ -66,13 +66,18 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   auto type = curr->type;
 
   // See comment on |brIfsNeedingHandling| for the extra handling we need to
-  // emit here for certain br_ifs.
+  // emit here for certain br_ifs. If we need that handling, we either use a
+  // cast in simple cases, or scratch locals otherwise. We use the scratch
+  // locals to stash the stack before the br_if (which contains the refined
+  // types), then restore it later from those locals).
   bool needScratchLocals = false;
-  // If we need this handling,
-  // We must track how many scratch locals we've used from each type as we
-  // go, as a type might appear multiple times in the tuple. We allocated
-  // enough for each, in a contiguous range, so we just increment as we go.
+  // If we need locals, we must track how many we've used from each type as we
+  // go, as a type might appear multiple times in the tuple. We know we have
+  // enough of a range allocated for them, so we just increment as we go.
   std::unordered_map<Type, Index> scratchTypeUses;
+  // Logic to stash and restore the stack, given a vector of types we are
+  // stashing/restoring. We will first stash the entire stack, including the i32
+  // condition, and after the br_if, restore the value (without the condition).
   auto stashStack = [&](const std::vector<Type>& types) {
     for (Index i = 0; i < types.size(); i++) {
       auto t = types[types.size() - i - 1];
@@ -91,22 +96,20 @@ void BinaryInstWriter::visitBreak(Break* curr) {
     }
   };
 
+  // The types on the stack before the br_if. We need this if we use locals to
+  // stash the stack.
   std::vector<Type> typesOnStack;
 
   auto needHandling = brIfsNeedingHandling.count(curr);
-  if (needHandling) { // TODO make it a set
-    // Tuples always need scratch locals. Uncastable types do as well (see
-    // below).
+  if (needHandling) {
+    // Tuples always need scratch locals. Uncastable types do as well, we we
+    // can't fix them up below with a simple cast.
     needScratchLocals = type.isTuple() || !type.isCastable();
     if (needScratchLocals) {
-      // Stash all the values on the stack to those locals, then reload them.
-      // After this, we can reload the refined values after the br_if.
-      //
-      // We must track how many scratch locals we've used from each type as we
-      // go, as a type might appear multiple times in the tuple. We allocated
-      // enough for each, in a contiguous range, so we just increment as we go.
-      //
-      // Work on the types on the stack: the value + condition.
+      // Stash all the values on the stack to those locals, then reload them for
+      // the br_if to consume. Later, we can reload the refined values after the
+      // br_if, for its parent to consume.
+
       if (type.isTuple()) {
         typesOnStack = type.getTuple();
       } else {
@@ -116,17 +119,20 @@ void BinaryInstWriter::visitBreak(Break* curr) {
 
       stashStack(typesOnStack);
       restoreStack(typesOnStack);
-      // The stack is now as if we didn't change anything, but we
+      // The stack is now in the same state as before, but we have copies in
+      // locals for later.
     }
   }
 
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
 
-  if (needHandling) { // TODO make it a set
+  if (needHandling) {
     if (!needScratchLocals) {
-      // We can just cast here, avoiding scratch locals.
-      //
+      // We can just cast here, avoiding scratch locals. (Casting adds overhead,
+      // but this is very rare, and it avoids adding locals, which would keep
+      // growing the wasm with each roundtrip.)
+
       // Shim a tiny bit of IR, just enough to get visitRefCast to see what we
       // are casting, and to emit the proper thing.
       RefCast cast;
@@ -3157,14 +3163,15 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       // types we need scratch tuple locals for (if relevant).
       writer.brIfsNeedingHandling.insert(curr);
 
+      // Simple cases can be handled by a cast. However, tuples and uncastable
+      // types require us to use locals too. 
       if (type.isTuple() || !type.isCastable()) {
         // We must allocate enough scratch locals for this tuple, plus the i32
         // of the condition, as we will stash it all so that we can restore the
         // fully refined value after the br_if.
         //
-        // Note that we
-        // may need more than one per type in the tuple, if a type appears more
-        // than once, so we count their appearances.
+        // Note that we may need more than one per type in the tuple, if a type
+        // appears more than once, so we count their appearances.
         InsertOrderedMap<Type, Index> scratchTypeUses;
         for (auto t : type) {
           scratchTypeUses[t]++;
