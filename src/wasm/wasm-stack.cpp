@@ -3164,7 +3164,7 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       writer.brIfsNeedingHandling.insert(curr);
 
       // Simple cases can be handled by a cast. However, tuples and uncastable
-      // types require us to use locals too. 
+      // types require us to use locals too.
       if (type.isTuple() || !type.isCastable()) {
         // We must allocate enough scratch locals for this tuple, plus the i32
         // of the condition, as we will stash it all so that we can restore the
