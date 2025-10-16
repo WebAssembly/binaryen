@@ -112,3 +112,40 @@
  )
 )
 
+;; call_indirect using the supertype. The direct call has a more refined type,
+;; which we must update the IR to.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func (result (ref any)))))
+  (type $super (sub (func (result (ref any)))))
+  ;; CHECK:       (type $sub (sub $super (func (result (ref none)))))
+  (type $sub (sub $super (func (result (ref none)))))
+ )
+
+ ;; CHECK:      (table $table 42 funcref)
+ (table $table 42 funcref)
+ ;; CHECK:      (elem $elem (i32.const 0) $sub)
+ (elem $elem (i32.const 0) $sub)
+
+ ;; CHECK:      (func $super (type $super) (result (ref any))
+ ;; CHECK-NEXT:  (block $show-type (result (ref none))
+ ;; CHECK-NEXT:   (call $sub)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $super (type $super) (result (ref any))
+  (block $show-type (result (ref any))
+   (call_indirect $table (type $super)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $sub (type $sub) (result (ref none))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $sub (type $sub) (result (ref none))
+  (unreachable)
+ )
+)
+
