@@ -95,7 +95,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   if (needHandling) { // TODO make it a set
     // Tuples always need scratch locals. Uncastable types do as well (see
     // below).
-    needScratchLocals = type->isTuple() || !type.isCastable();
+    needScratchLocals = type.isTuple() || !type.isCastable();
     if (needScratchLocals) {
       // Stash all the values on the stack to those locals, then reload them.
       // After this, we can reload the refined values after the br_if.
@@ -128,7 +128,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // Shim a tiny bit of IR, just enough to get visitRefCast to see what we
       // are casting, and to emit the proper thing.
       RefCast cast;
-      cast.type = to;
+      cast.type = type;
       cast.ref = cast.desc = nullptr;
       visitRefCast(&cast);
     } else {
@@ -3147,9 +3147,9 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
 
       // Mark the br_if as needing handling, and add the type to the set of
       // types we need scratch tuple locals for (if relevant).
-      writer.brIfsNeedingHandling[curr] = unrefinedType; // XXX make it a set
+      writer.brIfsNeedingHandling.insert(curr);
 
-      if (type->isTuple() || !type.isCastable()) {
+      if (type.isTuple() || !type.isCastable()) {
         // We must allocate enough scratch locals for this tuple, plus the i32
         // of the condition, as we will stash it all so that we can restore the
         // fully refined value after the br_if.
