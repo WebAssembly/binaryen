@@ -288,11 +288,11 @@
   (f32.const 0)
  )
 )
-;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (result i64)))
+;; PRIMARY:      (import "placeholder.2" "0" (func $placeholder_0 (result i64)))
 
-;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (result f32)))
+;; PRIMARY:      (import "placeholder.3" "1" (func $placeholder_1 (result f32)))
 
-;; PRIMARY:      (import "placeholder" "2" (func $placeholder_2 (result i32)))
+;; PRIMARY:      (import "placeholder.1" "2" (func $placeholder_2 (result i32)))
 
 ;; PRIMARY:      (table $0 3 funcref)
 
@@ -354,11 +354,11 @@
 ;; PRIMARY-OPTIONS-NEXT:  )
 ;; PRIMARY-OPTIONS-NEXT: )
 
-;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env" "0" (func $placeholder_0 (result i64)))
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env.2" "0" (func $placeholder_0 (result i64)))
 
-;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env" "1" (func $placeholder_1 (result f32)))
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env.3" "1" (func $placeholder_1 (result f32)))
 
-;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env" "2" (func $placeholder_2 (result i32)))
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env.1" "2" (func $placeholder_2 (result i32)))
 
 ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (table $0 3 funcref)
 

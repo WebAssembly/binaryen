@@ -333,7 +333,7 @@ Keeping: <none>
 After:
 (module
  (type $0 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "foo" (func $trampoline_foo))
@@ -369,7 +369,7 @@ Keeping: <none>
 After:
 (module
  (type $0 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
  (table $table 1 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (i32.const 0) func $trampoline_foo)
@@ -407,7 +407,7 @@ Keeping: <none>
 After:
 (module
  (type $0 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
  (table $table 2 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (i32.const 0) func $trampoline_foo $trampoline_foo)
@@ -446,7 +446,7 @@ Keeping: <none>
 After:
 (module
  (type $0 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
  (table $table 1000 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (i32.const 42) func $trampoline_foo)
@@ -488,7 +488,7 @@ After:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
  (table $table 1000 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (global.get $base) func $trampoline_foo)
@@ -531,7 +531,7 @@ After:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
  (table $table 1000 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (global.get $base) func $trampoline_foo $trampoline_foo)
@@ -578,7 +578,7 @@ After:
  (type $0 (func))
  (type $1 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (type $1) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $1) (param i32) (result i32)))
  (table $table 1000 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (global.get $base) func $null $trampoline_foo)
@@ -671,7 +671,7 @@ Keeping: foo
 After:
 (module
  (type $0 (func))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "%table" (table $0))
@@ -726,7 +726,7 @@ Keeping: foo
 After:
 (module
  (type $0 (func))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "%foo" (func $trampoline_bar))
@@ -775,8 +775,8 @@ Keeping: bar, quux
 After:
 (module
  (type $0 (func))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
- (import "placeholder" "1" (func $placeholder_1 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "1" (func $placeholder_1 (type $0)))
  (table $table 4 funcref)
  (table $0 2 funcref)
  (elem $0 (table $table) (i32.const 0) func $trampoline_foo $bar $trampoline_baz $quux)
@@ -838,8 +838,8 @@ After:
 (module
  (type $0 (func))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
- (import "placeholder" "1" (func $placeholder_1 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "1" (func $placeholder_1 (type $0)))
  (table $table 4 funcref)
  (table $0 2 funcref)
  (elem $0 (table $table) (global.get $base) func $trampoline_foo $bar $trampoline_baz $quux)
@@ -900,9 +900,9 @@ Keeping: baz
 After:
 (module
  (type $0 (func))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
- (import "placeholder" "1" (func $placeholder_1 (type $0)))
- (import "placeholder" "2" (func $placeholder_2 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "1" (func $placeholder_1 (type $0)))
+ (import "placeholder.deferred" "2" (func $placeholder_2 (type $0)))
  (table $table 4 funcref)
  (table $0 3 funcref)
  (elem $0 (table $table) (i32.const 0) func $trampoline_foo $trampoline_bar $baz $trampoline_quux)
@@ -969,9 +969,9 @@ After:
 (module
  (type $0 (func))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
- (import "placeholder" "1" (func $placeholder_1 (type $0)))
- (import "placeholder" "2" (func $placeholder_2 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "1" (func $placeholder_1 (type $0)))
+ (import "placeholder.deferred" "2" (func $placeholder_2 (type $0)))
  (table $table 4 funcref)
  (table $0 3 funcref)
  (elem $0 (table $table) (global.get $base) func $trampoline_foo $trampoline_bar $baz $trampoline_quux)
@@ -1033,7 +1033,7 @@ After:
 (module
  (type $0 (func))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
  (table $table 2 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (global.get $base) func $foo $trampoline_bar)
@@ -1083,7 +1083,7 @@ Keeping: foo
 After:
 (module
  (type $0 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
  (table $table 1 1 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (i32.const 0) func $foo)
@@ -1124,7 +1124,7 @@ Keeping: <none>
 After:
 (module
  (type $0 (func))
- (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "foo1" (func $trampoline_foo))

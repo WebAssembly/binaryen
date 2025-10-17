@@ -52,6 +52,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
 
   ModuleSplitting::Config config;
   config.secondaryFuncs.push_back(std::move(splitFuncs));
+  config.secondaryNames.push_back("deferred");
   config.newExportPrefix = "%";
   auto results = splitFunctions(*primary, config);
   auto& secondary = *results.secondaries.begin();
@@ -477,6 +478,7 @@ void test_minimized_exports() {
 
   ModuleSplitting::Config config;
   config.secondaryFuncs.push_back({"call"});
+  config.secondaryNames.push_back("deferred");
   config.newExportPrefix = "%";
   config.minimizeNewExportNames = true;
 

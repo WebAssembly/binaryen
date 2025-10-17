@@ -772,7 +772,9 @@ void ModuleSplitter::setupTablePatching() {
       assert(table == tableManager.activeTable->name);
 
       placeholderMap[table][index] = ref->func;
-      Module& secondary = *secondaries.at(funcToSecondaryIndex.at(ref->func));
+      Index secondaryIndex = funcToSecondaryIndex.at(ref->func);
+      Module& secondary = *secondaries.at(secondaryIndex);
+      Name secondaryName = config.secondaryNames.at(secondaryIndex);
       auto* secondaryFunc = secondary.getFunction(ref->func);
       moduleToReplacedElems[&secondary][index] = secondaryFunc;
       if (!config.usePlaceholders) {
@@ -782,7 +784,8 @@ void ModuleSplitter::setupTablePatching() {
         return;
       }
       auto placeholder = std::make_unique<Function>();
-      placeholder->module = config.placeholderNamespace;
+      placeholder->module = config.placeholderNamespacePrefix.toString() + "." +
+                            secondaryName.toString();
       placeholder->base = std::to_string(index);
       placeholder->name = Names::getValidFunctionName(
         primary, std::string("placeholder_") + placeholder->base.toString());

@@ -232,8 +232,8 @@ void setCommonSplitConfigs(ModuleSplitting::Config& config,
   if (options.exportPrefix.size()) {
     config.newExportPrefix = options.exportPrefix;
   }
-  if (options.placeholderNamespace.size()) {
-    config.placeholderNamespace = options.placeholderNamespace;
+  if (options.placeholderNamespacePrefix.size()) {
+    config.placeholderNamespacePrefix = options.placeholderNamespacePrefix;
   }
 }
 
@@ -346,6 +346,7 @@ void splitModule(const WasmSplitOptions& options) {
   ModuleSplitting::Config config;
   setCommonSplitConfigs(config, options);
   config.secondaryFuncs.push_back(std::move(splitFuncs));
+  config.secondaryNames.push_back("deferred");
   config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
   auto& secondary = *splitResults.secondaries.begin();
@@ -407,7 +408,6 @@ void multiSplitModule(const WasmSplitOptions& options) {
 
   std::string line;
   bool newSection = true;
-  std::vector<Name> moduleNames;
   std::unordered_set<Name> moduleNameSet;
   while (std::getline(manifest, line)) {
     if (line.empty()) {
@@ -424,7 +424,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
       }
       currModule = name;
       moduleNameSet.insert(currModule);
-      moduleNames.push_back(currModule);
+      config.secondaryNames.push_back(currModule);
       config.secondaryFuncs.emplace_back(std::set<Name>());
       currFuncs = &config.secondaryFuncs.back();
       newSection = false;
@@ -448,10 +448,10 @@ void multiSplitModule(const WasmSplitOptions& options) {
   }
 
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-  assert(moduleNames.size() == splitResults.secondaries.size());
-  for (Index i = 0, n = moduleNames.size(); i < n; i++) {
+  assert(config.secondaryNames.size() == splitResults.secondaries.size());
+  for (Index i = 0, n = config.secondaryNames.size(); i < n; i++) {
     auto& secondary = *splitResults.secondaries[i];
-    auto moduleName = options.outPrefix + moduleNames[i].toString() +
+    auto moduleName = options.outPrefix + config.secondaryNames[i].toString() +
                       (options.emitBinary ? ".wasm" : ".wast");
     if (options.symbolMap) {
       writeSymbolMap(secondary, moduleName + ".symbols");
