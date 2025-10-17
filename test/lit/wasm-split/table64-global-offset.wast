@@ -20,7 +20,7 @@
 ;; PRIMARY-NOREF:      (module
 ;; PRIMARY-NOREF-NEXT:  (type $0 (func (param i32) (result i32)))
 ;; PRIMARY-NOREF-NEXT:  (import "env" "g" (global $g i64))
-;; PRIMARY-NOREF-NEXT:  (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+;; PRIMARY-NOREF-NEXT:  (import "placeholder.deferred" "1" (func $placeholder_1 (param i32) (result i32)))
 ;; PRIMARY-NOREF-NEXT:  (table $table i64 2 2 funcref)
 ;; PRIMARY-NOREF-NEXT:  (elem $0 (global.get $g) $foo $placeholder_1)
 ;; PRIMARY-NOREF-NEXT:  (export "%foo" (func $foo))
@@ -53,7 +53,7 @@
 ;; PRIMARY-REF:      (module
 ;; PRIMARY-REF-NEXT:  (type $0 (func (param i32) (result i32)))
 ;; PRIMARY-REF-NEXT:  (import "env" "g" (global $g i64))
-;; PRIMARY-REF-NEXT:  (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+;; PRIMARY-REF-NEXT:  (import "placeholder.deferred" "0" (func $placeholder_0 (param i32) (result i32)))
 ;; PRIMARY-REF-NEXT:  (table $table i64 1 1 funcref)
 ;; PRIMARY-REF-NEXT:  (table $1 1 funcref)
 ;; PRIMARY-REF-NEXT:  (elem $0 (table $table) (global.get $g) func $foo)
