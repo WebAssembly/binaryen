@@ -2163,7 +2163,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     bool isValidTryRef(Name target, Expression* curr) {
       // The rethrow must be on top.
       assert(!expressionStack.empty());
-      assert(expressionStack.back() == getCurrent());
+      assert(expressionStack.back() == curr);
       if (expressionStack.size() < 2) {
         // There must be a parent try for this to be valid.
         return false;
