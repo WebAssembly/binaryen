@@ -1763,7 +1763,7 @@ static bool replaceChildWith(Expression* expr, Expression* with) {
   // Casts can get broken if we replace with something not castable.
   if (!with->type.isCastable()) {
     if (expr->is<RefCast>() || expr->is<RefTest>() || expr->is<BrOn>()) {
-      return false; // TODO verify
+      return false;
     }
   }
   for (auto*& child : ChildIterator(expr)) {
@@ -2136,7 +2136,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     }
     void fixCast(Expression* curr, Expression* ref) {
       if (!ref->type.isCastable()) {
-        replaceCurrent(parent.makeTrivial(curr->type)); // TODO verify
+        replaceCurrent(parent.makeTrivial(curr->type));
       } else {
         visitExpression(curr);
       }
