@@ -2153,7 +2153,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     }
 
     void visitTry(Try* curr) {
-      if (curr->delegateTarget.is() && !isValidTryRef(curr->delegateTarget, curr)) {
+      if (curr->delegateTarget.is() &&
+          !isValidTryRef(curr->delegateTarget, curr)) {
         replace();
       }
     }
