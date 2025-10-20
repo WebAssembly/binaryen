@@ -2147,17 +2147,24 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     }
 
     void visitRethrow(Rethrow* curr) {
-      if (!isValidRethrow(curr->target)) {
+      if (!isValidTryRef(curr->target)) {
         replace();
       }
     }
 
-    bool isValidRethrow(Name target) {
+    void visitTry(Try* curr) {
+      if (curr->delegateTarget.is() && !isValidTryRef(curr->delegateTarget)) {
+        replace();
+      }
+    }
+
+    // Check if a reference to a try is valid.
+    bool isValidTryRef(Name target) {
       // The rethrow must be on top.
       assert(!expressionStack.empty());
-      assert(expressionStack.back()->is<Rethrow>());
+      assert(expressionStack.back() == getCurrent());
       if (expressionStack.size() < 2) {
-        // There must be a try for this rethrow to be valid.
+        // There must be a parent try for this to be valid.
         return false;
       }
       Index i = expressionStack.size() - 2;
