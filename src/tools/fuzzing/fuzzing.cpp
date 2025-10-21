@@ -5667,17 +5667,21 @@ Type TranslateToFuzzReader::getReferenceType() {
 }
 
 Type TranslateToFuzzReader::getCastableReferenceType() {
-  auto type = getReferenceType();
-  if (!type.isCastable()) {
-    // Avoid continuations in a simple way (this is rare, so being precise is
-    // not crucial).
-    if (oneIn(4)) {
-      type = getSubType(Type(HeapType::func, Nullable));
-    } else {
-      type = getSubType(Type(HeapType::any, Nullable));
+  int tries = fuzzParams->TRIES;
+  while (tries-- > 0) {
+    auto type = getReferenceType();
+    if (type.isCastable()) {
+      return type;
     }
-    assert(type.isCastable());
   }
+  // We failed to find a type using fair sampling. Do something simple that must
+  // work.
+  if (oneIn(4)) {
+    type = getSubType(Type(HeapType::func, Nullable));
+  } else {
+    type = getSubType(Type(HeapType::any, Nullable));
+  }
+  assert(type.isCastable());
   return type;
 }
 
