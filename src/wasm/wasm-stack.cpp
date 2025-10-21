@@ -110,11 +110,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // the br_if to consume. Later, we can reload the refined values after the
       // br_if, for its parent to consume.
 
-      if (type.isTuple()) {
-        typesOnStack = type.getTuple();
-      } else {
-        typesOnStack.push_back(type);
-      }
+      typesOnStack = std::vector<Type>(type.begin(), type.end());
       typesOnStack.push_back(Type::i32);
 
       stashStack(typesOnStack);
