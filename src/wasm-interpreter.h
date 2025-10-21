@@ -4816,8 +4816,7 @@ public:
         // not the original function that was called, and the original has been
         // returned from already; we should call the last return_called
         // function).
-        auto funcType = Type(function->type, NonNullable, Exact);
-        auto target = self()->makeFuncData(name, funcType);
+        auto target = self()->makeFuncData(name, function->type);
         self()->pushResumeEntry({target}, "function-target");
       }
 
