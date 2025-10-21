@@ -114,7 +114,8 @@ struct SignatureRefining : public Pass {
       // For direct calls, add each call to the type of the function being
       // called.
       for (auto* call : info.calls) {
-        allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+        allInfo[module->getFunction(call->target)->type.getHeapType()]
+          .calls.push_back(call);
 
         // For call.without.effects, we also add the effective function being
         // called as well. The final operand is the function reference being
@@ -138,11 +139,11 @@ struct SignatureRefining : public Pass {
 
       // Add the function's return LUB to the one for the heap type of that
       // function.
-      allInfo[func->type].resultsLUB.combine(info.resultsLUB);
+      allInfo[func->type.getHeapType()].resultsLUB.combine(info.resultsLUB);
 
       // If one function cannot be modified, that entire type cannot be.
       if (!info.canModify) {
-        allInfo[func->type].canModify = false;
+        allInfo[func->type.getHeapType()].canModify = false;
       }
     }
 
@@ -180,16 +181,16 @@ struct SignatureRefining : public Pass {
     std::unordered_set<HeapType> seen;
     for (auto& func : module->functions) {
       auto type = func->type;
-      if (!seen.insert(type).second) {
+      if (!seen.insert(type.getHeapType()).second) {
         continue;
       }
 
-      auto& info = allInfo[type];
+      auto& info = allInfo[type.getHeapType()];
       if (!info.canModify) {
         continue;
       }
 
-      auto sig = type.getSignature();
+      auto sig = type.getHeapType().getSignature();
 
       auto numParams = sig.params.size();
       std::vector<LUBFinder> paramLUBs(numParams);
@@ -246,7 +247,7 @@ struct SignatureRefining : public Pass {
       }
 
       // We found an improvement!
-      newSignatures[type] = Signature(newParams, newResults);
+      newSignatures[type.getHeapType()] = Signature(newParams, newResults);
 
       if (newResults != func->getResults()) {
         // Update the types of calls using the signature.
@@ -287,7 +288,7 @@ struct SignatureRefining : public Pass {
       }
 
       void doWalkFunction(Function* func) {
-        auto iter = parent.newSignatures.find(func->type);
+        auto iter = parent.newSignatures.find(func->type.getHeapType());
         if (iter != parent.newSignatures.end()) {
           std::vector<Type> newParamsTypes;
           for (auto param : iter->second.params) {
@@ -343,8 +344,8 @@ struct SignatureRefining : public Pass {
       }
 
       auto name = Names::getValidFunctionName(*module, import->name);
-      auto newImport =
-        module->addFunction(Builder(*module).makeFunction(name, newType, {}));
+      auto newImport = module->addFunction(Builder(*module).makeFunction(
+        name, Type(newType, NonNullable, Exact), {}));
 
       // Copy the binaryen intrinsic module.base import names.
       newImport->module = import->module;

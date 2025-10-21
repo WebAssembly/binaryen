@@ -169,11 +169,11 @@
   (f32.const 0)
  )
 )
-;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (result i64)))
+;; PRIMARY:      (import "placeholder.2" "0" (func $placeholder_0 (result i64)))
 
-;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (result f32)))
+;; PRIMARY:      (import "placeholder.3" "1" (func $placeholder_1 (result f32)))
 
-;; PRIMARY:      (import "placeholder" "2" (func $placeholder_2 (result i32)))
+;; PRIMARY:      (import "placeholder.1" "2" (func $placeholder_2 (result i32)))
 
 ;; PRIMARY:      (table $0 3 funcref)
 

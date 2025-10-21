@@ -223,8 +223,15 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
   void visitRefEq(RefEq* curr) {
-    self()->noteNonFlowSubtype(curr->left, Type(HeapType::eq, Nullable));
-    self()->noteNonFlowSubtype(curr->right, Type(HeapType::eq, Nullable));
+    // Match the shareability of the current content (if it exists).
+    // TODO: This could also allow both sides to flip.
+    HeapType eq = HeapType::eq;
+    if (curr->type != Type::unreachable) {
+      eq = eq.getBasic(curr->left->type.getHeapType().getShared());
+    }
+    auto type = Type(eq, Nullable);
+    self()->noteNonFlowSubtype(curr->left, type);
+    self()->noteNonFlowSubtype(curr->right, type);
   }
   void visitTableGet(TableGet* curr) {}
   void visitTableSet(TableSet* curr) {

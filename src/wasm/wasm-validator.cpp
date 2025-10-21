@@ -965,7 +965,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->type);
+  validateCallParamsAndResult(curr, target->type.getHeapType());
 
   if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
     // call.without.effects has the specific form of the last argument being a
@@ -2385,9 +2385,10 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   if (!shouldBeTrue(!!func, curr, "function argument of ref.func must exist")) {
     return;
   }
-  shouldBeTrue(func->type == curr->type.getHeapType(),
-               curr,
-               "function reference type must match referenced function type");
+  shouldBeEqual(curr->type,
+                func->type,
+                curr,
+                "function reference type must match referenced function type");
   shouldBeTrue(
     curr->type.isExact(), curr, "function reference should be exact");
 }
