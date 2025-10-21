@@ -5674,7 +5674,7 @@ Type TranslateToFuzzReader::getCastableReferenceType() {
     if (oneIn(4)) {
       type = getSubType(Type(HeapType::func, Nullable));
     } else {
-      type = getEqReferenceType();
+      type = getSubType(Type(HeapType::any, Nullable));
     }
     assert(type.isCastable());
   }
