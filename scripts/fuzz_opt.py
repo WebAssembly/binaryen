@@ -154,7 +154,7 @@ def randomize_feature_opts():
         # Same with strings. Relaxed SIMD's nondeterminism disables much but not
         # all of our V8 fuzzing, so avoid it too. Stack Switching, as well, is
         # not yet ready in V8.
-        if random.random() < 0.45: # XXX fuzz continuations more, in this PR
+        if random.random() < 0.90:
             FEATURE_OPTS.append('--disable-shared-everything')
             FEATURE_OPTS.append('--disable-strings')
             FEATURE_OPTS.append('--disable-relaxed-simd')
