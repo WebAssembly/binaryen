@@ -3499,7 +3499,7 @@ public:
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
     auto* func = wasm.getFunction(curr->target);
-    auto funcType = Type(func->type, NonNullable, Exact);
+    auto funcType = func->type;
     if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
       // The call.without.effects intrinsic is a call to an import that actually
       // calls the given function reference that is the final argument.
@@ -3511,7 +3511,7 @@ public:
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      arguments.push_back(self()->makeFuncData(target, funcType.getHeapType()));
+      arguments.push_back(self()->makeFuncData(target, funcType));
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
@@ -4469,9 +4469,8 @@ public:
     }
     auto funcName = funcValue.getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
-    auto funcType = Type(func->type, NonNullable, Exact);
     return Literal(std::make_shared<ContData>(
-      self()->makeFuncData(funcName, funcType), curr->type.getHeapType()));
+      self()->makeFuncData(funcName, func->type), curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
