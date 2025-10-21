@@ -321,7 +321,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     // from unknown sources.
     // TODO: Be more precise about the types we allow these imports to have.
     return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
-                   Type(import->type, NonNullable, Exact));
+                   import->type);
   }
 
   Tag* getImportedTag(Tag* tag) override {
@@ -370,7 +370,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       throw FailToEvalException("tableLoad of non-literal");
     }
     if (auto* r = value->dynCast<RefFunc>()) {
-      return instance->makeFuncData(r->func, r->type.getHeapType());
+      return instance->makeFuncData(r->func, r->type);
     }
     return Properties::getLiteral(value);
   }
