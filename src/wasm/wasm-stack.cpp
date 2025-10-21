@@ -69,7 +69,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // emit here for certain br_ifs. If we need that handling, we either use a
   // cast in simple cases, or scratch locals otherwise. We use the scratch
   // locals to stash the stack before the br_if (which contains the refined
-  // types), then restore it later from those locals).
+  // types), then restore it later from those locals.
   bool needScratchLocals = false;
   // If we need locals, we must track how many we've used from each type as we
   // go, as a type might appear multiple times in the tuple. We know we have
