@@ -2147,32 +2147,42 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     }
 
     void visitRethrow(Rethrow* curr) {
-      if (!isValidRethrow(curr->target)) {
+      if (!isValidTryRef(curr->target, curr)) {
         replace();
       }
     }
 
-    bool isValidRethrow(Name target) {
-      // The rethrow must be on top.
+    void visitTry(Try* curr) {
+      if (curr->delegateTarget.is() &&
+          !isValidTryRef(curr->delegateTarget, curr)) {
+        replace();
+      }
+    }
+
+    // Check if a reference to a try is valid.
+    bool isValidTryRef(Name target, Expression* curr) {
+      // The rethrow or try must be on top.
       assert(!expressionStack.empty());
-      assert(expressionStack.back()->is<Rethrow>());
+      assert(expressionStack.back() == curr);
       if (expressionStack.size() < 2) {
-        // There must be a try for this rethrow to be valid.
+        // There must be a parent try for this to be valid.
         return false;
       }
       Index i = expressionStack.size() - 2;
+      // Rethrows and try-delegates must target a try. Find it.
       while (1) {
-        auto* curr = expressionStack[i];
-        if (auto* tryy = curr->dynCast<Try>()) {
-          // The rethrow must target a try, and must be nested in a catch of
-          // that try (not the body). Look at the child above us to check, when
-          // we find the proper try.
+        if (auto* tryy = expressionStack[i]->dynCast<Try>()) {
+          // A rethrow must be nested in a catch of that try, not the body. A
+          // try-delegate is the reverse. Look at the child above us to check,
+          // when we find the proper try.
           if (tryy->name == target) {
-            if (i + 1 >= expressionStack.size()) {
-              return false;
-            }
+            assert(i + 1 < expressionStack.size());
             auto* child = expressionStack[i + 1];
-            return child != tryy->body;
+            if (curr->is<Rethrow>()) {
+              return child != tryy->body;
+            }
+            assert(curr->is<Try>());
+            return child == tryy->body;
           }
         }
         if (i == 0) {
