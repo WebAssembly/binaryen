@@ -1826,12 +1826,6 @@ void TranslateToFuzzReader::recombine(Function* func) {
 // be placed as either of the children of the i32.add. This tramples the
 // existing content there. Returns true if we found a place.
 static bool replaceChildWith(Expression* expr, Expression* with) {
-  // Casts can get broken if we replace with something not castable.
-  if (!with->type.isCastable()) {
-    if (expr->is<RefCast>() || expr->is<RefTest>() || expr->is<BrOn>()) {
-      return false;
-    }
-  }
   for (auto*& child : ChildIterator(expr)) {
     // To replace, we must have an appropriate type, and we cannot replace a
     // Pop under any circumstances.
@@ -2186,25 +2180,6 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
           return false;
         }
         i--;
-      }
-    }
-
-    // Fix up casts: Our changes may have put an uncastable type in a cast.
-    void visitRefCast(RefCast* curr) { fixCast(curr, curr->ref); }
-    void visitRefTest(RefTest* curr) { fixCast(curr, curr->ref); }
-    void visitBrOn(BrOn* curr) {
-      if (curr->op == BrOnCast || curr->op == BrOnCastFail ||
-          curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail) {
-        fixCast(curr, curr->ref);
-      } else {
-        visitExpression(curr);
-      }
-    }
-    void fixCast(Expression* curr, Expression* ref) {
-      if (!ref->type.isCastable()) {
-        replaceCurrent(parent.makeTrivial(curr->type));
-      } else {
-        visitExpression(curr);
       }
     }
   };
@@ -5676,6 +5651,7 @@ Type TranslateToFuzzReader::getCastableReferenceType() {
   }
   // We failed to find a type using fair sampling. Do something simple that must
   // work.
+  Type type;
   if (oneIn(4)) {
     type = getSubType(Type(HeapType::func, Nullable));
   } else {
