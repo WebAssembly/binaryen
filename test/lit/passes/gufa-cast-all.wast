@@ -366,8 +366,6 @@
 
   ;; CHECK:      (type $2 (func (result contref)))
 
-  ;; CHECK:      (type $3 (func (param (ref $cont))))
-
   ;; CHECK:      (elem declare func $suspend)
 
   ;; CHECK:      (func $suspend (type $none)
