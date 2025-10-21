@@ -3202,7 +3202,7 @@ public:
                      [this, func](const Literals& arguments) -> Flow {
                        return callFunction(func->name, arguments);
                      }),
-                   Type(func->type, NonNullable, Exact));
+                   func->type);
   }
 
   // get an exported global

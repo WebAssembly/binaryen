@@ -211,7 +211,7 @@ public:
     };
     // Use a null instance because this is a host function.
     return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
-                   Type(import->type, NonNullable, Exact));
+                   import->type);
   }
 
   void throwJSException() {

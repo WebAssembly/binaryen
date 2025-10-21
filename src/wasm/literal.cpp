@@ -85,7 +85,7 @@ Literal Literal::makeFunc(Name func, Type type) {
 Literal Literal::makeFunc(Name func, Module& wasm) {
   auto* f = wasm.getFunction(func);
   auto exact = f->imported() ? Inexact : Exact;
-  return makeFunc(func, Type(f->type, NonNullable, exact));
+  return makeFunc(func, f->type);
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
