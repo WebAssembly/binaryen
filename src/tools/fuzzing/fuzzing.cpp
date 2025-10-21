@@ -2161,7 +2161,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
 
     // Check if a reference to a try is valid.
     bool isValidTryRef(Name target, Expression* curr) {
-      // The rethrow must be on top.
+      // The rethrow or try must be on top.
       assert(!expressionStack.empty());
       assert(expressionStack.back() == curr);
       if (expressionStack.size() < 2) {
@@ -2171,15 +2171,12 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       Index i = expressionStack.size() - 2;
       // Rethrows and try-delegates must target a try. Find it.
       while (1) {
-        auto* curr = expressionStack[i];
-        if (auto* tryy = curr->dynCast<Try>()) {
+        if (auto* tryy = expressionStack[i]->dynCast<Try>()) {
           // A rethrow must be nested in a catch of that try, not the body. A
           // try-delegate is the reverse. Look at the child above us to check,
           // when we find the proper try.
           if (tryy->name == target) {
-            if (i + 1 >= expressionStack.size()) {
-              return false;
-            }
+            assert(i + 1 < expressionStack.size());
             auto* child = expressionStack[i + 1];
             if (curr->is<Rethrow>()) {
               return child != tryy->body;
