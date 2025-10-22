@@ -828,7 +828,9 @@ void RefFunc::finalize() {
 }
 
 void RefFunc::finalize(HeapType heapType, Module& wasm) {
-  type = Type(heapType, NonNullable, wasm.getFunction(func)->imported() ? Inexact : Exact);
+  type = Type(heapType,
+              NonNullable,
+              wasm.getFunction(func)->imported() ? Inexact : Exact);
 }
 
 void RefEq::finalize() {

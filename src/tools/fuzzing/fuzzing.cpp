@@ -380,7 +380,8 @@ void TranslateToFuzzReader::build() {
   finalizeTable();
   shuffleExports();
 
-  // XXX
+  // We may turn various function imports into defined functions. Refinalize at
+  // the end to update all references to them, which may become exact.
   PassRunner runner(&wasm);
   ReFinalize().run(&runner, &wasm);
   ReFinalize().walkModuleCode(&wasm);
