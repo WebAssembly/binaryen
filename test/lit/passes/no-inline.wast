@@ -638,6 +638,26 @@
   )
  )
 
+ (func $very-long-name-we-should-not-error-on-even-though-it-is-very-very-long
+  ;; Test a long name.
+ )
+
+ ;; NO_FULL:      (func $very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long
+ ;; NO_FULL-NEXT: )
+ ;; NO_BOTH:      (func $very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long
+ ;; NO_BOTH-NEXT: )
+ (func $very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long
+  ;; Test a long name with "maybe" in it.
+ )
+
+ ;; NO_FULL:      (func $very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long
+ ;; NO_FULL-NEXT: )
+ ;; NO_BOTH:      (func $very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long
+ ;; NO_BOTH-NEXT: )
+ (func $very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long
+  ;; Test a long name with "maybe" in it, and a partial match earlier ("may").
+ )
+
  ;; YES_ALL:      (func $caller
  ;; YES_ALL-NEXT:  (local $0 i32)
  ;; YES_ALL-NEXT:  (local $1 i32)
@@ -741,6 +761,18 @@
  ;; YES_ALL-NEXT:    )
  ;; YES_ALL-NEXT:   )
  ;; YES_ALL-NEXT:  )
+ ;; YES_ALL-NEXT:  (block $__inlined_func$very-long-name-we-should-not-error-on-even-though-it-is-very-very-long$4
+ ;; YES_ALL-NEXT:   (block
+ ;; YES_ALL-NEXT:   )
+ ;; YES_ALL-NEXT:  )
+ ;; YES_ALL-NEXT:  (block $__inlined_func$very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long$5
+ ;; YES_ALL-NEXT:   (block
+ ;; YES_ALL-NEXT:   )
+ ;; YES_ALL-NEXT:  )
+ ;; YES_ALL-NEXT:  (block $__inlined_func$very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long$6
+ ;; YES_ALL-NEXT:   (block
+ ;; YES_ALL-NEXT:   )
+ ;; YES_ALL-NEXT:  )
  ;; YES_ALL-NEXT: )
  ;; NO_PART:      (func $caller
  ;; NO_PART-NEXT:  (call $maybe-partial-or-full-1
@@ -754,6 +786,18 @@
  ;; NO_PART-NEXT:  )
  ;; NO_PART-NEXT:  (call $maybe-partial-or-full-2
  ;; NO_PART-NEXT:   (i32.const 1)
+ ;; NO_PART-NEXT:  )
+ ;; NO_PART-NEXT:  (block $__inlined_func$very-long-name-we-should-not-error-on-even-though-it-is-very-very-long
+ ;; NO_PART-NEXT:   (block
+ ;; NO_PART-NEXT:   )
+ ;; NO_PART-NEXT:  )
+ ;; NO_PART-NEXT:  (block $__inlined_func$very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long$1
+ ;; NO_PART-NEXT:   (block
+ ;; NO_PART-NEXT:   )
+ ;; NO_PART-NEXT:  )
+ ;; NO_PART-NEXT:  (block $__inlined_func$very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long$2
+ ;; NO_PART-NEXT:   (block
+ ;; NO_PART-NEXT:   )
  ;; NO_PART-NEXT:  )
  ;; NO_PART-NEXT: )
  ;; NO_FULL:      (func $caller
@@ -817,6 +861,12 @@
  ;; NO_FULL-NEXT:    )
  ;; NO_FULL-NEXT:   )
  ;; NO_FULL-NEXT:  )
+ ;; NO_FULL-NEXT:  (block $__inlined_func$very-long-name-we-should-not-error-on-even-though-it-is-very-very-long$4
+ ;; NO_FULL-NEXT:   (block
+ ;; NO_FULL-NEXT:   )
+ ;; NO_FULL-NEXT:  )
+ ;; NO_FULL-NEXT:  (call $very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long)
+ ;; NO_FULL-NEXT:  (call $very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long)
  ;; NO_FULL-NEXT: )
  ;; NO_BOTH:      (func $caller
  ;; NO_BOTH-NEXT:  (call $maybe-partial-or-full-1
@@ -831,6 +881,12 @@
  ;; NO_BOTH-NEXT:  (call $maybe-partial-or-full-2
  ;; NO_BOTH-NEXT:   (i32.const 1)
  ;; NO_BOTH-NEXT:  )
+ ;; NO_BOTH-NEXT:  (block $__inlined_func$very-long-name-we-should-not-error-on-even-though-it-is-very-very-long
+ ;; NO_BOTH-NEXT:   (block
+ ;; NO_BOTH-NEXT:   )
+ ;; NO_BOTH-NEXT:  )
+ ;; NO_BOTH-NEXT:  (call $very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long)
+ ;; NO_BOTH-NEXT:  (call $very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long)
  ;; NO_BOTH-NEXT: )
  (func $caller
   ;; In YES_ALL we will fully inline all of these. In NO_FULL we will partially
@@ -851,6 +907,9 @@
   (call $maybe-partial-or-full-2
    (i32.const 1)
   )
+  (call $very-long-name-we-should-not-error-on-even-though-it-is-very-very-long)
+  (call $very-long-name-we-should-not-error-on-maybe-even-though-it-is-very-very-long)
+  (call $very-long-name-we-may-should-not-error-on-maybe-even-though-it-is-very-very-long)
  )
 )
 ;; NO_FULL:      (func $byn-split-outlined-B$maybe-partial-or-full-1 (param $x i32)

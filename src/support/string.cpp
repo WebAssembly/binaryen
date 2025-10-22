@@ -82,21 +82,67 @@ Split handleBracketingOperators(Split split) {
   return ret;
 }
 
-bool wildcardMatch(const std::string& pattern, const std::string& value) {
-  for (size_t i = 0; i < pattern.size(); i++) {
+bool wildcardMatch(const std::string& initialPattern, const std::string& initialValue) {
+  struct Task {
+    const std::string pattern;// TODO stirng_view
+    const std::string value;
+    size_t i;
+    bool continuation;
+  };
+  std::vector<Task> tasks;
+  std::vector<bool> results;
+  tasks.push_back({initialPattern, initialValue, 0, false});
+  while (!tasks.empty()) {
+    auto task = tasks.back();
+    tasks.pop_back();
+    auto& [pattern, value, i, continuation] = task;
+#if 1
+    std::cout << "pat: " << pattern << '\n';
+    std::cout << "val: " << value << '\n';
+    for (size_t a = 0; a < i + 5; a++) std::cout << ' ';
+    std::cout << "^\n";
+    std::cout << "cont: " << continuation << "\n";
+#endif
+    if (continuation) {
+      // See below: We pushed two tasks, and must check if either matched.
+      auto num = results.size();
+      assert(num >= 2);
+      auto result = results[num - 1] || results[num - 2];
+      results.resize(num - 2);
+      results.push_back(result);
+      continue;
+    }
+    if (i == pattern.size()) {
+      // We reached the end.
+      results.push_back(value.size() == pattern.size());
+      continue;
+    }
     if (pattern[i] == '*') {
-      return wildcardMatch(pattern.substr(i + 1), value.substr(i)) ||
-             (value.size() > 0 &&
-              wildcardMatch(pattern.substr(i), value.substr(i + 1)));
+      if (i >= value.size()) {
+        // A lone wildcard matches the empty string.
+        results.push_back(pattern.size() == (i + 1));
+        continue;
+      }
+      // Push a continuation of us, and then the child tasks. We need one of the
+      // child tasks to be true for us to match.
+      tasks.push_back({pattern, value, i, true});
+      tasks.push_back({pattern.substr(i + 1), value.substr(i), 0, false});
+      tasks.push_back({pattern.substr(i), value.substr(i + 1), 0, false});
+      continue;
     }
     if (i >= value.size()) {
-      return false;
+      results.push_back(false);
+      continue;
     }
     if (pattern[i] != value[i]) {
-      return false;
+      results.push_back(false);
+      continue;
     }
+    tasks.push_back({pattern, value, i + 1, false});
   }
-  return value.size() == pattern.size();
+  assert(results.size() == 1);
+//std::cout << initialPattern << " vs " << initialValue << " => " << results[0] << '\n';
+  return results[0];
 }
 
 std::string trim(const std::string& input) {
