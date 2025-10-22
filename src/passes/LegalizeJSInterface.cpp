@@ -424,7 +424,9 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
         void visitRefFunc(RefFunc* curr) {
           curr->finalize(curr->type.getHeapType(), *getModule());
         }
-      };
+      } fixer;
+      fixer.run(getPassRunner(), module);
+      fixer.runOnModuleCode(getPassRunner(), module);
     }
 
     // TODO: globals etc.
