@@ -414,20 +414,8 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
     }
 
     if (prunedImport) {
-      // fix up imports: their ref.funcs are now inexact.
-      struct Fixer : public WalkerPass<PostWalker<Fixer>> {
-        bool isFunctionParallel() override { return true; }
-
-        std::unique_ptr<Pass> create() override {
-          return std::make_unique<Fixer>();
-        }
-
-        void visitRefFunc(RefFunc* curr) {
-          curr->finalize(curr->type.getHeapType(), *getModule());
-        }
-      } fixer;
-      fixer.run(getPassRunner(), module);
-      fixer.runOnModuleCode(getPassRunner(), module);
+      // RefFunc types need updating.
+      ReFinalize().run(getPassRunner(), module);
     }
 
     // TODO: globals etc.
