@@ -700,6 +700,13 @@ public:
     ret->finalize();
     return ret;
   }
+  RefFunc* makeRefFunc(Name func, Type type) {
+    auto* ret = wasm.allocator.alloc<RefFunc>();
+    ret->func = func;
+    ret->type = type;
+    ret->finalize();
+    return ret;
+  }
   RefFunc* makeRefFunc(Name func, HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;

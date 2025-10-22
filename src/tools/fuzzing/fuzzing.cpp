@@ -3593,7 +3593,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
         funcContext->func->type.getHeapType().getShared() == share &&
         !oneIn(4)) {
       auto* target = funcContext->func;
-      return builder.makeRefFunc(target->name, target->type.getHeapType());
+      return builder.makeRefFunc(target->name, target->type);
     }
   }
   // Look for a proper function starting from a random location, and loop from
