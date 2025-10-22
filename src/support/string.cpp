@@ -84,14 +84,17 @@ Split handleBracketingOperators(Split split) {
 
 bool wildcardMatch(const std::string& initialPattern,
                    const std::string& initialValue) {
+  // Avoid recursion, as strings can be very long.
   struct Task {
     std::string_view pattern;
     std::string_view value;
     size_t i;
+    // Whether we continue a task waiting on results of subtasks (see below).
     bool continuation;
   };
   std::vector<Task> tasks;
   std::vector<bool> results;
+  // We start with the initial data.
   tasks.push_back({initialPattern, initialValue, 0, false});
   while (!tasks.empty()) {
     auto task = tasks.back();
@@ -117,21 +120,28 @@ bool wildcardMatch(const std::string& initialPattern,
         results.push_back(pattern.size() == (i + 1));
         continue;
       }
-      // Push a continuation of us, and then the child tasks. We need one of the
+      // Push a continuation of us, and then two child tasks. We need one of the
       // child tasks to be true for us to match.
       tasks.push_back({pattern, value, i, true});
+      // This child task matches if we can skip the '*' (we find what we want
+      // right after).
       tasks.push_back({pattern.substr(i + 1), value.substr(i), 0, false});
+      // This child task matches if we can skip a character in the value (the
+      // '*' matches something arbitary, and later we find what we want).
       tasks.push_back({pattern.substr(i), value.substr(i + 1), 0, false});
       continue;
     }
     if (i >= value.size()) {
+      // We reached the end, and sizes do not match.
       results.push_back(false);
       continue;
     }
     if (pattern[i] != value[i]) {
+      // The data does not match.
       results.push_back(false);
       continue;
     }
+    // Proceed onwards.
     tasks.push_back({pattern, value, i + 1, false});
   }
   assert(results.size() == 1);
