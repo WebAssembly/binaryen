@@ -84,8 +84,8 @@ Split handleBracketingOperators(Split split) {
 
 bool wildcardMatch(const std::string& initialPattern, const std::string& initialValue) {
   struct Task {
-    const std::string pattern;// TODO stirng_view
-    const std::string value;
+    std::string_view pattern;
+    std::string_view value;
     size_t i;
     bool continuation;
   };
@@ -96,13 +96,6 @@ bool wildcardMatch(const std::string& initialPattern, const std::string& initial
     auto task = tasks.back();
     tasks.pop_back();
     auto& [pattern, value, i, continuation] = task;
-#if 1
-    std::cout << "pat: " << pattern << '\n';
-    std::cout << "val: " << value << '\n';
-    for (size_t a = 0; a < i + 5; a++) std::cout << ' ';
-    std::cout << "^\n";
-    std::cout << "cont: " << continuation << "\n";
-#endif
     if (continuation) {
       // See below: We pushed two tasks, and must check if either matched.
       auto num = results.size();
@@ -141,7 +134,6 @@ bool wildcardMatch(const std::string& initialPattern, const std::string& initial
     tasks.push_back({pattern, value, i + 1, false});
   }
   assert(results.size() == 1);
-//std::cout << initialPattern << " vs " << initialValue << " => " << results[0] << '\n';
   return results[0];
 }
 
