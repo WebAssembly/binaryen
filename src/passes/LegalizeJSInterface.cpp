@@ -392,6 +392,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       // Prune an import by implementing it in a trivial manner.
       if (imported) {
         func->module = func->base = Name();
+        func->type = func->type.with(Exact);
         prunedImport = true;
 
         Builder builder(*module);

@@ -3082,9 +3082,11 @@ void PrintSExpression::handleSignature(Function* curr,
       requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
     printHeapTypeName(curr->type.getHeapType()) << ')';
-    o << "(; "; // XXX
-    printTypeOrName(curr->type, o, currModule);
-    o << " ;)";
+    if (getenv("BINARYEN_PRINT_FULL")) { // XXX
+      o << " (; ";
+      printTypeOrName(curr->type, o, currModule);
+      o << " ;)";
+    }
   }
   bool inParam = false;
   Index i = 0;
