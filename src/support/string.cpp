@@ -82,7 +82,8 @@ Split handleBracketingOperators(Split split) {
   return ret;
 }
 
-bool wildcardMatch(const std::string& initialPattern, const std::string& initialValue) {
+bool wildcardMatch(const std::string& initialPattern,
+                   const std::string& initialValue) {
   struct Task {
     std::string_view pattern;
     std::string_view value;
