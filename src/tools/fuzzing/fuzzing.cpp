@@ -942,12 +942,13 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
     if (!preserveImportsAndExports) {
       func->module = "fuzzing-support";
       func->base = baseName;
+      func->type = Type(Signature(type, Type::none), NonNullable, Inexact);
     } else {
       // We cannot add an import, so just make it a trivial function (this is
       // simpler than avoiding calls to logging in all the rest of the logic).
       func->body = builder.makeNop();
+      func->type = Type(Signature(type, Type::none), NonNullable, Exact);
     }
-    func->type = Type(Signature(type, Type::none), NonNullable, Inexact);
     wasm.addFunction(std::move(func));
   }
 }
@@ -1063,11 +1064,12 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   if (!preserveImportsAndExports) {
     func->module = "fuzzing-support";
     func->base = "throw";
+    func->type = Type(Signature(Type::i32, Type::none), NonNullable, Inexact);
   } else {
     // As with logging, implement in a trivial way when we cannot add imports.
     func->body = builder.makeNop();
+    func->type = Type(Signature(Type::i32, Type::none), NonNullable, Exact);
   }
-  func->type = Type(Signature(Type::i32, Type::none), NonNullable, Inexact);
   wasm.addFunction(std::move(func));
 }
 
@@ -2226,6 +2228,7 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
     if (func->imported()) {
       FunctionCreationContext context(*this, func);
       func->module = func->base = Name();
+      func->type = func->type.with(Exact);
       func->body = make(func->getResults());
     }
   }
