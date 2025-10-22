@@ -422,7 +422,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
         }
 
         void visitRefFunc(RefFunc* curr) {
-          curr->finalize(iter->second->type.getHeapType(), *getModule());
+          curr->finalize(curr->type.getHeapType(), *getModule());
         }
       };
     }
