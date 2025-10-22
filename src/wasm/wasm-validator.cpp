@@ -2389,8 +2389,13 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
                 func->type,
                 curr,
                 "function reference type must match referenced function type");
-  shouldBeTrue(
-    curr->type.isExact(), curr, "function reference should be exact");
+  if (func->imported()) {
+    shouldBeTrue(
+      !curr->type.isExact(), curr, "imported function reference should be inexact");
+  } else {
+    shouldBeTrue(
+      curr->type.isExact(), curr, "defined function reference should be exact");
+  }
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
