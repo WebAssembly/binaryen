@@ -22,6 +22,7 @@
 
 #include <cctype>
 
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -37,6 +38,7 @@ static void extract(PassRunner* runner, Module* module, Name name) {
       func->module = "env";
       func->base = func->name;
       func->vars.clear();
+      func->type = func->type.with(Inexact);
       func->body = nullptr;
     } else {
       found = true;
@@ -46,6 +48,10 @@ static void extract(PassRunner* runner, Module* module, Name name) {
     Fatal() << "could not find the function to extract\n";
   }
 
+  // Update function references after making things imports.
+  ReFinalize().run(runner, module);
+  ReFinalize().walkModuleCode(module);
+  
   // Leave just one export, for the thing we want.
   module->exports.clear();
   module->updateMaps();

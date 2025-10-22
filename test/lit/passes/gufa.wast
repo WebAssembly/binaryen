@@ -1187,18 +1187,15 @@
 (module
   ;; CHECK:      (type $func (sub (func)))
   (type $func (sub (func)))
+  (type $sub (sub $func (func)))
   ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (type $sub (sub $func (func)))
-  (type $sub (sub $func (func)))
   ;; CHECK:      (import "" "" (func $f (type $func)))
   (import "" "" (func $f (type $func)))
   ;; CHECK:      (export "test" (func $test))
 
   ;; CHECK:      (func $test (type $1) (result i32)
-  ;; CHECK-NEXT:  (ref.test (ref $sub)
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $test (export "test") (result i32)
     (ref.test (ref $sub)
