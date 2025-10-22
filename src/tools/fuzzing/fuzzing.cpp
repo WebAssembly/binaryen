@@ -383,6 +383,7 @@ void TranslateToFuzzReader::build() {
   // XXX
   PassRunner runner(&wasm);
   ReFinalize().run(&runner, &wasm);
+  ReFinalize().walkModuleCode(&wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
