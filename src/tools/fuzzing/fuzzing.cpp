@@ -943,7 +943,7 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
       // simpler than avoiding calls to logging in all the rest of the logic).
       func->body = builder.makeNop();
     }
-    func->type = Type(Signature(type, Type::none), NonNullable, Exact);
+    func->type = Type(Signature(type, Type::none), NonNullable, Inexact);
     wasm.addFunction(std::move(func));
   }
 }
@@ -992,7 +992,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->module = "fuzzing-support";
     func->base = "call-export";
     func->type =
-      Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Exact);
+      Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Inexact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1006,7 +1006,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->name = callExportCatchImportName;
     func->module = "fuzzing-support";
     func->base = "call-export-catch";
-    func->type = Type(Signature(Type::i32, Type::i32), NonNullable, Exact);
+    func->type = Type(Signature(Type::i32, Type::i32), NonNullable, Inexact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1025,7 +1025,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->type =
         Type(Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none),
              NonNullable,
-             Exact);
+             Inexact);
       wasm.addFunction(std::move(func));
     }
 
@@ -1040,7 +1040,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->base = "call-ref-catch";
       func->type = Type(Signature(Type(HeapType::func, Nullable), Type::i32),
                         NonNullable,
-                        Exact);
+                        Inexact);
       wasm.addFunction(std::move(func));
     }
   }
@@ -1062,7 +1062,7 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
     // As with logging, implement in a trivial way when we cannot add imports.
     func->body = builder.makeNop();
   }
-  func->type = Type(Signature(Type::i32, Type::none), NonNullable, Exact);
+  func->type = Type(Signature(Type::i32, Type::none), NonNullable, Inexact);
   wasm.addFunction(std::move(func));
 }
 
@@ -1103,7 +1103,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
     func->base = "table-get";
     func->type = Type(Signature({Type::i32}, Type(HeapType::func, Nullable)),
                       NonNullable,
-                      Exact);
+                      Inexact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1117,7 +1117,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
     func->type =
       Type(Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none),
            NonNullable,
-           Exact);
+           Inexact);
     wasm.addFunction(std::move(func));
   }
 }
@@ -1138,7 +1138,7 @@ void TranslateToFuzzReader::addImportSleepSupport() {
   func->module = "fuzzing-support";
   func->base = "sleep";
   func->type =
-    Type(Signature({Type::i32, Type::i32}, Type::i32), NonNullable, Exact);
+    Type(Signature({Type::i32, Type::i32}, Type::i32), NonNullable, Inexact);
   wasm.addFunction(std::move(func));
 }
 
@@ -1223,8 +1223,7 @@ void TranslateToFuzzReader::useImportedFunctions() {
     auto name =
       Names::getValidFunctionName(wasm, "primary_" + exp->name.toString());
     // We can import it as its own type, or any (declared) supertype.
-    // TODO: this will be inexact eventually
-    auto type = getSuperType(func->type).with(NonNullable).with(Exact);
+    auto type = getSuperType(func->type).with(NonNullable).with(Inexact);
     auto import = builder.makeFunction(name, type, {});
     import->module = "primary";
     import->base = exp->name;
