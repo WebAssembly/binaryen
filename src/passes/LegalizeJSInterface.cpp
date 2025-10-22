@@ -367,6 +367,8 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       }
     }
 
+    auto prunedImport = false;
+
     for (auto& func : module->functions) {
       // If the function is neither exported nor imported, no problem.
       auto imported = func->imported();
@@ -390,6 +392,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       // Prune an import by implementing it in a trivial manner.
       if (imported) {
         func->module = func->base = Name();
+        prunedImport = true;
 
         Builder builder(*module);
         if (sig.results == Type::none) {
@@ -407,6 +410,21 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       if (exported) {
         module->removeExport(exportedFunctions[func->name]);
       }
+    }
+
+    if (prunedImport) {
+      // fix up imports: their ref.funcs are now inexact.
+      struct Fixer : public WalkerPass<PostWalker<Fixer>> {
+        bool isFunctionParallel() override { return true; }
+
+        std::unique_ptr<Pass> create() override {
+          return std::make_unique<Fixer>();
+        }
+
+        void visitRefFunc(RefFunc* curr) {
+          curr->finalize(iter->second->type.getHeapType(), *getModule());
+        }
+      };
     }
 
     // TODO: globals etc.
