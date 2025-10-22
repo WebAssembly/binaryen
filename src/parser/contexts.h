@@ -1419,6 +1419,9 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
       return in.err(pos, "expected signature type");
     }
     f->type = f->type.with(type.type);
+    if (f->imported()) {
+      f->type = f->type.with(Inexact);
+    }
     // If we are provided with too many names (more than the function has), we
     // will error on that later when we check the signature matches the type.
     // For now, avoid asserting in setLocalName.
