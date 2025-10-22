@@ -3082,7 +3082,7 @@ void PrintSExpression::handleSignature(Function* curr,
       requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
     printHeapTypeName(curr->type.getHeapType()) << ')';
-    o << "(; ";
+    o << "(; "; // XXX
     printTypeOrName(curr->type, o, currModule);
     o << " ;)";
   }
