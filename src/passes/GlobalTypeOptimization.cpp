@@ -444,7 +444,7 @@ struct GlobalTypeOptimization : public Pass {
 
             // Clear the old names and write the new ones.
             nameInfo.fieldNames.clear();
-            for (Index i = 0; i < oldFieldNames.size(); i++) {
+            for (Index i = 0; i < indexesAfterRemoval.size(); i++) {
               auto newIndex = indexesAfterRemoval[i];
               if (newIndex != RemovedField && oldFieldNames.count(i)) {
                 assert(oldFieldNames[i].is());

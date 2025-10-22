@@ -1675,3 +1675,27 @@
     )
   )
 )
+
+(module
+  ;; A struct with partial names: only some fields are named. We should still
+  ;; update names properly when removing and reordering.
+
+  (type $struct (sub (struct (field i32) (field $named i32) (field i32) (field $other i32))))
+
+  (func $func (param $x (ref $struct))
+    ;; Use fields 1 and 2.
+    (struct.set $struct 1
+      (local.get $x)
+      (struct.get $struct 1)
+        (local.get $x)
+      )
+    )
+    (struct.set $struct 2
+      (local.get $x)
+      (struct.get $struct 2)
+        (local.get $x)
+      )
+    )
+  )
+)
+
