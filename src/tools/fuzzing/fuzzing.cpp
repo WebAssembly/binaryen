@@ -380,7 +380,8 @@ void TranslateToFuzzReader::build() {
   finalizeTable();
   shuffleExports();
 
-  ReFinalize().run(getPassRunner(), module);
+  PassRunner runner;
+  ReFinalize().run(&runner, &wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
