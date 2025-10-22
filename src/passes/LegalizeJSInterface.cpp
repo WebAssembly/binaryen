@@ -309,7 +309,7 @@ private:
       stub->body = call;
     }
     legalIm->type =
-      Type(Signature(Type(params), call->type), NonNullable, Exact);
+      Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
     auto* stubPtr = stub.get();
     if (!module->getFunctionOrNull(stub->name)) {
@@ -334,7 +334,7 @@ private:
     }
     // Failing that create a new function import.
     auto import = Builder::makeFunction(
-      name, Type(Signature(params, results), NonNullable, Exact), {});
+      name, Type(Signature(params, results), NonNullable, Inexact), {});
     import->module = ENV;
     import->base = name;
     auto* ret = import.get();
