@@ -381,8 +381,8 @@ void TranslateToFuzzReader::build() {
   shuffleExports();
 
   // XXX
-  //PassRunner runner(&wasm);
-  //ReFinalize().run(&runner, &wasm);
+  PassRunner runner(&wasm);
+  ReFinalize().run(&runner, &wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
