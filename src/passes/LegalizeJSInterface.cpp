@@ -278,7 +278,7 @@ private:
     legalIm->hasExplicitName = true;
     auto stub = std::make_unique<Function>();
     stub->name = Name(std::string("legalfunc$") + im->name.toString());
-    stub->type = im->type;
+    stub->type = im->type.with(Exact);
     stub->hasExplicitName = true;
 
     auto* call = module->allocator.alloc<Call>();
