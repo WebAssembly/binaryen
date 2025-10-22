@@ -1601,7 +1601,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     elems.push_back(expr);
   }
   void appendFuncElem(std::vector<Expression*>& elems, Name func) {
-    auto type = wasm.getFunction(func)->type.getHeapType();
+    auto type = wasm.getFunction(func)->type;
     elems.push_back(builder.makeRefFunc(func, type));
   }
 
