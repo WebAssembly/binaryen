@@ -3082,7 +3082,8 @@ void PrintSExpression::handleSignature(Function* curr,
       requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
     printHeapTypeName(curr->type.getHeapType()) << ')';
-    if (getenv("BINARYEN_PRINT_FULL")) { // XXX
+    if (full) {
+      // Print the full type in a comment. TODO the spec may add this too
       o << " (; ";
       printTypeOrName(curr->type, o, currModule);
       o << " ;)";
