@@ -379,6 +379,8 @@ void TranslateToFuzzReader::build() {
   }
   finalizeTable();
   shuffleExports();
+
+  ReFinalize().run(getPassRunner(), module);
 }
 
 void TranslateToFuzzReader::setupMemory() {
