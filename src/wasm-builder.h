@@ -703,7 +703,7 @@ public:
   RefFunc* makeRefFunc(Name func, HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize(heapType);
+    ret->finalize(heapType, wasm);
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {

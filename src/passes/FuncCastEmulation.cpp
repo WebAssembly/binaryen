@@ -178,7 +178,7 @@ struct FuncCastEmulation : public Pass {
         }
         auto* thunk = iter->second;
         ref->func = thunk->name;
-        ref->finalize(thunk->type.getHeapType());
+        ref->finalize(thunk->type.getHeapType(), *module);
       }
     }
 
