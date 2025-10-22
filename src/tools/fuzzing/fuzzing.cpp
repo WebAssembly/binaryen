@@ -380,8 +380,9 @@ void TranslateToFuzzReader::build() {
   finalizeTable();
   shuffleExports();
 
-  PassRunner runner(&wasm);
-  ReFinalize().run(&runner, &wasm);
+  // XXX
+  //PassRunner runner(&wasm);
+  //ReFinalize().run(&runner, &wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -967,6 +968,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
           func->base.startsWith("call-ref")) {
         // Make it non-imported, and with a simple body.
         func->module = func->base = Name();
+        func->type = func->type.with(Exact);
         auto results = func->getResults();
         func->body =
           results.isConcrete() ? makeConst(results) : makeNop(Type::none);
