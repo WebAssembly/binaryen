@@ -274,7 +274,8 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
                   activeBase.index + Index(activeSegment->data.size())};
 
   Builder builder(module);
-  activeSegment->data.push_back(builder.makeRefFunc(func, type));
+  auto funcType = Type(type, NonNullable, Inexact);
+  activeSegment->data.push_back(builder.makeRefFunc(func, funcType));
 
   addSlot(func, newSlot);
   if (activeTable->initial <= newSlot.index) {
@@ -792,7 +793,7 @@ void ModuleSplitter::setupTablePatching() {
       placeholder->hasExplicitName = true;
       placeholder->type = secondaryFunc->type;
       elem = Builder(primary).makeRefFunc(placeholder->name,
-                                          placeholder->type.getHeapType());
+                                          placeholder->type);
       primary.addFunction(std::move(placeholder));
     });
 
@@ -834,7 +835,7 @@ void ModuleSplitter::setupTablePatching() {
           // function.
           auto* func = replacement->second;
           auto* ref = Builder(secondary).makeRefFunc(func->name,
-                                                     func->type.getHeapType());
+                                                     func->type);
           secondaryElems.push_back(ref);
           ++replacement;
         } else if (auto* get = primarySeg->data[i]->dynCast<RefFunc>()) {
@@ -876,7 +877,7 @@ void ModuleSplitter::setupTablePatching() {
       }
       auto* func = curr->second;
       currData.push_back(
-        Builder(secondary).makeRefFunc(func->name, func->type.getHeapType()));
+        Builder(secondary).makeRefFunc(func->name, func->type));
     }
     if (currData.size()) {
       finishSegment();

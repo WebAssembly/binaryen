@@ -703,8 +703,10 @@ public:
   RefFunc* makeRefFunc(Name func, Type type) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
+    // Just apply the type, trusting it completely. This is safe to do even in
+    // the middle of an operation (where the Module is in the process of being
+    // altered, and should not be read from, which finalize normally does).
     ret->type = type;
-    ret->finalize();
     return ret;
   }
   RefFunc* makeRefFunc(Name func, HeapType heapType) {
