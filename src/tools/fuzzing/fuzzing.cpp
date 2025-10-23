@@ -453,9 +453,9 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // Use heap types from an imported module, if present.
   if (importedModule) {
     auto importedHeapTypes = ModuleUtils::collectHeapTypes(*importedModule);
-    auto rate = upTo(101);
+    auto rate = upTo(11);
     for (auto type : importedHeapTypes) {
-      if (upTo(100) < rate) {
+      if (upTo(10) < rate) {
         possibleHeapTypes.push_back(type);
       }
     }
@@ -1224,9 +1224,9 @@ void TranslateToFuzzReader::useImportedFunctions() {
   }
 
   // Add some of the module's exported functions as imports, at a random rate.
-  auto rate = upTo(101);
+  auto rate = upTo(11);
   for (auto& exp : importedModule->exports) {
-    if (exp->kind != ExternalKind::Function || upTo(100) >= rate) {
+    if (exp->kind != ExternalKind::Function || upTo(10) >= rate) {
       continue;
     }
 
@@ -1254,9 +1254,9 @@ void TranslateToFuzzReader::useImportedGlobals() {
   }
 
   // Add some of the module's exported globals as imports, at a random rate.
-  auto rate = upTo(101);
+  auto rate = upTo(11);
   for (auto& exp : importedModule->exports) {
-    if (exp->kind != ExternalKind::Global || upTo(100) >= rate) {
+    if (exp->kind != ExternalKind::Global || upTo(10) >= rate) {
       continue;
     }
 
