@@ -414,11 +414,14 @@ function wrapExportForJSPI(value) {
   return value;
 }
 
-// If a second binary will be linked in then set up the imports for
-// placeholders. Any import like  (import "placeholder" "0" (func ..  will be
-// provided by the secondary module, and must be called using an indirection.
+// If we are fuzzing a split module, a secondary binary will have imports for
+// placeholders, whose module name defaults to 'placeholder.deferred' for the
+// two-module split. Any import like
+// (import "placeholder.deferred" "0" (func ..))
+// will be provided by the secondary module, and must be called using an
+// indirection.
 if (secondBinary) {
-  imports['placeholder'] = new Proxy({}, {
+  imports['placeholder.deferred'] = new Proxy({}, {
     get(target, prop, receiver) {
       // Return a function that throws. We could do an indirect call using the
       // exported table, but as we immediately link in the secondary module,
