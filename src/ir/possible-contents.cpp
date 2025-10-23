@@ -642,9 +642,15 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    addRoot(
-      curr,
-      PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
+    if (!getModule()->getFunction(curr->func)->imported()) {
+      // This is not imported, so we know the exact function literal.
+      addRoot(
+        curr,
+        PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
+    } else {
+      // This is imported, so it might be anything of the proper type.
+      addRoot(curr);
+    }
 
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
