@@ -367,8 +367,6 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       }
     }
 
-    auto prunedImport = false;
-
     for (auto& func : module->functions) {
       // If the function is neither exported nor imported, no problem.
       auto imported = func->imported();
@@ -393,7 +391,6 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       if (imported) {
         func->module = func->base = Name();
         func->type = func->type.with(Exact);
-        prunedImport = true;
 
         Builder builder(*module);
         if (sig.results == Type::none) {
@@ -413,10 +410,8 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       }
     }
 
-    if (prunedImport) {
-      // RefFunc types need updating.
-      ReFinalize().run(getPassRunner(), module);
-    }
+    // RefFunc types etc. need updating.
+    ReFinalize().run(getPassRunner(), module);
 
     // TODO: globals etc.
   }
