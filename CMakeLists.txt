@@ -81,9 +81,9 @@ option(EMSCRIPTEN_ENABLE_WASM64 "Enable memory64 in emscripten build" OFF)
 # Turn this on to use pthreads feature in the wasm/BinaryenJS builds
 option(EMSCRIPTEN_ENABLE_PTHREADS "Enable pthreads in emscripten build" OFF)
 
-# Turn this off to generate a separate .wasm file instead of packaging it into the JS.
-# This is useful for debugging, performance analysis, and other testing.
-option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten build" ON)
+# Turn this on to generate a single .js file with the Wasm file embedded within
+# it. This is useful for packaging and distrubting binaryen as a single file.
+option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten build" OFF)
 
 option(ENABLE_WERROR "Enable -Werror" ON)
 
