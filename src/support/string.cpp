@@ -104,11 +104,18 @@ bool wildcardMatch(const std::string& pattern, const std::string& value) {
 
       // Handle wildcards.
       if (p < psize && pattern[p] == '*') {
-        // Optimistically move past the wildcard.
-        if (++p == psize) {
+        // Skip past the sequence of wildcards.
+        while (p < psize && pattern[p] == '*') {
+          ++p;
+        }
+        if (p == psize) {
           // The pattern ended in a wildcard, so it matches the rest of the
           // value no matter what it is.
           return true;
+        }
+        // Find the next possible match.
+        while (v < vsize && value[v] != pattern[p]) {
+          ++v;
         }
         if (v == vsize) {
           // No match. Backtrack if possible.
