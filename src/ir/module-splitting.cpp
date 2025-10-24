@@ -982,8 +982,7 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
 }
 
 void ModuleSplitter::updateIR() {
-  std::cout << "waka update\n";
-  // Imported functions may need type updates. XXX unneeded
+  // Imported functions may need type updates. XXX is this done elsewhere?
   PassRunner runner(&primary);
   ReFinalize().run(&runner, &primary);
   ReFinalize().walkModuleCode(&primary);
