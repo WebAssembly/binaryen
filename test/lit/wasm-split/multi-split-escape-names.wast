@@ -38,12 +38,16 @@
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (drop
  ;; MOD1-NEXT:   (call_ref $1
- ;; MOD1-NEXT:    (ref.func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD1-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD1-NEXT:     (ref.func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD1-NEXT:    )
  ;; MOD1-NEXT:   )
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (drop
  ;; MOD1-NEXT:   (call_ref $0
- ;; MOD1-NEXT:    (ref.func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD1-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD1-NEXT:     (ref.func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD1-NEXT:    )
  ;; MOD1-NEXT:   )
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (i32.const 0)
@@ -84,7 +88,9 @@
  ;; MOD2:      (func $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29 (result i64)
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $1
- ;; MOD2-NEXT:    (ref.func $trampoline_wasm::Type::getFeatures\28\29\20const)
+ ;; MOD2-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD2-NEXT:     (ref.func $trampoline_wasm::Type::getFeatures\28\29\20const)
+ ;; MOD2-NEXT:    )
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (drop
@@ -94,7 +100,9 @@
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $0
- ;; MOD2-NEXT:    (ref.func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD2-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD2-NEXT:     (ref.func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD2-NEXT:    )
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (i64.const 0)
@@ -135,12 +143,16 @@
  ;; MOD3:      (func $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29 (result f32)
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $1
- ;; MOD3-NEXT:    (ref.func $trampoline_wasm::Type::getFeatures\28\29\20const)
+ ;; MOD3-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD3-NEXT:     (ref.func $trampoline_wasm::Type::getFeatures\28\29\20const)
+ ;; MOD3-NEXT:    )
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $0
- ;; MOD3-NEXT:    (ref.func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD3-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD3-NEXT:     (ref.func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD3-NEXT:    )
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
