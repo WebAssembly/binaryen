@@ -14,6 +14,11 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+ - The emscripten build of binaryen no longer targets pure JS (via wasm2js) by
+   default.  In the long run this will allow us to enable WASM_BIGINT and other
+   features that wasm2js does not support.  There is now just a single
+   binaryen_js target.  It should still be possible to inject `-sWASM=0` as a
+   linker flag but this is not officially supported. (#7995)
 
 v126
 ----

@@ -438,7 +438,6 @@ TEST_SUITES = OrderedDict([
     ('example', run_example_tests),
     ('unit', run_unittest),
     ('binaryenjs', binaryenjs.test_binaryen_js),
-    ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
     ('lit', run_lit),
     ('gtest', run_gtest),
 ])
@@ -447,7 +446,7 @@ TEST_SUITES = OrderedDict([
 # Run all the tests
 def main():
     all_suites = TEST_SUITES.keys()
-    skip_by_default = ['binaryenjs', 'binaryenjs_wasm']
+    skip_by_default = ['binaryenjs']
 
     if shared.options.list_suites:
         for suite in all_suites:
