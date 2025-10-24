@@ -82,7 +82,9 @@
  (import "primary" "global" (global $import (ref null $A)))
 
  ;; OPEND:      (func $read (type $1) (result i32)
- ;; OPEND-NEXT:  (unreachable)
+ ;; OPEND-NEXT:  (struct.get $A 0
+ ;; OPEND-NEXT:   (global.get $import)
+ ;; OPEND-NEXT:  )
  ;; OPEND-NEXT: )
  ;; CLOSE:      (func $read (type $1) (result i32)
  ;; CLOSE-NEXT:  (unreachable)
