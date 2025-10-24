@@ -376,7 +376,7 @@ void ModuleSplitter::setupJSPI() {
     // Add an imported function to load the secondary module.
     auto import = Builder::makeFunction(
       ModuleSplitting::LOAD_SECONDARY_MODULE,
-      Type(Signature(Type::none, Type::none), NonNullable, Exact),
+      Type(Signature(Type::none, Type::none), NonNullable, Inexact),
       {});
     import->module = ENV;
     import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
@@ -520,6 +520,7 @@ void ModuleSplitter::exportImportFunction(Name funcName,
       func->hasExplicitName = primaryFunc->hasExplicitName;
       func->module = config.importNamespace;
       func->base = exportName;
+      func->type = func->type.with(Inexact);
       secondary->addFunction(std::move(func));
     }
   }
@@ -794,7 +795,7 @@ void ModuleSplitter::setupTablePatching() {
       placeholder->name = Names::getValidFunctionName(
         primary, std::string("placeholder_") + placeholder->base.toString());
       placeholder->hasExplicitName = true;
-      placeholder->type = secondaryFunc->type;
+      placeholder->type = secondaryFunc->type.with(Inexact);
       elem = Builder(primary).makeRefFunc(placeholder->name,
                                           placeholder->type);
       primary.addFunction(std::move(placeholder));
@@ -981,7 +982,8 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
 }
 
 void ModuleSplitter::updateIR() {
-  // Imported functions may need type updates.
+  std::cout << "waka update\n";
+  // Imported functions may need type updates. XXX unneeded
   PassRunner runner(&primary);
   ReFinalize().run(&runner, &primary);
   ReFinalize().walkModuleCode(&primary);
