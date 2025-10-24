@@ -980,10 +980,27 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
 }
 
 void ModuleSplitter::updateIR() {
-  // Imported functions may need type updates. XXX is this done elsewhere?
-  PassRunner runner(&primary);
-  ReFinalize().run(&runner, &primary);
-  ReFinalize().walkModuleCode(&primary);
+  // Imported functions may need type updates.
+  struct Fixer : public PostWalker<Fixer> {
+    void visitRefFunc(RefFunc* curr) {
+      auto& wasm = *getModule();
+      auto* func = wasm.getFunction(curr->func);
+      if (func->type != curr->type) {
+        // This became an import, and lost exactness.
+        assert(!func->type.isExact());
+        assert(curr->type.isExact());
+        if (wasm.features.hasCustomDescriptors()) {
+          // Add a cast, as the parent may depend on the exactness to validate.
+          replaceCurrent(Builder(wasm).makeRefCast(curr, curr->type));
+        }
+        curr->type = curr->type.with(Inexact);
+      }
+    }
+  } fixer;
+  fixer.walkModule(&primary);
+  for (auto& secondaryPtr : secondaries) {
+    fixer.walkModule(secondaryPtr.get());
+  }
 }
 
 } // anonymous namespace
