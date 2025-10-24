@@ -974,6 +974,8 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
   // code size in the primary module as well.
   for (auto& secondaryPtr : secondaries) {
     PassRunner runner(secondaryPtr.get());
+    // Do not validate here in the middle, as the IR still needs updating later.
+    runner.options.validate = false;
     runner.add("remove-unused-module-elements");
     runner.run();
   }
