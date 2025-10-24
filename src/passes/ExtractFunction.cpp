@@ -51,7 +51,7 @@ static void extract(PassRunner* runner, Module* module, Name name) {
   // Update function references after making things imports.
   ReFinalize().run(runner, module);
   ReFinalize().walkModuleCode(module);
-  
+
   // Leave just one export, for the thing we want.
   module->exports.clear();
   module->updateMaps();

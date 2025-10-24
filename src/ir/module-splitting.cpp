@@ -796,8 +796,7 @@ void ModuleSplitter::setupTablePatching() {
         primary, std::string("placeholder_") + placeholder->base.toString());
       placeholder->hasExplicitName = true;
       placeholder->type = secondaryFunc->type.with(Inexact);
-      elem = Builder(primary).makeRefFunc(placeholder->name,
-                                          placeholder->type);
+      elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
       primary.addFunction(std::move(placeholder));
     });
 
@@ -838,8 +837,7 @@ void ModuleSplitter::setupTablePatching() {
           // primarySeg->data[i] is a placeholder, so use the secondary
           // function.
           auto* func = replacement->second;
-          auto* ref = Builder(secondary).makeRefFunc(func->name,
-                                                     func->type);
+          auto* ref = Builder(secondary).makeRefFunc(func->name, func->type);
           secondaryElems.push_back(ref);
           ++replacement;
         } else if (auto* get = primarySeg->data[i]->dynCast<RefFunc>()) {
