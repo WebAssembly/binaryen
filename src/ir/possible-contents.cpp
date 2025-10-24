@@ -2413,6 +2413,24 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     }
   }
 
+  // In open world, public heap types may be written to from the outside.
+  if (!options.closedWorld) {
+    for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          roots[DataLocation{type, i}] = PossibleContents::fromType(fields[i].type);
+        }
+        if (auto desc = type.getDescriptorType()) {
+          auto descType = Type(*desc, Nullable, Inexact);
+          roots[DataLocation{type, DataLocation::DescriptorIndex}] = PossibleContents::fromType(descType);
+        }
+      } else if (type.isArray()) {
+        roots[DataLocation{type, 0}] = PossibleContents::fromType(type.getArray().element.type);
+      }
+    }
+  }
+
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "struct phase\n";
 #endif

@@ -66,3 +66,34 @@
   )
  )
 )
+
+;; Import a struct in a global.
+(module
+ ;; OPEND:      (type $A (struct (field i32)))
+ ;; CLOSE:      (type $A (struct (field i32)))
+ (type $A (struct (field i32)))
+
+ ;; OPEND:      (type $1 (func (result i32)))
+
+ ;; OPEND:      (import "primary" "global" (global $import (ref null $A)))
+ ;; CLOSE:      (type $1 (func (result i32)))
+
+ ;; CLOSE:      (import "primary" "global" (global $import (ref null $A)))
+ (import "primary" "global" (global $import (ref null $A)))
+
+ ;; OPEND:      (func $read (type $1) (result i32)
+ ;; OPEND-NEXT:  (unreachable)
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (func $read (type $1) (result i32)
+ ;; CLOSE-NEXT:  (unreachable)
+ ;; CLOSE-NEXT: )
+ (func $read (result i32)
+  ;; In closed world, we can assume no work happens on this struct outside, so
+  ;; it can only be null. In open world, we can do nothing here.
+  (struct.get $A 0
+   (global.get $import)
+  )
+ )
+)
+
+;; TODO: array and desc
