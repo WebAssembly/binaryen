@@ -73,6 +73,7 @@
 #include "ir/export-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
 #include "wasm-builder.h"
@@ -340,6 +341,7 @@ struct ModuleSplitter {
   void setupTablePatching();
   void shareImportableItems();
   void removeUnusedSecondaryElements();
+  void updateIR();
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), primary(primary), tableManager(primary),
@@ -356,6 +358,7 @@ struct ModuleSplitter {
     setupTablePatching();
     shareImportableItems();
     removeUnusedSecondaryElements();
+    updateIR();
   }
 };
 
@@ -975,6 +978,13 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
     runner.add("remove-unused-module-elements");
     runner.run();
   }
+}
+
+void ModuleSplitter::updateIR() {
+  // Imported functions may need type updates.
+  PassRunner runner(&primary);
+  ReFinalize().run(&runner, &primary);
+  ReFinalize().walkModuleCode(&primary);
 }
 
 } // anonymous namespace
