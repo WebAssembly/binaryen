@@ -532,8 +532,11 @@ endif()
 # declared earlier, so we create binaryen_wasm/js.js, which must then be copied.
 if(EMSCRIPTEN)
   # binaryen.js WebAssembly variant
-  add_executable(binaryen_wasm ${binaryen_SOURCES})
-  target_link_libraries(binaryen_wasm PRIVATE binaryen)
+  add_executable(binaryen_wasm ${binaryen_HEADERS})
+  # For the emscripten build we link against libbinaryen wih `--whole-archive`.
+  # Without this, the EMSCRIPTEN_KEEPALIVE symbols within the library would
+  # be ignored.
+  target_link_libraries(binaryen_wasm PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,binaryen>")
   target_link_libraries(binaryen_wasm PRIVATE "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm PRIVATE "-sNODERAWFS=0")
@@ -563,8 +566,8 @@ if(EMSCRIPTEN)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
-  add_executable(binaryen_js ${binaryen_SOURCES})
-  target_link_libraries(binaryen_js PRIVATE binaryen)
+  add_executable(binaryen_js ${binaryen_HEADERS})
+  target_link_libraries(binaryen_js PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,binaryen>")
   target_link_libraries(binaryen_js PRIVATE "-sWASM=0")
   target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
 
