@@ -29,6 +29,7 @@ CMakeFiles
 /dist/
 /config.h
 /emcc-build
+/emcc-build-dbg
 compile_commands.json
 test/lit/lit.site.cfg.py
 CMakeUserPresets.json
