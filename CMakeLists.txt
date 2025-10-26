@@ -1,6 +1,7 @@
-# Version set according the the cmake versions available in Ubuntu/Bionic:
-# https://packages.ubuntu.com/focal/cmake
-cmake_minimum_required(VERSION 3.16.3)
+# Version set according the the cmake versions available in Ubuntu/Noble LTS:
+# https://launchpad.net/ubuntu/+source/cmake/3.28.3-1build7
+# In particualr with use LINK_LIBRARY:WHOLE_ARCHIVE which requires 3.24.
+cmake_minimum_required(VERSION 3.28)
 
 # Needed for C++17 (std::variant)
 # TODO(https://github.com/WebAssembly/binaryen/issues/4299): We need
