@@ -991,7 +991,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 
   auto choice = upTo(16);
 
-  if (choice & 1) {
+  if (wasm.features.hasExceptionHandling() && (choice & 1)) {
     // Given an export index, call it from JS.
     // A second parameter has flags. The first bit determines whether we catch
     // and rethrow all exceptions. (This ends up giving us the same signature
@@ -1007,7 +1007,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     wasm.addFunction(std::move(func));
   }
 
-  if (choice & 2) {
+  if (wasm.features.hasExceptionHandling() && (choice & 2)) {
     // Given an export index, call it from JS and catch all exceptions. Return
     // whether we caught. Exceptions are common (if the index is invalid, in
     // particular), so a variant that catches is useful to avoid halting.
