@@ -419,6 +419,9 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
     Name name = WasmBinaryReader::escape(line);
     if (newSection) {
+      if (name.endsWith(":")) {
+        name = name.substr(0, name.size() - 1);
+      }
       if (moduleNameSet.count(name)) {
         Fatal() << "Module name " << name << " is listed more than once\n";
       }
