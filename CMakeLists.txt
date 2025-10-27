@@ -536,7 +536,7 @@ if(EMSCRIPTEN)
   # For the emscripten build we link against libbinaryen wih `--whole-archive`.
   # Without this, the EMSCRIPTEN_KEEPALIVE symbols within the library would
   # be ignored.
-  target_link_libraries(binaryen_wasm PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,binaryen>")
+  target_link_libraries(binaryen_wasm PRIVATE binaryen)
   target_link_libraries(binaryen_wasm PRIVATE "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm PRIVATE "-sNODERAWFS=0")
@@ -549,7 +549,13 @@ if(EMSCRIPTEN)
   endif()
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_ES6")
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
-  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  # Explictly export _i32_load to ensure the binaryen-c.cpp is linked in.
+  # This is the file that contains all the EMSCRIPTEN_KEEPALIVE symbols which
+  # we want to exports, but enless we explictly reference a symbol from it
+  # the linker will ignore the whole library.
+  # TODO(sbc): Replace with `LINK_LIBRARY:WHOLE_ARCHIVE` once we bump the min
+  # cmake version 3.24.
+  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_wasm PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm PRIVATE "-msign-ext")
   target_link_libraries(binaryen_wasm PRIVATE "-mbulk-memory")
@@ -567,7 +573,7 @@ if(EMSCRIPTEN)
 
   # binaryen.js JavaScript variant
   add_executable(binaryen_js ${binaryen_HEADERS})
-  target_link_libraries(binaryen_js PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,binaryen>")
+  target_link_libraries(binaryen_js PRIVATE binaryen)
   target_link_libraries(binaryen_js PRIVATE "-sWASM=0")
   target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
 
@@ -597,7 +603,7 @@ if(EMSCRIPTEN)
     target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6=1")
   endif()
   target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
-  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_js PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)
