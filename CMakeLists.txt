@@ -557,8 +557,6 @@ if(EMSCRIPTEN)
   # cmake version 3.24.
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_wasm PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-  target_link_libraries(binaryen_wasm PRIVATE "-msign-ext")
-  target_link_libraries(binaryen_wasm PRIVATE "-mbulk-memory")
   target_link_libraries(binaryen_wasm PRIVATE optimized "--closure=1")
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_wasm PRIVATE optimized "-Wno-error=closure")
