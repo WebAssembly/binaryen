@@ -421,6 +421,9 @@ void multiSplitModule(const WasmSplitOptions& options) {
     if (newSection) {
       if (name.endsWith(":")) {
         name = name.substr(0, name.size() - 1);
+        if (name.size() == 0) {
+          Fatal() << "Module name is empty\n";
+        }
       }
       if (moduleNameSet.count(name)) {
         Fatal() << "Module name " << name << " is listed more than once\n";
