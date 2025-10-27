@@ -1,5 +1,5 @@
-# Version set according the the cmake versions available in Ubuntu/Bionic:
-# https://packages.ubuntu.com/focal/cmake
+# Version set according the the cmake version available in Ubuntu/Focal (LTS):
+# https://launchpad.net/ubuntu/focal/+source/cmake
 cmake_minimum_required(VERSION 3.16.3)
 
 # Needed for C++17 (std::variant)
