@@ -139,3 +139,42 @@
   )
 )
 
+;; Test we can optimize a descriptor read.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
+    (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK:       (type $desc (sub (describes $struct (struct))))
+    (type $desc (sub (describes $struct (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (import "a" "b" (global $imported (ref (exact $desc))))
+  (import "a" "b" (global $imported (ref (exact $desc))))
+
+  ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct
+  ;; CHECK-NEXT:  (global.get $imported)
+  ;; CHECK-NEXT: ))
+  (global $struct (ref $struct)
+    (struct.new $struct
+      (global.get $imported)
+    )
+  )
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $imported)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This get reads $import.
+    (drop
+      (ref.get_desc $struct
+        (global.get $struct)
+      )
+    )
+  )
+)
+
