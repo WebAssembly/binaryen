@@ -211,6 +211,7 @@ struct InstrumentBranchHints
 
     // Update ref.func type changes.
     ReFinalize().run(getPassRunner(), module);
+    ReFinalize().walkModuleCode(module);
   }
 };
 
