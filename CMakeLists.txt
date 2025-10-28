@@ -31,7 +31,14 @@ endif()
 # more useful error reports from users.
 option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 
-option(BYN_ENABLE_LTO "Build with LTO" ${EMSCRIPTEN})
+if(EMSCRIPTEN AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+  # in opt builds, LTO helps so much (>20%) it's worth slow compile times,
+  # so we enable LTO by default in non-debug emscripten builds.
+  set(DEFAULT_LTO ON)
+else()
+  set(DEFAULT_LTO OFF)
+endif()
+option(BYN_ENABLE_LTO "Build with LTO" ${DEFAULT_LTO})
 
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
@@ -222,6 +229,11 @@ if(BYN_ENABLE_LTO)
   set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=2)
   set(CMAKE_JOB_POOL_LINK link_job_pool)
   add_compile_flag("-flto=thin")
+  if(EMSCRIPTEN)
+    # Under emscripten we also add `-flto` to the linker flags to tell the
+    # compiler driver to choose LTO versions of the system libraries.
+    add_link_flag("-flto=thin")
+  endif()
 endif()
 
 if(MSVC)
@@ -352,10 +364,6 @@ if(EMSCRIPTEN)
   else()
     # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
-  endif()
-  if (BYN_ENABLE_LTO)
-    # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-    add_nondebug_compile_flag("-flto")
   endif()
   if(EMSCRIPTEN_ENABLE_WASM64)
     add_compile_flag("-sMEMORY64")
@@ -560,9 +568,6 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm PRIVATE optimized "--closure=1")
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_wasm PRIVATE optimized "-Wno-error=closure")
-  if (BYN_ENABLE_LTO)
-    target_link_libraries(binaryen_wasm PRIVATE optimized "-flto")
-  endif()
   target_link_libraries(binaryen_wasm PRIVATE debug "--profiling")
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
@@ -614,9 +619,6 @@ if(EMSCRIPTEN)
   endif()
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_js PRIVATE optimized "-Wno-error=closure")
-  if(BYN_ENABLE_LTO)
-    target_link_libraries(binaryen_js PRIVATE optimized "-flto")
-  endif()
   target_link_libraries(binaryen_js PRIVATE debug "--profiling")
   target_link_libraries(binaryen_js PRIVATE debug "-sASSERTIONS")
   # Avoid catching exit as that can confuse error reporting in Node,
