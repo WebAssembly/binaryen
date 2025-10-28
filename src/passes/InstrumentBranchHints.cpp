@@ -102,6 +102,7 @@
 #include "ir/names.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/string.h"
 #include "wasm-builder.h"
@@ -207,6 +208,9 @@ struct InstrumentBranchHints
 
     // Walk normally, using logBranch as we go.
     Super::doWalkModule(module);
+
+    // Update ref.func type changes.
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 
