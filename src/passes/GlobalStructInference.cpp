@@ -47,7 +47,7 @@
 //
 // This also optimizes some related things - reads from structs created in
 // globals - that benefit from the infrastructure here (see unnesting, below),
-// even with this type-based approach.
+// even without this type-based approach.
 //
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
