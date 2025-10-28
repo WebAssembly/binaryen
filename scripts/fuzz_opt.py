@@ -1798,10 +1798,16 @@ class ClusterFuzz(TestCaseHandler):
 #
 # Note it may be better to reduce the second one first, so it imports less from
 # the first (otherwise, when the second one imports many things, the first will
-# fail to remove exports that are used). To reduce the second one, use a reducer
-# script that sets BINARYEN_SECOND_WASM with the file being reduced, and keep
-# the primary module fixed by providing a wasm file as an argument to this
-# script.
+# fail to remove exports that are used). To reduce the second one, set
+#
+#   BINARYEN_FIRST_WASM=${saved_first}
+#
+# The reduce.sh script will then do the right thing, using that as the first
+# wasm, and reducing on the second one, if you replace "original.wasm" in the
+# command with "second.wasm" as needed.
+#
+# In both cases, make sure to copy the files to a saved location first (do not
+# use a path to the scratch files that get constantly overwritten).
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
@@ -2605,9 +2611,18 @@ echo "The following value should be 0:"
 %(wasm_opt)s %(features)s %(temp_wasm)s
 echo "  " $?
 
-# run the command
 echo "The following value should be 1:"
-./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+
+if [ -z "$BINARYEN_FIRST_WASM" ]; then
+  # run the command normally
+  ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+else
+  # BINARYEN_FIRST_WASM was provided so we should actually reduce the *second*
+  # file. pass the first one in as the main file, and use the env var for the
+  # second.
+  BINARYEN_SECOND_WASM=%(temp_wasm)s ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d $BINARYEN_FIRST_WASM > o 2> e
+fi
+
 echo "  " $?
 
 #
