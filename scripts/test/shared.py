@@ -195,7 +195,7 @@ NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
             which('gcc') or which('clang'))
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
-NODEJS = os.environ.get('NODE') or which('node') or which('nodejs')
+NODEJS = os.environ.get('NODE') or os.environ.get('EMSDK_NODE') or which('node') or which('nodejs')
 MOZJS = which('mozjs') or which('spidermonkey')
 
 V8 = os.environ.get('V8') or which('v8') or which('d8')
@@ -264,9 +264,8 @@ V8_OPTS = [
 
 try:
     if NODEJS is not None:
-        subprocess.check_call([NODEJS, '--version'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+        version = subprocess.check_output([NODEJS, '--version'])
+        print(f'Using node ({NODEJS}) version: {version.strip()}')
 except (OSError, subprocess.CalledProcessError):
     NODEJS = None
 if NODEJS is None:
