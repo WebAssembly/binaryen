@@ -83,9 +83,6 @@ public:
       if (imported->module == tag->module && imported->base == tag->base) {
         return imported;
       }
-    } else if (linkedInstances.count(import->module)) {
-      // This is from a recognized module.
-      return getImportInstance(import)->callExport(import->base, arguments);
     }
     Fatal() << "missing host tag " << tag->module << '.' << tag->base;
   }
