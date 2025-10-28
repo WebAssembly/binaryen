@@ -23,9 +23,45 @@
     )
   )
 
-  ;; CHECK:      (func $nested-creations (type $1)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $imported)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This get reads $import.
+    (drop
+      (struct.get $vtable 0
+        (global.get $vtable)
+      )
+    )
+  )
+)
+
+;; As above, but the global is not immutable, so we cannot optimize.
+(module
+  ;; CHECK:      (type $vtable (struct (field funcref)))
+  (type $vtable (struct funcref))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $imported funcref))
+  (import "a" "b" (global $imported funcref))
+
+  ;; CHECK:      (global $vtable (mut (ref $vtable)) (struct.new $vtable
+  ;; CHECK-NEXT:  (global.get $imported)
+  ;; CHECK-NEXT: ))
+  (global $vtable (mut (ref $vtable))
+    (struct.new $vtable
+      (global.get $imported)
+    )
+  )
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
