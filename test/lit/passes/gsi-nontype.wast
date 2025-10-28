@@ -65,10 +65,75 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; This get reads $import.
     (drop
       (struct.get $vtable 0
         (global.get $vtable)
+      )
+    )
+  )
+)
+
+;; As above, but the global does not contain a struct.new, so we cannot
+;; optimize.
+(module
+  ;; CHECK:      (type $vtable (struct (field funcref)))
+  (type $vtable (struct funcref))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $imported funcref))
+  (import "a" "b" (global $imported funcref))
+
+  ;; CHECK:      (global $vtable (ref null $vtable) (ref.null none))
+  (global $vtable (ref null $vtable) (ref.null $vtable))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.get $vtable 0
+        (global.get $vtable)
+      )
+    )
+  )
+)
+
+;; As above, but the value in the struct.new is not constant, so we cannot
+;; optimize.
+(module
+  ;; CHECK:      (type $table (struct (field anyref)))
+  (type $table (struct anyref))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $imported funcref))
+  (import "a" "b" (global $imported funcref))
+
+  ;; CHECK:      (global $table (ref $table) (struct.new $table
+  ;; CHECK-NEXT:  (struct.new_default $table)
+  ;; CHECK-NEXT: ))
+  (global $table (ref $table)
+    (struct.new $table
+      (struct.new_default $table)
+    )
+  )
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $table 0
+  ;; CHECK-NEXT:    (global.get $table)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.get $table 0
+        (global.get $table)
       )
     )
   )
