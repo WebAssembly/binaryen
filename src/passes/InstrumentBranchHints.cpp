@@ -193,6 +193,7 @@ struct InstrumentBranchHints
       auto* func = module->getFunction(existing);
       func->body = Builder(*module).makeNop();
       func->module = func->base = Name();
+      func->type = func->type.with(Exact);
     }
 
     // Add our import.
