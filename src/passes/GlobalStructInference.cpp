@@ -531,7 +531,9 @@ struct GlobalStructInference : public Pass {
         }
       }
 
-      Value readFromStructNew(StructNew* structNew, Index fieldIndex, std::optional<Field>& field) {
+      Value readFromStructNew(StructNew* structNew,
+                              Index fieldIndex,
+                              std::optional<Field>& field) {
         // Find the value read from the struct and represent it as a Value.
         Value value;
         PossibleConstantValues constant;
