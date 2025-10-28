@@ -1788,7 +1788,7 @@ class ClusterFuzz(TestCaseHandler):
 # two and link them at runtime, this starts with two separate wasm files.
 #
 # Fuzzing failures here is a little trickier, as there are two wasm files.
-# First, reduce on the primary file, by finding the secondary one in the log
+# You can reduce the primary file by finding the secondary one in the log
 # (usually out/test/second.wasm), copy that to the side, and add
 #
 #   BINARYEN_SECOND_WASM=${saved_second}
@@ -1796,9 +1796,12 @@ class ClusterFuzz(TestCaseHandler):
 # in the env. That will keep the secondary wasm fixed as you reduce the primary
 # one.
 #
-# It is better to reduce the second one first, as then it will import less from
+# Note it may be better to reduce the second one first, so it imports less from
 # the first (otherwise, when the second one imports many things, the first will
-# fail to remove exports that are used).
+# fail to remove exports that are used). To reduce the second one, use a reducer
+# script that sets BINARYEN_SECOND_WASM with the file being reduced, and keep
+# the primary module fixed by providing a wasm file as an argument to this
+# script.
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
