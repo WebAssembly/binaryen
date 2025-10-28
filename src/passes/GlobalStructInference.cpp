@@ -45,6 +45,10 @@
 // comparison. But we can compare structs, so if the function references are in
 // vtables, and the vtables follow the above pattern, then we can optimize.
 //
+// This also optimizes some related things - reads from structs created in
+// globals - that benefit from the infrastructure here (see unnesting, below),
+// even with this type-based approach.
+//
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
 
@@ -203,11 +207,6 @@ struct GlobalStructInference : public Pass {
       }
     }
 
-    if (typeGlobals.empty()) {
-      // We found nothing we can optimize.
-      return;
-    }
-
     // The above loop on typeGlobalsCopy is on an unsorted data structure, and
     // that can lead to nondeterminism in typeGlobals. Sort the vectors there to
     // ensure determinism.
@@ -328,17 +327,11 @@ struct GlobalStructInference : public Pass {
 
         // We must ignore the case of a non-struct heap type, that is, a bottom
         // type (which is all that is left after we've already ruled out
-        // unreachable). Such things will not be in typeGlobals, which we are
-        // checking now anyhow.
+        // unreachable).
         auto heapType = type.getHeapType();
-        auto iter = parent.typeGlobals.find(heapType);
-        if (iter == parent.typeGlobals.end()) {
+        if (!heapType.isStruct()) {
           return;
         }
-
-        // This cannot be a bottom type as we found it in the typeGlobals map,
-        // which only contains types of struct.news.
-        assert(heapType.isStruct());
 
         // The field must be immutable.
         std::optional<Field> field;
@@ -349,12 +342,36 @@ struct GlobalStructInference : public Pass {
           }
         }
 
+        auto& wasm = *getModule();
+
+        // This is a read of an immutable field. See if it is a trivial case, of
+        // a read from an immutable global.
+        if (auto* get = ref->dynCast<GlobalGet>()) {
+          auto* global = wasm.getGlobal(get->name);
+          if (!global->mutable_) {
+            if (auto* structNew = global->init->dynCast<StructNew>()) {
+              auto value = readFromStructNew(structNew, fieldIndex, field);
+              // TODO: handle non-constant values using unnesting, as below.
+              if (value.isConstant()) {
+                replaceCurrent(value.getConstant().makeExpression(wasm));
+                return;
+              }
+              // Otherwise, continue to try the main type-based optimization
+              // below.
+            }
+          }
+        }
+
+        auto iter = parent.typeGlobals.find(heapType);
+        if (iter == parent.typeGlobals.end()) {
+          return;
+        }
+
         const auto& globals = iter->second;
         if (globals.size() == 0) {
           return;
         }
 
-        auto& wasm = *getModule();
         Builder builder(wasm);
 
         if (globals.size() == 1) {
@@ -388,28 +405,8 @@ struct GlobalStructInference : public Pass {
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
           auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
-          // The value that is read from this struct.new.
-          Value value;
-
-          // Find the value read from the struct and represent it as a Value.
-          PossibleConstantValues constant;
-          if (field && structNew->isWithDefault()) {
-            constant.note(Literal::makeZero(field->type));
-            value.content = constant;
-          } else {
-            Expression* operand;
-            if (field) {
-              operand = structNew->operands[fieldIndex];
-            } else {
-              operand = structNew->desc;
-            }
-            constant.note(operand, wasm);
-            if (constant.isConstant()) {
-              value.content = constant;
-            } else {
-              value.content = operand;
-            }
-          }
+          // Find the value read from the struct.new.
+          auto value = readFromStructNew(structNew, fieldIndex, field);
 
           // If the value is constant, it may be grouped as mentioned before.
           // See if it matches anything we've seen before.
@@ -532,6 +529,30 @@ struct GlobalStructInference : public Pass {
         if (refinalize) {
           ReFinalize().walkFunctionInModule(func, getModule());
         }
+      }
+
+      Value readFromStructNew(StructNew* structNew, Index fieldIndex, std::optional<Field>& field) {
+        // Find the value read from the struct and represent it as a Value.
+        Value value;
+        PossibleConstantValues constant;
+        if (field && structNew->isWithDefault()) {
+          constant.note(Literal::makeZero(field->type));
+          value.content = constant;
+        } else {
+          Expression* operand;
+          if (field) {
+            operand = structNew->operands[fieldIndex];
+          } else {
+            operand = structNew->desc;
+          }
+          constant.note(operand, *getModule());
+          if (constant.isConstant()) {
+            value.content = constant;
+          } else {
+            value.content = operand;
+          }
+        }
+        return value;
       }
     };
 
