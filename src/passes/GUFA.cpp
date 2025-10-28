@@ -371,8 +371,8 @@ struct GUFAOptimizer
       bool optimized = false;
 
       void visitExpression(Expression* curr) {
-        if (!curr->type.isRef()) {
-          // Ignore anything we cannot infer a type for.
+        // Ignore anything we cannot emit a cast for.
+        if (!curr->type.isCastable()) {
           return;
         }
 

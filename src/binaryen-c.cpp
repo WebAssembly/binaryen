@@ -4973,7 +4973,7 @@ static BinaryenFunctionRef addFunctionInternal(BinaryenModuleRef module,
                                                BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
-  ret->type = type;
+  ret->type = Type(type, NonNullable, Exact);
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -5097,7 +5097,8 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
     func->module = externalModuleName;
     func->base = externalBaseName;
     // TODO: Take a HeapType rather than params and results.
-    func->type = Signature(Type(params), Type(results));
+    func->type =
+      Type(Signature(Type(params), Type(results)), NonNullable, Exact);
     ((Module*)module)->addFunction(std::move(func));
   } else {
     // already exists so just set module and base
@@ -5285,7 +5286,8 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
+      Builder(*(Module*)module)
+        .makeRefFunc(funcNames[i], func->type.getHeapType()));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -5302,7 +5304,8 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
+      Builder(*(Module*)module)
+        .makeRefFunc(funcNames[i], func->type.getHeapType()));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -6017,10 +6020,10 @@ void BinaryenFunctionSetBody(BinaryenFunctionRef func,
   ((Function*)func)->body = (Expression*)body;
 }
 BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func) {
-  return ((Function*)func)->type.getID();
+  return ((Function*)func)->type.getHeapType().getID();
 }
 void BinaryenFunctionSetType(BinaryenFunctionRef func, BinaryenHeapType type) {
-  ((Function*)func)->type = HeapType(type);
+  ((Function*)func)->type = Type(HeapType(type), NonNullable, Exact);
 }
 void BinaryenFunctionOptimize(BinaryenFunctionRef func,
                               BinaryenModuleRef module) {

@@ -1,5 +1,5 @@
-# Version set according the the cmake versions available in Ubuntu/Bionic:
-# https://packages.ubuntu.com/focal/cmake
+# Version set according the the cmake version available in Ubuntu/Focal (LTS):
+# https://launchpad.net/ubuntu/focal/+source/cmake
 cmake_minimum_required(VERSION 3.16.3)
 
 # Needed for C++17 (std::variant)
@@ -31,7 +31,14 @@ endif()
 # more useful error reports from users.
 option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 
-option(BYN_ENABLE_LTO "Build with LTO" ${EMSCRIPTEN})
+if(EMSCRIPTEN AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+  # in opt builds, LTO helps so much (>20%) it's worth slow compile times,
+  # so we enable LTO by default in non-debug emscripten builds.
+  set(DEFAULT_LTO ON)
+else()
+  set(DEFAULT_LTO OFF)
+endif()
+option(BYN_ENABLE_LTO "Build with LTO" ${DEFAULT_LTO})
 
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
@@ -81,9 +88,9 @@ option(EMSCRIPTEN_ENABLE_WASM64 "Enable memory64 in emscripten build" OFF)
 # Turn this on to use pthreads feature in the wasm/BinaryenJS builds
 option(EMSCRIPTEN_ENABLE_PTHREADS "Enable pthreads in emscripten build" OFF)
 
-# Turn this off to generate a separate .wasm file instead of packaging it into the JS.
-# This is useful for debugging, performance analysis, and other testing.
-option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten build" ON)
+# Turn this on to generate a single .js file with the Wasm file embedded within
+# it. This is useful for packaging and distrubting binaryen as a single file.
+option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten build" OFF)
 
 option(ENABLE_WERROR "Enable -Werror" ON)
 
@@ -222,6 +229,11 @@ if(BYN_ENABLE_LTO)
   set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=2)
   set(CMAKE_JOB_POOL_LINK link_job_pool)
   add_compile_flag("-flto=thin")
+  if(EMSCRIPTEN)
+    # Under emscripten we also add `-flto` to the linker flags to tell the
+    # compiler driver to choose LTO versions of the system libraries.
+    add_link_flag("-flto=thin")
+  endif()
 endif()
 
 if(MSVC)
@@ -346,7 +358,6 @@ if(EMSCRIPTEN)
     add_link_flag("-sENVIRONMENT=web,worker")
     add_link_flag("-sINVOKE_RUN=0")
     add_link_flag("-sEXPORTED_RUNTIME_METHODS=run,callMain,FS")
-    add_link_flag("-sMODULARIZE")
     add_link_flag("-sEXPORT_ES6")
     add_link_flag("-sFILESYSTEM")
     add_link_flag("-sFORCE_FILESYSTEM")
@@ -354,12 +365,8 @@ if(EMSCRIPTEN)
     # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
   endif()
-  if (BYN_ENABLE_LTO)
-    # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-    add_nondebug_compile_flag("-flto")
-  endif()
   if(EMSCRIPTEN_ENABLE_WASM64)
-    add_compile_flag("-sMEMORY64 -Wno-experimental")
+    add_compile_flag("-sMEMORY64")
     add_link_flag("-sMEMORY64")
   endif()
 endif()
@@ -533,7 +540,10 @@ endif()
 # declared earlier, so we create binaryen_wasm/js.js, which must then be copied.
 if(EMSCRIPTEN)
   # binaryen.js WebAssembly variant
-  add_executable(binaryen_wasm ${binaryen_SOURCES})
+  add_executable(binaryen_wasm ${binaryen_HEADERS})
+  # For the emscripten build we link against libbinaryen wih `--whole-archive`.
+  # Without this, the EMSCRIPTEN_KEEPALIVE symbols within the library would
+  # be ignored.
   target_link_libraries(binaryen_wasm PRIVATE binaryen)
   target_link_libraries(binaryen_wasm PRIVATE "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_NAME=Binaryen")
@@ -547,16 +557,17 @@ if(EMSCRIPTEN)
   endif()
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_ES6")
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
-  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  # Explictly export _i32_load to ensure the binaryen-c.cpp is linked in.
+  # This is the file that contains all the EMSCRIPTEN_KEEPALIVE symbols which
+  # we want to exports, but enless we explictly reference a symbol from it
+  # the linker will ignore the whole library.
+  # TODO(sbc): Replace with `LINK_LIBRARY:WHOLE_ARCHIVE` once we bump the min
+  # cmake version 3.24.
+  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_wasm PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-  target_link_libraries(binaryen_wasm PRIVATE "-msign-ext")
-  target_link_libraries(binaryen_wasm PRIVATE "-mbulk-memory")
   target_link_libraries(binaryen_wasm PRIVATE optimized "--closure=1")
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_wasm PRIVATE optimized "-Wno-error=closure")
-  if (BYN_ENABLE_LTO)
-    target_link_libraries(binaryen_wasm PRIVATE optimized "-flto")
-  endif()
   target_link_libraries(binaryen_wasm PRIVATE debug "--profiling")
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
@@ -564,7 +575,7 @@ if(EMSCRIPTEN)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
-  add_executable(binaryen_js ${binaryen_SOURCES})
+  add_executable(binaryen_js ${binaryen_HEADERS})
   target_link_libraries(binaryen_js PRIVATE binaryen)
   target_link_libraries(binaryen_js PRIVATE "-sWASM=0")
   target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
@@ -595,7 +606,7 @@ if(EMSCRIPTEN)
     target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6=1")
   endif()
   target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
-  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_js PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)
@@ -608,9 +619,6 @@ if(EMSCRIPTEN)
   endif()
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_js PRIVATE optimized "-Wno-error=closure")
-  if(BYN_ENABLE_LTO)
-    target_link_libraries(binaryen_js PRIVATE optimized "-flto")
-  endif()
   target_link_libraries(binaryen_js PRIVATE debug "--profiling")
   target_link_libraries(binaryen_js PRIVATE debug "-sASSERTIONS")
   # Avoid catching exit as that can confuse error reporting in Node,

@@ -251,68 +251,80 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     });
   }
 
-  Flow callImport(Function* import, const Literals& arguments) override {
-    Name WASI("wasi_snapshot_preview1");
+  Literal getImportedFunction(Function* import) override {
+    auto f = [import, this](const Literals& arguments) -> Flow {
+      Name WASI("wasi_snapshot_preview1");
 
-    if (ignoreExternalInput) {
-      if (import->module == WASI) {
-        if (import->base == "environ_sizes_get") {
-          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
-              import->getResults() != Type::i32) {
-            throw FailToEvalException("wasi environ_sizes_get has wrong sig");
+      if (ignoreExternalInput) {
+        if (import->module == WASI) {
+          if (import->base == "environ_sizes_get") {
+            if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+                import->getResults() != Type::i32) {
+              throw FailToEvalException("wasi environ_sizes_get has wrong sig");
+            }
+
+            // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS
+            // (0).
+            store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
+            return {Literal(int32_t(0))};
           }
 
-          // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
-          return {Literal(int32_t(0))};
-        }
+          if (import->base == "environ_get") {
+            if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+                import->getResults() != Type::i32) {
+              throw FailToEvalException("wasi environ_get has wrong sig");
+            }
 
-        if (import->base == "environ_get") {
-          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
-              import->getResults() != Type::i32) {
-            throw FailToEvalException("wasi environ_get has wrong sig");
+            // Just return __WASI_ERRNO_SUCCESS (0).
+            return {Literal(int32_t(0))};
           }
 
-          // Just return __WASI_ERRNO_SUCCESS (0).
-          return {Literal(int32_t(0))};
-        }
+          if (import->base == "args_sizes_get") {
+            if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+                import->getResults() != Type::i32) {
+              throw FailToEvalException("wasi args_sizes_get has wrong sig");
+            }
 
-        if (import->base == "args_sizes_get") {
-          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
-              import->getResults() != Type::i32) {
-            throw FailToEvalException("wasi args_sizes_get has wrong sig");
+            // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS
+            // (0).
+            store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
+            return {Literal(int32_t(0))};
           }
 
-          // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
-          return {Literal(int32_t(0))};
-        }
+          if (import->base == "args_get") {
+            if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+                import->getResults() != Type::i32) {
+              throw FailToEvalException("wasi args_get has wrong sig");
+            }
 
-        if (import->base == "args_get") {
-          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
-              import->getResults() != Type::i32) {
-            throw FailToEvalException("wasi args_get has wrong sig");
+            // Just return __WASI_ERRNO_SUCCESS (0).
+            return {Literal(int32_t(0))};
           }
 
-          // Just return __WASI_ERRNO_SUCCESS (0).
-          return {Literal(int32_t(0))};
+          // Otherwise, we don't recognize this import; continue normally to
+          // error.
         }
-
-        // Otherwise, we don't recognize this import; continue normally to
-        // error.
       }
-    }
 
-    std::string extra;
-    if (import->module == ENV && import->base == "___cxa_atexit") {
-      extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that calls "
-                             "to atexit are not emitted";
-    } else if (import->module == WASI && !ignoreExternalInput) {
-      extra = RECOMMENDATION "consider --ignore-external-input";
-    }
-    throw FailToEvalException(std::string("call import: ") +
-                              import->module.toString() + "." +
-                              import->base.toString() + extra);
+      std::string extra;
+      if (import->module == ENV && import->base == "___cxa_atexit") {
+        extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that calls "
+                               "to atexit are not emitted";
+      } else if (import->module == WASI && !ignoreExternalInput) {
+        extra = RECOMMENDATION "consider --ignore-external-input";
+      }
+      throw FailToEvalException(std::string("call import: ") +
+                                import->module.toString() + "." +
+                                import->base.toString() + extra);
+    };
+    // Use a null instance because these are either host functions or imported
+    // from unknown sources.
+    return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
+                   import->type.getHeapType());
+  }
+
+  Tag* getImportedTag(Tag* tag) override {
+    WASM_UNREACHABLE("missing imported tag");
   }
 
   // We assume the table is not modified FIXME
@@ -355,6 +367,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     }
     if (!Properties::isConstantExpression(value)) {
       throw FailToEvalException("tableLoad of non-literal");
+    }
+    if (auto* r = value->dynCast<RefFunc>()) {
+      return instance->makeFuncData(r->func, r->type.getHeapType());
     }
     return Properties::getLiteral(value);
   }
@@ -1286,7 +1301,8 @@ start_eval:
       // signature. If there is a mismatch, shift the local indices to make room
       // for the unused parameters.
       std::vector<Type> localTypes;
-      auto originalParams = originalFuncType.getSignature().params;
+      auto originalParams =
+        originalFuncType.getHeapType().getSignature().params;
       if (originalParams != func->getParams()) {
         // Add locals for the body to use instead of using the params.
         for (auto type : func->getParams()) {

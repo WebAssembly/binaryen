@@ -72,6 +72,9 @@
 ;; CHECK-NEXT:   --fuzz-preserve-imports-exports               don't add imports and exports in
 ;; CHECK-NEXT:                                                 -ttf mode
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in
+;; CHECK-NEXT:                                                 -ttf mode
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-spec-wrapper,-esw                      Emit a wasm spec interpreter
 ;; CHECK-NEXT:                                                 wrapper file that can run the
 ;; CHECK-NEXT:                                                 wasm with some test values,

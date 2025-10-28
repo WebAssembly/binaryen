@@ -10,9 +10,9 @@
 (module
  ;; PRIMARY:      (type $0 (func))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
 
- ;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (type $0)))
+ ;; PRIMARY:      (import "placeholder.deferred" "1" (func $placeholder_1 (type $0)))
 
  ;; PRIMARY:      (global $glob1 (ref func) (ref.func $prime))
 

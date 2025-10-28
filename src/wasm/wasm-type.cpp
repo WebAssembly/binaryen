@@ -623,6 +623,8 @@ bool Type::isDefaultable() const {
   return isConcrete() && !isNonNullable();
 }
 
+bool Type::isCastable() { return isRef() && getHeapType().isCastable(); }
+
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
@@ -887,6 +889,11 @@ Shareability HeapType::getShared() const {
   } else {
     return getHeapTypeInfo(*this)->share;
   }
+}
+
+bool HeapType::isCastable() {
+  return !isContinuation() && !isMaybeShared(HeapType::cont) &&
+         !isMaybeShared(HeapType::nocont);
 }
 
 Signature HeapType::getSignature() const {
@@ -2389,10 +2396,12 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return false;
     }
   }
-  // A supertype of a type must have a describes clause iff the type has a
-  // describes clause.
-  if (bool(sub.described) != bool(super.described)) {
-    return false;
+  // A supertype of a type with a (describes $x) clause must have a (describes
+  // $y) clause where $y is the declared supertype of $x.
+  if (sub.described) {
+    if (!super.described || sub.described->supertype != super.described) {
+      return false;
+    }
   }
   SubTyper typer;
   switch (sub.kind) {

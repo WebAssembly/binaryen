@@ -131,32 +131,46 @@ public:
 };
 
 struct FuncData {
-  // Name of the function in the module.
+  // Name of the function in the instance that defines it, if available, or
+  // otherwise the internal name of a function import.
   Name name;
 
-  // The interpreter instance we are in. This is only used for equality
-  // comparisons, as two functions are equal iff they have the same name and are
-  // in the same instance (in particular, we do *not* compare the |call| field
-  // below, which is an execution detail).
+  // The interpreter instance this function closes over, if any. (There might
+  // not be an interpreter instance if this is a host function or an import from
+  // an unknown source.) This is only used for equality comparisons, as two
+  // functions are equal iff they have the same name and are defined by the same
+  // instance (in particular, we do *not* compare the |call| field below, which
+  // is an execution detail).
   void* self;
 
   // A way to execute this function. We use this when it is called.
-  using Call = std::function<Flow(Literals)>;
-  std::optional<Call> call;
+  using Call = std::function<Flow(const Literals&)>;
+  Call call;
 
-  FuncData(Name name,
-           void* self = nullptr,
-           std::optional<Call> call = std::nullopt)
+  FuncData(Name name, void* self = nullptr, Call call = {})
     : name(name), self(self), call(call) {}
 
   bool operator==(const FuncData& other) const {
     return name == other.name && self == other.self;
   }
 
-  Flow doCall(Literals arguments) {
+  Flow doCall(const Literals& arguments) {
     assert(call);
-    return (*call)(arguments);
+    return call(arguments);
   }
+};
+
+// The data of a (ref exn) literal.
+struct ExnData {
+  // The tag of this exn data.
+  // TODO: Add self, like in FuncData, to handle the case of a module that is
+  //       instantiated multiple times.
+  Tag* tag;
+
+  // The payload of this exn data.
+  Literals payload;
+
+  ExnData(Tag* tag, Literals payload) : tag(tag), payload(payload) {}
 };
 
 // Suspend/resume support.
@@ -323,7 +337,7 @@ protected:
   }
 
   // Same as makeGCData but for ExnData.
-  Literal makeExnData(Name tag, const Literals& payload) {
+  Literal makeExnData(Tag* tag, const Literals& payload) {
     auto allocation = std::make_shared<ExnData>(tag, payload);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
@@ -1889,9 +1903,18 @@ public:
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
+    // Single-module implementation. This is used from Precompute, for example.
+    // It is overriden in ModuleRunner to add logic for finding the proper
+    // imported tag (which single-module cases don't care about).
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{makeExnData(curr->tag, arguments)});
+    auto* tag = self()->getModule()->getTag(curr->tag);
+    if (tag->imported()) {
+      // The same tag can be imported twice, so by looking at only the current
+      // module we can't tell if two tags are the same or not.
+      return NONCONSTANT_FLOW;
+    }
+    throwException(WasmException{self()->makeExnData(tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
@@ -2898,7 +2921,7 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Flow callImport(Function* import, const Literals& arguments) = 0;
+    virtual Literal getImportedFunction(Function* import) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -2907,6 +2930,9 @@ public:
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
+    // Get the Tag instance for a tag implemented in the host, that is, not
+    // among the linked ModuleRunner instances, but imported from the host.
+    virtual Tag* getImportedTag(Tag* tag) = 0;
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -3155,17 +3181,32 @@ public:
 
   // call an exported function
   Flow callExport(Name name, const Literals& arguments) {
-    Export* export_ = wasm.getExportOrNull(name);
-    if (!export_ || export_->kind != ExternalKind::Function) {
-      externalInterface->trap("callExport not found");
-    }
-    return callFunction(*export_->getInternalName(), arguments);
+    return getExportedFunction(name).getFuncData()->doCall(arguments);
   }
 
   Flow callExport(Name name) { return callExport(name, Literals()); }
 
+  Literal getExportedFunction(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Function) {
+      externalInterface->trap("exported function not found");
+    }
+    Function* func = wasm.getFunctionOrNull(*export_->getInternalName());
+    assert(func);
+    if (func->imported()) {
+      return externalInterface->getImportedFunction(func);
+    }
+    return Literal(std::make_shared<FuncData>(
+                     func->name,
+                     this,
+                     [this, func](const Literals& arguments) -> Flow {
+                       return callFunction(func->name, arguments);
+                     }),
+                   func->type.getHeapType());
+  }
+
   // get an exported global
-  Literals getExport(Name name) {
+  Literals getExportedGlobal(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
       externalInterface->trap("getExport external not found");
@@ -3176,6 +3217,18 @@ public:
       externalInterface->trap("getExport internal not found");
     }
     return iter->second;
+  }
+
+  Tag* getExportedTag(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Tag) {
+      externalInterface->trap("exported tag not found");
+    }
+    auto* tag = wasm.getTag(*export_->getInternalName());
+    if (tag->imported()) {
+      tag = externalInterface->getImportedTag(tag);
+    }
+    return tag;
   }
 
   std::string printFunctionStack() {
@@ -3429,12 +3482,15 @@ protected:
   Tag* getCanonicalTag(Name name) {
     auto* inst = self();
     auto* tag = inst->wasm.getTag(name);
-    while (tag->imported()) {
-      inst = inst->linkedInstances.at(tag->module).get();
-      auto* tagExport = inst->wasm.getExport(tag->base);
-      tag = inst->wasm.getTag(*tagExport->getInternalName());
+    if (!tag->imported()) {
+      return tag;
     }
-    return tag;
+    auto iter = inst->linkedInstances.find(tag->module);
+    if (iter == inst->linkedInstances.end()) {
+      return externalInterface->getImportedTag(tag);
+    }
+    inst = iter->second.get();
+    return inst->getExportedTag(tag->base);
   }
 
 public:
@@ -3448,14 +3504,14 @@ public:
       // The call.without.effects intrinsic is a call to an import that actually
       // calls the given function reference that is the final argument.
       target = arguments.back().getFunc();
-      funcType = arguments.back().type.getHeapType();
+      funcType = arguments.back().type;
       arguments.pop_back();
     }
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      arguments.push_back(self()->makeFuncData(target, funcType));
+      arguments.push_back(self()->makeFuncData(target, funcType.getHeapType()));
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
@@ -3505,15 +3561,16 @@ public:
       trap("non-function target in call_indirect");
     }
 
-    auto* func = self()->getModule()->getFunction(funcref.getFunc());
-    if (!HeapType::isSubType(func->type, curr->heapType)) {
+    // TODO: Throw a non-constant exception if the reference is to an imported
+    //       function that has a supertype of the expected type.
+    if (!HeapType::isSubType(funcref.type.getHeapType(), curr->heapType)) {
       trap("callIndirect: non-subtype");
     }
 
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(calling table)\n";
 #endif
-    Flow ret = callFunction(funcref.getFunc(), arguments);
+    Flow ret = funcref.getFuncData()->doCall(arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
@@ -4338,7 +4395,8 @@ public:
 
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        if (curr->catchTags[i] == exnData->tag) {
+        auto* tag = self()->getCanonicalTag(curr->catchTags[i]);
+        if (tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
@@ -4361,7 +4419,8 @@ public:
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
-        if (!catchTag.is() || catchTag == exnData->tag) {
+        if (!catchTag.is() ||
+            self()->getCanonicalTag(catchTag) == exnData->tag) {
           Flow ret;
           ret.breakTo = curr->catchDests[i];
           if (catchTag.is()) {
@@ -4378,6 +4437,13 @@ public:
       // This exception is not caught by this try_table. Rethrow it.
       throw;
     }
+  }
+  Flow visitThrow(Throw* curr) {
+    Literals arguments;
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
+    throwException(WasmException{
+      self()->makeExnData(self()->getCanonicalTag(curr->tag), arguments)});
+    WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
     for (int i = exceptionStack.size() - 1; i >= 0; i--) {
@@ -4404,7 +4470,8 @@ public:
     auto funcName = funcValue.getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
     return Literal(std::make_shared<ContData>(
-      self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
+      self()->makeFuncData(func->name, func->type.getHeapType()),
+      curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
@@ -4447,9 +4514,8 @@ public:
       assert(self()->restoredValuesMap.empty());
       // Throw, if we were resumed by resume_throw;
       if (auto* tag = currContinuation->exceptionTag) {
-        // XXX tag->name lacks cross-module support
         throwException(WasmException{
-          self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+          self()->makeExnData(tag, currContinuation->resumeArguments)});
       }
       return currContinuation->resumeArguments;
     }
@@ -4652,9 +4718,8 @@ public:
         // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
         if (auto* tag = currContinuation->exceptionTag) {
-          // XXX tag->name lacks cross-module support
           throwException(WasmException{
-            self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+            self()->makeExnData(tag, currContinuation->resumeArguments)});
         }
       }
     }
@@ -4699,7 +4764,9 @@ public:
 
       if (function->imported()) {
         // TODO: Allow imported functions to tail call as well.
-        return externalInterface->callImport(function, arguments);
+        return externalInterface->getImportedFunction(function)
+          .getFuncData()
+          ->doCall(arguments);
       }
 
       FunctionScope scope(function, arguments, *self());
@@ -4749,7 +4816,7 @@ public:
         // not the original function that was called, and the original has been
         // returned from already; we should call the last return_called
         // function).
-        auto target = self()->makeFuncData(name, function->type);
+        auto target = self()->makeFuncData(name, function->type.getHeapType());
         self()->pushResumeEntry({target}, "function-target");
       }
 

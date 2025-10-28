@@ -965,7 +965,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->type);
+  validateCallParamsAndResult(curr, target->type.getHeapType());
 
   if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
     // call.without.effects has the specific form of the last argument being a
@@ -2385,9 +2385,10 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   if (!shouldBeTrue(!!func, curr, "function argument of ref.func must exist")) {
     return;
   }
-  shouldBeTrue(func->type == curr->type.getHeapType(),
-               curr,
-               "function reference type must match referenced function type");
+  shouldBeEqual(curr->type,
+                func->type,
+                curr,
+                "function reference type must match referenced function type");
   shouldBeTrue(
     curr->type.isExact(), curr, "function reference should be exact");
 }
@@ -2910,6 +2911,10 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
 void FunctionValidator::visitRefTest(RefTest* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.test requires gc [--enable-gc]");
+
+  shouldBeTrue(
+    curr->castType.isCastable(), curr, "ref.test cannot cast to invalid type");
+
   if (curr->ref->type == Type::unreachable) {
     return;
   }
@@ -2939,6 +2944,9 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
                  "ref.test of exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
   }
+
+  shouldBeTrue(
+    curr->ref->type.isCastable(), curr, "ref.test cannot cast invalid type");
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
@@ -2998,6 +3006,11 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                  "ref.cast to exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
   }
+
+  shouldBeTrue(
+    curr->ref->type.isCastable(), curr, "ref.cast cannot cast invalid type");
+  shouldBeTrue(
+    curr->type.isCastable(), curr, "ref.cast cannot cast to invalid type");
 
   if (!curr->desc) {
     return;
@@ -3122,6 +3135,10 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                      "br_on_cast* to exact type requires custom descriptors "
                      "[--enable-custom-descriptors]");
       }
+      shouldBeTrue(
+        curr->ref->type.isCastable(), curr, "br_on cannot cast invalid type");
+      shouldBeTrue(
+        curr->castType.isCastable(), curr, "br_on cannot cast to invalid type");
       break;
     }
   }

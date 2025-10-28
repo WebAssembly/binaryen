@@ -14,7 +14,7 @@
  ;; PRIMARY:      (type $elem-array (array externref))
  (type $elem-array (array externref))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0))
 
  ;; PRIMARY:      (memory $mem 0)
  (memory $mem 0)

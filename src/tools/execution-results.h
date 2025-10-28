@@ -42,13 +42,11 @@ private:
   Name exportedTable;
   Module& wasm;
 
-  // The name of the imported fuzzing tag for wasm.
-  Name wasmTag;
+  // The imported fuzzing tag for wasm.
+  Tag wasmTag;
 
-  // The name of the imported tag for js exceptions. If it is not imported, we
-  // use a default name here (which should differentiate it from any wasm
-  // exceptions).
-  Name jsTag = "__private";
+  // The imported tag for js exceptions.
+  Tag jsTag;
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
@@ -67,135 +65,156 @@ public:
       }
     }
 
-    for (auto& tag : wasm.tags) {
-      if (tag->module == "fuzzing-support") {
-        if (tag->base == "wasmtag") {
-          wasmTag = tag->name;
-        } else if (tag->base == "jstag") {
-          jsTag = tag->name;
-        }
-      }
-    }
+    // Set up tags. (Setting these values is useful for debugging - making the
+    // Tag objects valid - and also appears in fuzz-exec logging.)
+    wasmTag.module = "fuzzing-support";
+    wasmTag.base = "wasmtag";
+    wasmTag.name = "imported-wasm-tag";
+    wasmTag.type = Signature(Type::i32, Type::none);
+
+    jsTag.module = "fuzzing-support";
+    jsTag.base = "jstag";
+    jsTag.name = "imported-js-tag";
+    jsTag.type = Signature(Type(HeapType::ext, Nullable), Type::none);
   }
 
-  Flow callImport(Function* import, const Literals& arguments) override {
-    if (import->module == "fuzzing-support") {
-      if (import->base.startsWith("log")) {
-        // This is a logging function like log-i32 or log-f64
-        std::cout << "[LoggingExternalInterface ";
-        if (import->base == "log-branch") {
-          // Report this as a special logging, so we can differentiate it from
-          // the others in the fuzzer.
-          std::cout << "log-branch";
-        } else {
-          // All others are just reported as loggings.
-          std::cout << "logging";
-        }
-        loggings.push_back(Literal()); // buffer with a None between calls
-        for (auto argument : arguments) {
-          if (argument.type == Type::i64) {
-            // To avoid JS legalization changing logging results, treat a
-            // logging of an i64 as two i32s (which is what legalization would
-            // turn us into).
-            auto low = Literal(int32_t(argument.getInteger()));
-            auto high = Literal(int32_t(argument.getInteger() >> int32_t(32)));
-            std::cout << ' ' << low;
-            loggings.push_back(low);
-            std::cout << ' ' << high;
-            loggings.push_back(high);
-          } else {
-            std::cout << ' ' << argument;
-            loggings.push_back(argument);
-          }
-        }
-        std::cout << "]\n";
-        return {};
-      } else if (import->base == "throw") {
-        // Throw something, depending on the value of the argument. 0 means we
-        // should throw a JS exception, and any other value means we should
-        // throw a wasm exception (with that value as the payload).
-        if (arguments[0].geti32() == 0) {
-          throwJSException();
-        } else {
-          auto payload = std::make_shared<ExnData>(wasmTag, arguments);
-          throwException(WasmException{Literal(payload)});
-        }
-      } else if (import->base == "table-get") {
-        // Check for errors here, duplicating tableLoad(), because that will
-        // trap, and we just want to throw an exception (the same as JS would).
-        if (!exportedTable) {
-          throwJSException();
-        }
-        auto index = arguments[0].getUnsigned();
-        if (index >= tables[exportedTable].size()) {
-          throwJSException();
-        }
-        return {tableLoad(exportedTable, index)};
-      } else if (import->base == "table-set") {
-        if (!exportedTable) {
-          throwJSException();
-        }
-        auto index = arguments[0].getUnsigned();
-        if (index >= tables[exportedTable].size()) {
-          throwJSException();
-        }
-        tableStore(exportedTable, index, arguments[1]);
-        return {};
-      } else if (import->base == "call-export") {
-        callExportAsJS(arguments[0].geti32());
-        // The second argument determines if we should catch and rethrow
-        // exceptions. There is no observable difference in those two modes in
-        // the binaryen interpreter, so we don't need to do anything.
-
-        // Return nothing. If we wanted to return a value we'd need to have
-        // multiple such functions, one for each signature.
-        return {};
-      } else if (import->base == "call-export-catch") {
-        try {
-          callExportAsJS(arguments[0].geti32());
-          return {Literal(int32_t(0))};
-        } catch (const WasmException& e) {
-          return {Literal(int32_t(1))};
-        }
-      } else if (import->base == "call-ref") {
-        // Similar to call-export*, but with a ref.
-        callRefAsJS(arguments[0]);
-        return {};
-      } else if (import->base == "call-ref-catch") {
-        try {
-          callRefAsJS(arguments[0]);
-          return {Literal(int32_t(0))};
-        } catch (const WasmException& e) {
-          return {Literal(int32_t(1))};
-        }
-      } else if (import->base == "sleep") {
-        // Do not actually sleep, just return the id.
-        return {arguments[1]};
-      } else {
-        WASM_UNREACHABLE("unknown fuzzer import");
-      }
-    } else if (import->module == ENV) {
-      if (import->base == "log_execution") {
-        std::cout << "[LoggingExternalInterface log-execution";
-        for (auto argument : arguments) {
-          std::cout << ' ' << argument;
-        }
-        std::cout << "]\n";
-        return {};
-      } else if (import->base == "setTempRet0") {
-        state.tempRet0 = arguments[0].geti32();
-        return {};
-      } else if (import->base == "getTempRet0") {
-        return {Literal(state.tempRet0)};
+  Tag* getImportedTag(Tag* tag) override {
+    for (auto* imported : {&wasmTag, &jsTag}) {
+      if (imported->module == tag->module && imported->base == tag->base) {
+        return imported;
       }
     } else if (linkedInstances.count(import->module)) {
       // This is from a recognized module.
       return getImportInstance(import)->callExport(import->base, arguments);
     }
-    // Anything else, we ignore.
-    std::cerr << "[LoggingExternalInterface ignoring an unknown import "
-              << import->module << " . " << import->base << '\n';
-    return {};
+    Fatal() << "missing host tag " << tag->module << '.' << tag->base;
+  }
+
+  Literal getImportedFunction(Function* import) override {
+    if (linkedInstances.count(import->module)) {
+      return getImportInstance(import)->getExportedFunction(import->base);
+    }
+    auto f = [import, this](const Literals& arguments) -> Flow {
+      if (import->module == "fuzzing-support") {
+        if (import->base.startsWith("log")) {
+          // This is a logging function like log-i32 or log-f64
+          std::cout << "[LoggingExternalInterface ";
+          if (import->base == "log-branch") {
+            // Report this as a special logging, so we can differentiate it
+            // from the others in the fuzzer.
+            std::cout << "log-branch";
+          } else {
+            // All others are just reported as loggings.
+            std::cout << "logging";
+          }
+          loggings.push_back(Literal()); // buffer with a None between calls
+          for (auto argument : arguments) {
+            if (argument.type == Type::i64) {
+              // To avoid JS legalization changing logging results, treat a
+              // logging of an i64 as two i32s (which is what legalization
+              // would turn us into).
+              auto low = Literal(int32_t(argument.getInteger()));
+              auto high =
+                Literal(int32_t(argument.getInteger() >> int32_t(32)));
+              std::cout << ' ' << low;
+              loggings.push_back(low);
+              std::cout << ' ' << high;
+              loggings.push_back(high);
+            } else {
+              std::cout << ' ' << argument;
+              loggings.push_back(argument);
+            }
+          }
+          std::cout << "]\n";
+          return {};
+        } else if (import->base == "throw") {
+          // Throw something, depending on the value of the argument. 0 means
+          // we should throw a JS exception, and any other value means we
+          // should throw a wasm exception (with that value as the payload).
+          if (arguments[0].geti32() == 0) {
+            throwJSException();
+          } else {
+            auto payload = std::make_shared<ExnData>(&wasmTag, arguments);
+            throwException(WasmException{Literal(payload)});
+          }
+        } else if (import->base == "table-get") {
+          // Check for errors here, duplicating tableLoad(), because that will
+          // trap, and we just want to throw an exception (the same as JS
+          // would).
+          if (!exportedTable) {
+            throwJSException();
+          }
+          auto index = arguments[0].getUnsigned();
+          if (index >= tables[exportedTable].size()) {
+            throwJSException();
+          }
+          return {tableLoad(exportedTable, index)};
+        } else if (import->base == "table-set") {
+          if (!exportedTable) {
+            throwJSException();
+          }
+          auto index = arguments[0].getUnsigned();
+          if (index >= tables[exportedTable].size()) {
+            throwJSException();
+          }
+          tableStore(exportedTable, index, arguments[1]);
+          return {};
+        } else if (import->base == "call-export") {
+          callExportAsJS(arguments[0].geti32());
+          // The second argument determines if we should catch and rethrow
+          // exceptions. There is no observable difference in those two modes
+          // in the binaryen interpreter, so we don't need to do anything.
+
+          // Return nothing. If we wanted to return a value we'd need to have
+          // multiple such functions, one for each signature.
+          return {};
+        } else if (import->base == "call-export-catch") {
+          try {
+            callExportAsJS(arguments[0].geti32());
+            return {Literal(int32_t(0))};
+          } catch (const WasmException& e) {
+            return {Literal(int32_t(1))};
+          }
+        } else if (import->base == "call-ref") {
+          // Similar to call-export*, but with a ref.
+          callRefAsJS(arguments[0]);
+          return {};
+        } else if (import->base == "call-ref-catch") {
+          try {
+            callRefAsJS(arguments[0]);
+            return {Literal(int32_t(0))};
+          } catch (const WasmException& e) {
+            return {Literal(int32_t(1))};
+          }
+        } else if (import->base == "sleep") {
+          // Do not actually sleep, just return the id.
+          return {arguments[1]};
+        } else {
+          WASM_UNREACHABLE("unknown fuzzer import");
+        }
+      } else if (import->module == ENV) {
+        if (import->base == "log_execution") {
+          std::cout << "[LoggingExternalInterface log-execution";
+          for (auto argument : arguments) {
+            std::cout << ' ' << argument;
+          }
+          std::cout << "]\n";
+          return {};
+        } else if (import->base == "setTempRet0") {
+          state.tempRet0 = arguments[0].geti32();
+          return {};
+        } else if (import->base == "getTempRet0") {
+          return {Literal(state.tempRet0)};
+        }
+      }
+      // Anything else, we ignore.
+      std::cerr << "[LoggingExternalInterface ignoring an unknown import "
+                << import->module << " . " << import->base << '\n';
+      return {};
+    };
+    // Use a null instance because this is a host function.
+    return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
+                   import->type.getHeapType());
   }
 
   void throwJSException() {
@@ -206,7 +225,7 @@ public:
     auto empty = HeapType(Struct{});
     auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
     Literals arguments = {inner.externalize()};
-    auto payload = std::make_shared<ExnData>(jsTag, arguments);
+    auto payload = std::make_shared<ExnData>(&jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
 
@@ -220,7 +239,12 @@ public:
       // No callable export.
       throwJSException();
     }
-    return callFunctionAsJS(*exp->getInternalName());
+    auto funcName = *exp->getInternalName();
+    return callFunctionAsJS(
+      [&](Literals arguments) {
+        return instance->callFunction(funcName, arguments);
+      },
+      wasm.getFunction(funcName)->type.getHeapType());
   }
 
   Literals callRefAsJS(Literal ref) {
@@ -228,17 +252,21 @@ public:
       // Not a callable ref.
       throwJSException();
     }
-    return callFunctionAsJS(ref.getFunc());
+    return callFunctionAsJS(
+      [&](Literals arguments) { return ref.getFuncData()->doCall(arguments); },
+      ref.type.getHeapType());
   }
 
   // Call a function in a "JS-ey" manner, adding arguments as needed, and
-  // throwing if necessary, the same way JS does.
-  Literals callFunctionAsJS(Name name) {
-    auto* func = wasm.getFunction(name);
+  // throwing if necessary, the same way JS does. We are given a method that
+  // does the actual call, and the type we are calling.
+  Literals callFunctionAsJS(std::function<Flow(Literals)> doCall,
+                            HeapType type) {
+    auto sig = type.getSignature();
 
     // Send default values as arguments, or error if we need anything else.
     Literals arguments;
-    for (const auto& param : func->getParams()) {
+    for (const auto& param : sig.params) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
       // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
       if (param == Type::i64 || param == Type::v128 || param.isExn()) {
@@ -252,7 +280,7 @@ public:
 
     // Error on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
-    for (const auto& result : func->getResults()) {
+    for (const auto& result : sig.results) {
       // An i64 result is fine: a BigInt will be provided. But v128 and exnref
       // still error.
       if (result == Type::v128 || result.isExn()) {
@@ -261,7 +289,7 @@ public:
     }
 
     // Call the function.
-    auto flow = instance->callFunction(func->name, arguments);
+    auto flow = doCall(arguments);
     // Suspending through JS is not valid.
     if (flow.suspendTag) {
       throwJSException();
@@ -290,20 +318,31 @@ struct ExecutionResults {
   // link with it (like fuzz_shell's second module).
   void get(Module& wasm, Module* second = nullptr) {
     try {
-      // Run the first module.
+      // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
       auto instance = std::make_shared<ModuleRunner>(wasm, &interface);
-      runModule(wasm, *instance, interface);
+      instantiate(*instance, interface);
 
+      // Instantiate the second, if there is one (we instantiate both before
+      // running anything, so that we match the behavior of fuzz_shell.js).
+      std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+      std::unique_ptr<LoggingExternalInterface> secondInterface;
+      std::shared_ptr<ModuleRunner> secondInstance;
       if (second) {
-        // Link and run the second module.
-        std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+        // Link and instantiate the second module.
         linkedInstances["primary"] = instance;
-        LoggingExternalInterface secondInterface(
+        secondInterface = std::make_unique<LoggingExternalInterface>(
           loggings, *second, linkedInstances);
-        auto secondInstance = std::make_shared<ModuleRunner>(
-          *second, &secondInterface, linkedInstances);
-        runModule(*second, *secondInstance, secondInterface);
+        secondInstance = std::make_shared<ModuleRunner>(
+          *second, secondInterface.get(), linkedInstances);
+        instantiate(*secondInstance, *secondInterface);
+      }
+
+      // Run.
+      callExports(wasm, *instance);
+      if (second) {
+        std::cout << "[fuzz-exec] running second module\n";
+        callExports(*second, *secondInstance);
       }
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).
@@ -315,14 +354,16 @@ struct ExecutionResults {
     }
   }
 
-  void runModule(Module& wasm,
-                 ModuleRunner& instance,
-                 LoggingExternalInterface& interface) {
+  void instantiate(ModuleRunner& instance,
+                   LoggingExternalInterface& interface) {
     // This is not an optimization: we want to execute anything, even relaxed
     // SIMD instructions.
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
     instance.instantiate();
     interface.setModuleRunner(&instance);
+  }
+
+  void callExports(Module& wasm, ModuleRunner& instance) {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {

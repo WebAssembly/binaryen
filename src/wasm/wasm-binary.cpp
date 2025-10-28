@@ -333,7 +333,7 @@ void WasmBinaryWriter::writeImports() {
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
     writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getTypeIndex(func->type));
+    o << U32LEB(getTypeIndex(func->type.getHeapType()));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     writeImportHeader(global);
@@ -375,8 +375,9 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   }
   auto start = startSection(BinaryConsts::Section::Function);
   o << U32LEB(importInfo->getNumDefinedFunctions());
-  ModuleUtils::iterDefinedFunctions(
-    *wasm, [&](Function* func) { o << U32LEB(getTypeIndex(func->type)); });
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+    o << U32LEB(getTypeIndex(func->type.getHeapType()));
+  });
   finishSection(start);
 }
 
@@ -2893,7 +2894,8 @@ void WasmBinaryReader::readImports() {
                      '.' + base.toString() +
                      "'s type must be a signature. Given: " + type.toString());
         }
-        auto curr = builder.makeFunction(name, type, {});
+        auto curr =
+          builder.makeFunction(name, Type(type, NonNullable, Exact), {});
         curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
@@ -3028,7 +3030,8 @@ void WasmBinaryReader::readFunctionSignatures() {
     functionTypes.push_back(type);
     // Check that the type is a signature.
     getSignatureByTypeIndex(index);
-    auto func = Builder(wasm).makeFunction(name, type, {}, nullptr);
+    auto func = Builder(wasm).makeFunction(
+      name, Type(type, NonNullable, Exact), {}, nullptr);
     func->hasExplicitName = isExplicit;
     wasm.addFunction(std::move(func));
   }

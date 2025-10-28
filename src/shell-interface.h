@@ -133,21 +133,40 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     });
   }
 
-  Flow callImport(Function* import, const Literals& arguments) override {
+  Literal getImportedFunction(Function* import) override {
+    // TODO: We should perhaps restrict the types with which the well-known
+    // functions can be imported.
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
-      for (auto argument : arguments) {
-        std::cout << argument << " : " << argument.type << '\n';
-      }
-      return {};
+      // Use a null instance because these are host functions.
+      return Literal(
+        std::make_shared<FuncData>(import->name,
+                                   nullptr,
+                                   [](const Literals& arguments) -> Flow {
+                                     for (auto argument : arguments) {
+                                       std::cout << argument << " : "
+                                                 << argument.type << '\n';
+                                     }
+                                     return Flow();
+                                   }),
+        import->type.getHeapType());
     } else if (import->module == ENV && import->base == EXIT) {
-      // XXX hack for torture tests
-      std::cout << "exit()\n";
-      throw ExitException();
+      return Literal(std::make_shared<FuncData>(import->name,
+                                                nullptr,
+                                                [](const Literals&) -> Flow {
+                                                  // XXX hack for torture tests
+                                                  std::cout << "exit()\n";
+                                                  throw ExitException();
+                                                }),
+                     import->type.getHeapType());
     } else if (auto* inst = getImportInstance(import)) {
-      return inst->callExport(import->base, arguments);
+      return inst->getExportedFunction(import->base);
     }
-    Fatal() << "callImport: unknown import: " << import->module.str << "."
-            << import->name.str;
+    Fatal() << "getImportedFunction: unknown import: " << import->module.str
+            << "." << import->name.str;
+  }
+
+  Tag* getImportedTag(Tag* tag) override {
+    WASM_UNREACHABLE("missing imported tag");
   }
 
   int8_t load8s(Address addr, Name memoryName) override {

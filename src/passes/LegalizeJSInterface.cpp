@@ -148,7 +148,7 @@ struct LegalizeJSInterface : public Pass {
           }
 
           curr->func = iter->second->name;
-          curr->finalize(iter->second->type);
+          curr->finalize(iter->second->type.getHeapType());
         }
       };
 
@@ -248,7 +248,8 @@ private:
     }
     Type resultsType =
       func->getResults() == Type::i64 ? Type::i32 : func->getResults();
-    legal->type = Signature(Type(legalParams), resultsType);
+    legal->type =
+      Type(Signature(Type(legalParams), resultsType), NonNullable, Exact);
     if (func->getResults() == Type::i64) {
       auto index = Builder::addVar(legal, Name(), Type::i64);
       auto* block = builder.makeBlock();
@@ -307,7 +308,8 @@ private:
       call->type = im->getResults();
       stub->body = call;
     }
-    legalIm->type = Signature(Type(params), call->type);
+    legalIm->type =
+      Type(Signature(Type(params), call->type), NonNullable, Exact);
 
     auto* stubPtr = stub.get();
     if (!module->getFunctionOrNull(stub->name)) {
@@ -331,7 +333,8 @@ private:
       return f;
     }
     // Failing that create a new function import.
-    auto import = Builder::makeFunction(name, Signature(params, results), {});
+    auto import = Builder::makeFunction(
+      name, Type(Signature(params, results), NonNullable, Exact), {});
     import->module = ENV;
     import->base = name;
     auto* ret = import.get();
@@ -374,7 +377,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
 
       // The params are allowed to be multivalue, but not the results. Otherwise
       // look for SIMD etc.
-      auto sig = func->type.getSignature();
+      auto sig = func->getSig();
       auto illegal = isIllegal(sig.results);
       illegal =
         illegal || std::any_of(sig.params.begin(),
@@ -391,9 +394,12 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
         Builder builder(*module);
         if (sig.results == Type::none) {
           func->body = builder.makeNop();
-        } else {
+        } else if (sig.results.isDefaultable()) {
           func->body =
             builder.makeConstantExpression(Literal::makeZeros(sig.results));
+        } else {
+          // We have nothing better than to trap here.
+          func->body = builder.makeUnreachable();
         }
       }
 

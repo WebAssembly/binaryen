@@ -2,8 +2,8 @@
 
 ;; Test of exports / imports type matching
 
-;; CHECK: Type mismatch when importing function f1 from module env ($bad1): type (type $func.0 (func)) is not a subtype of (type $func.0 (func (param (ref eq)))).
-;; CHECK-NEXT: Type mismatch when importing function f3 from module env ($bad2): type (type $func.0 (sub (func (result anyref)))) is not a subtype of (type $func.0 (sub $func.1 (func (result eqref)))).
+;; CHECK: Type mismatch when importing function f1 from module env ($bad1):
+;; CHECK-NEXT: Type mismatch when importing function f3 from module env ($bad2):
 ;; CHECK-NEXT: Type mismatch when importing table t1 from module env ($bad1): minimal size 10 is smaller than expected minimal size 11.
 ;; CHECK-NEXT: Type mismatch when importing table t1 from module env ($bad2): maximal size 100 is larger than expected maximal size 99.
 ;; CHECK-NEXT: Type mismatch when importing table t2 from module env ($bad3): expecting a bounded table but the imported table is unbounded.
