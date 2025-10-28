@@ -3,19 +3,19 @@
 
 ;; Non-type-based optimizations in --gsi
 
+;; Create an immutable vtable in an immutable global, which we can optimize
+;; with.
 (module
-  ;; Create an immutable vtable in an immutable global, which we can optimize
-  ;; with.
-
   ;; CHECK:      (type $vtable (struct (field funcref)))
   (type $vtable (struct funcref))
-  ;; CHECK:      (type $object (struct (field (ref $vtable))))
-  (type $object (struct (ref $vtable)))
 
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $imported funcref))
   (import "a" "b" (global $imported funcref))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
-  ;; CHECK-NEXT:  (ref.func $nested-creations)
+  ;; CHECK-NEXT:  (global.get $imported)
   ;; CHECK-NEXT: ))
   (global $vtable (ref $vtable)
     (struct.new $vtable
@@ -23,18 +23,12 @@
     )
   )
 
-  ;; CHECK:      (func $nested-creations (type $2)
-  ;; CHECK-NEXT:  (local $ref (ref null $object))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $object
-  ;; CHECK-NEXT:    (global.get $vtable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $helper
-  ;; CHECK-NEXT:   (ref.func $nested-creations)
+  ;; CHECK:      (func $nested-creations (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $imported)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $nested-creations
+  (func $test
     ;; This get reads $import.
     (drop
       (struct.get $vtable 0
