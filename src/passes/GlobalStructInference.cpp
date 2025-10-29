@@ -348,7 +348,7 @@ struct GlobalStructInference : public Pass {
         // a read from an immutable global.
         if (auto* get = ref->dynCast<GlobalGet>()) {
           auto* global = wasm.getGlobal(get->name);
-          if (!global->mutable_) {
+          if (!global->mutable_ && !global->imported()) {
             if (auto* structNew = global->init->dynCast<StructNew>()) {
               auto value = readFromStructNew(structNew, fieldIndex, field);
               // TODO: handle non-constant values using unnesting, as below.

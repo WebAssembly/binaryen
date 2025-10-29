@@ -178,3 +178,29 @@
   )
 )
 
+;; Check we do not error on a global.get of an imported global.
+(module
+  ;; CHECK:      (type $vtable (struct (field funcref)))
+  (type $vtable (struct funcref))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $imported (ref $vtable)))
+  (import "a" "b" (global $imported (ref $vtable)))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (global.get $imported)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.get $vtable 0
+        (global.get $imported)
+      )
+    )
+  )
+)
+
