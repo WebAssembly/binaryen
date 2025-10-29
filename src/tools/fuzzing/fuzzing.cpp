@@ -2160,6 +2160,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     void visitRethrow(Rethrow* curr) {
       if (!isValidTryRef(curr->target, curr)) {
         replace();
+      } else {
+        visitExpression(curr);
       }
     }
 
@@ -2167,6 +2169,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       if (curr->delegateTarget.is() &&
           !isValidTryRef(curr->delegateTarget, curr)) {
         replace();
+      } else {
+        visitExpression(curr);
       }
     }
 
@@ -2203,8 +2207,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         i--;
       }
     }
-  };
-  Fixer fixer(wasm, *this);
+  } fixer(wasm, *this);
   fixer.walk(func->body);
 
   // Refinalize at the end, after labels are all fixed up.
