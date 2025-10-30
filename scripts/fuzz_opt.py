@@ -2370,6 +2370,7 @@ requires_closed_world = {("--type-refining",),
                          ("--remove-unused-types",),
                          ("--abstract-type-refining",),
                          ("--cfp",),
+                         ("--cfp-reftest",),
                          ("--gsi",),
                          ("--type-ssa",),
                          ("--type-merging",)}
