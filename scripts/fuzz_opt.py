@@ -1804,7 +1804,8 @@ class ClusterFuzz(TestCaseHandler):
 #
 # The reduce.sh script will then do the right thing, using that as the first
 # wasm, and reducing on the second one, if you replace "original.wasm" in the
-# command with "second.wasm" as needed.
+# reduction command (the command that this fuzzer script recommended that you
+# run) with "second.wasm" as needed.
 #
 # In both cases, make sure to copy the files to a saved location first (do not
 # use a path to the scratch files that get constantly overwritten).
