@@ -66,3 +66,104 @@
   )
  )
 )
+
+;; Import a struct in a global.
+(module
+ ;; OPEND:      (type $A (struct (field i32)))
+ ;; CLOSE:      (type $A (struct (field i32)))
+ (type $A (struct (field i32)))
+
+ ;; OPEND:      (type $1 (func (result i32)))
+
+ ;; OPEND:      (import "primary" "global" (global $import (ref null $A)))
+ ;; CLOSE:      (type $1 (func (result i32)))
+
+ ;; CLOSE:      (import "primary" "global" (global $import (ref null $A)))
+ (import "primary" "global" (global $import (ref null $A)))
+
+ ;; OPEND:      (func $read (type $1) (result i32)
+ ;; OPEND-NEXT:  (struct.get $A 0
+ ;; OPEND-NEXT:   (global.get $import)
+ ;; OPEND-NEXT:  )
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (func $read (type $1) (result i32)
+ ;; CLOSE-NEXT:  (unreachable)
+ ;; CLOSE-NEXT: )
+ (func $read (result i32)
+  ;; In closed world, we can assume no work happens on this struct outside, so
+  ;; it can only be null. In open world, we can do nothing here.
+  (struct.get $A 0
+   (global.get $import)
+  )
+ )
+)
+
+;; Import an array.
+(module
+ ;; OPEND:      (type $A (array (mut i32)))
+ ;; CLOSE:      (type $A (array (mut i32)))
+ (type $A (array (mut i32)))
+
+ ;; OPEND:      (type $1 (func (result i32)))
+
+ ;; OPEND:      (import "primary" "global" (global $import (ref null $A)))
+ ;; CLOSE:      (type $1 (func (result i32)))
+
+ ;; CLOSE:      (import "primary" "global" (global $import (ref null $A)))
+ (import "primary" "global" (global $import (ref null $A)))
+
+ ;; OPEND:      (func $read (type $1) (result i32)
+ ;; OPEND-NEXT:  (array.get $A
+ ;; OPEND-NEXT:   (global.get $import)
+ ;; OPEND-NEXT:   (i32.const 0)
+ ;; OPEND-NEXT:  )
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (func $read (type $1) (result i32)
+ ;; CLOSE-NEXT:  (unreachable)
+ ;; CLOSE-NEXT: )
+ (func $read (result i32)
+  ;; We do not optimize in open world.
+  (array.get $A
+   (global.get $import)
+   (i32.const 0)
+  )
+ )
+)
+
+;; Import a struct with a descriptor.
+(module
+ (rec
+  ;; OPEND:      (rec
+  ;; OPEND-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+  ;; CLOSE:      (rec
+  ;; CLOSE-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+  (type $A (sub (descriptor $A.desc (struct))))
+  ;; OPEND:       (type $A.desc (sub (describes $A (struct))))
+  ;; CLOSE:       (type $A.desc (sub (describes $A (struct))))
+  (type $A.desc (sub (describes $A (struct))))
+ )
+
+ ;; OPEND:      (type $2 (func (result anyref)))
+
+ ;; OPEND:      (import "primary" "global" (global $import (ref null $A)))
+ ;; CLOSE:      (type $2 (func (result anyref)))
+
+ ;; CLOSE:      (import "primary" "global" (global $import (ref null $A)))
+ (import "primary" "global" (global $import (ref null $A)))
+
+ ;; OPEND:      (func $read (type $2) (result anyref)
+ ;; OPEND-NEXT:  (ref.get_desc $A
+ ;; OPEND-NEXT:   (global.get $import)
+ ;; OPEND-NEXT:  )
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (func $read (type $2) (result anyref)
+ ;; CLOSE-NEXT:  (unreachable)
+ ;; CLOSE-NEXT: )
+ (func $read (result anyref)
+  ;; We do not optimize in open world.
+  (ref.get_desc $A
+   (global.get $import)
+  )
+ )
+)
+
