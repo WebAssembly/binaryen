@@ -1816,8 +1816,8 @@ class Two(TestCaseHandler):
 
     def handle(self, wasm):
         # Generate a second wasm file. (For fuzzing, we may be given one, but we
-        # still generate it to avoid changes to random numbers later; we just
-        # discard it after.)
+        # still do the work to prepare to generate it, as that consumes random
+        # values, and we don't want that to affect anything later.)
         second_wasm = abspath('second.wasm')
         second_input = abspath('second_input.dat')
         second_size = random_size()
