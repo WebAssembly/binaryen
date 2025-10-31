@@ -210,7 +210,13 @@ public:
       if (hasEffects) {
         // Visit, so we recompute the effects. (This is rare, see comment
         // above.)
-        visitFunc();
+        auto flow = visitFunc();
+        // Also check the result of the effects - if it is non-constant, we
+        // cannot use it. (This can happen during propagation, when we see that
+        // other inputs exist to something we depend on.)
+        if (flow.breaking()) {
+          return flow;
+        }
       }
       // Refer to the same canonical GCData that we already created.
       return Literal(data, curr->type.getHeapType());
@@ -278,27 +284,6 @@ struct Precompute
   HeapValues heapValues;
 
   bool canPartiallyPrecompute;
-
-  static void scan(Precompute* self, Expression** currp) {
-    if ((*currp)->is<Loop>()) {
-      // On loop entries, clear effectful sets. That mechanism in
-      // wasm-interpreter is not aware of control flow merges, so a normal
-      // walk over
-      //
-      //   x = 10;
-      //   loop {
-      //     use(x);
-      //     x = 20;
-      //
-      // would see 10, then apply the 10 in the use.
-      // TODO: Deprecate the old getValues mechanism, as |propagate| does the
-      //       same thing properly - though we run propagation less, so this
-      //       might regress unless we run the (slower) propagation more.
-      self->getValues.clear();
-    }
-
-    Super::scan(self, currp);
-  }
 
   void doWalkFunction(Function* func) {
     // Perform partial precomputing only when the optimization level is non-

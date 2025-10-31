@@ -4,40 +4,83 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (type $struct (sub (struct (field i32))))
  (type $struct (sub (struct (field i32))))
 
- (func $test
+ ;; CHECK:      (func $loop-different (type $1)
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
+ ;; CHECK-NEXT:  (local $int i32)
+ ;; CHECK-NEXT:  (local.set $int
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $struct
+ ;; CHECK-NEXT:    (struct.new $struct
+ ;; CHECK-NEXT:     (local.get $int)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $int
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (i32.eqz
+ ;; CHECK-NEXT:     (block $block1 (result i32)
+ ;; CHECK-NEXT:      (block $block
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (br_on_null $block
+ ;; CHECK-NEXT:         (local.get $struct)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (br $block1
+ ;; CHECK-NEXT:        (struct.get $struct 0
+ ;; CHECK-NEXT:         (local.get $struct)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-different
   (local $struct (ref null $struct))
   (local $int i32)
-   (local.set $int
-    (i32.const 0)
+  ;; This int is set before the loop, and read at the loop top. The value there
+  ;; is *not* 0, because we set a new value in the loop, which takes effect in
+  ;; later iterations.
+  (local.set $int
+   (i32.const 0)
+  )
+  (loop $loop
+   (local.set $struct
+    (struct.new $struct
+     (local.get $int)
+    )
    )
-   (loop $loop
-    (local.set $struct
-     (struct.new $struct
-      (local.get $int)
-     )
-    )
-    (local.set $int
-     (i32.const 1)
-    )
-    (br_if $loop
-     (i32.eqz
-      (block $block1 (result i32)
-       (block $block
-        (drop
-         (br_on_null $block
-          (local.get $struct)
-         )
-        )
-        (br $block1
-         (struct.get $struct 0
-          (local.get $struct)
-         )
+   (local.set $int
+    (i32.const 1)
+   )
+
+   ;; The rest of the code is needed to prevent the testcase from getting
+   ;; optimized trivially away. This br should not be optimized away or
+   ;; simplfied - it executes in the first loop iteration but not the second.
+   (br_if $loop
+    (i32.eqz
+     (block $block1 (result i32)
+      (block $block
+       (drop
+        (br_on_null $block
+         (local.get $struct)
         )
        )
-       (i32.const 0)
+       (br $block1
+        (struct.get $struct 0
+         (local.get $struct)
+        )
+       )
       )
+      (i32.const 0)
      )
     )
    )
