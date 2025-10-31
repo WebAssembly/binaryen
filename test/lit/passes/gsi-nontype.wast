@@ -236,3 +236,34 @@
   )
 )
 
+;; When reading a null descriptor, we must cast to non-null.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func (result (ref $A.desc))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $A
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $A) (struct.new_default $A
+    (ref.null none)
+  ))
+
+  ;; CHECK:      (func $test (type $2) (result (ref $A.desc))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref $A.desc))
+    (ref.get_desc $A
+      (global.get $global)
+    )
+  )
+)
+

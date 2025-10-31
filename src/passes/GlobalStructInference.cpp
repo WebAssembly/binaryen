@@ -514,6 +514,8 @@ struct GlobalStructInference : public Pass {
                                std::optional<Field>& field,
                                Expression* curr) {
         auto& wasm = *getModule();
+        Builder builder(wasm);
+
         Expression* ret;
         if (value.isConstant()) {
           // This is known to be a constant, so simply emit an expression for
@@ -534,7 +536,6 @@ struct GlobalStructInference : public Pass {
 
           // Create a global.get with temporary name, leaving only the
           // updating of the name to later work.
-          Builder builder(wasm);
           auto* get = builder.makeGlobalGet(value.globals[0],
                                             value.getExpression()->type);
 
@@ -542,6 +543,13 @@ struct GlobalStructInference : public Pass {
             GlobalToUnnest{value.globals[0], fieldIndex, get});
 
           ret = get;
+        }
+
+        // We must add a cast to non-null in some cases: A read of a null
+        // descriptor returns a non-null value, so if there was a null in the
+        // global, that would not validate by itself.
+        if (ret->type.isNullable() && curr->type.isNonNullable()) {
+          ret = builder.makeRefAs(RefAsNonNull, ret);
         }
 
         // If the type is more refined, we must refinalize. For example, we
