@@ -354,3 +354,41 @@
   )
 )
 
+;; Do not refine uncastable types.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $cont (cont $none))
+    (type $cont (cont $none))
+    ;; CHECK:       (type $none (func))
+    (type $none (func))
+  )
+
+  ;; CHECK:      (type $2 (func (result contref)))
+
+  ;; CHECK:      (elem declare func $suspend)
+
+  ;; CHECK:      (func $suspend (type $none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $suspend (type $none)
+    (nop)
+  )
+
+  ;; CHECK:      (func $unrefine (type $2) (result contref)
+  ;; CHECK-NEXT:  (block $label (result contref)
+  ;; CHECK-NEXT:   (cont.new $cont
+  ;; CHECK-NEXT:    (ref.func $suspend)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unrefine (result contref)
+    ;; No cast should be added here.
+    (block $label (result contref)
+      (cont.new $cont
+        (ref.func $suspend)
+      )
+    )
+  )
+)
+

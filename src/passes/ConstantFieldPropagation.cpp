@@ -549,6 +549,10 @@ struct ConstantFieldPropagation : public Pass {
       return;
     }
 
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "CFP requires --closed-world";
+    }
+
     // Find and analyze all writes inside each function.
     PCVFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);

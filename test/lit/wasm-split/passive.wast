@@ -9,7 +9,7 @@
 
  ;; PRIMARY:      (type $0 (func))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
 
  ;; PRIMARY:      (table $table 3 funcref)
  (table $table 3 funcref)

@@ -595,7 +595,7 @@ struct ReconstructStringifyWalker
     }
 
     // Add a local.get instruction for every parameter of the outlined function.
-    Signature sig = outlinedFunc->type.getSignature();
+    Signature sig = outlinedFunc->getSig();
     ODBG(std::cerr << outlinedFunc->name << " takes " << sig.params.size()
                    << " parameters\n");
     for (Index i = 0; i < sig.params.size(); i++) {
@@ -725,8 +725,8 @@ struct Outlining : public Pass {
          exprIdx++) {
       sig += StackSignature(exprs[exprIdx]);
     }
-    module->addFunction(
-      Builder::makeFunction(func, Signature(sig.params, sig.results), {}));
+    module->addFunction(Builder::makeFunction(
+      func, Type(Signature(sig.params, sig.results), NonNullable, Exact), {}));
     return func;
   }
 

@@ -480,7 +480,9 @@ void fuseImportsAndExports(const PassOptions& options) {
                                               [import->module][import->base];
       if (internalName.is()) {
         auto* export_ = merged.getFunction(internalName);
-        if (!HeapType::isSubType(export_->type, import->type)) {
+        // TODO: use Type subtyping when exactness handling is complete.
+        if (!HeapType::isSubType(export_->type.getHeapType(),
+                                 import->type.getHeapType())) {
           reportTypeMismatch(valid, "function", import);
           std::cerr << "type " << export_->type << " is not a subtype of "
                     << import->type << ".\n";
@@ -569,7 +571,7 @@ void updateTypes(Module& wasm) {
     }
 
     void visitRefFunc(RefFunc* curr) {
-      curr->finalize(getModule()->getFunction(curr->func)->type);
+      curr->finalize(getModule()->getFunction(curr->func)->type.getHeapType());
     }
 
     void visitFunction(Function* curr) {
@@ -778,14 +780,6 @@ Input source maps can be specified by adding an -ism option right after the modu
     }
   }
 
-  // If we didn't validate after each merged module, validate once at the very
-  // end. This won't catch problems at the earliest point, but is still useful.
-  if (!PassRunner::getPassDebug() && options.passOptions.validate &&
-      !WasmValidator().validate(merged)) {
-    std::cout << merged << '\n';
-    Fatal() << "error in validating final merged";
-  }
-
   // Fuse imports and exports now that everything is all together in the merged
   // module.
   fuseImportsAndExports(options.passOptions);
@@ -806,6 +800,13 @@ Input source maps can be specified by adding an -ism option right after the modu
     // module would still be forced to provide something for that import).
     passRunner.add("remove-unused-module-elements");
     passRunner.run();
+  }
+
+  // Without pass-debug mode, validate once at the very end.
+  if (!PassRunner::getPassDebug() && options.passOptions.validate &&
+      !WasmValidator().validate(merged)) {
+    std::cout << merged << '\n';
+    Fatal() << "error in validating final merged";
   }
 
   // Output.

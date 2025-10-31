@@ -18,6 +18,7 @@
 
 ;; CHECK: [fuzz-exec] calling func
 ;; CHECK-NEXT: [exception thrown: tag nullref]
+;; CHECK-NEXT: [fuzz-exec] running second module
 ;; CHECK-NEXT: [fuzz-exec] calling func2-internal
 ;; CHECK-NEXT: [exception thrown: tag nullref]
 ;; CHECK-NEXT: [fuzz-exec] calling func2-imported

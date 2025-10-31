@@ -2224,7 +2224,9 @@ class EffectAnalyzer;
 
 class Function : public Importable {
 public:
-  HeapType type = HeapType(Signature()); // parameters and return value
+  // A non-nullable reference to a function type. Exact for defined functions.
+  // TODO: Inexact for imported functions.
+  Type type = Type(Signature(), NonNullable, Exact);
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
@@ -2307,11 +2309,15 @@ public:
   bool noPartialInline = false;
 
   // Methods
-  Signature getSig() { return type.getSignature(); }
+  Signature getSig() { return type.getHeapType().getSignature(); }
   Type getParams() { return getSig().params; }
   Type getResults() { return getSig().results; }
-  void setParams(Type params) { type = Signature(params, getResults()); }
-  void setResults(Type results) { type = Signature(getParams(), results); }
+  void setParams(Type params) {
+    type = type.with(Signature(params, getResults()));
+  }
+  void setResults(Type results) {
+    type = type.with(Signature(getParams(), results));
+  }
 
   size_t getNumParams();
   size_t getNumVars();

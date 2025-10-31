@@ -132,9 +132,7 @@ public:
   void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
     preserveImportsAndExports = preserveImportsAndExports_;
   }
-  void setImportedModule(std::string importedModule_) {
-    importedModule = importedModule_;
-  }
+  void setImportedModule(std::string importedModuleName);
 
   void build();
 
@@ -161,7 +159,7 @@ private:
   bool preserveImportsAndExports = false;
 
   // An optional module to import from.
-  std::optional<std::string> importedModule;
+  std::optional<Module> importedModule;
 
   // Whether we allow the fuzzer to add unreachable code when generating changes
   // to existing code. This is randomized during startup, but could be an option
@@ -371,7 +369,8 @@ private:
 
   void addHangLimitChecks(Function* func);
 
-  void useImportedModule();
+  void useImportedFunctions();
+  void useImportedGlobals();
 
   // Recombination and mutation
 
@@ -395,6 +394,9 @@ private:
   // Fix up the IR after recombination and mutation.
   void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
+
+  // Note a global for use during code generation.
+  void useGlobalLater(Global* global);
 
   // Initial wasm contents may have come from a test that uses the drop pattern:
   //
@@ -540,6 +542,7 @@ private:
   // Getters for Types
   Type getSingleConcreteType();
   Type getReferenceType();
+  Type getCastableReferenceType();
   Type getEqReferenceType();
   Type getMVPType();
   Type getTupleType();

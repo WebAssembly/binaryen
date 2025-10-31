@@ -24,7 +24,7 @@
 )
 ;; PRIMARY:      (type $0 (func))
 
-;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0))
+;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0))
 
 ;; PRIMARY:      (table $0 1 funcref)
 

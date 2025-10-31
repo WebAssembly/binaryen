@@ -1,0 +1,12 @@
+(module
+ (import "fuzzing-support" "call-ref" (func $call-ref (param funcref i32)))
+ (import "primary" "get" (func $primary-get (result funcref)))
+
+ (func $run (export "run")
+  (call $call-ref
+   (call $primary-get)
+   (i32.const 0)
+  )
+ )
+)
+

@@ -18,5 +18,4 @@
 )
 
 ;; RUN: not wasm-opt %s --string-lifting -all 2>&1 | filecheck %s
-;; CHECK: Fatal: StringLifting: bad type for fromCharCodeArray: (type $func.0 (func (param (ref null $array.0) i32 i64) (result (ref extern))))
-
+;; CHECK: Fatal: StringLifting: bad type for fromCharCodeArray

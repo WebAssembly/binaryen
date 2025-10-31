@@ -22,6 +22,7 @@
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/public-type-validator.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-type.h"
@@ -75,13 +76,17 @@ struct GlobalRefining : public Pass {
     // fields in subtypes - the types must match exactly, or else a write in
     // one place could store a type considered in valid in another place).
     std::unordered_set<Name> unoptimizable;
-    for (auto* global : ExportUtils::getExportedGlobals(*module)) {
+    auto exportedGlobalsVec = ExportUtils::getExportedGlobals(*module);
+    std::unordered_set<Global*> exportedGlobals(exportedGlobalsVec.begin(),
+                                                exportedGlobalsVec.end());
+    for (auto* global : exportedGlobalsVec) {
       if (getPassOptions().closedWorld || global->mutable_) {
         unoptimizable.insert(global->name);
       }
     }
 
     bool optimized = false;
+    PublicTypeValidator publicTypeValidator(module->features);
 
     for (auto& global : module->globals) {
       if (global->imported() || unoptimizable.count(global->name)) {
@@ -102,12 +107,20 @@ struct GlobalRefining : public Pass {
 
       auto oldType = global->type;
       auto newType = lub.getLUB();
-      if (newType != oldType) {
-        // We found an improvement!
-        assert(Type::isSubType(newType, oldType));
-        global->type = newType;
-        optimized = true;
+      if (newType == oldType) {
+        continue;
       }
+
+      // Do not make invalid types public.
+      if (exportedGlobals.count(global.get()) &&
+          !publicTypeValidator.isValidPublicType(newType)) {
+        continue;
+      }
+
+      // We found an improvement!
+      assert(Type::isSubType(newType, oldType));
+      global->type = newType;
+      optimized = true;
     }
 
     if (!optimized) {
