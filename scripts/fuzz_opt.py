@@ -1786,32 +1786,54 @@ class ClusterFuzz(TestCaseHandler):
 # Tests linking two wasm files at runtime, and that optimizations do not break
 # anything. This is similar to Split(), but rather than split a wasm file into
 # two and link them at runtime, this starts with two separate wasm files.
+#
+# Fuzzing failures here is a little trickier, as there are two wasm files.
+# You can reduce the primary file by finding the secondary one in the log
+# (usually out/test/second.wasm), copy that to the side, and add
+#
+#   BINARYEN_SECOND_WASM=${saved_second}
+#
+# in the env. That will keep the secondary wasm fixed as you reduce the primary
+# one.
+#
+# Note it may be better to reduce the second one first, so it imports less from
+# the first (otherwise, when the second one imports many things, the first will
+# fail to remove exports that are used). To reduce the second one, set
+#
+#   BINARYEN_FIRST_WASM=${saved_first}
+#
+# The reduce.sh script will then do the right thing, using that as the first
+# wasm, and reducing on the second one, if you replace "original.wasm" in the
+# reduction command (the command that this fuzzer script recommended that you
+# run) with "second.wasm" as needed.
+#
+# In both cases, make sure to copy the files to a saved location first (do not
+# use a path to the scratch files that get constantly overwritten).
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
     frequency = 1
 
     def handle(self, wasm):
-        # Generate a second wasm file, unless we were given one (useful during
-        # reduction).
+        # Generate a second wasm file. (For fuzzing, we may be given one, but we
+        # still do the work to prepare to generate it, as that consumes random
+        # values, and we don't want that to affect anything later.)
         second_wasm = abspath('second.wasm')
-        given = os.environ.get('BINARYEN_SECOND_WASM')
-        if given:
-            # TODO: should we de-nan this etc. as with the primary?
-            shutil.copyfile(given, second_wasm)
-        else:
-            # generate a second wasm file to merge. pick a smaller size when
-            # the main wasm file is smaller, so reduction shrinks this too.
-            wasm_size = os.stat(wasm).st_size
-            second_size = min(wasm_size, random_size())
+        second_input = abspath('second_input.dat')
+        second_size = random_size()
+        make_random_input(second_size, second_input)
+        args = [second_input, '-ttf']
+        # Most of the time, use the first wasm as an import to the second.
+        if random.random() < 0.8:
+            args += ['--fuzz-import=' + wasm]
 
-            second_input = abspath('second_input.dat')
-            make_random_input(second_size, second_input)
-            args = [second_input, '-ttf', '-o', second_wasm]
-            # Most of the time, use the first wasm as an import to the second.
-            if random.random() < 0.8:
-                args += ['--fuzz-import=' + wasm]
-            run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
+        given = os.environ.get('BINARYEN_SECOND_WASM')
+        if not given:
+            print('Generate second wasm')
+            run([in_bin('wasm-opt'), '-o', second_wasm] + args + GEN_ARGS + FEATURE_OPTS)
+        else:
+            print(f'Use given second wasm {given}')
+            shutil.copyfile(given, second_wasm)
 
         # Run the wasm.
         #
@@ -2591,9 +2613,18 @@ echo "The following value should be 0:"
 %(wasm_opt)s %(features)s %(temp_wasm)s
 echo "  " $?
 
-# run the command
 echo "The following value should be 1:"
-./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+
+if [ -z "$BINARYEN_FIRST_WASM" ]; then
+  # run the command normally
+  ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+else
+  # BINARYEN_FIRST_WASM was provided so we should actually reduce the *second*
+  # file. pass the first one in as the main file, and use the env var for the
+  # second.
+  BINARYEN_SECOND_WASM=%(temp_wasm)s ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d $BINARYEN_FIRST_WASM > o 2> e
+fi
+
 echo "  " $?
 
 #
