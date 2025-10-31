@@ -455,12 +455,17 @@ def compare(x, y, context, verbose=True):
     if x != y and x != IGNORE and y != IGNORE:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
         if verbose:
-            raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
+            print(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
                 x, y,
                 message
             ))
         else:
-            raise Exception(context + "\nDiff:\n\n%s" % (message))
+            print(context + "\nDiff:\n\n%s" % (message))
+        traceback.print_stack()
+        # Exit with code 2, which is different than code 1 that happens for a
+        # thrown Python exception. This allows the reducer to not get confused
+        # between a comparison error and some other kind of error.
+        sys.exit(2)
 
 
 # converts a possibly-signed integer to an unsigned integer
