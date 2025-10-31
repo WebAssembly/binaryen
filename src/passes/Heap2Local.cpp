@@ -857,6 +857,12 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
 
     if (curr->desc) {
+      auto descTrap = [&]() {
+        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->desc),
+                                        builder.makeUnreachable()));
+      };
+
       // If we are doing a ref.cast_desc of the optimized allocation, but the
       // allocation does not have a descriptor, then we know the cast must fail.
       // We also know the cast must fail (except for nulls it might let through)
@@ -888,21 +894,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
         } else {
           // Either the cast does not allow nulls or we know the value isn't
           // null anyway, so the cast certainly fails.
-          replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->desc),
-                                          builder.makeUnreachable()));
+          descTrap();
         }
-      } else {
-        assert(allocIsCastRef);
+      } else if (allocIsCastRef) {
         if (!Type::isSubType(allocation->type, curr->type)) {
           // The cast fails, so it must trap. We mark such failing casts as
           // fully consuming their inputs, so we cannot just emit the explicit
           // descriptor equality check below because it would appear to be able
           // to propagate the optimized allocation on to the parent (as a null
           // value, which might not validate).
-          replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->desc),
-                                          builder.makeUnreachable()));
+          descTrap();
         } else {
           // The cast succeeds iff the optimized allocation's descriptor is the
           // same as the given descriptor and traps otherwise.
@@ -915,6 +916,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
               builder.makeRefNull(allocation->type.getHeapType()),
               builder.makeUnreachable())));
         }
+      } else {
+        // The allocation is neither the ref nor the descriptor inputs to this
+        // cast. This can happen if a previous operation led to the StructNew
+        // being dropped, as a result if it being used in unreachable code (it
+        // ends up happening because some of the initial analysis, like Parents,
+        // is stale; we could also recompute Parents after each Struct2Local,
+        // but it is simple enough to handle this with a trap).
+        assert(curr->type == Type::unreachable);
+        descTrap();
       }
     } else {
       // We know this RefCast receives our allocation, so we can see whether it
