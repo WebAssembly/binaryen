@@ -210,7 +210,13 @@ public:
       if (hasEffects) {
         // Visit, so we recompute the effects. (This is rare, see comment
         // above.)
-        visitFunc();
+        auto flow = visitFunc();
+        // Also check the result of the effects - if it is non-constant, we
+        // cannot use it. (This can happen during propagation, when we see that
+        // other inputs exist to something we depend on.)
+        if (flow.breaking()) {
+          return flow;
+        }
       }
       // Refer to the same canonical GCData that we already created.
       return Literal(data, curr->type.getHeapType());
