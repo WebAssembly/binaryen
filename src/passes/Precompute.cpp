@@ -266,10 +266,6 @@ public:
 struct Precompute
   : public WalkerPass<
       PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
-
-  using Super =
-    WalkerPass<PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>>;
-
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
