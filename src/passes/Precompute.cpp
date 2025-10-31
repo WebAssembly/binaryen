@@ -260,6 +260,10 @@ public:
 struct Precompute
   : public WalkerPass<
       PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
+
+  using Super = WalkerPass<
+      PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>>;
+
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -274,6 +278,24 @@ struct Precompute
   HeapValues heapValues;
 
   bool canPartiallyPrecompute;
+
+  static void scan(Precompute* self, Expression** currp) {
+    if ((*currp)->is<Loop>()) {
+      // On loop entries, clear effectful sets. That mechanism in
+      // wasm-interpreter is not aware of control flow merges, so a normal
+      // walk over
+      //
+      //   x = 10;
+      //   loop {
+      //     use(x);
+      //     x = 20;
+      //
+      // would see 10, then apply the 10 in the use.
+      self->getValues.clear();
+    }
+
+    Super::scan(self, currp);
+  }
 
   void doWalkFunction(Function* func) {
     // Perform partial precomputing only when the optimization level is non-
