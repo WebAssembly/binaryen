@@ -291,6 +291,9 @@ struct Precompute
       //     x = 20;
       //
       // would see 10, then apply the 10 in the use.
+      // TODO: Deprecate the old getValues mechanism, as |propagate| does the
+      //       same thing properly - though we run propagation less, so this
+      //       might regress unless we run the (slower) propagation more.
       self->getValues.clear();
     }
 
