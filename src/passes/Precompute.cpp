@@ -93,6 +93,9 @@ struct HeapValues {
 // of GetValues computed during the precompute pass.
 class PrecomputingExpressionRunner
   : public ConstantExpressionRunner<PrecomputingExpressionRunner> {
+
+  using Super = ConstantExpressionRunner<PrecomputingExpressionRunner>;
+
   // Concrete values of gets computed during the pass, which the runner does not
   // know about since it only records values of sets it visits.
   const GetValues& getValues;
