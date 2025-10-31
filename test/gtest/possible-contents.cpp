@@ -89,8 +89,8 @@ protected:
   PossibleContents nonNullFuncGlobal =
     PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
 
-  PossibleContents nonNullFunc = PossibleContents::literal(
-    Literal::makeFunc("func", Signature(Type::none, Type::none)));
+  PossibleContents nonNullFunc = PossibleContents::literal(Literal::makeFunc(
+    "func", Type(Signature(Type::none, Type::none), NonNullable, Exact)));
 
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
   PossibleContents exactAnyref = PossibleContents::exactType(anyref);

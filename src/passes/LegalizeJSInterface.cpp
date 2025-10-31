@@ -148,7 +148,7 @@ struct LegalizeJSInterface : public Pass {
           }
 
           curr->func = iter->second->name;
-          curr->finalize(iter->second->type.getHeapType());
+          curr->finalize(iter->second->type.getHeapType(), *getModule());
         }
       };
 
@@ -278,7 +278,7 @@ private:
     legalIm->hasExplicitName = true;
     auto stub = std::make_unique<Function>();
     stub->name = Name(std::string("legalfunc$") + im->name.toString());
-    stub->type = im->type;
+    stub->type = im->type.with(Exact);
     stub->hasExplicitName = true;
 
     auto* call = module->allocator.alloc<Call>();
@@ -309,7 +309,7 @@ private:
       stub->body = call;
     }
     legalIm->type =
-      Type(Signature(Type(params), call->type), NonNullable, Exact);
+      Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
     auto* stubPtr = stub.get();
     if (!module->getFunctionOrNull(stub->name)) {
@@ -334,7 +334,7 @@ private:
     }
     // Failing that create a new function import.
     auto import = Builder::makeFunction(
-      name, Type(Signature(params, results), NonNullable, Exact), {});
+      name, Type(Signature(params, results), NonNullable, Inexact), {});
     import->module = ENV;
     import->base = name;
     auto* ret = import.get();
@@ -390,6 +390,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       // Prune an import by implementing it in a trivial manner.
       if (imported) {
         func->module = func->base = Name();
+        func->type = func->type.with(Exact);
 
         Builder builder(*module);
         if (sig.results == Type::none) {
@@ -408,6 +409,9 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
         module->removeExport(exportedFunctions[func->name]);
       }
     }
+
+    // RefFunc types etc. need updating.
+    ReFinalize().run(getPassRunner(), module);
 
     // TODO: globals etc.
   }

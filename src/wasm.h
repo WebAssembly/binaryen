@@ -1376,7 +1376,7 @@ public:
   Name func;
 
   void finalize();
-  void finalize(HeapType heapType);
+  void finalize(HeapType heapType, Module& wasm);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {

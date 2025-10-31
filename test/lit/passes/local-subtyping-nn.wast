@@ -9,7 +9,7 @@
 
   ;; CHECK:      (func $non-nullable (type $1)
   ;; CHECK-NEXT:  (local $x (ref none))
-  ;; CHECK-NEXT:  (local $y (ref (exact $0)))
+  ;; CHECK-NEXT:  (local $y (ref $0))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (ref.null none)

@@ -1419,6 +1419,9 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
       return in.err(pos, "expected signature type");
     }
     f->type = f->type.with(type.type);
+    if (f->imported()) {
+      f->type = f->type.with(Inexact);
+    }
     // If we are provided with too many names (more than the function has), we
     // will error on that later when we check the signature matches the type.
     // For now, avoid asserting in setLocalName.
@@ -1601,7 +1604,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     elems.push_back(expr);
   }
   void appendFuncElem(std::vector<Expression*>& elems, Name func) {
-    auto type = wasm.getFunction(func)->type.getHeapType();
+    auto type = wasm.getFunction(func)->type;
     elems.push_back(builder.makeRefFunc(func, type));
   }
 

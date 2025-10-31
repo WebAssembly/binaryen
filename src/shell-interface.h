@@ -148,7 +148,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
                                      }
                                      return Flow();
                                    }),
-        import->type.getHeapType());
+        import->type);
     } else if (import->module == ENV && import->base == EXIT) {
       return Literal(std::make_shared<FuncData>(import->name,
                                                 nullptr,
@@ -157,7 +157,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
                                                   std::cout << "exit()\n";
                                                   throw ExitException();
                                                 }),
-                     import->type.getHeapType());
+                     import->type);
     } else if (auto* inst = getImportInstance(import)) {
       return inst->getExportedFunction(import->base);
     }

@@ -61,12 +61,16 @@
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (drop
  ;; MOD1-NEXT:   (call_ref $0
- ;; MOD1-NEXT:    (ref.func $trampoline_B)
+ ;; MOD1-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD1-NEXT:     (ref.func $trampoline_B)
+ ;; MOD1-NEXT:    )
  ;; MOD1-NEXT:   )
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (drop
  ;; MOD1-NEXT:   (call_ref $1
- ;; MOD1-NEXT:    (ref.func $trampoline_C)
+ ;; MOD1-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD1-NEXT:     (ref.func $trampoline_C)
+ ;; MOD1-NEXT:    )
  ;; MOD1-NEXT:   )
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (i32.const 0)
@@ -93,12 +97,16 @@
  ;; MOD1-OPTIONS-NEXT:  )
  ;; MOD1-OPTIONS-NEXT:  (drop
  ;; MOD1-OPTIONS-NEXT:   (call_ref $0
- ;; MOD1-OPTIONS-NEXT:    (ref.func $trampoline_B)
+ ;; MOD1-OPTIONS-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD1-OPTIONS-NEXT:     (ref.func $trampoline_B)
+ ;; MOD1-OPTIONS-NEXT:    )
  ;; MOD1-OPTIONS-NEXT:   )
  ;; MOD1-OPTIONS-NEXT:  )
  ;; MOD1-OPTIONS-NEXT:  (drop
  ;; MOD1-OPTIONS-NEXT:   (call_ref $1
- ;; MOD1-OPTIONS-NEXT:    (ref.func $trampoline_C)
+ ;; MOD1-OPTIONS-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD1-OPTIONS-NEXT:     (ref.func $trampoline_C)
+ ;; MOD1-OPTIONS-NEXT:    )
  ;; MOD1-OPTIONS-NEXT:   )
  ;; MOD1-OPTIONS-NEXT:  )
  ;; MOD1-OPTIONS-NEXT:  (i32.const 0)
@@ -139,7 +147,9 @@
  ;; MOD2:      (func $B (result i64)
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $0
- ;; MOD2-NEXT:    (ref.func $trampoline_A)
+ ;; MOD2-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD2-NEXT:     (ref.func $trampoline_A)
+ ;; MOD2-NEXT:    )
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (drop
@@ -149,7 +159,9 @@
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $1
- ;; MOD2-NEXT:    (ref.func $trampoline_C)
+ ;; MOD2-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD2-NEXT:     (ref.func $trampoline_C)
+ ;; MOD2-NEXT:    )
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (i64.const 0)
@@ -171,7 +183,9 @@
  ;; MOD2-OPTIONS:      (func $B (result i64)
  ;; MOD2-OPTIONS-NEXT:  (drop
  ;; MOD2-OPTIONS-NEXT:   (call_ref $0
- ;; MOD2-OPTIONS-NEXT:    (ref.func $trampoline_A)
+ ;; MOD2-OPTIONS-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD2-OPTIONS-NEXT:     (ref.func $trampoline_A)
+ ;; MOD2-OPTIONS-NEXT:    )
  ;; MOD2-OPTIONS-NEXT:   )
  ;; MOD2-OPTIONS-NEXT:  )
  ;; MOD2-OPTIONS-NEXT:  (drop
@@ -181,7 +195,9 @@
  ;; MOD2-OPTIONS-NEXT:  )
  ;; MOD2-OPTIONS-NEXT:  (drop
  ;; MOD2-OPTIONS-NEXT:   (call_ref $1
- ;; MOD2-OPTIONS-NEXT:    (ref.func $trampoline_C)
+ ;; MOD2-OPTIONS-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD2-OPTIONS-NEXT:     (ref.func $trampoline_C)
+ ;; MOD2-OPTIONS-NEXT:    )
  ;; MOD2-OPTIONS-NEXT:   )
  ;; MOD2-OPTIONS-NEXT:  )
  ;; MOD2-OPTIONS-NEXT:  (i64.const 0)
@@ -222,12 +238,16 @@
  ;; MOD3:      (func $C (result f32)
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $0
- ;; MOD3-NEXT:    (ref.func $trampoline_A)
+ ;; MOD3-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD3-NEXT:     (ref.func $trampoline_A)
+ ;; MOD3-NEXT:    )
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $1
- ;; MOD3-NEXT:    (ref.func $trampoline_B)
+ ;; MOD3-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD3-NEXT:     (ref.func $trampoline_B)
+ ;; MOD3-NEXT:    )
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
@@ -254,12 +274,16 @@
  ;; MOD3-OPTIONS:      (func $C (result f32)
  ;; MOD3-OPTIONS-NEXT:  (drop
  ;; MOD3-OPTIONS-NEXT:   (call_ref $0
- ;; MOD3-OPTIONS-NEXT:    (ref.func $trampoline_A)
+ ;; MOD3-OPTIONS-NEXT:    (ref.cast (ref (exact $0))
+ ;; MOD3-OPTIONS-NEXT:     (ref.func $trampoline_A)
+ ;; MOD3-OPTIONS-NEXT:    )
  ;; MOD3-OPTIONS-NEXT:   )
  ;; MOD3-OPTIONS-NEXT:  )
  ;; MOD3-OPTIONS-NEXT:  (drop
  ;; MOD3-OPTIONS-NEXT:   (call_ref $1
- ;; MOD3-OPTIONS-NEXT:    (ref.func $trampoline_B)
+ ;; MOD3-OPTIONS-NEXT:    (ref.cast (ref (exact $1))
+ ;; MOD3-OPTIONS-NEXT:     (ref.func $trampoline_B)
+ ;; MOD3-OPTIONS-NEXT:    )
  ;; MOD3-OPTIONS-NEXT:   )
  ;; MOD3-OPTIONS-NEXT:  )
  ;; MOD3-OPTIONS-NEXT:  (drop

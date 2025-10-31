@@ -103,7 +103,7 @@ public:
   }
 
   // This needs to be duplicated from ModuleRunner, unfortunately.
-  Literal makeFuncData(Name name, HeapType type) {
+  Literal makeFuncData(Name name, Type type) {
     auto allocation =
       std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
         return callFunction(name, arguments);
@@ -319,8 +319,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     };
     // Use a null instance because these are either host functions or imported
     // from unknown sources.
+    // TODO: Be more precise about the types we allow these imports to have.
     return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
-                   import->type.getHeapType());
+                   import->type);
   }
 
   Tag* getImportedTag(Tag* tag) override {
@@ -369,7 +370,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       throw FailToEvalException("tableLoad of non-literal");
     }
     if (auto* r = value->dynCast<RefFunc>()) {
-      return instance->makeFuncData(r->func, r->type.getHeapType());
+      return instance->makeFuncData(r->func, r->type);
     }
     return Properties::getLiteral(value);
   }

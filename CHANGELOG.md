@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - C and JS APIs now assume RefFuncs are created after imported functions (non-
+   imported functions can still be created later). This is necessary because
+   imported function types can vary (due to Custom Descriptors), and we need to
+   look up that type at RefFunc creation time.
  - The --mod-asyncify-never-unwind and --mod-asyncify-always-and-only-unwind
    passed were deleted.  They only existed to support the lazy code loading
    support in emscripten that was removed. (#7893)
