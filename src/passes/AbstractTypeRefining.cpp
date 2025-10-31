@@ -406,7 +406,8 @@ struct AbstractTypeRefining : public Pass {
         auto subDescriptor = *optimized;
 
         Builder builder(*getModule());
-        if (curr->type.isExact() || subDescriptor == HeapTypes::none) {
+        if (curr->type.isExact() ||
+            subDescriptor.isMaybeShared(HeapType::none)) {
           // This is exact, so we can ignore subtypes, or there is no subtype to
           // optimize to. In this case it must trap.
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),

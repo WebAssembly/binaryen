@@ -1675,3 +1675,45 @@
     )
   )
 )
+
+(module
+  ;; A struct with partial names: only some fields are named. We should still
+  ;; update names properly when removing and reordering.
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (sub (struct (field (mut i32)) (field $named (mut i32)))))
+  (type $struct (sub (struct (field (mut i32)) (field (mut i32)) (field $named (mut i32)) (field (mut i32)) (field (mut i32)))))
+
+  ;; CHECK:       (type $1 (func (param (ref $struct))))
+
+  ;; CHECK:      (func $func (type $1) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct $named
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (struct.get $struct $named
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+    ;; Use fields 1 and 2.
+    (struct.set $struct 1
+      (local.get $x)
+      (struct.get $struct 1
+        (local.get $x)
+      )
+    )
+    (struct.set $struct 2
+      (local.get $x)
+      (struct.get $struct 2
+        (local.get $x)
+      )
+    )
+  )
+)
+
