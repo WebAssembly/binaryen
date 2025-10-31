@@ -103,8 +103,8 @@
   )
 )
 
-;; As above, but the value in the struct.new is not constant, so we cannot
-;; optimize.
+;; As above, but the value in the struct.new is not constant. We must un-nest
+;; it into another global.
 (module
   ;; CHECK:      (type $table (struct (field anyref)))
   (type $table (struct anyref))
@@ -114,8 +114,10 @@
   ;; CHECK:      (import "a" "b" (global $imported funcref))
   (import "a" "b" (global $imported funcref))
 
+  ;; CHECK:      (global $table.unnested.0 (ref (exact $table)) (struct.new_default $table))
+
   ;; CHECK:      (global $table (ref $table) (struct.new $table
-  ;; CHECK-NEXT:  (struct.new_default $table)
+  ;; CHECK-NEXT:  (global.get $table.unnested.0)
   ;; CHECK-NEXT: ))
   (global $table (ref $table)
     (struct.new $table
@@ -125,9 +127,7 @@
 
   ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $table 0
-  ;; CHECK-NEXT:    (global.get $table)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.get $table.unnested.0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
@@ -200,6 +200,69 @@
       (struct.get $vtable 0
         (global.get $imported)
       )
+    )
+  )
+)
+
+;; A packed field.
+(module
+  ;; CHECK:      (type $A (struct (field i8)))
+  (type $A (struct (field i8)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const -1)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $A) (struct.new $A
+    (i32.const -1)
+  ))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This should be 255, not -1.
+    (drop
+      (struct.get_u $A 0
+        (global.get $global)
+      )
+    )
+  )
+)
+
+;; When reading a null descriptor, we must cast to non-null.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func (result (ref $A.desc))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $A
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $A) (struct.new_default $A
+    (ref.null none)
+  ))
+
+  ;; CHECK:      (func $test (type $2) (result (ref $A.desc))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref $A.desc))
+    (ref.get_desc $A
+      (global.get $global)
     )
   )
 )
