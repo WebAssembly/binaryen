@@ -96,12 +96,12 @@
 // Overall, this should allow good performance with small overhead that is
 // mostly noticed at rewind time.
 //
-// Exceptions handling (-fwasm-exceptions) is partially supported. Asyncify
-// can't start unwind operation when a catch block is in the stack trace.
-// If assertions mode is enabled then pass will check if unwind called from
-// within catch block or not, and if so throw an unreachable exception.
-// If "ignore unwind from catch" mode is enable then Asyncify will skip
-// any unwind call from within catch block.
+// Exceptions handling (-fwasm-exceptions) is partially supported, everything
+// except for handling unwinding from within a catch block. If assertions mode
+// is enabled then this pass will check for that problem, and if so, throw an
+// unreachable exception. (If "ignore unwind from catch" mode is enabled then
+// Asyncify will silently skip any unwind call from within catch blocks, see
+// below.)
 //
 // After this pass is run a new i32 global "__asyncify_state" is added, which
 // has the following values:
