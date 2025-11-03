@@ -572,7 +572,11 @@ void updateTypes(Module& wasm) {
 
     void visitCall(Call* curr) {
       if (curr->type != Type::unreachable) {
-        curr->type = getModule()->getFunction(curr->target)->type.getHeapType().getSignature().results;
+        curr->type = getModule()
+                       ->getFunction(curr->target)
+                       ->type.getHeapType()
+                       .getSignature()
+                       .results;
       }
     }
 
