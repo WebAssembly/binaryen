@@ -309,6 +309,12 @@ struct GlobalStructInference : public Pass {
 
       bool refinalize = false;
 
+      // As we prepare to un-nest globals, we create global.gets of the global
+      // that we will un-nest the content to. That global does not yet exist,
+      // and we note such globals as we go so we ignore them (they are invalid
+      // IR until the global is created, later in this pass).
+      std::unordered_set<GlobalGet*> unnestingGlobalGets;
+
       void visitStructGet(StructGet* curr) {
         optimize(curr, curr->ref, curr->index);
       }
@@ -347,14 +353,18 @@ struct GlobalStructInference : public Pass {
         // This is a read of an immutable field. See if it is a trivial case, of
         // a read from an immutable global.
         if (auto* get = ref->dynCast<GlobalGet>()) {
-          auto* global = wasm.getGlobal(get->name);
-          if (!global->mutable_ && !global->imported()) {
-            if (auto* structNew = global->init->dynCast<StructNew>()) {
-              auto value = readFromStructNew(structNew, fieldIndex, field);
-              // We know the exact global being read here.
-              value.globals.push_back(global->name);
-              replaceCurrent(getReadValue(value, fieldIndex, field, curr));
-              return;
+          // The global.get must be valid, and not in the process of being
+          // rewritten to point to a new un-nested global.
+          if (!unnestingGlobalGets.count(get)) {
+            auto* global = wasm.getGlobal(get->name);
+            if (!global->mutable_ && !global->imported()) {
+              if (auto* structNew = global->init->dynCast<StructNew>()) {
+                auto value = readFromStructNew(structNew, fieldIndex, field);
+                // We know the exact global being read here.
+                value.globals.push_back(global->name);
+                replaceCurrent(getReadValue(value, fieldIndex, field, curr));
+                return;
+              }
             }
           }
         }
@@ -541,6 +551,7 @@ struct GlobalStructInference : public Pass {
 
           globalsToUnnest.emplace_back(
             GlobalToUnnest{value.globals[0], fieldIndex, get});
+          unnestingGlobalGets.insert(get);
 
           ret = get;
         }
