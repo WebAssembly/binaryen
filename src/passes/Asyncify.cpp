@@ -248,9 +248,9 @@
 //
 //   --pass-arg=asyncify-ignore-unwind-from-catch
 //
-//      This enables additional check to be performed before unwinding. In
-//      cases where the unwind operation is triggered from the catch block,
-//      it will be silently ignored (-fwasm-exceptions support)
+//      When an unwind operation is triggered from inside a wasm-exceptions
+//      catch block, which is not supported, silently ignore it rather than
+//      fail during rewinding later.
 //
 //   --pass-arg=asyncify-verbose
 //
