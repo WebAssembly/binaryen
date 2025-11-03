@@ -29,15 +29,17 @@
 )
 
 ;; CHECK:      (func $caller (type $0) (result anyref)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call $sub
-;; CHECK-NEXT:   (i32.const 42)
+;; CHECK-NEXT:  (block $block (result (ref any))
+;; CHECK-NEXT:   (call $sub
+;; CHECK-NEXT:    (i32.const 42)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $caller-unreachable (type $0) (result anyref)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call $sub
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:  (block $block
+;; CHECK-NEXT:   (call $sub
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

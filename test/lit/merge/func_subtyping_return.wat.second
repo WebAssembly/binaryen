@@ -5,8 +5,7 @@
 
  (func $caller (export "caller") (result anyref)
   ;; This will get refined from anyref to non-nullable.
-  (block (result anyref)
-   (nop) ;; keep the block non-trivial
+  (block $block (result anyref)
    (call $import
     (i32.const 42)
    )
@@ -15,8 +14,7 @@
 
  (func $caller-unreachable (export "caller-unreachable") (result anyref)
   ;; Unreachable code is not modified.
-  (block (result anyref)
-   (nop)
+  (block $block (result anyref)
    (call $import
     (unreachable)
    )
