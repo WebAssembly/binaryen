@@ -1248,7 +1248,7 @@ private:
   }
 };
 
-// Add catch block counters to verify that unwind is not called from catch
+// Add catch block counters to verify that unwinding is not done from catch
 // block.
 struct AsyncifyAddCatchCounters : public Pass {
   bool isFunctionParallel() override { return true; }
