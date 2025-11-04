@@ -3492,7 +3492,12 @@ protected:
       return self()->makeFuncData(name, func->type);
     }
     auto iter = inst->linkedInstances.find(func->module);
-    if (iter == inst->linkedInstances.end()) {
+    // wasm-shell builds a "spectest" module, but does *not* provide print
+    // methods there. Those arrive from getImportedFunction(). So we must call
+    // getImportedFunction() even if the linked instance exists, in the case
+    // that it does not provide the export we want. TODO: fix wasm-shell
+    if (iter == inst->linkedInstances.end() ||
+        !inst->wasm.getExportOrNull(func->base)) {
       return externalInterface->getImportedFunction(func);
     }
     inst = iter->second.get();
