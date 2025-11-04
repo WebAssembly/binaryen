@@ -3795,13 +3795,21 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      // If nullable, we can emit a null. If there is no function context, then
-      // we must do so, as the other option is a throw in a block, which are not
-      // possible outside of functions.
+      // If nullable, sometimes emit a null. If not in a function context, see
+      // below, we need a null as well regardless of the type.
       if ((type.isNullable() && oneIn(2)) || !funcContext) {
-        return builder.makeRefNull(HeapTypes::exn.getBasic(share));
+        auto* null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
+        if (type.isNullable()) {
+          return null;
+        }
+        // The type is non-nullable, so we are here because we are in a non-
+        // function context, with nothing valid to emit. "Fix" it with a cast,
+        // which is not valid IR, but which the calling code will handle.
+        assert(!funcContext);
+        return builder.makeRefAs(RefAsNonNull, null);
       }
 
+      // Emit a throw in a block.
       auto* throww = makeThrow(Type::unreachable);
       auto label = makeLabel();
       auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
