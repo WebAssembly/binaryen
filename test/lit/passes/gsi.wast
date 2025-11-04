@@ -1901,7 +1901,7 @@
   ;; CHECK:      (type $struct (struct (field i8)))
   (type $struct (struct (field i8)))
 
-  ;; CHECK:      (type $1 (func (result i32)))
+  ;; CHECK:      (type $1 (func (param (ref $struct)) (result i32)))
 
   ;; CHECK:      (global $A (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 257)
@@ -1917,7 +1917,7 @@
     (i32.const 258)
   ))
 
-  ;; CHECK:      (func $test (type $1) (result i32)
+  ;; CHECK:      (func $test (type $1) (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.and
   ;; CHECK-NEXT:    (i32.const 257)
@@ -1929,18 +1929,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (global.get $A)
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (result i32)
+  (func $test (param $x (ref $struct)) (result i32)
     ;; We can infer this value is one of two things since only two objects exist
     ;; of this type. We must emit the proper truncated value for them, as the
     ;; values are truncated into i8.
     (struct.get_u $struct 0
-     (global.get $A)
+     (local.get $x)
     )
   )
 )

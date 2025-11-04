@@ -1189,3 +1189,58 @@
   )
 )
 
+;; Shared abstract described types.
+(module
+ (rec
+  (type $A (sub (shared (descriptor $B (struct)))))
+  (type $B (sub (shared (describes $A (descriptor $C (struct))))))
+  (type $C (sub (shared (describes $B (struct)))))
+ )
+
+ ;; YESTNH:      (rec
+ ;; YESTNH-NEXT:  (type $0 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; YESTNH:       (type $1 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; YESTNH:      (func $A (type $0) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; YESTNH-NEXT:  (drop
+ ;; YESTNH-NEXT:   (local.get $x)
+ ;; YESTNH-NEXT:  )
+ ;; YESTNH-NEXT:  (unreachable)
+ ;; YESTNH-NEXT: )
+ ;; NO_TNH:      (rec
+ ;; NO_TNH-NEXT:  (type $0 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; NO_TNH:       (type $1 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; NO_TNH:      (func $A (type $0) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; NO_TNH-NEXT:  (drop
+ ;; NO_TNH-NEXT:   (local.get $x)
+ ;; NO_TNH-NEXT:  )
+ ;; NO_TNH-NEXT:  (unreachable)
+ ;; NO_TNH-NEXT: )
+ (func $A (param $x (ref $A)) (result (ref $B))
+  (ref.get_desc $A
+   (local.get $x)
+  )
+ )
+
+ ;; YESTNH:      (func $B (type $1) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; YESTNH-NEXT:  (drop
+ ;; YESTNH-NEXT:   (local.get $x)
+ ;; YESTNH-NEXT:  )
+ ;; YESTNH-NEXT:  (unreachable)
+ ;; YESTNH-NEXT: )
+ ;; NO_TNH:      (func $B (type $1) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; NO_TNH-NEXT:  (drop
+ ;; NO_TNH-NEXT:   (local.get $x)
+ ;; NO_TNH-NEXT:  )
+ ;; NO_TNH-NEXT:  (unreachable)
+ ;; NO_TNH-NEXT: )
+ (func $B (param $x (ref $B)) (result (ref $C))
+  (ref.get_desc $B
+   (local.get $x)
+  )
+ )
+)
+

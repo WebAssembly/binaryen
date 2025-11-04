@@ -456,6 +456,17 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // initial content we began with.
   auto possibleHeapTypes = ModuleUtils::collectHeapTypes(wasm);
 
+  // Use heap types from an imported module, if present.
+  if (importedModule) {
+    auto importedHeapTypes = ModuleUtils::collectHeapTypes(*importedModule);
+    auto rate = upTo(11);
+    for (auto type : importedHeapTypes) {
+      if (upTo(10) < rate) {
+        possibleHeapTypes.push_back(type);
+      }
+    }
+  }
+
   // Filter away uninhabitable heap types, that is, heap types that we cannot
   // construct, like a type with a non-nullable reference to itself.
   interestingHeapTypes = HeapTypeGenerator::getInhabitable(possibleHeapTypes);
@@ -1222,9 +1233,9 @@ void TranslateToFuzzReader::useImportedFunctions() {
   }
 
   // Add some of the module's exported functions as imports, at a random rate.
-  auto rate = upTo(100);
+  auto rate = upTo(11);
   for (auto& exp : importedModule->exports) {
-    if (exp->kind != ExternalKind::Function || upTo(100) > rate) {
+    if (exp->kind != ExternalKind::Function || upTo(10) >= rate) {
       continue;
     }
 
@@ -1251,9 +1262,9 @@ void TranslateToFuzzReader::useImportedGlobals() {
   }
 
   // Add some of the module's exported globals as imports, at a random rate.
-  auto rate = upTo(100);
+  auto rate = upTo(11);
   for (auto& exp : importedModule->exports) {
-    if (exp->kind != ExternalKind::Global || upTo(100) > rate) {
+    if (exp->kind != ExternalKind::Global || upTo(10) >= rate) {
       continue;
     }
 
@@ -2157,6 +2168,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     void visitRethrow(Rethrow* curr) {
       if (!isValidTryRef(curr->target, curr)) {
         replace();
+      } else {
+        visitExpression(curr);
       }
     }
 
@@ -2164,6 +2177,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       if (curr->delegateTarget.is() &&
           !isValidTryRef(curr->delegateTarget, curr)) {
         replace();
+      } else {
+        visitExpression(curr);
       }
     }
 
@@ -2200,8 +2215,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         i--;
       }
     }
-  };
-  Fixer fixer(wasm, *this);
+  } fixer(wasm, *this);
   fixer.walk(func->body);
 
   // Refinalize at the end, after labels are all fixed up.

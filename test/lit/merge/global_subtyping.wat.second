@@ -1,0 +1,14 @@
+(module
+ (type $second-super (sub (func)))
+
+ (import "primary" "sub" (global $import (ref $second-super)))
+
+ (func $second-user (export "second-user")
+  (drop
+   (block (result (ref $second-super))
+    (global.get $import)
+   )
+  )
+ )
+)
+
