@@ -712,8 +712,7 @@ void TranslateToFuzzReader::setupGlobals() {
       assert(init->is<TupleMake>());
     }
     if (!FindAll<RefAs>(init).list.empty() ||
-        !FindAll<ContNew>(init).list.empty() ||
-        !FindAll<Throw>(init).list.empty()) {
+        !FindAll<ContNew>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
       // means we had to stop in the middle of an overly-nested struct or array,
       // which we can break out of using ref.as_non_null of a nullable ref. That
@@ -721,8 +720,7 @@ void TranslateToFuzzReader::setupGlobals() {
       // validate in a global. Switch to something safe instead.
       //
       // Likewise, if we see cont.new, we must switch as well. That can happen
-      // if a nested struct we create has a continuation field, for example. And
-      // for non-nullable exnrefs, we end up with a throw in a block.
+      // if a nested struct we create has a continuation field, for example.
       type = getMVPType();
       init = makeConst(type);
     }
@@ -3797,15 +3795,21 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      // If nullable, sometimes emit a null (always, if nullable and we are not
-      // in a function context).
-      if (type.isNullable() && (!funcContext || oneIn(2))) {
-        return builder.makeRefNull(HeapTypes::exn.getBasic(share));
+      // If nullable, sometimes emit a null. If not in a function context, see
+      // below, we need a null as well regardless of the type.
+      if ((type.isNullable() && oneIn(2)) || !funcContext) {
+        auto* null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
+        if (type.isNullable()) {
+          return null;
+        }
+        // The type is non-nullable, so we are here because we are in a non-
+        // function context, with nothing valid to emit. "Fix" it with a cast,
+        // which is not valid IR, but which the calling code will handle.
+        assert(!funcContext);
+        return builder.makeRefAs(RefAsNonNull, null);
       }
 
-      // Emit a throw in a block. Note that this is invalid if there is no
-      // function context, in which case the calling code will handle that (as
-      // it does for RefAsNonNull and other fixups).
+      // Emit a throw in a block.
       auto* throww = makeThrow(Type::unreachable);
       auto label = makeLabel();
       auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
