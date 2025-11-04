@@ -1883,6 +1883,15 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
+    // The type may differ from the type in the IR: An imported function may
+    // have a more refined type than it was imported as. Imports are handled in
+    // subclasses.
+    auto* func = self()->getModule()->getFunction(curr->func);
+    if (func->imported()) {
+      return NONCONSTANT_FLOW;
+    }
+    // This is a defined function, so the type of the reference matches the
+    // actual function.
     return self()->makeFuncData(curr->func, curr->type);
   }
   Flow visitRefEq(RefEq* curr) {
@@ -3462,7 +3471,7 @@ private:
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
 protected:
-  // Returns a reference to the current value of a potentially imported global
+  // Returns a reference to the current value of a potentially imported global.
   Literals& getGlobal(Name name) {
     auto* inst = self();
     auto* global = inst->wasm.getGlobal(name);
@@ -3473,6 +3482,21 @@ protected:
     }
 
     return inst->globals[global->name];
+  }
+
+  // As above, but for a function.
+  Literal getFunction(Name name) {
+    auto* inst = self();
+    auto* func = inst->wasm.getFunction(name);
+    if (!func->imported()) {
+      return self()->makeFuncData(name, func->type);
+    }
+    auto iter = inst->linkedInstances.find(func->module);
+    if (iter == inst->linkedInstances.end()) {
+      return externalInterface->getImportedFunction(func);
+    }
+    inst = iter->second.get();
+    return inst->getExportedFunction(func->base);
   }
 
   // Get a tag object while looking through imports, i.e., this uses the name as
@@ -4229,6 +4253,12 @@ public:
                                info.name);
     }
     return {};
+  }
+  Flow visitRefFunc(RefFunc* curr) {
+    // Handle both imported and defined functions by finding the actual one that
+    // is referred to here.
+    auto func = self()->getFunction(curr->func);
+    return self()->makeFuncData(curr->func, func.type);
   }
   Flow visitArrayNewData(ArrayNewData* curr) {
     VISIT(offsetFlow, curr->offset)
