@@ -172,7 +172,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     // This is not a known import. Create a literal for it, which is good enough
     // if it is never called (see the ref_func.wast spec test, which does that).
     std::cerr << "warning: getImportedFunction: unknown import: "
-              << import->module.str  << "." << import->name.str << '\n';
+              << import->module.str << "." << import->name.str << '\n';
     return Literal::makeFunc(import->name, import->type);
   }
 
