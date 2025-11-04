@@ -570,6 +570,20 @@ void updateTypes(Module& wasm) {
       return std::make_unique<Updater>();
     }
 
+    void visitGlobalGet(GlobalGet* curr) {
+      curr->type = getModule()->getGlobal(curr->name)->type;
+    }
+
+    void visitCall(Call* curr) {
+      if (curr->type != Type::unreachable) {
+        curr->type = getModule()
+                       ->getFunction(curr->target)
+                       ->type.getHeapType()
+                       .getSignature()
+                       .results;
+      }
+    }
+
     void visitRefFunc(RefFunc* curr) {
       curr->finalize(getModule()->getFunction(curr->func)->type.getHeapType());
     }
