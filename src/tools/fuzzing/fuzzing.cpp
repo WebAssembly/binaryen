@@ -712,7 +712,8 @@ void TranslateToFuzzReader::setupGlobals() {
       assert(init->is<TupleMake>());
     }
     if (!FindAll<RefAs>(init).list.empty() ||
-        !FindAll<ContNew>(init).list.empty()) {
+        !FindAll<ContNew>(init).list.empty() ||
+        !FindAll<Throw>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
       // means we had to stop in the middle of an overly-nested struct or array,
       // which we can break out of using ref.as_non_null of a nullable ref. That
@@ -720,7 +721,8 @@ void TranslateToFuzzReader::setupGlobals() {
       // validate in a global. Switch to something safe instead.
       //
       // Likewise, if we see cont.new, we must switch as well. That can happen
-      // if a nested struct we create has a continuation field, for example.
+      // if a nested struct we create has a continuation field, for example. And
+      // for non-nullable exnrefs, we end up with a throw in a block.
       type = getMVPType();
       init = makeConst(type);
     }
@@ -3795,13 +3797,15 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      // If nullable, we can emit a null. If there is no function context, then
-      // we must do so, as the other option is a throw in a block, which are not
-      // possible outside of functions.
-      if ((type.isNullable() && oneIn(2)) || !funcContext) {
+      // If nullable, sometimes emit a null (always, if nullable and we are not
+      // in a function context).
+      if (type.isNullable() && (!funcContext || oneIn(2))) {
         return builder.makeRefNull(HeapTypes::exn.getBasic(share));
       }
 
+      // Emit a throw in a block. Note that this is invalid if there is no
+      // function context, in which case the calling code will handle that (as
+      // it does for RefAsNonNull and other fixups).
       auto* throww = makeThrow(Type::unreachable);
       auto label = makeLabel();
       auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
