@@ -1,5 +1,5 @@
 ;; Import a function of type $C as type $A, cast to $A, $B, $C. All those casts
-;; should succeed. Exact casts, however TODO
+;; should succeed.
 (module           
  (rec
   (type $A (sub (func)))
