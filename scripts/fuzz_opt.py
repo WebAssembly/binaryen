@@ -1888,7 +1888,16 @@ class Two(TestCaseHandler):
             # things. We only compare the output if that is not an issue.
             merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
 
-            self.compare_to_merged_output(output, merged_output)
+            if merged_output == IGNORE:
+                # The original output was ok, but after merging it becomes
+                # something we must ignore. This can happen when we optimize, if
+                # the optimizer reorders a normal trap (say a null exception)
+                # with a host limit trap (say an allocation limit). Nothing to
+                # do here, but verify we did optimize, as otherwise this is
+                # inexplicable.
+                assert merged == abspath('merged.opt.wasm')
+            else:
+                self.compare_to_merged_output(output, merged_output)
 
         # The rest of the testing here depends on being to optimize the
         # two modules independently, which closed-world can break.
