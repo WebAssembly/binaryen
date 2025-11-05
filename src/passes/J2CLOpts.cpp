@@ -88,6 +88,10 @@ public:
     : assignmentCounts(assignmentCounts) {}
 
   void visitGlobal(Global* curr) {
+    // Ignore imported globals, e.g., JS prototypes.
+    if (curr->imported()) {
+      return;
+    }
     if (isInitialValue(curr->init)) {
       return;
     }
