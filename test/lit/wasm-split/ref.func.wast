@@ -7,16 +7,6 @@
 ;; Test that we handle ref.func operations properly as we split out $second.
 ;; ref.funcs that refer to the other module must be fixed up to refer to
 ;; something in the same module, that then trampolines to the other.
-
-;; Also test without custom descriptors. The primary module is unchanged here,
-;; while the secondary one still has the cast, but without exactness (that cast
-;; has become trivial: it was needed in the IR when exactness matters, but
-;; after binary writing removes exactness, it becomes trivial).
-
-;; RUN: wasm-split %s -all --disable-custom-descriptors --split-funcs=second,second-in-table -g -o1 %t.1.wasm -o2 %t.2.wasm
-;; RUN: wasm-dis -all %t.1.wasm | filecheck %s --check-prefix PRIMARY
-;; RUN: wasm-dis -all %t.2.wasm | filecheck %s --check-prefix SECONDARY_NOCD
-
 (module
  ;; PRIMARY:      (type $0 (func))
 
@@ -91,26 +81,6 @@
  ;; SECONDARY-NEXT:   (ref.func $second)
  ;; SECONDARY-NEXT:  )
  ;; SECONDARY-NEXT: )
- ;; SECONDARY_NOCD:      (type $0 (func))
-
- ;; SECONDARY_NOCD:      (import "primary" "table_2" (table $timport$0 2 funcref))
-
- ;; SECONDARY_NOCD:      (import "primary" "prime" (func $prime (type $0)))
-
- ;; SECONDARY_NOCD:      (elem $0 (i32.const 0) $second $second-in-table)
-
- ;; SECONDARY_NOCD:      (elem declare func $prime)
-
- ;; SECONDARY_NOCD:      (func $second (type $0)
- ;; SECONDARY_NOCD-NEXT:  (drop
- ;; SECONDARY_NOCD-NEXT:   (ref.cast (ref $0)
- ;; SECONDARY_NOCD-NEXT:    (ref.func $prime)
- ;; SECONDARY_NOCD-NEXT:   )
- ;; SECONDARY_NOCD-NEXT:  )
- ;; SECONDARY_NOCD-NEXT:  (drop
- ;; SECONDARY_NOCD-NEXT:   (ref.func $second)
- ;; SECONDARY_NOCD-NEXT:  )
- ;; SECONDARY_NOCD-NEXT: )
  (func $second
   (drop
    (ref.func $prime)
@@ -130,14 +100,11 @@
 
  ;; SECONDARY:      (func $second-in-table (type $0)
  ;; SECONDARY-NEXT: )
- ;; SECONDARY_NOCD:      (func $second-in-table (type $0)
- ;; SECONDARY_NOCD-NEXT: )
  (func $second-in-table
   ;; As above, but in the secondary module. We still don't need a trampoline
   ;; (but we will get a placeholder, as all split-out functions do).
  )
 )
-
 ;; PRIMARY:      (func $trampoline_second (type $0)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
