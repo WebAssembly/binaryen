@@ -642,15 +642,18 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    if (!getModule()->getFunction(curr->func)->imported()) {
-      // This is not imported, so we know the exact function literal.
-      addRoot(
-        curr,
-        PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
-    } else {
-      // This is imported, so it might be anything of the proper type.
-      addRoot(curr);
-    }
+    // TODO: This is not quite right for imported functions. In that case this
+    //       does not represent a reference to a specific function, but to what
+    //       was imported. In particular, two different imports might have
+    //       identical values, like two imported globals. As function references
+    //       are not comparable in wasm, this is not immediately dangerous, but
+    //       in theory optimizations could get tripped up here.
+    //       We should either fix this (perhaps add a new form of Literal value)
+    //       or document this as the meaning of function literals (i.e. they
+    //       mean something very different if imported).
+    addRoot(
+      curr,
+      PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
 
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
