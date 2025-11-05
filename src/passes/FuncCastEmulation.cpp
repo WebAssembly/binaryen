@@ -178,7 +178,7 @@ struct FuncCastEmulation : public Pass {
         }
         auto* thunk = iter->second;
         ref->func = thunk->name;
-        ref->finalize(thunk->type);
+        ref->finalize(thunk->type.getHeapType());
       }
     }
 
@@ -209,11 +209,11 @@ private:
     for (Index i = 0; i < numParams; i++) {
       thunkParams.push_back(Type::i64);
     }
-    auto thunkFunc =
-      builder.makeFunction(thunk,
-                           Signature(Type(thunkParams), Type::i64),
-                           {}, // no vars
-                           toABI(call, module));
+    auto thunkFunc = builder.makeFunction(
+      thunk,
+      Type(Signature(Type(thunkParams), Type::i64), NonNullable, Exact),
+      {}, // no vars
+      toABI(call, module));
     thunkFunc->hasExplicitName = true;
     return module->addFunction(std::move(thunkFunc));
   }

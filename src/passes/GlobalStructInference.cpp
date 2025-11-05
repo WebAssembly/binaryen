@@ -45,6 +45,10 @@
 // comparison. But we can compare structs, so if the function references are in
 // vtables, and the vtables follow the above pattern, then we can optimize.
 //
+// This also optimizes some related things - reads from structs created in
+// globals - that benefit from the infrastructure here (see unnesting, below),
+// even without this type-based approach.
+//
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
 
@@ -203,11 +207,6 @@ struct GlobalStructInference : public Pass {
       }
     }
 
-    if (typeGlobals.empty()) {
-      // We found nothing we can optimize.
-      return;
-    }
-
     // The above loop on typeGlobalsCopy is on an unsorted data structure, and
     // that can lead to nondeterminism in typeGlobals. Sort the vectors there to
     // ensure determinism.
@@ -310,6 +309,12 @@ struct GlobalStructInference : public Pass {
 
       bool refinalize = false;
 
+      // As we prepare to un-nest globals, we create global.gets of the global
+      // that we will un-nest the content to. That global does not yet exist,
+      // and we note such globals as we go so we ignore them (they are invalid
+      // IR until the global is created, later in this pass).
+      std::unordered_set<GlobalGet*> unnestingGlobalGets;
+
       void visitStructGet(StructGet* curr) {
         optimize(curr, curr->ref, curr->index);
       }
@@ -328,17 +333,11 @@ struct GlobalStructInference : public Pass {
 
         // We must ignore the case of a non-struct heap type, that is, a bottom
         // type (which is all that is left after we've already ruled out
-        // unreachable). Such things will not be in typeGlobals, which we are
-        // checking now anyhow.
+        // unreachable).
         auto heapType = type.getHeapType();
-        auto iter = parent.typeGlobals.find(heapType);
-        if (iter == parent.typeGlobals.end()) {
+        if (!heapType.isStruct()) {
           return;
         }
-
-        // This cannot be a bottom type as we found it in the typeGlobals map,
-        // which only contains types of struct.news.
-        assert(heapType.isStruct());
 
         // The field must be immutable.
         std::optional<Field> field;
@@ -349,12 +348,37 @@ struct GlobalStructInference : public Pass {
           }
         }
 
+        auto& wasm = *getModule();
+
+        // This is a read of an immutable field. See if it is a trivial case, of
+        // a read from an immutable global.
+        if (auto* get = ref->dynCast<GlobalGet>()) {
+          // The global.get must be valid, and not in the process of being
+          // rewritten to point to a new un-nested global.
+          if (!unnestingGlobalGets.count(get)) {
+            auto* global = wasm.getGlobal(get->name);
+            if (!global->mutable_ && !global->imported()) {
+              if (auto* structNew = global->init->dynCast<StructNew>()) {
+                auto value = readFromStructNew(structNew, fieldIndex, field);
+                // We know the exact global being read here.
+                value.globals.push_back(global->name);
+                replaceCurrent(getReadValue(value, fieldIndex, field, curr));
+                return;
+              }
+            }
+          }
+        }
+
+        auto iter = parent.typeGlobals.find(heapType);
+        if (iter == parent.typeGlobals.end()) {
+          return;
+        }
+
         const auto& globals = iter->second;
         if (globals.size() == 0) {
           return;
         }
 
-        auto& wasm = *getModule();
         Builder builder(wasm);
 
         if (globals.size() == 1) {
@@ -388,28 +412,8 @@ struct GlobalStructInference : public Pass {
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
           auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
-          // The value that is read from this struct.new.
-          Value value;
-
-          // Find the value read from the struct and represent it as a Value.
-          PossibleConstantValues constant;
-          if (field && structNew->isWithDefault()) {
-            constant.note(Literal::makeZero(field->type));
-            value.content = constant;
-          } else {
-            Expression* operand;
-            if (field) {
-              operand = structNew->operands[fieldIndex];
-            } else {
-              operand = structNew->desc;
-            }
-            constant.note(operand, wasm);
-            if (constant.isConstant()) {
-              value.content = constant;
-            } else {
-              value.content = operand;
-            }
-          }
+          // Find the value read from the struct.new.
+          auto value = readFromStructNew(structNew, fieldIndex, field);
 
           // If the value is constant, it may be grouped as mentioned before.
           // See if it matches anything we've seen before.
@@ -436,52 +440,6 @@ struct GlobalStructInference : public Pass {
           }
         }
 
-        // Helper for optimization: Given a Value, returns what we should read
-        // for it.
-        auto getReadValue = [&](const Value& value) -> Expression* {
-          Expression* ret;
-          if (value.isConstant()) {
-            // This is known to be a constant, so simply emit an expression for
-            // that constant, and handle if the field is packed.
-            ret = value.getConstant().makeExpression(wasm);
-            if (field) {
-              ret = Bits::makePackedFieldGet(
-                ret, *field, curr->cast<StructGet>()->signed_, wasm);
-            }
-          } else {
-            // Otherwise, this is non-constant, so we are in the situation where
-            // we want to un-nest the value out of the struct.new it is in. Note
-            // that for later work, as we cannot add a global in parallel.
-
-            // There can only be one global in a value that is not constant,
-            // which is the global we want to read from.
-            assert(value.globals.size() == 1);
-
-            // Create a global.get with temporary name, leaving only the
-            // updating of the name to later work.
-            auto* get = builder.makeGlobalGet(value.globals[0],
-                                              value.getExpression()->type);
-
-            globalsToUnnest.emplace_back(
-              GlobalToUnnest{value.globals[0], fieldIndex, get});
-
-            ret = get;
-          }
-
-          // If the type is more refined, we must refinalize. For example, we
-          // might have a struct.get that normally returns anyref, and know that
-          // field contains null, so we return nullref.
-          if (ret->type != curr->type) {
-            refinalize = true;
-          }
-
-          // This value replaces the struct.get, so it should have the same
-          // source location.
-          debuginfo::copyOriginalToReplacement(curr, ret, getFunction());
-
-          return ret;
-        };
-
         // We have some globals (at least 2), and so must have at least one
         // value. And we have already exited if we have more than 2 values (see
         // the early return above) so that only leaves 1 and 2.
@@ -492,7 +450,7 @@ struct GlobalStructInference : public Pass {
           // not need a fence.
           replaceCurrent(builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
-            getReadValue(values[0])));
+            getReadValue(values[0], fieldIndex, field, curr)));
           return;
         }
         assert(values.size() == 2);
@@ -516,8 +474,8 @@ struct GlobalStructInference : public Pass {
         auto checkGlobal = values[0].globals[0];
         // Compute the left and right values before the next line, as the order
         // of their execution matters (they may note globals for un-nesting).
-        auto* left = getReadValue(values[0]);
-        auto* right = getReadValue(values[1]);
+        auto* left = getReadValue(values[0], fieldIndex, field, curr);
+        auto* right = getReadValue(values[1], fieldIndex, field, curr);
         // Note that we must trap on null, so add a ref.as_non_null here. As
         // before, the get cannot have synchronized with anything.
         Expression* getGlobal =
@@ -532,6 +490,91 @@ struct GlobalStructInference : public Pass {
         if (refinalize) {
           ReFinalize().walkFunctionInModule(func, getModule());
         }
+      }
+
+      Value readFromStructNew(StructNew* structNew,
+                              Index fieldIndex,
+                              std::optional<Field>& field) {
+        // Find the value read from the struct and represent it as a Value.
+        Value value;
+        PossibleConstantValues constant;
+        if (field && structNew->isWithDefault()) {
+          constant.note(Literal::makeZero(field->type));
+          value.content = constant;
+        } else {
+          Expression* operand;
+          if (field) {
+            operand = structNew->operands[fieldIndex];
+          } else {
+            operand = structNew->desc;
+          }
+          constant.note(operand, *getModule());
+          if (constant.isConstant()) {
+            value.content = constant;
+          } else {
+            value.content = operand;
+          }
+        }
+        return value;
+      }
+
+      // Given a Value, returns what we should read for it.
+      Expression* getReadValue(const Value& value,
+                               Index fieldIndex,
+                               std::optional<Field>& field,
+                               Expression* curr) {
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+
+        Expression* ret;
+        if (value.isConstant()) {
+          // This is known to be a constant, so simply emit an expression for
+          // that constant, and handle if the field is packed.
+          ret = value.getConstant().makeExpression(wasm);
+          if (field) {
+            ret = Bits::makePackedFieldGet(
+              ret, *field, curr->cast<StructGet>()->signed_, wasm);
+          }
+        } else {
+          // Otherwise, this is non-constant, so we are in the situation where
+          // we want to un-nest the value out of the struct.new it is in. Note
+          // that for later work, as we cannot add a global in parallel.
+
+          // There can only be one global in a value that is not constant,
+          // which is the global we want to read from.
+          assert(value.globals.size() == 1);
+
+          // Create a global.get with temporary name, leaving only the
+          // updating of the name to later work.
+          auto* get = builder.makeGlobalGet(value.globals[0],
+                                            value.getExpression()->type);
+
+          globalsToUnnest.emplace_back(
+            GlobalToUnnest{value.globals[0], fieldIndex, get});
+          unnestingGlobalGets.insert(get);
+
+          ret = get;
+        }
+
+        // We must add a cast to non-null in some cases: A read of a null
+        // descriptor returns a non-null value, so if there was a null in the
+        // global, that would not validate by itself.
+        if (ret->type.isNullable() && curr->type.isNonNullable()) {
+          ret = builder.makeRefAs(RefAsNonNull, ret);
+        }
+
+        // If the type is more refined, we must refinalize. For example, we
+        // might have a struct.get that normally returns anyref, and know that
+        // field contains null, so we return nullref.
+        if (ret->type != curr->type) {
+          refinalize = true;
+        }
+
+        // This value replaces the struct.get, so it should have the same
+        // source location.
+        debuginfo::copyOriginalToReplacement(curr, ret, getFunction());
+
+        return ret;
       }
     };
 

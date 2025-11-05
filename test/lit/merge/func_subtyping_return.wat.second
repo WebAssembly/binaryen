@@ -1,0 +1,24 @@
+(module
+ (type $second-super (sub (func (param i32) (result anyref))))
+
+ (import "primary" "sub" (func $import (type $second-super)))
+
+ (func $caller (export "caller") (result anyref)
+  ;; This will get refined from anyref to non-nullable.
+  (block $block (result anyref)
+   (call $import
+    (i32.const 42)
+   )
+  )
+ )
+
+ (func $caller-unreachable (export "caller-unreachable") (result anyref)
+  ;; Unreachable code is not modified.
+  (block $block (result anyref)
+   (call $import
+    (unreachable)
+   )
+  )
+ )
+)
+

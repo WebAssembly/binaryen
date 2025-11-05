@@ -351,3 +351,10 @@
     )
   )
 )
+
+;; Imported globals are ignored
+(module
+  ;; CHECK:      (import "a" "b" (global $a.b (ref extern)))
+  (import "a" "b" (global $a.b (ref extern)))
+)
+

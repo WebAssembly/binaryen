@@ -13,7 +13,7 @@
 
  ;; PRIMARY:      (import "env" "__load_secondary_module" (func $fimport$0))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (param i32) (result i32)))
 
  ;; PRIMARY:      (global $global$0 (mut i32) (i32.const 0))
 

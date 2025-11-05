@@ -211,7 +211,7 @@ public:
     };
     // Use a null instance because this is a host function.
     return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
-                   import->type);
+                   import->type.getHeapType());
   }
 
   void throwJSException() {
@@ -236,7 +236,12 @@ public:
       // No callable export.
       throwJSException();
     }
-    return callFunctionAsJS(*exp->getInternalName());
+    auto funcName = *exp->getInternalName();
+    return callFunctionAsJS(
+      [&](Literals arguments) {
+        return instance->callFunction(funcName, arguments);
+      },
+      wasm.getFunction(funcName)->type.getHeapType());
   }
 
   Literals callRefAsJS(Literal ref) {
@@ -244,17 +249,21 @@ public:
       // Not a callable ref.
       throwJSException();
     }
-    return callFunctionAsJS(ref.getFunc());
+    return callFunctionAsJS(
+      [&](Literals arguments) { return ref.getFuncData()->doCall(arguments); },
+      ref.type.getHeapType());
   }
 
   // Call a function in a "JS-ey" manner, adding arguments as needed, and
-  // throwing if necessary, the same way JS does.
-  Literals callFunctionAsJS(Name name) {
-    auto* func = wasm.getFunction(name);
+  // throwing if necessary, the same way JS does. We are given a method that
+  // does the actual call, and the type we are calling.
+  Literals callFunctionAsJS(std::function<Flow(Literals)> doCall,
+                            HeapType type) {
+    auto sig = type.getSignature();
 
     // Send default values as arguments, or error if we need anything else.
     Literals arguments;
-    for (const auto& param : func->getParams()) {
+    for (const auto& param : sig.params) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
       // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
       if (param == Type::i64 || param == Type::v128 || param.isExn()) {
@@ -268,7 +277,7 @@ public:
 
     // Error on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
-    for (const auto& result : func->getResults()) {
+    for (const auto& result : sig.results) {
       // An i64 result is fine: a BigInt will be provided. But v128 and exnref
       // still error.
       if (result == Type::v128 || result.isExn()) {
@@ -277,7 +286,7 @@ public:
     }
 
     // Call the function.
-    auto flow = instance->callFunction(func->name, arguments);
+    auto flow = doCall(arguments);
     // Suspending through JS is not valid.
     if (flow.suspendTag) {
       throwJSException();
@@ -302,9 +311,9 @@ struct ExecutionResults {
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
 
-  // Get results of executing a module. Optionally, provide a second module to
-  // link with it (like fuzz_shell's second module).
-  void get(Module& wasm, Module* second = nullptr) {
+  // Execute a module and collect the results. Optionally, provide a second
+  // module to link with it (like fuzz_shell's second module).
+  void collect(Module& wasm, Module* second = nullptr) {
     try {
       // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
@@ -418,7 +427,7 @@ struct ExecutionResults {
   // get current results and check them against previous ones
   void check(Module& wasm) {
     ExecutionResults optimizedResults;
-    optimizedResults.get(wasm);
+    optimizedResults.collect(wasm);
     if (optimizedResults != *this) {
       std::cout << "[fuzz-exec] optimization passes changed results\n";
       exit(1);

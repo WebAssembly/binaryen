@@ -44,7 +44,7 @@ public:
   // make* functions create an expression instance.
 
   static std::unique_ptr<Function> makeFunction(Name name,
-                                                HeapType type,
+                                                Type type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
     assert(type.isSignature());
@@ -57,8 +57,16 @@ public:
   }
 
   static std::unique_ptr<Function> makeFunction(Name name,
-                                                std::vector<NameType>&& params,
                                                 HeapType type,
+                                                std::vector<Type>&& vars,
+                                                Expression* body = nullptr) {
+    return makeFunction(
+      name, Type(type, NonNullable, Exact), std::move(vars), body);
+  }
+
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                std::vector<NameType>&& params,
+                                                Type type,
                                                 std::vector<NameType>&& vars,
                                                 Expression* body = nullptr) {
     assert(type.isSignature());
@@ -80,6 +88,18 @@ public:
       func->localNames[index] = var.name;
     }
     return func;
+  }
+
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                std::vector<NameType>&& params,
+                                                HeapType type,
+                                                std::vector<NameType>&& vars,
+                                                Expression* body = nullptr) {
+    return makeFunction(name,
+                        std::move(params),
+                        Type(type, NonNullable, Exact),
+                        std::move(vars),
+                        body);
   }
 
   static std::unique_ptr<Table> makeTable(Name name,
@@ -1389,7 +1409,7 @@ public:
     Signature sig = func->getSig();
     std::vector<Type> params(sig.params.begin(), sig.params.end());
     params.push_back(type);
-    func->type = Signature(Type(params), sig.results);
+    func->type = func->type.with(Signature(Type(params), sig.results));
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;
