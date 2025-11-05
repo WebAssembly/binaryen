@@ -1198,25 +1198,18 @@
 
   ;; CHECK:      (func $test (type $1) (result i32)
   ;; CHECK-NEXT:  (ref.test (ref $sub)
-  ;; CHECK-NEXT:   (block (result (ref $func))
-  ;; CHECK-NEXT:    (ref.func $f)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $f)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (export "test") (result i32)
     (ref.test (ref $sub)
-      ;; TODO: Remove this block. It is currently necessary because we
-      ;; incorrectly type the function reference as exact, so without the block
-      ;; the cast type above would be "improved" to (ref nofunc).
-      (block (result (ref $func))
-        (ref.func $f)
-      )
+      (ref.func $f)
     )
   )
 )
 
-;; This is another exact cast, but now the imported type is final, so we know
-;; it will succeed.
+;; This is another exact cast, but now the imported type is final. TODO: Use
+;; finality in this pass, as we could optimize here.
 (module
   ;; CHECK:      (type $func (func))
   (type $func (sub final (func)))
