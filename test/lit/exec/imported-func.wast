@@ -1,6 +1,6 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec-before --fuzz-exec-second=%s.second -q -o /dev/null 2>&1 | filecheck %s
 
-;; The second module import a function of type $C as type $A, then casts to $A,
+;; The second module imports a function of type $C as type $A, then casts to $A,
 ;; $B, $C. All those casts should succeed.
 
 (module
