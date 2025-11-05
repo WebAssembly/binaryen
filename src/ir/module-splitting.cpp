@@ -991,10 +991,8 @@ void ModuleSplitter::updateIR() {
         // This became an import, and lost exactness.
         assert(!func->type.isExact());
         assert(curr->type.isExact());
-        if (wasm.features.hasCustomDescriptors()) {
-          // Add a cast, as the parent may depend on the exactness to validate.
-          replaceCurrent(Builder(wasm).makeRefCast(curr, curr->type));
-        }
+        // Add a cast, as the parent may depend on the exactness to validate.
+        replaceCurrent(Builder(wasm).makeRefCast(curr, curr->type));
         curr->type = curr->type.with(Inexact);
       }
     }
