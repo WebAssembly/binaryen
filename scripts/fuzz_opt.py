@@ -681,6 +681,10 @@ def get_v8_extra_flags():
     if random.random() < 0.5:
         flags += ['--future']
 
+    # Sometimes add V8's type assertions.
+    if random.random() < 0.5:
+        flags += ['--wasm-assert-types']
+
     return flags
 
 
