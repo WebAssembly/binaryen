@@ -993,6 +993,7 @@ void ModuleSplitter::updateIR() {
         assert(curr->type.isExact());
         if (wasm.features.hasCustomDescriptors()) {
           // Add a cast, as the parent may depend on the exactness to validate.
+          // TODO: The cast may be needed even without CD enabled
           replaceCurrent(Builder(wasm).makeRefCast(curr, curr->type));
         }
         curr->type = curr->type.with(Inexact);
