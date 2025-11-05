@@ -352,9 +352,9 @@
   )
 )
 
-;; Imported globals are ignored
+;; Imported globals are ignored.
 (module
-  ;; CHECK:      (import "a" "b" (global $a.b (ref extern)))
-  (import "a" "b" (global $a.b (ref extern)))
+  ;; CHECK:      (import "a" "b" (global $a.b (ref func)))
+  (import "a" "b" (global $a.b (ref func)))
 )
 
