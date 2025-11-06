@@ -1180,6 +1180,7 @@
     (local.set $temp
       (ref.func $f)
     )
+    ;; This will become a ref.func $f.
     (local.get $temp)
   )
 )
