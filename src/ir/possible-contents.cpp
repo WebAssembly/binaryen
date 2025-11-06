@@ -208,9 +208,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // Note the global's information, if we started as a global. In that case, the
   // code below will refine our type but we can remain a global, which we will
   // accomplish by restoring our global status at the end.
-  std::optional<Name> globalName;
+  std::optional<GlobalInfo> global;
   if (isGlobal()) {
-    globalName = getGlobal();
+    global = getGlobal();
   }
 
   if (hasFullCone() && other.hasFullCone()) {
@@ -230,9 +230,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
     value = ConeType{newType, std::min(newDepth, otherNewDepth)};
   }
 
-  if (globalName) {
+  if (global) {
     // Restore the global but keep the new and refined type.
-    value = GlobalInfo{*globalName, getType()};
+    value = GlobalInfo{global->name, global->kind, getType()};
   }
 }
 
@@ -2826,6 +2826,12 @@ void Flower::filterExpressionContents(PossibleContents& contents,
 
 void Flower::filterGlobalContents(PossibleContents& contents,
                                   const GlobalLocation& globalLoc) {
+  // Function imports are always immutable.
+  auto kind = contents.getGlobal().kind;
+  if (kind == ExternalKind::Function) {
+    return;
+  }
+  assert(kind == ExternalKind::Global);
   auto* global = wasm.getGlobal(globalLoc.name);
   if (global->mutable_ == Immutable) {
     // This is an immutable global. We never need to consider this value as
