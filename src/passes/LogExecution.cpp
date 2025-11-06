@@ -68,8 +68,8 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
   void visitModule(Module* curr) {
     // Add the import
-    auto import =
-      Builder::makeFunction(LOGGER, Type(Signature(Type::i32, Type::none), NonNullable, Inexact), {});
+    auto import = Builder::makeFunction(
+      LOGGER, Type(Signature(Type::i32, Type::none), NonNullable, Inexact), {});
 
     if (loggerModule != "") {
       import->module = loggerModule;
