@@ -278,7 +278,7 @@ private:
     call->type = im->getResults();
     stub->body = block;
     wrapperIm->type =
-      Type(Signature(Type(params), call->type), NonNullable, Exact);
+      Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
     if (wasmSplit && im->name == ModuleSplitting::LOAD_SECONDARY_MODULE) {
       // In non-debug builds the name of the JSPI wrapper function for loading
