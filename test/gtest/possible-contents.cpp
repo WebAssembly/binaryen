@@ -80,14 +80,14 @@ protected:
     PossibleContents::literal(Literal::makeNull(HeapType::i31));
 
   PossibleContents i32Global1 =
-    PossibleContents::global("i32Global1", Type::i32);
+    PossibleContents::global("i32Global1", ExternalKind::Global, Type::i32);
   PossibleContents i32Global2 =
-    PossibleContents::global("i32Global2", Type::i32);
-  PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
-  PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
-  PossibleContents funcGlobal = PossibleContents::global("funcGlobal", funcref);
+    PossibleContents::global("i32Global2", ExternalKind::Global, Type::i32);
+  PossibleContents f64Global = PossibleContents::global("f64Global", ExternalKind::Global, Type::f64);
+  PossibleContents anyGlobal = PossibleContents::global("anyGlobal", ExternalKind::Global, anyref);
+  PossibleContents funcGlobal = PossibleContents::global("funcGlobal", ExternalKind::Global, funcref);
   PossibleContents nonNullFuncGlobal =
-    PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
+    PossibleContents::global("funcGlobal", ExternalKind::Global, Type(HeapType::func, NonNullable));
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal::makeFunc("func", Signature(Type::none, Type::none)));
@@ -787,7 +787,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   // Filter a global to a more specific type.
   assertIntersection(funcGlobal,
                      PossibleContents::coneType(signature),
-                     PossibleContents::global("funcGlobal", signature));
+                     PossibleContents::global("funcGlobal", ExternalKind::Global, signature));
 
   // Filter a global's nullability only.
   auto nonNullFuncRef = Type(HeapType::func, NonNullable);
