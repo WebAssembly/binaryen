@@ -99,7 +99,7 @@ struct JSPI : public Pass {
       // version will be created.
       auto import = Builder::makeFunction(
         ModuleSplitting::LOAD_SECONDARY_MODULE,
-        Type(Signature(Type::none, Type::none), NonNullable, Exact),
+        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
         {});
       import->module = ENV;
       import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
@@ -235,7 +235,7 @@ private:
     wrapperIm->base = im->base;
     auto stub = std::make_unique<Function>();
     stub->name = Name(im->name.str);
-    stub->type = im->type;
+    stub->type = im->type.with(Exact);
 
     auto* call = module->allocator.alloc<Call>();
     call->target = wrapperIm->name;
@@ -278,7 +278,7 @@ private:
     call->type = im->getResults();
     stub->body = block;
     wrapperIm->type =
-      Type(Signature(Type(params), call->type), NonNullable, Exact);
+      Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
     if (wasmSplit && im->name == ModuleSplitting::LOAD_SECONDARY_MODULE) {
       // In non-debug builds the name of the JSPI wrapper function for loading

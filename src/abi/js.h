@@ -58,7 +58,8 @@ inline void ensureHelpers(Module* wasm, IString specific = IString()) {
     if (specific.is() && name != specific) {
       return;
     }
-    auto func = Builder::makeFunction(name, Signature(params, results), {});
+    auto func = Builder::makeFunction(
+      name, Type(Signature(params, results), NonNullable, Inexact), {});
     func->module = ENV;
     func->base = name;
     wasm->addFunction(std::move(func));

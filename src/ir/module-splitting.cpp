@@ -73,6 +73,7 @@
 #include "ir/export-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
 #include "wasm-builder.h"
@@ -274,7 +275,8 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
                   activeBase.index + Index(activeSegment->data.size())};
 
   Builder builder(module);
-  activeSegment->data.push_back(builder.makeRefFunc(func, type));
+  auto funcType = Type(type, NonNullable, Inexact);
+  activeSegment->data.push_back(builder.makeRefFunc(func, funcType));
 
   addSlot(func, newSlot);
   if (activeTable->initial <= newSlot.index) {
@@ -339,6 +341,7 @@ struct ModuleSplitter {
   void setupTablePatching();
   void shareImportableItems();
   void removeUnusedSecondaryElements();
+  void updateIR();
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), primary(primary), tableManager(primary),
@@ -355,6 +358,7 @@ struct ModuleSplitter {
     setupTablePatching();
     shareImportableItems();
     removeUnusedSecondaryElements();
+    updateIR();
   }
 };
 
@@ -372,7 +376,7 @@ void ModuleSplitter::setupJSPI() {
     // Add an imported function to load the secondary module.
     auto import = Builder::makeFunction(
       ModuleSplitting::LOAD_SECONDARY_MODULE,
-      Type(Signature(Type::none, Type::none), NonNullable, Exact),
+      Type(Signature(Type::none, Type::none), NonNullable, Inexact),
       {});
     import->module = ENV;
     import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
@@ -516,6 +520,7 @@ void ModuleSplitter::exportImportFunction(Name funcName,
       func->hasExplicitName = primaryFunc->hasExplicitName;
       func->module = config.importNamespace;
       func->base = exportName;
+      func->type = func->type.with(Inexact);
       secondary->addFunction(std::move(func));
     }
   }
@@ -790,9 +795,8 @@ void ModuleSplitter::setupTablePatching() {
       placeholder->name = Names::getValidFunctionName(
         primary, std::string("placeholder_") + placeholder->base.toString());
       placeholder->hasExplicitName = true;
-      placeholder->type = secondaryFunc->type;
-      elem = Builder(primary).makeRefFunc(placeholder->name,
-                                          placeholder->type.getHeapType());
+      placeholder->type = secondaryFunc->type.with(Inexact);
+      elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
       primary.addFunction(std::move(placeholder));
     });
 
@@ -833,8 +837,7 @@ void ModuleSplitter::setupTablePatching() {
           // primarySeg->data[i] is a placeholder, so use the secondary
           // function.
           auto* func = replacement->second;
-          auto* ref = Builder(secondary).makeRefFunc(func->name,
-                                                     func->type.getHeapType());
+          auto* ref = Builder(secondary).makeRefFunc(func->name, func->type);
           secondaryElems.push_back(ref);
           ++replacement;
         } else if (auto* get = primarySeg->data[i]->dynCast<RefFunc>()) {
@@ -876,7 +879,7 @@ void ModuleSplitter::setupTablePatching() {
       }
       auto* func = curr->second;
       currData.push_back(
-        Builder(secondary).makeRefFunc(func->name, func->type.getHeapType()));
+        Builder(secondary).makeRefFunc(func->name, func->type));
     }
     if (currData.size()) {
       finishSegment();
@@ -971,8 +974,35 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
   // code size in the primary module as well.
   for (auto& secondaryPtr : secondaries) {
     PassRunner runner(secondaryPtr.get());
+    // Do not validate here in the middle, as the IR still needs updating later.
+    runner.options.validate = false;
     runner.add("remove-unused-module-elements");
     runner.run();
+  }
+}
+
+void ModuleSplitter::updateIR() {
+  // Imported functions may need type updates.
+  struct Fixer : public PostWalker<Fixer> {
+    void visitRefFunc(RefFunc* curr) {
+      auto& wasm = *getModule();
+      auto* func = wasm.getFunction(curr->func);
+      if (func->type != curr->type) {
+        // This became an import, and lost exactness.
+        assert(!func->type.isExact());
+        assert(curr->type.isExact());
+        if (wasm.features.hasCustomDescriptors()) {
+          // Add a cast, as the parent may depend on the exactness to validate.
+          // TODO: The cast may be needed even without CD enabled
+          replaceCurrent(Builder(wasm).makeRefCast(curr, curr->type));
+        }
+        curr->type = curr->type.with(Inexact);
+      }
+    }
+  } fixer;
+  fixer.walkModule(&primary);
+  for (auto& secondaryPtr : secondaries) {
+    fixer.walkModule(secondaryPtr.get());
   }
 }
 

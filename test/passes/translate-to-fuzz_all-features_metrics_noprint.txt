@@ -9,19 +9,19 @@ total
  [table-data]   : 5       
  [tables]       : 2       
  [tags]         : 1       
- [total]        : 547     
+ [total]        : 548     
  [vars]         : 32      
  ArrayNewFixed  : 7       
  AtomicRMW      : 1       
  Binary         : 25      
- Block          : 80      
+ Block          : 81      
  BrOn           : 1       
- Break          : 8       
+ Break          : 7       
  Call           : 18      
  CallIndirect   : 3       
  CallRef        : 1       
  Const          : 128     
- Drop           : 2       
+ Drop           : 3       
  GlobalGet      : 47      
  GlobalSet      : 36      
  If             : 24      

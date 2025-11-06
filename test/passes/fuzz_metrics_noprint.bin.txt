@@ -9,15 +9,15 @@ total
  [table-data]   : 71      
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 15952   
+ [total]        : 15937   
  [vars]         : 628     
  Binary         : 1172    
- Block          : 2734    
- Break          : 525     
+ Block          : 2747    
+ Break          : 485     
  Call           : 628     
  CallIndirect   : 146     
  Const          : 2648    
- Drop           : 185     
+ Drop           : 197     
  GlobalGet      : 1418    
  GlobalSet      : 1052    
  If             : 866     
