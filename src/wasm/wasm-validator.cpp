@@ -2389,14 +2389,6 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
                 func->type,
                 curr,
                 "function reference type must match referenced function type");
-  if (func->imported()) {
-    shouldBeTrue(!curr->type.isExact(),
-                 curr,
-                 "imported function reference should be inexact");
-  } else {
-    shouldBeTrue(
-      curr->type.isExact(), curr, "defined function reference should be exact");
-  }
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -4166,6 +4158,15 @@ void FunctionValidator::visitFunction(Function* curr) {
   shouldBeTrue(features <= getModule()->features,
                curr->name,
                "all used types should be allowed");
+
+  if (curr->imported()) {
+    shouldBeTrue(!curr->type.isExact(),
+                 curr,
+                 "imported function should be inexact");
+  } else {
+    shouldBeTrue(
+      curr->type.isExact(), curr, "defined function should be exact");
+  }
 
   // validate optional local names
   std::unordered_set<Name> seen;
