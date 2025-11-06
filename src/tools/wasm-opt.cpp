@@ -367,14 +367,14 @@ For more on how to optimize effectively, see
   ExecutionResults results;
   if (fuzzExecBefore) {
     if (fuzzExecSecond.empty()) {
-      results.get(wasm);
+      results.collect(wasm);
     } else {
       // Add the second module.
       Module second;
       second.features = wasm.features;
       ModuleReader().read(fuzzExecSecond, second);
 
-      results.get(wasm, &second);
+      results.collect(wasm, &second);
     }
   }
 
