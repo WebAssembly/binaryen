@@ -164,6 +164,23 @@ TEST_F(PossibleContentsTest, TestComparisons) {
   assertNotEqualSymmetric(exactNonNullAnyref, exactAnyref);
 }
 
+TEST_F(PossibleContentsTest, TestComparisonsGlobals) {
+  // Check if two PossibleContents::global, one a wasm Global and one a wasm
+  // Function, and equal in their names and types, are still understood to be
+  // non-equal: the |kind| field differentiates them.
+
+  PossibleContents wasmGlobal = PossibleContents::global(
+    "foo", ExternalKind::Global, Type(HeapType::func, NonNullable));
+  PossibleContents wasmFunction = PossibleContents::global(
+    "foo", ExternalKind::Function, Type(HeapType::func, NonNullable));
+
+  assertNotEqualSymmetric(wasmGlobal, wasmFunction);
+
+  // But they are equal to themselves, of course.
+  assertEqualSymmetric(wasmGlobal, wasmGlobal);
+  assertEqualSymmetric(wasmFunction, wasmFunction);
+}
+
 TEST_F(PossibleContentsTest, TestHash) {
   // Hashes should be deterministic.
   EXPECT_EQ(none.hash(), none.hash());
