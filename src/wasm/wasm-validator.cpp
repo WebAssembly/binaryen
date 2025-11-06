@@ -4161,11 +4161,11 @@ void FunctionValidator::visitFunction(Function* curr) {
 
   if (curr->imported()) {
     shouldBeTrue(!curr->type.isExact(),
-                 curr,
+                 curr->name,
                  "imported function should be inexact");
   } else {
     shouldBeTrue(
-      curr->type.isExact(), curr, "defined function should be exact");
+      curr->type.isExact(), curr->name, "defined function should be exact");
   }
 
   // validate optional local names

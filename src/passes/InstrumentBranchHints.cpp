@@ -202,7 +202,7 @@ struct InstrumentBranchHints
       Names::getValidFunctionName(*module, BASE),
       Type(Signature({Type::i32, Type::i32, Type::i32}, Type::none),
            NonNullable,
-           Exact),
+           Inexact),
       {}));
     func->module = MODULE;
     func->base = BASE;
