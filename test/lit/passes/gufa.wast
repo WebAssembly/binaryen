@@ -1155,6 +1155,51 @@
   )
 )
 
+;; Imported functions can be inferred.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "" "" (func $imported (type $0)))
+  (import "" "" (func $imported))
+
+  ;; CHECK:      (elem declare func $defined $imported)
+
+  ;; CHECK:      (func $defined (type $0)
+  ;; CHECK-NEXT:  (local $temp funcref)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (ref.func $imported)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (ref.func $defined)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $defined)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $defined
+    (local $temp funcref)
+    (local.set $temp
+      (ref.func $imported)
+    )
+    ;; This will become a ref.func $imported. TODO
+    (drop
+      (local.get $temp)
+    )
+
+    ;; Test a defined function too.
+    (local.set $temp
+      (ref.func $defined)
+    )
+    ;; This will become a ref.func $defined.
+    (drop
+      (local.get $temp)
+    )
+  )
+)
+
 ;; We cannot know the types of imported functions, so we should not be able to
 ;; optimize this exact cast.
 (module
