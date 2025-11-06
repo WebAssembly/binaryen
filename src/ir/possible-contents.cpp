@@ -2842,7 +2842,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // a cone/exact type *and* that something is equal to a global, in some
     // cases. See https://github.com/WebAssembly/binaryen/pull/5083
     if (contents.isMany() || contents.isConeType()) {
-      contents = PossibleContents::global(global->name, global->type);
+      contents = PossibleContents::global(global->name, ExternalKind::Global, global->type);
 
       // TODO: We could do better here, to set global->init->type instead of
       //       global->type, or even the contents.getType() - either of those
