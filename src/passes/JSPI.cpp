@@ -99,7 +99,7 @@ struct JSPI : public Pass {
       // version will be created.
       auto import = Builder::makeFunction(
         ModuleSplitting::LOAD_SECONDARY_MODULE,
-        Type(Signature(Type::none, Type::none), NonNullable, Exact),
+        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
         {});
       import->module = ENV;
       import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
