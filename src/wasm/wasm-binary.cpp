@@ -2895,7 +2895,7 @@ void WasmBinaryReader::readImports() {
                      "'s type must be a signature. Given: " + type.toString());
         }
         auto curr =
-          builder.makeFunction(name, Type(type, NonNullable, Exact), {});
+          builder.makeFunction(name, Type(type, NonNullable, Inexact), {});
         curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;

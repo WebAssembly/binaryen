@@ -254,7 +254,7 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer& trappingFunctions) {
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  import->type = import->type.with(Signature(Type::f64, Type::i32));
+  import->type = Type(Signature(Type::f64, Type::i32), NonNullable, Inexact);
   trappingFunctions.addImport(import);
 }
 

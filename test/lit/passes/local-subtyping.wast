@@ -84,7 +84,7 @@
   ;; more specific type. A similar thing with a parameter, however, is not a
   ;; thing we can optimize. Also, ignore a local with zero assignments.
   ;; CHECK:      (func $simple-local-but-not-param (type $8) (param $x funcref)
-  ;; CHECK-NEXT:  (local $y (ref (exact $1)))
+  ;; CHECK-NEXT:  (local $y (ref $1))
   ;; CHECK-NEXT:  (local $unused funcref)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)
@@ -179,9 +179,9 @@
   ;; In some cases multiple iterations are necessary, as one inferred new type
   ;; applies to a get which then allows another inference.
   ;; CHECK:      (func $multiple-iterations (type $0)
-  ;; CHECK-NEXT:  (local $x (ref (exact $1)))
-  ;; CHECK-NEXT:  (local $y (ref (exact $1)))
-  ;; CHECK-NEXT:  (local $z (ref (exact $1)))
+  ;; CHECK-NEXT:  (local $x (ref $1))
+  ;; CHECK-NEXT:  (local $y (ref $1))
+  ;; CHECK-NEXT:  (local $z (ref $1))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)
   ;; CHECK-NEXT:  )
@@ -209,8 +209,8 @@
 
   ;; Sometimes a refinalize is necessary in between the iterations.
   ;; CHECK:      (func $multiple-iterations-refinalize (type $2) (param $i i32)
-  ;; CHECK-NEXT:  (local $x (ref (exact $1)))
-  ;; CHECK-NEXT:  (local $y (ref (exact $4)))
+  ;; CHECK-NEXT:  (local $x (ref $1))
+  ;; CHECK-NEXT:  (local $y (ref $4))
   ;; CHECK-NEXT:  (local $z (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)

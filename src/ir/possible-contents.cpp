@@ -27,6 +27,7 @@
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "support/insert_ordered.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace std {
@@ -643,9 +644,9 @@ struct InfoCollector
   void visitRefFunc(RefFunc* curr) {
     if (!getModule()->getFunction(curr->func)->imported()) {
       // This is not imported, so we know the exact function literal.
-      addRoot(curr,
-              PossibleContents::literal(
-                Literal::makeFunc(curr->func, curr->type.getHeapType())));
+      addRoot(
+        curr,
+        PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
     } else {
       // This is imported, so it is effectively a global.
       addRoot(curr,
@@ -1869,8 +1870,7 @@ void TNHOracle::infer() {
         //       lot of other optimizations become possible anyhow.
         auto target = possibleTargets[0]->name;
         info.inferences[call->target] =
-          PossibleContents::literal(Literal::makeFunc(
-            target, wasm.getFunction(target)->type.getHeapType()));
+          PossibleContents::literal(Literal::makeFunc(target, wasm));
         continue;
       }
 
@@ -3142,8 +3142,6 @@ void Flower::dump(Location location) {
     std::cout << "  sigparamloc " << '\n';
   } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
     std::cout << "  sigresultloc " << loc->type << " : " << loc->index << '\n';
-  } else if (auto* loc = std::get_if<RootLocation>(&location)) {
-    std::cout << "  rootloc " << loc->type << '\n';
   } else {
     std::cout << "  (other)\n";
   }
