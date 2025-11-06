@@ -235,7 +235,7 @@ private:
     wrapperIm->base = im->base;
     auto stub = std::make_unique<Function>();
     stub->name = Name(im->name.str);
-    stub->type = im->type;
+    stub->type = im->type.with(Exact);
 
     auto* call = module->allocator.alloc<Call>();
     call->target = wrapperIm->name;
