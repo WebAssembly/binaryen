@@ -83,16 +83,19 @@ protected:
     PossibleContents::global("i32Global1", ExternalKind::Global, Type::i32);
   PossibleContents i32Global2 =
     PossibleContents::global("i32Global2", ExternalKind::Global, Type::i32);
-  PossibleContents f64Global = PossibleContents::global("f64Global", ExternalKind::Global, Type::f64);
-  PossibleContents anyGlobal = PossibleContents::global("anyGlobal", ExternalKind::Global, anyref);
-  PossibleContents funcGlobal = PossibleContents::global("funcGlobal", ExternalKind::Global, funcref);
-  PossibleContents nonNullFuncGlobal =
-    PossibleContents::global("funcGlobal", ExternalKind::Global, Type(HeapType::func, NonNullable));
+  PossibleContents f64Global =
+    PossibleContents::global("f64Global", ExternalKind::Global, Type::f64);
+  PossibleContents anyGlobal =
+    PossibleContents::global("anyGlobal", ExternalKind::Global, anyref);
+  PossibleContents funcGlobal =
+    PossibleContents::global("funcGlobal", ExternalKind::Global, funcref);
+  PossibleContents nonNullFuncGlobal = PossibleContents::global(
+    "funcGlobal", ExternalKind::Global, Type(HeapType::func, NonNullable));
 
-  PossibleContents importedFunc1 =
-    PossibleContents::global("impfunc1", ExternalKind::Function, Type(HeapType::func, NonNullable));
-  PossibleContents importedFunc2 =
-    PossibleContents::global("impfunc2", ExternalKind::Function, Type(HeapType::func, NonNullable));
+  PossibleContents importedFunc1 = PossibleContents::global(
+    "impfunc1", ExternalKind::Function, Type(HeapType::func, NonNullable));
+  PossibleContents importedFunc2 = PossibleContents::global(
+    "impfunc2", ExternalKind::Function, Type(HeapType::func, NonNullable));
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal::makeFunc("func", Signature(Type::none, Type::none)));
@@ -119,7 +122,8 @@ protected:
   PossibleContents coneAnyref = PossibleContents::coneType(anyref);
   PossibleContents coneFuncref = PossibleContents::coneType(funcref);
   PossibleContents coneFuncref1 = PossibleContents::coneType(funcref, 1);
-  PossibleContents coneNonNullFuncref = PossibleContents::coneType(Type(HeapType::func, NonNullable));
+  PossibleContents coneNonNullFuncref =
+    PossibleContents::coneType(Type(HeapType::func, NonNullable));
 };
 
 TEST_F(PossibleContentsTest, TestComparisons) {
@@ -807,9 +811,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
     nonNullFunc, PossibleContents::coneType(signature), nonNullFunc);
 
   // Filter a global to a more specific type.
-  assertIntersection(funcGlobal,
-                     PossibleContents::coneType(signature),
-                     PossibleContents::global("funcGlobal", ExternalKind::Global, signature));
+  assertIntersection(
+    funcGlobal,
+    PossibleContents::coneType(signature),
+    PossibleContents::global("funcGlobal", ExternalKind::Global, signature));
 
   // Filter a global's nullability only.
   auto nonNullFuncRef = Type(HeapType::func, NonNullable);

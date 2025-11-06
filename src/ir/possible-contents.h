@@ -322,10 +322,12 @@ public:
       // in the GlobalInfo, as that type may not match the global (see comment
       // in the GlobalInfo declaration above).
       if (info.kind == ExternalKind::Global) {
-        return builder.makeGlobalGet(info.name, wasm.getGlobal(info.name)->type);
+        return builder.makeGlobalGet(info.name,
+                                     wasm.getGlobal(info.name)->type);
       } else {
         assert(info.kind == ExternalKind::Function);
-        return builder.makeRefFunc(info.name, wasm.getFunction(info.name)->type.getHeapType());
+        return builder.makeRefFunc(
+          info.name, wasm.getFunction(info.name)->type.getHeapType());
       }
     }
   }
@@ -382,7 +384,8 @@ public:
       }
     } else if (isGlobal()) {
       auto info = getGlobal();
-      o << "GlobalInfo $" << info.name << " K: " << int(info.kind) << " T: " << getType();
+      o << "GlobalInfo $" << info.name << " K: " << int(info.kind)
+        << " T: " << getType();
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       auto t = coneType->type;
       o << "ConeType " << t;
