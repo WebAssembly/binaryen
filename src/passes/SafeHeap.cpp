@@ -166,7 +166,9 @@ struct SafeHeap : public Pass {
       sbrk = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        GET_SBRK_PTR, Signature(Type::none, addressType), {});
+        GET_SBRK_PTR,
+        Type(Signature(Type::none, addressType), NonNullable, Inexact),
+        {});
       getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
       import->base = GET_SBRK_PTR;
@@ -176,7 +178,9 @@ struct SafeHeap : public Pass {
       segfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        SEGFAULT_IMPORT, Signature(Type::none, Type::none), {});
+        SEGFAULT_IMPORT,
+        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
+        {});
       segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
@@ -186,7 +190,9 @@ struct SafeHeap : public Pass {
       alignfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        ALIGNFAULT_IMPORT, Signature(Type::none, Type::none), {});
+        ALIGNFAULT_IMPORT,
+        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
+        {});
 
       alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
