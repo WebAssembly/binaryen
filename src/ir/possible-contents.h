@@ -41,9 +41,10 @@ namespace wasm {
 //  * Literal:         One possible constant value like an i32 of 42.
 //
 //  * Global:          An immutable global value, something who we can identify
-//                     but do not know the concree value of at runtime. This can
-//                     be either a literal (immutable) global, or an imported
-//                     function (which is effectively the same).
+//                     but do not know the actual value of at runtime. This can
+//                     be either a wasm (immutable) Global, or an imported wasm
+//                     Function (which is effectively the same: we can refer to
+//                     it, but do not know what is being imported there).
 //
 //  * ConeType:        Any possible value of a particular type, and a possible
 //                     "cone" of a certain depth below it. If the depth is 0
