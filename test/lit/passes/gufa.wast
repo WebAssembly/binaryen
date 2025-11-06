@@ -1154,3 +1154,34 @@
     )
   )
 )
+
+;; Imported functions can be inferred.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result funcref)))
+
+  ;; CHECK:      (import "" "" (func $f (type $0)))
+  (import "" "" (func $f))
+
+  ;; CHECK:      (elem declare func $f)
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $1) (result funcref)
+  ;; CHECK-NEXT:  (local $temp funcref)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (ref.func $f)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.func $f)
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (result funcref)
+    (local $temp funcref)
+    (local.set $temp
+      (ref.func $f)
+    )
+    ;; This will become a ref.func $f.
+    (local.get $temp)
+  )
+)
+
