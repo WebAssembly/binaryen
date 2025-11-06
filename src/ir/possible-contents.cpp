@@ -209,9 +209,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // Note the global's information, if we started as a global. In that case, the
   // code below will refine our type but we can remain a global, which we will
   // accomplish by restoring our global status at the end.
-  std::optional<Name> globalName;
+  std::optional<GlobalInfo> global;
   if (isGlobal()) {
-    globalName = getGlobal();
+    global = getGlobal();
   }
 
   if (hasFullCone() && other.hasFullCone()) {
@@ -231,9 +231,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
     value = ConeType{newType, std::min(newDepth, otherNewDepth)};
   }
 
-  if (globalName) {
+  if (global) {
     // Restore the global but keep the new and refined type.
-    value = GlobalInfo{*globalName, getType()};
+    value = GlobalInfo{global->name, global->kind, getType()};
   }
 }
 
@@ -648,8 +648,10 @@ struct InfoCollector
         curr,
         PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
     } else {
-      // This is imported, so it might be anything of the proper type.
-      addRoot(curr);
+      // This is imported, so it is effectively a global.
+      addRoot(curr,
+              PossibleContents::global(
+                curr->func, ExternalKind::Function, curr->type));
     }
 
     // The presence of a RefFunc indicates the function may be called
@@ -2842,7 +2844,8 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // a cone/exact type *and* that something is equal to a global, in some
     // cases. See https://github.com/WebAssembly/binaryen/pull/5083
     if (contents.isMany() || contents.isConeType()) {
-      contents = PossibleContents::global(global->name, global->type);
+      contents = PossibleContents::global(
+        global->name, ExternalKind::Global, global->type);
 
       // TODO: We could do better here, to set global->init->type instead of
       //       global->type, or even the contents.getType() - either of those

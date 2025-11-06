@@ -80,14 +80,22 @@ protected:
     PossibleContents::literal(Literal::makeNull(HeapType::i31));
 
   PossibleContents i32Global1 =
-    PossibleContents::global("i32Global1", Type::i32);
+    PossibleContents::global("i32Global1", ExternalKind::Global, Type::i32);
   PossibleContents i32Global2 =
-    PossibleContents::global("i32Global2", Type::i32);
-  PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
-  PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
-  PossibleContents funcGlobal = PossibleContents::global("funcGlobal", funcref);
-  PossibleContents nonNullFuncGlobal =
-    PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
+    PossibleContents::global("i32Global2", ExternalKind::Global, Type::i32);
+  PossibleContents f64Global =
+    PossibleContents::global("f64Global", ExternalKind::Global, Type::f64);
+  PossibleContents anyGlobal =
+    PossibleContents::global("anyGlobal", ExternalKind::Global, anyref);
+  PossibleContents funcGlobal =
+    PossibleContents::global("funcGlobal", ExternalKind::Global, funcref);
+  PossibleContents nonNullFuncGlobal = PossibleContents::global(
+    "funcGlobal", ExternalKind::Global, Type(HeapType::func, NonNullable));
+
+  PossibleContents importedFunc1 = PossibleContents::global(
+    "impfunc1", ExternalKind::Function, Type(HeapType::func, NonNullable));
+  PossibleContents importedFunc2 = PossibleContents::global(
+    "impfunc2", ExternalKind::Function, Type(HeapType::func, NonNullable));
 
   PossibleContents nonNullFunc = PossibleContents::literal(Literal::makeFunc(
     "func", Type(Signature(Type::none, Type::none), NonNullable, Exact)));
@@ -114,6 +122,8 @@ protected:
   PossibleContents coneAnyref = PossibleContents::coneType(anyref);
   PossibleContents coneFuncref = PossibleContents::coneType(funcref);
   PossibleContents coneFuncref1 = PossibleContents::coneType(funcref, 1);
+  PossibleContents coneNonNullFuncref =
+    PossibleContents::coneType(Type(HeapType::func, NonNullable));
 };
 
 TEST_F(PossibleContentsTest, TestComparisons) {
@@ -134,6 +144,9 @@ TEST_F(PossibleContentsTest, TestComparisons) {
   assertNotEqualSymmetric(i32Global1, i32Global2);
   assertNotEqualSymmetric(i32Global1, exactI32);
   assertNotEqualSymmetric(i32Global1, many);
+
+  assertEqualSymmetric(importedFunc1, importedFunc1);
+  assertNotEqualSymmetric(importedFunc1, importedFunc2);
 
   assertEqualSymmetric(exactI32, exactI32);
   assertNotEqualSymmetric(exactI32, exactAnyref);
@@ -257,6 +270,10 @@ TEST_F(PossibleContentsTest, TestCombinations) {
 
   assertCombination(anyGlobal, anyNull, coneAnyref);
   assertCombination(anyGlobal, i31Null, coneAnyref);
+
+  // Imported functions.
+  assertCombination(importedFunc1, importedFunc1, importedFunc1);
+  assertCombination(importedFunc1, importedFunc2, coneNonNullFuncref);
 }
 
 static PassOptions options;
@@ -338,6 +355,13 @@ TEST_F(PossibleContentsTest, TestIntersection) {
 
   // Separate hierarchies.
   assertLackIntersection(funcGlobal, anyGlobal);
+
+  // Imported functions.
+  assertHaveIntersection(importedFunc1, importedFunc1);
+  assertHaveIntersection(importedFunc1, exactFuncSignatureType);
+  assertHaveIntersection(importedFunc1, exactNonNullFuncSignatureType);
+  assertHaveIntersection(importedFunc1, importedFunc2);
+  assertHaveIntersection(importedFunc1, funcGlobal);
 }
 
 TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
@@ -484,6 +508,8 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
                                                   funcGlobal,
                                                   nonNullFuncGlobal,
                                                   nonNullFunc,
+                                                  importedFunc1,
+                                                  importedFunc2,
                                                   exactI32,
                                                   exactAnyref,
                                                   exactFuncref,
@@ -785,9 +811,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
     nonNullFunc, PossibleContents::coneType(signature), nonNullFunc);
 
   // Filter a global to a more specific type.
-  assertIntersection(funcGlobal,
-                     PossibleContents::coneType(signature),
-                     PossibleContents::global("funcGlobal", signature));
+  assertIntersection(
+    funcGlobal,
+    PossibleContents::coneType(signature),
+    PossibleContents::global("funcGlobal", ExternalKind::Global, signature));
 
   // Filter a global's nullability only.
   auto nonNullFuncRef = Type(HeapType::func, NonNullable);
@@ -813,6 +840,13 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertIntersection(literalNullA, none, none);
   assertIntersection(funcGlobal, none, none);
   assertIntersection(PossibleContents::coneType(signature), none, none);
+
+  // Imported functions. TODO: These are not yet supported, and assert instead.
+  //  assertIntersection(
+  //    importedFunc1, importedFunc1, importedFunc1);
+  //  assertIntersection(
+  //    importedFunc1, PossibleContents::coneType(nonNullFuncRef),
+  //    importedFunc1);
 
   // Subcontents. This API only supports the case where one of the inputs is a
   // full cone type.
