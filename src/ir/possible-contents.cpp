@@ -3142,8 +3142,6 @@ void Flower::dump(Location location) {
     std::cout << "  sigparamloc " << '\n';
   } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
     std::cout << "  sigresultloc " << loc->type << " : " << loc->index << '\n';
-  } else if (auto* loc = std::get_if<RootLocation>(&location)) {
-    std::cout << "  rootloc " << loc->type << '\n';
   } else {
     std::cout << "  (other)\n";
   }

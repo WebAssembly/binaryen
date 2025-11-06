@@ -1170,7 +1170,7 @@
   ;; CHECK-NEXT:   (ref.func $imported)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:   (ref.func $imported)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (ref.func $defined)
@@ -1184,7 +1184,7 @@
     (local.set $temp
       (ref.func $imported)
     )
-    ;; This will become a ref.func $imported. TODO
+    ;; This will become a ref.func $imported.
     (drop
       (local.get $temp)
     )
