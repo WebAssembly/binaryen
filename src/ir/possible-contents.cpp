@@ -641,9 +641,17 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    addRoot(curr,
-            PossibleContents::literal(
-              Literal::makeFunc(curr->func, curr->type.getHeapType())));
+    if (!getModule()->getFunction(curr->func)->imported()) {
+      // This is not imported, so we know the exact function literal.
+      addRoot(curr,
+              PossibleContents::literal(
+                Literal::makeFunc(curr->func, curr->type.getHeapType())));
+    } else {
+      // This is imported, so it is effectively a global.
+      addRoot(curr,
+  PossibleContents::global(curr->func, ExternalKind::Function, curr->type)
+      );
+    }
 
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
@@ -2826,12 +2834,6 @@ void Flower::filterExpressionContents(PossibleContents& contents,
 
 void Flower::filterGlobalContents(PossibleContents& contents,
                                   const GlobalLocation& globalLoc) {
-  // Function imports are always immutable.
-  auto kind = contents.getGlobal().kind;
-  if (kind == ExternalKind::Function) {
-    return;
-  }
-  assert(kind == ExternalKind::Global);
   auto* global = wasm.getGlobal(globalLoc.name);
   if (global->mutable_ == Immutable) {
     // This is an immutable global. We never need to consider this value as
