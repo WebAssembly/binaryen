@@ -446,6 +446,10 @@ struct Unsubtyping : Pass {
       return;
     }
 
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "Unsubtyping requires --closed-world";
+    }
+
     // Initialize the subtype relation based on what is immediately required to
     // keep the code and public types valid.
     analyzePublicTypes(*wasm);
