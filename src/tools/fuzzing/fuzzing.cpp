@@ -323,8 +323,11 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
 
   // Prune things that error in JS if we call them (like SIMD), some of the
   // time. This alters the wasm/JS boundary quite a lot, so testing both forms
-  // is useful.
-  if (oneIn(2)) {
+  // is useful. Note that we do not do this if there is an imported module,
+  // because in that case legalization could alter the contract between the two
+  // (that is, if the first module has an i64 param, we must call it like that,
+  // and not as two i32s which we'd get after legalization).
+  if (!importedModule && oneIn(2)) {
     options.passes.push_back("legalize-and-prune-js-interface");
   }
 
