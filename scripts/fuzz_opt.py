@@ -2706,7 +2706,7 @@ echo "The following value should be 0:"
 %(wasm_opt)s %(features)s %(temp_wasm)s
 echo "  " $?
 
-echo "The following value should be 1:"
+echo "The following value should be >0:"
 
 if [ -z "$BINARYEN_FIRST_WASM" ]; then
   # run the command normally
@@ -2784,7 +2784,7 @@ Make sure to verify by eye that the output says something like this:
 
 The following value should be 0:
   0
-The following value should be 1:
+The following value should be >0:
   1
 
 (If it does not, then one possible issue is that the fuzzer fails to write a
