@@ -2615,7 +2615,7 @@ if __name__ == '__main__':
         counter += 1
         if given_seed is not None:
             seed = given_seed
-            given_seed_passed = True
+            given_seed_error = 0
         else:
             seed = random.randint(0, 1 << 64)
         random.seed(seed)
@@ -2656,10 +2656,16 @@ if __name__ == '__main__':
             traceback.print_tb(tb)
             print('-----------------------------------------')
             print('!')
+            # Default to an error code of 1, but change it for certain errors,
+            # so we report them differently (useful for the reducer to keep
+            # reducing the exact same error category)
+            if given_seed is not None:
+                given_seed_error = 1
             for arg in e.args:
                 print(arg)
-            if given_seed is not None:
-                given_seed_passed = False
+                if type(arg) is str:
+                    if 'comparison error' in arg:
+                        given_seed_error = 2
 
             # We want to generate a template reducer script only when there is
             # no given wasm file. That we have a given wasm file means we are no
@@ -2704,7 +2710,7 @@ echo "The following value should be 0:"
 %(wasm_opt)s %(features)s %(temp_wasm)s
 echo "  " $?
 
-echo "The following value should be 1:"
+echo "The following value should be >0:"
 
 if [ -z "$BINARYEN_FIRST_WASM" ]; then
   # run the command normally
@@ -2782,7 +2788,7 @@ Make sure to verify by eye that the output says something like this:
 
 The following value should be 0:
   0
-The following value should be 1:
+The following value should be >0:
   1
 
 (If it does not, then one possible issue is that the fuzzer fails to write a
@@ -2813,9 +2819,9 @@ After reduction, the reduced file will be in %(working_wasm)s
             print('  ', testcase_handler.__class__.__name__ + ':', testcase_handler.count_runs())
 
     if given_seed is not None:
-        if given_seed_passed:
+        if not given_seed_error:
             print('(finished running seed %d without error)' % given_seed)
             sys.exit(0)
         else:
             print('(finished running seed %d, see error above)' % given_seed)
-            sys.exit(1)
+            sys.exit(given_seed_error)
