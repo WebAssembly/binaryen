@@ -116,9 +116,7 @@ void ReFinalize::visitMemoryGrow(MemoryGrow* curr) { curr->finalize(); }
 void ReFinalize::visitRefNull(RefNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefFunc(RefFunc* curr) {
-  // TODO: should we look up the function and update the type from there? This
-  // could handle a change to the function's type, but is also not really what
-  // this class has been meant to do.
+  curr->finalize(curr->type.getHeapType(), *getModule());
 }
 void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }

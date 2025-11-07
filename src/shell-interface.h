@@ -102,13 +102,21 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   }
   virtual ~ShellExternalInterface() = default;
 
-  ModuleRunner* getImportInstance(Importable* import) {
+  ModuleRunner* getImportInstanceOrNull(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
+      return nullptr;
+    }
+    return it->second.get();
+  }
+
+  ModuleRunner* getImportInstance(Importable* import) {
+    auto* ret = getImportInstanceOrNull(import);
+    if (!ret) {
       Fatal() << "getImportInstance: unknown import: " << import->module.str
               << "." << import->base.str;
     }
-    return it->second.get();
+    return ret;
   }
 
   void init(Module& wasm, ModuleRunner& instance) override {
@@ -148,7 +156,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
                                      }
                                      return Flow();
                                    }),
-        import->type.getHeapType());
+        import->type);
     } else if (import->module == ENV && import->base == EXIT) {
       return Literal(std::make_shared<FuncData>(import->name,
                                                 nullptr,
@@ -157,12 +165,15 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
                                                   std::cout << "exit()\n";
                                                   throw ExitException();
                                                 }),
-                     import->type.getHeapType());
-    } else if (auto* inst = getImportInstance(import)) {
+                     import->type);
+    } else if (auto* inst = getImportInstanceOrNull(import)) {
       return inst->getExportedFunction(import->base);
     }
-    Fatal() << "getImportedFunction: unknown import: " << import->module.str
-            << "." << import->name.str;
+    // This is not a known import. Create a literal for it, which is good enough
+    // if it is never called (see the ref_func.wast spec test, which does that).
+    std::cerr << "warning: getImportedFunction: unknown import: "
+              << import->module.str << "." << import->name.str << '\n';
+    return Literal::makeFunc(import->name, import->type);
   }
 
   Tag* getImportedTag(Tag* tag) override {

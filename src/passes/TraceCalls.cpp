@@ -208,7 +208,7 @@ private:
         tracerName,
         Type(Signature(getTracerParamsType(info, f), Type::none),
              NonNullable,
-             Exact),
+             Inexact),
         {});
       import->module = ENV;
       import->base = tracerName;

@@ -40,10 +40,11 @@ namespace wasm {
 //
 //  * Literal:         One possible constant value like an i32 of 42.
 //
-//  * Global:          The name of a global whose value is here. We do not know
-//                     the actual value at compile time, but we know it is equal
-//                     to that global. Typically we can only infer this for
-//                     immutable globals.
+//  * Global:          An immutable global value, something who we can identify
+//                     but do not know the actual value of at runtime. This can
+//                     be either a wasm (immutable) Global, or an imported wasm
+//                     Function (which is effectively the same: we can refer to
+//                     it, but do not know what is being imported there).
 //
 //  * ConeType:        Any possible value of a particular type, and a possible
 //                     "cone" of a certain depth below it. If the depth is 0
@@ -85,6 +86,7 @@ class PossibleContents {
 
   struct GlobalInfo {
     Name name;
+    ExternalKind kind;
     // The type of contents. Note that this may not match the type of the
     // global, if we were filtered. For example:
     //
@@ -99,7 +101,7 @@ class PossibleContents {
     //       way. In principle, not having depth info can lead to loss of
     //       precision.
     bool operator==(const GlobalInfo& other) const {
-      return name == other.name && type == other.type;
+      return name == other.name && kind == other.kind && type == other.type;
     }
   };
 
@@ -144,8 +146,8 @@ public:
 
   static PossibleContents none() { return PossibleContents{None()}; }
   static PossibleContents literal(Literal c) { return PossibleContents{c}; }
-  static PossibleContents global(Name name, Type type) {
-    return PossibleContents{GlobalInfo{name, type}};
+  static PossibleContents global(Name name, ExternalKind kind, Type type) {
+    return PossibleContents{GlobalInfo{name, kind, type}};
   }
   // Helper for a cone type with depth 0, i.e., an exact type.
   static PossibleContents exactType(Type type) {
@@ -216,9 +218,9 @@ public:
     return std::get<Literal>(value);
   }
 
-  Name getGlobal() const {
+  GlobalInfo getGlobal() const {
     assert(isGlobal());
-    return std::get<GlobalInfo>(value).name;
+    return std::get<GlobalInfo>(value);
   }
 
   bool isNull() const { return isLiteral() && getLiteral().isNull(); }
@@ -316,11 +318,18 @@ public:
     if (isLiteral()) {
       return builder.makeConstantExpression(getLiteral());
     } else {
-      auto name = getGlobal();
+      auto info = getGlobal();
       // Note that we load the type from the module, rather than use the type
       // in the GlobalInfo, as that type may not match the global (see comment
       // in the GlobalInfo declaration above).
-      return builder.makeGlobalGet(name, wasm.getGlobal(name)->type);
+      if (info.kind == ExternalKind::Global) {
+        return builder.makeGlobalGet(info.name,
+                                     wasm.getGlobal(info.name)->type);
+      } else {
+        assert(info.kind == ExternalKind::Function);
+        return builder.makeRefFunc(
+          info.name, wasm.getFunction(info.name)->type.getHeapType());
+      }
     }
   }
 
@@ -352,6 +361,7 @@ public:
       rehash(ret, getLiteral());
     } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
       rehash(ret, global->name);
+      rehash(ret, global->kind);
       rehash(ret, global->type);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       rehash(ret, coneType->type);
@@ -374,7 +384,9 @@ public:
         o << " HT: " << h;
       }
     } else if (isGlobal()) {
-      o << "GlobalInfo $" << getGlobal() << " T: " << getType();
+      auto info = getGlobal();
+      o << "GlobalInfo $" << info.name << " K: " << int(info.kind)
+        << " T: " << getType();
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       auto t = coneType->type;
       o << "ConeType " << t;

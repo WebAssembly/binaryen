@@ -103,8 +103,8 @@
   )
 )
 
-;; As above, but the value in the struct.new is not constant, so we cannot
-;; optimize.
+;; As above, but the value in the struct.new is not constant. We must un-nest
+;; it into another global.
 (module
   ;; CHECK:      (type $table (struct (field anyref)))
   (type $table (struct anyref))
@@ -114,8 +114,10 @@
   ;; CHECK:      (import "a" "b" (global $imported funcref))
   (import "a" "b" (global $imported funcref))
 
+  ;; CHECK:      (global $table.unnested.0 (ref (exact $table)) (struct.new_default $table))
+
   ;; CHECK:      (global $table (ref $table) (struct.new $table
-  ;; CHECK-NEXT:  (struct.new_default $table)
+  ;; CHECK-NEXT:  (global.get $table.unnested.0)
   ;; CHECK-NEXT: ))
   (global $table (ref $table)
     (struct.new $table
@@ -125,9 +127,7 @@
 
   ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $table 0
-  ;; CHECK-NEXT:    (global.get $table)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.get $table.unnested.0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
@@ -199,6 +199,127 @@
     (drop
       (struct.get $vtable 0
         (global.get $imported)
+      )
+    )
+  )
+)
+
+;; A packed field.
+(module
+  ;; CHECK:      (type $A (struct (field i8)))
+  (type $A (struct (field i8)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const -1)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $A) (struct.new $A
+    (i32.const -1)
+  ))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This should be 255, not -1.
+    (drop
+      (struct.get_u $A 0
+        (global.get $global)
+      )
+    )
+  )
+)
+
+;; When reading a null descriptor, we must cast to non-null.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func (result (ref $A.desc))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $A
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $A) (struct.new_default $A
+    (ref.null none)
+  ))
+
+  ;; CHECK:      (func $test (type $2) (result (ref $A.desc))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref $A.desc))
+    (ref.get_desc $A
+      (global.get $global)
+    )
+  )
+)
+
+;; Nested struct.gets that seem optimizable.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $func (func (result anyref)))
+    (type $func (func (result anyref)))
+    ;; CHECK:       (type $outer (sub (struct (field (ref $inner)))))
+    (type $outer (sub (struct (field (ref $inner)))))
+    ;; CHECK:       (type $inner (sub (struct (field (ref $func)))))
+    (type $inner (sub (struct (field (ref $func)))))
+  )
+
+  ;; CHECK:      (type $3 (func (result anyref)))
+
+  ;; CHECK:      (global $global.unnested.0 (ref (exact $inner)) (struct.new $inner
+  ;; CHECK-NEXT:  (ref.func $func)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $global (ref $outer) (struct.new $outer
+  ;; CHECK-NEXT:  (global.get $global.unnested.0)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $outer) (struct.new $outer
+    (struct.new $inner
+      (ref.func $func)
+    )
+  ))
+
+  ;; CHECK:      (func $func (type $func) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func (type $func) (result anyref)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $caller (type $3) (result anyref)
+  ;; CHECK-NEXT:  (call_ref $func
+  ;; CHECK-NEXT:   (struct.get $inner 0
+  ;; CHECK-NEXT:    (global.get $global.unnested.0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (result anyref)
+    (call_ref $func
+      ;; TODO: If we did two passes, we could optimize this one too.
+      (struct.get $inner 0
+        ;; These two can be optimized, if we un-nest the global. When doing so we
+        ;; turn these into a global.get, with a global name that does not exist yet
+        ;; (we only create that global later in the pass). We must not think it is
+        ;; a complete global.get and try to optimize with it when we reach the
+        ;; parent struct.get.
+        (struct.get $outer 0
+          (global.get $global)
+        )
       )
     )
   )

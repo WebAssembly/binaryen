@@ -345,7 +345,7 @@ struct SignatureRefining : public Pass {
 
       auto name = Names::getValidFunctionName(*module, import->name);
       auto newImport = module->addFunction(Builder(*module).makeFunction(
-        name, Type(newType, NonNullable, Exact), {}));
+        name, Type(newType, NonNullable, Inexact), {}));
 
       // Copy the binaryen intrinsic module.base import names.
       newImport->module = import->module;

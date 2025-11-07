@@ -359,7 +359,7 @@ struct StringLowering : public StringGathering {
     auto sig = Signature(params, results);
     Builder builder(*module);
     auto* func = module->addFunction(
-      builder.makeFunction(name, Type(sig, NonNullable, Exact), {}));
+      builder.makeFunction(name, Type(sig, NonNullable, Inexact), {}));
     func->module = WasmStringsModule;
     func->base = trueName;
     return name;

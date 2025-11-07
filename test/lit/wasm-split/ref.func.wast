@@ -73,7 +73,9 @@
 
  ;; SECONDARY:      (func $second (type $0)
  ;; SECONDARY-NEXT:  (drop
- ;; SECONDARY-NEXT:   (ref.func $prime)
+ ;; SECONDARY-NEXT:   (ref.cast (ref (exact $0))
+ ;; SECONDARY-NEXT:    (ref.func $prime)
+ ;; SECONDARY-NEXT:   )
  ;; SECONDARY-NEXT:  )
  ;; SECONDARY-NEXT:  (drop
  ;; SECONDARY-NEXT:   (ref.func $second)
