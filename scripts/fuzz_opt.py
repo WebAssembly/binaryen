@@ -2661,7 +2661,7 @@ if __name__ == '__main__':
                 print(arg)
                 if type(arg) is str:
                     if 'comparison error' in arg:
-                        given_seen_error = 2
+                        given_seed_error = 2
 
             # We want to generate a template reducer script only when there is
             # no given wasm file. That we have a given wasm file means we are no
@@ -2820,4 +2820,4 @@ After reduction, the reduced file will be in %(working_wasm)s
             sys.exit(0)
         else:
             print('(finished running seed %d, see error above)' % given_seed)
-            sys.exit(given_seen_error)
+            sys.exit(given_seed_error)
