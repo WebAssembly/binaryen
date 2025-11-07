@@ -455,17 +455,12 @@ def compare(x, y, context, verbose=True):
     if x != y and x != IGNORE and y != IGNORE:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
         if verbose:
-            print(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
+            raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
                 x, y,
                 message
             ))
         else:
-            print(context + "\nDiff:\n\n%s" % (message))
-        traceback.print_stack()
-        # Exit with code 2, which is different than code 1 that happens for a
-        # thrown Python exception. This allows the reducer to not get confused
-        # between a comparison error and some other kind of error.
-        sys.exit(2)
+            raise Exception(context + "\nDiff:\n\n%s" % (message))
 
 
 # converts a possibly-signed integer to an unsigned integer
@@ -1788,9 +1783,9 @@ class ClusterFuzz(TestCaseHandler):
         tar.close()
 
 
-# Tests linking two wasm files at runtime, and that optimizations do not break
-# anything. This is similar to Split(), but rather than split a wasm file into
-# two and link them at runtime, this starts with two separate wasm files.
+# Generates two wasm and tests interesting interactions between them. This is a
+# little similar to Split(), but rather than split one wasm file into two and
+# test that, we start with two.
 #
 # Fuzzing failures here is a little trickier, as there are two wasm files.
 # You can reduce the primary file by finding the secondary one in the log
@@ -1817,7 +1812,7 @@ class ClusterFuzz(TestCaseHandler):
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
-    frequency = 1
+    frequency = 1  # TODO: We may want even higher priority here
 
     def handle(self, wasm):
         # Generate a second wasm file. (For fuzzing, we may be given one, but we
@@ -1870,9 +1865,50 @@ class Two(TestCaseHandler):
             print(f'warning: no calls in output. output:\n{output}')
         assert calls_in_output == len(exports), exports
 
+        # Merge the files and run them that way. The result should be the same,
+        # even if we optimize. TODO: merge (no pun intended) the rest of Merge
+        # into here.
+        merged = abspath('merged.wasm')
+        run([in_bin('wasm-merge'), wasm, 'primary', second_wasm, 'secondary',
+            '-o', merged, '--rename-export-conflicts', '-all'])
+
+        # Usually also optimize the merged module. Optimizations are very
+        # interesting here, because after merging we can safely do even closed-
+        # world optimizations, making very aggressive changes that should still
+        # behave the same as before merging.
+        if random.random() < 0.8:
+            merged_opt = abspath('merged.opt.wasm')
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), merged, '-o', merged_opt, '-all'] + opts)
+            merged = merged_opt
+
+        if not wasm_notices_export_changes(merged):
+            # wasm-merge combines exports, which can alter their indexes and
+            # lead to noticeable differences if the wasm is sensitive to such
+            # things. We only compare the output if that is not an issue.
+            merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
+
+            if merged_output == IGNORE:
+                # The original output was ok, but after merging it becomes
+                # something we must ignore. This can happen when we optimize, if
+                # the optimizer reorders a normal trap (say a null exception)
+                # with a host limit trap (say an allocation limit). Nothing to
+                # do here, but verify we did optimize, as otherwise this is
+                # inexplicable.
+                assert merged == abspath('merged.opt.wasm')
+            else:
+                self.compare_to_merged_output(output, merged_output)
+
+        # The rest of the testing here depends on being to optimize the
+        # two modules independently, which closed-world can break.
+        if CLOSED_WORLD:
+            return
+
+        # Fix up the normal output for later comparisons.
         output = fix_output(output)
 
-        # Optimize at least one of the two.
+        # We can optimize and compare the results. Optimize at least one of
+        # the two.
         wasms = [wasm, second_wasm]
         for i in range(random.randint(1, 2)):
             wasm_index = random.randint(0, 1)
@@ -1886,7 +1922,7 @@ class Two(TestCaseHandler):
         optimized_output = run_bynterp(wasms[0], args=['--fuzz-exec-before', f'--fuzz-exec-second={wasms[1]}'])
         optimized_output = fix_output(optimized_output)
 
-        compare(output, optimized_output, 'Two')
+        compare(output, optimized_output, 'Two-Opt')
 
         # If we can, also test in V8. We also cannot compare if there are NaNs
         # (as optimizations can lead to different outputs), and we must
@@ -1912,10 +1948,56 @@ class Two(TestCaseHandler):
 
         compare(output, optimized_output, 'Two-V8')
 
-    def can_run_on_wasm(self, wasm):
-        # We cannot optimize wasm files we are going to link in closed world
-        # mode.
-        return not CLOSED_WORLD
+    def compare_to_merged_output(self, output, merged_output):
+        # Comparing the original output from two files to the output after
+        # merging them is not trivial. First, remove the extra logging that
+        # --fuzz-exec-second adds.
+        output = output.replace('[fuzz-exec] running second module\n', '')
+
+        # Fix up both outputs.
+        output = fix_output(output)
+        merged_output = fix_output(merged_output)
+
+        # Finally, align the export names. We merged with
+        # --rename-export-conflicts, so that all exports remain exported,
+        # allowing a full comparison, but we do need to handle the different
+        # names. We do so by matching the export names in the logging.
+        output_lines = output.splitlines()
+        merged_output_lines = merged_output.splitlines()
+
+        if len(output_lines) != len(merged_output_lines):
+            # The line counts don't even match. Just compare them, which will
+            # emit a nice error for that.
+            compare(output, merged_output, 'Two-Counts')
+            assert False, 'we should have errored on the line counts'
+
+        for i in range(len(output_lines)):
+            a = output_lines[i]
+            b = merged_output_lines[i]
+            if a == b:
+                continue
+            if a.startswith(FUZZ_EXEC_CALL_PREFIX):
+                # Fix up
+                #   [fuzz-exec] calling foo/bar
+                # for different foo/bar. Just copy the original.
+                assert b.startswith(FUZZ_EXEC_CALL_PREFIX)
+                merged_output_lines[i] = output_lines[i]
+            elif a.startswith(FUZZ_EXEC_NOTE_RESULT):
+                # Fix up
+                #   [fuzz-exec] note result: foo/bar => 42
+                # for different foo/bar. We do not want to copy the result here,
+                # which might differ (that would be a bug we want to find).
+                assert b.startswith(FUZZ_EXEC_NOTE_RESULT)
+                assert a.count(' => ') == 1
+                assert b.count(' => ') == 1
+                a_prefix, a_result = a.split(' => ')
+                b_prefix, b_result = b.split(' => ')
+                # Copy a's prefix with b's result.
+                merged_output_lines[i] = a_prefix + ' => ' + b_result
+
+        merged_output = '\n'.join(merged_output_lines)
+
+        compare(output, merged_output, 'Two-Merged')
 
 
 # Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
@@ -2529,7 +2611,7 @@ if __name__ == '__main__':
         counter += 1
         if given_seed is not None:
             seed = given_seed
-            given_seed_passed = True
+            given_seed_error = 0
         else:
             seed = random.randint(0, 1 << 64)
         random.seed(seed)
@@ -2570,10 +2652,16 @@ if __name__ == '__main__':
             traceback.print_tb(tb)
             print('-----------------------------------------')
             print('!')
+            # Default to an error code of 1, but change it for certain errors,
+            # so we report them differently (useful for the reducer to keep
+            # reducing the exact same error category)
+            if given_seed is not None:
+                given_seed_error = 1
             for arg in e.args:
                 print(arg)
-            if given_seed is not None:
-                given_seed_passed = False
+                if type(arg) is str:
+                    if 'comparison error' in arg:
+                        given_seen_error = 2
 
             # We want to generate a template reducer script only when there is
             # no given wasm file. That we have a given wasm file means we are no
@@ -2727,9 +2815,9 @@ After reduction, the reduced file will be in %(working_wasm)s
             print('  ', testcase_handler.__class__.__name__ + ':', testcase_handler.count_runs())
 
     if given_seed is not None:
-        if given_seed_passed:
+        if not given_seed_error:
             print('(finished running seed %d without error)' % given_seed)
             sys.exit(0)
         else:
             print('(finished running seed %d, see error above)' % given_seed)
-            sys.exit(1)
+            sys.exit(given_seen_error)
