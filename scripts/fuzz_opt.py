@@ -2486,7 +2486,8 @@ requires_closed_world = {("--type-refining",),
                          ("--cfp-reftest",),
                          ("--gsi",),
                          ("--type-ssa",),
-                         ("--type-merging",)}
+                         ("--type-merging",),
+                         ("--unsubtyping",)}
 
 
 def get_random_opts():
