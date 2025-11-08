@@ -151,9 +151,7 @@ struct JSPI : public Pass {
           if (iter == wrappedExports.end()) {
             continue;
           }
-          auto* replacementRef = builder.makeRefFunc(
-            iter->second,
-            module->getFunction(iter->second)->type.getHeapType());
+          auto* replacementRef = builder.makeRefFunc(iter->second);
           segment->data[i] = replacementRef;
         }
       }

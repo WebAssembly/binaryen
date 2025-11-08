@@ -584,10 +584,7 @@ void updateTypes(Module& wasm) {
       }
     }
 
-    void visitRefFunc(RefFunc* curr) {
-      curr->finalize(getModule()->getFunction(curr->func)->type.getHeapType(),
-                     *getModule());
-    }
+    void visitRefFunc(RefFunc* curr) { curr->finalize(*getModule()); }
 
     void visitFunction(Function* curr) {
       ReFinalize().walkFunctionInModule(curr, getModule());

@@ -148,7 +148,7 @@ struct LegalizeJSInterface : public Pass {
           }
 
           curr->func = iter->second->name;
-          curr->finalize(iter->second->type.getHeapType(), *getModule());
+          curr->finalize(*getModule());
         }
       };
 
