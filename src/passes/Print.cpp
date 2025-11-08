@@ -3078,6 +3078,9 @@ void PrintSExpression::handleSignature(Function* curr,
   o << '(';
   printMajor(o, "func ");
   curr->name.print(o);
+  if (curr->imported() && curr->type.isExact()) {
+    o << " (exact";
+  }
   if ((currModule && currModule->features.hasGC()) ||
       requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
@@ -3123,6 +3126,9 @@ void PrintSExpression::handleSignature(Function* curr,
   if (curr->getResults() != Type::none) {
     o << maybeSpace;
     printResultType(curr->getResults());
+  }
+  if (curr->imported() && curr->type.isExact()) {
+    o << ')';
   }
 }
 

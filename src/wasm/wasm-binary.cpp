@@ -332,8 +332,11 @@ void WasmBinaryWriter::writeImports() {
   };
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
     writeImportHeader(func);
-    o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getTypeIndex(func->type.getHeapType()));
+    auto kind = (uint32_t)ExternalKind::Function;
+    if (func->type.isExact()) {
+      kind |= BinaryConsts::ExactImport;
+    }
+    o << U32LEB(kind) << U32LEB(getTypeIndex(func->type.getHeapType()));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     writeImportHeader(global);
@@ -2875,12 +2878,13 @@ void WasmBinaryReader::readImports() {
   for (size_t i = 0; i < num; i++) {
     auto module = getInlineString();
     auto base = getInlineString();
-    auto kind = (ExternalKind)getU32LEB();
+    auto kind = getU32LEB();
     // We set a unique prefix for the name based on the kind. This ensures no
     // collisions between them, which can't occur here (due to the index i) but
     // could occur later due to the names section.
     switch (kind) {
-      case ExternalKind::Function: {
+      case (uint32_t)ExternalKind::Function:
+      case (uint32_t)ExternalKind::Function | BinaryConsts::ExactImport: {
         auto [name, isExplicit] =
           getOrMakeName(functionNames,
                         wasm.functions.size(),
@@ -2894,8 +2898,9 @@ void WasmBinaryReader::readImports() {
                      '.' + base.toString() +
                      "'s type must be a signature. Given: " + type.toString());
         }
+        auto exact = (kind & BinaryConsts::ExactImport) ? Exact : Inexact;
         auto curr =
-          builder.makeFunction(name, Type(type, NonNullable, Inexact), {});
+          builder.makeFunction(name, Type(type, NonNullable, exact), {});
         curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
@@ -2903,7 +2908,7 @@ void WasmBinaryReader::readImports() {
         wasm.addFunction(std::move(curr));
         break;
       }
-      case ExternalKind::Table: {
+      case (uint32_t)ExternalKind::Table: {
         auto [name, isExplicit] =
           getOrMakeName(tableNames,
                         wasm.tables.size(),
@@ -2927,7 +2932,7 @@ void WasmBinaryReader::readImports() {
         wasm.addTable(std::move(table));
         break;
       }
-      case ExternalKind::Memory: {
+      case (uint32_t)ExternalKind::Memory: {
         auto [name, isExplicit] =
           getOrMakeName(memoryNames,
                         wasm.memories.size(),
@@ -2945,7 +2950,7 @@ void WasmBinaryReader::readImports() {
         wasm.addMemory(std::move(memory));
         break;
       }
-      case ExternalKind::Global: {
+      case (uint32_t)ExternalKind::Global: {
         auto [name, isExplicit] =
           getOrMakeName(globalNames,
                         wasm.globals.size(),
@@ -2967,7 +2972,7 @@ void WasmBinaryReader::readImports() {
         wasm.addGlobal(std::move(curr));
         break;
       }
-      case ExternalKind::Tag: {
+      case (uint32_t)ExternalKind::Tag: {
         auto [name, isExplicit] =
           getOrMakeName(tagNames,
                         wasm.tags.size(),
@@ -4692,7 +4697,7 @@ void WasmBinaryReader::readExports() {
       throwError("duplicate export name");
     }
     ExternalKind kind = (ExternalKind)getU32LEB();
-    std::variant<Name, HeapType> value;
+    std::optional<std::variant<Name, HeapType>> value;
     auto index = getU32LEB();
     switch (kind) {
       case ExternalKind::Function:
@@ -4711,9 +4716,12 @@ void WasmBinaryReader::readExports() {
         value = getTagName(index);
         break;
       case ExternalKind::Invalid:
-        throwError("invalid export kind");
+        break;
     }
-    wasm.addExport(new Export(name, kind, value));
+    if (!value) {
+      throwError("invalid export kind");
+    }
+    wasm.addExport(new Export(name, kind, *value));
   }
 }
 

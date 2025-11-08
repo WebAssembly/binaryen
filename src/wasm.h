@@ -2343,13 +2343,13 @@ public:
 };
 
 // The kind of an import or export.
-enum class ExternalKind {
+enum class ExternalKind : uint32_t {
   Function = 0,
   Table = 1,
   Memory = 2,
   Global = 3,
   Tag = 4,
-  Invalid = -1
+  Invalid = uint32_t(-1)
 };
 
 // The kind of a top-level module item. (This overlaps with ExternalKind, but
