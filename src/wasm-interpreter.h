@@ -511,6 +511,20 @@ protected:
     currContinuation->resumeInfo.push_back(entry);
   }
 
+  // Rvalue reference overload to avoid unnecessary copies when the entry
+  // is about to be destroyed.
+  void pushResumeEntry(Literals&& entry, const char* what) {
+    auto currContinuation = getCurrContinuationOrNull();
+    if (!currContinuation) {
+      return;
+    }
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "push resume entry [" << what << "]: " << entry
+              << "\n";
+#endif
+    currContinuation->resumeInfo.push_back(std::move(entry));
+  }
+
   // Fetch an entry as we resume. Instructions call this as we rewind.
   Literals popResumeEntry(const char* what) {
 #if WASM_INTERPRETER_DEBUG
@@ -518,7 +532,7 @@ protected:
 #endif
     auto currContinuation = getCurrContinuation();
     assert(!currContinuation->resumeInfo.empty());
-    auto entry = currContinuation->resumeInfo.back();
+    auto entry = std::move(currContinuation->resumeInfo.back());
     currContinuation->resumeInfo.pop_back();
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "                 => " << entry << "\n";
@@ -618,8 +632,7 @@ public:
             auto& values = valueStack.back();
             auto num = values.size();
             while (!values.empty()) {
-              // TODO: std::move, &elsewhere?
-              pushResumeEntry(values.back(), "child value");
+              pushResumeEntry(std::move(values.back()), "child value");
               values.pop_back();
             }
             pushResumeEntry({Literal(int32_t(num))}, "num executed children");
@@ -687,7 +700,7 @@ public:
       // in the block.
       entry.push_back(Literal(uint32_t(stack.size())));
       entry.push_back(Literal(uint32_t(blockIndex)));
-      pushResumeEntry(entry, "block");
+      pushResumeEntry(std::move(entry), "block");
     };
     Index blockIndex = 0;
     if (isResuming()) {
@@ -4779,7 +4792,7 @@ public:
           // callFunction() will read it. Then call into the other module. This
           // sets this up as if we called into the proper module in the first
           // place.
-          self()->pushResumeEntry(entry, "function-target");
+          self()->pushResumeEntry(std::move(entry), "function-target");
           return data->doCall(arguments);
         }
 
@@ -4843,7 +4856,7 @@ public:
       if (flow.suspendTag) {
         // Save the local state.
         for (auto& local : scope.locals) {
-          self()->pushResumeEntry(local, "function-local");
+          self()->pushResumeEntry(std::move(local), "function-local");
         }
 
         // Save the function we called (in the case of a return call, this is
