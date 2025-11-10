@@ -3955,7 +3955,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       }
       Expression* descriptor = nullptr;
       if (auto descType = heapType.getDescriptorType()) {
-        descriptor = make(Type(*descType, Nullable, Exact));
+        descriptor = makeTrappingRefUse(Type(*descType, Nullable, Exact));
       }
       return builder.makeStructNew(heapType, values, descriptor);
     }
@@ -4079,13 +4079,17 @@ Expression* TranslateToFuzzReader::makeStringGet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
+  return makeTrappingRefUse(Type(type, Nullable));
+}
+
+Expression* TranslateToFuzzReader::makeTrappingRefUse(Type type) {
   auto percent = upTo(100);
   // Only give a low probability to emit a nullable reference.
   if (percent < 5) {
-    return make(Type(type, Nullable));
+    return make(type.with(Nullable));
   }
   // Otherwise, usually emit a non-nullable one.
-  auto nonNull = Type(type, NonNullable);
+  auto nonNull = type.with(NonNullable);
   if (percent < 70 || !funcContext) {
     return make(nonNull);
   }
