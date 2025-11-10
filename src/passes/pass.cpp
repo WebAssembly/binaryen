@@ -769,7 +769,9 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       } else {
         addIfNoDWARFIssues("cfp");
       }
-      addIfNoDWARFIssues("gsi");
+    }
+    addIfNoDWARFIssues("gsi");
+    if (options.closedWorld) {
       addIfNoDWARFIssues("abstract-type-refining");
       addIfNoDWARFIssues("unsubtyping");
     }

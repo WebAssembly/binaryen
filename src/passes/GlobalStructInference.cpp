@@ -15,6 +15,9 @@
  */
 
 //
+// GlobalStructInference: Analyze struct usage globally, in particular, structs
+// created (perhaps only) in globals.
+//
 // Finds types which are only created in assignments to immutable globals. For
 // such types we can replace a struct.get with a global.get when there is a
 // single possible global, or if there are two then with this pattern:
@@ -47,7 +50,7 @@
 //
 // This also optimizes some related things - reads from structs created in
 // globals - that benefit from the infrastructure here (see unnesting, below),
-// even without this type-based approach.
+// even without this type-based approach, and even in open world.
 //
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
@@ -81,6 +84,9 @@ struct GlobalStructInference : public Pass {
   //
   // We will remove unoptimizable types from here, so in practice, if a type is
   // optimizable it will have an entry here, and not if not.
+  //
+  // This is filled in when in closed world. In open world, we cannot do such
+  // type-based inference, and this remains empty.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
   void run(Module* module) override {
@@ -88,10 +94,14 @@ struct GlobalStructInference : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
-      Fatal() << "GSI requires --closed-world";
+    if (getPassOptions().closedWorld) {
+      analyzeClosedWorld(module);
     }
 
+    optimize(module);
+  }
+
+  void analyzeClosedWorld(Module* module) {
     // First, find all the information we need. We need to know which struct
     // types are created in functions, because we will not be able to optimize
     // those.
@@ -213,7 +223,9 @@ struct GlobalStructInference : public Pass {
     for (auto& [type, globals] : typeGlobals) {
       std::sort(globals.begin(), globals.end());
     }
+  }
 
+  void optimize(Module* module) {
     // We are looking for the case where we can pick between two values using a
     // single comparison. More than two values, or more than a single
     // comparison, lead to tradeoffs that may not be worth it.
