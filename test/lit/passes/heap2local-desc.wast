@@ -1266,7 +1266,7 @@
     ;; After we optimize the struct.new above, the local.get below will get
     ;; removed, and we will see that the ref.cast_desc traps (the input
     ;; descriptor differs from the one we test, the allocation we just
-    ;; removed). When optimizing that, we should not emit invalid ID for the
+    ;; removed). When optimizing that, we should not emit invalid IR for the
     ;; ref.is_null: It has an i32 result normally, but in unreachable code it
     ;; must remain unreachable.
     (ref.is_null
