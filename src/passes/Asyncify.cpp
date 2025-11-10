@@ -354,8 +354,6 @@ namespace {
 
 static const Name ASYNCIFY_STATE = "__asyncify_state";
 static const Name ASYNCIFY_GET_STATE = "asyncify_get_state";
-static const Name ASYNCIFY_CATCH_COUNTER = "__asyncify_catch_counter";
-static const Name ASYNCIFY_GET_CATCH_COUNTER = "asyncify_get_catch_counter";
 static const Name ASYNCIFY_DATA = "__asyncify_data";
 static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
 static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
@@ -1248,202 +1246,6 @@ private:
   }
 };
 
-// Add catch block counters to verify that unwinding is not done from catch
-// block.
-struct AsyncifyAddCatchCounters : public Pass {
-  bool isFunctionParallel() override { return true; }
-
-  std::unique_ptr<Pass> create() override {
-    return std::make_unique<AsyncifyAddCatchCounters>();
-  }
-
-  void runOnFunction(Module* module_, Function* func) override {
-    class CountersBuilder : public Builder {
-    public:
-      CountersBuilder(Module& wasm) : Builder(wasm) {}
-      Expression* makeInc(int amount = 1) {
-        return makeGlobalSet(
-          ASYNCIFY_CATCH_COUNTER,
-          makeBinary(AddInt32,
-                     makeGlobalGet(ASYNCIFY_CATCH_COUNTER, Type::i32),
-                     makeConst(int32_t(amount))));
-      }
-      Expression* makeDec(int amount = 1) {
-        return makeGlobalSet(
-          ASYNCIFY_CATCH_COUNTER,
-          makeBinary(SubInt32,
-                     makeGlobalGet(ASYNCIFY_CATCH_COUNTER, Type::i32),
-                     makeConst(int32_t(amount))));
-      }
-    };
-
-    // with this walker we will handle those changes of counter:
-    // - entering top-level catch (= pop)           +1
-    // - entering nested catch (= pop)               0 (ignored)
-    //
-    // - return inside top-level/nested catch       -1
-    // - return outside top-level/nested catch       0 (ignored)
-    //
-    // - break target outside of top-level catch    -1
-    // - break target inside of top-level catch      0 (ignored)
-    // - break outside top-level/nested catch        0 (ignored)
-    //
-    // - exiting from top-level catch               -1
-    // - exiting from nested catch                   0 (ignored)
-    struct AddCountersWalker : public PostWalker<AddCountersWalker> {
-      Function* func;
-      CountersBuilder* builder;
-      BranchUtils::BranchTargets* branchTargets;
-      Parents* parents;
-      int finallyNum = 0;
-      int popNum = 0;
-
-      int getCatchCount(Expression* expression) {
-        int catchCount = 0;
-        while (expression != func->body) {
-          auto parent = parents->getParent(expression);
-          if (auto* try_ = parent->dynCast<Try>()) {
-            if (try_->body != expression) {
-              catchCount++;
-            }
-          }
-          expression = parent;
-        }
-
-        return catchCount;
-      }
-
-      // Each catch block except catch_all should have pop instruction
-      // We increment counter each time when we enter top-level catch block
-      void visitPop(Pop* pop) {
-        if (getCatchCount(pop) == 1) {
-          auto name =
-            func->name.toString() + "-pop-" + std::to_string(++popNum);
-          replaceCurrent(
-            builder->makeBlock(name, {pop, builder->makeInc()}, Type::none));
-        }
-      }
-      void visitLocalSet(LocalSet* set) {
-        auto block = set->value->dynCast<Block>(); // from visitPop above
-        if (block && block->name.hasSubstring("-pop-")) {
-          auto pop = block->list[0]->dynCast<Pop>();
-          assert(pop && getCatchCount(pop) == 1);
-          set->value = pop;
-          replaceCurrent(builder->makeBlock(
-            block->name, {set, builder->makeInc()}, Type::none));
-        }
-      }
-
-      // When return happens we decrement counter on 1, because we account
-      // only top-level catch blocks
-      // catch
-      //   +1
-      //   catch
-      //     ;; not counted
-      //     -1
-      //     return
-      // ...
-      void visitReturn(Return* ret) {
-        if (getCatchCount(ret) > 0) {
-          replaceCurrent(builder->makeSequence(builder->makeDec(), ret));
-        }
-      }
-
-      // When break happens we decrement counter only if it goes out
-      // from top-level catch block
-      void visitBreak(Break* br) {
-        Expression* target = branchTargets->getTarget(br->name);
-        assert(target != nullptr);
-        if (getCatchCount(br) > 0 && getCatchCount(target) == 0) {
-          if (br->condition == nullptr) {
-            replaceCurrent(builder->makeSequence(builder->makeDec(), br));
-          } else if (br->value == nullptr) {
-            auto decIf =
-              builder->makeIf(br->condition,
-                              builder->makeSequence(builder->makeDec(), br),
-                              nullptr);
-            br->condition = nullptr;
-            replaceCurrent(decIf);
-          } else {
-            Index newLocal = builder->addVar(func, br->value->type);
-            auto setLocal = builder->makeLocalSet(newLocal, br->value);
-            auto getLocal = builder->makeLocalGet(newLocal, br->value->type);
-            auto condition = br->condition;
-            br->condition = nullptr;
-            br->value = getLocal;
-            auto decIf =
-              builder->makeIf(condition,
-                              builder->makeSequence(builder->makeDec(), br),
-                              getLocal);
-            replaceCurrent(builder->makeSequence(setLocal, decIf));
-          }
-        }
-      }
-
-      // Replacing each top-level catch block with try/catch_all(finally) and
-      // increase counter for catch_all blocks (not handled by visitPop); dec
-      // counter at the end of catch block try ({fn}-finally-{label})
-      //   +1
-      //   {catch body}
-      //   -1
-      // catch_all
-      //   -1
-      //   rethrow {fn}-finally-{label}
-      void visitTry(Try* curr) {
-        if (getCatchCount(curr) == 0) {
-          for (size_t i = 0; i < curr->catchBodies.size(); ++i) {
-            curr->catchBodies[i] = addCatchCounters(
-              curr->catchBodies[i], i == curr->catchTags.size());
-          }
-        }
-      }
-      Expression* addCatchCounters(Expression* expression, bool catchAll) {
-        auto block = expression->dynCast<Block>();
-        if (block == nullptr) {
-          block = builder->makeBlock(expression);
-        }
-
-        // catch_all case is not covered by visitPop
-        if (catchAll) {
-          block->list.insertAt(0, builder->makeInc());
-        }
-
-        // dec counters at the end of catch
-        if (block->type == Type::none) {
-          auto last = block->list[block->list.size() - 1];
-          if (!last->dynCast<Return>()) {
-            block->list.push_back(builder->makeDec());
-            block->finalize();
-          }
-        }
-
-        auto name =
-          func->name.toString() + "-finally-" + std::to_string(++finallyNum);
-        return builder->makeTry(
-          name,
-          block,
-          {},
-          {builder->makeSequence(builder->makeDec(),
-                                 builder->makeRethrow(name))},
-          block->type);
-      }
-    };
-
-    Parents parents(func->body);
-    CountersBuilder builder(*module_);
-    BranchUtils::BranchTargets branchTargets(func->body);
-
-    AddCountersWalker addCountersWalker;
-    addCountersWalker.func = func;
-    addCountersWalker.builder = &builder;
-    addCountersWalker.branchTargets = &branchTargets;
-    addCountersWalker.parents = &parents;
-    addCountersWalker.walk(func->body);
-
-    EHUtils::handleBlockNestedPops(func, *module_);
-  }
-};
-
 // Add asserts in non-instrumented code.
 struct AsyncifyAssertInNonInstrumented : public Pass {
   bool isFunctionParallel() override { return true; }
@@ -1540,6 +1342,80 @@ struct AsyncifyAssertInNonInstrumented : public Pass {
 private:
   std::unique_ptr<AsyncifyBuilder> builder;
   Module* module;
+};
+
+struct AsyncifyAssertUnwindCorrectness : Pass {
+  ModuleAnalyzer* analyzer;
+  Module* module;
+
+  AsyncifyAssertUnwindCorrectness(ModuleAnalyzer* analyzer, Module* module) {
+    this->analyzer = analyzer;
+    this->module = module;
+  }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AsyncifyAssertUnwindCorrectness>(analyzer, module);
+  }
+
+  bool isFunctionParallel() override { return true; }
+
+  void runOnFunction(Module*, Function* function) override {
+    auto builder = std::make_unique<Builder>(*module);
+
+    struct UnwindWalker : WalkerPass<ExpressionStackWalker<UnwindWalker>> {
+      Function* function;
+      Builder* builder;
+
+      void replaceCallWithCheck(Call* call) {
+        auto check = builder->makeIf(
+          builder->makeBinary(NeInt32,
+                              builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32),
+                              builder->makeConst(int32_t(State::Normal))),
+          builder->makeUnreachable());
+        if (call->type.isConcrete()) {
+          auto temp = builder->addVar(function, call->type);
+          replaceCurrent(builder->makeBlock(
+            {
+              builder->makeLocalSet(temp, call),
+              check,
+              builder->makeLocalGet(temp, call->type),
+            },
+            call->type));
+        } else {
+          replaceCurrent(builder->makeBlock(
+            {
+              call,
+              check,
+            },
+            call->type));
+        }
+      }
+
+      void visitCall(Call* curr) {
+        assert(!expressionStack.empty());
+        std::vector<int> parents;
+        Index i = expressionStack.size() - 1;
+        while (i > 0) {
+          auto* expr = expressionStack[i];
+          if (Try* aTry = expr->template dynCast<Try>()) {
+            // check if curr is inside body of aTry (which is safe),
+            // otherwise do replace a call
+            assert(i + 1 < expressionStack.size());
+            if (expressionStack[i + 1] != aTry->body) {
+              replaceCallWithCheck(curr);
+            }
+            break;
+          }
+          i--;
+        }
+      };
+    };
+
+    UnwindWalker walker;
+    walker.function = function;
+    walker.builder = builder.get();
+    walker.walk(function->body);
+  }
 };
 
 // Instrument local saving/restoring.
@@ -1876,8 +1752,6 @@ struct Asyncify : public Pass {
     auto relocatable = hasArgument("asyncify-relocatable");
     auto secondaryMemory = hasArgument("asyncify-in-secondary-memory");
     auto propagateAddList = hasArgument("asyncify-propagate-addlist");
-    auto ignoreCatchUnwind = hasArgument("asyncify-ignore-unwind-from-catch");
-    auto addAsyncifyCounters = asserts || ignoreCatchUnwind;
 
     // Ensure there is a memory, as we need it.
 
@@ -1942,7 +1816,7 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module, relocatable, addAsyncifyCounters);
+    addGlobals(module, relocatable);
 
     // Compute the set of functions we will instrument. All of the passes we run
     // below only need to run there.
@@ -1983,16 +1857,15 @@ struct Asyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
-    if (asserts || addAsyncifyCounters) {
+    if (asserts) {
       // Add asserts in non-instrumented code. Note we do not use an
       // instrumented pass runner here as we do want to run on all functions.
       PassRunner runner(module);
-      if (addAsyncifyCounters) {
-        runner.add(std::make_unique<AsyncifyAddCatchCounters>());
-      }
       if (asserts) {
         runner.add(std::make_unique<AsyncifyAssertInNonInstrumented>(
           &analyzer, pointerType, asyncifyMemory));
+        runner.add(
+          std::make_unique<AsyncifyAssertUnwindCorrectness>(&analyzer, module));
       }
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
@@ -2019,11 +1892,11 @@ struct Asyncify : public Pass {
     }
     // Finally, add function support (that should not have been seen by
     // the previous passes).
-    addFunctions(module, asserts, ignoreCatchUnwind);
+    addFunctions(module, asserts);
   }
 
 private:
-  void addGlobals(Module* module, bool imported, bool addAsyncifyCounters) {
+  void addGlobals(Module* module, bool imported) {
     Builder builder(*module);
 
     auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
@@ -2036,19 +1909,6 @@ private:
     }
     module->addGlobal(std::move(asyncifyState));
 
-    if (addAsyncifyCounters) {
-      auto asyncifyCatchCounter =
-        builder.makeGlobal(ASYNCIFY_CATCH_COUNTER,
-                           Type::i32,
-                           builder.makeConst(int32_t(0)),
-                           Builder::Mutable);
-      if (imported) {
-        asyncifyCatchCounter->module = ENV;
-        asyncifyCatchCounter->base = ASYNCIFY_CATCH_COUNTER;
-      }
-      module->addGlobal(std::move(asyncifyCatchCounter));
-    }
-
     auto asyncifyData = builder.makeGlobal(ASYNCIFY_DATA,
                                            pointerType,
                                            builder.makeConst(pointerType),
@@ -2060,20 +1920,10 @@ private:
     module->addGlobal(std::move(asyncifyData));
   }
 
-  void addFunctions(Module* module, bool asserts, bool ignoreCatchUnwind) {
+  void addFunctions(Module* module, bool asserts) {
     Builder builder(*module);
     auto makeFunction = [&](Name name, bool setData, State state) {
       auto* body = builder.makeBlock();
-      if (name == ASYNCIFY_START_UNWIND && (asserts || ignoreCatchUnwind)) {
-        auto* check = builder.makeIf(
-          builder.makeBinary(
-            NeInt32,
-            builder.makeGlobalGet(ASYNCIFY_CATCH_COUNTER, Type::i32),
-            builder.makeConst(int32_t(0))),
-          ignoreCatchUnwind ? (Expression*)builder.makeReturn()
-                            : (Expression*)builder.makeUnreachable());
-        body->list.push_back(check);
-      }
       std::vector<Type> params;
       if (setData) {
         params.push_back(pointerType);
@@ -2125,17 +1975,6 @@ private:
                            builder.makeGlobalGet(ASYNCIFY_STATE, Type::i32)));
     module->addExport(builder.makeExport(
       ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
-
-    if (asserts || ignoreCatchUnwind) {
-      module->addFunction(builder.makeFunction(
-        ASYNCIFY_GET_CATCH_COUNTER,
-        Signature(Type::none, Type::i32),
-        {},
-        builder.makeGlobalGet(ASYNCIFY_CATCH_COUNTER, Type::i32)));
-      module->addExport(builder.makeExport(ASYNCIFY_GET_CATCH_COUNTER,
-                                           ASYNCIFY_GET_CATCH_COUNTER,
-                                           ExternalKind::Function));
-    }
   }
 
   Name createSecondaryMemory(Module* module, Address secondaryMemorySize) {
