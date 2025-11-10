@@ -1220,10 +1220,44 @@
 
 (module
   (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
    (type $struct (sub (descriptor $desc (struct))))
+   ;; CHECK:       (type $desc (describes $struct (struct)))
    (type $desc (sub final (describes $struct (struct))))
   )
 
+  ;; CHECK:      (type $2 (func (result i32)))
+
+  ;; CHECK:      (func $test (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $desc (ref $desc))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (struct.new_default $desc)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test (result i32)
     (local $desc (ref $desc))
     (local.set $desc
