@@ -49,7 +49,7 @@ namespace wasm::analysis {
 //   template<size_t I, typename E>
 //   bool shouldAbstract(const E&. const E&) const
 //
-// shouldAbstract is only queries for unrelated elements. Related elements of
+// shouldAbstract is only queried for unrelated elements. Related elements of
 // the same sub-lattice are always joined as normal.
 template<typename Self, typename... Ls> struct Abstraction {
   using Element = std::variant<typename Ls::Element...>;
