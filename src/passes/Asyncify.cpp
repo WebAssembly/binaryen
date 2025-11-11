@@ -330,7 +330,6 @@
 
 #include "asmjs/shared-constants.h"
 #include "cfg/liveness-traversal.h"
-#include "ir/branch-utils.h"
 #include "ir/effects.h"
 #include "ir/eh-utils.h"
 #include "ir/find_all.h"
