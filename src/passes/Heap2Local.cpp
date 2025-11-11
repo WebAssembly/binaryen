@@ -795,6 +795,12 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // The result does not matter. Leave things as they are (and let DCE
+      // handle it).
+      return;
+    }
+
     // The result must be 0, since the allocation is not null. Drop the RefIs
     // and append that.
     replaceCurrent(builder.makeSequence(
