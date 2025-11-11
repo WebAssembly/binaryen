@@ -250,7 +250,7 @@
 //
 //      When an unwind operation is triggered from inside a wasm-exceptions
 //      catch block, which is not supported, silently ignore it rather than
-//      fail during rewinding later.
+//      fail during rewinding later. (This is unsafe in general.)
 //
 //   --pass-arg=asyncify-verbose
 //
