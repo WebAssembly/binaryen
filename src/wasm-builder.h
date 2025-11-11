@@ -709,10 +709,10 @@ public:
     ret->type = type;
     return ret;
   }
-  RefFunc* makeRefFunc(Name func, HeapType heapType) {
+  RefFunc* makeRefFunc(Name func) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize(heapType, wasm);
+    ret->finalize(wasm);
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
@@ -1368,7 +1368,7 @@ public:
       return makeRefNull(type.getHeapType());
     }
     if (type.isFunction()) {
-      return makeRefFunc(value.getFunc(), type.getHeapType());
+      return makeRefFunc(value.getFunc());
     }
     if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
       return makeRefI31(makeConst(value.geti31()),

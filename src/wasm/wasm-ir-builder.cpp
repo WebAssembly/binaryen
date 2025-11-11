@@ -1736,7 +1736,7 @@ Result<> IRBuilder::makeRefIsNull() {
 }
 
 Result<> IRBuilder::makeRefFunc(Name func) {
-  push(builder.makeRefFunc(func, wasm.getFunction(func)->type.getHeapType()));
+  push(builder.makeRefFunc(func));
   return Ok{};
 }
 

@@ -327,8 +327,7 @@ public:
                                      wasm.getGlobal(info.name)->type);
       } else {
         assert(info.kind == ExternalKind::Function);
-        return builder.makeRefFunc(
-          info.name, wasm.getFunction(info.name)->type.getHeapType());
+        return builder.makeRefFunc(info.name);
       }
     }
   }
