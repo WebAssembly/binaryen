@@ -131,15 +131,7 @@ private:
   const Self& self() const noexcept { return *static_cast<const Self*>(this); }
 
   // TODO: Use C++26 pack indexing.
-  template<std::size_t I, typename... Ts> struct Indexed;
-  template<typename T, typename... Ts> struct Indexed<0, T, Ts...> {
-    using type = T;
-  };
-  template<std::size_t I, typename T, typename... Ts>
-  struct Indexed<I, T, Ts...> {
-    using type = typename Indexed<I - 1, Ts...>::type;
-  };
-  template<std::size_t I> using L = typename Indexed<I, Ls...>::type;
+  template<std::size_t I> using L = std::tuple_element_t<I, std::tuple<Ls...>>;
 
   // Compute tables of functions that forward operations to the CRTP subtype or
   // the lattices. These tables map the dynamic variant indices to compile-time
