@@ -339,7 +339,6 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "ir/parents.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "passes/pass-utils.h"
