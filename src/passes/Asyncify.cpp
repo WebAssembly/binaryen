@@ -1391,6 +1391,7 @@ struct AsyncifyAssertUnwindCorrectness : Pass {
 
       void visitCall(Call* curr) {
         assert(!expressionStack.empty());
+        // Go up the stack and see if we are in a Catch.
         Index i = expressionStack.size() - 1;
         while (i > 0) {
           auto* expr = expressionStack[i];
