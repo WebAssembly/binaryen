@@ -1392,7 +1392,6 @@ struct AsyncifyAssertUnwindCorrectness : Pass {
 
       void visitCall(Call* curr) {
         assert(!expressionStack.empty());
-        std::vector<int> parents;
         Index i = expressionStack.size() - 1;
         while (i > 0) {
           auto* expr = expressionStack[i];
