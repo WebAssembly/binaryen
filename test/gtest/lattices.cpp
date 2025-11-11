@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "analysis/lattice.h"
 #include "analysis/lattices/abstraction.h"
 #include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
@@ -774,13 +775,41 @@ TEST(AbstractionLattice, Join) {
                         const auto& joiner,
                         const auto& expected) {
     testing::ScopedTrace trace(file, line, "");
-    auto copy = joinee;
-    EXPECT_EQ(abstraction.join(copy, joiner), joinee != expected);
-    EXPECT_EQ(copy, expected);
-
-    auto copy2 = joiner;
-    EXPECT_EQ(abstraction.join(copy2, joinee), joiner != expected);
-    EXPECT_EQ(copy2, expected);
+    switch (abstraction.compare(joinee, joiner)) {
+      case analysis::NO_RELATION:
+        EXPECT_NE(joinee, joiner);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::NO_RELATION);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::LESS);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::LESS);
+        break;
+      case analysis::EQUAL:
+        EXPECT_EQ(joinee, joiner);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::EQUAL);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::EQUAL);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::EQUAL);
+        break;
+      case analysis::LESS:
+        EXPECT_EQ(joiner, expected);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::GREATER);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::LESS);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::EQUAL);
+        break;
+      case analysis::GREATER:
+        EXPECT_EQ(joinee, expected);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::LESS);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::EQUAL);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::LESS);
+    }
+    {
+      auto copy = joinee;
+      EXPECT_EQ(abstraction.join(copy, joiner), joinee != expected);
+      EXPECT_EQ(copy, expected);
+    }
+    {
+      auto copy = joiner;
+      EXPECT_EQ(abstraction.join(copy, joinee), joiner != expected);
+      EXPECT_EQ(copy, expected);
+    }
   };
 
 #define JOIN(a, b, c) expectJoin(__FILE__, __LINE__, a, b, c)
