@@ -90,8 +90,8 @@ inline Index append(Table& table, Name name, Module& wasm) {
     wasm.dylinkSection->tableSize++;
   }
 
-  auto* func = wasm.getFunctionOrNull(name);
-  assert(func != nullptr && "Cannot append non-existing function to a table.");
+  assert(wasm.getFunctionOrNull(name) != nullptr &&
+         "Cannot append non-existing function to a table.");
   segment->data.push_back(Builder(wasm).makeRefFunc(name));
   table.initial++;
   return tableIndex;
