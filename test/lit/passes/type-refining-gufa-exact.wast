@@ -146,7 +146,7 @@
   (func $make
     ;; Make the struct twice, once with a proper continuation, and once with a
     ;; call to a function that GUFA infers a trap in. The latter would usually
-    ;; be fixed up, allowing the struct field to be refined, but a cast is not
+    ;; be fixed up, allowing the struct field to be refined to be exact, but a cast is not
     ;; valid on a continuation, so we must avoid refining this struct to have an
     ;; exact field.
     (drop
