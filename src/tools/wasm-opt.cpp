@@ -346,14 +346,14 @@ For more on how to optimize effectively, see
   if (translateToFuzz) {
     TranslateToFuzzReader reader(
       wasm, options.extra["infile"], options.passOptions.closedWorld);
-    if (fuzzPasses) {
-      reader.pickPasses(options);
-    }
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
     if (!fuzzImport.empty()) {
       reader.setImportedModule(fuzzImport);
+    }
+    if (fuzzPasses) {
+      reader.pickPasses(options);
     }
     reader.build();
     if (options.passOptions.validate) {

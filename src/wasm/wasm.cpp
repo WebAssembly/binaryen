@@ -827,11 +827,7 @@ void RefFunc::finalize() {
   assert(type.isSignature());
 }
 
-void RefFunc::finalize(HeapType heapType, Module& wasm) {
-  type = Type(heapType,
-              NonNullable,
-              wasm.getFunction(func)->imported() ? Inexact : Exact);
-}
+void RefFunc::finalize(Module& wasm) { type = wasm.getFunction(func)->type; }
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {

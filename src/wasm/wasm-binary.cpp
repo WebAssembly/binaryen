@@ -4962,8 +4962,7 @@ void WasmBinaryReader::readElementSegments() {
     } else {
       for (Index j = 0; j < size; j++) {
         Index index = getU32LEB();
-        auto sig = getTypeByFunctionIndex(index);
-        auto* refFunc = Builder(wasm).makeRefFunc(getFunctionName(index), sig);
+        auto* refFunc = Builder(wasm).makeRefFunc(getFunctionName(index));
         segmentData.push_back(refFunc);
       }
     }

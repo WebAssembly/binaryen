@@ -323,8 +323,11 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
 
   // Prune things that error in JS if we call them (like SIMD), some of the
   // time. This alters the wasm/JS boundary quite a lot, so testing both forms
-  // is useful.
-  if (oneIn(2)) {
+  // is useful. Note that we do not do this if there is an imported module,
+  // because in that case legalization could alter the contract between the two
+  // (that is, if the first module has an i64 param, we must call it like that,
+  // and not as two i32s which we'd get after legalization).
+  if (!importedModule && oneIn(2)) {
     options.passes.push_back("legalize-and-prune-js-interface");
   }
 
@@ -1694,8 +1697,7 @@ Function* TranslateToFuzzReader::addFunction() {
       }
     });
     auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
-    randomElem->data.push_back(
-      builder.makeRefFunc(func->name, func->type.getHeapType()));
+    randomElem->data.push_back(builder.makeRefFunc(func->name));
   }
   numAddedFunctions++;
   return func;
@@ -2988,10 +2990,7 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
   }
   // TODO: half the time make a completely random item with that type.
   return builder.makeCallRef(
-    builder.makeRefFunc(target->name, target->type.getHeapType()),
-    args,
-    type,
-    isReturn);
+    builder.makeRefFunc(target->name), args, type, isReturn);
 }
 
 Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
@@ -3627,7 +3626,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     do {
       auto& func = wasm.functions[i];
       if (Type::isSubType(func->type, type)) {
-        return builder.makeRefFunc(func->name, func->type.getHeapType());
+        return builder.makeRefFunc(func->name);
       }
       i = (i + 1) % wasm.functions.size();
     } while (i != start);
@@ -3666,7 +3665,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
                          Type(heapType, NonNullable, Exact),
                          {},
                          body));
-  return builder.makeRefFunc(func->name, heapType);
+  return builder.makeRefFunc(func->name);
 }
 
 Expression* TranslateToFuzzReader::makeConst(Type type) {
@@ -3952,7 +3951,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       }
       Expression* descriptor = nullptr;
       if (auto descType = heapType.getDescriptorType()) {
-        descriptor = make(Type(*descType, Nullable, Exact));
+        descriptor = makeTrappingRefUse(Type(*descType, Nullable, Exact));
       }
       return builder.makeStructNew(heapType, values, descriptor);
     }
@@ -4076,13 +4075,17 @@ Expression* TranslateToFuzzReader::makeStringGet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
+  return makeTrappingRefUse(Type(type, Nullable));
+}
+
+Expression* TranslateToFuzzReader::makeTrappingRefUse(Type type) {
   auto percent = upTo(100);
   // Only give a low probability to emit a nullable reference.
   if (percent < 5) {
-    return make(Type(type, Nullable));
+    return make(type.with(Nullable));
   }
   // Otherwise, usually emit a non-nullable one.
-  auto nonNull = Type(type, NonNullable);
+  auto nonNull = type.with(NonNullable);
   if (percent < 70 || !funcContext) {
     return make(nonNull);
   }

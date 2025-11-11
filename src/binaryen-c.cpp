@@ -1614,10 +1614,11 @@ BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
   // is non-imported if not. TODO: If we want to allow creating imports later,
   // we would need an API addition or change.
   auto* wasm = (Module*)module;
-  if (wasm->getFunctionOrNull(func)) {
+  if ([[maybe_unused]] auto* f = wasm->getFunctionOrNull(func)) {
+    assert(f->type.getHeapType() == HeapType(type));
     // Use the HeapType constructor, which will do a lookup on the module.
     return static_cast<Expression*>(
-      Builder(*(Module*)module).makeRefFunc(func, HeapType(type)));
+      Builder(*(Module*)module).makeRefFunc(func));
   } else {
     // Assume non-imported, and provide the full type for that.
     Type full = Type(HeapType(type), NonNullable, Exact);
@@ -5299,8 +5300,7 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module)
-        .makeRefFunc(funcNames[i], func->type.getHeapType()));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i]));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -5317,8 +5317,7 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module)
-        .makeRefFunc(funcNames[i], func->type.getHeapType()));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i]));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
