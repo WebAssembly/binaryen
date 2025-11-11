@@ -735,28 +735,29 @@ struct OddEvenAbstraction
 
   template<size_t I, typename E1, typename E2> E2 abstract(const E1&) const;
 
-  template<>
-  OddEvenBool::Element abstract<0>(const OddEvenInt::Element& elem) const {
-    if (elem.isTop()) {
-      return OddEvenBool{}.getTop();
-    }
-    if (elem.isBottom()) {
-      return OddEvenBool{}.getBottom();
-    }
-    return OddEvenBool{}.get((*elem.getVal() & 1) == 0);
-  }
-
   template<std::size_t I, typename E>
   bool shouldAbstract(const E&, const E&) const;
-
-  template<>
-  bool shouldAbstract<0>(const OddEvenInt::Element&,
-                         const OddEvenInt::Element&) const {
-    // Since the elements are not related, they must be different integers.
-    // Always abstract them.
-    return true;
-  }
 };
+
+template<>
+OddEvenBool::Element
+OddEvenAbstraction::abstract<0>(const OddEvenInt::Element& elem) const {
+  if (elem.isTop()) {
+    return OddEvenBool{}.getTop();
+  }
+  if (elem.isBottom()) {
+    return OddEvenBool{}.getBottom();
+  }
+  return OddEvenBool{}.get((*elem.getVal() & 1) == 0);
+}
+
+template<>
+bool OddEvenAbstraction::shouldAbstract<0>(const OddEvenInt::Element&,
+                                           const OddEvenInt::Element&) const {
+  // Since the elements are not related, they must be different integers.
+  // Always abstract them.
+  return true;
+}
 
 TEST(AbstractionLattice, GetBottom) {
   OddEvenAbstraction abstraction;
