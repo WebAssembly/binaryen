@@ -1199,11 +1199,20 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors'])
 
 
+# Returns the wat for a wasm file. If it is already wat, it just returns that
+# (useful when reducing with --text, where wasm files are really wat files).
+def get_wat(wasm):
+    binary = open(wasm, 'rb').read()
+    if binary.startswith(b'(module'):
+        return binary.decode(encoding='utf-8')
+    return run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+
+
 # given a wasm, find all the exports of particular kinds (for example, kinds
 # can be ['func', 'table'] and then we would find exported functions and
 # tables).
 def get_exports(wasm, kinds):
-    wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+    wat = get_wat(wasm)
     p = re.compile(r'^ [(]export "(.*[^\\]?)" [(](?:' + '|'.join(kinds) + ')')
     exports = []
     for line in wat.splitlines():
@@ -1254,7 +1263,7 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
 # Check if a wasm file would notice normally-unnoticeable changes to exports,
 # such as removing one that is not called.
 def wasm_notices_export_changes(wasm):
-    wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+    wat = get_wat(wasm)
 
     if '(import "fuzzing-support" "call-export' in wat:
         # The call-export* imports are sensitive to the number and identity of
@@ -1555,7 +1564,7 @@ class Split(TestCaseHandler):
     def handle(self, wasm):
         # get the list of function names, some of which we will decide to split
         # out
-        wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+        wat = get_wat(wasm)
         all_funcs = re.findall(FUNC_NAMES_REGEX, wat)
 
         # get the original output before splitting
