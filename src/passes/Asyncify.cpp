@@ -1364,7 +1364,8 @@ struct AsyncifyAssertUnwindCorrectness : Pass {
       Function* function;
       Builder* builder;
 
-      void replaceCallWithCheck(Call* call) {
+      // Adds a check for Call that is inside a Catch block (we do not handle unwinding there).
+      void checkCallInsideCatch(Call* call) {
         auto check = builder->makeIf(
           builder->makeBinary(NeInt32,
                               builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32),
