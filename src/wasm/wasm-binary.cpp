@@ -332,7 +332,7 @@ void WasmBinaryWriter::writeImports() {
   };
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
     writeImportHeader(func);
-    auto kind = (uint32_t)ExternalKind::Function;
+    uint32_t kind = ExternalKind::Function;
     if (func->type.isExact()) {
       kind |= BinaryConsts::ExactImport;
     }
@@ -2883,8 +2883,8 @@ void WasmBinaryReader::readImports() {
     // collisions between them, which can't occur here (due to the index i) but
     // could occur later due to the names section.
     switch (kind) {
-      case (uint32_t)ExternalKind::Function:
-      case (uint32_t)ExternalKind::Function | BinaryConsts::ExactImport: {
+      case ExternalKind::Function:
+      case ExternalKind::Function | BinaryConsts::ExactImport: {
         auto [name, isExplicit] =
           getOrMakeName(functionNames,
                         wasm.functions.size(),
@@ -2908,7 +2908,7 @@ void WasmBinaryReader::readImports() {
         wasm.addFunction(std::move(curr));
         break;
       }
-      case (uint32_t)ExternalKind::Table: {
+      case ExternalKind::Table: {
         auto [name, isExplicit] =
           getOrMakeName(tableNames,
                         wasm.tables.size(),
@@ -2932,7 +2932,7 @@ void WasmBinaryReader::readImports() {
         wasm.addTable(std::move(table));
         break;
       }
-      case (uint32_t)ExternalKind::Memory: {
+      case ExternalKind::Memory: {
         auto [name, isExplicit] =
           getOrMakeName(memoryNames,
                         wasm.memories.size(),
@@ -2950,7 +2950,7 @@ void WasmBinaryReader::readImports() {
         wasm.addMemory(std::move(memory));
         break;
       }
-      case (uint32_t)ExternalKind::Global: {
+      case ExternalKind::Global: {
         auto [name, isExplicit] =
           getOrMakeName(globalNames,
                         wasm.globals.size(),
@@ -2972,7 +2972,7 @@ void WasmBinaryReader::readImports() {
         wasm.addGlobal(std::move(curr));
         break;
       }
-      case (uint32_t)ExternalKind::Tag: {
+      case ExternalKind::Tag: {
         auto [name, isExplicit] =
           getOrMakeName(tagNames,
                         wasm.tags.size(),

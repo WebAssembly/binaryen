@@ -2342,15 +2342,20 @@ public:
   void clearDebugInfo();
 };
 
-// The kind of an import or export.
-enum class ExternalKind : uint32_t {
+// The kind of an import or export. Use a namespace to avoid polluting the wasm
+// namespace while maintaining implicit conversion to int, which an enum class
+// would not have.
+namespace ExternalKindImpl {
+enum Kind {
   Function = 0,
   Table = 1,
   Memory = 2,
   Global = 3,
   Tag = 4,
-  Invalid = uint32_t(-1)
+  Invalid = -1
 };
+} // namespace ExternalKindImpl
+using ExternalKind = ExternalKindImpl::Kind;
 
 // The kind of a top-level module item. (This overlaps with ExternalKind, but
 // C++ has no good way to extend an enum.) All such items are referred to by
