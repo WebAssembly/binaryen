@@ -3,10 +3,10 @@
 ;; Check that we don't refine in ways that might require invalid exact casts
 ;; when custom descriptors is disabled.
 
-;; RUN: wasm-opt %s -all                              --closed-world --preserve-type-order \
+;; RUN: foreach %s %t wasm-opt -all                              --closed-world --preserve-type-order \
 ;; RUN:     --type-refining-gufa -S -o - | filecheck %s
 
-;; RUN: wasm-opt %s -all --disable-custom-descriptors --closed-world --preserve-type-order \
+;; RUN: foreach %s %t wasm-opt -all --disable-custom-descriptors --closed-world --preserve-type-order \
 ;; RUN:     --type-refining-gufa -S -o - | filecheck %s --check-prefix=NO_CD
 
 (module
@@ -78,3 +78,89 @@
     )
   )
 )
+
+;; Avoid casting continuations.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $func (func))
+    ;; NO_CD:      (rec
+    ;; NO_CD-NEXT:  (type $func (func))
+    (type $func (func))
+    ;; CHECK:       (type $cont (cont $func))
+    ;; NO_CD:       (type $cont (cont $func))
+    (type $cont (cont $func))
+    ;; CHECK:       (type $struct (struct (field (ref $cont))))
+    ;; NO_CD:       (type $struct (struct (field (ref $cont))))
+    (type $struct (struct (field (ref $cont))))
+  )
+
+  ;; CHECK:      (func $nop (type $func)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $nop (type $func)
+  ;; NO_CD-NEXT:  (nop)
+  ;; NO_CD-NEXT: )
+  (func $nop (type $func)
+    (nop)
+  )
+
+  ;; CHECK:      (func $trap (type $3) (result (ref $cont))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $trap (type $3) (result (ref $cont))
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
+  (func $trap (result (ref $cont))
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $make (type $4)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (cont.new $cont
+  ;; CHECK-NEXT:     (ref.func $nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (call $trap)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $make (type $4)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (struct.new $struct
+  ;; NO_CD-NEXT:    (cont.new $cont
+  ;; NO_CD-NEXT:     (ref.func $nop)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (struct.new $struct
+  ;; NO_CD-NEXT:    (call $trap)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
+  (func $make
+    ;; Make the struct twice, once with a proper continuation, and once with a
+    ;; call to a function that GUFA infers a trap in. The latter would usually
+    ;; be fixed up, allowing the struct field to be refined to be exact, but a cast is not
+    ;; valid on a continuation, so we must avoid refining this struct to have an
+    ;; exact field.
+    (drop
+      (struct.new $struct
+        (cont.new $cont
+          (ref.func $nop)
+        )
+      )
+    )
+    (drop
+      (struct.new $struct
+        (call $trap)
+      )
+    )
+  )
+)
+
