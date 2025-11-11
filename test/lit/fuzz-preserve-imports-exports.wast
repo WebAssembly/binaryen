@@ -4,7 +4,7 @@
 ;; preserve imports and exports. There should be no new imports or exports, and
 ;; old ones must stay the same.
 
-;; RUN: wasm-opt %s.ttf --initial-fuzz=%s -all -ttf --fuzz-preserve-imports-exports \
+;; RUN: wasm-opt %s.dat --initial-fuzz=%s -all -ttf --fuzz-preserve-imports-exports \
 ;; RUN:          --metrics -S -o - | filecheck %s --check-prefix=PRESERVE
 
 ;; PRESERVE: [exports]      : 1
@@ -22,7 +22,7 @@
 
 ;; And, without the flag, we do generate both imports and exports.
 
-;; RUN: wasm-opt %s.ttf --initial-fuzz=%s -all -ttf \
+;; RUN: wasm-opt %s.dat --initial-fuzz=%s -all -ttf \
 ;; RUN:          --metrics -S -o - | filecheck %s --check-prefix=NORMAL
 
 ;; Rather than hardcode the number here, find two of each.
