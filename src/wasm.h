@@ -2361,7 +2361,8 @@ using ExternalKind = ExternalKindImpl::Kind;
 // C++ has no good way to extend an enum.) All such items are referred to by
 // name in the IR (that is, the IR is relocatable), and so they are subclasses
 // of the Named class.
-enum class ModuleItemKind {
+namespace ModuleItemKindImpl {
+enum Kind {
   Function = 0,
   Table = 1,
   Memory = 2,
@@ -2371,6 +2372,9 @@ enum class ModuleItemKind {
   ElementSegment = 6,
   Invalid = -1
 };
+} // namespace ModuleItemKindImpl
+
+using ModuleItemKind = ModuleItemKindImpl::Kind;
 
 class Export {
 public:
