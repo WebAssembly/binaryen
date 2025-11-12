@@ -20,7 +20,9 @@
 namespace wasm {
 
 static Name BinaryenIntrinsicsModule("binaryen-intrinsics"),
-  CallWithoutEffects("call.without.effects");
+  CallWithoutEffects("call.without.effects"),
+  JSPrototypesModule("wasm:js-prototypes"),
+  ConfigureAll("configureAll");
 
 bool Intrinsics::isCallWithoutEffects(Function* func) {
   if (func->module != BinaryenIntrinsicsModule) {
@@ -43,6 +45,60 @@ Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
     }
   }
   return nullptr;
+}
+
+bool Intrinsics::isConfigureAll(Function* func) {
+  if (func->module != JSPrototypesModule) {
+    return false;
+  }
+  if (func->base == ConfigureAll) {
+    return true;
+  }
+  Fatal() << "Unrecognized intrinsic";
+}
+
+Call* Intrinsics::isConfigureAll(Expression* curr) {
+  if (auto* call = curr->dynCast<Call>()) {
+    if (auto* func = module.getFunctionOrNull(call->target)) {
+      if (isConfigureAll(func)) {
+        return call;
+      }
+    }
+  }
+  return nullptr;
+}
+
+ElementSegment* Intrinsics::getConfigureAllSegment(Call* call) {
+  assert(isConfigureAll(curr));
+
+  auto error = [&](const char* msg) {
+    Fatal() << "Invalid configureAll( " << msg << "): " << *curr;
+  };
+
+  // The second operand is an array of signature-called function refs.
+  auto& operands = call->operands;
+  if (operands.size() <= 2) {
+    error("insufficient operands");
+  }
+  auto* arrayNew = operands[1]->dynCast<ArrayNewElem>();
+  if (!arrayNew) {
+    error("not array.new");
+  }
+  auto start = arrayNew->offset->dynCast<Const>();
+  if (!start || start->value.geti32() != 0) {
+    error("start != 0");
+  }
+  auto size = arrayNew->size->dynCast<Const>();
+  if (!size) {
+    error("size not const");
+  }
+  auto* seg = module.getElementSegment(arrayNew->segment);
+  if (seg->data.size() != size->value.geti32()) {
+    error("wrong seg size");
+  }
+
+  // Success!
+  return seg;
 }
 
 } // namespace wasm
