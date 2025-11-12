@@ -4696,7 +4696,7 @@ void WasmBinaryReader::readExports() {
     if (!names.emplace(name).second) {
       throwError("duplicate export name");
     }
-    ExternalKind kind = (ExternalKind)getU32LEB();
+    auto kind = getU32LEB();
     std::optional<std::variant<Name, HeapType>> value;
     auto index = getU32LEB();
     switch (kind) {
@@ -4721,7 +4721,7 @@ void WasmBinaryReader::readExports() {
     if (!value) {
       throwError("invalid export kind");
     }
-    wasm.addExport(new Export(name, kind, *value));
+    wasm.addExport(new Export(name, ExternalKind(kind), *value));
   }
 }
 

@@ -2346,13 +2346,13 @@ public:
 // namespace while maintaining implicit conversion to int, which an enum class
 // would not have.
 namespace ExternalKindImpl {
-enum Kind {
+enum Kind : uint32_t {
   Function = 0,
   Table = 1,
   Memory = 2,
   Global = 3,
   Tag = 4,
-  Invalid = -1
+  Invalid = uint32_t(-1)
 };
 } // namespace ExternalKindImpl
 using ExternalKind = ExternalKindImpl::Kind;
@@ -2362,7 +2362,7 @@ using ExternalKind = ExternalKindImpl::Kind;
 // name in the IR (that is, the IR is relocatable), and so they are subclasses
 // of the Named class.
 namespace ModuleItemKindImpl {
-enum Kind {
+enum Kind : uint32_t {
   Function = 0,
   Table = 1,
   Memory = 2,
@@ -2370,7 +2370,7 @@ enum Kind {
   Tag = 4,
   DataSegment = 5,
   ElementSegment = 6,
-  Invalid = -1
+  Invalid = uint32_t(-1)
 };
 } // namespace ModuleItemKindImpl
 
