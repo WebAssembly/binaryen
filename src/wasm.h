@@ -2373,7 +2373,6 @@ enum Kind : uint32_t {
   Invalid = uint32_t(-1)
 };
 } // namespace ModuleItemKindImpl
-
 using ModuleItemKind = ModuleItemKindImpl::Kind;
 
 class Export {
