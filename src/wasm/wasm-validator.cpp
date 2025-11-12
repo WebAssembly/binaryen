@@ -4159,10 +4159,7 @@ void FunctionValidator::visitFunction(Function* curr) {
                curr->name,
                "all used types should be allowed");
 
-  if (curr->imported()) {
-    shouldBeTrue(
-      !curr->type.isExact(), curr->name, "imported function should be inexact");
-  } else {
+  if (!curr->imported()) {
     shouldBeTrue(
       curr->type.isExact(), curr->name, "defined function should be exact");
   }

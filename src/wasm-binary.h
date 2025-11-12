@@ -356,6 +356,8 @@ enum BrOnCastFlag {
   OutputNullable = 1 << 1,
 };
 
+constexpr uint32_t ExactImport = 1 << 5;
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f

@@ -47,7 +47,7 @@ public:
                                                 Type type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
-    assert(type.isSignature());
+    assert(type.isSignature() && type.isNonNullable());
     auto func = std::make_unique<Function>();
     func->name = name;
     func->type = type;

@@ -41,7 +41,8 @@ importStackOverflowHandler(Module& module, Name name, Signature sig) {
   ImportInfo info(module);
 
   if (!info.getImportedFunction(ENV, name)) {
-    auto import = Builder::makeFunction(name, sig, {});
+    auto import =
+      Builder::makeFunction(name, Type(sig, NonNullable, Inexact), {});
     import->module = ENV;
     import->base = name;
     module.addFunction(std::move(import));
