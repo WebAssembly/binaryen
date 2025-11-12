@@ -74,7 +74,7 @@ template<typename Self, typename... Ls> struct Abstraction {
     if (a.index() < b.index()) {
       auto abstractedA = a;
       abstractToIndex(abstractedA, b.index());
-      switch (compares()[b.index()](lattices, abstractedA, b)) {
+      switch (compare()[b.index()](lattices, abstractedA, b)) {
         case EQUAL:
         case LESS:
           return LESS;
@@ -87,7 +87,7 @@ template<typename Self, typename... Ls> struct Abstraction {
     if (a.index() > b.index()) {
       auto abstractedB = b;
       abstractToIndex(abstractedB, a.index());
-      switch (compares()[a.index()](lattices, a, abstractedB)) {
+      switch (compare()[a.index()](lattices, a, abstractedB)) {
         case EQUAL:
         case GREATER:
           return GREATER;
@@ -97,7 +97,7 @@ template<typename Self, typename... Ls> struct Abstraction {
       }
       WASM_UNREACHABLE("unexpected comparison");
     }
-    return compares()[a.index()](lattices, a, b);
+    return compare()[a.index()](lattices, a, b);
   }
 
   bool join(Element& joinee, const Element& _joiner) const noexcept {
@@ -115,12 +115,12 @@ template<typename Self, typename... Ls> struct Abstraction {
         // Cannot abstract further, so we must join no matter what.
         break;
       }
-      switch (compares()[joiner.index()](lattices, joinee, joiner)) {
+      switch (compare()[joiner.index()](lattices, joinee, joiner)) {
         case NO_RELATION:
-          if (shouldAbstracts()[joiner.index()](self(), joinee, joiner)) {
+          if (shouldAbstract()[joiner.index()](self(), joinee, joiner)) {
             // Try abstracting further.
-            joinee = abstracts()[joinee.index()](self(), joinee);
-            joiner = abstracts()[joiner.index()](self(), joiner);
+            joinee = abstract()[joinee.index()](self(), joinee);
+            joiner = abstract()[joiner.index()](self(), joiner);
             changed = true;
             continue;
           }
@@ -132,7 +132,7 @@ template<typename Self, typename... Ls> struct Abstraction {
       }
       break;
     }
-    return joins()[joiner.index()](lattices, joinee, joiner) || changed;
+    return join()[joiner.index()](lattices, joinee, joiner) || changed;
   }
 
 private:
@@ -146,7 +146,7 @@ private:
   // lattice indices.
 
   template<std::size_t... I>
-  static constexpr auto makeAbstracts(std::index_sequence<I...>) noexcept {
+  static constexpr auto makeAbstractFuncs(std::index_sequence<I...>) noexcept {
     using F = Element (*)(const Self&, const Element& elem);
     return std::array<F, sizeof...(I)>{
       [](const Self& self, const Element& elem) -> Element {
@@ -160,19 +160,19 @@ private:
         }
       }...};
   }
-  static constexpr auto abstracts() noexcept {
-    return makeAbstracts(std::make_index_sequence<sizeof...(Ls)>{});
+  static constexpr auto abstract() noexcept {
+    return makeAbstractFuncs(std::make_index_sequence<sizeof...(Ls)>{});
   }
 
   void abstractToIndex(Element& elem, std::size_t index) const noexcept {
     while (elem.index() < index) {
-      elem = abstracts()[elem.index()](self(), elem);
+      elem = abstract()[elem.index()](self(), elem);
     }
   }
 
   template<std::size_t... I>
   static constexpr auto
-  makeShouldAbstracts(std::index_sequence<I...>) noexcept {
+  makeShouldAbstractFuncs(std::index_sequence<I...>) noexcept {
     using F = bool (*)(const Self&, const Element&, const Element&);
     return std::array<F, sizeof...(I)>{
       [](const Self& self, const Element& a, const Element& b) -> bool {
@@ -184,12 +184,12 @@ private:
         }
       }...};
   }
-  static constexpr auto shouldAbstracts() noexcept {
-    return makeShouldAbstracts(std::make_index_sequence<sizeof...(Ls)>{});
+  static constexpr auto shouldAbstract() noexcept {
+    return makeShouldAbstractFuncs(std::make_index_sequence<sizeof...(Ls)>{});
   }
 
   template<std::size_t... I>
-  static constexpr auto makeCompares(std::index_sequence<I...>) noexcept {
+  static constexpr auto makeCompareFuncs(std::index_sequence<I...>) noexcept {
     using F = LatticeComparison (*)(
       const std::tuple<Ls...>&, const Element&, const Element&);
     return std::array<F, sizeof...(I)>{
@@ -199,12 +199,12 @@ private:
         return std::get<I>(lattices).compare(std::get<I>(a), std::get<I>(b));
       }...};
   }
-  static constexpr auto compares() noexcept {
-    return makeCompares(std::make_index_sequence<sizeof...(Ls)>{});
+  static constexpr auto compare() noexcept {
+    return makeCompareFuncs(std::make_index_sequence<sizeof...(Ls)>{});
   }
 
   template<std::size_t... I>
-  static constexpr auto makeJoins(std::index_sequence<I...>) noexcept {
+  static constexpr auto makeJoinFuncs(std::index_sequence<I...>) noexcept {
     using F = bool (*)(const std::tuple<Ls...>&, Element&, const Element&);
     return std::array<F, sizeof...(I)>{[](const std::tuple<Ls...>& lattices,
                                           Element& joinee,
@@ -213,8 +213,8 @@ private:
                                         std::get<I>(joiner));
     }...};
   }
-  static constexpr auto joins() noexcept {
-    return makeJoins(std::make_index_sequence<sizeof...(Ls)>{});
+  static constexpr auto join() noexcept {
+    return makeJoinFuncs(std::make_index_sequence<sizeof...(Ls)>{});
   }
 };
 
