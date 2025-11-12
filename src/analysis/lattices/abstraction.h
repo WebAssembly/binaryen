@@ -51,6 +51,14 @@ namespace wasm::analysis {
 //
 // shouldAbstract is only queried for unrelated elements. Related elements of
 // the same sub-lattice are always joined as normal.
+//
+// `abstract` should be monotonic. Making its input more general should either
+// not change its output or make its output more general.
+//
+// `shouldAbstract` should return true only when no upper bound of its arguments
+// in their original sub-lattice is used. If such an upper bound is used in a
+// comparison or join, the operation may fail to uphold the properties of a
+// lattice.
 template<typename Self, typename... Ls> struct Abstraction {
   using Element = std::variant<typename Ls::Element...>;
 
