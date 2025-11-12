@@ -160,7 +160,7 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
       }
     } else if (intrinsics.isConfigureAll(curr)) {
       // Every function that configureAll refers to is signature-called. Mark
-      // them all as called
+      // them all as called, as JS can call them.
       for (auto func : intrinsics.getConfigureAllFunctions(curr)) {
         use({ModuleElementKind::Function, func});
       }
