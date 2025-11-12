@@ -68,7 +68,7 @@ Call* Intrinsics::isConfigureAll(Expression* curr) {
   return nullptr;
 }
 
-ElementSegment* Intrinsics::getConfigureAllSegment(Call* call) {
+std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
   assert(isConfigureAll(curr));
 
   auto error = [&](const char* msg) {
@@ -96,9 +96,15 @@ ElementSegment* Intrinsics::getConfigureAllSegment(Call* call) {
   if (seg->data.size() != size->value.geti32()) {
     error("wrong seg size");
   }
-
-  // Success!
-  return seg;
+  std::vector<Name> ret;
+  for (auto* curr : seg->data) {
+    if (auto* refFunc = curr->dynCast<RefFunc>()) {
+      ret.push_back(refFunc->func);
+    } else {
+      error("non-function ref");
+    }
+  }
+  return ret;
 }
 
 } // namespace wasm

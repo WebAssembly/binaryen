@@ -108,8 +108,9 @@ public:
   //  )
   //
   // where the segment $seg is of size N. The segment returned here contains all
-  // the signature-called functions.
-  ElementSegment* getConfigureAllSegment(Call* call);
+  // the signature-called functions. This function returns a vector of all the
+  // function names in that segment.
+  std::vector<Name> getConfigureAllFunctions(Call* call);
 };
 
 } // namespace wasm

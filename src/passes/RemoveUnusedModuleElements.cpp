@@ -159,6 +159,7 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
         visitCallRef(&callRef);
       }
     } else if (intrinsics.isConfigureAll(curr)) {
+      auto funcs = intrinsics.getConfigureAllFunctions(curr);
     }
   }
 
