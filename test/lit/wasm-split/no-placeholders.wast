@@ -31,7 +31,7 @@
 
  ;; SECONDARY:      (import "primary" "table" (table $timport$0 2 funcref))
 
- ;; SECONDARY:      (import "primary" "foo" (func $foo))
+ ;; SECONDARY:      (import "primary" "foo" (func $foo (exact)))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $bar $baz)
 

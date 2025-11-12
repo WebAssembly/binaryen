@@ -73,7 +73,7 @@
 
  ;; SECONDARY:      (import "primary" "table" (table $timport$0 1 funcref))
 
- ;; SECONDARY:      (import "primary" "foo" (func $foo (type $0)))
+ ;; SECONDARY:      (import "primary" "foo" (func $foo (exact (type $0))))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $bar)
 
@@ -82,9 +82,7 @@
  ;; SECONDARY:      (func $bar (type $0)
  ;; SECONDARY-NEXT:  (local $exact (ref (exact $0)))
  ;; SECONDARY-NEXT:  (local.set $exact
- ;; SECONDARY-NEXT:   (ref.cast (ref (exact $0))
- ;; SECONDARY-NEXT:    (ref.func $foo)
- ;; SECONDARY-NEXT:   )
+ ;; SECONDARY-NEXT:   (ref.func $foo)
  ;; SECONDARY-NEXT:  )
  ;; SECONDARY-NEXT:  (local.set $exact
  ;; SECONDARY-NEXT:   (ref.func $bar)
