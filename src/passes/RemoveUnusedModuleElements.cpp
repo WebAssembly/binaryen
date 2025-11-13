@@ -412,7 +412,6 @@ struct Analyzer {
       return;
     }
 
-    // TODO: use structured bindings with c++20, needed for the capture below
     auto [table, type] = call;
 
     // Any function in the table of that signature may be called.
