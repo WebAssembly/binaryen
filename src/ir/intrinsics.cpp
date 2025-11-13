@@ -47,13 +47,7 @@ Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
 }
 
 bool Intrinsics::isConfigureAll(Function* func) {
-  if (func->module != JSPrototypesModule) {
-    return false;
-  }
-  if (func->base == ConfigureAll) {
-    return true;
-  }
-  Fatal() << "Unrecognized intrinsic";
+  return func->module == JSPrototypesModule && func->base == ConfigureAll;
 }
 
 Call* Intrinsics::isConfigureAll(Expression* curr) {
