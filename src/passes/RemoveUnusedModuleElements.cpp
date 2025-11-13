@@ -417,7 +417,7 @@ struct Analyzer {
     // Any function in the table of that signature may be called.
     for (auto& elemInfo : flatTableInfoMap[table]) {
       auto elemReferenced = false;
-      for (auto [func, funcType] : elemInfo.data) {
+      for (auto& [func, funcType] : elemInfo.data) {
         if (HeapType::isSubType(funcType.getHeapType(), type)) {
           use({ModuleElementKind::Function, func});
           elemReferenced = true;
