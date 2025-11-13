@@ -98,8 +98,8 @@ public:
   // matters then).
   bool isConfigureAll(Function* func);
   Call* isConfigureAll(Expression* curr);
-  // Given a configureAll, parse out the element segment that it reads from. We
-  // error if it is not in the canonical form
+  // Given a configureAll, return all the functions it refers to. We error if it
+  // is not in the canonical form
   //
   //  (call $configureAll
   //    ..arg0..
@@ -107,9 +107,7 @@ public:
   //    ..
   //  )
   //
-  // where the segment $seg is of size N. The segment returned here contains all
-  // the signature-called functions. This function returns a vector of all the
-  // function names in that segment.
+  // where the segment $seg is of size N.
   std::vector<Name> getConfigureAllFunctions(Call* call);
 };
 
