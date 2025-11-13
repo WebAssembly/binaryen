@@ -19,20 +19,20 @@
   ;; OPEN_WORLD:      (type $bytes (array (mut i8)))
   (type $bytes (array (mut i8)))
 
-  ;; CHECK:      (type $3 (func))
-
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $ret-any-2 (func (result (ref (exact $struct)))))
 
   ;; CHECK:       (type $struct (struct))
 
-  ;; CHECK:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
-  ;; OPEN_WORLD:      (type $3 (func))
+  ;; CHECK:       (type $5 (func))
 
+  ;; CHECK:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   ;; OPEN_WORLD:      (rec
   ;; OPEN_WORLD-NEXT:  (type $ret-any-2 (func (result (ref (exact $struct)))))
 
   ;; OPEN_WORLD:       (type $struct (struct))
+
+  ;; OPEN_WORLD:       (type $5 (func))
 
   ;; OPEN_WORLD:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   (type $configureAll (func (param (ref null $externs)) (param (ref null $funcs)) (param (ref null $bytes)) (param externref)))
@@ -86,15 +86,11 @@
 
   (data $bytes "12345678")
 
-  ;; CHECK:      (export "calls" (func $calls))
-
   ;; CHECK:      (start $start)
-  ;; OPEN_WORLD:      (export "calls" (func $calls))
-
   ;; OPEN_WORLD:      (start $start)
   (start $start)
 
-  ;; CHECK:      (func $start (type $3)
+  ;; CHECK:      (func $start (type $5)
   ;; CHECK-NEXT:  (call $configureAll
   ;; CHECK-NEXT:   (array.new_elem $externs $externs
   ;; CHECK-NEXT:    (i32.const 0)
@@ -111,7 +107,7 @@
   ;; CHECK-NEXT:   (ref.null noextern)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $start (type $3)
+  ;; OPEN_WORLD:      (func $start (type $5)
   ;; OPEN_WORLD-NEXT:  (call $configureAll
   ;; OPEN_WORLD-NEXT:   (array.new_elem $externs $externs
   ;; OPEN_WORLD-NEXT:    (i32.const 0)
@@ -171,31 +167,5 @@
   (func $unconfigured (type $ret-any-2) (result anyref)
     ;; This is not referred to by configureAll, and can be refined.
     (struct.new $struct)
-  )
-
-  ;; CHECK:      (func $calls (type $3)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $bar)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $unconfigured)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $calls (type $3)
-  ;; OPEN_WORLD-NEXT:  (drop
-  ;; OPEN_WORLD-NEXT:   (call $bar)
-  ;; OPEN_WORLD-NEXT:  )
-  ;; OPEN_WORLD-NEXT:  (drop
-  ;; OPEN_WORLD-NEXT:   (call $unconfigured)
-  ;; OPEN_WORLD-NEXT:  )
-  ;; OPEN_WORLD-NEXT: )
-  (func $calls (export "calls")
-    ;; Add calls to avoid functions being reivial
-    (drop
-      (call $bar)
-    )
-    (drop
-      (call $unconfigured)
-    )
   )
 )
