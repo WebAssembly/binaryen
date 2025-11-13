@@ -701,11 +701,13 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
   //      optimization.
   if (wasm.start) {
     auto* start = wasm.getFunction(wasm.start);
-    Intrinsics intrinsics(wasm);
-    for (auto* call : FindAll<Call>(start->body).list) {
-      if (intrinsics.isConfigureAll(call)) {
-        for (auto func : intrinsics.getConfigureAllFunctions(call)) {
-          notePublic(wasm.getFunction(func)->type.getHeapType());
+    if (!start->imported()) {
+      Intrinsics intrinsics(wasm);
+      for (auto* call : FindAll<Call>(start->body).list) {
+        if (intrinsics.isConfigureAll(call)) {
+          for (auto func : intrinsics.getConfigureAllFunctions(call)) {
+            notePublic(wasm.getFunction(func)->type.getHeapType());
+          }
         }
       }
     }
