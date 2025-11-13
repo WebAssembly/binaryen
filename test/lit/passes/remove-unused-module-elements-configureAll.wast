@@ -124,4 +124,9 @@
   (func $bar (param $x i32) (result i32)
     (local.get $x)
   )
+
+  (func $unconfigured (result i32)
+    ;; This is not referred to by configureAll, and can be removed.
+    (i32.const 1337)
+  )
 )
