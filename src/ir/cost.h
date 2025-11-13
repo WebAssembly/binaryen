@@ -81,8 +81,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return ret;
   }
   CostType visitCallIndirect(CallIndirect* curr) {
-    // Model indirect calls as more expensive than call_refs.
-    CostType ret = CallCost + 2 + visit(curr->target);
+    // Model indirect calls as more expensive than direct ones.
+    CostType ret = CallCost + 1 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
