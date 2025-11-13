@@ -21,8 +21,7 @@ namespace wasm {
 
 static Name BinaryenIntrinsicsModule("binaryen-intrinsics"),
   CallWithoutEffects("call.without.effects"),
-  JSPrototypesModule("wasm:js-prototypes"),
-  ConfigureAll("configureAll");
+  JSPrototypesModule("wasm:js-prototypes"), ConfigureAll("configureAll");
 
 bool Intrinsics::isCallWithoutEffects(Function* func) {
   if (func->module != BinaryenIntrinsicsModule) {
