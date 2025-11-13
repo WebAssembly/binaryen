@@ -75,7 +75,7 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
   }
   auto* arrayNew = operands[1]->dynCast<ArrayNewElem>();
   if (!arrayNew) {
-    error("not array.new");
+    error("not array.new_elem");
   }
   auto start = arrayNew->offset->dynCast<Const>();
   if (!start || start->value.geti32() != 0) {
