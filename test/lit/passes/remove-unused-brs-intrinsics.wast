@@ -4,12 +4,12 @@
 ;; RUN: wasm-opt %s --remove-unused-brs --shrink-level=2 -all -S -o - | filecheck %s --check-prefix=SHRINK2
 
 (module
-  ;; SHRINK0:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $0) (param funcref) (result i32)))
-  ;; SHRINK1:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $0) (param funcref) (result i32)))
-  ;; SHRINK2:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $0) (param funcref) (result i32)))
+  ;; SHRINK0:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $1) (param funcref) (result i32)))
+  ;; SHRINK1:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $1) (param funcref) (result i32)))
+  ;; SHRINK2:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $1) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
 
-  ;; SHRINK0:      (func $no-selectify (type $1) (param $x i32) (result i32)
+  ;; SHRINK0:      (func $if-call-no-effects (type $0) (param $x i32) (result i32)
   ;; SHRINK0-NEXT:  (if (result i32)
   ;; SHRINK0-NEXT:   (local.get $x)
   ;; SHRINK0-NEXT:   (then
@@ -22,7 +22,7 @@
   ;; SHRINK0-NEXT:   )
   ;; SHRINK0-NEXT:  )
   ;; SHRINK0-NEXT: )
-  ;; SHRINK1:      (func $no-selectify (type $1) (param $x i32) (result i32)
+  ;; SHRINK1:      (func $if-call-no-effects (type $0) (param $x i32) (result i32)
   ;; SHRINK1-NEXT:  (if (result i32)
   ;; SHRINK1-NEXT:   (local.get $x)
   ;; SHRINK1-NEXT:   (then
@@ -35,7 +35,7 @@
   ;; SHRINK1-NEXT:   )
   ;; SHRINK1-NEXT:  )
   ;; SHRINK1-NEXT: )
-  ;; SHRINK2:      (func $no-selectify (type $1) (param $x i32) (result i32)
+  ;; SHRINK2:      (func $if-call-no-effects (type $0) (param $x i32) (result i32)
   ;; SHRINK2-NEXT:  (select
   ;; SHRINK2-NEXT:   (call $call.without.effects
   ;; SHRINK2-NEXT:    (ref.func $ret)
@@ -44,7 +44,7 @@
   ;; SHRINK2-NEXT:   (local.get $x)
   ;; SHRINK2-NEXT:  )
   ;; SHRINK2-NEXT: )
-  (func $no-selectify (param $x i32) (result i32)
+  (func $if-call-no-effects (param $x i32) (result i32)
     ;; The call to $ret has no effects, so we can selectify here in theory.
     ;; The cost of a call prevents it, however, when not shrinking at level 2
     ;; (2 means "shrink at all costs", and this does shrink).
@@ -52,6 +52,52 @@
       (local.get $x)
       (then
         (call $call.without.effects (ref.func $ret))
+      )
+      (else
+        (i32.const 42)
+      )
+    )
+  )
+
+  ;; SHRINK0:      (func $if-call-effects (type $0) (param $x i32) (result i32)
+  ;; SHRINK0-NEXT:  (if (result i32)
+  ;; SHRINK0-NEXT:   (local.get $x)
+  ;; SHRINK0-NEXT:   (then
+  ;; SHRINK0-NEXT:    (call $ret)
+  ;; SHRINK0-NEXT:   )
+  ;; SHRINK0-NEXT:   (else
+  ;; SHRINK0-NEXT:    (i32.const 42)
+  ;; SHRINK0-NEXT:   )
+  ;; SHRINK0-NEXT:  )
+  ;; SHRINK0-NEXT: )
+  ;; SHRINK1:      (func $if-call-effects (type $0) (param $x i32) (result i32)
+  ;; SHRINK1-NEXT:  (if (result i32)
+  ;; SHRINK1-NEXT:   (local.get $x)
+  ;; SHRINK1-NEXT:   (then
+  ;; SHRINK1-NEXT:    (call $ret)
+  ;; SHRINK1-NEXT:   )
+  ;; SHRINK1-NEXT:   (else
+  ;; SHRINK1-NEXT:    (i32.const 42)
+  ;; SHRINK1-NEXT:   )
+  ;; SHRINK1-NEXT:  )
+  ;; SHRINK1-NEXT: )
+  ;; SHRINK2:      (func $if-call-effects (type $0) (param $x i32) (result i32)
+  ;; SHRINK2-NEXT:  (if (result i32)
+  ;; SHRINK2-NEXT:   (local.get $x)
+  ;; SHRINK2-NEXT:   (then
+  ;; SHRINK2-NEXT:    (call $ret)
+  ;; SHRINK2-NEXT:   )
+  ;; SHRINK2-NEXT:   (else
+  ;; SHRINK2-NEXT:    (i32.const 42)
+  ;; SHRINK2-NEXT:   )
+  ;; SHRINK2-NEXT:  )
+  ;; SHRINK2-NEXT: )
+  (func $if-call-effects (param $x i32) (result i32)
+    ;; As above, but a normal call. The effects stop selectifying even in 2.
+    (if (result i32)
+      (local.get $x)
+      (then
+        (call $ret)
       )
       (else
         (i32.const 42)
