@@ -47,6 +47,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   // cost due to shortening the time to the next collection.
   static const CostType AllocationCost = 100;
 
+  // Calls can have unpredictable, unknown cost. Model it as a large number.
+  // TODO: For calls to functions in this module, we could in principle scan
+  //       them. However, call effects generally mean the cost is a moot point,
+  //       except for call.without.effects, which is rare.
+  static const CostType CallCost = 100;
+
   CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
 
   CostType visitBlock(Block* curr) {
@@ -68,23 +74,23 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + visit(curr->condition) + maybeVisit(curr->value);
   }
   CostType visitCall(Call* curr) {
-    // XXX this does not take into account if the call is to an import, which
-    //     may be costlier in general
-    CostType ret = 4;
+    CostType ret = CallCost;
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
   CostType visitCallIndirect(CallIndirect* curr) {
-    CostType ret = 6 + visit(curr->target);
+    // Model indirect calls as more expensive than call_refs.
+    CostType ret = CallCost + 2 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
   CostType visitCallRef(CallRef* curr) {
-    CostType ret = 5 + visit(curr->target);
+    // Model call_refs as more expensive than direct calls.
+    CostType ret = CallCost + 1 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }

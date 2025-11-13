@@ -23,12 +23,16 @@
   ;; SHRINK0-NEXT:  )
   ;; SHRINK0-NEXT: )
   ;; SHRINK1:      (func $no-selectify (type $1) (param $x i32) (result i32)
-  ;; SHRINK1-NEXT:  (select
-  ;; SHRINK1-NEXT:   (call $call.without.effects
-  ;; SHRINK1-NEXT:    (ref.func $ret)
-  ;; SHRINK1-NEXT:   )
-  ;; SHRINK1-NEXT:   (i32.const 42)
+  ;; SHRINK1-NEXT:  (if (result i32)
   ;; SHRINK1-NEXT:   (local.get $x)
+  ;; SHRINK1-NEXT:   (then
+  ;; SHRINK1-NEXT:    (call $call.without.effects
+  ;; SHRINK1-NEXT:     (ref.func $ret)
+  ;; SHRINK1-NEXT:    )
+  ;; SHRINK1-NEXT:   )
+  ;; SHRINK1-NEXT:   (else
+  ;; SHRINK1-NEXT:    (i32.const 42)
+  ;; SHRINK1-NEXT:   )
   ;; SHRINK1-NEXT:  )
   ;; SHRINK1-NEXT: )
   ;; SHRINK2:      (func $no-selectify (type $1) (param $x i32) (result i32)
@@ -42,7 +46,8 @@
   ;; SHRINK2-NEXT: )
   (func $no-selectify (param $x i32) (result i32)
     ;; The call to $ret has no effects, so we can selectify here in theory.
-    ;; The cost of a call prevents it, however, when not shrinking at level 2.
+    ;; The cost of a call prevents it, however, when not shrinking at level 2
+    ;; (2 means "shrink at all costs", and this does shrink).
     (if (result i32)
       (local.get $x)
       (then
