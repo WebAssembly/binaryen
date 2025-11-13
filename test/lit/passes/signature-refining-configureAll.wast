@@ -3,8 +3,8 @@
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --closed-world -all -S -o - | filecheck %s
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements                -all -S -o - | filecheck %s --check-prefix OPEN_WORLD
 
-;; Test that configureAll is respected: referred functions are not optimized
-;; away or emptied out. This is so even in closed world.
+;; Test that configureAll is respected: referred functions are not refined.
+;; This is so even in closed world.
 
 (module
   ;; CHECK:      (type $externs (array (mut externref)))
@@ -27,15 +27,19 @@
 
   ;; CHECK:      (type $5 (func (result i32)))
 
-  ;; CHECK:      (type $6 (func (param i32) (result i32)))
+  ;; CHECK:      (type $6 (func (result anyref)))
 
-  ;; CHECK:      (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll) (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
+  ;; CHECK:      (type $struct (struct))
   ;; OPEN_WORLD:      (type $4 (func))
 
   ;; OPEN_WORLD:      (type $5 (func (result i32)))
 
-  ;; OPEN_WORLD:      (type $6 (func (param i32) (result i32)))
+  ;; OPEN_WORLD:      (type $6 (func (result anyref)))
 
+  ;; OPEN_WORLD:      (type $struct (struct))
+  (type $struct (struct))
+
+  ;; CHECK:      (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll) (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   ;; OPEN_WORLD:      (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll) (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll)))
 
@@ -118,18 +122,19 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $bar (type $6) (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK:      (func $bar (type $6) (result anyref)
+  ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $bar (type $6) (param $x i32) (result i32)
-  ;; OPEN_WORLD-NEXT:  (local.get $x)
+  ;; OPEN_WORLD:      (func $bar (type $6) (result anyref)
+  ;; OPEN_WORLD-NEXT:  (struct.new_default $struct)
   ;; OPEN_WORLD-NEXT: )
-  (func $bar (param $x i32) (result i32)
-    (local.get $x)
+  (func $bar (result anyref)
+    ;; This will not be refined.
+    (struct.new $struct)
   )
 
-  (func $unconfigured (result i32)
-    ;; This is not referred to by configureAll, and can be removed.
-    (i32.const 1337)
+  (func $unconfigured (result anyref)
+    ;; This is not referred to by configureAll, and can be refined.
+    (struct.new $struct)
   )
 )
