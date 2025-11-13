@@ -136,7 +136,7 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
   void visitCall(Call* curr) {
     use({ModuleElementKind::Function, curr->target});
 
-    Intrinsics intrinsics(*getModule();
+    Intrinsics intrinsics(*getModule());
     if (intrinsics.isCallWithoutEffects(curr)) {
       // A call-without-effects receives a function reference and calls it, the
       // same as a CallRef. When we have a flag for non-closed-world, we should

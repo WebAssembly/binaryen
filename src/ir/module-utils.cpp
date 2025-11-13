@@ -15,6 +15,7 @@
  */
 
 #include "module-utils.h"
+#include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/metadata.h"
@@ -693,16 +694,18 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
   }
 
   // ConfigureAll in a start function makes its functions callable. They are
-  // only signature-called, so the heap type does not need to be public, but for
-  // now we mark them as public to avoid breakage in passes. Specific fixes in
-  // passes could replace this for better optimizations of these functions TODO
+  // only signature-called, so the heap type does not need to be public - nor
+  // types referred to - but for now we mark them as public to avoid breakage in
+  // several passes.
+  // TODO Specific fixes in those passes could replace this, and allow better
+  //      optimization.
   if (wasm.start) {
     auto* start = wasm.getFunction(wasm.start);
     Intrinsics intrinsics(wasm);
     for (auto* call : FindAll<Call>(start->body).list) {
       if (intrinsics.isConfigureAll(call)) {
         for (auto func : intrinsics.getConfigureAllFunctions(call)) {
-          notePublic(wasm.getFunction(func)->type);
+          notePublic(wasm.getFunction(func)->type.getHeapType());
         }
       }
     }

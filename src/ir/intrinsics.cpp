@@ -69,10 +69,10 @@ Call* Intrinsics::isConfigureAll(Expression* curr) {
 }
 
 std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
-  assert(isConfigureAll(curr));
+  assert(isConfigureAll(call));
 
   auto error = [&](const char* msg) {
-    Fatal() << "Invalid configureAll( " << msg << "): " << *curr;
+    Fatal() << "Invalid configureAll( " << msg << "): " << *call;
   };
 
   // The second operand is an array of signature-called function refs.
@@ -93,7 +93,7 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
     error("size not const");
   }
   auto* seg = module.getElementSegment(arrayNew->segment);
-  if (seg->data.size() != size->value.geti32()) {
+  if (seg->data.size() != size->value.getUnsigned()) {
     error("wrong seg size");
   }
   std::vector<Name> ret;
