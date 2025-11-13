@@ -115,6 +115,7 @@
   ;; OPEN_WORLD-NEXT:  (i32.const 42)
   ;; OPEN_WORLD-NEXT: )
   (func $foo (result i32)
+    ;; configureAll keeps this from being modified.
     (i32.const 42)
   )
 
@@ -125,6 +126,7 @@
   ;; OPEN_WORLD-NEXT:  (local.get $x)
   ;; OPEN_WORLD-NEXT: )
   (func $bar (param $x i32) (result i32)
+    ;; This too.
     (local.get $x)
   )
 
