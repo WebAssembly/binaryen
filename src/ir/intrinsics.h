@@ -21,7 +21,8 @@
 #include "wasm-traversal.h"
 
 //
-// See the README.md for background on intrinsic functions.
+// Intrinsics include Binaryen intrinsics, and Wasm spec builtins. See the
+// README.md for more.
 //
 // Intrinsics can be recognized by Intrinsics::isFoo() methods, that check if a
 // function is a particular intrinsic, or if a call to a function is so. The
@@ -37,8 +38,7 @@ class Intrinsics {
 public:
   Intrinsics(Module& module) : module(module) {}
 
-  //
-  // Check if an instruction is the call.without.effects intrinsic.
+  // Check if an instruction is the Binaryen call.without.effects intrinsic.
   //
   //   (import "binaryen-intrinsics" "call.without.effects"
   //     (func (..params..) (param $target funcref) (..results..)))
@@ -85,9 +85,30 @@ public:
   //
   // Later passes will then turn that into a direct call and further optimize
   // things.
-  //
   bool isCallWithoutEffects(Function* func);
   Call* isCallWithoutEffects(Expression* curr);
+
+  // Check if an instruction is the wasm/JS interop configureAll builtin. Such
+  // calls have a second parameter which is an array of function references,
+  // which must be assumed to be "signature-called": Called from outside the
+  // module, using that signature. "Signature-called" is less powerful than the
+  // reference to the function generally escaping, as we do not care about the
+  // heap type of the function (no call_refs or casts will happen), all we know
+  // is that a JS-style call of the methods can occur (and only the signature
+  // matters then).
+  bool isConfigureAll(Function* func);
+  Call* isConfigureAll(Expression* curr);
+  // Given a configureAll, return all the functions it refers to. We error if it
+  // is not in the canonical form
+  //
+  //  (call $configureAll
+  //    ..arg0..
+  //    (array.new_elem $seg (0) (N)
+  //    ..
+  //  )
+  //
+  // where the segment $seg is of size N.
+  std::vector<Name> getConfigureAllFunctions(Call* call);
 };
 
 } // namespace wasm
