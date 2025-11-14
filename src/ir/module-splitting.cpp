@@ -67,7 +67,13 @@
 //   2. It assumes that either all table segment offsets are constants or there
 //      is exactly one segment that may have a non-constant offset. It also
 //      assumes that all segments are active segments.
-
+//
+//   3. It assumes that if exact function references are required for validity
+//      (because they are stored in a local with an exact function type, for
+//      example), then custom descriptors are allowed so primary functions can
+//      be imported exactly. This could be worked around by removing exactness
+//      from the IR before splitting.
+//
 #include "ir/module-splitting.h"
 #include "asmjs/shared-constants.h"
 #include "ir/export-utils.h"
@@ -341,7 +347,6 @@ struct ModuleSplitter {
   void setupTablePatching();
   void shareImportableItems();
   void removeUnusedSecondaryElements();
-  void updateIR();
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), primary(primary), tableManager(primary),
@@ -358,7 +363,6 @@ struct ModuleSplitter {
     setupTablePatching();
     shareImportableItems();
     removeUnusedSecondaryElements();
-    updateIR();
   }
 };
 
@@ -520,7 +524,7 @@ void ModuleSplitter::exportImportFunction(Name funcName,
       func->hasExplicitName = primaryFunc->hasExplicitName;
       func->module = config.importNamespace;
       func->base = exportName;
-      func->type = func->type.with(Inexact);
+      func->type = func->type.withInexactIfNoCustomDescs(secondary->features);
       secondary->addFunction(std::move(func));
     }
   }
@@ -978,31 +982,6 @@ void ModuleSplitter::removeUnusedSecondaryElements() {
     runner.options.validate = false;
     runner.add("remove-unused-module-elements");
     runner.run();
-  }
-}
-
-void ModuleSplitter::updateIR() {
-  // Imported functions may need type updates.
-  struct Fixer : public PostWalker<Fixer> {
-    void visitRefFunc(RefFunc* curr) {
-      auto& wasm = *getModule();
-      auto* func = wasm.getFunction(curr->func);
-      if (func->type != curr->type) {
-        // This became an import, and lost exactness.
-        assert(!func->type.isExact());
-        assert(curr->type.isExact());
-        if (wasm.features.hasCustomDescriptors()) {
-          // Add a cast, as the parent may depend on the exactness to validate.
-          // TODO: The cast may be needed even without CD enabled
-          replaceCurrent(Builder(wasm).makeRefCast(curr, curr->type));
-        }
-        curr->type = curr->type.with(Inexact);
-      }
-    }
-  } fixer;
-  fixer.walkModule(&primary);
-  for (auto& secondaryPtr : secondaries) {
-    fixer.walkModule(secondaryPtr.get());
   }
 }
 

@@ -65,7 +65,7 @@
 
  ;; SECONDARY:      (import "primary" "table_2" (table $timport$0 2 funcref))
 
- ;; SECONDARY:      (import "primary" "prime" (func $prime (type $0)))
+ ;; SECONDARY:      (import "primary" "prime" (func $prime (exact (type $0))))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $second $second-in-table)
 
@@ -73,9 +73,7 @@
 
  ;; SECONDARY:      (func $second (type $0)
  ;; SECONDARY-NEXT:  (drop
- ;; SECONDARY-NEXT:   (ref.cast (ref (exact $0))
- ;; SECONDARY-NEXT:    (ref.func $prime)
- ;; SECONDARY-NEXT:   )
+ ;; SECONDARY-NEXT:   (ref.func $prime)
  ;; SECONDARY-NEXT:  )
  ;; SECONDARY-NEXT:  (drop
  ;; SECONDARY-NEXT:   (ref.func $second)
