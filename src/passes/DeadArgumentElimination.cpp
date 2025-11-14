@@ -247,7 +247,7 @@ struct DAE : public Pass {
     std::vector<bool> hasUnseenCalls(numFunctions);
 
     // For each function, the set of callers.
-    std::vector<std::unordered_set<Name>> callers;
+    std::vector<std::unordered_set<Name>> callers(numFunctions);
 
     for (auto& [func, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
