@@ -1905,10 +1905,11 @@ class Two(TestCaseHandler):
                 # The original output was ok, but after merging it becomes
                 # something we must ignore. This can happen when we optimize, if
                 # the optimizer reorders a normal trap (say a null exception)
-                # with a host limit trap (say an allocation limit). Nothing to
-                # do here, but verify we did optimize, as otherwise this is
-                # inexplicable.
-                assert merged == abspath('merged.opt.wasm')
+                # with a host limit trap (say an allocation limit). This can
+                # also happen because stack limits on calls change slightly when
+                # we go from cross-module calls to within-module calls. There
+                # is nothing to check in this case.
+                pass
             else:
                 self.compare_to_merged_output(output, merged_output)
 
