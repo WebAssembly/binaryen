@@ -869,6 +869,8 @@ protected:
   Element top;
   Element i32;
   Element i64;
+
+  // The number at the end is the depth of the element.
   Element eqNull3;
   Element eqNonNull3;
   Element structNull2;
@@ -975,6 +977,8 @@ protected:
     CHECK_MEET(a, b, meet);
     switch (lattice.compare(a, b)) {
       case analysis::NO_RELATION:
+        // This first check looks redundant, but it's also checking the opposite
+        // direction.
         CHECK_UNRELATED(a, b);
         CHECK_LESS(a, join);
         CHECK_LESS(b, join);
@@ -1046,8 +1050,8 @@ private:
 
 std::unordered_map<HeapType, Index>
 ConeTypeLatticeTest::initTypes(ConeTypeLatticeTest* self) {
-  // 0  3
-  // |\
+  //   0  3
+  //  /|
   // 1 2
   TypeBuilder builder(4);
   builder.createRecGroup(0, 4);

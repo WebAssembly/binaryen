@@ -22,6 +22,11 @@
 
 namespace wasm::analysis {
 
+// The value type lattice augmented with subtyping depths on reference types. An
+// element {(ref $foo), 1}, for example, represents the set of values that are
+// exactly $foo or exactly one of $foo's immediate subtypes, but not any deeper
+// type. Non-reference types and bottom references types always have a depth of
+// 0.
 struct ConeType {
   struct Element {
     Type type;
@@ -34,7 +39,8 @@ struct ConeType {
     bool isTop() const { return type == Type::none; }
   };
 
-  std::unordered_map<HeapType, Index> typeDepths;
+  // Used only for initializing depths for new elements.
+  const std::unordered_map<HeapType, Index> typeDepths;
 
   ConeType(std::unordered_map<HeapType, Index>&& typeDepths)
     : typeDepths(std::move(typeDepths)) {}
