@@ -41,13 +41,13 @@ struct ConeType {
 
   Element get(Type type) const noexcept {
     assert(!type.isTuple());
-    if (!type.isRef() || type.isExact()) {
+    if (!type.isRef() || type.isExact() || type.isNull() ||
+        type.getHeapType().isMaybeShared(HeapType::i31)) {
       return Element{type, 0};
     }
-    if (auto it = typeDepths.find(type.getHeapType()); it != typeDepths.end()) {
-      return Element{type, it->second};
-    }
-    return Element{type, 0};
+    auto it = typeDepths.find(type.getHeapType());
+    assert(it != typeDepths.end());
+    return Element{type, it->second};
   }
 
   Element getBottom() const noexcept { return Element{Type::unreachable, 0}; }
@@ -63,10 +63,10 @@ struct ConeType {
       return changed;
     }
     Index joineeToLub = 0, joinerToLub = 0;
-    if (!joinee.isBottom() && !joinee.type.getHeapType().isBottom()) {
+    if (!joinee.isBottom() && !joinee.type.isNull()) {
       joineeToLub = depthToSuper(joinee, lub);
     }
-    if (!joiner.isBottom() && !joiner.type.getHeapType().isBottom()) {
+    if (!joiner.isBottom() && !joiner.type.isNull()) {
       joinerToLub = depthToSuper(joiner, lub);
     }
     Index newDepth =
@@ -96,7 +96,7 @@ struct ConeType {
     }
     Index newDepth;
     auto glb = Type::getGreatestLowerBound(meetee.type, meeter.type);
-    if (glb == Type::unreachable || glb.getHeapType().isBottom()) {
+    if (glb == Type::unreachable || glb.isNull()) {
       newDepth = 0;
     } else if (HeapType::isSubType(meetee.type.getHeapType(),
                                    meeter.type.getHeapType())) {
@@ -140,14 +140,14 @@ struct ConeType {
       return a.depth < b.depth ? analysis::LESS : analysis::GREATER;
     }
     if (Type::isSubType(a.type, b.type)) {
-      if (a.type.getHeapType().isBottom()) {
+      if (a.type.isNull()) {
         return analysis::LESS;
       }
       Index diff = depthToSuper(a, b.type);
       return a.depth + diff <= b.depth ? analysis::LESS : analysis::NO_RELATION;
     }
     if (Type::isSubType(b.type, a.type)) {
-      if (b.type.getHeapType().isBottom()) {
+      if (b.type.isNull()) {
         return analysis::GREATER;
       }
       Index diff = depthToSuper(b, a.type);
