@@ -22,6 +22,12 @@ Current Trunk
  - The --mod-asyncify-never-unwind and --mod-asyncify-always-and-only-unwind
    passed were deleted.  They only existed to support the lazy code loading
    support in emscripten that was removed. (#7893)
+ - The cost modeling of calls was increased to a high number. That cost is
+   usually not something you can notice (as calls have effects that make
+   removing/replacing them impossible), but you may notice this when using
+   call.without.effects (calls will no longer be assumed to be cheap enough to
+   run unconditionally) or monomorphize (which inputs a cost factor as a
+   number). (#8047)
 
 v124
 ----
