@@ -136,7 +136,8 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
   void visitCall(Call* curr) {
     use({ModuleElementKind::Function, curr->target});
 
-    if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+    Intrinsics intrinsics(*getModule());
+    if (intrinsics.isCallWithoutEffects(curr)) {
       // A call-without-effects receives a function reference and calls it, the
       // same as a CallRef. When we have a flag for non-closed-world, we should
       // handle this automatically by the reference flowing out to an import,
@@ -156,6 +157,12 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
         CallRef callRef(getModule()->allocator);
         callRef.target = target;
         visitCallRef(&callRef);
+      }
+    } else if (intrinsics.isConfigureAll(curr)) {
+      // Every function that configureAll refers to is signature-called. Mark
+      // them all as called, as JS can call them.
+      for (auto func : intrinsics.getConfigureAllFunctions(curr)) {
+        use({ModuleElementKind::Function, func});
       }
     }
   }
@@ -268,10 +275,35 @@ struct Analyzer {
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
+  // Cached segment data. Each time we see a new indirect call, we must scan all
+  // the segments of the table it refers to, find the functions in that segment,
+  // and check their types. If the number of segments is immense, we may end up
+  // doing a massive amount of function lookups (N * M where N = number of
+  // unique indirect call forms and M = size of the table's segments). To avoid
+  // that, precompute the function lookups in advance by "flattening" the data.
+  struct FlatElemInfo {
+    // The name of the element segment.
+    Name name;
+
+    // The data in the element segment.
+    struct Item {
+      // The function the element segment's item refers to.
+      Name func;
+      // The type of function.
+      Type type;
+    };
+    std::vector<Item> data;
+  };
+  // Each table tracks all its elems.
+  using FlatTableInfo = std::vector<FlatElemInfo>;
+  std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
+
   Analyzer(Module* module,
            const PassOptions& options,
            const std::vector<ModuleElement>& roots)
     : module(module), options(options) {
+
+    prepare();
 
     // All roots are used.
     for (auto& element : roots) {
@@ -280,6 +312,26 @@ struct Analyzer {
 
     // Main loop on both the module and the expression queues.
     while (processExpressions() || processModule()) {
+    }
+  }
+
+  void prepare() {
+    for (auto& elem : module->elementSegments) {
+      if (!elem->table) {
+        continue;
+      }
+      FlatElemInfo elemInfo;
+      elemInfo.name = elem->name;
+      auto& data = elemInfo.data;
+      for (auto* item : elem->data) {
+        if (auto* refFunc = item->dynCast<RefFunc>()) {
+          auto* func = module->getFunction(refFunc->func);
+          data.emplace_back(FlatElemInfo::Item{func->name, func->type});
+        }
+      }
+      if (!elemInfo.data.empty()) {
+        flatTableInfoMap[elem->table].push_back(std::move(elemInfo));
+      }
     }
   }
 
@@ -367,27 +419,21 @@ struct Analyzer {
       return;
     }
 
-    // TODO: use structured bindings with c++20, needed for the capture below
-    auto table = call.first;
-    auto type = call.second;
+    auto [table, type] = call;
 
     // Any function in the table of that signature may be called.
-    ModuleUtils::iterTableSegments(
-      *module, table, [&](ElementSegment* segment) {
-        auto segmentReferenced = false;
-        for (auto* item : segment->data) {
-          if (auto* refFunc = item->dynCast<RefFunc>()) {
-            auto* func = module->getFunction(refFunc->func);
-            if (HeapType::isSubType(func->type.getHeapType(), type)) {
-              use({ModuleElementKind::Function, refFunc->func});
-              segmentReferenced = true;
-            }
-          }
+    for (auto& elemInfo : flatTableInfoMap[table]) {
+      auto elemReferenced = false;
+      for (auto& [func, funcType] : elemInfo.data) {
+        if (HeapType::isSubType(funcType.getHeapType(), type)) {
+          use({ModuleElementKind::Function, func});
+          elemReferenced = true;
         }
-        if (segmentReferenced) {
-          reference({ModuleElementKind::ElementSegment, segment->name});
-        }
-      });
+      }
+      if (elemReferenced) {
+        reference({ModuleElementKind::ElementSegment, elemInfo.name});
+      }
+    }
   }
 
   void useRefFunc(Name func) {

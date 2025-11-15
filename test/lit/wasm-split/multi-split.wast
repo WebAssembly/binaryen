@@ -47,9 +47,9 @@
 
  ;; MOD1:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD1:      (import "primary" "trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD1:      (import "primary" "trampoline_B" (func $trampoline_B (exact (result i64))))
 
- ;; MOD1:      (import "primary" "trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD1:      (import "primary" "trampoline_C" (func $trampoline_C (exact (result f32))))
 
  ;; MOD1:      (elem $0 (i32.const 2) $A)
 
@@ -79,9 +79,9 @@
 
  ;; MOD1-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
 
- ;; MOD1-OPTIONS:      (import "custom_env" "%trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD1-OPTIONS:      (import "custom_env" "%trampoline_B" (func $trampoline_B (exact (result i64))))
 
- ;; MOD1-OPTIONS:      (import "custom_env" "%trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD1-OPTIONS:      (import "custom_env" "%trampoline_C" (func $trampoline_C (exact (result f32))))
 
  ;; MOD1-OPTIONS:      (elem $0 (i32.const 2) $A)
 
@@ -130,9 +130,9 @@
 
  ;; MOD2:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD2:      (import "primary" "trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD2:      (import "primary" "trampoline_A" (func $trampoline_A (exact (result i32))))
 
- ;; MOD2:      (import "primary" "trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD2:      (import "primary" "trampoline_C" (func $trampoline_C (exact (result f32))))
 
  ;; MOD2:      (elem $0 (i32.const 0) $B)
 
@@ -162,9 +162,9 @@
 
  ;; MOD2-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
 
- ;; MOD2-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD2-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (exact (result i32))))
 
- ;; MOD2-OPTIONS:      (import "custom_env" "%trampoline_C" (func $trampoline_C (result f32)))
+ ;; MOD2-OPTIONS:      (import "custom_env" "%trampoline_C" (func $trampoline_C (exact (result f32))))
 
  ;; MOD2-OPTIONS:      (elem $0 (i32.const 0) $B)
 
@@ -213,9 +213,9 @@
 
  ;; MOD3:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD3:      (import "primary" "trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD3:      (import "primary" "trampoline_A" (func $trampoline_A (exact (result i32))))
 
- ;; MOD3:      (import "primary" "trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD3:      (import "primary" "trampoline_B" (func $trampoline_B (exact (result i64))))
 
  ;; MOD3:      (elem $0 (i32.const 1) $C)
 
@@ -245,9 +245,9 @@
 
  ;; MOD3-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (result i32)))
+ ;; MOD3-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (exact (result i32))))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "%trampoline_B" (func $trampoline_B (result i64)))
+ ;; MOD3-OPTIONS:      (import "custom_env" "%trampoline_B" (func $trampoline_B (exact (result i64))))
 
  ;; MOD3-OPTIONS:      (elem $0 (i32.const 1) $C)
 

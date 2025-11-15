@@ -3078,10 +3078,19 @@ void PrintSExpression::handleSignature(Function* curr,
   o << '(';
   printMajor(o, "func ");
   curr->name.print(o);
+  if (curr->imported() && curr->type.isExact()) {
+    o << " (exact";
+  }
   if ((currModule && currModule->features.hasGC()) ||
       requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
     printHeapTypeName(curr->type.getHeapType()) << ')';
+    if (full) {
+      // Print the full type in a comment. TODO the spec may add this too
+      o << " (; ";
+      printTypeOrName(curr->type, o, currModule);
+      o << " ;)";
+    }
   }
   bool inParam = false;
   Index i = 0;
@@ -3117,6 +3126,9 @@ void PrintSExpression::handleSignature(Function* curr,
   if (curr->getResults() != Type::none) {
     o << maybeSpace;
     printResultType(curr->getResults());
+  }
+  if (curr->imported() && curr->type.isExact()) {
+    o << ')';
   }
 }
 

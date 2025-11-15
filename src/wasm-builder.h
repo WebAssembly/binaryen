@@ -47,7 +47,7 @@ public:
                                                 Type type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
-    assert(type.isSignature());
+    assert(type.isSignature() && type.isNonNullable());
     auto func = std::make_unique<Function>();
     func->name = name;
     func->type = type;
@@ -700,10 +700,19 @@ public:
     ret->finalize();
     return ret;
   }
-  RefFunc* makeRefFunc(Name func, HeapType heapType) {
+  RefFunc* makeRefFunc(Name func, Type type) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize(heapType);
+    // Just apply the type, trusting it completely. This is safe to do even in
+    // the middle of an operation (where the Module is in the process of being
+    // altered, and should not be read from, which finalize normally does).
+    ret->type = type;
+    return ret;
+  }
+  RefFunc* makeRefFunc(Name func) {
+    auto* ret = wasm.allocator.alloc<RefFunc>();
+    ret->func = func;
+    ret->finalize(wasm);
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
@@ -1359,7 +1368,7 @@ public:
       return makeRefNull(type.getHeapType());
     }
     if (type.isFunction()) {
-      return makeRefFunc(value.getFunc(), type.getHeapType());
+      return makeRefFunc(value.getFunc());
     }
     if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
       return makeRefI31(makeConst(value.geti31()),

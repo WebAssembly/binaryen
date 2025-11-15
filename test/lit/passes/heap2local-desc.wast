@@ -1144,3 +1144,138 @@
   )
 )
 
+;; A chain of descriptors, where initial optimizations influence later ones.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (shared (descriptor $B (struct))))
+    (type $A (shared (descriptor $B (struct))))
+    ;; CHECK:       (type $B (sub (shared (describes $A (descriptor $C (struct))))))
+    (type $B (sub (shared (describes $A (descriptor $C (struct))))))
+    ;; CHECK:       (type $C (sub (shared (describes $B (struct)))))
+    (type $C (sub (shared (describes $B (struct)))))
+  )
+
+  ;; CHECK:      (type $3 (func (result (ref (shared any)))))
+
+  ;; CHECK:      (func $test (type $3) (result (ref (shared any)))
+  ;; CHECK-NEXT:  (local $temp (ref $C))
+  ;; CHECK-NEXT:  (local $1 (ref (shared none)))
+  ;; CHECK-NEXT:  (local $2 (ref (shared none)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:       (local.set $2
+  ;; CHECK-NEXT:        (ref.as_non_null
+  ;; CHECK-NEXT:         (ref.null (shared none))
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null (shared none))
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null (shared none))
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref (shared any)))
+    (local $temp (ref $C))
+    (local.set $temp
+      ;; We optimize this first, making the |local.get| below unreachable, and
+      ;; making that inner ref.cast_desc unreachable, which leads to the
+      ;; |struct.new_default $B| being dropped, and in particular having a new
+      ;; parent (the drop). We should not get confused and error internally.
+      (struct.new_default $C)
+    )
+    (ref.cast_desc (ref $B)
+      (ref.cast_desc (ref $B)
+        (struct.new_default $B
+          (ref.null (shared none))
+        )
+        (local.get $temp)
+      )
+      (struct.new_default $C)
+    )
+  )
+)
+
+(module
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
+   (type $struct (sub (descriptor $desc (struct))))
+   ;; CHECK:       (type $desc (describes $struct (struct)))
+   (type $desc (sub final (describes $struct (struct))))
+  )
+
+  ;; CHECK:      (type $2 (func (result i32)))
+
+  ;; CHECK:      (func $test (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $desc (ref $desc))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (struct.new_default $desc)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result i32)
+    (local $desc (ref $desc))
+    (local.set $desc
+      (struct.new_default $desc)
+    )
+    ;; After we optimize the struct.new above, the local.get below will get
+    ;; removed, and we will see that the ref.cast_desc traps (the input
+    ;; descriptor differs from the one we test, the allocation we just
+    ;; removed). When optimizing that, we should not emit invalid IR for the
+    ;; ref.is_null: It has an i32 result normally, but in unreachable code it
+    ;; must remain unreachable.
+    (ref.is_null
+      (ref.cast_desc (ref $struct)
+        (struct.new_default $struct
+          (struct.new_default $desc)
+        )
+        (local.get $desc)
+      )
+    )
+  )
+)

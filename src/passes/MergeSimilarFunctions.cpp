@@ -131,9 +131,7 @@ struct ParamInfo {
     if (const auto literals = std::get_if<Literals>(&values)) {
       return builder.makeConst((*literals)[index]);
     } else if (auto callees = std::get_if<std::vector<Name>>(&values)) {
-      auto fnName = (*callees)[index];
-      auto heapType = module->getFunction(fnName)->type.getHeapType();
-      return builder.makeRefFunc(fnName, heapType);
+      return builder.makeRefFunc((*callees)[index]);
     } else {
       WASM_UNREACHABLE("unexpected const value type");
     }

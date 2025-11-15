@@ -211,7 +211,7 @@ public:
     };
     // Use a null instance because this is a host function.
     return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
-                   import->type.getHeapType());
+                   import->type);
   }
 
   void throwJSException() {
@@ -311,9 +311,9 @@ struct ExecutionResults {
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
 
-  // Get results of executing a module. Optionally, provide a second module to
-  // link with it (like fuzz_shell's second module).
-  void get(Module& wasm, Module* second = nullptr) {
+  // Execute a module and collect the results. Optionally, provide a second
+  // module to link with it (like fuzz_shell's second module).
+  void collect(Module& wasm, Module* second = nullptr) {
     try {
       // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
@@ -427,7 +427,7 @@ struct ExecutionResults {
   // get current results and check them against previous ones
   void check(Module& wasm) {
     ExecutionResults optimizedResults;
-    optimizedResults.get(wasm);
+    optimizedResults.collect(wasm);
     if (optimizedResults != *this) {
       std::cout << "[fuzz-exec] optimization passes changed results\n";
       exit(1);

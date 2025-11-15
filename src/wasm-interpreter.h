@@ -359,7 +359,7 @@ public:
     Execute,
   };
 
-  Literal makeFuncData(Name name, HeapType type) {
+  Literal makeFuncData(Name name, Type type) {
     // Identify the interpreter, but do not provide a way to actually call the
     // function.
     auto allocation = std::make_shared<FuncData>(name, this);
@@ -1883,7 +1883,16 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
-    return self()->makeFuncData(curr->func, curr->type.getHeapType());
+    // The type may differ from the type in the IR: An imported function may
+    // have a more refined type than it was imported as. Imports are handled in
+    // subclasses.
+    auto* func = self()->getModule()->getFunction(curr->func);
+    if (func->imported()) {
+      return NONCONSTANT_FLOW;
+    }
+    // This is a defined function, so the type of the reference matches the
+    // actual function.
+    return self()->makeFuncData(curr->func, curr->type);
   }
   Flow visitRefEq(RefEq* curr) {
     VISIT(flow, curr->left)
@@ -3202,7 +3211,7 @@ public:
                      [this, func](const Literals& arguments) -> Flow {
                        return callFunction(func->name, arguments);
                      }),
-                   func->type.getHeapType());
+                   func->type);
   }
 
   // get an exported global
@@ -3462,7 +3471,7 @@ private:
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
 protected:
-  // Returns a reference to the current value of a potentially imported global
+  // Returns a reference to the current value of a potentially imported global.
   Literals& getGlobal(Name name) {
     auto* inst = self();
     auto* global = inst->wasm.getGlobal(name);
@@ -3473,6 +3482,26 @@ protected:
     }
 
     return inst->globals[global->name];
+  }
+
+  // As above, but for a function.
+  Literal getFunction(Name name) {
+    auto* inst = self();
+    auto* func = inst->wasm.getFunction(name);
+    if (!func->imported()) {
+      return self()->makeFuncData(name, func->type);
+    }
+    auto iter = inst->linkedInstances.find(func->module);
+    // wasm-shell builds a "spectest" module, but does *not* provide print
+    // methods there. Those arrive from getImportedFunction(). So we must call
+    // getImportedFunction() even if the linked instance exists, in the case
+    // that it does not provide the export we want. TODO: fix wasm-shell
+    if (iter == inst->linkedInstances.end() ||
+        !inst->wasm.getExportOrNull(func->base)) {
+      return externalInterface->getImportedFunction(func);
+    }
+    inst = iter->second.get();
+    return inst->getExportedFunction(func->base);
   }
 
   // Get a tag object while looking through imports, i.e., this uses the name as
@@ -3504,14 +3533,14 @@ public:
       // The call.without.effects intrinsic is a call to an import that actually
       // calls the given function reference that is the final argument.
       target = arguments.back().getFunc();
-      funcType = arguments.back().type;
+      funcType = funcType.with(arguments.back().type.getHeapType());
       arguments.pop_back();
     }
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      arguments.push_back(self()->makeFuncData(target, funcType.getHeapType()));
+      arguments.push_back(self()->makeFuncData(target, funcType));
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
@@ -4230,6 +4259,12 @@ public:
     }
     return {};
   }
+  Flow visitRefFunc(RefFunc* curr) {
+    // Handle both imported and defined functions by finding the actual one that
+    // is referred to here.
+    auto func = self()->getFunction(curr->func);
+    return self()->makeFuncData(curr->func, func.type);
+  }
   Flow visitArrayNewData(ArrayNewData* curr) {
     VISIT(offsetFlow, curr->offset)
     VISIT(sizeFlow, curr->size)
@@ -4470,8 +4505,7 @@ public:
     auto funcName = funcValue.getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
     return Literal(std::make_shared<ContData>(
-      self()->makeFuncData(func->name, func->type.getHeapType()),
-      curr->type.getHeapType()));
+      self()->makeFuncData(funcName, func->type), curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
@@ -4816,7 +4850,7 @@ public:
         // not the original function that was called, and the original has been
         // returned from already; we should call the last return_called
         // function).
-        auto target = self()->makeFuncData(name, function->type.getHeapType());
+        auto target = self()->makeFuncData(name, function->type);
         self()->pushResumeEntry({target}, "function-target");
       }
 
@@ -4965,7 +4999,7 @@ public:
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
 
-  Literal makeFuncData(Name name, HeapType type) {
+  Literal makeFuncData(Name name, Type type) {
     // As the super's |makeFuncData|, but here we also provide a way to
     // actually call the function.
     auto allocation =

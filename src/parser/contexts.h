@@ -1078,6 +1078,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    const std::vector<Name>& exports,
                    ImportNames* import,
                    TypeUseT type,
+                   Exactness exact,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
                    Index pos);
@@ -1411,6 +1412,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUse type,
+                   Exactness exact,
                    std::optional<LocalsT> locals,
                    std::vector<Annotation>&&,
                    Index pos) {
@@ -1418,7 +1420,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     if (!type.type.isSignature()) {
       return in.err(pos, "expected signature type");
     }
-    f->type = f->type.with(type.type);
+    f->type = Type(type.type, NonNullable, exact);
     // If we are provided with too many names (more than the function has), we
     // will error on that later when we check the signature matches the type.
     // For now, avoid asserting in setLocalName.
@@ -1601,7 +1603,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     elems.push_back(expr);
   }
   void appendFuncElem(std::vector<Expression*>& elems, Name func) {
-    auto type = wasm.getFunction(func)->type.getHeapType();
+    auto type = wasm.getFunction(func)->type;
     elems.push_back(builder.makeRefFunc(func, type));
   }
 
@@ -1800,6 +1802,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUseT,
+                   Exactness,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
                    Index) {

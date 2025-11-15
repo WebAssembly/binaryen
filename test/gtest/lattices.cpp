@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "analysis/lattice.h"
+#include "analysis/lattices/abstraction.h"
 #include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
 #include "analysis/lattices/flat.h"
@@ -344,6 +346,22 @@ TEST(FlatLattice, Join) {
   analysis::Flat<int> flat;
   testDiamondJoin(
     flat, flat.getBottom(), flat.get(0), flat.get(1), flat.getTop());
+}
+
+TEST(FlatLattice, MultipleTypes) {
+  analysis::Flat<int, std::string> flat;
+  testDiamondJoin(
+    flat, flat.getBottom(), flat.get(0), flat.get("foo"), flat.getTop());
+
+  auto stringElem = flat.get("foo");
+
+  EXPECT_EQ(stringElem.getVal<0>(), nullptr);
+  ASSERT_NE(stringElem.getVal<1>(), nullptr);
+  EXPECT_EQ(*stringElem.getVal<1>(), std::string("foo"));
+
+  EXPECT_EQ(stringElem.getVal<int>(), nullptr);
+  ASSERT_NE(stringElem.getVal<std::string>(), nullptr);
+  EXPECT_EQ(*stringElem.getVal<std::string>(), std::string("foo"));
 }
 
 TEST(LiftLattice, GetBottom) {
@@ -709,9 +727,9 @@ TEST(StackLattice, Compare) {
   auto& flat = stack.lattice;
   testDiamondCompare(stack,
                      {},
-                     {flat.get(0)},
-                     {flat.get(0), flat.get(1)},
-                     {flat.get(0), flat.getTop()});
+                     {flat.get(0u)},
+                     {flat.get(0u), flat.get(1u)},
+                     {flat.get(0u), flat.getTop()});
 }
 
 TEST(StackLattice, Join) {
@@ -719,7 +737,134 @@ TEST(StackLattice, Join) {
   auto& flat = stack.lattice;
   testDiamondJoin(stack,
                   {},
-                  {flat.get(0)},
-                  {flat.get(0), flat.get(1)},
-                  {flat.get(0), flat.getTop()});
+                  {flat.get(0u)},
+                  {flat.get(0u), flat.get(1u)},
+                  {flat.get(0u), flat.getTop()});
+}
+
+using OddEvenInt = analysis::Flat<uint32_t>;
+using OddEvenBool = analysis::Flat<bool>;
+struct OddEvenAbstraction
+  : analysis::Abstraction<OddEvenAbstraction, OddEvenInt, OddEvenBool> {
+  OddEvenAbstraction()
+    : analysis::Abstraction<OddEvenAbstraction, OddEvenInt, OddEvenBool>(
+        OddEvenInt{}, OddEvenBool{}) {}
+
+  template<size_t I, typename E1, typename E2> E2 abstract(const E1&) const;
+
+  template<std::size_t I, typename E>
+  bool shouldAbstract(const E&, const E&) const;
+};
+
+template<>
+OddEvenBool::Element
+OddEvenAbstraction::abstract<0>(const OddEvenInt::Element& elem) const {
+  if (elem.isTop()) {
+    return OddEvenBool{}.getTop();
+  }
+  if (elem.isBottom()) {
+    return OddEvenBool{}.getBottom();
+  }
+  return OddEvenBool{}.get((*elem.getVal() & 1) == 0);
+}
+
+template<>
+bool OddEvenAbstraction::shouldAbstract<0>(const OddEvenInt::Element&,
+                                           const OddEvenInt::Element&) const {
+  // Since the elements are not related, they must be different integers.
+  // Always abstract them.
+  return true;
+}
+
+TEST(AbstractionLattice, GetBottom) {
+  OddEvenAbstraction abstraction;
+  auto expected = OddEvenAbstraction::Element(OddEvenInt{}.getBottom());
+  EXPECT_EQ(abstraction.getBottom(), expected);
+}
+
+TEST(AbstractionLattice, Join) {
+  OddEvenAbstraction abstraction;
+
+  auto expectJoin = [&](const char* file,
+                        int line,
+                        const auto& joinee,
+                        const auto& joiner,
+                        const auto& expected) {
+    testing::ScopedTrace trace(file, line, "");
+    switch (abstraction.compare(joinee, joiner)) {
+      case analysis::NO_RELATION:
+        EXPECT_NE(joinee, joiner);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::NO_RELATION);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::LESS);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::LESS);
+        break;
+      case analysis::EQUAL:
+        EXPECT_EQ(joinee, joiner);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::EQUAL);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::EQUAL);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::EQUAL);
+        break;
+      case analysis::LESS:
+        EXPECT_EQ(joiner, expected);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::GREATER);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::LESS);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::EQUAL);
+        break;
+      case analysis::GREATER:
+        EXPECT_EQ(joinee, expected);
+        EXPECT_EQ(abstraction.compare(joiner, joinee), analysis::LESS);
+        EXPECT_EQ(abstraction.compare(joinee, expected), analysis::EQUAL);
+        EXPECT_EQ(abstraction.compare(joiner, expected), analysis::LESS);
+    }
+    {
+      auto copy = joinee;
+      EXPECT_EQ(abstraction.join(copy, joiner), joinee != expected);
+      EXPECT_EQ(copy, expected);
+    }
+    {
+      auto copy = joiner;
+      EXPECT_EQ(abstraction.join(copy, joinee), joiner != expected);
+      EXPECT_EQ(copy, expected);
+    }
+  };
+
+#define JOIN(a, b, c) expectJoin(__FILE__, __LINE__, a, b, c)
+
+  auto bot = abstraction.getBottom();
+  auto one = OddEvenAbstraction::Element(OddEvenInt{}.get(1u));
+  auto two = OddEvenAbstraction::Element(OddEvenInt{}.get(2u));
+  auto three = OddEvenAbstraction::Element(OddEvenInt{}.get(3u));
+  auto four = OddEvenAbstraction::Element(OddEvenInt{}.get(4u));
+  auto even = OddEvenAbstraction::Element(OddEvenBool{}.get(true));
+  auto odd = OddEvenAbstraction::Element(OddEvenBool{}.get(false));
+  auto top = OddEvenAbstraction::Element(OddEvenBool{}.getTop());
+
+  JOIN(bot, bot, bot);
+  JOIN(bot, one, one);
+  JOIN(bot, two, two);
+  JOIN(bot, even, even);
+  JOIN(bot, odd, odd);
+  JOIN(bot, top, top);
+
+  JOIN(one, one, one);
+  JOIN(one, two, top);
+  JOIN(one, three, odd);
+  JOIN(one, even, top);
+  JOIN(one, odd, odd);
+
+  JOIN(two, two, two);
+  JOIN(two, three, top);
+  JOIN(two, four, even);
+  JOIN(two, even, even);
+  JOIN(two, odd, top);
+  JOIN(two, top, top);
+
+  JOIN(even, even, even);
+  JOIN(even, odd, top);
+  JOIN(even, top, top);
+
+  JOIN(odd, odd, odd);
+  JOIN(odd, top, top);
+
+#undef JOIN
 }

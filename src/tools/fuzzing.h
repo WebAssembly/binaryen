@@ -487,6 +487,7 @@ private:
   // used in a place that will trap on null. For example, the reference of a
   // struct.get or array.set would use this.
   Expression* makeTrappingRefUse(HeapType type);
+  Expression* makeTrappingRefUse(Type type);
 
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);

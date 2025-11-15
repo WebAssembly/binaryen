@@ -345,7 +345,8 @@ private:
   InstructionFilter filter;
 
   void addImport(Module* curr, Name name, Type params, Type results) {
-    auto import = Builder::makeFunction(name, Signature(params, results), {});
+    auto import = Builder::makeFunction(
+      name, Type(Signature(params, results), NonNullable, Inexact), {});
     import->module = ENV;
     import->base = name;
     curr->addFunction(std::move(import));

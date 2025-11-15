@@ -745,7 +745,7 @@ Secondary:
 (module
  (type $0 (func))
  (import "primary" "%table" (table $0 1 funcref))
- (import "primary" "%foo_1" (func $foo (type $0)))
+ (import "primary" "%foo_1" (func $foo (exact (type $0))))
  (elem $0 (i32.const 0) $bar)
  (func $bar (type $0)
   (call $foo)
@@ -1055,7 +1055,7 @@ Secondary:
 (module
  (type $0 (func))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%foo" (func $foo (type $0)))
+ (import "primary" "%foo" (func $foo (exact (type $0))))
  (elem $0 (i32.const 0) $bar)
  (func $bar (type $0)
   (call $foo)
@@ -1102,7 +1102,7 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%foo" (func $foo (type $0) (param i32) (result i32)))
+ (import "primary" "%foo" (func $foo (exact (type $0) (param i32) (result i32))))
  (elem $0 (i32.const 0) $bar)
  (func $bar (type $0) (param $0 i32) (result i32)
   (call $foo

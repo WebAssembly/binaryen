@@ -17,13 +17,15 @@
 #ifndef wasm_analysis_lattices_flat_h
 #define wasm_analysis_lattices_flat_h
 
+#include <tuple>
+#include <type_traits>
 #include <variant>
 
 #if __cplusplus >= 202002L
 #include <concepts>
 #endif
 
-#include "../lattice.h"
+#include "analysis/lattice.h"
 #include "support/utilities.h"
 
 namespace wasm::analysis {
@@ -33,27 +35,48 @@ namespace wasm::analysis {
 template<typename T>
 concept Flattenable = std::copyable<T> && std::equality_comparable<T>;
 
-// Given a type T, Flat<T> is the lattice where none of the values of T are
-// comparable except with themselves, but they are all greater than a common
-// bottom element not in T and less than a common top element also not in T.
-template<Flattenable T>
+// Given types Ts..., Flat<T...> is the lattice where none of the values of any
+// T are comparable except with themselves, but they are all greater than a
+// common bottom element and less than a common top element.
+template<Flattenable T, Flattenable... Ts>
 #else
-template<typename T>
+template<typename T, typename... Ts>
 #endif
 struct Flat {
 private:
-  struct Bot {};
-  struct Top {};
+  struct Bot : std::monostate {};
+  struct Top : std::monostate {};
+
+  template<std::size_t I>
+  using TI = std::tuple_element_t<I, std::tuple<T, Ts...>>;
 
 public:
-  struct Element : std::variant<Bot, T, Top> {
+  struct Element : std::variant<T, Ts..., Bot, Top> {
     bool isBottom() const noexcept { return std::get_if<Bot>(this); }
     bool isTop() const noexcept { return std::get_if<Top>(this); }
-    const T* getVal() const noexcept { return std::get_if<T>(this); }
-    T* getVal() noexcept { return std::get_if<T>(this); }
+    template<typename U = T> const U* getVal() const noexcept {
+      return std::get_if<U>(this);
+    }
+    template<typename U = T> U* getVal() noexcept {
+      return std::get_if<U>(this);
+    }
+    template<std::size_t I> const TI<I>* getVal() const noexcept {
+      return std::get_if<I>(this);
+    }
+    template<std::size_t I> TI<I>* getVal() noexcept {
+      return std::get_if<I>(this);
+    }
     bool operator==(const Element& other) const noexcept {
-      return ((isBottom() && other.isBottom()) || (isTop() && other.isTop()) ||
-              (getVal() && other.getVal() && *getVal() == *other.getVal()));
+      return this->index() == other.index() &&
+             std::visit(
+               [](const auto& a, const auto& b) {
+                 if constexpr (std::is_same_v<decltype(a), decltype(b)>) {
+                   return a == b;
+                 }
+                 return false;
+               },
+               *this,
+               other);
     }
     bool operator!=(const Element& other) const noexcept {
       return !(*this == other);
@@ -62,18 +85,21 @@ public:
 
   Element getBottom() const noexcept { return Element{Bot{}}; }
   Element getTop() const noexcept { return Element{Top{}}; }
-  Element get(T&& val) const noexcept { return Element{std::move(val)}; }
+  template<typename U> Element get(U&& val) const noexcept {
+    return Element{std::move(val)};
+  }
 
   LatticeComparison compare(const Element& a, const Element& b) const noexcept {
-    if (a.index() < b.index()) {
-      return LESS;
-    } else if (a.index() > b.index()) {
-      return GREATER;
-    } else if (auto pA = a.getVal(); pA && *pA != *b.getVal()) {
-      return NO_RELATION;
-    } else {
+    if (a == b) {
       return EQUAL;
     }
+    if (a.isTop() || b.isBottom()) {
+      return GREATER;
+    }
+    if (a.isBottom() || b.isTop()) {
+      return LESS;
+    }
+    return NO_RELATION;
   }
 
   bool join(Element& joinee, const Element& joiner) const noexcept {

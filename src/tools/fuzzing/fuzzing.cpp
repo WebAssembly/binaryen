@@ -323,8 +323,11 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
 
   // Prune things that error in JS if we call them (like SIMD), some of the
   // time. This alters the wasm/JS boundary quite a lot, so testing both forms
-  // is useful.
-  if (oneIn(2)) {
+  // is useful. Note that we do not do this if there is an imported module,
+  // because in that case legalization could alter the contract between the two
+  // (that is, if the first module has an i64 param, we must call it like that,
+  // and not as two i32s which we'd get after legalization).
+  if (!importedModule && oneIn(2)) {
     options.passes.push_back("legalize-and-prune-js-interface");
   }
 
@@ -379,6 +382,12 @@ void TranslateToFuzzReader::build() {
   }
   finalizeTable();
   shuffleExports();
+
+  // We may turn various function imports into defined functions. Refinalize at
+  // the end to update all references to them, which may become exact.
+  PassRunner runner(&wasm);
+  ReFinalize().run(&runner, &wasm);
+  ReFinalize().walkModuleCode(&wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -949,12 +958,13 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
     if (!preserveImportsAndExports) {
       func->module = "fuzzing-support";
       func->base = baseName;
+      func->type = Type(Signature(type, Type::none), NonNullable, Inexact);
     } else {
       // We cannot add an import, so just make it a trivial function (this is
       // simpler than avoiding calls to logging in all the rest of the logic).
       func->body = builder.makeNop();
+      func->type = Type(Signature(type, Type::none), NonNullable, Exact);
     }
-    func->type = Type(Signature(type, Type::none), NonNullable, Exact);
     wasm.addFunction(std::move(func));
   }
 }
@@ -975,6 +985,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
           func->base.startsWith("call-ref")) {
         // Make it non-imported, and with a simple body.
         func->module = func->base = Name();
+        func->type = func->type.with(Exact);
         auto results = func->getResults();
         func->body =
           results.isConcrete() ? makeConst(results) : makeNop(Type::none);
@@ -1003,7 +1014,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->module = "fuzzing-support";
     func->base = "call-export";
     func->type =
-      Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Exact);
+      Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Inexact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1017,7 +1028,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->name = callExportCatchImportName;
     func->module = "fuzzing-support";
     func->base = "call-export-catch";
-    func->type = Type(Signature(Type::i32, Type::i32), NonNullable, Exact);
+    func->type = Type(Signature(Type::i32, Type::i32), NonNullable, Inexact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1036,7 +1047,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->type =
         Type(Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none),
              NonNullable,
-             Exact);
+             Inexact);
       wasm.addFunction(std::move(func));
     }
 
@@ -1051,7 +1062,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->base = "call-ref-catch";
       func->type = Type(Signature(Type(HeapType::func, Nullable), Type::i32),
                         NonNullable,
-                        Exact);
+                        Inexact);
       wasm.addFunction(std::move(func));
     }
   }
@@ -1069,11 +1080,12 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   if (!preserveImportsAndExports) {
     func->module = "fuzzing-support";
     func->base = "throw";
+    func->type = Type(Signature(Type::i32, Type::none), NonNullable, Inexact);
   } else {
     // As with logging, implement in a trivial way when we cannot add imports.
     func->body = builder.makeNop();
+    func->type = Type(Signature(Type::i32, Type::none), NonNullable, Exact);
   }
-  func->type = Type(Signature(Type::i32, Type::none), NonNullable, Exact);
   wasm.addFunction(std::move(func));
 }
 
@@ -1114,7 +1126,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
     func->base = "table-get";
     func->type = Type(Signature({Type::i32}, Type(HeapType::func, Nullable)),
                       NonNullable,
-                      Exact);
+                      Inexact);
     wasm.addFunction(std::move(func));
   }
 
@@ -1128,7 +1140,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
     func->type =
       Type(Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none),
            NonNullable,
-           Exact);
+           Inexact);
     wasm.addFunction(std::move(func));
   }
 }
@@ -1149,7 +1161,7 @@ void TranslateToFuzzReader::addImportSleepSupport() {
   func->module = "fuzzing-support";
   func->base = "sleep";
   func->type =
-    Type(Signature({Type::i32, Type::i32}, Type::i32), NonNullable, Exact);
+    Type(Signature({Type::i32, Type::i32}, Type::i32), NonNullable, Inexact);
   wasm.addFunction(std::move(func));
 }
 
@@ -1234,8 +1246,7 @@ void TranslateToFuzzReader::useImportedFunctions() {
     auto name =
       Names::getValidFunctionName(wasm, "primary_" + exp->name.toString());
     // We can import it as its own type, or any (declared) supertype.
-    // TODO: this will be inexact eventually
-    auto type = getSuperType(func->type).with(NonNullable).with(Exact);
+    auto type = getSuperType(func->type).with(NonNullable).with(Inexact);
     auto import = builder.makeFunction(name, type, {});
     import->module = "primary";
     import->base = exp->name;
@@ -1686,8 +1697,7 @@ Function* TranslateToFuzzReader::addFunction() {
       }
     });
     auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
-    randomElem->data.push_back(
-      builder.makeRefFunc(func->name, func->type.getHeapType()));
+    randomElem->data.push_back(builder.makeRefFunc(func->name));
   }
   numAddedFunctions++;
   return func;
@@ -2160,6 +2170,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     void visitRethrow(Rethrow* curr) {
       if (!isValidTryRef(curr->target, curr)) {
         replace();
+      } else {
+        visitExpression(curr);
       }
     }
 
@@ -2167,6 +2179,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       if (curr->delegateTarget.is() &&
           !isValidTryRef(curr->delegateTarget, curr)) {
         replace();
+      } else {
+        visitExpression(curr);
       }
     }
 
@@ -2203,8 +2217,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         i--;
       }
     }
-  };
-  Fixer fixer(wasm, *this);
+  } fixer(wasm, *this);
   fixer.walk(func->body);
 
   // Refinalize at the end, after labels are all fixed up.
@@ -2233,6 +2246,7 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
     if (func->imported()) {
       FunctionCreationContext context(*this, func);
       func->module = func->base = Name();
+      func->type = func->type.with(Exact);
       func->body = make(func->getResults());
     }
   }
@@ -2976,10 +2990,7 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
   }
   // TODO: half the time make a completely random item with that type.
   return builder.makeCallRef(
-    builder.makeRefFunc(target->name, target->type.getHeapType()),
-    args,
-    type,
-    isReturn);
+    builder.makeRefFunc(target->name), args, type, isReturn);
 }
 
 Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
@@ -3604,7 +3615,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
         funcContext->func->type.getHeapType().getShared() == share &&
         !oneIn(4)) {
       auto* target = funcContext->func;
-      return builder.makeRefFunc(target->name, target->type.getHeapType());
+      return builder.makeRefFunc(target->name, target->type);
     }
   }
   // Look for a proper function starting from a random location, and loop from
@@ -3615,7 +3626,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     do {
       auto& func = wasm.functions[i];
       if (Type::isSubType(func->type, type)) {
-        return builder.makeRefFunc(func->name, func->type.getHeapType());
+        return builder.makeRefFunc(func->name);
       }
       i = (i + 1) % wasm.functions.size();
     } while (i != start);
@@ -3654,7 +3665,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
                          Type(heapType, NonNullable, Exact),
                          {},
                          body));
-  return builder.makeRefFunc(func->name, heapType);
+  return builder.makeRefFunc(func->name);
 }
 
 Expression* TranslateToFuzzReader::makeConst(Type type) {
@@ -3792,13 +3803,21 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      // If nullable, we can emit a null. If there is no function context, then
-      // we must do so, as the other option is a throw in a block, which are not
-      // possible outside of functions.
+      // If nullable, sometimes emit a null. If not in a function context, see
+      // below, we need a null as well regardless of the type.
       if ((type.isNullable() && oneIn(2)) || !funcContext) {
-        return builder.makeRefNull(HeapTypes::exn.getBasic(share));
+        auto* null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
+        if (type.isNullable()) {
+          return null;
+        }
+        // The type is non-nullable, so we are here because we are in a non-
+        // function context, with nothing valid to emit. "Fix" it with a cast,
+        // which is not valid IR, but which the calling code will handle.
+        assert(!funcContext);
+        return builder.makeRefAs(RefAsNonNull, null);
       }
 
+      // Emit a throw in a block.
       auto* throww = makeThrow(Type::unreachable);
       auto label = makeLabel();
       auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
@@ -3932,7 +3951,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       }
       Expression* descriptor = nullptr;
       if (auto descType = heapType.getDescriptorType()) {
-        descriptor = make(Type(*descType, Nullable, Exact));
+        descriptor = makeTrappingRefUse(Type(*descType, Nullable, Exact));
       }
       return builder.makeStructNew(heapType, values, descriptor);
     }
@@ -4056,13 +4075,17 @@ Expression* TranslateToFuzzReader::makeStringGet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
+  return makeTrappingRefUse(Type(type, Nullable));
+}
+
+Expression* TranslateToFuzzReader::makeTrappingRefUse(Type type) {
   auto percent = upTo(100);
   // Only give a low probability to emit a nullable reference.
   if (percent < 5) {
-    return make(Type(type, Nullable));
+    return make(type.with(Nullable));
   }
   // Otherwise, usually emit a non-nullable one.
-  auto nonNull = Type(type, NonNullable);
+  auto nonNull = type.with(NonNullable);
   if (percent < 70 || !funcContext) {
     return make(nonNull);
   }

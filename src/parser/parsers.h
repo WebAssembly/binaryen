@@ -370,6 +370,8 @@ Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
 template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::TypeUseT> typeuse(Ctx&, bool allowNames = true);
+template<typename Ctx>
+Result<std::pair<typename Ctx::TypeUse, Exactness>> exacttypeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(Lexer&);
 Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> comptype(Ctx&);
@@ -3007,6 +3009,24 @@ Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx, bool allowNames) {
   return ctx.makeTypeUse(pos, type, namedParams.getPtr(), resultTypes.getPtr());
 }
 
+// exacttypeuse ::= typeuse |
+//                  '(' 'exact' typeuse ')'
+template<typename Ctx>
+Result<std::pair<typename Ctx::TypeUseT, Exactness>> exacttypeuse(Ctx& ctx) {
+  auto exact = Inexact;
+  if (ctx.in.takeSExprStart("exact"sv)) {
+    exact = Exact;
+  }
+  auto type = typeuse(ctx, true);
+  CHECK_ERR(type);
+  if (exact == Exact) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of exact type use");
+    }
+  }
+  return std::make_pair(*type, exact);
+}
+
 // ('(' 'import' mod:name nm:name ')')?
 inline MaybeResult<ImportNames> inlineImport(Lexer& in) {
   if (!in.takeSExprStart("import"sv)) {
@@ -3221,7 +3241,7 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
 }
 
 // import ::= '(' 'import' mod:name nm:name importdesc ')'
-// importdesc ::= '(' 'func' id? typeuse ')'
+// importdesc ::= '(' 'func' id? exacttypeuse ')'
 //              | '(' 'table' id? tabletype ')'
 //              | '(' 'memory' id? memtype ')'
 //              | '(' 'global' id? globaltype ')'
@@ -3246,11 +3266,12 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
 
   if (ctx.in.takeSExprStart("func"sv)) {
     auto name = ctx.in.takeID();
-    auto type = typeuse(ctx);
-    CHECK_ERR(type);
+    auto use = exacttypeuse(ctx);
+    CHECK_ERR(use);
+    auto [type, exact] = *use;
     // TODO: function import annotations
     CHECK_ERR(ctx.addFunc(
-      name ? *name : Name{}, {}, &names, *type, std::nullopt, {}, pos));
+      name ? *name : Name{}, {}, &names, type, exact, std::nullopt, {}, pos));
   } else if (ctx.in.takeSExprStart("table"sv)) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
@@ -3289,7 +3310,7 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
 // func ::= '(' 'func' id? ('(' 'export' name ')')*
 //              x,I:typeuse t*:vec(local) (in:instr)* ')'
 //        | '(' 'func' id? ('(' 'export' name ')')*
-//              '(' 'import' mod:name nm:name ')' typeuse ')'
+//              '(' 'import' mod:name nm:name ')' exacttypeuse ')'
 template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   auto pos = ctx.in.getPos();
   auto annotations = ctx.in.getAnnotations();
@@ -3309,11 +3330,19 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  auto type = typeuse(ctx);
-  CHECK_ERR(type);
-
+  typename Ctx::TypeUseT type;
+  Exactness exact = Exact;
   std::optional<typename Ctx::LocalsT> localVars;
-  if (!import) {
+
+  if (import) {
+    auto use = exacttypeuse(ctx);
+    CHECK_ERR(use);
+    type = use->first;
+    exact = use->second;
+  } else {
+    auto use = typeuse(ctx);
+    CHECK_ERR(use);
+    type = *use;
     if (auto l = locals(ctx)) {
       CHECK_ERR(l);
       localVars = *l;
@@ -3331,7 +3360,8 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   CHECK_ERR(ctx.addFunc(name,
                         *exports,
                         import.getPtr(),
-                        *type,
+                        type,
+                        exact,
                         localVars,
                         std::move(annotations),
                         pos));

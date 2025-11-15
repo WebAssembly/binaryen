@@ -209,6 +209,11 @@ struct TypeRefining : public Pass {
           if (!fields[i].type.isExact()) {
             gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
           }
+          // Do not use the GUFA type if it is a continuation, as we cannot add
+          // casts to fix up issues later.
+          if (gufaType.isContinuation()) {
+            continue;
+          }
           infos[i] = LUBFinder(gufaType);
         }
       }

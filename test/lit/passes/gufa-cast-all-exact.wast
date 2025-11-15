@@ -120,10 +120,22 @@
  (import "" "" (global $exact (ref (exact $foo))))
 
  ;; CHECK:      (func $get (type $1) (result i32)
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (struct.get $foo 0
+ ;; CHECK-NEXT:   (select (result (ref null (exact $foo)))
+ ;; CHECK-NEXT:    (global.get $exact)
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NO_CD:      (func $get (type $1) (result i32)
- ;; NO_CD-NEXT:  (unreachable)
+ ;; NO_CD-NEXT:  (struct.get $foo 0
+ ;; NO_CD-NEXT:   (select (result (ref null (exact $foo)))
+ ;; NO_CD-NEXT:    (global.get $exact)
+ ;; NO_CD-NEXT:    (ref.null none)
+ ;; NO_CD-NEXT:    (i32.const 0)
+ ;; NO_CD-NEXT:   )
+ ;; NO_CD-NEXT:  )
  ;; NO_CD-NEXT: )
  (func $get (result i32)
   ;; Regression test for a bug where exactness was not preserved when combining
@@ -220,20 +232,18 @@
  (import "" "" (global $null-exact (ref null (exact $foo))))
 
  ;; CHECK:      (func $as-non-null (type $1) (result i32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (struct.get $foo 0
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (global.get $null-exact)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; NO_CD:      (func $as-non-null (type $1) (result i32)
- ;; NO_CD-NEXT:  (drop
+ ;; NO_CD-NEXT:  (struct.get $foo 0
  ;; NO_CD-NEXT:   (ref.as_non_null
  ;; NO_CD-NEXT:    (global.get $null-exact)
  ;; NO_CD-NEXT:   )
  ;; NO_CD-NEXT:  )
- ;; NO_CD-NEXT:  (unreachable)
  ;; NO_CD-NEXT: )
  (func $as-non-null (result i32)
   (struct.get $foo 0

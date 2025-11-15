@@ -71,15 +71,19 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(std::shared_ptr<FuncData> funcData, HeapType type)
-  : funcData(funcData), type(type, NonNullable, Exact) {
+Literal::Literal(std::shared_ptr<FuncData> funcData, Type type)
+  : funcData(funcData), type(type) {
   assert(funcData);
   assert(type.isSignature());
 }
 
-Literal Literal::makeFunc(Name func, HeapType type) {
+Literal Literal::makeFunc(Name func, Type type) {
   // Provide only the name of the function, without execution info.
   return Literal(std::make_shared<FuncData>(func), type);
+}
+
+Literal Literal::makeFunc(Name func, Module& wasm) {
+  return makeFunc(func, wasm.getFunction(func)->type);
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
