@@ -218,6 +218,14 @@ struct DAE : public Pass {
     }
   }
 
+  // For each function, the set of callers. This is somewhat expensive to
+  // compute, so we don't do it in every iteration. Rarely, a call may vanish
+  // (due to applying a constant param that then lets the optimizer remove it),
+  // and in such cases we are over-approximating the set of callers here, which
+  // can lead to a little wasted work, but this is still more efficient than
+  // computing callers precisely in each iteration.
+  std::vector<std::unordered_set<Name>> callers;
+
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
     allDroppedCalls.clear();
 
@@ -246,15 +254,10 @@ struct DAE : public Pass {
     std::vector<bool> tailCallees(numFunctions);
     std::vector<bool> hasUnseenCalls(numFunctions);
 
-    // For each function, the set of callers.
-    std::vector<std::unordered_set<Name>> callers(numFunctions);
-
     for (auto& [func, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
-        auto targetIndex = indexes[name];
-        auto& allCallsToName = allCalls[targetIndex];
+        auto& allCallsToName = allCalls[indexes[name]];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
-        callers[targetIndex].insert(func);
       }
       for (auto& callee : info.tailCallees) {
         tailCallees[indexes[callee]] = true;
@@ -270,6 +273,15 @@ struct DAE : public Pass {
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         hasUnseenCalls[indexes[*curr->getInternalName()]] = true;
+      }
+    }
+
+    if (callers.empty()) {
+      callers.resize(numFunctions);
+      for (auto& [func, info] : infoMap) {
+        for (auto& [name, calls] : info.calls) {
+          callers[indexes[name]].insert(func);
+        }
       }
     }
 
