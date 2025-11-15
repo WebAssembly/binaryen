@@ -348,6 +348,22 @@ TEST(FlatLattice, Join) {
     flat, flat.getBottom(), flat.get(0), flat.get(1), flat.getTop());
 }
 
+TEST(FlatLattice, MultipleTypes) {
+  analysis::Flat<int, std::string> flat;
+  testDiamondJoin(
+    flat, flat.getBottom(), flat.get(0), flat.get("foo"), flat.getTop());
+
+  auto stringElem = flat.get("foo");
+
+  EXPECT_EQ(stringElem.getVal<0>(), nullptr);
+  ASSERT_NE(stringElem.getVal<1>(), nullptr);
+  EXPECT_EQ(*stringElem.getVal<1>(), std::string("foo"));
+
+  EXPECT_EQ(stringElem.getVal<int>(), nullptr);
+  ASSERT_NE(stringElem.getVal<std::string>(), nullptr);
+  EXPECT_EQ(*stringElem.getVal<std::string>(), std::string("foo"));
+}
+
 TEST(LiftLattice, GetBottom) {
   analysis::Lift lift{analysis::Bool{}};
   EXPECT_TRUE(lift.getBottom().isBottom());
@@ -711,9 +727,9 @@ TEST(StackLattice, Compare) {
   auto& flat = stack.lattice;
   testDiamondCompare(stack,
                      {},
-                     {flat.get(0)},
-                     {flat.get(0), flat.get(1)},
-                     {flat.get(0), flat.getTop()});
+                     {flat.get(0u)},
+                     {flat.get(0u), flat.get(1u)},
+                     {flat.get(0u), flat.getTop()});
 }
 
 TEST(StackLattice, Join) {
@@ -721,9 +737,9 @@ TEST(StackLattice, Join) {
   auto& flat = stack.lattice;
   testDiamondJoin(stack,
                   {},
-                  {flat.get(0)},
-                  {flat.get(0), flat.get(1)},
-                  {flat.get(0), flat.getTop()});
+                  {flat.get(0u)},
+                  {flat.get(0u), flat.get(1u)},
+                  {flat.get(0u), flat.getTop()});
 }
 
 using OddEvenInt = analysis::Flat<uint32_t>;
@@ -815,10 +831,10 @@ TEST(AbstractionLattice, Join) {
 #define JOIN(a, b, c) expectJoin(__FILE__, __LINE__, a, b, c)
 
   auto bot = abstraction.getBottom();
-  auto one = OddEvenAbstraction::Element(OddEvenInt{}.get(1));
-  auto two = OddEvenAbstraction::Element(OddEvenInt{}.get(2));
-  auto three = OddEvenAbstraction::Element(OddEvenInt{}.get(3));
-  auto four = OddEvenAbstraction::Element(OddEvenInt{}.get(4));
+  auto one = OddEvenAbstraction::Element(OddEvenInt{}.get(1u));
+  auto two = OddEvenAbstraction::Element(OddEvenInt{}.get(2u));
+  auto three = OddEvenAbstraction::Element(OddEvenInt{}.get(3u));
+  auto four = OddEvenAbstraction::Element(OddEvenInt{}.get(4u));
   auto even = OddEvenAbstraction::Element(OddEvenBool{}.get(true));
   auto odd = OddEvenAbstraction::Element(OddEvenBool{}.get(false));
   auto top = OddEvenAbstraction::Element(OddEvenBool{}.getTop());
