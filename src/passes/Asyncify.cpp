@@ -96,6 +96,13 @@
 // Overall, this should allow good performance with small overhead that is
 // mostly noticed at rewind time.
 //
+// Exceptions handling (-fwasm-exceptions) is partially supported, everything
+// except for handling unwinding from within a catch block. If assertions mode
+// is enabled then this pass will check for that problem, and if so, throw an
+// unreachable exception. (If "ignore unwind from catch" mode is enabled then
+// Asyncify will silently skip any unwind call from within catch blocks, see
+// below.)
+//
 // After this pass is run a new i32 global "__asyncify_state" is added, which
 // has the following values:
 //
@@ -238,6 +245,12 @@
 //      This enables extra asserts in the output, like checking if we put in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the only-list / remove-list, see later).
+//
+//   --pass-arg=asyncify-ignore-unwind-from-catch
+//
+//      When an unwind operation is triggered from inside a wasm-exceptions
+//      catch block, which is not supported, silently ignore it rather than
+//      fail during rewinding later. (This is unsafe in general.)
 //
 //   --pass-arg=asyncify-verbose
 //
@@ -1138,6 +1151,18 @@ private:
         // here as well.
         results.push_back(makeCallSupport(curr));
         continue;
+      } else if (auto* try_ = curr->dynCast<Try>()) {
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          work.push_back(Work{try_->body, Work::Scan});
+          // catchBodies are ignored because we assume that pause/resume will
+          // not happen inside them
+          continue;
+        }
+        try_->body = results.back();
+        results.pop_back();
+        results.push_back(try_);
+        continue;
       }
       // We must handle all control flow above, and all things that can change
       // the state, so there should be nothing that can reach here - add it
@@ -1314,6 +1339,81 @@ struct AsyncifyAssertInNonInstrumented : public Pass {
 private:
   std::unique_ptr<AsyncifyBuilder> builder;
   Module* module;
+};
+
+struct AsyncifyAssertUnwindCorrectness : Pass {
+  ModuleAnalyzer* analyzer;
+  Module* module;
+
+  AsyncifyAssertUnwindCorrectness(ModuleAnalyzer* analyzer, Module* module) {
+    this->analyzer = analyzer;
+    this->module = module;
+  }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AsyncifyAssertUnwindCorrectness>(analyzer, module);
+  }
+
+  bool isFunctionParallel() override { return true; }
+
+  void runOnFunction(Module*, Function* function) override {
+    auto builder = std::make_unique<Builder>(*module);
+
+    struct UnwindWalker : WalkerPass<ExpressionStackWalker<UnwindWalker>> {
+      Function* function;
+      Builder* builder;
+
+      // Adds a check for Call that is inside a Catch block (we do not handle unwinding there).
+      void checkCallInsideCatch(Call* call) {
+        auto check = builder->makeIf(
+          builder->makeBinary(NeInt32,
+                              builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32),
+                              builder->makeConst(int32_t(State::Normal))),
+          builder->makeUnreachable());
+        if (call->type.isConcrete()) {
+          auto temp = builder->addVar(function, call->type);
+          replaceCurrent(builder->makeBlock(
+            {
+              builder->makeLocalSet(temp, call),
+              check,
+              builder->makeLocalGet(temp, call->type),
+            },
+            call->type));
+        } else {
+          replaceCurrent(builder->makeBlock(
+            {
+              call,
+              check,
+            },
+            call->type));
+        }
+      }
+
+      void visitCall(Call* curr) {
+        assert(!expressionStack.empty());
+        // Go up the stack and see if we are in a Catch.
+        Index i = expressionStack.size() - 1;
+        while (i > 0) {
+          auto* expr = expressionStack[i];
+          if (Try* aTry = expr->template dynCast<Try>()) {
+            // check if curr is inside body of aTry (which is safe),
+            // otherwise do replace a call
+            assert(i + 1 < expressionStack.size());
+            if (expressionStack[i + 1] != aTry->body) {
+              replaceCallWithCheck(curr);
+            }
+            break;
+          }
+          i--;
+        }
+      };
+    };
+
+    UnwindWalker walker;
+    walker.function = function;
+    walker.builder = builder.get();
+    walker.walk(function->body);
+  }
 };
 
 // Instrument local saving/restoring.
@@ -1759,8 +1859,12 @@ struct Asyncify : public Pass {
       // Add asserts in non-instrumented code. Note we do not use an
       // instrumented pass runner here as we do want to run on all functions.
       PassRunner runner(module);
-      runner.add(std::make_unique<AsyncifyAssertInNonInstrumented>(
-        &analyzer, pointerType, asyncifyMemory));
+      if (asserts) {
+        runner.add(std::make_unique<AsyncifyAssertInNonInstrumented>(
+          &analyzer, pointerType, asyncifyMemory));
+        runner.add(
+          std::make_unique<AsyncifyAssertUnwindCorrectness>(&analyzer, module));
+      }
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -1786,7 +1890,7 @@ struct Asyncify : public Pass {
     }
     // Finally, add function support (that should not have been seen by
     // the previous passes).
-    addFunctions(module);
+    addFunctions(module, asserts);
   }
 
 private:
@@ -1814,14 +1918,14 @@ private:
     module->addGlobal(std::move(asyncifyData));
   }
 
-  void addFunctions(Module* module) {
+  void addFunctions(Module* module, bool asserts) {
     Builder builder(*module);
     auto makeFunction = [&](Name name, bool setData, State state) {
+      auto* body = builder.makeBlock();
       std::vector<Type> params;
       if (setData) {
         params.push_back(pointerType);
       }
-      auto* body = builder.makeBlock();
       body->list.push_back(builder.makeGlobalSet(
         ASYNCIFY_STATE, builder.makeConst(int32_t(state))));
       if (setData) {
