@@ -693,26 +693,6 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
     WASM_UNREACHABLE("unexpected export kind");
   }
 
-  // ConfigureAll in a start function makes its functions callable. They are
-  // only signature-called, so the heap type does not need to be public - nor
-  // types referred to - but for now we mark them as public to avoid breakage in
-  // several passes.
-  // TODO Specific fixes in those passes could replace this, and allow better
-  //      optimization.
-  if (wasm.start) {
-    auto* start = wasm.getFunction(wasm.start);
-    if (!start->imported()) {
-      Intrinsics intrinsics(wasm);
-      for (auto* call : FindAll<Call>(start->body).list) {
-        if (intrinsics.isConfigureAll(call)) {
-          for (auto func : intrinsics.getConfigureAllFunctions(call)) {
-            notePublic(wasm.getFunction(func)->type.getHeapType());
-          }
-        }
-      }
-    }
-  }
-
   // Ignorable public types are public.
   for (auto type : getIgnorablePublicTypes()) {
     notePublic(type);
