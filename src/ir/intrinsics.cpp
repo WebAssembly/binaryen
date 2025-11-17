@@ -107,13 +107,19 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions() {
     auto* start = module.getFunction(module.start);
     if (!start->imported()) {
       FindAll<Call> calls(start->body);
-      if (calls.list.size() > 1) {
-        Fatal() << "Multiple configureAlls";
-      }
+      // Look for the (single) configureAll.
+      Call* configureAll = nullptr;
       for (auto* call : calls.list) {
         if (isConfigureAll(call)) {
-          return getConfigureAllFunctions(call);
+          if (configureAll) {
+            Fatal() << "Multiple configureAlls";
+          } else {
+            configureAll = call;
+          }
         }
+      }
+      if (configureAll) {
+        return getConfigureAllFunctions(configureAll);
       }
     }
   }
