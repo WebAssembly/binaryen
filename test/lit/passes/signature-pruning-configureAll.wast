@@ -6,15 +6,12 @@
 
 (module
   ;; CHECK:      (type $externs (array (mut externref)))
-  ;; OPEN_WORLD:      (type $externs (array (mut externref)))
   (type $externs (array (mut externref)))
 
   ;; CHECK:      (type $funcs (array (mut funcref)))
-  ;; OPEN_WORLD:      (type $funcs (array (mut funcref)))
   (type $funcs (array (mut funcref)))
 
   ;; CHECK:      (type $bytes (array (mut i8)))
-  ;; OPEN_WORLD:      (type $bytes (array (mut i8)))
   (type $bytes (array (mut i8)))
 
   ;; CHECK:      (rec
@@ -29,18 +26,7 @@
   ;; CHECK:       (type $7 (func))
 
   ;; CHECK:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
-  ;; OPEN_WORLD:      (rec
-  ;; OPEN_WORLD-NEXT:  (type $ret-any-2 (func (result (ref (exact $struct)))))
 
-  ;; OPEN_WORLD:       (type $struct (struct))
-
-  ;; OPEN_WORLD:       (type $ret-any-1 (func (result (ref (exact $struct)))))
-
-  ;; OPEN_WORLD:       (type $6 (func (result i32)))
-
-  ;; OPEN_WORLD:       (type $7 (func))
-
-  ;; OPEN_WORLD:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   (type $configureAll (func (param (ref null $externs)) (param (ref null $funcs)) (param (ref null $bytes)) (param externref)))
 
   (type $struct (struct))
@@ -60,21 +46,17 @@
   )
 
   ;; CHECK:      (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll) (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
-  ;; OPEN_WORLD:      (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll) (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll)))
 
   ;; CHECK:      (data $bytes "12345678")
 
   ;; CHECK:      (elem $externs externref (item (ref.null noextern)))
-  ;; OPEN_WORLD:      (data $bytes "12345678")
 
-  ;; OPEN_WORLD:      (elem $externs externref (item (ref.null noextern)))
   (elem $externs externref
     (ref.null extern)
   )
 
   ;; CHECK:      (elem $funcs func $foo $bar)
-  ;; OPEN_WORLD:      (elem $funcs func $foo $bar)
   (elem $funcs funcref
     (ref.func $foo)
     (ref.func $bar)
@@ -83,7 +65,6 @@
   (data $bytes "12345678")
 
   ;; CHECK:      (start $start)
-  ;; OPEN_WORLD:      (start $start)
   (start $start)
 
   ;; CHECK:      (func $start (type $7)
@@ -103,23 +84,6 @@
   ;; CHECK-NEXT:   (ref.null noextern)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $start (type $7)
-  ;; OPEN_WORLD-NEXT:  (call $configureAll
-  ;; OPEN_WORLD-NEXT:   (array.new_elem $externs $externs
-  ;; OPEN_WORLD-NEXT:    (i32.const 0)
-  ;; OPEN_WORLD-NEXT:    (i32.const 1)
-  ;; OPEN_WORLD-NEXT:   )
-  ;; OPEN_WORLD-NEXT:   (array.new_elem $funcs $funcs
-  ;; OPEN_WORLD-NEXT:    (i32.const 0)
-  ;; OPEN_WORLD-NEXT:    (i32.const 2)
-  ;; OPEN_WORLD-NEXT:   )
-  ;; OPEN_WORLD-NEXT:   (array.new_data $bytes $bytes
-  ;; OPEN_WORLD-NEXT:    (i32.const 0)
-  ;; OPEN_WORLD-NEXT:    (i32.const 8)
-  ;; OPEN_WORLD-NEXT:   )
-  ;; OPEN_WORLD-NEXT:   (ref.null noextern)
-  ;; OPEN_WORLD-NEXT:  )
-  ;; OPEN_WORLD-NEXT: )
   (func $start
     (call $configureAll
       (array.new_elem $externs $externs
@@ -135,9 +99,6 @@
   ;; CHECK:      (func $foo (type $6) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $foo (type $6) (result i32)
-  ;; OPEN_WORLD-NEXT:  (i32.const 42)
-  ;; OPEN_WORLD-NEXT: )
   (func $foo (result i32)
     ;; Nothing to do here anyhow, but do not error.
     (i32.const 42)
@@ -146,9 +107,6 @@
   ;; CHECK:      (func $bar (type $ret-any-1) (result (ref (exact $struct)))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $bar (type $ret-any-1) (result (ref (exact $struct)))
-  ;; OPEN_WORLD-NEXT:  (struct.new_default $struct)
-  ;; OPEN_WORLD-NEXT: )
   (func $bar (type $any-1) (param $x anyref)
     ;; The param is unused, but will not be pruned due to configureAll.
   )
@@ -156,9 +114,6 @@
   ;; CHECK:      (func $unconfigured (type $ret-any-2) (result (ref (exact $struct)))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $unconfigured (type $ret-any-2) (result (ref (exact $struct)))
-  ;; OPEN_WORLD-NEXT:  (struct.new_default $struct)
-  ;; OPEN_WORLD-NEXT: )
   (func $unconfigured (type $any-2) (param $x anyref)
     ;; This is not referred to by configureAll, and can be pruned.
   )
