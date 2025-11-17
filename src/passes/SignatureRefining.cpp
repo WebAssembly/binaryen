@@ -93,7 +93,7 @@ struct SignatureRefining : public Pass {
       // called: it is fine to refine results, as the calls still succeed (we
       // just happen to get something even more refined back), but we cannot
       // refine params (as calls might start to fail, with insufficiently-
-      // refined inputs). 
+      // refined inputs).
       bool canModifyParams = true;
     };
 
@@ -165,7 +165,8 @@ struct SignatureRefining : public Pass {
     // configureAll functions are signature-called, which means their params
     // must not be refined.
     for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
-      allInfo[module->getFunction(func)->type.getHeapType()].canModifyParams = false;
+      allInfo[module->getFunction(func)->type.getHeapType()].canModifyParams =
+        false;
     }
 
     // Also skip modifying types used in tags, even private tags, since we don't
@@ -242,8 +243,8 @@ struct SignatureRefining : public Pass {
         }
         if (newParamsTypes.size() < numParams) {
           // We did not have type information to calculate a LUB (no calls, or
-          // some param is always unreachable), so there is nothing we can improve
-          // here. Other passes might remove the type entirely.
+          // some param is always unreachable), so there is nothing we can
+          // improve here. Other passes might remove the type entirely.
           newParams = func->getParams();
         } else {
           newParams = Type(newParamsTypes);
