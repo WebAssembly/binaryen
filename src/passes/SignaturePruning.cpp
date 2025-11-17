@@ -176,6 +176,12 @@ struct SignaturePruning : public Pass {
       allInfo[tag->type].optimizable = false;
     }
 
+    // configureAll functions are signature-called, and must also not be
+    // modified.
+    for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
+      allInfo[module->getFunction(func)->type.getHeapType].optimizable = false;
+    }
+
     // A type must have the same number of parameters and results as its
     // supertypes and subtypes, so we only attempt to modify types without
     // supertypes or subtypes.

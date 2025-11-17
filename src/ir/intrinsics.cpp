@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "wasm-builder.h"
 
@@ -98,6 +99,25 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
     }
   }
   return ret;
+}
+
+std::vector<Name> Intrinsics::getConfigureAllFunctions() {
+  // ConfigureAll in a start function makes its functions callable.
+  if (wasm.start) {
+    auto* start = wasm.getFunction(wasm.start);
+    if (!start->imported()) {
+      FindAll<Call> calls(start->body);
+      if (calls.list.size() > 1) {
+        Fatal() << "Multiple configureAlls";
+      }
+      for (auto* call : calls.list) {
+        if (intrinsics.isConfigureAll(call)) {
+          return getConfigureAllFunctions(call);
+        }
+      }
+    }
+  }
+  return {};
 }
 
 } // namespace wasm

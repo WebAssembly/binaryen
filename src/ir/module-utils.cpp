@@ -15,7 +15,6 @@
  */
 
 #include "module-utils.h"
-#include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/metadata.h"

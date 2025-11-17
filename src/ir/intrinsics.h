@@ -109,6 +109,8 @@ public:
   //
   // where the segment $seg is of size N.
   std::vector<Name> getConfigureAllFunctions(Call* call);
+  // As above, but looks through the module to find the configureAll.
+  std::vector<Name> getConfigureAllFunctions();
 };
 
 } // namespace wasm

@@ -14,24 +14,17 @@
   ;; CHECK:      (type $bytes (array (mut i8)))
   (type $bytes (array (mut i8)))
 
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $ret-any-2 (func (result (ref (exact $struct)))))
-
-  ;; CHECK:       (type $struct (struct))
-
-  ;; CHECK:       (type $ret-any-1 (func (result (ref (exact $struct)))))
-
-  ;; CHECK:       (type $6 (func (result i32)))
-
-  ;; CHECK:       (type $7 (func))
 
   ;; CHECK:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
-
   (type $configureAll (func (param (ref null $externs)) (param (ref null $funcs)) (param (ref null $bytes)) (param externref)))
 
   (type $struct (struct))
 
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $any-2 (func))
+
+    ;; CHECK:       (type $any-1 (func))
     (type $any-1 (func (param anyref)))
 
     ;; use brands to allow $any-1/2 to be optimized separately.
@@ -45,13 +38,17 @@
     (type $brand3 (struct))
   )
 
+  ;; CHECK:       (type $6 (func (result i32)))
+
+  ;; CHECK:       (type $7 (func))
+
   ;; CHECK:      (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll) (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   (import "wasm:js-prototypes" "configureAll" (func $configureAll (type $configureAll)))
+
 
   ;; CHECK:      (data $bytes "12345678")
 
   ;; CHECK:      (elem $externs externref (item (ref.null noextern)))
-
   (elem $externs externref
     (ref.null extern)
   )
@@ -104,15 +101,16 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $bar (type $ret-any-1) (result (ref (exact $struct)))
-  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK:      (func $bar (type $any-1)
+  ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT: )
   (func $bar (type $any-1) (param $x anyref)
-    ;; The param is unused, but will not be pruned due to configureAll.
+    ;; The param is unused, but will not be pruned (turned into a local) due to
+    ;; configureAll.
   )
 
-  ;; CHECK:      (func $unconfigured (type $ret-any-2) (result (ref (exact $struct)))
-  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK:      (func $unconfigured (type $any-2)
+  ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT: )
   (func $unconfigured (type $any-2) (param $x anyref)
     ;; This is not referred to by configureAll, and can be pruned.
