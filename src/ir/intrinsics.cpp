@@ -103,15 +103,15 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
 
 std::vector<Name> Intrinsics::getConfigureAllFunctions() {
   // ConfigureAll in a start function makes its functions callable.
-  if (wasm.start) {
-    auto* start = wasm.getFunction(wasm.start);
+  if (module.start) {
+    auto* start = module.getFunction(module.start);
     if (!start->imported()) {
       FindAll<Call> calls(start->body);
       if (calls.list.size() > 1) {
         Fatal() << "Multiple configureAlls";
       }
       for (auto* call : calls.list) {
-        if (intrinsics.isConfigureAll(call)) {
+        if (isConfigureAll(call)) {
           return getConfigureAllFunctions(call);
         }
       }
