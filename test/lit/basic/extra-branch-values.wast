@@ -28,10 +28,10 @@
   (import "env" "use-i32-any" (func $use-i32-any (param i32 (ref any))))
 
   ;; CHECK:      (tag $e (type $7) (param i32))
-  ;; OPT_O:      (tag $e (type $5) (param i32))
+  ;; OPT_O:      (tag $e (type $9) (param i32))
   (tag $e (param i32))
   ;; CHECK:      (tag $e2 (type $7) (param i32))
-  ;; OPT_O:      (tag $e2 (type $5) (param i32))
+  ;; OPT_O:      (tag $e2 (type $9) (param i32))
   (tag $e2 (param i32))
 
   ;; CHECK:      (func $br_on_null-one (type $8) (param $0 i32) (param $1 anyref) (result i32)
@@ -76,7 +76,7 @@
   ;; CHECK-NEXT:   (local.get $scratch_3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $br_on_null-one (type $6) (param $0 i32) (param $1 anyref) (result i32)
+  ;; OPT_O:      (func $br_on_null-one (type $10) (param $0 i32) (param $1 anyref) (result i32)
   ;; OPT_O-NEXT:  (block $block (result i32)
   ;; OPT_O-NEXT:   (block $block0
   ;; OPT_O-NEXT:    (global.set $any
@@ -168,7 +168,7 @@
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $br_on_null-two (type $16) (param $0 i32) (param $1 i64) (param $2 anyref) (result i32 i64)
   ;; OPT_O-NEXT:  (local $3 (tuple i32 i64))
-  ;; OPT_O-NEXT:  (block $block (type $11) (result i32 i64)
+  ;; OPT_O-NEXT:  (block $block (type $8) (result i32 i64)
   ;; OPT_O-NEXT:   (local.set $3
   ;; OPT_O-NEXT:    (tuple.make 2
   ;; OPT_O-NEXT:     (local.get $0)
@@ -254,8 +254,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $br_on_non_null-one (type $7) (param $0 i32) (param $1 anyref) (result i32 (ref any))
-  ;; OPT_O-NEXT:  (block $block (type $1) (result i32 (ref any))
+  ;; OPT_O:      (func $br_on_non_null-one (type $11) (param $0 i32) (param $1 anyref) (result i32 (ref any))
+  ;; OPT_O-NEXT:  (block $block (type $7) (result i32 (ref any))
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result (ref any))
@@ -350,8 +350,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $br_on_non_null-two (type $8) (param $0 i32) (param $1 i64) (param $2 anyref) (result i32 i64 (ref any))
-  ;; OPT_O-NEXT:  (block $block (type $4) (result i32 i64 (ref any))
+  ;; OPT_O:      (func $br_on_non_null-two (type $12) (param $0 i32) (param $1 i64) (param $2 anyref) (result i32 i64 (ref any))
+  ;; OPT_O-NEXT:  (block $block (type $6) (result i32 i64 (ref any))
   ;; OPT_O-NEXT:   (tuple.make 3
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (local.get $1)
@@ -441,8 +441,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $br_on_cast-one (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $block (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $br_on_cast-one (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $block (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result eqref)
@@ -550,7 +550,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $br_on_cast-two (type $17) (param $0 i32) (param $1 i64) (param $2 anyref) (result i32 i64 eqref)
-  ;; OPT_O-NEXT:  (block $block (type $12) (result i32 i64 eqref)
+  ;; OPT_O-NEXT:  (block $block (type $4) (result i32 i64 eqref)
   ;; OPT_O-NEXT:   (tuple.make 3
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (local.get $1)
@@ -644,7 +644,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $br_on_cast-nn (type $18) (param $0 i32) (param $1 (ref any)) (result i32 (ref eq))
-  ;; OPT_O-NEXT:  (block $block (type $2) (result i32 (ref eq))
+  ;; OPT_O-NEXT:  (block $block (type $3) (result i32 (ref eq))
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result (ref eq))
@@ -730,7 +730,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $br_on_cast-to-nn (type $19) (param $0 i32) (param $1 anyref) (result i32 (ref eq))
-  ;; OPT_O-NEXT:  (block $block (type $2) (result i32 (ref eq))
+  ;; OPT_O-NEXT:  (block $block (type $3) (result i32 (ref eq))
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result (ref eq))
@@ -815,8 +815,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $br_on_cast_fail-one (type $7) (param $0 i32) (param $1 anyref) (result i32 (ref any))
-  ;; OPT_O-NEXT:  (block $block (type $1) (result i32 (ref any))
+  ;; OPT_O:      (func $br_on_cast_fail-one (type $11) (param $0 i32) (param $1 anyref) (result i32 (ref any))
+  ;; OPT_O-NEXT:  (block $block (type $7) (result i32 (ref any))
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result (ref any))
@@ -923,8 +923,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $br_on_cast_fail-two (type $8) (param $0 i32) (param $1 i64) (param $2 anyref) (result i32 i64 (ref any))
-  ;; OPT_O-NEXT:  (block $block (type $4) (result i32 i64 (ref any))
+  ;; OPT_O:      (func $br_on_cast_fail-two (type $12) (param $0 i32) (param $1 i64) (param $2 anyref) (result i32 i64 (ref any))
+  ;; OPT_O-NEXT:  (block $block (type $6) (result i32 i64 (ref any))
   ;; OPT_O-NEXT:   (tuple.make 3
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (local.get $1)
@@ -1018,7 +1018,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $br_on_cast_fail-nn (type $20) (param $0 i32) (param $1 (ref any)) (result i32 (ref any))
-  ;; OPT_O-NEXT:  (block $block (type $1) (result i32 (ref any))
+  ;; OPT_O-NEXT:  (block $block (type $7) (result i32 (ref any))
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result (ref any))
@@ -1103,8 +1103,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $br_on_cast_fail-to-nn (type $9) (param $0 i32) (param $1 anyref) (result i32 anyref)
-  ;; OPT_O-NEXT:  (block $block (type $13) (result i32 anyref)
+  ;; OPT_O:      (func $br_on_cast_fail-to-nn (type $13) (param $0 i32) (param $1 anyref) (result i32 anyref)
+  ;; OPT_O-NEXT:  (block $block (type $2) (result i32 anyref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result anyref)
@@ -1187,7 +1187,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $scratch_7)
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $unreachable-fallthrough (type $6) (param $0 i32) (param $1 anyref) (result i32)
+  ;; OPT_O:      (func $unreachable-fallthrough (type $10) (param $0 i32) (param $1 anyref) (result i32)
   ;; OPT_O-NEXT:  (drop
   ;; OPT_O-NEXT:   (block $l0 (result (ref any))
   ;; OPT_O-NEXT:    (br_on_non_null $l0
@@ -1294,7 +1294,7 @@
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $matching-branches (type $21) (param $0 i32) (param $1 anyref) (param $2 i32) (param $3 anyref) (result i32 eqref)
   ;; OPT_O-NEXT:  (local $4 eqref)
-  ;; OPT_O-NEXT:  (block $block (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $block (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (local.set $4
   ;; OPT_O-NEXT:    (block $block0 (result eqref)
   ;; OPT_O-NEXT:     (global.set $any
@@ -1453,7 +1453,7 @@
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $different-branches (type $22) (param $0 i32) (param $1 anyref) (param $2 i32) (param $3 eqref) (param $4 anyref) (result i32 eqref)
   ;; OPT_O-NEXT:  (local $5 (tuple i32 eqref))
-  ;; OPT_O-NEXT:  (block $block (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $block (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (block $block1
   ;; OPT_O-NEXT:    (br $block
   ;; OPT_O-NEXT:     (tuple.make 2
@@ -1626,7 +1626,7 @@
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $different-branches-2 (type $23) (param $0 i32) (param $1 eqref) (param $2 anyref) (param $3 i32) (param $4 anyref) (result i32 eqref)
   ;; OPT_O-NEXT:  (local $5 (tuple i32 eqref))
-  ;; OPT_O-NEXT:  (block $block (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $block (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (block $block0
   ;; OPT_O-NEXT:    (br $block
   ;; OPT_O-NEXT:     (tuple.make 2
@@ -1793,7 +1793,7 @@
   ;; OPT_O-NEXT:   (block $block10
   ;; OPT_O-NEXT:    (br $block1
   ;; OPT_O-NEXT:     (tuple.extract 2 0
-  ;; OPT_O-NEXT:      (block $block (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:      (block $block (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:       (tuple.make 2
   ;; OPT_O-NEXT:        (local.get $0)
   ;; OPT_O-NEXT:        (block $block0 (result eqref)
@@ -1896,7 +1896,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPT_O:      (func $with-block-param (type $25) (param $0 i64) (param $1 anyref) (result i64 eqref)
-  ;; OPT_O-NEXT:  (block $block (type $14) (result i64 eqref)
+  ;; OPT_O-NEXT:  (block $block (type $1) (result i64 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $block0 (result eqref)
@@ -2098,7 +2098,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $loop-results (type $9) (param $0 i32) (param $1 anyref) (result i32 anyref)
+  ;; OPT_O:      (func $loop-results (type $13) (param $0 i32) (param $1 anyref) (result i32 anyref)
   ;; OPT_O-NEXT:  (local $2 (tuple i32 anyref))
   ;; OPT_O-NEXT:  (local $3 eqref)
   ;; OPT_O-NEXT:  (local.set $2
@@ -2107,12 +2107,12 @@
   ;; OPT_O-NEXT:    (local.get $1)
   ;; OPT_O-NEXT:   )
   ;; OPT_O-NEXT:  )
-  ;; OPT_O-NEXT:  (loop $label2 (type $1) (result i32 (ref any))
-  ;; OPT_O-NEXT:   (block $label3 (type $1) (result i32 (ref any))
+  ;; OPT_O-NEXT:  (loop $label2 (type $7) (result i32 (ref any))
+  ;; OPT_O-NEXT:   (block $label3 (type $7) (result i32 (ref any))
   ;; OPT_O-NEXT:    (local.set $2
-  ;; OPT_O-NEXT:     (block $label (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:     (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:      (br $label3
-  ;; OPT_O-NEXT:       (block $label1 (type $1) (result i32 (ref any))
+  ;; OPT_O-NEXT:       (block $label1 (type $7) (result i32 (ref any))
   ;; OPT_O-NEXT:        (local.set $3
   ;; OPT_O-NEXT:         (block $label0 (result eqref)
   ;; OPT_O-NEXT:          (br $label1
@@ -2215,13 +2215,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $if (type $10) (param $0 i32) (param $1 i32) (param $2 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $if (type $14) (param $0 i32) (param $1 i32) (param $2 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $1)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
   ;; OPT_O-NEXT:     (br $label
-  ;; OPT_O-NEXT:      (if (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:      (if (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:       (local.get $0)
   ;; OPT_O-NEXT:       (then
   ;; OPT_O-NEXT:        (global.set $any
@@ -2327,13 +2327,13 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; OPT_O:      (func $else (type $10) (param $0 i32) (param $1 i32) (param $2 anyref) (result i32 eqref)
- ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+ ;; OPT_O:      (func $else (type $14) (param $0 i32) (param $1 i32) (param $2 anyref) (result i32 eqref)
+ ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
  ;; OPT_O-NEXT:   (tuple.make 2
  ;; OPT_O-NEXT:    (local.get $1)
  ;; OPT_O-NEXT:    (block $label0 (result eqref)
  ;; OPT_O-NEXT:     (br $label
- ;; OPT_O-NEXT:      (if (type $0) (result i32 eqref)
+ ;; OPT_O-NEXT:      (if (type $5) (result i32 eqref)
  ;; OPT_O-NEXT:       (local.get $0)
  ;; OPT_O-NEXT:       (then
  ;; OPT_O-NEXT:        (tuple.make 2
@@ -2469,12 +2469,12 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; OPT_O:      (func $if-else-params (type $27) (param $0 i32) (param $1 i32) (param $2 anyref) (param $3 anyref) (result i32 eqref)
- ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+ ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
  ;; OPT_O-NEXT:   (tuple.make 2
  ;; OPT_O-NEXT:    (local.get $0)
  ;; OPT_O-NEXT:    (block $label0 (result eqref)
  ;; OPT_O-NEXT:     (br $label
- ;; OPT_O-NEXT:      (if (type $0) (result i32 eqref)
+ ;; OPT_O-NEXT:      (if (type $5) (result i32 eqref)
  ;; OPT_O-NEXT:       (local.get $1)
  ;; OPT_O-NEXT:       (then
  ;; OPT_O-NEXT:        (global.set $any
@@ -2573,13 +2573,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $try-catch (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $try-catch (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
   ;; OPT_O-NEXT:     (br $label
-  ;; OPT_O-NEXT:      (try (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:      (try (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:       (do
   ;; OPT_O-NEXT:        (call $use-i32-any
   ;; OPT_O-NEXT:         (local.get $0)
@@ -2670,13 +2670,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $try-catch_all (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $try-catch_all (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
   ;; OPT_O-NEXT:     (br $label
-  ;; OPT_O-NEXT:      (try (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:      (try (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:       (do
   ;; OPT_O-NEXT:        (call $use-i32-any
   ;; OPT_O-NEXT:         (local.get $0)
@@ -2763,13 +2763,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $try-delegate (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $try-delegate (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
   ;; OPT_O-NEXT:     (br $label
-  ;; OPT_O-NEXT:      (try (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:      (try (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:       (do
   ;; OPT_O-NEXT:        (call $use-i32-any
   ;; OPT_O-NEXT:         (local.get $0)
@@ -2869,13 +2869,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $try-everything-params (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $try-everything-params (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
   ;; OPT_O-NEXT:     (br $label
-  ;; OPT_O-NEXT:      (try (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:      (try (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:       (do
   ;; OPT_O-NEXT:        (call $use-i32-any
   ;; OPT_O-NEXT:         (local.get $0)
@@ -2975,13 +2975,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $try_table (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $try_table (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
   ;; OPT_O-NEXT:     (br $label
-  ;; OPT_O-NEXT:      (try_table (type $0) (result i32 eqref)
+  ;; OPT_O-NEXT:      (try_table (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:       (call $use-i32-any
   ;; OPT_O-NEXT:        (local.get $0)
   ;; OPT_O-NEXT:        (br_on_cast $label0 anyref eqref
@@ -3058,13 +3058,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $try_table-params (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $try_table-params (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
   ;; OPT_O-NEXT:     (br $label
-  ;; OPT_O-NEXT:      (try_table (type $2) (result i32 (ref eq))
+  ;; OPT_O-NEXT:      (try_table (type $3) (result i32 (ref eq))
   ;; OPT_O-NEXT:       (call $use-i32-any
   ;; OPT_O-NEXT:        (local.get $0)
   ;; OPT_O-NEXT:        (br_on_cast $label0 anyref eqref
@@ -3143,8 +3143,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPT_O:      (func $branch-to-func (type $3) (param $0 i32) (param $1 anyref) (result i32 eqref)
-  ;; OPT_O-NEXT:  (block $label (type $0) (result i32 eqref)
+  ;; OPT_O:      (func $branch-to-func (type $0) (param $0 i32) (param $1 anyref) (result i32 eqref)
+  ;; OPT_O-NEXT:  (block $label (type $5) (result i32 eqref)
   ;; OPT_O-NEXT:   (tuple.make 2
   ;; OPT_O-NEXT:    (local.get $0)
   ;; OPT_O-NEXT:    (block $label0 (result eqref)
