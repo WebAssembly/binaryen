@@ -223,7 +223,7 @@ struct DAE : public Pass {
   // from optimization. It is ok if this is an over-approximation, that is, if
   // we think there are more callers than there are, as it would just lead to
   // unneeded extra scanning of calling functions (in the example just given, if
-  // a caller did not actually call, they would not benefit from optimization,
+  // a caller did not actually call, they would not benefit from the extra optimization,
   // but no harm is done, and no optimization is missed). Such over-
   // approximation can happen in later optimization iterations: We may manage to
   // remove a call from a function to another (say, after applying a constant
