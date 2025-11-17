@@ -277,6 +277,8 @@ struct DAE : public Pass {
     }
 
     if (callers.empty()) {
+      // This is faster, but confirm no regress... maybe recompute once if no other opts kick in, from outside?
+      //a ctually thisis fine... it only does more unneeded work at worst! comment up top. but test on more code, and with dae-opt too
       callers.resize(numFunctions);
       for (auto& [func, info] : infoMap) {
         for (auto& [name, calls] : info.calls) {
