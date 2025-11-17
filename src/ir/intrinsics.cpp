@@ -15,6 +15,7 @@
  */
 
 #include "ir/intrinsics.h"
+#include "ir/find_all.h"
 #include "wasm-builder.h"
 
 namespace wasm {
@@ -98,6 +99,31 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
     }
   }
   return ret;
+}
+
+std::vector<Name> Intrinsics::getConfigureAllFunctions() {
+  // ConfigureAll in a start function makes its functions callable.
+  if (module.start) {
+    auto* start = module.getFunction(module.start);
+    if (!start->imported()) {
+      FindAll<Call> calls(start->body);
+      // Look for the (single) configureAll.
+      Call* configureAll = nullptr;
+      for (auto* call : calls.list) {
+        if (isConfigureAll(call)) {
+          if (configureAll) {
+            Fatal() << "Multiple configureAlls";
+          } else {
+            configureAll = call;
+          }
+        }
+      }
+      if (configureAll) {
+        return getConfigureAllFunctions(configureAll);
+      }
+    }
+  }
+  return {};
 }
 
 } // namespace wasm

@@ -24,7 +24,11 @@
 
   ;; CHECK:       (type $struct (struct))
 
-  ;; CHECK:       (type $5 (func))
+  ;; CHECK:       (type $ret-any-1 (func (result anyref)))
+
+  ;; CHECK:       (type $6 (func (result i32)))
+
+  ;; CHECK:       (type $7 (func))
 
   ;; CHECK:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   ;; OPEN_WORLD:      (rec
@@ -32,7 +36,11 @@
 
   ;; OPEN_WORLD:       (type $struct (struct))
 
-  ;; OPEN_WORLD:       (type $5 (func))
+  ;; OPEN_WORLD:       (type $ret-any-1 (func (result anyref)))
+
+  ;; OPEN_WORLD:       (type $6 (func (result i32)))
+
+  ;; OPEN_WORLD:       (type $7 (func))
 
   ;; OPEN_WORLD:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   (type $configureAll (func (param (ref null $externs)) (param (ref null $funcs)) (param (ref null $bytes)) (param externref)))
@@ -40,19 +48,9 @@
   (type $struct (struct))
 
   (rec
-    ;; CHECK:      (type $7 (func (result i32)))
-
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $ret-any-1 (func (result anyref)))
-    ;; OPEN_WORLD:      (type $7 (func (result i32)))
-
-    ;; OPEN_WORLD:      (rec
-    ;; OPEN_WORLD-NEXT:  (type $ret-any-1 (func (result anyref)))
     (type $ret-any-1 (func (result anyref)))
 
     ;; use brands to allow $ret-any-1/2 to be optimized separately.
-    ;; CHECK:       (type $brand1 (struct))
-    ;; OPEN_WORLD:       (type $brand1 (struct))
     (type $brand1 (struct))
   )
 
@@ -90,7 +88,7 @@
   ;; OPEN_WORLD:      (start $start)
   (start $start)
 
-  ;; CHECK:      (func $start (type $5)
+  ;; CHECK:      (func $start (type $7)
   ;; CHECK-NEXT:  (call $configureAll
   ;; CHECK-NEXT:   (array.new_elem $externs $externs
   ;; CHECK-NEXT:    (i32.const 0)
@@ -107,7 +105,7 @@
   ;; CHECK-NEXT:   (ref.null noextern)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $start (type $5)
+  ;; OPEN_WORLD:      (func $start (type $7)
   ;; OPEN_WORLD-NEXT:  (call $configureAll
   ;; OPEN_WORLD-NEXT:   (array.new_elem $externs $externs
   ;; OPEN_WORLD-NEXT:    (i32.const 0)
@@ -136,10 +134,10 @@
     )
   )
 
-  ;; CHECK:      (func $foo (type $7) (result i32)
+  ;; CHECK:      (func $foo (type $6) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $foo (type $7) (result i32)
+  ;; OPEN_WORLD:      (func $foo (type $6) (result i32)
   ;; OPEN_WORLD-NEXT:  (i32.const 42)
   ;; OPEN_WORLD-NEXT: )
   (func $foo (result i32)

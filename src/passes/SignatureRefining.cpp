@@ -154,6 +154,12 @@ struct SignatureRefining : public Pass {
       }
     }
 
+    // configureAll functions are signature-called, and must also not be
+    // modified.
+    for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
+      allInfo[module->getFunction(func)->type.getHeapType()].canModify = false;
+    }
+
     // Also skip modifying types used in tags, even private tags, since we don't
     // analyze exception handling or stack switching instructions. TODO: Analyze
     // and optimize exception handling and stack switching instructions.

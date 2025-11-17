@@ -243,7 +243,8 @@ struct AbstractTypeRefining : public Pass {
 
     for (auto type : subTypes.types) {
       if (!type.isStruct()) {
-        // TODO: support arrays and funcs
+        // TODO: Support arrays and functions (for functions we will need to
+        //       handle configureAll).
         continue;
       }
 
