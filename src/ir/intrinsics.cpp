@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/find_all.h"
 #include "ir/intrinsics.h"
+#include "ir/find_all.h"
 #include "wasm-builder.h"
 
 namespace wasm {
