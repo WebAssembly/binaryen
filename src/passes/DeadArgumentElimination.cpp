@@ -218,12 +218,18 @@ struct DAE : public Pass {
     }
   }
 
-  // For each function, the set of callers. This is somewhat expensive to
-  // compute, so we don't do it in every iteration. Rarely, a call may vanish
-  // (due to applying a constant param that then lets the optimizer remove it),
-  // and in such cases we are over-approximating the set of callers here, which
-  // can lead to a little wasted work, but this is still more efficient than
-  // computing callers precisely in each iteration.
+  // For each function, the set of callers. This is used to propagate changes,
+  // e.g. if we remove a return value from a function, the calls might benefit
+  // from optimization. It is ok if this is an over-approximation, that is, if
+  // we think there are more callers than there are, as it would just lead to
+  // unneeded extra scanning of calling functions (in the example just given, if
+  // a caller did not actually call, they would not benefit from optimization,
+  // but no harm is done, and no optimization is missed). Such over-
+  // approximation can happen in later optimization iterations: We may manage to
+  // remove a call from a function to another (say, after applying a constant
+  // param, we see the call is not reached). This is somewhat rare, and the cost
+  // of computing this map is significant, so we compute it once at the start
+  // and then use that possibly-over-approximating data.
   std::vector<std::unordered_set<Name>> callers;
 
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
@@ -276,9 +282,8 @@ struct DAE : public Pass {
       }
     }
 
+    // See comment above, we compute callers once and never again.
     if (callers.empty()) {
-      // This is faster, but confirm no regress... maybe recompute once if no other opts kick in, from outside?
-      //a ctually thisis fine... it only does more unneeded work at worst! comment up top. but test on more code, and with dae-opt too
       callers.resize(numFunctions);
       for (auto& [func, info] : infoMap) {
         for (auto& [name, calls] : info.calls) {
