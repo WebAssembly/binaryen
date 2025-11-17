@@ -296,7 +296,7 @@ struct DAE : public Pass {
       callers.resize(numFunctions);
       for (Index i = 0; i < numFunctions; ++i) {
         auto& set = callersSets[i];
-        std::copy(set.begin(), set.end(), std::back_inserter(callers[i]));
+        callers[i] = std::vector<Name>(set.begin(), set.end());
       }
     }
 
