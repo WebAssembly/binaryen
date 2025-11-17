@@ -34,6 +34,7 @@
 // watch for here).
 //
 
+#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -230,7 +231,7 @@ struct DAE : public Pass {
   // param, we see the call is not reached). This is somewhat rare, and the cost
   // of computing this map is significant, so we compute it once at the start
   // and then use that possibly-over-approximating data.
-  std::vector<std::unordered_set<Name>> callers;
+  std::vector<std::vector<Name>> callers;
 
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
     allDroppedCalls.clear();
@@ -284,11 +285,18 @@ struct DAE : public Pass {
 
     // See comment above, we compute callers once and never again.
     if (callers.empty()) {
-      callers.resize(numFunctions);
+      // Compute first as sets, to deduplicate.
+      std::vector<std::unordered_set<Name>> callersSets(numFunctions);
       for (auto& [func, info] : infoMap) {
         for (auto& [name, calls] : info.calls) {
-          callers[indexes[name]].insert(func);
+          callersSets[indexes[name]].insert(func);
         }
+      }
+      // Copy into efficient vectors.
+      callers.resize(numFunctions);
+      for (Index i = 0; i < numFunctions; ++i) {
+        auto& set = callersSets[i];
+        std::copy(set.begin(), set.end(), std::back_inserter(callers[i]));
       }
     }
 
