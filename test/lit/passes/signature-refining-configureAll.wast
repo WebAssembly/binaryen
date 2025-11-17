@@ -24,7 +24,7 @@
 
   ;; CHECK:       (type $struct (struct))
 
-  ;; CHECK:       (type $ret-any-1 (func (result (ref (exact $struct)))))
+  ;; CHECK:       (type $ret-any-1 (func (result anyref)))
 
   ;; CHECK:       (type $6 (func (result i32)))
 
@@ -36,7 +36,7 @@
 
   ;; OPEN_WORLD:       (type $struct (struct))
 
-  ;; OPEN_WORLD:       (type $ret-any-1 (func (result (ref (exact $struct)))))
+  ;; OPEN_WORLD:       (type $ret-any-1 (func (result anyref)))
 
   ;; OPEN_WORLD:       (type $6 (func (result i32)))
 
@@ -145,10 +145,10 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $bar (type $ret-any-1) (result (ref (exact $struct)))
+  ;; CHECK:      (func $bar (type $ret-any-1) (result anyref)
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $bar (type $ret-any-1) (result (ref (exact $struct)))
+  ;; OPEN_WORLD:      (func $bar (type $ret-any-1) (result anyref)
   ;; OPEN_WORLD-NEXT:  (struct.new_default $struct)
   ;; OPEN_WORLD-NEXT: )
   (func $bar (type $ret-any-1) (result anyref)

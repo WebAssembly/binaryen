@@ -24,7 +24,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $any-2 (func))
 
-    ;; CHECK:       (type $any-1 (func))
+    ;; CHECK:       (type $any-1 (func (param anyref)))
     (type $any-1 (func (param anyref)))
 
     ;; use brands to allow $any-1/2 to be optimized separately.
@@ -101,8 +101,7 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $bar (type $any-1)
-  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK:      (func $bar (type $any-1) (param $x anyref)
   ;; CHECK-NEXT: )
   (func $bar (type $any-1) (param $x anyref)
     ;; The param is unused, but will not be pruned (turned into a local) due to

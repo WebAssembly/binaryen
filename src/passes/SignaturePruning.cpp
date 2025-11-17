@@ -179,7 +179,7 @@ struct SignaturePruning : public Pass {
     // configureAll functions are signature-called, and must also not be
     // modified.
     for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
-      allInfo[module->getFunction(func)->type.getHeapType].optimizable = false;
+      allInfo[module->getFunction(func)->type.getHeapType()].optimizable = false;
     }
 
     // A type must have the same number of parameters and results as its
