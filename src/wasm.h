@@ -2519,6 +2519,8 @@ public:
 
   Name start;
 
+  bool isDefinition = false;
+
   std::vector<CustomSection> customSections;
 
   // Optional user section IR representation.

@@ -443,7 +443,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'imports.wast',  # Missing validation of missing function on instantiation
     'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
     'linking.wast',  # Missing function type validation on instantiation
-    'memory.wast',   # Requires wast `module definition` support
+    # 'memory.wast',   # Requires wast `module definition` support
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'memory64-imports.wast',  # Missing validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed

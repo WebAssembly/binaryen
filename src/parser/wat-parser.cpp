@@ -137,4 +137,8 @@ Result<> parseModule(Module& wasm, Lexer& lexer) {
   return doParseModule(wasm, lexer, true);
 }
 
+Result<> parseModuleBody(Module& wasm, Lexer& lexer) {
+  return doParseModule(wasm, lexer, true);
+}
+
 } // namespace wasm::WATParser
