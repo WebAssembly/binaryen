@@ -646,21 +646,21 @@
   )
 
   ;; CHECK-TEXT:      (func $struct-new (type $13) (result (ref (exact $pair)))
-  ;; CHECK-TEXT-NEXT:  (struct.new $pair
+  ;; CHECK-TEXT-NEXT:  (struct.new_desc $pair
   ;; CHECK-TEXT-NEXT:   (i32.const 0)
   ;; CHECK-TEXT-NEXT:   (i64.const 1)
   ;; CHECK-TEXT-NEXT:   (struct.new_default $pair.desc)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $struct-new (type $13) (result (ref (exact $pair)))
-  ;; CHECK-BIN-NEXT:  (struct.new $pair
+  ;; CHECK-BIN-NEXT:  (struct.new_desc $pair
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:   (i64.const 1)
   ;; CHECK-BIN-NEXT:   (struct.new_default $pair.desc)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $struct-new (result (ref (exact $pair)))
-    (struct.new $pair
+    (struct.new_desc $pair
       (i32.const 0)
       (i64.const 1)
       (struct.new $pair.desc)
@@ -668,17 +668,17 @@
   )
 
   ;; CHECK-TEXT:      (func $struct-new-default (type $13) (result (ref (exact $pair)))
-  ;; CHECK-TEXT-NEXT:  (struct.new_default $pair
+  ;; CHECK-TEXT-NEXT:  (struct.new_default_desc $pair
   ;; CHECK-TEXT-NEXT:   (struct.new_default $pair.desc)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $struct-new-default (type $13) (result (ref (exact $pair)))
-  ;; CHECK-BIN-NEXT:  (struct.new_default $pair
+  ;; CHECK-BIN-NEXT:  (struct.new_default_desc $pair
   ;; CHECK-BIN-NEXT:   (struct.new_default $pair.desc)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $struct-new-default (result (ref (exact $pair)))
-    (struct.new_default $pair
+    (struct.new_default_desc $pair
       (struct.new $pair.desc)
     )
   )
@@ -896,7 +896,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $21 (type $13) (result (ref (exact $4)))
-;; CHECK-BIN-NODEBUG-NEXT:  (struct.new $4
+;; CHECK-BIN-NODEBUG-NEXT:  (struct.new_desc $4
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i64.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (struct.new_default $5)
@@ -904,7 +904,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $22 (type $13) (result (ref (exact $4)))
-;; CHECK-BIN-NODEBUG-NEXT:  (struct.new_default $4
+;; CHECK-BIN-NODEBUG-NEXT:  (struct.new_default_desc $4
 ;; CHECK-BIN-NODEBUG-NEXT:   (struct.new_default $5)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

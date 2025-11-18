@@ -52,7 +52,7 @@
 
   ;; CHECK:      (func $test (type $2) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (global.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -71,7 +71,7 @@
     ;; Only one creation of $A, so we can infer the descriptor that is read
     ;; below.
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (global.get $B)
       )
     )
@@ -100,12 +100,12 @@
 
   ;; CHECK:      (func $test (type $2) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (global.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (struct.new_default $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -119,12 +119,12 @@
     ;; As above, but with another struct.new here, with another value, so we
     ;; cannot infer.
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (global.get $B)
       )
     )
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (struct.new $B)
       )
     )
@@ -153,12 +153,12 @@
 
   ;; CHECK:      (func $test (type $2) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (global.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (global.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -176,12 +176,12 @@
   (func $test (param $A (ref null $A))
     ;; As above, but both struct.news agree, so we can infer.
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (global.get $B)
       )
     )
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (global.get $B)
       )
     )
@@ -214,12 +214,12 @@
 
   ;; CHECK:      (func $test (type $4) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (global.get $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (struct.new_default $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -242,12 +242,12 @@
   (func $test (param $A (ref null $A)) (param $B (ref null $B))
     ;; We can optimize $A's read below, but not $B's.
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (global.get $A.desc)
       )
     )
     (drop
-      (struct.new $B
+      (struct.new_desc $B
         (struct.new $B.desc)
       )
     )
@@ -285,12 +285,12 @@
 
   ;; CHECK:      (func $test (type $4) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (global.get $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (struct.new_default $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -308,12 +308,12 @@
   (func $test (param $A (ref null $A)) (param $B (ref null $B))
     ;; As above, but now $B is a subtype of $A, preventing $A's optimization.
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (global.get $A.desc)
       )
     )
     (drop
-      (struct.new $B
+      (struct.new_desc $B
         (struct.new $B.desc)
       )
     )
@@ -351,12 +351,12 @@
 
   ;; CHECK:      (func $test (type $4) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (struct.new_default $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (global.get $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -381,12 +381,12 @@
     ;; can be optimized but not the supertype. The problem with $A does not stop
     ;; $B from being optimized.
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (struct.new $A.desc)
       )
     )
     (drop
-      (struct.new $B
+      (struct.new_desc $B
         (global.get $B.desc)
       )
     )
@@ -418,7 +418,7 @@
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (struct.new_default $A
+  ;; CHECK-NEXT:      (struct.new_default_desc $A
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -431,7 +431,7 @@
     ;; We need to add a ref.as_non_null on the descriptor that is read, as the
     ;; function result is non-nullable.
     (ref.get_desc $A
-      (struct.new_default $A
+      (struct.new_default_desc $A
         (ref.null none)
       )
     )

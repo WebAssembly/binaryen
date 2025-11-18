@@ -16,7 +16,7 @@
   ;; CHECK:      (global $A.desc (ref null (exact $A.desc)) (struct.new_default $A.desc))
   (global $A.desc (ref null (exact $A.desc)) (struct.new $A.desc))
   ;; CHECK:      (global $A (ref null $A) (struct.new_default $A))
-  (global $A (ref null $A) (struct.new $A (global.get $A.desc)))
+  (global $A (ref null $A) (struct.new_desc $A (global.get $A.desc)))
 )
 
 ;; Because we assume traps never happen, we do not need a ref.as_non_null to
@@ -41,7 +41,7 @@
   ;; CHECK-NEXT: )
   (func $nullable-descs (param $A.desc (ref null (exact $A.desc)))
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (local.get $A.desc)
       )
     )
@@ -59,7 +59,7 @@
   )
 
   ;; CHECK:      (global $g (ref $struct) (struct.new_default $struct))
-  (global $g (ref $struct) (struct.new $struct (struct.new $desc (ref.null none))))
+  (global $g (ref $struct) (struct.new_desc $struct (struct.new_desc $desc (ref.null none))))
 )
 
 ;; Same, but now the nesting is under a non-descriptor field.
@@ -77,5 +77,5 @@
   ;; CHECK:      (global $g (ref $A) (struct.new $A
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: ))
-  (global $g (ref $A) (struct.new $A (struct.new $struct (struct.new $desc (ref.null none)))))
+  (global $g (ref $A) (struct.new $A (struct.new_desc $struct (struct.new_desc $desc (ref.null none)))))
 )

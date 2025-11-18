@@ -2121,10 +2121,17 @@ Result<> IRBuilder::makeBrOn(
   return Ok{};
 }
 
-Result<> IRBuilder::makeStructNew(HeapType type) {
+Result<> IRBuilder::makeStructNew(HeapType type, bool isDesc) {
   if (!type.isStruct()) {
     return Err{"expected struct type annotation on struct.new"};
   }
+  if (isDesc && !type.getDescriptorType()) {
+    return Err{"struct.new_desc of type without descriptor"};
+  }
+  // TODO: Uncomment this after a transition period.
+  // if (!isDesc && type.getDescriptorType()) {
+  //   return Err{"type with descriptor requires struct.new_desc"};
+  // }
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   curr.operands.resize(type.getStruct().fields.size());
@@ -2133,7 +2140,14 @@ Result<> IRBuilder::makeStructNew(HeapType type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStructNewDefault(HeapType type) {
+Result<> IRBuilder::makeStructNewDefault(HeapType type, bool isDesc) {
+  if (isDesc && !type.getDescriptorType()) {
+    return Err{"struct.new_default_desc of type without descriptor"};
+  }
+  // TODO: Uncomment this after a transition period.
+  // if (!isDesc && type.getDescriptorType()) {
+  //   return Err{"type with descriptor requires struct.new_default_desc"};
+  // }
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   CHECK_ERR(visitStructNew(&curr));

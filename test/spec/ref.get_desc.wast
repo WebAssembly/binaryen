@@ -6,8 +6,8 @@
 
   (global $desc1 (ref (exact $desc)) (struct.new $desc))
   (global $desc2 (ref (exact $desc)) (struct.new $desc))
-  (global $struct1 (ref $struct) (struct.new $struct (global.get $desc1)))
-  (global $struct2 (ref $struct) (struct.new $struct (global.get $desc2)))
+  (global $struct1 (ref $struct) (struct.new_desc $struct (global.get $desc1)))
+  (global $struct2 (ref $struct) (struct.new_desc $struct (global.get $desc2)))
 
   (func $unreachable (param $struct (ref null $struct)) (result (ref $desc))
     (ref.get_desc $struct
@@ -41,7 +41,7 @@
   )
 
   (func (export "desc-trap") (result (ref $struct))
-    (struct.new $struct (unreachable))
+    (struct.new_desc $struct (unreachable))
   )
 )
 

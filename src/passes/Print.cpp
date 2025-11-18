@@ -2309,6 +2309,9 @@ struct PrintExpressionContents
     if (curr->isWithDefault()) {
       printMedium(o, "_default");
     }
+    if (curr->desc) {
+      printMedium(o, "_desc");
+    }
     o << ' ';
     printHeapTypeName(curr->type.getHeapType());
   }

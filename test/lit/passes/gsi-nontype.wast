@@ -162,11 +162,11 @@
   ;; CHECK:      (import "a" "b" (global $imported (ref (exact $desc))))
   (import "a" "b" (global $imported (ref (exact $desc))))
 
-  ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct
+  ;; CHECK:      (global $struct (ref $struct) (struct.new_default_desc $struct
   ;; CHECK-NEXT:  (global.get $imported)
   ;; CHECK-NEXT: ))
   (global $struct (ref $struct)
-    (struct.new $struct
+    (struct.new_desc $struct
       (global.get $imported)
     )
   )
@@ -259,10 +259,10 @@
 
   ;; CHECK:      (type $2 (func (result (ref $A.desc))))
 
-  ;; CHECK:      (global $global (ref $A) (struct.new_default $A
+  ;; CHECK:      (global $global (ref $A) (struct.new_default_desc $A
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
-  (global $global (ref $A) (struct.new_default $A
+  (global $global (ref $A) (struct.new_default_desc $A
     (ref.null none)
   ))
 

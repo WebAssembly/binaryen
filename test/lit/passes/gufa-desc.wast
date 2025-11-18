@@ -23,13 +23,13 @@
     (ref.func $func)
   ))
 
-  ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
+  ;; CHECK:      (global $struct (ref $struct) (struct.new_desc $struct
   ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT:  (i32.const 200)
   ;; CHECK-NEXT:  (i32.const 300)
   ;; CHECK-NEXT:  (global.get $desc)
   ;; CHECK-NEXT: ))
-  (global $struct (ref $struct) (struct.new $struct
+  (global $struct (ref $struct) (struct.new_desc $struct
     (i32.const 100)
     (i32.const 200)
     (i32.const 300)
@@ -170,13 +170,13 @@
     (ref.func $func)
   ))
 
-  ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
+  ;; CHECK:      (global $struct (ref $struct) (struct.new_desc $struct
   ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT:  (i32.const 200)
   ;; CHECK-NEXT:  (i32.const 300)
   ;; CHECK-NEXT:  (global.get $desc)
   ;; CHECK-NEXT: ))
-  (global $struct (ref $struct) (struct.new $struct
+  (global $struct (ref $struct) (struct.new_desc $struct
     (i32.const 100)
     (i32.const 200)
     (i32.const 300)
@@ -280,7 +280,7 @@
   ;; CHECK:      (func $sub (type $5)
   ;; CHECK-NEXT:  (local $temp (ref $sub))
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (struct.new $sub
+  ;; CHECK-NEXT:   (struct.new_desc $sub
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:    (i32.const 200)
   ;; CHECK-NEXT:    (i32.const 333)
@@ -311,7 +311,7 @@
     (local $temp (ref $sub))
     ;; Test $sub, and for variety, not using globals.
     (local.set $temp
-      (struct.new $sub
+      (struct.new_desc $sub
         (i32.const 100) ;; agrees with parent
         (i32.const 200) ;; agrees with parent
         (i32.const 333) ;; disagrees with parent
@@ -404,13 +404,13 @@
     (ref.func $func)
   ))
 
-  ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
+  ;; CHECK:      (global $struct (ref $struct) (struct.new_desc $struct
   ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT:  (i32.const 200)
   ;; CHECK-NEXT:  (i32.const 300)
   ;; CHECK-NEXT:  (global.get $desc)
   ;; CHECK-NEXT: ))
-  (global $struct (ref $struct) (struct.new $struct
+  (global $struct (ref $struct) (struct.new_desc $struct
     (i32.const 100)
     (i32.const 200)
     (i32.const 300)
@@ -437,7 +437,7 @@
 
   ;; CHECK:      (func $test (type $5)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $sub
+  ;; CHECK-NEXT:   (struct.new_desc $sub
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:    (i32.const 200)
   ;; CHECK-NEXT:    (i32.const 333)
@@ -488,7 +488,7 @@
   ;; CHECK-NEXT: )
   (func $test (export "test")
     (drop
-      (struct.new $sub
+      (struct.new_desc $sub
         (i32.const 100) ;; agrees with parent
         (i32.const 200) ;; agrees with parent
         (i32.const 333) ;; disagrees with parent
@@ -554,20 +554,20 @@
     (i32.const 10)
   ))
 
-  ;; CHECK:      (global $B (ref (exact $B)) (struct.new $B
+  ;; CHECK:      (global $B (ref (exact $B)) (struct.new_desc $B
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT:  (global.get $C)
   ;; CHECK-NEXT: ))
-  (global $B (ref (exact $B)) (struct.new $B
+  (global $B (ref (exact $B)) (struct.new_desc $B
     (i32.const 20)
     (global.get $C)
   ))
 
-  ;; CHECK:      (global $A (ref (exact $A)) (struct.new $A
+  ;; CHECK:      (global $A (ref (exact $A)) (struct.new_desc $A
   ;; CHECK-NEXT:  (i32.const 30)
   ;; CHECK-NEXT:  (global.get $B)
   ;; CHECK-NEXT: ))
-  (global $A (ref (exact $A)) (struct.new $A
+  (global $A (ref (exact $A)) (struct.new_desc $A
     (i32.const 30)
     (global.get $B)
   ))

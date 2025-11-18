@@ -9,10 +9,10 @@
 
   (global $super.desc1 (ref (exact $super.desc)) (struct.new $super.desc))
   (global $super.desc2 (ref (exact $super.desc)) (struct.new $super.desc))
-  (global $super1 (ref $super) (struct.new $super (global.get $super.desc1)))
+  (global $super1 (ref $super) (struct.new_desc $super (global.get $super.desc1)))
 
   (global $sub.desc (ref (exact $sub.desc)) (struct.new $sub.desc))
-  (global $sub (ref $sub) (struct.new $sub (global.get $sub.desc)))
+  (global $sub (ref $sub) (struct.new_desc $sub (global.get $sub.desc)))
 
   ;; br_on_cast_desc
 
