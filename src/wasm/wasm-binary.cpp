@@ -3560,40 +3560,40 @@ Result<> WasmBinaryReader::readInst() {
       return builder.makeLoad(8, false, offset, align, Type::f64, mem);
     }
     case BinaryConsts::I32StoreMem8: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(1, offset, align, Type::i32, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 1, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I32StoreMem16: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(2, offset, align, Type::i32, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 2, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I32StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(4, offset, align, Type::i32, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 4, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I64StoreMem8: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(1, offset, align, Type::i64, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 1, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64StoreMem16: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(2, offset, align, Type::i64, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 2, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64StoreMem32: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(4, offset, align, Type::i64, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 4, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(8, offset, align, Type::i64, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 8, offset, align, Type::i64, mem);
     }
     case BinaryConsts::F32StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(4, offset, align, Type::f32, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 4, offset, align, Type::f32, mem);
     }
     case BinaryConsts::F64StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(8, offset, align, Type::f64, mem);
+      auto [mem, align, offset, backing] = getMemargWithBacking();
+      return builder.makeStore(backing, 8, offset, align, Type::f64, mem);
     }
     case BinaryConsts::AtomicPrefix: {
       auto op = getU32LEB();
@@ -5428,9 +5428,12 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
                       });
 }
 
-Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
+Index WasmBinaryReader::readMemoryAccess(Address& alignment,
+                                         Address& offset,
+                                         BackingType& backing) {
   auto rawAlignment = getU32LEB();
   bool hasMemIdx = false;
+  backing = BackingType::Memory;
   Index memIdx = 0;
   // Check bit 6 in the alignment to know whether a memory index is present per:
   // https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
@@ -5440,28 +5443,51 @@ Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
     rawAlignment = rawAlignment & ~(1 << 6);
   }
 
+  if (rawAlignment & (1 << (7))) {
+    backing = BackingType::Array;
+    // Clear the bit before we parse alignment
+    rawAlignment = rawAlignment & ~(1 << 7);
+  }
+
   if (rawAlignment > 8) {
     throwError("Alignment must be of a reasonable size");
   }
 
   alignment = Bits::pow2(rawAlignment);
-  if (hasMemIdx) {
-    memIdx = getU32LEB();
+  // TODO: don't allow memIdx when backing typ is array.
+  if (backing == BackingType::Memory) {
+    if (hasMemIdx) {
+      memIdx = getU32LEB();
+    }
+    if (memIdx >= wasm.memories.size()) {
+      throwError("Memory index out of range while reading memory alignment.");
+    }
+    auto* memory = wasm.memories[memIdx].get();
+    offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
   }
-  if (memIdx >= wasm.memories.size()) {
-    throwError("Memory index out of range while reading memory alignment.");
-  }
-  auto* memory = wasm.memories[memIdx].get();
-  offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
 
   return memIdx;
 }
 
 // TODO: make this the only version
-std::tuple<Name, Address, Address> WasmBinaryReader::getMemarg() {
+// TODO: remove me - temporary hack to use a second getMemarg function so i
+// don't have to update everywhere that uses getMemarg
+std::tuple<Name, Address, Address, BackingType>
+WasmBinaryReader::getMemargWithBacking() {
   Address alignment, offset;
-  auto memIdx = readMemoryAccess(alignment, offset);
-  return {getMemoryName(memIdx), alignment, offset};
+  BackingType backing;
+  auto memIdx = readMemoryAccess(alignment, offset, backing);
+  if (backing == BackingType::Array) {
+    // ??? how does binaryen usually handle empty names or maybe we shouldn't
+    // return a name?
+    return {{}, alignment, offset, backing};
+  }
+  return {getMemoryName(memIdx), alignment, offset, backing};
+}
+
+std::tuple<Name, Address, Address> WasmBinaryReader::getMemarg() {
+  auto [memoryName, alignment, offset, backing] = getMemargWithBacking();
+  return {memoryName, alignment, offset};
 }
 
 MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {

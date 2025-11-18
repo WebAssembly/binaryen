@@ -156,6 +156,12 @@ public:
                     Name mem);
   Result<> makeStore(
     unsigned bytes, Address offset, unsigned align, Type type, Name mem);
+  Result<> makeStore(BackingType backing,
+                     unsigned bytes,
+                     Address offset,
+                     unsigned align,
+                     Type type,
+                     Name mem);
   Result<> makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem);
   Result<> makeAtomicStore(unsigned bytes, Address offset, Type type, Name mem);
   Result<> makeAtomicRMW(
@@ -244,6 +250,7 @@ public:
   Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
   Result<> makeArrayGet(HeapType type, bool signed_, MemoryOrder order);
   Result<> makeArraySet(HeapType type, MemoryOrder order);
+  Result<> makeArrayStore(unsigned bytes, Type type);
   Result<> makeArrayLen();
   Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   Result<> makeArrayFill(HeapType type);

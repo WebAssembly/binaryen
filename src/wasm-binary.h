@@ -1725,7 +1725,9 @@ public:
   size_t inlineHintsLen = 0;
   void readInlineHints(size_t payloadLen);
 
-  Index readMemoryAccess(Address& alignment, Address& offset);
+  Index
+  readMemoryAccess(Address& alignment, Address& offset, BackingType& backing);
+  std::tuple<Name, Address, Address, BackingType> getMemargWithBacking();
   std::tuple<Name, Address, Address> getMemarg();
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
