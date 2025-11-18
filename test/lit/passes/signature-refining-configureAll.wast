@@ -7,7 +7,29 @@
 ;; This is so even in closed world.
 
 (module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $func-2 (func (param (ref (exact $struct))) (result (ref (exact $struct)))))
+
+  ;; CHECK:       (type $func-1 (func (param anyref) (result (ref (exact $struct)))))
+
+  ;; CHECK:       (type $2 (func (result i32)))
+
+  ;; CHECK:       (type $struct (struct))
+
+  ;; CHECK:       (type $4 (func))
+
   ;; CHECK:      (type $externs (array (mut externref)))
+  ;; OPEN_WORLD:      (rec
+  ;; OPEN_WORLD-NEXT:  (type $func-2 (func (param (ref (exact $struct))) (result (ref (exact $struct)))))
+
+  ;; OPEN_WORLD:       (type $func-1 (func (param anyref) (result (ref (exact $struct)))))
+
+  ;; OPEN_WORLD:       (type $2 (func (result i32)))
+
+  ;; OPEN_WORLD:       (type $struct (struct))
+
+  ;; OPEN_WORLD:       (type $4 (func))
+
   ;; OPEN_WORLD:      (type $externs (array (mut externref)))
   (type $externs (array (mut externref)))
 
@@ -19,43 +41,21 @@
   ;; OPEN_WORLD:      (type $bytes (array (mut i8)))
   (type $bytes (array (mut i8)))
 
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $ret-any-2 (func (result (ref (exact $struct)))))
-
-  ;; CHECK:       (type $struct (struct))
-
-  ;; CHECK:       (type $ret-any-1 (func (result anyref)))
-
-  ;; CHECK:       (type $6 (func (result i32)))
-
-  ;; CHECK:       (type $7 (func))
-
   ;; CHECK:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
-  ;; OPEN_WORLD:      (rec
-  ;; OPEN_WORLD-NEXT:  (type $ret-any-2 (func (result (ref (exact $struct)))))
-
-  ;; OPEN_WORLD:       (type $struct (struct))
-
-  ;; OPEN_WORLD:       (type $ret-any-1 (func (result anyref)))
-
-  ;; OPEN_WORLD:       (type $6 (func (result i32)))
-
-  ;; OPEN_WORLD:       (type $7 (func))
-
   ;; OPEN_WORLD:      (type $configureAll (func (param (ref null $externs) (ref null $funcs) (ref null $bytes) externref)))
   (type $configureAll (func (param (ref null $externs)) (param (ref null $funcs)) (param (ref null $bytes)) (param externref)))
 
   (type $struct (struct))
 
   (rec
-    (type $ret-any-1 (func (result anyref)))
+    (type $func-1 (func (param anyref) (result anyref)))
 
-    ;; use brands to allow $ret-any-1/2 to be optimized separately.
+    ;; use brands to allow $func-1/2 to be optimized separately.
     (type $brand1 (struct))
   )
 
   (rec
-    (type $ret-any-2 (func (result anyref)))
+    (type $func-2 (func (param anyref) (result anyref)))
 
     (type $brand2 (struct))
     (type $brand3 (struct))
@@ -88,7 +88,7 @@
   ;; OPEN_WORLD:      (start $start)
   (start $start)
 
-  ;; CHECK:      (func $start (type $7)
+  ;; CHECK:      (func $start (type $4)
   ;; CHECK-NEXT:  (call $configureAll
   ;; CHECK-NEXT:   (array.new_elem $externs $externs
   ;; CHECK-NEXT:    (i32.const 0)
@@ -105,7 +105,7 @@
   ;; CHECK-NEXT:   (ref.null noextern)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $start (type $7)
+  ;; OPEN_WORLD:      (func $start (type $4)
   ;; OPEN_WORLD-NEXT:  (call $configureAll
   ;; OPEN_WORLD-NEXT:   (array.new_elem $externs $externs
   ;; OPEN_WORLD-NEXT:    (i32.const 0)
@@ -134,10 +134,47 @@
     )
   )
 
-  ;; CHECK:      (func $foo (type $6) (result i32)
+  ;; CHECK:      (func $calls (type $4)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $bar
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $unconfigured
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $calls (type $4)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call $bar
+  ;; OPEN_WORLD-NEXT:    (struct.new_default $struct)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call $unconfigured
+  ;; OPEN_WORLD-NEXT:    (struct.new_default $struct)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $calls
+    (drop
+      (call $bar
+        (struct.new $struct)
+      )
+    )
+    (drop
+      (call $unconfigured
+        (struct.new $struct)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $foo (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $foo (type $6) (result i32)
+  ;; OPEN_WORLD:      (func $foo (type $2) (result i32)
   ;; OPEN_WORLD-NEXT:  (i32.const 42)
   ;; OPEN_WORLD-NEXT: )
   (func $foo (result i32)
@@ -145,25 +182,26 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $bar (type $ret-any-1) (result anyref)
+  ;; CHECK:      (func $bar (type $func-1) (param $x anyref) (result (ref (exact $struct)))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $bar (type $ret-any-1) (result anyref)
+  ;; OPEN_WORLD:      (func $bar (type $func-1) (param $x anyref) (result (ref (exact $struct)))
   ;; OPEN_WORLD-NEXT:  (struct.new_default $struct)
   ;; OPEN_WORLD-NEXT: )
-  (func $bar (type $ret-any-1) (result anyref)
-    ;; This will not be refined due to configureAll.
+  (func $bar (type $func-1) (param $x anyref) (result anyref)
+    ;; The params will not be refined due to configureAll, but the result will.
     (struct.new $struct)
   )
 
-  ;; CHECK:      (func $unconfigured (type $ret-any-2) (result (ref (exact $struct)))
+  ;; CHECK:      (func $unconfigured (type $func-2) (param $x (ref (exact $struct))) (result (ref (exact $struct)))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $unconfigured (type $ret-any-2) (result (ref (exact $struct)))
+  ;; OPEN_WORLD:      (func $unconfigured (type $func-2) (param $x (ref (exact $struct))) (result (ref (exact $struct)))
   ;; OPEN_WORLD-NEXT:  (struct.new_default $struct)
   ;; OPEN_WORLD-NEXT: )
-  (func $unconfigured (type $ret-any-2) (result anyref)
-    ;; This is not referred to by configureAll, and can be refined.
+  (func $unconfigured (type $func-2) (param $x anyref) (result anyref)
+    ;; This is not referred to by configureAll, and can be refined in both
+    ;; params and result.
     (struct.new $struct)
   )
 )
