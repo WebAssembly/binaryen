@@ -571,6 +571,11 @@ struct NullInstrParserCtx {
                      MemoryOrder) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<>
+  makeArrayStore(Index, const std::vector<Annotation>&, Type, int, HeapTypeT) {
+    return Ok{};
+  }
   Result<> makeAtomicRMW(Index,
                          const std::vector<Annotation>&,
                          AtomicRMWOp,
@@ -2312,6 +2317,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     }
     return withLoc(
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
+  }
+
+  Result<> makeArrayStore(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Type type,
+                          int bytes,
+                          HeapTypeT arrayType) {
+    return withLoc(pos, irBuilder.makeArrayStore(arrayType, bytes, type));
   }
 
   Result<> makeAtomicRMW(Index pos,

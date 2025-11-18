@@ -437,6 +437,25 @@ struct PrintExpressionContents
     return parent.printBlockType(sig);
   }
 
+  std::ostream& printStorePostfix(uint8_t bytes, Type valueType) {
+    if (bytes < 4 || (valueType == Type::i64 && bytes < 8)) {
+      if (bytes == 1) {
+        o << '8';
+      } else if (bytes == 2) {
+        if (valueType == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
+      } else if (bytes == 4) {
+        o << "32";
+      } else {
+        abort();
+      }
+    }
+    return o;
+  }
+
   void visitBlock(Block* curr) {
     printMedium(o, "block");
     if (curr->name.is()) {
@@ -589,21 +608,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".store";
-    if (curr->bytes < 4 || (curr->valueType == Type::i64 && curr->bytes < 8)) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->valueType == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
-    }
+    printStorePostfix(curr->bytes, curr->valueType);
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
     printMemoryOrder(curr->order);
@@ -2476,6 +2481,18 @@ struct PrintExpressionContents
     printMemoryOrder(curr->order);
     o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
+  }
+  void visitArrayStore(ArrayStore* curr) {
+    prepareColor(o) << forceConcrete(curr->valueType);
+    o << ".store";
+    printStorePostfix(curr->bytes, curr->valueType);
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {

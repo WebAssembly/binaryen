@@ -56,6 +56,70 @@ void BinaryInstWriter::emitIfElse(If* curr) {
   o << static_cast<int8_t>(BinaryConsts::Else);
 }
 
+void BinaryInstWriter::emitStore(uint8_t bytes, Type valueType) {
+  switch (valueType.getBasic()) {
+    case Type::i32: {
+      switch (bytes) {
+        case 1:
+          o << static_cast<int8_t>(BinaryConsts::I32StoreMem8);
+          break;
+        case 2:
+          o << static_cast<int8_t>(BinaryConsts::I32StoreMem16);
+          break;
+        case 4:
+          o << static_cast<int8_t>(BinaryConsts::I32StoreMem);
+          break;
+        default:
+          abort();
+      }
+      break;
+    }
+    case Type::i64: {
+      switch (bytes) {
+        case 1:
+          o << static_cast<int8_t>(BinaryConsts::I64StoreMem8);
+          break;
+        case 2:
+          o << static_cast<int8_t>(BinaryConsts::I64StoreMem16);
+          break;
+        case 4:
+          o << static_cast<int8_t>(BinaryConsts::I64StoreMem32);
+          break;
+        case 8:
+          o << static_cast<int8_t>(BinaryConsts::I64StoreMem);
+          break;
+        default:
+          abort();
+      }
+      break;
+    }
+    case Type::f32: {
+      switch (bytes) {
+        case 2:
+          o << static_cast<int8_t>(BinaryConsts::MiscPrefix)
+            << U32LEB(BinaryConsts::F32_F16StoreMem);
+          break;
+        case 4:
+          o << static_cast<int8_t>(BinaryConsts::F32StoreMem);
+          break;
+        default:
+          WASM_UNREACHABLE("invalid store size");
+      }
+      break;
+    }
+    case Type::f64:
+      o << static_cast<int8_t>(BinaryConsts::F64StoreMem);
+      break;
+    case Type::v128:
+      o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::V128Store);
+      break;
+    case Type::none:
+    case Type::unreachable:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Loop);
@@ -380,67 +444,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
 
 void BinaryInstWriter::visitStore(Store* curr) {
   if (!curr->isAtomic()) {
-    switch (curr->valueType.getBasic()) {
-      case Type::i32: {
-        switch (curr->bytes) {
-          case 1:
-            o << static_cast<int8_t>(BinaryConsts::I32StoreMem8);
-            break;
-          case 2:
-            o << static_cast<int8_t>(BinaryConsts::I32StoreMem16);
-            break;
-          case 4:
-            o << static_cast<int8_t>(BinaryConsts::I32StoreMem);
-            break;
-          default:
-            abort();
-        }
-        break;
-      }
-      case Type::i64: {
-        switch (curr->bytes) {
-          case 1:
-            o << static_cast<int8_t>(BinaryConsts::I64StoreMem8);
-            break;
-          case 2:
-            o << static_cast<int8_t>(BinaryConsts::I64StoreMem16);
-            break;
-          case 4:
-            o << static_cast<int8_t>(BinaryConsts::I64StoreMem32);
-            break;
-          case 8:
-            o << static_cast<int8_t>(BinaryConsts::I64StoreMem);
-            break;
-          default:
-            abort();
-        }
-        break;
-      }
-      case Type::f32: {
-        switch (curr->bytes) {
-          case 2:
-            o << static_cast<int8_t>(BinaryConsts::MiscPrefix)
-              << U32LEB(BinaryConsts::F32_F16StoreMem);
-            break;
-          case 4:
-            o << static_cast<int8_t>(BinaryConsts::F32StoreMem);
-            break;
-          default:
-            WASM_UNREACHABLE("invalid store size");
-        }
-        break;
-      }
-      case Type::f64:
-        o << static_cast<int8_t>(BinaryConsts::F64StoreMem);
-        break;
-      case Type::v128:
-        o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
-          << U32LEB(BinaryConsts::V128Store);
-        break;
-      case Type::none:
-      case Type::unreachable:
-        WASM_UNREACHABLE("unexpected type");
-    }
+    emitStore(curr->bytes, curr->valueType);
   } else {
     o << static_cast<int8_t>(BinaryConsts::AtomicPrefix);
     switch (curr->valueType.getBasic()) {
@@ -2783,6 +2787,17 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
+void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  emitStore(curr->bytes, curr->valueType);
+  uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
+  o << U32LEB(alignmentBits);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   o << static_cast<int8_t>(BinaryConsts::GCPrefix)
     << U32LEB(BinaryConsts::ArrayLen);
@@ -3440,8 +3455,14 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         uint64_t offset,
                                         Name memory,
                                         MemoryOrder order,
-                                        bool isRMW) {
+                                        bool isRMW,
+                                        BackingType backing) {
   uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
+  if (backing == BackingType::Array) {
+    alignmentBits |= BinaryConsts::HasBackingArrayMask;
+    o << U32LEB(alignmentBits);
+    return;
+  }
   uint32_t memoryIdx = parent.getMemoryIndex(memory);
 
   bool shouldWriteMemoryOrder = false;

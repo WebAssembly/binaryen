@@ -72,6 +72,11 @@ enum class MemoryOrder : uint8_t {
   AcqRel,
 };
 
+enum class BackingType {
+  Memory,
+  Array,
+};
+
 enum class IRProfile { Normal, Poppy };
 
 // Operators
@@ -736,6 +741,7 @@ public:
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
+    ArrayStoreId,
     ArrayLenId,
     ArrayCopyId,
     ArrayFillId,
@@ -1856,6 +1862,20 @@ public:
   Expression* index;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  void finalize();
+};
+
+class ArrayStore : public SpecificExpression<Expression::ArrayStoreId> {
+public:
+  ArrayStore() = default;
+  ArrayStore(MixedArena& allocator) {}
+
+  uint8_t bytes;
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+  Type valueType;
 
   void finalize();
 };

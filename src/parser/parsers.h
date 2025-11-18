@@ -1786,6 +1786,18 @@ Result<> makeStore(Ctx& ctx,
                    Type type,
                    int bytes,
                    bool isAtomic) {
+  if (ctx.in.takeSExprStart("type"sv)) {
+    std::optional<typename Ctx::HeapTypeT> arrayType;
+    auto x = typeidx(ctx);
+    CHECK_ERR(x);
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
+    }
+
+    arrayType = *x;
+    return ctx.makeArrayStore(pos, annotations, type, bytes, *arrayType);
+  }
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
 
