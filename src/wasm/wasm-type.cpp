@@ -126,7 +126,7 @@ struct TypePrinter {
   std::ostream& print(const Field& field);
   std::ostream& print(const Signature& sig);
   std::ostream& print(const Continuation& cont);
-  std::ostream& print(const Struct& struct_,
+  std::ostream& print(HeapType type,
                       const std::unordered_map<Index, Name>& fieldNames);
   std::ostream& print(const Array& array);
 };
@@ -1663,9 +1663,9 @@ std::ostream& TypePrinter::print(Type type) {
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
-      if (type.isExact()) {
-        os << "(exact ";
-      }
+      // if (type.isExact()) {
+      //   os << "(exact ";
+      // }
       // Print shorthands for certain basic heap types.
       switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
@@ -1714,22 +1714,22 @@ std::ostream& TypePrinter::print(Type type) {
           os << "nullexnref";
           break;
       }
-      if (type.isExact()) {
-        os << ')';
-      }
+      // if (type.isExact()) {
+      //   os << ')';
+      // }
       return os;
     }
     os << "(ref ";
     if (type.isNullable()) {
       os << "null ";
     }
-    if (type.isExact()) {
-      os << "(exact ";
-    }
+    // if (type.isExact()) {
+    //   os << "(exact ";
+    // }
     printHeapTypeName(heapType);
-    if (type.isExact()) {
-      os << ')';
-    }
+    // if (type.isExact()) {
+    //   os << ')';
+    // }
     os << ')';
   } else {
     WASM_UNREACHABLE("unexpected type");
@@ -1820,22 +1820,22 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (type.isShared()) {
     os << "(shared ";
   }
-  if (auto desc = type.getDescribedType()) {
-    os << "(describes ";
-    printHeapTypeName(*desc);
-    os << ' ';
-  }
-  if (auto desc = type.getDescriptorType()) {
-    os << "(descriptor ";
-    printHeapTypeName(*desc);
-    os << ' ';
-  }
+  // if (auto desc = type.getDescribedType()) {
+  //   os << "(describes ";
+  //   printHeapTypeName(*desc);
+  //   os << ' ';
+  // }
+  // if (auto desc = type.getDescriptorType()) {
+  //   os << "(descriptor ";
+  //   printHeapTypeName(*desc);
+  //   os << ' ';
+  // }
   switch (type.getKind()) {
     case HeapTypeKind::Func:
       print(type.getSignature());
       break;
     case HeapTypeKind::Struct:
-      print(type.getStruct(), names.fieldNames);
+      print(type, names.fieldNames);
       break;
     case HeapTypeKind::Array:
       print(type.getArray());
@@ -1846,12 +1846,12 @@ std::ostream& TypePrinter::print(HeapType type) {
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
   }
-  if (type.getDescriptorType()) {
-    os << ')';
-  }
-  if (type.getDescribedType()) {
-    os << ')';
-  }
+  // if (type.getDescriptorType()) {
+  //   os << ')';
+  // }
+  // if (type.getDescribedType()) {
+  //   os << ')';
+  // }
   if (type.isShared()) {
     os << ')';
   }
@@ -1921,9 +1921,15 @@ std::ostream& TypePrinter::print(const Continuation& continuation) {
 }
 
 std::ostream&
-TypePrinter::print(const Struct& struct_,
+TypePrinter::print(HeapType type,
                    const std::unordered_map<Index, Name>& fieldNames) {
+  const auto& struct_ = type.getStruct();
   os << "(struct";
+  if (auto desc = type.getDescriptorType()) {
+    os << " (field $vtable ";
+    print(Type(*desc, NonNullable));
+    os << ')';
+  }
   for (Index i = 0; i < struct_.fields.size(); ++i) {
     // TODO: move this to the function for printing fields.
     os << " (field ";
