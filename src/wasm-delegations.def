@@ -92,6 +92,7 @@ DELEGATE(ArrayNewElem);
 DELEGATE(ArrayNewFixed);
 DELEGATE(ArrayGet);
 DELEGATE(ArraySet);
+DELEGATE(ArrayStore);
 DELEGATE(ArrayLen);
 DELEGATE(ArrayCopy);
 DELEGATE(ArrayFill);

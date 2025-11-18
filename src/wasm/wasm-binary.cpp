@@ -1417,6 +1417,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::MutableGlobalsFeature;
       case FeatureSet::TruncSat:
         return BinaryConsts::CustomSections::TruncSatFeature;
+      case FeatureSet::Multibyte:
+        return BinaryConsts::CustomSections::MultibyteFeature;
       case FeatureSet::SIMD:
         return BinaryConsts::CustomSections::SIMD128Feature;
       case FeatureSet::BulkMemory:
@@ -3251,6 +3253,15 @@ void WasmBinaryReader::readVars() {
   }
 }
 
+Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
+  auto [mem, align, offset, backing] = getMemarg();
+  if (backing == BackingType::Array) {
+    HeapType arrayType = getIndexedHeapType();
+    return builder.makeArrayStore(arrayType, bytes, type);
+  }
+  return builder.makeStore(bytes, offset, align, type, mem);
+}
+
 Result<> WasmBinaryReader::readInst() {
   if (auto loc = sourceMapReader.readDebugLocationAt(pos)) {
     builder.setDebugLocation(loc);
@@ -3590,96 +3601,87 @@ Result<> WasmBinaryReader::readInst() {
     case BinaryConsts::F64Const:
       return builder.makeConst(getFloat64Literal());
     case BinaryConsts::I32LoadMem8S: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(1, true, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I32LoadMem8U: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(1, false, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I32LoadMem16S: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(2, true, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I32LoadMem16U: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(2, false, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I32LoadMem: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(4, false, offset, align, Type::i32, mem);
     }
     case BinaryConsts::I64LoadMem8S: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(1, true, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64LoadMem8U: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(1, false, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64LoadMem16S: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(2, true, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64LoadMem16U: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(2, false, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64LoadMem32S: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(4, true, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64LoadMem32U: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(4, false, offset, align, Type::i64, mem);
     }
     case BinaryConsts::I64LoadMem: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(8, false, offset, align, Type::i64, mem);
     }
     case BinaryConsts::F32LoadMem: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(4, false, offset, align, Type::f32, mem);
     }
     case BinaryConsts::F64LoadMem: {
-      auto [mem, align, offset] = getMemarg();
+      auto [mem, align, offset, backing] = getMemarg();
       return builder.makeLoad(8, false, offset, align, Type::f64, mem);
     }
     case BinaryConsts::I32StoreMem8: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(1, offset, align, Type::i32, mem);
+      return readStore(1, Type::i32);
     }
     case BinaryConsts::I32StoreMem16: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(2, offset, align, Type::i32, mem);
+      return readStore(2, Type::i32);
     }
     case BinaryConsts::I32StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(4, offset, align, Type::i32, mem);
+      return readStore(4, Type::i32);
     }
     case BinaryConsts::I64StoreMem8: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(1, offset, align, Type::i64, mem);
+      return readStore(1, Type::i64);
     }
     case BinaryConsts::I64StoreMem16: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(2, offset, align, Type::i64, mem);
+      return readStore(2, Type::i64);
     }
     case BinaryConsts::I64StoreMem32: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(4, offset, align, Type::i64, mem);
+      return readStore(4, Type::i64);
     }
     case BinaryConsts::I64StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(8, offset, align, Type::i64, mem);
+      return readStore(8, Type::i64);
     }
     case BinaryConsts::F32StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(4, offset, align, Type::f32, mem);
+      return readStore(4, Type::f32);
     }
     case BinaryConsts::F64StoreMem: {
-      auto [mem, align, offset] = getMemarg();
-      return builder.makeStore(8, offset, align, Type::f64, mem);
+      return readStore(8, Type::f64);
     }
     case BinaryConsts::AtomicPrefix: {
       auto op = getU32LEB();
@@ -3984,11 +3986,11 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeElemDrop(elem);
         }
         case BinaryConsts::F32_F16LoadMem: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeLoad(2, false, offset, align, Type::f32, mem);
         }
         case BinaryConsts::F32_F16StoreMem: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeStore(2, offset, align, Type::f32, mem);
         }
       }
@@ -4533,98 +4535,98 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::V128Const:
           return builder.makeConst(getVec128Literal());
         case BinaryConsts::V128Store: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeStore(16, offset, align, Type::v128, mem);
         }
         case BinaryConsts::V128Load: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeLoad(16, false, offset, align, Type::v128, mem);
         }
         case BinaryConsts::V128Load8Splat: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load8SplatVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load16Splat: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load16SplatVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load32Splat: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load32SplatVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load64Splat: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load64SplatVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load8x8S: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load8x8SVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load8x8U: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load8x8UVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load16x4S: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load16x4SVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load16x4U: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load16x4UVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load32x2S: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load32x2SVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load32x2U: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load32x2UVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load32Zero: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load32ZeroVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load64Zero: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoad(Load64ZeroVec128, offset, align, mem);
         }
         case BinaryConsts::V128Load8Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Load8LaneVec128, offset, align, getLaneIndex(16), mem);
         }
         case BinaryConsts::V128Load16Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Load16LaneVec128, offset, align, getLaneIndex(8), mem);
         }
         case BinaryConsts::V128Load32Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Load32LaneVec128, offset, align, getLaneIndex(4), mem);
         }
         case BinaryConsts::V128Load64Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Load64LaneVec128, offset, align, getLaneIndex(2), mem);
         }
         case BinaryConsts::V128Store8Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Store8LaneVec128, offset, align, getLaneIndex(16), mem);
         }
         case BinaryConsts::V128Store16Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Store16LaneVec128, offset, align, getLaneIndex(8), mem);
         }
         case BinaryConsts::V128Store32Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Store32LaneVec128, offset, align, getLaneIndex(4), mem);
         }
         case BinaryConsts::V128Store64Lane: {
-          auto [mem, align, offset] = getMemarg();
+          auto [mem, align, offset, backing] = getMemarg();
           return builder.makeSIMDLoadStoreLane(
             Store64LaneVec128, offset, align, getLaneIndex(2), mem);
         }
@@ -5584,10 +5586,12 @@ void WasmBinaryReader::readIdempotentHints(size_t payloadLen) {
   READ_BOOLEAN_HINT(Annotations::IdempotentHint, idempotent);
 }
 
-std::tuple<Address, Address, Index, MemoryOrder>
+std::tuple<Address, Address, Index, MemoryOrder, BackingType>
 WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   auto rawAlignment = getU32LEB();
+  BackingType backing = BackingType::Memory;
   Index memIdx = 0;
+  Address offset = 0;
 
   bool hasMemoryOrder = rawAlignment & BinaryConsts::HasMemoryOrderMask;
   if (hasMemoryOrder && !isAtomic) {
@@ -5605,6 +5609,12 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
     rawAlignment = rawAlignment & ~BinaryConsts::HasMemoryIndexMask;
   }
 
+  if (rawAlignment & BinaryConsts::HasBackingArrayMask) {
+    backing = BackingType::Array;
+    // Clear the bit before we parse alignment
+    rawAlignment = rawAlignment & ~BinaryConsts::HasBackingArrayMask;
+  }
+
   if (rawAlignment > 8) {
     throwError("Alignment must be of a reasonable size");
   }
@@ -5612,39 +5622,49 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   Address alignment = Bits::pow2(rawAlignment);
   MemoryOrder memoryOrder =
     isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
-  if (hasMemIdx) {
-    memIdx = getU32LEB();
-  }
-  if (hasMemoryOrder) {
-    memoryOrder = getMemoryOrder(isRMW);
-  }
-  if (memIdx >= wasm.memories.size()) {
-    throwError("Memory index out of range while reading memory alignment.");
-  }
-  auto* memory = wasm.memories[memIdx].get();
-  Address offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
 
-  return {alignment, offset, memIdx, memoryOrder};
+  if (backing == BackingType::Memory) {
+    if (hasMemIdx) {
+      memIdx = getU32LEB();
+    }
+    if (hasMemoryOrder) {
+      memoryOrder = getMemoryOrder(isRMW);
+    }
+    if (memIdx >= wasm.memories.size()) {
+      throwError("Memory index out of range while reading memory alignment.");
+    }
+    auto* memory = wasm.memories[memIdx].get();
+    offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
+  } else {
+    // TODO: don't allow memIdx or memoryOrder when backing type is array?
+  }
+
+  return {alignment, offset, memIdx, memoryOrder, backing};
 }
 
 std::tuple<Name, Address, Address, MemoryOrder>
 WasmBinaryReader::getAtomicMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder] =
+  auto [alignment, offset, memIdx, memoryOrder, backing] =
     readMemoryAccess(/*isAtomic=*/true, /*isRMW=*/false);
   return {getMemoryName(memIdx), alignment, offset, memoryOrder};
 }
 
 std::tuple<Name, Address, Address, MemoryOrder>
 WasmBinaryReader::getRMWMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder] =
+  auto [alignment, offset, memIdx, memoryOrder, backing] =
     readMemoryAccess(/*isAtomic=*/true, /*isRMW=*/true);
   return {getMemoryName(memIdx), alignment, offset, memoryOrder};
 }
 
-std::tuple<Name, Address, Address> WasmBinaryReader::getMemarg() {
-  auto [alignment, offset, memIdx, _] =
+std::tuple<Name, Address, Address, BackingType> WasmBinaryReader::getMemarg() {
+  auto [alignment, offset, memIdx, memoryOrder, backing] =
     readMemoryAccess(/*isAtomic=*/false, /*isRMW=*/false);
-  return {getMemoryName(memIdx), alignment, offset};
+  if (backing == BackingType::Array) {
+    // ??? how does binaryen usually handle empty names or maybe we shouldn't
+    // return a name?
+    return {{}, alignment, offset, backing};
+  }
+  return {getMemoryName(memIdx), alignment, offset, backing};
 }
 
 MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {

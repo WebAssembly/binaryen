@@ -802,6 +802,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
+  void visitArrayStore(ArrayStore* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitArrayLen(ArrayLen* curr) {
     // The input must be an array.
     push(Type(HeapType::array, Nullable));

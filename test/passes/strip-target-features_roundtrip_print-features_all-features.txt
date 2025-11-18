@@ -21,6 +21,7 @@
 --enable-call-indirect-overlong
 --enable-custom-descriptors
 --enable-relaxed-atomics
+--enable-multibyte
 (module
  (type $0 (func (result v128 externref)))
  (func $foo (type $0) (result v128 externref)

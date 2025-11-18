@@ -358,6 +358,7 @@ enum BrOnCastFlag {
 
 constexpr uint32_t ExactImport = 1 << 5;
 
+constexpr uint32_t HasBackingArrayMask = 1 << 4;
 constexpr uint32_t HasMemoryOrderMask = 1 << 5;
 constexpr uint32_t HasMemoryIndexMask = 1 << 6;
 
@@ -462,6 +463,7 @@ extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
 extern const char* CustomDescriptorsFeature;
 extern const char* RelaxedAtomicsFeature;
+extern const char* MultibyteFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1696,6 +1698,8 @@ public:
 
   void readExports();
 
+  Result<> readStore(unsigned bytes, Type type);
+
   // The strings in the strings section (which are referred to by StringConst).
   std::vector<Name> strings;
   void readStrings();
@@ -1743,11 +1747,11 @@ public:
   void readJSCalledHints(size_t payloadLen);
   void readIdempotentHints(size_t payloadLen);
 
-  std::tuple<Address, Address, Index, MemoryOrder>
+  std::tuple<Address, Address, Index, MemoryOrder, BackingType>
   readMemoryAccess(bool isAtomic, bool isRMW);
   std::tuple<Name, Address, Address, MemoryOrder> getAtomicMemarg();
   std::tuple<Name, Address, Address, MemoryOrder> getRMWMemarg();
-  std::tuple<Name, Address, Address> getMemarg();
+  std::tuple<Name, Address, Address, BackingType> getMemarg();
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {
