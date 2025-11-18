@@ -5,11 +5,11 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct (field i32) (field i32) (field i32)))))
-    (type $struct (sub (descriptor $desc (struct (field i32) (field i32) (field i32)))))
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct (field i32) (field i32) (field i32))))
+    (type $struct (sub (descriptor $desc) (struct (field i32) (field i32) (field i32))))
 
-    ;; CHECK:       (type $desc (sub (describes $struct (struct (field funcref)))))
-    (type $desc (sub (describes $struct (struct (field funcref)))))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field funcref))))
+    (type $desc (sub (describes $struct) (struct (field funcref))))
   )
 
   ;; CHECK:      (type $2 (func (result i32)))
@@ -134,17 +134,17 @@
     ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i32) (field i32))))
     (type $parent (sub (struct (field i32) (field i32) (field i32))))
 
-    ;; CHECK:       (type $struct (sub $parent (descriptor $desc (struct (field i32) (field i32) (field i32)))))
-    (type $struct (sub $parent (descriptor $desc (struct (field i32) (field i32) (field i32)))))
+    ;; CHECK:       (type $struct (sub $parent (descriptor $desc) (struct (field i32) (field i32) (field i32))))
+    (type $struct (sub $parent (descriptor $desc) (struct (field i32) (field i32) (field i32))))
 
-    ;; CHECK:       (type $desc (sub (describes $struct (struct (field funcref)))))
-    (type $desc (sub (describes $struct (struct (field funcref)))))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field funcref))))
+    (type $desc (sub (describes $struct) (struct (field funcref))))
 
-    ;; CHECK:       (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
-    (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
+    ;; CHECK:       (type $sub (sub $struct (descriptor $subdesc) (struct (field i32) (field i32) (field i32))))
+    (type $sub (sub $struct (descriptor $subdesc) (struct (field i32) (field i32) (field i32))))
 
-    ;; CHECK:       (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
-    (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
+    ;; CHECK:       (type $subdesc (sub $desc (describes $sub) (struct (field funcref))))
+    (type $subdesc (sub $desc (describes $sub) (struct (field funcref))))
   )
 
 
@@ -380,17 +380,17 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct (field i32) (field i32) (field i32)))))
-    (type $struct (sub (descriptor $desc (struct (field i32) (field i32) (field i32)))))
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct (field i32) (field i32) (field i32))))
+    (type $struct (sub (descriptor $desc) (struct (field i32) (field i32) (field i32))))
 
-    ;; CHECK:       (type $desc (sub (describes $struct (struct (field funcref)))))
-    (type $desc (sub (describes $struct (struct (field funcref)))))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field funcref))))
+    (type $desc (sub (describes $struct) (struct (field funcref))))
 
-    ;; CHECK:       (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
-    (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
+    ;; CHECK:       (type $sub (sub $struct (descriptor $subdesc) (struct (field i32) (field i32) (field i32))))
+    (type $sub (sub $struct (descriptor $subdesc) (struct (field i32) (field i32) (field i32))))
 
-    ;; CHECK:       (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
-    (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
+    ;; CHECK:       (type $subdesc (sub $desc (describes $sub) (struct (field funcref))))
+    (type $subdesc (sub $desc (describes $sub) (struct (field funcref))))
   )
 
   ;; CHECK:      (type $4 (func (result i32)))
@@ -535,14 +535,14 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (descriptor $B (struct (field i32))))
-    (type $A (descriptor $B (struct (field i32))))
+    ;; CHECK-NEXT:  (type $A (descriptor $B) (struct (field i32)))
+    (type $A (descriptor $B) (struct (field i32)))
 
-    ;; CHECK:       (type $B (describes $A (descriptor $C (struct (field i32)))))
-    (type $B (describes $A (descriptor $C (struct (field i32)))))
+    ;; CHECK:       (type $B (describes $A) (descriptor $C) (struct (field i32)))
+    (type $B (describes $A) (descriptor $C) (struct (field i32)))
 
-    ;; CHECK:       (type $C (describes $B (struct (field i32))))
-    (type $C (describes $B (struct (field i32))))
+    ;; CHECK:       (type $C (describes $B) (struct (field i32)))
+    (type $C (describes $B) (struct (field i32)))
   )
 
   ;; CHECK:      (type $3 (func))

@@ -12,31 +12,31 @@
 (module
   (rec
     ;; CHECK-TEXT:      (rec
-    ;; CHECK-TEXT-NEXT:  (type $described (descriptor $middle (struct)))
+    ;; CHECK-TEXT-NEXT:  (type $described (descriptor $middle) (struct))
     ;; CHECK-BIN:      (rec
-    ;; CHECK-BIN-NEXT:  (type $described (descriptor $middle (struct)))
-    (type $described (descriptor $middle (struct)))
-    ;; CHECK-TEXT:       (type $middle (describes $described (descriptor $describing (struct))))
-    ;; CHECK-BIN:       (type $middle (describes $described (descriptor $describing (struct))))
-    (type $middle (describes $described (descriptor $describing (struct))))
-    ;; CHECK-TEXT:       (type $describing (describes $middle (struct)))
-    ;; CHECK-BIN:       (type $describing (describes $middle (struct)))
-    (type $describing (describes $middle (struct)))
+    ;; CHECK-BIN-NEXT:  (type $described (descriptor $middle) (struct))
+    (type $described (descriptor $middle) (struct))
+    ;; CHECK-TEXT:       (type $middle (describes $described) (descriptor $describing) (struct))
+    ;; CHECK-BIN:       (type $middle (describes $described) (descriptor $describing) (struct))
+    (type $middle (describes $described) (descriptor $describing) (struct))
+    ;; CHECK-TEXT:       (type $describing (describes $middle) (struct))
+    ;; CHECK-BIN:       (type $describing (describes $middle) (struct))
+    (type $describing (describes $middle) (struct))
   )
 
   (rec
     ;; CHECK-TEXT:      (type $3 (func (param anyref) (result anyref)))
 
     ;; CHECK-TEXT:      (rec
-    ;; CHECK-TEXT-NEXT:  (type $pair (descriptor $pair.desc (struct (field i32) (field i64))))
+    ;; CHECK-TEXT-NEXT:  (type $pair (descriptor $pair.desc) (struct (field i32) (field i64)))
     ;; CHECK-BIN:      (type $3 (func (param anyref) (result anyref)))
 
     ;; CHECK-BIN:      (rec
-    ;; CHECK-BIN-NEXT:  (type $pair (descriptor $pair.desc (struct (field i32) (field i64))))
-    (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-    ;; CHECK-TEXT:       (type $pair.desc (describes $pair (struct)))
-    ;; CHECK-BIN:       (type $pair.desc (describes $pair (struct)))
-    (type $pair.desc (describes $pair (struct)))
+    ;; CHECK-BIN-NEXT:  (type $pair (descriptor $pair.desc) (struct (field i32) (field i64)))
+    (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+    ;; CHECK-TEXT:       (type $pair.desc (describes $pair) (struct))
+    ;; CHECK-BIN:       (type $pair.desc (describes $pair) (struct))
+    (type $pair.desc (describes $pair) (struct))
   )
 
   (rec
@@ -58,7 +58,7 @@
     ;; CHECK-TEXT:      (type $13 (func (result (ref (exact $pair)))))
 
     ;; CHECK-TEXT:      (rec
-    ;; CHECK-TEXT-NEXT:  (type $shared-described (shared (descriptor $shared-describing (struct))))
+    ;; CHECK-TEXT-NEXT:  (type $shared-described (shared (descriptor $shared-describing) (struct)))
     ;; CHECK-BIN:      (type $6 (func))
 
     ;; CHECK-BIN:      (type $7 (func (param anyref (ref null $describing))))
@@ -76,11 +76,11 @@
     ;; CHECK-BIN:      (type $13 (func (result (ref (exact $pair)))))
 
     ;; CHECK-BIN:      (rec
-    ;; CHECK-BIN-NEXT:  (type $shared-described (shared (descriptor $shared-describing (struct))))
-    (type $shared-described (shared (descriptor $shared-describing (struct))))
-    ;; CHECK-TEXT:       (type $shared-describing (shared (describes $shared-described (struct))))
-    ;; CHECK-BIN:       (type $shared-describing (shared (describes $shared-described (struct))))
-    (type $shared-describing (shared (describes $shared-described (struct))))
+    ;; CHECK-BIN-NEXT:  (type $shared-described (shared (descriptor $shared-describing) (struct)))
+    (type $shared-described (shared (descriptor $shared-describing) (struct)))
+    ;; CHECK-TEXT:       (type $shared-describing (shared (describes $shared-described) (struct)))
+    ;; CHECK-BIN:       (type $shared-describing (shared (describes $shared-described) (struct)))
+    (type $shared-describing (shared (describes $shared-described) (struct)))
   )
 
 
@@ -685,18 +685,18 @@
 
 )
 ;; CHECK-BIN-NODEBUG:      (rec
-;; CHECK-BIN-NODEBUG-NEXT:  (type $0 (descriptor $1 (struct)))
+;; CHECK-BIN-NODEBUG-NEXT:  (type $0 (descriptor $1) (struct))
 
-;; CHECK-BIN-NODEBUG:       (type $1 (describes $0 (descriptor $2 (struct))))
+;; CHECK-BIN-NODEBUG:       (type $1 (describes $0) (descriptor $2) (struct))
 
-;; CHECK-BIN-NODEBUG:       (type $2 (describes $1 (struct)))
+;; CHECK-BIN-NODEBUG:       (type $2 (describes $1) (struct))
 
 ;; CHECK-BIN-NODEBUG:      (type $3 (func (param anyref) (result anyref)))
 
 ;; CHECK-BIN-NODEBUG:      (rec
-;; CHECK-BIN-NODEBUG-NEXT:  (type $4 (descriptor $5 (struct (field i32) (field i64))))
+;; CHECK-BIN-NODEBUG-NEXT:  (type $4 (descriptor $5) (struct (field i32) (field i64)))
 
-;; CHECK-BIN-NODEBUG:       (type $5 (describes $4 (struct)))
+;; CHECK-BIN-NODEBUG:       (type $5 (describes $4) (struct))
 
 ;; CHECK-BIN-NODEBUG:      (type $6 (func))
 
@@ -715,9 +715,9 @@
 ;; CHECK-BIN-NODEBUG:      (type $13 (func (result (ref (exact $4)))))
 
 ;; CHECK-BIN-NODEBUG:      (rec
-;; CHECK-BIN-NODEBUG-NEXT:  (type $14 (shared (descriptor $15 (struct))))
+;; CHECK-BIN-NODEBUG-NEXT:  (type $14 (shared (descriptor $15) (struct)))
 
-;; CHECK-BIN-NODEBUG:       (type $15 (shared (describes $14 (struct))))
+;; CHECK-BIN-NODEBUG:       (type $15 (shared (describes $14) (struct)))
 
 ;; CHECK-BIN-NODEBUG:      (type $16 (func (param (ref null $0) (ref null (exact $1)))))
 

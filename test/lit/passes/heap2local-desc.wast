@@ -6,30 +6,30 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $described (descriptor $descriptor (struct (field i32))))
-    (type $described (descriptor $descriptor (struct (field i32))))
-    ;; CHECK:       (type $descriptor (describes $described (struct (field i64))))
-    (type $descriptor (describes $described (struct (field i64))))
+    ;; CHECK-NEXT:  (type $described (descriptor $descriptor) (struct (field i32)))
+    (type $described (descriptor $descriptor) (struct (field i32)))
+    ;; CHECK:       (type $descriptor (describes $described) (struct (field i64)))
+    (type $descriptor (describes $described) (struct (field i64)))
 
-    ;; CHECK:       (type $super (sub (descriptor $super.desc (struct))))
-    (type $super (sub (descriptor $super.desc (struct))))
-    ;; CHECK:       (type $super.desc (sub (describes $super (struct))))
-    (type $super.desc (sub (describes $super (struct))))
+    ;; CHECK:       (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
 
-    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc (struct))))
-    (type $sub (sub $super (descriptor $sub.desc (struct))))
-    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct))))
-    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct)))
 
     ;; CHECK:       (type $no-desc (struct))
     (type $no-desc (struct))
 
-    ;; CHECK:       (type $chain-described (descriptor $chain-middle (struct)))
-    (type $chain-described (descriptor $chain-middle (struct)))
-    ;; CHECK:       (type $chain-middle (describes $chain-described (descriptor $chain-descriptor (struct))))
-    (type $chain-middle (describes $chain-described (descriptor $chain-descriptor (struct))))
-    ;; CHECK:       (type $chain-descriptor (describes $chain-middle (struct)))
-    (type $chain-descriptor (describes $chain-middle (struct)))
+    ;; CHECK:       (type $chain-described (descriptor $chain-middle) (struct))
+    (type $chain-described (descriptor $chain-middle) (struct))
+    ;; CHECK:       (type $chain-middle (describes $chain-described) (descriptor $chain-descriptor) (struct))
+    (type $chain-middle (describes $chain-described) (descriptor $chain-descriptor) (struct))
+    ;; CHECK:       (type $chain-descriptor (describes $chain-middle) (struct))
+    (type $chain-descriptor (describes $chain-middle) (struct))
   )
 
   ;; CHECK:      (type $10 (func))
@@ -860,10 +860,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
-    (type $struct (sub (descriptor $desc (struct))))
-    ;; CHECK:       (type $desc (describes $struct (struct)))
-    (type $desc (describes $struct (struct)))
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
+    (type $struct (sub (descriptor $desc) (struct)))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (type $2 (func (result (ref (exact $desc)))))
@@ -961,15 +961,15 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
-    (type $A (descriptor $B (struct)))
-    ;; CHECK:       (type $B (describes $A (struct)))
-    (type $B (describes $A (struct)))
+    ;; CHECK-NEXT:  (type $A (descriptor $B) (struct))
+    (type $A (descriptor $B) (struct))
+    ;; CHECK:       (type $B (describes $A) (struct))
+    (type $B (describes $A) (struct))
 
-    ;; CHECK:       (type $A2 (descriptor $B2 (struct)))
-    (type $A2 (descriptor $B2 (struct)))
-    ;; CHECK:       (type $B2 (describes $A2 (struct)))
-    (type $B2 (describes $A2 (struct)))
+    ;; CHECK:       (type $A2 (descriptor $B2) (struct))
+    (type $A2 (descriptor $B2) (struct))
+    ;; CHECK:       (type $B2 (describes $A2) (struct))
+    (type $B2 (describes $A2) (struct))
   )
 
   ;; CHECK:      (type $4 (func (result (ref $A))))
@@ -1007,8 +1007,8 @@
 
 (module
   (rec
-    (type $A (descriptor $B (struct)))
-    (type $B (sub (describes $A (struct))))
+    (type $A (descriptor $B) (struct))
+    (type $B (sub (describes $A) (struct)))
   )
   ;; CHECK:      (type $0 (func))
 
@@ -1060,10 +1060,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (descriptor $B (struct (field v128))))
-    (type $A (descriptor $B (struct (field v128))))
-    ;; CHECK:       (type $B (describes $A (struct)))
-    (type $B (describes $A (struct)))
+    ;; CHECK-NEXT:  (type $A (descriptor $B) (struct (field v128)))
+    (type $A (descriptor $B) (struct (field v128)))
+    ;; CHECK:       (type $B (describes $A) (struct))
+    (type $B (describes $A) (struct))
   )
 
   ;; CHECK:      (type $2 (func))
@@ -1148,12 +1148,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (shared (descriptor $B (struct))))
-    (type $A (shared (descriptor $B (struct))))
-    ;; CHECK:       (type $B (sub (shared (describes $A (descriptor $C (struct))))))
-    (type $B (sub (shared (describes $A (descriptor $C (struct))))))
-    ;; CHECK:       (type $C (sub (shared (describes $B (struct)))))
-    (type $C (sub (shared (describes $B (struct)))))
+    ;; CHECK-NEXT:  (type $A (shared (descriptor $B) (struct)))
+    (type $A (shared (descriptor $B) (struct)))
+    ;; CHECK:       (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
+    (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
+    ;; CHECK:       (type $C (sub (shared (describes $B) (struct))))
+    (type $C (sub (shared (describes $B) (struct))))
   )
 
   ;; CHECK:      (type $3 (func (result (ref (shared any)))))
@@ -1221,10 +1221,10 @@
 (module
   (rec
    ;; CHECK:      (rec
-   ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
-   (type $struct (sub (descriptor $desc (struct))))
-   ;; CHECK:       (type $desc (describes $struct (struct)))
-   (type $desc (sub final (describes $struct (struct))))
+   ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
+   (type $struct (sub (descriptor $desc) (struct)))
+   ;; CHECK:       (type $desc (describes $struct) (struct))
+   (type $desc (sub final (describes $struct) (struct)))
   )
 
   ;; CHECK:      (type $2 (func (result i32)))

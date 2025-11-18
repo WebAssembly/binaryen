@@ -3091,34 +3091,30 @@ template<typename Ctx> Result<> comptype(Ctx& ctx) {
   return ctx.in.err("expected type description");
 }
 
-// describedcomptype ::= '(' 'descriptor' typeidx ct:comptype ')'
-//                     | ct:comptype
+// describedcomptype ::= '(' 'descriptor' typeidx ')' comptype
+//                     | comptype
 template<typename Ctx> Result<> describedcomptype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("descriptor"sv)) {
-    auto x = typeidx(ctx);
-    CHECK_ERR(x);
-    ctx.setDescriptor(*x);
-    CHECK_ERR(comptype(ctx));
+    auto d = typeidx(ctx);
+    CHECK_ERR(d);
     if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of described type");
+      return ctx.in.err("expected end of descriptor");
     }
-    return Ok{};
+    ctx.setDescriptor(*d);
   }
   return comptype(ctx);
 }
 
-// describingcomptype ::= '(' 'describes' typeidx ct:describedcomptype ')'
-//                      | ct: describedcomptype
+// describingcomptype ::= '(' 'describes' typeidx ')' describedcomptype
+//                      | describedcomptype
 template<typename Ctx> Result<> describingcomptype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("describes"sv)) {
-    auto x = typeidx(ctx);
-    CHECK_ERR(x);
-    ctx.setDescribes(*x);
-    CHECK_ERR(describedcomptype(ctx));
+    auto d = typeidx(ctx);
+    CHECK_ERR(d);
     if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of describing type");
+      return ctx.in.err("expected end of describes");
     }
-    return Ok{};
+    ctx.setDescribes(*d);
   }
   return describedcomptype(ctx);
 }

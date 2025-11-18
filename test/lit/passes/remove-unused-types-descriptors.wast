@@ -8,12 +8,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $described (descriptor $middle (struct)))
-    (type $described (descriptor $middle (struct)))
-    ;; CHECK:       (type $middle (describes $described (descriptor $describing (struct))))
-    (type $middle (describes $described (descriptor $describing (struct))))
-    ;; CHECK:       (type $describing (describes $middle (struct)))
-    (type $describing (describes $middle (struct)))
+    ;; CHECK-NEXT:  (type $described (descriptor $middle) (struct))
+    (type $described (descriptor $middle) (struct))
+    ;; CHECK:       (type $middle (describes $described) (descriptor $describing) (struct))
+    (type $middle (describes $described) (descriptor $describing) (struct))
+    ;; CHECK:       (type $describing (describes $middle) (struct))
+    (type $describing (describes $middle) (struct))
 
     (type $unused (struct))
   )
@@ -68,12 +68,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $described (descriptor $middle (struct)))
-    (type $described (descriptor $middle (struct)))
-    ;; CHECK:       (type $middle (describes $described (descriptor $describing (struct))))
-    (type $middle (describes $described (descriptor $describing (struct))))
-    ;; CHECK:       (type $describing (describes $middle (struct)))
-    (type $describing (describes $middle (struct)))
+    ;; CHECK-NEXT:  (type $described (descriptor $middle) (struct))
+    (type $described (descriptor $middle) (struct))
+    ;; CHECK:       (type $middle (describes $described) (descriptor $describing) (struct))
+    (type $middle (describes $described) (descriptor $describing) (struct))
+    ;; CHECK:       (type $describing (describes $middle) (struct))
+    (type $describing (describes $middle) (struct))
 
     (type $unused (struct))
   )

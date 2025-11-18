@@ -6,35 +6,35 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
     ;; NTRAP:      (rec
-    ;; NTRAP-NEXT:  (type $struct (sub (descriptor $desc (struct))))
-    (type $struct (sub (descriptor $desc (struct))))
-    ;; CHECK:       (type $desc (sub (describes $struct (struct))))
-    ;; NTRAP:       (type $desc (sub (describes $struct (struct))))
-    (type $desc (sub (describes $struct (struct))))
+    ;; NTRAP-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
+    (type $struct (sub (descriptor $desc) (struct)))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct)))
+    ;; NTRAP:       (type $desc (sub (describes $struct) (struct)))
+    (type $desc (sub (describes $struct) (struct)))
   )
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub (sub $struct (descriptor $sub.desc (struct))))
+    ;; CHECK-NEXT:  (type $sub (sub $struct (descriptor $sub.desc) (struct)))
     ;; NTRAP:      (rec
-    ;; NTRAP-NEXT:  (type $sub (sub $struct (descriptor $sub.desc (struct))))
-    (type $sub (sub $struct (descriptor $sub.desc (struct))))
-    ;; CHECK:       (type $sub.desc (sub $desc (describes $sub (struct))))
-    ;; NTRAP:       (type $sub.desc (sub $desc (describes $sub (struct))))
-    (type $sub.desc (sub $desc (describes $sub (struct))))
+    ;; NTRAP-NEXT:  (type $sub (sub $struct (descriptor $sub.desc) (struct)))
+    (type $sub (sub $struct (descriptor $sub.desc) (struct)))
+    ;; CHECK:       (type $sub.desc (sub $desc (describes $sub) (struct)))
+    ;; NTRAP:       (type $sub.desc (sub $desc (describes $sub) (struct)))
+    (type $sub.desc (sub $desc (describes $sub) (struct)))
   )
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct-i32 (descriptor $struct-i32.desc (struct (field i32))))
+    ;; CHECK-NEXT:  (type $struct-i32 (descriptor $struct-i32.desc) (struct (field i32)))
     ;; NTRAP:      (rec
-    ;; NTRAP-NEXT:  (type $struct-i32 (descriptor $struct-i32.desc (struct (field i32))))
-    (type $struct-i32 (descriptor $struct-i32.desc (struct (field i32))))
-    ;; CHECK:       (type $struct-i32.desc (describes $struct-i32 (struct)))
-    ;; NTRAP:       (type $struct-i32.desc (describes $struct-i32 (struct)))
-    (type $struct-i32.desc (describes $struct-i32 (struct)))
+    ;; NTRAP-NEXT:  (type $struct-i32 (descriptor $struct-i32.desc) (struct (field i32)))
+    (type $struct-i32 (descriptor $struct-i32.desc) (struct (field i32)))
+    ;; CHECK:       (type $struct-i32.desc (describes $struct-i32) (struct))
+    ;; NTRAP:       (type $struct-i32.desc (describes $struct-i32) (struct))
+    (type $struct-i32.desc (describes $struct-i32) (struct))
   )
 
   ;; CHECK:      (import "" "" (func $effect (type $6)))

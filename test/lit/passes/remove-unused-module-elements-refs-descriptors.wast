@@ -6,10 +6,10 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
-  (type $struct (descriptor $desc (struct)))
-  ;; CHECK:       (type $desc (describes $struct (struct)))
-  (type $desc (describes $struct (struct)))
+  ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+  (type $struct (descriptor $desc) (struct))
+  ;; CHECK:       (type $desc (describes $struct) (struct))
+  (type $desc (describes $struct) (struct))
  )
 
  ;; CHECK:      (type $2 (func))
@@ -40,10 +40,10 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
-  (type $struct (descriptor $desc (struct)))
-  ;; CHECK:       (type $desc (describes $struct (struct)))
-  (type $desc (describes $struct (struct)))
+  ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+  (type $struct (descriptor $desc) (struct))
+  ;; CHECK:       (type $desc (describes $struct) (struct))
+  (type $desc (describes $struct) (struct))
   ;; CHECK:       (type $list (struct (field (ref $struct)) (field (ref null $list))))
   (type $list (struct (field (ref $struct)) (field (ref null $list))))
  )
@@ -133,10 +133,10 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $vtable (sub (descriptor $vtable.desc (struct (field (ref $void))))))
-  (type $vtable (sub (descriptor $vtable.desc (struct (field (ref $void))))))
-  ;; CHECK:       (type $vtable.desc (sub (describes $vtable (struct (field (ref $void))))))
-  (type $vtable.desc (sub (describes $vtable (struct (field (ref $void))))))
+  ;; CHECK-NEXT:  (type $vtable (sub (descriptor $vtable.desc) (struct (field (ref $void)))))
+  (type $vtable (sub (descriptor $vtable.desc) (struct (field (ref $void)))))
+  ;; CHECK:       (type $vtable.desc (sub (describes $vtable) (struct (field (ref $void)))))
+  (type $vtable.desc (sub (describes $vtable) (struct (field (ref $void)))))
  )
 
  ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable

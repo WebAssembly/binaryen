@@ -12,19 +12,19 @@
   ;; relation between $B.desc and $A.desc.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; YESTNH:       (type $A.desc (sub (describes $A (struct))))
-    ;; NO_TNH:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; YESTNH:       (type $A.desc (sub (describes $A) (struct)))
+    ;; NO_TNH:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
   ;; YESTNH:      (global $g (ref (exact $B)) (struct.new_default $B
   ;; YESTNH-NEXT:  (ref.null none)
@@ -45,19 +45,19 @@
   ;; optimized to $B with TNH.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc (struct (field (ref null $B)) (field (ref null $B))))))
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct (field (ref null $B)) (field (ref null $B)))))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc (struct (field (ref null $A)) (field (ref null $B))))))
-    (type $A (sub (descriptor $A.desc (struct (field (ref null $A) (ref null $B))))))
-    ;; YESTNH:       (type $A.desc (sub (describes $A (struct (field nullref) (field nullref)))))
-    ;; NO_TNH:       (type $A.desc (sub (describes $A (struct (field nullref) (field nullref)))))
-    (type $A.desc (sub (describes $A (struct (field (ref null $A.desc) (ref null $B.desc))))))
-    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc (struct (field (ref null $B)) (field (ref null $B))))))
-    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc (struct (field (ref null $A)) (field (ref null $B))))))
-    (type $B (sub $A (descriptor $B.desc (struct (field (ref null $A) (ref null $B))))))
-    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B (struct (field nullref) (field nullref)))))
-    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B (struct (field nullref) (field nullref)))))
-    (type $B.desc (sub $A.desc (describes $B (struct (field (ref null $A.desc) (ref null $B.desc))))))
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct (field (ref null $A)) (field (ref null $B)))))
+    (type $A (sub (descriptor $A.desc) (struct (field (ref null $A) (ref null $B)))))
+    ;; YESTNH:       (type $A.desc (sub (describes $A) (struct (field nullref) (field nullref))))
+    ;; NO_TNH:       (type $A.desc (sub (describes $A) (struct (field nullref) (field nullref))))
+    (type $A.desc (sub (describes $A) (struct (field (ref null $A.desc) (ref null $B.desc)))))
+    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc) (struct (field (ref null $B)) (field (ref null $B)))))
+    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc) (struct (field (ref null $A)) (field (ref null $B)))))
+    (type $B (sub $A (descriptor $B.desc) (struct (field (ref null $A) (ref null $B)))))
+    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B) (struct (field nullref) (field nullref))))
+    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B) (struct (field nullref) (field nullref))))
+    (type $B.desc (sub $A.desc (describes $B) (struct (field (ref null $A.desc) (ref null $B.desc)))))
   )
 
   ;; YESTNH:      (global $g (ref (exact $B)) (struct.new_default $B
@@ -76,13 +76,13 @@
 (module
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $struct (descriptor $desc (struct)))
+    ;; YESTNH-NEXT:  (type $struct (descriptor $desc) (struct))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $struct (descriptor $desc (struct)))
-    (type $struct (descriptor $desc (struct)))
-    ;; YESTNH:       (type $desc (describes $struct (struct)))
-    ;; NO_TNH:       (type $desc (describes $struct (struct)))
-    (type $desc (describes $struct (struct)))
+    ;; NO_TNH-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; YESTNH:       (type $desc (describes $struct) (struct))
+    ;; NO_TNH:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; YESTNH:       (type $2 (func (param anyref (ref null $desc)) (result nullref)))
@@ -850,19 +850,19 @@
   ;; invalid allocations of its described type.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $struct (sub (descriptor $uninstantiated (struct))))
+    ;; YESTNH-NEXT:  (type $struct (sub (descriptor $uninstantiated) (struct)))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $struct (sub (descriptor $uninstantiated (struct))))
-    (type $struct (sub (descriptor $uninstantiated (struct))))
-    ;; YESTNH:       (type $uninstantiated (sub (describes $struct (struct))))
-    ;; NO_TNH:       (type $uninstantiated (sub (describes $struct (struct))))
-    (type $uninstantiated (sub (describes $struct (struct))))
-    ;; YESTNH:       (type $sub (sub $struct (descriptor $instantiated (struct))))
-    ;; NO_TNH:       (type $sub (sub $struct (descriptor $instantiated (struct))))
-    (type $sub (sub $struct (descriptor $instantiated (struct))))
-    ;; YESTNH:       (type $instantiated (sub $uninstantiated (describes $sub (struct))))
-    ;; NO_TNH:       (type $instantiated (sub $uninstantiated (describes $sub (struct))))
-    (type $instantiated (sub $uninstantiated (describes $sub (struct))))
+    ;; NO_TNH-NEXT:  (type $struct (sub (descriptor $uninstantiated) (struct)))
+    (type $struct (sub (descriptor $uninstantiated) (struct)))
+    ;; YESTNH:       (type $uninstantiated (sub (describes $struct) (struct)))
+    ;; NO_TNH:       (type $uninstantiated (sub (describes $struct) (struct)))
+    (type $uninstantiated (sub (describes $struct) (struct)))
+    ;; YESTNH:       (type $sub (sub $struct (descriptor $instantiated) (struct)))
+    ;; NO_TNH:       (type $sub (sub $struct (descriptor $instantiated) (struct)))
+    (type $sub (sub $struct (descriptor $instantiated) (struct)))
+    ;; YESTNH:       (type $instantiated (sub $uninstantiated (describes $sub) (struct)))
+    ;; NO_TNH:       (type $instantiated (sub $uninstantiated (describes $sub) (struct)))
+    (type $instantiated (sub $uninstantiated (describes $sub) (struct)))
   )
 
   ;; YESTNH:       (type $4 (func (result (ref $struct))))
@@ -944,13 +944,13 @@
   ;; we can.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated) (struct))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
-    (type $struct (descriptor $uninstantiated (struct)))
-    ;; YESTNH:       (type $uninstantiated (describes $struct (struct)))
-    ;; NO_TNH:       (type $uninstantiated (describes $struct (struct)))
-    (type $uninstantiated (describes $struct (struct)))
+    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated) (struct))
+    (type $struct (descriptor $uninstantiated) (struct))
+    ;; YESTNH:       (type $uninstantiated (describes $struct) (struct))
+    ;; NO_TNH:       (type $uninstantiated (describes $struct) (struct))
+    (type $uninstantiated (describes $struct) (struct))
   )
 
   ;; YESTNH:       (type $2 (func (result (ref $struct))))
@@ -1027,13 +1027,13 @@
   ;; validating type for the new result; and it traps anyhow).
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B (struct))))
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B (struct))))
-    (type $A (sub (descriptor $B (struct))))
-    ;; YESTNH:       (type $B (describes $A (struct)))
-    ;; NO_TNH:       (type $B (describes $A (struct)))
-    (type $B (describes $A (struct)))
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
+    (type $A (sub (descriptor $B) (struct)))
+    ;; YESTNH:       (type $B (describes $A) (struct))
+    ;; NO_TNH:       (type $B (describes $A) (struct))
+    (type $B (describes $A) (struct))
   )
 
   ;; YESTNH:       (type $2 (func (result (ref none))))
@@ -1093,20 +1093,20 @@
   ;; As above, but now there are subtypes $A.sub, $B.sub.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B (struct))))
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B (struct))))
-    (type $A (sub (descriptor $B (struct))))
-    ;; YESTNH:       (type $B (sub (describes $A (struct))))
-    ;; NO_TNH:       (type $B (sub (describes $A (struct))))
-    (type $B (sub (describes $A (struct))))
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
+    (type $A (sub (descriptor $B) (struct)))
+    ;; YESTNH:       (type $B (sub (describes $A) (struct)))
+    ;; NO_TNH:       (type $B (sub (describes $A) (struct)))
+    (type $B (sub (describes $A) (struct)))
 
-    ;; YESTNH:       (type $A.sub (sub $A (descriptor $B.sub (struct))))
-    ;; NO_TNH:       (type $A.sub (sub $A (descriptor $B.sub (struct))))
-    (type $A.sub (sub $A (descriptor $B.sub (struct))))
-    ;; YESTNH:       (type $B.sub (sub $B (describes $A.sub (struct))))
-    ;; NO_TNH:       (type $B.sub (sub $B (describes $A.sub (struct))))
-    (type $B.sub (sub $B (describes $A.sub (struct))))
+    ;; YESTNH:       (type $A.sub (sub $A (descriptor $B.sub) (struct)))
+    ;; NO_TNH:       (type $A.sub (sub $A (descriptor $B.sub) (struct)))
+    (type $A.sub (sub $A (descriptor $B.sub) (struct)))
+    ;; YESTNH:       (type $B.sub (sub $B (describes $A.sub) (struct)))
+    ;; NO_TNH:       (type $B.sub (sub $B (describes $A.sub) (struct)))
+    (type $B.sub (sub $B (describes $A.sub) (struct)))
   )
 
   ;; YESTNH:       (type $4 (func))
@@ -1192,9 +1192,9 @@
 ;; Shared abstract described types.
 (module
  (rec
-  (type $A (sub (shared (descriptor $B (struct)))))
-  (type $B (sub (shared (describes $A (descriptor $C (struct))))))
-  (type $C (sub (shared (describes $B (struct)))))
+  (type $A (sub (shared (descriptor $B) (struct))))
+  (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
+  (type $C (sub (shared (describes $B) (struct))))
  )
 
  ;; YESTNH:      (rec

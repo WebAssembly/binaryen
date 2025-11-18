@@ -12,8 +12,8 @@
 
 (module
   (rec
-    (type $struct (descriptor $desc (struct)))
-    (type $desc (describes $struct (struct)))
+    (type $struct (descriptor $desc) (struct))
+    (type $desc (describes $struct) (struct))
     (type $used (struct))
   )
 

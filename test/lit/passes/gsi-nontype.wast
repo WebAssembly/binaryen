@@ -150,10 +150,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct))))
-    (type $struct (sub (descriptor $desc (struct))))
-    ;; CHECK:       (type $desc (sub (describes $struct (struct))))
-    (type $desc (sub (describes $struct (struct))))
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
+    (type $struct (sub (descriptor $desc) (struct)))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct)))
+    (type $desc (sub (describes $struct) (struct)))
   )
 
 
@@ -250,10 +250,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
   )
 
 

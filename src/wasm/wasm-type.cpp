@@ -1823,12 +1823,12 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (auto desc = type.getDescribedType()) {
     os << "(describes ";
     printHeapTypeName(*desc);
-    os << ' ';
+    os << ") ";
   }
   if (auto desc = type.getDescriptorType()) {
     os << "(descriptor ";
     printHeapTypeName(*desc);
-    os << ' ';
+    os << ") ";
   }
   switch (type.getKind()) {
     case HeapTypeKind::Func:
@@ -1845,12 +1845,6 @@ std::ostream& TypePrinter::print(HeapType type) {
       break;
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
-  }
-  if (type.getDescriptorType()) {
-    os << ')';
-  }
-  if (type.getDescribedType()) {
-    os << ')';
   }
   if (type.isShared()) {
     os << ')';

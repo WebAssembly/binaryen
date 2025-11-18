@@ -6,10 +6,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
-    (type $struct (descriptor $desc (struct)))
-    ;; CHECK:       (type $desc (describes $struct (struct)))
-    (type $desc (describes $struct (struct)))
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new_default $desc))

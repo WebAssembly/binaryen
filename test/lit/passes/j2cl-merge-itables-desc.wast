@@ -7,29 +7,29 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $Object (sub (descriptor $Object.vtable (struct (field $itable (ref $Object.itable))))))
-    (type $Object (sub (descriptor $Object.vtable (struct
-      (field $itable (ref $Object.itable))))))
+    ;; CHECK-NEXT:  (type $Object (sub (descriptor $Object.vtable) (struct (field $itable (ref $Object.itable)))))
+    (type $Object (sub (descriptor $Object.vtable) (struct
+      (field $itable (ref $Object.itable)))))
 
-    ;; CHECK:       (type $SubObject (sub $Object (descriptor $SubObject.vtable (struct (field $itable (ref $Object.itable))))))
-    (type $SubObject (sub $Object (descriptor $SubObject.vtable (struct
-      (field $itable (ref $Object.itable))))))
+    ;; CHECK:       (type $SubObject (sub $Object (descriptor $SubObject.vtable) (struct (field $itable (ref $Object.itable)))))
+    (type $SubObject (sub $Object (descriptor $SubObject.vtable) (struct
+      (field $itable (ref $Object.itable)))))
 
     ;; CHECK:       (type $function (func))
     (type $function (func))
 
     ;; The $Object.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $Object.vtable (sub (describes $Object (struct (field externref) (field structref)))))
-    (type $Object.vtable (sub (describes $Object (struct
-      (field externref)))))
+    ;; CHECK:       (type $Object.vtable (sub (describes $Object) (struct (field externref) (field structref))))
+    (type $Object.vtable (sub (describes $Object) (struct
+      (field externref))))
 
     ;; The $Object.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct (field externref) (field structref) (field (ref $function))))))
-    (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct
+    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject) (struct (field externref) (field structref) (field (ref $function)))))
+    (type $SubObject.vtable (sub $Object.vtable (describes $SubObject) (struct
       (field externref)
-      (field (ref $function))))))
+      (field (ref $function)))))
 
     ;; CHECK:       (type $Object.itable (struct (field structref)))
     (type $Object.itable (struct
@@ -133,13 +133,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $Object (sub (descriptor $Object.vtable (struct (field $itable (ref $Object.itable))))))
-    (type $Object (sub (descriptor $Object.vtable (struct
-      (field $itable (ref $Object.itable))))))
+    ;; CHECK-NEXT:  (type $Object (sub (descriptor $Object.vtable) (struct (field $itable (ref $Object.itable)))))
+    (type $Object (sub (descriptor $Object.vtable) (struct
+      (field $itable (ref $Object.itable)))))
 
-    ;; CHECK:       (type $SubObject (sub $Object (descriptor $SubObject.vtable (struct (field $itable (ref $SubObject.itable))))))
-    (type $SubObject (sub $Object (descriptor $SubObject.vtable (struct
-      (field $itable (ref $SubObject.itable))))))
+    ;; CHECK:       (type $SubObject (sub $Object (descriptor $SubObject.vtable) (struct (field $itable (ref $SubObject.itable)))))
+    (type $SubObject (sub $Object (descriptor $SubObject.vtable) (struct
+      (field $itable (ref $SubObject.itable)))))
 
     ;; CHECK:       (type $function (func))
     (type $function (func))
@@ -154,16 +154,16 @@
 
     ;; The $Object.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $Object.vtable (sub (describes $Object (struct (field externref) (field structref)))))
-    (type $Object.vtable (sub (describes $Object (struct
-      (field externref)))))
+    ;; CHECK:       (type $Object.vtable (sub (describes $Object) (struct (field externref) (field structref))))
+    (type $Object.vtable (sub (describes $Object) (struct
+      (field externref))))
 
     ;; The $SubObject.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct (field externref) (field structref) (field (ref $function))))))
-    (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct
+    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject) (struct (field externref) (field structref) (field (ref $function)))))
+    (type $SubObject.vtable (sub $Object.vtable (describes $SubObject) (struct
       (field externref)
-      (field (ref $function))))))
+      (field (ref $function)))))
   )
 
   ;; The initialization for the itable field (null struct) will be added to this
