@@ -529,6 +529,7 @@ private:
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
   Expression* makeArraySet(Type type);
+  Expression* makeArrayStore(Type type);
   // Use a single method for the misc array operations, to not give them too
   // much representation (e.g. compared to struct operations, which only include
   // get/set).

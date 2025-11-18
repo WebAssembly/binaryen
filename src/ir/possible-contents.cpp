@@ -1095,6 +1095,13 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
     addChildParentLink(curr->value, curr);
   }
+  void visitArrayStore(ArrayStore* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+  }
 
   void visitArrayLen(ArrayLen* curr) {
     // TODO: optimize when possible (perhaps we can infer a Literal for the
@@ -1732,6 +1739,7 @@ void TNHOracle::scan(Function* func,
     }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayStore(ArrayStore* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
     void visitArrayCopy(ArrayCopy* curr) {
       notePossibleTrap(curr->srcRef);

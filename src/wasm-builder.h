@@ -1129,6 +1129,20 @@ public:
     ret->finalize();
     return ret;
   }
+  ArrayStore* makeArrayStore(unsigned bytes,
+                             Type valueType,
+                             Expression* ref,
+                             Expression* index,
+                             Expression* value) {
+    auto* ret = wasm.allocator.alloc<ArrayStore>();
+    ret->bytes = bytes;
+    ret->valueType = valueType;
+    ret->ref = ref;
+    ret->index = index;
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
   ArrayLen* makeArrayLen(Expression* ref) {
     auto* ret = wasm.allocator.alloc<ArrayLen>();
     ret->ref = ref;
