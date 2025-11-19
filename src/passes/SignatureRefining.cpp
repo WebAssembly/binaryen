@@ -87,6 +87,14 @@ struct SignatureRefining : public Pass {
       // Normally we can optimize, but some cases prevent a particular signature
       // type from being changed at all, see below.
       bool canModify = true;
+
+      // If we can modify this, whether we can modify parameters specifically.
+      // In some cases we can only refine results, namely if we are signature-
+      // called: it is fine to refine results, as the calls still succeed (we
+      // just happen to get something even more refined back), but we cannot
+      // refine params (as calls might start to fail, with insufficiently-
+      // refined inputs).
+      bool canModifyParams = true;
     };
 
     // This analysis also modifies the wasm as it goes, as the getResultsLUB()
@@ -154,10 +162,11 @@ struct SignatureRefining : public Pass {
       }
     }
 
-    // configureAll functions are signature-called, and must also not be
-    // modified.
+    // configureAll functions are signature-called, which means their params
+    // must not be refined.
     for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
-      allInfo[module->getFunction(func)->type.getHeapType()].canModify = false;
+      allInfo[module->getFunction(func)->type.getHeapType()].canModifyParams =
+        false;
     }
 
     // Also skip modifying types used in tags, even private tags, since we don't
@@ -198,44 +207,48 @@ struct SignatureRefining : public Pass {
 
       auto sig = type.getHeapType().getSignature();
 
-      auto numParams = sig.params.size();
-      std::vector<LUBFinder> paramLUBs(numParams);
+      // Change the params only if we are allowed to.
+      auto newParams = func->getParams();
 
-      auto updateLUBs = [&](const ExpressionList& operands) {
-        for (Index i = 0; i < numParams; i++) {
-          paramLUBs[i].note(operands[i]->type);
+      if (info.canModifyParams) {
+        auto numParams = sig.params.size();
+        std::vector<LUBFinder> paramLUBs(numParams);
+
+        auto updateLUBs = [&](const ExpressionList& operands) {
+          for (Index i = 0; i < numParams; i++) {
+            paramLUBs[i].note(operands[i]->type);
+          }
+        };
+
+        for (auto* call : info.calls) {
+          updateLUBs(call->operands);
         }
-      };
-
-      for (auto* call : info.calls) {
-        updateLUBs(call->operands);
-      }
-      for (auto* callRef : info.callRefs) {
-        updateLUBs(callRef->operands);
-      }
-      for (auto* call : info.extraCalls) {
-        // Note that these intrinsic calls have an extra function reference
-        // param at the end, but updateLUBs looks at |numParams| only, so it
-        // considers just the relevant parameters.
-        updateLUBs(call->operands);
-      }
-
-      // Find the final LUBs, and see if we found an improvement.
-      std::vector<Type> newParamsTypes;
-      for (auto& lub : paramLUBs) {
-        if (!lub.noted()) {
-          break;
+        for (auto* callRef : info.callRefs) {
+          updateLUBs(callRef->operands);
         }
-        newParamsTypes.push_back(lub.getLUB());
-      }
-      Type newParams;
-      if (newParamsTypes.size() < numParams) {
-        // We did not have type information to calculate a LUB (no calls, or
-        // some param is always unreachable), so there is nothing we can improve
-        // here. Other passes might remove the type entirely.
-        newParams = func->getParams();
-      } else {
-        newParams = Type(newParamsTypes);
+        for (auto* call : info.extraCalls) {
+          // Note that these intrinsic calls have an extra function reference
+          // param at the end, but updateLUBs looks at |numParams| only, so it
+          // considers just the relevant parameters.
+          updateLUBs(call->operands);
+        }
+
+        // Find the final LUBs, and see if we found an improvement.
+        std::vector<Type> newParamsTypes;
+        for (auto& lub : paramLUBs) {
+          if (!lub.noted()) {
+            break;
+          }
+          newParamsTypes.push_back(lub.getLUB());
+        }
+        if (newParamsTypes.size() < numParams) {
+          // We did not have type information to calculate a LUB (no calls, or
+          // some param is always unreachable), so there is nothing we can
+          // improve here. Other passes might remove the type entirely.
+          newParams = func->getParams();
+        } else {
+          newParams = Type(newParamsTypes);
+        }
       }
 
       auto& resultsLUB = info.resultsLUB;
