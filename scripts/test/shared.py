@@ -389,7 +389,7 @@ if options.spec_tests:
     non_existent_tests = [test_name for test_name in options.spec_tests if not os.path.isfile(test_name)]
     if non_existent_tests:
         raise ValueError(f"Supplied test files do not exist: {non_existent_tests}")
-    options.spec_tests = options.spec_tests
+    options.spec_tests = [os.path.abspath(t) for t in options.spec_tests]
 else:
     options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'], recursive=True)
 
