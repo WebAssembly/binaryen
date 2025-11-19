@@ -1341,6 +1341,70 @@ private:
   Module* module;
 };
 
+struct AsyncifyUnwindWalker
+  : WalkerPass<ExpressionStackWalker<AsyncifyUnwindWalker>> {
+  Function* function;
+  Module* module;
+
+  // Adds a check for Call that is inside a Catch block (we do not handle
+  // unwinding there).
+  template<typename T> void replaceCallWithCheck(T* call) {
+    auto builder = std::make_unique<Builder>(*module);
+    auto check = builder->makeIf(
+      builder->makeBinary(NeInt32,
+                          builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32),
+                          builder->makeConst(int32_t(State::Normal))),
+      builder->makeUnreachable());
+    if (call->type.isConcrete()) {
+      auto temp = builder->addVar(function, call->type);
+      replaceCurrent(builder->makeBlock(
+        {
+          builder->makeLocalSet(temp, call),
+          check,
+          builder->makeLocalGet(temp, call->type),
+        },
+        call->type));
+    } else {
+      replaceCurrent(builder->makeBlock(
+        {
+          call,
+          check,
+        },
+        call->type));
+    }
+  }
+
+  template<typename T> void visitCallLike(T* curr) {
+    assert(!expressionStack.empty());
+    // A return_call (curr->isReturn) can be ignored here: It returns first,
+    // leaving the Catch, before calling.
+    if (curr->isReturn) {
+      return;
+    }
+    // Go up the stack and see if we are in a Catch.
+    Index i = expressionStack.size() - 1;
+    while (i > 0) {
+      auto* expr = expressionStack[i];
+      if (Try* aTry = expr->template dynCast<Try>()) {
+        // check if curr is inside body of aTry (which is safe),
+        // otherwise do replace a call
+        assert(i + 1 < expressionStack.size());
+        if (expressionStack[i + 1] != aTry->body) {
+          replaceCallWithCheck(curr);
+        }
+        break;
+      }
+      i--;
+    }
+  }
+
+  void visitCall(Call* curr) { visitCallLike(curr); }
+
+  void visitCallRef(CallRef* curr) { visitCallLike(curr); }
+
+  void visitCallIndirect(CallIndirect* curr) { visitCallLike(curr); }
+};
+
 struct AsyncifyAssertUnwindCorrectness : Pass {
   bool isFunctionParallel() override { return true; }
 
@@ -1357,63 +1421,7 @@ struct AsyncifyAssertUnwindCorrectness : Pass {
   }
 
   void runOnFunction(Module* module_, Function* function) override {
-    struct UnwindWalker : WalkerPass<ExpressionStackWalker<UnwindWalker>> {
-      Function* function;
-      Module* module;
-
-      // Adds a check for Call that is inside a Catch block (we do not handle unwinding there).
-      void replaceCallWithCheck(Call* call) {
-        auto builder = std::make_unique<Builder>(*module);
-        auto check = builder->makeIf(
-          builder->makeBinary(NeInt32,
-                              builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32),
-                              builder->makeConst(int32_t(State::Normal))),
-          builder->makeUnreachable());
-        if (call->type.isConcrete()) {
-          auto temp = builder->addVar(function, call->type);
-          replaceCurrent(builder->makeBlock(
-            {
-              builder->makeLocalSet(temp, call),
-              check,
-              builder->makeLocalGet(temp, call->type),
-            },
-            call->type));
-        } else {
-          replaceCurrent(builder->makeBlock(
-            {
-              call,
-              check,
-            },
-            call->type));
-        }
-      }
-
-      void visitCall(Call* curr) {
-        assert(!expressionStack.empty());
-        // A return_call (curr->isReturn) can be ignored here: It returns first,
-        // leaving the Catch, before calling.
-        if (curr->isReturn) {
-          return;
-        }
-        // Go up the stack and see if we are in a Catch.
-        Index i = expressionStack.size() - 1;
-        while (i > 0) {
-          auto* expr = expressionStack[i];
-          if (Try* aTry = expr->template dynCast<Try>()) {
-            // check if curr is inside body of aTry (which is safe),
-            // otherwise do replace a call
-            assert(i + 1 < expressionStack.size());
-            if (expressionStack[i + 1] != aTry->body) {
-              replaceCallWithCheck(curr);
-            }
-            break;
-          }
-          i--;
-        }
-      };
-    };
-
-    UnwindWalker walker;
+    AsyncifyUnwindWalker walker;
     walker.function = function;
     walker.module = module_;
     walker.walk(function->body);
@@ -1859,40 +1867,40 @@ struct Asyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
+    if (asserts) {
       // Add asserts in non-instrumented code. Note we do not use an
       // instrumented pass runner here as we do want to run on all functions.
       PassRunner runner(module);
-      if (asserts) {
-        runner.add(std::make_unique<AsyncifyAssertInNonInstrumented>(
-          &analyzer, pointerType, asyncifyMemory));
-        runner.add(
-          std::make_unique<AsyncifyAssertUnwindCorrectness>(&analyzer, module));
+      runner.add(std::make_unique<AsyncifyAssertInNonInstrumented>(
+        &analyzer, pointerType, asyncifyMemory));
+      runner.add(
+        std::make_unique<AsyncifyAssertUnwindCorrectness>(&analyzer, module));
+      runner.setIsNested(true);
+      runner.setValidateGlobally(false);
+      runner.run();
+    }
+    // Next, add local saving/restoring logic. We optimize before doing this,
+    // to undo the extra code generated by flattening, and to arrive at the
+    // minimal amount of locals (which is important as we must save and
+    // restore those locals). We also and optimize after as well to simplify
+    // the code as much as possible.
+    {
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
+      if (optimize) {
+        runner.addDefaultFunctionOptimizationPasses();
+      }
+      runner.add(std::make_unique<AsyncifyLocals>(
+        &analyzer, pointerType, asyncifyMemory));
+      if (optimize) {
+        runner.addDefaultFunctionOptimizationPasses();
       }
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
-      // Next, add local saving/restoring logic. We optimize before doing this,
-      // to undo the extra code generated by flattening, and to arrive at the
-      // minimal amount of locals (which is important as we must save and
-      // restore those locals). We also and optimize after as well to simplify
-      // the code as much as possible.
-      {
-        PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
-        if (optimize) {
-          runner.addDefaultFunctionOptimizationPasses();
-        }
-        runner.add(std::make_unique<AsyncifyLocals>(
-          &analyzer, pointerType, asyncifyMemory));
-        if (optimize) {
-          runner.addDefaultFunctionOptimizationPasses();
-        }
-        runner.setIsNested(true);
-        runner.setValidateGlobally(false);
-        runner.run();
-      }
+    }
     // Finally, add function support (that should not have been seen by
     // the previous passes).
-      addFunctions(module);
+    addFunctions(module);
   }
 
 private:
