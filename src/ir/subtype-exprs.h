@@ -445,8 +445,19 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->replacement, type);
   }
   void visitRefAs(RefAs* curr) {
-    if (curr->op == RefAsNonNull) {
-      self()->noteCast(curr->value, curr);
+    switch (curr->op) {
+      case RefAsNonNull:
+        self()->noteCast(curr->value, curr);
+        return;
+      case AnyConvertExtern:
+        return;
+      case ExternConvertAny:
+        if (curr->type != Type::unreachable) {
+          auto any =
+            HeapTypes::any.getBasic(curr->type.getHeapType().getShared());
+          self()->noteSubtype(curr->value, Type(any, Nullable));
+        }
+        return;
     }
   }
   void visitStringNew(StringNew* curr) {}
