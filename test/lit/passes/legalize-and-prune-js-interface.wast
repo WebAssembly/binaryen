@@ -21,9 +21,6 @@
   ;; an unreachable.
   (import "env" "imported-v128-nondefaultable" (func $imported-v128-nondefaultable (result v128 (ref any))))
 
-  ;; This func will turn from an import into an internal function. We would
-  ;; error if we do not update this ref.func while doing so, to make its type
-  ;; exact.
   ;; CHECK:      (type $0 (func (result v128)))
 
   ;; CHECK:      (type $1 (func (result i32 f64)))
@@ -49,7 +46,12 @@
   ;; CHECK:      (import "env" "imported-64" (func $legalimport$imported-64 (type $9) (param i32 f64) (result i32)))
 
   ;; CHECK:      (global $global funcref (ref.func $imported-v128))
-  (global $global funcref (ref.func $imported-v128))
+  (global $global funcref
+    ;; The ref target will turn from an import into an internal function. We'd
+    ;; error if we do not update this ref.func while doing so, to make its type
+    ;; exact.
+    (ref.func $imported-v128)
+  )
 
   ;; CHECK:      (func $imported-v128 (type $0) (result v128)
   ;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
