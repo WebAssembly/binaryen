@@ -45,6 +45,14 @@
 
   ;; CHECK:      (import "env" "imported-64" (func $legalimport$imported-64 (type $9) (param i32 f64) (result i32)))
 
+  ;; CHECK:      (global $global funcref (ref.func $imported-v128))
+  (global $global funcref
+    ;; The ref target will turn from an import into an internal function. We'd
+    ;; error if we do not update this ref.func while doing so, to make its type
+    ;; exact.
+    (ref.func $imported-v128)
+  )
+
   ;; CHECK:      (func $imported-v128 (type $0) (result v128)
   ;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   ;; CHECK-NEXT: )
