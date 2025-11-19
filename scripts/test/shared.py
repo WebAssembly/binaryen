@@ -504,12 +504,12 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
 def _can_run_spec_test(test):
     test = Path(test)
     if 'testsuite' not in test.parts:
-        return not any(test.full_match(f"**/test/spec/{test_to_skip}") for test_to_skip in SPEC_TESTS_TO_SKIP)
+        return not any(test.match(f"test/spec/{test_to_skip}") for test_to_skip in SPEC_TESTS_TO_SKIP)
 
     if any(proposal in test.parts for proposal in SPEC_TESTSUITE_PROPOSALS_TO_SKIP):
         return False
 
-    return not any(Path(test).full_match(f"**/test/spec/testsuite/{test_to_skip}") for test_to_skip in SPEC_TESTSUITE_TESTS_TO_SKIP)
+    return not any(Path(test).match(f"test/spec/testsuite/{test_to_skip}") for test_to_skip in SPEC_TESTSUITE_TESTS_TO_SKIP)
 
 
 options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
