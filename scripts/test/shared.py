@@ -509,6 +509,7 @@ def _can_run_spec_test(test):
 
     return not any(test.endswith(f"test/spec/testsuite/{test_to_skip}") for test_to_skip in SPEC_TESTSUITE_TESTS_TO_SKIP)
 
+
 options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
 
 
