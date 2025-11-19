@@ -402,114 +402,112 @@ os.chdir(options.out_dir)
 # corresponding 'old_[FILENAME].wast' file. When you fix the new file and
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
-# Paths are relative to the test/ directory
+# Paths are relative to the test/spec directory
 SPEC_TESTS_TO_SKIP = [
     # Requires us to write our own floating point parser
-    'spec/const.wast',
+    'const.wast',
 
     # Unlinkable module accepted
-    'spec/linking.wast',
+    'linking.wast',
 
     # Invalid module accepted
-    'spec/unreached-invalid.wast',
+    'unreached-invalid.wast',
 
     # Test invalid
-    'spec/elem.wast',
+    'elem.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
     'custom-page-sizes',
     'wide-arithmetic',
 ]
 
-# Paths are relative to the test/ directory
+# Paths are relative to the test/spec/testsuite directory
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
-    'spec/testsuite/address.wast',  # 64-bit offset allowed by memory64
-    'spec/testsuite/array_new_elem.wast',  # Failure to parse element segment item abbreviation
-    'spec/testsuite/binary.wast',   # Missing data count section validation
-    'spec/testsuite/call_indirect64.wast',  # Failure to parse element segment abbreviation
-    'spec/testsuite/comments.wast',  # Issue with carriage returns being treated as newlines
-    'spec/testsuite/const.wast',    # Hex float constant not recognized as out of range
-    'spec/testsuite/conversions.wast',  # Promoted NaN should be canonical
-    'spec/testsuite/data.wast',    # Fail to parse data segment offset abbreviation
-    'spec/testsuite/elem.wast',    # Requires modeling empty declarative segments
-    'spec/testsuite/f32.wast',     # Adding -0 and -nan should give a canonical NaN
-    'spec/testsuite/f64.wast',     # Adding -0 and -nan should give a canonical NaN
-    'spec/testsuite/float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
-    'spec/testsuite/float_misc.wast',   # Rounding wrong on f64.sqrt
-    'spec/testsuite/func.wast',    # Duplicate parameter names not properly rejected
-    'spec/testsuite/global.wast',  # Fail to parse table
-    'spec/testsuite/if.wast',      # Requires more precise unreachable validation
-    'spec/testsuite/imports.wast',  # Missing validation of missing function on instantiation
+    'address.wast',  # 64-bit offset allowed by memory64
+    'array_new_elem.wast',  # Failure to parse element segment item abbreviation
+    'binary.wast',   # Missing data count section validation
+    'call_indirect64.wast',  # Failure to parse element segment abbreviation
+    'comments.wast',  # Issue with carriage returns being treated as newlines
+    'const.wast',    # Hex float constant not recognized as out of range
+    'conversions.wast',  # Promoted NaN should be canonical
+    'data.wast',    # Fail to parse data segment offset abbreviation
+    'elem.wast',    # Requires modeling empty declarative segments
+    'f32.wast',     # Adding -0 and -nan should give a canonical NaN
+    'f64.wast',     # Adding -0 and -nan should give a canonical NaN
+    'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
+    'float_misc.wast',   # Rounding wrong on f64.sqrt
+    'func.wast',    # Duplicate parameter names not properly rejected
+    'global.wast',  # Fail to parse table
+    'if.wast',      # Requires more precise unreachable validation
+    'imports.wast',  # Missing validation of missing function on instantiation
     'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
-    'spec/testsuite/linking.wast',  # Missing function type validation on instantiation
-    'spec/testsuite/memory.wast',   # Requires wast `module definition` support
-    'spec/testsuite/proposals/threads/memory.wast',  # Missing memory type validation on instantiation
-    'spec/testsuite/memory64-imports.wast',  # Missing validation on instantiation
-    'spec/testsuite/annotations.wast',  # String annotations IDs should be allowed
-    'spec/testsuite/id.wast',       # Empty IDs should be disallowed
-    'spec/testsuite/instance.wast',  # Requires wast `module definition` support
-    'spec/testsuite/table64.wast',   # Requires wast `module definition` support
-    'spec/testsuite/table_grow.wast',  # Incorrect table linking semantics in interpreter
-    'spec/testsuite/tag.wast',      # Non-empty tag results allowed by stack switching
-    'spec/testsuite/try_table.wast',  # Requires try_table interpretation
-    'spec/testsuite/local_init.wast',  # Requires local validation to respect unnamed blocks
-    'spec/testsuite/ref_func.wast',   # Requires rejecting undeclared functions references
-    'spec/testsuite/ref_is_null.wast',  # Requires ref.null wast constants
-    'spec/testsuite/ref_null.wast',     # Requires ref.null wast constants
-    'spec/testsuite/return_call_indirect.wast',  # Requires more precise unreachable validation
-    'spec/testsuite/select.wast',  # Requires ref.null wast constants
-    'spec/testsuite/table.wast',  # Requires support for table default elements
-    'spec/testsuite/unreached-invalid.wast',  # Requires more precise unreachable validation
-    'spec/testsuite/array.wast',  # Requires support for table default elements
-    'spec/testsuite/br_if.wast',  # Requires more precise branch validation
-    'spec/testsuite/br_on_cast.wast',  # Requires host references to not be externalized i31refs
-    'spec/testsuite/br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs
-    'spec/testsuite/extern.wast',    # Requires ref.host wast constants
-    'spec/testsuite/i31.wast',       # Requires support for table default elements
-    'spec/testsuite/ref_cast.wast',  # Requires host references to not be externalized i31refs
-    'spec/testsuite/ref_test.wast',  # Requires host references to not be externalized i31refs
-    'spec/testsuite/struct.wast',    # Duplicate field names not properly rejected
-    'spec/testsuite/type-rec.wast',  # Missing function type validation on instantiation
-    'spec/testsuite/type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
-    'spec/testsuite/call_indirect.wast',   # Bug with 64-bit inline element segment parsing
-    'spec/testsuite/memory64.wast',        # Requires wast `module definition` support
-    'spec/testsuite/imports0.wast',        # Missing memory type validation on instantiation
-    'spec/testsuite/imports2.wast',        # Missing memory type validation on instantiation
-    'spec/testsuite/imports3.wast',        # Missing memory type validation on instantiation
-    'spec/testsuite/linking0.wast',        # Missing memory type validation on instantiation
-    'spec/testsuite/linking3.wast',        # Fatal error on missing table.
-    'spec/testsuite/i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
-    'spec/testsuite/i32x4_relaxed_trunc.wast',      # Requires wast `either` support
-    'spec/testsuite/i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
-    'spec/testsuite/relaxed_dot_product.wast',   # Requires wast `either` support
-    'spec/testsuite/relaxed_laneselect.wast',    # Requires wast `either` support
-    'spec/testsuite/relaxed_madd_nmadd.wast',    # Requires wast `either` support
-    'spec/testsuite/relaxed_min_max.wast',       # Requires wast `either` support
-    'spec/testsuite/simd_const.wast',            # Hex float constant not recognized as out of range
-    'spec/testsuite/simd_conversions.wast',      # Promoted NaN should be canonical
-    'spec/testsuite/simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
-    'spec/testsuite/simd_f32x4_arith.wast',      # Adding inf and -inf should give a canonical NaN
-    'spec/testsuite/simd_f32x4_rounding.wast',   # Ceil of NaN should give a canonical NaN
-    'spec/testsuite/simd_f64x2.wast',            # Min of 0 and NaN should give a canonical NaN
-    'spec/testsuite/simd_f64x2_arith.wast',      # Adding inf and -inf should give a canonical NaN
-    'spec/testsuite/simd_f64x2_rounding.wast',   # Ceil of NaN should give a canonical NaN
-    'spec/testsuite/simd_i32x4_cmp.wast',        # UBSan error on integer overflow
-    'spec/testsuite/simd_i32x4_arith2.wast',     # UBSan error on integer overflow
-    'spec/testsuite/simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
-    'spec/testsuite/token.wast',                 # Lexer should require spaces between strings and non-paren tokens
+    'linking.wast',  # Missing function type validation on instantiation
+    'memory.wast',   # Requires wast `module definition` support
+    'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
+    'memory64-imports.wast',  # Missing validation on instantiation
+    'annotations.wast',  # String annotations IDs should be allowed
+    'id.wast',       # Empty IDs should be disallowed
+    'instance.wast',  # Requires wast `module definition` support
+    'table64.wast',   # Requires wast `module definition` support
+    'table_grow.wast',  # Incorrect table linking semantics in interpreter
+    'tag.wast',      # Non-empty tag results allowed by stack switching
+    'try_table.wast',  # Requires try_table interpretation
+    'local_init.wast',  # Requires local validation to respect unnamed blocks
+    'ref_func.wast',   # Requires rejecting undeclared functions references
+    'ref_is_null.wast',  # Requires ref.null wast constants
+    'ref_null.wast',     # Requires ref.null wast constants
+    'return_call_indirect.wast',  # Requires more precise unreachable validation
+    'select.wast',  # Requires ref.null wast constants
+    'table.wast',  # Requires support for table default elements
+    'unreached-invalid.wast',  # Requires more precise unreachable validation
+    'array.wast',  # Requires support for table default elements
+    'br_if.wast',  # Requires more precise branch validation
+    'br_on_cast.wast',  # Requires host references to not be externalized i31refs
+    'br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs
+    'extern.wast',    # Requires ref.host wast constants
+    'i31.wast',       # Requires support for table default elements
+    'ref_cast.wast',  # Requires host references to not be externalized i31refs
+    'ref_test.wast',  # Requires host references to not be externalized i31refs
+    'struct.wast',    # Duplicate field names not properly rejected
+    'type-rec.wast',  # Missing function type validation on instantiation
+    'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
+    'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
+    'memory64.wast',        # Requires wast `module definition` support
+    'imports0.wast',        # Missing memory type validation on instantiation
+    'imports2.wast',        # Missing memory type validation on instantiation
+    'imports3.wast',        # Missing memory type validation on instantiation
+    'linking0.wast',        # Missing memory type validation on instantiation
+    'linking3.wast',        # Fatal error on missing table.
+    'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
+    'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
+    'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
+    'relaxed_dot_product.wast',   # Requires wast `either` support
+    'relaxed_laneselect.wast',    # Requires wast `either` support
+    'relaxed_madd_nmadd.wast',    # Requires wast `either` support
+    'relaxed_min_max.wast',       # Requires wast `either` support
+    'simd_const.wast',            # Hex float constant not recognized as out of range
+    'simd_conversions.wast',      # Promoted NaN should be canonical
+    'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f32x4_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f32x4_rounding.wast',   # Ceil of NaN should give a canonical NaN
+    'simd_f64x2.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f64x2_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f64x2_rounding.wast',   # Ceil of NaN should give a canonical NaN
+    'simd_i32x4_cmp.wast',        # UBSan error on integer overflow
+    'simd_i32x4_arith2.wast',     # UBSan error on integer overflow
+    'simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
+    'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
 
 
 def _can_run_spec_test(test):
-    path_relative_to_test_dir = test.removeprefix("test/")
     if 'testsuite' not in test:
-        return path_relative_to_test_dir not in SPEC_TESTS_TO_SKIP
+        return not any(test.endswith(f"test/spec/{test_to_skip}") for test_to_skip in SPEC_TESTS_TO_SKIP)
 
     if any(proposal in test for proposal in SPEC_TESTSUITE_PROPOSALS_TO_SKIP):
         return False
 
-    return path_relative_to_test_dir not in SPEC_TESTSUITE_TESTS_TO_SKIP
-
+    return not any(test.endswith(f"test/spec/testsuite/{test_to_skip}") for test_to_skip in SPEC_TESTSUITE_TESTS_TO_SKIP)
 
 options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
 
