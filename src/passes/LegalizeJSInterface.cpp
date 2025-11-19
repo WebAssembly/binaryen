@@ -412,6 +412,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
 
     // RefFunc types etc. need updating.
     ReFinalize().run(getPassRunner(), module);
+    ReFinalize().runOnModuleCode(getPassRunner(), module);
 
     // TODO: globals etc.
   }
