@@ -321,7 +321,7 @@ struct DAE : public Pass {
     for (auto& [func, info] : infoMap) {
       if (info.justUpdated) {
         for (auto& callee : callees[indexes[func]]) {
-          calledByJustUpdated.insert(callee);
+          calledByJustUpdated.insert(module->functions[callee]->name);
         }
       }
     }
