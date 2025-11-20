@@ -60,6 +60,8 @@ struct DAEFunctionInfo {
   // Whether this needs to be recomputed. This begins as true for the first
   // computation, and we reset it every time we touch the function.
   bool stale = true;
+  // TODO
+  bool justUpdated = false;
   // The unused parameters, if any.
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
@@ -160,18 +162,21 @@ struct DAEScanner
 
     if (!info->stale) {
       // Nothing changed since last time.
+      info->justUpdated = false;
       return;
     }
 
     // Clear the data, mark us as no longer stale, and recompute everything.
     info->clear();
     info->stale = false;
+    info->justUpdated = true;
 
-    auto numParams = func->getNumParams();
     PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(func);
+
     // If there are params, check if they are used.
     // TODO: This work could be avoided if we cannot optimize for other reasons.
     //       That would require deferring this to later and checking that.
+    auto numParams = func->getNumParams();
     if (numParams > 0) {
       auto usedParams = ParamUtils::getUsedParams(func, getModule());
       for (Index i = 0; i < numParams; i++) {
@@ -195,6 +200,9 @@ struct DAE : public Pass {
   // Map of function names to indexes. This lets us use indexes below for speed.
   std::unordered_map<Name, Index> indexes;
 
+  // TODO comment
+  std::vector<std::vector<Call*>> allCalls;
+
   void run(Module* module) override {
     DAEFunctionInfoMap infoMap;
     // Ensure all entries exist so the parallel threads don't modify the data
@@ -210,6 +218,8 @@ struct DAE : public Pass {
     for (Index i = 0; i < numFunctions; i++) {
       indexes[module->functions[i]->name] = i;
     }
+
+    allCalls.resize(numFunctions);
 
     // Iterate to convergence.
     while (1) {
@@ -232,6 +242,8 @@ struct DAE : public Pass {
   // of computing this map is significant, so we compute it once at the start
   // and then use that possibly-over-approximating data.
   std::vector<std::vector<Name>> callers;
+  // TODO
+  std::vector<std::vector<Index>> callees;
 
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
     allDroppedCalls.clear();
@@ -257,15 +269,10 @@ struct DAE : public Pass {
     scanner.run(getPassRunner(), module);
 
     // Combine all the info from the scan.
-    std::vector<std::vector<Call*>> allCalls(numFunctions);
     std::vector<bool> tailCallees(numFunctions);
     std::vector<bool> hasUnseenCalls(numFunctions);
 
     for (auto& [func, info] : infoMap) {
-      for (auto& [name, calls] : info.calls) {
-        auto& allCallsToName = allCalls[indexes[name]];
-        allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
-      }
       for (auto& callee : info.tailCallees) {
         tailCallees[indexes[callee]] = true;
       }
@@ -294,9 +301,47 @@ struct DAE : public Pass {
       }
       // Copy into efficient vectors.
       callers.resize(numFunctions);
+      callees.resize(numFunctions);
       for (Index i = 0; i < numFunctions; ++i) {
         auto& set = callersSets[i];
         callers[i] = std::vector<Name>(set.begin(), set.end());
+        for (auto& caller : callers[i]) {
+          callees[indexes[caller]].push_back(i);
+        }
+      }
+    }
+
+    // Recompute parts of allCalls as necessary. We know which function infos
+    // were just updated, and start there: If we updated { A, B }, and A calls
+    // C while B calls nothing, then the list of all calls must be updated for
+    // D. If D is called by not only A but also some other (not just updated)
+    // function X, that means we must scan { A, X }. First, find the things
+    // called by just-updated functions.
+    std::unordered_set<Name> calledByJustUpdated;
+    for (auto& [func, info] : infoMap) {
+      if (info.justUpdated) {
+        for (auto& callee : callees[indexes[func]]) {
+          calledByJustUpdated.insert(callee);
+        }
+      }
+    }
+    // Find all their callers, so we can process the calls from them, thus
+    // finding all the calls to |calledByJustUpdated|.
+    std::unordered_set<Name> relevantCallers;
+    for (auto& called : calledByJustUpdated) {
+      auto calledIndex = indexes[called];
+      for (auto& caller : callers[calledIndex]) {
+        relevantCallers.insert(caller);
+      }
+      // Clear the old call data before we fill it below.
+      allCalls[calledIndex].clear();
+    }
+    // Process those callers.
+    for (auto& caller : relevantCallers) {
+      auto& info = infoMap[caller];
+      for (auto& [name, calls] : info.calls) {
+        auto& allCallsToName = allCalls[indexes[name]];
+        allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
       }
     }
 
