@@ -19,6 +19,7 @@ import difflib
 import fnmatch
 import glob
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
@@ -385,6 +386,9 @@ def get_tests(test_dir, extensions=[], recursive=False):
 
 
 if options.spec_tests:
+    non_existent_tests = [test_name for test_name in options.spec_tests if not os.path.isfile(test_name)]
+    if non_existent_tests:
+        raise ValueError(f"Supplied test files do not exist: {non_existent_tests}")
     options.spec_tests = [os.path.abspath(t) for t in options.spec_tests]
 else:
     options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'], recursive=True)
@@ -399,6 +403,7 @@ os.chdir(options.out_dir)
 # corresponding 'old_[FILENAME].wast' file. When you fix the new file and
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
+# Paths are relative to the test/spec directory
 SPEC_TESTS_TO_SKIP = [
     # Requires us to write our own floating point parser
     'const.wast',
@@ -416,6 +421,8 @@ SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
     'custom-page-sizes',
     'wide-arithmetic',
 ]
+
+# Paths are relative to the test/spec/testsuite directory
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
     'array_new_elem.wast',  # Failure to parse element segment item abbreviation
@@ -434,8 +441,10 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'global.wast',  # Fail to parse table
     'if.wast',      # Requires more precise unreachable validation
     'imports.wast',  # Missing validation of missing function on instantiation
+    'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
     'linking.wast',  # Missing function type validation on instantiation
     'memory.wast',   # Requires wast `module definition` support
+    'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'memory64-imports.wast',  # Missing validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'id.wast',       # Empty IDs should be disallowed
@@ -493,12 +502,14 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
 
 
 def _can_run_spec_test(test):
-    if 'testsuite' in test:
-        for proposal in SPEC_TESTSUITE_PROPOSALS_TO_SKIP:
-            if proposal in test:
-                return False
-        return os.path.basename(test) not in SPEC_TESTSUITE_TESTS_TO_SKIP
-    return os.path.basename(test) not in SPEC_TESTS_TO_SKIP
+    test = Path(test)
+    if 'testsuite' not in test.parts:
+        return not any(test.match(f"test/spec/{test_to_skip}") for test_to_skip in SPEC_TESTS_TO_SKIP)
+
+    if any(proposal in test.parts for proposal in SPEC_TESTSUITE_PROPOSALS_TO_SKIP):
+        return False
+
+    return not any(Path(test).match(f"test/spec/testsuite/{test_to_skip}") for test_to_skip in SPEC_TESTSUITE_TESTS_TO_SKIP)
 
 
 options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
