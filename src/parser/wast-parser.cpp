@@ -535,7 +535,9 @@ Result<WASTCommand> command(Lexer& in) {
   CHECK_ERR(cmd);
 
   return std::visit(
-    [](const auto& modOrInstantiation) -> WASTCommand { return modOrInstantiation; },
+    [](const auto& modOrInstantiation) -> WASTCommand {
+      return modOrInstantiation;
+    },
     *cmd);
 }
 
