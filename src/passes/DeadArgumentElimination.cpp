@@ -311,6 +311,8 @@ struct DAE : public Pass {
       }
     }
 
+std::cout << "iter\n" << *module << '\n';
+
     // Recompute parts of allCalls as necessary. We know which function infos
     // were just updated, and start there: If we updated { A, B }, and A calls
     // C while B calls nothing, then the list of all calls must be updated for
@@ -320,6 +322,7 @@ struct DAE : public Pass {
     std::unordered_set<Name> calledByJustUpdated;
     for (auto& [func, info] : infoMap) {
       if (info.justUpdated) {
+std::cout << "just updated " << func << '\n';
         for (auto& callee : callees[indexes[func]]) {
           calledByJustUpdated.insert(module->functions[callee]->name);
         }
@@ -327,6 +330,53 @@ struct DAE : public Pass {
     }
     // Find all their callers, so we can process the calls from them, thus
     // finding all the calls to |calledByJustUpdated|.
+    // XXX this is bad... we need to close over repeated operations here, see
+    // $1 here:
+    /*
+    (module
+ (rec                           
+  (type $S (struct))
+  (type $0 (sub (struct (field (mut f64)) (field (mut funcref)))))
+ )
+
+ (func $0 (param $0 (ref $0)) (param $1 (ref struct)) (result f64)
+  (unreachable)
+ )
+ (func $1 (param $0 (ref $0)) (param $1 (ref struct)) (result f64)
+  (unreachable)
+ )
+ (func $2
+  (drop
+   (call $1
+    (struct.new $0
+     (call $6)
+     (ref.func $0)
+    )
+    (struct.new_default $S)
+   )
+  )
+ )
+ (func $4 (param $0 (ref any)) (result f64)
+  (unreachable)
+ )
+ (func $5
+  (drop
+   (call $4
+    (struct.new $0
+     (f64.const 0)
+     (ref.func $1)
+    )
+   )
+  )
+  (drop
+   (call $6)
+  )
+ )
+ (func $6 (result f64)
+  (unreachable)
+ )
+)
+*/
     std::unordered_set<Name> relevantCallers;
     for (auto& called : calledByJustUpdated) {
       auto calledIndex = indexes[called];
@@ -335,9 +385,11 @@ struct DAE : public Pass {
       }
       // Clear the old call data before we fill it below.
       allCalls[calledIndex].clear();
+std::cout << "updating calls to  " << called << '\n';
     }
     // Process those callers.
     for (auto& caller : relevantCallers) {
+std::cout << "processing calls from  " << caller << '\n';
       auto& info = infoMap[caller];
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[indexes[name]];
@@ -446,6 +498,7 @@ struct DAE : public Pass {
       auto [removedIndexes, outcome] = ParamUtils::removeParameters(
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
+std::cout << "remove param " << func->name << '\n';
         // Success!
         worthOptimizing.insert(func);
         markStale(name);
