@@ -151,14 +151,12 @@ def split_wast(wastFile):
             break
         i = to_end(start + 1)
         chunk = wast[start:i]
-        if QUOTED.match(chunk):
+        if QUOTED.match(chunk) or MODULE_DEFINITION_OR_INSTANCE.match(chunk):
             # There may be assertions after this quoted module, but we aren't
             # returning the module, so we need to skip the assertions as well.
             ignoring_quoted = True
             continue
         if chunk.startswith('(module'):
-            if MODULE_DEFINITION_OR_INSTANCE.match(chunk):
-                continue
             ignoring_quoted = False
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):

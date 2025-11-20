@@ -91,6 +91,7 @@ Result<Action> action(Lexer& in) {
 // (module id binary string*)
 // (module id quote string*)
 // (module definition id? ...)
+// (module definition id? binary ...)
 Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
   Lexer reset = in;
   if (!in.takeSExprStart("module"sv)) {
@@ -122,7 +123,7 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
       }
     }
     std::string mod(reset.next().substr(0, in.getPos() - reset.getPos()));
-    return QuotedModule{!isDefinition, QuotedModuleType::Text, mod};
+    return WASTModule{isDefinition, QuotedModule{QuotedModuleType::Text, mod}};
   } else {
     // In this case the module is mostly valid WAT, unless it is a module
     // definition in which case it will begin with (module definition ...)
@@ -146,8 +147,7 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
       return in.err("expected end of module");
     }
 
-    wasm->isDefinition = isDefinition;
-    return wasm;
+    return WASTModule{isDefinition, wasm};
   }
 
   // We have a quote or binary module. Collect its contents.
@@ -160,7 +160,7 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
     return in.err("expected end of module");
   }
 
-  return QuotedModule{isDefinition, type, ss.str()};
+  return WASTModule{isDefinition, QuotedModule{type, ss.str()}};
 }
 
 Result<NaNKind> nan(Lexer& in) {
@@ -558,7 +558,7 @@ Result<WASTScript> wast(Lexer& in) {
         // No, that wasn't the problem. Return the original error.
         return Err{err->msg};
       }
-      cmds.push_back({WASTModule{std::move(wasm)}, line});
+      cmds.push_back({WASTModule{/*isDefinition=*/false, std::move(wasm)}, line});
       return cmds;
     }
     CHECK_ERR(cmd);

@@ -39,13 +39,13 @@ using namespace wasm;
 using namespace wasm::WATParser;
 
 struct Shell {
-  // Keyed by module name
+  // Keyed by module name.
   std::map<Name, std::shared_ptr<Module>> modules;
 
-  // Keyed by instance name
+  // Keyed by instance name.
   std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
   std::map<Name, std::shared_ptr<ModuleRunner>> instances;
-  // used for imports, keyed by instance name
+  // Used for imports, keyed by instance name.
   std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   Name lastModule;
@@ -100,12 +100,11 @@ struct Shell {
 
   Result<std::shared_ptr<Module>> makeModule(WASTModule& mod) {
     std::shared_ptr<Module> wasm;
-    if (auto* quoted = std::get_if<QuotedModule>(&mod)) {
+    if (auto* quoted = std::get_if<QuotedModule>(&mod.module)) {
       wasm = std::make_shared<Module>();
       switch (quoted->type) {
         case QuotedModuleType::Text: {
           CHECK_ERR(parseModule(*wasm, quoted->module));
-          wasm->isDefinition = quoted->isDefinition;
           break;
         }
         case QuotedModuleType::Binary: {
@@ -119,11 +118,10 @@ struct Shell {
             p.dump(ss);
             return Err{ss.str()};
           }
-          wasm->isDefinition = quoted->isDefinition;
           break;
         }
       }
-    } else if (auto* ptr = std::get_if<std::shared_ptr<Module>>(&mod)) {
+    } else if (auto* ptr = std::get_if<std::shared_ptr<Module>>(&mod.module)) {
       wasm = *ptr;
     } else {
       WASM_UNREACHABLE("unexpected module kind");
@@ -173,7 +171,7 @@ struct Shell {
 
     lastModule = wasm->name;
     modules[lastModule] = wasm;
-    if (!wasm->isDefinition) {
+    if (!mod.isDefinition) {
       CHECK_ERR(instantiate(*wasm, wasm->name));
     }
 
@@ -530,7 +528,7 @@ struct Shell {
 
     // print_* functions are handled separately, no need to define here.
 
-    WASTModule mod = std::move(spectest);
+    WASTModule mod = {/*isDefinition=*/false, spectest};
     auto added = addModule(mod);
     if (added.getErr()) {
       WASM_UNREACHABLE("error building spectest module");

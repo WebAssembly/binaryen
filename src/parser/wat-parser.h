@@ -93,12 +93,14 @@ struct AssertAction {
 enum class QuotedModuleType { Text, Binary };
 
 struct QuotedModule {
-  bool isDefinition = false;
   QuotedModuleType type;
   std::string module;
 };
 
-using WASTModule = std::variant<QuotedModule, std::shared_ptr<Module>>;
+struct WASTModule {
+  bool isDefinition = false;
+  std::variant<QuotedModule, std::shared_ptr<Module>> module;
+};
 
 enum class ModuleAssertionType { Trap, Malformed, Invalid, Unlinkable };
 
