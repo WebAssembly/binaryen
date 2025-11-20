@@ -497,8 +497,7 @@ MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
     return in.err("expected end of module instantiation");
   }
 
-  return ModuleInstantiation{.moduleName = *moduleId,
-                             .instanceName = *instanceId};
+  return ModuleInstantiation{*moduleId, *instanceId};
 }
 
 using ModuleOrInstantiation = std::variant<ModuleInstantiation, WASTModule>;
