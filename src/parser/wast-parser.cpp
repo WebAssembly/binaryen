@@ -557,7 +557,8 @@ Result<WASTScript> wast(Lexer& in) {
         // No, that wasn't the problem. Return the original error.
         return Err{err->msg};
       }
-      cmds.push_back({WASTModule{/*isDefinition=*/false, std::move(wasm)}, line});
+      cmds.push_back(
+        {WASTModule{/*isDefinition=*/false, std::move(wasm)}, line});
       return cmds;
     }
     CHECK_ERR(cmd);

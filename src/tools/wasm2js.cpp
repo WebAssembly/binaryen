@@ -789,7 +789,8 @@ void AssertionEmitter::emit() {
     auto& cmd = script[i].cmd;
     if (auto* mod = std::get_if<WASTModule>(&cmd)) {
       if (mod->isDefinition) {
-        Fatal() << "Module definition is not supported on line " << script[i].line;
+        Fatal() << "Module definition is not supported on line "
+                << script[i].line;
       }
       if (auto* w = std::get_if<std::shared_ptr<Module>>(&mod->module)) {
         wasm = *w;
