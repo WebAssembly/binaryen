@@ -75,7 +75,7 @@
   ;; CHECK:      (func $usages (type $6)
   ;; CHECK-NEXT:  (local $o (ref null $SubObject))
   ;; CHECK-NEXT:  (local.set $o
-  ;; CHECK-NEXT:   (struct.new $SubObject
+  ;; CHECK-NEXT:   (struct.new_desc $SubObject
   ;; CHECK-NEXT:    (global.get $SubObject.itable)
   ;; CHECK-NEXT:    (global.get $SubObject.vtable)
   ;; CHECK-NEXT:   )
@@ -105,7 +105,7 @@
   (func $usages
     (local $o (ref null $SubObject))
     (local.set $o
-      (struct.new $SubObject
+      (struct.new_desc $SubObject
         (global.get $SubObject.itable)
         (global.get $SubObject.vtable)))
     (drop
@@ -204,7 +204,7 @@
   ;; CHECK:      (func $usages (type $7)
   ;; CHECK-NEXT:  (local $o (ref null $SubObject))
   ;; CHECK-NEXT:  (local.set $o
-  ;; CHECK-NEXT:   (struct.new $SubObject
+  ;; CHECK-NEXT:   (struct.new_desc $SubObject
   ;; CHECK-NEXT:    (global.get $SubObject.itable)
   ;; CHECK-NEXT:    (global.get $SubObject.vtable)
   ;; CHECK-NEXT:   )
@@ -234,7 +234,7 @@
   (func $usages
     (local $o (ref null $SubObject))
     (local.set $o
-      (struct.new $SubObject
+      (struct.new_desc $SubObject
         (global.get $SubObject.itable)
         (global.get $SubObject.vtable)))
     (drop

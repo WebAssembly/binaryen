@@ -79,7 +79,7 @@
   ;; CHECK-NEXT: )
   (func $dropped
     (drop
-      (struct.new $described
+      (struct.new_desc $described
         (i32.const 1)
         (global.get $desc)
       )
@@ -109,7 +109,7 @@
   ;; CHECK-NEXT: )
   (func $dropped-default
     (drop
-      (struct.new_default $described
+      (struct.new_default_desc $described
         (global.get $desc)
       )
     )
@@ -142,7 +142,7 @@
   ;; CHECK-NEXT: )
   (func $dropped-alloc-desc
     (drop
-      (struct.new $described
+      (struct.new_desc $described
         (i32.const 1)
         (struct.new $descriptor
           (i64.const 2)
@@ -174,7 +174,7 @@
   ;; CHECK-NEXT: )
   (func $dropped-default-alloc-desc
     (drop
-      (struct.new_default $described
+      (struct.new_default_desc $described
         (struct.new $descriptor
           (i64.const 2)
         )
@@ -200,7 +200,7 @@
   ;; CHECK-NEXT: )
   (func $get-desc (result (ref null $super.desc))
     (ref.get_desc $super
-      (struct.new $super
+      (struct.new_desc $super
         (struct.new $super.desc)
       )
     )
@@ -231,7 +231,7 @@
     (block (result (ref null $super.desc))
       (ref.get_desc $super
         (block (result (ref null $super))
-          (struct.new $sub
+          (struct.new_desc $sub
             (struct.new $sub.desc)
           )
         )
@@ -283,7 +283,7 @@
     )
     (drop
       (ref.cast_desc (ref (exact $super))
-        (struct.new $super
+        (struct.new_desc $super
           (local.get $desc)
         )
         (local.get $desc)
@@ -325,7 +325,7 @@
   (func $cast-desc-fail (param $desc (ref null (exact $super.desc)))
     (drop
       (ref.cast_desc (ref (exact $super))
-        (struct.new $super
+        (struct.new_desc $super
           (struct.new $super.desc)
         )
         (local.get $desc)
@@ -372,7 +372,7 @@
     ;; Same as above, but change where the parameter is used.
     (drop
       (ref.cast_desc (ref (exact $super))
-        (struct.new $super
+        (struct.new_desc $super
           (local.get $desc)
         )
         (struct.new $super.desc)
@@ -673,7 +673,7 @@
     ;; logic as the previous test.
     (local $middle (ref null (exact $chain-middle)))
     (local.set $middle
-      (struct.new $chain-middle
+      (struct.new_desc $chain-middle
         (local.get $desc)
       )
     )
@@ -718,7 +718,7 @@
     ;; Same, but now the cast allows nulls. It should still trap.
     (local $middle (ref null (exact $chain-middle)))
     (local.set $middle
-      (struct.new $chain-middle
+      (struct.new_desc $chain-middle
         (local.get $desc)
       )
     )
@@ -893,7 +893,7 @@
     ;; not end up with a (ref (exact $desc)) here, since this will trap, so we
     ;; emit an unreachable.
     (ref.get_desc $struct
-      (struct.new_default $struct
+      (struct.new_default_desc $struct
         (ref.null none)
       )
     )
@@ -920,7 +920,7 @@
   (func $nullable-param (param $desc (ref null (exact $desc))) (result (ref (exact $desc)))
     ;; Read a null descriptor from a nullable param.
     (ref.get_desc $struct
-      (struct.new_default $struct
+      (struct.new_default_desc $struct
         (local.get $desc)
       )
     )
@@ -949,7 +949,7 @@
     (local $desc (ref null (exact $desc)))
     ;; Read a null descriptor from a nullable local.
     (ref.get_desc $struct
-      (struct.new_default $struct
+      (struct.new_default_desc $struct
         (local.get $desc)
       )
     )
@@ -997,7 +997,7 @@
   ;; CHECK-NEXT: )
   (func $A (result (ref $A))
     (ref.cast_desc (ref $A)
-      (struct.new_default $A2
+      (struct.new_default_desc $A2
         (struct.new_default $B2)
       )
       (struct.new_default $B)
@@ -1046,7 +1046,7 @@
       (drop
         (br_on_null $block
           (ref.get_desc $A
-            (struct.new_default $A
+            (struct.new_default_desc $A
               (ref.null none)
             )
           )
@@ -1130,7 +1130,7 @@
     (local.set $v
       (struct.get $A 0
         (ref.cast_desc (ref $A)
-          (struct.new_default $A
+          (struct.new_default_desc $A
             (ref.as_non_null
               (ref.null none)
             )
@@ -1208,7 +1208,7 @@
     )
     (ref.cast_desc (ref $B)
       (ref.cast_desc (ref $B)
-        (struct.new_default $B
+        (struct.new_default_desc $B
           (ref.null (shared none))
         )
         (local.get $temp)
@@ -1271,7 +1271,7 @@
     ;; must remain unreachable.
     (ref.is_null
       (ref.cast_desc (ref $struct)
-        (struct.new_default $struct
+        (struct.new_default_desc $struct
           (struct.new_default $desc)
         )
         (local.get $desc)

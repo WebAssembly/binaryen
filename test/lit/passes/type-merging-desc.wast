@@ -85,8 +85,8 @@
   ;; CHECK:      (func $meta (type $5) (result (ref $B.meta))
   ;; CHECK-NEXT:  (ref.get_desc $B.desc
   ;; CHECK-NEXT:   (ref.get_desc $B
-  ;; CHECK-NEXT:    (struct.new_default $B
-  ;; CHECK-NEXT:     (struct.new_default $B.desc
+  ;; CHECK-NEXT:    (struct.new_default_desc $B
+  ;; CHECK-NEXT:     (struct.new_default_desc $B.desc
   ;; CHECK-NEXT:      (struct.new_default $B.meta)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -99,8 +99,8 @@
     ;; descriptor.
     (ref.get_desc $B.desc
       (ref.get_desc $B
-        (struct.new $B
-          (struct.new $B.desc
+        (struct.new_desc $B
+          (struct.new_desc $B.desc
             (struct.new $B.meta)
           )
         )
@@ -132,14 +132,14 @@
 
   ;; CHECK:      (func $desc (type $4) (result (ref $B.desc))
   ;; CHECK-NEXT:  (ref.get_desc $B
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (struct.new_default $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (result (ref $B.desc))
     (ref.get_desc $B
-      (struct.new_default $B
+      (struct.new_default_desc $B
         (struct.new_default $B.desc)
       )
     )
@@ -169,14 +169,14 @@
 
   ;; CHECK:      (func $desc (type $4) (result (ref $B.desc))
   ;; CHECK-NEXT:  (ref.get_desc $B
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (struct.new_default $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (result (ref $B.desc))
     (ref.get_desc $B
-      (struct.new_default $B
+      (struct.new_default_desc $B
         (struct.new_default $B.desc)
       )
     )
@@ -204,14 +204,14 @@
 
   ;; CHECK:      (func $desc (type $2) (result (ref $A.desc))
   ;; CHECK-NEXT:  (ref.get_desc $A
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (struct.new_default $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (result (ref $B.desc))
     (ref.get_desc $B
-      (struct.new_default $B
+      (struct.new_default_desc $B
         (struct.new_default $B.desc)
       )
     )

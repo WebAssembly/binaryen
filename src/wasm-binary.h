@@ -1155,6 +1155,8 @@ enum ASTNodes {
 
   StructNew = 0x00,
   StructNewDefault = 0x01,
+  StructNewDesc = 0x20,
+  StructNewDefaultDesc = 0x21,
   StructGet = 0x02,
   StructGetS = 0x03,
   StructGetU = 0x04,

@@ -244,8 +244,8 @@ makeBrOnNull(Ctx&, Index, const std::vector<Annotation>&, bool onFail = false);
 template<typename Ctx>
 Result<> makeBrOnCast(Ctx&, Index, const std::vector<Annotation>&, BrOnOp op);
 template<typename Ctx>
-Result<>
-makeStructNew(Ctx&, Index, const std::vector<Annotation>&, bool default_);
+Result<> makeStructNew(
+  Ctx&, Index, const std::vector<Annotation>&, bool default_, bool isDesc);
 template<typename Ctx>
 Result<> makeStructGet(Ctx&,
                        Index,
@@ -2315,13 +2315,14 @@ template<typename Ctx>
 Result<> makeStructNew(Ctx& ctx,
                        Index pos,
                        const std::vector<Annotation>& annotations,
-                       bool default_) {
+                       bool default_,
+                       bool isDesc) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   if (default_) {
-    return ctx.makeStructNewDefault(pos, annotations, *type);
+    return ctx.makeStructNewDefault(pos, annotations, *type, isDesc);
   }
-  return ctx.makeStructNew(pos, annotations, *type);
+  return ctx.makeStructNew(pos, annotations, *type, isDesc);
 }
 
 template<typename Ctx>

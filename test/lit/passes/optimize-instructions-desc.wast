@@ -48,7 +48,7 @@
   ;; NTRAP-NEXT:  (unreachable)
   ;; NTRAP-NEXT: )
   (func $trap-null-desc (result (ref (exact $struct)))
-    (struct.new $struct
+    (struct.new_desc $struct
       (ref.null none)
     )
   )
@@ -73,7 +73,7 @@
   ;; NTRAP-NEXT: )
   (func $trap-null-desc-fallthrough (result (ref (exact $struct)))
     (local $desc (ref null (exact $desc)))
-    (struct.new $struct
+    (struct.new_desc $struct
       (local.tee $desc
         (ref.null none)
       )
@@ -81,17 +81,17 @@
   )
 
   ;; CHECK:      (func $nonnull-cast-desc (type $19) (param $desc (ref null (exact $desc))) (result (ref (exact $struct)))
-  ;; CHECK-NEXT:  (struct.new_default $struct
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
   ;; CHECK-NEXT:   (local.get $desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NTRAP:      (func $nonnull-cast-desc (type $19) (param $desc (ref null (exact $desc))) (result (ref (exact $struct)))
-  ;; NTRAP-NEXT:  (struct.new_default $struct
+  ;; NTRAP-NEXT:  (struct.new_default_desc $struct
   ;; NTRAP-NEXT:   (local.get $desc)
   ;; NTRAP-NEXT:  )
   ;; NTRAP-NEXT: )
   (func $nonnull-cast-desc (param $desc (ref null (exact $desc))) (result (ref (exact $struct)))
-    (struct.new $struct
+    (struct.new_desc $struct
       (ref.as_non_null
         (local.get $desc)
       )
@@ -101,7 +101,7 @@
   ;; Test that when we optimize a struct.new to a struct.new_default, we drop
   ;; the field operands but keep the descriptor.
   ;; CHECK:      (func $new-default-keep-desc (type $11) (result anyref)
-  ;; CHECK-NEXT:  (struct.new_default $struct-i32
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct-i32
   ;; CHECK-NEXT:   (block (result (ref (exact $struct-i32.desc)))
   ;; CHECK-NEXT:    (call $effect)
   ;; CHECK-NEXT:    (struct.new_default $struct-i32.desc)
@@ -109,7 +109,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NTRAP:      (func $new-default-keep-desc (type $11) (result anyref)
-  ;; NTRAP-NEXT:  (struct.new_default $struct-i32
+  ;; NTRAP-NEXT:  (struct.new_default_desc $struct-i32
   ;; NTRAP-NEXT:   (block (result (ref (exact $struct-i32.desc)))
   ;; NTRAP-NEXT:    (call $effect)
   ;; NTRAP-NEXT:    (struct.new_default $struct-i32.desc)
@@ -117,7 +117,7 @@
   ;; NTRAP-NEXT:  )
   ;; NTRAP-NEXT: )
   (func $new-default-keep-desc (result anyref)
-    (struct.new $struct-i32
+    (struct.new_desc $struct-i32
       (i32.const 0)
       (block (result (ref (exact $struct-i32.desc)))
         ;; This would cause the descriptor to be dropped if it were dropped with
@@ -141,7 +141,7 @@
   (func $cast-desc-null-desc
     (drop
       (ref.cast_desc (ref (exact $struct))
-        (struct.new $struct
+        (struct.new_desc $struct
           (struct.new $desc)
         )
         (ref.null none)
@@ -378,7 +378,7 @@
   ;; CHECK:      (func $cast-desc-wrong-desc (type $6)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
-  ;; CHECK-NEXT:    (struct.new_default $struct
+  ;; CHECK-NEXT:    (struct.new_default_desc $struct
   ;; CHECK-NEXT:     (struct.new_default $desc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (struct.new_default $desc)
@@ -388,7 +388,7 @@
   ;; NTRAP:      (func $cast-desc-wrong-desc (type $6)
   ;; NTRAP-NEXT:  (drop
   ;; NTRAP-NEXT:   (block (result (ref (exact $struct)))
-  ;; NTRAP-NEXT:    (struct.new_default $struct
+  ;; NTRAP-NEXT:    (struct.new_default_desc $struct
   ;; NTRAP-NEXT:     (struct.new_default $desc)
   ;; NTRAP-NEXT:    )
   ;; NTRAP-NEXT:   )
@@ -401,7 +401,7 @@
       ;; TODO: We could see that the descriptor used in the allocation and the
       ;; descriptor used in the cast are different and optimize without TNH.
       (ref.cast_desc (ref (exact $struct))
-        (struct.new $struct
+        (struct.new_desc $struct
           (struct.new $desc)
         )
         (struct.new $desc)
@@ -414,7 +414,7 @@
     ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
     ;; CHECK-NEXT:    (block (result (ref (exact $struct)))
     ;; CHECK-NEXT:     (call $effect)
-    ;; CHECK-NEXT:     (struct.new_default $struct
+    ;; CHECK-NEXT:     (struct.new_default_desc $struct
     ;; CHECK-NEXT:      (struct.new_default $desc)
     ;; CHECK-NEXT:     )
     ;; CHECK-NEXT:    )
@@ -433,7 +433,7 @@
     ;; NTRAP-NEXT:    (local.set $0
     ;; NTRAP-NEXT:     (block (result (ref (exact $struct)))
     ;; NTRAP-NEXT:      (call $effect)
-    ;; NTRAP-NEXT:      (struct.new_default $struct
+    ;; NTRAP-NEXT:      (struct.new_default_desc $struct
     ;; NTRAP-NEXT:       (struct.new_default $desc)
     ;; NTRAP-NEXT:      )
     ;; NTRAP-NEXT:     )
@@ -454,7 +454,7 @@
       (ref.cast_desc (ref (exact $struct))
         (block (result (ref (exact $struct)))
           (call $effect)
-          (struct.new $struct
+          (struct.new_desc $struct
             (struct.new $desc)
           )
         )
