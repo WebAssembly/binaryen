@@ -92,6 +92,7 @@ QUOTED = re.compile(r'\(module\s*(\$\S*)?\s+(quote|binary)')
 
 MODULE_DEFINITION_OR_INSTANCE = re.compile(r'(?m)\(module\s+(instance|definition)')
 
+
 def split_wast(wastFile):
     '''
     Returns a list of pairs of module definitions and assertions.
@@ -133,7 +134,7 @@ def split_wast(wastFile):
         return j
 
     i = 0
-    ignoring_quoted = False
+    ignoring_assertions = False
     while i >= 0:
         start = wast.find('(', i)
         if start >= 0 and wast[start + 1] == ';':
@@ -154,14 +155,14 @@ def split_wast(wastFile):
         if QUOTED.match(chunk) or MODULE_DEFINITION_OR_INSTANCE.match(chunk):
             # There may be assertions after this quoted module, but we aren't
             # returning the module, so we need to skip the assertions as well.
-            ignoring_quoted = True
+            ignoring_assertions = True
             continue
         if chunk.startswith('(module'):
-            ignoring_quoted = False
+            ignoring_assertions = False
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):
             continue
-        elif chunk.startswith(('(assert', '(invoke', '(register')) and not ignoring_quoted:
+        elif chunk.startswith(('(assert', '(invoke', '(register')) and not ignoring_assertions:
             # ret may be empty if there are some asserts before the first
             # module. in that case these are asserts *without* a module, which
             # are valid (they may check something that doesn't refer to a module
