@@ -467,7 +467,7 @@ MaybeResult<Register> register_(Lexer& in) {
     return in.err("expected end of register command");
   }
 
-  return Register{.name = *name, .instanceName = instanceName};
+  return Register{*name, instanceName};
 }
 
 // (module instance instance_name module_name)

@@ -112,7 +112,7 @@ struct AssertModule {
 using Assertion = std::variant<AssertReturn, AssertAction, AssertModule>;
 
 struct Register {
-  // TODO: rename this to distinguish it from instanceName
+  // TODO: Rename this to distinguish it from instanceName.
   Name name;
   std::optional<Name> instanceName = std::nullopt;
 };
