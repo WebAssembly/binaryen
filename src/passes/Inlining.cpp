@@ -1015,7 +1015,7 @@ struct FunctionSplitter {
     }
     // Finish the locals check mentioned above.
     if (finalItem) {
-      for (auto* get : FindAll<LocalSet>(finalItem).list) {
+      for (auto* get : FindAll<LocalGet>(finalItem).list) {
         if (writtenLocals.count(get->index)) {
           return InliningMode::Uninlineable;
         }
