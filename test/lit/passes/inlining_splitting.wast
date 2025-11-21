@@ -2299,23 +2299,6 @@
     (local.get $y)
   )
 
-  (func $good (param $x i32) (param $y i32) (result i32)
-    ;; As above, but set $x in the if body. No problem occurs after the if, so
-    ;; we can split here.
-    (if
-      (local.get $x)
-      (then
-        (block
-          (local.set $x
-            (i32.const 1337)
-          )
-          (call $import)
-        )
-      )
-    )
-    (local.get $y)
-  )
-
   ;; CHECK:      (func $calls-bad (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
@@ -2375,6 +2358,23 @@
     (drop
       (call $bad (i32.const 1) (i32.const 2))
     )
+  )
+
+  (func $good (param $x i32) (param $y i32) (result i32)
+    ;; As above, but set $x in the if body. No problem occurs after the if, so
+    ;; we can split here.
+    (if
+      (local.get $x)
+      (then
+        (block
+          (local.set $x
+            (i32.const 1337)
+          )
+          (call $import)
+        )
+      )
+    )
+    (local.get $y)
   )
 
   ;; CHECK:      (func $calls-good (type $0)
@@ -2438,7 +2438,6 @@
   )
 )
 
-;; TODO: two ifs etc.
 ;; CHECK:      (func $byn-split-outlined-B$bad (type $1) (param $x i32) (param $y i32)
 ;; CHECK-NEXT:  (local.set $y
 ;; CHECK-NEXT:   (i32.const 42)
@@ -2448,7 +2447,7 @@
 
 ;; CHECK:      (func $byn-split-outlined-B$good (type $1) (param $x i32) (param $y i32)
 ;; CHECK-NEXT:  (local.set $x
-;; CHECK-NEXT:   (i32.const 42)
+;; CHECK-NEXT:   (i32.const 1337)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT: )
