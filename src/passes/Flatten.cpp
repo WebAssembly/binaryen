@@ -74,16 +74,27 @@ struct Flatten
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
+  // Whether we support exception handling via try_table. This requires
+  // relaxing the Flat IR contract by allowing blocks that are catch
+  // destinations to preserve their return values.
+  bool relaxed;
+
+  Flatten(bool relaxed) : relaxed(relaxed) {}
+
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<Flatten>();
+    return std::make_unique<Flatten>(relaxed);
   }
 
   // For each expression, a bunch of expressions that should execute right
   // before it
   std::unordered_map<Expression*, std::vector<Expression*>> preludes;
 
+
   // Break values are sent through a temp local
   std::unordered_map<Name, Index> breakTemps;
+
+  // These blocks must preserve their return values.
+  std::unordered_set<Name> catchDestBlocks;
 
   void visitExpression(Expression* curr) {
     std::vector<Expression*> ourPreludes;
@@ -116,8 +127,11 @@ struct Flatten
           newList.push_back(item);
         }
         block->list.swap(newList);
-        // remove a block return value
+
         auto type = block->type;
+
+        bool preserveReturnValue = catchDestBlocks.count(block->name);
+
         if (type.isConcrete()) {
           // if there is a temp index for breaking to the block, use that
           Index temp;
@@ -127,20 +141,31 @@ struct Flatten
           } else {
             temp = builder.addVar(getFunction(), type);
           }
-          auto*& last = block->list.back();
-          if (last->type.isConcrete()) {
-            last = builder.makeLocalSet(temp, last);
-          }
-          block->finalize(Type::none);
-          // and we leave just a get of the value
-          auto* rep = builder.makeLocalGet(temp, type);
-          replaceCurrent(rep);
-          // the whole block is now a prelude
-          ourPreludes.push_back(block);
-        }
-        // the block now has no return value, and may have become unreachable
-        block->finalize(Type::none);
 
+          if (preserveReturnValue) {
+            // prelude is just the local set.
+            ourPreludes.push_back(builder.makeLocalSet(temp, block));
+
+            // and we leave a get of the value.
+            replaceCurrent(builder.makeLocalGet(temp, type));
+          } else {
+            // remove a block return value
+            auto*& last = block->list.back();
+            if (last->type.isConcrete()) {
+              last = builder.makeLocalSet(temp, last);
+            }
+            // and we leave just a get of the value
+            auto* rep = builder.makeLocalGet(temp, type);
+            replaceCurrent(rep);
+            // the whole block is now a prelude
+            ourPreludes.push_back(block);
+          }
+        }
+
+        if (!preserveReturnValue) {
+          // the block now has no return value, and may have become unreachable
+          block->finalize(Type::none);
+        }
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
         auto* rep = getPreludesWithExpression(iff->condition, iff);
@@ -227,6 +252,28 @@ struct Flatten
         tryy->finalize();
         replaceCurrent(rep);
 
+      } else if (relaxed && curr->dynCast<TryTable>()) {
+        auto* tryy = curr->dynCast<TryTable>();
+
+        // remove a try value
+        Expression* rep = tryy;
+        auto* originalBody = tryy->body;
+
+        auto type = tryy->type;
+        if (type.isConcrete()) {
+          Index temp = builder.addVar(getFunction(), type);
+          if (tryy->body->type.isConcrete()) {
+            tryy->body = builder.makeLocalSet(temp, tryy->body);
+          }
+          // and we leave just a get of the value
+          rep = builder.makeLocalGet(temp, type);
+          // the whole try is now a prelude
+          ourPreludes.push_back(tryy);
+        }
+        tryy->body = getPreludesWithExpression(originalBody, tryy->body);
+        tryy->finalize();
+        replaceCurrent(rep);
+
       } else {
         WASM_UNREACHABLE("unexpected expr type");
       }
@@ -254,7 +301,10 @@ struct Flatten
         }
 
       } else if (auto* br = curr->dynCast<Break>()) {
-        if (br->value) {
+        // relaxed: if this break has a value and breaks into a catch
+        // destination, we also need to preserve the break value here
+
+        if (br->value && !catchDestBlocks.count(br->name)) {
           auto type = br->value->type;
           if (type.isConcrete()) {
             // we are sending a value. use a local instead
@@ -333,7 +383,7 @@ struct Flatten
       }
     }
 
-    if (curr->is<BrOn>() || curr->is<TryTable>()) {
+    if (curr->is<BrOn>() || (!relaxed && curr->is<TryTable>())) {
       Fatal() << "Unsupported instruction for Flatten: "
               << getExpressionName(curr);
     }
@@ -367,6 +417,28 @@ struct Flatten
       }
     }
   }
+
+  void doWalkFunction(Function* func) {
+    if (relaxed) {
+      // Find all the catch destination blocks.
+      struct CatchDestBlockScanner : public PostWalker<CatchDestBlockScanner> {
+        std::unordered_set<Name>& catchDestBlocks;
+        CatchDestBlockScanner(std::unordered_set<Name>& catchDestBlocks)
+          : catchDestBlocks(catchDestBlocks) {}
+
+        void visitTryTable(TryTable* curr) {
+          for (auto& cd : curr->catchDests) {
+            catchDestBlocks.insert(cd);
+          }
+        }
+      };
+
+      CatchDestBlockScanner(catchDestBlocks).walkFunction(func);
+    }
+
+    Super::doWalkFunction(func);
+  }
+
 
   void visitFunction(Function* curr) {
     auto* originalBody = curr->body;
@@ -419,6 +491,7 @@ private:
   }
 };
 
-Pass* createFlattenPass() { return new Flatten(); }
+Pass* createFlattenPass() { return new Flatten(false); }
+Pass* createFlattenRelaxedPass() { return new Flatten(true); }
 
 } // namespace wasm
