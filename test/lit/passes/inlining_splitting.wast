@@ -2275,11 +2275,11 @@
   ;; Pattern B situations with local value dependencies.
 
   ;; An import, whose calls are work that we want to split out.
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $0 (func (param i32 i32)))
 
-  ;; CHECK:      (type $1 (func (param i32 i32)))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (import "out" "func" (func $import (type $0)))
+  ;; CHECK:      (import "out" "func" (func $import (type $1)))
   (import "out" "func" (func $import))
 
   (func $bad (param $x i32) (param $y i32) (result i32)
@@ -2299,7 +2299,7 @@
     (local.get $y)
   )
 
-  ;; CHECK:      (func $calls-bad (type $0)
+  ;; CHECK:      (func $calls-bad (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2377,7 +2377,7 @@
     (local.get $y)
   )
 
-  ;; CHECK:      (func $calls-good (type $0)
+  ;; CHECK:      (func $calls-good (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2436,18 +2436,256 @@
       (call $good (i32.const 2) (i32.const 3))
     )
   )
+
+  (func $bad-2 (param $x i32) (param $y i32) (result i32)
+    ;; Two ifs, with the problem in the first.
+    (if
+      (local.get $x)
+      (then
+        (block
+          (local.set $y ;; this is bad
+            (i32.const 42)
+          )
+          (call $import)
+        )
+      )
+    )
+    (if
+      (local.get $y)
+      (then
+        (block
+          (local.set $x
+            (i32.const 42)
+          )
+          (call $import)
+        )
+      )
+    )
+    (local.get $y)
+  )
+
+  ;; CHECK:      (func $calls-bad-2 (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$bad-2$4 (result i32)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-2
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-2_15
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$bad-2$5 (result i32)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-2
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-2_15
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-bad-2
+    ;; These should not be inlined/split.
+    (drop
+      (call $bad-2 (i32.const 1) (i32.const 2))
+    )
+    (drop
+      (call $bad-2 (i32.const 1) (i32.const 2))
+    )
+  )
+
+  (func $bad-3 (param $x i32) (param $y i32) (result i32)
+    ;; Two ifs, with the problem in the second.
+    (if
+      (local.get $x)
+      (then
+        (block
+          (local.set $x ;; this changed
+            (i32.const 42)
+          )
+          (call $import)
+        )
+      )
+    )
+    (if
+      (local.get $y)
+      (then
+        (block
+          (local.set $y ;; this changed
+            (i32.const 42)
+          )
+          (call $import)
+        )
+      )
+    )
+    (local.get $y)
+  )
+
+  ;; CHECK:      (func $calls-bad-3 (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$bad-3$6 (result i32)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-3
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-3_18
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$bad-3$7 (result i32)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-3
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$bad-3_18
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-bad-3
+    ;; These should not be inlined/split.
+    (drop
+      (call $bad-3 (i32.const 1) (i32.const 2))
+    )
+    (drop
+      (call $bad-3 (i32.const 1) (i32.const 2))
+    )
+  )
 )
 
-;; CHECK:      (func $byn-split-outlined-B$bad (type $1) (param $x i32) (param $y i32)
+;; CHECK:      (func $byn-split-outlined-B$bad (type $0) (param $x i32) (param $y i32)
 ;; CHECK-NEXT:  (local.set $y
 ;; CHECK-NEXT:   (i32.const 42)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$good (type $1) (param $x i32) (param $y i32)
+;; CHECK:      (func $byn-split-outlined-B$good (type $0) (param $x i32) (param $y i32)
 ;; CHECK-NEXT:  (local.set $x
 ;; CHECK-NEXT:   (i32.const 1337)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-B$bad-2 (type $0) (param $x i32) (param $y i32)
+;; CHECK-NEXT:  (local.set $y
+;; CHECK-NEXT:   (i32.const 42)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-B$bad-2_15 (type $0) (param $x i32) (param $y i32)
+;; CHECK-NEXT:  (local.set $x
+;; CHECK-NEXT:   (i32.const 42)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-B$bad-3 (type $0) (param $x i32) (param $y i32)
+;; CHECK-NEXT:  (local.set $x
+;; CHECK-NEXT:   (i32.const 42)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-B$bad-3_18 (type $0) (param $x i32) (param $y i32)
+;; CHECK-NEXT:  (local.set $y
+;; CHECK-NEXT:   (i32.const 42)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT: )
