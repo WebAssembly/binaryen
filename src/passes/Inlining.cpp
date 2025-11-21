@@ -960,6 +960,7 @@ struct FunctionSplitter {
     // Find the number of ifs.
     Index numIfs = 0;
     while (getIf(body, numIfs) && numIfs <= MaxIfs) {
+      // but what if if has effects that the later things notice, either other ifs or the final B? acuallyy effects are cool. but locals r not!
       numIfs++;
     }
     if (numIfs == 0 || numIfs > MaxIfs) {
