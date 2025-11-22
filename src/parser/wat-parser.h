@@ -34,6 +34,11 @@ Result<> parseModule(Module& wasm,
 // file.
 Result<> parseModule(Module& wasm, Lexer& lexer);
 
+// Similar to `parseModule`, parse the fields of a single WAT module (after the
+// initial module definition including its name) and stop at the ending right
+// paren.
+Result<> parseModuleBody(Module& wasm, Lexer& lexer);
+
 Result<Literal> parseConst(Lexer& lexer);
 
 #pragma GCC diagnostic push
@@ -92,7 +97,10 @@ struct QuotedModule {
   std::string module;
 };
 
-using WASTModule = std::variant<QuotedModule, std::shared_ptr<Module>>;
+struct WASTModule {
+  bool isDefinition = false;
+  std::variant<QuotedModule, std::shared_ptr<Module>> module;
+};
 
 enum class ModuleAssertionType { Trap, Malformed, Invalid, Unlinkable };
 
@@ -104,10 +112,18 @@ struct AssertModule {
 using Assertion = std::variant<AssertReturn, AssertAction, AssertModule>;
 
 struct Register {
+  // TODO: Rename this to distinguish it from instanceName.
   Name name;
+  std::optional<Name> instanceName = std::nullopt;
 };
 
-using WASTCommand = std::variant<WASTModule, Register, Action, Assertion>;
+struct ModuleInstantiation {
+  Name moduleName;
+  Name instanceName;
+};
+
+using WASTCommand =
+  std::variant<WASTModule, Register, Action, Assertion, ModuleInstantiation>;
 
 struct ScriptEntry {
   WASTCommand cmd;

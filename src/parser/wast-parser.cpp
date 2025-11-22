@@ -88,16 +88,21 @@ Result<Action> action(Lexer& in) {
   return in.err("expected action");
 }
 
-// (module id? binary string*)
-// (module id? quote string*)
-// (module ...)
+// (module id binary string*)
+// (module id quote string*)
+// (module definition id? ...)
+// (module definition id? binary ...)
 Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
   Lexer reset = in;
   if (!in.takeSExprStart("module"sv)) {
     return in.err("expected module");
   }
-  // TODO: use ID?
-  [[maybe_unused]] auto id = in.takeID();
+
+  bool isDefinition = in.takeKeyword("definition"sv);
+
+  // We'll read this again in the 'inline module' case
+  (void)in.takeID();
+
   QuotedModuleType type;
   if (in.takeKeyword("quote"sv)) {
     type = QuotedModuleType::Text;
@@ -118,15 +123,31 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
       }
     }
     std::string mod(reset.next().substr(0, in.getPos() - reset.getPos()));
-    return QuotedModule{QuotedModuleType::Text, mod};
+    return WASTModule{isDefinition, QuotedModule{QuotedModuleType::Text, mod}};
   } else {
-    // This is a normal inline module that should be parseable. Reset to the
-    // start and parse it normally.
+    // In this case the module is mostly valid WAT, unless it is a module
+    // definition in which case it will begin with (module definition ...)
     in = std::move(reset);
+
+    // We already checked this before resetting
+    if (!in.takeSExprStart("module"sv)) {
+      return in.err("expected module");
+    }
+
+    bool isDefinition = in.takeKeyword("definition"sv);
+
     auto wasm = std::make_shared<Module>();
+    if (auto id = in.takeID()) {
+      wasm->name = *id;
+    }
+
     wasm->features = FeatureSet::All;
-    CHECK_ERR(parseModule(*wasm, in));
-    return wasm;
+    CHECK_ERR(parseModuleBody(*wasm, in));
+    if (!in.takeRParen()) {
+      return in.err("expected end of module");
+    }
+
+    return WASTModule{isDefinition, wasm};
   }
 
   // We have a quote or binary module. Collect its contents.
@@ -139,7 +160,7 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
     return in.err("expected end of module");
   }
 
-  return QuotedModule{type, ss.str()};
+  return WASTModule{isDefinition, QuotedModule{type, ss.str()}};
 }
 
 Result<NaNKind> nan(Lexer& in) {
@@ -440,17 +461,63 @@ MaybeResult<Register> register_(Lexer& in) {
     return in.err("expected name");
   }
 
-  // TODO: Do we need to use this optional id?
-  in.takeID();
+  auto instanceName = in.takeID();
 
   if (!in.takeRParen()) {
-    // TODO: handle optional module id.
     return in.err("expected end of register command");
   }
-  return Register{*name};
+
+  return Register{*name, instanceName};
 }
 
-// module | register | action | assertion
+// (module instance instance_name module_name)
+MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
+  if (!in.takeSExprStart("module"sv)) {
+    std::optional<std::string_view> actual = in.peekKeyword();
+    return in.err((std::stringstream() << "expected `module` keyword but got "
+                                       << actual.value_or("<not a keyword>"))
+                    .str());
+  }
+
+  if (!in.takeKeyword("instance"sv)) {
+    // This is not a module instance and probably a module instead.
+    return {};
+  }
+
+  auto instanceId = in.takeID();
+  if (!instanceId.has_value()) {
+    return in.err("expected an instance id in module instantiation");
+  }
+  auto moduleId = in.takeID();
+  if (!moduleId.has_value()) {
+    return in.err("expected a module id in module instantiation");
+  }
+
+  if (!in.takeRParen()) {
+    return in.err("expected end of module instantiation");
+  }
+
+  return ModuleInstantiation{*moduleId, *instanceId};
+}
+
+using ModuleOrInstantiation = std::variant<ModuleInstantiation, WASTModule>;
+
+// (module instance ...) | (module ...)
+Result<ModuleOrInstantiation> moduleOrInstantiation(Lexer& in) {
+  auto reset = in;
+
+  if (auto inst = instantiation(in)) {
+    CHECK_ERR(inst);
+    return *inst;
+  }
+  in = reset;
+
+  auto module = wastModule(in);
+  CHECK_ERR(module);
+  return *module;
+}
+
+// instantiate | module | register | action | assertion
 Result<WASTCommand> command(Lexer& in) {
   if (auto cmd = register_(in)) {
     CHECK_ERR(cmd);
@@ -464,9 +531,14 @@ Result<WASTCommand> command(Lexer& in) {
     CHECK_ERR(cmd);
     return *cmd;
   }
-  auto mod = wastModule(in);
-  CHECK_ERR(mod);
-  return *mod;
+  auto cmd = moduleOrInstantiation(in);
+  CHECK_ERR(cmd);
+
+  return std::visit(
+    [](const auto& modOrInstantiation) -> WASTCommand {
+      return modOrInstantiation;
+    },
+    *cmd);
 }
 
 #pragma GCC diagnostic push
@@ -487,7 +559,8 @@ Result<WASTScript> wast(Lexer& in) {
         // No, that wasn't the problem. Return the original error.
         return Err{err->msg};
       }
-      cmds.push_back({WASTModule{std::move(wasm)}, line});
+      cmds.push_back(
+        {WASTModule{/*isDefinition=*/false, std::move(wasm)}, line});
       return cmds;
     }
     CHECK_ERR(cmd);

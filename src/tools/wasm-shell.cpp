@@ -39,10 +39,13 @@ using namespace wasm;
 using namespace wasm::WATParser;
 
 struct Shell {
+  // Keyed by module name.
   std::map<Name, std::shared_ptr<Module>> modules;
+
+  // Keyed by instance name.
   std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
   std::map<Name, std::shared_ptr<ModuleRunner>> instances;
-  // used for imports
+  // Used for imports, keyed by instance name.
   std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   Name lastModule;
@@ -86,6 +89,10 @@ struct Shell {
       return Ok{};
     } else if (auto* assn = std::get_if<Assertion>(&cmd)) {
       return doAssertion(*assn);
+    } else if (auto* instantiateModule =
+                 std::get_if<ModuleInstantiation>(&cmd)) {
+      return instantiate(*modules[instantiateModule->moduleName],
+                         instantiateModule->instanceName);
     } else {
       WASM_UNREACHABLE("unexpected command");
     }
@@ -93,7 +100,7 @@ struct Shell {
 
   Result<std::shared_ptr<Module>> makeModule(WASTModule& mod) {
     std::shared_ptr<Module> wasm;
-    if (auto* quoted = std::get_if<QuotedModule>(&mod)) {
+    if (auto* quoted = std::get_if<QuotedModule>(&mod.module)) {
       wasm = std::make_shared<Module>();
       switch (quoted->type) {
         case QuotedModuleType::Text: {
@@ -114,7 +121,7 @@ struct Shell {
           break;
         }
       }
-    } else if (auto* ptr = std::get_if<std::shared_ptr<Module>>(&mod)) {
+    } else if (auto* ptr = std::get_if<std::shared_ptr<Module>>(&mod.module)) {
       wasm = *ptr;
     } else {
       WASM_UNREACHABLE("unexpected module kind");
@@ -133,20 +140,26 @@ struct Shell {
   using InstanceInfo = std::pair<std::shared_ptr<ShellExternalInterface>,
                                  std::shared_ptr<ModuleRunner>>;
 
-  Result<InstanceInfo> instantiate(Module& wasm) {
+  Result<> instantiate(Module& wasm, Name instanceName) {
+
+    std::shared_ptr<ShellExternalInterface> interface;
+    std::shared_ptr<ModuleRunner> instance;
     try {
-      auto interface =
-        std::make_shared<ShellExternalInterface>(linkedInstances);
-      auto instance =
+      interface = std::make_shared<ShellExternalInterface>(linkedInstances);
+      instance =
         std::make_shared<ModuleRunner>(wasm, interface.get(), linkedInstances);
+
       // This is not an optimization: we want to execute anything, even relaxed
       // SIMD instructions.
       instance->setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
       instance->instantiate();
-      return {{std::move(interface), std::move(instance)}};
     } catch (...) {
       return Err{"failed to instantiate module"};
     }
+
+    interfaces[instanceName] = std::move(interface);
+    instances[instanceName] = std::move(instance);
+    return Ok{};
   }
 
   Result<> addModule(WASTModule& mod) {
@@ -156,20 +169,20 @@ struct Shell {
     auto wasm = *module;
     CHECK_ERR(validateModule(*wasm));
 
-    auto instanceInfo = instantiate(*wasm);
-    CHECK_ERR(instanceInfo);
-
-    auto& [interface, instance] = *instanceInfo;
     lastModule = wasm->name;
-    modules[lastModule] = std::move(wasm);
-    interfaces[lastModule] = std::move(interface);
-    instances[lastModule] = std::move(instance);
+    modules[lastModule] = wasm;
+    if (!mod.isDefinition) {
+      CHECK_ERR(instantiate(*wasm, wasm->name));
+    }
 
     return Ok{};
   }
 
   Result<> addRegistration(Register& reg) {
-    auto instance = instances[lastModule];
+    wasm::Name instanceName =
+      reg.instanceName.has_value() ? *reg.instanceName : lastModule;
+
+    auto instance = instances[instanceName];
     if (!instance) {
       return Err{"register called without a module"};
     }
@@ -178,8 +191,9 @@ struct Shell {
     // We copy pointers as a registered module's name might still be used
     // in an assertion or invoke command.
     modules[reg.name] = modules[lastModule];
-    interfaces[reg.name] = interfaces[lastModule];
-    instances[reg.name] = instances[lastModule];
+
+    interfaces[reg.name] = interfaces[instanceName];
+    instances[reg.name] = instances[instanceName];
     return Ok{};
   }
 
@@ -441,7 +455,7 @@ struct Shell {
       return Err{"expected invalid module"};
     }
 
-    auto instance = instantiate(**wasm);
+    auto instance = instantiate(**wasm, (*wasm)->name);
     if (auto* err = instance.getErr()) {
       if (assn.type == ModuleAssertionType::Unlinkable ||
           assn.type == ModuleAssertionType::Trap) {
@@ -513,7 +527,7 @@ struct Shell {
 
     // print_* functions are handled separately, no need to define here.
 
-    WASTModule mod = std::move(spectest);
+    WASTModule mod = {/*isDefinition=*/false, spectest};
     auto added = addModule(mod);
     if (added.getErr()) {
       WASM_UNREACHABLE("error building spectest module");
@@ -521,7 +535,9 @@ struct Shell {
     Register registration{"spectest"};
     auto registered = addRegistration(registration);
     if (registered.getErr()) {
-      WASM_UNREACHABLE("error registering spectest module");
+      WASM_UNREACHABLE((std::string("error registering spectest module: ") +
+                        registered.getErr()->msg)
+                         .c_str());
     }
   }
 };
