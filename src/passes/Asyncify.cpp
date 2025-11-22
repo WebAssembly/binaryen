@@ -640,6 +640,8 @@ public:
               } else if (target->base == STOP_REWIND) {
                 info.canChangeState = true;
                 info.isTopMostRuntime = true;
+              } else if (target->base == GET_STATE) {
+                info.canChangeState = false;
               } else {
                 WASM_UNREACHABLE("call to unidenfied asyncify import");
               }
