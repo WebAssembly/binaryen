@@ -362,6 +362,7 @@ static const Name START_UNWIND = "start_unwind";
 static const Name STOP_UNWIND = "stop_unwind";
 static const Name START_REWIND = "start_rewind";
 static const Name STOP_REWIND = "stop_rewind";
+static const Name GET_STATE = "get_state";
 static const Name ASYNCIFY_GET_CALL_INDEX = "__asyncify_get_call_index";
 static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
 
@@ -582,6 +583,8 @@ public:
           renamings[func->name] = ASYNCIFY_START_REWIND;
         } else if (func->base == STOP_REWIND) {
           renamings[func->name] = ASYNCIFY_STOP_REWIND;
+        } else if (func->base == GET_STATE) {
+          renamings[func->name] = ASYNCIFY_GET_STATE;
         } else {
           Fatal() << "call to unidenfied asyncify import: " << func->base;
         }
