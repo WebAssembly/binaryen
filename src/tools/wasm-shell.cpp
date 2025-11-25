@@ -137,11 +137,7 @@ struct Shell {
     return Ok{};
   }
 
-  using InstanceInfo = std::pair<std::shared_ptr<ShellExternalInterface>,
-                                 std::shared_ptr<ModuleRunner>>;
-
   Result<> instantiate(Module& wasm, Name instanceName) {
-
     std::shared_ptr<ShellExternalInterface> interface;
     std::shared_ptr<ModuleRunner> instance;
     try {
@@ -179,8 +175,7 @@ struct Shell {
   }
 
   Result<> addRegistration(Register& reg) {
-    wasm::Name instanceName =
-      reg.instanceName.has_value() ? *reg.instanceName : lastModule;
+    Name instanceName = reg.instanceName ? *reg.instanceName : lastModule;
 
     auto instance = instances[instanceName];
     if (!instance) {

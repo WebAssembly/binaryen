@@ -485,11 +485,11 @@ MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
   }
 
   auto instanceId = in.takeID();
-  if (!instanceId.has_value()) {
+  if (!instanceId) {
     return in.err("expected an instance id in module instantiation");
   }
   auto moduleId = in.takeID();
-  if (!moduleId.has_value()) {
+  if (!moduleId) {
     return in.err("expected a module id in module instantiation");
   }
 
