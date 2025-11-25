@@ -233,6 +233,9 @@ struct DAE : public Pass {
   // and then use that possibly-over-approximating data.
   std::vector<std::vector<Name>> callers;
 
+  // TOCO
+  Index unprofitableRemovalIters = 0;
+
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
     allDroppedCalls.clear();
 
@@ -380,34 +383,47 @@ struct DAE : public Pass {
       // TODO: We could track in which functions we actually make changes.
       ReFinalize().run(getPassRunner(), module);
     }
-    // We now know which parameters are unused, and can potentially remove them.
-    for (Index index = 0; index < numFunctions; index++) {
-      auto* func = module->functions[index].get();
-      if (func->imported()) {
-        continue;
+    if (!unprofitableRemovalIters) {
+      // We now know which parameters are unused, and can potentially remove them.
+      Index removals = 0;
+      Index singleCallerRemovals = 0;
+      for (Index index = 0; index < numFunctions; index++) {
+        auto* func = module->functions[index].get();
+        if (func->imported()) {
+          continue;
+        }
+        if (hasUnseenCalls[index]) {
+          continue;
+        }
+        auto numParams = func->getNumParams();
+        if (numParams == 0) {
+          continue;
+        }
+        auto& calls = allCalls[index];
+        if (calls.empty()) {
+          continue;
+        }
+        auto name = func->name;
+        auto [removedIndexes, outcome] = ParamUtils::removeParameters(
+          {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
+        if (!removedIndexes.empty()) {
+          // Success!
+          worthOptimizing.insert(func);
+          markStale(name);
+          markCallersStale(index);
+          if (callers[index].size() == 1) {
+            singleCallerRemovals++;
+          }
+          removals++;
+        }
+        if (outcome == ParamUtils::RemovalOutcome::Failure) {
+          callTargetsToLocalize.insert(name);
+        }
       }
-      if (hasUnseenCalls[index]) {
-        continue;
-      }
-      auto numParams = func->getNumParams();
-      if (numParams == 0) {
-        continue;
-      }
-      auto& calls = allCalls[index];
-      if (calls.empty()) {
-        continue;
-      }
-      auto name = func->name;
-      auto [removedIndexes, outcome] = ParamUtils::removeParameters(
-        {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
-      if (!removedIndexes.empty()) {
-        // Success!
-        worthOptimizing.insert(func);
-        markStale(name);
-        markCallersStale(index);
-      }
-      if (outcome == ParamUtils::RemovalOutcome::Failure) {
-        callTargetsToLocalize.insert(name);
+      if (removals == 1 && singleCallerRemovals == 1 && callTargetsToLocalize.empty()) {
+        // We only removed parameters from one function, and it had a single
+        // caller, which is something the inlining pass will handle anyhow.
+        unprofitableRemovalIters++;
       }
     }
     // We can also tell which calls have all their return values dropped. Note
