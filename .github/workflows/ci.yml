@@ -51,7 +51,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest, windows-11-arm]
+        # Test on the oldest support Ubuntu version in addition to `latest`.
+        os: [ubuntu-22.04, ubuntu-latest, macos-latest, windows-latest, windows-11-arm]
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -65,11 +66,11 @@ jobs:
 
     - name: gen-s-parser
       run: ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
-      if: matrix.os == 'ubuntu-latest'
+      if: startsWith(matrix.os, 'ubuntu')
 
     - name: install ninja (linux)
       run: sudo apt-get install ninja-build
-      if: matrix.os == 'ubuntu-latest'
+      if: startsWith(matrix.os, 'ubuntu')
 
     - name: install ninja (macos)
       run: brew install ninja
@@ -89,7 +90,7 @@ jobs:
 
     - name: cmake (linux)
       run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install
-      if: matrix.os == 'ubuntu-latest'
+      if: startsWith(matrix.os, 'ubuntu')
 
     - name: cmake (macos)
       run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install '-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'
