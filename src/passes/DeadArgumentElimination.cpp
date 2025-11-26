@@ -440,7 +440,8 @@ struct DAE : public Pass {
       }
       if (removals == 1 && singleCallerRemovals == 1 && callTargetsToLocalize.empty()) {
         // We only removed parameters from one function, and it had a single
-        // caller, which is something the inlining pass will handle anyhow.
+        // caller, and we don't have other pending actions (call targets we
+        // need to localize), so this was unprofitable as mentioned earlier.
         unprofitableRemovalIters++;
       }
     }
