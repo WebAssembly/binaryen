@@ -422,8 +422,13 @@ struct DAE : public Pass {
           continue;
         }
         auto name = func->name;
-        auto [removedIndexes, outcome] = ParamUtils::removeParameters(
-          {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
+        auto [removedIndexes, outcome] =
+          ParamUtils::removeParameters({func},
+                                       infoMap[name].unusedParams,
+                                       calls,
+                                       {},
+                                       module,
+                                       getPassRunner());
         if (!removedIndexes.empty()) {
           // Success!
           worthOptimizing.insert(func);
@@ -438,7 +443,8 @@ struct DAE : public Pass {
           callTargetsToLocalize.insert(name);
         }
       }
-      if (removals == 1 && singleCallerRemovals == 1 && callTargetsToLocalize.empty()) {
+      if (removals == 1 && singleCallerRemovals == 1 &&
+          callTargetsToLocalize.empty()) {
         // We only removed parameters from one function, and it had a single
         // caller, and we don't have other pending actions (call targets we
         // need to localize), so this was unprofitable as mentioned earlier.
