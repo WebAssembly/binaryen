@@ -233,7 +233,20 @@ struct DAE : public Pass {
   // and then use that possibly-over-approximating data.
   std::vector<std::vector<Name>> callers;
 
-  // TOCO
+  // A count of how many iterations we saw unprofitable removals of parameters.
+  // An unprofitable removal is one where we only manage to remove from a single
+  // call, that is, from one call target and it has a single call going to it.
+  // Such calls are not very interesting, as when there is a single call like
+  // that then inlining will handle it anyhow, in most cases, and inlining
+  // does so far more efficiently in situations of call chains:
+  //   a -> b -> c -> d
+  //
+  // Imagine we remove a param from d, and so we remove it from the call in c.
+  // If c received that as a parameter, and only ever used it to call d, then
+  // now we can remove a param from c, and from the call in b, and so forth -
+  // requiring a full iteration each time to find the small amount of progress.
+  // (Inlining, otoh, will inline b into a, then c into a, and d into a,
+  // efficiently.)
   Index unprofitableRemovalIters = 0;
 
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
@@ -383,8 +396,13 @@ struct DAE : public Pass {
       // TODO: We could track in which functions we actually make changes.
       ReFinalize().run(getPassRunner(), module);
     }
+    // We now know which parameters are unused, and can potentially remove them.
+    // Only do so if we didn't run into unprofitable removals - if so, leave
+    // any further removals for other invocations of this pass. (This avoids us
+    // getting stuck in long unprofitable call chains as mentioned in the
+    // comment earlier; note that we do process one unprofitable iteration
+    // before giving up here, so we do make progress at least.)
     if (!unprofitableRemovalIters) {
-      // We now know which parameters are unused, and can potentially remove them.
       Index removals = 0;
       Index singleCallerRemovals = 0;
       for (Index index = 0; index < numFunctions; index++) {
