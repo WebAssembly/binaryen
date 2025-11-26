@@ -239,6 +239,7 @@ struct DAE : public Pass {
   // Such calls are not very interesting, as when there is a single call like
   // that then inlining will handle it anyhow, in most cases, and inlining
   // does so far more efficiently in situations of call chains:
+  //
   //   a -> b -> c -> d
   //
   // Imagine we remove a param from d, and so we remove it from the call in c.
