@@ -450,7 +450,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     # Requires correct handling of tag imports from different instances of the same module,
     # ref.null wast constants, and splitting for module instances
     'instance.wast',
-    'table64.wast',   # Requires validations for table size
+    # 'table64.wast',   # Requires validations for table size
     'table_grow.wast',  # Incorrect table linking semantics in interpreter
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'try_table.wast',  # Requires try_table interpretation
