@@ -519,34 +519,37 @@ options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
 
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary'):
+                        binary_suffix='.fromBinary', base_name=None, stdout=None, stderr=None):
     # checks we can convert the wast to binary and back
 
-    print('         (binary format check)')
-    cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all'] + wasm_as_args
-    print('            ', ' '.join(cmd))
-    if os.path.exists('a.wasm'):
-        os.unlink('a.wasm')
-    subprocess.check_call(cmd, stdout=subprocess.PIPE)
-    assert os.path.exists('a.wasm')
+    as_file = f"{base_name}-a.wasm" if base_name is not None else "a.wasm"
+    disassembled_file = f"{base_name}-ab.wast" if base_name is not None else "ab.wast"
 
-    cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast', '-all']
-    print('            ', ' '.join(cmd))
-    if os.path.exists('ab.wast'):
-        os.unlink('ab.wast')
+    print('         (binary format check)', file=stdout)
+    cmd = WASM_AS + [wast, '-o', as_file, '-all'] + wasm_as_args
+    print('            ', ' '.join(cmd), file=stdout)
+    if os.path.exists(as_file):
+        os.unlink(as_file)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
-    assert os.path.exists('ab.wast')
+    assert os.path.exists(as_file)
+
+    cmd = WASM_DIS + [as_file, '-o', disassembled_file, '-all']
+    print('            ', ' '.join(cmd), file=stdout)
+    if os.path.exists(disassembled_file):
+        os.unlink(disassembled_file)
+    subprocess.check_call(cmd, stdout=subprocess.PIPE)
+    assert os.path.exists(disassembled_file)
 
     # make sure it is a valid wast
-    cmd = WASM_OPT + ['ab.wast', '-all', '-q']
-    print('            ', ' '.join(cmd))
+    cmd = WASM_OPT + [disassembled_file, '-all', '-q']
+    print('            ', ' '.join(cmd), file=stdout)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
     if verify_final_result:
-        actual = open('ab.wast').read()
+        actual = open(disassembled_file).read()
         fail_if_not_identical_to_file(actual, wast + binary_suffix)
 
-    return 'ab.wast'
+    return disassembled_file
 
 
 def minify_check(wast, verify_final_result=True):

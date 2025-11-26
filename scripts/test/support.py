@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 import filecmp
 import os
 import re
@@ -185,16 +186,29 @@ def write_wast(filename, wast, asserts=[]):
             o.write(wast + '\n'.join(asserts))
 
 
-def run_command(cmd, expected_status=0, stderr=None,
+def run_command(cmd, expected_status=0, stdout=None, stderr=None,
                 expected_err=None, err_contains=False, err_ignore=None):
     if expected_err is not None:
         assert stderr == subprocess.PIPE or stderr is None, \
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
-    print('executing: ', ' '.join(cmd))
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
-    out, err = proc.communicate()
-    code = proc.returncode
+    print('executing: ', ' '.join(cmd), file=stdout)
+
+    # Popen's streams require a file handle with a fileno, which StringIO doesn't have
+    # In this case, print the streams after the fact.
+    if isinstance(stderr, io.StringIO):
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, encoding='UTF-8')
+
+        out, err = proc.communicate()
+        code = proc.returncode
+
+        print(out, file=stdout, end='')
+        print(err, file=stderr, end='')
+    else:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
+        out, err = proc.communicate()
+        code = proc.returncode
+
     if expected_status is not None and code != expected_status:
         raise Exception(f"run_command `{' '.join(cmd)}` failed ({code}) {err or ''}")
     if expected_err is not None:
