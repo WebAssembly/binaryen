@@ -118,8 +118,11 @@ struct Register {
 };
 
 struct ModuleInstantiation {
-  Name moduleName;
-  Name instanceName;
+  // If not specified, instantiate the most recent module definition.
+  std::optional<Name> moduleName;
+
+  // If not specified, use the moduleName
+  std::optional<Name> instanceName;
 };
 
 using WASTCommand =

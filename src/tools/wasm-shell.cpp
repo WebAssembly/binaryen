@@ -48,7 +48,8 @@ struct Shell {
   // Used for imports, keyed by instance name.
   std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
-  Name lastModule;
+  Name lastInstance;
+  std::optional<Name> lastModuleDefinition;
 
   Options& options;
 
@@ -91,8 +92,7 @@ struct Shell {
       return doAssertion(*assn);
     } else if (auto* instantiateModule =
                  std::get_if<ModuleInstantiation>(&cmd)) {
-      return instantiate(*modules[instantiateModule->moduleName],
-                         instantiateModule->instanceName);
+      return doInstantiate(*instantiateModule);
     } else {
       WASM_UNREACHABLE("unexpected command");
     }
@@ -137,6 +137,26 @@ struct Shell {
     return Ok{};
   }
 
+  Result<> doInstantiate(ModuleInstantiation& instantiateModule) {
+    auto moduleDefinitionName = instantiateModule.moduleName
+                                  ? instantiateModule.moduleName
+                                  : lastModuleDefinition;
+    if (!moduleDefinitionName) {
+      return Err{"No module definition found in module instantiation, and no "
+                 "previous module definition was found."};
+    }
+
+    auto instanceName = instantiateModule.instanceName
+                          ? instantiateModule.instanceName
+                          : lastModuleDefinition;
+    if (!instanceName) {
+      return Err{"No instance name found in module instantiation, and no "
+                 "previous module definition was found."};
+    }
+
+    return instantiate(*modules[*moduleDefinitionName], *instanceName);
+  }
+
   Result<> instantiate(Module& wasm, Name instanceName) {
     std::shared_ptr<ShellExternalInterface> interface;
     std::shared_ptr<ModuleRunner> instance;
@@ -153,6 +173,8 @@ struct Shell {
       return Err{"failed to instantiate module"};
     }
 
+    lastInstance = instanceName;
+
     interfaces[instanceName] = std::move(interface);
     instances[instanceName] = std::move(instance);
     return Ok{};
@@ -165,17 +187,18 @@ struct Shell {
     auto wasm = *module;
     CHECK_ERR(validateModule(*wasm));
 
-    lastModule = wasm->name;
-    modules[lastModule] = wasm;
+    modules[wasm->name] = wasm;
     if (!mod.isDefinition) {
       CHECK_ERR(instantiate(*wasm, wasm->name));
+    } else {
+      lastModuleDefinition = wasm->name;
     }
 
     return Ok{};
   }
 
   Result<> addRegistration(Register& reg) {
-    Name instanceName = reg.instanceName ? *reg.instanceName : lastModule;
+    Name instanceName = reg.instanceName ? *reg.instanceName : lastInstance;
 
     auto instance = instances[instanceName];
     if (!instance) {
@@ -185,8 +208,6 @@ struct Shell {
 
     // We copy pointers as a registered module's name might still be used
     // in an assertion or invoke command.
-    modules[reg.name] = modules[lastModule];
-
     interfaces[reg.name] = interfaces[instanceName];
     instances[reg.name] = instances[instanceName];
     return Ok{};
@@ -221,9 +242,9 @@ struct Shell {
   }
 
   ActionResult doAction(Action& act) {
-    assert(instances[lastModule].get());
+    assert(instances[lastInstance].get());
     if (auto* invoke = std::get_if<InvokeAction>(&act)) {
-      auto it = instances.find(invoke->base ? *invoke->base : lastModule);
+      auto it = instances.find(invoke->base ? *invoke->base : lastInstance);
       if (it == instances.end()) {
         return TrapResult{};
       }
@@ -248,7 +269,7 @@ struct Shell {
       }
       return flow.values;
     } else if (auto* get = std::get_if<GetAction>(&act)) {
-      auto it = instances.find(get->base ? *get->base : lastModule);
+      auto it = instances.find(get->base ? *get->base : lastInstance);
       if (it == instances.end()) {
         return TrapResult{};
       }
@@ -527,7 +548,8 @@ struct Shell {
     if (added.getErr()) {
       WASM_UNREACHABLE("error building spectest module");
     }
-    Register registration{"spectest"};
+    Register registration{/*name=*/"spectest"};
+    modules["spectest"] = spectest;
     auto registered = addRegistration(registration);
     if (registered.getErr()) {
       WASM_UNREACHABLE((std::string("error registering spectest module: ") +

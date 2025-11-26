@@ -196,7 +196,7 @@ def run_command(cmd, expected_status=0, stderr=None,
     out, err = proc.communicate()
     code = proc.returncode
     if expected_status is not None and code != expected_status:
-        raise Exception(f"run_command `{" ".join(cmd)}` failed ({code}) {err or ""}")
+        raise Exception(f"run_command `{' '.join(cmd)}` failed ({code}) {err or ''}")
     if expected_err is not None:
         if err_ignore is not None:
             err = "\n".join([line for line in err.split('\n') if err_ignore not in line])
