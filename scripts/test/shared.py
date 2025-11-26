@@ -460,7 +460,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'ref_null.wast',     # Requires ref.null wast constants
     'return_call_indirect.wast',  # Requires more precise unreachable validation
     'select.wast',  # Requires ref.null wast constants
-    'table.wast',  # Requires support for table default elements
+    # 'table.wast',  # Requires support for table default elements
     'unreached-invalid.wast',  # Requires more precise unreachable validation
     'array.wast',  # Requires support for table default elements
     'br_if.wast',  # Requires more precise branch validation

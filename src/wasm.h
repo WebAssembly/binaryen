@@ -2419,9 +2419,9 @@ public:
 class Table : public Importable {
 public:
   static const Address::address32_t kPageSize = 1;
-  static const Index kUnlimitedSize = Index(-1);
+  static const uint64_t kUnlimitedSize = -1ull;
   // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
-  static const Index kMaxSize = Index(-1);
+  static const Index kMaxSize = Index(-1ull);
 
   Address initial = 0;
   Address max = kMaxSize;
