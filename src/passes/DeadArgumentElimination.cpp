@@ -434,7 +434,7 @@ struct DAE : public Pass {
           worthOptimizing.insert(func);
           markStale(name);
           markCallersStale(index);
-          if (callers[index].size() == 1) {
+          if (calls.size() == 1) {
             singleCallerRemovals++;
           }
           removals++;
