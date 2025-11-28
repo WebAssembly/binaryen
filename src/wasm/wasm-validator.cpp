@@ -4595,9 +4595,13 @@ static void validateTables(Module& module, ValidationInfo& info) {
 
   auto funcref = Type(HeapType::func, Nullable);
   for (auto& table : module.tables) {
-    info.shouldBeTrue(table->initial <= table->max,
-                      "table",
-                      "size minimum must not be greater than maximum");
+    // info.shouldBeTrue(table->initial != 0 || table->initial <= table->max,
+    info.shouldBeTrue(
+      table->initial <= table->max,
+      "table",
+      (std::string("size minimum must not be greater than maximum ") +
+       std::to_string(table->initial) + " " + std::to_string(table->max))
+        .c_str());
     info.shouldBeTrue(
       table->type.isNullable(),
       "table",

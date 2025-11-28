@@ -450,7 +450,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     # Requires correct handling of tag imports from different instances of the same module,
     # ref.null wast constants, and splitting for module instances
     'instance.wast',
-    'table64.wast',   # Requires validations for table size
+    # 'table64.wast',   # Requires validations for table size
     'table_grow.wast',  # Incorrect table linking semantics in interpreter
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'try_table.wast',  # Requires try_table interpretation
@@ -460,7 +460,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'ref_null.wast',     # Requires ref.null wast constants
     'return_call_indirect.wast',  # Requires more precise unreachable validation
     'select.wast',  # Requires ref.null wast constants
-    'table.wast',  # Requires support for table default elements
+    # 'table.wast',  # Requires support for table default elements
     'unreached-invalid.wast',  # Requires more precise unreachable validation
     'array.wast',  # Requires support for table default elements
     'br_if.wast',  # Requires more precise branch validation
