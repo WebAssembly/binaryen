@@ -470,7 +470,7 @@ MaybeResult<Register> register_(Lexer& in) {
   return Register{*name, instanceName};
 }
 
-// (module instance instance_name module_name)
+// (module instance instance_name? module_name?)
 MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
   if (!in.takeSExprStart("module"sv)) {
     std::optional<std::string_view> actual = in.peekKeyword();
@@ -485,19 +485,13 @@ MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
   }
 
   auto instanceId = in.takeID();
-  if (!instanceId) {
-    return in.err("expected an instance id in module instantiation");
-  }
   auto moduleId = in.takeID();
-  if (!moduleId) {
-    return in.err("expected a module id in module instantiation");
-  }
 
   if (!in.takeRParen()) {
     return in.err("expected end of module instantiation");
   }
 
-  return ModuleInstantiation{*moduleId, *instanceId};
+  return ModuleInstantiation{moduleId, instanceId};
 }
 
 using ModuleOrInstantiation = std::variant<ModuleInstantiation, WASTModule>;
