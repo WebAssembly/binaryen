@@ -213,6 +213,13 @@ Result<ExpectedResult> result(Lexer& in) {
     return lanes;
   }
 
+  if (in.takeSExprStart("ref.null")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.null");
+    }
+    return NullRefResult{};
+  }
+
   if (in.takeSExprStart("ref.extern")) {
     if (!in.takeRParen()) {
       return in.err("expected end of ref.extern");

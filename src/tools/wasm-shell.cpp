@@ -342,6 +342,12 @@ struct Shell {
               << atIndex();
           return Err{err.str()};
         }
+      } else if ([[maybe_unused]] auto* nullRef =
+                   std::get_if<NullRefResult>(&expected)) {
+        if (!val.isNull()) {
+          err << "expected ref.null, got " << val << atIndex();
+          return Err{err.str()};
+        }
       } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
         auto check = checkNaN(val, *nan);
         if (auto* e = check.getErr()) {

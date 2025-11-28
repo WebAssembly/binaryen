@@ -63,6 +63,8 @@ struct RefResult {
   HeapType type;
 };
 
+struct NullRefResult {};
+
 enum class NaNKind { Canonical, Arithmetic };
 
 struct NaNResult {
@@ -74,7 +76,8 @@ using LaneResult = std::variant<Literal, NaNResult>;
 
 using LaneResults = std::vector<LaneResult>;
 
-using ExpectedResult = std::variant<Literal, RefResult, NaNResult, LaneResults>;
+using ExpectedResult =
+  std::variant<Literal, NullRefResult, RefResult, NaNResult, LaneResults>;
 
 using ExpectedResults = std::vector<ExpectedResult>;
 
