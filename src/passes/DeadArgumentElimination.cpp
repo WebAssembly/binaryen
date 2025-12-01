@@ -365,11 +365,11 @@ std::cout << "just updated " << func << '\n';
         calledCalls.origins.resize(oldSize - skip);
       }
     }
-
-XXX    // Process those callers.
-    for (auto& caller : relevantCallers) {
+    // The just-updated callers have been cleaned out of |allCalls|. Add their
+    // calls, after which that data structure is up-to-date.
+    for (auto& caller : justUpdated) {
+      auto& info = infoMap[module->functions[caller]->name];
 std::cout << "processing calls from  " << caller << '\n';
-      auto& info = infoMap[caller];
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[indexes[name]];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
