@@ -4,48 +4,55 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae-optimizing -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $1 (func (param f64 f32 f32 f64 f32 i64 f64) (result i32)))
+
+ ;; CHECK:      (type $0 (func (param f32) (result f32)))
  (type $0 (func (param f32) (result f32)))
  (type $1 (func (param f64 f32 f32 f64 f32 i64 f64) (result i32)))
- ;; CHECK:      (type $3 (func (result i32)))
-
- ;; CHECK:      (type $4 (func (result f32)))
-
  ;; CHECK:      (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))
  (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
- ;; CHECK:      (func $0 (type $3) (result i32)
- ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (local $1 i32)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result f32)
- ;; CHECK-NEXT:    (local.tee $0
- ;; CHECK-NEXT:     (i32.const 33554432)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (then
+ ;; CHECK:      (func $0 (type $1) (param $0 f64) (param $1 f32) (param $2 f32) (param $3 f64) (param $4 f32) (param $5 i64) (param $6 f64) (result i32)
+ ;; CHECK-NEXT:  (local $7 i32)
+ ;; CHECK-NEXT:  (local $8 i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.tee $7
+ ;; CHECK-NEXT:    (i32.const 33554432)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (loop $label$2 (result f32)
  ;; CHECK-NEXT:      (if
  ;; CHECK-NEXT:       (global.get $global$0)
  ;; CHECK-NEXT:       (then
  ;; CHECK-NEXT:        (return
- ;; CHECK-NEXT:         (local.get $0)
+ ;; CHECK-NEXT:         (local.get $7)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.set $0
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.set $1
- ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      (local.set $8
+ ;; CHECK-NEXT:       (block $label$4 (result i32)
+ ;; CHECK-NEXT:        (drop
+ ;; CHECK-NEXT:         (local.tee $7
+ ;; CHECK-NEXT:          (local.get $8)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (br_if $label$2
- ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:       (local.get $7)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (f32.const 1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (else
- ;; CHECK-NEXT:     (call $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $1
+ ;; CHECK-NEXT:      (f32.const 1)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -96,14 +103,22 @@
   )
   (i32.const -11)
  )
- ;; CHECK:      (func $1 (type $4) (result f32)
+ ;; CHECK:      (func $1 (type $0) (param $0 f32) (result f32)
  ;; CHECK-NEXT:  (f32.const 0)
  ;; CHECK-NEXT: )
  (func $1 (; 1 ;) (type $0) (param $0 f32) (result f32)
   (f32.const 0)
  )
  ;; CHECK:      (func $2 (type $2) (param $0 f64) (param $1 f32) (param $2 f32) (param $3 f64) (param $4 f32) (param $5 i32) (param $6 i32) (param $7 f64) (result i32)
- ;; CHECK-NEXT:  (call $0)
+ ;; CHECK-NEXT:  (call $0
+ ;; CHECK-NEXT:   (f64.const 1)
+ ;; CHECK-NEXT:   (f32.const 1)
+ ;; CHECK-NEXT:   (f32.const 1)
+ ;; CHECK-NEXT:   (f64.const 1)
+ ;; CHECK-NEXT:   (f32.const 1)
+ ;; CHECK-NEXT:   (i64.const 1)
+ ;; CHECK-NEXT:   (f64.const 1)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $2 (; 2 ;) (type $2) (param $0 f64) (param $1 f32) (param $2 f32) (param $3 f64) (param $4 f32) (param $5 i32) (param $6 i32) (param $7 f64) (result i32)
   (call $0
@@ -122,22 +137,6 @@
 (module
   (func $import (import "" "") (result i32))
   (func $impossible (import "" "") (result (ref none)))
-  ;; CHECK:      (type $0 (func (result i32)))
-
-  ;; CHECK:      (type $1 (func (result (ref none))))
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (import "" "" (func $import (type $0) (result i32)))
-
-  ;; CHECK:      (import "" "" (func $impossible (type $1) (result (ref none))))
-
-  ;; CHECK:      (export "export" (func $export))
-
-  ;; CHECK:      (func $export (type $0) (result i32)
-  ;; CHECK-NEXT:  (call $internal)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
   (func $export (export "export") (result i32)
     (drop
       ;; This should be optimized to an unreachable sequence.
@@ -153,14 +152,6 @@
     )
     (i32.const 0)
   )
-  ;; CHECK:      (func $internal (type $2)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $impossible)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $internal (param i32) (result (ref none))
     ;; Prevent this from being removed entirely.
     (drop
@@ -169,3 +160,56 @@
     (call $impossible)
   )
 )
+;; CHECK:      (type $3 (func (result i32)))
+
+;; CHECK:      (type $4 (func (result f32)))
+
+;; CHECK:      (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))
+
+;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
+
+;; CHECK:      (func $0 (type $3) (result i32)
+;; CHECK-NEXT:  (local $0 i32)
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (if (result f32)
+;; CHECK-NEXT:    (local.tee $0
+;; CHECK-NEXT:     (i32.const 33554432)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (then
+;; CHECK-NEXT:     (loop $label$2 (result f32)
+;; CHECK-NEXT:      (if
+;; CHECK-NEXT:       (global.get $global$0)
+;; CHECK-NEXT:       (then
+;; CHECK-NEXT:        (return
+;; CHECK-NEXT:         (local.get $0)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (local.set $0
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (local.set $1
+;; CHECK-NEXT:       (i32.const 0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (br_if $label$2
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (f32.const 1)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (else
+;; CHECK-NEXT:     (call $1)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.const -11)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $1 (type $4) (result f32)
+;; CHECK-NEXT:  (f32.const 0)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $2 (type $2) (param $0 f64) (param $1 f32) (param $2 f32) (param $3 f64) (param $4 f32) (param $5 i32) (param $6 i32) (param $7 f64) (result i32)
+;; CHECK-NEXT:  (call $0)
+;; CHECK-NEXT: )

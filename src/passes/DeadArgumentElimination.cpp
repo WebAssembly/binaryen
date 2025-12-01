@@ -319,7 +319,7 @@ struct DAE : public Pass {
       }
     }
 
-std::cout << "iter\n" << *module << '\n';
+std::cerr << "iter\n" << *module << '\n';
 
     // Recompute parts of allCalls as necessary. We know which function infos
     // were just updated, and start there: If we updated { A, B }, and A calls
@@ -329,7 +329,7 @@ std::cout << "iter\n" << *module << '\n';
     std::unordered_set<Index> calledByJustUpdated;
     for (auto& [func, info] : infoMap) {
       if (info.justUpdated) {
-std::cout << "just updated " << func << '\n';
+std::cerr << "just updated " << func << '\n';
         auto index = indexes[func];
         justUpdated.insert(index);
         for (auto& callee : callees[index]) {
@@ -369,7 +369,7 @@ std::cout << "just updated " << func << '\n';
     // calls, after which that data structure is up-to-date.
     for (auto& caller : justUpdated) {
       auto& info = infoMap[module->functions[caller]->name];
-std::cout << "processing calls from  " << caller << '\n';
+std::cerr << "processing calls from  " << caller << '\n';
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[indexes[name]].calls;
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
@@ -482,7 +482,7 @@ std::cout << "processing calls from  " << caller << '\n';
       auto [removedIndexes, outcome] = ParamUtils::removeParameters(
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
-std::cout << "remove param " << func->name << '\n';
+std::cerr << "remove param " << func->name << '\n';
         // Success!
         worthOptimizing.insert(func);
         markStale(name);

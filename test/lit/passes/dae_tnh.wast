@@ -6,12 +6,11 @@
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct (field i32))))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (param i32)))
 
   ;; CHECK:      (type $2 (func (param (ref null $struct))))
 
-  ;; CHECK:      (func $target (type $1)
-  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK:      (func $target (type $1) (param $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param $x i32)
@@ -19,7 +18,11 @@
   )
 
   ;; CHECK:      (func $caller (type $2) (param $ref (ref null $struct))
-  ;; CHECK-NEXT:  (call $target)
+  ;; CHECK-NEXT:  (call $target
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (param $ref (ref null $struct))
     (call $target
@@ -34,12 +37,19 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
 
-  ;; CHECK:      (type $1 (func (param i32)))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK:      (type $2 (func (param (ref null $struct))))
+
+  ;; CHECK:      (func $target (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $caller (type $2) (param $ref (ref null $struct))
+  ;; CHECK-NEXT:  (call $target)
   ;; CHECK-NEXT: )
   (func $caller
     ;; Removing this parameter would make the type of the call change from
@@ -56,20 +66,25 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $1) (param $0 i32)
-  ;; CHECK-NEXT: )
   (func $target (param i32)
   )
 )
 
 ;; As above but the called target has a result.
 (module
-  ;; CHECK:      (type $0 (func (result i32)))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
 
-  ;; CHECK:      (type $1 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (func $caller (type $0) (result i32)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK:      (type $2 (func (param (ref null $struct))))
+
+  ;; CHECK:      (func $target (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $caller (type $2) (param $ref (ref null $struct))
+  ;; CHECK-NEXT:  (call $target)
   ;; CHECK-NEXT: )
   (func $caller (result i32)
     ;; Again, the call is replaced by an unreachable.
@@ -78,9 +93,6 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $1) (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (i32.const 42)
-  ;; CHECK-NEXT: )
   (func $target (param i32) (result i32)
     (i32.const 42)
   )
@@ -95,7 +107,9 @@
   ;; CHECK:      (type $1 (func (param i32)))
 
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (call $target
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
     (return_call $target
@@ -110,18 +124,15 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func (param i32)))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (func $target (type $0) (param $0 i32)
-  ;; CHECK-NEXT:  (local $1 f64)
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (f64.const 4.2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $target (type $1) (param $0 i32)
   ;; CHECK-NEXT: )
   (func $target (param $used i32) (param $unused f64)
     ;; One parameter is used, and one is not.
@@ -130,11 +141,6 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $1)
-  ;; CHECK-NEXT:  (call $target
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $caller
     ;; There is an unreachable parameter, and as in the cases above, we can't
     ;; remove it as it would change the type. But it isn't the param we want to

@@ -4,16 +4,23 @@
 
 ;; The br_on_cast_fail is optimized away thanks to the refined type. The output still has some unoptimized code (an additional --dce pass would get rid of the drop-return pattern here), but that is not directly relevant to this test.
 (module
- ;; CHECK:      (type $0 (func (param (ref array)) (result i32)))
+ ;; CHECK:      (type $0 (func (param (ref eq)) (result i32)))
 
- ;; CHECK:      (func $len (type $0) (param $0 (ref array)) (result i32)
+ ;; CHECK:      (type $1 (func (param (ref array)) (result i32)))
+
+ ;; CHECK:      (func $len (type $0) (param $0 (ref eq)) (result i32)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (array.len
- ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:   (block $not_array (result (ref eq))
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (array.len
+ ;; CHECK-NEXT:      (br_on_cast_fail $not_array (ref eq) (ref array)
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const -1)
  ;; CHECK-NEXT: )
  (func $len (param (ref eq)) (result i32)
   (drop
@@ -29,7 +36,7 @@
   )
   (i32.const -1)
  )
- ;; CHECK:      (func $optimize-after-refinement (type $0) (param $0 (ref array)) (result i32)
+ ;; CHECK:      (func $optimize-after-refinement (type $1) (param $0 (ref array)) (result i32)
  ;; CHECK-NEXT:  (call $len
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
