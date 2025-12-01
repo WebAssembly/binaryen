@@ -201,7 +201,15 @@ struct DAE : public Pass {
   std::unordered_map<Name, Index> indexes;
 
   // TODO comment
-  std::vector<std::vector<Call*>> allCalls;
+  struct CallInfo {
+    // Store the calls and their origins in parallel vectors, as we need |calls|
+    // by itself for certain APIs. This is, origins[i] is the function index in
+    // which calls[i] appears.
+    std::vector<Call*> calls;
+    std::vector<Index> origins;
+  }
+  // TODO comment
+  std::vector<CallInfo> allCalls;
 
   void run(Module* module) override {
     DAEFunctionInfoMap infoMap;
@@ -315,36 +323,50 @@ std::cout << "iter\n" << *module << '\n';
 
     // Recompute parts of allCalls as necessary. We know which function infos
     // were just updated, and start there: If we updated { A, B }, and A calls
-    // C while B calls nothing, then the list of all calls must be updated for
-    // D. If D is called by not only A but also some other (not just updated)
-    // function X, that means we must scan { A, X }. First, find the things
-    // called by just-updated functions.
-    std::unordered_set<Name> calledByJustUpdated;
+    // C while B calls C and D, then the list of all calls must be updated for
+    // C and D. First, find those functions called by just-updated functions.
+    std::unordered_set<Index> justUpdated;
+    std::unordered_set<Index> calledByJustUpdated;
     for (auto& [func, info] : infoMap) {
       if (info.justUpdated) {
 std::cout << "just updated " << func << '\n';
-        for (auto& callee : callees[indexes[func]]) {
-          calledByJustUpdated.insert(module->functions[callee]->name);
+        auto index = indexes[func];
+        justUpdated.insert(index);
+        for (auto& callee : callees[index]) {
+          calledByJustUpdated.insert(callee);
         }
       }
     }
-    // Find all their callers, so we can process the calls from them, thus
-    // finding all the calls to |calledByJustUpdated|.
-    // XXX this is bad... we need to close over repeated operations here, see
-    // $1 here:
-    /*
-*/
+    // For each such called function, we don't want to alter calls from
+    // unchanged functions. That is, if X calls C and D in the example above,
+    // and X is not just-updated, then X's calls to C and D are fine as they
+    // are. Leaving such calls alone, remove calls from the callers that we did
+    // just update, and after that, add them from the fresh data we have on
+    // those just-updated functions.
     std::unordered_set<Name> relevantCallers;
     for (auto& called : calledByJustUpdated) {
-      auto calledIndex = indexes[called];
-      for (auto& caller : callers[calledIndex]) {
-        relevantCallers.insert(caller);
+      auto& calledCalls = allCalls[called];
+      auto oldSize = calledCalls.calls.size();
+      assert(oldSize == calledCalls.origins.size());
+      Index skip = 0;
+      for (Index i = 0; i < calledCalls.calls.size(); i++) {
+        if (justUpdated.count(calledCalls.origins[i])) {
+          // Remove it by skipping over.
+          skip++;
+        } else if (skip) {
+          // Keep it by writing to the proper place.
+          calledCalls.calls[i - skip] = calledCalls.calls[i];
+          calledCalls.origins[i - skip] = calledCalls.origins[i];
+        }
       }
-      // Clear the old call data before we fill it below.
-      allCalls[calledIndex].clear();
-std::cout << "updating calls to  " << called << '\n';
+      if (skip > 0) {
+        // Update the sizes after removing things.
+        calledCalls.calls.resize(oldSize - skip);
+        calledCalls.origins.resize(oldSize - skip);
+      }
     }
-    // Process those callers.
+
+XXX    // Process those callers.
     for (auto& caller : relevantCallers) {
 std::cout << "processing calls from  " << caller << '\n';
       auto& info = infoMap[caller];
