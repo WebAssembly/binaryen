@@ -373,6 +373,11 @@ std::cout << "processing calls from  " << caller << '\n';
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[indexes[name]].calls;
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
+        auto num = calls.size();
+        auto& origins = allCalls[indexes[name]].origins;
+        for (Index i = 0; i < num; i++) {
+          origins.push_back(caller);
+        }
       }
     }
 
