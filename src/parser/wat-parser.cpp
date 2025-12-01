@@ -124,22 +124,6 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
   return Ok{};
 }
 
-Result<> doParseModuleBody(Module& wasm, Lexer& input, bool allowExtra) {
-  ParseDeclsCtx decls(input, wasm);
-  CHECK_ERR(parseModuleBody(decls));
-  if (!allowExtra && !decls.in.empty()) {
-    return decls.in.err("Unexpected tokens after module");
-  }
-
-  CHECK_ERR(parseModuleWithDecls(decls));
-
-  // decls / parseModuleBody made a copy of `input`. Advance `input` past the
-  // parsed module.
-  input = decls.in;
-
-  return Ok{};
-}
-
 } // anonymous namespace
 
 Result<> parseModule(Module& wasm,
@@ -159,7 +143,15 @@ Result<> parseModule(Module& wasm, Lexer& lexer) {
 }
 
 Result<> parseModuleBody(Module& wasm, Lexer& lexer) {
-  return doParseModuleBody(wasm, lexer, /*allowExtra=*/true);
+  ParseDeclsCtx decls(lexer, wasm);
+  CHECK_ERR(parseModuleBody(decls));
+  CHECK_ERR(parseModuleWithDecls(decls));
+
+  // decls / parseModuleBody made a copy of `input`. Advance `input` past the
+  // parsed module.
+  lexer = decls.in;
+
+  return Ok{};
 }
 
 } // namespace wasm::WATParser
