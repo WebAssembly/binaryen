@@ -333,49 +333,6 @@ std::cout << "just updated " << func << '\n';
     // XXX this is bad... we need to close over repeated operations here, see
     // $1 here:
     /*
-    (module
- (rec                           
-  (type $S (struct))
-  (type $0 (sub (struct (field (mut f64)) (field (mut funcref)))))
- )
-
- (func $0 (param $0 (ref $0)) (param $1 (ref struct)) (result f64)
-  (unreachable)
- )
- (func $1 (param $0 (ref $0)) (param $1 (ref struct)) (result f64)
-  (unreachable)
- )
- (func $2
-  (drop
-   (call $1
-    (struct.new $0
-     (call $6)
-     (ref.func $0)
-    )
-    (struct.new_default $S)
-   )
-  )
- )
- (func $4 (param $0 (ref any)) (result f64)
-  (unreachable)
- )
- (func $5
-  (drop
-   (call $4
-    (struct.new $0
-     (f64.const 0)
-     (ref.func $1)
-    )
-   )
-  )
-  (drop
-   (call $6)
-  )
- )
- (func $6 (result f64)
-  (unreachable)
- )
-)
 */
     std::unordered_set<Name> relevantCallers;
     for (auto& called : calledByJustUpdated) {
