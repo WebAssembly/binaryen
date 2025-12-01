@@ -828,8 +828,17 @@ template<> struct hash<wasm::Literal> {
         wasm::rehash(digest, a.getFunc());
         return digest;
       }
-      if (a.type.getHeapType().isMaybeShared(wasm::HeapType::i31)) {
+      auto type = a.type.getHeapType();
+      if (type.isMaybeShared(wasm::HeapType::i31)) {
         wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      if (type.isMaybeShared(wasm::HeapType::any)) {
+        // This may be an extern string that was internalized to |any|. Undo
+        // that to get the actual value. (Rehash here with the existing digest,
+        // which contains the |any| type, so that the final hash takes into
+        // account the fact that it was internalized.)
+        wasm::rehash(digest, (*this)(a.externalize()));
         return digest;
       }
       if (a.type.isString()) {
@@ -841,7 +850,8 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       // other non-null reference type literals cannot represent concrete
-      // values, i.e. there is no concrete anyref or eqref other than null.
+      // values, i.e. there is no concrete anyref or eqref other than null and
+      // internalized strings.
       WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("unexpected type");

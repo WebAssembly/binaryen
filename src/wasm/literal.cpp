@@ -493,12 +493,16 @@ bool Literal::operator==(const Literal& other) const {
     if (type.isData()) {
       return gcData == other.gcData;
     }
-    assert(type.getHeapType().isBasic());
-    if (type.getHeapType().isMaybeShared(HeapType::i31)) {
+    auto heapType = type.getHeapType();
+    assert(heapType.isBasic());
+    if (heapType.isMaybeShared(HeapType::i31)) {
       return i32 == other.i32;
     }
-    if (type.getHeapType().isMaybeShared(HeapType::ext)) {
+    if (heapType.isMaybeShared(HeapType::ext)) {
       return internalize() == other.internalize();
+    }
+    if (heapType.isMaybeShared(HeapType::any)) {
+      return externalize() == other.externalize();
     }
     WASM_UNREACHABLE("unexpected type");
   }
