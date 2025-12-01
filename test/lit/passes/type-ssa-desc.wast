@@ -36,7 +36,7 @@
   ;; CHECK:      (type $2 (func (result (ref $struct))))
 
   ;; CHECK:      (func $final-desc (type $2) (result (ref $struct))
-  ;; CHECK-NEXT:  (struct.new_default $struct
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
   ;; CHECK-NEXT:   (struct.new_default $desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -44,7 +44,7 @@
     ;; We could optimize the allocation of the struct, but we would need to
     ;; update the descriptor to be a corresponding new subtype. The descriptor
     ;; is final, so this is not posssible and we cannot optimize.
-    (struct.new_default $struct
+    (struct.new_default_desc $struct
       (struct.new $desc)
     )
   )
@@ -62,14 +62,14 @@
   ;; CHECK:      (type $2 (func (result (ref $struct))))
 
   ;; CHECK:      (func $opt (type $2) (result (ref $struct))
-  ;; CHECK-NEXT:  (struct.new_default $struct
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
   ;; CHECK-NEXT:   (struct.new_default $desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $opt (result (ref $struct))
     ;; Now we could optimize, but we would still have to introduce a new
     ;; descriptor subtype. We do not support this yet.
-    (struct.new_default $struct
+    (struct.new_default_desc $struct
       (struct.new $desc)
     )
   )
@@ -91,9 +91,9 @@
   ;; CHECK:      (type $4 (func (result (ref $A))))
 
   ;; CHECK:      (func $opt-chain (type $4) (result (ref $A))
-  ;; CHECK-NEXT:  (struct.new_default $A
-  ;; CHECK-NEXT:   (struct.new_default $B
-  ;; CHECK-NEXT:    (struct.new_default $C
+  ;; CHECK-NEXT:  (struct.new_default_desc $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
+  ;; CHECK-NEXT:    (struct.new_default_desc $C
   ;; CHECK-NEXT:     (struct.new_default $D)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -101,9 +101,9 @@
   ;; CHECK-NEXT: )
   (func $opt-chain (result (ref $A))
     ;; Now optimizing would require updating a whole chain of descriptors.
-    (struct.new_default $A
-      (struct.new $B
-        (struct.new $C
+    (struct.new_default_desc $A
+      (struct.new_desc $B
+        (struct.new_desc $C
           (struct.new $D)
         )
       )
@@ -126,14 +126,14 @@
   (global $desc (ref (exact $desc)) (struct.new $desc))
 
   ;; CHECK:      (func $global-desc (type $2) (result (ref $struct))
-  ;; CHECK-NEXT:  (struct.new_default $struct
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
   ;; CHECK-NEXT:   (global.get $desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $global-desc (result (ref $struct))
     ;; Optimizing below would require creating a new global to hold the new
     ;; descriptor subtype.
-    (struct.new_default $struct
+    (struct.new_default_desc $struct
       (global.get $desc)
     )
   )
@@ -157,7 +157,7 @@
   ;; CHECK-NEXT:  (ref.eq
   ;; CHECK-NEXT:   (ref.get_desc $struct
   ;; CHECK-NEXT:    (block (result (ref (exact $struct)))
-  ;; CHECK-NEXT:     (struct.new_default $struct
+  ;; CHECK-NEXT:     (struct.new_default_desc $struct
   ;; CHECK-NEXT:      (global.get $desc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -173,7 +173,7 @@
         ;; Use a block to stop the ref.get_desc from observing the exactness of
         ;; the allocation, which would separately inhibit optimization.
         (block (result (ref $struct))
-          (struct.new_default $struct
+          (struct.new_default_desc $struct
             (global.get $desc)
           )
         )
@@ -200,24 +200,24 @@
 
   ;; CHECK:      (global $D (ref (exact $D)) (struct.new_default $D))
   (global $D (ref (exact $D)) (struct.new $D))
-  ;; CHECK:      (global $C (ref (exact $C)) (struct.new_default $C
+  ;; CHECK:      (global $C (ref (exact $C)) (struct.new_default_desc $C
   ;; CHECK-NEXT:  (global.get $D)
   ;; CHECK-NEXT: ))
-  (global $C (ref (exact $C)) (struct.new $C (global.get $D)))
-  ;; CHECK:      (global $B (ref (exact $B)) (struct.new_default $B
+  (global $C (ref (exact $C)) (struct.new_desc $C (global.get $D)))
+  ;; CHECK:      (global $B (ref (exact $B)) (struct.new_default_desc $B
   ;; CHECK-NEXT:  (global.get $C)
   ;; CHECK-NEXT: ))
-  (global $B (ref (exact $B)) (struct.new $B (global.get $C)))
+  (global $B (ref (exact $B)) (struct.new_desc $B (global.get $C)))
 
   ;; CHECK:      (func $opt-global-chain (type $4) (result (ref $A))
-  ;; CHECK-NEXT:  (struct.new_default $A
+  ;; CHECK-NEXT:  (struct.new_default_desc $A
   ;; CHECK-NEXT:   (global.get $B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $opt-global-chain (result (ref $A))
     ;; Same as above, but now we would have to copy a whole chain of descriptor
     ;; globals.
-    (struct.new_default $A
+    (struct.new_default_desc $A
       (global.get $B)
     )
   )

@@ -83,7 +83,7 @@ void propagateDebugLocations(Module& wasm) {
   runner.run();
 }
 
-// After doing the initial pass, parse types, imports, et.c
+// After doing the initial pass, parse types, imports, etc.
 Result<> parseModuleWithDecls(ParseDeclsCtx& decls) {
   auto typeIndices = createIndexMap(decls.in, decls.typeDefs);
   CHECK_ERR(typeIndices);

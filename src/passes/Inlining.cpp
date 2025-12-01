@@ -978,7 +978,19 @@ struct FunctionSplitter {
     if (finalItem && getItem(body, numIfs + 1)) {
       return InliningMode::Uninlineable;
     }
-    // This has the general shape we seek. Check each if.
+    // This has the general shape we seek. Check each if: it must be in the
+    // form mentioned above (simple condition, no returns in body). We must also
+    // have no sets of locals that the final item notices, as then we could
+    // have this:
+    //
+    //  if (A) {
+    //    x = 10;
+    //  }
+    //  return x;
+    //
+    // We cannot split out the if in such a case because of the local
+    // dependency.
+    std::unordered_set<Index> writtenLocals;
     for (Index i = 0; i < numIfs; i++) {
       auto* iff = getIf(body, i);
       // The if must have a simple condition and no else arm.
@@ -995,7 +1007,21 @@ struct FunctionSplitter {
         // unreachable, and we ruled out none before.
         assert(iff->ifTrue->type == Type::unreachable);
       }
+      if (finalItem) {
+        for (auto* set : FindAll<LocalSet>(iff).list) {
+          writtenLocals.insert(set->index);
+        }
+      }
     }
+    // Finish the locals check mentioned above.
+    if (finalItem) {
+      for (auto* get : FindAll<LocalGet>(finalItem).list) {
+        if (writtenLocals.count(get->index)) {
+          return InliningMode::Uninlineable;
+        }
+      }
+    }
+
     // Success, this matches the pattern.
 
     // If the outlined function will be worth inlining normally, skip the

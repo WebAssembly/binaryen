@@ -21,14 +21,14 @@
 
   ;; CHECK:      (func $new-null-desc (type $5) (param $desc nullref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $struct
+  ;; CHECK-NEXT:   (struct.new_default_desc $struct
   ;; CHECK-NEXT:    (local.get $desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; CKIIT:      (func $new-null-desc (type $5) (param $desc nullref)
   ;; CKIIT-NEXT:  (drop
-  ;; CKIIT-NEXT:   (struct.new_default $struct
+  ;; CKIIT-NEXT:   (struct.new_default_desc $struct
   ;; CKIIT-NEXT:    (local.get $desc)
   ;; CKIIT-NEXT:   )
   ;; CKIIT-NEXT:  )
@@ -38,7 +38,7 @@
   ;; CKTNH-NEXT: )
   (func $new-null-desc (param $desc nullref)
     (drop
-      (struct.new $struct
+      (struct.new_desc $struct
         (local.get $desc)
       )
     )
@@ -46,7 +46,7 @@
 
   ;; CHECK:      (func $new-nullable-desc (type $6) (param $desc (ref null (exact $desc)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $struct
+  ;; CHECK-NEXT:   (struct.new_default_desc $struct
   ;; CHECK-NEXT:    (local.get $desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -59,7 +59,7 @@
   ;; CKTNH-NEXT: )
   (func $new-nullable-desc (param $desc (ref null (exact $desc)))
     (drop
-      (struct.new $struct
+      (struct.new_desc $struct
         (local.get $desc)
       )
     )
@@ -76,7 +76,7 @@
   ;; CKTNH-NEXT: )
   (func $new-non-nullable-desc (param $desc (ref (exact $desc)))
     (drop
-      (struct.new $struct
+      (struct.new_desc $struct
         (local.get $desc)
       )
     )

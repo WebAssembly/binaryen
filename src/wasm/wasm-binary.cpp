@@ -4579,9 +4579,15 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeBrOn(label, kind, in, cast);
         }
         case BinaryConsts::StructNew:
-          return builder.makeStructNew(getIndexedHeapType());
+        case BinaryConsts::StructNewDesc: {
+          bool isDesc = op == BinaryConsts::StructNewDesc;
+          return builder.makeStructNew(getIndexedHeapType(), isDesc);
+        }
         case BinaryConsts::StructNewDefault:
-          return builder.makeStructNewDefault(getIndexedHeapType());
+        case BinaryConsts::StructNewDefaultDesc: {
+          bool isDesc = op == BinaryConsts::StructNewDefaultDesc;
+          return builder.makeStructNewDefault(getIndexedHeapType(), isDesc);
+        }
         case BinaryConsts::StructGet:
         case BinaryConsts::StructGetS:
         case BinaryConsts::StructGetU: {

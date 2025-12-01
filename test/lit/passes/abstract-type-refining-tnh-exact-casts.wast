@@ -22,11 +22,11 @@
   ;; CHECK:      (global $nullable-desc (ref null (exact $uninstantiated.desc)) (ref.null none))
   (global $nullable-desc (ref null (exact $uninstantiated.desc)) (ref.null none))
 
-  ;; CHECK:      (global $instantiated (ref $instantiated) (struct.new_default $instantiated
+  ;; CHECK:      (global $instantiated (ref $instantiated) (struct.new_default_desc $instantiated
   ;; CHECK-NEXT:  (struct.new_default $instantiated.desc)
   ;; CHECK-NEXT: ))
   (global $instantiated (ref $instantiated)
-    (struct.new $instantiated
+    (struct.new_desc $instantiated
       (struct.new $instantiated.desc)
     )
   )

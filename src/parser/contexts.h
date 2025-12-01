@@ -756,12 +756,13 @@ struct NullInstrParserCtx {
   }
 
   template<typename HeapTypeT>
-  Result<> makeStructNew(Index, const std::vector<Annotation>&, HeapTypeT) {
+  Result<>
+  makeStructNew(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
   Result<>
-  makeStructNewDefault(Index, const std::vector<Annotation>&, HeapTypeT) {
+  makeStructNewDefault(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -2650,14 +2651,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
 
   Result<> makeStructNew(Index pos,
                          const std::vector<Annotation>& annotations,
-                         HeapType type) {
-    return withLoc(pos, irBuilder.makeStructNew(type));
+                         HeapType type,
+                         bool isDesc) {
+    return withLoc(pos, irBuilder.makeStructNew(type, isDesc));
   }
 
   Result<> makeStructNewDefault(Index pos,
                                 const std::vector<Annotation>& annotations,
-                                HeapType type) {
-    return withLoc(pos, irBuilder.makeStructNewDefault(type));
+                                HeapType type,
+                                bool isDesc) {
+    return withLoc(pos, irBuilder.makeStructNewDefault(type, isDesc));
   }
 
   Result<> makeStructGet(Index pos,

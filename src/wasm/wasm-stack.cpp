@@ -2387,9 +2387,21 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->isWithDefault()) {
-    o << U32LEB(BinaryConsts::StructNewDefault);
+    if (curr->desc) {
+      // TODO: Start emitting the new opcode once V8 supports it.
+      // o << U32LEB(BinaryConsts::StructNewDefaultDesc);
+      o << U32LEB(BinaryConsts::StructNewDefault);
+    } else {
+      o << U32LEB(BinaryConsts::StructNewDefault);
+    }
   } else {
-    o << U32LEB(BinaryConsts::StructNew);
+    if (curr->desc) {
+      // TODO: Start emitting the new opcode once V8 supports it.
+      // o << U32LEB(BinaryConsts::StructNewDesc);
+      o << U32LEB(BinaryConsts::StructNew);
+    } else {
+      o << U32LEB(BinaryConsts::StructNew);
+    }
   }
   parent.writeIndexedHeapType(curr->type.getHeapType());
 }

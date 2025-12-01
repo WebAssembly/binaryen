@@ -36,10 +36,10 @@
 
   ;; CHECK:      (global $A.unnested.desc (ref (exact $A.desc)) (struct.new_default $A.desc))
 
-  ;; CHECK:      (global $A (ref $A) (struct.new_default $A
+  ;; CHECK:      (global $A (ref $A) (struct.new_default_desc $A
   ;; CHECK-NEXT:  (global.get $A.unnested.desc)
   ;; CHECK-NEXT: ))
-  (global $A (ref $A) (struct.new $A
+  (global $A (ref $A) (struct.new_desc $A
     (struct.new $A.desc)
   ))
 
@@ -49,45 +49,45 @@
 
   ;; CHECK:      (global $two2.unnested.desc (ref (exact $two.desc)) (struct.new_default $two.desc))
 
-  ;; CHECK:      (global $B (ref $B) (struct.new_default $B
+  ;; CHECK:      (global $B (ref $B) (struct.new_default_desc $B
   ;; CHECK-NEXT:  (global.get $B.unnested.desc)
   ;; CHECK-NEXT: ))
-  (global $B (ref $B) (struct.new $B
+  (global $B (ref $B) (struct.new_desc $B
     (struct.new $B.desc)
   ))
 
-  ;; CHECK:      (global $two (ref $two) (struct.new_default $two
+  ;; CHECK:      (global $two (ref $two) (struct.new_default_desc $two
   ;; CHECK-NEXT:  (global.get $two.unnested.desc)
   ;; CHECK-NEXT: ))
-  (global $two (ref $two) (struct.new $two
+  (global $two (ref $two) (struct.new_desc $two
     (struct.new $two.desc)
   ))
 
-  ;; CHECK:      (global $two2 (ref $two) (struct.new_default $two
+  ;; CHECK:      (global $two2 (ref $two) (struct.new_default_desc $two
   ;; CHECK-NEXT:  (global.get $two2.unnested.desc)
   ;; CHECK-NEXT: ))
-  (global $two2 (ref $two) (struct.new $two
+  (global $two2 (ref $two) (struct.new_desc $two
     (struct.new $two.desc)
   ))
 
-  ;; CHECK:      (global $three (ref $three) (struct.new_default $three
+  ;; CHECK:      (global $three (ref $three) (struct.new_default_desc $three
   ;; CHECK-NEXT:  (struct.new_default $three.desc)
   ;; CHECK-NEXT: ))
-  (global $three (ref $three) (struct.new $three
+  (global $three (ref $three) (struct.new_desc $three
     (struct.new $three.desc)
   ))
 
-  ;; CHECK:      (global $three2 (ref $three) (struct.new_default $three
+  ;; CHECK:      (global $three2 (ref $three) (struct.new_default_desc $three
   ;; CHECK-NEXT:  (struct.new_default $three.desc)
   ;; CHECK-NEXT: ))
-  (global $three2 (ref $three) (struct.new $three
+  (global $three2 (ref $three) (struct.new_desc $three
     (struct.new $three.desc)
   ))
 
-  ;; CHECK:      (global $three3 (ref $three) (struct.new_default $three
+  ;; CHECK:      (global $three3 (ref $three) (struct.new_default_desc $three
   ;; CHECK-NEXT:  (struct.new_default $three.desc)
   ;; CHECK-NEXT: ))
-  (global $three3 (ref $three) (struct.new $three
+  (global $three3 (ref $three) (struct.new_desc $three
     (struct.new $three.desc)
   ))
 

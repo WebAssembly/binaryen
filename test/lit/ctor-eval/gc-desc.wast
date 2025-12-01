@@ -13,13 +13,13 @@
 
   ;; CHECK:      (global $ctor-eval$global_2 (ref (exact $desc)) (struct.new_default $desc))
 
-  ;; CHECK:      (global $ctor-eval$global (ref (exact $struct)) (struct.new_default $struct
+  ;; CHECK:      (global $ctor-eval$global (ref (exact $struct)) (struct.new_default_desc $struct
   ;; CHECK-NEXT:  (global.get $ctor-eval$global_2)
   ;; CHECK-NEXT: ))
 
   ;; CHECK:      (global $global (ref $struct) (global.get $ctor-eval$global))
   (global $global (export "g") (ref $struct)
-    (struct.new $struct
+    (struct.new_desc $struct
       (struct.new $desc)
     )
   )

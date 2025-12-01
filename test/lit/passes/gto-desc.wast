@@ -29,11 +29,11 @@
     ;; Both fields will be removed, but only the second can trap, so only the
     ;; second will be moved to a new global.
     (struct.new $pair
-      (struct.new $struct
+      (struct.new_desc $struct
         (i32.const 0)
         (struct.new $desc)
       )
-      (struct.new $struct
+      (struct.new_desc $struct
         (i32.const 1)
         (ref.null none)
       )
@@ -45,11 +45,11 @@
     ;; Same as above, but now the first traps (or at least we assume it can
     ;; based on its type).
     (struct.new $pair
-      (struct.new $struct
+      (struct.new_desc $struct
         (i32.const 2)
         (global.get $nullable-desc)
       )
-      (struct.new $struct
+      (struct.new_desc $struct
         (i32.const 3)
         (struct.new $desc)
       )
@@ -57,11 +57,11 @@
   )
 
   ;; CHECK:      (global $used-traps (ref $used-pair) (struct.new $used-pair
-  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:  (struct.new_desc $struct
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:  (struct.new_desc $struct
   ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
@@ -70,23 +70,23 @@
     ;; Now both trap, but they are also used, so they will not be removed and no
     ;; globals will be created.
     (struct.new $used-pair
-      (struct.new $struct
+      (struct.new_desc $struct
         (i32.const 4)
         (ref.null none)
       )
-      (struct.new $struct
+      (struct.new_desc $struct
         (i32.const 5)
         (ref.null none)
       )
     )
   )
 
-  ;; CHECK:      (global $gto-removed-0 (ref (exact $struct)) (struct.new $struct
+  ;; CHECK:      (global $gto-removed-0 (ref (exact $struct)) (struct.new_desc $struct
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
 
-  ;; CHECK:      (global $gto-removed-1_6 (ref (exact $struct)) (struct.new $struct
+  ;; CHECK:      (global $gto-removed-1_6 (ref (exact $struct)) (struct.new_desc $struct
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT:  (global.get $nullable-desc)
   ;; CHECK-NEXT: ))

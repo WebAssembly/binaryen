@@ -34,12 +34,12 @@
 
   ;; CHECK:      (func $test (type $6) (param $super (ref null $super)) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (global.get $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (global.get $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -77,12 +77,12 @@
   ;; CHECK-NEXT: )
   (func $test (param $super (ref null $super)) (param $A (ref null $A)) (param $B (ref null $B))
     (drop
-      (struct.new $A
+      (struct.new_desc $A
         (global.get $A.desc)
       )
     )
     (drop
-      (struct.new $B
+      (struct.new_desc $B
         (global.get $B.desc)
       )
     )
@@ -133,12 +133,12 @@
 
   ;; CHECK:      (func $test (type $5) (result (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $super
+  ;; CHECK-NEXT:   (struct.new_default_desc $super
   ;; CHECK-NEXT:    (global.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $sub
+  ;; CHECK-NEXT:   (struct.new_default_desc $sub
   ;; CHECK-NEXT:    (global.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -155,12 +155,12 @@
   ;; CHECK-NEXT: )
   (func $test (result (ref (exact $super.desc)))
     (drop
-      (struct.new_default $super
+      (struct.new_default_desc $super
         (global.get $A)
       )
     )
     (drop
-      (struct.new_default $sub
+      (struct.new_default_desc $sub
         (global.get $B)
       )
     )
