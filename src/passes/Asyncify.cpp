@@ -323,6 +323,20 @@
 // model where you can specify "instrument, but not indirect calls from me"
 // would likely have little benefit.)
 //
+// In addition, there are arguments for controlling the import/export of the
+// internal globals used by Asyncify.  These can be useful in dynamic linking.
+// By default these globals are are internal and neither imported nor exported.
+//
+//   --pass-arg=import-globals
+//
+//      Import the internal globals used by Asyncify. This allows them to be
+//      defined in another module.
+//
+//   --pass-arg=export-globals
+//
+//      Export the internal globals used by Asyncify.  This allows them to be
+//      imported into anther module built with --pass-arg=import-globals
+//
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
 //      of their original range.
@@ -1759,7 +1773,11 @@ struct Asyncify : public Pass {
       String::Split::NewLineOr(","));
     auto asserts = hasArgument("asyncify-asserts");
     auto verbose = hasArgument("asyncify-verbose");
-    auto relocatable = hasArgument("asyncify-relocatable");
+    // TODO: Remove the legacy asyncify-relocatable name once emscripten is
+    // updated.
+    auto importGlobals = hasArgument("asyncify-import-globals") ||
+                         hasArgument("asyncify-relocatable");
+    auto exportGlobals = hasArgument("asyncify-export-globals");
     auto secondaryMemory = hasArgument("asyncify-in-secondary-memory");
     auto propagateAddList = hasArgument("asyncify-propagate-addlist");
 
@@ -1826,7 +1844,7 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module, relocatable);
+    addGlobals(module, importGlobals, exportGlobals);
 
     // Compute the set of functions we will instrument. All of the passes we run
     // below only need to run there.
@@ -1904,8 +1922,11 @@ struct Asyncify : public Pass {
   }
 
 private:
-  void addGlobals(Module* module, bool imported) {
+  void addGlobals(Module* module, bool imported, bool exported) {
     Builder builder(*module);
+    // It doesn't make sense to both import and export these globals at the
+    // same time.
+    assert(!(imported && exported));
 
     auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
                                             Type::i32,
@@ -1926,6 +1947,13 @@ private:
       asyncifyData->base = ASYNCIFY_DATA;
     }
     module->addGlobal(std::move(asyncifyData));
+
+    if (exported) {
+      module->addExport(builder.makeExport(
+        ASYNCIFY_STATE, ASYNCIFY_STATE, ExternalKind::Global));
+      module->addExport(
+        builder.makeExport(ASYNCIFY_DATA, ASYNCIFY_DATA, ExternalKind::Global));
+    }
   }
 
   void addFunctions(Module* module) {
