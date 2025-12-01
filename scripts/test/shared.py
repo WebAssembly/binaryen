@@ -457,7 +457,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'ref_func.wast',   # Requires rejecting undeclared functions references
     'ref_is_null.wast',  # Requires support for non-nullable reference types in tables
     'return_call_indirect.wast',  # Requires more precise unreachable validation
-    'select.wast',  # Missing type checking for func references
+    'select.wast',  # Missing validation of type annotation on select
     'table.wast',  # Requires support for table default elements
     'unreached-invalid.wast',  # Requires more precise unreachable validation
     'array.wast',  # Requires support for table default elements
