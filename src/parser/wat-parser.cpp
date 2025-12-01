@@ -83,37 +83,58 @@ void propagateDebugLocations(Module& wasm) {
   runner.run();
 }
 
-// Parse module-level declarations.
-
-// Parse type definitions.
-
-// Parse implicit type definitions and map typeuses without explicit types to
-// the correct types.
-
-Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
-  ParseDeclsCtx decls(input, wasm);
-  CHECK_ERR(parseDecls(decls));
-  if (!allowExtra && !decls.in.empty()) {
-    return decls.in.err("Unexpected tokens after module");
-  }
-
+// After doing the initial pass, parse types, imports, etc.
+Result<> parseModuleWithDecls(ParseDeclsCtx& decls) {
   auto typeIndices = createIndexMap(decls.in, decls.typeDefs);
   CHECK_ERR(typeIndices);
 
   std::vector<HeapType> types;
   std::unordered_map<HeapType, std::unordered_map<Name, Index>> typeNames;
-  CHECK_ERR(parseTypeDefs(decls, input, *typeIndices, types, typeNames));
+  CHECK_ERR(parseTypeDefs(decls, decls.in, *typeIndices, types, typeNames));
 
+  // Parse implicit type definitions and map typeuses without explicit types to
+  // the correct types.
   std::unordered_map<Index, HeapType> implicitTypes;
   CHECK_ERR(
-    parseImplicitTypeDefs(decls, input, *typeIndices, types, implicitTypes));
+    parseImplicitTypeDefs(decls, decls.in, *typeIndices, types, implicitTypes));
 
-  CHECK_ERR(parseModuleTypes(decls, input, *typeIndices, types, implicitTypes));
+  CHECK_ERR(
+    parseModuleTypes(decls, decls.in, *typeIndices, types, implicitTypes));
 
   CHECK_ERR(parseDefinitions(
-    decls, input, *typeIndices, types, implicitTypes, typeNames));
+    decls, decls.in, *typeIndices, types, implicitTypes, typeNames));
 
-  propagateDebugLocations(wasm);
+  propagateDebugLocations(decls.wasm);
+
+  return Ok{};
+}
+
+Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
+  ParseDeclsCtx decls(input, wasm);
+  CHECK_ERR(parseModule(decls));
+  if (!allowExtra && !decls.in.empty()) {
+    return decls.in.err("Unexpected tokens after module");
+  }
+
+  CHECK_ERR(parseModuleWithDecls(decls));
+
+  // decls / parseModule made a copy of `input`. Advance `input` past the parsed
+  // module.
+  input = decls.in;
+  return Ok{};
+}
+
+Result<> doParseModuleBody(Module& wasm, Lexer& input, bool allowExtra) {
+  ParseDeclsCtx decls(input, wasm);
+  CHECK_ERR(parseModuleBody(decls));
+  if (!allowExtra && !decls.in.empty()) {
+    return decls.in.err("Unexpected tokens after module");
+  }
+
+  CHECK_ERR(parseModuleWithDecls(decls));
+
+  // decls / parseModuleBody made a copy of `input`. Advance `input` past the
+  // parsed module.
   input = decls.in;
 
   return Ok{};
@@ -125,16 +146,20 @@ Result<> parseModule(Module& wasm,
                      std::string_view in,
                      std::optional<std::string> filename) {
   Lexer lexer(in, filename);
-  return doParseModule(wasm, lexer, false);
+  return doParseModule(wasm, lexer, /*allowExtra=*/false);
 }
 
 Result<> parseModule(Module& wasm, std::string_view in) {
   Lexer lexer(in);
-  return doParseModule(wasm, lexer, false);
+  return doParseModule(wasm, lexer, /*allowExtra=*/false);
 }
 
 Result<> parseModule(Module& wasm, Lexer& lexer) {
-  return doParseModule(wasm, lexer, true);
+  return doParseModule(wasm, lexer, /*allowExtra=*/true);
+}
+
+Result<> parseModuleBody(Module& wasm, Lexer& lexer) {
+  return doParseModuleBody(wasm, lexer, /*allowExtra=*/true);
 }
 
 } // namespace wasm::WATParser
