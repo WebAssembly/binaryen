@@ -99,9 +99,9 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
   }
 
   bool isDefinition = in.takeKeyword("definition"sv);
+  std::optional<Name> id = in.takeID();
 
-  // We'll read this again in the 'inline module' case
-  (void)in.takeID();
+  Lexer moduleBody = in;
 
   QuotedModuleType type;
   if (in.takeKeyword("quote"sv)) {
@@ -127,17 +127,10 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
   } else {
     // In this case the module is mostly valid WAT, unless it is a module
     // definition in which case it will begin with (module definition ...)
-    in = std::move(reset);
-
-    // We already checked this before resetting
-    if (!in.takeSExprStart("module"sv)) {
-      return in.err("expected module");
-    }
-
-    bool isDefinition = in.takeKeyword("definition"sv);
+    in = std::move(moduleBody);
 
     auto wasm = std::make_shared<Module>();
-    if (auto id = in.takeID()) {
+    if (id) {
       wasm->name = *id;
     }
 
@@ -472,6 +465,7 @@ MaybeResult<Register> register_(Lexer& in) {
 
 // (module instance instance_name? module_name?)
 MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
+  Lexer reset = in;
   if (!in.takeSExprStart("module"sv)) {
     std::optional<std::string_view> actual = in.peekKeyword();
     return in.err((std::stringstream() << "expected `module` keyword but got "
@@ -481,6 +475,7 @@ MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
 
   if (!in.takeKeyword("instance"sv)) {
     // This is not a module instance and probably a module instead.
+    in = reset;
     return {};
   }
 
@@ -492,23 +487,6 @@ MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
   }
 
   return ModuleInstantiation{moduleId, instanceId};
-}
-
-using ModuleOrInstantiation = std::variant<ModuleInstantiation, WASTModule>;
-
-// (module instance ...) | (module ...)
-Result<ModuleOrInstantiation> moduleOrInstantiation(Lexer& in) {
-  auto reset = in;
-
-  if (auto inst = instantiation(in)) {
-    CHECK_ERR(inst);
-    return *inst;
-  }
-  in = reset;
-
-  auto module = wastModule(in);
-  CHECK_ERR(module);
-  return *module;
 }
 
 // instantiate | module | register | action | assertion
@@ -525,14 +503,14 @@ Result<WASTCommand> command(Lexer& in) {
     CHECK_ERR(cmd);
     return *cmd;
   }
-  auto cmd = moduleOrInstantiation(in);
-  CHECK_ERR(cmd);
+  if (auto cmd = instantiation(in)) {
+    CHECK_ERR(cmd);
+    return *cmd;
+  }
 
-  return std::visit(
-    [](const auto& modOrInstantiation) -> WASTCommand {
-      return modOrInstantiation;
-    },
-    *cmd);
+  auto module = wastModule(in);
+  CHECK_ERR(module);
+  return *module;
 }
 
 #pragma GCC diagnostic push
