@@ -207,7 +207,7 @@ struct DAE : public Pass {
     // which calls[i] appears.
     std::vector<Call*> calls;
     std::vector<Index> origins;
-  }
+  };
   // TODO comment
   std::vector<CallInfo> allCalls;
 
@@ -371,7 +371,7 @@ std::cout << "just updated " << func << '\n';
       auto& info = infoMap[module->functions[caller]->name];
 std::cout << "processing calls from  " << caller << '\n';
       for (auto& [name, calls] : info.calls) {
-        auto& allCallsToName = allCalls[indexes[name]];
+        auto& allCallsToName = allCalls[indexes[name]].calls;
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
       }
     }
@@ -420,7 +420,7 @@ std::cout << "processing calls from  " << caller << '\n';
       if (hasUnseenCalls[index]) {
         continue;
       }
-      auto& calls = allCalls[index];
+      auto& calls = allCalls[index].calls;
       if (calls.empty()) {
         // Nothing calls this, so it is not worth optimizing.
         continue;
@@ -469,7 +469,7 @@ std::cout << "processing calls from  " << caller << '\n';
       if (numParams == 0) {
         continue;
       }
-      auto& calls = allCalls[index];
+      auto& calls = allCalls[index].calls;
       if (calls.empty()) {
         continue;
       }
@@ -510,7 +510,7 @@ std::cout << "remove param " << func->name << '\n';
         if (tailCallees[index]) {
           continue;
         }
-        auto& calls = allCalls[index];
+        auto& calls = allCalls[index].calls;
         if (calls.empty()) {
           continue;
         }
