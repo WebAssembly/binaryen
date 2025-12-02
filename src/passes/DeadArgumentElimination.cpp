@@ -245,6 +245,7 @@ struct DAE : public Pass {
 
     scan.dump();
     combine.dump();
+    callers.dump();
     opt1.dump();
     opt2.dump();
     opt3.dump();
@@ -324,6 +325,9 @@ combine.start();
       }
     }
 
+combine.stop();
+
+callers.start();
     // See comment above, we compute callers once and never again.
     if (callers.empty()) {
       // Compute first as sets, to deduplicate.
@@ -344,8 +348,7 @@ combine.start();
         }
       }
     }
-
-combine.stop();
+callers.stop();
 
 allC.start();
 
