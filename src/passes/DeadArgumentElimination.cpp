@@ -1,4 +1,7 @@
 // 16.8,16.7,16.75
+// =>
+// 14.5
+// not a big... win
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -51,6 +54,7 @@
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
+#include "support/timing.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -189,6 +193,8 @@ struct DAEScanner
   }
 };
 
+static Timer scan("scan"), combine("combine"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
+
 struct DAE : public Pass {
   // This pass changes locals and parameters.
   // FIXME DWARF updating does not handle local changes yet.
@@ -236,6 +242,17 @@ struct DAE : public Pass {
         break;
       }
     }
+
+    scan.dump();
+    combine.dump();
+    opt1.dump();
+    opt2.dump();
+    opt3.dump();
+    opt4.dump();
+    loc.dump();
+    oai.dump();
+    allC.dump();
+
   }
 
   // For each function, the set of callers. This is used to propagate changes,
@@ -255,6 +272,8 @@ struct DAE : public Pass {
   std::vector<std::vector<Index>> callees;
 
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
+    std::cout << "iter\n";
+
     allDroppedCalls.clear();
 
 #if DAE_DEBUG
@@ -272,10 +291,16 @@ struct DAE : public Pass {
     }
 #endif
 
+scan.start();
+
     DAEScanner scanner(&infoMap);
     scanner.walkModuleCode(module);
     // Scan all the functions.
     scanner.run(getPassRunner(), module);
+
+scan.stop();
+
+combine.start();
 
     // Combine all the info from the scan.
     std::vector<bool> tailCallees(numFunctions);
@@ -320,7 +345,9 @@ struct DAE : public Pass {
       }
     }
 
-//std::cerr << "iter\n" << *module << '\n';
+combine.stop();
+
+allC.start();
 
     // Recompute parts of allCalls as necessary. We know which function infos
     // were just updated, and start there: If we updated { A, B }, and A calls
@@ -382,6 +409,7 @@ struct DAE : public Pass {
       }
     }
 
+allC.stop();
     // Track which functions we changed that are worth re-optimizing at the end.
     std::unordered_set<Function*> worthOptimizing;
 
@@ -415,6 +443,7 @@ struct DAE : public Pass {
       }
     };
 
+opt1.start();
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (Index index = 0; index < numFunctions; index++) {
@@ -456,12 +485,16 @@ struct DAE : public Pass {
         markStale(func->name);
       }
     }
+opt1.stop();
     if (refinedReturnTypes) {
+opt2.start();
       // Changing a call expression's return type can propagate out to its
       // parents, and so we must refinalize.
       // TODO: We could track in which functions we actually make changes.
       ReFinalize().run(getPassRunner(), module);
+opt2.stop();
     }
+opt3.start();
     // We now know which parameters are unused, and can potentially remove them.
     for (Index index = 0; index < numFunctions; index++) {
       auto* func = module->functions[index].get();
@@ -493,6 +526,8 @@ struct DAE : public Pass {
         callTargetsToLocalize.insert(name);
       }
     }
+opt3.stop();
+opt4.start();
     // We can also tell which calls have all their return values dropped. Note
     // that we can't do this if we changed anything so far, as we may have
     // modified allCalls (we can't modify a call site twice in one iteration,
@@ -540,14 +575,19 @@ struct DAE : public Pass {
         markCallersStale(index);
       }
     }
+opt4.stop();
     if (!callTargetsToLocalize.empty()) {
+loc.start();
       ParamUtils::localizeCallsTo(
         callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
           markStale(func->name);
         });
+loc.stop();
     }
     if (optimize && !worthOptimizing.empty()) {
+oai.start();
       OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
+oai.stop();
     }
 
     return !worthOptimizing.empty() || refinedReturnTypes ||
