@@ -220,7 +220,7 @@
  ;; CHECK-NEXT:  (local $0 (ref $B))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $param (param $0 (ref $B)) (result f64)
+ (func $param (param $0 (ref $B))
   ;; Helper with a param and lets us have calls inside it.
   (unreachable)
  )
@@ -236,12 +236,10 @@
  ;; CHECK-NEXT:  (call $param)
  ;; CHECK-NEXT: )
  (func $2
-  (drop
-   (call $param
-    (struct.new $B
-     (call $6)
-     (ref.func $nop)
-    )
+  (call $param
+   (struct.new $B
+    (call $6)
+    (ref.func $nop)
    )
   )
  )
