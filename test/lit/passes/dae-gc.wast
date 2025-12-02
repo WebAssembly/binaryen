@@ -210,13 +210,11 @@
   (type $B (sub (struct (field (mut f64)) (field (mut funcref)))))
  )
 
- ;; CHECK:      (func $0 (type $4) (param $0 (ref $B)) (param $1 (ref struct)) (result f64)
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK:      (func $nop (type $0)
  ;; CHECK-NEXT: )
- (func $0 (param $0 (ref $B)) (param $1 (ref struct)) (result f64)
-  (unreachable)
+ (func $nop
  )
- ;; CHECK:      (func $1 (type $3) (result f64)
+ ;; CHECK:      (func $1 (type $1) (result f64)
  ;; CHECK-NEXT:  (local $0 (ref struct))
  ;; CHECK-NEXT:  (local $1 (ref $B))
  ;; CHECK-NEXT:  (unreachable)
@@ -231,7 +229,7 @@
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (struct.new $B
  ;; CHECK-NEXT:      (call $6)
- ;; CHECK-NEXT:      (ref.func $0)
+ ;; CHECK-NEXT:      (ref.func $nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (call $1)
@@ -243,7 +241,7 @@
    (call $1
     (struct.new $B
      (call $6)
-     (ref.func $0)
+     (ref.func $nop)
     )
     (struct.new_default $A)
    )
@@ -275,7 +273,7 @@
    (call $6)
   )
  )
- ;; CHECK:      (func $6 (type $3) (result f64)
+ ;; CHECK:      (func $6 (type $1) (result f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $6 (result f64)
