@@ -193,7 +193,7 @@ struct DAEScanner
   }
 };
 
-static Timer scan("scan"), combine("combine"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
+static Timer scan("scan"), combine("combine"), callers("callers"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
 
 struct DAE : public Pass {
   // This pass changes locals and parameters.
