@@ -254,8 +254,6 @@ struct DAE : public Pass {
   std::vector<std::vector<Index>> callees;
 
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
-    std::cout << "iter\n";
-
     allDroppedCalls.clear();
 
 #if DAE_DEBUG
@@ -273,13 +271,10 @@ struct DAE : public Pass {
     }
 #endif
 
-
     DAEScanner scanner(&infoMap);
     scanner.walkModuleCode(module);
     // Scan all the functions.
     scanner.run(getPassRunner(), module);
-
-
 
     // Combine all the info from the scan.
     std::vector<bool> tailCallees(numFunctions);
@@ -303,7 +298,6 @@ struct DAE : public Pass {
       }
     }
 
-
     // See comment above, we compute callers once and never again.
     if (callers.empty()) {
       // Compute first as sets, to deduplicate.
@@ -325,7 +319,6 @@ struct DAE : public Pass {
       }
     }
 
-
     // Recompute parts of allCalls as necessary. We know which function infos
     // were just updated, and start there: If we updated { A, B }, and A calls
     // C while B calls C and D, then the list of all calls must be updated for
@@ -334,7 +327,6 @@ struct DAE : public Pass {
     std::unordered_set<Index> calledByJustUpdated;
     for (auto& [func, info] : infoMap) {
       if (info.justUpdated) {
-//std::cerr << "just updated " << func << '\n';
         auto index = indexes[func];
         justUpdated.insert(index);
         for (auto& callee : callees[index]) {
@@ -345,7 +337,6 @@ struct DAE : public Pass {
 
     auto addCallsFrom = [&](Index caller) {
       auto& info = infoMap[module->functions[caller]->name];
-//std::cerr << "processing calls from  " << caller << '\n';
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[indexes[name]].calls;
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
@@ -357,7 +348,6 @@ struct DAE : public Pass {
       }
     };
 
-std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", called by them=" << calledByJustUpdated.size() << " out of " << numFunctions << '\n';
     if (justUpdated.size() + calledByJustUpdated.size() >= numFunctions) {
       // Many functions need to be processed to do an incremental update. Just
       // do a full recompute from scratch, which may be faster.
@@ -368,13 +358,12 @@ std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", call
       }
     } else {
       // Do an incremental update.
-      std::cout << "  incrememt\n";
       // For each such called function, we don't want to alter calls from
       // unchanged functions. That is, if X calls C and D in the example above,
       // and X is not just-updated, then X's calls to C and D are fine as they
-      // are. Leaving such calls alone, remove calls from the callers that we did
-      // just update, and after that, add them from the fresh data we have on
-      // those just-updated functions.
+      // are. Leaving such calls alone, remove calls from the callers that we
+      // did just update, and after that, add them from the fresh data we have
+      // on those just-updated functions.
       for (auto& called : calledByJustUpdated) {
         auto& calledCalls = allCalls[called];
         auto oldSize = calledCalls.calls.size();
@@ -402,7 +391,7 @@ std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", call
         addCallsFrom(caller);
       }
     }
-    
+
     // Track which functions we changed that are worth re-optimizing at the end.
     std::unordered_set<Function*> worthOptimizing;
 
@@ -504,8 +493,7 @@ std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", call
       auto [removedIndexes, outcome] = ParamUtils::removeParameters(
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
-//std::cerr << "remove param " << func->name << '\n';
-        // Success!
+        //  Success!
         worthOptimizing.insert(func);
         markStale(name);
         markCallersStale(index);
