@@ -369,47 +369,8 @@ allC.start();
         }
       }
     }
-std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", called by them=" << calledByJustUpdated.size() << " out of " << numFunctions << '\n';
-    if (justUpdated.size() + calledByJustUpdated.size() > numFunctions / 10) {
-      // Many functions need to be processed to do an incremental update. Just
-      // do a full recompute from scratch, which may be faster.
-      allCalls.clear();
-      allCalls.resize(numFunctions);
-      // Clear this data structure so we don't process it below.
-      calledByJustUpdated.clear();
-    } else {
-      // Do an incremental update.
-    }
-    // For each such called function, we don't want to alter calls from
-    // unchanged functions. That is, if X calls C and D in the example above,
-    // and X is not just-updated, then X's calls to C and D are fine as they
-    // are. Leaving such calls alone, remove calls from the callers that we did
-    // just update, and after that, add them from the fresh data we have on
-    // those just-updated functions.
-    for (auto& called : calledByJustUpdated) {
-      auto& calledCalls = allCalls[called];
-      auto oldSize = calledCalls.calls.size();
-      assert(oldSize == calledCalls.origins.size());
-      Index skip = 0;
-      for (Index i = 0; i < calledCalls.calls.size(); i++) {
-        if (justUpdated.count(calledCalls.origins[i])) {
-          // Remove it by skipping over.
-          skip++;
-        } else if (skip) {
-          // Keep it by writing to the proper place.
-          calledCalls.calls[i - skip] = calledCalls.calls[i];
-          calledCalls.origins[i - skip] = calledCalls.origins[i];
-        }
-      }
-      if (skip > 0) {
-        // Update the sizes after removing things.
-        calledCalls.calls.resize(oldSize - skip);
-        calledCalls.origins.resize(oldSize - skip);
-      }
-    }
-    // The just-updated callers have been cleaned out of |allCalls|. Add their
-    // calls, after which that data structure is up-to-date.
-    for (auto& caller : justUpdated) {
+
+    auto addCallsFrom = [&](Index caller) {
       auto& info = infoMap[module->functions[caller]->name];
 //std::cerr << "processing calls from  " << caller << '\n';
       for (auto& [name, calls] : info.calls) {
@@ -421,8 +382,54 @@ std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", call
           origins.push_back(caller);
         }
       }
-    }
+    };
 
+std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", called by them=" << calledByJustUpdated.size() << " out of " << numFunctions << '\n';
+    if (justUpdated.size() + calledByJustUpdated.size() > numFunctions / 10) {
+      // Many functions need to be processed to do an incremental update. Just
+      // do a full recompute from scratch, which may be faster.
+      allCalls.clear();
+      allCalls.resize(numFunctions);
+      for (Index caller = 0; caller < numFunctions; caller++) {
+        addCallsFrom(caller);
+      }
+    } else {
+      // Do an incremental update.
+      std::cout << "  incrememt\n";
+      // For each such called function, we don't want to alter calls from
+      // unchanged functions. That is, if X calls C and D in the example above,
+      // and X is not just-updated, then X's calls to C and D are fine as they
+      // are. Leaving such calls alone, remove calls from the callers that we did
+      // just update, and after that, add them from the fresh data we have on
+      // those just-updated functions.
+      for (auto& called : calledByJustUpdated) {
+        auto& calledCalls = allCalls[called];
+        auto oldSize = calledCalls.calls.size();
+        assert(oldSize == calledCalls.origins.size());
+        Index skip = 0;
+        for (Index i = 0; i < calledCalls.calls.size(); i++) {
+          if (justUpdated.count(calledCalls.origins[i])) {
+            // Remove it by skipping over.
+            skip++;
+          } else if (skip) {
+            // Keep it by writing to the proper place.
+            calledCalls.calls[i - skip] = calledCalls.calls[i];
+            calledCalls.origins[i - skip] = calledCalls.origins[i];
+          }
+        }
+        if (skip > 0) {
+          // Update the sizes after removing things.
+          calledCalls.calls.resize(oldSize - skip);
+          calledCalls.origins.resize(oldSize - skip);
+        }
+      }
+      // The just-updated callers have been cleaned out of |allCalls|. Add their
+      // calls, after which that data structure is up-to-date.
+      for (auto& caller : justUpdated) {
+        addCallsFrom(caller);
+      }
+    }
+    
 allC.stop();
     // Track which functions we changed that are worth re-optimizing at the end.
     std::unordered_set<Function*> worthOptimizing;
