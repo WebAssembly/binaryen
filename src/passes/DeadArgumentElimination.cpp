@@ -279,7 +279,6 @@ struct DAE : public Pass {
     // Scan all the functions.
     scanner.run(getPassRunner(), module);
 
-scan.stop();
 
 
     // Combine all the info from the scan.
@@ -304,7 +303,6 @@ scan.stop();
       }
     }
 
-combine.stop();
 
     // See comment above, we compute callers once and never again.
     if (callers.empty()) {
@@ -326,7 +324,6 @@ combine.stop();
         }
       }
     }
-callerz.stop();
 
 
     // Recompute parts of allCalls as necessary. We know which function infos
@@ -406,7 +403,6 @@ std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", call
       }
     }
     
-allC.stop();
     // Track which functions we changed that are worth re-optimizing at the end.
     std::unordered_set<Function*> worthOptimizing;
 
@@ -465,13 +461,11 @@ allC.stop();
         markStale(func->name);
       }
       // Refine return types as well.
-ra.stop();
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
         markStale(name);
         markCallersStale(index);
       }
-rr.stop();
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
       for (auto i : optimizedIndexes) {
@@ -479,18 +473,15 @@ rr.stop();
         // for that).
         infoMap[name].unusedParams.insert(i);
       }
-acv.stop();
       if (!optimizedIndexes.empty()) {
         markStale(func->name);
       }
     }
-opt1.stop();
     if (refinedReturnTypes) {
       // Changing a call expression's return type can propagate out to its
       // parents, and so we must refinalize.
       // TODO: We could track in which functions we actually make changes.
       ReFinalize().run(getPassRunner(), module);
-opt2.stop();
     }
     // We now know which parameters are unused, and can potentially remove them.
     for (Index index = 0; index < numFunctions; index++) {
@@ -523,7 +514,6 @@ opt2.stop();
         callTargetsToLocalize.insert(name);
       }
     }
-opt3.stop();
     // We can also tell which calls have all their return values dropped. Note
     // that we can't do this if we changed anything so far, as we may have
     // modified allCalls (we can't modify a call site twice in one iteration,
@@ -571,17 +561,14 @@ opt3.stop();
         markCallersStale(index);
       }
     }
-opt4.stop();
     if (!callTargetsToLocalize.empty()) {
       ParamUtils::localizeCallsTo(
         callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
           markStale(func->name);
         });
-loc.stop();
     }
     if (optimize && !worthOptimizing.empty()) {
       OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
-oai.stop();
     }
 
     return !worthOptimizing.empty() || refinedReturnTypes ||
