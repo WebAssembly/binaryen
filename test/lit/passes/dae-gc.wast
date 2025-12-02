@@ -250,13 +250,13 @@
  (func $param2 (param $0 (ref any))
  )
 
- ;; CHECK:      (func $5 (type $0)
+ ;; CHECK:      (func $caller2 (type $0)
  ;; CHECK-NEXT:  (call $param2)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $6)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $5
+ (func $caller2
   (call $param2
    (struct.new $B
     (f64.const 0)
