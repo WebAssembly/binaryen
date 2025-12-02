@@ -6,7 +6,7 @@
  (table $table 10 funcref)
 
  (func $caller (export "caller")
-  ;; Do an indirec call from the table, writing the imported funcref first.
+  ;; Do an indirect call from the table, writing the imported funcref first.
   (table.set $table
    (i32.const 1)
    (global.get $gimport)
