@@ -225,7 +225,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $2 (type $0)
+ ;; CHECK:      (func $caller (type $0)
  ;; CHECK-NEXT:  (local $0 (ref (exact $B)))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (struct.new $B
@@ -235,7 +235,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $param)
  ;; CHECK-NEXT: )
- (func $2
+ (func $caller
   (call $param
    (struct.new $B
     (call $6)
