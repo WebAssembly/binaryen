@@ -1,8 +1,3 @@
-// 16.8,16.7,16.75
-// =>
-// 14.5
-// not a big... win
-// allC is 1.5
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -55,7 +50,6 @@
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
-#include "support/timing.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -194,8 +188,6 @@ struct DAEScanner
   }
 };
 
-static Timer scan("scan"), combine("combine"), callerz("callerz"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC"), ra("ra"), rr("rr"), acv("acv");
-
 struct DAE : public Pass {
   // This pass changes locals and parameters.
   // FIXME DWARF updating does not handle local changes yet.
@@ -243,21 +235,6 @@ struct DAE : public Pass {
         break;
       }
     }
-
-    scan.dump();
-    combine.dump();
-    callerz.dump();
-    opt1.dump();
-    opt2.dump();
-    opt3.dump();
-    opt4.dump();
-    loc.dump();
-    oai.dump();
-    allC.dump();
-    ra.dump();
-    rr.dump();
-    acv.dump();
-
   }
 
   // For each function, the set of callers. This is used to propagate changes,
