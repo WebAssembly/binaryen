@@ -4,6 +4,11 @@
 // not a big... win
 // allC is 1.65
 /*
+    / 10 => 2.03 :( also / 5
+    / 2  => 1.58, 1.62
+    ...  => 1.51
+*/
+/*
  * Copyright 2018 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
