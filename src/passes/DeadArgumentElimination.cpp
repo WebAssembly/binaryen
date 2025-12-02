@@ -194,7 +194,7 @@ struct DAEScanner
   }
 };
 
-static Timer scan("scan"), combine("combine"), callerz("callerz"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
+static Timer scan("scan"), combine("combine"), callerz("callerz"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC"), ra("ra"), rr("rr"), acv("acv");
 
 struct DAE : public Pass {
   // This pass changes locals and parameters.
@@ -254,6 +254,9 @@ struct DAE : public Pass {
     loc.dump();
     oai.dump();
     allC.dump();
+    ra.dump();
+    rr.dump();
+    avc.dump();
 
   }
 
@@ -484,17 +487,22 @@ opt1.start();
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
+ra.start();
       auto name = func->name;
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
         worthOptimizing.insert(func);
         markStale(func->name);
       }
       // Refine return types as well.
+ra.stop();
+rr.start();
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
         markStale(name);
         markCallersStale(index);
       }
+rr.stop();
+acv.start();
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
       for (auto i : optimizedIndexes) {
@@ -502,6 +510,7 @@ opt1.start();
         // for that).
         infoMap[name].unusedParams.insert(i);
       }
+acv.stop();
       if (!optimizedIndexes.empty()) {
         markStale(func->name);
       }
