@@ -197,10 +197,9 @@
 )
 
 ;; After the first optimization, where we remove params from the call to $1,
-;; we update the IR incrementally, and must do so properly: we update $1 and
-;; $1's caller $2, and note that $2 also calls $result, so we must update some of
-;; $result's callers but not all.
-;; TODO: pretty names etc.
+;; we update the IR incrementally, and must do so properly: we update $param and
+;; its callers $caller. $caller also calls $result, so we must update some of
+;; $result's callers but not all. Ditto with $caller2, $result2.
 (module
  (rec
   ;; CHECK:      (rec
@@ -263,6 +262,7 @@
     (ref.func $param)
    )
   )
+  ;; The second call is not nested in this case, to test another form.
   (drop
    (call $result)
   )
