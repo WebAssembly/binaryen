@@ -34,6 +34,11 @@ Result<> parseModule(Module& wasm,
 // file.
 Result<> parseModule(Module& wasm, Lexer& lexer);
 
+// Similar to `parseModule`, parse the fields of a single WAT module (after the
+// initial module definition including its name) and stop at the ending right
+// paren.
+Result<> parseModuleBody(Module& wasm, Lexer& lexer);
+
 Result<Literal> parseConst(Lexer& lexer);
 
 #pragma GCC diagnostic push

@@ -18,6 +18,8 @@
 
 namespace wasm::WATParser {
 
-Result<> parseDecls(ParseDeclsCtx& decls) { return module(decls); }
+Result<> parseModule(ParseDeclsCtx& decls) { return module(decls); }
+
+Result<> parseModuleBody(ParseDeclsCtx& decls) { return moduleBody(decls); }
 
 } // namespace wasm::WATParser
