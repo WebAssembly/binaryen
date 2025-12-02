@@ -198,8 +198,8 @@
 
 ;; After the first optimization, where we remove params from the call to $1,
 ;; we update the IR incrementally, and must do so properly: we update $1 and
-;; $1's caller $2, and note that $2 also calls $6, so we must update some of
-;; $6's callers but not all.
+;; $1's caller $2, and note that $2 also calls $result, so we must update some of
+;; $result's callers but not all.
 ;; TODO: pretty names etc.
 (module
  (rec
@@ -229,7 +229,7 @@
  ;; CHECK-NEXT:  (local $0 (ref (exact $B)))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (struct.new $B
- ;; CHECK-NEXT:    (call $6)
+ ;; CHECK-NEXT:    (call $result)
  ;; CHECK-NEXT:    (ref.func $nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -238,7 +238,7 @@
  (func $caller
   (call $param
    (struct.new $B
-    (call $6)
+    (call $result)
     (ref.func $nop)
    )
   )
@@ -253,7 +253,7 @@
  ;; CHECK:      (func $caller2 (type $0)
  ;; CHECK-NEXT:  (call $param2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $6)
+ ;; CHECK-NEXT:   (call $result)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller2
@@ -264,14 +264,14 @@
    )
   )
   (drop
-   (call $6)
+   (call $result)
   )
  )
 
- ;; CHECK:      (func $6 (type $3) (result f64)
+ ;; CHECK:      (func $result (type $3) (result f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $6 (result f64)
+ (func $result (result f64)
   (unreachable)
  )
 )
