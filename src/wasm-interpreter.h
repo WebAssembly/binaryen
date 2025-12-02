@@ -4861,9 +4861,17 @@ public:
       // There was a return call, so we need to call the next function before
       // returning to the caller. The flow carries the function arguments and a
       // function reference.
-      name = flow.values.back().getFunc();
+      auto nextData = flow.values.back().getFuncData();
+      name = nextData->name;
       flow.values.pop_back();
       arguments = flow.values;
+
+      if (nextData->self != this) {
+        // This function is in another module. Call from there.
+        auto other = (decltype(this))nextData->self;
+        flow = other->callFunction(name, arguments);
+        break;
+      }
     }
 
     if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
