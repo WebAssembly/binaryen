@@ -193,7 +193,7 @@ struct DAEScanner
   }
 };
 
-static Timer scan("scan"), combine("combine"), callers("callers"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
+static Timer scan("scan"), combine("combine"), callerz("callers"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
 
 struct DAE : public Pass {
   // This pass changes locals and parameters.
@@ -245,7 +245,7 @@ struct DAE : public Pass {
 
     scan.dump();
     combine.dump();
-    callers.dump();
+    callerz.dump();
     opt1.dump();
     opt2.dump();
     opt3.dump();
@@ -327,7 +327,7 @@ combine.start();
 
 combine.stop();
 
-callers.start();
+callerz.start();
     // See comment above, we compute callers once and never again.
     if (callers.empty()) {
       // Compute first as sets, to deduplicate.
@@ -348,7 +348,7 @@ callers.start();
         }
       }
     }
-callers.stop();
+callerz.stop();
 
 allC.start();
 
