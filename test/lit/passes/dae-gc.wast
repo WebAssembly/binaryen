@@ -202,11 +202,8 @@
 ;; $result's callers but not all. Ditto with $caller2, $result2.
 (module
  (rec
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct))
-  (type $A (struct))
-  ;; CHECK:       (type $B (sub (struct (field (mut f64)) (field (mut funcref)))))
-  (type $B (sub (struct (field (mut f64)) (field (mut funcref)))))
+  ;; CHECK:      (type $A (sub (struct (field (mut f64)) (field (mut funcref)))))
+  (type $A (sub (struct (field (mut f64)) (field (mut funcref)))))
  )
 
  ;; CHECK:      (func $nop (type $0)
@@ -216,18 +213,18 @@
  )
 
  ;; CHECK:      (func $param (type $0)
- ;; CHECK-NEXT:  (local $0 (ref $B))
+ ;; CHECK-NEXT:  (local $0 (ref $A))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $param (param $0 (ref $B))
+ (func $param (param $0 (ref $A))
   ;; Helper with a param and lets us have calls inside it.
   (unreachable)
  )
 
  ;; CHECK:      (func $caller (type $0)
- ;; CHECK-NEXT:  (local $0 (ref (exact $B)))
+ ;; CHECK-NEXT:  (local $0 (ref (exact $A)))
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (struct.new $B
+ ;; CHECK-NEXT:   (struct.new $A
  ;; CHECK-NEXT:    (call $result)
  ;; CHECK-NEXT:    (ref.func $nop)
  ;; CHECK-NEXT:   )
@@ -236,7 +233,7 @@
  ;; CHECK-NEXT: )
  (func $caller
   (call $param
-   (struct.new $B
+   (struct.new $A
     (call $result)
     (ref.func $nop)
    )
@@ -257,7 +254,7 @@
  ;; CHECK-NEXT: )
  (func $caller2
   (call $param2
-   (struct.new $B
+   (struct.new $A
     (f64.const 0)
     (ref.func $param)
    )
@@ -268,7 +265,7 @@
   )
  )
 
- ;; CHECK:      (func $result (type $3) (result f64)
+ ;; CHECK:      (func $result (type $2) (result f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $result (result f64)
