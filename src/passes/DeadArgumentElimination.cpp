@@ -194,7 +194,7 @@ struct DAEScanner
   }
 };
 
-static Timer scan("scan"), combine("combine"), callerz("callerz"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
+static Timer scan("scan"), combine("combine"), combine2("combine2"), callerz("callerz"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
 
 struct DAE : public Pass {
   // This pass changes locals and parameters.
@@ -246,6 +246,7 @@ struct DAE : public Pass {
 
     scan.dump();
     combine.dump();
+    combine2.dump();
     callerz.dump();
     opt1.dump();
     opt2.dump();
@@ -312,9 +313,6 @@ combine.start();
       for (auto& callee : info.tailCallees) {
         tailCallees[indexes[callee]] = true;
       }
-      for (auto& [call, dropp] : info.droppedCalls) {
-        allDroppedCalls[call] = dropp;
-      }
       for (auto& name : info.hasUnseenCalls) {
         hasUnseenCalls[indexes[name]] = true;
       }
@@ -327,6 +325,14 @@ combine.start();
     }
 
 combine.stop();
+
+combine2.start();
+    for (auto& [_, info] : infoMap) {
+      for (auto& [call, dropp] : info.droppedCalls) {
+        allDroppedCalls[call] = dropp;
+      }
+    }
+combine2.stop();
 
 callerz.start();
     // See comment above, we compute callers once and never again.
