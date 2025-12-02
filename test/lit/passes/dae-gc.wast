@@ -196,10 +196,10 @@
  )
 )
 
-;; After the first optimization, where we remove params from the call to $1,
+;; After the first optimization, where we remove params from the call to $param,
 ;; we update the IR incrementally, and must do so properly: we update $param and
 ;; its callers $caller. $caller also calls $result, so we must update some of
-;; $result's callers but not all. Ditto with $caller2, $result2.
+;; $result's callers but not all. Ditto with $caller2.
 (module
  (rec
   ;; CHECK:      (type $A (sub (struct (field (mut f64)) (field (mut funcref)))))
