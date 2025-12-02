@@ -193,7 +193,7 @@ struct DAEScanner
   }
 };
 
-static Timer scan("scan"), combine("combine"), callerz("callers"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
+static Timer scan("scan"), combine("combine"), callerz("callerz"), opt1("opt1"), opt2("opt2"), opt3("opt3"), opt4("opt4"), loc("loc"), oai("oai"),allC("allC");
 
 struct DAE : public Pass {
   // This pass changes locals and parameters.
@@ -368,13 +368,13 @@ allC.start();
         }
       }
     }
+std::cout << "  updating allcalls justUpdated=" << justUpdated << ", called by them=" << calledByJustUpdated << " out of " << numFunctions << '\n';
     // For each such called function, we don't want to alter calls from
     // unchanged functions. That is, if X calls C and D in the example above,
     // and X is not just-updated, then X's calls to C and D are fine as they
     // are. Leaving such calls alone, remove calls from the callers that we did
     // just update, and after that, add them from the fresh data we have on
     // those just-updated functions.
-    std::unordered_set<Name> relevantCallers;
     for (auto& called : calledByJustUpdated) {
       auto& calledCalls = allCalls[called];
       auto oldSize = calledCalls.calls.size();
