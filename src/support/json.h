@@ -271,14 +271,15 @@ struct Value {
   };
 
   char* parse(char* curr, StringEncoding stringEncoding) {
-#define is_json_space(x)                                                       \
-  (x == 32 || x == 9 || x == 10 ||                                             \
-   x == 13) /* space, tab, linefeed/newline, or return */
-#define skip()                                                                 \
-  {                                                                            \
-    while (*curr && is_json_space(*curr))                                      \
-      curr++;                                                                  \
-  }
+    auto is_json_space = [](char x) -> bool {
+      return x == 32 || x == 9 || x == 10 ||
+             x == 13; /* space, tab, linefeed/newline, or return */
+    };
+    auto skip = [&]() -> void {
+      while (*curr && is_json_space(*curr)) {
+        curr++;
+      }
+    };
     skip();
     if (*curr == '"') {
       // String
