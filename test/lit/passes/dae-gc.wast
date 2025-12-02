@@ -214,27 +214,24 @@
  ;; CHECK-NEXT: )
  (func $nop
  )
- ;; CHECK:      (func $1 (type $1) (result f64)
- ;; CHECK-NEXT:  (local $0 (ref struct))
- ;; CHECK-NEXT:  (local $1 (ref $B))
+
+ ;; CHECK:      (func $1 (type $0)
+ ;; CHECK-NEXT:  (local $0 (ref $B))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $1 (param $0 (ref $B)) (param $1 (ref struct)) (result f64)
+ (func $1 (param $0 (ref $B)) (result f64)
   (unreachable)
  )
+
  ;; CHECK:      (func $2 (type $0)
  ;; CHECK-NEXT:  (local $0 (ref (exact $B)))
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result f64)
- ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (struct.new $B
- ;; CHECK-NEXT:      (call $6)
- ;; CHECK-NEXT:      (ref.func $nop)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $1)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (struct.new $B
+ ;; CHECK-NEXT:    (call $6)
+ ;; CHECK-NEXT:    (ref.func $nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $1)
  ;; CHECK-NEXT: )
  (func $2
   (drop
@@ -243,10 +240,10 @@
      (call $6)
      (ref.func $nop)
     )
-    (struct.new_default $A)
    )
   )
  )
+
  ;; CHECK:      (func $4 (type $0)
  ;; CHECK-NEXT:  (local $0 (ref any))
  ;; CHECK-NEXT:  (unreachable)
@@ -254,6 +251,7 @@
  (func $4 (param $0 (ref any)) (result f64)
   (unreachable)
  )
+
  ;; CHECK:      (func $5 (type $0)
  ;; CHECK-NEXT:  (call $4)
  ;; CHECK-NEXT:  (drop
@@ -273,7 +271,8 @@
    (call $6)
   )
  )
- ;; CHECK:      (func $6 (type $1) (result f64)
+
+ ;; CHECK:      (func $6 (type $3) (result f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $6 (result f64)
