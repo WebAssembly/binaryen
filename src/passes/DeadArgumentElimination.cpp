@@ -514,6 +514,7 @@ private:
       }
     }
 
+    // Add calls from one caller to allCalls.
     auto addCallsFrom = [&](Index caller) {
       auto& info = infoMap[module->functions[caller]->name];
       for (auto& [name, calls] : info.calls) {
@@ -535,40 +536,37 @@ private:
       for (Index caller = 0; caller < numFunctions; caller++) {
         addCallsFrom(caller);
       }
-    } else {
-      // Do an incremental update.
-      // For each such called function, we don't want to alter calls from
-      // unchanged functions. That is, if X calls C and D in the example above,
-      // and X is not just-updated, then X's calls to C and D are fine as they
-      // are. Leaving such calls alone, remove calls from the callers that we
-      // did just update, and after that, add them from the fresh data we have
-      // on those just-updated functions.
-      for (auto& called : calledByJustUpdated) {
-        auto& calledCalls = allCalls[called];
-        auto oldSize = calledCalls.calls.size();
-        assert(oldSize == calledCalls.origins.size());
-        Index skip = 0;
-        for (Index i = 0; i < calledCalls.calls.size(); i++) {
-          if (justUpdated.count(calledCalls.origins[i])) {
-            // Remove it by skipping over.
-            skip++;
-          } else if (skip) {
-            // Keep it by writing to the proper place.
-            calledCalls.calls[i - skip] = calledCalls.calls[i];
-            calledCalls.origins[i - skip] = calledCalls.origins[i];
-          }
-        }
-        if (skip > 0) {
-          // Update the sizes after removing things.
-          calledCalls.calls.resize(oldSize - skip);
-          calledCalls.origins.resize(oldSize - skip);
+      return;
+    }
+
+    // Do an incremental update. First, remove all stale calls from allCalls,
+    // that is, remove calls from the just-updated functions.
+    for (auto& called : calledByJustUpdated) {
+      auto& calledCalls = allCalls[called];
+      auto oldSize = calledCalls.calls.size();
+      assert(oldSize == calledCalls.origins.size());
+      Index skip = 0;
+      for (Index i = 0; i < calledCalls.calls.size(); i++) {
+        if (justUpdated.count(calledCalls.origins[i])) {
+          // Remove it by skipping over.
+          skip++;
+        } else if (skip) {
+          // Keep it by writing to the proper place.
+          calledCalls.calls[i - skip] = calledCalls.calls[i];
+          calledCalls.origins[i - skip] = calledCalls.origins[i];
         }
       }
-      // The just-updated callers have been cleaned out of |allCalls|. Add their
-      // calls, after which that data structure is up-to-date.
-      for (auto& caller : justUpdated) {
-        addCallsFrom(caller);
+      if (skip > 0) {
+        // Update the sizes after removing things.
+        calledCalls.calls.resize(oldSize - skip);
+        calledCalls.origins.resize(oldSize - skip);
       }
+    }
+
+    // The just-updated callers' calls have been cleaned out of allCalls. Add
+    // them in, leaving us with fully-updated data.
+    for (auto& caller : justUpdated) {
+      addCallsFrom(caller);
     }
   }
 
