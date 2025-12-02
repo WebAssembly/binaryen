@@ -3940,4 +3940,10 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair) {
   return o << "(unnamed)";
 }
 
+std::ostream& operator<<(std::ostream& o, const wasm::Memory& memory) {
+  wasm::PrintSExpression printer(o);
+  printer.visitMemory(const_cast<wasm::Memory*>(&memory));
+  return o;
+}
+
 } // namespace std
