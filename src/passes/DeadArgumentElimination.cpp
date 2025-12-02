@@ -2,12 +2,7 @@
 // =>
 // 14.5
 // not a big... win
-// allC is 1.65
-/*
-    / 10 => 2.03 :( also / 5
-    / 2  => 1.58, 1.62
-    ...  => 1.51
-*/
+// allC is 1.5
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -390,7 +385,7 @@ allC.start();
     };
 
 std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", called by them=" << calledByJustUpdated.size() << " out of " << numFunctions << '\n';
-    if (justUpdated.size() + calledByJustUpdated.size() > numFunctions / 10) {
+    if (justUpdated.size() + calledByJustUpdated.size() >= numFunctions) {
       // Many functions need to be processed to do an incremental update. Just
       // do a full recompute from scratch, which may be faster.
       allCalls.clear();
