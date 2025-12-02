@@ -2,8 +2,6 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $0 (func))
-
  ;; CHECK:      (type $"{}" (struct))
  (type $"{}" (struct))
 
@@ -70,8 +68,6 @@
 
 ;; Test ref.func and ref.null optimization of constant parameter values.
 (module
- ;; CHECK:      (type $0 (func))
-
  ;; CHECK:      (func $foo (type $1) (param $0 (ref (exact $0)))
  ;; CHECK-NEXT:  (local $1 (ref (exact $0)))
  ;; CHECK-NEXT:  (local.set $1
@@ -171,8 +167,6 @@
 
 ;; Test that string constants can be applied.
 (module
- ;; CHECK:      (type $0 (func))
-
  ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (call $1)
  ;; CHECK-NEXT: )
@@ -210,32 +204,32 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $S (struct))
-  (type $S (struct))
-  ;; CHECK:       (type $0 (sub (struct (field (mut f64)) (field (mut funcref)))))
-  (type $0 (sub (struct (field (mut f64)) (field (mut funcref)))))
+  ;; CHECK-NEXT:  (type $A (struct))
+  (type $A (struct))
+  ;; CHECK:       (type $B (sub (struct (field (mut f64)) (field (mut funcref)))))
+  (type $B (sub (struct (field (mut f64)) (field (mut funcref)))))
  )
 
- ;; CHECK:      (func $0 (type $5) (param $0 (ref $0)) (param $1 (ref struct)) (result f64)
+ ;; CHECK:      (func $0 (type $4) (param $0 (ref $B)) (param $1 (ref struct)) (result f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $0 (param $0 (ref $0)) (param $1 (ref struct)) (result f64)
+ (func $0 (param $0 (ref $B)) (param $1 (ref struct)) (result f64)
   (unreachable)
  )
- ;; CHECK:      (func $1 (type $4) (result f64)
+ ;; CHECK:      (func $1 (type $3) (result f64)
  ;; CHECK-NEXT:  (local $0 (ref struct))
- ;; CHECK-NEXT:  (local $1 (ref $0))
+ ;; CHECK-NEXT:  (local $1 (ref $B))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $1 (param $0 (ref $0)) (param $1 (ref struct)) (result f64)
+ (func $1 (param $0 (ref $B)) (param $1 (ref struct)) (result f64)
   (unreachable)
  )
- ;; CHECK:      (func $2 (type $1)
- ;; CHECK-NEXT:  (local $0 (ref (exact $0)))
+ ;; CHECK:      (func $2 (type $0)
+ ;; CHECK-NEXT:  (local $0 (ref (exact $B)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result f64)
  ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (struct.new $0
+ ;; CHECK-NEXT:     (struct.new $B
  ;; CHECK-NEXT:      (call $6)
  ;; CHECK-NEXT:      (ref.func $0)
  ;; CHECK-NEXT:     )
@@ -247,22 +241,22 @@
  (func $2
   (drop
    (call $1
-    (struct.new $0
+    (struct.new $B
      (call $6)
      (ref.func $0)
     )
-    (struct.new_default $S)
+    (struct.new_default $A)
    )
   )
  )
- ;; CHECK:      (func $4 (type $1)
+ ;; CHECK:      (func $4 (type $0)
  ;; CHECK-NEXT:  (local $0 (ref any))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $4 (param $0 (ref any)) (result f64)
   (unreachable)
  )
- ;; CHECK:      (func $5 (type $1)
+ ;; CHECK:      (func $5 (type $0)
  ;; CHECK-NEXT:  (call $4)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $6)
@@ -271,7 +265,7 @@
  (func $5
   (drop
    (call $4
-    (struct.new $0
+    (struct.new $B
      (f64.const 0)
      (ref.func $1)
     )
@@ -281,7 +275,7 @@
    (call $6)
   )
  )
- ;; CHECK:      (func $6 (type $4) (result f64)
+ ;; CHECK:      (func $6 (type $3) (result f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $6 (result f64)
