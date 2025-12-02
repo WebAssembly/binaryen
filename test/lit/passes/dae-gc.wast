@@ -244,27 +244,23 @@
   )
  )
 
- ;; CHECK:      (func $4 (type $0)
+ ;; CHECK:      (func $param2 (type $0)
  ;; CHECK-NEXT:  (local $0 (ref any))
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $4 (param $0 (ref any)) (result f64)
-  (unreachable)
+ (func $param2 (param $0 (ref any))
  )
 
  ;; CHECK:      (func $5 (type $0)
- ;; CHECK-NEXT:  (call $4)
+ ;; CHECK-NEXT:  (call $param2)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $6)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $5
-  (drop
-   (call $4
-    (struct.new $B
-     (f64.const 0)
-     (ref.func $param)
-    )
+  (call $param2
+   (struct.new $B
+    (f64.const 0)
+    (ref.func $param)
    )
   )
   (drop
