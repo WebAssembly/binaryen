@@ -213,13 +213,15 @@
  ;; CHECK:      (func $nop (type $0)
  ;; CHECK-NEXT: )
  (func $nop
+  ;; Helper.
  )
 
- ;; CHECK:      (func $1 (type $0)
+ ;; CHECK:      (func $param (type $0)
  ;; CHECK-NEXT:  (local $0 (ref $B))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $1 (param $0 (ref $B)) (result f64)
+ (func $param (param $0 (ref $B)) (result f64)
+  ;; Helper with a param and lets us have calls inside it.
   (unreachable)
  )
 
@@ -231,11 +233,11 @@
  ;; CHECK-NEXT:    (ref.func $nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call $1)
+ ;; CHECK-NEXT:  (call $param)
  ;; CHECK-NEXT: )
  (func $2
   (drop
-   (call $1
+   (call $param
     (struct.new $B
      (call $6)
      (ref.func $nop)
@@ -263,7 +265,7 @@
    (call $4
     (struct.new $B
      (f64.const 0)
-     (ref.func $1)
+     (ref.func $param)
     )
    )
   )
