@@ -2,6 +2,7 @@
 // =>
 // 14.5
 // not a big... win
+// allC is 1.65
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -369,6 +370,16 @@ allC.start();
       }
     }
 std::cout << "  updating allcalls justUpdated=" << justUpdated.size() << ", called by them=" << calledByJustUpdated.size() << " out of " << numFunctions << '\n';
+    if (justUpdated.size() + calledByJustUpdated.size() > numFunctions / 10) {
+      // Many functions need to be processed to do an incremental update. Just
+      // do a full recompute from scratch, which may be faster.
+      allCalls.clear();
+      allCalls.resize(numFunctions);
+      // Clear this data structure so we don't process it below.
+      calledByJustUpdated.clear();
+    } else {
+      // Do an incremental update.
+    }
     // For each such called function, we don't want to alter calls from
     // unchanged functions. That is, if X calls C and D in the example above,
     // and X is not just-updated, then X's calls to C and D are fine as they
