@@ -60,7 +60,9 @@ struct DAEFunctionInfo {
   // Whether this needs to be recomputed. This begins as true for the first
   // computation, and we reset it every time we touch the function.
   bool stale = true;
-  // TODO
+  // Set after we just updated this. That is the case right after we were stale,
+  // and were updated to become not stale, and it indicates that we contain new
+  // data.
   bool justUpdated = false;
   // The unused parameters, if any.
   SortedVector unusedParams;
@@ -200,15 +202,15 @@ struct DAE : public Pass {
   // Map of function names to indexes. This lets us use indexes below for speed.
   std::unordered_map<Name, Index> indexes;
 
-  // TODO comment
   struct CallInfo {
-    // Store the calls and their origins in parallel vectors, as we need |calls|
-    // by itself for certain APIs. This is, origins[i] is the function index in
+    // Store the calls and their origins in parallel vectors (as we need |calls|
+    // by itself for certain APIs). That is, origins[i] is the function index in
     // which calls[i] appears.
     std::vector<Call*> calls;
     std::vector<Index> origins;
   };
-  // TODO comment
+  // The set of all calls (and their origins) between functions. We compute this
+  // incrementally in later iterations, to avoid repeated work.
   std::vector<CallInfo> allCalls;
 
   void run(Module* module) override {
@@ -250,7 +252,7 @@ struct DAE : public Pass {
   // of computing this map is significant, so we compute it once at the start
   // and then use that possibly-over-approximating data.
   std::vector<std::vector<Name>> callers;
-  // TODO
+  // Reverse data: The list of functions called by a function.
   std::vector<std::vector<Index>> callees;
 
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
