@@ -172,11 +172,6 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
     // the heap type we call with.
     reference({ModuleElementKind::Table, curr->table});
     noteIndirectCall(curr->table, curr->heapType);
-    // Note a possible call of a function reference as well, as something might
-    // be written into the table during runtime. With precise tracking of what
-    // is written into the table we could do better here; we could also see
-    // which tables are immutable. TODO
-    noteCallRef(curr->heapType);
   }
 
   void visitCallRef(CallRef* curr) {
@@ -434,6 +429,12 @@ struct Analyzer {
         reference({ModuleElementKind::ElementSegment, elemInfo.name});
       }
     }
+
+    // Note a possible call of a function reference as well, as something might
+    // be written into the table during runtime. With precise tracking of what
+    // is written into the table we could do better here; we could also see
+    // which tables are immutable. TODO
+    useCallRefType(type);
   }
 
   void useRefFunc(Name func) {
