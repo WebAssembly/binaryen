@@ -100,7 +100,10 @@ struct QuotedModule {
   std::string module;
 };
 
-using WASTModule = std::variant<QuotedModule, std::shared_ptr<Module>>;
+struct WASTModule {
+  bool isDefinition = false;
+  std::variant<QuotedModule, std::shared_ptr<Module>> module;
+};
 
 enum class ModuleAssertionType { Trap, Malformed, Invalid, Unlinkable };
 
@@ -112,10 +115,21 @@ struct AssertModule {
 using Assertion = std::variant<AssertReturn, AssertAction, AssertModule>;
 
 struct Register {
+  // TODO: Rename this to distinguish it from instanceName.
   Name name;
+  std::optional<Name> instanceName = std::nullopt;
 };
 
-using WASTCommand = std::variant<WASTModule, Register, Action, Assertion>;
+struct ModuleInstantiation {
+  // If not specified, instantiate the most recent module definition.
+  std::optional<Name> moduleName;
+
+  // If not specified, use the moduleName
+  std::optional<Name> instanceName;
+};
+
+using WASTCommand =
+  std::variant<WASTModule, Register, Action, Assertion, ModuleInstantiation>;
 
 struct ScriptEntry {
   WASTCommand cmd;
