@@ -455,10 +455,9 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'try_table.wast',  # Requires try_table interpretation
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
-    'ref_is_null.wast',  # Requires ref.null wast constants
-    'ref_null.wast',     # Requires ref.null wast constants
+    'ref_is_null.wast',  # Requires support for non-nullable reference types in tables
     'return_call_indirect.wast',  # Requires more precise unreachable validation
-    'select.wast',  # Requires ref.null wast constants
+    'select.wast',  # Missing validation of type annotation on select
     'table.wast',  # Requires support for table default elements
     'unreached-invalid.wast',  # Requires more precise unreachable validation
     'array.wast',  # Requires support for table default elements
