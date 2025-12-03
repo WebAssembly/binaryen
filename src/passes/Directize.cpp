@@ -46,28 +46,6 @@ namespace wasm {
 
 namespace {
 
-struct TableInfo {
-  // Whether the table may be modifed at runtime, either because it is imported
-  // or exported, or table.set operations exist for it in the code.
-  bool mayBeModified = false;
-
-  // Whether we can assume that the initial contents are immutable. See the
-  // toplevel comment.
-  bool initialContentsImmutable = false;
-
-  std::unique_ptr<TableUtils::FlatTable> flatTable;
-
-  bool canOptimize() const {
-    // We can optimize if:
-    //  * Either the table can't be modified at all, or it can be modified but
-    //    the initial contents are immutable (so we can optimize them).
-    //  * The table is flat.
-    return (!mayBeModified || initialContentsImmutable) && flatTable->valid;
-  }
-};
-
-using TableInfoMap = std::unordered_map<Name, TableInfo>;
-
 struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
@@ -75,7 +53,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     return std::make_unique<FunctionDirectizer>(tables);
   }
 
-  FunctionDirectizer(const TableInfoMap& tables) : tables(tables) {}
+  FunctionDirectizer(const TableUtils::TableInfoMap& tables) : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     auto& table = tables.at(curr->table);
@@ -114,7 +92,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  const TableInfoMap& tables;
+  const TableUtils::TableInfoMap& tables;
 
   bool changedTypes = false;
 
@@ -123,7 +101,7 @@ private:
   // that is, whether we know a direct call target, or we know it will trap, or
   // if we know nothing.
   CallUtils::IndirectCallInfo getTargetInfo(Expression* target,
-                                            const TableInfo& table,
+                                            const TableUtils::TableInfo& table,
                                             CallIndirect* original) {
     auto* c = target->dynCast<Const>();
     if (!c) {
@@ -165,7 +143,7 @@ private:
   // with an unreachable.
   void makeDirectCall(const std::vector<Expression*>& operands,
                       Expression* c,
-                      const TableInfo& table,
+                      const TableUtils::TableInfo& table,
                       CallIndirect* original) {
     auto info = getTargetInfo(c, table, original);
     if (std::get_if<CallUtils::Unknown>(&info)) {
@@ -211,84 +189,17 @@ struct Directize : public Pass {
     auto initialContentsImmutable =
       hasArgument("directize-initial-contents-immutable");
 
-    // Set up the initial info.
-    TableInfoMap tables;
-    for (auto& table : module->tables) {
-      tables[table->name].initialContentsImmutable = initialContentsImmutable;
-      tables[table->name].flatTable =
-        std::make_unique<TableUtils::FlatTable>(*module, *table);
-    }
+    auto tables = TableUtils::computeTableInfo(*module, initialContentsImmutable);
 
-    // Next, look at the imports and exports.
-
-    for (auto& table : module->tables) {
-      if (table->imported()) {
-        tables[table->name].mayBeModified = true;
+    // Stop if we cannot optimize anything.
+    auto hasOptimizableTable = false;
+    for (auto& [_, info] : tables) {
+      if (info.canOptimize()) {
+        hasOptimizableTable = true;
+        break;
       }
     }
-
-    for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Table) {
-        tables[*ex->getInternalName()].mayBeModified = true;
-      }
-    }
-
-    // This may already be enough information to know that we can't optimize
-    // anything. If so, skip scanning all the module contents.
-    auto canOptimize = [&]() {
-      for (auto& [_, info] : tables) {
-        if (info.canOptimize()) {
-          return true;
-        }
-      }
-      return false;
-    };
-
-    if (!canOptimize()) {
-      return;
-    }
-
-    // Find which tables have sets.
-
-    using TablesWithSet = std::unordered_set<Name>;
-
-    ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
-      *module, [&](Function* func, TablesWithSet& tablesWithSet) {
-        if (func->imported()) {
-          return;
-        }
-
-        struct Finder : public PostWalker<Finder> {
-          TablesWithSet& tablesWithSet;
-
-          Finder(TablesWithSet& tablesWithSet) : tablesWithSet(tablesWithSet) {}
-
-          void visitTableSet(TableSet* curr) {
-            tablesWithSet.insert(curr->table);
-          }
-          void visitTableFill(TableFill* curr) {
-            tablesWithSet.insert(curr->table);
-          }
-          void visitTableCopy(TableCopy* curr) {
-            tablesWithSet.insert(curr->destTable);
-          }
-          void visitTableInit(TableInit* curr) {
-            tablesWithSet.insert(curr->table);
-          }
-        };
-
-        Finder(tablesWithSet).walkFunction(func);
-      });
-
-    for (auto& [_, names] : analysis.map) {
-      for (auto name : names) {
-        tables[name].mayBeModified = true;
-      }
-    }
-
-    // Perhaps the new information about tables with sets shows we cannot
-    // optimize.
-    if (!canOptimize()) {
+    if (!hasOptimizableTable) {
       return;
     }
 
