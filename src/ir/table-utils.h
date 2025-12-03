@@ -151,7 +151,8 @@ using TableInfoMap = std::unordered_map<Name, TableInfo>;
 // Compute a map with table optimizability info. We can be told that the initial
 // contents of the tables are immutable (that is, existing data is not
 // overwritten, but new things may be appended).
-TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable=false);
+TableInfoMap computeTableInfo(Module& wasm,
+                              bool initialContentsImmutable = false);
 
 } // namespace wasm::TableUtils
 
