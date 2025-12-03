@@ -454,8 +454,19 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # rare, and in a sense they are actually unuseful).
                 if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
                     valid_executions += 1
+                else:
+                    print('====')
+                    print('invalid execution, returncode: ', proc.returncode)
+                    print('stdout:')
+                    print(proc.stdout)
+                    print('stderr:')
+                    print(proc.stderr)
+                    print('====')
 
-            print('Valid executions are distributed as ~ mean 0.99')
+            # We do not want valid executions to be 100%, as some amount of
+            # traps during startup are interesting (VMs can have bugs there),
+            # but the vast majority should be valid.
+            print('Valid executions are distributed as ~ mean 0.95')
             print(f'mean valid executions: {valid_executions / N}')
             # Assert on having at least half execute properly. Given the true mean
             # is 0.9, for half of 100 to fail is incredibly unlikely.
