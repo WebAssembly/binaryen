@@ -465,7 +465,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
             # We do not want valid executions to be 100%, as some amount of
             # traps during startup are interesting (VMs can have bugs there),
-            # but the vast majority should be valid.
+            # but the vast majority should be valid. (Startup traps can include
+            # null descriptors, segments out of bounds, etc.)
             print('Valid executions are distributed as ~ mean 0.95')
             print(f'mean valid executions: {valid_executions / N}')
             # Assert on having at least half execute properly. Given the true mean
