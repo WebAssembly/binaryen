@@ -183,7 +183,7 @@ def run_wasm_reduce_tests():
 
 def run_spec_test(wast, stdout=None, stderr=None):
     cmd = shared.WASM_SHELL + [wast]
-    output = support.run_command(cmd, stdout=stdout, stderr=stderr)
+    output = support.run_command(cmd, stdout=stdout, stderr=subprocess.PIPE)
     # filter out binaryen interpreter logging that the spec suite
     # doesn't expect
     filtered = [line for line in output.splitlines() if not line.startswith('[trap')]
@@ -193,7 +193,7 @@ def run_spec_test(wast, stdout=None, stderr=None):
 def run_opt_test(wast, stdout=None, stderr=None):
     # check optimization validation
     cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
-    support.run_command(cmd, stdout=stdout, stderr=stderr)
+    support.run_command(cmd, stdout=stdout)
 
 
 def check_expected(actual, expected, stdout=None):
@@ -274,7 +274,7 @@ def run_spec_tests():
 
     stop_printer = object()
 
-    def printer(stop_event):
+    def printer():
         while True:
             string = output_queue.get()
             if string is stop_printer:
@@ -282,11 +282,10 @@ def run_spec_tests():
 
             print(string, end="")
 
-    stop_event = threading.Event()
-    printing_thread = threading.Thread(target=printer, args=(stop_event,))
+    printing_thread = threading.Thread(target=printer)
     printing_thread.start()
 
-    worker_count = os.cpu_count() * 2
+    worker_count = os.cpu_count()
     print("Running with", worker_count, "workers")
     executor = ThreadPoolExecutor(max_workers=worker_count)
     try:

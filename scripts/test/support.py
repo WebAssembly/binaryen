@@ -186,27 +186,41 @@ def write_wast(filename, wast, asserts=[]):
             o.write(wast + '\n'.join(asserts))
 
 
+# Hack to allow subprocess.Popen with stdout/stderr to StringIO, which doesn't have a fileno and doesn't work otherwise
+def _process_communicate(*args, **kwargs):
+    overwrite_stderr = "stderr" in kwargs and isinstance(kwargs["stderr"], io.StringIO)
+    overwrite_stdout = "stdout" in kwargs and isinstance(kwargs["stdout"], io.StringIO)
+
+    if overwrite_stdout:
+        kwargs["stdout"] = subprocess.PIPE
+    if overwrite_stderr:
+        kwargs["stderr"] = subprocess.PIPE
+
+    proc = subprocess.Popen(*args, **kwargs)
+    out, err = proc.communicate()
+
+    if overwrite_stdout:
+        kwargs["stdout"].write(out)
+    if overwrite_stderr:
+        kwargs["stderr"].write(err)
+
+    return out, err, proc.returncode
+
+
 def run_command(cmd, expected_status=0, stdout=None, stderr=None,
                 expected_err=None, err_contains=False, err_ignore=None):
+    '''
+    stderr - None, subprocess.PIPE, subprocess.STDOUT or a file handle / io.StringIO to write stdout to
+    stdout - File handle to print debug messages to
+    returns the process's stdout
+    '''
     if expected_err is not None:
         assert stderr == subprocess.PIPE or stderr is None, \
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
     print('executing: ', ' '.join(cmd), file=stdout)
 
-    # Popen's streams require a file handle with a fileno, which StringIO doesn't have
-    # In this case, print the streams after the fact.
-    if isinstance(stderr, io.StringIO):
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, encoding='UTF-8')
-
-        out, err = proc.communicate()
-        code = proc.returncode
-
-        print(err, file=stderr, end='')
-    else:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
-        out, err = proc.communicate()
-        code = proc.returncode
+    out, err, code = _process_communicate(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
 
     if expected_status is not None and code != expected_status:
         raise Exception(f"run_command `{' '.join(cmd)}` failed ({code}) {err or ''}")
