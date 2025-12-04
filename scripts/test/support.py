@@ -202,7 +202,6 @@ def run_command(cmd, expected_status=0, stdout=None, stderr=None,
         out, err = proc.communicate()
         code = proc.returncode
 
-        print(out, file=stdout, end='')
         print(err, file=stderr, end='')
     else:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')

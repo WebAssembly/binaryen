@@ -232,11 +232,12 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
     # check binary format. here we can verify execution of the final
     # result, no need for an output verification
     actual = ''
-    with open(base_name + ".transformed", 'w') as transformed_spec_file:
+    transformed_path = base_name + ".transformed"
+    with open(transformed_path, 'w') as transformed_spec_file:
         for i, (module, asserts) in enumerate(support.split_wast(str(wast))):
             if not module:
                 # Skip any initial assertions that don't have a module
-                return
+                continue
             print(f'        testing split module {i}', file=stdout)
             split_name = base_name + f'_split{i}.wast'
             support.write_wast(split_name, module)
@@ -249,7 +250,7 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
                 transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
     # compare all the outputs to the expected output
-    actual = run_spec_test(base_name + ".transformed", stdout=stdout, stderr=stderr)
+    actual = run_spec_test(transformed_path, stdout=stdout, stderr=stderr)
     check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'), stdout=stdout)
 
 
@@ -271,15 +272,18 @@ def run_spec_tests():
 
     output_queue = queue.Queue()
 
-    def printer():
+    stop_printer = object()
+
+    def printer(stop_event):
         while True:
-            try:
-                string = output_queue.get()
-            except queue.ShutDown:
+            string = output_queue.get()
+            if string is stop_printer:
                 break
+
             print(string, end="")
 
-    printing_thread = threading.Thread(target=printer)
+    stop_event = threading.Event()
+    printing_thread = threading.Thread(target=printer, args=(stop_event,))
     printing_thread.start()
 
     worker_count = os.cpu_count() * 2
@@ -297,7 +301,7 @@ def run_spec_tests():
     finally:
         executor.shutdown(cancel_futures=True)
 
-        output_queue.shutdown()
+        output_queue.put(stop_printer)
         printing_thread.join()
 
 
