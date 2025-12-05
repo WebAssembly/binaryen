@@ -3409,3 +3409,90 @@ console.log("# I31Get");
 
   module.dispose();
 })();
+
+console.log("# CallRef");
+(function testCallRef() {
+  const module = new binaryen.Module();
+
+  const funcName = "tiny";
+  module.addFunction(funcName, binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none, [], module.nop());
+  const funcType = binaryen.Function(module.getFunction(funcName)).type;
+  const funcRef = binaryen.RefFunc(module.ref.func(funcName, funcType));
+
+  const operands = [
+    module.i32.const(6),
+    module.i32.const(7)
+  ];
+
+  const theCallRef = binaryen.CallRef(module.call_ref(funcRef, operands, binaryen.none, false));
+  assert(theCallRef instanceof binaryen.CallRef);
+  assert(theCallRef instanceof binaryen.Expression);
+  assert(theCallRef.numOperands === operands.length);
+  assert(theCallRef.type === binaryen.none);
+  assert(binaryen.RefFunc(theCallRef.target).func === funcName);
+
+  const info = binaryen.getExpressionInfo(theCallRef);
+  assert(info.id === theCallRef.id);
+  assert(info.type === theCallRef.type);
+  assert(info.target === theCallRef.target);
+  assert(info.isReturn === theCallRef.isReturn());
+
+  assert(theCallRef.getNumOperands() === operands.length);
+
+  assert(theCallRef.getOperandAt(0) === operands[0]);
+  assert(theCallRef.getOperandAt(1) === operands[1]);
+
+  theCallRef.setOperandAt(0, operands[1]);
+  assert(theCallRef.getOperandAt(0), operands[1]);
+  theCallRef.setOperandAt(0, operands[0]);
+  assert(theCallRef.getOperandAt(0), operands[0]);
+
+  const newOperand = module.i32.const(8);
+  theCallRef.appendOperand(newOperand);
+  assert(theCallRef.getNumOperands() == 3);
+  assert(theCallRef.getOperandAt(2) === newOperand);
+  
+  theCallRef.removeOperandAt(2);
+  assert(theCallRef.getNumOperands() == 2);
+  assert(theCallRef.getOperandAt(0) === operands[0]);
+  assert(theCallRef.getOperandAt(1) === operands[1]);
+
+  theCallRef.insertOperandAt(1, newOperand);
+  assert(theCallRef.getNumOperands() == 3);
+  assert(theCallRef.getOperandAt(0) === operands[0]);
+  assert(theCallRef.getOperandAt(1) === newOperand);
+  assert(theCallRef.getOperandAt(2) === operands[1]);
+
+  theCallRef.removeOperandAt(1);
+  assert(theCallRef.getNumOperands() == 2);
+  assert(theCallRef.getOperandAt(0) === operands[0]);
+  assert(theCallRef.getOperandAt(1) === operands[1]);
+
+  assert(theCallRef.isReturn() === false);
+  theCallRef.setReturn(true);
+  assert(theCallRef.isReturn() === true);
+  theCallRef.setReturn(false);
+  assert(theCallRef.isReturn() === false);
+
+
+  const targetRef = binaryen.RefFunc(theCallRef.getTarget());
+  assert(theCallRef.getTarget() == theCallRef.target);
+  assert(targetRef.func === funcName);
+
+  const newTargetName = "newTarget";
+  const newTargetRef = binaryen.RefFunc(module.ref.func(newTargetName, funcType));
+  theCallRef.setTarget(newTargetRef);
+  assert(binaryen.RefFunc(theCallRef.getTarget()).func === newTargetName);
+
+  theCallRef.setTarget(funcRef);
+  assert(binaryen.RefFunc(theCallRef.getTarget()).func === funcName);
+
+  console.log(theCallRef.toText());
+  assert(
+    theCallRef.toText()
+    ==
+    "(call_ref $func.0\n (i32.const 6)\n (i32.const 7)\n (ref.func $tiny)\n)\n"
+  );
+
+  module.dispose();
+})();
