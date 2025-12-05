@@ -49,7 +49,7 @@ namespace wasm {
 template<typename T, size_t N> class SmallVector {
   // fixed-space storage
   size_t usedFixed = 0;
-  std::array<T, N> fixed;
+  std::array<T, N> fixed{};
 
   // flexible additional storage
   std::vector<T> flexible;
