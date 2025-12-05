@@ -208,7 +208,9 @@ def check_expected(actual, expected, stdout=None):
 
 def run_one_spec_test(wast: Path, stdout=None, stderr=None):
     test_name = wast.name
-    base_name = "-".join(wast.parts[-3:])
+
+    # /path/to/binaryen/test/spec/foo.wast -> test-spec-foo
+    base_name = "-".join(wast.relative_to(Path(shared.options.binaryen_root)).with_suffix("").parts)
 
     print('..', test_name, file=stdout)
     # windows has some failures that need to be investigated
