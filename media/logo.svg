@@ -9,7 +9,7 @@
    viewBox="0 0 167 167"
    enable-background="new 0 0 900 400"
    xml:space="preserve"
-   sodipodi:docname="logo2.svg"
+   sodipodi:docname="logo.svg"
    inkscape:export-filename="/home/trzeci/Projects/emscripten/site/source/_static/logo.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
@@ -45,12 +45,12 @@
    id="namedview341"
    showgrid="false"
    inkscape:zoom="2.9755556"
-   inkscape:cx="85.698281"
+   inkscape:cx="85.530245"
    inkscape:cy="99.47722"
    inkscape:window-x="26"
    inkscape:window-y="23"
    inkscape:window-maximized="0"
-   inkscape:current-layer="g240"
+   inkscape:current-layer="Layer_1"
    inkscape:showpageshadow="2"
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1" />
@@ -410,14 +410,12 @@
    style="fill:url(#SVGID_6_)" />
 	</g>
 	
-<text
-   xml:space="preserve"
-   transform="translate(147.90522,116.15621)"
+<path
+   d="m 63.587889,122.76169 v -2.20573 h 3.481768 V 97.751295 h -3.481768 v -2.205727 h 16.132799 q 4.976558,0 7.473952,1.677082 2.497394,1.677082 2.497394,5.04947 0,2.42448 -1.73177,3.84636 -1.71354,1.42187 -5.104162,1.78645 4.101559,0.38281 6.289057,2.1875 2.187498,1.80469 2.187498,4.79427 0,4.04687 -3.062497,5.96093 -3.044268,1.91406 -9.552075,1.91406 z M 74.08788,106.90233 h 2.388019 q 3.135414,0 4.648434,-1.13021 1.513019,-1.14843 1.513019,-3.5 0,-2.369785 -1.476561,-3.445305 -1.458332,-1.07552 -4.684892,-1.07552 H 74.08788 Z m 0,13.65363 h 2.606769 q 3.481768,0 5.15885,-1.38541 1.677081,-1.38542 1.677081,-4.28385 0,-2.91667 -1.695311,-4.35677 -1.695311,-1.4401 -5.14062,-1.4401 H 74.08788 Z"
    id="text1"
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:37.3333px;font-family:Serif;-inkscape-font-specification:'Serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect1);display:inline;fill:#000080"><tspan
-     x="61.837891"
-     y="122.76169"
-     id="tspan3">B</tspan></text><text
+   style="font-weight:bold;font-size:37.3333px;font-family:Serif;-inkscape-font-specification:'Serif, Bold';white-space:pre;fill:#000080"
+   transform="translate(149.58558,115.82014)"
+   aria-label="B" /><text
    xml:space="preserve"
    style="text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000"
    x="221.16884"
