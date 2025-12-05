@@ -21,8 +21,6 @@
 
 using namespace wasm;
 
-// A BrIf must require of its value to both match the block it targets, and
-// also the BrIf itself, as the value flows out.
 TEST(GLBsTest, Basics) {
   GLBFinder finder;
 
