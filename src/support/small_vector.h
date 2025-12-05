@@ -230,14 +230,6 @@ struct ZeroInitSmallVector : public SmallVector<T, N> {
   }
 };
 
-#if defined(__aarch64__)
-#pragma GCC diagnostic pop
-#endif
-
-#if defined(__riscv) && __riscv_xlen == 64
-#pragma GCC diagnostic pop
-#endif
-
 } // namespace wasm
 
 #endif // wasm_support_small_vector_h
