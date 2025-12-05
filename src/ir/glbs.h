@@ -23,7 +23,7 @@
 namespace wasm {
 
 //
-// Similar to GLBFinder, but for GLBs.
+// Similar to LUBFinder, but for GLBs.
 //
 struct GLBFinder {
   GLBFinder() {}
