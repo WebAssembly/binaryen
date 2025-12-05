@@ -1242,7 +1242,7 @@ void WasmBinaryWriter::writeSourceMapProlog() {
   // Remove unused function names from 'names' field.
   if (!wasm->debugInfoSymbolNames.empty()) {
     std::vector<std::string> newSymbolNames;
-    std::unordered_map<Index, Index> oldToNewIndex;
+    std::map<Index, Index> oldToNewIndex;
 
     // Collect all used symbol name indexes.
     for (auto& func : wasm->functions) {
