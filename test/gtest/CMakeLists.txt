@@ -22,6 +22,7 @@ set(unittest_SOURCES
   public-type-validator.cpp
   scc.cpp
   stringify.cpp
+  subtype-exprs.cpp
   suffix_tree.cpp
   topological-sort.cpp
   type-builder.cpp

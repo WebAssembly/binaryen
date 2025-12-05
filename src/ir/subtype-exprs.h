@@ -133,6 +133,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitBreak(Break* curr) {
     if (curr->value) {
       self()->noteSubtype(curr->value, self()->findBreakTarget(curr->name));
+      if (curr->condition) {
+        self()->noteSubtype(curr->value, curr);
+      }
     }
   }
   void visitSwitch(Switch* curr) {
