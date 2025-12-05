@@ -57,20 +57,18 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
 
     Finder(Module& wasm, LUBFinder& lub) : wasm(wasm), lub(lub) {}
 
-    void visitReturn(Return* curr) {
-      lub.note(ret->value->type);
-    }
+    void visitReturn(Return* curr) { lub.note(ret->value->type); }
     void visitCall(Call* curr) {
       if (curr->isReturn) {
         lub.note(wasm.getFunction(curr->target)->getResults());
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
-      if (curr->isReturn &&
+      if (curr->isReturn) {
         lub.note(curr->heapType.getSignature().results);
       }
     }
-    void visitCallRef(CallRef* curr) {
+    void visitCallRef(CallRef * curr) {
       if (curr->isReturn) {
         auto targetType = curr->target->type;
         // We can skip unreachable code and calls to bottom types, as both trap.
@@ -84,7 +82,8 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
         lub.note(targetHeapType.getSignature().results);
       }
     }
-  } finder(wasm, lub);
+  }
+  finder(wasm, lub);
   finder.walk(func->body);
 
   return lub;
