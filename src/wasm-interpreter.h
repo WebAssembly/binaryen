@@ -86,7 +86,7 @@ public:
   }
 
   Literals values;
-  Name breakTo; // if non-null, a break is going on
+  Name breakTo;              // if non-null, a break is going on
   Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
                              // this is the tag being suspended
 
@@ -2658,6 +2658,8 @@ public:
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
+  virtual void trap(std::string_view why) { WASM_UNREACHABLE("unimp"); }
+
   virtual void hostLimit(const char* why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void throwException(const WasmException& exn) {
@@ -2937,6 +2939,7 @@ public:
                            Index oldSize,
                            Index newSize) = 0;
     virtual void trap(const char* why) = 0;
+    virtual void trap(std::string_view why) { trap(std::string(why).c_str()); }
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
@@ -3178,6 +3181,8 @@ public:
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
 
+    validateImports();
+
     initializeTableContents();
     initializeMemoryContents();
 
@@ -3268,6 +3273,70 @@ private:
     // The name the table has in that interface.
     Name name;
   };
+
+  // Trap if types don't match between all imports and their corresponding
+  // exports. Imported memories and tables must also be a subtype of their
+  // export.
+  void validateImports() {
+    ModuleUtils::iterImportable(
+      wasm,
+      [this](ExternalKind kind,
+             std::variant<Function*, Memory*, Tag*, Global*, Table*> import) {
+        Importable* importable = std::visit(
+          [](const auto& import) -> Importable* { return import; }, import);
+
+        SubType* importedInstance =
+          linkedInstances.at(importable->module).get();
+        Export* export_ =
+          importedInstance->wasm.getExportOrNull(importable->base);
+
+        // In case functions are imported from the special "spectest" module,
+        // don't check them here, since they won't show up in exports.
+        if (!export_ && kind != ExternalKind::Function) {
+          std::cerr << "importedinstance " << importedInstance
+                    << ". Importable: " << importable->module << " "
+                    << importable->base << "\n";
+          trap((std::stringstream()
+                << "Export " << importable->base << " doesn't exist.")
+                 .str());
+        }
+        if (export_ && export_->kind != kind) {
+          trap("Exported kind doesn't match");
+        }
+
+        if (auto** memory = std::get_if<Memory*>(&import)) {
+          SubType* importedInstance =
+            linkedInstances.at((*memory)->module).get();
+          Export* export_ =
+            importedInstance->wasm.getExportOrNull((*memory)->base);
+          Memory exportedMemory =
+            *importedInstance->wasm.getMemory(*export_->getInternalName());
+          exportedMemory.initial =
+            importedInstance->getMemorySize(*export_->getInternalName());
+
+          // todo which way?
+          // if (!(*memory)->isSubType(exportedMemory)) {
+          if (!exportedMemory.isSubType(**memory)) {
+            trap((std::stringstream()
+                  << "Imported memory isn't compatible. Imported memory: "
+                  << **memory << ". Exported memory: " << exportedMemory)
+                   .str());
+          }
+        }
+
+        if (auto** table = std::get_if<Table*>(&import)) {
+          SubType* importedInstance =
+            linkedInstances.at((*table)->module).get();
+          Export* export_ =
+            importedInstance->wasm.getExportOrNull((*table)->base);
+          Table* exportedTable =
+            importedInstance->wasm.getTable(*export_->getInternalName());
+          if (!(*table)->isSubType(*exportedTable)) {
+            trap("Imported table isn't compatible");
+          }
+        }
+      });
+  }
 
   TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
@@ -4682,11 +4751,12 @@ public:
   }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(const char* why) override {
-    // Traps break all current continuations - they will never be resumable.
+  void trap(std::string_view why) override {
     self()->clearContinuationStore();
     externalInterface->trap(why);
   }
+
+  void trap(const char* why) override { trap(std::string_view(why)); }
 
   void hostLimit(const char* why) override {
     self()->clearContinuationStore();
