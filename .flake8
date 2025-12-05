@@ -6,4 +6,4 @@ ignore =
   E241,
   ; line break after binary operator
   W504
-exclude = third_party,./test/emscripten,./test/spec,./test/wasm-install,./test/lit,./_deps
+exclude = third_party,./test/emscripten,./test/spec,./test/wasm-install,./test/lit,./_deps,./build

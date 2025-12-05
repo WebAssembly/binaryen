@@ -3882,6 +3882,15 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
   return ctx.in.err("unrecognized module field");
 }
 
+// (m:modulefield)*
+template<typename Ctx> Result<> moduleBody(Ctx& ctx) {
+  while (auto field = modulefield(ctx)) {
+    CHECK_ERR(field);
+  }
+
+  return Ok{};
+}
+
 // module ::= '(' 'module' id? (m:modulefield)* ')'
 //          | (m:modulefield)* eof
 template<typename Ctx> Result<> module(Ctx& ctx) {
@@ -3893,9 +3902,7 @@ template<typename Ctx> Result<> module(Ctx& ctx) {
     }
   }
 
-  while (auto field = modulefield(ctx)) {
-    CHECK_ERR(field);
-  }
+  CHECK_ERR(moduleBody(ctx));
 
   if (outer && !ctx.in.takeRParen()) {
     return ctx.in.err("expected end of module");
