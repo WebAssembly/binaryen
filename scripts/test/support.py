@@ -192,17 +192,19 @@ def _process_communicate(*args, **kwargs):
     overwrite_stdout = "stdout" in kwargs and isinstance(kwargs["stdout"], io.StringIO)
 
     if overwrite_stdout:
+        stdout_fd = kwargs["stdout"]
         kwargs["stdout"] = subprocess.PIPE
     if overwrite_stderr:
+        stderr_fd = kwargs["stderr"]
         kwargs["stderr"] = subprocess.PIPE
 
     proc = subprocess.Popen(*args, **kwargs)
     out, err = proc.communicate()
 
     if overwrite_stdout:
-        kwargs["stdout"].write(out)
+        stdout_fd.write(out)
     if overwrite_stderr:
-        kwargs["stderr"].write(err)
+        stderr_fd.write(err)
 
     return out, err, proc.returncode
 
