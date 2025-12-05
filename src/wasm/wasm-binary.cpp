@@ -1264,7 +1264,7 @@ void WasmBinaryWriter::writeSourceMapProlog() {
 
     // Update all debug locations to point to the new indices.
     for (auto& func : wasm->functions) {
-      for (auto& pair : func->debugLocations) {
+      for (auto& [_, location] : func->debugLocations) {
         if (pair.second && pair.second->symbolNameIndex) {
           uint32_t oldIndex = *pair.second->symbolNameIndex;
           pair.second->symbolNameIndex = oldToNewIndex[oldIndex];
