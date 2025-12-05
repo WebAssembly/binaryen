@@ -1257,7 +1257,7 @@ void WasmBinaryWriter::writeSourceMapProlog() {
 
     // Create the new list of names and the mapping from old to new indices.
     uint32_t newIndex = 0;
-    for (auto& pair : oldToNewIndex) {
+    for (auto& [oldIndex, newIndex] : oldToNewIndex) {
       // pair.first is the oldIndex
       newSymbolNames.push_back(wasm->debugInfoSymbolNames[pair.first]);
       pair.second = newIndex++; // update placeholder to new index
