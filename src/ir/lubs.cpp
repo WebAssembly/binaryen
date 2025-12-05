@@ -57,7 +57,7 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
 
     Finder(Module& wasm, LUBFinder& lub) : wasm(wasm), lub(lub) {}
 
-    void visitReturn(Return* curr) { lub.note(ret->value->type); }
+    void visitReturn(Return* curr) { lub.note(curr->value->type); }
     void visitCall(Call* curr) {
       if (curr->isReturn) {
         lub.note(wasm.getFunction(curr->target)->getResults());
