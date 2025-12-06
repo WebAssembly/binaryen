@@ -16,6 +16,7 @@
 
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
+#include "ir/glbs.h"
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
@@ -1894,7 +1895,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
     // Maps children we can replace to the types we can replace them with. We
     // only store nontrivial ones (i.e., where the type is not just the child's
     // type).
-    std::unordered_map<Expression*, Type> childTypes;
+    std::unordered_map<Expression*, GLBFinder> childTypes;
 
     // We only care about constraints on Expression* things.
     void noteSubtype(Type sub, Type super) {}
@@ -1904,9 +1905,8 @@ void TranslateToFuzzReader::mutate(Function* func) {
       // The expression must be a supertype of a fixed type. Nothing to do.
     }
     void noteSubtype(Expression* sub, Type super) {
-      if (super.isRef() && sub->type != super) {
-        // This is a nontrivial opportunity to replace sub with a given type.
-        childTypes[sub] = super;
+      if (super.isRef()) {
+        childTypes[sub].note(super);
       }
     }
     void noteSubtype(Expression* sub, Expression* super) {
@@ -1962,14 +1962,12 @@ void TranslateToFuzzReader::mutate(Function* func) {
       // Find the type to replace with.
       auto type = curr->type;
       if (type.isRef()) {
-        auto iter = finder.childTypes.find(curr);
-        if (iter != finder.childTypes.end()) {
-          type = iter->second;
+        auto& glb = finder.childTypes[curr];
+        if (glb.noted()) {
+          type = glb.getGLB();
           // We can only be given a less-refined type (certainly we can replace
           // curr with its own type).
           assert(Type::isSubType(curr->type, type));
-          // We only store an interesting non-trivial type.
-          assert(type != curr->type);
         }
       }
 

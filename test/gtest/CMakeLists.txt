@@ -11,6 +11,7 @@ set(unittest_SOURCES
   cfg.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
+  glbs.cpp
   interpreter.cpp
   intervals.cpp
   json.cpp
