@@ -39,6 +39,7 @@ function initializeConstants() {
     ['eqref', 'Eqref'],
     ['i31ref', 'I31ref'],
     ['structref', 'Structref'],
+    ['arrayref', 'Arrayref'],
     ['stringref', 'Stringref'],
     ['nullref', 'Nullref'],
     ['nullexternref', 'NullExternref'],
@@ -2378,6 +2379,12 @@ function wrapModule(module, self = {}) {
   self['structref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['structref']);
+    }
+  };
+
+  self['arrayref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['arrayref']);
     }
   };
 

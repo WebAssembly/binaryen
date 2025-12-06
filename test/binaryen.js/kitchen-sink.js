@@ -660,6 +660,7 @@ function test_core() {
     module.eqref.pop(),
     module.i31ref.pop(),
     module.structref.pop(),
+    module.arrayref.pop(),
     module.stringref.pop(),
 
     // Memory
