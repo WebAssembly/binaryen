@@ -345,6 +345,15 @@ protected:
     return Literal(allocation);
   }
 
+  // TODO find a better spot for this or see if a helper already exists.
+  template<typename T>
+  void writeBytes(T value, int numBytes, size_t index, Literals& values) {
+    for (int i = 0; i < numBytes; ++i) {
+      values[index + i] =
+        Literal(static_cast<int32_t>((value >> (i * 8)) & 0xff));
+    }
+  }
+
 public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -2291,12 +2300,58 @@ public:
     if (!data) {
       trap("null ref");
     }
+
     Index i = index.getSingleValue().geti32();
     if (i >= data->values.size()) {
       trap("array oob");
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
     data->values[i] = truncateForPacking(value.getSingleValue(), field);
+    return Flow();
+  }
+  Flow visitArrayStore(ArrayStore* curr) {
+    VISIT(ref, curr->ref)
+    VISIT(index, curr->index)
+    VISIT(value, curr->value)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+
+    Index i = index.getSingleValue().geti32();
+    size_t size = data->values.size();
+    // Use subtraction to avoid overflow.
+    if (i >= size || curr->bytes > (size - i)) {
+      trap("array oob");
+    }
+    switch (curr->valueType.getBasic()) {
+      case Type::i32:
+        writeBytes(
+          value.getSingleValue().geti32(), curr->bytes, i, data->values);
+        break;
+      case Type::i64:
+        writeBytes(
+          value.getSingleValue().geti64(), curr->bytes, i, data->values);
+        break;
+      case Type::f32:
+        writeBytes(value.getSingleValue().reinterpreti32(),
+                   curr->bytes,
+                   i,
+                   data->values);
+        break;
+      case Type::f64:
+        writeBytes(value.getSingleValue().reinterpreti64(),
+                   curr->bytes,
+                   i,
+                   data->values);
+        break;
+      case Type::v128:
+        // TODO
+        WASM_UNREACHABLE("todo");
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unimp basic type");
+    }
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {

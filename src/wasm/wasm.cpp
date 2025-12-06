@@ -1323,6 +1323,15 @@ void ArraySet::finalize() {
   }
 }
 
+void ArrayStore::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
 void ArrayLen::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
