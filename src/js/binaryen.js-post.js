@@ -2465,11 +2465,17 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['call_ref'] = function(target, operands, type, isReturn) {
+  self['call_ref'] = function(target, operands, type) {
     return preserveStack(() =>
-      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, isReturn)
+      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, false)
     );
   };
+  
+  self['return_call_ref'] = function(target, operands, type) {
+    return preserveStack(() =>
+      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, true)
+    );
+  }
 
   self['any'] = {
     'convert_extern'() {

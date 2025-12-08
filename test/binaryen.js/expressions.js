@@ -3424,7 +3424,7 @@ console.log("# CallRef");
     module.i32.const(7)
   ];
 
-  const theCallRef = binaryen.CallRef(module.call_ref(funcRef, operands, binaryen.none, false));
+  const theCallRef = binaryen.CallRef(module.call_ref(funcRef, operands, binaryen.none));
   assert(theCallRef instanceof binaryen.CallRef);
   assert(theCallRef instanceof binaryen.Expression);
   assert(theCallRef.numOperands === operands.length);
@@ -3473,6 +3473,13 @@ console.log("# CallRef");
   assert(theCallRef.isReturn() === true);
   theCallRef.setReturn(false);
   assert(theCallRef.isReturn() === false);
+
+  const theReturnCallRef = binaryen.CallRef(module.return_call_ref(funcRef, operands, binaryen.none));
+  assert(theReturnCallRef instanceof binaryen.CallRef);
+  assert(theReturnCallRef instanceof binaryen.Expression);
+  assert(theReturnCallRef.numOperands === operands.length);
+  assert(binaryen.RefFunc(theReturnCallRef.target).func === funcName);
+  assert(theReturnCallRef.isReturn() === true);
 
 
   const targetRef = binaryen.RefFunc(theCallRef.getTarget());
