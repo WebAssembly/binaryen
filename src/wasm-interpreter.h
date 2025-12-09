@@ -29,6 +29,7 @@
 #define wasm_wasm_interpreter_h
 
 #include <cmath>
+#include <iomanip>
 #include <limits.h>
 #include <sstream>
 #include <variant>
@@ -86,7 +87,7 @@ public:
   }
 
   Literals values;
-  Name breakTo; // if non-null, a break is going on
+  Name breakTo;              // if non-null, a break is going on
   Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
                              // this is the tag being suspended
 
@@ -2658,6 +2659,8 @@ public:
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
+  virtual void trap(std::string_view why) { WASM_UNREACHABLE("unimp"); }
+
   virtual void hostLimit(const char* why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void throwException(const WasmException& exn) {
@@ -2937,6 +2940,7 @@ public:
                            Index oldSize,
                            Index newSize) = 0;
     virtual void trap(const char* why) = 0;
+    virtual void trap(std::string_view why) { trap(std::string(why).c_str()); }
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
@@ -3178,6 +3182,8 @@ public:
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
 
+    validateImports();
+
     initializeTableContents();
     initializeMemoryContents();
 
@@ -3269,6 +3275,78 @@ private:
     Name name;
   };
 
+  // Trap if the importable's export's kind doesn't match `kind`.
+  void validateImportKindMatches(ExternalKind kind,
+                                 const Importable& importable) {
+    auto it = linkedInstances.find(importable.module);
+    if (it == linkedInstances.end()) {
+      trap((std::stringstream()
+            << "Import module " << std::quoted(importable.module.toString())
+            << " doesn't exist.")
+             .str());
+    }
+    SubType* importedInstance = it->second.get();
+
+    Export* export_ = importedInstance->wasm.getExportOrNull(importable.base);
+
+    if (!export_) {
+      trap((std::stringstream()
+            << "Export " << importable.base << " doesn't exist.")
+             .str());
+    }
+    if (export_->kind != kind) {
+      trap("Exported kind doesn't match");
+    }
+  }
+
+  // Trap if types don't match between all imports and their corresponding
+  // exports. Imported memories and tables must also be a subtype of their
+  // export.
+  void validateImports() {
+    ModuleUtils::iterImportable(
+      wasm,
+      [this](ExternalKind kind,
+             std::variant<Function*, Memory*, Tag*, Global*, Table*> import) {
+        Importable* importable = std::visit(
+          [](const auto& import) -> Importable* { return import; }, import);
+
+        // These two modules are injected implicitly to tests. We won't find any
+        // import information for them.
+        if (importable->module == "binaryen-intrinsics" ||
+            (importable->module == "spectest" &&
+             importable->base.startsWith("print")) ||
+            importable->module == "fuzzing-support") {
+          return;
+        }
+
+        validateImportKindMatches(kind, *importable);
+
+        SubType* importedInstance =
+          linkedInstances.at(importable->module).get();
+        Export* export_ =
+          importedInstance->wasm.getExportOrNull(importable->base);
+
+        if (auto** memory = std::get_if<Memory*>(&import)) {
+          Memory exportedMemory =
+            *importedInstance->wasm.getMemory(*export_->getInternalName());
+          exportedMemory.initial =
+            importedInstance->getMemorySize(*export_->getInternalName());
+
+          if (!exportedMemory.isSubType(**memory)) {
+            trap("Imported memory isn't compatible.");
+          }
+        }
+
+        if (auto** table = std::get_if<Table*>(&import)) {
+          Table* exportedTable =
+            importedInstance->wasm.getTable(*export_->getInternalName());
+          if (!(*table)->isSubType(*exportedTable)) {
+            trap("Imported table isn't compatible");
+          }
+        }
+      });
+  }
+
   TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
     if (table->imported()) {
@@ -3326,12 +3404,16 @@ private:
   };
 
   MemoryInstanceInfo getMemoryInstanceInfo(Name name) {
-    auto* memory = wasm.getMemory(name);
-    if (memory->imported()) {
-      auto& importedInstance = linkedInstances.at(memory->module);
-      auto* memoryExport = importedInstance->wasm.getExport(memory->base);
-      return importedInstance->getMemoryInstanceInfo(
-        *memoryExport->getInternalName());
+    auto* instance = self();
+    Export* memoryExport = nullptr;
+    for (auto* memory = instance->wasm.getMemory(name); memory->imported();
+         memory = instance->wasm.getMemory(*memoryExport->getInternalName())) {
+      instance = instance->linkedInstances.at(memory->module).get();
+      memoryExport = instance->wasm.getExport(memory->base);
+    }
+
+    if (memoryExport) {
+      return instance->getMemoryInstanceInfo(*memoryExport->getInternalName());
     }
 
     return MemoryInstanceInfo{self(), name};
@@ -3385,6 +3467,11 @@ private:
   }
 
   Address getMemorySize(Name memory) {
+    auto info = getMemoryInstanceInfo(memory);
+    if (info.instance != self()) {
+      return info.instance->getMemorySize(info.name);
+    }
+
     auto iter = memorySizes.find(memory);
     if (iter == memorySizes.end()) {
       externalInterface->trap("getMemorySize called on non-existing memory");
@@ -3397,7 +3484,7 @@ private:
     if (iter == memorySizes.end()) {
       externalInterface->trap("setMemorySize called on non-existing memory");
     }
-    memorySizes[memory] = size;
+    iter->second = size;
   }
 
 public:
@@ -4682,11 +4769,13 @@ public:
   }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(const char* why) override {
+  void trap(std::string_view why) override {
     // Traps break all current continuations - they will never be resumable.
     self()->clearContinuationStore();
     externalInterface->trap(why);
   }
+
+  void trap(const char* why) override { trap(std::string_view(why)); }
 
   void hostLimit(const char* why) override {
     self()->clearContinuationStore();

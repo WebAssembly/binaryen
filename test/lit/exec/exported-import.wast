@@ -4,7 +4,7 @@
 ;; no other output is expected (as the import does nothing and is ignored).
 
 (module
-  (import "spectest" "nothing" (func $import))
+  (import "spectest" "print" (func $import))
   (export "__wasm_call_ctors" (func $import))
 )
 
