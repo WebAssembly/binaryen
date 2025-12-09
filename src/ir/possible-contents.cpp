@@ -828,7 +828,8 @@ struct InfoCollector
         return ResultLocation{target, i};
       });
   }
-  template<typename T> void handleIndirectCall(T* curr, HeapType targetType, Exactness exact) {
+  template<typename T>
+  void handleIndirectCall(T* curr, HeapType targetType, Exactness exact) {
     // If the heap type is not a signature, which is the case for a bottom type
     // (null) then nothing can be called.
     if (!targetType.isSignature()) {
@@ -861,11 +862,9 @@ struct InfoCollector
     for (Index i = 0; i < sig.results.size(); i++) {
       if (isRelevant(sig.results[i])) {
         shared.subTypes->iterSubTypes(
-          targetType,
-          [&](HeapType subType, Index depth) {
-            info.links.push_back(
-              {SignatureResultLocation{subType, i},
-               ExpressionLocation{curr, i}});
+          targetType, [&](HeapType subType, Index depth) {
+            info.links.push_back({SignatureResultLocation{subType, i},
+                                  ExpressionLocation{curr, i}});
           });
       }
     }
@@ -874,7 +873,8 @@ struct InfoCollector
     // If the type is unreachable, nothing can be called (and there is no heap
     // type to get).
     if (targetType != Type::unreachable) {
-      handleIndirectCall(curr, targetType.getHeapType(), targetType.getExactness());
+      handleIndirectCall(
+        curr, targetType.getHeapType(), targetType.getExactness());
     }
   }
 
