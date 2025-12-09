@@ -233,7 +233,6 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $super (type $super) (param $x i32)
-  ;; This type is called with only one possible value, 42.
   (drop
    (local.get $x)
   )
@@ -245,8 +244,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $sub (type $sub) (param $x i32)
-  ;; We might be called with our supertype too, and the values differ, so we do
-  ;; not infer anything here.
+  ;; We can now infer 42 here.
   (drop
    (local.get $x)
   )
@@ -263,12 +261,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $export (export "export") (param $x i32)
-  ;; Call using the supertype.
   (call_indirect $table (type $super)
    (i32.const 42)
    (local.get $x)
   )
-  ;; Call using the subtype.
   (call_indirect $table (type $sub)
    (i32.const 42) ;; this changed
    (local.get $x)
