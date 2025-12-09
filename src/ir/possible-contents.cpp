@@ -448,6 +448,8 @@ namespace {
 struct SharedInfo {
   // The names of tables that are imported or exported.
   std::unordered_set<Name> publicTables;
+  // Subtyping info.
+  SubTypes* subTypes;
 };
 
 // The data we gather from each function, as we process them in parallel. Later
@@ -826,29 +828,53 @@ struct InfoCollector
         return ResultLocation{target, i};
       });
   }
-  template<typename T> void handleIndirectCall(T* curr, HeapType targetType) {
+  template<typename T> void handleIndirectCall(T* curr, HeapType targetType, Exactness exact) {
     // If the heap type is not a signature, which is the case for a bottom type
     // (null) then nothing can be called.
     if (!targetType.isSignature()) {
       assert(targetType.isBottom());
       return;
     }
+    // Connect us to the given type.
+    auto sig = targetType.getSignature();
     handleCall(
       curr,
       [&](Index i) {
-        assert(i <= targetType.getSignature().params.size());
+        assert(i <= sig.params.size());
         return SignatureParamLocation{targetType, i};
       },
       [&](Index i) {
-        assert(i <= targetType.getSignature().results.size());
+        assert(i <= sig.results.size());
         return SignatureResultLocation{targetType, i};
       });
+    // If the type is exact, we only need to read SignatureParamLocation /
+    // SignatureResultLocation of this exact type, and we are done.
+    if (exact == Exact) {
+      return;
+    }
+    // Inexact type, so subtyping is relevant: add the relevant links.
+    // TODO: SignatureParamLocation is handled below in an inefficient way, see
+    //       there.
+    // TODO: For CallRef, we could do something like readFromData() and use the
+    //       of the flowing function reference, not the static type. We could
+    //       even reuse ConeReadLocation if we generalized it to function types.
+    for (Index i = 0; i < sig.results.size(); i++) {
+      if (isRelevant(sig.results[i])) {
+        shared.subTypes->iterSubTypes(
+          targetType,
+          [&](HeapType subType, Index depth) {
+            info.links.push_back(
+              {SignatureResultLocation{subType, i},
+               ExpressionLocation{curr, i}});
+          });
+      }
+    }
   }
   template<typename T> void handleIndirectCall(T* curr, Type targetType) {
     // If the type is unreachable, nothing can be called (and there is no heap
     // type to get).
     if (targetType != Type::unreachable) {
-      handleIndirectCall(curr, targetType.getHeapType());
+      handleIndirectCall(curr, targetType.getHeapType(), getExactness());
     }
   }
 
@@ -891,7 +917,8 @@ struct InfoCollector
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: optimize the call target like CallRef
-    handleIndirectCall(curr, curr->heapType);
+    // CallIndirect only knows a heap type, so it is always inexact.
+    handleIndirectCall(curr, curr->heapType, Inexact);
 
     // If this goes to a public table, then we must root the output, as the
     // table could contain anything at all, and calling functions there could
@@ -2242,12 +2269,20 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "subtypes phase\n";
+#endif
+
+  subTypes = std::make_unique<SubTypes>(wasm);
+  maxDepths = subTypes->getMaxDepths();
+
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
 
   // Compute shared info that we need for the main pass over each function, such
   // as the imported/exported tables.
   SharedInfo shared;
+  shared.subTypes = &subTypes;
 
   for (auto& table : wasm.tables) {
     if (table->imported()) {
@@ -2443,11 +2478,29 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "struct phase\n";
+  std::cout << "function subtyping phase\n";
 #endif
 
-  subTypes = std::make_unique<SubTypes>(wasm);
-  maxDepths = subTypes->getMaxDepths();
+  // Link function subtyping params. When a function of type B has a supertype
+  // A, then we may call B using A's type. That means the parameters to
+  // (indirect) calls to B must look at supertypes, which is the opposite of the
+  // logic for results, readFromData(), etc. For now, we just connect these
+  // types directly, which does not fully optimize exact types. TODO: Add a new
+  // mechanism to optimize here.
+  for (auto type : subTypes->types) {
+    if (!type.isFunction()) {
+      continue;
+    }
+    auto super = type.getSuperType();
+    if (!super) {
+      continue;
+    }
+    auto params = type.getSignature().params;
+    for (Index i = 0; i < params.size(); i++) {
+      links.insert(getIndexes(LocationLink{SignatureParamLocation{*super, i},
+                                           SignatureParamLocation{type, i}}));
+    }
+  }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "Link-targets phase\n";
