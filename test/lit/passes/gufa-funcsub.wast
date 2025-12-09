@@ -70,3 +70,141 @@
  )
 )
 
+;; As above, but now the functions return the same.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func (result i32))))
+  (type $super (sub (func (result i32))))
+  ;; CHECK:       (type $sub (sub $super (func (result i32))))
+  (type $sub (sub $super (func (result i32))))
+ )
+
+ ;; CHECK:      (type $2 (func (param i32)))
+
+ ;; CHECK:      (table $table 3 funcref)
+ (table $table i32 3 funcref)
+ ;; CHECK:      (elem $elem (i32.const 0) $super $sub)
+ (elem $elem (i32.const 0) $super $sub)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $super (type $super) (result i32)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $super (type $super) (result i32)
+  (i32.const 42) ;; this changed
+ )
+
+ ;; CHECK:      (func $sub (type $sub) (result i32)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $sub (type $sub) (result i32)
+  (i32.const 42) ;; this changed
+ )
+
+ ;; CHECK:      (func $export (type $2) (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call_indirect $table (type $super)
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call_indirect $table (type $sub)
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (param $x i32)
+  (drop
+   (call_indirect $table (type $super)
+    (local.get $x)
+   )
+  )
+  ;; They both return 42 now, so we can optimize this.
+  (drop
+   (call_indirect $table (type $sub)
+    (local.get $x)
+   )
+  )
+ )
+)
+
+;; Function subtyping in params.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func (param i32))))
+  (type $super (sub (func (param i32))))
+  ;; CHECK:       (type $sub (sub $super (func (param i32))))
+  (type $sub (sub $super (func (param i32))))
+ )
+
+ ;; CHECK:      (type $2 (func (param i32)))
+
+ ;; CHECK:      (table $table 3 funcref)
+ (table $table i32 3 funcref)
+ ;; CHECK:      (elem $elem (i32.const 0) $super $sub)
+ (elem $elem (i32.const 0) $super $sub)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $super (type $super) (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $super (type $super) (param $x i32)
+  ;; This type is called with only one possible value, 42.
+  (drop
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $sub (type $sub) (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $sub (type $sub) (param $x i32)
+  ;; We might be called with our supertype too, and the values differ, so we do
+  ;; not infer anything here.
+  (drop
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $export (type $2) (param $x i32)
+ ;; CHECK-NEXT:  (call_indirect $table (type $super)
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $sub)
+ ;; CHECK-NEXT:   (i32.const 1337)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (param $x i32)
+  ;; Call using the supertype.
+  (call_indirect $table (type $super)
+   (i32.const 42)
+   (local.get $x)
+  )
+  ;; Call using the subtype.
+  (call_indirect $table (type $sub)
+   (i32.const 1337)
+   (local.get $x)
+  )
+ )
+)
+
