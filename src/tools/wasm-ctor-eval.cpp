@@ -104,13 +104,12 @@ public:
 
   // This needs to be duplicated from ModuleRunner, unfortunately.
   Literal makeFuncData(Name name, Type type) {
-    auto allocation =
-      std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
-        return callFunction(name, arguments);
+    auto allocation = std::make_shared<FuncData>(
+      name,
+      reinterpret_cast<uintptr_t>(this),
+      [self = shared_from_this(), name](Literals arguments) {
+        return self->callFunction(name, arguments);
       });
-#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
-#endif
     return Literal(allocation, type);
   }
 };
@@ -320,7 +319,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     // Use a null instance because these are either host functions or imported
     // from unknown sources.
     // TODO: Be more precise about the types we allow these imports to have.
-    return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
+    return Literal(std::make_shared<FuncData>(import->name, /*self=*/0, f),
                    import->type);
   }
 

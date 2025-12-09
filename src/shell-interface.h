@@ -148,7 +148,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       // Use a null instance because these are host functions.
       return Literal(
         std::make_shared<FuncData>(import->name,
-                                   nullptr,
+                                   /*self=*/0,
                                    [](const Literals& arguments) -> Flow {
                                      for (auto argument : arguments) {
                                        std::cout << argument << " : "
@@ -159,7 +159,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
         import->type);
     } else if (import->module == ENV && import->base == EXIT) {
       return Literal(std::make_shared<FuncData>(import->name,
-                                                nullptr,
+                                                /*self=*/0,
                                                 [](const Literals&) -> Flow {
                                                   // XXX hack for torture tests
                                                   std::cout << "exit()\n";

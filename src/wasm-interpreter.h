@@ -86,7 +86,7 @@ public:
   }
 
   Literals values;
-  Name breakTo; // if non-null, a break is going on
+  Name breakTo;              // if non-null, a break is going on
   Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
                              // this is the tag being suspended
 
@@ -137,17 +137,16 @@ struct FuncData {
 
   // The interpreter instance this function closes over, if any. (There might
   // not be an interpreter instance if this is a host function or an import from
-  // an unknown source.) This is only used for equality comparisons, as two
-  // functions are equal iff they have the same name and are defined by the same
-  // instance (in particular, we do *not* compare the |call| field below, which
-  // is an execution detail).
-  void* self;
+  // an unknown source.) Two functions are equal iff they have the same name and
+  // are defined by the same instance (in particular, we do *not* compare the
+  // |call| field below, which is an execution detail).
+  uintptr_t self;
 
   // A way to execute this function. We use this when it is called.
   using Call = std::function<Flow(const Literals&)>;
   Call call;
 
-  FuncData(Name name, void* self = nullptr, Call call = {})
+  FuncData(Name name, uintptr_t self = 0, Call call = {})
     : name(name), self(self), call(call) {}
 
   bool operator==(const FuncData& other) const {
@@ -362,10 +361,8 @@ public:
   Literal makeFuncData(Name name, Type type) {
     // Identify the interpreter, but do not provide a way to actually call the
     // function.
-    auto allocation = std::make_shared<FuncData>(name, this);
-#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
-#endif
+    auto allocation =
+      std::make_shared<FuncData>(name, reinterpret_cast<uintptr_t>(this));
     return Literal(allocation, type);
   }
 
@@ -2917,7 +2914,9 @@ using GlobalValueSet = std::map<Name, Literals>;
 //
 
 template<typename SubType>
-class ModuleRunnerBase : public ExpressionRunner<SubType> {
+class ModuleRunnerBase
+  : public ExpressionRunner<SubType>,
+    public std::enable_shared_from_this<ModuleRunnerBase<SubType>> {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -3207,9 +3206,10 @@ public:
     }
     return Literal(std::make_shared<FuncData>(
                      func->name,
-                     this,
-                     [this, func](const Literals& arguments) -> Flow {
-                       return callFunction(func->name, arguments);
+                     reinterpret_cast<uintptr_t>(this),
+                     [self = this->shared_from_this(),
+                      func](const Literals& arguments) -> Flow {
+                       return self->callFunction(func->name, arguments);
                      }),
                    func->type);
   }
@@ -4774,7 +4774,7 @@ public:
         auto func = entry[0];
         auto data = func.getFuncData();
         // We must be in the right module to do the call using that name.
-        if (data->self != self()) {
+        if (data->self != (uintptr_t)self()) {
           // Restore the entry to the resume stack, as the other module's
           // callFunction() will read it. Then call into the other module. This
           // sets this up as if we called into the proper module in the first
@@ -4866,10 +4866,9 @@ public:
       flow.values.pop_back();
       arguments = flow.values;
 
-      if (nextData->self != this) {
+      if (nextData->self != (uintptr_t)self()) {
         // This function is in another module. Call from there.
-        auto other = (decltype(this))nextData->self;
-        flow = other->callFunction(name, arguments);
+        flow = nextData->doCall(arguments);
         break;
       }
     }
@@ -5010,13 +5009,16 @@ public:
   Literal makeFuncData(Name name, Type type) {
     // As the super's |makeFuncData|, but here we also provide a way to
     // actually call the function.
-    auto allocation =
-      std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
-        return callFunction(name, arguments);
+    auto allocation = std::make_shared<FuncData>(
+      name,
+      reinterpret_cast<uintptr_t>(this),
+      [moduleRunner = std::static_pointer_cast<ModuleRunner>(
+         std::enable_shared_from_this<
+           ModuleRunnerBase<ModuleRunner>>::shared_from_this()),
+       name](Literals arguments) {
+        return moduleRunner->callFunction(name, arguments);
       });
-#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
-#endif
+
     return Literal(allocation, type);
   }
 };

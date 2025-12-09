@@ -210,7 +210,7 @@ public:
       return {};
     };
     // Use a null instance because this is a host function.
-    return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
+    return Literal(std::make_shared<FuncData>(import->name, /*self=*/0, f),
                    import->type);
   }
 
