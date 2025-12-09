@@ -1,3 +1,10 @@
+<div align="center">
+  <a href="https://github.com/WebAssembly/binaryen">
+    <img src="media/logo.svg" width=300 alt="Binaryen logo"/>
+  </a>
+  <br>
+</div>
+
 [![CI](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml?branch=main&event=push)
 
 # Binaryen
