@@ -4763,11 +4763,14 @@ void WasmBinaryReader::readExports() {
 
 Expression* WasmBinaryReader::readExpression() {
   assert(builder.empty());
-  while (input[pos] != BinaryConsts::End) {
+  while (more() && input[pos] != BinaryConsts::End) {
     auto inst = readInst();
     if (auto* err = inst.getErr()) {
       throwError(err->msg);
     }
+  }
+  if (!more()) {
+    throwError("unexpected end of input");
   }
   ++pos;
   auto expr = builder.build();
