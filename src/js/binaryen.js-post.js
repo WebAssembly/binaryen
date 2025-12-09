@@ -2472,6 +2472,18 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  self['call_ref'] = function(target, operands, type) {
+    return preserveStack(() =>
+      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, false)
+    );
+  };
+  
+  self['return_call_ref'] = function(target, operands, type) {
+    return preserveStack(() =>
+      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, true)
+    );
+  }
+
   self['any'] = {
     'convert_extern'() {
       return Module['_BinaryenRefAsAnyConvertExtern']();
@@ -5150,6 +5162,39 @@ Module['I31Get'] = makeExpressionWrapper(Module['_BinaryenI31GetId'](), {
   },
   'setSigned'(expr, isSigned) {
     Module['_BinaryenI31GetSetSigned'](expr, isSigned);
+  }
+});
+
+Module['CallRef'] = makeExpressionWrapper(Module['_BinaryenCallRefId'](), {
+  'getNumOperands'(expr) {
+    return Module['_BinaryenCallRefGetNumOperands'](expr);
+  },
+  'getOperandAt'(expr, index) {
+    return Module['_BinaryenCallRefGetOperandAt'](expr, index);
+  },
+  'setOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenCallRefSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand'(expr, operandExpr) {
+    return Module['_BinaryenCallRefAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenCallRefInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt'(expr, index) {
+    return Module['_BinaryenCallRefRemoveOperandAt'](expr, index);
+  },
+  'getTarget'(expr) {
+    return Module['_BinaryenCallRefGetTarget'](expr);
+  },
+  'setTarget'(expr, targetExpr) {
+    Module['_BinaryenCallRefSetTarget'](expr, targetExpr);
+  },
+  'isReturn'(expr) {
+    return Boolean(Module['_BinaryenCallRefIsReturn'](expr));
+  },
+  'setReturn'(expr, isReturn) {
+    Module['_BinaryenCallRefSetReturn'](expr, isReturn);
   }
 });
 
