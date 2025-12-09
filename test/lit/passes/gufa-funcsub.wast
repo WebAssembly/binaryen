@@ -272,3 +272,101 @@
  )
 )
 
+;; CallRef, where exactness matters.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func (result i32))))
+  (type $super (sub (func (result i32))))
+  ;; CHECK:       (type $sub (sub $super (func (result i32))))
+  (type $sub (sub $super (func (result i32))))
+ )
+
+ ;; CHECK:      (type $2 (func (param (ref $super) (ref (exact $super)) (ref $sub) (ref (exact $sub)))))
+
+ ;; CHECK:      (table $table 3 funcref)
+ (table $table i32 3 funcref)
+ ;; CHECK:      (elem $elem (i32.const 0) $super $sub)
+ (elem $elem (i32.const 0) $super $sub)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $super (type $super) (result i32)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $super (type $super) (result i32)
+  (i32.const 42)
+ )
+
+ ;; CHECK:      (func $sub (type $sub) (result i32)
+ ;; CHECK-NEXT:  (i32.const 1337)
+ ;; CHECK-NEXT: )
+ (func $sub (type $sub) (result i32)
+  (i32.const 1337)
+ )
+
+ ;; CHECK:      (func $export (type $2) (param $super (ref $super)) (param $super-exact (ref (exact $super))) (param $sub (ref $sub)) (param $sub-exact (ref (exact $sub)))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call_ref $super
+ ;; CHECK-NEXT:    (local.get $super)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call_ref $super
+ ;; CHECK-NEXT:      (local.get $super-exact)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call_ref $sub
+ ;; CHECK-NEXT:      (local.get $sub)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1337)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call_ref $sub
+ ;; CHECK-NEXT:      (local.get $sub-exact)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1337)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (param $super (ref $super)) (param $super-exact (ref (exact $super)))
+                                 (param $sub   (ref $sub))   (param $sub-exact   (ref (exact $sub)))
+  ;; This could call anything, so we infer nothing.
+  (drop
+   (call_ref $super
+    (local.get $super)
+   )
+  )
+  ;; This calls exactly super, so it returns 42.
+  (drop
+   (call_ref $super
+    (local.get $super-exact)
+   )
+  )
+  ;; Called exactly or not, we can infer 1337 here.
+  (drop
+   (call_ref $sub
+    (local.get $sub)
+   )
+  )
+  (drop
+   (call_ref $sub
+    (local.get $sub-exact)
+   )
+  )
+ )
+)
+
