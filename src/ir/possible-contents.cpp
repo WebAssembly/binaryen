@@ -874,7 +874,7 @@ struct InfoCollector
     // If the type is unreachable, nothing can be called (and there is no heap
     // type to get).
     if (targetType != Type::unreachable) {
-      handleIndirectCall(curr, targetType.getHeapType(), getExactness());
+      handleIndirectCall(curr, targetType.getHeapType(), targetType.getExactness());
     }
   }
 
@@ -2282,7 +2282,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Compute shared info that we need for the main pass over each function, such
   // as the imported/exported tables.
   SharedInfo shared;
-  shared.subTypes = &subTypes;
+  shared.subTypes = subTypes.get();
 
   for (auto& table : wasm.tables) {
     if (table->imported()) {
