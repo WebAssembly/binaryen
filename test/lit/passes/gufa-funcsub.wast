@@ -59,7 +59,9 @@
     (local.get $x)
    )
   )
-  ;; Call using the subtype. Now we can infer the return value.
+  ;; Call using the subtype. Now we can infer the return value. (It might also
+  ;; trap, of course, if the table slot is null, but that does not prevent us
+  ;; from setting the result of 1 here, which is only used if it does not trap.)
   (drop
    (call_indirect $table (type $sub)
     (local.get $x)
