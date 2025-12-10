@@ -1269,7 +1269,7 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
 
     // Update all debug locations to point to the new indices.
-    auto updateIndexMap =
+    auto updateIndex =
       [&](std::optional<Function::DebugLocation>& location) {
         if (location && location->symbolNameIndex) {
           uint32_t oldIndex = *location->symbolNameIndex;
@@ -1278,10 +1278,10 @@ void WasmBinaryWriter::writeSourceMapProlog() {
       };
     for (auto& func : wasm->functions) {
       for (auto& [_, location] : func->debugLocations) {
-        updateIndexMap(location);
+        updateIndex(location);
       }
-      updateIndexMap(func->prologLocation);
-      updateIndexMap(func->epilogLocation);
+      updateIndex(func->prologLocation);
+      updateIndex(func->epilogLocation);
     }
 
     // Replace the old symbol names with the new, pruned list.
