@@ -1246,7 +1246,7 @@ void WasmBinaryWriter::writeSourceMapProlog() {
 
     // Collect all used symbol name indexes.
     auto prepareIndexMap =
-      [&](std::optional<Function::DebugLocation>& location) {
+      [&](const std::optional<Function::DebugLocation>& location) {
         if (location && location->symbolNameIndex) {
           uint32_t oldIndex = *location->symbolNameIndex;
           assert(oldIndex < wasm->debugInfoSymbolNames.size());
