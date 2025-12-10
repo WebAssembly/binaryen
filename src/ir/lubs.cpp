@@ -72,11 +72,7 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
       if (curr->isReturn) {
         auto targetType = curr->target->type;
         // We can skip unreachable code and calls to bottom types, as both trap.
-        if (targetType == Type::unreachable) {
-          return;
-        }
-        auto targetHeapType = targetType.getHeapType();
-        if (targetHeapType.isBottom()) {
+        if (!targetType.isSignature()) {
           return;
         }
         lub.note(targetHeapType.getSignature().results);
