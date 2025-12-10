@@ -857,7 +857,7 @@ struct InfoCollector
     // TODO: SignatureParamLocation is handled below in an inefficient way, see
     //       there.
     // TODO: For CallRef, we could do something like readFromData() and use the
-    //       of the flowing function reference, not the static type. We could
+    //       flowing function reference's type, not the static type. We could
     //       even reuse ConeReadLocation if we generalized it to function types.
     for (Index i = 0; i < sig.results.size(); i++) {
       if (isRelevant(sig.results[i])) {
