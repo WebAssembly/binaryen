@@ -1245,14 +1245,20 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     std::map<Index, Index> oldToNewIndex;
 
     // Collect all used symbol name indexes.
-    for (auto& func : wasm->functions) {
-      for (auto& [_, location] : func->debugLocations) {
+    auto prepareIndexMap =
+      [&](std::optional<Function::DebugLocation>& location) {
         if (location && location->symbolNameIndex) {
           uint32_t oldIndex = *location->symbolNameIndex;
           assert(oldIndex < wasm->debugInfoSymbolNames.size());
           oldToNewIndex[oldIndex] = 0; // placeholder
         }
+      };
+    for (auto& func : wasm->functions) {
+      for (auto& [_, location] : func->debugLocations) {
+        prepareIndexMap(location);
       }
+      prepareIndexMap(func->prologLocation);
+      prepareIndexMap(func->epilogLocation);
     }
 
     // Create the new list of names and the mapping from old to new indices.
@@ -1263,13 +1269,19 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
 
     // Update all debug locations to point to the new indices.
-    for (auto& func : wasm->functions) {
-      for (auto& [_, location] : func->debugLocations) {
+    auto updateIndexMap =
+      [&](std::optional<Function::DebugLocation>& location) {
         if (location && location->symbolNameIndex) {
           uint32_t oldIndex = *location->symbolNameIndex;
           location->symbolNameIndex = oldToNewIndex[oldIndex];
         }
+      };
+    for (auto& func : wasm->functions) {
+      for (auto& [_, location] : func->debugLocations) {
+        updateIndexMap(location);
       }
+      updateIndexMap(func->prologLocation);
+      updateIndexMap(func->epilogLocation);
     }
 
     // Replace the old symbol names with the new, pruned list.
