@@ -1,7 +1,2 @@
 (module
- (type $0 (func))
- (export "test1" (func $test1))
- (func $test1 (type $0)
-  (nop)
- )
 )
