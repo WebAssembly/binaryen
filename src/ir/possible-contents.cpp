@@ -446,10 +446,13 @@ namespace {
 
 // Information that is shared with InfoCollector.
 struct SharedInfo {
+  // Subtyping info.
+  const SubTypes& subTypes;
+
   // The names of tables that are imported or exported.
   std::unordered_set<Name> publicTables;
-  // Subtyping info.
-  SubTypes* subTypes;
+
+  SharedInfo(const SubTypes& subTypes) : subTypes(subTypes) {}
 };
 
 // The data we gather from each function, as we process them in parallel. Later
@@ -861,7 +864,7 @@ struct InfoCollector
     //       even reuse ConeReadLocation if we generalized it to function types.
     for (Index i = 0; i < sig.results.size(); i++) {
       if (isRelevant(sig.results[i])) {
-        shared.subTypes->iterSubTypes(
+        shared.subTypes.iterSubTypes(
           targetType, [&](HeapType subType, Index depth) {
             info.links.push_back({SignatureResultLocation{subType, i},
                                   ExpressionLocation{curr, i}});
@@ -2281,8 +2284,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
   // Compute shared info that we need for the main pass over each function, such
   // as the imported/exported tables.
-  SharedInfo shared;
-  shared.subTypes = subTypes.get();
+  SharedInfo shared(*subTypes);
 
   for (auto& table : wasm.tables) {
     if (table->imported()) {
