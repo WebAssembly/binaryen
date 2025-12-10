@@ -75,7 +75,7 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
         if (!targetType.isSignature()) {
           return;
         }
-        lub.note(targetHeapType.getSignature().results);
+        lub.note(targetType.getHeapType().getSignature().results);
       }
     }
   } finder(wasm, lub);
