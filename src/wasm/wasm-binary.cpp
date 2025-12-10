@@ -1245,14 +1245,20 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     std::map<Index, Index> oldToNewIndex;
 
     // Collect all used symbol name indexes.
-    for (auto& func : wasm->functions) {
-      for (auto& [_, location] : func->debugLocations) {
+    auto prepareIndexMap =
+      [&](const std::optional<Function::DebugLocation>& location) {
         if (location && location->symbolNameIndex) {
           uint32_t oldIndex = *location->symbolNameIndex;
           assert(oldIndex < wasm->debugInfoSymbolNames.size());
           oldToNewIndex[oldIndex] = 0; // placeholder
         }
+      };
+    for (auto& func : wasm->functions) {
+      for (auto& [_, location] : func->debugLocations) {
+        prepareIndexMap(location);
       }
+      prepareIndexMap(func->prologLocation);
+      prepareIndexMap(func->epilogLocation);
     }
 
     // Create the new list of names and the mapping from old to new indices.
@@ -1263,13 +1269,18 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
 
     // Update all debug locations to point to the new indices.
+    auto updateIndex = [&](std::optional<Function::DebugLocation>& location) {
+      if (location && location->symbolNameIndex) {
+        uint32_t oldIndex = *location->symbolNameIndex;
+        location->symbolNameIndex = oldToNewIndex[oldIndex];
+      }
+    };
     for (auto& func : wasm->functions) {
       for (auto& [_, location] : func->debugLocations) {
-        if (location && location->symbolNameIndex) {
-          uint32_t oldIndex = *location->symbolNameIndex;
-          location->symbolNameIndex = oldToNewIndex[oldIndex];
-        }
+        updateIndex(location);
       }
+      updateIndex(func->prologLocation);
+      updateIndex(func->epilogLocation);
     }
 
     // Replace the old symbol names with the new, pruned list.
@@ -4763,11 +4774,14 @@ void WasmBinaryReader::readExports() {
 
 Expression* WasmBinaryReader::readExpression() {
   assert(builder.empty());
-  while (input[pos] != BinaryConsts::End) {
+  while (more() && input[pos] != BinaryConsts::End) {
     auto inst = readInst();
     if (auto* err = inst.getErr()) {
       throwError(err->msg);
     }
+  }
+  if (!more()) {
+    throwError("unexpected end of input");
   }
   ++pos;
   auto expr = builder.build();
