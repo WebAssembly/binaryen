@@ -11,9 +11,9 @@
 
  ;; PRIMARY:      (type $1 (func))
 
- ;; PRIMARY:      (import "env" "__load_secondary_module" (func $fimport$0 (type $1)))
+ ;; PRIMARY:      (import "env" "__load_secondary_module" (func $fimport$0))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (param i32) (result i32)))
 
  ;; PRIMARY:      (global $global$0 (mut i32) (i32.const 0))
 
@@ -27,7 +27,7 @@
 
  ;; PRIMARY:      (export "%table" (table $0))
 
- ;; PRIMARY:      (func $foo (type $0) (param $0 i32) (result i32)
+ ;; PRIMARY:      (func $foo (param $0 i32) (result i32)
  ;; PRIMARY-NEXT:  (if
  ;; PRIMARY-NEXT:   (i32.eqz
  ;; PRIMARY-NEXT:    (global.get $global$0)
@@ -36,7 +36,7 @@
  ;; PRIMARY-NEXT:    (call $fimport$0)
  ;; PRIMARY-NEXT:   )
  ;; PRIMARY-NEXT:  )
- ;; PRIMARY-NEXT:  (call_indirect $0 (type $0)
+ ;; PRIMARY-NEXT:  (call_indirect (type $0)
  ;; PRIMARY-NEXT:   (i32.const 0)
  ;; PRIMARY-NEXT:   (i32.const 0)
  ;; PRIMARY-NEXT:  )
@@ -48,11 +48,11 @@
 
  ;; SECONDARY:      (import "primary" "%table" (table $timport$0 1 funcref))
 
- ;; SECONDARY:      (import "primary" "foo" (func $foo (type $0) (param i32) (result i32)))
+ ;; SECONDARY:      (import "primary" "foo" (func $foo (param i32) (result i32)))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $bar)
 
- ;; SECONDARY:      (func $bar (type $0) (param $0 i32) (result i32)
+ ;; SECONDARY:      (func $bar (param $0 i32) (result i32)
  ;; SECONDARY-NEXT:  (call $foo
  ;; SECONDARY-NEXT:   (i32.const 1)
  ;; SECONDARY-NEXT:  )

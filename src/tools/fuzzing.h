@@ -132,6 +132,7 @@ public:
   void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
     preserveImportsAndExports = preserveImportsAndExports_;
   }
+  void setImportedModule(std::string importedModuleName);
 
   void build();
 
@@ -156,6 +157,9 @@ private:
   // exports, which is useful if the tool using us only wants us to mutate an
   // existing testcase (using initial-content).
   bool preserveImportsAndExports = false;
+
+  // An optional module to import from.
+  std::optional<Module> importedModule;
 
   // Whether we allow the fuzzer to add unreachable code when generating changes
   // to existing code. This is randomized during startup, but could be an option
@@ -211,10 +215,16 @@ private:
   // All arrays that are mutable.
   std::vector<HeapType> mutableArrays;
 
+  // All tags that are valid as exception tags (which cannot have results).
+  std::vector<Tag*> exceptionTags;
+
   Index numAddedFunctions = 0;
 
   // The name of an empty tag.
   Name trivialTag;
+
+  // Whether we were given initial functions.
+  bool haveInitialFunctions;
 
   // RAII helper for managing the state used to create a single function.
   struct FunctionCreationContext {
@@ -359,6 +369,9 @@ private:
 
   void addHangLimitChecks(Function* func);
 
+  void useImportedFunctions();
+  void useImportedGlobals();
+
   // Recombination and mutation
 
   // Recombination and mutation can replace a node with another node of the same
@@ -381,6 +394,9 @@ private:
   // Fix up the IR after recombination and mutation.
   void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
+
+  // Note a global for use during code generation.
+  void useGlobalLater(Global* global);
 
   // Initial wasm contents may have come from a test that uses the drop pattern:
   //
@@ -471,6 +487,7 @@ private:
   // used in a place that will trap on null. For example, the reference of a
   // struct.get or array.set would use this.
   Expression* makeTrappingRefUse(HeapType type);
+  Expression* makeTrappingRefUse(Type type);
 
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
@@ -499,6 +516,7 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+  Expression* makeRefGetDesc(Type type);
   Expression* makeBrOn(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
@@ -525,6 +543,7 @@ private:
   // Getters for Types
   Type getSingleConcreteType();
   Type getReferenceType();
+  Type getCastableReferenceType();
   Type getEqReferenceType();
   Type getMVPType();
   Type getTupleType();
@@ -542,7 +561,6 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
-  HeapType getArrayTypeForString();
 
   // Utilities
   Name getTargetName(Expression* target);

@@ -14,9 +14,10 @@
 (module
   ;; CHECK:      (type $0 (func (param stringref stringref)))
 
-  ;; CHECK:      (type $array (sub (array (mut i8))))
-
-  ;; CHECK:      (type $array16 (sub (array (mut i16))))
+  ;; CHECK:      (type $array (array (mut i8)))
+  (type $array (array (mut i8)))
+  ;; CHECK:      (type $array16 (array (mut i16)))
+  (type $array16 (array (mut i16)))
 
   ;; CHECK:      (type $3 (func))
 
@@ -33,15 +34,11 @@
   ;; CHECK:      (import "env" "get-string-ref" (func $get-string-ref (type $4) (result externref)))
   (import "env" "get-string-ref" (func $get-string-ref  (result externref)))
 
-  (memory 10 10)
-
-  (type $array (sub (array (mut i8))))
-  (type $array16 (sub (array (mut i16))))
-
   ;; CHECK:      (global $string-const stringref (string.const "string in a global \c2\a3_\e2\82\ac_\f0\90\8d\88 \01\00\t\t\n\n\r\r\"\"\'\'\\\\ "))
   (global $string-const stringref (string.const "string in a global \C2\A3_\E2\82\AC_\F0\90\8D\88 \01\00\t\t\n\n\r\r\"\"\'\'\\\\ "))
 
   ;; CHECK:      (memory $0 10 10)
+  (memory $0 10 10)
 
   ;; CHECK:      (func $string.const (type $5) (param $param (ref string))
   ;; CHECK-NEXT:  (call $string.const

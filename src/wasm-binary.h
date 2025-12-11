@@ -30,6 +30,7 @@
 #include "parsing.h"
 #include "source-map.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
 #include "wasm-ir-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-validator.h"
@@ -354,6 +355,8 @@ enum BrOnCastFlag {
   InputNullable = 1 << 0,
   OutputNullable = 1 << 1,
 };
+
+constexpr uint32_t ExactImport = 1 << 5;
 
 enum EncodedType {
   // value types
@@ -1152,6 +1155,8 @@ enum ASTNodes {
 
   StructNew = 0x00,
   StructNewDefault = 0x01,
+  StructNewDesc = 0x20,
+  StructNewDefaultDesc = 0x21,
   StructGet = 0x02,
   StructGetS = 0x03,
   StructGetU = 0x04,
@@ -1730,11 +1735,18 @@ public:
     throw ParseException(text, 0, pos);
   }
 
+  // Allow users to query the target features section features after parsing.
+  FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
+
 private:
   // In certain modes we need to note the locations of expressions, to match
   // them against sections like DWARF or custom annotations. As this incurs
   // overhead, we only note locations when we actually need to.
   bool needCodeLocations = false;
+
+  // The features enabled by the target features section, which may be a subset
+  // of the features enabled for the module.
+  FeatureSet featuresSectionFeatures;
 
   // Scans ahead in the binary to check certain conditions like
   // needCodeLocations.

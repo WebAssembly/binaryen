@@ -844,4 +844,34 @@
       )
     )
   )
+
+  (func $never
+    ;; This will be resume_throw'd on the first execution, so this code is never
+    ;; reached.
+    (call $log (i32.const 1337))
+  )
+
+  ;; CHECK:      [fuzz-exec] calling resume_throw-never
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  (func $resume_throw-never (export "resume_throw-never")
+    (block $more
+      (try_table (catch $more $more)
+        (resume_throw $k $more
+          (cont.new $k (ref.func $never))
+        )
+      )
+    )
+    ;; This will be reached.
+    (call $log (i32.const 42))
+  )
+
+  ;; CHECK:      [fuzz-exec] calling suspend-unhandled-block
+  ;; CHECK-NEXT: [exception thrown: unhandled suspend]
+  (func $suspend-unhandled-block (export "suspend-unhandled-block")
+    ;; The nop here means that we are inside a block. The block will try to save
+    ;; resume data, but we should skip that without erroring, and just report an
+    ;; unhandled suspend.
+    (suspend $more)
+    (nop)
+  )
 )

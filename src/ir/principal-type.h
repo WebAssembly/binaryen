@@ -130,6 +130,8 @@ struct PrincipalType {
   // variables.
   std::optional<Signature> getSignature() const;
 
+  static bool matches(Type type, VarType constraint);
+
   bool operator==(const PrincipalType& other) const {
     return rparams == other.rparams && results == other.results &&
            unreachable == other.unreachable;

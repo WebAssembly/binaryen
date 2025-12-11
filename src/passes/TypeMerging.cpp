@@ -45,7 +45,7 @@
 #include "pass.h"
 #include "support/dfa_minimization.h"
 #include "support/small_set.h"
-#include "support/topological_sort.h"
+#include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -168,31 +168,17 @@ struct TypeMerging : public Pass {
 
   std::vector<HeapType>
   mergeableSupertypesFirst(const std::vector<HeapType>& types) {
-    // Topological sort so that supertypes come first. Since we treat descriptor
-    // chains as units represented by their base described types, we must handle
-    // the case where one chain has multiple unrelated chains as supertypes.
-    InsertOrderedMap<HeapType, std::vector<HeapType>> subtypes;
-    for (auto type : types) {
-      // Skip descriptor types, since they will be considered as a unit with
-      // their base described types.
-      if (type.getDescribedType()) {
-        continue;
-      }
-      subtypes.insert({type, {}});
-    }
-    // Find the base described type (`superBase`) for each supertype in the
-    // chain starting at `subBase`.
-    for (auto [subBase, _] : subtypes) {
-      for (auto type : subBase.getDescriptorChain()) {
+    // Topological sort so that supertypes come first. For descriptor chains,
+    // this will ensure that we consider the supertype chain before the subtype
+    // chain because it will order the first supertype before the first subtype,
+    // and those are the only types from the chains we will consider later.
+    return HeapTypeOrdering::supertypesFirst(
+      types, [&](HeapType type) -> std::optional<HeapType> {
         if (auto super = type.getDeclaredSuperType()) {
-          auto superBase = getMerged(getBaseDescribedType(*super));
-          if (auto it = subtypes.find(superBase); it != subtypes.end()) {
-            it->second.push_back(subBase);
-          }
+          return getMerged(*super);
         }
-      }
-    }
-    return TopologicalSort::sortOf(subtypes.begin(), subtypes.end());
+        return std::nullopt;
+      });
   }
 
   void run(Module* module_) override;
@@ -224,6 +210,7 @@ bool shapeEq(HeapType a, HeapType b);
 bool shapeEq(const Struct& a, const Struct& b);
 bool shapeEq(Array a, Array b);
 bool shapeEq(Signature a, Signature b);
+bool shapeEq(Continuation a, Continuation b);
 bool shapeEq(Field a, Field b);
 bool shapeEq(Type a, Type b);
 bool shapeEq(const Tuple& a, const Tuple& b);
@@ -232,6 +219,7 @@ size_t shapeHash(HeapType a);
 size_t shapeHash(const Struct& a);
 size_t shapeHash(Array a);
 size_t shapeHash(Signature a);
+size_t shapeHash(Continuation a);
 size_t shapeHash(Field a);
 size_t shapeHash(Type a);
 size_t shapeHash(const Tuple& a);
@@ -371,7 +359,13 @@ bool TypeMerging::merge(MergeKind kind) {
   // For each type, either create a new partition or add to its supertype's
   // partition.
   for (auto type : mergeableSupertypesFirst(mergeable)) {
-    assert(!type.getDescribedType());
+    // Skip descriptor types. Since types in descriptor chains all have to be
+    // merged into matching descriptor chains together, only the base described
+    // type in each chain is considered, and its DFA state will include the
+    // shape of its entire descriptor chain.
+    if (type.getDescribedType()) {
+      continue;
+    }
     // We need partitions for any public children of this type since those
     // children will participate in the DFA we're creating. We use the base
     // described type of the child because that's the type that the DFA state
@@ -386,7 +380,7 @@ bool TypeMerging::merge(MergeKind kind) {
     auto chain = type.getDescriptorChain();
     bool hasCast =
       std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
-        return castTypes.count(type);
+        return castTypes.count(t);
       });
     if (hasCast || !privateTypes.count(type)) {
       ensurePartition(type);
@@ -690,7 +684,10 @@ bool shapeEq(HeapType a, HeapType b) {
         }
         break;
       case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+        if (!shapeEq(a.getContinuation(), b.getContinuation())) {
+          return false;
+        }
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -719,7 +716,8 @@ size_t shapeHash(HeapType a) {
         hash_combine(digest, shapeHash(type.getArray()));
         continue;
       case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+        hash_combine(digest, shapeHash(type.getContinuation()));
+        continue;
       case HeapTypeKind::Basic:
         continue;
     }
@@ -761,6 +759,10 @@ size_t shapeHash(Signature a) {
   hash_combine(digest, shapeHash(a.results));
   return digest;
 }
+
+bool shapeEq(Continuation a, Continuation b) { return shapeEq(a.type, b.type); }
+
+size_t shapeHash(Continuation a) { return shapeHash(a.type); }
 
 bool shapeEq(Field a, Field b) {
   return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&

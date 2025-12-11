@@ -314,13 +314,6 @@ void PassRegistry::registerPasses() {
   registerPass("minimize-rec-groups",
                "Split types into minimal recursion groups",
                createMinimizeRecGroupsPass);
-  registerPass("mod-asyncify-always-and-only-unwind",
-               "apply the assumption that asyncify imports always unwind, "
-               "and we never rewind",
-               createModAsyncifyAlwaysOnlyUnwindPass);
-  registerPass("mod-asyncify-never-unwind",
-               "apply the assumption that asyncify never unwinds",
-               createModAsyncifyNeverUnwindPass);
   registerPass("monomorphize",
                "creates specialized versions of functions",
                createMonomorphizePass);
@@ -405,7 +398,6 @@ void PassRegistry::registerPasses() {
   // Also register it as "symbolmap" so that  wasm-opt --symbolmap=foo  is the
   // same as  wasm-as --symbolmap=foo  even though the latter is not a pass
   // (wasm-as cannot run arbitrary passes).
-  // TODO: switch emscripten to this name, then remove the old one
   registerPass(
     "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
 
@@ -451,6 +443,9 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-locals",
                "sorts locals by access frequency",
                createReorderLocalsPass);
+  registerPass("reorder-types",
+               "sorts private types by access frequency",
+               createReorderTypesPass);
   registerPass("rereloop",
                "re-optimize control flow using the relooper algorithm",
                createReReloopPass);
@@ -608,6 +603,10 @@ void PassRegistry::registerPasses() {
   registerTestPass("reorder-globals-always",
                    "sorts globals by access frequency (even if there are few)",
                    createReorderGlobalsAlwaysPass);
+  registerTestPass(
+    "reorder-types-for-testing",
+    "sorts types by access frequency with an exaggerated cost function",
+    createReorderTypesForTestingPass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
@@ -764,8 +763,15 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("remove-unused-module-elements");
     if (options.closedWorld) {
       addIfNoDWARFIssues("remove-unused-types");
-      addIfNoDWARFIssues("cfp");
-      addIfNoDWARFIssues("gsi");
+      // Allow ref.tests in cfp if we are aggressively optimizing for speed.
+      if (options.optimizeLevel >= 3) {
+        addIfNoDWARFIssues("cfp-reftest");
+      } else {
+        addIfNoDWARFIssues("cfp");
+      }
+    }
+    addIfNoDWARFIssues("gsi");
+    if (options.closedWorld) {
       addIfNoDWARFIssues("abstract-type-refining");
       addIfNoDWARFIssues("unsubtyping");
     }

@@ -125,7 +125,8 @@ struct SignaturePruning : public Pass {
       // For direct calls, add each call to the type of the function being
       // called.
       for (auto* call : info.calls) {
-        allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+        allInfo[module->getFunction(call->target)->type.getHeapType()]
+          .calls.push_back(call);
 
         // Intrinsics limit our ability to optimize in some cases. We will avoid
         // modifying any type that is used by call.without.effects, to avoid
@@ -150,16 +151,16 @@ struct SignaturePruning : public Pass {
 
       // A parameter used in this function is used in the heap type - just one
       // function is enough to prevent the parameter from being removed.
-      auto& allUsedParams = allInfo[func->type].usedParams;
+      auto& allUsedParams = allInfo[func->type.getHeapType()].usedParams;
       for (auto index : info.usedParams) {
         allUsedParams.insert(index);
       }
 
       if (!info.optimizable) {
-        allInfo[func->type].optimizable = false;
+        allInfo[func->type.getHeapType()].optimizable = false;
       }
 
-      sigFuncs[func->type].push_back(func);
+      sigFuncs[func->type.getHeapType()].push_back(func);
     }
 
     // Find the public types, which cannot be modified.
@@ -173,6 +174,13 @@ struct SignaturePruning : public Pass {
     // switching tags. TODO.
     for (auto& tag : module->tags) {
       allInfo[tag->type].optimizable = false;
+    }
+
+    // configureAll functions are signature-called, and must also not be
+    // modified.
+    for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
+      allInfo[module->getFunction(func)->type.getHeapType()].optimizable =
+        false;
     }
 
     // A type must have the same number of parameters and results as its
@@ -292,7 +300,7 @@ struct SignaturePruning : public Pass {
       // that, which would add more complexity in that method, undo the change
       // here.
       for (auto* func : funcs) {
-        func->type = type;
+        func->type = func->type.with(type);
       }
     }
 
@@ -311,7 +319,7 @@ struct SignaturePruning : public Pass {
     for (auto* call : callTargetsToLocalize) {
       HeapType type;
       if (auto* c = call->dynCast<Call>()) {
-        type = module->getFunction(c->target)->type;
+        type = module->getFunction(c->target)->type.getHeapType();
       } else if (auto* c = call->dynCast<CallRef>()) {
         type = c->target->type.getHeapType();
       } else {

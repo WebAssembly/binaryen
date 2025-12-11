@@ -14,6 +14,13 @@
 
   (import "env" "imported-v128-param-noresult" (func $imported-v128-param-noresult (param v128)))
 
+  ;; The results here include a nullable value, which we will emit a null for.
+  (import "env" "imported-v128-defaultable" (func $imported-v128-defaultable (result v128 anyref)))
+
+  ;; The results here include a non-nullable value, which will force us to emit
+  ;; an unreachable.
+  (import "env" "imported-v128-nondefaultable" (func $imported-v128-nondefaultable (result v128 (ref any))))
+
   ;; CHECK:      (type $0 (func (result v128)))
 
   ;; CHECK:      (type $1 (func (result i32 f64)))
@@ -22,17 +29,29 @@
 
   ;; CHECK:      (type $3 (func (param v128)))
 
-  ;; CHECK:      (type $4 (func))
+  ;; CHECK:      (type $4 (func (result v128 anyref)))
 
-  ;; CHECK:      (type $5 (func (result i32)))
+  ;; CHECK:      (type $5 (func (result v128 (ref any))))
 
-  ;; CHECK:      (type $6 (func (param i32 f64) (result i64)))
+  ;; CHECK:      (type $6 (func))
 
-  ;; CHECK:      (type $7 (func (param i32 f64) (result i32)))
+  ;; CHECK:      (type $7 (func (result i32)))
 
-  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $5) (result i32)))
+  ;; CHECK:      (type $8 (func (param i32 f64) (result i64)))
 
-  ;; CHECK:      (import "env" "imported-64" (func $legalimport$imported-64 (type $7) (param i32 f64) (result i32)))
+  ;; CHECK:      (type $9 (func (param i32 f64) (result i32)))
+
+  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $7) (result i32)))
+
+  ;; CHECK:      (import "env" "imported-64" (func $legalimport$imported-64 (type $9) (param i32 f64) (result i32)))
+
+  ;; CHECK:      (global $global funcref (ref.func $imported-v128))
+  (global $global funcref
+    ;; The ref target will turn from an import into an internal function. We'd
+    ;; error if we do not update this ref.func while doing so, to make its type
+    ;; exact.
+    (ref.func $imported-v128)
+  )
 
   ;; CHECK:      (func $imported-v128 (type $0) (result v128)
   ;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
@@ -53,7 +72,18 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $call-64 (type $4)
+  ;; CHECK:      (func $imported-v128-defaultable (type $4) (result v128 anyref)
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $imported-v128-nondefaultable (type $5) (result v128 (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $call-64 (type $6)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $legalfunc$imported-64
   ;; CHECK-NEXT:    (i32.const 0)
@@ -103,7 +133,7 @@
   )
 )
 
-;; CHECK:      (func $legalfunc$imported-64 (type $6) (param $0 i32) (param $1 f64) (result i64)
+;; CHECK:      (func $legalfunc$imported-64 (type $8) (param $0 i32) (param $1 f64) (result i64)
 ;; CHECK-NEXT:  (i64.or
 ;; CHECK-NEXT:   (i64.extend_i32_u
 ;; CHECK-NEXT:    (call $legalimport$imported-64

@@ -102,13 +102,21 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   }
   virtual ~ShellExternalInterface() = default;
 
-  ModuleRunner* getImportInstance(Importable* import) {
+  ModuleRunner* getImportInstanceOrNull(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
-      Fatal() << "importGlobals: unknown import: " << import->module.str << "."
-              << import->base.str;
+      return nullptr;
     }
     return it->second.get();
+  }
+
+  ModuleRunner* getImportInstance(Importable* import) {
+    auto* ret = getImportInstanceOrNull(import);
+    if (!ret) {
+      Fatal() << "getImportInstance: unknown import: " << import->module.str
+              << "." << import->base.str;
+    }
+    return ret;
   }
 
   void init(Module& wasm, ModuleRunner& instance) override {
@@ -133,21 +141,43 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     });
   }
 
-  Flow callImport(Function* import, const Literals& arguments) override {
+  Literal getImportedFunction(Function* import) override {
+    // TODO: We should perhaps restrict the types with which the well-known
+    // functions can be imported.
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
-      for (auto argument : arguments) {
-        std::cout << argument << " : " << argument.type << '\n';
-      }
-      return {};
+      // Use a null instance because these are host functions.
+      return Literal(
+        std::make_shared<FuncData>(import->name,
+                                   nullptr,
+                                   [](const Literals& arguments) -> Flow {
+                                     for (auto argument : arguments) {
+                                       std::cout << argument << " : "
+                                                 << argument.type << '\n';
+                                     }
+                                     return Flow();
+                                   }),
+        import->type);
     } else if (import->module == ENV && import->base == EXIT) {
-      // XXX hack for torture tests
-      std::cout << "exit()\n";
-      throw ExitException();
-    } else if (auto* inst = getImportInstance(import)) {
-      return inst->callExport(import->base, arguments);
+      return Literal(std::make_shared<FuncData>(import->name,
+                                                nullptr,
+                                                [](const Literals&) -> Flow {
+                                                  // XXX hack for torture tests
+                                                  std::cout << "exit()\n";
+                                                  throw ExitException();
+                                                }),
+                     import->type);
+    } else if (auto* inst = getImportInstanceOrNull(import)) {
+      return inst->getExportedFunction(import->base);
     }
-    Fatal() << "callImport: unknown import: " << import->module.str << "."
-            << import->name.str;
+    // This is not a known import. Create a literal for it, which is good enough
+    // if it is never called (see the ref_func.wast spec test, which does that).
+    std::cerr << "warning: getImportedFunction: unknown import: "
+              << import->module.str << "." << import->name.str << '\n';
+    return Literal::makeFunc(import->name, import->type);
+  }
+
+  Tag* getImportedTag(Tag* tag) override {
+    WASM_UNREACHABLE("missing imported tag");
   }
 
   int8_t load8s(Address addr, Name memoryName) override {

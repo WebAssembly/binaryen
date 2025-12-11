@@ -604,6 +604,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
   Builder builder;
   const FieldList& fields;
 
+  // The descriptor can arrive as nullable, but we trap if it is null, so there
+  // is only something to store if it is non-nullable, and we store it that way.
+  Type descType;
+
   Struct2Local(StructNew* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
@@ -616,7 +620,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       localIndexes.push_back(builder.addVar(func, field.type));
     }
     if (allocation->desc) {
-      localIndexes.push_back(builder.addVar(func, allocation->desc->type));
+      descType = allocation->desc->type.with(NonNullable);
+      localIndexes.push_back(builder.addVar(func, descType));
     }
 
     // Replace the things we need to using the visit* methods.
@@ -744,7 +749,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       }
     }
     if (curr->desc) {
-      tempIndexes.push_back(builder.addVar(func, curr->desc->type));
+      tempIndexes.push_back(builder.addVar(func, descType));
     }
 
     // Store the initial values into the temp locals.
@@ -773,8 +778,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       contents.push_back(builder.makeLocalSet(localIndexes[i], val));
     }
     if (curr->desc) {
-      auto* val =
-        builder.makeLocalGet(tempIndexes[numTemps - 1], curr->desc->type);
+      auto* val = builder.makeLocalGet(tempIndexes[numTemps - 1], descType);
       contents.push_back(
         builder.makeLocalSet(localIndexes[fields.size()], val));
     }
@@ -788,6 +792,12 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   void visitRefIsNull(RefIsNull* curr) {
     if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // The result does not matter. Leave things as they are (and let DCE
+      // handle it).
       return;
     }
 
@@ -853,6 +863,12 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
 
     if (curr->desc) {
+      auto descTrap = [&]() {
+        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->desc),
+                                        builder.makeUnreachable()));
+      };
+
       // If we are doing a ref.cast_desc of the optimized allocation, but the
       // allocation does not have a descriptor, then we know the cast must fail.
       // We also know the cast must fail (except for nulls it might let through)
@@ -884,23 +900,37 @@ struct Struct2Local : PostWalker<Struct2Local> {
         } else {
           // Either the cast does not allow nulls or we know the value isn't
           // null anyway, so the cast certainly fails.
-          replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->desc),
-                                          builder.makeUnreachable()));
+          descTrap();
+        }
+      } else if (allocIsCastRef) {
+        if (!Type::isSubType(allocation->type, curr->type)) {
+          // The cast fails, so it must trap. We mark such failing casts as
+          // fully consuming their inputs, so we cannot just emit the explicit
+          // descriptor equality check below because it would appear to be able
+          // to propagate the optimized allocation on to the parent (as a null
+          // value, which might not validate).
+          descTrap();
+        } else {
+          // The cast succeeds iff the optimized allocation's descriptor is the
+          // same as the given descriptor and traps otherwise.
+          replaceCurrent(builder.blockify(
+            builder.makeDrop(curr->ref),
+            builder.makeIf(
+              builder.makeRefEq(
+                curr->desc,
+                builder.makeLocalGet(localIndexes[fields.size()], descType)),
+              builder.makeRefNull(allocation->type.getHeapType()),
+              builder.makeUnreachable())));
         }
       } else {
-        assert(allocIsCastRef);
-        // The cast succeeds iff the optimized allocation's descriptor is the
-        // same as the given descriptor and traps otherwise.
-        auto type = allocation->desc->type;
-        replaceCurrent(builder.blockify(
-          builder.makeDrop(curr->ref),
-          builder.makeIf(
-            builder.makeRefEq(
-              curr->desc,
-              builder.makeLocalGet(localIndexes[fields.size()], type)),
-            builder.makeRefNull(allocation->type.getHeapType()),
-            builder.makeUnreachable())));
+        // The allocation is neither the ref nor the descriptor inputs to this
+        // cast. This can happen if a previous operation led to the StructNew
+        // being dropped, as a result if it being used in unreachable code (it
+        // ends up happening because some of the initial analysis, like Parents,
+        // is stale; we could also recompute Parents after each Struct2Local,
+        // but it is simple enough to handle this with a trap).
+        assert(curr->type == Type::unreachable);
+        descTrap();
       }
     } else {
       // We know this RefCast receives our allocation, so we can see whether it
@@ -928,15 +958,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    auto type = allocation->desc->type;
-    if (type != curr->type) {
-      // We know exactly the allocation that flows into this expression, so we
-      // know the exact type of the descriptor. This type may be more precise
-      // than the static type of this expression.
-      refinalize = true;
-    }
-    auto* value = builder.makeLocalGet(localIndexes[fields.size()], type);
+    auto descIndex = localIndexes[fields.size()];
+    Expression* value = builder.makeLocalGet(descIndex, descType);
     replaceCurrent(builder.blockify(builder.makeDrop(curr->ref), value));
+
+    // After removing the ref.get_desc, a null may be falling through,
+    // requiring refinalization to update parents.
+    refinalize = true;
   }
 
   void visitStructSet(StructSet* curr) {
@@ -958,6 +986,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   void visitStructGet(StructGet* curr) {
     if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // We must not modify unreachable code here, as we will replace it with a
+      // local.get, which has a concrete type (another option could be to run
+      // DCE and not only ReFinalize - DCE will propagate an unreachable out of
+      // a concrete block, like we emit here - but we can just ignore such
+      // code).
       return;
     }
 

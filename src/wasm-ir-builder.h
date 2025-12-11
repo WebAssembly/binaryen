@@ -229,8 +229,8 @@ public:
                     Type in = Type::none,
                     Type out = Type::none,
                     std::optional<bool> likely = std::nullopt);
-  Result<> makeStructNew(HeapType type);
-  Result<> makeStructNewDefault(HeapType type);
+  Result<> makeStructNew(HeapType type, bool isDesc);
+  Result<> makeStructNewDefault(HeapType type, bool isDesc);
   Result<>
   makeStructGet(HeapType type, Index field, bool signed_, MemoryOrder order);
   Result<> makeStructSet(HeapType type, Index field, MemoryOrder order);
@@ -537,7 +537,7 @@ private:
     }
     Type getResultType() {
       if (auto* func = getFunction()) {
-        return func->type.getSignature().results;
+        return func->getResults();
       }
       if (auto* block = getBlock()) {
         return block->type;

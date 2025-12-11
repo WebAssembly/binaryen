@@ -1,9 +1,9 @@
 (module
- (type $0 (struct (field (mut i32)) (field funcref)))
+ (type $0 (struct (field (mut i32))))
  (type $1 (func (result i32)))
  (global $global$0 (ref null $0) (struct.new_default $0))
  (export "use-global" (func $0))
- (func $0 (type $1) (result i32)
+ (func $0 (result i32)
   (struct.set $0 0
    (global.get $global$0)
    (i32.const 42)

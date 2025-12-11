@@ -95,7 +95,7 @@ private:
       trackerCallParams.push_back(builder.makeLocalGet(localVar, op->type));
     }
 
-    auto resultType = target->type.getSignature().results;
+    auto resultType = target->type.getHeapType().getSignature().results;
     auto realCall = builder.makeCall(target->name, realCallParams, resultType);
 
     if (resultType.isConcrete()) {
@@ -146,7 +146,7 @@ struct TraceCalls : public Pass {
 
 private:
   Type getTracerParamsType(ImportInfo& info, const Function& func) {
-    auto resultsType = func.type.getSignature().results;
+    auto resultsType = func.type.getHeapType().getSignature().results;
     if (resultsType.isTuple()) {
       Fatal() << "Failed to instrument function '" << func.name
               << "': Multi-value result type is not supported";
@@ -156,7 +156,7 @@ private:
     if (resultsType.isConcrete()) {
       tracerParamTypes.push_back(resultsType);
     }
-    for (auto& op : func.type.getSignature().params) {
+    for (auto& op : func.type.getHeapType().getSignature().params) {
       tracerParamTypes.push_back(op);
     }
 
@@ -205,7 +205,11 @@ private:
 
     if (!info.getImportedFunction(ENV, tracerName)) {
       auto import = Builder::makeFunction(
-        tracerName, Signature(getTracerParamsType(info, f), Type::none), {});
+        tracerName,
+        Type(Signature(getTracerParamsType(info, f), Type::none),
+             NonNullable,
+             Inexact),
+        {});
       import->module = ENV;
       import->base = tracerName;
       wasm->addFunction(std::move(import));

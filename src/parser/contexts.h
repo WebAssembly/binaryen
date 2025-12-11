@@ -756,12 +756,13 @@ struct NullInstrParserCtx {
   }
 
   template<typename HeapTypeT>
-  Result<> makeStructNew(Index, const std::vector<Annotation>&, HeapTypeT) {
+  Result<>
+  makeStructNew(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
   Result<>
-  makeStructNewDefault(Index, const std::vector<Annotation>&, HeapTypeT) {
+  makeStructNewDefault(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -1078,6 +1079,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    const std::vector<Name>& exports,
                    ImportNames* import,
                    TypeUseT type,
+                   Exactness exact,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
                    Index pos);
@@ -1411,6 +1413,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUse type,
+                   Exactness exact,
                    std::optional<LocalsT> locals,
                    std::vector<Annotation>&&,
                    Index pos) {
@@ -1418,7 +1421,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     if (!type.type.isSignature()) {
       return in.err(pos, "expected signature type");
     }
-    f->type = type.type;
+    f->type = Type(type.type, NonNullable, exact);
     // If we are provided with too many names (more than the function has), we
     // will error on that later when we check the signature matches the type.
     // For now, avoid asserting in setLocalName.
@@ -1800,6 +1803,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUseT,
+                   Exactness,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
                    Index) {
@@ -2647,14 +2651,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
 
   Result<> makeStructNew(Index pos,
                          const std::vector<Annotation>& annotations,
-                         HeapType type) {
-    return withLoc(pos, irBuilder.makeStructNew(type));
+                         HeapType type,
+                         bool isDesc) {
+    return withLoc(pos, irBuilder.makeStructNew(type, isDesc));
   }
 
   Result<> makeStructNewDefault(Index pos,
                                 const std::vector<Annotation>& annotations,
-                                HeapType type) {
-    return withLoc(pos, irBuilder.makeStructNewDefault(type));
+                                HeapType type,
+                                bool isDesc) {
+    return withLoc(pos, irBuilder.makeStructNewDefault(type, isDesc));
   }
 
   Result<> makeStructGet(Index pos,

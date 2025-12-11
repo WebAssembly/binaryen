@@ -165,8 +165,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
         seen_sizes = []
         seen_exports = []
 
-        # Second wasm files are also emitted sometimes.
+        # Second wasm files are also emitted sometimes, and sometimes they
+        # import the primary module.
         seen_second_sizes = []
+        seen_primary_imports = 0
 
         # The number of struct.news appears in the metrics report like this:
         #
@@ -230,9 +232,15 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # sizes, is enough).
                 seen_second_sizes.append(os.path.getsize(second_binary_file))
 
+                # The primary module should be imported sometimes.
+                wat = subprocess.check_output(
+                    shared.WASM_DIS + [second_binary_file], text=True)
+                if '(import "primary" ' in wat:
+                    seen_primary_imports += 1
+
         print()
 
-        print('struct.news are distributed as ~ mean 15, stddev 24, median 10')
+        print('struct.news can vary a lot, but should be ~10')
         # Given that, with 100 samples we are incredibly likely to see an
         # interesting number at least once. It is also incredibly unlikely for
         # the stdev to be zero.
@@ -244,7 +252,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('sizes are distributed as ~ mean 2933, stddev 2011, median 2510')
+        print('sizes are distributed as ~ mean 3600, stddev 2500, median 2800')
         print(f'mean sizes:   {statistics.mean(seen_sizes)}')
         print(f'stdev sizes:  {statistics.stdev(seen_sizes)}')
         print(f'median sizes: {statistics.median(seen_sizes)}')
@@ -253,7 +261,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('exports are distributed as ~ mean 9, stddev 6, median 8')
+        print('exports are distributed as ~ mean 16, stddev 13, median 13')
         print(f'mean exports:   {statistics.mean(seen_exports)}')
         print(f'stdev exports:  {statistics.stdev(seen_exports)}')
         print(f'median exports: {statistics.median(seen_exports)}')
@@ -275,6 +283,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # interesting wasm file.
         self.assertGreaterEqual(max(seen_second_sizes), 500)
         self.assertGreater(statistics.stdev(seen_second_sizes), 0)
+
+        print()
+
+        # Primary imports appear in most second files.
+        print('number of primary imports should be around 22 +- 4')
+        print(f'number of primary_imports: {seen_primary_imports}')
+        assert seen_primary_imports >= 2, 'must see some primary imports'
 
         print()
 
@@ -307,7 +322,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 js = f.read()
             seen_builds.append(js.count('build(binary);'))
             seen_calls.append(re.findall(call_exports_regex, js))
-            seen_second_builds.append(js.count('build(secondBinary);'))
+            seen_second_builds.append(js.count('build(secondBinary, true);'))
 
             # If JSPI is enabled, the async and await keywords should be
             # enabled (uncommented).
@@ -427,7 +442,11 @@ class ClusterFuzz(utils.BinaryenTestCase):
                        '--experimental-wasm-custom-descriptors',
                        '--fuzzing',
                        fuzz_file]
-                proc = subprocess.run(cmd, stdout=subprocess.PIPE)
+                # Capture stderr even though we will not read it. It may
+                # contain warnings like us passing v8 experimental flags.
+                proc = subprocess.run(cmd,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
 
                 # An execution is valid if we exited without error, and if we
                 # managed to run some code before exiting (modules with no
@@ -435,8 +454,20 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # rare, and in a sense they are actually unuseful).
                 if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
                     valid_executions += 1
+                else:
+                    print('====')
+                    print('invalid execution, returncode: ', proc.returncode)
+                    print('stdout:')
+                    print(proc.stdout)
+                    print('stderr:')
+                    print(proc.stderr)
+                    print('====')
 
-            print('Valid executions are distributed as ~ mean 0.99')
+            # We do not want valid executions to be 100%, as some amount of
+            # traps during startup are interesting (VMs can have bugs there),
+            # but the vast majority should be valid. (Startup traps can include
+            # null descriptors, segments out of bounds, etc.)
+            print('Valid executions are distributed as ~ mean 0.95')
             print(f'mean valid executions: {valid_executions / N}')
             # Assert on having at least half execute properly. Given the true mean
             # is 0.9, for half of 100 to fail is incredibly unlikely.

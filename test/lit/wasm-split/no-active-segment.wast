@@ -15,7 +15,7 @@
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $foo)
 
- ;; SECONDARY:      (func $foo (type $0)
+ ;; SECONDARY:      (func $foo
  ;; SECONDARY-NEXT:  (nop)
  ;; SECONDARY-NEXT: )
  (func $foo
@@ -24,18 +24,18 @@
 )
 ;; PRIMARY:      (type $0 (func))
 
-;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0)))
+;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0))
 
 ;; PRIMARY:      (table $0 1 funcref)
 
 ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
-;; PRIMARY:      (export "foo" (func $0))
+;; PRIMARY:      (export "foo" (func $trampoline_foo))
 
 ;; PRIMARY:      (export "table" (table $0))
 
-;; PRIMARY:      (func $0 (type $0)
-;; PRIMARY-NEXT:  (call_indirect $0 (type $0)
+;; PRIMARY:      (func $trampoline_foo
+;; PRIMARY-NEXT:  (call_indirect (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )

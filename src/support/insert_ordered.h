@@ -129,6 +129,14 @@ template<typename Key, typename T> struct InsertOrderedMap {
     return it->second;
   }
 
+  const_iterator find(const Key& k) const {
+    auto it = Map.find(k);
+    if (it == Map.end()) {
+      return end();
+    }
+    return it->second;
+  }
+
   void erase(const Key& k) {
     auto it = Map.find(k);
     if (it != Map.end()) {

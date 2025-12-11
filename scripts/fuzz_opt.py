@@ -152,11 +152,13 @@ def randomize_feature_opts():
         # The shared-everything feature is new and we want to fuzz it, but it
         # also currently disables fuzzing V8, so disable it most of the time.
         # Same with strings. Relaxed SIMD's nondeterminism disables much but not
-        # all of our V8 fuzzing, so avoid it too.
+        # all of our V8 fuzzing, so avoid it too. Stack Switching, as well, is
+        # not yet ready in V8.
         if random.random() < 0.9:
             FEATURE_OPTS.append('--disable-shared-everything')
             FEATURE_OPTS.append('--disable-strings')
             FEATURE_OPTS.append('--disable-relaxed-simd')
+            FEATURE_OPTS.append('--disable-stack-switching')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -600,6 +602,7 @@ def note_ignored_vm_run(reason, extra_text='', amount=1):
     ignored_vm_run_reasons[reason] += amount
 
 
+# Run a VM command, and filter out known issues.
 def run_vm(cmd):
     def filter_known_issues(output):
         known_issues = [
@@ -678,6 +681,10 @@ def get_v8_extra_flags():
     if random.random() < 0.5:
         flags += ['--future']
 
+    # Sometimes add V8's type assertions.
+    if random.random() < 0.5:
+        flags += ['--wasm-assert-types']
+
     return flags
 
 
@@ -751,6 +758,8 @@ class TestCaseHandler:
     # care about their relationship.
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.handle(before_wasm)
+        # Add some visual space between the independent parts.
+        print('\n')
         self.handle(after_wasm)
 
     def can_run_on_wasm(self, wasm):
@@ -824,8 +833,9 @@ class CompareVMs(TestCaseHandler):
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
                 # shared-everything enabled, so do not fuzz shared-everything
-                # for now. It also does not yet support strings.
-                return all_disallowed(['shared-everything', 'strings'])
+                # for now. It also does not yet support strings, nor stack
+                # switching
+                return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
@@ -1189,11 +1199,20 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors'])
 
 
+# Returns the wat for a wasm file. If it is already wat, it just returns that
+# (useful when reducing with --text, where wasm files are really wat files).
+def get_wat(wasm):
+    binary = open(wasm, 'rb').read()
+    if binary.startswith(b'(module'):
+        return binary.decode(encoding='utf-8')
+    return run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+
+
 # given a wasm, find all the exports of particular kinds (for example, kinds
 # can be ['func', 'table'] and then we would find exported functions and
 # tables).
 def get_exports(wasm, kinds):
-    wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+    wat = get_wat(wasm)
     p = re.compile(r'^ [(]export "(.*[^\\]?)" [(](?:' + '|'.join(kinds) + ')')
     exports = []
     for line in wat.splitlines():
@@ -1241,14 +1260,21 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
     run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
 
 
-# Check if a wasm file would notice changes to exports. Normally removing an
-# export that is not called, for example, would not be observable, but if the
-# "call-export*" functions are present then such changes can break us.
+# Check if a wasm file would notice normally-unnoticeable changes to exports,
+# such as removing one that is not called.
 def wasm_notices_export_changes(wasm):
-    # we could be more precise here and disassemble the wasm to look for an
-    # actual import with name "call-export*", but looking for the string should
-    # have practically no false positives.
-    return b'call-export' in open(wasm, 'rb').read()
+    wat = get_wat(wasm)
+
+    if '(import "fuzzing-support" "call-export' in wat:
+        # The call-export* imports are sensitive to the number and identity of
+        # exports.
+        return True
+
+    if '(import "fuzzing-support" "table-' in wat and '(export "table" (table ' in wat:
+        # The table-get/set imports are sensitive to the "table" export.
+        return True
+
+    return False
 
 
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
@@ -1482,11 +1508,17 @@ class Merge(TestCaseHandler):
 
         # verify that merging in the second module did not alter the output.
         output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
+        if output == IGNORE:
+            return
         output = fix_output(output)
         second_output = run_bynterp(second_wasm, ['--fuzz-exec-before', '-all'])
         second_output = fix_output(second_output)
+        if second_output == IGNORE:
+            return
         merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
         merged_output = fix_output(merged_output)
+        if merged_output == IGNORE:
+            return
 
         # If the second module traps in instantiation, then the merged module
         # must do so as well, regardless of what the first module does. (In
@@ -1527,12 +1559,12 @@ FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
 # files, which adds coverage for ClusterFuzz (which sometimes runs two wasm
 # files in that way).
 class Split(TestCaseHandler):
-    frequency = 1  # TODO: adjust lower when we actually enable this
+    frequency = 0.1
 
     def handle(self, wasm):
         # get the list of function names, some of which we will decide to split
         # out
-        wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+        wat = get_wat(wasm)
         all_funcs = re.findall(FUNC_NAMES_REGEX, wat)
 
         # get the original output before splitting
@@ -1573,6 +1605,9 @@ class Split(TestCaseHandler):
 
         run([in_bin('wasm-split'), wasm, '--split',
              '--split-funcs', ','.join(split_funcs),
+             # make the new exports easily identifiable, as we need to ignore
+             # them in part of fuzz_shell.js
+             '--export-prefix=__fuzz_split_',
              '--primary-output', primary,
              '--secondary-output', secondary] + split_feature_opts)
 
@@ -1607,7 +1642,12 @@ class Split(TestCaseHandler):
 
         # get the output from the split modules, linking them using JS
         # TODO run liftoff/turboshaft/etc.
-        linked_output = run_d8_wasm(primary, args=[secondary, exports_to_call])
+        args = [
+            secondary,
+            exports_to_call,
+            '--fuzz-split',
+        ]
+        linked_output = run_d8_wasm(primary, args=args)
         linked_output = fix_output(linked_output)
 
         # see D8.can_compare_to_self: we cannot compare optimized outputs if
@@ -1624,7 +1664,7 @@ class Split(TestCaseHandler):
             return False
 
         # see D8.can_run
-        return all_disallowed(['shared-everything', 'strings'])
+        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
 
 
 # Check that the text format round-trips without error.
@@ -1640,7 +1680,7 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
-# The error shown when a module fails to instantiate.
+# The error shown in V8 when a module fails to instantiate.
 INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
 
 
@@ -1756,58 +1796,133 @@ class ClusterFuzz(TestCaseHandler):
         tar.close()
 
 
-# Tests linking two wasm files at runtime, and that optimizations do not break
-# anything. This is similar to Split(), but rather than split a wasm file into
-# two and link them at runtime, this starts with two separate wasm files.
+# Generates two wasm and tests interesting interactions between them. This is a
+# little similar to Split(), but rather than split one wasm file into two and
+# test that, we start with two.
+#
+# Fuzzing failures here is a little trickier, as there are two wasm files.
+# You can reduce the primary file by finding the secondary one in the log
+# (usually out/test/second.wasm), copy that to the side, and add
+#
+#   BINARYEN_SECOND_WASM=${saved_second}
+#
+# in the env. That will keep the secondary wasm fixed as you reduce the primary
+# one.
+#
+# Note it may be better to reduce the second one first, so it imports less from
+# the first (otherwise, when the second one imports many things, the first will
+# fail to remove exports that are used). To reduce the second one, set
+#
+#   BINARYEN_FIRST_WASM=${saved_first}
+#
+# The reduce.sh script will then do the right thing, using that as the first
+# wasm, and reducing on the second one, if you replace "original.wasm" in the
+# reduction command (the command that this fuzzer script recommended that you
+# run) with "second.wasm" as needed.
+#
+# In both cases, make sure to copy the files to a saved location first (do not
+# use a path to the scratch files that get constantly overwritten).
 class Two(TestCaseHandler):
-    frequency = 0.2
+    # Run at relatively high priority, as this is the main place we check cross-
+    # module interactions.
+    frequency = 1  # TODO: We may want even higher priority here
 
     def handle(self, wasm):
-        # Generate a second wasm file, unless we were given one (useful during
-        # reduction).
+        # Generate a second wasm file. (For fuzzing, we may be given one, but we
+        # still do the work to prepare to generate it, as that consumes random
+        # values, and we don't want that to affect anything later.)
         second_wasm = abspath('second.wasm')
-        given = os.environ.get('BINARYEN_SECOND_WASM')
-        if given:
-            # TODO: should we de-nan this etc. as with the primary?
-            shutil.copyfile(given, second_wasm)
-        else:
-            second_input = abspath('second_input.dat')
-            make_random_input(random_size(), second_input)
-            args = [second_input, '-ttf', '-o', second_wasm]
-            run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
+        second_input = abspath('second_input.dat')
+        second_size = random_size()
+        make_random_input(second_size, second_input)
+        args = [second_input, '-ttf']
+        # Most of the time, use the first wasm as an import to the second.
+        if random.random() < 0.8:
+            args += ['--fuzz-import=' + wasm]
 
-        # The binaryen interpreter only supports a single file, so we run them
-        # from JS using fuzz_shell.js's support for two files.
+        given = os.environ.get('BINARYEN_SECOND_WASM')
+        if not given:
+            print('Generate second wasm')
+            run([in_bin('wasm-opt'), '-o', second_wasm] + args + GEN_ARGS + FEATURE_OPTS)
+        else:
+            print(f'Use given second wasm {given}')
+            shutil.copyfile(given, second_wasm)
+
+        # Run the wasm.
         #
         # Note that we *cannot* run each wasm file separately and compare those
         # to the combined output, as fuzz_shell.js intentionally allows calls
         # *between* the wasm files, through JS APIs like call-export*. So all we
         # do here is see the combined, linked behavior, and then later below we
         # see that that behavior remains even after optimizations.
-        output = run_d8_wasm(wasm, args=[second_wasm])
+        output = run_bynterp(wasm, args=['--fuzz-exec-before', f'--fuzz-exec-second={second_wasm}'])
+
+        # Check if we trapped during instantiation.
+        if traps_in_instantiation(output):
+            # We may fail to instantiate the modules for valid reasons, such as
+            # an active segment being out of bounds. There is no point to
+            # continue in such cases, as no exports are called.
+            note_ignored_vm_run('Two instantiate error')
+            return
 
         if output == IGNORE:
             # There is no point to continue since we can't compare this output
             # to anything.
             return
 
-        if output.startswith(INSTANTIATE_ERROR):
-            # We may fail to instantiate the modules for valid reasons, such as
-            # an active segment being out of bounds. There is no point to
-            # continue in such cases, as no exports are called.
-            return
-
-        # Make sure that fuzz_shell.js actually executed all exports from both
+        # Make sure that we actually executed all exports from both
         # wasm files.
         exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
         calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
         if calls_in_output == 0:
             print(f'warning: no calls in output. output:\n{output}')
-        assert calls_in_output == len(exports)
+        assert calls_in_output == len(exports), exports
 
+        # Merge the files and run them that way. The result should be the same,
+        # even if we optimize. TODO: merge (no pun intended) the rest of Merge
+        # into here.
+        merged = abspath('merged.wasm')
+        run([in_bin('wasm-merge'), wasm, 'primary', second_wasm, 'secondary',
+            '-o', merged, '--rename-export-conflicts', '-all'])
+
+        # Usually also optimize the merged module. Optimizations are very
+        # interesting here, because after merging we can safely do even closed-
+        # world optimizations, making very aggressive changes that should still
+        # behave the same as before merging.
+        if random.random() < 0.8:
+            merged_opt = abspath('merged.opt.wasm')
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), merged, '-o', merged_opt, '-all'] + opts)
+            merged = merged_opt
+
+        if not wasm_notices_export_changes(merged):
+            # wasm-merge combines exports, which can alter their indexes and
+            # lead to noticeable differences if the wasm is sensitive to such
+            # things. We only compare the output if that is not an issue.
+            merged_output = run_bynterp(merged, args=['--fuzz-exec-before', '-all'])
+
+            if merged_output == IGNORE:
+                # The original output was ok, but after merging it becomes
+                # something we must ignore. This can happen when we optimize, if
+                # the optimizer reorders a normal trap (say a null exception)
+                # with a host limit trap (say an allocation limit). This can
+                # also happen because stack limits on calls change slightly when
+                # we go from cross-module calls to within-module calls. There
+                # is nothing to check in this case.
+                pass
+            else:
+                self.compare_to_merged_output(output, merged_output)
+
+        # The rest of the testing here depends on being to optimize the
+        # two modules independently, which closed-world can break.
+        if CLOSED_WORLD:
+            return
+
+        # Fix up the normal output for later comparisons.
         output = fix_output(output)
 
-        # Optimize at least one of the two.
+        # We can optimize and compare the results. Optimize at least one of
+        # the two.
         wasms = [wasm, second_wasm]
         for i in range(random.randint(1, 2)):
             wasm_index = random.randint(0, 1)
@@ -1818,21 +1933,85 @@ class Two(TestCaseHandler):
             wasms[wasm_index] = new_name
 
         # Run again, and compare the output
+        optimized_output = run_bynterp(wasms[0], args=['--fuzz-exec-before', f'--fuzz-exec-second={wasms[1]}'])
+        optimized_output = fix_output(optimized_output)
+
+        compare(output, optimized_output, 'Two-Opt')
+
+        # If we can, also test in V8. We also cannot compare if there are NaNs
+        # (as optimizations can lead to different outputs), and we must
+        # disallow some features.
+        # TODO: relax some of these
+        if NANS or not all_disallowed(['shared-everything', 'strings', 'stack-switching']):
+            return
+
+        output = run_d8_wasm(wasm, args=[second_wasm])
+
+        if output == IGNORE:
+            return
+
+        # We ruled out things we must ignore, like host limitations, and also
+        # exited earlier on a deterministic instantiation error, so there should
+        # be no such error in V8.
+        assert not output.startswith(INSTANTIATE_ERROR)
+
+        output = fix_output(output)
+
         optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
         optimized_output = fix_output(optimized_output)
 
-        compare(output, optimized_output, 'Two')
+        compare(output, optimized_output, 'Two-V8')
 
-    def can_run_on_wasm(self, wasm):
-        # We cannot optimize wasm files we are going to link in closed world
-        # mode. We also cannot run shared-everything code in d8 yet. We also
-        # cannot compare if there are NaNs (as optimizations can lead to
-        # different outputs).
-        if CLOSED_WORLD:
-            return False
-        if NANS:
-            return False
-        return all_disallowed(['shared-everything', 'strings'])
+    def compare_to_merged_output(self, output, merged_output):
+        # Comparing the original output from two files to the output after
+        # merging them is not trivial. First, remove the extra logging that
+        # --fuzz-exec-second adds.
+        output = output.replace('[fuzz-exec] running second module\n', '')
+
+        # Fix up both outputs.
+        output = fix_output(output)
+        merged_output = fix_output(merged_output)
+
+        # Finally, align the export names. We merged with
+        # --rename-export-conflicts, so that all exports remain exported,
+        # allowing a full comparison, but we do need to handle the different
+        # names. We do so by matching the export names in the logging.
+        output_lines = output.splitlines()
+        merged_output_lines = merged_output.splitlines()
+
+        if len(output_lines) != len(merged_output_lines):
+            # The line counts don't even match. Just compare them, which will
+            # emit a nice error for that.
+            compare(output, merged_output, 'Two-Counts')
+            assert False, 'we should have errored on the line counts'
+
+        for i in range(len(output_lines)):
+            a = output_lines[i]
+            b = merged_output_lines[i]
+            if a == b:
+                continue
+            if a.startswith(FUZZ_EXEC_CALL_PREFIX):
+                # Fix up
+                #   [fuzz-exec] calling foo/bar
+                # for different foo/bar. Just copy the original.
+                assert b.startswith(FUZZ_EXEC_CALL_PREFIX)
+                merged_output_lines[i] = output_lines[i]
+            elif a.startswith(FUZZ_EXEC_NOTE_RESULT):
+                # Fix up
+                #   [fuzz-exec] note result: foo/bar => 42
+                # for different foo/bar. We do not want to copy the result here,
+                # which might differ (that would be a bug we want to find).
+                assert b.startswith(FUZZ_EXEC_NOTE_RESULT)
+                assert a.count(' => ') == 1
+                assert b.count(' => ') == 1
+                a_prefix, a_result = a.split(' => ')
+                b_prefix, b_result = b.split(' => ')
+                # Copy a's prefix with b's result.
+                merged_output_lines[i] = a_prefix + ' => ' + b_result
+
+        merged_output = '\n'.join(merged_output_lines)
+
+        compare(output, merged_output, 'Two-Merged')
 
 
 # Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
@@ -2104,8 +2283,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-    # TODO: enable when stable enough, and adjust |frequency| (see above)
-    # Split(),
+    Split(),
     RoundtripText(),
     ClusterFuzz(),
     Two(),
@@ -2219,6 +2397,7 @@ opt_choices = [
     ('-O1',), ('-O2',), ('-O3',), ('-O4',), ('-Os',), ('-Oz',),
     ("--abstract-type-refining",),
     ("--cfp",),
+    ("--cfp-reftest",),
     ("--coalesce-locals",),
     # XXX slow, non-default ("--coalesce-locals-learning",),
     ("--code-pushing",),
@@ -2314,9 +2493,12 @@ requires_closed_world = {("--type-refining",),
                          ("--remove-unused-types",),
                          ("--abstract-type-refining",),
                          ("--cfp",),
-                         ("--gsi",),
+                         ("--cfp-reftest",),
+                         ("--type-finalizing",),
+                         ("--type-unfinalizing",),
                          ("--type-ssa",),
-                         ("--type-merging",)}
+                         ("--type-merging",),
+                         ("--unsubtyping",)}
 
 
 def get_random_opts():
@@ -2403,7 +2585,7 @@ print('FEATURE_DISABLE_FLAGS:', FEATURE_DISABLE_FLAGS)
 # disabled, its dependent features need to be disabled as well.
 IMPLIED_FEATURE_OPTS = {
     '--disable-reference-types': ['--disable-gc', '--disable-exception-handling', '--disable-strings'],
-    '--disable-gc': ['--disable-strings'],
+    '--disable-gc': ['--disable-strings', '--disable-stack-switching', '--disable-custom-descriptors'],
 }
 
 print('''
@@ -2445,7 +2627,7 @@ if __name__ == '__main__':
         counter += 1
         if given_seed is not None:
             seed = given_seed
-            given_seed_passed = True
+            given_seed_error = 0
         else:
             seed = random.randint(0, 1 << 64)
         random.seed(seed)
@@ -2486,10 +2668,16 @@ if __name__ == '__main__':
             traceback.print_tb(tb)
             print('-----------------------------------------')
             print('!')
+            # Default to an error code of 1, but change it for certain errors,
+            # so we report them differently (useful for the reducer to keep
+            # reducing the exact same error category)
+            if given_seed is not None:
+                given_seed_error = 1
             for arg in e.args:
                 print(arg)
-            if given_seed is not None:
-                given_seed_passed = False
+                if type(arg) is str:
+                    if 'comparison error' in arg:
+                        given_seed_error = 2
 
             # We want to generate a template reducer script only when there is
             # no given wasm file. That we have a given wasm file means we are no
@@ -2534,9 +2722,18 @@ echo "The following value should be 0:"
 %(wasm_opt)s %(features)s %(temp_wasm)s
 echo "  " $?
 
-# run the command
-echo "The following value should be 1:"
-./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+echo "The following value should be >0:"
+
+if [ -z "$BINARYEN_FIRST_WASM" ]; then
+  # run the command normally
+  ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+else
+  # BINARYEN_FIRST_WASM was provided so we should actually reduce the *second*
+  # file. pass the first one in as the main file, and use the env var for the
+  # second.
+  BINARYEN_SECOND_WASM=%(temp_wasm)s ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d $BINARYEN_FIRST_WASM > o 2> e
+fi
+
 echo "  " $?
 
 #
@@ -2603,7 +2800,7 @@ Make sure to verify by eye that the output says something like this:
 
 The following value should be 0:
   0
-The following value should be 1:
+The following value should be >0:
   1
 
 (If it does not, then one possible issue is that the fuzzer fails to write a
@@ -2634,9 +2831,9 @@ After reduction, the reduced file will be in %(working_wasm)s
             print('  ', testcase_handler.__class__.__name__ + ':', testcase_handler.count_runs())
 
     if given_seed is not None:
-        if given_seed_passed:
+        if not given_seed_error:
             print('(finished running seed %d without error)' % given_seed)
             sys.exit(0)
         else:
             print('(finished running seed %d, see error above)' % given_seed)
-            sys.exit(1)
+            sys.exit(given_seed_error)

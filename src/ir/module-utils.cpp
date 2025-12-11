@@ -657,14 +657,14 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
     // We can ignore call.without.effects, which is implemented as an import but
     // functionally is a call within the module.
     if (!Intrinsics(wasm).isCallWithoutEffects(func)) {
-      notePublic(func->type);
+      notePublic(func->type.getHeapType());
     }
   });
   for (auto& ex : wasm.exports) {
     switch (ex->kind) {
       case ExternalKind::Function: {
         auto* func = wasm.getFunction(*ex->getInternalName());
-        notePublic(func->type);
+        notePublic(func->type.getHeapType());
         continue;
       }
       case ExternalKind::Table: {

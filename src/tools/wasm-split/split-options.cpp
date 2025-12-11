@@ -221,7 +221,7 @@ WasmSplitOptions::WasmSplitOptions()
       "",
       "Write a file mapping placeholder indices to the function names.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { placeholderMap = true; })
     .add("--import-namespace",
@@ -231,20 +231,30 @@ WasmSplitOptions::WasmSplitOptions()
          "module into the secondary module. In instrument mode, refers to the "
          "namespace from which to import the secondary memory, if any.",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument, Mode::MultiSplit},
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
          })
-    .add("--placeholder-namespace",
+    .add("--placeholder-namespace-prefix",
          "",
-         "The namespace from which to import placeholder functions into "
-         "the primary module.",
+         "The prefix for the namespaces from which to import placeholder "
+         "functions into the primary module. The namespaces will be "
+         "concatenations of the prefix and the module name.",
          WasmSplitOption,
-         {Mode::Split},
+         {Mode::Split, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
-           placeholderNamespace = argument;
+           placeholderNamespacePrefix = argument;
+         })
+    .add("--placeholder-namespace",
+         "",
+         "The same as --placeholder-namespace-prefix.",
+         WasmSplitOption,
+         {Mode::Split, Mode::MultiSplit},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           placeholderNamespacePrefix = argument;
          })
     .add("--jspi",
          "",
@@ -260,7 +270,7 @@ WasmSplitOptions::WasmSplitOptions()
       "An identifying prefix to prepend to new export names created "
       "by module splitting.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { exportPrefix = argument; })
     .add("--profile-export",

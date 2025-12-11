@@ -246,6 +246,17 @@ struct OptimizationOptions : public ToolOptions {
              passOptions.inlining.oneCallerInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
+      .add("--inline-max-combined-binary-size",
+           "-imcbs",
+           "Max size of combined functions after inlining. "
+           "Default: " +
+             std::to_string(InliningOptions().maxCombinedBinarySize),
+           OptimizationOptionsCategory,
+           Options::Arguments::One,
+           [this](Options* o, const std::string& argument) {
+             passOptions.inlining.maxCombinedBinarySize =
+               static_cast<Index>(atoi(argument.c_str()));
+           })
       .add("--inline-functions-with-loops",
            "-ifwl",
            "Allow inlining functions with loops",

@@ -61,6 +61,11 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
+    if (index == StructUtils::DescriptorIndex) {
+      // We cannot continue on below, where we index into the vector of values.
+      return;
+    }
+
     auto noted = expr->type;
     // Do not introduce new exact fields that might requires invalid
     // casts. Keep any existing exact fields, though.
@@ -81,9 +86,16 @@ struct FieldInfoScanner
     info.note(fieldType);
   }
 
-  void noteCopy(HeapType type, Index index, FieldInfo& info) {
-    // Copies do not add any type requirements at all: the type will always be
-    // read and written to a place with the same type.
+  void noteCopy(StructGet* get, Type type, Index index, FieldInfo& info) {
+    // Copies with identical sources and destinations do not add any type
+    // requirements.
+    auto srcType = get->ref->type.getHeapType();
+    auto dstType = type.getHeapType();
+    if (srcType == dstType && get->index == index) {
+      return;
+    }
+    // Otherwise we must note the written type.
+    noteExpression(get, dstType, index, info);
   }
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
@@ -188,13 +200,19 @@ struct TypeRefining : public Pass {
     for (auto type : allTypes) {
       if (type.isStruct()) {
         auto& fields = type.getStruct().fields;
-        auto& infos = finalInfos[type];
+        // Update the inexact entry because that's what we will query later.
+        auto& infos = finalInfos[{type, Inexact}];
         for (Index i = 0; i < fields.size(); i++) {
           auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
           // Do not introduce new exact fields that might requires invalid
           // casts. Keep any existing exact fields, though.
           if (!fields[i].type.isExact()) {
             gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
+          }
+          // Do not use the GUFA type if it is a continuation, as we cannot add
+          // casts to fix up issues later.
+          if (gufaType.isContinuation()) {
+            continue;
           }
           infos[i] = LUBFinder(gufaType);
         }
@@ -218,7 +236,7 @@ struct TypeRefining : public Pass {
         }
 
         auto type = structNew->type.getHeapType();
-        auto& infos = finalInfos[type];
+        auto& infos = finalInfos[{type, Inexact}];
         auto& fields = type.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {
           // We are in a situation like this:
@@ -282,7 +300,9 @@ struct TypeRefining : public Pass {
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         auto oldType = fields[i].type;
-        auto& info = finalInfos[type][i];
+        // Use inexact because exact info will have been propagated up to
+        // inexact entries but not necessarily vice versa.
+        auto& info = finalInfos[{type, Inexact}][i];
         if (!info.noted()) {
           info = LUBFinder(oldType);
         }
@@ -296,11 +316,11 @@ struct TypeRefining : public Pass {
           // public, unchanged since we cannot optimize it
           Type newSuperType;
           if (!publicTypesSet.count(*super)) {
-            newSuperType = finalInfos[*super][i].getLUB();
+            newSuperType = finalInfos[{*super, Inexact}][i].getLUB();
           } else {
             newSuperType = superFields[i].type;
           }
-          auto& info = finalInfos[type][i];
+          auto& info = finalInfos[{type, Inexact}][i];
           auto newType = info.getLUB();
           if (!Type::isSubType(newType, newSuperType)) {
             // To ensure we are a subtype of the super's field, simply copy that
@@ -335,7 +355,7 @@ struct TypeRefining : public Pass {
       // After all those decisions, see if we found anything to optimize.
       for (Index i = 0; i < fields.size(); i++) {
         auto oldType = fields[i].type;
-        auto& lub = finalInfos[type][i];
+        auto& lub = finalInfos[{type, Inexact}][i];
         auto newType = lub.getLUB();
         if (newType != oldType) {
           canOptimize = true;
@@ -379,7 +399,8 @@ struct TypeRefining : public Pass {
         Type newFieldType;
         if (!curr->ref->type.isNull()) {
           auto oldType = curr->ref->type.getHeapType();
-          newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
+          newFieldType =
+            parent.finalInfos[{oldType, Inexact}][curr->index].getLUB();
         }
 
         if (curr->ref->type.isNull() || newFieldType == Type::unreachable ||
@@ -444,7 +465,8 @@ struct TypeRefining : public Pass {
           if (!oldType.isRef()) {
             continue;
           }
-          auto newType = parent.finalInfos[oldStructType][i].getLUB();
+          auto newType =
+            parent.finalInfos[{oldStructType, Inexact}][i].getLUB();
           newFields[i].type = getTempType(newType);
         }
       }

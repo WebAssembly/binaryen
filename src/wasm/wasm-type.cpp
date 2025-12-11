@@ -623,6 +623,8 @@ bool Type::isDefaultable() const {
   return isConcrete() && !isNonNullable();
 }
 
+bool Type::isCastable() { return isRef() && getHeapType().isCastable(); }
+
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
@@ -887,6 +889,11 @@ Shareability HeapType::getShared() const {
   } else {
     return getHeapTypeInfo(*this)->share;
   }
+}
+
+bool HeapType::isCastable() {
+  return !isContinuation() && !isMaybeShared(HeapType::cont) &&
+         !isMaybeShared(HeapType::nocont);
 }
 
 Signature HeapType::getSignature() const {
@@ -1324,6 +1331,9 @@ FeatureSet HeapType::getFeatures() const {
 
       // In addition, scan their non-ref children, to add dependencies on
       // things like SIMD.
+      // XXX This will not scan HeapType children that are not also children of
+      //     Type children, which happens with Continuation (has a HeapType
+      //     child that is not a Type).
       for (auto child : heapType.getTypeChildren()) {
         if (!child.isRef()) {
           feats |= child.getFeatures();
@@ -1813,12 +1823,12 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (auto desc = type.getDescribedType()) {
     os << "(describes ";
     printHeapTypeName(*desc);
-    os << ' ';
+    os << ") ";
   }
   if (auto desc = type.getDescriptorType()) {
     os << "(descriptor ";
     printHeapTypeName(*desc);
-    os << ' ';
+    os << ") ";
   }
   switch (type.getKind()) {
     case HeapTypeKind::Func:
@@ -1835,12 +1845,6 @@ std::ostream& TypePrinter::print(HeapType type) {
       break;
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
-  }
-  if (type.getDescriptorType()) {
-    os << ')';
-  }
-  if (type.getDescribedType()) {
-    os << ')';
   }
   if (type.isShared()) {
     os << ')';
@@ -2386,10 +2390,12 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return false;
     }
   }
-  // A supertype of a type must have a describes clause iff the type has a
-  // describes clause.
-  if (bool(sub.described) != bool(super.described)) {
-    return false;
+  // A supertype of a type with a (describes $x) clause must have a (describes
+  // $y) clause where $y is the declared supertype of $x.
+  if (sub.described) {
+    if (!super.described || sub.described->supertype != super.described) {
+      return false;
+    }
   }
   SubTyper typer;
   switch (sub.kind) {
@@ -2721,21 +2727,27 @@ void TypeBuilder::dump() {
 }
 
 std::unordered_set<HeapType> getIgnorablePublicTypes() {
-  auto array8 = Array(Field(Field::i8, Mutable));
-  auto array16 = Array(Field(Field::i16, Mutable));
-  TypeBuilder builder(2);
-  builder[0] = array8;
-  builder[1] = array16;
-  auto result = builder.build();
-  assert(result);
-  std::unordered_set<HeapType> ret;
-  for (auto type : *result) {
-    ret.insert(type);
-  }
-  return ret;
+  std::unordered_set<HeapType> set;
+  set.insert(HeapTypes::getMutI8Array());
+  set.insert(HeapTypes::getMutI16Array());
+  return set;
 }
 
 } // namespace wasm
+
+namespace wasm::HeapTypes {
+
+HeapType getMutI8Array() {
+  static HeapType i8Array = Array(Field(Field::i8, Mutable));
+  return i8Array;
+}
+
+HeapType getMutI16Array() {
+  static HeapType i16Array = Array(Field(Field::i16, Mutable));
+  return i16Array;
+}
+
+} // namespace wasm::HeapTypes
 
 namespace std {
 

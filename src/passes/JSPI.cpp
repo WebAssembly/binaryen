@@ -97,10 +97,10 @@ struct JSPI : public Pass {
     if (wasmSplit) {
       // Make an import for the load secondary module function so a JSPI wrapper
       // version will be created.
-      auto import =
-        Builder::makeFunction(ModuleSplitting::LOAD_SECONDARY_MODULE,
-                              Signature(Type::none, Type::none),
-                              {});
+      auto import = Builder::makeFunction(
+        ModuleSplitting::LOAD_SECONDARY_MODULE,
+        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
+        {});
       import->module = ENV;
       import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
       module->addFunction(std::move(import));
@@ -151,8 +151,7 @@ struct JSPI : public Pass {
           if (iter == wrappedExports.end()) {
             continue;
           }
-          auto* replacementRef = builder.makeRefFunc(
-            iter->second, module->getFunction(iter->second)->type);
+          auto* replacementRef = builder.makeRefFunc(iter->second);
           segment->data[i] = replacementRef;
         }
       }
@@ -213,12 +212,12 @@ private:
       block->list.push_back(builder.makeConst(0));
     }
     block->finalize();
-    auto wrapperFunc =
-      Builder::makeFunction(wrapperName,
-                            std::move(namedWrapperParams),
-                            Signature(Type(wrapperParams), resultsType),
-                            {},
-                            block);
+    auto wrapperFunc = Builder::makeFunction(
+      wrapperName,
+      std::move(namedWrapperParams),
+      Type(Signature(Type(wrapperParams), resultsType), NonNullable, Exact),
+      {},
+      block);
     return module->addFunction(std::move(wrapperFunc))->name;
   }
 
@@ -234,7 +233,7 @@ private:
     wrapperIm->base = im->base;
     auto stub = std::make_unique<Function>();
     stub->name = Name(im->name.str);
-    stub->type = im->type;
+    stub->type = im->type.with(Exact);
 
     auto* call = module->allocator.alloc<Call>();
     call->target = wrapperIm->name;
@@ -276,7 +275,8 @@ private:
     block->finalize();
     call->type = im->getResults();
     stub->body = block;
-    wrapperIm->type = Signature(Type(params), call->type);
+    wrapperIm->type =
+      Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
     if (wasmSplit && im->name == ModuleSplitting::LOAD_SECONDARY_MODULE) {
       // In non-debug builds the name of the JSPI wrapper function for loading

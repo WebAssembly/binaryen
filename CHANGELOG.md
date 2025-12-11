@@ -15,15 +15,51 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v125
+----
+
+ - Add a ReorderTypes pass (#7879).
+ - C and JS APIs now assume RefFuncs are created after imported functions (non-
+   imported functions can still be created later). This is necessary because
+   imported function types can vary (due to Custom Descriptors), and we need to
+   look up that type at RefFunc creation time. (#7993)
+ - The --mod-asyncify-never-unwind and --mod-asyncify-always-and-only-unwind
+   passed were deleted.  They only existed to support the lazy code loading
+   support in emscripten that was removed. (#7893)
+ - The cost modeling of calls was increased to a high number. That cost is
+   usually not something you can notice (as calls have effects that make
+   removing/replacing them impossible), but you may notice this when using
+   call.without.effects (calls will no longer be assumed to be cheap enough to
+   run unconditionally) or monomorphize (which inputs a cost factor as a
+   number). (#8047)
+ - Cross-module fuzzing: Add support generate and fuzz two linked files (#7947,
+   #7949, etc.)
+
+v124
+----
+
+ - Add Custom Descriptors support. (Fuzzing: #7796)
+ - Add Stack Switching support. (Fuzzing: #7834)
+ - Add Compilation Hints + Branch Hinting support. (Fuzzing #7704)
+ - Build mimalloc with `MI_NO_OPT_ARCH` to fix Raspberry Pi 4 on Arm64. (#7837)
  - `wasm-split`'s `--multi-split` mode now supports more options:
    `--no-placeholders`, `--import-namespace`, `--emit-module-names`,
-   `--emit-text`, and `--symbolmap`. Because `--no-placeholders` is false by
-   default and until now `--multi-split` didn't use placeholders at all, this is
-   a breaking change. If you want to continue to do multi-split without
-   placeholders, you need to explicitly specify `--no-placeholders`.
+   `--emit-text`, `--symbolmap`, and `--placeholdermap`. Because
+   `--no-placeholders` is false by default and until now `--multi-split` didn't
+   use placeholders at all, this is a breaking change. If you want to continue
+   to do multi-split without placeholders, you need to explicitly specify
+   `--no-placeholders`. (#7781, #7789, #7792)
+ - InstrumentMemory: Allow filtering by instruction, and instrument memory.grow.
+   (#7388)
+ - Add support for more source map fields, "sourcesContent", "file", and
+   "sourceRoot". (#7473)
+ - [GC] Add a TypeRefiningGUFA pass. (#7433)
+ - [C/JS APIs] Allow JS and C to read the start function of a module (#7424)
  - Add a `--string-lifting` pass that raises imported string operations and
    constants into stringref in Binaryen IR (which can then be fully optimized,
-   and typically lowered back down with `--string-lowering`).
+   and typically lowered back down with `--string-lowering`). (#7389)
+ - Fuzzer: Improve handling of small inputs and their debugging using a new
+   `BINARYEN_FUZZER_MAX_BYTES` env var. (#7832)
 
 v123
 ----

@@ -321,7 +321,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void printUnreachableReplacement(Expression* curr);
   bool maybePrintUnreachableReplacement(Expression* curr, Type type);
   void visitRefCast(RefCast* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+    if ((curr->desc && curr->desc->type != Type::unreachable) ||
+        !maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
@@ -503,7 +504,13 @@ struct PrintExpressionContents
       printMedium(o, "call_indirect ");
     }
 
-    if (features.hasReferenceTypes()) {
+    // Even if reference-types is not enabled because the features section or
+    // the matching command-line flags are not present, if the table index is
+    // greater than 0, we print the table because otherwise the results will be
+    // incorrect.
+    if (features.hasReferenceTypes() ||
+        (wasm && !wasm->tables.empty() &&
+         wasm->tables[0]->name != curr->table)) {
       curr->table.print(o);
       o << ' ';
     }
@@ -2218,7 +2225,20 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "ref.cast ");
     }
-    printType(curr->type);
+    if (curr->type != Type::unreachable) {
+      printType(curr->type);
+    } else {
+      // We can still recover a valid result type from the type of the
+      // descriptor.
+      auto described = curr->desc->type.getHeapType().getDescribedType();
+      if (described) {
+        printType(
+          Type(*described, NonNullable, curr->desc->type.getExactness()));
+      } else {
+        // Invalid, so it doesn't matter what we print.
+        printType(Type::unreachable);
+      }
+    }
   }
   void visitRefGetDesc(RefGetDesc* curr) {
     printMedium(o, "ref.get_desc ");
@@ -2288,6 +2308,9 @@ struct PrintExpressionContents
     printMedium(o, "struct.new");
     if (curr->isWithDefault()) {
       printMedium(o, "_default");
+    }
+    if (curr->desc) {
+      printMedium(o, "_desc");
     }
     o << ' ';
     printHeapTypeName(curr->type.getHeapType());
@@ -3058,10 +3081,19 @@ void PrintSExpression::handleSignature(Function* curr,
   o << '(';
   printMajor(o, "func ");
   curr->name.print(o);
+  if (curr->imported() && curr->type.isExact()) {
+    o << " (exact";
+  }
   if ((currModule && currModule->features.hasGC()) ||
-      requiresExplicitFuncType(curr->type)) {
+      requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
-    printHeapTypeName(curr->type) << ')';
+    printHeapTypeName(curr->type.getHeapType()) << ')';
+    if (full) {
+      // Print the full type in a comment. TODO the spec may add this too
+      o << " (; ";
+      printTypeOrName(curr->type, o, currModule);
+      o << " ;)";
+    }
   }
   bool inParam = false;
   Index i = 0;
@@ -3097,6 +3129,9 @@ void PrintSExpression::handleSignature(Function* curr,
   if (curr->getResults() != Type::none) {
     o << maybeSpace;
     printResultType(curr->getResults());
+  }
+  if (curr->imported() && curr->type.isExact()) {
+    o << ')';
   }
 }
 
@@ -3895,6 +3930,14 @@ std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
 std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair) {
   wasm::printTypeOrName(pair.second, o, &pair.first);
   return o;
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair) {
+  if (auto it = pair.first.typeNames.find(pair.second);
+      it != pair.first.typeNames.end()) {
+    return o << it->second.name;
+  }
+  return o << "(unnamed)";
 }
 
 } // namespace std

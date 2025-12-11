@@ -4,19 +4,19 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc (struct))))
-    (type $super (sub (descriptor $super.desc (struct))))
-    ;; CHECK:       (type $super.desc (sub (describes $super (struct))))
-    (type $super.desc (sub (describes $super (struct))))
-    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc (struct))))
-    (type $sub (sub $super (descriptor $sub.desc (struct))))
-    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct))))
-    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct)))
 
-    ;; CHECK:       (type $other (descriptor $other.desc (struct)))
-    (type $other (descriptor $other.desc (struct)))
-    ;; CHECK:       (type $other.desc (describes $other (struct)))
-    (type $other.desc (describes $other (struct)))
+    ;; CHECK:       (type $other (descriptor $other.desc) (struct))
+    (type $other (descriptor $other.desc) (struct))
+    ;; CHECK:       (type $other.desc (describes $other) (struct))
+    (type $other.desc (describes $other) (struct))
   )
 
   ;; CHECK:      (import "" "" (func $effect (type $14)))

@@ -1,0 +1,64 @@
+;; Import a function of type $C as type $A, cast to $A, $B, $C. All those casts
+;; should succeed.
+(module           
+ (rec
+  (type $A (sub (func)))
+  (type $B (sub $A (func)))
+  (type $C (sub final $B (func)))
+ )
+
+ (import "primary" "func" (func $fimport (type $A)))
+
+ (func $cast-A (export "cast-A")
+  (drop
+   (ref.cast (ref $A)
+    (ref.func $fimport)
+   )
+  )
+ )
+
+ (func $cast-B (export "cast-B")
+  (drop
+   (ref.cast (ref $B)
+    (ref.func $fimport)
+   )
+  )
+ )
+
+ (func $cast-C (export "cast-C")
+  (drop
+   (ref.cast (ref $C)
+    (ref.func $fimport)
+   )
+  )
+ )
+
+ (func $cast-A-exact (export "cast-A-exact")
+  (drop
+   (ref.cast (ref (exact $A))
+    (ref.func $fimport)
+   )
+  )
+ )
+
+ (func $cast-B-exact (export "cast-B-exact")
+  (drop
+   (ref.cast (ref (exact $B))
+    (ref.func $fimport)
+   )
+  )
+ )
+
+ (func $cast-C-exact (export "cast-C-exact")
+  (drop
+   (ref.cast (ref (exact $C))
+    (ref.func $fimport)
+   )
+  )
+ )
+
+ (func $last (export "last")
+  ;; Just a non-trapping method to make the test output easier to read.
+ )
+)
+

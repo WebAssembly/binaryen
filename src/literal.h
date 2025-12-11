@@ -30,6 +30,7 @@
 
 namespace wasm {
 
+class Module;
 class Literals;
 struct FuncData;
 struct GCData;
@@ -70,6 +71,9 @@ class Literal {
 
 public:
   // Type of the literal. Immutable because the literal's payload depends on it.
+  // For references to defined heap types, this is almost always an exact type.
+  // The exception is references to imported functions, since the function
+  // provided at instantiation time may have a subtype of the import type.
   const Type type;
 
   Literal() : v128(), type(Type::none) {}
@@ -90,7 +94,7 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(std::shared_ptr<FuncData> funcData, HeapType type);
+  explicit Literal(std::shared_ptr<FuncData> funcData, Type type);
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   explicit Literal(std::shared_ptr<ExnData> exnData);
   explicit Literal(std::shared_ptr<ContData> contData);
@@ -252,7 +256,8 @@ public:
   }
   // Simple way to create a function from the name and type, without a full
   // FuncData.
-  static Literal makeFunc(Name func, HeapType type);
+  static Literal makeFunc(Name func, Type type);
+  static Literal makeFunc(Name func, Module& wasm);
   static Literal makeI31(int32_t value, Shareability share) {
     auto lit = Literal(Type(HeapTypes::i31.getBasic(share), NonNullable));
     lit.i32 = value | 0x80000000;
@@ -785,18 +790,6 @@ struct GCData {
     : type(type), values(std::move(values)), desc(desc) {}
 };
 
-// The data of a (ref exn) literal.
-struct ExnData {
-  // The tag of this exn data.
-  // TODO: handle cross-module calls using something other than a Name here.
-  Name tag;
-
-  // The payload of this exn data.
-  Literals payload;
-
-  ExnData(Name tag, Literals payload) : tag(tag), payload(payload) {}
-};
-
 } // namespace wasm
 
 namespace std {
@@ -835,8 +828,17 @@ template<> struct hash<wasm::Literal> {
         wasm::rehash(digest, a.getFunc());
         return digest;
       }
-      if (a.type.getHeapType().isMaybeShared(wasm::HeapType::i31)) {
+      auto type = a.type.getHeapType();
+      if (type.isMaybeShared(wasm::HeapType::i31)) {
         wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      if (type.isMaybeShared(wasm::HeapType::any)) {
+        // This may be an extern string that was internalized to |any|. Undo
+        // that to get the actual value. (Rehash here with the existing digest,
+        // which contains the |any| type, so that the final hash takes into
+        // account the fact that it was internalized.)
+        wasm::rehash(digest, (*this)(a.externalize()));
         return digest;
       }
       if (a.type.isString()) {
@@ -848,7 +850,8 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       // other non-null reference type literals cannot represent concrete
-      // values, i.e. there is no concrete anyref or eqref other than null.
+      // values, i.e. there is no concrete anyref or eqref other than null and
+      // internalized strings.
       WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("unexpected type");

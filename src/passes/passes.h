@@ -121,8 +121,6 @@ Pass* createOptimizeForJSPass();
 Pass* createOutliningPass();
 #endif
 Pass* createPickLoadSignsPass();
-Pass* createModAsyncifyAlwaysOnlyUnwindPass();
-Pass* createModAsyncifyNeverUnwindPass();
 Pass* createLLVMNonTrappingFPToIntLoweringPass();
 Pass* createPoppifyPass();
 Pass* createPostEmscriptenPass();
@@ -147,6 +145,8 @@ Pass* createReorderFunctionsPass();
 Pass* createReorderGlobalsPass();
 Pass* createReorderGlobalsAlwaysPass();
 Pass* createReorderLocalsPass();
+Pass* createReorderTypesPass();
+Pass* createReorderTypesForTestingPass();
 Pass* createReReloopPass();
 Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();

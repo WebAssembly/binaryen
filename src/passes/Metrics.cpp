@@ -195,16 +195,17 @@ struct Metrics
     keys.push_back("[total]");
     counts["[total]"] = total;
     // sort
-    sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
-      // Sort the [..] ones first.
-      if (a[0] == '[' && b[0] != '[') {
-        return true;
-      }
-      if (a[0] != '[' && b[0] == '[') {
-        return false;
-      }
-      return strcmp(b, a) > 0;
-    });
+    std::sort(
+      keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
+        // Sort the [..] ones first.
+        if (a[0] == '[' && b[0] != '[') {
+          return true;
+        }
+        if (a[0] != '[' && b[0] == '[') {
+          return false;
+        }
+        return strcmp(b, a) > 0;
+      });
     o << title << "\n";
     for (auto* key : keys) {
       auto value = counts[key];

@@ -19,6 +19,7 @@ import difflib
 import fnmatch
 import glob
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
@@ -385,6 +386,9 @@ def get_tests(test_dir, extensions=[], recursive=False):
 
 
 if options.spec_tests:
+    non_existent_tests = [test_name for test_name in options.spec_tests if not os.path.isfile(test_name)]
+    if non_existent_tests:
+        raise ValueError(f"Supplied test files do not exist: {non_existent_tests}")
     options.spec_tests = [os.path.abspath(t) for t in options.spec_tests]
 else:
     options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'], recursive=True)
@@ -399,6 +403,7 @@ os.chdir(options.out_dir)
 # corresponding 'old_[FILENAME].wast' file. When you fix the new file and
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
+# Paths are relative to the test/spec directory
 SPEC_TESTS_TO_SKIP = [
     # Requires us to write our own floating point parser
     'const.wast',
@@ -412,41 +417,49 @@ SPEC_TESTS_TO_SKIP = [
     # Test invalid
     'elem.wast',
 ]
+SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
+    'custom-page-sizes',
+    'wide-arithmetic',
+]
+
+# Paths are relative to the test/spec/testsuite directory
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
-    'align.wast',    # Alignment bit 6 used by multi-memory
-    'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
+    'array_new_elem.wast',  # Failure to parse element segment item abbreviation
+    'binary.wast',   # Missing data count section validation
+    'call_indirect64.wast',  # Failure to parse element segment abbreviation
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
     'conversions.wast',  # Promoted NaN should be canonical
-    'data.wast',    # Constant global references allowed by GC
+    'data.wast',    # Fail to parse data segment offset abbreviation
     'elem.wast',    # Requires modeling empty declarative segments
     'f32.wast',     # Adding -0 and -nan should give a canonical NaN
     'f64.wast',     # Adding -0 and -nan should give a canonical NaN
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
     'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
-    'global.wast',  # Globals allowed to refer to previous globals by GC
+    'global.wast',  # Fail to parse table
     'if.wast',      # Requires more precise unreachable validation
-    'imports.wast',  # Requires wast `register` support
-    'linking.wast',  # Requires wast `register` support
-    'memory.wast',   # Multiple memories now allowed
+    'imports.wast',  # Missing validation of missing function on instantiation
+    'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
+    'linking.wast',  # Missing function type validation on instantiation
+    'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
+    'memory64-imports.wast',  # Missing validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'id.wast',       # Empty IDs should be disallowed
-    'throw.wast',    # Requires try_table interpretation
-    'try_catch.wast',  # Requires wast `register` support
+    # Requires correct handling of tag imports from different instances of the same module,
+    # ref.null wast constants, and splitting for module instances
+    'instance.wast',
+    'table64.wast',   # Requires validations for table size
+    'table_grow.wast',  # Incorrect table linking semantics in interpreter
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'try_table.wast',  # Requires try_table interpretation
-    # 'br_on_non_null.wast',  # Requires sending values on br_on_non_null
-    # 'br_on_null.wast',      # Requires sending values on br_on_null
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
-    'ref_is_null.wast',  # Requires ref.null wast constants
-    'ref_null.wast',     # Requires ref.null wast constants
+    'ref_is_null.wast',  # Requires support for non-nullable reference types in tables
     'return_call_indirect.wast',  # Requires more precise unreachable validation
-    'select.wast',  # Requires ref.null wast constants
+    'select.wast',  # Missing validation of type annotation on select
     'table.wast',  # Requires support for table default elements
-    'type-equivalence.wast',  # Recursive types allowed by GC
     'unreached-invalid.wast',  # Requires more precise unreachable validation
     'array.wast',  # Requires support for table default elements
     'br_if.wast',  # Requires more precise branch validation
@@ -457,16 +470,15 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
     'ref_test.wast',  # Requires host references to not be externalized i31refs
     'struct.wast',    # Duplicate field names not properly rejected
-    'type-rec.wast',  # Requires wast `register` support
+    'type-rec.wast',  # Missing function type validation on instantiation
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
-    'memory64.wast',        # Multiple memories now allowed
-    'table_init.wast',      # Requires support for elem.drop
-    'imports0.wast',        # Requires wast `register` support
-    'imports2.wast',        # Requires wast `register` support
-    'imports3.wast',        # Requires wast `register` support
-    'linking0.wast',        # Requires wast `register` support
-    'linking3.wast',        # Requires wast `register` support
+    'memory64.wast',        # Requires validations for memory size
+    'imports0.wast',        # Missing memory type validation on instantiation
+    'imports2.wast',        # Missing memory type validation on instantiation
+    'imports3.wast',        # Missing memory type validation on instantiation
+    'linking0.wast',        # Missing memory type validation on instantiation
+    'linking3.wast',        # Fatal error on missing table.
     'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
     'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
     'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
@@ -474,7 +486,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'relaxed_laneselect.wast',    # Requires wast `either` support
     'relaxed_madd_nmadd.wast',    # Requires wast `either` support
     'relaxed_min_max.wast',       # Requires wast `either` support
-    'simd_address.wast',          # 64-bit offset allowed by memory64
     'simd_const.wast',            # Hex float constant not recognized as out of range
     'simd_conversions.wast',      # Promoted NaN should be canonical
     'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
@@ -488,42 +499,57 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
     'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
-options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
-                      in (SPEC_TESTSUITE_TESTS_TO_SKIP if 'testsuite' in t
-                          else SPEC_TESTS_TO_SKIP)]
+
+
+def _can_run_spec_test(test):
+    test = Path(test)
+    if 'testsuite' not in test.parts:
+        return not any(test.match(f"test/spec/{test_to_skip}") for test_to_skip in SPEC_TESTS_TO_SKIP)
+
+    if any(proposal in test.parts for proposal in SPEC_TESTSUITE_PROPOSALS_TO_SKIP):
+        return False
+
+    return not any(Path(test).match(f"test/spec/testsuite/{test_to_skip}") for test_to_skip in SPEC_TESTSUITE_TESTS_TO_SKIP)
+
+
+options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
+
 
 # check utilities
 
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary'):
+                        binary_suffix='.fromBinary', base_name=None, stdout=None, stderr=None):
     # checks we can convert the wast to binary and back
 
-    print('         (binary format check)')
-    cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all'] + wasm_as_args
-    print('            ', ' '.join(cmd))
-    if os.path.exists('a.wasm'):
-        os.unlink('a.wasm')
-    subprocess.check_call(cmd, stdout=subprocess.PIPE)
-    assert os.path.exists('a.wasm')
+    as_file = f"{base_name}-a.wasm" if base_name is not None else "a.wasm"
+    disassembled_file = f"{base_name}-ab.wast" if base_name is not None else "ab.wast"
 
-    cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast', '-all']
-    print('            ', ' '.join(cmd))
-    if os.path.exists('ab.wast'):
-        os.unlink('ab.wast')
+    print('         (binary format check)', file=stdout)
+    cmd = WASM_AS + [wast, '-o', as_file, '-all'] + wasm_as_args
+    print('            ', ' '.join(cmd), file=stdout)
+    if os.path.exists(as_file):
+        os.unlink(as_file)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
-    assert os.path.exists('ab.wast')
+    assert os.path.exists(as_file)
+
+    cmd = WASM_DIS + [as_file, '-o', disassembled_file, '-all']
+    print('            ', ' '.join(cmd), file=stdout)
+    if os.path.exists(disassembled_file):
+        os.unlink(disassembled_file)
+    subprocess.check_call(cmd, stdout=subprocess.PIPE)
+    assert os.path.exists(disassembled_file)
 
     # make sure it is a valid wast
-    cmd = WASM_OPT + ['ab.wast', '-all', '-q']
-    print('            ', ' '.join(cmd))
+    cmd = WASM_OPT + [disassembled_file, '-all', '-q']
+    print('            ', ' '.join(cmd), file=stdout)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
     if verify_final_result:
-        actual = open('ab.wast').read()
+        actual = open(disassembled_file).read()
         fail_if_not_identical_to_file(actual, wast + binary_suffix)
 
-    return 'ab.wast'
+    return disassembled_file
 
 
 def minify_check(wast, verify_final_result=True):

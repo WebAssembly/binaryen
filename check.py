@@ -20,6 +20,12 @@ import subprocess
 import sys
 import unittest
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+import queue
+import io
+import threading
+from functools import partial
 
 from scripts.test import binaryenjs
 from scripts.test import lld
@@ -175,75 +181,129 @@ def run_wasm_reduce_tests():
         assert after < 0.85 * before, [before, after]
 
 
+def run_spec_test(wast, stdout=None, stderr=None):
+    cmd = shared.WASM_SHELL + [wast]
+    output = support.run_command(cmd, stdout=stdout, stderr=subprocess.PIPE)
+    # filter out binaryen interpreter logging that the spec suite
+    # doesn't expect
+    filtered = [line for line in output.splitlines() if not line.startswith('[trap')]
+    return '\n'.join(filtered) + '\n'
+
+
+def run_opt_test(wast, stdout=None, stderr=None):
+    # check optimization validation
+    cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
+    support.run_command(cmd, stdout=stdout)
+
+
+def check_expected(actual, expected, stdout=None):
+    if expected and os.path.exists(expected):
+        expected = open(expected).read()
+        print('       (using expected output)', file=stdout)
+        actual = actual.strip()
+        expected = expected.strip()
+        if actual != expected:
+            shared.fail(actual, expected)
+
+
+def run_one_spec_test(wast: Path, stdout=None, stderr=None):
+    test_name = wast.name
+
+    # /path/to/binaryen/test/spec/foo.wast -> test-spec-foo
+    base_name = "-".join(wast.relative_to(Path(shared.options.binaryen_root)).with_suffix("").parts)
+
+    print('..', test_name, file=stdout)
+    # windows has some failures that need to be investigated
+    if test_name == 'names.wast' and shared.skip_if_on_windows('spec: ' + test_name):
+        return
+
+    expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log')
+
+    # some spec tests should fail (actual process failure, not just assert_invalid)
+    try:
+        actual = run_spec_test(str(wast), stdout=stdout, stderr=stderr)
+    except Exception as e:
+        if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in test_name:
+            print('<< test failed as expected >>', file=stdout)
+            return  # don't try all the binary format stuff TODO
+        else:
+            shared.fail_with_error(str(e))
+
+    check_expected(actual, expected, stdout=stdout)
+
+    # check binary format. here we can verify execution of the final
+    # result, no need for an output verification
+    actual = ''
+    transformed_path = base_name + ".transformed"
+    with open(transformed_path, 'w') as transformed_spec_file:
+        for i, (module, asserts) in enumerate(support.split_wast(str(wast))):
+            if not module:
+                # Skip any initial assertions that don't have a module
+                continue
+            print(f'        testing split module {i}', file=stdout)
+            split_name = base_name + f'_split{i}.wast'
+            support.write_wast(split_name, module)
+            run_opt_test(split_name, stdout=stdout, stderr=stderr)    # also that our optimizer doesn't break on it
+
+            result_wast_file = shared.binary_format_check(split_name, verify_final_result=False, base_name=base_name, stdout=stdout, stderr=stderr)
+            with open(result_wast_file) as f:
+                result_wast = f.read()
+                # add the asserts, and verify that the test still passes
+                transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
+
+    # compare all the outputs to the expected output
+    actual = run_spec_test(transformed_path, stdout=stdout, stderr=stderr)
+    check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'), stdout=stdout)
+
+
+def run_spec_test_with_wrapped_stdout(output_queue, wast: Path):
+    out = io.StringIO()
+    try:
+        ret = run_one_spec_test(wast, stdout=out, stderr=out)
+    except Exception as e:
+        print(e, file=out)
+        raise
+    finally:
+        # If a test fails, it's important to keep its output
+        output_queue.put(out.getvalue())
+    return ret
+
+
 def run_spec_tests():
     print('\n[ checking wasm-shell spec testcases... ]\n')
 
-    for wast in shared.options.spec_tests:
-        base = os.path.basename(wast)
-        print('..', base)
-        # windows has some failures that need to be investigated
-        if base == 'names.wast' and shared.skip_if_on_windows('spec: ' + base):
-            continue
+    output_queue = queue.Queue()
 
-        def run_spec_test(wast):
-            cmd = shared.WASM_SHELL + [wast]
-            output = support.run_command(cmd, stderr=subprocess.PIPE)
-            # filter out binaryen interpreter logging that the spec suite
-            # doesn't expect
-            filtered = [line for line in output.splitlines() if not line.startswith('[trap')]
-            return '\n'.join(filtered) + '\n'
+    stop_printer = object()
 
-        def run_opt_test(wast):
-            # check optimization validation
-            cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
-            support.run_command(cmd)
+    def printer():
+        while True:
+            string = output_queue.get()
+            if string is stop_printer:
+                break
 
-        def check_expected(actual, expected):
-            if expected and os.path.exists(expected):
-                expected = open(expected).read()
-                print('       (using expected output)')
-                actual = actual.strip()
-                expected = expected.strip()
-                if actual != expected:
-                    shared.fail(actual, expected)
+            print(string, end="")
 
-        expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log')
+    printing_thread = threading.Thread(target=printer)
+    printing_thread.start()
 
-        # some spec tests should fail (actual process failure, not just assert_invalid)
-        try:
-            actual = run_spec_test(wast)
-        except Exception as e:
-            if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in base:
-                print('<< test failed as expected >>')
-                continue  # don't try all the binary format stuff TODO
-            else:
-                shared.fail_with_error(str(e))
+    worker_count = os.cpu_count()
+    print("Running with", worker_count, "workers")
+    executor = ThreadPoolExecutor(max_workers=worker_count)
+    try:
+        results = executor.map(partial(run_spec_test_with_wrapped_stdout, output_queue), map(Path, shared.options.spec_tests))
+        for _ in results:
+            # Iterating joins the threads. No return value here.
+            pass
+    except KeyboardInterrupt:
+        # Hard exit to avoid threads continuing to run after Ctrl-C.
+        # There's no concern of deadlocking during shutdown here.
+        os._exit(1)
+    finally:
+        executor.shutdown(cancel_futures=True)
 
-        check_expected(actual, expected)
-
-        run_spec_test(wast)
-
-        # check binary format. here we can verify execution of the final
-        # result, no need for an output verification
-        actual = ''
-        with open(base, 'w') as transformed_spec_file:
-            for i, (module, asserts) in enumerate(support.split_wast(wast)):
-                if not module:
-                    # Skip any initial assertions that don't have a module
-                    continue
-                print(f'        testing split module {i}')
-                split_name = os.path.splitext(base)[0] + f'_split{i}.wast'
-                support.write_wast(split_name, module)
-                run_opt_test(split_name)    # also that our optimizer doesn't break on it
-                result_wast_file = shared.binary_format_check(split_name, verify_final_result=False)
-                with open(result_wast_file) as f:
-                    result_wast = f.read()
-                    # add the asserts, and verify that the test still passes
-                    transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
-
-        # compare all the outputs to the expected output
-        actual = run_spec_test(base)
-        check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
+        output_queue.put(stop_printer)
+        printing_thread.join()
 
 
 def run_validator_tests():

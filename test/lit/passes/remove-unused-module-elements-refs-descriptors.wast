@@ -6,10 +6,10 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
-  (type $struct (descriptor $desc (struct)))
-  ;; CHECK:       (type $desc (describes $struct (struct)))
-  (type $desc (describes $struct (struct)))
+  ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+  (type $struct (descriptor $desc) (struct))
+  ;; CHECK:       (type $desc (describes $struct) (struct))
+  (type $desc (describes $struct) (struct))
  )
 
  ;; CHECK:      (type $2 (func))
@@ -21,14 +21,14 @@
 
  ;; CHECK:      (func $export (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (struct.new_default $struct
+ ;; CHECK-NEXT:   (struct.new_default_desc $struct
  ;; CHECK-NEXT:    (global.get $desc)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $export (export "export")
   (drop
-   (struct.new $struct
+   (struct.new_desc $struct
     (global.get $desc)
    )
   )
@@ -40,10 +40,10 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
-  (type $struct (descriptor $desc (struct)))
-  ;; CHECK:       (type $desc (describes $struct (struct)))
-  (type $desc (describes $struct (struct)))
+  ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+  (type $struct (descriptor $desc) (struct))
+  ;; CHECK:       (type $desc (describes $struct) (struct))
+  (type $desc (describes $struct) (struct))
   ;; CHECK:       (type $list (struct (field (ref $struct)) (field (ref null $list))))
   (type $list (struct (field (ref $struct)) (field (ref null $list))))
  )
@@ -56,32 +56,32 @@
  (global $desc (ref (exact $desc)) (struct.new $desc))
 
  ;; Trapping globals must be kept, but non-trapping globals can be removed.
- ;; CHECK:      (global $trap (ref $struct) (struct.new_default $struct
+ ;; CHECK:      (global $trap (ref $struct) (struct.new_default_desc $struct
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
- (global $trap (ref $struct) (struct.new $struct (ref.null none)))
- (global $no-trap (ref $struct) (struct.new $struct (struct.new $desc)))
+ (global $trap (ref $struct) (struct.new_desc $struct (ref.null none)))
+ (global $no-trap (ref $struct) (struct.new_desc $struct (struct.new $desc)))
 
- ;; CHECK:      (global $trap-get-null (ref $struct) (struct.new_default $struct
+ ;; CHECK:      (global $trap-get-null (ref $struct) (struct.new_default_desc $struct
  ;; CHECK-NEXT:  (global.get $null)
  ;; CHECK-NEXT: ))
- (global $trap-get-null (ref $struct) (struct.new $struct (global.get $null)))
- ;; CHECK:      (global $trap-get-nullable (ref $struct) (struct.new_default $struct
+ (global $trap-get-null (ref $struct) (struct.new_desc $struct (global.get $null)))
+ ;; CHECK:      (global $trap-get-nullable (ref $struct) (struct.new_default_desc $struct
  ;; CHECK-NEXT:  (global.get $nullable-desc)
  ;; CHECK-NEXT: ))
- (global $trap-get-nullable (ref $struct) (struct.new $struct (global.get $nullable-desc)))
- (global $no-trap-get (ref $struct) (struct.new $struct (global.get $desc)))
+ (global $trap-get-nullable (ref $struct) (struct.new_desc $struct (global.get $nullable-desc)))
+ (global $no-trap-get (ref $struct) (struct.new_desc $struct (global.get $desc)))
 
  ;; CHECK:      (global $trap-nested (ref $list) (struct.new $list
- ;; CHECK-NEXT:  (struct.new_default $struct
+ ;; CHECK-NEXT:  (struct.new_default_desc $struct
  ;; CHECK-NEXT:   (struct.new_default $desc)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.new $list
- ;; CHECK-NEXT:   (struct.new_default $struct
+ ;; CHECK-NEXT:   (struct.new_default_desc $struct
  ;; CHECK-NEXT:    (global.get $desc)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (struct.new $list
- ;; CHECK-NEXT:    (struct.new_default $struct
+ ;; CHECK-NEXT:    (struct.new_default_desc $struct
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null none)
@@ -90,11 +90,11 @@
  ;; CHECK-NEXT: ))
  (global $trap-nested (ref $list)
   (struct.new $list
-   (struct.new $struct (struct.new $desc))
+   (struct.new_desc $struct (struct.new $desc))
    (struct.new $list
-    (struct.new $struct (global.get $desc))
+    (struct.new_desc $struct (global.get $desc))
     (struct.new $list
-     (struct.new $struct (ref.null none))
+     (struct.new_desc $struct (ref.null none))
      (ref.null none)
     )
    )
@@ -103,27 +103,97 @@
 
  (global $no-trap-nested (ref $list)
   (struct.new $list
-   (struct.new $struct (struct.new $desc))
+   (struct.new_desc $struct (struct.new $desc))
    (struct.new $list
-    (struct.new $struct (global.get $desc))
+    (struct.new_desc $struct (global.get $desc))
     (ref.null none)
    )
   )
  )
 
- ;; CHECK:      (elem $trap anyref (item (struct.new_default $struct
+ ;; CHECK:      (elem $trap anyref (item (struct.new_default_desc $struct
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: )))
- (elem $trap anyref (item (struct.new $struct (ref.null none))))
- (elem $no-trap anyref (item (struct.new $struct (struct.new $desc))))
-  ;; CHECK:      (elem $trap-get-null anyref (item (struct.new_default $struct
+ (elem $trap anyref (item (struct.new_desc $struct (ref.null none))))
+ (elem $no-trap anyref (item (struct.new_desc $struct (struct.new $desc))))
+  ;; CHECK:      (elem $trap-get-null anyref (item (struct.new_default_desc $struct
   ;; CHECK-NEXT:  (global.get $null)
   ;; CHECK-NEXT: )))
-  (elem $trap-get-null anyref (item (struct.new $struct (global.get $null))))
- ;; CHECK:      (elem $trap-get-nullable anyref (item (struct.new_default $struct
+  (elem $trap-get-null anyref (item (struct.new_desc $struct (global.get $null))))
+ ;; CHECK:      (elem $trap-get-nullable anyref (item (struct.new_default_desc $struct
  ;; CHECK-NEXT:  (global.get $nullable-desc)
  ;; CHECK-NEXT: )))
- (elem $trap-get-nullable anyref (item (struct.new $struct (global.get $nullable-desc))))
- (elem $no-trap-get anyref (item (struct.new $struct (global.get $desc))))
+ (elem $trap-get-nullable anyref (item (struct.new_desc $struct (global.get $nullable-desc))))
+ (elem $no-trap-get anyref (item (struct.new_desc $struct (global.get $desc))))
+)
+
+(module
+ ;; CHECK:      (type $void (func))
+ (type $void (func))
+
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $vtable (sub (descriptor $vtable.desc) (struct (field (ref $void)))))
+  (type $vtable (sub (descriptor $vtable.desc) (struct (field (ref $void)))))
+  ;; CHECK:       (type $vtable.desc (sub (describes $vtable) (struct (field (ref $void)))))
+  (type $vtable.desc (sub (describes $vtable) (struct (field (ref $void)))))
+ )
+
+ ;; CHECK:      (global $vtable (ref $vtable) (struct.new_desc $vtable
+ ;; CHECK-NEXT:  (ref.func $a)
+ ;; CHECK-NEXT:  (struct.new $vtable.desc
+ ;; CHECK-NEXT:   (ref.func $b)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: ))
+ (global $vtable (ref $vtable) (struct.new_desc $vtable
+  (ref.func $a)
+  (struct.new $vtable.desc
+   (ref.func $b)
+  )
+ ))
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $void)
+ ;; CHECK-NEXT:  (call_ref $void
+ ;; CHECK-NEXT:   (struct.get $vtable 0
+ ;; CHECK-NEXT:    (global.get $vtable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  ;; Read $a and call it. $b, in the descriptor, should not be callable.
+  (call_ref $void
+   (struct.get $vtable 0
+    (global.get $vtable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $a (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (type $void)
+  ;; This is reached from above.
+  (drop (i32.const 42))
+ )
+
+ ;; CHECK:      (func $b (type $void)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $b (type $void)
+  ;; This is not reached: We never read the descriptor, so we never read field 0
+  ;; in it, leaving this as dead (in closed world). That it itself seems to read
+  ;; the descriptor should not confuse us.
+  (call_ref $void
+   (struct.get $vtable.desc 0
+    (ref.get_desc $vtable
+     (global.get $vtable)
+    )
+   )
+  )
+ )
 )
 

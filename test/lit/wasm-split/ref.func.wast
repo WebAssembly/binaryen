@@ -10,9 +10,9 @@
 (module
  ;; PRIMARY:      (type $0 (func))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (type $0)))
 
- ;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (type $0)))
+ ;; PRIMARY:      (import "placeholder.deferred" "1" (func $placeholder_1 (type $0)))
 
  ;; PRIMARY:      (global $glob1 (ref func) (ref.func $prime))
 
@@ -65,7 +65,7 @@
 
  ;; SECONDARY:      (import "primary" "table_2" (table $timport$0 2 funcref))
 
- ;; SECONDARY:      (import "primary" "prime" (func $prime (type $0)))
+ ;; SECONDARY:      (import "primary" "prime" (func $prime (exact (type $0))))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $second $second-in-table)
 

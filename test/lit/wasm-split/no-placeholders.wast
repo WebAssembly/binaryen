@@ -15,11 +15,11 @@
 
  ;; PRIMARY:      (export "table" (table $0))
 
- ;; PRIMARY:      (func $foo (type $0)
- ;; PRIMARY-NEXT:  (call_indirect $0 (type $0)
+ ;; PRIMARY:      (func $foo
+ ;; PRIMARY-NEXT:  (call_indirect (type $0)
  ;; PRIMARY-NEXT:   (i32.const 0)
  ;; PRIMARY-NEXT:  )
- ;; PRIMARY-NEXT:  (call_indirect $0 (type $0)
+ ;; PRIMARY-NEXT:  (call_indirect (type $0)
  ;; PRIMARY-NEXT:   (i32.const 1)
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
@@ -31,11 +31,11 @@
 
  ;; SECONDARY:      (import "primary" "table" (table $timport$0 2 funcref))
 
- ;; SECONDARY:      (import "primary" "foo" (func $foo (type $0)))
+ ;; SECONDARY:      (import "primary" "foo" (func $foo (exact)))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $bar $baz)
 
- ;; SECONDARY:      (func $bar (type $0)
+ ;; SECONDARY:      (func $bar
  ;; SECONDARY-NEXT:  (call $foo)
  ;; SECONDARY-NEXT:  (call $baz)
  ;; SECONDARY-NEXT: )
@@ -43,7 +43,7 @@
   (call $foo)
   (call $baz)
  )
- ;; SECONDARY:      (func $baz (type $0)
+ ;; SECONDARY:      (func $baz
  ;; SECONDARY-NEXT:  (call $foo)
  ;; SECONDARY-NEXT:  (call $bar)
  ;; SECONDARY-NEXT: )

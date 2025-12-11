@@ -9,7 +9,7 @@
 ;; module-level code in TypeSSA and fix the validator so it would have caught
 ;; the stale type.
 
-;; RUN: wasm-opt %s -all --type-ssa --unsubtyping -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --type-ssa --unsubtyping --closed-world -S -o - | filecheck %s
 
 (module
  ;; CHECK:      (rec

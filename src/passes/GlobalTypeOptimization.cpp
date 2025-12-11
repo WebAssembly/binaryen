@@ -24,16 +24,13 @@
 
 #include "ir/eh-utils.h"
 #include "ir/localize.h"
-#include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
 #include "support/permutations.h"
-#include "wasm-builder.h"
 #include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -44,6 +41,8 @@ namespace {
 
 // Information about usage of a field.
 struct FieldInfo {
+  // This represents a normal write for normal fields. (Unused descriptors are
+  // optimized in Unsubtyping instead.)
   bool hasWrite = false;
   bool hasRead = false;
 
@@ -61,6 +60,10 @@ struct FieldInfo {
       changed = true;
     }
     return changed;
+  }
+
+  void dump(std::ostream& o) {
+    o << "[write: " << hasWrite << " hasRead: " << hasRead << ']';
   }
 };
 
@@ -81,6 +84,10 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
+    if (index == StructUtils::DescriptorIndex) {
+      // We do not optimize descriptors. Ignore them.
+      return;
+    }
     info.noteWrite();
   }
 
@@ -89,11 +96,14 @@ struct FieldInfoScanner
     info.noteWrite();
   }
 
-  void noteCopy(HeapType type, Index index, FieldInfo& info) {
+  void noteCopy(StructGet* get, Type type, Index index, FieldInfo& info) {
     info.noteWrite();
   }
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
+    if (index == StructUtils::DescriptorIndex) {
+      return;
+    }
     info.noteRead();
   }
 
@@ -140,8 +150,6 @@ struct GlobalTypeOptimization : public Pass {
 
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
-    // TODO: combine newInfos as well, once we have a need for that (we will
-    //       when we do things like subtyping).
 
     // Propagate information to super and subtypes on set/get infos:
     //
@@ -169,7 +177,8 @@ struct GlobalTypeOptimization : public Pass {
     //    subtypes (as wasm only allows the type to differ if the fields are
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
-    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
+    SubTypes subTypes(*module);
+    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(subTypes);
     auto dataFromSubsAndSupersMap = combinedSetGetInfos;
     propagator.propagateToSuperAndSubTypes(dataFromSubsAndSupersMap);
     auto dataFromSupersMap = std::move(combinedSetGetInfos);
@@ -190,8 +199,13 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[type];
-      auto& dataFromSupers = dataFromSupersMap[type];
+      // Use the exact entry because information from the inexact entry in
+      // dataFromSupersMap will have been propagated down into it but not vice
+      // versa. (This doesn't matter or dataFromSubsAndSupers because the exact
+      // and inexact entries will have the same data.)
+      auto ht = std::make_pair(type, Exact);
+      auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[ht];
+      auto& dataFromSupers = dataFromSupersMap[ht];
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
@@ -367,12 +381,12 @@ struct GlobalTypeOptimization : public Pass {
       }
     }
 
-    // If we found fields that can be removed, remove them from instructions.
+    // If we found things that can be removed, remove them from instructions.
     // (Note that we must do this first, while we still have the old heap types
     // that we can identify, and only after this should we update all the types
     // throughout the module.)
     if (!indexesAfterRemovals.empty()) {
-      removeFieldsInInstructions(*module);
+      updateInstructions(*module);
     }
 
     // Update the types in the entire module.
@@ -388,7 +402,6 @@ struct GlobalTypeOptimization : public Pass {
     public:
       TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
-
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         auto& newFields = struct_.fields;
 
@@ -431,11 +444,13 @@ struct GlobalTypeOptimization : public Pass {
 
             // Clear the old names and write the new ones.
             nameInfo.fieldNames.clear();
-            for (Index i = 0; i < oldFieldNames.size(); i++) {
+            for (Index i = 0; i < indexesAfterRemoval.size(); i++) {
               auto newIndex = indexesAfterRemoval[i];
-              if (newIndex != RemovedField && oldFieldNames.count(i)) {
-                assert(oldFieldNames[i].is());
-                nameInfo.fieldNames[newIndex] = oldFieldNames[i];
+              if (newIndex != RemovedField) {
+                auto iter = oldFieldNames.find(i);
+                if (iter != oldFieldNames.end()) {
+                  nameInfo.fieldNames[newIndex] = iter->second;
+                }
               }
             }
           }
@@ -448,7 +463,7 @@ struct GlobalTypeOptimization : public Pass {
 
   // After updating the types to remove certain fields, we must also remove
   // them from struct instructions.
-  void removeFieldsInInstructions(Module& wasm) {
+  void updateInstructions(Module& wasm) {
     struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
 
@@ -472,18 +487,17 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
         if (curr->isWithDefault()) {
-          // Nothing to do, a default was written and will no longer be.
+          // No indices to remove.
           return;
         }
 
-        auto iter = parent.indexesAfterRemovals.find(curr->type.getHeapType());
+        auto type = curr->type.getHeapType();
+
+        auto iter = parent.indexesAfterRemovals.find(type);
         if (iter == parent.indexesAfterRemovals.end()) {
           return;
         }
-        auto& indexesAfterRemoval = iter->second;
-
-        auto& operands = curr->operands;
-        assert(indexesAfterRemoval.size() == operands.size());
+        std::vector<Index>& indexesAfterRemoval = iter->second;
 
         // Ensure any children with non-trivial effects are replaced with
         // local.gets, so that we can remove/reorder to our hearts' content.
@@ -499,6 +513,9 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         // Remove and reorder operands.
+        auto& operands = curr->operands;
+        assert(indexesAfterRemoval.size() == operands.size());
+
         Index removed = 0;
         std::vector<Expression*> old(operands.begin(), operands.end());
         for (Index i = 0; i < operands.size(); ++i) {

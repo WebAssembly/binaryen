@@ -5,15 +5,15 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $uninstantiated (sub (descriptor $uninstantiated.desc (struct))))
-    (type $uninstantiated (sub (descriptor $uninstantiated.desc (struct))))
-    ;; CHECK:       (type $instantiated (sub $uninstantiated (descriptor $instantiated.desc (struct))))
+    ;; CHECK-NEXT:  (type $uninstantiated (sub (descriptor $uninstantiated.desc) (struct)))
+    (type $uninstantiated (sub (descriptor $uninstantiated.desc) (struct)))
+    ;; CHECK:       (type $instantiated (sub $uninstantiated (descriptor $instantiated.desc) (struct)))
 
-    ;; CHECK:       (type $uninstantiated.desc (sub (describes $uninstantiated (struct))))
-    (type $uninstantiated.desc (sub (describes $uninstantiated (struct))))
-    (type $instantiated (sub $uninstantiated (descriptor $instantiated.desc (struct))))
-    ;; CHECK:       (type $instantiated.desc (sub $uninstantiated.desc (describes $instantiated (struct))))
-    (type $instantiated.desc (sub $uninstantiated.desc (describes $instantiated (struct))))
+    ;; CHECK:       (type $uninstantiated.desc (sub (describes $uninstantiated) (struct)))
+    (type $uninstantiated.desc (sub (describes $uninstantiated) (struct)))
+    (type $instantiated (sub $uninstantiated (descriptor $instantiated.desc) (struct)))
+    ;; CHECK:       (type $instantiated.desc (sub $uninstantiated.desc (describes $instantiated) (struct)))
+    (type $instantiated.desc (sub $uninstantiated.desc (describes $instantiated) (struct)))
   )
 
   ;; CHECK:      (import "" "" (func $effect (type $5)))
@@ -22,11 +22,11 @@
   ;; CHECK:      (global $nullable-desc (ref null (exact $uninstantiated.desc)) (ref.null none))
   (global $nullable-desc (ref null (exact $uninstantiated.desc)) (ref.null none))
 
-  ;; CHECK:      (global $instantiated (ref $instantiated) (struct.new_default $instantiated
+  ;; CHECK:      (global $instantiated (ref $instantiated) (struct.new_default_desc $instantiated
   ;; CHECK-NEXT:  (struct.new_default $instantiated.desc)
   ;; CHECK-NEXT: ))
   (global $instantiated (ref $instantiated)
-    (struct.new $instantiated
+    (struct.new_desc $instantiated
       (struct.new $instantiated.desc)
     )
   )

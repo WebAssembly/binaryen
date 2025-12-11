@@ -978,7 +978,19 @@ struct FunctionSplitter {
     if (finalItem && getItem(body, numIfs + 1)) {
       return InliningMode::Uninlineable;
     }
-    // This has the general shape we seek. Check each if.
+    // This has the general shape we seek. Check each if: it must be in the
+    // form mentioned above (simple condition, no returns in body). We must also
+    // have no sets of locals that the final item notices, as then we could
+    // have this:
+    //
+    //  if (A) {
+    //    x = 10;
+    //  }
+    //  return x;
+    //
+    // We cannot split out the if in such a case because of the local
+    // dependency.
+    std::unordered_set<Index> writtenLocals;
     for (Index i = 0; i < numIfs; i++) {
       auto* iff = getIf(body, i);
       // The if must have a simple condition and no else arm.
@@ -995,7 +1007,21 @@ struct FunctionSplitter {
         // unreachable, and we ruled out none before.
         assert(iff->ifTrue->type == Type::unreachable);
       }
+      if (finalItem) {
+        for (auto* set : FindAll<LocalSet>(iff).list) {
+          writtenLocals.insert(set->index);
+        }
+      }
     }
+    // Finish the locals check mentioned above.
+    if (finalItem) {
+      for (auto* get : FindAll<LocalGet>(finalItem).list) {
+        if (writtenLocals.count(get->index)) {
+          return InliningMode::Uninlineable;
+        }
+      }
+    }
+
     // Success, this matches the pattern.
 
     // If the outlined function will be worth inlining normally, skip the
@@ -1501,21 +1527,13 @@ struct Inlining : public Pass {
   }
 
   // Checks if the combined size of the code after inlining is under the
-  // absolute size limit. We have an absolute limit in order to avoid
-  // extremely-large sizes after inlining, as they may hit limits in VMs and/or
-  // slow down startup (measurements there indicate something like ~1 second to
-  // optimize a 100K function). See e.g.
-  // https://github.com/WebAssembly/binaryen/pull/3730#issuecomment-867939138
-  // https://github.com/emscripten-core/emscripten/issues/13899#issuecomment-825073344
+  // absolute size limit.
   bool isUnderSizeLimit(Name target, Name source) {
     // Estimate the combined binary size from the number of instructions.
     auto combinedSize = infos[target].size + infos[source].size;
     auto estimatedBinarySize = Measurer::BytesPerExpr * combinedSize;
-    // The limit is arbitrary, but based on the links above. It is a very high
-    // value that should appear very rarely in practice (for example, it does
-    // not occur on the Emscripten benchmark suite of real-world codebases).
-    const Index MaxCombinedBinarySize = 400 * 1024;
-    return estimatedBinarySize < MaxCombinedBinarySize;
+    auto& options = getPassRunner()->options;
+    return estimatedBinarySize < options.inlining.maxCombinedBinarySize;
   }
 };
 

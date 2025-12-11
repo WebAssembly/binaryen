@@ -18,7 +18,6 @@
 #define wasm_ir_type_updating_h
 
 #include "ir/branch-utils.h"
-#include "ir/module-utils.h"
 #include "support/insert_ordered.h"
 #include "wasm-traversal.h"
 
@@ -344,6 +343,9 @@ struct TypeUpdater
 // made while doing so.
 class GlobalTypeRewriter {
 public:
+  using PredecessorGraph =
+    std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>>;
+
   Module& wasm;
 
   GlobalTypeRewriter(Module& wasm);
@@ -375,6 +377,12 @@ public:
   // mapping for recorded type indices.
   void mapTypeNamesAndIndices(const TypeMap& oldToNewTypes);
 
+  // Given the predecessor graph of the types to be rebuilt, return a list of
+  // the types in the order in which they will be rebuilt. Users can override
+  // this to inject placeholders for extra types or use custom logic to sort the
+  // types.
+  virtual std::vector<HeapType> getSortedTypes(PredecessorGraph preds);
+
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions
   // are the hooks to apply changes through. The methods receive as input the
@@ -404,6 +412,7 @@ public:
   // so that they can use a proper temp type of the TypeBuilder while modifying
   // things.
   Type getTempType(Type type);
+  HeapType getTempHeapType(HeapType type);
   Type getTempTupleType(Tuple tuple);
 
   using SignatureUpdates = std::unordered_map<HeapType, Signature>;
@@ -440,13 +449,16 @@ public:
   }
 
 protected:
+  // Return the graph matching each private type to its private predecessors.
+  PredecessorGraph getPrivatePredecessors(
+    const std::vector<HeapType>& additionalPrivateTypes = {});
+
   // Builds new types after updating their contents using the hooks below and
   // returns a map from the old types to the modified types. Used internally in
   // update().
   //
   // See above regarding private types.
-  TypeMap
-  rebuildTypes(const std::vector<HeapType>& additionalPrivateTypes = {});
+  TypeMap rebuildTypes(std::vector<HeapType> types);
 
 private:
   TypeBuilder typeBuilder;
@@ -471,7 +483,8 @@ public:
   void map(const std::vector<HeapType>& additionalPrivateTypes = {}) {
     // Update the internals of types (struct fields, signatures, etc.) to
     // refer to the merged types.
-    auto newMapping = rebuildTypes(additionalPrivateTypes);
+    auto newMapping = rebuildTypes(
+      getSortedTypes(getPrivatePredecessors(additionalPrivateTypes)));
 
     // Compose the user-provided mapping from old types to other old types with
     // the new mapping from old types to new types. `newMapping` will become
@@ -496,7 +509,7 @@ public:
     if (iter != mapping.end()) {
       return iter->second;
     }
-    return type;
+    return getTempHeapType(type);
   }
 
   Type getNewType(Type type) {

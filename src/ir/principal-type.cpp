@@ -1069,6 +1069,11 @@ std::optional<Signature> PrincipalType::getSignature() const {
   return Signature(sigParams, sigResults);
 }
 
+bool PrincipalType::matches(Type type, VarType constraint) {
+  VarAssignments assignments;
+  return match(assignments, VarType{type}, constraint);
+}
+
 std::ostream& operator<<(std::ostream& o, const PrincipalType& type) {
   print(o, type);
   return o;

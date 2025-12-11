@@ -184,6 +184,8 @@ public:
     return isBasic() && getBasic(Unshared) == type;
   }
 
+  bool isCastable();
+
   Signature getSignature() const;
   Continuation getContinuation() const;
 
@@ -415,6 +417,7 @@ public:
     return isRef() && getHeapType().isContinuation();
   }
   bool isDefaultable() const;
+  bool isCastable();
 
   // TODO: Allow this only for reference types.
   Nullability getNullability() const {
@@ -590,6 +593,11 @@ constexpr HeapType noext = HeapType::noext;
 constexpr HeapType nofunc = HeapType::nofunc;
 constexpr HeapType nocont = HeapType::nocont;
 constexpr HeapType noexn = HeapType::noexn;
+
+// Certain heap types are used by standard operations. Provide central accessors
+// for them to avoid having to build them everywhere they are used.
+HeapType getMutI8Array();
+HeapType getMutI16Array();
 
 } // namespace HeapTypes
 
@@ -800,9 +808,12 @@ struct TypeBuilder {
         setHeapType(i, wasm::Array(elem));
         return;
       }
-      case HeapTypeKind::Cont:
-        setHeapType(i, Continuation(map(type.getContinuation().type)));
+      case HeapTypeKind::Cont: {
+        auto cont = type.getContinuation();
+        cont.type = map(cont.type);
+        setHeapType(i, cont);
         return;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }

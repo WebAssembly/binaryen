@@ -84,8 +84,26 @@ public:
   bool startsWith(IString str) const { return startsWith(str.str); }
 
   // Disambiguate for string literals.
-  template<int N> bool startsWith(const char (&str)[N]) {
+  template<int N> bool startsWith(const char (&str)[N]) const {
     return startsWith(std::string_view(str));
+  }
+
+  bool endsWith(std::string_view suffix) const {
+    // TODO: Use C++20 `ends_with`.
+    if (suffix.size() > str.size()) {
+      return false;
+    }
+    return str.substr(str.size() - suffix.size()) == suffix;
+  }
+  bool endsWith(IString str) const { return endsWith(str.str); }
+
+  // Disambiguate for string literals.
+  template<int N> bool endsWith(const char (&str)[N]) const {
+    return endsWith(std::string_view(str));
+  }
+
+  IString substr(size_t pos, size_t len = std::string_view::npos) const {
+    return IString(str.substr(pos, len));
   }
 
   size_t size() const { return str.size(); }

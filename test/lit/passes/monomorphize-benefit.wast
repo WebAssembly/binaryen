@@ -986,70 +986,113 @@
   (import "a" "c" (func $import2 (param (ref $A))))
 
   ;; DEFAULT:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
-  ;; DEFAULT-NEXT:  (call $import)
-  ;; DEFAULT-NEXT:  (call $import)
-  ;; DEFAULT-NEXT:  (call $import)
-  ;; DEFAULT-NEXT:  (call $import)
-  ;; DEFAULT-NEXT:  (call $import)
-  ;; DEFAULT-NEXT:  (call $import)
+  ;; DEFAULT-NEXT:  (local $1 i32)
+  ;; DEFAULT-NEXT:  (local.set $1
+  ;; DEFAULT-NEXT:   (i32.const 1000)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (loop $loop
+  ;; DEFAULT-NEXT:   (br_if $loop
+  ;; DEFAULT-NEXT:    (local.tee $1
+  ;; DEFAULT-NEXT:     (i32.add
+  ;; DEFAULT-NEXT:      (local.get $1)
+  ;; DEFAULT-NEXT:      (local.get $1)
+  ;; DEFAULT-NEXT:     )
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT:  (ref.cast (ref $A)
   ;; DEFAULT-NEXT:   (local.get $0)
   ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT: )
   ;; ZERO___:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
-  ;; ZERO___-NEXT:  (call $import)
-  ;; ZERO___-NEXT:  (call $import)
-  ;; ZERO___-NEXT:  (call $import)
-  ;; ZERO___-NEXT:  (call $import)
-  ;; ZERO___-NEXT:  (call $import)
-  ;; ZERO___-NEXT:  (call $import)
+  ;; ZERO___-NEXT:  (local $1 i32)
+  ;; ZERO___-NEXT:  (local.set $1
+  ;; ZERO___-NEXT:   (i32.const 1000)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (loop $loop
+  ;; ZERO___-NEXT:   (br_if $loop
+  ;; ZERO___-NEXT:    (local.tee $1
+  ;; ZERO___-NEXT:     (i32.add
+  ;; ZERO___-NEXT:      (local.get $1)
+  ;; ZERO___-NEXT:      (local.get $1)
+  ;; ZERO___-NEXT:     )
+  ;; ZERO___-NEXT:    )
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
   ;; ZERO___-NEXT:  (ref.cast (ref $A)
   ;; ZERO___-NEXT:   (local.get $0)
   ;; ZERO___-NEXT:  )
   ;; ZERO___-NEXT: )
   ;; THIRD__:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
-  ;; THIRD__-NEXT:  (call $import)
-  ;; THIRD__-NEXT:  (call $import)
-  ;; THIRD__-NEXT:  (call $import)
-  ;; THIRD__-NEXT:  (call $import)
-  ;; THIRD__-NEXT:  (call $import)
-  ;; THIRD__-NEXT:  (call $import)
+  ;; THIRD__-NEXT:  (local $1 i32)
+  ;; THIRD__-NEXT:  (local.set $1
+  ;; THIRD__-NEXT:   (i32.const 1000)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (loop $loop
+  ;; THIRD__-NEXT:   (br_if $loop
+  ;; THIRD__-NEXT:    (local.tee $1
+  ;; THIRD__-NEXT:     (i32.add
+  ;; THIRD__-NEXT:      (local.get $1)
+  ;; THIRD__-NEXT:      (local.get $1)
+  ;; THIRD__-NEXT:     )
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT:  (ref.cast (ref $A)
   ;; THIRD__-NEXT:   (local.get $0)
   ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT: )
   ;; TWOTRDS:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
-  ;; TWOTRDS-NEXT:  (call $import)
-  ;; TWOTRDS-NEXT:  (call $import)
-  ;; TWOTRDS-NEXT:  (call $import)
-  ;; TWOTRDS-NEXT:  (call $import)
-  ;; TWOTRDS-NEXT:  (call $import)
-  ;; TWOTRDS-NEXT:  (call $import)
+  ;; TWOTRDS-NEXT:  (local $1 i32)
+  ;; TWOTRDS-NEXT:  (local.set $1
+  ;; TWOTRDS-NEXT:   (i32.const 1000)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (loop $loop
+  ;; TWOTRDS-NEXT:   (br_if $loop
+  ;; TWOTRDS-NEXT:    (local.tee $1
+  ;; TWOTRDS-NEXT:     (i32.add
+  ;; TWOTRDS-NEXT:      (local.get $1)
+  ;; TWOTRDS-NEXT:      (local.get $1)
+  ;; TWOTRDS-NEXT:     )
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
   ;; TWOTRDS-NEXT:  (ref.cast (ref $A)
   ;; TWOTRDS-NEXT:   (local.get $0)
   ;; TWOTRDS-NEXT:  )
   ;; TWOTRDS-NEXT: )
   ;; HUNDRED:      (func $target-long (type $1) (param $0 anyref) (result (ref $A))
-  ;; HUNDRED-NEXT:  (call $import)
-  ;; HUNDRED-NEXT:  (call $import)
-  ;; HUNDRED-NEXT:  (call $import)
-  ;; HUNDRED-NEXT:  (call $import)
-  ;; HUNDRED-NEXT:  (call $import)
-  ;; HUNDRED-NEXT:  (call $import)
+  ;; HUNDRED-NEXT:  (local $1 i32)
+  ;; HUNDRED-NEXT:  (local.set $1
+  ;; HUNDRED-NEXT:   (i32.const 1000)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (loop $loop
+  ;; HUNDRED-NEXT:   (br_if $loop
+  ;; HUNDRED-NEXT:    (local.tee $1
+  ;; HUNDRED-NEXT:     (i32.add
+  ;; HUNDRED-NEXT:      (local.get $1)
+  ;; HUNDRED-NEXT:      (local.get $1)
+  ;; HUNDRED-NEXT:     )
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
   ;; HUNDRED-NEXT:  (ref.cast (ref $A)
   ;; HUNDRED-NEXT:   (local.get $0)
   ;; HUNDRED-NEXT:  )
   ;; HUNDRED-NEXT: )
   (func $target-long (param $any anyref) (result (ref $A))
+    (local $temp i32)
     ;; This function does a cast, aside from a lot of other work. The other work
     ;; causes us to only optimize when we are ok with getting a very small % of
     ;; improvement.
-    (call $import)
-    (call $import)
-    (call $import)
-    (call $import)
-    (call $import)
-    (call $import)
+
+    ;; A silly loop that might in theory end after a long time.
+    (local.set $temp (i32.const 1000))
+    (loop $loop
+      (local.set $temp (i32.add (local.get $temp) (local.get $temp)))
+      (br_if $loop (local.get $temp))
+    )
+
     (ref.cast (ref $A)
       (local.get $any)
     )
@@ -1514,12 +1557,20 @@
 ;; DEFAULT-NEXT: )
 
 ;; ZERO___:      (func $target-long_6 (type $4) (param $0 anyref)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (local $1 i32)
+;; ZERO___-NEXT:  (local.set $1
+;; ZERO___-NEXT:   (i32.const 1000)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (loop $loop
+;; ZERO___-NEXT:   (br_if $loop
+;; ZERO___-NEXT:    (local.tee $1
+;; ZERO___-NEXT:     (i32.add
+;; ZERO___-NEXT:      (local.get $1)
+;; ZERO___-NEXT:      (local.get $1)
+;; ZERO___-NEXT:     )
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
 ;; ZERO___-NEXT: )
 
 ;; ZERO___:      (func $target-long_7 (type $5) (param $0 i32) (result (ref $A))
@@ -1529,47 +1580,77 @@
 ;; ZERO___-NEXT:    (local.get $0)
 ;; ZERO___-NEXT:   )
 ;; ZERO___-NEXT:  )
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (local.set $0
+;; ZERO___-NEXT:   (i32.const 1000)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (loop $loop
+;; ZERO___-NEXT:   (br_if $loop
+;; ZERO___-NEXT:    (local.tee $0
+;; ZERO___-NEXT:     (i32.add
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:     )
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
 ;; ZERO___-NEXT:  (local.get $1)
 ;; ZERO___-NEXT: )
 
 ;; ZERO___:      (func $target-long_8 (type $6) (param $0 i32)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (local.set $0
+;; ZERO___-NEXT:   (i32.const 1000)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (loop $loop
+;; ZERO___-NEXT:   (br_if $loop
+;; ZERO___-NEXT:    (local.tee $0
+;; ZERO___-NEXT:     (i32.add
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:     )
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
 ;; ZERO___-NEXT: )
 
 ;; ZERO___:      (func $target-long_9 (type $7) (result (ref $A))
-;; ZERO___-NEXT:  (local $0 (ref (exact $A)))
+;; ZERO___-NEXT:  (local $0 i32)
+;; ZERO___-NEXT:  (local $1 (ref (exact $A)))
 ;; ZERO___-NEXT:  (local.set $0
+;; ZERO___-NEXT:   (i32.const 1000)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (loop $loop
+;; ZERO___-NEXT:   (br_if $loop
+;; ZERO___-NEXT:    (local.tee $0
+;; ZERO___-NEXT:     (i32.add
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:     )
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (local.set $1
 ;; ZERO___-NEXT:   (struct.new $A
 ;; ZERO___-NEXT:    (i32.const 42)
 ;; ZERO___-NEXT:   )
 ;; ZERO___-NEXT:  )
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (local.get $0)
+;; ZERO___-NEXT:  (local.get $1)
 ;; ZERO___-NEXT: )
 
 ;; ZERO___:      (func $target-long_10 (type $1)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
-;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (local $0 i32)
+;; ZERO___-NEXT:  (local.set $0
+;; ZERO___-NEXT:   (i32.const 1000)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (loop $loop
+;; ZERO___-NEXT:   (br_if $loop
+;; ZERO___-NEXT:    (local.tee $0
+;; ZERO___-NEXT:     (i32.add
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:      (local.get $0)
+;; ZERO___-NEXT:     )
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
 ;; ZERO___-NEXT: )
 
 ;; ZERO___:      (func $target-short_11 (type $4) (param $0 anyref)
@@ -1597,21 +1678,36 @@
 ;; ZERO___-NEXT: )
 
 ;; THIRD__:      (func $target-long_6 (type $4) (param $0 i32)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT:  (local.set $0
+;; THIRD__-NEXT:   (i32.const 1000)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (loop $loop
+;; THIRD__-NEXT:   (br_if $loop
+;; THIRD__-NEXT:    (local.tee $0
+;; THIRD__-NEXT:     (i32.add
+;; THIRD__-NEXT:      (local.get $0)
+;; THIRD__-NEXT:      (local.get $0)
+;; THIRD__-NEXT:     )
+;; THIRD__-NEXT:    )
+;; THIRD__-NEXT:   )
+;; THIRD__-NEXT:  )
 ;; THIRD__-NEXT: )
 
 ;; THIRD__:      (func $target-long_7 (type $1)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
-;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT:  (local $0 i32)
+;; THIRD__-NEXT:  (local.set $0
+;; THIRD__-NEXT:   (i32.const 1000)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (loop $loop
+;; THIRD__-NEXT:   (br_if $loop
+;; THIRD__-NEXT:    (local.tee $0
+;; THIRD__-NEXT:     (i32.add
+;; THIRD__-NEXT:      (local.get $0)
+;; THIRD__-NEXT:      (local.get $0)
+;; THIRD__-NEXT:     )
+;; THIRD__-NEXT:    )
+;; THIRD__-NEXT:   )
+;; THIRD__-NEXT:  )
 ;; THIRD__-NEXT: )
 
 ;; THIRD__:      (func $target-short_8 (type $6) (param $0 anyref)
@@ -1627,21 +1723,36 @@
 ;; THIRD__-NEXT: )
 
 ;; TWOTRDS:      (func $target-long_6 (type $4) (param $0 i32)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
+;; TWOTRDS-NEXT:  (local.set $0
+;; TWOTRDS-NEXT:   (i32.const 1000)
+;; TWOTRDS-NEXT:  )
+;; TWOTRDS-NEXT:  (loop $loop
+;; TWOTRDS-NEXT:   (br_if $loop
+;; TWOTRDS-NEXT:    (local.tee $0
+;; TWOTRDS-NEXT:     (i32.add
+;; TWOTRDS-NEXT:      (local.get $0)
+;; TWOTRDS-NEXT:      (local.get $0)
+;; TWOTRDS-NEXT:     )
+;; TWOTRDS-NEXT:    )
+;; TWOTRDS-NEXT:   )
+;; TWOTRDS-NEXT:  )
 ;; TWOTRDS-NEXT: )
 
 ;; TWOTRDS:      (func $target-long_7 (type $1)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
-;; TWOTRDS-NEXT:  (call $import)
+;; TWOTRDS-NEXT:  (local $0 i32)
+;; TWOTRDS-NEXT:  (local.set $0
+;; TWOTRDS-NEXT:   (i32.const 1000)
+;; TWOTRDS-NEXT:  )
+;; TWOTRDS-NEXT:  (loop $loop
+;; TWOTRDS-NEXT:   (br_if $loop
+;; TWOTRDS-NEXT:    (local.tee $0
+;; TWOTRDS-NEXT:     (i32.add
+;; TWOTRDS-NEXT:      (local.get $0)
+;; TWOTRDS-NEXT:      (local.get $0)
+;; TWOTRDS-NEXT:     )
+;; TWOTRDS-NEXT:    )
+;; TWOTRDS-NEXT:   )
+;; TWOTRDS-NEXT:  )
 ;; TWOTRDS-NEXT: )
 
 ;; TWOTRDS:      (func $target-short_8 (type $6) (param $0 anyref)

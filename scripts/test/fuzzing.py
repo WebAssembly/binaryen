@@ -70,12 +70,6 @@ unfuzzable = [
     # the fuzzer does not support imported memories
     'multi-memory-lowering-import.wast',
     'multi-memory-lowering-import-error.wast',
-    # the fuzzer does not support typed continuations
-    'typed_continuations.wast',
-    'typed_continuations_resume.wast',
-    'typed_continuations_contnew.wast',
-    'typed_continuations_contbind.wast',
-    'typed_continuations_suspend.wast',
     # the fuzzer does not support struct RMW ops
     'gc-atomics.wast',
     'gc-atomics-null-refs.wast',
@@ -96,32 +90,14 @@ unfuzzable = [
     # it removes unknown imports
     'string-lifting.wast',
     'string-lifting-custom-module.wast',
-    # TODO: V8 still has bugs in br_on_cast_desc
-    'custom-descriptors.wast',
-    'abstract-type-refining-desc.wast',
-    'abstract-type-refining-tnh-exact-casts.wast',
-    'precompute-desc.wast',
-    'remove-unused-brs-desc.wast',
-    'vacuum-desc.wast',
-    'br_on_cast_desc.wast',
-    # TODO: fuzzer support for stack switching
-    'tag_linked.wast',
-    'stack_switching.wast',
-    'stack_switching_contnew.wast',
-    'stack_switching_contbind.wast',
-    'stack_switching_suspend.wast',
-    'stack_switching_resume.wast',
-    'stack_switching_resume_throw.wast',
-    'stack_switching_switch.wast',
-    'stack_switching_switch_2.wast',
-    'O3_stack-switching.wast',
-    'coalesce-locals-stack-switching.wast',
-    'dce-stack-switching.wast',
-    'precompute-stack-switching.wast',
-    'unsubtyping-stack-switching.wast',
-    'vacuum-stack-switching.wast',
+    # TODO: fuzzer support for remaining stack switching instructions: switch,
+    #       cont.bind
     'cont.wast',
-    'cont_simple.wast',
+    'precompute-stack-switching.wast',
+    'coalesce-locals-stack-switching.wast',
+    'stack_switching_switch_2.wast',
+    'stack_switching_switch.wast',
+    'unsubtyping-stack-switching.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
@@ -129,6 +105,11 @@ unfuzzable = [
     'exact-references.wast',
     # We do not have full suppor for these imports in all parts of the fuzzer.
     'instrument-branch-hints.wast',
+    # Contains a subtype chain that exceeds depth limits.
+    'reorder-types-real.wast',
+    # Contains a name with "__fuzz_split", indicating it is emitted by
+    # wasm-split, confusing the fuzzer because it is in the initial content.
+    'fuzz_shell_second.wast',
 ]
 
 

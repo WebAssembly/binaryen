@@ -48,14 +48,12 @@
 //
 
 #include "ir/child-typer.h"
-#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/possible-constant.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/hash.h"
-#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -221,26 +219,23 @@ struct Analyzer
         : ChildTyper(*parent.getModule(), parent.getFunction()),
           parent(parent) {}
 
-      void noteSubtype(Expression**, Type type) {
-        for (Type t : type) {
-          if (t.isExact()) {
-            parent.disallowedTypes.insert(t.getHeapType());
+      void note(Expression**, Constraints type) {
+        // Check closed type constraints for exactness. Other kinds of type
+        // constaints do not concern us.
+        // TODO: Handle tuples?
+        for (auto varType : type) {
+          if (auto* t = std::get_if<Type>(&varType)) {
+            if (t->isExact()) {
+              parent.disallowedTypes.insert(t->getHeapType());
+            }
           }
         }
       }
 
-      // Other constraints do not matter to us.
-      void noteAnyType(Expression**) {}
-      void noteAnyReferenceType(Expression**) {}
-      void noteAnyTupleType(Expression**, size_t) {}
-      void noteAnyI8ArrayReferenceType(Expression**) {}
-      void noteAnyI16ArrayReferenceType(Expression**) {}
-
       Type getLabelType(Name label) { WASM_UNREACHABLE("unexpected branch"); }
 
-      // Skip unreachable code. If we cannot compute a constraint due to
-      // unreachability, we can ignore it.
-      bool skipUnreachable() { return true; }
+      // We don't mind if we cannot compute a constraint due to unreachability.
+      void noteUnknown() {}
     } typer(*this);
     typer.visit(curr);
   }

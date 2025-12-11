@@ -16,16 +16,13 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iomanip>
 
-#include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "support/bits.h"
-#include "support/debug.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
 #include "wasm-annotations.h"
@@ -332,8 +329,11 @@ void WasmBinaryWriter::writeImports() {
   };
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
     writeImportHeader(func);
-    o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getTypeIndex(func->type));
+    uint32_t kind = ExternalKind::Function;
+    if (func->type.isExact()) {
+      kind |= BinaryConsts::ExactImport;
+    }
+    o << U32LEB(kind) << U32LEB(getTypeIndex(func->type.getHeapType()));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     writeImportHeader(global);
@@ -375,8 +375,9 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   }
   auto start = startSection(BinaryConsts::Section::Function);
   o << U32LEB(importInfo->getNumDefinedFunctions());
-  ModuleUtils::iterDefinedFunctions(
-    *wasm, [&](Function* func) { o << U32LEB(getTypeIndex(func->type)); });
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+    o << U32LEB(getTypeIndex(func->type.getHeapType()));
+  });
   finishSection(start);
 }
 
@@ -1238,6 +1239,54 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
   }
 
+  // Remove unused function names from 'names' field.
+  if (!wasm->debugInfoSymbolNames.empty()) {
+    std::vector<std::string> newSymbolNames;
+    std::map<Index, Index> oldToNewIndex;
+
+    // Collect all used symbol name indexes.
+    auto prepareIndexMap =
+      [&](const std::optional<Function::DebugLocation>& location) {
+        if (location && location->symbolNameIndex) {
+          uint32_t oldIndex = *location->symbolNameIndex;
+          assert(oldIndex < wasm->debugInfoSymbolNames.size());
+          oldToNewIndex[oldIndex] = 0; // placeholder
+        }
+      };
+    for (auto& func : wasm->functions) {
+      for (auto& [_, location] : func->debugLocations) {
+        prepareIndexMap(location);
+      }
+      prepareIndexMap(func->prologLocation);
+      prepareIndexMap(func->epilogLocation);
+    }
+
+    // Create the new list of names and the mapping from old to new indices.
+    uint32_t index = 0;
+    for (auto& [oldIndex, newIndex] : oldToNewIndex) {
+      newSymbolNames.push_back(wasm->debugInfoSymbolNames[oldIndex]);
+      newIndex = index++;
+    }
+
+    // Update all debug locations to point to the new indices.
+    auto updateIndex = [&](std::optional<Function::DebugLocation>& location) {
+      if (location && location->symbolNameIndex) {
+        uint32_t oldIndex = *location->symbolNameIndex;
+        location->symbolNameIndex = oldToNewIndex[oldIndex];
+      }
+    };
+    for (auto& func : wasm->functions) {
+      for (auto& [_, location] : func->debugLocations) {
+        updateIndex(location);
+      }
+      updateIndex(func->prologLocation);
+      updateIndex(func->epilogLocation);
+    }
+
+    // Replace the old symbol names with the new, pruned list.
+    wasm->debugInfoSymbolNames = std::move(newSymbolNames);
+  }
+
   auto writeOptionalString = [&](const char* name, const std::string& str) {
     if (!str.empty()) {
       *sourceMap << "\"" << name << "\":\"" << str << "\",";
@@ -1265,10 +1314,6 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     writeStringVector("sourcesContent", wasm->debugInfoSourcesContent);
   }
 
-  // TODO: This field is optional; maybe we should omit if it's empty.
-  // TODO: Binaryen actually does not correctly preserve symbol names when it
-  // rewrites the mappings. We should maybe just drop them, or else handle
-  // them correctly.
   writeStringVector("names", wasm->debugInfoSymbolNames);
 
   *sourceMap << "\"mappings\":\"";
@@ -2874,12 +2919,13 @@ void WasmBinaryReader::readImports() {
   for (size_t i = 0; i < num; i++) {
     auto module = getInlineString();
     auto base = getInlineString();
-    auto kind = (ExternalKind)getU32LEB();
+    auto kind = getU32LEB();
     // We set a unique prefix for the name based on the kind. This ensures no
     // collisions between them, which can't occur here (due to the index i) but
     // could occur later due to the names section.
     switch (kind) {
-      case ExternalKind::Function: {
+      case ExternalKind::Function:
+      case ExternalKind::Function | BinaryConsts::ExactImport: {
         auto [name, isExplicit] =
           getOrMakeName(functionNames,
                         wasm.functions.size(),
@@ -2893,7 +2939,9 @@ void WasmBinaryReader::readImports() {
                      '.' + base.toString() +
                      "'s type must be a signature. Given: " + type.toString());
         }
-        auto curr = builder.makeFunction(name, type, {});
+        auto exact = (kind & BinaryConsts::ExactImport) ? Exact : Inexact;
+        auto curr =
+          builder.makeFunction(name, Type(type, NonNullable, exact), {});
         curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
@@ -3028,7 +3076,8 @@ void WasmBinaryReader::readFunctionSignatures() {
     functionTypes.push_back(type);
     // Check that the type is a signature.
     getSignatureByTypeIndex(index);
-    auto func = Builder(wasm).makeFunction(name, type, {}, nullptr);
+    auto func = Builder(wasm).makeFunction(
+      name, Type(type, NonNullable, Exact), {}, nullptr);
     func->hasExplicitName = isExplicit;
     wasm.addFunction(std::move(func));
   }
@@ -4571,9 +4620,15 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeBrOn(label, kind, in, cast);
         }
         case BinaryConsts::StructNew:
-          return builder.makeStructNew(getIndexedHeapType());
+        case BinaryConsts::StructNewDesc: {
+          bool isDesc = op == BinaryConsts::StructNewDesc;
+          return builder.makeStructNew(getIndexedHeapType(), isDesc);
+        }
         case BinaryConsts::StructNewDefault:
-          return builder.makeStructNewDefault(getIndexedHeapType());
+        case BinaryConsts::StructNewDefaultDesc: {
+          bool isDesc = op == BinaryConsts::StructNewDefaultDesc;
+          return builder.makeStructNewDefault(getIndexedHeapType(), isDesc);
+        }
         case BinaryConsts::StructGet:
         case BinaryConsts::StructGetS:
         case BinaryConsts::StructGetU: {
@@ -4688,8 +4743,8 @@ void WasmBinaryReader::readExports() {
     if (!names.emplace(name).second) {
       throwError("duplicate export name");
     }
-    ExternalKind kind = (ExternalKind)getU32LEB();
-    std::variant<Name, HeapType> value;
+    auto kind = getU32LEB();
+    std::optional<std::variant<Name, HeapType>> value;
     auto index = getU32LEB();
     switch (kind) {
       case ExternalKind::Function:
@@ -4708,19 +4763,25 @@ void WasmBinaryReader::readExports() {
         value = getTagName(index);
         break;
       case ExternalKind::Invalid:
-        throwError("invalid export kind");
+        break;
     }
-    wasm.addExport(new Export(name, kind, value));
+    if (!value) {
+      throwError("invalid export kind");
+    }
+    wasm.addExport(new Export(name, ExternalKind(kind), *value));
   }
 }
 
 Expression* WasmBinaryReader::readExpression() {
   assert(builder.empty());
-  while (input[pos] != BinaryConsts::End) {
+  while (more() && input[pos] != BinaryConsts::End) {
     auto inst = readInst();
     if (auto* err = inst.getErr()) {
       throwError(err->msg);
     }
+  }
+  if (!more()) {
+    throwError("unexpected end of input");
   }
   ++pos;
   auto expr = builder.build();
@@ -4959,8 +5020,7 @@ void WasmBinaryReader::readElementSegments() {
     } else {
       for (Index j = 0; j < size; j++) {
         Index index = getU32LEB();
-        auto sig = getTypeByFunctionIndex(index);
-        auto* refFunc = Builder(wasm).makeRefFunc(getFunctionName(index), sig);
+        auto* refFunc = Builder(wasm).makeRefFunc(getFunctionName(index));
         segmentData.push_back(refFunc);
       }
     }
@@ -5262,12 +5322,14 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
         << " was enabled by the user, but disallowed in the features section.";
     }
     if (used) {
-      wasm.features.enable(feature);
+      featuresSectionFeatures.enable(feature);
     }
   }
   if (pos != sectionPos + payloadLen) {
     throwError("bad features section size");
   }
+
+  wasm.features.enable(featuresSectionFeatures);
 }
 
 void WasmBinaryReader::readDylink(size_t payloadLen) {
