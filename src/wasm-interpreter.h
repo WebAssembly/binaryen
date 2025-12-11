@@ -203,9 +203,10 @@ struct ExnData {
 //      unwind an If instruction then we note which arm of the If we unwound
 //      from, and then when we re-wind we enter that proper arm. For a Block,
 //      we can note the index we had executed up to, etc.
-//    * For values, we just save them (see below on |valueStack| however, as we
-//      do an optimization for speed that avoids using that stack unless
-//      actually necessary).
+//    * For values, we just save them automatically (specific visitFoo methods
+//      do not need to do anything themselves), see below on |valueStack|. (Note
+//      that we do an optimization for speed that avoids using that stack unless
+//      actually necessary.)
 //
 // Once we have those two things handled, pretty much everything else "just
 // works," and 99% of instructions need no special handling at all. Even some
