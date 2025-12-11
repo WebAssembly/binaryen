@@ -286,7 +286,7 @@ struct Analyzer {
     // is, typeItemMap[foo] includes data for subtypes of foo, so that we just
     // need to read one place.
     std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
-    std::unordered_map<HeapType, std::unordered_set<Name>> typeSegments;
+    std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
   };
   std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
 
@@ -322,7 +322,7 @@ struct Analyzer {
           while (type) {
             flatTableInfo.typeFuncs[*type].insert(func->name);
             flatTableInfo.typeElems[*type].insert(elem->name);
-            type = type.getSuperType();
+            type = type->getSuperType();
           }
         }
       }
