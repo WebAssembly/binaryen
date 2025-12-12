@@ -176,6 +176,8 @@ struct Shell {
       // SIMD instructions.
       instance->setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
       instance->instantiate();
+    } catch (const std::exception& e) {
+      return Err{std::string("failed to instantiate module: ") + e.what()};
     } catch (...) {
       return Err{"failed to instantiate module"};
     }
