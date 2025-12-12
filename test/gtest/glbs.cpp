@@ -39,4 +39,9 @@ TEST(GLBsTest, Basics) {
   finder.note(refAny);
   EXPECT_TRUE(finder.noted());
   EXPECT_EQ(finder.getGLB(), refAny);
+
+  // Note unreachable, which changes nothing (we ignore unreachable inputs).
+  finder.note(Type::unreachable);
+  EXPECT_EQ(finder.getGLB(), refAny);
 }
+

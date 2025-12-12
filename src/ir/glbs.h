@@ -32,12 +32,19 @@ struct GLBFinder {
 
   // Note another type to take into account in the GLB.
   void note(Type type) {
+    // We only compute GLBs of concrete types in our IR.
+    assert(type != Type::none);
+
     if (type != Type::unreachable) {
       if (glb == Type::unreachable) {
         // This is the first thing we see.
         glb = type;
       } else {
         glb = Type::getGreatestLowerBound(glb, type);
+        // If the result is unreachable, when neither of the inputs was, then we
+        // have combined things from different hierarchies, which we do not
+        // allow here: We focus on computing GLBs for concrete places in our IR.
+        assert(glb != Type::unreachable);
       }
     }
   }
