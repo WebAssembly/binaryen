@@ -118,7 +118,8 @@ public:
 // Build artificial modules based on a module's imports, so that the
 // interpreter can use correct object instances. It initializes usable global
 // imports, and fills the rest with fake values since those are dangerous to
-// use. We will fail if dangerous globals are used.
+// use. Imported globals can't be read anyway; see
+// `EvallingModuleRunner::visitGlobalGet`.
 std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
   std::map<Name, std::unique_ptr<Module>> modules;
 
