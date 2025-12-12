@@ -44,4 +44,3 @@ TEST(GLBsTest, Basics) {
   finder.note(Type::unreachable);
   EXPECT_EQ(finder.getGLB(), refAny);
 }
-
