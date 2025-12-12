@@ -129,15 +129,12 @@ std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
       Importable* importable =
         std::visit([](auto* i) -> Importable* { return i; }, import);
 
-      Module* module = nullptr;
-      if (auto it = modules.find(importable->module); it != modules.end()) {
-        module = it->second.get();
-      } else {
-        auto [inserted, _] =
-          modules.emplace(importable->module, std::make_unique<Module>());
-        module = inserted->second.get();
-        module->name = importable->module;
+      auto [it, inserted] = modules.try_emplace(importable->module, nullptr);
+      if (inserted) {
+        it->second = std::make_unique<Module>();
+        it->second->name = importable->module;
       }
+      Module* module = it->second.get();
 
       struct Visitor {
         Module* module;
