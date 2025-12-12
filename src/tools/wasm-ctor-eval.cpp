@@ -129,6 +129,13 @@ std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
       Importable* importable =
         std::visit([](auto* i) -> Importable* { return i; }, import);
 
+      // Ignore WASI functions. They are handled separately in
+      // `getImportedFunction`.
+      if (std::holds_alternative<Function*>(import) &&
+          importable->module.startsWith("wasi_")) {
+        return;
+      }
+
       auto [it, inserted] = modules.try_emplace(importable->module, nullptr);
       if (inserted) {
         it->second = std::make_unique<Module>();
