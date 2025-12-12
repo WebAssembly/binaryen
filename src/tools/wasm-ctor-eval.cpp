@@ -120,6 +120,9 @@ public:
 // imports, and fills the rest with fake values since those are dangerous to
 // use. Imported globals can't be read anyway; see
 // `EvallingModuleRunner::visitGlobalGet`.
+// Note: wasi_ modules have stubs generated but won't be called due to the
+// special handling in `CtorEvalExternalInterface::getImportedFunction`. We
+// still generate the stubs to ensure the link-time validation passes.
 std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
   std::map<Name, std::unique_ptr<Module>> modules;
 
@@ -128,13 +131,6 @@ std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
     [&modules](std::variant<Memory*, Table*, Global*, Function*, Tag*> import) {
       Importable* importable =
         std::visit([](auto* i) -> Importable* { return i; }, import);
-
-      // Ignore WASI functions. They are handled separately in
-      // `getImportedFunction`.
-      if (std::holds_alternative<Function*>(import) &&
-          importable->module.startsWith("wasi_")) {
-        return;
-      }
 
       auto [it, inserted] = modules.try_emplace(importable->module, nullptr);
       if (inserted) {
