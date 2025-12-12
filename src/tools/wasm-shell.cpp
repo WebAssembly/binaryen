@@ -158,12 +158,19 @@ struct Shell {
   }
 
   Result<> instantiate(Module& wasm, Name instanceName) {
-    std::shared_ptr<ShellExternalInterface> interface;
-    std::shared_ptr<ModuleRunner> instance;
+    auto interface = std::make_shared<ShellExternalInterface>(linkedInstances);
+    auto instance =
+      std::make_shared<ModuleRunner>(wasm, interface.get(), linkedInstances);
+
+    lastInstance = instanceName;
+
+    // Even if instantiation fails, the module may have partially instantiated
+    // and mutated an imported memory or table. Keep the references alive to
+    // ensure that function references stay alive.
+    interfaces[instanceName] = interface;
+    instances[instanceName] = instance;
+
     try {
-      interface = std::make_shared<ShellExternalInterface>(linkedInstances);
-      instance =
-        std::make_shared<ModuleRunner>(wasm, interface.get(), linkedInstances);
 
       // This is not an optimization: we want to execute anything, even relaxed
       // SIMD instructions.
@@ -173,10 +180,6 @@ struct Shell {
       return Err{"failed to instantiate module"};
     }
 
-    lastInstance = instanceName;
-
-    interfaces[instanceName] = std::move(interface);
-    instances[instanceName] = std::move(instance);
     return Ok{};
   }
 
