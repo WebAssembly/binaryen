@@ -86,7 +86,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $A_1 (sub $A (shared (array (mut i32)))))
 
-  ;; CHECK:       (type $4 (struct (field (mut i32)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
+  ;; CHECK:       (type $4 (struct))
 
   ;; CHECK:      (func $func (type $1)
   ;; CHECK-NEXT:  (local $local (ref $B))
