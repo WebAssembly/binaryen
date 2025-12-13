@@ -1731,15 +1731,27 @@ BinaryenExpressionRef BinaryenCallRef(BinaryenModuleRef module,
                                       BinaryenExpressionRef target,
                                       BinaryenExpressionRef* operands,
                                       BinaryenIndex numOperands,
-                                      BinaryenType type,
-                                      bool isReturn) {
+                                      BinaryenType type) {
   std::vector<Expression*> args;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     args.push_back((Expression*)operands[i]);
   }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeCallRef((Expression*)target, args, Type(type), isReturn));
+      .makeCallRef((Expression*)target, args, Type(type), false));
+}
+BinaryenExpressionRef BinaryenReturnCallRef(BinaryenModuleRef module,
+                                      BinaryenExpressionRef target,
+                                      BinaryenExpressionRef* operands,
+                                      BinaryenIndex numOperands,
+                                      BinaryenType type) {
+  std::vector<Expression*> args;
+  for (BinaryenIndex i = 0; i < numOperands; i++) {
+    args.push_back((Expression*)operands[i]);
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeCallRef((Expression*)target, args, Type(type), true));
 }
 BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
                                       BinaryenExpressionRef ref,

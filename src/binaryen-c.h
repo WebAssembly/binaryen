@@ -1016,8 +1016,13 @@ BinaryenCallRef(BinaryenModuleRef module,
                 BinaryenExpressionRef target,
                 BinaryenExpressionRef* operands,
                 BinaryenIndex numOperands,
-                BinaryenType type,
-                bool isReturn);
+                BinaryenType type);
+BINARYEN_API BinaryenExpressionRef
+BinaryenReturnCallRef(BinaryenModuleRef module,
+                BinaryenExpressionRef target,
+                BinaryenExpressionRef* operands,
+                BinaryenIndex numOperands,
+                BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
                                                    BinaryenExpressionRef ref,
                                                    BinaryenType castType);

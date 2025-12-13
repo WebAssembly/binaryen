@@ -2474,13 +2474,13 @@ function wrapModule(module, self = {}) {
 
   self['call_ref'] = function(target, operands, type) {
     return preserveStack(() =>
-      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, false)
+      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type)
     );
   };
   
   self['return_call_ref'] = function(target, operands, type) {
     return preserveStack(() =>
-      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, true)
+      Module['_BinaryenReturnCallRef'](module, target, i32sToStack(operands), operands.length, type)
     );
   }
 
