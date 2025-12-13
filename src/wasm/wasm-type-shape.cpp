@@ -370,6 +370,40 @@ bool ComparableRecGroupShape::operator>(const RecGroupShape& other) const {
   return GT == compareComparable(*this, other);
 }
 
+const std::vector<HeapType>& UniqueRecGroups::get(std::vector<HeapType> types) {
+  auto& group = *groups.emplace(groups.end(), std::move(types));
+  if (shapes.emplace(RecGroupShape(group, features)).second) {
+    // The types are already unique.
+    return group;
+  }
+  // There is a conflict. Find a brand that makes the group unique.
+  BrandTypeIterator brand;
+  group.push_back(*brand);
+  while (!shapes.emplace(RecGroupShape(group, features)).second) {
+    group.back() = *++brand;
+  }
+  // Rebuild the rec group to include the brand. Map the old types (excluding
+  // the brand) to their corresponding new types to preserve recursions within
+  // the group.
+  Index size = group.size();
+  TypeBuilder builder(size);
+  std::unordered_map<HeapType, HeapType> newTypes;
+  for (Index i = 0; i < size - 1; ++i) {
+    newTypes[group[i]] = builder[i];
+  }
+  for (Index i = 0; i < size; ++i) {
+    builder[i].copy(group[i], [&](HeapType type) {
+      if (auto newType = newTypes.find(type); newType != newTypes.end()) {
+        return newType->second;
+      }
+      return type;
+    });
+  }
+  builder.createRecGroup(0, size);
+  group = *builder.build();
+  return group;
+}
+
 } // namespace wasm
 
 namespace std {

@@ -18,6 +18,8 @@
 #define wasm_wasm_type_shape_h
 
 #include <functional>
+#include <list>
+#include <unordered_set>
 #include <vector>
 
 #include "wasm-features.h"
@@ -78,5 +80,98 @@ public:
 };
 
 } // namespace std
+
+namespace wasm {
+
+// Provides an infinite sequence of possible brand types, prioritizing those
+// with the most compact encoding.
+struct BrandTypeIterator {
+  static constexpr Index optionCount = 18;
+  static constexpr std::array<Field, optionCount> fieldOptions = {{
+    Field(Field::i8, Mutable),
+    Field(Field::i16, Mutable),
+    Field(Type::i32, Mutable),
+    Field(Type::i64, Mutable),
+    Field(Type::f32, Mutable),
+    Field(Type::f64, Mutable),
+    Field(Type(HeapType::any, Nullable), Mutable),
+    Field(Type(HeapType::func, Nullable), Mutable),
+    Field(Type(HeapType::ext, Nullable), Mutable),
+    Field(Type(HeapType::none, Nullable), Mutable),
+    Field(Type(HeapType::nofunc, Nullable), Mutable),
+    Field(Type(HeapType::noext, Nullable), Mutable),
+    Field(Type(HeapType::any, NonNullable), Mutable),
+    Field(Type(HeapType::func, NonNullable), Mutable),
+    Field(Type(HeapType::ext, NonNullable), Mutable),
+    Field(Type(HeapType::none, NonNullable), Mutable),
+    Field(Type(HeapType::nofunc, NonNullable), Mutable),
+    Field(Type(HeapType::noext, NonNullable), Mutable),
+  }};
+
+  struct FieldInfo {
+    uint8_t index = 0;
+    bool immutable = false;
+
+    operator Field() const {
+      auto field = fieldOptions[index];
+      if (immutable) {
+        field.mutable_ = Immutable;
+      }
+      return field;
+    }
+
+    bool advance() {
+      if (!immutable) {
+        immutable = true;
+        return true;
+      }
+      immutable = false;
+      index = (index + 1) % optionCount;
+      return index != 0;
+    }
+  };
+
+  bool useArray = false;
+  std::vector<FieldInfo> fields;
+
+  HeapType operator*() const {
+    if (useArray) {
+      return Array(fields[0]);
+    }
+    return Struct(std::vector<Field>(fields.begin(), fields.end()));
+  }
+
+  BrandTypeIterator& operator++() {
+    for (Index i = fields.size(); i > 0; --i) {
+      if (fields[i - 1].advance()) {
+        return *this;
+      }
+    }
+    if (useArray) {
+      useArray = false;
+      return *this;
+    }
+    fields.emplace_back();
+    useArray = fields.size() == 1;
+    return *this;
+  }
+};
+
+struct UniqueRecGroups {
+  std::list<std::vector<HeapType>> groups;
+  std::unordered_set<RecGroupShape> shapes;
+
+  FeatureSet features;
+
+  UniqueRecGroups(FeatureSet features) : features(features) {}
+
+  // Add a rec group. If it has the same shape as a previously added rec group,
+  // the group will be rebuilt with a brand at the end to make it unique.
+  // Returns the rebuilt types (including the brand) or the original types if no
+  // brand was necessary.
+  const std::vector<HeapType>& get(std::vector<HeapType> group);
+};
+
+} // namespace wasm
 
 #endif // wasm_wasm_type_shape_h
