@@ -324,7 +324,7 @@ public:
   constexpr Type(BasicType id) : id(id) {}
 
   // But converting raw TypeID is more dangerous, so make it explicit
-  explicit Type(TypeID id) : id(id) {}
+  explicit constexpr Type(TypeID id) : id(id) {}
 
   // Construct tuple from a list of single types
   Type(std::initializer_list<Type>);
@@ -335,7 +335,9 @@ public:
 
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
-  Type(HeapType heapType, Nullability nullable, Exactness exact = Inexact)
+  constexpr Type(HeapType heapType,
+                 Nullability nullable,
+                 Exactness exact = Inexact)
     : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
            (exact == Exact ? ExactMask : 0)) {
     assert(!(heapType.getID() &
@@ -659,10 +661,11 @@ struct Field {
   Mutability mutable_;
 
   // Arbitrary defaults for convenience.
-  Field() : type(Type::i32), packedType(not_packed), mutable_(Mutable) {}
-  Field(Type type, Mutability mutable_)
+  constexpr Field()
+    : type(Type::i32), packedType(not_packed), mutable_(Mutable) {}
+  constexpr Field(Type type, Mutability mutable_)
     : type(type), packedType(not_packed), mutable_(mutable_) {}
-  Field(PackedType packedType, Mutability mutable_)
+  constexpr Field(PackedType packedType, Mutability mutable_)
     : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
 
   constexpr bool isPacked() const {
