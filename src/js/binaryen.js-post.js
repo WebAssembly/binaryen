@@ -2855,6 +2855,13 @@ function wrapModule(module, self = {}) {
   self['optimize'] = function() {
     return Module['_BinaryenModuleOptimize'](module);
   };
+  /**
+   * Updates the internal name mapping logic in a module. This must be called
+   * after renaming module elements.
+   */
+  self['update_maps'] = function() {
+    Module['_BinaryenModuleUpdateMaps'](module);
+  };
   self['optimizeFunction'] = function(func) {
     if (typeof func === 'string') func = self['getFunction'](func);
     return Module['_BinaryenFunctionOptimize'](func, module);
