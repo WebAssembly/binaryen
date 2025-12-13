@@ -107,10 +107,27 @@ struct TypeSCCs
 // provides an infinite sequence of possible brand types, prioritizing those
 // with the most compact encoding.
 struct BrandTypeIterator {
-  // See `initFieldOptions` for the 18 options.
   static constexpr Index optionCount = 18;
-  static std::array<Field, optionCount> fieldOptions;
-  static void initFieldOptions();
+  static constexpr std::array<Field, optionCount> fieldOptions = {{
+    Field(Field::i8, Mutable),
+    Field(Field::i16, Mutable),
+    Field(Type::i32, Mutable),
+    Field(Type::i64, Mutable),
+    Field(Type::f32, Mutable),
+    Field(Type::f64, Mutable),
+    Field(Type(HeapType::any, Nullable), Mutable),
+    Field(Type(HeapType::func, Nullable), Mutable),
+    Field(Type(HeapType::ext, Nullable), Mutable),
+    Field(Type(HeapType::none, Nullable), Mutable),
+    Field(Type(HeapType::nofunc, Nullable), Mutable),
+    Field(Type(HeapType::noext, Nullable), Mutable),
+    Field(Type(HeapType::any, NonNullable), Mutable),
+    Field(Type(HeapType::func, NonNullable), Mutable),
+    Field(Type(HeapType::ext, NonNullable), Mutable),
+    Field(Type(HeapType::none, NonNullable), Mutable),
+    Field(Type(HeapType::nofunc, NonNullable), Mutable),
+    Field(Type(HeapType::noext, NonNullable), Mutable),
+  }};
 
   struct FieldInfo {
     uint8_t index = 0;
@@ -316,32 +333,6 @@ void GroupClassInfo::permute(RecGroupInfo& info) {
   }
 }
 
-std::array<Field, BrandTypeIterator::optionCount>
-  BrandTypeIterator::fieldOptions = {{}};
-
-void BrandTypeIterator::initFieldOptions() {
-  BrandTypeIterator::fieldOptions = {{
-    Field(Field::i8, Mutable),
-    Field(Field::i16, Mutable),
-    Field(Type::i32, Mutable),
-    Field(Type::i64, Mutable),
-    Field(Type::f32, Mutable),
-    Field(Type::f64, Mutable),
-    Field(Type(HeapType::any, Nullable), Mutable),
-    Field(Type(HeapType::func, Nullable), Mutable),
-    Field(Type(HeapType::ext, Nullable), Mutable),
-    Field(Type(HeapType::none, Nullable), Mutable),
-    Field(Type(HeapType::nofunc, Nullable), Mutable),
-    Field(Type(HeapType::noext, Nullable), Mutable),
-    Field(Type(HeapType::any, NonNullable), Mutable),
-    Field(Type(HeapType::func, NonNullable), Mutable),
-    Field(Type(HeapType::ext, NonNullable), Mutable),
-    Field(Type(HeapType::none, NonNullable), Mutable),
-    Field(Type(HeapType::nofunc, NonNullable), Mutable),
-    Field(Type(HeapType::noext, NonNullable), Mutable),
-  }};
-}
-
 struct MinimizeRecGroups : Pass {
   // The types we are optimizing and their indices in this list.
   std::vector<HeapType> types;
@@ -386,8 +377,6 @@ struct MinimizeRecGroups : Pass {
     if (!features.hasGC()) {
       return;
     }
-
-    initBrandOptions();
 
     auto typeInfo = ModuleUtils::collectHeapTypeInfo(
       *module,
@@ -443,15 +432,6 @@ struct MinimizeRecGroups : Pass {
     }
 
     rewriteTypes(*module);
-  }
-
-  void initBrandOptions() {
-    // Initialize the field options for brand types lazily here to avoid
-    // depending on global constructor ordering.
-    [[maybe_unused]] static bool fieldsInitialized = []() {
-      BrandTypeIterator::initFieldOptions();
-      return true;
-    }();
   }
 
   void updateShapes() {
