@@ -1741,10 +1741,10 @@ BinaryenExpressionRef BinaryenCallRef(BinaryenModuleRef module,
       .makeCallRef((Expression*)target, args, Type(type), false));
 }
 BinaryenExpressionRef BinaryenReturnCallRef(BinaryenModuleRef module,
-                                      BinaryenExpressionRef target,
-                                      BinaryenExpressionRef* operands,
-                                      BinaryenIndex numOperands,
-                                      BinaryenType type) {
+                                            BinaryenExpressionRef target,
+                                            BinaryenExpressionRef* operands,
+                                            BinaryenIndex numOperands,
+                                            BinaryenType type) {
   std::vector<Expression*> args;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     args.push_back((Expression*)operands[i]);

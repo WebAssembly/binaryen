@@ -1019,10 +1019,10 @@ BinaryenCallRef(BinaryenModuleRef module,
                 BinaryenType type);
 BINARYEN_API BinaryenExpressionRef
 BinaryenReturnCallRef(BinaryenModuleRef module,
-                BinaryenExpressionRef target,
-                BinaryenExpressionRef* operands,
-                BinaryenIndex numOperands,
-                BinaryenType type);
+                      BinaryenExpressionRef target,
+                      BinaryenExpressionRef* operands,
+                      BinaryenIndex numOperands,
+                      BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
                                                    BinaryenExpressionRef ref,
                                                    BinaryenType castType);
