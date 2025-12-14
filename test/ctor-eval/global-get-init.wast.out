@@ -1,2 +1,8 @@
 (module
+ (type $0 (func (result i32)))
+ (import "import" "global" (global $imported i32))
+ (export "use-global" (func $use-global))
+ (func $use-global (type $0) (result i32)
+  (global.get $imported)
+ )
 )
