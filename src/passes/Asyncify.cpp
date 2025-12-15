@@ -378,6 +378,10 @@ static const Name START_REWIND = "start_rewind";
 static const Name STOP_REWIND = "stop_rewind";
 static const Name ASYNCIFY_GET_CALL_INDEX = "__asyncify_get_call_index";
 static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
+static const Name ASYNCIFY_REF_TABLE = "__asyncify_ref_table";
+static const Name ASYNCIFY_REF_BITMAP_TABLE = "__asyncify_ref_bitmap_table";
+static const Name ASYNCIFY_REF_LOAD_AND_CLEAR = "__asyncify_ref_load_and_clear";
+static const Name ASYNCIFY_REF_STORE = "__asyncify_ref_store";
 
 // TODO: having just normal/unwind_or_rewind would decrease code
 //       size, but make debugging harder
@@ -386,6 +390,8 @@ enum class State { Normal = 0, Unwinding = 1, Rewinding = 2 };
 enum class DataOffset { BStackPos = 0, BStackEnd = 4, BStackEnd64 = 8 };
 
 const auto STACK_ALIGN = 4;
+
+const auto MIN_REF_TABLE_SIZE = 256;
 
 // A helper class for managing fake global names. Creates the globals and
 // provides mappings for using them.
@@ -861,6 +867,7 @@ public:
 
   FakeGlobalHelper fakeGlobals;
   bool verbose;
+  bool hasExceptionReferences = false;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -873,6 +880,15 @@ static bool doesCall(Expression* curr) {
     curr = drop->value;
   }
   return curr->is<Call>() || curr->is<CallIndirect>();
+}
+
+// Flat IR exception: local set with a block, we need to handle this separately
+static bool isLocalSetWithBlock(Expression* curr) {
+  if (auto* set = curr->dynCast<LocalSet>()) {
+    curr = set->value;
+    return curr->is<Block>();
+  }
+  return false;
 }
 
 class AsyncifyBuilder : public Builder {
@@ -1099,6 +1115,7 @@ private:
             i--;
           }
         }
+        block->finalize(block->type);
         results.push_back(block);
         continue;
       } else if (auto* iff = curr->dynCast<If>()) {
@@ -1159,6 +1176,47 @@ private:
         loop->body = results.back();
         results.pop_back();
         results.push_back(loop);
+        continue;
+      } else if (auto* try_ = curr->dynCast<TryTable>()) {
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          work.push_back(Work{try_->body, Work::Scan});
+          continue;
+        }
+        try_->body = results.back();
+        results.pop_back();
+        results.push_back(try_);
+        continue;
+      } else if (isLocalSetWithBlock(curr)) { // relaxed flat IR
+        auto* set = curr->dynCast<LocalSet>();
+
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          work.push_back(Work{set->value, Work::Scan});
+          continue;
+        }
+
+        auto* blockValue = results.back()->cast<Block>();
+        results.pop_back();
+        // If the block has a type, we need to ensure that when rewinding,
+        // we still produce a value of that type.
+        if (blockValue->type.isConcrete()) {
+          auto type = blockValue->type;
+
+          // If the type is a reference type, we need to ensure it's nullable,
+          // since the optimization could mark it as non nullable.
+          if (type.isRef() && type.isNonNullable()) {
+            type = type.with(wasm::Nullable);
+          }
+
+          blockValue->list.push_back(
+            builder->makeLocalGet(set->index, type));
+
+          blockValue->finalize(type);
+        }
+        set->value = blockValue;
+
+        results.push_back(set);
         continue;
       } else if (doesCall(curr)) {
         // We reach here only in Scan phase, but we in effect "Finish" calls
@@ -1620,7 +1678,7 @@ private:
       if (!relevantLiveLocals.count(i)) {
         continue;
       }
-      total += getByteSize(func->getLocalType(i));
+      total += getStoredByteSize(func->getLocalType(i));
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
@@ -1635,17 +1693,36 @@ private:
       auto localType = func->getLocalType(i);
       SmallVector<Expression*, 1> loads;
       for (const auto& type : localType) {
-        auto size = getByteSize(type);
+        auto size = getStoredByteSize(type);
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
-        loads.push_back(builder->makeLoad(
-          size,
-          true,
-          offset,
-          STACK_ALIGN,
-          builder->makeLocalGet(tempIndex, builder->pointerType),
-          type,
-          asyncifyMemory));
+
+        if (type.hasByteSize()) {
+          loads.push_back(builder->makeLoad(
+            size,
+            true,
+            offset,
+            STACK_ALIGN,
+            builder->makeLocalGet(tempIndex, builder->pointerType),
+            type,
+            asyncifyMemory));
+        } else {
+          analyzer->hasExceptionReferences = true;
+
+          // we load the index and then use it to load the ref
+          Expression* tableIndex = builder->makeLoad(
+            size,
+            true,
+            offset,
+            STACK_ALIGN,
+            builder->makeLocalGet(tempIndex, builder->pointerType),
+            builder->pointerType,
+            asyncifyMemory);
+
+          loads.push_back(builder->makeCall(
+            ASYNCIFY_REF_LOAD_AND_CLEAR, {tableIndex}, Type(HeapType::exn, Nullable)));
+        }
+
         offset += size;
       }
       Expression* load;
@@ -1680,21 +1757,38 @@ private:
       auto localType = func->getLocalType(i);
       size_t j = 0;
       for (const auto& type : localType) {
-        auto size = getByteSize(type);
+        auto size = getStoredByteSize(type);
         Expression* localGet = builder->makeLocalGet(i, localType);
         if (localType.size() > 1) {
           localGet = builder->makeTupleExtract(localGet, j);
         }
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
-        block->list.push_back(builder->makeStore(
-          size,
-          offset,
-          STACK_ALIGN,
-          builder->makeLocalGet(tempIndex, builder->pointerType),
-          localGet,
-          type,
-          asyncifyMemory));
+
+        if (type.hasByteSize()) {
+          block->list.push_back(builder->makeStore(
+            size,
+            offset,
+            STACK_ALIGN,
+            builder->makeLocalGet(tempIndex, builder->pointerType),
+            localGet,
+            type,
+            asyncifyMemory));
+        } else {
+          analyzer->hasExceptionReferences = true;
+
+          // the result is the tableIndex as pointerType
+          // store this into memory
+          block->list.push_back(builder->makeStore(
+            size,
+            offset,
+            STACK_ALIGN,
+            builder->makeLocalGet(tempIndex, builder->pointerType),
+            builder->makeCall(ASYNCIFY_REF_STORE, {localGet}, builder->pointerType),
+            builder->pointerType,
+            asyncifyMemory));
+        }
+
         offset += size;
         ++j;
       }
@@ -1717,14 +1811,18 @@ private:
       builder->makeIncStackPos(4));
   }
 
-  unsigned getByteSize(Type type) {
-    if (!type.hasByteSize()) {
-      Fatal() << "Asyncify does not yet support non-number types, like "
-                 "references (see "
-                 "https://github.com/WebAssembly/binaryen/issues/3739)";
+  unsigned getStoredByteSize(Type type) {
+    if (type.hasByteSize()) {
+      return type.getByteSize();
     }
-    return type.getByteSize();
+    if (type == Type(HeapType::exn, Nullable)) {
+      return builder->pointerType.getByteSize();
+    }
+    Fatal() << "Asyncify does not yet support non-number types, like "
+               "references (see "
+               "https://github.com/WebAssembly/binaryen/issues/3739)";
   }
+
 };
 
 } // anonymous namespace
@@ -1861,7 +1959,7 @@ struct Asyncify : public Pass {
     // anything else.
     {
       PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
-      runner.add("flatten");
+      runner.add("flatten-relaxed");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
       // unreachable code here.
@@ -1919,6 +2017,14 @@ struct Asyncify : public Pass {
     // Finally, add function support (that should not have been seen by
     // the previous passes).
     addFunctions(module);
+
+    if (analyzer.hasExceptionReferences) {
+      // Add tables for saving reference types
+      addRefTables(module);
+
+      // And functions for saving/loading reference types
+      addRefFunctions(module);
+    }
   }
 
 private:
@@ -1953,6 +2059,131 @@ private:
         ASYNCIFY_STATE, ASYNCIFY_STATE, ExternalKind::Global));
       module->addExport(
         builder.makeExport(ASYNCIFY_DATA, ASYNCIFY_DATA, ExternalKind::Global));
+    }
+  }
+
+  void addRefTables(Module* module) {
+    Builder builder(*module);
+
+    auto ref_table = builder.makeTable(
+      ASYNCIFY_REF_TABLE, Type(HeapType::exn, Nullable), MIN_REF_TABLE_SIZE);
+    module->addTable(std::move(ref_table));
+
+    auto ref_bitmap_table = builder.makeTable(
+      ASYNCIFY_REF_BITMAP_TABLE, Type(HeapType::func, Nullable), MIN_REF_TABLE_SIZE);
+    module->addTable(std::move(ref_bitmap_table));
+  }
+
+  void addRefFunctions(Module* module) {
+    Builder builder(*module);
+
+    {
+      // load and clear - load the reference at a given index
+      // then write ref.null to this index in the bitmap table
+      auto* body = builder.makeBlock();
+
+      Index tableIdx = 0;
+
+      body->list.push_back(
+        builder.makeTableSet(ASYNCIFY_REF_BITMAP_TABLE,
+                             builder.makeLocalGet(tableIdx, pointerType),
+                             builder.makeRefNull(HeapType::func)));
+
+      body->list.push_back(builder.makeReturn(
+        builder.makeTableGet(ASYNCIFY_REF_TABLE,
+                             builder.makeLocalGet(tableIdx, pointerType),
+                             Type(HeapType::exn, Nullable))));
+      body->finalize();
+
+      module->addFunction(
+        builder.makeFunction(ASYNCIFY_REF_LOAD_AND_CLEAR,
+                             {{"tableIdx", pointerType}},
+                             Signature(pointerType, Type(HeapType::exn, Nullable)),
+                             {},
+                             body));
+    }
+
+    {
+      // store and mark - scan bitmap table to find a free index (a null ref)
+      // if the index is not found, grow the table
+      // write the value to the ref table, mark the slot in the bitmap table
+
+      auto* body = builder.makeBlock();
+
+      Index value = 0, tableSize = 1, foundIndex = 2;
+
+      body->list.push_back(builder.makeLocalSet(
+        tableSize, builder.makeTableSize(ASYNCIFY_REF_BITMAP_TABLE)));
+      body->list.push_back(builder.makeLocalSet(
+        foundIndex, builder.makeConst(Literal::makeFromInt64(0, pointerType))));
+
+      // foundIndex is 0 and we loop until we reach tableSize or the index
+      // exists then after the loop if foundIndex is not <tableSize, it means no
+      // free slot in that case we need to grow the table and set foundIndex
+
+      auto* loop = builder.makeLoop(
+        "find_empty_slot",
+        builder.makeBlock(
+          {builder.makeIf(
+             builder.makeBinary(Abstract::getBinary(pointerType, Abstract::LeU),
+                                builder.makeLocalGet(foundIndex, pointerType),
+                                builder.makeLocalGet(tableSize, pointerType)),
+             builder.makeIf(builder.makeUnary(
+                              EqZInt32,
+                              builder.makeRefIsNull(builder.makeTableGet(
+                                ASYNCIFY_REF_BITMAP_TABLE,
+                                builder.makeLocalGet(foundIndex, pointerType),
+                                Type(HeapType::func, Nullable)))),
+                            builder.makeBreak("find_empty_slot")),
+             builder.makeBreak("find_empty_slot")),
+           builder.makeLocalSet(
+             foundIndex,
+             builder.makeBinary(
+               Abstract::getBinary(pointerType, Abstract::Add),
+               builder.makeLocalGet(foundIndex, pointerType),
+               builder.makeConst(Literal::makeFromInt64(1, pointerType))))}));
+
+      body->list.push_back(loop);
+
+      // If no empty slot was found, grow the table
+      body->list.push_back(builder.makeIf(
+        builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Eq),
+                           builder.makeLocalGet(foundIndex, pointerType),
+                           builder.makeLocalGet(tableSize, pointerType)),
+        builder.makeBlock(
+          {builder.makeDrop(builder.makeTableGrow(
+             ASYNCIFY_REF_TABLE,
+             builder.makeRefNull(HeapType::exn),
+             builder.makeConst(Literal::makeFromInt64(1, pointerType)))),
+           builder.makeDrop(builder.makeTableGrow(
+             ASYNCIFY_REF_BITMAP_TABLE,
+             builder.makeRefNull(HeapType::func),
+             builder.makeConst(Literal::makeFromInt64(1, pointerType))))})));
+
+      // Store the value in the ref table
+      body->list.push_back(
+        builder.makeTableSet(ASYNCIFY_REF_TABLE,
+                             builder.makeLocalGet(foundIndex, pointerType),
+                             builder.makeLocalGet(value, Type(HeapType::exn, Nullable))));
+
+      // Mark the slot in the bitmap table as occupied
+      auto* dummyFunc = module->getFunction(Name("asyncify_start_unwind"));
+
+      body->list.push_back(builder.makeTableSet(
+        ASYNCIFY_REF_BITMAP_TABLE,
+        builder.makeLocalGet(foundIndex, pointerType),
+        builder.makeRefFunc(dummyFunc->name, dummyFunc->type)));
+
+      body->list.push_back(
+        builder.makeReturn(builder.makeLocalGet(foundIndex, pointerType)));
+      body->finalize();
+
+      module->addFunction(builder.makeFunction(
+        ASYNCIFY_REF_STORE,
+        {{"value", Type(HeapType::exn, Nullable)}},
+        Signature(Type(HeapType::exn, Nullable), pointerType),
+        {{"tableSize", pointerType}, {"foundIndex", pointerType}},
+        body));
     }
   }
 

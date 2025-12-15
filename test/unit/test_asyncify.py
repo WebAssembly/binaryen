@@ -13,9 +13,10 @@ class AsyncifyTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-sleep.wat'), '--asyncify', '-o', 'a.wasm'])
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-coroutine.wat'), '--asyncify', '-o', 'b.wasm'])
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-stackOverflow.wat'), '--asyncify', '-o', 'c.wasm'])
+            shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-exception.wat'), '--asyncify', '--enable-exception-handling', '--enable-reference-types', '-o', 'd.wasm'])
             print('  file size: %d' % os.path.getsize('a.wasm'))
             if shared.NODEJS:
-                shared.run_process([shared.NODEJS, self.input_path('asyncify.js')], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                shared.run_process([shared.NODEJS, "--experimental-wasm-exnref", self.input_path('asyncify.js')], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         test(['-g'])
         test([])

@@ -222,7 +222,7 @@ function coroutineTests() {
     },
     values: [],
     yield: function(value) {
-      console.log('yield reached', Runtime.rewinding, value); 
+      console.log('yield reached', Runtime.rewinding, value);
       var coroutine = Runtime.active;
       if (Runtime.rewinding) {
         coroutine.stopRewind();
@@ -297,11 +297,125 @@ function stackOverflowAssertTests() {
   assert(fails == 4, 'all 4 should have failed');
 }
 
+function exceptionTests() {
+  console.log('\nexception tests\n\n');
+
+  // Get and compile the wasm.
+  var binary = fs.readFileSync('d.wasm');
+  var module = new WebAssembly.Module(binary);
+
+  var DATA_ADDR = 4;
+  var isSuspending = false;
+  var shouldSuspend = true;
+
+  var imports = {
+    env: {
+      maybe_suspend: function() {
+        if (!shouldSuspend) {
+          return;
+        }
+        var state = exports.asyncify_get_state();
+        if (state === 0 /* Normal */) {
+          exports.asyncify_start_unwind(DATA_ADDR);
+          isSuspending = true;
+        } else if (state === 2 /* Rewinding */) {
+          exports.asyncify_stop_rewind();
+        }
+      },
+      log_caught_tag: function(val) {
+        // Just a marker for the test - actual logging not needed for assertions
+      },
+      log_caught_exnref: function(exn) {
+        try {
+          exports.rethrow_for_js(exn);
+        } catch (e) {
+          // Exception re-thrown and caught as expected
+        }
+      },
+      js_thrower: function() {
+        throw new Error("Error from JavaScript!");
+      }
+    }
+  };
+
+  var instance = new WebAssembly.Instance(module, imports);
+  var exports = instance.exports;
+  var view = new Int32Array(exports.memory.buffer);
+
+  // Initialize asyncify stack
+  var ASYNCIFY_STACK_SIZE = 1024;
+  view[DATA_ADDR >> 2] = DATA_ADDR + 8; // Stack top
+  view[(DATA_ADDR + 4) >> 2] = DATA_ADDR + 8 + ASYNCIFY_STACK_SIZE; // Stack end
+
+  function runExceptionTest(name, expectedResult, testFunc) {
+    console.log('\n==== testing ' + name + ' ====');
+
+    isSuspending = false;
+    var result = testFunc();
+
+    if (isSuspending) {
+      assert(!result, 'results during exception handling sleep are meaningless, just 0');
+      exports.asyncify_stop_unwind();
+
+      exports.asyncify_start_rewind(DATA_ADDR);
+      result = testFunc();
+    }
+
+    console.log('final result: ' + result);
+    assert(result == expectedResult, 'bad final result for ' + name);
+  }
+
+  var testValue = 123;
+
+  // Test with suspension enabled
+  shouldSuspend = true;
+
+  // Test 1: Async call WITH Wasm exception
+  runExceptionTest('wasm exception with suspend', testValue, function() {
+    return exports.test_wasm_exception(testValue, 1);
+  });
+
+  // Test 2: Async call WITHOUT Wasm exception
+  runExceptionTest('wasm exception without suspend', -1, function() {
+    return exports.test_wasm_exception(testValue, 0);
+  });
+
+  // Test 3: Sync call that catches a JS exception
+  runExceptionTest('js exception handling', -2, function() {
+    return exports.test_js_exception();
+  });
+
+  // Test 4: Suspend inside a catch handler
+  runExceptionTest('suspend in catch handler', testValue + 100, function() {
+    return exports.test_suspend_in_catch(testValue);
+  });
+
+  // Test with suspension disabled
+  shouldSuspend = false;
+
+  runExceptionTest('wasm exception no suspend', testValue, function() {
+    return exports.test_wasm_exception(testValue, 1);
+  });
+
+  runExceptionTest('wasm no exception no suspend', -1, function() {
+    return exports.test_wasm_exception(testValue, 0);
+  });
+
+  runExceptionTest('js exception no suspend', -2, function() {
+    return exports.test_js_exception();
+  });
+
+  runExceptionTest('catch handler no suspend', testValue + 100, function() {
+    return exports.test_suspend_in_catch(testValue);
+  });
+}
+
 // Main
 
 sleepTests();
 coroutineTests();
 stackOverflowAssertTests();
+exceptionTests();
 
 console.log('\ntests completed successfully');
 
