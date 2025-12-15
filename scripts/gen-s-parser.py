@@ -757,7 +757,6 @@ class Node:
 
 def instruction_parser():
     """Build a trie out of all the instructions, then emit it as C++ code."""
-    global instructions
     trie = Node()
     inst_length = 0
     for inst, expr in instructions:
