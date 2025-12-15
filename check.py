@@ -60,7 +60,7 @@ def run_version_tests():
     changelog_version = get_changelog_version()
     for e in executables:
         print('.. %s --version' % e)
-        proc = subprocess.run([e, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        proc = subprocess.run([e, '--version'], capture_output=True, text=True)
         assert len(proc.stderr) == 0, 'Expected no stderr, got:\n%s' % proc.stderr
         out = proc.stdout
         assert os.path.basename(e).replace('.exe', '') in out, 'Expected version to contain program name, got:\n%s' % out

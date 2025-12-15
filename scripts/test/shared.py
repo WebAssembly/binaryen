@@ -264,9 +264,7 @@ V8_OPTS = [
 
 try:
     if NODEJS is not None:
-        subprocess.check_call([NODEJS, '--version'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+        subprocess.run([NODEJS, '--version'], check=True, capture_output=True)
 except (OSError, subprocess.CalledProcessError):
     NODEJS = None
 if NODEJS is None:
@@ -314,12 +312,9 @@ class Py2CalledProcessError(subprocess.CalledProcessError):
         self.stderr = stderr
 
 
-def run_process(cmd, check=True, input=None, capture_output=False, decode_output=True, *args, **kw):
+def run_process(cmd, check=True, input=None, decode_output=True, *args, **kw):
     if input and type(input) is str:
         input = bytes(input, 'utf-8')
-    if capture_output:
-        kw['stdout'] = subprocess.PIPE
-        kw['stderr'] = subprocess.PIPE
     ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
     if decode_output and ret.stdout is not None:
         ret.stdout = ret.stdout.decode('utf-8')

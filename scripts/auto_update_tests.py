@@ -60,7 +60,7 @@ def update_example_tests():
             print('link: ', ' '.join(cmd))
             subprocess.check_call(cmd)
             print('run...', output_file)
-            proc = subprocess.run([output_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.run([output_file], capture_output=True)
             assert proc.returncode == 0, [proc.returncode, proc.stderror, proc.stdout]
             actual = proc.stdout
             with open(expected, 'wb') as o:
