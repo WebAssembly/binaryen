@@ -137,7 +137,8 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
         trap((std::stringstream()
               << "importGlobals: unknown import: " << import->module.str << "."
               << import->name.str)
-               .str());
+               .str()
+               .c_str());
       }
       globals[import->name] = inst->globals[*exportedGlobal->getInternalName()];
     });
@@ -327,9 +328,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return true;
   }
 
-  void trap(const char* why) override { trap(std::string_view(why)); }
-
-  void trap(std::string_view why) override {
+  void trap(const char* why) override {
     std::cout << "[trap " << why << "]\n";
     throw TrapException();
   }

@@ -2694,8 +2694,6 @@ public:
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
-  virtual void trap(std::string_view why) { WASM_UNREACHABLE("unimp"); }
-
   virtual void hostLimit(const char* why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void throwException(const WasmException& exn) {
@@ -2975,7 +2973,6 @@ public:
                            Index oldSize,
                            Index newSize) = 0;
     virtual void trap(const char* why) = 0;
-    virtual void trap(std::string_view why) { trap(std::string(why).c_str()); }
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
@@ -3319,7 +3316,8 @@ private:
       trap((std::stringstream()
             << "Import module " << std::quoted(importable.module.toString())
             << " doesn't exist.")
-             .str());
+             .str()
+             .c_str());
     }
     SubType* importedInstance = it->second.get();
 
@@ -3328,12 +3326,14 @@ private:
     if (!export_) {
       trap((std::stringstream()
             << "Export " << importable.base << " doesn't exist.")
-             .str());
+             .str()
+             .c_str());
     }
     if (export_->kind != kind) {
       trap((std::stringstream() << "Exported kind: " << export_->kind
                                 << " doesn't match expected kind: " << kind)
-             .str());
+             .str()
+             .c_str());
     }
   }
 
@@ -4807,13 +4807,11 @@ public:
   }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(std::string_view why) override {
+  void trap(const char* why) override {
     // Traps break all current continuations - they will never be resumable.
     self()->clearContinuationStore();
     externalInterface->trap(why);
   }
-
-  void trap(const char* why) override { trap(std::string_view(why)); }
 
   void hostLimit(const char* why) override {
     self()->clearContinuationStore();
