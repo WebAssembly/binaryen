@@ -551,17 +551,6 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     return disassembled_file
 
 
-def minify_check(wast, verify_final_result=True):
-    # checks we can parse minified output
-
-    print('     (minify check)')
-    cmd = WASM_OPT + [wast, '--print-minified', '-all']
-    print('      ', ' '.join(cmd))
-    subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
-    subprocess.check_call(WASM_OPT + ['a.wast', '-all'],
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-
 # run a check with BINARYEN_PASS_DEBUG set, to do full validation
 def with_pass_debug(check):
     old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
