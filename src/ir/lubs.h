@@ -52,7 +52,7 @@ struct LUBFinder {
 
 private:
   // The least upper bound. As we go this always contains the latest value based
-  // on everything we've seen so far, except for nulls.
+  // on everything we've seen so far.
   Type lub = Type::unreachable;
 };
 

@@ -114,7 +114,6 @@ warnings = []
 
 
 def warn(text):
-    global warnings
     warnings.append(text)
     print('warning:', text, file=sys.stderr)
 
