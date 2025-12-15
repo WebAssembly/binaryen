@@ -96,13 +96,13 @@ def test_wasm_opt():
         wasm = os.path.basename(t).replace('.wast', '')
         cmd = shared.WASM_OPT + [t, '--print', '-all']
         print('    ', ' '.join(cmd))
-        actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         expected_file = os.path.join(shared.get_test_dir('print'), wasm + '.txt')
-        shared.fail_if_not_identical_to_file(actual, expected_file)
+        shared.fail_if_not_identical_to_file(proc.stdout, expected_file)
         cmd = shared.WASM_OPT + [os.path.join(shared.get_test_dir('print'), t), '--print-minified', '-all']
         print('    ', ' '.join(cmd))
-        actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
-        shared.fail_if_not_identical(actual.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        shared.fail_if_not_identical(proc.stdout.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
 
 
 def update_wasm_opt_tests():
