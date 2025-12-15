@@ -37,8 +37,10 @@
 #include "fp16.h"
 #include "ir/intrinsics.h"
 #include "ir/iteration.h"
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/table-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
@@ -3368,7 +3370,7 @@ private:
           exportedMemory.initial =
             importedInstance->getMemorySize(*export_->getInternalName());
 
-          if (!exportedMemory.isSubType(**memory)) {
+          if (!MemoryUtils::isSubType(exportedMemory, **memory)) {
             trap("Imported memory isn't compatible.");
           }
         }
@@ -3376,7 +3378,7 @@ private:
         if (auto** table = std::get_if<Table*>(&import)) {
           Table* exportedTable =
             importedInstance->wasm.getTable(*export_->getInternalName());
-          if (!(*table)->isSubType(*exportedTable)) {
+          if (!TableUtils::isSubType(**table, *exportedTable)) {
             trap("Imported table isn't compatible");
           }
         }

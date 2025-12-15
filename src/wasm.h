@@ -2435,28 +2435,6 @@ public:
     initial = 0;
     max = kMaxSize;
   }
-
-  static bool isSubType(const Table& a, const Table& b) {
-    if (a.addressType != b.addressType) {
-      return false;
-    }
-
-    if (!Type::isSubType(a.type, b.type)) {
-      return false;
-    }
-
-    if (a.initial > b.initial) {
-      return false;
-    }
-
-    if (a.max < b.max) {
-      return false;
-    }
-
-    return true;
-  }
-
-  bool isSubType(const Table& other) { return Table::isSubType(*this, other); }
 };
 
 class DataSegment : public Named {
@@ -2491,15 +2469,6 @@ public:
     max = kMaxSize32;
     shared = false;
     addressType = Type::i32;
-  }
-
-  static bool isSubType(const Memory& a, const Memory& b) {
-    return a.shared == b.shared && a.addressType == b.addressType &&
-           a.initial >= b.initial && a.max <= b.max;
-  }
-
-  bool isSubType(const Memory& other) {
-    return Memory::isSubType(*this, other);
   }
 };
 
