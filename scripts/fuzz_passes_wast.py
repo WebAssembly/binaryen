@@ -22,7 +22,6 @@ or validation
 Usage: Provide the filename of the wast.
 '''
 
-from __future__ import print_function
 
 import os
 import random

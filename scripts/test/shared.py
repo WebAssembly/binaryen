@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
 
 import argparse
 import difflib
 import fnmatch
 import glob
 import os
-from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
+from pathlib import Path
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with CMakeLists.txt CXX_STANDARD
@@ -175,7 +175,7 @@ def which(program):
             # Prefer tools installed using third_party/setup.py
             os.path.join(options.binaryen_root, 'third_party', 'mozjs'),
             os.path.join(options.binaryen_root, 'third_party', 'v8'),
-            os.path.join(options.binaryen_root, 'third_party', 'wabt', 'bin')
+            os.path.join(options.binaryen_root, 'third_party', 'wabt', 'bin'),
         ] + os.environ['PATH'].split(os.pathsep)
         for path in paths:
             path = path.strip('"')
@@ -288,7 +288,6 @@ def delete_from_orbit(filename):
     if not os.path.exists(filename):
         return
     try:
-        import stat
         os.chmod(filename, os.stat(filename).st_mode | stat.S_IWRITE)
 
         def remove_readonly_and_try_again(func, path, exc_info):
@@ -296,16 +295,16 @@ def delete_from_orbit(filename):
                 os.chmod(path, os.stat(path).st_mode | stat.S_IWRITE)
                 func(path)
             else:
-                raise
+                raise exc_info[1]
         shutil.rmtree(filename, onerror=remove_readonly_and_try_again)
     except OSError:
         pass
 
 
-def run_process(cmd, check=True, input=None, decode_output=True, *args, **kw):
+def run_process(cmd, check=True, input=None, decode_output=True, *args, **kwargs):
     if input and type(input) is str:
         input = bytes(input, 'utf-8')
-    ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
+    ret = subprocess.run(cmd, *args, check=check, input=input, **kwargs)
     if decode_output and ret.stdout is not None:
         ret.stdout = ret.stdout.decode('utf-8')
     if ret.stderr is not None:
@@ -329,7 +328,7 @@ def fail(actual, expected, fromfile='expected'):
         expected.split('\n'), actual.split('\n'),
         fromfile=fromfile, tofile='actual')
     diff_str = ''.join([a.rstrip() + '\n' for a in diff_lines])[:]
-    fail_with_error("incorrect output, diff:\n\n%s" % diff_str)
+    fail_with_error(f'incorrect output, diff:\n\n{diff_str}')
 
 
 def fail_if_not_identical(actual, expected, fromfile='expected'):
@@ -503,7 +502,7 @@ options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
 
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary', base_name=None, stdout=None, stderr=None):
+                        binary_suffix='.fromBinary', base_name=None, stdout=None):
     # checks we can convert the wast to binary and back
 
     as_file = f"{base_name}-a.wasm" if base_name is not None else "a.wasm"
@@ -545,9 +544,8 @@ def with_pass_debug(check):
     finally:
         if old_pass_debug is not None:
             os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
-        else:
-            if 'BINARYEN_PASS_DEBUG' in os.environ:
-                del os.environ['BINARYEN_PASS_DEBUG']
+        elif 'BINARYEN_PASS_DEBUG' in os.environ:
+            del os.environ['BINARYEN_PASS_DEBUG']
 
 
 # checks if we are on windows, and if so logs out that a test is being skipped,
@@ -555,7 +553,7 @@ def with_pass_debug(check):
 # windows, so that we can easily find which tests are skipped.
 def skip_if_on_windows(name):
     if get_platform() == 'windows':
-        print('skipping test "%s" on windows' % name)
+        print(f'skipping test "{name}" on windows')
         return True
     return False
 

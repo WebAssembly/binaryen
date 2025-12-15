@@ -1,0 +1,42 @@
+target-version = "py310"
+
+exclude = [
+  'third_party',
+  'test/lit/lit.cfg.py',
+  'test/spec/testsuite',
+]
+
+[lint]
+select = [
+  "ARG",
+  "ASYNC",
+  "B",
+  "C4",
+  "C90",
+  "COM",
+  "E",
+  "F",
+  "I",
+  "PERF",
+  "PIE",
+  "PL",
+  "UP",
+  "W",
+  "YTT",
+]
+
+ignore = [
+  "C901", # https://docs.astral.sh/ruff/rules/complex-structure/
+  "B006", # https://docs.astral.sh/ruff/rules/mutable-argument-default/
+  "B011", # https://docs.astral.sh/ruff/rules/assert-false/
+  "B023", # https://docs.astral.sh/ruff/rules/function-uses-loop-variable/
+  "E501", # https://docs.astral.sh/ruff/rules/line-too-long/
+  "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
+  "PLR0912", # https://docs.astral.sh/ruff/rules/too-many-branches/
+  "PLR0913", # https://docs.astral.sh/ruff/rules/too-many-arguments/
+  "PLR0915", # https://docs.astral.sh/ruff/rules/too-many-statements/
+  "PLR2004", # https://docs.astral.sh/ruff/rules/magic-value-comparison/
+  "PLW0603", # https://docs.astral.sh/ruff/rules/global-statement/
+  "PLW1510", # https://docs.astral.sh/ruff/rules/subprocess-run-without-check/
+  "PLW2901", # https://docs.astral.sh/ruff/rules/redefined-loop-name/
+]

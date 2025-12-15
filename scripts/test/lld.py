@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import os
-from . import shared
-from . import support
+
+from . import shared, support
 
 
 def args_for_finalize(filename):

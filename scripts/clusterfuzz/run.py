@@ -23,13 +23,12 @@ This file should be bundled up together with the other files it needs, see
 bundle_clusterfuzz.py.
 '''
 
-import os
 import getopt
 import math
+import os
 import random
 import subprocess
 import sys
-
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
 # run V8. By default we apply all staging flags.
@@ -141,7 +140,7 @@ def get_wasm_contents(name, output_dir, extra_args=[]):
 
     # wasm-opt may fail to run in rare cases (when the fuzzer emits code it
     # detects as invalid). Just try again in such a case.
-    for attempt in range(0, 100):
+    for attempt in range(100):
         # Generate random data.
         random_size = system_random.randint(1, MAX_RANDOM_SIZE)
         with open(input_data_file_path, 'wb') as file:
@@ -186,7 +185,7 @@ def get_wasm_contents(name, output_dir, extra_args=[]):
     global temp_files
     temp_files += [
         wasm_file_path,
-        input_data_file_path
+        input_data_file_path,
     ]
 
     # Convert to a string, and wrap into a typed array.
@@ -261,7 +260,7 @@ def get_js_file_contents(i, output_dir):
             'build(secondBinary, true)',
         ]
 
-    for i in range(num):
+    for _ in range(num):
         choice = system_random.choice(extra_js_operations)
         if choice == 'CALL_EXPORTS':
             # The random seed can be any unsigned 32-bit number.

@@ -10,6 +10,7 @@ import tempfile
 import unittest
 
 from scripts.test import shared
+
 from . import utils
 
 
@@ -78,7 +79,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         self.assertEqual(proc.stdout.count('Created testcase:'), N)
 
         # We should have actually created them.
-        for i in range(0, N + 2):
+        for i in range(N + 2):
             fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
             flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
             # We actually emit the range [1, N], so 0 or N+1 should not exist.
@@ -135,7 +136,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # probability then something is very wrong, and we'd like to see
         # errors.)
         seen_num_passes = set()
-        for i in range(100):
+        for _ in range(100):
             os.environ['BINARYEN_PASS_DEBUG'] = '1'
             try:
                 proc = self.generate_testcases(N, temp_dir.name)
