@@ -3308,7 +3308,8 @@ private:
     Name name;
   };
 
-  // Trap if the importable's export's kind doesn't match `kind`.
+  // Validates that the export that provides `importable` exists and has the
+  // same kind that the import expects (`kind`).
   void validateImportKindMatches(ExternalKind kind,
                                  const Importable& importable) {
     auto it = linkedInstances.find(importable.module);
@@ -3328,7 +3329,9 @@ private:
              .str());
     }
     if (export_->kind != kind) {
-      trap("Exported kind doesn't match");
+      trap((std::stringstream() << "Exported kind: " << export_->kind
+                                << " doesn't match expected kind: " << kind)
+             .str());
     }
   }
 
