@@ -16,6 +16,11 @@
 
 import sys
 
+if sys.version_info < (3, 10):
+    print("python 3.10 required")
+    sys.exit(1)
+
+
 instructions = [
     ("unreachable",    "makeUnreachable()"),
     ("nop",            "makeNop()"),
@@ -831,10 +836,6 @@ def print_footer():
 
 
 def main():
-    if sys.version_info.major != 3:
-        import datetime
-        print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
-        sys.exit(1)
     print_header()
     instruction_parser()
     print_footer()
