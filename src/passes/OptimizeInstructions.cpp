@@ -2551,6 +2551,17 @@ struct OptimizeInstructions
     //   (ref.cast (ref T) ..)
     //
     if (auto* as = curr->ref->dynCast<RefAs>(); as && as->op == RefAsNonNull) {
+      if (curr->desc) {
+        // There is another child here, whose effects we must consider (the same
+        // ordering situation as in skipNonNullCast: we want to move a trap on
+        // null past later children).
+        auto& options = getPassRunner()->options;
+        EffectAnalyzer descEffects(options, *getModule(), curr->desc);
+        ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
+        if (descEffects.invalidates(movingEffects)) {
+          return;
+        }
+      }
       curr->ref = as->value;
       curr->type = curr->type.with(NonNullable);
     }
