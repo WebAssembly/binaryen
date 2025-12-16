@@ -2852,9 +2852,12 @@ void BinaryInstWriter::visitResumeThrow(ResumeThrow* curr) {
     emitUnreachable();
     return;
   }
-  o << int8_t(BinaryConsts::ResumeThrow);
+  o << int8_t(curr->tag ? BinaryConsts::ResumeThrow
+                        : BinaryConsts::ResumeThrowRef);
   parent.writeIndexedHeapType(curr->cont->type.getHeapType());
-  o << U32LEB(parent.getTagIndex(curr->tag));
+  if (curr->tag) {
+    o << U32LEB(parent.getTagIndex(curr->tag));
+  }
 
   size_t handlerNum = curr->handlerTags.size();
   o << U32LEB(handlerNum);
