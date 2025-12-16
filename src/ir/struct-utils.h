@@ -139,7 +139,7 @@ struct FunctionStructValuesMap
     // Initialize the data for each function in preparation for parallel
     // computation.
     for (auto& func : wasm.functions) {
-      (*this)[func.get()];
+      this->try_emplace(func.get());
     }
   }
 

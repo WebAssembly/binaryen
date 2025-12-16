@@ -200,10 +200,10 @@ struct DAE : public Pass {
     // Ensure all entries exist so the parallel threads don't modify the data
     // structure.
     for (auto& func : module->functions) {
-      infoMap[func->name];
+      infoMap.try_emplace(func->name);
     }
     // The null name represents module-level code (not in a function).
-    infoMap[Name()];
+    infoMap.try_emplace(Name());
 
     numFunctions = module->functions.size();
 
