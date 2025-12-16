@@ -131,6 +131,11 @@ struct TableInfo {
   // will assume it must call b. It is possible that the table is appended to,
   // but in this mode we assume the initial contents are not overwritten. This
   // is the case for output from LLVM, for example.
+  //
+  // This is a weaker property than mayBeModified (if the table cannot be
+  // modified at all, we can definitely assume the initial contents we see are
+  // not mutated), but is useful in the case that things are appended to the
+  // table (as e.g. dynamic linking does in Emscripten).
   bool initialContentsImmutable = false;
 
   std::unique_ptr<TableUtils::FlatTable> flatTable;
