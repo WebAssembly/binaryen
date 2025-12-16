@@ -1412,6 +1412,9 @@ Result<> IRBuilder::makeLocalGet(Index local) {
   if (!func) {
     return Err{"local.get is only valid in a function context"};
   }
+  if (local >= func->getNumLocals()) {
+    return Err{"invalid local.get index"};
+  }
   push(builder.makeLocalGet(local, func->getLocalType(local)));
   return Ok{};
 }
@@ -1419,6 +1422,9 @@ Result<> IRBuilder::makeLocalGet(Index local) {
 Result<> IRBuilder::makeLocalSet(Index local) {
   if (!func) {
     return Err{"local.set is only valid in a function context"};
+  }
+  if (local >= func->getNumLocals()) {
+    return Err{"invalid local.set index"};
   }
   LocalSet curr;
   curr.index = local;
@@ -1430,6 +1436,9 @@ Result<> IRBuilder::makeLocalSet(Index local) {
 Result<> IRBuilder::makeLocalTee(Index local) {
   if (!func) {
     return Err{"local.tee is only valid in a function context"};
+  }
+  if (local >= func->getNumLocals()) {
+    return Err{"invalid local.tee index"};
   }
   LocalSet curr;
   curr.index = local;

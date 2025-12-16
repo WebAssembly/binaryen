@@ -78,7 +78,7 @@ struct TypeUpdater
     } else {
       BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
         // ensure info exists, discoverBreaks can then fill it
-        blockInfos[name];
+        blockInfos.try_emplace(name);
       });
     }
     // add a break to the info, for break and switch

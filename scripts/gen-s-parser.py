@@ -16,6 +16,11 @@
 
 import sys
 
+if sys.version_info < (3, 10):
+    print("python 3.10 required")
+    sys.exit(1)
+
+
 instructions = [
     ("unreachable",    "makeUnreachable()"),
     ("nop",            "makeNop()"),
@@ -757,7 +762,6 @@ class Node:
 
 def instruction_parser():
     """Build a trie out of all the instructions, then emit it as C++ code."""
-    global instructions
     trie = Node()
     inst_length = 0
     for inst, expr in instructions:
@@ -832,10 +836,6 @@ def print_footer():
 
 
 def main():
-    if sys.version_info.major != 3:
-        import datetime
-        print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
-        sys.exit(1)
     print_header()
     instruction_parser()
     print_footer()

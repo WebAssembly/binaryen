@@ -46,7 +46,7 @@ from test import shared
 from test import support
 
 
-assert sys.version_info.major == 3, 'requires Python 3!'
+assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 # parameters
 
@@ -102,7 +102,7 @@ def run(cmd, stderr=None, silent=False):
 
 def run_unchecked(cmd):
     print(' '.join(cmd))
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).communicate()[0]
+    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).stdout
 
 
 def randomize_pass_debug():
@@ -971,8 +971,6 @@ class CompareVMs(TestCaseHandler):
                     ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        global ignored_vm_runs
-
         before = self.run_vms(before_wasm)
 
         after = self.run_vms(after_wasm)
@@ -1821,7 +1819,18 @@ class ClusterFuzz(TestCaseHandler):
 # run) with "second.wasm" as needed.
 #
 # In both cases, make sure to copy the files to a saved location first (do not
-# use a path to the scratch files that get constantly overwritten).
+# use a path to the scratch files that get constantly overwritten). The full
+# process might look like this:
+#
+#  * cp out/test/original.wasm first.wasm
+#  * cp out/test/second.wasm second.wasm
+#  * BINARYEN_FIRST_WASM=`pwd`/first.wasm [copied reducer command, replacing
+#                                          original.wasm with `pwd`/second.wasm]
+#  * cp out/test/w.wasm second.reduced.wasm
+#  * BINARYEN_SECOND_WASM=`pwd`/second.reduced.wasm [copied reducer command,
+#                                                    replacing original.wasm
+#                                                    with `pwd`/first.wasm]
+#
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.

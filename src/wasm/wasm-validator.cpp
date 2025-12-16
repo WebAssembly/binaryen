@@ -298,7 +298,7 @@ public:
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
     if (curr->name.is()) {
-      self->breakTypes[curr->name];
+      self->breakTypes.try_emplace(curr->name);
     }
   }
 
@@ -309,7 +309,7 @@ public:
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
     if (curr->name.is()) {
-      self->breakTypes[curr->name];
+      self->breakTypes.try_emplace(curr->name);
     }
   }
 

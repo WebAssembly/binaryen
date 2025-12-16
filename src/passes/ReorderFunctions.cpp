@@ -67,7 +67,7 @@ struct ReorderFunctions : public Pass {
     // fill in info, as we operate on it in parallel (each function to its own
     // entry)
     for (auto& func : module->functions) {
-      counts[func->name];
+      counts.try_emplace(func->name, 0);
     }
     // find counts on function calls
     CallCountScanner(&counts).run(getPassRunner(), module);

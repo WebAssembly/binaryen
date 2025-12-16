@@ -16,16 +16,13 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iomanip>
 
-#include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "support/bits.h"
-#include "support/debug.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
 #include "wasm-annotations.h"
@@ -1242,6 +1239,54 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
   }
 
+  // Remove unused function names from 'names' field.
+  if (!wasm->debugInfoSymbolNames.empty()) {
+    std::vector<std::string> newSymbolNames;
+    std::map<Index, Index> oldToNewIndex;
+
+    // Collect all used symbol name indexes.
+    auto prepareIndexMap =
+      [&](const std::optional<Function::DebugLocation>& location) {
+        if (location && location->symbolNameIndex) {
+          uint32_t oldIndex = *location->symbolNameIndex;
+          assert(oldIndex < wasm->debugInfoSymbolNames.size());
+          oldToNewIndex[oldIndex] = 0; // placeholder
+        }
+      };
+    for (auto& func : wasm->functions) {
+      for (auto& [_, location] : func->debugLocations) {
+        prepareIndexMap(location);
+      }
+      prepareIndexMap(func->prologLocation);
+      prepareIndexMap(func->epilogLocation);
+    }
+
+    // Create the new list of names and the mapping from old to new indices.
+    uint32_t index = 0;
+    for (auto& [oldIndex, newIndex] : oldToNewIndex) {
+      newSymbolNames.push_back(wasm->debugInfoSymbolNames[oldIndex]);
+      newIndex = index++;
+    }
+
+    // Update all debug locations to point to the new indices.
+    auto updateIndex = [&](std::optional<Function::DebugLocation>& location) {
+      if (location && location->symbolNameIndex) {
+        uint32_t oldIndex = *location->symbolNameIndex;
+        location->symbolNameIndex = oldToNewIndex[oldIndex];
+      }
+    };
+    for (auto& func : wasm->functions) {
+      for (auto& [_, location] : func->debugLocations) {
+        updateIndex(location);
+      }
+      updateIndex(func->prologLocation);
+      updateIndex(func->epilogLocation);
+    }
+
+    // Replace the old symbol names with the new, pruned list.
+    wasm->debugInfoSymbolNames = std::move(newSymbolNames);
+  }
+
   auto writeOptionalString = [&](const char* name, const std::string& str) {
     if (!str.empty()) {
       *sourceMap << "\"" << name << "\":\"" << str << "\",";
@@ -1269,10 +1314,6 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     writeStringVector("sourcesContent", wasm->debugInfoSourcesContent);
   }
 
-  // TODO: This field is optional; maybe we should omit if it's empty.
-  // TODO: Binaryen actually does not correctly preserve symbol names when it
-  // rewrites the mappings. We should maybe just drop them, or else handle
-  // them correctly.
   writeStringVector("names", wasm->debugInfoSymbolNames);
 
   *sourceMap << "\"mappings\":\"";
@@ -4733,11 +4774,14 @@ void WasmBinaryReader::readExports() {
 
 Expression* WasmBinaryReader::readExpression() {
   assert(builder.empty());
-  while (input[pos] != BinaryConsts::End) {
+  while (more() && input[pos] != BinaryConsts::End) {
     auto inst = readInst();
     if (auto* err = inst.getErr()) {
       throwError(err->msg);
     }
+  }
+  if (!more()) {
+    throwError("unexpected end of input");
   }
   ++pos;
   auto expr = builder.build();
