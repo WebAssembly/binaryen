@@ -3319,7 +3319,7 @@ private:
              .str()
              .c_str());
     }
-    SubType* importedInstance = it->second.get();
+    auto* importedInstance = it->second.get();
 
     Export* export_ = importedInstance->wasm.getExportOrNull(importable.base);
 
