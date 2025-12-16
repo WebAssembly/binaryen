@@ -2859,7 +2859,7 @@ function wrapModule(module, self = {}) {
    * Updates the internal name mapping logic in a module. This must be called
    * after renaming module elements.
    */
-  self['update_maps'] = function() {
+  self['updateMaps'] = function() {
     Module['_BinaryenModuleUpdateMaps'](module);
   };
   self['optimizeFunction'] = function(func) {
