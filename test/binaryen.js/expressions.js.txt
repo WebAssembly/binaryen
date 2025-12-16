@@ -453,3 +453,9 @@
  (local.get $2)
 )
 
+# CallRef
+(call_ref $func.0
+ (i32.const 6)
+ (i32.const 7)
+ (ref.func $tiny)
+)

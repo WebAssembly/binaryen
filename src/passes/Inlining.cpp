@@ -1344,7 +1344,7 @@ struct Inlining : public Pass {
     // fill in info, as we operate on it in parallel (each function to its own
     // entry)
     for (auto& func : module->functions) {
-      infos[func->name];
+      infos.try_emplace(func->name);
     }
     {
       FunctionInfoScanner scanner(infos);
@@ -1388,7 +1388,7 @@ struct Inlining : public Pass {
     // without iterator invalidation.
     std::vector<Name> funcNames;
     for (auto& func : module->functions) {
-      state.actionsForFunction[func->name];
+      state.actionsForFunction.try_emplace(func->name);
       funcNames.push_back(func->name);
     }
 

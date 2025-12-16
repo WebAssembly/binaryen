@@ -184,9 +184,42 @@ struct ExnData {
 // but the shared idea is that to resume code we simply need to get to where we
 // were when we suspended, so we have a "resuming" mode in which we walk the IR
 // but do not execute normally. While resuming we basically re-wind the stack,
-// using data we stashed on the side while unwinding. For example, if we unwind
-// an If instruction then we note which arm of the If we unwound from, and then
-// when we re-wind we enter that proper arm, etc.
+// using data we stashed on the side while unwinding.
+//
+// The key idea in this approach to suspending and resuming is that to suspend
+// you want to unwind the stack - you "jump" back to some outer scope - and to
+// reume, we want to rewind the stack - to get everything back exactly the way
+// it was, so we can pick things back up. And, to achieve that, we really just
+// need two things:
+//    * To rewind the call stack. If we called foo() and then bar(), we want to
+//      have foo and bar on the stack, so that when bar finishes, we return to
+//      foo, etc., as if we never suspended/resumed.
+//    * To have the same values as before. If we are an i32.add, and we
+//      suspended in the second arm, we need to have the same value for the
+//      first arm as before the suspend.
+//
+// Implementing these is conceptually simple:
+//    * For control flow, each structure handles itself. For example, if we
+//      unwind an If instruction then we note which arm of the If we unwound
+//      from, and then when we re-wind we enter that proper arm. For a Block,
+//      we can note the index we had executed up to, etc.
+//    * For values, we just save them automatically (specific visitFoo methods
+//      do not need to do anything themselves), see below on |valueStack|. (Note
+//      that we do an optimization for speed that avoids using that stack unless
+//      actually necessary.)
+//
+// Once we have those two things handled, pretty much everything else "just
+// works," and 99% of instructions need no special handling at all. Even some
+// instructions you might think would need custom code do not, like CallRef:
+// while that instruction does a call and changes the call stack, it calls the
+// value of its last child, so if we restore that child's value while resuming,
+// the normal code is exactly what we want (calling that child rewinds the stack
+// in exactly the right way). That is, once control flow structures know what to
+// do (which is unique to each one, but trivial), and once we have values
+// restored, the interpreter "wants" to return to the exact place we suspended
+// at, and we just let it do that. (And when it reaches the place we suspended
+// from, we do a special operation to stop resuming, and to proceed with normal
+// execution, as if we never suspended.)
 //
 // This is not the most efficient way to pause and resume execution (a program
 // counter/goto would be much faster!) but this is very simple to implement in

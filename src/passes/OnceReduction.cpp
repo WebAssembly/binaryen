@@ -419,7 +419,7 @@ struct OnceReduction : public Pass {
       // Initialize all the items in the new data structure that will be
       // populated.
       for (auto& func : module->functions) {
-        optInfo.newOnceGlobalsSetInFuncs[func->name];
+        optInfo.newOnceGlobalsSetInFuncs.try_emplace(func->name);
       }
 
       Optimizer(optInfo).run(getPassRunner(), module);

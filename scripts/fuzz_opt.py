@@ -46,7 +46,7 @@ from test import shared
 from test import support
 
 
-assert sys.version_info.major == 3, 'requires Python 3!'
+assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 # parameters
 
@@ -102,7 +102,7 @@ def run(cmd, stderr=None, silent=False):
 
 def run_unchecked(cmd):
     print(' '.join(cmd))
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).communicate()[0]
+    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).stdout
 
 
 def randomize_pass_debug():
@@ -971,8 +971,6 @@ class CompareVMs(TestCaseHandler):
                     ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        global ignored_vm_runs
-
         before = self.run_vms(before_wasm)
 
         after = self.run_vms(after_wasm)

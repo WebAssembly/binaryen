@@ -370,14 +370,10 @@ int main() {
     print('^')
     subprocess.check_call(['./fuzz'], stdout=open('fuzz.wast', 'w'))
     print('*')
-    fast_out = subprocess.Popen(['bin/wasm-shell', 'fuzz.wast'],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE).communicate()[0]
+    fast_out = subprocess.run(['bin/wasm-shell', 'fuzz.wast'], capture_output=True).stdout
     print('-')
     node = os.getenv('NODE', 'nodejs')
-    slow_out = subprocess.Popen([node, 'fuzz.slow.js'],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE).communicate()[0]
+    slow_out = subprocess.run([node, 'fuzz.slow.js'], capture_output=True).stdout
     print('_')
 
     if slow_out != fast_out:

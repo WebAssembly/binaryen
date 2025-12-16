@@ -145,6 +145,7 @@ struct ReFinalize
   void visitMemory(Memory* curr);
   void visitDataSegment(DataSegment* curr);
   void visitTag(Tag* curr);
+  void visitFunction(Function* curr);
   void visitModule(Module* curr);
 
 private:
@@ -153,6 +154,10 @@ private:
   // Replace an untaken branch/switch with an unreachable value.
   // A condition may also exist and may or may not be unreachable.
   void replaceUntaken(Expression* value, Expression* condition);
+
+  // If we see a pop and also add a block, we need to do EH fixups.
+  bool seenPop = false;
+  bool addedBlock = false;
 };
 
 // Re-finalize a single node. This is slow, if you want to refinalize

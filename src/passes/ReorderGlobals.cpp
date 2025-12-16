@@ -100,7 +100,7 @@ struct ReorderGlobals : public Pass {
     AtomicNameCountMap atomicCounts;
     // Fill in info, as we'll operate on it in parallel.
     for (auto& global : globals) {
-      atomicCounts[global->name];
+      atomicCounts.try_emplace(global->name, 0);
     }
 
     // Count uses.

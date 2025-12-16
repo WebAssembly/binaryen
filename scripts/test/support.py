@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 import filecmp
 import os
 import re
@@ -90,8 +91,14 @@ def untar(tarfile, outdir):
 
 QUOTED = re.compile(r'\(module\s*(\$\S*)?\s+(quote|binary)')
 
+MODULE_DEFINITION_OR_INSTANCE = re.compile(r'(?m)\(module\s+(instance|definition)')
+
 
 def split_wast(wastFile):
+    '''
+    Returns a list of pairs of module definitions and assertions.
+    Module invalidity tests, as well as (module definition ...) and (module instance ...) are skipped.
+    '''
     # if it's a binary, leave it as is, we can't split it
     wast = None
     if not wastFile.endswith('.wasm'):
@@ -128,7 +135,7 @@ def split_wast(wastFile):
         return j
 
     i = 0
-    ignoring_quoted = False
+    ignoring_assertions = False
     while i >= 0:
         start = wast.find('(', i)
         if start >= 0 and wast[start + 1] == ';':
@@ -146,17 +153,17 @@ def split_wast(wastFile):
             break
         i = to_end(start + 1)
         chunk = wast[start:i]
-        if QUOTED.match(chunk):
+        if QUOTED.match(chunk) or MODULE_DEFINITION_OR_INSTANCE.match(chunk):
             # There may be assertions after this quoted module, but we aren't
             # returning the module, so we need to skip the assertions as well.
-            ignoring_quoted = True
+            ignoring_assertions = True
             continue
         if chunk.startswith('(module'):
-            ignoring_quoted = False
+            ignoring_assertions = False
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):
             continue
-        elif chunk.startswith(('(assert', '(invoke', '(register')) and not ignoring_quoted:
+        elif chunk.startswith(('(assert', '(invoke', '(register')) and not ignoring_assertions:
             # ret may be empty if there are some asserts before the first
             # module. in that case these are asserts *without* a module, which
             # are valid (they may check something that doesn't refer to a module
@@ -179,25 +186,51 @@ def write_wast(filename, wast, asserts=[]):
             o.write(wast + '\n'.join(asserts))
 
 
-def run_command(cmd, expected_status=0, stderr=None,
+# Hack to allow subprocess with stdout/stderr to StringIO, which doesn't have a fileno and doesn't work otherwise
+def _subprocess_run(*args, **kwargs):
+    overwrite_stderr = "stderr" in kwargs and isinstance(kwargs["stderr"], io.StringIO)
+    overwrite_stdout = "stdout" in kwargs and isinstance(kwargs["stdout"], io.StringIO)
+
+    if overwrite_stdout:
+        stdout_fd = kwargs["stdout"]
+        kwargs["stdout"] = subprocess.PIPE
+    if overwrite_stderr:
+        stderr_fd = kwargs["stderr"]
+        kwargs["stderr"] = subprocess.PIPE
+
+    proc = subprocess.run(*args, **kwargs)
+
+    if overwrite_stdout:
+        stdout_fd.write(proc.stdout)
+    if overwrite_stderr:
+        stderr_fd.write(proc.stderr)
+
+    return proc.stdout, proc.stderr, proc.returncode
+
+
+def run_command(cmd, expected_status=0, stdout=None, stderr=None,
                 expected_err=None, err_contains=False, err_ignore=None):
+    '''
+    stderr - None, subprocess.PIPE, subprocess.STDOUT or a file handle / io.StringIO to write stdout to
+    stdout - File handle to print debug messages to
+    returns the process's stdout
+    '''
     if expected_err is not None:
         assert stderr == subprocess.PIPE or stderr is None, \
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
-    print('executing: ', ' '.join(cmd))
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
-    out, err = proc.communicate()
-    code = proc.returncode
+    print('executing: ', ' '.join(cmd), file=stdout)
+
+    out, err, code = _subprocess_run(cmd, stdout=subprocess.PIPE, stderr=stderr, encoding='UTF-8')
+
     if expected_status is not None and code != expected_status:
-        raise Exception(('run_command failed (%s)' % code, out + str(err or '')))
+        raise Exception(f"run_command `{' '.join(cmd)}` failed ({code}) {err or ''}")
     if expected_err is not None:
         if err_ignore is not None:
             err = "\n".join([line for line in err.split('\n') if err_ignore not in line])
         err_correct = expected_err in err if err_contains else expected_err == err
         if not err_correct:
-            raise Exception(('run_command unexpected stderr',
-                             "expected '%s', actual '%s'" % (expected_err, err)))
+            raise Exception(f"run_command unexpected stderr. Expected '{expected_err}', actual '{err}'")
     return out
 
 

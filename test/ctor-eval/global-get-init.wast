@@ -1,8 +1,9 @@
 (module
   (import "import" "global" (global $imported i32))
-  (func $test1 (export "test1")
-    ;; This should be safe to eval in theory, but the imported global stops us,
-    ;; so this function will not be optimized out.
-    ;; TODO: perhaps if we never use that global that is ok?
+  (func $use-global (export "use-global") (result i32)
+    (global.get $imported)
   )
+  ;; The imported global isn't used in the ctor,
+  ;; so we're free to remove it completely.
+  (func $test1 (export "test1"))
 )
