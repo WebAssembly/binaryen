@@ -37,8 +37,8 @@
     (type $struct-i32.desc (describes $struct-i32) (struct))
   )
 
-  ;; CHECK:      (import "" "" (func $effect (type $6)))
-  ;; NTRAP:      (import "" "" (func $effect (type $6)))
+  ;; CHECK:      (import "" "" (func $effect (type $4)))
+  ;; NTRAP:      (import "" "" (func $effect (type $4)))
   (import "" "" (func $effect))
 
   ;; CHECK:      (func $trap-null-desc (type $10) (result (ref (exact $struct)))
@@ -128,12 +128,12 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-null-desc (type $6)
+  ;; CHECK:      (func $cast-desc-null-desc (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NTRAP:      (func $cast-desc-null-desc (type $6)
+  ;; NTRAP:      (func $cast-desc-null-desc (type $4)
   ;; NTRAP-NEXT:  (drop
   ;; NTRAP-NEXT:   (unreachable)
   ;; NTRAP-NEXT:  )
@@ -375,7 +375,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-wrong-desc (type $6)
+  ;; CHECK:      (func $cast-desc-wrong-desc (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
   ;; CHECK-NEXT:    (struct.new_default_desc $struct
@@ -385,7 +385,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NTRAP:      (func $cast-desc-wrong-desc (type $6)
+  ;; NTRAP:      (func $cast-desc-wrong-desc (type $4)
   ;; NTRAP-NEXT:  (drop
   ;; NTRAP-NEXT:   (block (result (ref (exact $struct)))
   ;; NTRAP-NEXT:    (struct.new_default_desc $struct
@@ -409,7 +409,7 @@
     )
   )
 
-    ;; CHECK:      (func $cast-desc-wrong-desc-effects (type $6)
+    ;; CHECK:      (func $cast-desc-wrong-desc-effects (type $4)
     ;; CHECK-NEXT:  (drop
     ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
     ;; CHECK-NEXT:    (block (result (ref (exact $struct)))
@@ -425,7 +425,7 @@
     ;; CHECK-NEXT:   )
     ;; CHECK-NEXT:  )
     ;; CHECK-NEXT: )
-    ;; NTRAP:      (func $cast-desc-wrong-desc-effects (type $6)
+    ;; NTRAP:      (func $cast-desc-wrong-desc-effects (type $4)
     ;; NTRAP-NEXT:  (local $0 (ref (exact $struct)))
     ;; NTRAP-NEXT:  (local $1 (ref (exact $desc)))
     ;; NTRAP-NEXT:  (drop
@@ -497,9 +497,11 @@
   ;; CHECK:      (func $cast-desc-weaker-nondesc-child-effects (type $14) (param $ref anyref) (param $desc (ref $sub.desc))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_desc (ref $sub)
-  ;; CHECK-NEXT:    (block (result anyref)
-  ;; CHECK-NEXT:     (call $effect)
-  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block (result (ref $sub.desc))
   ;; CHECK-NEXT:     (call $effect)
@@ -511,9 +513,11 @@
   ;; NTRAP:      (func $cast-desc-weaker-nondesc-child-effects (type $14) (param $ref anyref) (param $desc (ref $sub.desc))
   ;; NTRAP-NEXT:  (drop
   ;; NTRAP-NEXT:   (ref.cast_desc (ref $sub)
-  ;; NTRAP-NEXT:    (block (result anyref)
-  ;; NTRAP-NEXT:     (call $effect)
-  ;; NTRAP-NEXT:     (local.get $ref)
+  ;; NTRAP-NEXT:    (ref.as_non_null
+  ;; NTRAP-NEXT:     (block (result anyref)
+  ;; NTRAP-NEXT:      (call $effect)
+  ;; NTRAP-NEXT:      (local.get $ref)
+  ;; NTRAP-NEXT:     )
   ;; NTRAP-NEXT:    )
   ;; NTRAP-NEXT:    (block (result (ref $sub.desc))
   ;; NTRAP-NEXT:     (call $effect)
@@ -524,7 +528,8 @@
   ;; NTRAP-NEXT: )
   (func $cast-desc-weaker-nondesc-child-effects (param $ref anyref) (param $desc (ref $sub.desc))
     (drop
-      ;; Same, but with effects.
+      ;; Same, but with effects. Due to ordering, we cannot remove the inner
+      ;; cast (which turns into ref.as_non_null).
       (ref.cast_desc (ref $sub)
         (ref.cast (ref any)
           (block (result anyref)
@@ -1073,7 +1078,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-unreachable-desc (type $6)
+  ;; CHECK:      (func $cast-desc-unreachable-desc (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -1086,7 +1091,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NTRAP:      (func $cast-desc-unreachable-desc (type $6)
+  ;; NTRAP:      (func $cast-desc-unreachable-desc (type $4)
   ;; NTRAP-NEXT:  (drop
   ;; NTRAP-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
   ;; NTRAP-NEXT:    (drop
@@ -1377,6 +1382,80 @@
           )
         )
         (return)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.cast_desc-ref.as_non_null (type $4)
+  ;; CHECK-NEXT:  (local $null (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref $struct)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $null)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result (ref null $desc))
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
+  ;; CHECK-NEXT:    (local.get $null)
+  ;; CHECK-NEXT:    (struct.new_default $desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NTRAP:      (func $ref.cast_desc-ref.as_non_null (type $4)
+  ;; NTRAP-NEXT:  (local $null (ref null $struct))
+  ;; NTRAP-NEXT:  (local $1 (ref $struct))
+  ;; NTRAP-NEXT:  (local $2 (ref null $desc))
+  ;; NTRAP-NEXT:  (drop
+  ;; NTRAP-NEXT:   (block (result (ref $struct))
+  ;; NTRAP-NEXT:    (local.set $1
+  ;; NTRAP-NEXT:     (ref.as_non_null
+  ;; NTRAP-NEXT:      (local.get $null)
+  ;; NTRAP-NEXT:     )
+  ;; NTRAP-NEXT:    )
+  ;; NTRAP-NEXT:    (local.set $2
+  ;; NTRAP-NEXT:     (block (result (ref null $desc))
+  ;; NTRAP-NEXT:      (return)
+  ;; NTRAP-NEXT:     )
+  ;; NTRAP-NEXT:    )
+  ;; NTRAP-NEXT:    (local.get $1)
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT:  (drop
+  ;; NTRAP-NEXT:   (ref.cast_desc (ref (exact $struct))
+  ;; NTRAP-NEXT:    (local.get $null)
+  ;; NTRAP-NEXT:    (struct.new_default $desc)
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT: )
+  (func $ref.cast_desc-ref.as_non_null
+    (local $null (ref null $struct))
+    ;; We read a null local and cast it to non-null, trapping. The ref.cast_desc
+    ;; would trap on null anyhow, so it seems we can remove the ref.as_non_null,
+    ;; but doing so would allow us to reach the block, which returns *before* the
+    ;; ref.cast_desc would trap.
+    (drop
+      (ref.cast_desc (ref $struct)
+        (ref.as_non_null
+          (local.get $null)
+        )
+        ;; Hide the return in a block, otherwise we'd skip unreachable code.
+        (block (result (ref null $desc))
+          (return)
+        )
+      )
+    )
+    ;; As above, but without dangerous effects: we can remove the
+    ;; ref.as_non_null.
+    (drop
+      (ref.cast_desc (ref $struct)
+        (ref.as_non_null
+          (local.get $null)
+        )
+        (struct.new $desc)
       )
     )
   )
