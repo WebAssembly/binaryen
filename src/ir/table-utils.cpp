@@ -114,41 +114,43 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
       break;
     }
   }
-  if (hasUnmodifiableTable) {
-    using TablesWithSet = std::unordered_set<Name>;
+  if (!hasUnmodifiableTable) {
+    return tables;
+  }
 
-    ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
-      wasm, [&](Function* func, TablesWithSet& tablesWithSet) {
-        if (func->imported()) {
-          return;
-        }
+  using TablesWithSet = std::unordered_set<Name>;
 
-        struct Finder : public PostWalker<Finder> {
-          TablesWithSet& tablesWithSet;
-
-          Finder(TablesWithSet& tablesWithSet) : tablesWithSet(tablesWithSet) {}
-
-          void visitTableSet(TableSet* curr) {
-            tablesWithSet.insert(curr->table);
-          }
-          void visitTableFill(TableFill* curr) {
-            tablesWithSet.insert(curr->table);
-          }
-          void visitTableCopy(TableCopy* curr) {
-            tablesWithSet.insert(curr->destTable);
-          }
-          void visitTableInit(TableInit* curr) {
-            tablesWithSet.insert(curr->table);
-          }
-        };
-
-        Finder(tablesWithSet).walkFunction(func);
-      });
-
-    for (auto& [_, names] : analysis.map) {
-      for (auto name : names) {
-        tables[name].mayBeModified = true;
+  ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
+    wasm, [&](Function* func, TablesWithSet& tablesWithSet) {
+      if (func->imported()) {
+        return;
       }
+
+      struct Finder : public PostWalker<Finder> {
+        TablesWithSet& tablesWithSet;
+
+        Finder(TablesWithSet& tablesWithSet) : tablesWithSet(tablesWithSet) {}
+
+        void visitTableSet(TableSet* curr) {
+          tablesWithSet.insert(curr->table);
+        }
+        void visitTableFill(TableFill* curr) {
+          tablesWithSet.insert(curr->table);
+        }
+        void visitTableCopy(TableCopy* curr) {
+          tablesWithSet.insert(curr->destTable);
+        }
+        void visitTableInit(TableInit* curr) {
+          tablesWithSet.insert(curr->table);
+        }
+      };
+
+      Finder(tablesWithSet).walkFunction(func);
+    });
+
+  for (auto& [_, names] : analysis.map) {
+    for (auto name : names) {
+      tables[name].mayBeModified = true;
     }
   }
 
