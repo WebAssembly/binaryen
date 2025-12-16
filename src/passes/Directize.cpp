@@ -54,7 +54,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   void visitCallIndirect(CallIndirect* curr) {
     auto& table = tables.at(curr->table);
-    if (!table.canOptimize()) {
+    if (!table.canOptimizeByEntry()) {
       return;
     }
     // If the target is constant, we can emit a direct call.
@@ -192,7 +192,7 @@ struct Directize : public Pass {
     // Stop if we cannot optimize anything.
     auto hasOptimizableTable = false;
     for (auto& [_, info] : tables) {
-      if (info.canOptimize()) {
+      if (info.canOptimizeByEntry()) {
         hasOptimizableTable = true;
         break;
       }

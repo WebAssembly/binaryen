@@ -135,20 +135,25 @@ struct TableInfo {
   // This is a weaker property than mayBeModified (if the table cannot be
   // modified at all, we can definitely assume the initial contents we see are
   // not mutated), but is useful in the case that things are appended to the
-  // table (as e.g. dynamic linking does in Emscripten).
+  // table (as e.g. dynamic linking does in Emscripten, which passes in a flag
+  // to set this mode; in general, this is an invariant about the program that
+  // we must be informed about, not one that we can infer - there can be
+  // table.sets, for example, and this property implies that those sets never
+  // overwrite initial data).
   bool initialContentsImmutable = false;
 
   std::unique_ptr<TableUtils::FlatTable> flatTable;
 
-  // Whether we can optimize using this table's data, that is, we know something
-  // useful about the data there at compile time. The specifics about what we
-  // know are in the above fields.
-  bool canOptimize() const {
-    // We can optimize if:
+  // Whether we can optimize using this table's data on the entry level, that
+  // is, individual entries in the table are known to us, so calls through the
+  // table with known indexes can be inferred, etc.
+  bool canOptimizeByEntry() const {
+    // To infer entries, we require:
     //  * Either the table can't be modified at all, or it can be modified but
     //    the initial contents are immutable (so we can optimize those
-    //    contents, even if other things might be appended later).
-    //  * The table is flat (so we can see what is in it).
+    //    contents, even if other things might be appended later, which we
+    //    cannot infer).
+    //  * The table is flat (so we can see what is in it, by index).
     return (!mayBeModified || initialContentsImmutable) && flatTable->valid;
   }
 };
