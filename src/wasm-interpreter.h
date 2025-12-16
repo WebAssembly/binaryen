@@ -4649,28 +4649,22 @@ public:
       }
       contData->executed = true;
 
-      auto* resumeThrow = curr->template dynCast<ResumeThrow>();
-      auto isResumeThrowRef = resumeThrow && !resumeThrow->tag;
       if (contData->resumeArguments.empty()) {
         // The continuation has no bound arguments. For now, we just handle the
         // simple case of binding all of them, so that means we can just use all
         // the immediate ones here. TODO
-        // Note we do not do this for resume_throw_ref, which does not receive
-        // arguments (the arguments are exactly a singleton exnref, which is to
-        // be thrown).
-        if (!isResumeThrowRef) { // XXX
-          contData->resumeArguments = arguments;
-        }
+        contData->resumeArguments = arguments;
       }
       // Fill in the continuation data. How we do this depends on whether we
       // are resume or resume_throw*.
-      if (resumeThrow) {
-        if (isResumeThrowRef) {
-          contData->exception = arguments[0];
-        } else {
+      if (auto* resumeThrow = curr->template dynCast<ResumeThrow>()) {
+        if (resumeThrow->tag) {
           // resume_throw
           contData->exceptionTag =
             self()->getModule()->getTag(resumeThrow->tag);
+        } else {
+          // resume_throw_ref
+          contData->exception = arguments[0];
         }
       }
 
