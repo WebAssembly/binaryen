@@ -2755,7 +2755,7 @@ Result<> makeResumeThrowRef(Ctx& ctx,
   auto resumetable = makeResumeTable(ctx);
   CHECK_ERR(resumetable);
 
-  return ctx.makeResumeThrow(pos, annotations, *type, *resumetable);
+  return ctx.makeResumeThrow(pos, annotations, *type, Name(), *resumetable);
 }
 
 // switch ::= 'switch' typeidx tagidx
