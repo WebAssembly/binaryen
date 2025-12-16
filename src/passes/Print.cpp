@@ -2628,8 +2628,10 @@ struct PrintExpressionContents
     }
     o << ' ';
     printHeapTypeName(curr->cont->type.getHeapType());
-    o << ' ';
-    curr->tag.print(o);
+    if (curr->tag) {
+      o << ' ';
+      curr->tag.print(o);
+    }
 
     handleResumeTable(o, curr);
   }
