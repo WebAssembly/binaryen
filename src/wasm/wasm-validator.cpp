@@ -4096,14 +4096,14 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     curr,
     "sentTypes cache in resume_throw instruction has not been initialized");
 
-  if (curr->tag()) {
+  if (curr->tag) {
     // Normal resume_throw
     auto* tag = getModule()->getTagOrNull(curr->tag);
     if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
       return;
     }
     shouldBeEqual(curr->operands.size(),
-                  tag->size(),
+                  tag->params().size(),
                   curr,
                   "resume_throw operands must match the tag");
   } else {
