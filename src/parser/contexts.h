@@ -936,9 +936,9 @@ struct NullInstrParserCtx {
   }
   template<typename HeapTypeT>
   Result<> makeResumeThrowRef(Index,
-                           const std::vector<Annotation>&,
-                           HeapTypeT,
-                           const TagLabelListT&) {
+                              const std::vector<Annotation>&,
+                              HeapTypeT,
+                              const TagLabelListT&) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -2917,9 +2917,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<> makeResumeThrowRef(Index pos,
-                           const std::vector<Annotation>& annotations,
-                           HeapType type,
-                           const std::vector<OnClauseInfo>& resumetable) {
+                              const std::vector<Annotation>& annotations,
+                              HeapType type,
+                              const std::vector<OnClauseInfo>& resumetable) {
     // A ResumeThrow, with an empty Name() for the tag.
     return makeResumeThrow(pos, annotations, type, Name(), resumetable);
   }

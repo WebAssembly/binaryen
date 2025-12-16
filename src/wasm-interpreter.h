@@ -4669,7 +4669,8 @@ public:
           contData->exception = arguments[0];
         } else {
           // resume_throw
-          contData->exceptionTag = self()->getModule()->getTag(resumeThrow->tag);
+          contData->exceptionTag =
+            self()->getModule()->getTag(resumeThrow->tag);
         }
       }
 
