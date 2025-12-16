@@ -3396,6 +3396,27 @@ Result<> WasmBinaryReader::readInst() {
       }
       return builder.makeResumeThrow(type, tag, tags, labels);
     }
+    case BinaryConsts::ResumeThrowRef: {
+      auto type = getIndexedHeapType();
+      auto numHandlers = getU32LEB();
+      std::vector<Name> tags;
+      std::vector<std::optional<Index>> labels;
+      tags.reserve(numHandlers);
+      labels.reserve(numHandlers);
+      for (Index i = 0; i < numHandlers; ++i) {
+        uint8_t code = getInt8();
+        if (code == BinaryConsts::OnLabel) {
+          tags.push_back(getTagName(getU32LEB()));
+          labels.push_back(std::optional<Index>{getU32LEB()});
+        } else if (code == BinaryConsts::OnSwitch) {
+          tags.push_back(getTagName(getU32LEB()));
+          labels.push_back(std::nullopt);
+        } else {
+          return Err{"ON opcode expected"};
+        }
+      }
+      return builder.makeResumeThrow(type, Name(), tags, labels);
+    }
     case BinaryConsts::Switch: {
       auto type = getIndexedHeapType();
       auto tag = getTagName(getU32LEB());
