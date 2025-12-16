@@ -28,14 +28,12 @@ namespace wasm {
 
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeRewriter::update(
-  const std::vector<HeapType>& additionalPrivateTypes) {
-  mapTypes(rebuildTypes(
-    getSortedTypes(getPrivatePredecessors(additionalPrivateTypes))));
+void GlobalTypeRewriter::update() {
+  mapTypes(rebuildTypes(getSortedTypes(getPrivatePredecessors())));
 }
 
-GlobalTypeRewriter::PredecessorGraph GlobalTypeRewriter::getPrivatePredecessors(
-  const std::vector<HeapType>& additionalPrivateTypes) {
+GlobalTypeRewriter::PredecessorGraph
+GlobalTypeRewriter::getPrivatePredecessors() {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type
@@ -45,23 +43,12 @@ GlobalTypeRewriter::PredecessorGraph GlobalTypeRewriter::getPrivatePredecessors(
     ModuleUtils::TypeInclusion::UsedIRTypes,
     ModuleUtils::VisibilityHandling::FindVisibility);
 
-  std::unordered_set<HeapType> additionalSet(additionalPrivateTypes.begin(),
-                                             additionalPrivateTypes.end());
-
-  // Check if a type is private, given the info for it.
-  auto isPublicGivenInfo = [&](HeapType type, auto& info) {
-    return info.visibility != ModuleUtils::Visibility::Private &&
-           !additionalSet.count(type);
-  };
-
   // Check if a type is private, looking for its info (if there is none, it is
   // not private).
   auto isPublic = [&](HeapType type) {
     auto it = typeInfo.find(type);
-    if (it == typeInfo.end()) {
-      return false;
-    }
-    return isPublicGivenInfo(type, it->second);
+    assert(it != typeInfo.end());
+    return it->second.visibility == ModuleUtils::Visibility::Public;
   };
 
   // For each type, note all the predecessors it must have, i.e., that must
@@ -69,7 +56,7 @@ GlobalTypeRewriter::PredecessorGraph GlobalTypeRewriter::getPrivatePredecessors(
   std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>> preds;
   preds.reserve(typeInfo.size());
   for (auto& [type, info] : typeInfo) {
-    if (isPublicGivenInfo(type, info)) {
+    if (info.visibility == ModuleUtils::Visibility::Public) {
       continue;
     }
     preds.push_back({type, {}});
