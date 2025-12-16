@@ -126,8 +126,11 @@ struct TableInfo {
   // or exported, or table.set operations exist for it in the code.
   bool mayBeModified = false;
 
-  // Whether we can assume that the initial contents are immutable. See the
-  // toplevel comment.
+  // Whether we can assume that the initial contents are immutable. That is, if
+  // a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
+  // will assume it must call b. It is possible that the table is appended to,
+  // but in this mode we assume the initial contents are not overwritten. This
+  // is the case for output from LLVM, for example.
   bool initialContentsImmutable = false;
 
   std::unique_ptr<TableUtils::FlatTable> flatTable;
