@@ -2623,7 +2623,9 @@ struct PrintExpressionContents
   void visitResumeThrow(ResumeThrow* curr) {
     assert(curr->cont->type.isContinuation());
     printMedium(o, "resume_throw");
-
+    if (!curr->name) {
+      printMedium(o, "_ref");
+    }
     o << ' ';
     printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
