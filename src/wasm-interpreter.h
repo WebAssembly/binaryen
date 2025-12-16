@@ -4588,7 +4588,7 @@ public:
       if (auto* tag = currContinuation->exceptionTag) {
         throwException(WasmException{
           self()->makeExnData(tag, currContinuation->resumeArguments)});
-      } else if (currContinuation->exception) {
+      } else if (currContinuation->exception.type != Type::none) {
         throwException(WasmException{currContinuation->exception});
       }
       return currContinuation->resumeArguments;
@@ -4652,7 +4652,7 @@ public:
       }
       // Fill in the continuation data. How we do this depends on whether we
       // are resume or resume_throw*.
-      if (auto* resumeThrow = curr->dynCast<ResumeThrow>()) {
+      if (auto* resumeThrow = curr->template dynCast<ResumeThrow>()) {
         if (resumeThrow->tag) {
           // resume_throw
           contData->exceptionTag = self()->getModule()->getTag(resumeThrow->tag);
