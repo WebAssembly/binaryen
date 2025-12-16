@@ -4102,20 +4102,18 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
       return;
     }
-    shouldBeEqual(
-      curr->operands.size(),
-      tag->size(),
-      curr,
-      "resume_throw operands must match the tag");
+    shouldBeEqual(curr->operands.size(),
+                  tag->size(),
+                  curr,
+                  "resume_throw operands must match the tag");
   } else {
     // resume_throw_ref
     Type exnref = Type(HeapType::exn, NonNullable);
-    if (
-      shouldBeEqual(
-        curr->operands.size(),
-        1,
-        curr,
-        "resume_throw_ref must have a single exnref operand") && curr->operands[0]->type != Type::unreachable) {
+    if (shouldBeEqual(curr->operands.size(),
+                      1,
+                      curr,
+                      "resume_throw_ref must have a single exnref operand") &&
+        curr->operands[0]->type != Type::unreachable) {
       shouldBeTrue(Type::isSubType(curr->operands[0]->type, exnref, "resume_throw_ref must receive exnref");
     }
   }
