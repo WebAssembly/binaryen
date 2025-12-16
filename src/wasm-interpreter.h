@@ -4561,6 +4561,18 @@ public:
     old->executed = true;
     return Literal(std::make_shared<ContData>(newData));
   }
+
+  void maybeThrowAfterResuming(std::shared_ptr<ContData>& currContinuation) {
+    if (auto* tag = currContinuation->exceptionTag) {
+      // resume_throw
+      throwException(WasmException{
+        self()->makeExnData(tag, currContinuation->resumeArguments)});
+    } else if (currContinuation->exception.type != Type::none) {
+      // resume_throw_ref
+      throwException(WasmException{currContinuation->exception});
+    }
+  }
+
   Flow visitSuspend(Suspend* curr) {
     // Process the arguments, whether or not we are resuming. If we are resuming
     // then we don't need these values (we sent them as part of the suspension),
@@ -4583,13 +4595,7 @@ public:
       // restoredValues map.
       assert(currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
-      // Throw, if we were resumed by resume_throw;
-      if (auto* tag = currContinuation->exceptionTag) {
-        throwException(WasmException{
-          self()->makeExnData(tag, currContinuation->resumeArguments)});
-      } else if (currContinuation->exception.type != Type::none) {
-        throwException(WasmException{currContinuation->exception});
-      }
+      maybeThrowAfterResuming(currContinuation);
       return currContinuation->resumeArguments;
     }
 
@@ -4652,7 +4658,7 @@ public:
         // Note we do not do this for resume_throw_ref, which does not receive
         // arguments (the arguments are exactly a singleton exnref, which is to
         // be thrown).
-        if (!isResumeThrowRef) {
+        if (!isResumeThrowRef) { // XXX
           contData->resumeArguments = arguments;
         }
       }
@@ -4805,10 +4811,7 @@ public:
         // to do is just start calling this function (with the arguments we've
         // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
-        if (auto* tag = currContinuation->exceptionTag) {
-          throwException(WasmException{
-            self()->makeExnData(tag, currContinuation->resumeArguments)});
-        }
+        maybeThrowAfterResuming(currContinuation);
       }
     }
 
