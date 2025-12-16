@@ -120,6 +120,53 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
 // do so, and some do not, depending on their type and use.)
 bool usesExpressions(ElementSegment* curr, Module* module);
 
+// Information about a table's optimizability.
+struct TableInfo {
+  // Whether the table may be modifed at runtime, either because it is imported
+  // or exported, or table.set operations exist for it in the code.
+  bool mayBeModified = false;
+
+  // Whether we can assume that the initial contents are immutable. That is, if
+  // a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
+  // will assume it must call b. It is possible that the table is appended to,
+  // but in this mode we assume the initial contents are not overwritten. This
+  // is the case for output from LLVM, for example.
+  //
+  // This is a weaker property than mayBeModified (if the table cannot be
+  // modified at all, we can definitely assume the initial contents we see are
+  // not mutated), but is useful in the case that things are appended to the
+  // table (as e.g. dynamic linking does in Emscripten, which passes in a flag
+  // to set this mode; in general, this is an invariant about the program that
+  // we must be informed about, not one that we can infer - there can be
+  // table.sets, for example, and this property implies that those sets never
+  // overwrite initial data).
+  bool initialContentsImmutable = false;
+
+  std::unique_ptr<TableUtils::FlatTable> flatTable;
+
+  // Whether we can optimize using this table's data on the entry level, that
+  // is, individual entries in the table are known to us, so calls through the
+  // table with known indexes can be inferred, etc.
+  bool canOptimizeByEntry() const {
+    // To infer entries, we require:
+    //  * Either the table can't be modified at all, or it can be modified but
+    //    the initial contents are immutable (so we can optimize those
+    //    contents, even if other things might be appended later, which we
+    //    cannot infer).
+    //  * The table is flat (so we can see what is in it, by index).
+    return (!mayBeModified || initialContentsImmutable) && flatTable->valid;
+  }
+};
+
+// A map of tables to their info.
+using TableInfoMap = std::unordered_map<Name, TableInfo>;
+
+// Compute a map with table optimizability info. We can be told that the initial
+// contents of the tables are immutable (that is, existing data is not
+// overwritten, but new things may be appended).
+TableInfoMap computeTableInfo(Module& wasm,
+                              bool initialContentsImmutable = false);
+
 } // namespace wasm::TableUtils
 
 #endif // wasm_ir_table_h
