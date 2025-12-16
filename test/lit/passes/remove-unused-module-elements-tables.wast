@@ -250,6 +250,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (table.set $table
   ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $foo-not-in-table)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -263,6 +266,9 @@
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (table.set $table
   ;; OPEN_WORLD-NEXT:   (i32.const 7)
+  ;; OPEN_WORLD-NEXT:   (ref.null nofunc)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (ref.func $foo-not-in-table)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
@@ -272,6 +278,12 @@
     )
     (table.set $table
       (i32.const 7)
+      (ref.null func)
+    )
+    ;; Take the reference of $foo-not-in-table, so that it is referred to but
+    ;; not in the table. The table.set will make our analysis believe it might
+    ;; be there (we do not track the flow of values precisely).
+    (drop
       (ref.func $foo-not-in-table)
     )
   )
