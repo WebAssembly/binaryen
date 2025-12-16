@@ -370,7 +370,8 @@ bool ComparableRecGroupShape::operator>(const RecGroupShape& other) const {
   return GT == compareComparable(*this, other);
 }
 
-const std::vector<HeapType>& UniqueRecGroups::get(std::vector<HeapType> types) {
+const std::vector<HeapType>&
+UniqueRecGroups::insert(std::vector<HeapType> types) {
   auto& group = *groups.emplace(groups.end(), std::move(types));
   if (shapes.emplace(RecGroupShape(group, features)).second) {
     // The types are already unique.

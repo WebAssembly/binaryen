@@ -157,6 +157,10 @@ struct BrandTypeIterator {
   }
 };
 
+// A set of unique rec group shapes. Upon inserting a new group of types, if it
+// has the same shape as a previously inserted group, the types will be rebuilt
+// with an extra brand type at the end of the group that differentiates it from
+// previous group.
 struct UniqueRecGroups {
   std::list<std::vector<HeapType>> groups;
   std::unordered_set<RecGroupShape> shapes;
@@ -165,11 +169,10 @@ struct UniqueRecGroups {
 
   UniqueRecGroups(FeatureSet features) : features(features) {}
 
-  // Add a rec group. If it has the same shape as a previously added rec group,
-  // the group will be rebuilt with a brand at the end to make it unique.
-  // Returns the rebuilt types (including the brand) or the original types if no
-  // brand was necessary.
-  const std::vector<HeapType>& get(std::vector<HeapType> group);
+  // Insert a rec group. If it is already unique, return the original types.
+  // Otherwise rebuild the group  make it unique and return the rebuilt types,
+  // including the brand.
+  const std::vector<HeapType>& insert(std::vector<HeapType> group);
 };
 
 } // namespace wasm

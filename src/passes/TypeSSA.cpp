@@ -73,12 +73,12 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(std::vector<HeapType>&& types,
   UniqueRecGroups unique(wasm.features);
   for (auto group : existing) {
     std::vector<HeapType> types(group.begin(), group.end());
-    [[maybe_unused]] auto uniqueTypes = unique.get(std::move(types));
+    [[maybe_unused]] auto uniqueTypes = unique.insert(std::move(types));
     assert(uniqueTypes.size() == group.size() && "unexpected collision");
   }
 
   auto num = types.size();
-  std::vector<HeapType> uniqueTypes = unique.get(std::move(types));
+  std::vector<HeapType> uniqueTypes = unique.insert(std::move(types));
   if (uniqueTypes.size() != num) {
     // Remove the brand type, which we do not need to consider further.
     uniqueTypes.pop_back();
