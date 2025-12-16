@@ -18,8 +18,11 @@
 #define wasm_ir_type_updating_h
 
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "support/insert_ordered.h"
 #include "wasm-traversal.h"
+#include "wasm-type-shape.h"
+#include "wasm-type.h"
 
 namespace wasm {
 
@@ -347,6 +350,13 @@ public:
     std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>>;
 
   Module& wasm;
+
+  // The module's types and their visibilities.
+  InsertOrderedMap<HeapType, ModuleUtils::HeapTypeInfo> typeInfo;
+
+  // The shapes of public rec groups, so we can be sure that the rewritten
+  // private types do not conflict with public types.
+  UniqueRecGroups publicGroups;
 
   GlobalTypeRewriter(Module& wasm);
   virtual ~GlobalTypeRewriter() {}
