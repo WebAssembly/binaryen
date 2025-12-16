@@ -302,16 +302,6 @@ def delete_from_orbit(filename):
         pass
 
 
-# This is a workaround for https://bugs.python.org/issue9400
-class Py2CalledProcessError(subprocess.CalledProcessError):
-    def __init__(self, returncode, cmd, output=None, stderr=None):
-        super(Exception, self).__init__(returncode, cmd, output, stderr)
-        self.returncode = returncode
-        self.cmd = cmd
-        self.output = output
-        self.stderr = stderr
-
-
 def run_process(cmd, check=True, input=None, decode_output=True, *args, **kw):
     if input and type(input) is str:
         input = bytes(input, 'utf-8')
