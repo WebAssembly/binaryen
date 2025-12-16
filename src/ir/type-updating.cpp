@@ -43,8 +43,7 @@ GlobalTypeRewriter::getPrivatePredecessors() {
     ModuleUtils::TypeInclusion::UsedIRTypes,
     ModuleUtils::VisibilityHandling::FindVisibility);
 
-  // Check if a type is private, looking for its info (if there is none, it is
-  // not private).
+  // Check if a type is private, by looking up its info.
   auto isPublic = [&](HeapType type) {
     auto it = typeInfo.find(type);
     assert(it != typeInfo.end());
