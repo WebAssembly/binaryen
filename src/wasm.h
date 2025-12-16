@@ -2114,6 +2114,9 @@ public:
     : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
       sentTypes(allocator) {}
 
+  // If tag is set to a non-null Name, this is a resume_throw and |operands|
+  // contains the values to be set in an exception of that tag. If tag is null,
+  // this is resume_throw_ref and |operands| contains a single item, the exnref.
   Name tag;
   // See the comment on `Resume` above.
   ArenaVector<Name> handlerTags;
