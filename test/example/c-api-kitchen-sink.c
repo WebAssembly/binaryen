@@ -1046,7 +1046,8 @@ void test_core() {
                                4,
                                iIfF,
                                BinaryenTypeInt32()),
-    BinaryenReturnCallRef(module, funcrefExpr, callOperands4b, 4, BinaryenTypeNone()),
+    BinaryenReturnCallRef(
+      module, funcrefExpr, callOperands4b, 4, BinaryenTypeNone()),
     // Reference types
     BinaryenRefIsNull(module, externrefExpr),
     BinaryenRefIsNull(module, funcrefExpr),
