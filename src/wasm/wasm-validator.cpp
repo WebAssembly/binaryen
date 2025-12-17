@@ -4105,7 +4105,8 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     shouldBeEqual(curr->operands.size(),
                   tag->params().size(),
                   curr,
-                  "resume_throw operands must match the tag");
+                  "resume_throw num operands must match the tag");
+    // TODO: validate operand types as well
   } else {
     // resume_throw_ref
     Type exnref = Type(HeapType::exn, Nullable);
