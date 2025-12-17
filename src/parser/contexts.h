@@ -2920,8 +2920,19 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                               const std::vector<Annotation>& annotations,
                               HeapType type,
                               const std::vector<OnClauseInfo>& resumetable) {
-    // A ResumeThrow, with an empty Name() for the tag.
-    return makeResumeThrow(pos, annotations, type, Name(), resumetable);
+    std::vector<Name> tags;
+    std::vector<std::optional<Index>> labels;
+    tags.reserve(resumetable.size());
+    labels.reserve(resumetable.size());
+    for (const OnClauseInfo& info : resumetable) {
+      tags.push_back(info.tag);
+      if (info.isOnSwitch) {
+        labels.push_back(std::nullopt);
+      } else {
+        labels.push_back(std::optional<Index>(info.label));
+      }
+    }
+    return withLoc(pos, irBuilder.makeResumeThrowRef(type, tags, labels));
   }
 
   Result<> makeStackSwitch(Index pos,
