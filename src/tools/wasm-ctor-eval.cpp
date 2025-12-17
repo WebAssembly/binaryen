@@ -140,20 +140,20 @@ std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
       Module* module = it->second.get();
 
       struct Visitor {
-        Module* module;
+        Module* module = nullptr;
+
         void operator()(Memory* memory) {
           auto* copied = ModuleUtils::copyMemory(memory, *module);
           copied->module = Name();
           copied->base = Name();
-          module->addExport(Builder(*module).makeExport(
+          module->maybeAddExport(Builder::makeExport(
             memory->base, copied->name, ExternalKind::Memory));
         }
         void operator()(Table* table) {
-          // create tables with similar initial and max values
           auto* copied = ModuleUtils::copyTable(table, *module);
           copied->module = Name();
           copied->base = Name();
-          module->addExport(Builder(*module).makeExport(
+          module->maybeAddExport(Builder::makeExport(
             table->base, copied->name, ExternalKind::Table));
         }
         void operator()(Global* global) {
@@ -163,17 +163,14 @@ std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
 
           Builder builder(*module);
           copied->init = builder.makeConst(Literal::makeZero(global->type));
-          module->addExport(builder.makeExport(
+          module->maybeAddExport(Builder::makeExport(
             global->base, copied->name, ExternalKind::Global));
         }
         void operator()(Function* func) {
           Builder builder(*module);
-          auto* copied = ModuleUtils::copyFunction(func, *module);
-          copied->module = Name();
-          copied->base = Name();
-          copied->body = builder.makeUnreachable();
-          module->addExport(builder.makeExport(
-            func->base, copied->name, ExternalKind::Function));
+          auto stubbedFunc = builder.makeUnreachableFunction(func->name);
+          module->maybeAddExport(Builder::makeExport(
+            func->base, stubbedFunc->name, ExternalKind::Function));
         }
         void operator()(Tag* tag) {
           // no-op

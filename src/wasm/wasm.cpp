@@ -1829,6 +1829,22 @@ Elem* addModuleElement(Vector& v,
   return ret;
 }
 
+template<typename Vector, typename Map, typename Elem>
+Elem* maybeAddModuleElement(Vector& v,
+                            Map& m,
+                            std::unique_ptr<Elem> curr,
+                            std::string funcName) {
+  if (!curr->name.is()) {
+    Fatal() << "Module::" << funcName << ": empty name";
+  }
+  if (getModuleElementOrNull(m, curr->name)) {
+    return nullptr;
+  }
+  auto* ret = m[curr->name] = curr.get();
+  v.push_back(std::move(curr));
+  return ret;
+}
+
 Export* Module::addExport(Export* curr) {
   return addModuleElement(exports, exportsMap, curr, "addExport");
 }
@@ -1847,6 +1863,11 @@ Tag* Module::addTag(Tag* curr) {
 
 Export* Module::addExport(std::unique_ptr<Export>&& curr) {
   return addModuleElement(exports, exportsMap, std::move(curr), "addExport");
+}
+
+Export* Module::maybeAddExport(std::unique_ptr<Export>&& curr) {
+  return maybeAddModuleElement(
+    exports, exportsMap, std::move(curr), "addExport");
 }
 
 Function* Module::addFunction(std::unique_ptr<Function>&& curr) {

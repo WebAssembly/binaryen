@@ -1,0 +1,10 @@
+(module
+ (type $0 (func (param i32)))
+ (import "import" "log" (func $logi32 (type $0) (param i32)))
+ (export "foo" (func $0))
+ (func $0 (type $0) (param $0 i32)
+  (call $logi32
+   (local.get $0)
+  )
+ )
+)
