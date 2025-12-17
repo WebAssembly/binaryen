@@ -115,65 +115,6 @@ public:
   }
 };
 
-// Build an artificial `env` module based on a module's imports, so that the
-// interpreter can use correct object instances. It initializes usable global
-// imports, and fills the rest with fake values since those are dangerous to
-// use. we will fail if dangerous globals are used.
-std::unique_ptr<Module> buildEnvModule(Module& wasm) {
-  auto env = std::make_unique<Module>();
-  env->name = "env";
-
-  // create empty functions with similar signature
-  ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-    if (func->module == env->name) {
-      Builder builder(*env);
-      auto* copied = ModuleUtils::copyFunction(func, *env);
-      copied->module = Name();
-      copied->base = Name();
-      copied->body = builder.makeUnreachable();
-      env->addExport(
-        builder.makeExport(func->base, copied->name, ExternalKind::Function));
-    }
-  });
-
-  // create tables with similar initial and max values
-  ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    if (table->module == env->name) {
-      auto* copied = ModuleUtils::copyTable(table, *env);
-      copied->module = Name();
-      copied->base = Name();
-      env->addExport(Builder(*env).makeExport(
-        table->base, copied->name, ExternalKind::Table));
-    }
-  });
-
-  ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-    if (global->module == env->name) {
-      auto* copied = ModuleUtils::copyGlobal(global, *env);
-      copied->module = Name();
-      copied->base = Name();
-
-      Builder builder(*env);
-      copied->init = builder.makeConst(Literal::makeZero(global->type));
-      env->addExport(
-        builder.makeExport(global->base, copied->name, ExternalKind::Global));
-    }
-  });
-
-  // create an exported memory with the same initial and max size
-  ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
-    if (memory->module == env->name) {
-      auto* copied = ModuleUtils::copyMemory(memory, *env);
-      copied->module = Name();
-      copied->base = Name();
-      env->addExport(Builder(*env).makeExport(
-        memory->base, copied->name, ExternalKind::Memory));
-    }
-  });
-
-  return env;
-}
-
 // Whether to ignore external input to the program as it runs. If set, we will
 // assume that stdin is empty, that any env vars we try to read are not set,
 // that there are not arguments passed to main, etc.
@@ -232,23 +173,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   void importGlobals(GlobalValueSet& globals, Module& wasm_) override {
-    ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
-      auto it = linkedInstances.find(global->module);
-      if (it != linkedInstances.end()) {
-        auto* inst = it->second.get();
-        auto* globalExport = inst->wasm.getExportOrNull(global->base);
-        if (!globalExport || globalExport->kind != ExternalKind::Global) {
-          throw FailToEvalException(std::string("importGlobals: ") +
-                                    global->module.toString() + "." +
-                                    global->base.toString());
-        }
-        globals[global->name] = inst->globals[*globalExport->getInternalName()];
-      } else {
-        throw FailToEvalException(std::string("importGlobals: ") +
-                                  global->module.toString() + "." +
-                                  global->base.toString());
-      }
-    });
+    // no-op. We want imports to succeed, and only fail if the imported global
+    // is actually used in the ctor.
   }
 
   Literal getImportedFunction(Function* import) override {
@@ -325,7 +251,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   Tag* getImportedTag(Tag* tag) override {
-    WASM_UNREACHABLE("missing imported tag");
+    throw FailToEvalException("can't evaluate imported tag");
   }
 
   // We assume the table is not modified FIXME
@@ -1356,12 +1282,12 @@ void evalCtors(Module& wasm,
 
   std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
-  // build and link the env module
-  auto envModule = buildEnvModule(wasm);
-  CtorEvalExternalInterface envInterface;
-  auto envInstance =
-    std::make_shared<EvallingModuleRunner>(*envModule, &envInterface);
-  linkedInstances[envModule->name] = envInstance;
+  // // build and link the env module
+  // auto envModule = buildEnvModule(wasm);
+  // CtorEvalExternalInterface envInterface;
+  // auto envInstance =
+  //   std::make_shared<EvallingModuleRunner>(*envModule, &envInterface);
+  // linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {

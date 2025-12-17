@@ -86,7 +86,7 @@ public:
   }
 
   Literals values;
-  Name breakTo; // if non-null, a break is going on
+  Name breakTo;              // if non-null, a break is going on
   Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
                              // this is the tag being suspended
 
@@ -3304,8 +3304,15 @@ private:
 
   TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
+    SubType* importedInstance;
     if (table->imported()) {
-      auto& importedInstance = linkedInstances.at(table->module);
+      if (auto it = linkedInstances.find(table->module);
+          it != linkedInstances.end()) {
+        importedInstance = it->second.get();
+      } else {
+        WASM_UNREACHABLE("no imported module for getTableInstanceInfo");
+      }
+      // auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
       return importedInstance->getTableInstanceInfo(
         *tableExport->getInternalName());

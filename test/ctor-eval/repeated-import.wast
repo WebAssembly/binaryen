@@ -1,0 +1,11 @@
+(module
+ (import "import" "log" (func $logi32 (param i32)))
+ (import "import" "log" (func $logi64 (param i64)))
+ (func $foo (param $i32 i32) (param $i64 i64)
+   (local.get $i32)
+   (call $logi32)
+   (local.get $i64)
+   (call $logi64)
+ )
+ (export "foo" (func $foo))
+)
