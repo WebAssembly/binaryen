@@ -43,11 +43,19 @@ public:
 
   // make* functions create an expression instance.
 
+  std::unique_ptr<Function> makeUnreachableFunction(Name name) {
+    auto func = std::make_unique<Function>();
+    func->name = name;
+    func->type = Type::unreachable;
+    func->body = makeUnreachable();
+    return func;
+  }
+
   static std::unique_ptr<Function> makeFunction(Name name,
                                                 Type type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
-    assert(type.isSignature() && type.isNonNullable());
+    // assert(type.isSignature() && type.isNonNullable());
     auto func = std::make_unique<Function>();
     func->name = name;
     func->type = type;

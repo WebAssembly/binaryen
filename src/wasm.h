@@ -2596,6 +2596,7 @@ public:
   Tag* addTag(Tag* curr);
 
   Export* addExport(std::unique_ptr<Export>&& curr);
+  Export* maybeAddExport(std::unique_ptr<Export>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
