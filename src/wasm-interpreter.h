@@ -86,7 +86,7 @@ public:
   }
 
   Literals values;
-  Name breakTo; // if non-null, a break is going on
+  Name breakTo;              // if non-null, a break is going on
   Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
                              // this is the tag being suspended
 
@@ -2694,9 +2694,9 @@ public:
     return makeGCData(std::move(contents), curr->type);
   }
 
-  virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
+  virtual void trap(std::string_view why) { WASM_UNREACHABLE("unimp"); }
 
-  virtual void hostLimit(const char* why) { WASM_UNREACHABLE("unimp"); }
+  virtual void hostLimit(std::string_view why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void throwException(const WasmException& exn) {
     WASM_UNREACHABLE("unimp");
@@ -2929,9 +2929,11 @@ public:
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(const char* why) override { throw NonconstantException(); }
+  void trap(std::string_view why) override { throw NonconstantException(); }
 
-  void hostLimit(const char* why) override { throw NonconstantException(); }
+  void hostLimit(std::string_view why) override {
+    throw NonconstantException();
+  }
 
   virtual void throwException(const WasmException& exn) override {
     throw NonconstantException();
@@ -2974,8 +2976,8 @@ public:
                            const Literal& value,
                            Index oldSize,
                            Index newSize) = 0;
-    virtual void trap(const char* why) = 0;
-    virtual void hostLimit(const char* why) = 0;
+    virtual void trap(std::string_view why) = 0;
+    virtual void hostLimit(std::string_view why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
     // among the linked ModuleRunner instances, but imported from the host.
@@ -4741,13 +4743,13 @@ public:
   Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(const char* why) override {
+  void trap(std::string_view why) override {
     // Traps break all current continuations - they will never be resumable.
     self()->clearContinuationStore();
     externalInterface->trap(why);
   }
 
-  void hostLimit(const char* why) override {
+  void hostLimit(std::string_view why) override {
     self()->clearContinuationStore();
     externalInterface->hostLimit(why);
   }
