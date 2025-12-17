@@ -4112,11 +4112,11 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     if (shouldBeEqual(curr->operands.size(),
                       size_t(1),
                       curr,
-                      "resume_throw_ref must have a single exnref operand") &&
-        curr->operands[0]->type != Type::unreachable) {
-      shouldBeTrue(Type::isSubType(curr->operands[0]->type, exnref),
-                   curr,
-                   "resume_throw_ref must receive exnref");
+                      "resume_throw_ref must have a single exnref operand")) {
+      shouldBeSubType(curr->operands[0]->type,
+                      exnref,
+                      curr,
+                      "resume_throw_ref must receive exnref");
     }
   }
 
