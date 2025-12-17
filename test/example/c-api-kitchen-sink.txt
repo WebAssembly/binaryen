@@ -2111,14 +2111,12 @@ BinaryenFeatureAll: 4194303
        (f64.const 3.7)
        (i32.const 2449)
       )
-      (drop
-       (call_ref $2
-        (i32.const 13)
-        (i64.const 37)
-        (f32.const 1.2999999523162842)
-        (f64.const 3.7)
-        (ref.func $"kitchen()sinker")
-       )
+      (return_call_ref $2
+       (i32.const 13)
+       (i64.const 37)
+       (f32.const 1.2999999523162842)
+       (f64.const 3.7)
+       (ref.func $"kitchen()sinker")
       )
       (drop
        (ref.is_null
