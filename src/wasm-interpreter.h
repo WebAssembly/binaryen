@@ -4563,11 +4563,15 @@ public:
   }
 
   void maybeThrowAfterResuming(std::shared_ptr<ContData>& currContinuation) {
-    if (auto* tag = currContinuation->exceptionTag) {
+    // We may throw by creating a tag, or an exnref.
+    auto* tag = currContinuation->exceptionTag;
+    auto exnref = currContinuation->exception.type != Type::none;
+    assert(!(tag && exnref));
+    if (tag) {
       // resume_throw
       throwException(WasmException{
         self()->makeExnData(tag, currContinuation->resumeArguments)});
-    } else if (currContinuation->exception.type != Type::none) {
+    } else if (exnref) {
       // resume_throw_ref
       throwException(WasmException{currContinuation->exception});
     }
