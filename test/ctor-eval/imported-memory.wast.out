@@ -1,0 +1,17 @@
+(module
+ (type $0 (func))
+ (import "import" "memory" (memory $memory 1 1))
+ (global $global (mut i32) (i32.const 0))
+ (export "g" (global $global))
+ (export "foo" (func $foo))
+ (func $foo (type $0)
+  (drop
+   (i32.load
+    (i32.const 0)
+   )
+  )
+  (global.set $global
+   (i32.const 1)
+  )
+ )
+)

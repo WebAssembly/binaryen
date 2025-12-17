@@ -1,0 +1,4 @@
+(module
+ (global $non-imported-global (mut i32) (i32.const 1))
+ (export "g" (global $non-imported-global))
+)

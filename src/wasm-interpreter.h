@@ -29,6 +29,7 @@
 #define wasm_wasm_interpreter_h
 
 #include <cmath>
+#include <iomanip>
 #include <limits.h>
 #include <sstream>
 #include <variant>
@@ -86,7 +87,7 @@ public:
   }
 
   Literals values;
-  Name breakTo; // if non-null, a break is going on
+  Name breakTo;              // if non-null, a break is going on
   Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
                              // this is the tag being suspended
 
@@ -3309,8 +3310,16 @@ private:
 
   TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
+    SubType* importedInstance;
     if (table->imported()) {
-      auto& importedInstance = linkedInstances.at(table->module);
+      if (auto it = linkedInstances.find(table->module);
+          it != linkedInstances.end()) {
+        importedInstance = it->second.get();
+      } else {
+        Fatal() << "getTableInstanceInfo: no imported module providing "
+                << std::quoted(name.toString());
+      }
+      // auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
       return importedInstance->getTableInstanceInfo(
         *tableExport->getInternalName());
@@ -3366,7 +3375,14 @@ private:
   MemoryInstanceInfo getMemoryInstanceInfo(Name name) {
     auto* memory = wasm.getMemory(name);
     if (memory->imported()) {
-      auto& importedInstance = linkedInstances.at(memory->module);
+      SubType* importedInstance;
+      if (auto it = linkedInstances.find(memory->module);
+          it != linkedInstances.end()) {
+        importedInstance = it->second.get();
+      } else {
+        Fatal() << "getMemoryInstanceInfo: no imported module providing "
+                << std::quoted(name.toString());
+      }
       auto* memoryExport = importedInstance->wasm.getExport(memory->base);
       return importedInstance->getMemoryInstanceInfo(
         *memoryExport->getInternalName());
