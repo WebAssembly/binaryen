@@ -279,13 +279,12 @@ struct SignaturePruning : public Pass {
 
       // Create a new signature. When the TypeRewriter operates below it will
       // modify the existing heap type in place to change its signature to this
-      // one (which preserves identity, that is, even if after pruning the new
-      // signature is structurally identical to another one, it will remain
-      // nominally different from those).
+      // one. TypeRewriter will also ensure that distinct types remain
+      // disctinct, even if they have the same signature after optimization.
       newSignatures[type] = Signature(Type(newParams), sig.results);
 
       // removeParameters() updates the type as it goes, but in this pass we
-      // need the type to match the other locations, nominally. That is, we need
+      // need the type to be updated in all locations at once. That is, we need
       // all the functions of a particular type to still have the same type
       // after this operation, and that must be the exact same type at the
       // relevant call_refs and so forth. The TypeRewriter below will do the
