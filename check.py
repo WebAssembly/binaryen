@@ -19,13 +19,10 @@ import os
 import subprocess
 import sys
 import unittest
+from multiprocessing.pool import ThreadPool
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import queue
 import io
-import threading
-from functools import partial
 
 from scripts.test import binaryenjs
 from scripts.test import lld
@@ -253,54 +250,32 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
     check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'), stdout=stdout)
 
 
-def run_spec_test_with_wrapped_stdout(output_queue, wast: Path):
+def run_spec_test_with_wrapped_stdout(wast: Path):
     out = io.StringIO()
     try:
-        ret = run_one_spec_test(wast, stdout=out, stderr=out)
+        run_one_spec_test(wast, stdout=out, stderr=out)
     except Exception as e:
+        # Serialize exceptions into the output string buffer
+        # so they can be reported on the main thread.
         print(e, file=out)
         raise
-    finally:
-        # If a test fails, it's important to keep its output
-        output_queue.put(out.getvalue())
-    return ret
+    return out.getvalue()
 
 
 def run_spec_tests():
     print('\n[ checking wasm-shell spec testcases... ]\n')
 
-    output_queue = queue.Queue()
-
-    stop_printer = object()
-
-    def printer():
-        while True:
-            string = output_queue.get()
-            if string is stop_printer:
-                break
-
-            print(string, end="")
-
-    printing_thread = threading.Thread(target=printer)
-    printing_thread.start()
-
     worker_count = os.cpu_count()
     print("Running with", worker_count, "workers")
-    executor = ThreadPoolExecutor(max_workers=worker_count)
-    try:
-        results = executor.map(partial(run_spec_test_with_wrapped_stdout, output_queue), map(Path, shared.options.spec_tests))
-        for _ in results:
-            # Iterating joins the threads. No return value here.
-            pass
-    except KeyboardInterrupt:
-        # Hard exit to avoid threads continuing to run after Ctrl-C.
-        # There's no concern of deadlocking during shutdown here.
-        os._exit(1)
-    finally:
-        executor.shutdown(cancel_futures=True)
-
-        output_queue.put(stop_printer)
-        printing_thread.join()
+    test_paths = [Path(x) for x in shared.options.spec_tests]
+    with ThreadPool(processes=worker_count) as pool:
+        try:
+            for result in pool.imap_unordered(run_spec_test_with_wrapped_stdout, test_paths):
+                print(result, end="")
+        except KeyboardInterrupt:
+            # Hard exit to avoid threads continuing to run after Ctrl-C.
+            # There's no concern of deadlocking during shutdown here.
+            os._exit(1)
 
 
 def run_validator_tests():
