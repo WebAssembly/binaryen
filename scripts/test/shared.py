@@ -40,12 +40,12 @@ def parse_args(args):
         '--no-torture', dest='torture', action='store_false',
         help='Disables running the torture testcases.')
     parser.add_argument(
-        '--abort-on-first-failure', dest='abort_on_first_failure',
+        '--abort-on-first-failure', "--fail-fast", dest='abort_on_first_failure',
         action='store_true', default=True,
         help=('Specifies whether to halt test suite execution on first test error.'
               ' Default: true.'))
     parser.add_argument(
-        '--no-abort-on-first-failure', dest='abort_on_first_failure',
+        '--no-abort-on-first-failure', "--no-fail-fast", dest='abort_on_first_failure',
         action='store_false',
         help=('If set, the whole test suite will run to completion independent of'
               ' earlier errors.'))
