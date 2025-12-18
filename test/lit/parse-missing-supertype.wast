@@ -1,4 +1,4 @@
-;; Test that incorrect nominal types result in the expected parse errors
+;; Test that missing supertypes result in the expected parse errors
 
 ;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
 

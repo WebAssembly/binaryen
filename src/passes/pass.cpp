@@ -569,7 +569,7 @@ void PassRegistry::registerPasses() {
                "merge types to their supertypes where possible",
                createTypeMergingPass);
   registerPass("type-ssa",
-               "create new nominal types to help other optimizations",
+               "create new types to help other optimizations",
                createTypeSSAPass);
   registerPass("type-unfinalizing",
                "mark all types as non-final (open)",

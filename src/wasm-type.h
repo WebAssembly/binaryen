@@ -139,21 +139,13 @@ public:
   // Choose an arbitrary heap type as the default.
   constexpr HeapType() : HeapType(func) {}
 
-  // Construct a HeapType referring to the single canonical HeapType for the
-  // given signature. In nominal mode, this is the first HeapType created with
-  // this signature.
+  // Construct the single canonical HeapType for the given signature, struct,
+  // array, or continuation.
   HeapType(Signature signature);
-
-  HeapType(Continuation cont);
-
-  // Create a HeapType with the given structure. In equirecursive mode, this may
-  // be the same as a previous HeapType created with the same contents. In
-  // nominal mode, this will be a fresh type distinct from all previously
-  // created HeapTypes.
-  // TODO: make these explicit to differentiate them.
   HeapType(const Struct& struct_);
   HeapType(Struct&& struct_);
   HeapType(Array array);
+  HeapType(Continuation cont);
 
   HeapTypeKind getKind() const;
 
@@ -193,7 +185,7 @@ public:
   Array getArray() const;
 
   // If there is a nontrivial (i.e. non-basic, one that was declared by the
-  // module) nominal supertype, return it, else an empty optional.
+  // module) supertype, return it, else an empty optional.
   std::optional<HeapType> getDeclaredSuperType() const;
 
   // As |getDeclaredSuperType|, but also handles basic types, that is, if the
@@ -206,8 +198,8 @@ public:
   std::optional<HeapType> getDescribedType() const;
   DescriptorChain getDescriptorChain() const;
 
-  // Return the depth of this heap type in the nominal type hierarchy, i.e. the
-  // number of supertypes in its supertype chain.
+  // Return the depth of this heap type in the type hierarchy, i.e. the number
+  // of supertypes in its supertype chain.
   size_t getDepth() const;
 
   // Get the bottom heap type for this heap type's hierarchy.
@@ -898,10 +890,7 @@ struct TypeBuilder {
   };
 
   // Returns all of the newly constructed heap types. May only be called once
-  // all of the heap types have been initialized with `setHeapType`. In nominal
-  // mode, all of the constructed HeapTypes will be fresh and distinct. In
-  // nominal mode, will also produce a fatal error if the declared subtype
-  // relationships are not valid.
+  // all of the heap types have been initialized with `setHeapType`.
   BuildResult build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType

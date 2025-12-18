@@ -1108,14 +1108,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $hoist-LUB-danger (param $x i32) (param $b (ref $B)) (param $c (ref $C)) (result i32)
-    ;; In nominal typing, if we hoist the struct.get out of the if, then the if
-    ;; will have a new type, $A, but $A does not have field "1" which would be an
-    ;; error. We disallow subtyping for this reason.
-    ;;
-    ;; We also disallow subtyping in structural typing, even though atm there
-    ;; might not be a concrete risk there: future instructions might introduce
-    ;; such things, and it reduces the complexity of having differences with
-    ;; nominal typing.
+    ;; If we hoist the struct.get out of the if, then the if will have a new
+    ;; type, $A, but $A does not have field 1, so that would be an error. We
+    ;; disallow hoisting when the children have different types for this reason.
     (if (result i32)
       (local.get $x)
       (then
