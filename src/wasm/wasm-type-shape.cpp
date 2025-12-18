@@ -138,8 +138,8 @@ template<typename CompareTypes> struct RecGroupComparator {
   Comparison compare(Type a, Type b) {
     // Compare types as they will eventually be written out, not as they are in
     // the IR.
-    a = a.asWrittenWithFeatures(features);
-    b = b.asWrittenWithFeatures(features);
+    a = a.asWrittenGivenFeatures(features);
+    b = b.asWrittenGivenFeatures(features);
     if (a.isBasic() != b.isBasic()) {
       return b.isBasic() < a.isBasic() ? LT : GT;
     }
@@ -298,7 +298,7 @@ struct RecGroupHasher {
   size_t hash(Type type) {
     // Hash types as they will eventually be written out, not as they are in the
     // IR.
-    type = type.asWrittenWithFeatures(features);
+    type = type.asWrittenGivenFeatures(features);
     size_t digest = wasm::hash(type.isBasic());
     if (type.isBasic()) {
       wasm::rehash(digest, type.getBasic());

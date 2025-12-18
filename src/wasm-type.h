@@ -264,7 +264,10 @@ public:
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
 
-  inline HeapType asWrittenWithFeatures(FeatureSet feats) const;
+  // We support more precise types in the IR than the enabled feature set would
+  // suggest. Get the generalized version of the type that will be written by
+  // the binary writer given the feature set.
+  inline HeapType asWrittenGivenFeatures(FeatureSet feats) const;
 
   // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
   // a `TypeID` because `Type` is incomplete at this point and using a reference
@@ -285,7 +288,7 @@ public:
   std::string toString() const;
 };
 
-HeapType HeapType::asWrittenWithFeatures(FeatureSet feats) const {
+HeapType HeapType::asWrittenGivenFeatures(FeatureSet feats) const {
   // Without GC, only top types like func and extern are supported. The
   // exception is string, since stringref can be enabled without GC and we still
   // expect to write stringref types in that case.
@@ -462,7 +465,10 @@ public:
     return !isExact() || feats.hasCustomDescriptors() ? *this : with(Inexact);
   }
 
-  inline Type asWrittenWithFeatures(FeatureSet feats) const;
+  // We support more precise types in the IR than the enabled feature set would
+  // suggest. Get the generalized version of the type that will be written by
+  // the binary writer given the feature set.
+  inline Type asWrittenGivenFeatures(FeatureSet feats) const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -592,11 +598,11 @@ public:
   const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
-Type Type::asWrittenWithFeatures(FeatureSet feats) const {
+Type Type::asWrittenGivenFeatures(FeatureSet feats) const {
   if (!isRef()) {
     return *this;
   }
-  auto type = with(getHeapType().asWrittenWithFeatures(feats));
+  auto type = with(getHeapType().asWrittenGivenFeatures(feats));
   if (!feats.hasGC()) {
     type = type.with(Nullable);
   }

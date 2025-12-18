@@ -171,7 +171,7 @@ struct UniqueRecGroups {
   UniqueRecGroups(FeatureSet features) : features(features) {}
 
   // Insert a rec group. If it is already unique, return the original types.
-  // Otherwise rebuild the group  make it unique and return the rebuilt types,
+  // Otherwise rebuild the group to make it unique and return the rebuilt types,
   // including the brand.
   const std::vector<HeapType>& insert(std::vector<HeapType> group);
 

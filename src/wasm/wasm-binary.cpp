@@ -1798,7 +1798,7 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 }
 
 void WasmBinaryWriter::writeType(Type type) {
-  type = type.asWrittenWithFeatures(wasm->features);
+  type = type.asWrittenGivenFeatures(wasm->features);
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
@@ -1887,7 +1887,7 @@ void WasmBinaryWriter::writeType(Type type) {
 }
 
 void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
-  type = type.asWrittenWithFeatures(wasm->features);
+  type = type.asWrittenGivenFeatures(wasm->features);
   if (!wasm->features.hasCustomDescriptors()) {
     exactness = Inexact;
   }

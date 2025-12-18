@@ -2263,7 +2263,7 @@ struct TypeBuilder::Impl {
   // and typed function references without GC. Allowing these more-refined types
   // in the IR helps the optimizer be more powerful. However, these disallowed
   // refinements will be erased when a module is written out as a binary, which
-  // could cause distinct rec groups becoming identical and potentially change
+  // could cause distinct rec groups to become identical and potentially change
   // the results of casts, etc. To avoid this, we must disallow building rec
   // groups that vary only in some refinement that will be removed in binary
   // writing. Track this with a UniqueRecGroups set, which is feature-aware.
