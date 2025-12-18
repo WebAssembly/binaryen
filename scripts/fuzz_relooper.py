@@ -18,7 +18,7 @@
 This fuzzes the relooper using the C API.
 '''
 
-from __future__ import print_function
+# ruff: noqa: UP031
 
 import difflib
 import os
@@ -69,10 +69,10 @@ while True:
         return random.randint(1, code_max)
 
     for i in range(num):
-        b = set([])
+        b = set()
         bs = random.randint(1, max(1,
                             round(density * random.random() * (num - 1))))
-        for j in range(bs):
+        for _ in range(bs):
             b.add(random.randint(1, num - 1))
         b = list(b)
         defaults[i] = random.choice(b)
@@ -83,12 +83,9 @@ while True:
     print(counter, ':', num, density, optimize, code_likelihood, code_max, max_printed, ', seed =', seed)
     counter += 1
 
-    for temp in ['fuzz.wasm', 'fuzz.wast', 'fast.txt', 'fuzz.slow.js',
-                 'fuzz.c']:
-        try:
+    for temp in ['fuzz.wasm', 'fuzz.wast', 'fast.txt', 'fuzz.slow.js', 'fuzz.c']:
+        if os.path.exists(temp):
             os.unlink(temp)
-        except OSError:
-            pass
 
     # parts
     entry = '''

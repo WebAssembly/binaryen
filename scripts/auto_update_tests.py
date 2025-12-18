@@ -19,12 +19,7 @@ import subprocess
 import sys
 from collections import OrderedDict
 
-from test import binaryenjs
-from test import lld
-from test import shared
-from test import support
-from test import wasm2js
-from test import wasm_opt
+from test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
 
 
 def update_example_tests():
@@ -119,7 +114,8 @@ def update_reduce_tests():
         print('..', os.path.basename(t))
         # convert to wasm
         support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
-        print(support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm']))
+        cmd = shared.WASM_OPT[0]
+        print(support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec -all', '-t', 'b.wasm', '-w', 'c.wasm']))
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', expected])
 

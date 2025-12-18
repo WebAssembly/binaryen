@@ -15,24 +15,16 @@
 # limitations under the License.
 
 import glob
+import io
 import os
 import subprocess
 import sys
 import unittest
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
-import queue
-import io
-import threading
-from functools import partial
 
-from scripts.test import binaryenjs
-from scripts.test import lld
-from scripts.test import shared
-from scripts.test import support
-from scripts.test import wasm2js
-from scripts.test import wasm_opt
+from scripts.test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
 
 
 def get_changelog_version():
@@ -41,7 +33,7 @@ def get_changelog_version():
     lines = [line for line in lines if len(line.split()) == 1]
     lines = [line for line in lines if line.startswith('v')]
     version = lines[0][1:]
-    print("Parsed CHANGELOG.md version: %s" % version)
+    print(f"Parsed CHANGELOG.md version: {version}")
     return int(version)
 
 
@@ -55,16 +47,16 @@ def run_version_tests():
                    not any(f.endswith(s) for s in not_executable_suffix) and
                    any(os.path.basename(f).startswith(s) for s in executable_prefix)]
     executables = sorted(executables)
-    assert len(executables)
+    assert executables
 
     changelog_version = get_changelog_version()
     for e in executables:
-        print('.. %s --version' % e)
+        print(f'.. {e} --version')
         proc = subprocess.run([e, '--version'], capture_output=True, text=True)
-        assert len(proc.stderr) == 0, 'Expected no stderr, got:\n%s' % proc.stderr
+        assert len(proc.stderr) == 0, f'Expected no stderr, got:\n{proc.stderr}'
         out = proc.stdout
-        assert os.path.basename(e).replace('.exe', '') in out, 'Expected version to contain program name, got:\n%s' % out
-        assert len(out.strip().splitlines()) == 1, 'Expected only version info, got:\n%s' % out
+        assert os.path.basename(e).replace('.exe', '') in out, f'Expected version to contain program name, got:\n{out}'
+        assert len(out.strip().splitlines()) == 1, f'Expected only version info, got:\n{out}'
         parts = out.split()
         assert parts[1] == 'version'
         version = int(parts[2])
@@ -158,7 +150,8 @@ def run_wasm_reduce_tests():
         print('..', os.path.basename(t))
         # convert to wasm
         support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all ' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+        cmd = shared.WASM_OPT[0]
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec -all ', '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
         with open('a.wat') as seen:
@@ -171,14 +164,15 @@ def run_wasm_reduce_tests():
         # TODO: re-enable multivalue once it is better optimized
         support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'lit/basic/signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+        cmd = shared.WASM_OPT[0]
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec --detect-features', '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
         # This number is a custom threshold to check if we have shrunk the
         # output sufficiently
         assert after < 0.85 * before, [before, after]
 
 
-def run_spec_test(wast, stdout=None, stderr=None):
+def run_spec_test(wast, stdout=None):
     cmd = shared.WASM_SHELL + [wast]
     output = support.run_command(cmd, stdout=stdout, stderr=subprocess.PIPE)
     # filter out binaryen interpreter logging that the spec suite
@@ -187,7 +181,7 @@ def run_spec_test(wast, stdout=None, stderr=None):
     return '\n'.join(filtered) + '\n'
 
 
-def run_opt_test(wast, stdout=None, stderr=None):
+def run_opt_test(wast, stdout=None):
     # check optimization validation
     cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
     support.run_command(cmd, stdout=stdout)
@@ -203,7 +197,7 @@ def check_expected(actual, expected, stdout=None):
             shared.fail(actual, expected)
 
 
-def run_one_spec_test(wast: Path, stdout=None, stderr=None):
+def run_one_spec_test(wast: Path, stdout=None):
     test_name = wast.name
 
     # /path/to/binaryen/test/spec/foo.wast -> test-spec-foo
@@ -218,7 +212,7 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
 
     # some spec tests should fail (actual process failure, not just assert_invalid)
     try:
-        actual = run_spec_test(str(wast), stdout=stdout, stderr=stderr)
+        actual = run_spec_test(str(wast), stdout=stdout)
     except Exception as e:
         if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in test_name:
             print('<< test failed as expected >>', file=stdout)
@@ -240,67 +234,45 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
             print(f'        testing split module {i}', file=stdout)
             split_name = base_name + f'_split{i}.wast'
             support.write_wast(split_name, module)
-            run_opt_test(split_name, stdout=stdout, stderr=stderr)    # also that our optimizer doesn't break on it
+            run_opt_test(split_name, stdout=stdout)    # also that our optimizer doesn't break on it
 
-            result_wast_file = shared.binary_format_check(split_name, verify_final_result=False, base_name=base_name, stdout=stdout, stderr=stderr)
+            result_wast_file = shared.binary_format_check(split_name, verify_final_result=False, base_name=base_name, stdout=stdout)
             with open(result_wast_file) as f:
                 result_wast = f.read()
                 # add the asserts, and verify that the test still passes
                 transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
     # compare all the outputs to the expected output
-    actual = run_spec_test(transformed_path, stdout=stdout, stderr=stderr)
+    actual = run_spec_test(transformed_path, stdout=stdout)
     check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'), stdout=stdout)
 
 
-def run_spec_test_with_wrapped_stdout(output_queue, wast: Path):
+def run_spec_test_with_wrapped_stdout(wast: Path):
     out = io.StringIO()
     try:
-        ret = run_one_spec_test(wast, stdout=out, stderr=out)
+        run_one_spec_test(wast, stdout=out)
     except Exception as e:
+        # Serialize exceptions into the output string buffer
+        # so they can be reported on the main thread.
         print(e, file=out)
         raise
-    finally:
-        # If a test fails, it's important to keep its output
-        output_queue.put(out.getvalue())
-    return ret
+    return out.getvalue()
 
 
 def run_spec_tests():
     print('\n[ checking wasm-shell spec testcases... ]\n')
 
-    output_queue = queue.Queue()
-
-    stop_printer = object()
-
-    def printer():
-        while True:
-            string = output_queue.get()
-            if string is stop_printer:
-                break
-
-            print(string, end="")
-
-    printing_thread = threading.Thread(target=printer)
-    printing_thread.start()
-
     worker_count = os.cpu_count()
     print("Running with", worker_count, "workers")
-    executor = ThreadPoolExecutor(max_workers=worker_count)
-    try:
-        results = executor.map(partial(run_spec_test_with_wrapped_stdout, output_queue), map(Path, shared.options.spec_tests))
-        for _ in results:
-            # Iterating joins the threads. No return value here.
-            pass
-    except KeyboardInterrupt:
-        # Hard exit to avoid threads continuing to run after Ctrl-C.
-        # There's no concern of deadlocking during shutdown here.
-        os._exit(1)
-    finally:
-        executor.shutdown(cancel_futures=True)
-
-        output_queue.put(stop_printer)
-        printing_thread.join()
+    test_paths = [Path(x) for x in shared.options.spec_tests]
+    with ThreadPool(processes=worker_count) as pool:
+        try:
+            for result in pool.imap_unordered(run_spec_test_with_wrapped_stdout, test_paths):
+                print(result, end="")
+        except KeyboardInterrupt:
+            # Hard exit to avoid threads continuing to run after Ctrl-C.
+            # There's no concern of deadlocking during shutdown here.
+            os._exit(1)
 
 
 def run_validator_tests():
@@ -437,7 +409,7 @@ def main():
 
     for r in shared.requested:
         if r not in all_suites:
-            print('invalid test suite: %s (see --list-suites)\n' % r)
+            print(f'invalid test suite: {r} (see --list-suites)\n')
             return 1
 
     if not shared.requested:

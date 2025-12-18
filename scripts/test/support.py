@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import filecmp
+import io
 import os
 import re
 import shutil
@@ -103,7 +103,7 @@ def split_wast(wastFile):
     wast = None
     if not wastFile.endswith('.wasm'):
         try:
-            wast = open(wastFile, 'r').read()
+            wast = open(wastFile).read()
         except Exception:
             pass
 

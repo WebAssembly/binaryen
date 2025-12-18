@@ -2586,7 +2586,13 @@ IRBuilder::makeResumeThrow(HeapType ct,
 
   ResumeThrow curr(wasm.allocator);
   curr.tag = tag;
-  curr.operands.resize(wasm.getTag(tag)->params().size());
+  if (tag) {
+    // This is a normal resume_throw.
+    curr.operands.resize(wasm.getTag(tag)->params().size());
+  } else {
+    // This is a resume_throw_ref.
+    curr.operands.resize(1);
+  }
 
   Result<ResumeTable> resumetable = makeResumeTable(
     labels,

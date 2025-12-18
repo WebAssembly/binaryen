@@ -16,8 +16,7 @@ import os
 import shutil
 import subprocess
 
-from . import shared
-from . import support
+from . import shared, support
 
 
 def test_wasm_opt():
