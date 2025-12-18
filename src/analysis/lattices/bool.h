@@ -24,7 +24,30 @@ namespace wasm::analysis {
 // A lattice with two elements: the top element is `true` and the bottom element
 // is `false`.
 struct Bool {
-  using Element = bool;
+  // Use a wrapper around bool to avoid triggering bool specializations of e.g.
+  // std::vector.
+  struct Element {
+    bool val = false;
+    Element(bool val) : val(val) {}
+    Element() = default;
+    Element(const Element& other) = default;
+    Element(Element&& other) = default;
+    operator bool() const noexcept { return val; }
+    bool operator==(const Element& other) const noexcept {
+      return val == other.val;
+    }
+    bool operator==(bool other) const noexcept { return val == other; }
+    bool operator!=(const Element& other) const noexcept {
+      return !(*this == other);
+    }
+    bool operator!=(bool other) const noexcept { return !(*this == other); }
+    Element& operator=(const Element& other) = default;
+    Element& operator=(Element&& other) = default;
+    Element& operator=(bool other) {
+      val = other;
+      return *this;
+    }
+  };
   Element getBottom() const noexcept { return false; }
   Element getTop() const noexcept { return true; }
   LatticeComparison compare(Element a, Element b) const noexcept {
@@ -37,12 +60,18 @@ struct Bool {
     }
     return false;
   }
+  bool join(Element& joinee, bool joiner) const noexcept {
+    return join(joinee, Element(joiner));
+  }
   bool meet(Element& meetee, Element meeter) const noexcept {
     if (meetee && !meeter) {
       meetee = meeter;
       return true;
     }
     return false;
+  }
+  bool meet(Element& meetee, bool meeter) const noexcept {
+    return meet(meetee, Element(meeter));
   }
 };
 
