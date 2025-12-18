@@ -2002,3 +2002,48 @@
     )
   )
 )
+
+;; Regression test for an assertion failure when br_if has a tuple value and
+;; unreachable condition.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
+  (type $A (sub (struct)))
+  ;; CHECK:       (type $B (sub (struct)))
+  (type $B (sub $A (struct)))
+  ;; CHECK:       (type $C (sub $A (struct)))
+  (type $C (sub $B (struct)))
+  ;; CHECK:       (type $3 (func (param (ref $C)) (result (ref $A) (ref $A))))
+
+  ;; CHECK:      (func $test (type $3) (param $C (ref $C)) (result (ref $A) (ref $A))
+  ;; CHECK-NEXT:  (local $Bs (tuple (ref $B) (ref $B)))
+  ;; CHECK-NEXT:  (block $l
+  ;; CHECK-NEXT:   (local.tee $Bs
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (tuple.drop 2
+  ;; CHECK-NEXT:      (tuple.make 2
+  ;; CHECK-NEXT:       (local.get $C)
+  ;; CHECK-NEXT:       (local.get $C)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $C (ref $C)) (result (ref $A) (ref $A))
+    (local $Bs (tuple (ref $B) (ref $B)))
+    (block $l (result (ref $A) (ref $A))
+      (local.set $Bs
+        ;; Because the br_if is unreachable, we do not record $C <: $B.
+        (br_if $l
+          (tuple.make 2
+            (local.get $C)
+            (local.get $C)
+          )
+          (unreachable)
+        )
+      )
+    )
+  )
+)
