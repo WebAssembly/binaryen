@@ -2706,7 +2706,7 @@ TypeBuilder::BuildResult TypeBuilder::build() {
     // after disallowed features are taken into account.
     if (groupSize > 0 && groupSize != entryCount) {
       auto expectedFirst = (*built)[0];
-      auto& types = impl->unique.insertOrGet(std::move(*built));
+      auto& types = impl->unique.insertOrGet(*built);
       if (types[0] != expectedFirst) {
         return {TypeBuilder::Error{
           groupStart, TypeBuilder::ErrorReason::RecGroupCollision}};
