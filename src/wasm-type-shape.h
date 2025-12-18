@@ -19,7 +19,7 @@
 
 #include <functional>
 #include <list>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 #include "wasm-features.h"
@@ -162,17 +162,22 @@ struct BrandTypeIterator {
 // with an extra brand type at the end of the group that differentiates it from
 // previous group.
 struct UniqueRecGroups {
-  std::list<std::vector<HeapType>> groups;
-  std::unordered_set<RecGroupShape> shapes;
+  using Groups = std::list<std::vector<HeapType>>;
+  Groups groups;
+  std::unordered_map<RecGroupShape, Groups::iterator> shapes;
 
   FeatureSet features;
 
   UniqueRecGroups(FeatureSet features) : features(features) {}
 
   // Insert a rec group. If it is already unique, return the original types.
-  // Otherwise rebuild the group  make it unique and return the rebuilt types,
+  // Otherwise rebuild the group to make it unique and return the rebuilt types,
   // including the brand.
   const std::vector<HeapType>& insert(std::vector<HeapType> group);
+
+  // If the group is unique, insert it and return the types. Otherwise, return
+  // the types that already have this shape.
+  const std::vector<HeapType>& insertOrGet(std::vector<HeapType> group);
 };
 
 } // namespace wasm
