@@ -29,6 +29,7 @@
 #define wasm_wasm_interpreter_h
 
 #include <cmath>
+#include <iomanip>
 #include <limits.h>
 #include <sstream>
 #include <variant>
@@ -2949,6 +2950,15 @@ using GlobalValueSet = std::map<Name, Literals>;
 // To call into the interpreter, use callExport.
 //
 
+template<typename SubType> struct TableInstanceInfo {
+  // The ModuleRunner instance in which the table is defined.
+  SubType* instance;
+  // The external interface in which the table is defined
+  ExternalInterface* interface() { return instance->externalInterface; }
+  // The name the table has in that interface.
+  Name name;
+};
+
 template<typename SubType>
 class ModuleRunnerBase : public ExpressionRunner<SubType> {
 public:
@@ -2964,6 +2974,22 @@ public:
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literal getImportedFunction(Function* import) = 0;
+    virtual TableInstanceInfo<SubType>
+    importedTableInstanceInfo(const Table& table) = 0;
+    // {
+    //   SubType* importedInstance;
+    //   if (auto it = linkedInstances.find(table.module);
+    //       it != linkedInstances.end()) {
+    //     importedInstance = it->second.get();
+    //   } else {
+    //     Fatal()<< "getTableInstanceInfo(): No imported module provides
+    //     imported table "<< std::quoted(name.toString());
+    //   }
+    //   auto* tableExport = importedInstance->wasm.getExport(table.base);
+    //   return importedInstance->getTableInstanceInfo(
+    //     *tableExport->getInternalName());
+
+    // }
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -3293,29 +3319,30 @@ private:
   std::unordered_set<Name> droppedDataSegments;
   std::unordered_set<Name> droppedElementSegments;
 
-  struct TableInstanceInfo {
-    // The ModuleRunner instance in which the memory is defined.
-    SubType* instance;
-    // The external interface in which the table is defined
-    ExternalInterface* interface() { return instance->externalInterface; }
-    // The name the table has in that interface.
-    Name name;
-  };
+  // struct TableInstanceInfo {
+  //   // The ModuleRunner instance in which the table is defined.
+  //   SubType* instance;
+  //   // The external interface in which the table is defined
+  //   ExternalInterface* interface() { return instance->externalInterface; }
+  //   // The name the table has in that interface.
+  //   Name name;
+  // };
 
   TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
-    SubType* importedInstance;
     if (table->imported()) {
-      if (auto it = linkedInstances.find(table->module);
-          it != linkedInstances.end()) {
-        importedInstance = it->second.get();
-      } else {
-        WASM_UNREACHABLE("no imported module for getTableInstanceInfo");
-      }
-      // auto& importedInstance = linkedInstances.at(table->module);
-      auto* tableExport = importedInstance->wasm.getExport(table->base);
-      return importedInstance->getTableInstanceInfo(
-        *tableExport->getInternalName());
+      return externalInterface->importedTableInstanceInfo(*table);
+      // SubType* importedInstance;
+      // if (auto it = linkedInstances.find(table->module);
+      //     it != linkedInstances.end()) {
+      //   importedInstance = it->second.get();
+      // } else {
+      //   Fatal()<< "getTableInstanceInfo(): No imported module provides
+      //   imported table "<< std::quoted(name.toString());
+      // }
+      // auto* tableExport = importedInstance->wasm.getExport(table->base);
+      // return importedInstance->getTableInstanceInfo(
+      //   *tableExport->getInternalName());
     }
 
     return TableInstanceInfo{self(), name};

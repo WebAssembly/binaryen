@@ -1282,13 +1282,6 @@ void evalCtors(Module& wasm,
 
   std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
-  // // build and link the env module
-  // auto envModule = buildEnvModule(wasm);
-  // CtorEvalExternalInterface envInterface;
-  // auto envInstance =
-  //   std::make_shared<EvallingModuleRunner>(*envModule, &envInterface);
-  // linkedInstances[envModule->name] = envInstance;
-
   CtorEvalExternalInterface interface(linkedInstances);
   try {
     // create an instance for evalling
