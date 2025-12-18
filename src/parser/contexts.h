@@ -935,6 +935,13 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<> makeResumeThrowRef(Index,
+                              const std::vector<Annotation>&,
+                              HeapTypeT,
+                              const TagLabelListT&) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<>
   makeStackSwitch(Index, const std::vector<Annotation>&, HeapTypeT, TagIdxT) {
     return Ok{};
@@ -2889,24 +2896,41 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return withLoc(pos, irBuilder.makeResume(type, tags, labels));
   }
 
+  struct ResumeThrowData {
+    std::vector<Name> tags;
+    std::vector<std::optional<Index>> labels;
+
+    ResumeThrowData(const std::vector<OnClauseInfo>& resumetable) {
+      tags.reserve(resumetable.size());
+      labels.reserve(resumetable.size());
+      for (const OnClauseInfo& info : resumetable) {
+        tags.push_back(info.tag);
+        if (info.isOnSwitch) {
+          labels.push_back(std::nullopt);
+        } else {
+          labels.push_back(std::optional<Index>(info.label));
+        }
+      }
+    }
+  };
+
   Result<> makeResumeThrow(Index pos,
                            const std::vector<Annotation>& annotations,
                            HeapType type,
                            Name tag,
                            const std::vector<OnClauseInfo>& resumetable) {
-    std::vector<Name> tags;
-    std::vector<std::optional<Index>> labels;
-    tags.reserve(resumetable.size());
-    labels.reserve(resumetable.size());
-    for (const OnClauseInfo& info : resumetable) {
-      tags.push_back(info.tag);
-      if (info.isOnSwitch) {
-        labels.push_back(std::nullopt);
-      } else {
-        labels.push_back(std::optional<Index>(info.label));
-      }
-    }
-    return withLoc(pos, irBuilder.makeResumeThrow(type, tag, tags, labels));
+    ResumeThrowData data(resumetable);
+    return withLoc(
+      pos, irBuilder.makeResumeThrow(type, tag, data.tags, data.labels));
+  }
+
+  Result<> makeResumeThrowRef(Index pos,
+                              const std::vector<Annotation>& annotations,
+                              HeapType type,
+                              const std::vector<OnClauseInfo>& resumetable) {
+    ResumeThrowData data(resumetable);
+    return withLoc(pos,
+                   irBuilder.makeResumeThrowRef(type, data.tags, data.labels));
   }
 
   Result<> makeStackSwitch(Index pos,

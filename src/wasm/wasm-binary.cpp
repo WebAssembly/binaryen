@@ -3374,9 +3374,13 @@ Result<> WasmBinaryReader::readInst() {
       }
       return builder.makeResume(type, tags, labels);
     }
-    case BinaryConsts::ResumeThrow: {
+    case BinaryConsts::ResumeThrow:
+    case BinaryConsts::ResumeThrowRef: {
       auto type = getIndexedHeapType();
-      auto tag = getTagName(getU32LEB());
+      Name tag;
+      if (code == BinaryConsts::ResumeThrow) {
+        tag = getTagName(getU32LEB());
+      }
       auto numHandlers = getU32LEB();
       std::vector<Name> tags;
       std::vector<std::optional<Index>> labels;

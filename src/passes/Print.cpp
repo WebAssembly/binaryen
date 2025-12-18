@@ -2623,11 +2623,15 @@ struct PrintExpressionContents
   void visitResumeThrow(ResumeThrow* curr) {
     assert(curr->cont->type.isContinuation());
     printMedium(o, "resume_throw");
-
+    if (!curr->tag) {
+      printMedium(o, "_ref");
+    }
     o << ' ';
     printHeapTypeName(curr->cont->type.getHeapType());
-    o << ' ';
-    curr->tag.print(o);
+    if (curr->tag) {
+      o << ' ';
+      curr->tag.print(o);
+    }
 
     handleResumeTable(o, curr);
   }

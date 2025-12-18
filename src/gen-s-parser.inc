@@ -4972,12 +4972,23 @@ switch (buf[0]) {
               return Ok{};
             }
             goto parse_error;
-          case '_':
-            if (op == "resume_throw"sv) {
-              CHECK_ERR(makeResumeThrow(ctx, pos, annotations));
-              return Ok{};
+          case '_': {
+            switch (buf[12]) {
+              case '\0':
+                if (op == "resume_throw"sv) {
+                  CHECK_ERR(makeResumeThrow(ctx, pos, annotations));
+                  return Ok{};
+                }
+                goto parse_error;
+              case '_':
+                if (op == "resume_throw_ref"sv) {
+                  CHECK_ERR(makeResumeThrowRef(ctx, pos, annotations));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           default: goto parse_error;
         }
       }
