@@ -14,7 +14,6 @@
 
 import os
 
-
 # Tests that the fuzzers should not operate on.
 unfuzzable = [
     # Float16 is still experimental.

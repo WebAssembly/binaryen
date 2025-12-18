@@ -2743,6 +2743,21 @@ Result<> makeResumeThrow(Ctx& ctx,
   return ctx.makeResumeThrow(pos, annotations, *type, *exnTag, *resumetable);
 }
 
+// resume_throw_ref ::= 'resume_throw' typeidx ('(' 'on' tagidx labelidx |
+// 'on' tagidx switch ')')*
+template<typename Ctx>
+Result<> makeResumeThrowRef(Ctx& ctx,
+                            Index pos,
+                            const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  auto resumetable = makeResumeTable(ctx);
+  CHECK_ERR(resumetable);
+
+  return ctx.makeResumeThrowRef(pos, annotations, *type, *resumetable);
+}
+
 // switch ::= 'switch' typeidx tagidx
 template<typename Ctx>
 Result<> makeStackSwitch(Ctx& ctx,

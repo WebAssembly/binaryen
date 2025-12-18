@@ -1,6 +1,7 @@
 import os
 
 from scripts.test import shared
+
 from . import utils
 
 
@@ -10,12 +11,12 @@ class WebLimitations(utils.BinaryenTestCase):
         disallow."""
 
         params = '(param i32) ' * 1001
-        module = '''
+        module = f'''
         (module
-         (func $foo %s
+         (func $foo {params}
          )
         )
-        ''' % params
+        '''
         p = shared.run_process(shared.WASM_OPT + ['-o', os.devnull],
                                input=module, capture_output=True)
         self.assertIn('Some VMs may not accept this binary because it has a large number of parameters in function foo.',
@@ -26,12 +27,12 @@ class WebLimitations(utils.BinaryenTestCase):
         disallow."""
 
         params = '(local i32) ' * 50_001
-        module = '''
+        module = f'''
         (module
-         (func $foo %s
+         (func $foo {params}
          )
         )
-        ''' % params
+        '''
         p = shared.run_process(shared.WASM_OPT + ['-o', os.devnull],
                                input=module, capture_output=True)
         self.assertIn('Some VMs may not accept this binary because it has a large number of locals in function foo.',

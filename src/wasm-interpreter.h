@@ -273,8 +273,13 @@ struct ContData {
   // suspend).
   Literals resumeArguments;
 
-  // If set, this is the exception to be thrown at the resume point.
+  // If set, this is the tag for an exception to be thrown at the resume point
+  // (from resume_throw).
   Tag* exceptionTag = nullptr;
+
+  // If set, this is the exception ref to be thrown at the resume point (from
+  // resume_throw_ref).
+  Literal exception;
 
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
@@ -4480,7 +4485,6 @@ public:
     }
   }
   Flow visitTryTable(TryTable* curr) {
-    assert(!self()->isResuming()); // TODO
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
@@ -4557,6 +4561,22 @@ public:
     old->executed = true;
     return Literal(std::make_shared<ContData>(newData));
   }
+
+  void maybeThrowAfterResuming(std::shared_ptr<ContData>& currContinuation) {
+    // We may throw by creating a tag, or an exnref.
+    auto* tag = currContinuation->exceptionTag;
+    auto exnref = currContinuation->exception.type != Type::none;
+    assert(!(tag && exnref));
+    if (tag) {
+      // resume_throw
+      throwException(WasmException{
+        self()->makeExnData(tag, currContinuation->resumeArguments)});
+    } else if (exnref) {
+      // resume_throw_ref
+      throwException(WasmException{currContinuation->exception});
+    }
+  }
+
   Flow visitSuspend(Suspend* curr) {
     // Process the arguments, whether or not we are resuming. If we are resuming
     // then we don't need these values (we sent them as part of the suspension),
@@ -4579,11 +4599,7 @@ public:
       // restoredValues map.
       assert(currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
-      // Throw, if we were resumed by resume_throw;
-      if (auto* tag = currContinuation->exceptionTag) {
-        throwException(WasmException{
-          self()->makeExnData(tag, currContinuation->resumeArguments)});
-      }
+      maybeThrowAfterResuming(currContinuation);
       return currContinuation->resumeArguments;
     }
 
@@ -4616,7 +4632,7 @@ public:
     new_->resumeExpr = curr;
     return Flow(SUSPEND_FLOW, tag, std::move(arguments));
   }
-  template<typename T> Flow doResume(T* curr, Tag* exceptionTag = nullptr) {
+  template<typename T> Flow doResume(T* curr) {
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments)
     VISIT_REUSE(flow, curr->cont);
@@ -4636,13 +4652,26 @@ public:
         trap("continuation already executed");
       }
       contData->executed = true;
+
       if (contData->resumeArguments.empty()) {
         // The continuation has no bound arguments. For now, we just handle the
         // simple case of binding all of them, so that means we can just use all
         // the immediate ones here. TODO
         contData->resumeArguments = arguments;
       }
-      contData->exceptionTag = exceptionTag;
+      // Fill in the continuation data. How we do this depends on whether we
+      // are resume or resume_throw*.
+      if (auto* resumeThrow = curr->template dynCast<ResumeThrow>()) {
+        if (resumeThrow->tag) {
+          // resume_throw
+          contData->exceptionTag =
+            self()->getModule()->getTag(resumeThrow->tag);
+        } else {
+          // resume_throw_ref
+          contData->exception = arguments[0];
+        }
+      }
+
       self()->pushCurrContinuation(contData);
       self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
@@ -4709,10 +4738,7 @@ public:
     return ret;
   }
   Flow visitResume(Resume* curr) { return doResume(curr); }
-  Flow visitResumeThrow(ResumeThrow* curr) {
-    // TODO: should the Resume and ResumeThrow classes be merged?
-    return doResume(curr, self()->getModule()->getTag(curr->tag));
-  }
+  Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override {
@@ -4784,10 +4810,7 @@ public:
         // to do is just start calling this function (with the arguments we've
         // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
-        if (auto* tag = currContinuation->exceptionTag) {
-          throwException(WasmException{
-            self()->makeExnData(tag, currContinuation->resumeArguments)});
-        }
+        maybeThrowAfterResuming(currContinuation);
       }
     }
 

@@ -1325,10 +1325,16 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       ct = curr->cont->type.getHeapType();
     }
     assert(ct->isContinuation());
-    auto params = wasm.getTag(curr->tag)->params();
-    assert(params.size() == curr->operands.size());
-    for (size_t i = 0; i < params.size(); ++i) {
-      note(&curr->operands[i], params[i]);
+    if (curr->tag) {
+      // resume_throw
+      auto params = wasm.getTag(curr->tag)->params();
+      assert(params.size() == curr->operands.size());
+      for (size_t i = 0; i < params.size(); ++i) {
+        note(&curr->operands[i], params[i]);
+      }
+    } else {
+      // resume_throw_ref
+      note(&curr->operands[0], Type(HeapType::exn, Nullable));
     }
     note(&curr->cont, Type(*ct, Nullable));
   }

@@ -15,24 +15,23 @@
 import os
 import subprocess
 
-from . import shared
-from . import support
+from . import shared, support
 
 
 def make_js_test_header(binaryen_js):
     # common wrapper code for JS tests, waiting for binaryen.js to become ready
     # and providing common utility used by all tests:
-    return '''
-import Binaryen from "%s";
+    return f'''
+import Binaryen from "{binaryen_js}";
 var binaryen = await Binaryen()
 
 // avoid stdout/stderr ordering issues in some js shells - use just stdout
 console.warn = console.error = console.log;
 
-function assert(x) {
+function assert(x) {{
     if (!x) throw Error('Test assertion failed');
-}
-''' % binaryen_js
+}}
+'''
 
 
 def make_js_test(input_js_file, binaryen_js):

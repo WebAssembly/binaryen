@@ -589,8 +589,8 @@
 ;; CHECK-NEXT:                                                 type fields where possible
 ;; CHECK-NEXT:                                                 (using GUFA)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --type-ssa                                    create new nominal types to help
-;; CHECK-NEXT:                                                 other optimizations
+;; CHECK-NEXT:   --type-ssa                                    create new types to help other
+;; CHECK-NEXT:                                                 optimizations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-unfinalizing                           mark all types as non-final
 ;; CHECK-NEXT:                                                 (open)

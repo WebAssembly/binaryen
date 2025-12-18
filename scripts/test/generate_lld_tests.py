@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
 
 import os
 import sys
 
 import shared
+
 import support
 
 
@@ -57,7 +57,7 @@ def generate_wat_files(llvm_bin, emscripten_sysroot):
             '-nostdinc',
             '-Xclang', '-nobuiltininc',
             '-Xclang', '-nostdsysteminc',
-            '-Xclang', '-I%s/include' % emscripten_sysroot,
+            '-Xclang', f'-I{emscripten_sysroot}/include'
             '-O1',
         ]
 
@@ -79,11 +79,10 @@ def generate_wat_files(llvm_bin, emscripten_sysroot):
             compile_cmd.append('-fvisibility=default')
             link_cmd.append('-shared')
             link_cmd.append('--experimental-pic')
+        elif 'reserved_func_ptr' in src_file:
+            link_cmd.append('--entry=__main_argc_argv')
         else:
-            if 'reserved_func_ptr' in src_file:
-                link_cmd.append('--entry=__main_argc_argv')
-            else:
-                link_cmd.append('--entry=main')
+            link_cmd.append('--entry=main')
 
         if is_64:
             compile_cmd.append('--target=wasm64-emscripten')

@@ -2474,13 +2474,13 @@ function wrapModule(module, self = {}) {
 
   self['call_ref'] = function(target, operands, type) {
     return preserveStack(() =>
-      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, false)
+      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type)
     );
   };
   
   self['return_call_ref'] = function(target, operands, type) {
     return preserveStack(() =>
-      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type, true)
+      Module['_BinaryenReturnCallRef'](module, target, i32sToStack(operands), operands.length, type)
     );
   }
 
@@ -2854,6 +2854,13 @@ function wrapModule(module, self = {}) {
   };
   self['optimize'] = function() {
     return Module['_BinaryenModuleOptimize'](module);
+  };
+  /**
+   * Updates the internal name mapping logic in a module. This must be called
+   * after renaming module elements.
+   */
+  self['updateMaps'] = function() {
+    Module['_BinaryenModuleUpdateMaps'](module);
   };
   self['optimizeFunction'] = function(func) {
     if (typeof func === 'string') func = self['getFunction'](func);

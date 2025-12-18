@@ -25,7 +25,6 @@ Usage: Provide a base filename for a runnable program, e.g. a.out.js.
        Other parameters after the first are used when calling the program.
 '''
 
-from __future__ import print_function
 
 import os
 import random

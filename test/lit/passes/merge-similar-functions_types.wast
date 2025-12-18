@@ -4,24 +4,37 @@
 
 ;; Calls to functions $2 and $3 are the only differences between the contents
 ;; of $0 and $1, so we want to merge them and pass ref.funcs of $2 and $3.
-;; However, their nominal types differ, so in nominal typing we cannot do so.
+;; However, their types differ, so we cannot do so.
 (module
- ;; CHECK:      (type $type$0 (sub (func)))
- (type $type$0 (sub (func)))
- (type $type$1 (sub (func)))
- (type $type$2 (sub (func)))
- (type $type$3 (sub (func (param f32) (result f32))))
- (type $type$4 (sub (func (param f64) (result f64))))
- ;; CHECK:      (type $1 (func (param (ref $type$0))))
+ (rec
+   ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (elem declare func $2 $3)
-
- ;; CHECK:      (func $0 (type $type$0)
- ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
- ;; CHECK-NEXT:   (ref.func $2)
- ;; CHECK-NEXT:  )
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $type$1 (sub (func)))
+   (type $type$1 (sub (func)))
+   ;; CHECK:       (type $type$2 (sub (func)))
+   (type $type$2 (sub (func)))
+ )
+ ;; CHECK:      (func $0 (type $0)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (call $2)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- (func $0 (type $type$0)
+ (func $0
   (nop)
   (nop)
   (nop)
@@ -40,12 +53,26 @@
   (nop)
   (nop)
  )
- ;; CHECK:      (func $1 (type $type$0)
- ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
- ;; CHECK-NEXT:   (ref.func $3)
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $1 (type $0)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (call $3)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- (func $1 (type $type$0)
+ (func $1
   (nop)
   (nop)
   (nop)
@@ -64,7 +91,7 @@
   (nop)
   (nop)
  )
- ;; CHECK:      (func $2 (type $type$0)
+ ;; CHECK:      (func $2 (type $type$1)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 17)
  ;; CHECK-NEXT:  )
@@ -74,7 +101,7 @@
    (i32.const 17)
   )
  )
- ;; CHECK:      (func $3 (type $type$0)
+ ;; CHECK:      (func $3 (type $type$2)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 999)
  ;; CHECK-NEXT:  )
@@ -86,37 +113,11 @@
  )
 )
 
-;; CHECK:      (func $byn$mgfn-shared$0 (type $1) (param $0 (ref $type$0))
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref $type$0
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT: )
 (module
- ;; As above, but now the nominal types do match, so we can optimize in all
- ;; modes.
- ;; CHECK:      (type $type$0 (sub (func)))
- (type $type$0 (sub (func)))
- (type $type$1 (sub (func)))
- (type $type$3 (sub (func (param f32) (result f32))))
- (type $type$4 (sub (func (param f64) (result f64))))
+ ;; As above, but now the types are the same, so we can optimize.
+ ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $1 (func (param (ref $type$0))))
+ ;; CHECK:      (type $1 (func (param (ref $0))))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
@@ -125,12 +126,12 @@
 
  ;; CHECK:      (elem declare func $2 $3)
 
- ;; CHECK:      (func $0 (type $type$0)
+ ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $0 (type $type$0)
+ (func $0
   (nop)
   (nop)
   (nop)
@@ -149,12 +150,12 @@
   (nop)
   (nop)
  )
- ;; CHECK:      (func $1 (type $type$0)
+ ;; CHECK:      (func $1 (type $0)
  ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $1 (type $type$0)
+ (func $1
   (nop)
   (nop)
   (nop)
@@ -173,28 +174,28 @@
   (nop)
   (nop)
  )
- ;; CHECK:      (func $2 (type $type$0)
+ ;; CHECK:      (func $2 (type $0)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 17)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $2 (type $type$1)
+ (func $2
   (drop
    (i32.const 17)
   )
  )
- ;; CHECK:      (func $3 (type $type$0)
+ ;; CHECK:      (func $3 (type $0)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 999)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $3 (type $type$1)
+ (func $3
   (drop
    (i32.const 999)
   )
  )
 )
-;; CHECK:      (func $byn$mgfn-shared$0 (type $1) (param $0 (ref $type$0))
+;; CHECK:      (func $byn$mgfn-shared$0 (type $1) (param $0 (ref $0))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -203,7 +204,7 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref $type$0
+;; CHECK-NEXT:  (call_ref $0
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (nop)

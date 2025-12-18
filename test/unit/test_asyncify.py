@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 
 from scripts.test import shared
+
 from . import utils
 
 
@@ -13,7 +14,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-sleep.wat'), '--asyncify', '-o', 'a.wasm'])
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-coroutine.wat'), '--asyncify', '-o', 'b.wasm'])
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-stackOverflow.wat'), '--asyncify', '-o', 'c.wasm'])
-            print('  file size: %d' % os.path.getsize('a.wasm'))
+            print(f'  file size: {os.path.getsize("a.wasm")}')
             if shared.NODEJS:
                 shared.run_process([shared.NODEJS, self.input_path('asyncify.js')], capture_output=True)
 
@@ -29,7 +30,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT + [input_file, '--asyncify', '-o', 'a.wasm'])
             shared.run_process(shared.WASM_DIS + ['a.wasm', '-o', 'a.wat'])
             output = shared.run_process(shared.WASM_SHELL + ['a.wat'], capture_output=True).stdout
-            with open(self.input_path('asyncify-pure.txt'), 'r') as f:
+            with open(self.input_path('asyncify-pure.txt')) as f:
                 self.assert_equal_ignoring_line_endings(f.read(), output)
 
         # test wat input
@@ -67,7 +68,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
             args = shared.WASM_OPT + [self.input_path('asyncify-pure.wat'),
                                       '--asyncify',
                                       '--pass-arg=asyncify-onlylist@main',
-                                      '--pass-arg=asyncify-%slist@main' % list_name]
+                                      f'--pass-arg=asyncify-{list_name}list@main']
             proc = shared.run_process(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
             self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
             self.assertIn('It makes no sense to use both an asyncify only-list together with another list', proc.stdout)
@@ -92,7 +93,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
         temp = tempfile.NamedTemporaryFile().name
         with open(temp, 'w') as f:
             f.write('env.sleep')
-        response = test(['--pass-arg=asyncify-imports@@%s' % temp])
+        response = test([f'--pass-arg=asyncify-imports@@{temp}'])
         self.assertEqual(normal, response)
         without = test(['--pass-arg=asyncify-imports@without.anything'])
         self.assertNotEqual(normal, without)
