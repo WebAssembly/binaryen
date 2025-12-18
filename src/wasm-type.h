@@ -256,6 +256,11 @@ public:
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
 
+  // We support more precise types in the IR than the enabled feature set would
+  // suggest. Get the generalized version of the type that will be written by
+  // the binary writer given the feature set.
+  inline HeapType asWrittenGivenFeatures(FeatureSet feats) const;
+
   // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
   // a `TypeID` because `Type` is incomplete at this point and using a reference
   // makes it less convenient to use.
@@ -274,6 +279,16 @@ public:
 
   std::string toString() const;
 };
+
+HeapType HeapType::asWrittenGivenFeatures(FeatureSet feats) const {
+  // Without GC, only top types like func and extern are supported. The
+  // exception is string, since stringref can be enabled without GC and we still
+  // expect to write stringref types in that case.
+  if (!feats.hasGC() && *this != HeapType::string) {
+    return getTop();
+  }
+  return *this;
+}
 
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
@@ -411,7 +426,7 @@ public:
     return isRef() && getHeapType().isContinuation();
   }
   bool isDefaultable() const;
-  bool isCastable();
+  bool isCastable() const;
 
   // TODO: Allow this only for reference types.
   Nullability getNullability() const {
@@ -441,6 +456,11 @@ public:
   Type withInexactIfNoCustomDescs(FeatureSet feats) const {
     return !isExact() || feats.hasCustomDescriptors() ? *this : with(Inexact);
   }
+
+  // We support more precise types in the IR than the enabled feature set would
+  // suggest. Get the generalized version of the type that will be written by
+  // the binary writer given the feature set.
+  inline Type asWrittenGivenFeatures(FeatureSet feats) const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -569,6 +589,20 @@ public:
   }
   const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
+
+Type Type::asWrittenGivenFeatures(FeatureSet feats) const {
+  if (!isRef()) {
+    return *this;
+  }
+  auto type = with(getHeapType().asWrittenGivenFeatures(feats));
+  if (!feats.hasGC()) {
+    type = type.with(Nullable);
+  }
+  if (!feats.hasCustomDescriptors()) {
+    type = type.with(Inexact);
+  }
+  return type;
+}
 
 namespace HeapTypes {
 
@@ -870,6 +904,9 @@ struct TypeBuilder {
     InvalidUnsharedDescribes,
     // The custom descriptors feature is missing.
     RequiresCustomDescriptors,
+    // Two rec groups with different shapes would have the same shapes after
+    // the binary writer generalizes refined types that use disabled features.
+    RecGroupCollision,
   };
 
   struct Error {
