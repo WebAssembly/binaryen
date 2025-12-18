@@ -19,7 +19,7 @@
 import os
 import subprocess
 
-import test.shared as shared
+from test import shared
 
 script_dir = os.path.dirname(__file__)
 root_dir = os.path.dirname(script_dir)

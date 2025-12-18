@@ -15,8 +15,8 @@
 # limitations under the License.
 
 import os
-import sys
 import subprocess
+import sys
 
 from test import support
 
@@ -33,7 +33,7 @@ def main():
     cmd = sys.argv[3:]
     returncode = 0
     all_modules = open(infile).read()
-    for i, (module, asserts) in enumerate(support.split_wast(infile)):
+    for i, (module, _asserts) in enumerate(support.split_wast(infile)):
         tempname = tempfile + '.' + str(i)
         with open(tempname, 'w') as temp:
             print(module, file=temp)

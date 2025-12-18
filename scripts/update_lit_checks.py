@@ -235,9 +235,7 @@ def update_test(args, test, lines, tmp):
 
     command_output = get_command_output(args, output_kind, test, lines, tmp)
 
-    prefixes = set(prefix
-                   for module_output in command_output
-                   for prefix in module_output.keys())
+    prefixes = {prefix for module_output in command_output for prefix in module_output.keys()}
     check_line_re = re.compile(r'^\s*;;\s*(' + '|'.join(prefixes) +
                                r')(?:-NEXT|-LABEL|-NOT)?:.*$')
 
@@ -269,8 +267,7 @@ def update_test(args, test, lines, tmp):
         def pad(line):
             return line if not line or line.startswith(' ') else ' ' + line
         output_lines.append(f'{indent};; {prefix}:     {pad(lines[0])}')
-        for line in lines[1:]:
-            output_lines.append(f'{indent};; {prefix}-NEXT:{pad(line)}')
+        output_lines.extend(f'{indent};; {prefix}-NEXT:{pad(line)}' for line in lines[1:])
 
     input_modules = [m.split('\n') for m in split_modules('\n'.join(lines))]
     if len(input_modules) > len(command_output):
@@ -301,7 +298,7 @@ def update_test(args, test, lines, tmp):
                 # name, emit all the items up to and including the matching
                 # item
                 has_item = False
-                for kind_name, lines in items:
+                for kind_name, _lines in items:
                     if name and (kind, name) == kind_name:
                         has_item = True
                         break
