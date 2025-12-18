@@ -1888,6 +1888,9 @@ void WasmBinaryWriter::writeType(Type type) {
 
 void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
   type = type.asWrittenWithFeatures(wasm->features);
+  if (!wasm->features.hasCustomDescriptors()) {
+    exactness = Inexact;
+  }
   assert(!type.isBasic() || exactness == Inexact);
   if (exactness == Exact) {
     o << uint8_t(BinaryConsts::EncodedType::Exact);
