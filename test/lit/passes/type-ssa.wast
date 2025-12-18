@@ -460,7 +460,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $array_1 (sub $array (array (mut f32))))
 
-  ;; CHECK:       (type $4 (struct (field (mut i32)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
+  ;; CHECK:       (type $4 (struct))
 
   ;; CHECK:      (func $1 (type $2) (param $ref (ref $subarray))
   ;; CHECK-NEXT:  (drop
