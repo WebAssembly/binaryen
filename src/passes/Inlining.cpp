@@ -1262,6 +1262,9 @@ struct Inlining : public Pass {
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
+  // We do this only where we inline, inside updateAfterInlining().
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // whether to optimize where we inline
   bool optimize = false;
 
