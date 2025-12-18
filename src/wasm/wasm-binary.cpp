@@ -1798,23 +1798,8 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 }
 
 void WasmBinaryWriter::writeType(Type type) {
+  type = type.asWrittenWithFeatures(wasm->features);
   if (type.isRef()) {
-    // The only reference types allowed without GC are funcref, externref, and
-    // exnref. We internally use more refined versions of those types, but we
-    // cannot emit those without GC.
-    if (!wasm->features.hasGC()) {
-      auto ht = type.getHeapType();
-      if (ht.isMaybeShared(HeapType::string)) {
-        // Do not overgeneralize stringref to anyref. We have tests that when a
-        // stringref is expected, we actually get a stringref. If we see a
-        // string, the stringref feature must be enabled.
-        type = Type(HeapTypes::string.getBasic(ht.getShared()), Nullable);
-      } else {
-        // Only the top type (func, extern, exn) is available, and only the
-        // nullable version.
-        type = Type(type.getHeapType().getTop(), Nullable);
-      }
-    }
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
       switch (heapType.getBasic(Unshared)) {
@@ -1902,15 +1887,7 @@ void WasmBinaryWriter::writeType(Type type) {
 }
 
 void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
-  // ref.null always has a bottom heap type in Binaryen IR, but those types are
-  // only actually valid with GC. Otherwise, emit the corresponding valid top
-  // types instead.
-  if (!wasm->features.hasCustomDescriptors()) {
-    exactness = Inexact;
-  }
-  if (!wasm->features.hasGC()) {
-    type = type.getTop();
-  }
+  type = type.asWrittenWithFeatures(wasm->features);
   assert(!type.isBasic() || exactness == Inexact);
   if (exactness == Exact) {
     o << uint8_t(BinaryConsts::EncodedType::Exact);
