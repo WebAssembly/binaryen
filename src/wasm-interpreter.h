@@ -29,6 +29,7 @@
 #define wasm_wasm_interpreter_h
 
 #include <cmath>
+#include <iomanip>
 #include <limits.h>
 #include <sstream>
 #include <variant>
@@ -3310,7 +3311,8 @@ private:
           it != linkedInstances.end()) {
         importedInstance = it->second.get();
       } else {
-        WASM_UNREACHABLE("no imported module for getTableInstanceInfo");
+        Fatal() << "getTableInstanceInfo: no imported module providing "
+                << std::quoted(name.toString());
       }
       // auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
@@ -3368,7 +3370,14 @@ private:
   MemoryInstanceInfo getMemoryInstanceInfo(Name name) {
     auto* memory = wasm.getMemory(name);
     if (memory->imported()) {
-      auto& importedInstance = linkedInstances.at(memory->module);
+      SubType* importedInstance;
+      if (auto it = linkedInstances.find(memory->module);
+          it != linkedInstances.end()) {
+        importedInstance = it->second.get();
+      } else {
+        Fatal() << "getMemoryInstanceInfo: no imported module providing "
+                << std::quoted(name.toString());
+      }
       auto* memoryExport = importedInstance->wasm.getExport(memory->base);
       return importedInstance->getMemoryInstanceInfo(
         *memoryExport->getInternalName());

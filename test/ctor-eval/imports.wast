@@ -1,14 +1,15 @@
 (module
  ;; (import "import" "tag" (tag $tag))
  ;; (import "import" "func" (func $logi64 (param i64)))
- ;; (import "import" "global" (global $global i32))
+ (import "import" "global" (global $global i32))
  ;; (import "import" "table" (table $table 1 1 anyref))
  (import "import" "memory" (memory $memory 1 1))
 
  (global $non-imported-global (mut i32) (i32.const 5))
  (func $foo (result i32)
   (nop)
-  (i32.store (i32.const 1) (i32.const 1))
+  ;; (i32.store (i32.const 1) (i32.const 1))
+;;   (drop (i32.load $memory (i32.const 1)))
   (drop (global.get $non-imported-global))
   (global.set $non-imported-global (i32.const 2))
   (i32.const 1)

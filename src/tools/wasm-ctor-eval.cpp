@@ -84,17 +84,43 @@ public:
                                 global->base.toString());
     }
 
-    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
+    return ModuleRunnerBase::visitGlobalGet(curr);
+  }
+
+  Flow visitLoad(Load* curr) {
+    auto* memory = wasm.getMemory(curr->memory);
+    if (memory->imported()) {
+      throw FailToEvalException("Can't load from imported memory");
+    }
+
+    return ModuleRunnerBase::visitLoad(curr);
+  }
+
+  Flow visitStore(Store* curr) {
+    auto* memory = wasm.getMemory(curr->memory);
+    if (memory->imported()) {
+      throw FailToEvalException("Can't store to imported memory");
+    }
+
+    return ModuleRunnerBase::visitStore(curr);
   }
 
   Flow visitTableGet(TableGet* curr) {
-    // We support tableLoad, below, so that call_indirect works (it calls it
-    // internally), but we want to disable table.get for now.
-    throw FailToEvalException("TODO: table.get");
+    auto table = wasm.getTable(curr->table);
+    if (table->imported()) {
+      throw FailToEvalException("Can't get on imported table");
+    }
+
+    return ModuleRunnerBase::visitTableGet(curr);
   }
 
-  Flow visitTableSet(TableGet* curr) {
-    throw FailToEvalException("TODO: table.set");
+  Flow visitTableSet(TableSet* curr) {
+    auto table = wasm.getTable(curr->table);
+    if (table->imported()) {
+      throw FailToEvalException("Can't set on imported table");
+    }
+
+    return ModuleRunnerBase::visitTableSet(curr);
   }
 
   bool allowContNew = true;
@@ -103,7 +129,7 @@ public:
     if (!allowContNew) {
       throw FailToEvalException("cont.new disallowed");
     }
-    return ModuleRunnerBase<EvallingModuleRunner>::visitContNew(curr);
+    return ModuleRunnerBase::visitContNew(curr);
   }
 
   // This needs to be duplicated from ModuleRunner, unfortunately.
