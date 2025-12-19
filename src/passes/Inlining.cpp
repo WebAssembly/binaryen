@@ -198,6 +198,8 @@ struct FunctionInfoScanner
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   FunctionInfoScanner(NameInfoMap& infos) : infos(infos) {}
 
   std::unique_ptr<Pass> create() override {
@@ -322,6 +324,8 @@ struct InliningState {
 
 struct Planner : public WalkerPass<TryDepthWalker<Planner>> {
   bool isFunctionParallel() override { return true; }
+
+  bool modifiesBinaryenIR() override { return false; }
 
   Planner(InliningState* state) : state(state) {}
 
@@ -688,8 +692,9 @@ static void updateAfterInlining(Module* module, Function* into) {
   // Inlining unreachable contents can make things in the function we inlined
   // into unreachable.
   ReFinalize().walkFunctionInModule(into, module);
-  // New locals we added may require fixups for nondefaultability.
-  // FIXME Is this not done automatically?
+  // New locals we added may require fixups for nondefaultability. We do this
+  // here and not in the main pass (or its subpasses) so that we only do it
+  // where needed.
   TypeUpdating::handleNonDefaultableLocals(into, *module);
 }
 
@@ -709,6 +714,9 @@ using ChosenActions = std::unordered_map<Name, std::vector<InliningAction>>;
 // perform.
 struct DoInlining : public Pass {
   bool isFunctionParallel() override { return true; }
+
+  // We do this only where we inline, inside updateAfterInlining().
+  bool requiresNonNullableLocalFixups() override { return false; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<DoInlining>(chosenActions);
@@ -1253,6 +1261,9 @@ struct Inlining : public Pass {
   // This pass changes locals and parameters.
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
+
+  // We do this only where we inline, inside updateAfterInlining().
+  bool requiresNonNullableLocalFixups() override { return false; }
 
   // whether to optimize where we inline
   bool optimize = false;
