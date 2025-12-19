@@ -87,6 +87,12 @@ public:
     return ModuleRunnerBase::visitGlobalGet(curr);
   }
 
+  Flow visitTableGet(TableGet* curr) {
+    // We support tableLoad, below, so that call_indirect works (it calls it
+    // internally), but we want to disable table.get for now.
+    throw FailToEvalException("TODO: table.get");
+  }
+
   Flow visitLoad(Load* curr) {
     auto* memory = wasm.getMemory(curr->memory);
     if (memory->imported()) {

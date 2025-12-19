@@ -1,8 +1,10 @@
 (module
+ ;; Importing things without using them doesn't affect evaluation of ctors.
  (import "import" "tag" (tag $tag))
  (import "import" "func" (func $logi64 (param i64)))
  (import "import" "memory" (memory $memory 1 1))
  ;; TODO: Fix importing for these two remaining types
+ ;; https://github.com/WebAssembly/binaryen/issues/8145
  ;; (import "import" "global" (global $global i32))
  ;; (import "import" "table" (table $table 1 1 anyref))
 

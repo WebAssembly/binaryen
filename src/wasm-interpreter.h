@@ -3310,8 +3310,8 @@ private:
 
   TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
-    SubType* importedInstance;
     if (table->imported()) {
+      SubType* importedInstance;
       if (auto it = linkedInstances.find(table->module);
           it != linkedInstances.end()) {
         importedInstance = it->second.get();
@@ -3319,7 +3319,6 @@ private:
         Fatal() << "getTableInstanceInfo: no imported module providing "
                 << std::quoted(name.toString());
       }
-      // auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
       return importedInstance->getTableInstanceInfo(
         *tableExport->getInternalName());
