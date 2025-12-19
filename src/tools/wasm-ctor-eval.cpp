@@ -93,6 +93,10 @@ public:
     throw FailToEvalException("TODO: table.get");
   }
 
+  Flow visitTableSet(TableGet* curr) {
+    throw FailToEvalException("TODO: table.set");
+  }
+
   bool allowContNew = true;
 
   Flow visitContNew(ContNew* curr) {
