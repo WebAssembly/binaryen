@@ -480,7 +480,7 @@
 )
 
 ;; Test we do not error on resume_throw_ref. It adds no subtyping constraints
-;; between declared types.
+;; between declared types besides those from the handlers.
 (module
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $f (func))
