@@ -301,15 +301,11 @@ def delete_from_orbit(filename):
         pass
 
 
-def run_process(cmd, check=True, input=None, decode_output=True, *args, **kwargs):
-    if input and type(input) is str:
-        input = bytes(input, 'utf-8')
-    ret = subprocess.run(cmd, *args, check=check, input=input, **kwargs)
-    if decode_output and ret.stdout is not None:
-        ret.stdout = ret.stdout.decode('utf-8')
-    if ret.stderr is not None:
-        ret.stderr = ret.stderr.decode('utf-8')
-    return ret
+def run_process(cmd, check=True, text=True, *args, **kw):
+    """Trivial wrapper around subprocess.run that defaults to check=True and
+    text=True
+    """
+    return subprocess.run(cmd, check=check, text=text, *args, **kw)
 
 
 def fail_with_error(msg):
