@@ -473,8 +473,6 @@ public:
 
   const TypeUpdates& mapping;
 
-  std::unordered_map<HeapType, Signature> newSignatures;
-
   TypeMapper(Module& wasm, const TypeUpdates& mapping)
     : GlobalTypeRewriter(wasm), mapping(mapping) {}
 
