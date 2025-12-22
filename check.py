@@ -250,10 +250,9 @@ def run_one_spec_test(wast: Path, stdout=None):
 
 
 def run_spec_test_with_wrapped_stdout(wast: Path):
-    '''
-    Returns (bool, str) where the first element is whether the test was
+    """Return (bool, str) where the first element is whether the test was
     successful and the second is the combined stdout and stderr of the test.
-    '''
+    """
     out = io.StringIO()
     try:
         run_one_spec_test(wast, stdout=out)
@@ -266,12 +265,16 @@ def run_spec_test_with_wrapped_stdout(wast: Path):
 
 
 @contextmanager
-def red_stdout():
+def red_output(file=sys.stdout):
+    print("\033[31m", end="", file=file)
     try:
-        print("\033[31m", end="")
         yield
     finally:
-        print("\033[0m", end="")
+        print("\033[0m", end="", file=file)
+
+
+def red_stderr():
+    return red_output(file=sys.stderr)
 
 
 def run_spec_tests():
@@ -291,21 +294,19 @@ def run_spec_tests():
 
                 failed_stdouts.append(stdout)
                 if shared.options.abort_on_first_failure:
-                    with red_stdout():
-                        print("Aborted tests execution after first failure. Set --no-fail-fast to disable this.")
+                    with red_stderr():
+                        print("Aborted spec test suite execution after first failure. Set --no-fail-fast to disable this.", file=sys.stderr)
                     break
         except KeyboardInterrupt:
             # Hard exit to avoid threads continuing to run after Ctrl-C.
             # There's no concern of deadlocking during shutdown here.
             os._exit(1)
 
-    if not failed_stdouts:
-        return
-
-    with red_stdout():
-        print("Failed tests:")
-        for failed in failed_stdouts:
-            print(failed, end="")
+    if failed_stdouts:
+        with red_stderr():
+            print("Failed tests:", file=sys.stderr)
+            for failed in failed_stdouts:
+                print(failed, end="", file=sys.stderr)
 
 
 def run_validator_tests():
