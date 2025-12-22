@@ -21,6 +21,7 @@ import subprocess
 import sys
 import unittest
 from collections import OrderedDict
+from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
@@ -219,6 +220,7 @@ def run_one_spec_test(wast: Path, stdout=None):
             return  # don't try all the binary format stuff TODO
         else:
             shared.fail_with_error(str(e))
+            raise
 
     check_expected(actual, expected, stdout=stdout)
 
@@ -248,6 +250,9 @@ def run_one_spec_test(wast: Path, stdout=None):
 
 
 def run_spec_test_with_wrapped_stdout(wast: Path):
+    """Return (bool, str) where the first element is whether the test was
+    successful and the second is the combined stdout and stderr of the test.
+    """
     out = io.StringIO()
     try:
         run_one_spec_test(wast, stdout=out)
@@ -255,8 +260,21 @@ def run_spec_test_with_wrapped_stdout(wast: Path):
         # Serialize exceptions into the output string buffer
         # so they can be reported on the main thread.
         print(e, file=out)
-        raise
-    return out.getvalue()
+        return False, out.getvalue()
+    return True, out.getvalue()
+
+
+@contextmanager
+def red_output(file=sys.stdout):
+    print("\033[31m", end="", file=file)
+    try:
+        yield
+    finally:
+        print("\033[0m", end="", file=file)
+
+
+def red_stderr():
+    return red_output(file=sys.stderr)
 
 
 def run_spec_tests():
@@ -264,15 +282,31 @@ def run_spec_tests():
 
     worker_count = os.cpu_count()
     print("Running with", worker_count, "workers")
-    test_paths = [Path(x) for x in shared.options.spec_tests]
+    test_paths = (Path(x) for x in shared.options.spec_tests)
+
+    failed_stdouts = []
     with ThreadPool(processes=worker_count) as pool:
         try:
-            for result in pool.imap_unordered(run_spec_test_with_wrapped_stdout, test_paths):
-                print(result, end="")
+            for success, stdout in pool.imap_unordered(run_spec_test_with_wrapped_stdout, test_paths):
+                if success:
+                    print(stdout, end="")
+                    continue
+
+                failed_stdouts.append(stdout)
+                if shared.options.abort_on_first_failure:
+                    with red_stderr():
+                        print("Aborted spec test suite execution after first failure. Set --no-fail-fast to disable this.", file=sys.stderr)
+                    break
         except KeyboardInterrupt:
             # Hard exit to avoid threads continuing to run after Ctrl-C.
             # There's no concern of deadlocking during shutdown here.
             os._exit(1)
+
+    if failed_stdouts:
+        with red_stderr():
+            print("Failed tests:", file=sys.stderr)
+            for failed in failed_stdouts:
+                print(failed, end="", file=sys.stderr)
 
 
 def run_validator_tests():
