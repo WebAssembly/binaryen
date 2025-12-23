@@ -46,6 +46,7 @@
 #include "wasm-limits.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
+#include "wasm/import-resolver.h"
 
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
 #include <sanitizer/lsan_interface.h>
