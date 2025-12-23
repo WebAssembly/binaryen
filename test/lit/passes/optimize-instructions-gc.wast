@@ -3719,7 +3719,8 @@
     ;; arm is i31, the other a struct, both non-nullable, and hence there is no
     ;; overlap). If we do that, and emit a 0, we'd be turning an unreachable
     ;; into a concrete type, and nothing pops that type off the stack, so we
-    ;; would fail to validate.
+    ;; would fail to validate. Instead, we should leave this code for DCE, aside
+    ;; from moving the ref.i31 out.
     (ref.eq
       (if (result (ref i31))
         (unreachable)

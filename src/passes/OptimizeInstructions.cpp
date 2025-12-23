@@ -1801,8 +1801,8 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Check for unreachability. Note we must check both the children and the
-    // ref.eq itself, as in e.g. visitTernary, as we only refinalize at the end,
-    // so unreachable children may not update the parent yet.
+    // ref.eq itself, as in e.g. optimizeTernary, as we only refinalize at the
+    // end, so unreachable children may not update the parent yet.
     auto leftType = curr->left->type;
     auto rightType = curr->right->type;
     if (leftType == Type::unreachable || rightType == Type::unreachable ||
