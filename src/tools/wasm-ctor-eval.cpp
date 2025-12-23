@@ -451,12 +451,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     throw FailToEvalException("grow table");
   }
 
-  void trap(const char* why) override {
-    throw FailToEvalException(std::string("trap: ") + why);
+  void trap(std::string_view why) override {
+    throw FailToEvalException(std::string("trap: ") + std::string(why));
   }
 
-  void hostLimit(const char* why) override {
-    throw FailToEvalException(std::string("trap: ") + why);
+  void hostLimit(std::string_view why) override {
+    throw FailToEvalException(std::string("trap: ") + std::string(why));
   }
 
   void throwException(const WasmException& exn) override {
