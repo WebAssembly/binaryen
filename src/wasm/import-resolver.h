@@ -1,4 +1,3 @@
-
 #include <optional>
 #include <utility>
 
@@ -16,7 +15,12 @@ public:
   virtual ~ImportResolver() = default;
   // For ctor-eval, we want to provide imports that are guaranteed to type-check
   // against the import type. Providing the expected type here helps us 'cheat'.
-  virtual std::optional<Global> getGlobal(QualifiedName name, Type type) = 0;
+
+  // Here we should also consider `Literal` instead of `Literals`. `Literals`
+  // seems to be used for consisentecy in some other places that may return
+  // multiple values like functions, but I don't think it's relevant in the case
+  // of globals.
+  virtual std::optional<Literals*> getGlobal(QualifiedName name, Type type) = 0;
   // One concern here, tables and memories can change type when resized.
   virtual std::optional<Memory>
   getMemory(QualifiedName name /*, MemoryType type ? */) = 0;
@@ -27,14 +31,25 @@ public:
   virtual std::optional<Tag> getTag(QualifiedName name, Signature type) = 0;
 };
 
+// This is defined in wasm-interpreter.h which would lead to a circular
+// reference.
+// TODO: extract this class out maybe?
+class ModuleRunner {
+public:
+  std::map<Name, Literals> definedGlobals;
+};
+
 class LinkedInstancesImportResolver : public ImportResolver {
 public:
   LinkedInstancesImportResolver(
     const std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances)
     : linkedInstances(linkedInstances) {}
 
-  std::optional<Global> getGlobal(QualifiedName name,
-                                  Type type) const override {}
+  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
+    auto instance = *linkedInstances.find(name.first);
+    auto* global = &instance.second->definedGlobals[name.second];
+    return global;
+  }
 
   std::optional<Memory>
   getMemory(QualifiedName name /*, MemoryType type ? */) override {

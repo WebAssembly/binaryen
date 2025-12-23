@@ -3181,6 +3181,13 @@ public:
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
 
+public:
+  // keyed by internal name
+  // This is the same as GlobalValueSet
+  std::map<Name, Literals> definedGlobals;
+  std::map<Name, Literals*> allGlobals;
+
+private:
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
