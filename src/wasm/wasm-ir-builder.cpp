@@ -2168,6 +2168,9 @@ Result<> IRBuilder::makeStructGet(HeapType type,
                                   Index field,
                                   bool signed_,
                                   MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.get"};
+  }
   const auto& fields = type.getStruct().fields;
   StructGet curr;
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
