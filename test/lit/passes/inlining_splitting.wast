@@ -828,7 +828,7 @@
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_67
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_70
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -843,7 +843,7 @@
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_67
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_70
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1279,6 +1279,21 @@
 
 
 
+  ;; CHECK:      (func $nop (type $2) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (br $loop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return_call $nop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $nop (param $x anyref) (result anyref)
     ;; A loop and recursion, to avoid this getting inlined (we want to keep the
     ;; return_call to here as a return_call).
@@ -1297,6 +1312,27 @@
     )
   )
 
+  ;; CHECK:      (func $reachable-if-body-return_call (type $2) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (return_call $nop
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
   (func $reachable-if-body-return_call (param $x anyref) (result anyref)
     (if
       (ref.is_null
@@ -1396,7 +1432,7 @@
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_76
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_79
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -1429,7 +1465,7 @@
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_76
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_79
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -1601,7 +1637,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$colliding-name_67 (type $1) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$colliding-name_70 (type $1) (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
@@ -1624,7 +1660,7 @@
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$multi-if_76 (type $3) (param $x anyref)
+;; CHECK:      (func $byn-split-outlined-B$multi-if_79 (type $3) (param $x anyref)
 ;; CHECK-NEXT:  (loop $x
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br_if $x
