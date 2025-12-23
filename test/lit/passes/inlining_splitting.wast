@@ -1276,6 +1276,71 @@
     (call $unreachable-if-body-no-result (ref.null any))
   )
 
+
+
+
+  (func $nop (param $x anyref) (result anyref)
+    ;; A loop and recursion, to avoid this getting inlined (we want to keep the
+    ;; return_call to here as a return_call).
+    (loop $loop
+      (if
+        (ref.is_null
+          (local.get $x)
+        )
+        (then
+          (br $loop)
+        )
+      )
+      (return_call $nop
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $reachable-if-body-return_call (param $x anyref) (result anyref)
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (then
+        (if
+          (i32.const 1)
+          ;; The return_call here prevents the optimization.
+          (then
+            (return_call $nop
+              (local.get $x)
+            )
+          )
+          (else
+            (call $import)
+          )
+        )
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $call-reachable-if-body-return_call (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $reachable-if-body-return_call
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $reachable-if-body-return_call
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-reachable-if-body-return_call
+    (drop (call $reachable-if-body-return_call (ref.null any)))
+    (drop (call $reachable-if-body-return_call (ref.null any)))
+  )
+
+
+
+
+
   (func $multi-if (param $x anyref) (result anyref)
     (if
       (ref.is_null
