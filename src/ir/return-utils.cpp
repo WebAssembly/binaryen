@@ -60,8 +60,6 @@ Info getInfo(Expression* curr) {
   struct Finder : PostWalker<Finder> {
     Info info;
 
-    Finder(Info& info) : info(info) {}
-
     void visitReturn(Return* curr) {
       info.hasReturn = true;
     }
