@@ -1276,9 +1276,6 @@
     (call $unreachable-if-body-no-result (ref.null any))
   )
 
-
-
-
   ;; CHECK:      (func $nop (type $2) (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
@@ -1341,7 +1338,9 @@
       (then
         (if
           (i32.const 1)
-          ;; The return_call here prevents the optimization.
+          ;; The return_call here prevents the optimization (nothing is inlined
+          ;; in our caller, below), just like the return in the previous
+          ;; testcase.
           (then
             (return_call $nop
               (local.get $x)
@@ -1369,13 +1368,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-reachable-if-body-return_call
+    ;; We do not inline here.
     (drop (call $reachable-if-body-return_call (ref.null any)))
     (drop (call $reachable-if-body-return_call (ref.null any)))
   )
-
-
-
-
 
   (func $multi-if (param $x anyref) (result anyref)
     (if
