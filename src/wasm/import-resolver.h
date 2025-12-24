@@ -34,39 +34,27 @@ public:
 // This is defined in wasm-interpreter.h which would lead to a circular
 // reference.
 // TODO: extract this class out maybe?
-class ModuleRunner {
-public:
-  std::map<Name, Literals> definedGlobals;
-};
+// class ModuleRunner {
+// public:
+//   std::map<Name, Literals> definedGlobals;
+// };
+class ModuleRunner;
 
 class LinkedInstancesImportResolver : public ImportResolver {
 public:
   LinkedInstancesImportResolver(
-    const std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances)
-    : linkedInstances(linkedInstances) {}
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances);
 
-  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
-    auto instance = *linkedInstances.find(name.first);
-    auto* global = &instance.second->definedGlobals[name.second];
-    return global;
-  }
+  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override;
 
   std::optional<Memory>
-  getMemory(QualifiedName name /*, MemoryType type ? */) override {
-    return std::nullopt;
-  }
+  getMemory(QualifiedName name /*, MemoryType type ? */) override;
   std::optional<Table>
-  getTable(QualifiedName name /*, TableType type ? */) override {
-    return std::nullopt;
-  }
+  getTable(QualifiedName name /*, TableType type ? */) override;
 
-  std::optional<Function> getFunction(QualifiedName name, Type type) override {
-    return std::nullopt;
-  }
+  std::optional<Function> getFunction(QualifiedName name, Type type) override;
 
-  std::optional<Tag> getTag(QualifiedName name, Signature type) override {
-    return std::nullopt;
-  }
+  std::optional<Tag> getTag(QualifiedName name, Signature type) override;
 
 private:
   const std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;

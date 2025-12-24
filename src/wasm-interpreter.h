@@ -3187,13 +3187,14 @@ public:
   std::map<Name, Literals> definedGlobals;
   std::map<Name, Literals*> allGlobals;
 
-private:
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
-      externalInterface(externalInterface), linkedInstances(linkedInstances_) {
+      externalInterface(externalInterface), linkedInstances(linkedInstances_),
+      importResolver(
+        std::make_shared<LinkedInstancesImportResolver>(linkedInstances)) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3216,6 +3217,19 @@ private:
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
   void instantiate() {
+
+    // for (auto global : wasm.globals) {
+    //   if (global->imported()) {
+    //     auto importedGlobal = importResolver->getGlobal(global->module,
+    //     global->base, global->type); if (!importedGlobal) { /* failure */ }
+    //     allGlobals[global->name] = *importedGlobal;
+    //   } else {
+    //     Literal init = self()->visit(global->init).values;
+    //     auto& definedGlobal definedGlobals.emplace_back(init);
+    //     allGlobals[global->name] = definedGlobal;
+    //   }
+    // }
+
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // generate internal (non-imported) globals
@@ -5063,6 +5077,7 @@ protected:
 
   ExternalInterface* externalInterface;
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
+  std::shared_ptr<ImportResolver> importResolver;
 };
 
 class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
