@@ -50,13 +50,13 @@ private:
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
-  ModuleRunner* instance = nullptr;
+  ModuleRunnerBase* instance = nullptr;
 
 public:
   LoggingExternalInterface(
     Loggings& loggings,
     Module& wasm,
-    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
+    std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances_ = {})
     : ShellExternalInterface(linkedInstances_), loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
@@ -294,7 +294,7 @@ public:
     return flow.values;
   }
 
-  void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
+  void setModuleRunner(ModuleRunnerBase* instance_) { instance = instance_; }
 };
 
 // gets execution results from a wasm module. this is useful for fuzzing
@@ -322,7 +322,7 @@ struct ExecutionResults {
 
       // Instantiate the second, if there is one (we instantiate both before
       // running anything, so that we match the behavior of fuzz_shell.js).
-      std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+      std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances;
       std::unique_ptr<LoggingExternalInterface> secondInterface;
       std::shared_ptr<ModuleRunner> secondInstance;
       if (second) {
@@ -351,16 +351,16 @@ struct ExecutionResults {
     }
   }
 
-  void instantiate(ModuleRunner& instance,
+  void instantiate(ModuleRunnerBase& instance,
                    LoggingExternalInterface& interface) {
     // This is not an optimization: we want to execute anything, even relaxed
     // SIMD instructions.
-    instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
+    instance.setRelaxedBehavior(ModuleRunnerBase::RelaxedBehavior::Execute);
     instance.instantiate();
     interface.setModuleRunner(&instance);
   }
 
-  void callExports(Module& wasm, ModuleRunner& instance) {
+  void callExports(Module& wasm, ModuleRunnerBase& instance) {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {
@@ -507,11 +507,11 @@ struct ExecutionResults {
 
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
-  FunctionResult run(Function* func, Module& wasm, ModuleRunner& instance) {
+  FunctionResult run(Function* func, Module& wasm, ModuleRunnerBase& instance) {
     // Clear the continuation state after each run of an export.
     struct CleanUp {
-      ModuleRunner& instance;
-      CleanUp(ModuleRunner& instance) : instance(instance) {}
+      ModuleRunnerBase& instance;
+      CleanUp(ModuleRunnerBase& instance) : instance(instance) {}
       ~CleanUp() { instance.clearContinuationStore(); }
     } cleanUp(instance);
 
