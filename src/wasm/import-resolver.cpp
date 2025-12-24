@@ -4,7 +4,9 @@
 namespace wasm {
 
 LinkedInstancesImportResolver::LinkedInstancesImportResolver(
-  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances)
+  std::map<Name, std::shared_ptr<ModuleRunnerInterface>> linkedInstances
+  // SomeLinkedInstances linkedInstances
+  )
   : linkedInstances(linkedInstances) {}
 
 std::optional<Literals*>

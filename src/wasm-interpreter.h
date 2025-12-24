@@ -2957,8 +2957,14 @@ using GlobalValueSet = std::map<Name, Literals>;
 // To call into the interpreter, use callExport.
 //
 
+class ModuleRunnerInterface {
+public:
+  std::map<Name, Literals> definedGlobals;
+};
+
 template<typename SubType>
-class ModuleRunnerBase : public ExpressionRunner<SubType> {
+class ModuleRunnerBase : public ExpressionRunner<SubType>,
+                         public ModuleRunnerInterface {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -3184,13 +3190,15 @@ public:
 public:
   // keyed by internal name
   // This is the same as GlobalValueSet
-  std::map<Name, Literals> definedGlobals;
+  // std::map<Name, Literals> definedGlobals;
   std::map<Name, Literals*> allGlobals;
 
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
+    // std::map<Name, std::shared_ptr<ModuleRunnerInterface>> linkedInstances_ =
+    // {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
       externalInterface(externalInterface), linkedInstances(linkedInstances_),
       importResolver(

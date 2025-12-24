@@ -31,19 +31,23 @@ public:
   virtual std::optional<Tag> getTag(QualifiedName name, Signature type) = 0;
 };
 
-// This is defined in wasm-interpreter.h which would lead to a circular
-// reference.
-// TODO: extract this class out maybe?
-// class ModuleRunner {
-// public:
-//   std::map<Name, Literals> definedGlobals;
-// };
-class ModuleRunner;
+// template <typename SubType>
+// class ModuleRunnerBase;
+// class EvallingModuleRunner;
+
+class ModuleRunnerInterface;
+
+// using SomeModuleRunner =
+// std::variant<shared_ptr<ModuleRunner<EvallingModuleRunner>>> using
+// SomeLinkedInstances = std::variant<std::map<Name,
+// std::shared_ptr<ModuleRunnerBase<EvallingModuleRunner>>>>
 
 class LinkedInstancesImportResolver : public ImportResolver {
 public:
   LinkedInstancesImportResolver(
-    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances);
+    std::map<Name, std::shared_ptr<ModuleRunnerInterface>> linkedInstances
+    // SomeLinkedInstances linkedInstances;
+  );
 
   std::optional<Literals*> getGlobal(QualifiedName name, Type type) override;
 
@@ -57,7 +61,7 @@ public:
   std::optional<Tag> getTag(QualifiedName name, Signature type) override;
 
 private:
-  const std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+  const std::map<Name, std::shared_ptr<ModuleRunnerInterface>> linkedInstances;
 };
 
 } // namespace wasm
