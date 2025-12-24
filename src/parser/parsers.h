@@ -1737,6 +1737,8 @@ Result<> makeLoad(Ctx& ctx,
                   bool signed_,
                   int bytes,
                   bool isAtomic) {
+  auto backing = backingType(ctx);
+  CHECK_ERR(backing);
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
   auto arg = memarg(ctx, bytes);
@@ -1752,12 +1754,14 @@ Result<> makeStore(Ctx& ctx,
                    Type type,
                    int bytes,
                    bool isAtomic) {
+  auto backing = backingType(ctx);
+  CHECK_ERR(backing);
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
   return ctx.makeStore(
-    pos, annotations, type, bytes, isAtomic, mem.getPtr(), *arg);
+    pos, annotations, type, bytes, isAtomic, mem.getPtr(), *arg, *backing);
 }
 
 template<typename Ctx>
@@ -2867,6 +2871,15 @@ MaybeResult<typename Ctx::TableIdxT> maybeTableuse(Ctx& ctx) {
     return ctx.in.err("Expected end of memory use");
   }
   return *idx;
+}
+
+template<typename Ctx> Result<BackingType> backingType(Ctx& ctx) {
+  // TODO this should probably parse out the "type" and value separately, but
+  // for now this works for a prototype.
+  if (ctx.in.takeKeyword("type=array"sv)) {
+    return BackingType::Array;
+  }
+  return BackingType::Memory;
 }
 
 // memidx ::= x:u32 => x

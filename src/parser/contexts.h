@@ -564,7 +564,8 @@ struct NullInstrParserCtx {
                      int,
                      bool,
                      MemoryIdxT*,
-                     MemargT) {
+                     MemargT,
+                     BackingType) {
     return Ok{};
   }
   Result<> makeAtomicRMW(Index,
@@ -2253,7 +2254,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                      int bytes,
                      bool isAtomic,
                      Name* mem,
-                     Memarg memarg) {
+                     Memarg memarg,
+                     BackingType backingType) {
+    if (backingType == BackingType::Array) {
+      return withLoc(pos, irBuilder.makeArrayStore(bytes, type));
+    }
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {

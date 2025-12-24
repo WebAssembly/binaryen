@@ -1067,6 +1067,22 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->value, type);
   }
 
+  void visitArrayStore(ArrayStore* curr,
+                       std::optional<HeapType> ht = std::nullopt) {
+    // TODO Figure out if this is correct. This is copied from visitArraySet.
+    if (!ht) {
+      if (!curr->ref->type.isRef()) {
+        self().noteUnknown();
+        return;
+      }
+      ht = curr->ref->type.getHeapType();
+    }
+    auto type = ht->getArray().element.type;
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->index, Type::i32);
+    note(&curr->value, type);
+  }
+
   void visitArrayLen(ArrayLen* curr) {
     note(&curr->ref, Type(HeapType::array, Nullable));
   }

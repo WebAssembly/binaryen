@@ -130,6 +130,7 @@ private:
                         size_t bytes,
                         uint64_t offset,
                         Name memory);
+  void emitStore(uint8_t bytes, Type ValueType);
   int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;
