@@ -28,6 +28,8 @@
 
 namespace wasm::MemoryUtils {
 
+bool isSubType(const Memory& a, const Memory& b);
+
 // Flattens memory into a single data segment, or no segment. If there is
 // a segment, it starts at 0.
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
