@@ -175,7 +175,7 @@ struct Shell {
       // This is not an optimization: we want to execute anything, even relaxed
       // SIMD instructions.
       instance->setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
-      instance->instantiate();
+      instance->instantiate(/* validateImports_=*/true);
     } catch (const std::exception& e) {
       return Err{std::string("failed to instantiate module: ") + e.what()};
     } catch (...) {
