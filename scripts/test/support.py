@@ -174,6 +174,9 @@ def split_wast(wastFile):
     return ret
 
 
+LIT_TEST_SUFFIXES = frozenset({'.wat', '.wast', '.test'})
+
+
 # write a split wast from split_wast. the wast may be binary if the original
 # file was binary
 def write_wast(filename, wast, asserts=[]):
