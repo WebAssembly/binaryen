@@ -22,7 +22,6 @@ import os
 import subprocess
 import sys
 
-
 script_dir = os.path.dirname(__file__)
 test_dir = os.path.join(os.path.dirname(script_dir), 'test')
 
@@ -70,7 +69,7 @@ def port_test(args, test):
     notice = (';; NOTE: This test was ported using'
               ' port_passes_tests_to_lit.py and could be cleaned up.')
 
-    with open(test, 'r') as src_file:
+    with open(test) as src_file:
         with open(dest, 'w') as dest_file:
             print(notice, file=dest_file)
             print('', file=dest_file)
@@ -87,7 +86,7 @@ def port_test(args, test):
     if not args.no_delete:
         for f in glob.glob(test.replace('.wast', '.*')):
             # Do not delete binary tests with the same name
-            if f.endswith('.wasm') or f.endswith('.bin.txt'):
+            if f.endswith(('.wasm', '.bin.txt')):
                 continue
             os.remove(f)
             if args.git_add:

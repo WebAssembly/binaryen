@@ -10,6 +10,7 @@ import tempfile
 import unittest
 
 from scripts.test import shared
+
 from . import utils
 
 
@@ -71,15 +72,14 @@ class ClusterFuzz(utils.BinaryenTestCase):
                                f'--output_dir={testcase_dir}',
                                f'--no_of_files={N}'],
                               text=True,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+                              capture_output=True)
         self.assertEqual(proc.returncode, 0)
 
         # We should have logged the creation of N testcases.
         self.assertEqual(proc.stdout.count('Created testcase:'), N)
 
         # We should have actually created them.
-        for i in range(0, N + 2):
+        for i in range(N + 2):
             fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
             flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
             # We actually emit the range [1, N], so 0 or N+1 should not exist.
@@ -136,7 +136,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # probability then something is very wrong, and we'd like to see
         # errors.)
         seen_num_passes = set()
-        for i in range(100):
+        for _ in range(100):
             os.environ['BINARYEN_PASS_DEBUG'] = '1'
             try:
                 proc = self.generate_testcases(N, temp_dir.name)
@@ -444,9 +444,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                        fuzz_file]
                 # Capture stderr even though we will not read it. It may
                 # contain warnings like us passing v8 experimental flags.
-                proc = subprocess.run(cmd,
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
+                proc = subprocess.run(cmd, capture_output=True)
 
                 # An execution is valid if we exited without error, and if we
                 # managed to run some code before exiting (modules with no
@@ -487,7 +485,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         failed = False
         try:
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(cmd, check=True, capture_output=True)
         except subprocess.CalledProcessError:
             # Expected error.
             failed = True

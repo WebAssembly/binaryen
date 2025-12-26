@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-
-'''
-Run various fuzzing operations on random inputs, using wasm-opt. See
+"""Run various fuzzing operations on random inputs, using wasm-opt. See
 "testcase_handlers" below for the list of fuzzing operations.
 
 Usage:
@@ -24,29 +22,29 @@ BINARYEN_CORES=1 BINARYEN_PASS_DEBUG=1 afl-fuzz -i afl-testcases/ -o afl-finding
 
 (that is on a fixed set of arguments to wasm-opt, though - this
 script covers different options being passed)
-'''
+"""
+
+# ruff: noqa: COM819, ARG002
 
 import contextlib
-import os
 import difflib
 import json
 import math
-import shutil
-import subprocess
+import os
 import random
 import re
+import shutil
+import subprocess
 import sys
 import tarfile
 import time
 import traceback
+from datetime import datetime, timedelta, timezone
 from os.path import abspath
 
-from test import fuzzing
-from test import shared
-from test import support
+from test import fuzzing, shared, support
 
-
-assert sys.version_info.major == 3, 'requires Python 3!'
+assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 # parameters
 
@@ -102,7 +100,7 @@ def run(cmd, stderr=None, silent=False):
 
 def run_unchecked(cmd):
     print(' '.join(cmd))
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).communicate()[0]
+    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).stdout
 
 
 def randomize_pass_debug():
@@ -144,7 +142,7 @@ def randomize_feature_opts():
                 FEATURE_OPTS.append(possible)
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
-    else:
+    elif random.random() < 0.9:
         # 2/3 of the remaining 90% use them all. This is useful to maximize
         # coverage, as enabling more features enables more optimizations and
         # code paths, and also allows all initial contents to run.
@@ -154,11 +152,10 @@ def randomize_feature_opts():
         # Same with strings. Relaxed SIMD's nondeterminism disables much but not
         # all of our V8 fuzzing, so avoid it too. Stack Switching, as well, is
         # not yet ready in V8.
-        if random.random() < 0.9:
-            FEATURE_OPTS.append('--disable-shared-everything')
-            FEATURE_OPTS.append('--disable-strings')
-            FEATURE_OPTS.append('--disable-relaxed-simd')
-            FEATURE_OPTS.append('--disable-stack-switching')
+        FEATURE_OPTS.append('--disable-shared-everything')
+        FEATURE_OPTS.append('--disable-strings')
+        FEATURE_OPTS.append('--disable-relaxed-simd')
+        FEATURE_OPTS.append('--disable-stack-switching')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -264,7 +261,6 @@ def init_important_initial_contents():
         # commit time of HEAD. The reason we use the commit time of HEAD instead
         # of the current system time is to make the results deterministic given
         # the Binaryen HEAD commit.
-        from datetime import datetime, timedelta, timezone
         head_ts_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
                           silent=True).split()[0]
         head_dt = datetime.utcfromtimestamp(int(head_ts_str))
@@ -277,9 +273,9 @@ def init_important_initial_contents():
         # (wat extension is also included)
         p = re.compile(r'^[AM]\stest' + os.sep + r'(.*\.(wat|wast))$')
         matches = [p.match(e) for e in log]
-        auto_set = set([match.group(1) for match in matches if match])
+        auto_set = {match.group(1) for match in matches if match}
         auto_set = auto_set.difference(set(FIXED_IMPORTANT_INITIAL_CONTENTS))
-        return sorted(list(auto_set))
+        return sorted(auto_set)
 
     def is_git_repo():
         try:
@@ -348,7 +344,7 @@ def pick_initial_contents():
         if len(split_parts) > 1:
             index = random.randint(0, len(split_parts) - 1)
             chosen = split_parts[index]
-            module, asserts = chosen
+            module, _asserts = chosen
             if not module:
                 # there is no module in this choice (just asserts), ignore it
                 print('initial contents has no module')
@@ -356,7 +352,7 @@ def pick_initial_contents():
             test_name = abspath('initial.wat')
             with open(test_name, 'w') as f:
                 f.write(module)
-            print('  picked submodule %d from multi-module wast' % index)
+            print(f'  picked submodule {index} from multi-module wast')
 
     global FEATURE_OPTS
     FEATURE_OPTS += [
@@ -452,15 +448,12 @@ def get_export_from_call_line(call_line):
 
 # compare two strings, strictly
 def compare(x, y, context, verbose=True):
-    if x != y and x != IGNORE and y != IGNORE:
+    if x != y and IGNORE not in (x, y):
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
         if verbose:
-            raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
-                x, y,
-                message
-            ))
+            raise Exception(f"{context} comparison error, expected to have '{x}' == '{y}', diff:\n\n{message}")
         else:
-            raise Exception(context + "\nDiff:\n\n%s" % (message))
+            raise Exception(f"{context}\nDiff:\n\n{message}")
 
 
 # converts a possibly-signed integer to an unsigned integer
@@ -582,14 +575,14 @@ def fix_output(out):
 def fix_spec_output(out):
     out = fix_output(out)
     # spec shows a pointer when it traps, remove that
-    out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.splitlines()))
+    out = '\n'.join(ln if 'runtime trap' not in ln else ln[ln.find('runtime trap'):] for ln in out.splitlines())
     # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
-    out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.splitlines()))
+    out = '\n'.join(ln if 'f32' not in ln and 'f64' not in ln else '' for ln in out.splitlines())
     return out
 
 
 ignored_vm_runs = 0
-ignored_vm_run_reasons = dict()
+ignored_vm_run_reasons = {}
 
 
 # Notes a VM run that we ignore, and the reason for it (for metrics purposes).
@@ -784,7 +777,7 @@ class CompareVMs(TestCaseHandler):
     frequency = 1
 
     def __init__(self):
-        super(CompareVMs, self).__init__()
+        super().__init__()
 
         class BinaryenInterpreter:
             name = 'binaryen interpreter'
@@ -856,7 +849,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8_liftoff'
 
             def run(self, wasm):
-                return super(D8Liftoff, self).run(wasm, extra_d8_flags=V8_LIFTOFF_ARGS)
+                return super().run(wasm, extra_d8_flags=V8_LIFTOFF_ARGS)
 
         class D8Turboshaft(D8):
             name = 'd8_turboshaft'
@@ -865,7 +858,7 @@ class CompareVMs(TestCaseHandler):
                 flags = ['--no-liftoff']
                 if random.random() < 0.5:
                     flags += ['--no-wasm-generic-wrapper']
-                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=flags)
+                return super().run(wasm, extra_d8_flags=flags)
 
         class Wasm2C:
             name = 'wasm2c'
@@ -915,7 +908,7 @@ class CompareVMs(TestCaseHandler):
             name = 'wasm2c2wasm'
 
             def __init__(self):
-                super(Wasm2C2Wasm, self).__init__()
+                super().__init__()
 
                 self.has_emcc = shared.which('emcc') is not None
 
@@ -951,7 +944,7 @@ class CompareVMs(TestCaseHandler):
                     return False
                 # prefer not to run if the wasm is very large, as it can OOM
                 # the JS engine.
-                return super(Wasm2C2Wasm, self).can_run(wasm) and self.has_emcc and \
+                return super().can_run(wasm) and self.has_emcc and \
                     os.path.getsize(wasm) <= INPUT_SIZE_MEAN
 
             def can_compare_to_other(self, other):
@@ -1007,7 +1000,7 @@ class CompareVMs(TestCaseHandler):
 
         # compare between the vms on this specific input
         num_vms = len(relevant_vms)
-        for i in range(0, num_vms):
+        for i in range(num_vms):
             for j in range(i + 1, num_vms):
                 vm1 = relevant_vms[i]
                 vm2 = relevant_vms[j]
@@ -1036,8 +1029,8 @@ class CheckDeterminism(TestCaseHandler):
         if (b1 != b2):
             run([in_bin('wasm-dis'), abspath('b1.wasm'), '-o', abspath('b1.wat')] + FEATURE_OPTS)
             run([in_bin('wasm-dis'), abspath('b2.wasm'), '-o', abspath('b2.wat')] + FEATURE_OPTS)
-            t1 = open(abspath('b1.wat'), 'r').read()
-            t2 = open(abspath('b2.wat'), 'r').read()
+            t1 = open(abspath('b1.wat')).read()
+            t2 = open(abspath('b2.wat')).read()
             compare(t1, t2, 'Output must be deterministic.', verbose=False)
 
 
@@ -1243,12 +1236,12 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
     graph = [{
         'name': 'outside',
         'reaches': [f'export-{export}' for export in keep],
-        'root': True
+        'root': True,
     }]
     for export in keep:
         graph.append({
             'name': f'export-{export}',
-            'export': export
+            'export': export,
         })
 
     with open('graph.json', 'w') as f:
@@ -1741,7 +1734,7 @@ class ClusterFuzz(TestCaseHandler):
         cmd = [shared.V8]
         # The flags are given in the flags file - we do *not* use our normal
         # flags here!
-        with open(flags_file, 'r') as f:
+        with open(flags_file) as f:
             flags = f.read()
         cmd += flags.split(' ')
         # Get V8's extra fuzzing flags, the same as the ClusterFuzz runner does
@@ -1819,7 +1812,18 @@ class ClusterFuzz(TestCaseHandler):
 # run) with "second.wasm" as needed.
 #
 # In both cases, make sure to copy the files to a saved location first (do not
-# use a path to the scratch files that get constantly overwritten).
+# use a path to the scratch files that get constantly overwritten). The full
+# process might look like this:
+#
+#  * cp out/test/original.wasm first.wasm
+#  * cp out/test/second.wasm second.wasm
+#  * BINARYEN_FIRST_WASM=`pwd`/first.wasm [copied reducer command, replacing
+#                                          original.wasm with `pwd`/second.wasm]
+#  * cp out/test/w.wasm second.reduced.wasm
+#  * BINARYEN_SECOND_WASM=`pwd`/second.reduced.wasm [copied reducer command,
+#                                                    replacing original.wasm
+#                                                    with `pwd`/first.wasm]
+#
 class Two(TestCaseHandler):
     # Run at relatively high priority, as this is the main place we check cross-
     # module interactions.
@@ -2361,7 +2365,7 @@ def test_one(random_input, given_wasm):
     # on them in the same amount of time.
     NUM_PAIR_HANDLERS = 3
     used_handlers = set()
-    for i in range(NUM_PAIR_HANDLERS):
+    for _ in range(NUM_PAIR_HANDLERS):
         testcase_handler = random.choice(filtered_handlers)
         if testcase_handler in used_handlers:
             continue
@@ -2382,7 +2386,7 @@ def write_commands(commands, filename):
     with open(filename, 'w') as f:
         f.write('set -e\n')
         for command in commands:
-            f.write('echo "%s"\n' % command)
+            f.write(f'echo "{command}"\n')
             pre = 'BINARYEN_PASS_DEBUG=%s ' % (os.environ.get('BINARYEN_PASS_DEBUG') or '0')
             f.write(pre + command + ' &> /dev/null\n')
         f.write('echo "ok"\n')
@@ -2701,7 +2705,7 @@ You can run that testcase again with "fuzz_opt.py %(seed)d"
 (We can't automatically reduce this testcase since we can only run the reducer
 on valid wasm files.)
 ================================================================================
-                ''' % {'seed': seed})
+''')
                     break
                 # show some useful info about filing a bug and reducing the
                 # testcase (to make reduction simple, save "original.wasm" on
@@ -2713,23 +2717,30 @@ on valid wasm files.)
                 auto_init = ''
                 if not shared.options.auto_initial_contents:
                     auto_init = '--no-auto-initial-contents'
-                with open('reduce.sh', 'w') as reduce_sh:
-                    reduce_sh.write('''\
+                wasm_opt = in_bin('wasm-opt')
+                binaryen_bin = shared.options.binaryen_bin
+                temp_wasm = abspath('t.wasm')
+                working_wasm = abspath('w.wasm')
+                wasm_reduce = in_bin('wasm-reduce')
+                reduce_sh = abspath('reduce.sh')
+                features = ' '.join(FEATURE_OPTS)
+                with open('reduce.sh', 'w') as f:
+                    f.write(f'''\
 # check the input is even a valid wasm file
 echo "The following value should be 0:"
-%(wasm_opt)s %(features)s %(temp_wasm)s
+{wasm_opt} {features} {temp_wasm}
 echo "  " $?
 
 echo "The following value should be >0:"
 
 if [ -z "$BINARYEN_FIRST_WASM" ]; then
   # run the command normally
-  ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+  ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
 else
   # BINARYEN_FIRST_WASM was provided so we should actually reduce the *second*
   # file. pass the first one in as the main file, and use the env var for the
   # second.
-  BINARYEN_SECOND_WASM=%(temp_wasm)s ./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d $BINARYEN_FIRST_WASM > o 2> e
+  BINARYEN_SECOND_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} $BINARYEN_FIRST_WASM > o 2> e
 fi
 
 echo "  " $?
@@ -2749,38 +2760,31 @@ echo "  " $?
 # To do a "dry run" of what the reducer will do, copy the original file to the
 # test file that this script will run on,
 #
-#   cp %(original_wasm)s %(temp_wasm)s
+#   cp {original_wasm} {temp_wasm}
 #
 # and then run
 #
-#   bash %(reduce_sh)s
+#   bash {reduce_sh}
 #
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
 #
 # If the testcase handler uses a second wasm file, you may be able to reduce it
 # using BINARYEN_SECOND_WASM.
 #
-                  ''' % {'wasm_opt': in_bin('wasm-opt'),
-                         'bin': shared.options.binaryen_bin,
-                         'seed': seed,
-                         'auto_init': auto_init,
-                         'original_wasm': original_wasm,
-                         'temp_wasm': abspath('t.wasm'),
-                         'features': ' '.join(FEATURE_OPTS),
-                         'reduce_sh': abspath('reduce.sh')})
+''')
 
-                print('''\
+                print(f'''\
 ================================================================================
 You found a bug! Please report it with
 
-  seed: %(seed)d
+  seed: {seed}
 
 and the exact version of Binaryen you found it on, plus the exact Python
 version (hopefully deterministic random numbers will be identical).
 
-You can run that testcase again with "fuzz_opt.py %(seed)d"
+You can run that testcase again with "fuzz_opt.py {seed}"
 
-The initial wasm file used here is saved as %(original_wasm)s
+The initial wasm file used here is saved as {original_wasm}
 
 You can reduce the testcase by running this now:
 
@@ -2788,7 +2792,7 @@ You can reduce the testcase by running this now:
 vvvv
 
 
-%(wasm_reduce)s %(features)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
+{wasm_reduce} {features} {original_wasm} '--command=bash {reduce_sh}' -t {temp_wasm} -w {working_wasm}
 
 
 ^^^^
@@ -2808,18 +2812,12 @@ passing --text to the reducer. Another possible fix is to avoid re-processing
 the wasm for fuzzing in each iteration, by adding
 BINARYEN_TRUST_GIVEN_WASM=1 in the env.)
 
-You can also read "%(reduce_sh)s" which has been filled out for you and includes
+You can also read "{reduce_sh}" which has been filled out for you and includes
 docs and suggestions.
 
-After reduction, the reduced file will be in %(working_wasm)s
+After reduction, the reduced file will be in {working_wasm}
 ================================================================================
-                ''' % {'seed': seed,
-                       'original_wasm': original_wasm,
-                       'temp_wasm': abspath('t.wasm'),
-                       'working_wasm': abspath('w.wasm'),
-                       'wasm_reduce': in_bin('wasm-reduce'),
-                       'reduce_sh': abspath('reduce.sh'),
-                       'features': ' '.join(FEATURE_OPTS)})
+''')
                 break
         if given_seed is not None:
             break
@@ -2830,8 +2828,8 @@ After reduction, the reduced file will be in %(working_wasm)s
 
     if given_seed is not None:
         if not given_seed_error:
-            print('(finished running seed %d without error)' % given_seed)
+            print(f'(finished running seed {given_seed} without error)')
             sys.exit(0)
         else:
-            print('(finished running seed %d, see error above)' % given_seed)
+            print(f'(finished running seed {given_seed}, see error above)')
             sys.exit(given_seed_error)

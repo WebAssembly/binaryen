@@ -155,7 +155,7 @@ with tarfile.open(output_file, "w:gz") as tar:
     for i, test in enumerate(all_tests):
         if not fuzzing.is_fuzzable(test):
             continue
-        for wast, asserts in support.split_wast(test):
+        for wast, _asserts in support.split_wast(test):
             if not wast:
                 continue
             support.write_wast(temp_wasm, wast)

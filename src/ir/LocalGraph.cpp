@@ -426,12 +426,12 @@ struct LocalGraphFlower
     // Ensure empty entries for each set of this index, to mark them as
     // computed.
     for (auto* set : setsByIndex[index]) {
-      setInfluences[set];
+      setInfluences.try_emplace(set);
     }
 
     // Also ensure |set| itself, that we were originally asked about. It may be
     // in unreachable code, which means it is not listed in setsByIndex.
-    setInfluences[set];
+    setInfluences.try_emplace(set);
 
     // Apply the info from the gets to the sets.
     for (auto* get : getsByIndex[index]) {

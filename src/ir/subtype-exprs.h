@@ -133,7 +133,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitBreak(Break* curr) {
     if (curr->value) {
       self()->noteSubtype(curr->value, self()->findBreakTarget(curr->name));
-      if (curr->condition) {
+      if (curr->condition && curr->type != Type::unreachable) {
         self()->noteSubtype(curr->value, curr);
       }
     }
@@ -561,13 +561,16 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
     processResumeHandlers(
       curr->cont->type, curr->handlerTags, curr->handlerBlocks);
-    // The types we use to create the exception package must remain subtypes of
-    // the types expected by the exception tag.
-    auto params =
-      self()->getModule()->getTag(curr->tag)->type.getSignature().params;
-    assert(curr->operands.size() == params.size());
-    for (Index i = 0; i < curr->operands.size(); ++i) {
-      self()->noteSubtype(curr->operands[i], params[i]);
+
+    if (curr->tag) {
+      // The types we use to create the exception package must remain subtypes
+      // of the types expected by the exception tag.
+      auto params =
+        self()->getModule()->getTag(curr->tag)->type.getSignature().params;
+      assert(curr->operands.size() == params.size());
+      for (Index i = 0; i < curr->operands.size(); ++i) {
+        self()->noteSubtype(curr->operands[i], params[i]);
+      }
     }
   }
   void visitStackSwitch(StackSwitch* curr) {

@@ -273,6 +273,12 @@ public:
                            Name tag,
                            const std::vector<Name>& tags,
                            const std::vector<std::optional<Index>>& labels);
+  Result<> makeResumeThrowRef(HeapType ct,
+                              const std::vector<Name>& tags,
+                              const std::vector<std::optional<Index>>& labels) {
+    // resume_throw_ref has an empty tag.
+    return makeResumeThrow(ct, Name(), tags, labels);
+  }
   Result<> makeStackSwitch(HeapType ct, Name tag);
 
   // Private functions that must be public for technical reasons.

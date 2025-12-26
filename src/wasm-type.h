@@ -139,21 +139,13 @@ public:
   // Choose an arbitrary heap type as the default.
   constexpr HeapType() : HeapType(func) {}
 
-  // Construct a HeapType referring to the single canonical HeapType for the
-  // given signature. In nominal mode, this is the first HeapType created with
-  // this signature.
+  // Construct the single canonical HeapType for the given signature, struct,
+  // array, or continuation.
   HeapType(Signature signature);
-
-  HeapType(Continuation cont);
-
-  // Create a HeapType with the given structure. In equirecursive mode, this may
-  // be the same as a previous HeapType created with the same contents. In
-  // nominal mode, this will be a fresh type distinct from all previously
-  // created HeapTypes.
-  // TODO: make these explicit to differentiate them.
   HeapType(const Struct& struct_);
   HeapType(Struct&& struct_);
   HeapType(Array array);
+  HeapType(Continuation cont);
 
   HeapTypeKind getKind() const;
 
@@ -193,7 +185,7 @@ public:
   Array getArray() const;
 
   // If there is a nontrivial (i.e. non-basic, one that was declared by the
-  // module) nominal supertype, return it, else an empty optional.
+  // module) supertype, return it, else an empty optional.
   std::optional<HeapType> getDeclaredSuperType() const;
 
   // As |getDeclaredSuperType|, but also handles basic types, that is, if the
@@ -206,8 +198,8 @@ public:
   std::optional<HeapType> getDescribedType() const;
   DescriptorChain getDescriptorChain() const;
 
-  // Return the depth of this heap type in the nominal type hierarchy, i.e. the
-  // number of supertypes in its supertype chain.
+  // Return the depth of this heap type in the type hierarchy, i.e. the number
+  // of supertypes in its supertype chain.
   size_t getDepth() const;
 
   // Get the bottom heap type for this heap type's hierarchy.
@@ -264,6 +256,11 @@ public:
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
 
+  // We support more precise types in the IR than the enabled feature set would
+  // suggest. Get the generalized version of the type that will be written by
+  // the binary writer given the feature set.
+  inline HeapType asWrittenGivenFeatures(FeatureSet feats) const;
+
   // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
   // a `TypeID` because `Type` is incomplete at this point and using a reference
   // makes it less convenient to use.
@@ -282,6 +279,16 @@ public:
 
   std::string toString() const;
 };
+
+HeapType HeapType::asWrittenGivenFeatures(FeatureSet feats) const {
+  // Without GC, only top types like func and extern are supported. The
+  // exception is string, since stringref can be enabled without GC and we still
+  // expect to write stringref types in that case.
+  if (!feats.hasGC() && *this != HeapType::string) {
+    return getTop();
+  }
+  return *this;
+}
 
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
@@ -419,7 +426,7 @@ public:
     return isRef() && getHeapType().isContinuation();
   }
   bool isDefaultable() const;
-  bool isCastable();
+  bool isCastable() const;
 
   // TODO: Allow this only for reference types.
   Nullability getNullability() const {
@@ -449,6 +456,11 @@ public:
   Type withInexactIfNoCustomDescs(FeatureSet feats) const {
     return !isExact() || feats.hasCustomDescriptors() ? *this : with(Inexact);
   }
+
+  // We support more precise types in the IR than the enabled feature set would
+  // suggest. Get the generalized version of the type that will be written by
+  // the binary writer given the feature set.
+  inline Type asWrittenGivenFeatures(FeatureSet feats) const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -577,6 +589,20 @@ public:
   }
   const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
+
+Type Type::asWrittenGivenFeatures(FeatureSet feats) const {
+  if (!isRef()) {
+    return *this;
+  }
+  auto type = with(getHeapType().asWrittenGivenFeatures(feats));
+  if (!feats.hasGC()) {
+    type = type.with(Nullable);
+  }
+  if (!feats.hasCustomDescriptors()) {
+    type = type.with(Inexact);
+  }
+  return type;
+}
 
 namespace HeapTypes {
 
@@ -878,6 +904,9 @@ struct TypeBuilder {
     InvalidUnsharedDescribes,
     // The custom descriptors feature is missing.
     RequiresCustomDescriptors,
+    // Two rec groups with different shapes would have the same shapes after
+    // the binary writer generalizes refined types that use disabled features.
+    RecGroupCollision,
   };
 
   struct Error {
@@ -898,10 +927,7 @@ struct TypeBuilder {
   };
 
   // Returns all of the newly constructed heap types. May only be called once
-  // all of the heap types have been initialized with `setHeapType`. In nominal
-  // mode, all of the constructed HeapTypes will be fresh and distinct. In
-  // nominal mode, will also produce a fatal error if the declared subtype
-  // relationships are not valid.
+  // all of the heap types have been initialized with `setHeapType`.
   BuildResult build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType

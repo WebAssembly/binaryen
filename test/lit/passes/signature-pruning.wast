@@ -608,8 +608,7 @@
 
 ;; Two functions with two different types have an unused parameter. After
 ;; removing the parameter from each, they both have no parameters. They should
-;; *not* have the same type, however: the type should be different nominally
-;; even though after the pruning they are identical structurally.
+;; *not* have the same type, however, even though they have the same signature.
 (module
   (rec
     ;; CHECK:      (rec

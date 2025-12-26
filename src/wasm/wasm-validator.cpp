@@ -298,7 +298,7 @@ public:
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
     if (curr->name.is()) {
-      self->breakTypes[curr->name];
+      self->breakTypes.try_emplace(curr->name);
     }
   }
 
@@ -309,7 +309,7 @@ public:
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
     if (curr->name.is()) {
-      self->breakTypes[curr->name];
+      self->breakTypes.try_emplace(curr->name);
     }
   }
 
@@ -4096,9 +4096,29 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     curr,
     "sentTypes cache in resume_throw instruction has not been initialized");
 
-  auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
-    return;
+  if (curr->tag) {
+    // Normal resume_throw
+    auto* tag = getModule()->getTagOrNull(curr->tag);
+    if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
+      return;
+    }
+    shouldBeEqual(curr->operands.size(),
+                  tag->params().size(),
+                  curr,
+                  "resume_throw num operands must match the tag");
+    // TODO: validate operand types as well
+  } else {
+    // resume_throw_ref
+    Type exnref = Type(HeapType::exn, Nullable);
+    if (shouldBeEqual(curr->operands.size(),
+                      size_t(1),
+                      curr,
+                      "resume_throw_ref must have a single exnref operand")) {
+      shouldBeSubType(curr->operands[0]->type,
+                      exnref,
+                      curr,
+                      "resume_throw_ref must receive exnref");
+    }
   }
 
   if (curr->cont->type.isRef() &&

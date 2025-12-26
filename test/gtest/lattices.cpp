@@ -161,7 +161,7 @@ TEST(BoolLattice, Compare) {
 
 TEST(BoolLattice, Join) {
   analysis::Bool lattice;
-  bool elem = false;
+  analysis::Bool::Element elem = false;
 
   EXPECT_FALSE(lattice.join(elem, false));
   ASSERT_FALSE(elem);
@@ -178,7 +178,7 @@ TEST(BoolLattice, Join) {
 
 TEST(BoolLattice, Meet) {
   analysis::Bool lattice;
-  bool elem = true;
+  analysis::Bool::Element elem = true;
 
   EXPECT_FALSE(lattice.meet(elem, true));
   ASSERT_TRUE(elem);
@@ -276,7 +276,7 @@ TEST(InvertedLattice, Compare) {
 
 TEST(InvertedLattice, Join) {
   analysis::Inverted inverted(analysis::Bool{});
-  bool elem = true;
+  analysis::Bool::Element elem = true;
 
   EXPECT_FALSE(inverted.join(elem, true));
   ASSERT_TRUE(elem);
@@ -293,7 +293,7 @@ TEST(InvertedLattice, Join) {
 
 TEST(InvertedLattice, Meet) {
   analysis::Inverted inverted(analysis::Bool{});
-  bool elem = false;
+  analysis::Bool::Element elem = false;
 
   EXPECT_FALSE(inverted.meet(elem, false));
   ASSERT_FALSE(elem);
@@ -445,12 +445,14 @@ TEST(LiftLattice, Join) {
 
 TEST(ArrayLattice, GetBottom) {
   analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
-  EXPECT_EQ(array.getBottom(), (std::array<bool, 2>{false, false}));
+  EXPECT_EQ(array.getBottom(),
+            (std::array<analysis::Bool::Element, 2>{false, false}));
 }
 
 TEST(ArrayLattice, GetTop) {
   analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
-  EXPECT_EQ(array.getTop(), (std::array<bool, 2>{true, true}));
+  EXPECT_EQ(array.getTop(),
+            (std::array<analysis::Bool::Element, 2>{true, true}));
 }
 
 TEST(ArrayLattice, Compare) {
@@ -473,12 +475,14 @@ TEST(ArrayLattice, Meet) {
 
 TEST(VectorLattice, GetBottom) {
   analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
-  EXPECT_EQ(vector.getBottom(), (std::vector<bool>{false, false}));
+  EXPECT_EQ(vector.getBottom(),
+            (std::vector<analysis::Bool::Element>{false, false}));
 }
 
 TEST(VectorLattice, GetTop) {
   analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
-  EXPECT_EQ(vector.getTop(), (std::vector<bool>{true, true}));
+  EXPECT_EQ(vector.getTop(),
+            (std::vector<analysis::Bool::Element>{true, true}));
 }
 
 TEST(VectorLattice, Compare) {
@@ -505,10 +509,10 @@ TEST(VectorLattice, JoinSingleton) {
   auto elem = vector.getBottom();
 
   EXPECT_FALSE(vector.join(elem, Vec::SingletonElement(0, false)));
-  EXPECT_EQ(elem, (std::vector{false, false}));
+  EXPECT_EQ(elem, (std::vector<analysis::Bool::Element>{false, false}));
 
   EXPECT_TRUE(vector.join(elem, Vec::SingletonElement(1, true)));
-  EXPECT_EQ(elem, (std::vector{false, true}));
+  EXPECT_EQ(elem, (std::vector<analysis::Bool::Element>{false, true}));
 }
 
 TEST(VectorLattice, MeetSingleton) {
@@ -517,10 +521,10 @@ TEST(VectorLattice, MeetSingleton) {
   auto elem = vector.getTop();
 
   EXPECT_FALSE(vector.meet(elem, Vec::SingletonElement(1, true)));
-  EXPECT_EQ(elem, (std::vector{true, true}));
+  EXPECT_EQ(elem, (std::vector<analysis::Bool::Element>{true, true}));
 
   EXPECT_TRUE(vector.meet(elem, Vec::SingletonElement(0, false)));
-  EXPECT_EQ(elem, (std::vector{false, true}));
+  EXPECT_EQ(elem, (std::vector<analysis::Bool::Element>{false, true}));
 }
 
 TEST(TupleLattice, GetBottom) {
@@ -707,7 +711,7 @@ TEST(SharedLattice, JoinVecSingleton) {
 
   auto elem = shared.getBottom();
   EXPECT_TRUE(shared.join(elem, Vec::SingletonElement(1, true)));
-  EXPECT_EQ(*elem, (std::vector{false, true}));
+  EXPECT_EQ(*elem, (std::vector<analysis::Bool::Element>{false, true}));
 }
 
 TEST(SharedLattice, JoinInvertedVecSingleton) {
@@ -717,7 +721,7 @@ TEST(SharedLattice, JoinInvertedVecSingleton) {
 
   auto elem = shared.getBottom();
   EXPECT_TRUE(shared.join(elem, Vec::SingletonElement(1, false)));
-  EXPECT_EQ(*elem, (std::vector{true, false}));
+  EXPECT_EQ(*elem, (std::vector<analysis::Bool::Element>{true, false}));
 }
 
 TEST(StackLattice, GetBottom) {

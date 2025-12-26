@@ -476,3 +476,148 @@
   )
  )
 )
+
+;; $wrap-cont has a continuation field, a type which we must not modify. There
+;; are other optimization opportunities in the module ($wrap-array's field can
+;; become exact), so we end up optimizing here. While doing so, we must not
+;; change the continuation type (due to cast limitations), and we must not get
+;; confused and think there is no value in that field because of that
+;; restriction (if we did, the outer struct.get in $a would trap, as it would be
+;; reading from a place nothing was written to, so it would need to be
+;; unreachable).
+(module
+ ;; NRML:      (type $func (func))
+ ;; GUFA:      (type $func (func))
+ ;; O3O3:      (type $func (func))
+ (type $func (func))
+ (rec
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $cont (cont $func))
+  ;; GUFA:      (rec
+  ;; GUFA-NEXT:  (type $cont (cont $func))
+  ;; O3O3:      (rec
+  ;; O3O3-NEXT:  (type $cont (cont $func))
+  (type $cont (cont $func))
+  ;; NRML:       (type $wrap-cont (struct (field (ref $cont))))
+  ;; GUFA:       (type $wrap-cont (struct (field (ref $cont))))
+  ;; O3O3:       (type $wrap-cont (struct (field (ref $cont))))
+  (type $wrap-cont (struct (field (ref $cont))))
+ )
+ ;; NRML:      (rec
+ ;; NRML-NEXT:  (type $array (array i32))
+ ;; GUFA:      (rec
+ ;; GUFA-NEXT:  (type $array (array i32))
+ (type $array (array i32))
+ ;; NRML:       (type $wrap-array (sub (struct (field (ref (exact $array))))))
+ ;; GUFA:       (type $wrap-array (sub (struct (field (ref (exact $array))))))
+ (type $wrap-array (sub (struct (field (ref $array)))))
+
+ ;; NRML:      (type $5 (func (result (ref $cont))))
+
+ ;; NRML:      (elem declare func $ref)
+
+ ;; NRML:      (export "a" (func $a))
+ ;; GUFA:      (type $5 (func (result (ref $cont))))
+
+ ;; GUFA:      (elem declare func $ref)
+
+ ;; GUFA:      (export "a" (func $a))
+ ;; O3O3:      (type $3 (func (result (ref $cont))))
+
+ ;; O3O3:      (elem declare func $ref)
+
+ ;; O3O3:      (export "a" (func $a))
+ (export "a" (func $a))
+ ;; NRML:      (export "b" (func $b))
+ ;; GUFA:      (export "b" (func $b))
+ ;; O3O3:      (export "b" (func $b))
+ (export "b" (func $b))
+
+ ;; NRML:      (func $a (type $func)
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.get $wrap-cont 0
+ ;; NRML-NEXT:    (struct.new $wrap-cont
+ ;; NRML-NEXT:     (cont.new $cont
+ ;; NRML-NEXT:      (ref.func $ref)
+ ;; NRML-NEXT:     )
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $a (type $func)
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.get $wrap-cont 0
+ ;; GUFA-NEXT:    (struct.new $wrap-cont
+ ;; GUFA-NEXT:     (cont.new $cont
+ ;; GUFA-NEXT:      (ref.func $ref)
+ ;; GUFA-NEXT:     )
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ ;; O3O3:      (func $a (type $func)
+ ;; O3O3-NEXT:  (drop
+ ;; O3O3-NEXT:   (cont.new $cont
+ ;; O3O3-NEXT:    (ref.func $ref)
+ ;; O3O3-NEXT:   )
+ ;; O3O3-NEXT:  )
+ ;; O3O3-NEXT: )
+ (func $a
+  ;; GUFA cannot improve things here (-O3 can remove the struct operations,
+  ;; though).
+  (drop
+   (struct.get $wrap-cont 0
+    (struct.new $wrap-cont
+     (cont.new $cont
+      (ref.func $ref)
+     )
+    )
+   )
+  )
+ )
+
+ ;; NRML:      (func $b (type $5) (result (ref $cont))
+ ;; NRML-NEXT:  (unreachable)
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $b (type $5) (result (ref $cont))
+ ;; GUFA-NEXT:  (unreachable)
+ ;; GUFA-NEXT: )
+ ;; O3O3:      (func $b (type $3) (result (ref $cont))
+ ;; O3O3-NEXT:  (unreachable)
+ ;; O3O3-NEXT: )
+ (func $b (result (ref $cont))
+  (unreachable)
+ )
+
+ ;; NRML:      (func $ref (type $func)
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.new $wrap-array
+ ;; NRML-NEXT:    (array.new_default $array
+ ;; NRML-NEXT:     (i32.const 0)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $ref (type $func)
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.new $wrap-array
+ ;; GUFA-NEXT:    (array.new_default $array
+ ;; GUFA-NEXT:     (i32.const 0)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ ;; O3O3:      (func $ref (type $func)
+ ;; O3O3-NEXT:  (nop)
+ ;; O3O3-NEXT: )
+ (func $ref (type $func)
+  (drop
+   (struct.new $wrap-array
+    (array.new_default $array
+     (i32.const 0)
+    )
+   )
+  )
+ )
+)
+

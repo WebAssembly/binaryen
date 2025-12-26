@@ -45,6 +45,7 @@
 #include "ir/module-utils.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
+#include "ir/table-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
@@ -172,11 +173,6 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
     // the heap type we call with.
     reference({ModuleElementKind::Table, curr->table});
     noteIndirectCall(curr->table, curr->heapType);
-    // Note a possible call of a function reference as well, as something might
-    // be written into the table during runtime. With precise tracking of what
-    // is written into the table we could do better here; we could also see
-    // which tables are immutable. TODO
-    noteCallRef(curr->heapType);
   }
 
   void visitCallRef(CallRef* curr) {
@@ -407,6 +403,8 @@ struct Analyzer {
 
   std::unordered_set<IndirectCall> usedIndirectCalls;
 
+  std::optional<TableUtils::TableInfoMap> tableInfoMap;
+
   void useIndirectCall(IndirectCall call) {
     auto [_, inserted] = usedIndirectCalls.insert(call);
     if (!inserted) {
@@ -421,6 +419,16 @@ struct Analyzer {
     }
     for (auto& elem : flatTableInfoMap[table].typeElems[type]) {
       reference({ModuleElementKind::ElementSegment, elem});
+    }
+
+    // Note a possible call of a function reference as well, if something else
+    // might be written into the table during runtime.
+    // TODO: Add an option for immutable initial content like Directize?
+    if (!tableInfoMap) {
+      tableInfoMap = TableUtils::computeTableInfo(*module);
+    }
+    if ((*tableInfoMap)[table].mayBeModified) {
+      useCallRefType(type);
     }
   }
 

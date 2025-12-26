@@ -115,79 +115,63 @@ public:
   }
 };
 
-// Build artificial modules based on a module's imports, so that the
+// Build an artificial `env` module based on a module's imports, so that the
 // interpreter can use correct object instances. It initializes usable global
 // imports, and fills the rest with fake values since those are dangerous to
-// use. Imported globals can't be read anyway; see
-// `EvallingModuleRunner::visitGlobalGet`.
-// Note: wasi_ modules have stubs generated but won't be called due to the
-// special handling in `CtorEvalExternalInterface::getImportedFunction`. We
-// still generate the stubs to ensure the link-time validation passes.
-std::vector<std::unique_ptr<Module>> buildStubModules(Module& wasm) {
-  std::map<Name, std::unique_ptr<Module>> modules;
+// use. we will fail if dangerous globals are used.
+std::unique_ptr<Module> buildEnvModule(Module& wasm) {
+  auto env = std::make_unique<Module>();
+  env->name = "env";
 
-  ModuleUtils::iterImports(
-    wasm,
-    [&modules](std::variant<Memory*, Table*, Global*, Function*, Tag*> import) {
-      Importable* importable =
-        std::visit([](auto* i) -> Importable* { return i; }, import);
+  // create empty functions with similar signature
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
+    if (func->module == env->name) {
+      Builder builder(*env);
+      auto* copied = ModuleUtils::copyFunction(func, *env);
+      copied->module = Name();
+      copied->base = Name();
+      copied->body = builder.makeUnreachable();
+      env->addExport(
+        builder.makeExport(func->base, copied->name, ExternalKind::Function));
+    }
+  });
 
-      auto [it, inserted] = modules.try_emplace(importable->module, nullptr);
-      if (inserted) {
-        it->second = std::make_unique<Module>();
-        it->second->name = importable->module;
-      }
-      Module* module = it->second.get();
+  // create tables with similar initial and max values
+  ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
+    if (table->module == env->name) {
+      auto* copied = ModuleUtils::copyTable(table, *env);
+      copied->module = Name();
+      copied->base = Name();
+      env->addExport(Builder(*env).makeExport(
+        table->base, copied->name, ExternalKind::Table));
+    }
+  });
 
-      struct Visitor {
-        Module* module;
-        void operator()(Memory* memory) {
-          auto* copied = ModuleUtils::copyMemory(memory, *module);
-          copied->module = Name();
-          copied->base = Name();
-          module->addExport(Builder(*module).makeExport(
-            memory->base, copied->name, ExternalKind::Memory));
-        }
-        void operator()(Table* table) {
-          // create tables with similar initial and max values
-          auto* copied = ModuleUtils::copyTable(table, *module);
-          copied->module = Name();
-          copied->base = Name();
-          module->addExport(Builder(*module).makeExport(
-            table->base, copied->name, ExternalKind::Table));
-        }
-        void operator()(Global* global) {
-          auto* copied = ModuleUtils::copyGlobal(global, *module);
-          copied->module = Name();
-          copied->base = Name();
+  ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
+    if (global->module == env->name) {
+      auto* copied = ModuleUtils::copyGlobal(global, *env);
+      copied->module = Name();
+      copied->base = Name();
 
-          Builder builder(*module);
-          copied->init = builder.makeConst(Literal::makeZero(global->type));
-          module->addExport(builder.makeExport(
-            global->base, copied->name, ExternalKind::Global));
-        }
-        void operator()(Function* func) {
-          Builder builder(*module);
-          auto* copied = ModuleUtils::copyFunction(func, *module);
-          copied->module = Name();
-          copied->base = Name();
-          copied->body = builder.makeUnreachable();
-          module->addExport(builder.makeExport(
-            func->base, copied->name, ExternalKind::Function));
-        }
-        void operator()(Tag* tag) {
-          // no-op
-        }
-      };
-      std::visit(Visitor{module}, import);
-    });
+      Builder builder(*env);
+      copied->init = builder.makeConst(Literal::makeZero(global->type));
+      env->addExport(
+        builder.makeExport(global->base, copied->name, ExternalKind::Global));
+    }
+  });
 
-  std::vector<std::unique_ptr<Module>> modulesVector;
-  modulesVector.reserve(modules.size());
-  for (auto& [_, ptr] : modules) {
-    modulesVector.push_back(std::move(ptr));
-  }
-  return modulesVector;
+  // create an exported memory with the same initial and max size
+  ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
+    if (memory->module == env->name) {
+      auto* copied = ModuleUtils::copyMemory(memory, *env);
+      copied->module = Name();
+      copied->base = Name();
+      env->addExport(Builder(*env).makeExport(
+        memory->base, copied->name, ExternalKind::Memory));
+    }
+  });
+
+  return env;
 }
 
 // Whether to ignore external input to the program as it runs. If set, we will
@@ -467,12 +451,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     throw FailToEvalException("grow table");
   }
 
-  void trap(const char* why) override {
-    throw FailToEvalException(std::string("trap: ") + why);
+  void trap(std::string_view why) override {
+    throw FailToEvalException(std::string("trap: ") + std::string(why));
   }
 
-  void hostLimit(const char* why) override {
-    throw FailToEvalException(std::string("trap: ") + why);
+  void hostLimit(std::string_view why) override {
+    throw FailToEvalException(std::string("trap: ") + std::string(why));
   }
 
   void throwException(const WasmException& exn) override {
@@ -1372,16 +1356,12 @@ void evalCtors(Module& wasm,
 
   std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
-  // stubModules and interfaces must be kept alive since they are referenced in
-  // linkedInstances.
-  std::vector<std::unique_ptr<Module>> stubModules = buildStubModules(wasm);
-  std::vector<std::unique_ptr<CtorEvalExternalInterface>> interfaces;
-
-  for (auto& module : stubModules) {
-    interfaces.push_back(std::make_unique<CtorEvalExternalInterface>());
-    linkedInstances[module->name] =
-      std::make_shared<EvallingModuleRunner>(*module, interfaces.back().get());
-  }
+  // build and link the env module
+  auto envModule = buildEnvModule(wasm);
+  CtorEvalExternalInterface envInterface;
+  auto envInstance =
+    std::make_shared<EvallingModuleRunner>(*envModule, &envInterface);
+  linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {

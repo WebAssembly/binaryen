@@ -478,3 +478,49 @@
     )
   )
 )
+
+;; Test we do not error on resume_throw_ref. It adds no subtyping constraints
+;; between declared types besides those from the handlers.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $f (func))
+
+  ;; CHECK:       (type $k (cont $f))
+
+  ;; CHECK:      (elem declare func $no_handler)
+
+  ;; CHECK:      (tag $e0 (type $f))
+  (tag $e0)
+
+  (type $f (func))
+  (type $k (cont $f))
+
+  ;; CHECK:      (func $no_handler (type $f)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $no_handler
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $throw_unhandled_ref (type $f)
+  ;; CHECK-NEXT:  (resume_throw_ref $k
+  ;; CHECK-NEXT:   (block $h (result (ref exn))
+  ;; CHECK-NEXT:    (try_table (catch_ref $e0 $h)
+  ;; CHECK-NEXT:     (throw $e0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (cont.new $k
+  ;; CHECK-NEXT:    (ref.func $no_handler)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw_unhandled_ref
+    (block $h (result exnref)
+      (try_table (catch_ref $e0 $h) (throw $e0))
+      (unreachable)
+    )
+    (resume_throw_ref $k (cont.new $k (ref.func $no_handler)))
+  )
+)
+

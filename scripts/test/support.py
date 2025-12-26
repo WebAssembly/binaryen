@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import filecmp
+import io
 import os
 import re
 import shutil
@@ -103,7 +103,7 @@ def split_wast(wastFile):
     wast = None
     if not wastFile.endswith('.wasm'):
         try:
-            wast = open(wastFile, 'r').read()
+            wast = open(wastFile).read()
         except Exception:
             pass
 
@@ -186,8 +186,8 @@ def write_wast(filename, wast, asserts=[]):
             o.write(wast + '\n'.join(asserts))
 
 
-# Hack to allow subprocess.Popen with stdout/stderr to StringIO, which doesn't have a fileno and doesn't work otherwise
-def _process_communicate(*args, **kwargs):
+# Hack to allow subprocess with stdout/stderr to StringIO, which doesn't have a fileno and doesn't work otherwise
+def _subprocess_run(*args, **kwargs):
     overwrite_stderr = "stderr" in kwargs and isinstance(kwargs["stderr"], io.StringIO)
     overwrite_stdout = "stdout" in kwargs and isinstance(kwargs["stdout"], io.StringIO)
 
@@ -198,15 +198,14 @@ def _process_communicate(*args, **kwargs):
         stderr_fd = kwargs["stderr"]
         kwargs["stderr"] = subprocess.PIPE
 
-    proc = subprocess.Popen(*args, **kwargs)
-    out, err = proc.communicate()
+    proc = subprocess.run(*args, **kwargs)
 
     if overwrite_stdout:
-        stdout_fd.write(out)
+        stdout_fd.write(proc.stdout)
     if overwrite_stderr:
-        stderr_fd.write(err)
+        stderr_fd.write(proc.stderr)
 
-    return out, err, proc.returncode
+    return proc.stdout, proc.stderr, proc.returncode
 
 
 def run_command(cmd, expected_status=0, stdout=None, stderr=None,
@@ -222,7 +221,7 @@ def run_command(cmd, expected_status=0, stdout=None, stderr=None,
         stderr = subprocess.PIPE
     print('executing: ', ' '.join(cmd), file=stdout)
 
-    out, err, code = _process_communicate(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
+    out, err, code = _subprocess_run(cmd, stdout=subprocess.PIPE, stderr=stderr, encoding='UTF-8')
 
     if expected_status is not None and code != expected_status:
         raise Exception(f"run_command `{' '.join(cmd)}` failed ({code}) {err or ''}")
