@@ -3323,8 +3323,7 @@ private:
       trap((std::stringstream()
             << "Import module " << std::quoted(importable.module.toString())
             << " doesn't exist.")
-             .str()
-             .c_str());
+             .str());
     }
     auto* importedInstance = it->second.get();
 
@@ -3333,14 +3332,12 @@ private:
     if (!export_) {
       trap((std::stringstream()
             << "Export " << importable.base << " doesn't exist.")
-             .str()
-             .c_str());
+             .str());
     }
     if (export_->kind != kind) {
       trap((std::stringstream() << "Exported kind: " << export_->kind
                                 << " doesn't match expected kind: " << kind)
-             .str()
-             .c_str());
+             .str());
     }
   }
 
@@ -5059,7 +5056,7 @@ protected:
     if (lhs > rhs) {
       std::stringstream ss;
       ss << msg << ": " << lhs << " > " << rhs;
-      externalInterface->trap(ss.str().c_str());
+      externalInterface->trap(ss.str());
     }
   }
 

@@ -137,8 +137,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
         trap((std::stringstream()
               << "importGlobals: unknown import: " << import->module.str << "."
               << import->name.str)
-               .str()
-               .c_str());
+               .str());
       }
       globals[import->name] = inst->globals[*exportedGlobal->getInternalName()];
     });
