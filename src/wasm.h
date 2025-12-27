@@ -995,7 +995,7 @@ public:
   Address align;
   Expression* ptr;
   Name memory;
-  MemoryOrder order;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 

@@ -1483,12 +1483,12 @@ Result<> IRBuilder::makeStore(
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem) {
+Result<> IRBuilder::makeAtomicLoad(
+  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
   Load curr;
   curr.memory = mem;
   CHECK_ERR(visitLoad(&curr));
-  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem));
+  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem, order));
   return Ok{};
 }
 
