@@ -574,6 +574,10 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
+    if (curr->order != MemoryOrder::Unordered) {
+      o << " ";
+      printMemoryOrder(curr->order);
+    }
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }

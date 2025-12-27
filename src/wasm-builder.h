@@ -384,10 +384,16 @@ public:
     ret->finalize();
     return ret;
   }
-  Load* makeAtomicLoad(
-    unsigned bytes, Address offset, Expression* ptr, Type type, Name memory) {
+  Load* makeAtomicLoad(unsigned bytes,
+                       Address offset,
+                       Expression* ptr,
+                       Type type,
+                       Name memory,
+                       MemoryOrder order) {
     Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
+    // Probably should remove this?
     load->isAtomic = true;
+    load->order = order;
     return load;
   }
   AtomicWait* makeAtomicWait(Expression* ptr,

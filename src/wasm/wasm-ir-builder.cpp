@@ -1075,7 +1075,7 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try * tryy;
+  } else if (Try* tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
     setCatchBody(tryy, *expr, index);
@@ -1484,12 +1484,12 @@ Result<> IRBuilder::makeStore(
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem) {
+Result<> IRBuilder::makeAtomicLoad(
+  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
   Load curr;
   curr.memory = mem;
   CHECK_ERR(visitLoad(&curr));
-  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem));
+  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem, order));
   return Ok{};
 }
 
