@@ -1737,12 +1737,22 @@ Result<> makeLoad(Ctx& ctx,
                   bool signed_,
                   int bytes,
                   bool isAtomic) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
-  return ctx.makeLoad(
-    pos, annotations, type, signed_, bytes, isAtomic, mem.getPtr(), *arg);
+  // todo should we remove isAtomic?
+  return ctx.makeLoad(pos,
+                      annotations,
+                      type,
+                      signed_,
+                      bytes,
+                      isAtomic,
+                      mem.getPtr(),
+                      *arg,
+                      *order);
 }
 
 template<typename Ctx>

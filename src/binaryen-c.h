@@ -848,7 +848,8 @@ BINARYEN_API BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                                       uint32_t offset,
                                                       BinaryenType type,
                                                       BinaryenExpressionRef ptr,
-                                                      const char* memoryName);
+                                                      const char* memoryName,
+                                                      uint8_t order);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicStore(BinaryenModuleRef module,
                     uint32_t bytes,

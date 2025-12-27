@@ -287,8 +287,13 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
                   getAddr(),
                   builder.makeBinary(
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
-                builder.makeAtomicLoad(
-                  1, 0, getFuncIdx(), Type::i32, loadMemoryName),
+                // TODO
+                builder.makeAtomicLoad(1,
+                                       0,
+                                       getFuncIdx(),
+                                       Type::i32,
+                                       loadMemoryName,
+                                       MemoryOrder::Unordered),
                 Type::i32,
                 wasm->memories[0]->name),
               builder.makeLocalSet(

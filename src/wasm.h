@@ -996,6 +996,7 @@ public:
   bool isAtomic;
   Expression* ptr;
   Name memory;
+  MemoryOrder order;
 
   // type must be set during creation, cannot be inferred
 

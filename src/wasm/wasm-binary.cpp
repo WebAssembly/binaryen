@@ -1331,9 +1331,10 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     }
     // more VLG digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
-    out << char(digit < 20
-                  ? 'g' + digit
-                  : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+    out << char(digit < 20    ? 'g' + digit
+                : digit < 30  ? '0' + digit - 20
+                : digit == 30 ? '+'
+                              : '/');
   }
 }
 
@@ -3622,62 +3623,57 @@ Result<> WasmBinaryReader::readInst() {
     }
     case BinaryConsts::AtomicPrefix: {
       auto op = getU32LEB();
+      // TODO: pass align through for validation.
+      auto [mem, align, offset] = getMemarg();
       switch (op) {
         case BinaryConsts::I32AtomicLoad8U: {
-          // TODO: pass align through for validation.
-          auto [mem, align, offset] = getMemarg();
-          return builder.makeAtomicLoad(1, offset, Type::i32, mem);
+          // TODO
+          return builder.makeAtomicLoad(
+            1, offset, Type::i32, mem, MemoryOrder::Unordered);
         }
         case BinaryConsts::I32AtomicLoad16U: {
-          auto [mem, align, offset] = getMemarg();
-          return builder.makeAtomicLoad(2, offset, Type::i32, mem);
+          return builder.makeAtomicLoad(
+            2, offset, Type::i32, mem, MemoryOrder::Unordered);
         }
         case BinaryConsts::I32AtomicLoad: {
-          auto [mem, align, offset] = getMemarg();
-          return builder.makeAtomicLoad(4, offset, Type::i32, mem);
+          return builder.makeAtomicLoad(
+            4, offset, Type::i32, mem, MemoryOrder::Unordered);
         }
         case BinaryConsts::I64AtomicLoad8U: {
-          auto [mem, align, offset] = getMemarg();
-          return builder.makeAtomicLoad(1, offset, Type::i64, mem);
+          return builder.makeAtomicLoad(
+            1, offset, Type::i64, mem, MemoryOrder::Unordered);
         }
         case BinaryConsts::I64AtomicLoad16U: {
-          auto [mem, align, offset] = getMemarg();
-          return builder.makeAtomicLoad(2, offset, Type::i64, mem);
+          return builder.makeAtomicLoad(
+            2, offset, Type::i64, mem, MemoryOrder::Unordered);
         }
         case BinaryConsts::I64AtomicLoad32U: {
-          auto [mem, align, offset] = getMemarg();
-          return builder.makeAtomicLoad(4, offset, Type::i64, mem);
+          return builder.makeAtomicLoad(
+            4, offset, Type::i64, mem, MemoryOrder::Unordered);
         }
         case BinaryConsts::I64AtomicLoad: {
-          auto [mem, align, offset] = getMemarg();
-          return builder.makeAtomicLoad(8, offset, Type::i64, mem);
+          return builder.makeAtomicLoad(
+            8, offset, Type::i64, mem, MemoryOrder::Unordered);
         }
         case BinaryConsts::I32AtomicStore8: {
-          auto [mem, align, offset] = getMemarg();
           return builder.makeAtomicStore(1, offset, Type::i32, mem);
         }
         case BinaryConsts::I32AtomicStore16: {
-          auto [mem, align, offset] = getMemarg();
           return builder.makeAtomicStore(2, offset, Type::i32, mem);
         }
         case BinaryConsts::I32AtomicStore: {
-          auto [mem, align, offset] = getMemarg();
           return builder.makeAtomicStore(4, offset, Type::i32, mem);
         }
         case BinaryConsts::I64AtomicStore8: {
-          auto [mem, align, offset] = getMemarg();
           return builder.makeAtomicStore(1, offset, Type::i64, mem);
         }
         case BinaryConsts::I64AtomicStore16: {
-          auto [mem, align, offset] = getMemarg();
           return builder.makeAtomicStore(2, offset, Type::i64, mem);
         }
         case BinaryConsts::I64AtomicStore32: {
-          auto [mem, align, offset] = getMemarg();
           return builder.makeAtomicStore(4, offset, Type::i64, mem);
         }
         case BinaryConsts::I64AtomicStore: {
-          auto [mem, align, offset] = getMemarg();
           return builder.makeAtomicStore(8, offset, Type::i64, mem);
         }
 
