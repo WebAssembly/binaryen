@@ -1728,8 +1728,10 @@ public:
   size_t inlineHintsLen = 0;
   void readInlineHints(size_t payloadLen);
 
-  Index readMemoryAccess(Address& alignment, Address& offset);
-  std::tuple<Name, Address, Address> getMemarg();
+  std::tuple<Address, Address, Index, MemoryOrder>
+  readMemoryAccess(bool isAtomic, bool isRMW);
+  std::tuple<Name, Address, Address, MemoryOrder> getMemarg(bool isAtomic,
+                                                            bool isRMW);
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {

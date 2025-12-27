@@ -574,6 +574,7 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
+    printMemoryOrderNoSpaces(curr->order, /*prependSpace=*/true);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -2323,7 +2324,8 @@ struct PrintExpressionContents
       o << index;
     }
   }
-  void printMemoryOrder(MemoryOrder order) {
+
+  void printMemoryOrderNoSpaces(MemoryOrder order, bool prependSpace) {
     switch (order) {
       // Unordered should have a different base instruction, so there is nothing
       // to print. We could be explicit and print seqcst, but we choose not to
@@ -2332,10 +2334,16 @@ struct PrintExpressionContents
       case MemoryOrder::SeqCst:
         break;
       case MemoryOrder::AcqRel:
-        o << "acqrel ";
+        o << (prependSpace ? " " : "") << "acqrel";
         break;
     }
   }
+
+  void printMemoryOrder(MemoryOrder order) {
+    printMemoryOrderNoSpaces(order, false);
+    o << " ";
+  }
+
   void visitStructGet(StructGet* curr) {
     auto heapType = curr->ref->type.getHeapType();
     const auto& field = heapType.getStruct().fields[curr->index];
