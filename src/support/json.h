@@ -280,8 +280,6 @@ struct Value {
         curr++;
       }
     };
-    (void)is_json_space;
-    (void)skip;
     skip();
     if (*curr == '"') {
       // String
