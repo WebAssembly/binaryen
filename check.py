@@ -257,6 +257,7 @@ def run_spec_test_with_wrapped_stdout(wast: Path):
     try:
         run_one_spec_test(wast, stdout=out)
     except Exception as e:
+        shared.num_failures += 1
         # Serialize exceptions into the output string buffer
         # so they can be reported on the main thread.
         print(e, file=out)
