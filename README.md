@@ -201,6 +201,17 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      rare cases (we avoid this overhead in the common case where the `br_if`
      value is unused).
 
+ * Strings
+
+   * When the string builtins feature is enabled (`--enable-string-builtins`),
+     string operations are optimized. First, string imports are lifted into
+     stringref operations, before any default optimization passes. Those
+     stringref operations can then be optimized (e.g., a concat of constants
+     turns into a concatenated constant). When we are about to finish running
+     default optimizations, we lower stringref back into string builtins. (Note:
+     reference types and GC must also be enabled, as imported string operations
+     depend on GC arrays.)
+
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
 

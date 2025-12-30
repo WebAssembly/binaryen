@@ -49,8 +49,16 @@ assert sys.version_info >= (3, 10), 'requires Python 3.10'
 # parameters
 
 # feature options that are always passed to the tools.
-# XXX fp16 is not yet stable, remove from here when it is
-CONSTANT_FEATURE_OPTS = ['--all-features', '--disable-fp16']
+CONSTANT_FEATURE_OPTS = [
+    '--all-features',
+    # TODO fp16 is not yet stable, remove from here when it is
+    '--disable-fp16',
+    # TODO if we enable string-builtins then if the input module has strings,
+    #      the output after lowering will have string imports, and the
+    #      interpreter does not yet support executing those (we'd need to handle
+    #      all the imported functions, magic constants, and the section)
+    '--disable-string-builtins',
+]
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
