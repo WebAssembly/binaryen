@@ -22,23 +22,8 @@
 namespace wasm::TableUtils {
 
 bool isSubType(const Table& a, const Table& b) {
-  if (a.addressType != b.addressType) {
-    return false;
-  }
-
-  if (!Type::isSubType(a.type, b.type)) {
-    return false;
-  }
-
-  if (a.initial > b.initial) {
-    return false;
-  }
-
-  if (a.max < b.max) {
-    return false;
-  }
-
-  return true;
+  return a.addressType == b.addressType && Type::isSubType(a.type, b.type) &&
+         a.initial >= b.initial && a.max <= b.max;
 }
 
 std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {

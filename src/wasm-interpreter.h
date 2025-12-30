@@ -3384,7 +3384,7 @@ private:
         if (auto** table = std::get_if<Table*>(&import)) {
           Table* exportedTable =
             importedInstance->wasm.getTable(*export_->getInternalName());
-          if (!TableUtils::isSubType(**table, *exportedTable)) {
+          if (!TableUtils::isSubType(*exportedTable, **table)) {
             trap("Imported table isn't compatible");
           }
         }
