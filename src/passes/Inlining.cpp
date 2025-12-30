@@ -42,6 +42,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/properties.h"
+#include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "parsing.h"
@@ -1007,7 +1008,7 @@ struct FunctionSplitter {
       }
       if (iff->ifTrue->type == Type::none) {
         // This must have no returns.
-        if (!FindAll<Return>(iff->ifTrue).list.empty()) {
+        if (ReturnUtils::getInfo(iff->ifTrue).hasReturn) {
           return InliningMode::Uninlineable;
         }
       } else {
