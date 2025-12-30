@@ -1800,13 +1800,18 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
-    // The types may prove that the same reference cannot appear on both sides.
+    // Check for unreachability. Note we must check both the children and the
+    // ref.eq itself, as in e.g. optimizeTernary, as we only refinalize at the
+    // end, so unreachable children may not update the parent yet.
     auto leftType = curr->left->type;
     auto rightType = curr->right->type;
-    if (leftType == Type::unreachable || rightType == Type::unreachable) {
+    if (leftType == Type::unreachable || rightType == Type::unreachable ||
+        curr->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
+
+    // The types may prove that the same reference cannot appear on both sides.
     auto leftHeapType = leftType.getHeapType();
     auto rightHeapType = rightType.getHeapType();
     auto leftIsHeapSubtype = HeapType::isSubType(leftHeapType, rightHeapType);
