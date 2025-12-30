@@ -198,6 +198,10 @@ struct ValidationInfo {
                                 Expression* curr,
                                 const char* text,
                                 Function* func = nullptr) {
+    if (!ty.isBasic()) {
+      fail(std::string(text) + " (not basic)", curr, func);
+      return;
+    }
     switch (ty.getBasic()) {
       case Type::i32:
       case Type::i64:
