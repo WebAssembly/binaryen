@@ -33,7 +33,7 @@ inline bool isSignRelevant(Load* load) {
 }
 
 // check if a load can be signed (which some opts want to do)
-inline bool canBeSigned(Load* load) { return !load->isAtomic; }
+inline bool canBeSigned(Load* load) { return !load->isAtomic(); }
 
 } // namespace wasm::LoadUtils
 

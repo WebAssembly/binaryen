@@ -549,7 +549,7 @@ struct PrintExpressionContents
   }
   void visitLoad(Load* curr) {
     prepareColor(o) << forceConcrete(curr->type, curr->align);
-    if (curr->isAtomic) {
+    if (curr->isAtomic()) {
       o << ".atomic";
     }
     o << ".load";

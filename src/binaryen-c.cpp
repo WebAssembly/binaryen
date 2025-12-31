@@ -2633,12 +2633,14 @@ void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
 bool BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
-  return static_cast<Load*>(expression)->isAtomic;
+  return static_cast<Load*>(expression)->isAtomic();
 }
+
 void BinaryenLoadSetAtomic(BinaryenExpressionRef expr, bool isAtomic) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
-  static_cast<Load*>(expression)->isAtomic = isAtomic != 0;
+  static_cast<Load*>(expression)->order =
+    isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
 }
 bool BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;

@@ -43,7 +43,7 @@ static Name getLoadName(Load* curr) {
   if (LoadUtils::isSignRelevant(curr) && !curr->signed_) {
     ret += "U_";
   }
-  if (curr->isAtomic) {
+  if (curr->isAtomic()) {
     ret += "A";
   } else {
     ret += std::to_string(curr->align);
@@ -233,7 +233,8 @@ struct SafeHeap : public Pass {
               continue;
             }
             for (auto isAtomic : {true, false}) {
-              load.isAtomic = isAtomic;
+              load.order =
+                isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
               if (isAtomic &&
                   !isPossibleAtomicOperation(
                     align, bytes, module->memories[0]->shared, type)) {
@@ -321,7 +322,7 @@ struct SafeHeap : public Pass {
     *load = style; // basically the same as the template we are given!
     load->ptr = builder.makeLocalGet(2, addressType);
     Expression* last = load;
-    if (load->isAtomic && load->signed_) {
+    if (load->isAtomic() && load->signed_) {
       // atomic loads cannot be signed, manually sign it
       last = Bits::makeSignExt(load, load->bytes, *module);
       load->signed_ = false;
@@ -410,8 +411,9 @@ struct SafeHeap : public Pass {
                               bool is64,
                               Name memory) {
     bool lowMemUnused = getPassOptions().lowMemoryUnused;
-    auto upperOp = is64 ? lowMemUnused ? LtUInt64 : EqInt64
-                        : lowMemUnused ? LtUInt32 : EqInt32;
+    auto upperOp = is64           ? lowMemUnused ? LtUInt64 : EqInt64
+                   : lowMemUnused ? LtUInt32
+                                  : EqInt32;
     auto upperBound = lowMemUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {

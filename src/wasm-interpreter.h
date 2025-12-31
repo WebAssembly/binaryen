@@ -3862,7 +3862,7 @@ public:
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
       info.instance->getFinalAddress(curr, flow.getSingleValue(), memorySize);
-    if (curr->isAtomic) {
+    if (curr->isAtomic()) {
       info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
     }
     auto ret = info.interface()->load(curr, addr, info.name);
@@ -3995,7 +3995,7 @@ public:
     load.signed_ = false;
     load.offset = curr->offset;
     load.align = curr->align;
-    load.isAtomic = false;
+    load.order = MemoryOrder::Unordered;
     load.ptr = curr->ptr;
     Literal (Literal::*splat)() const = nullptr;
     switch (curr->op) {
@@ -5023,7 +5023,7 @@ protected:
     // always an unsigned extension.
     load.signed_ = false;
     load.align = bytes;
-    load.isAtomic = true; // understatement
+    load.order = MemoryOrder::SeqCst;
     load.ptr = &ptr;
     load.type = type;
     load.memory = memoryName;

@@ -101,7 +101,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitGlobalGet(GlobalGet* curr) { return 1; }
   CostType visitGlobalSet(GlobalSet* curr) { return 2 + visit(curr->value); }
   CostType visitLoad(Load* curr) {
-    return 1 + visit(curr->ptr) + AtomicCost * curr->isAtomic;
+    return 1 + visit(curr->ptr) + AtomicCost * curr->isAtomic();
   }
   CostType visitStore(Store* curr) {
     return 2 + visit(curr->ptr) + visit(curr->value) +
