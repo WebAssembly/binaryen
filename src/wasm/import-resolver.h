@@ -101,11 +101,6 @@ public:
     : linkedInstances(linkedInstances) {}
 
   std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
-    // todo move this out
-    // if (name == std::pair(Name("spectest"), Name("global_i32"))) {
-    //   return new Literals({Literal(static_cast<uint32_t>(666))});
-    // }
-    // todo these can fail
     auto it = linkedInstances.find(name.first);
     if (it == linkedInstances.end()) {
       return std::nullopt;
@@ -113,8 +108,6 @@ public:
 
     ModuleRunnerType* instance = it->second.get();
     return instance->getExportedGlobal(name.second);
-    // Literals* global = instance->allGlobals.at(name.second);
-    // return global;
   }
 
   std::optional<Memory>

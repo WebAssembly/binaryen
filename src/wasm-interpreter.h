@@ -3302,19 +3302,40 @@ public:
                    func->type);
   }
 
-  // get an exported global
-  // I guess this should stay?
-  Literals* getExportedGlobal(Name name) {
+  std::optional<Literals*> getExportedGlobal(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
-      externalInterface->trap("getExport external not found");
+      return std::nullopt;
     }
     Name internalName = *export_->getInternalName();
     auto iter = allGlobals.find(internalName);
     if (iter == allGlobals.end()) {
-      externalInterface->trap("getExport internal not found");
+      return std::nullopt;
     }
     return iter->second;
+  }
+
+  // Traps if the global doesn't exist.
+  Literals& getExportedGlobalOrTrap(Name name) {
+    auto global = getExportedGlobal(name);
+    if (!global.has_value()) {
+      externalInterface->trap((std::stringstream()
+                               << "getExportedGlobal: export " << name
+                               << " not found.")
+                                .str());
+    }
+    return **global;
+
+    // Export* export_ = wasm.getExportOrNull(name);
+    // if (!export_ || export_->kind != ExternalKind::Global) {
+    //   externalInterface->trap("getExport external not found");
+    // }
+    // Name internalName = *export_->getInternalName();
+    // auto iter = allGlobals.find(internalName);
+    // if (iter == allGlobals.end()) {
+    //   externalInterface->trap("getExport internal not found");
+    // }
+    // return *iter->second;
   }
 
   Tag* getExportedTag(Name name) {
