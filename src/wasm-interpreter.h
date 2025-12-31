@@ -2956,8 +2956,7 @@ using GlobalValueSet = std::map<Name, Literals>;
 // To call into the interpreter, use callExport.
 //
 
-template<typename SubType>
-class ModuleRunnerBase : public ExpressionRunner<SubType> {
+class ModuleRunnerBase : public ExpressionRunner<ModuleRunnerBase> {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -2966,9 +2965,9 @@ public:
   //
   struct ExternalInterface {
     ExternalInterface(
-      std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
+      std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
-    virtual void init(Module& wasm, SubType& instance) {}
+    virtual void init(Module& wasm, ModuleRunnerBase& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literal getImportedFunction(Function* import) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
@@ -3169,7 +3168,7 @@ public:
     }
   };
 
-  SubType* self() { return static_cast<SubType*>(this); }
+  ModuleRunnerBase* self() { return this; }
 
   // TODO: this duplicates module in ExpressionRunner, and can be removed
   Module& wasm;
@@ -3183,8 +3182,8 @@ public:
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
-    std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
-    : ExpressionRunner<SubType>(&wasm), wasm(wasm),
+    std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances_ = {})
+    : ExpressionRunner<ModuleRunnerBase>(&wasm), wasm(wasm),
       externalInterface(externalInterface), linkedInstances(linkedInstances_) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
@@ -3302,7 +3301,7 @@ private:
 
   struct TableInstanceInfo {
     // The ModuleRunner instance in which the memory is defined.
-    SubType* instance;
+    ModuleRunnerBase* instance;
     // The external interface in which the table is defined
     ExternalInterface* interface() { return instance->externalInterface; }
     // The name the table has in that interface.
@@ -3358,7 +3357,7 @@ private:
 
   struct MemoryInstanceInfo {
     // The ModuleRunner instance in which the memory is defined.
-    SubType* instance;
+    ModuleRunnerBase* instance;
     // The external interface in which the memory is defined
     ExternalInterface* interface() { return instance->externalInterface; }
     // The name the memory has in that interface.
@@ -3445,13 +3444,13 @@ public:
   public:
     std::vector<Literals> locals;
     Function* function;
-    SubType& parent;
+    ModuleRunnerBase& parent;
 
     FunctionScope* oldScope;
 
     FunctionScope(Function* function,
                   const Literals& arguments,
-                  SubType& parent)
+                  ModuleRunnerBase& parent)
       : function(function), parent(parent) {
       oldScope = parent.scope;
       parent.scope = this;
@@ -3683,7 +3682,7 @@ public:
     return ret;
   }
 
-  Flow visitTableGet(TableGet* curr) {
+  virtual Flow visitTableGet(TableGet* curr) {
     VISIT(index, curr->index)
     auto info = getTableInstanceInfo(curr->table);
     auto address = index.getSingleValue().getUnsigned();
@@ -3844,7 +3843,7 @@ public:
     return curr->isTee() ? flow : Flow();
   }
 
-  Flow visitGlobalGet(GlobalGet* curr) {
+  virtual Flow visitGlobalGet(GlobalGet* curr) {
     auto name = curr->name;
     return getGlobal(name);
   }
@@ -4534,7 +4533,7 @@ public:
     multiValues.pop_back();
     return ret;
   }
-  Flow visitContNew(ContNew* curr) {
+  virtual Flow visitContNew(ContNew* curr) {
     VISIT(funcFlow, curr->func)
     // Create a new continuation for the target function.
     auto funcValue = funcFlow.getSingleValue();
@@ -5053,16 +5052,20 @@ protected:
     return externalInterface->store(&store, addr, toStore, memoryName);
   }
 
+  virtual Literal makeFuncData(Name name, Type type) {
+    return ExpressionRunner<ModuleRunnerBase>::makeFuncData(name, type);
+  }
+
   ExternalInterface* externalInterface;
-  std::map<Name, std::shared_ptr<SubType>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances;
 };
 
-class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
+class ModuleRunner : public ModuleRunnerBase {
 public:
   ModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
-    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
+    std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
 
   Literal makeFuncData(Name name, Type type) {

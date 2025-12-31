@@ -44,9 +44,9 @@ struct Shell {
 
   // Keyed by instance name.
   std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
-  std::map<Name, std::shared_ptr<ModuleRunner>> instances;
+  std::map<Name, std::shared_ptr<ModuleRunnerBase>> instances;
   // Used for imports, keyed by instance name.
-  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances;
 
   Name lastInstance;
   std::optional<Name> lastModuleDefinition;
