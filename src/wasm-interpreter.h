@@ -2957,14 +2957,13 @@ using GlobalValueSet = std::map<Name, Literals>;
 // To call into the interpreter, use callExport.
 //
 
-class ModuleRunnerInterface {
-public:
-  std::map<Name, Literals> definedGlobals;
-};
+// class ModuleRunnerInterface {
+// public:
+//   std::map<Name, Literals> definedGlobals;
+// };
 
 template<typename SubType>
-class ModuleRunnerBase : public ExpressionRunner<SubType>,
-                         public ModuleRunnerInterface {
+class ModuleRunnerBase : public ExpressionRunner<SubType> {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -3190,7 +3189,7 @@ public:
 public:
   // keyed by internal name
   // This is the same as GlobalValueSet
-  // std::map<Name, Literals> definedGlobals;
+  std::map<Name, Literals> definedGlobals;
   std::map<Name, Literals*> allGlobals;
 
   ModuleRunnerBase(
@@ -3201,8 +3200,8 @@ public:
     // {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
       externalInterface(externalInterface), linkedInstances(linkedInstances_),
-      importResolver(
-        std::make_shared<LinkedInstancesImportResolver>(linkedInstances)) {
+      importResolver(std::make_shared<LinkedInstancesImportResolver<SubType>>(
+        linkedInstances)) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3226,24 +3225,26 @@ public:
   // synchronously, which makes some code patterns harder to write.)
   void instantiate() {
 
-    // for (auto global : wasm.globals) {
-    //   if (global->imported()) {
-    //     auto importedGlobal = importResolver->getGlobal(global->module,
-    //     global->base, global->type); if (!importedGlobal) { /* failure */ }
-    //     allGlobals[global->name] = *importedGlobal;
-    //   } else {
-    //     Literal init = self()->visit(global->init).values;
-    //     auto& definedGlobal definedGlobals.emplace_back(init);
-    //     allGlobals[global->name] = definedGlobal;
-    //   }
-    // }
+    for (auto& global : wasm.globals) {
+      if (global->imported()) {
+        auto importedGlobal = importResolver->getGlobal(
+          std::pair(global->module, global->base), global->type);
+        if (!importedGlobal) { /* failure */
+        }
+        allGlobals[global->name] = *importedGlobal;
+      } else {
+        Literals init = self()->visit(global->init).values;
+        auto [it, inserted] = definedGlobals.emplace(global->name, init);
+        allGlobals[global->name] = &it->second;
+      }
+    }
 
     // import globals from the outside
-    externalInterface->importGlobals(globals, wasm);
-    // generate internal (non-imported) globals
-    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] = self()->visit(global->init).values;
-    });
+    // externalInterface->importGlobals(globals, wasm);
+    // // generate internal (non-imported) globals
+    // ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
+    //   globals[global->name] = self()->visit(global->init).values;
+    // });
 
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());

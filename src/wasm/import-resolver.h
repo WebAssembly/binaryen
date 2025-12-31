@@ -35,33 +35,48 @@ public:
 // class ModuleRunnerBase;
 // class EvallingModuleRunner;
 
-class ModuleRunnerInterface;
+// class ModuleRunnerInterface;
 
 // using SomeModuleRunner =
 // std::variant<shared_ptr<ModuleRunner<EvallingModuleRunner>>> using
 // SomeLinkedInstances = std::variant<std::map<Name,
 // std::shared_ptr<ModuleRunnerBase<EvallingModuleRunner>>>>
 
+template<typename ModuleRunnerType>
 class LinkedInstancesImportResolver : public ImportResolver {
 public:
   LinkedInstancesImportResolver(
-    std::map<Name, std::shared_ptr<ModuleRunnerInterface>> linkedInstances
+    std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances
     // SomeLinkedInstances linkedInstances;
-  );
+    )
+    : linkedInstances(linkedInstances) {}
 
-  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override;
+  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
+    // todo these can fail
+    ModuleRunnerType* instance = linkedInstances.find(name.first)->second.get();
+    Literals* global = &instance->definedGlobals[name.second];
+    return global;
+  }
 
   std::optional<Memory>
-  getMemory(QualifiedName name /*, MemoryType type ? */) override;
+  getMemory(QualifiedName name /*, MemoryType type ? */) override {
+    return std::nullopt;
+  };
   std::optional<Table>
-  getTable(QualifiedName name /*, TableType type ? */) override;
+  getTable(QualifiedName name /*, TableType type ? */) override {
+    return std::nullopt;
+  };
 
-  std::optional<Function> getFunction(QualifiedName name, Type type) override;
+  std::optional<Function> getFunction(QualifiedName name, Type type) override {
+    return std::nullopt;
+  };
 
-  std::optional<Tag> getTag(QualifiedName name, Signature type) override;
+  std::optional<Tag> getTag(QualifiedName name, Signature type) override {
+    return std::nullopt;
+  };
 
 private:
-  const std::map<Name, std::shared_ptr<ModuleRunnerInterface>> linkedInstances;
+  const std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances;
 };
 
 } // namespace wasm
