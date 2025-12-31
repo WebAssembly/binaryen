@@ -3251,7 +3251,6 @@ public:
       } else {
         Literals init = self()->visit(global->init).values;
         auto [it, inserted] = definedGlobals.emplace(global->name, init);
-        std::cout << "insert " << global->name << " " << it->second << "\n";
         // todo the name might already exist?
         allGlobals[global->name] = &it->second;
       }
