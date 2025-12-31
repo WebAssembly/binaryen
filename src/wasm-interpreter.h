@@ -3235,36 +3235,10 @@ public:
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
   void instantiate() {
-
-    // need to do something with export / getInternalName
-    for (auto& global : wasm.globals) {
-      if (global->imported()) {
-        auto importedGlobal = importResolver->getGlobal(
-          std::pair(global->module, global->base), global->type);
-        if (!importedGlobal) {
-          Fatal() << "asdf";
-        }
-        if (!*importedGlobal) {
-          Fatal() << "unexpected nullptr";
-        }
-        allGlobals[global->name] = *importedGlobal;
-      } else {
-        Literals init = self()->visit(global->init).values;
-        auto [it, inserted] = definedGlobals.emplace(global->name, init);
-        // todo the name might already exist?
-        allGlobals[global->name] = &it->second;
-      }
-    }
-
-    // import globals from the outside
-    // externalInterface->importGlobals(globals, wasm);
-    // // generate internal (non-imported) globals
-    // ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-    //   globals[global->name] = self()->visit(global->init).values;
-    // });
-
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
+
+    initializeGlobals();
 
     initializeTableContents();
     initializeMemoryContents();
@@ -3325,17 +3299,6 @@ public:
                                 .str());
     }
     return **global;
-
-    // Export* export_ = wasm.getExportOrNull(name);
-    // if (!export_ || export_->kind != ExternalKind::Global) {
-    //   externalInterface->trap("getExport external not found");
-    // }
-    // Name internalName = *export_->getInternalName();
-    // auto iter = allGlobals.find(internalName);
-    // if (iter == allGlobals.end()) {
-    //   externalInterface->trap("getExport internal not found");
-    // }
-    // return *iter->second;
   }
 
   Tag* getExportedTag(Name name) {
@@ -3389,6 +3352,29 @@ private:
     }
 
     return TableInstanceInfo{self(), name};
+  }
+
+  void initializeGlobals() {
+    // need to do something with export / getInternalName
+    for (auto& global : wasm.globals) {
+      if (global->imported()) {
+        auto importedGlobal = importResolver->getGlobal(
+          std::pair(global->module, global->base), global->type);
+        if (!importedGlobal) {
+          // Maybe we want a qualifiedname type
+          externalInterface->trap((std::stringstream()
+                                   << "Imported global " << global->module
+                                   << "." << global->base << " not found.")
+                                    .str());
+        }
+        allGlobals[global->name] = *importedGlobal;
+      } else {
+        Literals init = self()->visit(global->init).values;
+        auto [it, inserted] = definedGlobals.emplace(global->name, init);
+        // todo the name might already exist?
+        allGlobals[global->name] = &it->second;
+      }
+    }
   }
 
   void initializeTableContents() {
@@ -3581,21 +3567,8 @@ private:
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
 protected:
-  // Returns a reference to the current value of a potentially imported global.
-  Literals& getGlobal(Name name) {
-    return *allGlobals[name];
-    // auto* inst = self();
-    // auto* global = inst->wasm.getGlobal(name);
-    // while (global->imported()) {
-    //   inst = inst->linkedInstances.at(global->module).get();
-    //   Export* globalExport = inst->wasm.getExport(global->base);
-    //   global = inst->wasm.getGlobal(*globalExport->getInternalName());
-    // }
-
-    // return inst->globals[global->name];
-  }
-
-  // As above, but for a function.
+  // Returns a reference to the current value of a potentially imported
+  // function.
   Literal getFunction(Name name) {
     auto* inst = self();
     auto* func = inst->wasm.getFunction(name);
@@ -3917,13 +3890,13 @@ public:
 
   Flow visitGlobalGet(GlobalGet* curr) {
     auto name = curr->name;
-    return getGlobal(name);
+    return *allGlobals.at(name);
   }
   Flow visitGlobalSet(GlobalSet* curr) {
     auto name = curr->name;
     VISIT(flow, curr->value)
 
-    getGlobal(name) = flow.values;
+    *allGlobals.at(name) = flow.values;
     return Flow();
   }
 
