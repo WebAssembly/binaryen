@@ -3200,8 +3200,19 @@ public:
     // {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
       externalInterface(externalInterface), linkedInstances(linkedInstances_),
-      importResolver(std::make_shared<LinkedInstancesImportResolver<SubType>>(
-        linkedInstances)) {
+      importResolver(std::make_shared<ChainedImportResolver>(
+        std::initializer_list<std::shared_ptr<ImportResolver>>{
+          std::make_shared<SpecTestModuleImportResolver>(),
+          std::make_shared<LinkedInstancesImportResolver<SubType>>(
+            linkedInstances)}))
+  // importResolver([&linkedInstances_]() {
+  //   auto spec = std::make_shared<SpecTestModuleImportResolver>();
+  //   auto linked =
+  //     std::make_shared<LinkedInstancesImportResolver<SubType>>(linkedInstances_);
+  //   auto chained = std::make_shared<ChainedImportResolver>({spec, linked});
+  //   return chained;
+  // } ())
+  {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3225,16 +3236,23 @@ public:
   // synchronously, which makes some code patterns harder to write.)
   void instantiate() {
 
+    // need to do something with export / getInternalName
     for (auto& global : wasm.globals) {
       if (global->imported()) {
         auto importedGlobal = importResolver->getGlobal(
           std::pair(global->module, global->base), global->type);
-        if (!importedGlobal) { /* failure */
+        if (!importedGlobal) {
+          Fatal() << "asdf";
+        }
+        if (!*importedGlobal) {
+          Fatal() << "unexpected nullptr";
         }
         allGlobals[global->name] = *importedGlobal;
       } else {
         Literals init = self()->visit(global->init).values;
         auto [it, inserted] = definedGlobals.emplace(global->name, init);
+        std::cout << "insert " << global->name << " " << it->second << "\n";
+        // todo the name might already exist?
         allGlobals[global->name] = &it->second;
       }
     }
@@ -3286,14 +3304,15 @@ public:
   }
 
   // get an exported global
-  Literals getExportedGlobal(Name name) {
+  // I guess this should stay?
+  Literals* getExportedGlobal(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
       externalInterface->trap("getExport external not found");
     }
     Name internalName = *export_->getInternalName();
-    auto iter = globals.find(internalName);
-    if (iter == globals.end()) {
+    auto iter = allGlobals.find(internalName);
+    if (iter == allGlobals.end()) {
       externalInterface->trap("getExport internal not found");
     }
     return iter->second;
@@ -3544,15 +3563,16 @@ private:
 protected:
   // Returns a reference to the current value of a potentially imported global.
   Literals& getGlobal(Name name) {
-    auto* inst = self();
-    auto* global = inst->wasm.getGlobal(name);
-    while (global->imported()) {
-      inst = inst->linkedInstances.at(global->module).get();
-      Export* globalExport = inst->wasm.getExport(global->base);
-      global = inst->wasm.getGlobal(*globalExport->getInternalName());
-    }
+    return *allGlobals[name];
+    // auto* inst = self();
+    // auto* global = inst->wasm.getGlobal(name);
+    // while (global->imported()) {
+    //   inst = inst->linkedInstances.at(global->module).get();
+    //   Export* globalExport = inst->wasm.getExport(global->base);
+    //   global = inst->wasm.getGlobal(*globalExport->getInternalName());
+    // }
 
-    return inst->globals[global->name];
+    // return inst->globals[global->name];
   }
 
   // As above, but for a function.

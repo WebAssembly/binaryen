@@ -42,6 +42,55 @@ public:
 // SomeLinkedInstances = std::variant<std::map<Name,
 // std::shared_ptr<ModuleRunnerBase<EvallingModuleRunner>>>>
 
+class NullImportResolver : public ImportResolver {
+public:
+  NullImportResolver() {}
+
+  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
+    return std::nullopt;
+  }
+
+  std::optional<Memory>
+  getMemory(QualifiedName name /*, MemoryType type ? */) override {
+    return std::nullopt;
+  };
+  std::optional<Table>
+  getTable(QualifiedName name /*, TableType type ? */) override {
+    return std::nullopt;
+  };
+
+  std::optional<Function> getFunction(QualifiedName name, Type type) override {
+    return std::nullopt;
+  };
+
+  std::optional<Tag> getTag(QualifiedName name, Signature type) override {
+    return std::nullopt;
+  };
+};
+
+class SpecTestModuleImportResolver : public NullImportResolver {
+public:
+  SpecTestModuleImportResolver()
+    : global_i32({Literal(static_cast<uint32_t>(666))}) {}
+
+  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
+    if (name.first != "spectest") {
+      return std::nullopt;
+    }
+
+    if (name.second == "global_i32") {
+      return &global_i32;
+    }
+
+    // todo
+    return std::nullopt;
+  }
+
+private:
+  // todo make it into a map
+  Literals global_i32;
+};
+
 template<typename ModuleRunnerType>
 class LinkedInstancesImportResolver : public ImportResolver {
 public:
@@ -52,10 +101,20 @@ public:
     : linkedInstances(linkedInstances) {}
 
   std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
+    // todo move this out
+    // if (name == std::pair(Name("spectest"), Name("global_i32"))) {
+    //   return new Literals({Literal(static_cast<uint32_t>(666))});
+    // }
     // todo these can fail
-    ModuleRunnerType* instance = linkedInstances.find(name.first)->second.get();
-    Literals* global = &instance->definedGlobals[name.second];
-    return global;
+    auto it = linkedInstances.find(name.first);
+    if (it == linkedInstances.end()) {
+      return std::nullopt;
+    }
+
+    ModuleRunnerType* instance = it->second.get();
+    return instance->getExportedGlobal(name.second);
+    // Literals* global = instance->allGlobals.at(name.second);
+    // return global;
   }
 
   std::optional<Memory>
@@ -77,6 +136,26 @@ public:
 
 private:
   const std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances;
+};
+
+class ChainedImportResolver : public NullImportResolver {
+public:
+  ChainedImportResolver(
+    std::vector<std::shared_ptr<ImportResolver>> importResolvers)
+    : importResolvers(importResolvers) {}
+
+  std::optional<Literals*> getGlobal(QualifiedName name, Type type) override {
+    for (const auto& resolver : importResolvers) {
+      if (auto global = resolver->getGlobal(name, type); global) {
+        return global;
+      }
+    }
+
+    return std::nullopt;
+  }
+
+private:
+  std::vector<std::shared_ptr<ImportResolver>> importResolvers;
 };
 
 } // namespace wasm
