@@ -13,6 +13,10 @@ struct QualifiedName {
   friend std::ostream& operator<<(std::ostream& o, const QualifiedName& qname) {
     return o << qname.module << "." << qname.name;
   }
+
+  bool operator<(const QualifiedName& other) const {
+    return std::tie(module, name) < std::tie(other.module, other.name);
+  }
 };
 
 } // namespace wasm
