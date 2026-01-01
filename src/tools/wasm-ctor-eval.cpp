@@ -73,9 +73,15 @@ class EvallingImportResolver : public ImportResolver {
 public:
   EvallingImportResolver() = default;
 
+  // We throw FailToEvalException on reading these. Provide a stub value that
+  // passes import validation.
   Literals* getGlobalOrNull(ImportNames name, Type type) const override {
-    throw FailToEvalException("Accessed imported global");
+    auto [it, _] = stubLiterals.try_emplace(type, Literals({Literal(type)}));
+    return &it->second;
   }
+
+private:
+  mutable std::unordered_map<Type, Literals> stubLiterals;
 };
 
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
@@ -557,6 +563,9 @@ private:
     wasm->updateMaps();
 
     for (auto& oldGlobal : oldGlobals) {
+      if (oldGlobal->imported()) {
+        continue;
+      }
       // Serialize the global's value. While doing so, pass in the name of this
       // global, as we may be able to reuse the global as the defining global
       // for the value. See getSerialization() for more details.
