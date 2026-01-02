@@ -49,6 +49,7 @@
 #include "wasm-limits.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
+#include "wasm/import-resolver.h"
 
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
 #include <sanitizer/lsan_interface.h>
@@ -2943,8 +2944,6 @@ public:
   }
 };
 
-using GlobalValueSet = std::map<Name, Literals>;
-
 //
 // A runner for a module. Each runner contains the information to execute the
 // module, such as the state of globals, and so forth, so it basically
@@ -2972,7 +2971,6 @@ public:
       std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
-    virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literal getImportedFunction(Function* import) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
@@ -3177,18 +3175,22 @@ public:
   // TODO: this duplicates module in ExpressionRunner, and can be removed
   Module& wasm;
 
-  // Values of globals
-  GlobalValueSet globals;
-
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
+
+  // Keyed by internal name. All globals in the module, including imports.
+  // `definedGlobals` contains non-imported globals.
+  std::map<Name, Literals*> allGlobals;
 
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
+    std::shared_ptr<ImportResolver> importResolver,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
-      externalInterface(externalInterface), linkedInstances(linkedInstances_) {
+      externalInterface(externalInterface),
+      linkedInstances(std::move(linkedInstances_)),
+      importResolver(std::move(importResolver)) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3211,15 +3213,10 @@ public:
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
   void instantiate(bool validateImports_ = false) {
-    // import globals from the outside
-    externalInterface->importGlobals(globals, wasm);
-    // generate internal (non-imported) globals
-    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] = self()->visit(global->init).values;
-    });
-
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
+
+    initializeGlobals();
 
     if (validateImports_) {
       validateImports();
@@ -3261,18 +3258,28 @@ public:
                    func->type);
   }
 
-  // get an exported global
-  Literals getExportedGlobal(Name name) {
+  nullability::Nullable<Literals*> getExportedGlobal(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
-      externalInterface->trap("getExport external not found");
+      return nullptr;
     }
     Name internalName = *export_->getInternalName();
-    auto iter = globals.find(internalName);
-    if (iter == globals.end()) {
-      externalInterface->trap("getExport internal not found");
+    auto iter = allGlobals.find(internalName);
+    if (iter == allGlobals.end()) {
+      return nullptr;
     }
     return iter->second;
+  }
+
+  Literals& getExportedGlobalOrTrap(Name name) {
+    auto* global = getExportedGlobal(name);
+    if (!global) {
+      externalInterface->trap((std::stringstream()
+                               << "getExportedGlobal: export " << name
+                               << " not found.")
+                                .str());
+    }
+    return *global;
   }
 
   Tag* getExportedTag(Name name) {
@@ -3297,6 +3304,11 @@ public:
   }
 
 private:
+  // Globals that were defined in this module and not from an import.
+  // `allGlobals` contains these values + imported globals, keyed by their
+  // internal name.
+  std::vector<Literals> definedGlobals;
+
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
 
@@ -3401,6 +3413,39 @@ private:
     }
 
     return TableInstanceInfo{self(), name};
+  }
+
+  void initializeGlobals() {
+    int definedGlobalCount = 0;
+    ModuleUtils::iterDefinedGlobals(
+      wasm, [&definedGlobalCount](auto&& _) { ++definedGlobalCount; });
+    definedGlobals.reserve(definedGlobalCount);
+
+    for (auto& global : wasm.globals) {
+      if (global->imported()) {
+        QualifiedName name{global->module, global->base};
+        auto importedGlobal = importResolver->getGlobal(name, global->type);
+        if (!importedGlobal) {
+          externalInterface->trap(
+            (std::stringstream() << "Imported global " << name << " not found.")
+              .str());
+        }
+        auto [_, inserted] =
+          allGlobals.try_emplace(global->name, importedGlobal);
+        (void)_;
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated global name");
+      } else {
+        Literals init = self()->visit(global->init).values;
+        auto& definedGlobal = definedGlobals.emplace_back(init);
+
+        auto [_, inserted] =
+          allGlobals.try_emplace(global->name, &definedGlobal);
+        (void)_;
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated global name");
+      }
+    }
   }
 
   void initializeTableContents() {
@@ -3602,20 +3647,8 @@ private:
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
 protected:
-  // Returns a reference to the current value of a potentially imported global.
-  Literals& getGlobal(Name name) {
-    auto* inst = self();
-    auto* global = inst->wasm.getGlobal(name);
-    while (global->imported()) {
-      inst = inst->linkedInstances.at(global->module).get();
-      Export* globalExport = inst->wasm.getExport(global->base);
-      global = inst->wasm.getGlobal(*globalExport->getInternalName());
-    }
-
-    return inst->globals[global->name];
-  }
-
-  // As above, but for a function.
+  // Returns a reference to the current value of a potentially imported
+  // function.
   Literal getFunction(Name name) {
     auto* inst = self();
     auto* func = inst->wasm.getFunction(name);
@@ -3937,13 +3970,13 @@ public:
 
   Flow visitGlobalGet(GlobalGet* curr) {
     auto name = curr->name;
-    return getGlobal(name);
+    return *allGlobals.at(name);
   }
   Flow visitGlobalSet(GlobalSet* curr) {
     auto name = curr->name;
     VISIT(flow, curr->value)
 
-    getGlobal(name) = flow.values;
+    *allGlobals.at(name) = flow.values;
     return Flow();
   }
 
@@ -5146,6 +5179,7 @@ protected:
 
   ExternalInterface* externalInterface;
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
+  std::shared_ptr<ImportResolver> importResolver;
 };
 
 class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
@@ -5154,7 +5188,12 @@ public:
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
-    : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
+    : ModuleRunnerBase(
+        wasm,
+        externalInterface,
+        std::make_shared<LinkedInstancesImportResolver<ModuleRunner>>(
+          linkedInstances),
+        linkedInstances) {}
 
   Literal makeFuncData(Name name, Type type) {
     // As the super's |makeFuncData|, but here we also provide a way to

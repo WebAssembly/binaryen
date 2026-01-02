@@ -129,20 +129,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
   }
 
-  void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
-    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      auto inst = getImportInstance(import);
-      auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
-      if (!exportedGlobal || exportedGlobal->kind != ExternalKind::Global) {
-        trap((std::stringstream()
-              << "importGlobals: unknown import: " << import->module.str << "."
-              << import->name.str)
-               .str());
-      }
-      globals[import->name] = inst->globals[*exportedGlobal->getInternalName()];
-    });
-  }
-
   Literal getImportedFunction(Function* import) override {
     // TODO: We should perhaps restrict the types with which the well-known
     // functions can be imported.

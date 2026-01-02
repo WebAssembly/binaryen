@@ -280,7 +280,7 @@ struct Shell {
       }
       auto& instance = it->second;
       try {
-        return instance->getExportedGlobal(get->name);
+        return instance->getExportedGlobalOrTrap(get->name);
       } catch (TrapException&) {
         return TrapResult{};
       } catch (...) {
