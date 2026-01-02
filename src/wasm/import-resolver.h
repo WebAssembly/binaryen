@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "support/name.h"
+#include "support/nullability.h"
 #include "wasm.h"
 #include "wasm/qualified-name.h"
 
@@ -32,10 +33,13 @@ class ImportResolver {
 public:
   virtual ~ImportResolver() = default;
 
-  virtual std::optional<Literals*> getGlobal(QualifiedName name,
-                                             Type type) const = 0;
+  // Returns null if the `name` wasn't found. The returned Literals* lives as
+  // long as the ImportResolver instance.
+  virtual nullability::Nullable<Literals*> getGlobal(QualifiedName name,
+                                                     Type type) const = 0;
 };
 
+// Looks up imports from the given `linkedInstances`.
 template<typename ModuleRunnerType>
 class LinkedInstancesImportResolver : public ImportResolver {
 public:
@@ -43,11 +47,11 @@ public:
     std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances)
     : linkedInstances(std::move(linkedInstances)) {}
 
-  std::optional<Literals*> getGlobal(QualifiedName name,
-                                     Type type) const override {
+  nullability::Nullable<Literals*> getGlobal(QualifiedName name,
+                                             Type type) const override {
     auto it = linkedInstances.find(name.module);
     if (it == linkedInstances.end()) {
-      return std::nullopt;
+      return nullptr;
     }
 
     ModuleRunnerType* instance = it->second.get();

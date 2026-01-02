@@ -3258,28 +3258,28 @@ public:
                    func->type);
   }
 
-  std::optional<Literals*> getExportedGlobal(Name name) {
+  nullability::Nullable<Literals*> getExportedGlobal(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
-      return std::nullopt;
+      return nullptr;
     }
     Name internalName = *export_->getInternalName();
     auto iter = allGlobals.find(internalName);
     if (iter == allGlobals.end()) {
-      return std::nullopt;
+      return nullptr;
     }
     return iter->second;
   }
 
   Literals& getExportedGlobalOrTrap(Name name) {
-    auto global = getExportedGlobal(name);
-    if (!global.has_value()) {
+    auto* global = getExportedGlobal(name);
+    if (!global) {
       externalInterface->trap((std::stringstream()
                                << "getExportedGlobal: export " << name
                                << " not found.")
                                 .str());
     }
-    return **global;
+    return *global;
   }
 
   Tag* getExportedTag(Name name) {
@@ -3424,7 +3424,7 @@ private:
             (std::stringstream() << "Imported global " << name << " not found.")
               .str());
         }
-        allGlobals[global->name] = *importedGlobal;
+        allGlobals[global->name] = importedGlobal;
       } else {
         Literals init = self()->visit(global->init).values;
         auto [it, inserted] = definedGlobals.emplace(global->name, init);
