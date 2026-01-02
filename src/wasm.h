@@ -993,9 +993,10 @@ public:
   bool signed_ = false;
   Address offset;
   Address align;
-  bool isAtomic;
+  bool isAtomic = false;
   Expression* ptr;
   Name memory;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   // type must be set during creation, cannot be inferred
 

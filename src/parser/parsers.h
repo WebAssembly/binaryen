@@ -49,6 +49,7 @@ template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::MemTypeT> memtypeContinued(Ctx&, Type addressType);
 template<typename Ctx> Result<MemoryOrder> memorder(Ctx&);
+template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx&);
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx&, Type addressType);
@@ -858,6 +859,18 @@ template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
     return MemoryOrder::AcqRel;
   }
   return MemoryOrder::SeqCst;
+}
+
+// memorder ::= 'seqcst' | 'acqrel'
+template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx& ctx) {
+  if (ctx.in.takeKeyword("seqcst"sv)) {
+    return MemoryOrder::SeqCst;
+  }
+  if (ctx.in.takeKeyword("acqrel"sv)) {
+    return MemoryOrder::AcqRel;
+  }
+
+  return {};
 }
 
 // tabletype ::= (limits32 | 'i32' limits32 | 'i64' limit64) reftype
@@ -1737,12 +1750,30 @@ Result<> makeLoad(Ctx& ctx,
                   bool signed_,
                   int bytes,
                   bool isAtomic) {
+
+  // We could only parse this when `isAtomic`, but this way gives a clearer
+  // error since `memIdx` can never be mistaken for a `memOrder`.
+  auto maybeOrder = maybeMemOrder(ctx);
+  CHECK_ERR(maybeOrder);
+
+  if (maybeOrder && !isAtomic) {
+    return Err{"Memory ordering can only be provided for atomic loads."};
+  }
+
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
-  return ctx.makeLoad(
-    pos, annotations, type, signed_, bytes, isAtomic, mem.getPtr(), *arg);
+  // todo should we remove isAtomic?
+  return ctx.makeLoad(pos,
+                      annotations,
+                      type,
+                      signed_,
+                      bytes,
+                      isAtomic,
+                      mem.getPtr(),
+                      *arg,
+                      maybeOrder ? *maybeOrder : MemoryOrder::SeqCst);
 }
 
 template<typename Ctx>
