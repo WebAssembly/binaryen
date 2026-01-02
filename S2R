@@ -1,0 +1,55 @@
+##define("<io:*/ip_MACadd./data>")
+autosync.linkDevice=host.enum:(<"admin">/<"guest">/user").log:registry; 
+init:Mac:id("&%s:sizeof[*"%c,%d]:);
+getch 
+Host:ip(sizeof{"0000.0000.0000.0000"}=[init:Mac:id("&%s:sizeof[*"%c,%d]:);
+do
+check.admin:host("&&""^"!&&")=native:*"IO": indevice;
+device.login=enum.complete;
+while
+auth.device==single:MAC"000_____  "(multi.id:login.user["data"]);
+switch
+enum.device==login.success;
+switch
+ enum.id:(clone)=fail("access denied"/n:)
+multiple:MAC"000_____  "(single.id:login.user["data"]);
+
+{
+autolink.syncbuffer=log<device>
+Device=log.device;
+Log.device=[device.enum]; 
+{
+If
+Log<device>=init.device;
+Log.enum="true";
+Remote.enum="true";
+Log.enum!==("remote".(device.enum));
+Reges.enum=("native".§(clone.ip:device<mac:));
+Reges.clone=§("ip[host]":device<mac*:"ip[native]"));
+(optional=remote.user("name,number,symbol,contact"));
+Init.dDevice<//path/n>;
+import{readFilesync,writeFilesync,existsync,globesync};
+from "node:fs" && "host:fs";
+import{dirname,join}from"node:path" && "host:path";
+else
+import(optional=remote.user("name,number,symbol,contact"));
+Init.dDevice<//path/n>;
+import{dirname,join}from"node:path";
+}
+get
+clock.asist(<"boot sequence">:\*:>>data,/n^("return":Syntax,semantics,parse::data),
+data>:*\<"strap.binary">=(Syntax,semantics,parse);
+clause{
+auto.parse="data";
+{
+return("./");
+clause.value=(strings(Syntax,semantics,"parse::data: \n_..));
+Value=(serial<<data<<);
+Data==<"boot sequence:("./")">;
+auto push:
+clause=strap.gen<"data:">;
+auto.enum.(boot:'%s',%d && %c,\n,(auto.parse==("./"data));
+boot:
+    run:
+           automation);
+        }
