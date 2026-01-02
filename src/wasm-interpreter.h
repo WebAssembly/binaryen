@@ -37,8 +37,10 @@
 #include "fp16.h"
 #include "ir/intrinsics.h"
 #include "ir/iteration.h"
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/table-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
@@ -3210,11 +3212,15 @@ public:
   // Start up this instance. This must be called before doing anything else.
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
-  void instantiate() {
+  void instantiate(bool validateImports_ = false) {
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
 
     initializeGlobals();
+
+    if (validateImports_) {
+      validateImports();
+    }
 
     initializeTableContents();
     initializeMemoryContents();
@@ -3321,6 +3327,81 @@ private:
     Name name;
   };
 
+  // Validates that the export that provides `importable` exists and has the
+  // same kind that the import expects (`kind`).
+  void validateImportKindMatches(ExternalKind kind,
+                                 const Importable& importable) {
+    auto it = linkedInstances.find(importable.module);
+    if (it == linkedInstances.end()) {
+      trap((std::stringstream()
+            << "Import module " << std::quoted(importable.module.toString())
+            << " doesn't exist.")
+             .str());
+    }
+    auto* importedInstance = it->second.get();
+
+    Export* export_ = importedInstance->wasm.getExportOrNull(importable.base);
+
+    if (!export_) {
+      trap((std::stringstream()
+            << "Export " << importable.base << " doesn't exist.")
+             .str());
+    }
+    if (export_->kind != kind) {
+      trap((std::stringstream() << "Exported kind: " << export_->kind
+                                << " doesn't match expected kind: " << kind)
+             .str());
+    }
+  }
+
+  // Trap if types don't match between all imports and their corresponding
+  // exports. Imported memories and tables must also be a subtype of their
+  // export.
+  void validateImports() {
+    ModuleUtils::iterImportable(
+      wasm,
+      [this](ExternalKind kind,
+             std::variant<Function*, Memory*, Tag*, Global*, Table*> import) {
+        Importable* importable = std::visit(
+          [](const auto& import) -> Importable* { return import; }, import);
+
+        // These two modules are injected implicitly to tests. We won't find any
+        // import information for them.
+        if (importable->module == "binaryen-intrinsics" ||
+            (importable->module == "spectest" &&
+             importable->base.startsWith("print")) ||
+            importable->module == "fuzzing-support") {
+          return;
+        }
+
+        validateImportKindMatches(kind, *importable);
+
+        SubType* importedInstance =
+          linkedInstances.at(importable->module).get();
+        Export* export_ =
+          importedInstance->wasm.getExportOrNull(importable->base);
+
+        if (auto** memory = std::get_if<Memory*>(&import)) {
+          Memory exportedMemory =
+            *importedInstance->wasm.getMemory(*export_->getInternalName());
+          exportedMemory.initial =
+            importedInstance->getMemorySize(*export_->getInternalName());
+
+          if (!MemoryUtils::isSubType(exportedMemory, **memory)) {
+            trap("Imported memory isn't compatible.");
+          }
+        }
+
+        if (auto** table = std::get_if<Table*>(&import)) {
+          Table* exportedTable =
+            importedInstance->wasm.getTable(*export_->getInternalName());
+          if (!TableUtils::isSubType(*exportedTable, **table)) {
+            trap("Imported table isn't compatible");
+          }
+        }
+      });
+  }
+
   TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
     if (table->imported()) {
@@ -3400,12 +3481,16 @@ private:
   };
 
   MemoryInstanceInfo getMemoryInstanceInfo(Name name) {
-    auto* memory = wasm.getMemory(name);
-    if (memory->imported()) {
-      auto& importedInstance = linkedInstances.at(memory->module);
-      auto* memoryExport = importedInstance->wasm.getExport(memory->base);
-      return importedInstance->getMemoryInstanceInfo(
-        *memoryExport->getInternalName());
+    auto* instance = self();
+    Export* memoryExport = nullptr;
+    for (auto* memory = instance->wasm.getMemory(name); memory->imported();
+         memory = instance->wasm.getMemory(*memoryExport->getInternalName())) {
+      instance = instance->linkedInstances.at(memory->module).get();
+      memoryExport = instance->wasm.getExport(memory->base);
+    }
+
+    if (memoryExport) {
+      return instance->getMemoryInstanceInfo(*memoryExport->getInternalName());
     }
 
     return MemoryInstanceInfo{self(), name};
@@ -3459,6 +3544,11 @@ private:
   }
 
   Address getMemorySize(Name memory) {
+    auto info = getMemoryInstanceInfo(memory);
+    if (info.instance != self()) {
+      return info.instance->getMemorySize(info.name);
+    }
+
     auto iter = memorySizes.find(memory);
     if (iter == memorySizes.end()) {
       externalInterface->trap("getMemorySize called on non-existing memory");
@@ -3471,7 +3561,7 @@ private:
     if (iter == memorySizes.end()) {
       externalInterface->trap("setMemorySize called on non-existing memory");
     }
-    memorySizes[memory] = size;
+    iter->second = size;
   }
 
 public:
@@ -4989,7 +5079,7 @@ protected:
     if (lhs > rhs) {
       std::stringstream ss;
       ss << msg << ": " << lhs << " > " << rhs;
-      externalInterface->trap(ss.str().c_str());
+      externalInterface->trap(ss.str());
     }
   }
 
