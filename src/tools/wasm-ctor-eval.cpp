@@ -71,23 +71,16 @@ class EvallingModuleRunner;
 
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver(
-    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances,
-    ModuleRunnerBase<EvallingModuleRunner>::ExternalInterface*
-      externalInterface)
-    : externalInterface(externalInterface) {}
+  EvallingImportResolver() {}
 
   std::optional<Literals*> getGlobal(QualifiedName name,
                                      Type type) const override {
-    externalInterface->trap((std::stringstream()
-                             << "EvallingImportResolver: unexpected getGlobal "
-                             << name)
-                              .str());
-    return std::nullopt;
+    auto [it, _] = stubLiterals.try_emplace(name, Literals({Literal(type)}));
+    return &it->second;
   }
 
 private:
-  ModuleRunnerBase<EvallingModuleRunner>::ExternalInterface* externalInterface;
+  mutable std::map<QualifiedName, Literals> stubLiterals;
 };
 
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
@@ -98,8 +91,7 @@ public:
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
     : ModuleRunnerBase(wasm,
                        externalInterface,
-                       std::make_shared<EvallingImportResolver>(
-                         linkedInstances_, externalInterface),
+                       std::make_shared<EvallingImportResolver>(),
                        linkedInstances_) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
@@ -570,6 +562,9 @@ private:
     wasm->updateMaps();
 
     for (auto& oldGlobal : oldGlobals) {
+      if (oldGlobal->imported()) {
+        continue;
+      }
       // Serialize the global's value. While doing so, pass in the name of this
       // global, as we may be able to reuse the global as the defining global
       // for the value. See getSerialization() for more details.
