@@ -1049,7 +1049,7 @@ struct OptimizeInstructions
         // extend operation.
         bool willBeSigned = curr->op == ExtendSInt32 && load->bytes == 4;
         if (!(curr->op == ExtendUInt32 && load->bytes <= 2 && load->signed_) &&
-            !(willBeSigned && load->isAtomic)) {
+            !(willBeSigned && load->isAtomic())) {
           if (willBeSigned) {
             load->signed_ = true;
           }
@@ -1092,7 +1092,7 @@ struct OptimizeInstructions
       // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
       // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
       if (auto* load = curr->value->dynCast<Load>()) {
-        if (!load->isAtomic && load->bytes == curr->type.getByteSize()) {
+        if (!load->isAtomic() && load->bytes == curr->type.getByteSize()) {
           load->type = curr->type;
           return replaceCurrent(load);
         }

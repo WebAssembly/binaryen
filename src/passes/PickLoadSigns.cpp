@@ -120,7 +120,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
         continue;
       }
       // Atomic operations are always unsigned, never signed.
-      if (load->isAtomic) {
+      if (load->isAtomic()) {
         continue;
       }
       // we can pick the optimal one. our hope is to remove 2 items per
