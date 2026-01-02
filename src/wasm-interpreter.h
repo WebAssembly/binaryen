@@ -3176,8 +3176,8 @@ public:
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
 
-  // keyed by internal name
-  std::map<Name, Literals> definedGlobals;
+  // Keyed by internal name. All globals in the module, including imports.
+  // `definedGlobals` contains non-imported globals.
   std::map<Name, Literals*> allGlobals;
 
   ModuleRunnerBase(
@@ -3298,6 +3298,10 @@ public:
   }
 
 private:
+  // Keyed by internal name. Globals that were defined in this module and not
+  // from an import. `allGlobals` contains these values + imported globals.
+  std::map<Name, Literals> definedGlobals;
+
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
 
@@ -3343,15 +3347,9 @@ private:
       } else {
         Literals init = self()->visit(global->init).values;
         auto [it, inserted] = definedGlobals.emplace(global->name, init);
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated global");
 
-        // This was likely checked during parsing or validation
-        if (!inserted) {
-          externalInterface->trap(
-            (std::stringstream()
-             << "Global: " << std::quoted(global->name.toString())
-             << " was defined twice.")
-              .str());
-        }
         allGlobals[global->name] = &it->second;
       }
     }

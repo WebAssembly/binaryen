@@ -79,10 +79,7 @@ public:
 
   std::optional<Literals*> getGlobal(QualifiedName name,
                                      Type type) const override {
-    externalInterface->trap((std::stringstream()
-                             << "EvallingImportResolver: unexpected getGlobal "
-                             << name)
-                              .str());
+    externalInterface->trap("Accessed imported global");
     return std::nullopt;
   }
 
