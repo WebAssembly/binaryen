@@ -3432,6 +3432,7 @@ private:
         }
         auto [_, inserted] =
           allGlobals.try_emplace(global->name, importedGlobal);
+        (void)_;
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated global name");
       } else {
@@ -3440,6 +3441,7 @@ private:
 
         auto [_, inserted] =
           allGlobals.try_emplace(global->name, &definedGlobal);
+        (void)_;
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated global name");
       }
