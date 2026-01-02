@@ -3304,9 +3304,10 @@ public:
   }
 
 private:
-  // Keyed by internal name. Globals that were defined in this module and not
-  // from an import. `allGlobals` contains these values + imported globals.
-  std::map<Name, Literals> definedGlobals;
+  // Globals that were defined in this module and not from an import.
+  // `allGlobals` contains these values + imported globals, keyed by their
+  // internal name.
+  std::vector<Literals> definedGlobals;
 
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
@@ -3415,6 +3416,11 @@ private:
   }
 
   void initializeGlobals() {
+    int definedGlobalCount = 0;
+    ModuleUtils::iterDefinedGlobals(
+      wasm, [&definedGlobalCount](auto&& _) { ++definedGlobalCount; });
+    definedGlobals.reserve(definedGlobalCount);
+
     for (auto& global : wasm.globals) {
       if (global->imported()) {
         QualifiedName name{global->module, global->base};
@@ -3424,14 +3430,18 @@ private:
             (std::stringstream() << "Imported global " << name << " not found.")
               .str());
         }
-        allGlobals[global->name] = importedGlobal;
+        auto [_, inserted] =
+          allGlobals.try_emplace(global->name, importedGlobal);
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated global name");
       } else {
         Literals init = self()->visit(global->init).values;
-        auto [it, inserted] = definedGlobals.emplace(global->name, init);
-        // parsing/validation checked this already.
-        assert(inserted && "Unexpected repeated global");
+        auto& definedGlobal = definedGlobals.emplace_back(init);
 
-        allGlobals[global->name] = &it->second;
+        auto [_, inserted] =
+          allGlobals.try_emplace(global->name, &definedGlobal);
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated global name");
       }
     }
   }
