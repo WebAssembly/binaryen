@@ -26,6 +26,7 @@
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "pass.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -48,7 +49,8 @@ static Name getLoadName(Load* curr) {
   } else {
     ret += std::to_string(curr->align);
   }
-  return ret;
+
+  return "SAFE_HEAP_LOAD_" + String::join({}, "_");
 }
 
 static Name getStoreName(Store* curr) {
@@ -411,8 +413,9 @@ struct SafeHeap : public Pass {
                               bool is64,
                               Name memory) {
     bool lowMemUnused = getPassOptions().lowMemoryUnused;
-    auto upperOp = is64 ? lowMemUnused ? LtUInt64 : EqInt64
-                        : lowMemUnused ? LtUInt32 : EqInt32;
+    auto upperOp = is64           ? lowMemUnused ? LtUInt64 : EqInt64
+                   : lowMemUnused ? LtUInt32
+                                  : EqInt32;
     auto upperBound = lowMemUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
