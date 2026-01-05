@@ -20,6 +20,11 @@
 
 namespace wasm::MemoryUtils {
 
+bool isSubType(const Memory& a, const Memory& b) {
+  return a.shared == b.shared && a.addressType == b.addressType &&
+         a.initial >= b.initial && a.max <= b.max;
+}
+
 bool flatten(Module& wasm) {
   // If there are no memories then they are already flat, in the empty sense.
   if (wasm.memories.empty()) {

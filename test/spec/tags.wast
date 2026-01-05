@@ -1,6 +1,12 @@
 ;; Test tags
 
 (module
+  (tag (export "im0") (param i32))
+  (tag (export "im1") (param i32 f32))
+)
+(register "env")
+
+(module
   (tag $e-import (import "env" "im0") (param i32))
   (import "env" "im1" (tag (param i32 f32)))
 

@@ -134,8 +134,10 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       auto inst = getImportInstance(import);
       auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
       if (!exportedGlobal || exportedGlobal->kind != ExternalKind::Global) {
-        Fatal() << "importGlobals: unknown import: " << import->module.str
-                << "." << import->name.str;
+        trap((std::stringstream()
+              << "importGlobals: unknown import: " << import->module.str << "."
+              << import->name.str)
+               .str());
       }
       globals[import->name] = inst->globals[*exportedGlobal->getInternalName()];
     });

@@ -1,29 +1,27 @@
 ;; TODO: Use the upstream version from the custom descriptors proposal.
 
-(module
+(module definition
   (type $f (func))
   (import "" "" (func $1 (exact (type 0))))
-  (import "" "" (func $2 (exact (type $f) (param) (result))))
-  (import "" "" (func $3 (exact (type $f))))
-  (import "" "" (func $4 (exact (type 1)))) ;; Implicitly defined next
-  (import "" "" (func $5 (exact (param i32) (result i64))))
+  ;; (import "" "" (func $2 (exact (type $f) (param) (result)))) ;; TODO: parser support
+  (import "" "" (func $2 (exact (type $f))))
+  (import "" "" (func $3 (exact (type 1)))) ;; Implicitly defined next
+  (import "" "" (func $4 (exact (param i32) (result i64))))
 
-  (func $6 (import "" "") (exact (type 0)))
-  (func $7 (import "" "") (exact (type $f) (param) (result)))
-  (func $8 (import "" "") (exact (type $f)))
-  (func $9 (import "" "") (exact (type 2))) ;; Implicitly defined next
-  (func $10 (import "" "") (exact (param i64) (result i32)))
+  (func $5 (import "" "") (exact (type 0)))
+  ;; (func $6 (import "" "") (exact (type $f) (param) (result))) ;; TODO: parser support
+  (func $6 (import "" "") (exact (type $f)))
+  ;; (func $7 (import "" "") (exact (type 2))) ;; Implicitly defined next
+  ;; (func $8 (import "" "") (exact (param i64) (result i32))) ;; TODO: parser support
 
   (global (ref (exact $f)) (ref.func $1))
   (global (ref (exact $f)) (ref.func $2))
-  (global (ref (exact $f)) (ref.func $3))
+  (global (ref (exact 1)) (ref.func $3))
   (global (ref (exact 1)) (ref.func $4))
-  (global (ref (exact 1)) (ref.func $5))
+  (global (ref (exact $f)) (ref.func $5))
   (global (ref (exact $f)) (ref.func $6))
-  (global (ref (exact $f)) (ref.func $7))
-  (global (ref (exact $f)) (ref.func $8))
-  (global (ref (exact 2)) (ref.func $9))
-  (global (ref (exact 2)) (ref.func $10))
+  ;; (global (ref (exact 2)) (ref.func $7))
+  ;; (global (ref (exact 2)) (ref.func $8))
 )
 
 ;; References to inexact imports are not exact.
@@ -51,7 +49,7 @@
 
 ;; Inexact imports can still be referenced inexactly, though.
 
-(module
+(module definition
   (type $f (func))
   (import "" "" (func $1 (type $f)))
   (global (ref $f) (ref.func $1))
@@ -70,7 +68,9 @@
 ;; Import and re-export inexactly.
 (module $B
   (type $f (func))
-  (func (export "f") (import "A" "f") (type $f))
+  ;; (func (import "A" "f") (export "f") (type $f))
+  (func (import "A" "f") (type $f))
+  (export "f" (func 0))
 )
 (register "B")
 
@@ -220,7 +220,7 @@
 ;; Test the binary format
 
 ;; Exact function imports use 0x20.
-(module binary
+(module definition binary
   "\00asm" "\01\00\00\00"
   "\01"  ;; Type section id
   "\04"  ;; Type section length

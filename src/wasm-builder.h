@@ -373,7 +373,6 @@ public:
                  Type type,
                  Name memory) {
     auto* ret = wasm.allocator.alloc<Load>();
-    ret->isAtomic = false;
     ret->bytes = bytes;
     ret->signed_ = signed_;
     ret->offset = offset;
@@ -381,13 +380,14 @@ public:
     ret->ptr = ptr;
     ret->type = type;
     ret->memory = memory;
+    ret->order = MemoryOrder::Unordered;
     ret->finalize();
     return ret;
   }
   Load* makeAtomicLoad(
     unsigned bytes, Address offset, Expression* ptr, Type type, Name memory) {
     Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
-    load->isAtomic = true;
+    load->order = MemoryOrder::SeqCst;
     return load;
   }
   AtomicWait* makeAtomicWait(Expression* ptr,

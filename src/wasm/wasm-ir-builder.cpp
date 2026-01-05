@@ -2168,6 +2168,9 @@ Result<> IRBuilder::makeStructGet(HeapType type,
                                   Index field,
                                   bool signed_,
                                   MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.get"};
+  }
   const auto& fields = type.getStruct().fields;
   StructGet curr;
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
@@ -2268,6 +2271,9 @@ Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
 
 Result<>
 IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.get"};
+  }
   ArrayGet curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
