@@ -199,7 +199,7 @@ struct ValidationInfo {
                                 const char* text,
                                 Function* func = nullptr) {
     if (!ty.isBasic()) {
-      fail(std::string(text) + " (not basic)", curr, func);
+      fail(text, curr, func);
       return;
     }
     switch (ty.getBasic()) {
