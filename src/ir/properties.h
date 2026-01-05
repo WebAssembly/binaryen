@@ -502,7 +502,7 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
     return set->order;
   }
   if (auto* load = curr->dynCast<Load>()) {
-    return load->isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
+    return load->order;
   }
   if (auto* store = curr->dynCast<Store>()) {
     return store->isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;

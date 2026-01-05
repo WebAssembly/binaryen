@@ -418,15 +418,14 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'func.wast',    # Duplicate parameter names not properly rejected
     'global.wast',  # Fail to parse table
     'if.wast',      # Requires more precise unreachable validation
-    'imports.wast',  # Missing validation of missing function on instantiation
+    'imports.wast',  # Requires fixing handling of mutation to imported globals
     'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
     'linking.wast',  # Missing function type validation on instantiation
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
-    'memory64-imports.wast',  # Missing validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'id.wast',       # Empty IDs should be disallowed
-    # Requires correct handling of tag imports from different instances of the same module,
-    # ref.null wast constants, and splitting for module instances
+    # Requires correct handling of tag imports from different instances of the same module
+    # and splitting for module instances
     'instance.wast',
     'table64.wast',   # Requires validations for table size
     'table_grow.wast',  # Incorrect table linking semantics in interpreter
@@ -451,12 +450,8 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'type-rec.wast',  # Missing function type validation on instantiation
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
-    'memory64.wast',        # Requires validations for memory size
-    'imports0.wast',        # Missing memory type validation on instantiation
-    'imports2.wast',        # Missing memory type validation on instantiation
-    'imports3.wast',        # Missing memory type validation on instantiation
-    'linking0.wast',        # Missing memory type validation on instantiation
-    'linking3.wast',        # Fatal error on missing table.
+    'memory64.wast',        # Requires validations on the max memory size
+    'imports3.wast',  # Requires better checking of exports from the special "spectest" module
     'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
     'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
     'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
