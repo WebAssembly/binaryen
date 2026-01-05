@@ -34,6 +34,13 @@ void removeReturns(Function* func, Module& wasm);
 using ReturnCallersMap = std::unordered_map<Function*, bool>;
 ReturnCallersMap findReturnCallers(Module& wasm);
 
+// Information about the returns in a given expression.
+struct ReturnInfo {
+  bool hasReturn = false;
+  bool hasReturnCall = false;
+};
+ReturnInfo getInfo(Expression* curr);
+
 } // namespace wasm::ReturnUtils
 
 #endif // wasm_ir_return_h

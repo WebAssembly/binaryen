@@ -56,6 +56,38 @@ void removeReturns(Function* func, Module& wasm) {
   ReturnValueRemover().walkFunctionInModule(func, &wasm);
 }
 
+ReturnInfo getInfo(Expression* curr) {
+  struct Finder : PostWalker<Finder> {
+    ReturnInfo info;
+
+    void visitReturn(Return* curr) { info.hasReturn = true; }
+
+    void visitCall(Call* curr) {
+      if (curr->isReturn) {
+        info.hasReturnCall = true;
+      }
+    }
+    void visitCallIndirect(CallIndirect* curr) {
+      if (curr->isReturn) {
+        info.hasReturnCall = true;
+      }
+    }
+    void visitCallRef(CallRef* curr) {
+      if (curr->isReturn) {
+        info.hasReturnCall = true;
+      }
+    }
+  } finder;
+  finder.walk(curr);
+
+  // Any return call is also a return.
+  if (finder.info.hasReturnCall) {
+    finder.info.hasReturn = true;
+  }
+
+  return finder.info;
+}
+
 std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
   ModuleUtils::ParallelFunctionAnalysis<bool> analysis(
     wasm, [&](Function* func, bool& hasReturnCall) {
@@ -63,28 +95,7 @@ std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
         return;
       }
 
-      struct Finder : PostWalker<Finder> {
-        bool hasReturnCall = false;
-
-        void visitCall(Call* curr) {
-          if (curr->isReturn) {
-            hasReturnCall = true;
-          }
-        }
-        void visitCallIndirect(CallIndirect* curr) {
-          if (curr->isReturn) {
-            hasReturnCall = true;
-          }
-        }
-        void visitCallRef(CallRef* curr) {
-          if (curr->isReturn) {
-            hasReturnCall = true;
-          }
-        }
-      } finder;
-
-      finder.walk(func->body);
-      hasReturnCall = finder.hasReturnCall;
+      hasReturnCall = getInfo(func->body).hasReturnCall;
     });
 
   // Convert to an unordered map for fast lookups. TODO: Avoid a copy here.
