@@ -48,7 +48,7 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
   // stable addresses.
   static MixedArena arena;
 
-  // Guards access to `globalStrings` and `arena`.
+  // Guards access to `globalStrings`. (note: `arena` is thread-safe anyhow)
   static std::mutex mutex;
 
   // A thread-local cache of strings to reduce contention.
