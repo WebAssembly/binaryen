@@ -458,7 +458,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       return;
     }
     assert(curr->offset + 4 > curr->offset);
-    assert(!curr->isAtomic && "atomic store not implemented");
+    assert(!curr->isAtomic() && "atomic store not implemented");
     TempVar highBits = fetchOutParam(curr->value);
     uint8_t bytes = curr->bytes;
     curr->bytes = std::min(curr->bytes, uint8_t(4));

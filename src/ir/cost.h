@@ -105,7 +105,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitStore(Store* curr) {
     return 2 + visit(curr->ptr) + visit(curr->value) +
-           AtomicCost * curr->isAtomic;
+           AtomicCost * curr->isAtomic();
   }
   CostType visitAtomicRMW(AtomicRMW* curr) {
     return AtomicCost + visit(curr->ptr) + visit(curr->value);

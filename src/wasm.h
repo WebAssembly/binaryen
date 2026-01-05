@@ -1012,11 +1012,13 @@ public:
   uint8_t bytes;
   Address offset;
   Address align;
-  bool isAtomic;
   Expression* ptr;
   Expression* value;
   Type valueType;
   Name memory;
+  MemoryOrder order;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
