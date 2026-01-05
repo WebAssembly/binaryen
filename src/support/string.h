@@ -66,7 +66,7 @@ std::string join(const std::vector<StringLike>& strs, std::string_view sep) {
     return "";
   }
 
-  std::string ret = strs[0];
+  std::string ret = std::string(strs[0]);
   for (std::string_view s : strs) {
     ret.append(sep);
     ret.append(s);

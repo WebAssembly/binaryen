@@ -38,19 +38,32 @@ static const Name SEGFAULT_IMPORT("segfault");
 static const Name ALIGNFAULT_IMPORT("alignfault");
 
 static Name getLoadName(Load* curr) {
-  std::string ret = "SAFE_HEAP_LOAD_";
-  ret += curr->type.toString();
-  ret += "_" + std::to_string(curr->bytes) + "_";
+  std::vector<std::string> parts{curr->type.toString(),
+                                 std::to_string(curr->bytes)};
   if (LoadUtils::isSignRelevant(curr) && !curr->signed_) {
-    ret += "U_";
-  }
-  if (curr->isAtomic()) {
-    ret += "A";
-  } else {
-    ret += std::to_string(curr->align);
+    parts.push_back("U");
   }
 
-  return "SAFE_HEAP_LOAD_" + String::join({}, "_");
+  switch (curr->order) {
+    case MemoryOrder::Unordered: {
+      parts.push_back(std::to_string(curr->align));
+      break;
+    }
+    case MemoryOrder::SeqCst: {
+      parts.push_back("SC");
+      break;
+    }
+    case MemoryOrder::AcqRel: {
+      parts.push_back("AR");
+      break;
+    }
+  }
+
+  return "SAFE_HEAP_LOAD_" +
+         String::join(
+           std::vector<std::string_view>{curr->type.toString(),
+                                         std::to_string(curr->bytes)},
+           "_");
 }
 
 static Name getStoreName(Store* curr) {
@@ -234,10 +247,11 @@ struct SafeHeap : public Pass {
             if (align > bytes) {
               continue;
             }
-            for (auto isAtomic : {true, false}) {
-              load.order =
-                isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
-              if (isAtomic &&
+            for (auto memoryOrder : {MemoryOrder::Unordered,
+                                     MemoryOrder::AcqRel,
+                                     MemoryOrder::SeqCst}) {
+              load.order = memoryOrder;
+              if (load.isAtomic() &&
                   !isPossibleAtomicOperation(
                     align, bytes, module->memories[0]->shared, type)) {
                 continue;
