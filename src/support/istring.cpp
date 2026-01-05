@@ -15,6 +15,7 @@
  */
 
 #include "istring.h"
+#include "mixed_arena.h"
 
 namespace wasm {
 
@@ -45,9 +46,9 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
 
   // The global backing store for interned strings that do not otherwise have
   // stable addresses.
-  static std::vector<std::vector<char>> allocated;
+  static MixedArena arena;
 
-  // Guards access to `globalStrings` and `allocated`.
+  // Guards access to `globalStrings` and `arena`.
   static std::mutex mutex;
 
   // A thread-local cache of strings to reduce contention.
@@ -72,12 +73,10 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
     // We have a new string, but it doesn't have a stable address. Create a copy
     // of the data at a stable address we can use. Make sure it is null
     // terminated so legacy uses that get a C string still work.
-    allocated.emplace_back();
-    auto& data = allocated.back();
-    data.reserve(s.size() + 1);
-    data.insert(data.end(), s.begin(), s.end());
-    data.push_back('\0');
-    s = std::string_view(allocated.back().data(), s.size());
+    char* data = (char*)arena.allocSpace(s.size() + 1, 1);
+    std::copy(s.begin(), s.end(), data);
+    data[s.size()] = '\0';
+    s = std::string_view(data, s.size());
   }
 
   // Intern our new string.
