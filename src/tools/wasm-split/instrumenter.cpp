@@ -151,7 +151,8 @@ void Instrumenter::instrumentFuncs() {
                                   builder.makeConstPtr(0, Type::i32),
                                   builder.makeConst(uint32_t(1)),
                                   Type::i32,
-                                  memoryName),
+                                  memoryName,
+                                  MemoryOrder::SeqCst),
           func->body,
           func->body->type);
         ++funcIdx;
