@@ -2268,6 +2268,9 @@ Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
 
 Result<>
 IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.get"};
+  }
   ArrayGet curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
