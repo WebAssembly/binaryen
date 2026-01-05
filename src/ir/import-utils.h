@@ -18,6 +18,7 @@
 #define wasm_ir_import_h
 
 #include "literal.h"
+#include "src/wasm/qualified-name.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -121,6 +122,37 @@ struct ImportInfo {
   }
 
   Index getNumDefinedTags() { return wasm.tags.size() - getNumImportedTags(); }
+};
+
+class ImportResolver {
+public:
+  virtual ~ImportResolver() = default;
+
+  // Returns null if the `name` wasn't found. The returned Literals* lives as
+  // long as the ImportResolver instance.
+  virtual Literals* getGlobalOrNull(QualifiedName name, Type type) const = 0;
+};
+
+// Looks up imports from the given `linkedInstances`.
+template<typename ModuleRunnerType>
+class LinkedInstancesImportResolver : public ImportResolver {
+public:
+  LinkedInstancesImportResolver(
+    std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances)
+    : linkedInstances(std::move(linkedInstances)) {}
+
+  Literals* getGlobalOrNull(QualifiedName name, Type type) const override {
+    auto it = linkedInstances.find(name.module);
+    if (it == linkedInstances.end()) {
+      return nullptr;
+    }
+
+    ModuleRunnerType* instance = it->second.get();
+    return instance->getExportedGlobalOrNull(name.name);
+  }
+
+private:
+  const std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances;
 };
 
 } // namespace wasm

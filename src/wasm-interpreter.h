@@ -35,6 +35,7 @@
 #include <variant>
 
 #include "fp16.h"
+#include "ir/import-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/iteration.h"
 #include "ir/memory-utils.h"
@@ -49,7 +50,6 @@
 #include "wasm-limits.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
-#include "wasm/import-resolver.h"
 
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
 #include <sanitizer/lsan_interface.h>
@@ -3258,7 +3258,7 @@ public:
                    func->type);
   }
 
-  nullability::Nullable<Literals*> getExportedGlobal(Name name) {
+  Literals* getExportedGlobalOrNull(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
       return nullptr;
@@ -3272,7 +3272,7 @@ public:
   }
 
   Literals& getExportedGlobalOrTrap(Name name) {
-    auto* global = getExportedGlobal(name);
+    auto* global = getExportedGlobalOrNull(name);
     if (!global) {
       externalInterface->trap((std::stringstream()
                                << "getExportedGlobal: export " << name
@@ -3424,7 +3424,8 @@ private:
     for (auto& global : wasm.globals) {
       if (global->imported()) {
         QualifiedName name{global->module, global->base};
-        auto importedGlobal = importResolver->getGlobal(name, global->type);
+        auto importedGlobal =
+          importResolver->getGlobalOrNull(name, global->type);
         if (!importedGlobal) {
           externalInterface->trap(
             (std::stringstream() << "Imported global " << name << " not found.")

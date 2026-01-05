@@ -36,7 +36,6 @@
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
-#include "support/nullability.h"
 #include "support/small_set.h"
 #include "support/string.h"
 #include "support/topological_sort.h"
@@ -78,8 +77,7 @@ public:
       externalInterface)
     : externalInterface(externalInterface) {}
 
-  nullability::Nullable<Literals*> getGlobal(QualifiedName name,
-                                             Type type) const override {
+  Literals* getGlobalOrNull(QualifiedName name, Type type) const override {
     externalInterface->trap("Accessed imported global");
     return nullptr;
   }
