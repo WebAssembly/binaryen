@@ -35,11 +35,11 @@ using ReturnCallersMap = std::unordered_map<Function*, bool>;
 ReturnCallersMap findReturnCallers(Module& wasm);
 
 // Information about the returns in a given expression.
-struct Info {
+struct ReturnInfo {
   bool hasReturn = false;
   bool hasReturnCall = false;
 };
-Info getInfo(Expression* curr);
+ReturnInfo getInfo(Expression* curr);
 
 } // namespace wasm::ReturnUtils
 

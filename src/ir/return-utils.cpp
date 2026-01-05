@@ -56,9 +56,9 @@ void removeReturns(Function* func, Module& wasm) {
   ReturnValueRemover().walkFunctionInModule(func, &wasm);
 }
 
-Info getInfo(Expression* curr) {
+ReturnInfo getInfo(Expression* curr) {
   struct Finder : PostWalker<Finder> {
-    Info info;
+    ReturnInfo info;
 
     void visitReturn(Return* curr) { info.hasReturn = true; }
 
