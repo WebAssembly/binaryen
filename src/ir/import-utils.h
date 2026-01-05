@@ -18,8 +18,8 @@
 #define wasm_ir_import_h
 
 #include "literal.h"
-#include "src/wasm/qualified-name.h"
 #include "wasm.h"
+#include "wasm/qualified-name.h"
 
 namespace wasm {
 
