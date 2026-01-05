@@ -1289,9 +1289,7 @@ struct InfoCollector
         {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
   }
-  void visitThrow(Throw* curr) {
-    handleThrow(curr);
-  }
+  void visitThrow(Throw* curr) { handleThrow(curr); }
   void visitRethrow(Rethrow* curr) {}
   void visitThrowRef(ThrowRef* curr) {}
 
