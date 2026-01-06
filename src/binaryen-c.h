@@ -203,6 +203,14 @@ BINARYEN_API BinaryenExternalKind BinaryenExternalMemory(void);
 BINARYEN_API BinaryenExternalKind BinaryenExternalGlobal(void);
 BINARYEN_API BinaryenExternalKind BinaryenExternalTag(void);
 
+// MemoryOrder for atomic operations
+
+typedef uint8_t BinaryenMemoryOrder;
+
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderUnordered(void);
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderSeqCst(void);
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderAcqRel(void);
+
 // Features. Call to get the value of each; you can cache them. Use bitwise
 // operators to combine and test particular features.
 
