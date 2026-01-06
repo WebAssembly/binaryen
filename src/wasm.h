@@ -66,7 +66,7 @@ struct Address {
   }
 };
 
-enum class MemoryOrder {
+enum class MemoryOrder : uint8_t {
   Unordered,
   SeqCst,
   AcqRel,

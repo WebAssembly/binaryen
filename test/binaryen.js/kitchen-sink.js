@@ -624,6 +624,16 @@ function test_core() {
         module.i32.const(0)
       )
     ),
+    module.i32.atomic.store(0,
+      module.i32.const(0),
+      module.i32.atomic.load(0,
+        module.i32.const(0),
+        /* name=*/undefined,
+        binaryen.MemoryOrder.AcqRel
+      ),
+      /*name=*/undefined,
+      binaryen.MemoryOrder.AcqRel
+    ),
     module.drop(
       module.memory.atomic.wait32(
         module.i32.const(0),
@@ -1167,6 +1177,41 @@ function test_expression_info() {
   module.dispose();
 }
 
+function test_relaxed_atomics() {
+  module = new binaryen.Module();
+  module.setFeatures(binaryen.Features.All);
+
+  module.setMemory(1, 1, "memory", [], false, false, "0");
+
+  var load = module.i32.load(0, 0, makeInt32(0), "0");
+  binaryen.Load.setMemoryOrder(load, binaryen.MemoryOrder.AcqRel);
+  console.log("Load memory order: " + binaryen.Load.getMemoryOrder(load));
+
+  var store = module.i32.store(0, 0, makeInt32(0), makeInt32(1), "0");
+  binaryen.Store.setMemoryOrder(store, binaryen.MemoryOrder.AcqRel);
+  console.log("Store memory order: " + binaryen.Store.getMemoryOrder(store));
+
+  var rmw = module.i32.atomic.rmw.add(0, makeInt32(0), makeInt32(1), "0", binaryen.MemoryOrder.SeqCst);
+  binaryen.AtomicRMW.setMemoryOrder(rmw, binaryen.MemoryOrder.AcqRel);
+  console.log("RMW memory order: " + binaryen.AtomicRMW.getMemoryOrder(rmw));
+
+  var cmpxchg = module.i32.atomic.rmw.cmpxchg(0, makeInt32(0), makeInt32(0), makeInt32(1), "0", binaryen.MemoryOrder.SeqCst);
+  binaryen.AtomicCmpxchg.setMemoryOrder(cmpxchg, binaryen.MemoryOrder.AcqRel);
+  console.log("Cmpxchg memory order: " + binaryen.AtomicCmpxchg.getMemoryOrder(cmpxchg));
+
+  var body = module.block("body", [
+    module.drop(load),
+    store,
+    module.drop(rmw),
+    module.drop(cmpxchg)
+  ], binaryen.auto);
+
+  module.addFunction("relaxed-atomics", binaryen.none, binaryen.none, [], body);
+
+  console.log(module.emitText());
+  module.dispose();
+}
+
 test_types();
 test_features();
 test_ids();
@@ -1179,3 +1224,4 @@ test_parsing();
 test_internals();
 test_for_each();
 test_expression_info();
+test_relaxed_atomics();

@@ -1105,9 +1105,16 @@ void test_core() {
       4,
       0,
       temp6,
-      BinaryenAtomicLoad(module, 4, 0, BinaryenTypeInt32(), temp6, "0"),
+      BinaryenAtomicLoad(module,
+                         4,
+                         0,
+                         BinaryenTypeInt32(),
+                         temp6,
+                         "0",
+                         BinaryenMemoryOrderSeqCst()),
       BinaryenTypeInt32(),
-      "0"),
+      "0",
+      BinaryenMemoryOrderSeqCst()),
     BinaryenDrop(module,
                  BinaryenAtomicWait(
                    module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),
@@ -2278,6 +2285,77 @@ void test_callref_and_types() {
   BinaryenModuleDispose(module);
 }
 
+void test_relaxed_atomics() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureAll());
+
+  BinaryenSetMemory(
+    module, 1, 1, "memory", NULL, NULL, NULL, NULL, NULL, 0, false, false, "0");
+
+  BinaryenExpressionRef load = BinaryenLoad(
+    module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 0), "0");
+  BinaryenLoadSetMemoryOrder(load, BinaryenMemoryOrderAcqRel());
+  printf("Load memory order: %d\n", BinaryenLoadGetMemoryOrder(load));
+
+  BinaryenExpressionRef store = BinaryenStore(module,
+                                              4,
+                                              0,
+                                              0,
+                                              makeInt32(module, 0),
+                                              makeInt32(module, 1),
+                                              BinaryenTypeInt32(),
+                                              "0");
+  BinaryenStoreSetMemoryOrder(store, BinaryenMemoryOrderAcqRel());
+  printf("Store memory order: %d\n", BinaryenStoreGetMemoryOrder(store));
+
+  BinaryenExpressionRef rmw = BinaryenAtomicRMW(module,
+                                                BinaryenAtomicRMWAdd(),
+                                                4,
+                                                0,
+                                                makeInt32(module, 0),
+                                                makeInt32(module, 1),
+                                                BinaryenTypeInt32(),
+                                                "0",
+                                                BinaryenMemoryOrderSeqCst());
+  BinaryenAtomicRMWSetMemoryOrder(rmw, BinaryenMemoryOrderAcqRel());
+  printf("RMW memory order: %d\n", BinaryenAtomicRMWGetMemoryOrder(rmw));
+
+  BinaryenExpressionRef cmpxchg =
+    BinaryenAtomicCmpxchg(module,
+                          4,
+                          0,
+                          makeInt32(module, 0),
+                          makeInt32(module, 0),
+                          makeInt32(module, 1),
+                          BinaryenTypeInt32(),
+                          "0",
+                          BinaryenMemoryOrderSeqCst());
+  BinaryenAtomicCmpxchgSetMemoryOrder(cmpxchg, BinaryenMemoryOrderAcqRel());
+  printf("Cmpxchg memory order: %d\n",
+         BinaryenAtomicCmpxchgGetMemoryOrder(cmpxchg));
+
+  BinaryenExpressionRef statements[] = {BinaryenDrop(module, load),
+                                        store,
+                                        BinaryenDrop(module, rmw),
+                                        BinaryenDrop(module, cmpxchg)};
+
+  BinaryenExpressionRef value =
+    BinaryenBlock(module,
+                  "body",
+                  statements,
+                  sizeof(statements) / sizeof(BinaryenExpressionRef),
+                  BinaryenTypeAuto());
+
+  BinaryenFunctionRef tiny = BinaryenAddFunction(module,
+                                                 "relaxed-atomics",
+                                                 BinaryenTypeNone(),
+                                                 BinaryenTypeNone(),
+                                                 NULL,
+                                                 0,
+                                                 value);
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
 int main() {
   test_types();
   test_features();
@@ -2292,6 +2370,7 @@ int main() {
   test_func_opt();
   test_typebuilder();
   test_callref_and_types();
+  test_relaxed_atomics();
 
   return 0;
 }
