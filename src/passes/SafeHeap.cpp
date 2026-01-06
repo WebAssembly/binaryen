@@ -55,7 +55,7 @@ static Name getStoreName(Store* curr) {
   std::string ret = "SAFE_HEAP_STORE_";
   ret += curr->valueType.toString();
   ret += "_" + std::to_string(curr->bytes) + "_";
-  if (curr->isAtomic) {
+  if (curr->isAtomic()) {
     ret += "A";
   } else {
     ret += std::to_string(curr->align);
@@ -270,7 +270,8 @@ struct SafeHeap : public Pass {
             continue;
           }
           for (auto isAtomic : {true, false}) {
-            store.isAtomic = isAtomic;
+            store.order =
+              isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
             if (isAtomic &&
                 !isPossibleAtomicOperation(
                   align, bytes, module->memories[0]->shared, valueType)) {

@@ -3358,7 +3358,7 @@ Expression* TranslateToFuzzReader::makeStore(Type type) {
   }
   // make it atomic
   wasm.memories[0]->shared = true;
-  store->isAtomic = true;
+  store->order = MemoryOrder::SeqCst;
   store->align = store->bytes;
   return store;
 }

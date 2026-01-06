@@ -583,7 +583,7 @@ struct PrintExpressionContents
   }
   void visitStore(Store* curr) {
     prepareColor(o) << forceConcrete(curr->valueType);
-    if (curr->isAtomic) {
+    if (curr->isAtomic()) {
       o << ".atomic";
     }
     o << ".store";
