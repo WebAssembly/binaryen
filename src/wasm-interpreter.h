@@ -5136,7 +5136,7 @@ protected:
     Store store;
     store.bytes = bytes;
     store.align = bytes;
-    store.order = MemoryOrder::SeqCst; // understatement
+    store.order = MemoryOrder::SeqCst;
     store.ptr = &ptr;
     store.value = &value;
     store.valueType = value.type;
