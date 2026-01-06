@@ -73,8 +73,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(std::vector<HeapType>&& types,
   UniqueRecGroups unique(wasm.features);
   for (auto group : existing) {
     std::vector<HeapType> types(group.begin(), group.end());
-    [[maybe_unused]] auto uniqueTypes = unique.insert(std::move(types));
-    assert(uniqueTypes.size() == group.size() && "unexpected collision");
+    unique.insertOrGet(std::move(types));
   }
 
   auto num = types.size();
