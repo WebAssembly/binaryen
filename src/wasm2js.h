@@ -40,7 +40,6 @@
 #include "ir/names.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
-#include "mixed_arena.h"
 #include "passes/passes.h"
 #include "support/base64.h"
 #include "support/file.h"

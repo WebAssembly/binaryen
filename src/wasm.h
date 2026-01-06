@@ -34,8 +34,8 @@
 #include <vector>
 
 #include "literal.h"
-#include "mixed_arena.h"
 #include "support/index.h"
+#include "support/mixed_arena.h"
 #include "support/name.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
