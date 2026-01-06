@@ -39,6 +39,7 @@
 #include "support/name.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
+#include "wasm/import-name.h"
 
 namespace wasm {
 
@@ -2172,6 +2173,7 @@ struct Importable : Named {
   Name module, base;
 
   bool imported() const { return module.is(); }
+  ImportName importName() const { return ImportName{module, base}; };
 };
 
 class Function;

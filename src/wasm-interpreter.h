@@ -3423,13 +3423,14 @@ private:
 
     for (auto& global : wasm.globals) {
       if (global->imported()) {
-        QualifiedName name{global->module, global->base};
+        auto importName = global->importName();
         auto importedGlobal =
-          importResolver->getGlobalOrNull(name, global->type);
+          importResolver->getGlobalOrNull(importName, global->type);
         if (!importedGlobal) {
-          externalInterface->trap(
-            (std::stringstream() << "Imported global " << name << " not found.")
-              .str());
+          externalInterface->trap((std::stringstream()
+                                   << "Imported global " << importName
+                                   << " not found.")
+                                    .str());
         }
         auto [_, inserted] =
           allGlobals.try_emplace(global->name, importedGlobal);

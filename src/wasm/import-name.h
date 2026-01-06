@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef wasm_qualified_name_h
-#define wasm_qualified_name_h
+#ifndef wasm_import_name_h
+#define wasm_import_name_h
 
 #include "support/name.h"
 #include <ostream>
 
 namespace wasm {
 
-struct QualifiedName {
+struct ImportName {
   Name module;
   Name name;
 
-  friend std::ostream& operator<<(std::ostream& o, const QualifiedName& qname) {
+  friend std::ostream& operator<<(std::ostream& o, const ImportName& qname) {
     return o << qname.module << "." << qname.name;
   }
 };
 
 } // namespace wasm
 
-#endif // wasm_qualified_name_h
+#endif // wasm_import_name_h

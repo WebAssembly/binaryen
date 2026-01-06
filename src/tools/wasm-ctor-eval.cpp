@@ -77,7 +77,7 @@ public:
       externalInterface)
     : externalInterface(externalInterface) {}
 
-  Literals* getGlobalOrNull(QualifiedName name, Type type) const override {
+  Literals* getGlobalOrNull(ImportName name, Type type) const override {
     externalInterface->trap("Accessed imported global");
     return nullptr;
   }
