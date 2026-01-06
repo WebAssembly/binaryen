@@ -1304,6 +1304,8 @@
  (type $array  (array i8))
  (type $struct (struct (field (mut (ref any)))))
 
+ (global $global (mut i32) (i32.const 42))
+
  ;; CHECK:      (export "test" (func $test))
 
  ;; CHECK:      (func $test (type $1)
@@ -1332,6 +1334,12 @@
   (struct.set $struct 0
    (local.get $temp)
    (local.get $temp)
+  )
+
+  ;; Use the global, to keep it alive. If we error during global processing
+  ;; (failing to sort the new globals, which have a cycle), we could error here.
+  (drop
+   (global.get $global)
   )
  )
 )

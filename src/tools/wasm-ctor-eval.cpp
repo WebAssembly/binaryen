@@ -694,24 +694,37 @@ private:
     }
 
     if (!mustBeBefore.empty()) {
-      auto oldGlobals = std::move(wasm->globals);
-      // After clearing the globals vector, clear the map as well.
-      wasm->updateMaps();
-
       std::unordered_map<Name, Index> globalIndexes;
-      for (Index i = 0; i < oldGlobals.size(); i++) {
-        globalIndexes[oldGlobals[i]->name] = i;
+      for (Index i = 0; i < wasm->globals.size(); i++) {
+        globalIndexes[wasm->globals[i]->name] = i;
       }
+
+      // Compute the new order for the globals. As we go, track which ones we
+      // have placed in the new order already.
+      std::vector<Index> newOrder;
+      std::unordered_set<Name> inNewOrder;
+
       // Add the globals that had an important ordering, in the right order.
       for (auto global :
            TopologicalSort::sortOf(mustBeBefore.begin(), mustBeBefore.end())) {
-        wasm->addGlobal(std::move(oldGlobals[globalIndexes[global]]));
+        newOrder.push_back(globalIndexes[global]);
+        inNewOrder.insert(global);
       }
       // Add all other globals after them.
-      for (auto& global : oldGlobals) {
-        if (global) {
-          wasm->addGlobal(std::move(global));
+      for (auto& global : wasm->globals) {
+        if (!inNewOrder.count(global->name)) {
+          newOrder.push_back(globalIndexes[global->name]);
         }
+      }
+
+      // Modify wasm->globals. We must do this all at once, and only if the
+      // topological sort succeeds (if it fails, we must not leave wasm->globals
+      // in a mixed state).
+      auto oldGlobals = std::move(wasm->globals);
+      // After clearing the globals vector, clear the map as well.
+      wasm->updateMaps();
+      for (auto index : newOrder) {
+        wasm->addGlobal(std::move(oldGlobals[index]));
       }
     }
 
