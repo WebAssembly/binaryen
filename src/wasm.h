@@ -33,13 +33,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ir/import-name.h"
 #include "literal.h"
 #include "mixed_arena.h"
 #include "support/index.h"
 #include "support/name.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
-#include "wasm/import-name.h"
 
 namespace wasm {
 

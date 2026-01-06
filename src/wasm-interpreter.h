@@ -3179,7 +3179,8 @@ public:
   std::vector<Literals> multiValues;
 
   // Keyed by internal name. All globals in the module, including imports.
-  // `definedGlobals` contains non-imported globals.
+  // `definedGlobals` contains non-imported globals. Points to `definedGlobals`
+  // of this instance and other instances.
   std::map<Name, Literals*> allGlobals;
 
   ModuleRunnerBase(
