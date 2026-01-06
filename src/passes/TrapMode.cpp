@@ -22,8 +22,8 @@
 
 #include "asmjs/shared-constants.h"
 #include "ir/trapping.h"
-#include "mixed_arena.h"
 #include "pass.h"
+#include "support/mixed_arena.h"
 #include "support/name.h"
 #include "wasm-builder.h"
 #include "wasm-type.h"

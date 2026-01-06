@@ -33,9 +33,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "mixed_arena.h"
 #include "parser.h"
 #include "snprintf.h"
+#include "support/mixed_arena.h"
 #include "support/safe_integer.h"
 
 #define errv(str, ...) fprintf(stderr, str "\n", __VA_ARGS__);
