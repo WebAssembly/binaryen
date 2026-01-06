@@ -419,6 +419,18 @@ BinaryenExternalKind BinaryenExternalTag(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Tag);
 }
 
+// MemoryOrder for atomic operations
+
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderUnordered(void) {
+  return static_cast<BinaryenMemoryOrder>(MemoryOrder::Unordered);
+}
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderSeqCst(void) {
+  return static_cast<BinaryenMemoryOrder>(MemoryOrder::SeqCst);
+}
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderAcqRel(void) {
+  return static_cast<BinaryenMemoryOrder>(MemoryOrder::AcqRel);
+}
+
 // Features
 
 BinaryenFeatures BinaryenFeatureMVP(void) {
@@ -1347,7 +1359,8 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                          uint32_t offset,
                                          BinaryenType type,
                                          BinaryenExpressionRef ptr,
-                                         const char* memoryName) {
+                                         const char* memoryName,
+                                         uint8_t order) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeAtomicLoad(bytes,
@@ -1355,7 +1368,7 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                       (Expression*)ptr,
                       Type(type),
                       getMemoryName(module, memoryName),
-                      MemoryOrder::SeqCst));
+                      static_cast<MemoryOrder>(order)));
 }
 BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           uint32_t bytes,

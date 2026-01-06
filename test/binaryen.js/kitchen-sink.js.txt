@@ -2120,6 +2120,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 0)
        )
       )
+      (i32.atomic.store
+       (i32.const 0)
+       (i32.atomic.load
+        (i32.const 0)
+       )
+      )
       (drop
        (memory.atomic.wait32
         (i32.const 0)
