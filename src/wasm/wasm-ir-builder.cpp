@@ -1166,7 +1166,6 @@ IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
 
     // If all the received values are in the scratch local, just fetch them out.
     if (receivedType == Type::none) {
-      assert(extraType == labelType);
       curr = builder.makeSequence(
         curr, builder.makeLocalGet(extraLocal, extraType), extraType);
       continue;
