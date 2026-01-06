@@ -3434,16 +3434,16 @@ private:
         }
         auto [_, inserted] =
           allGlobals.try_emplace(global->name, importedGlobal);
-        (void)_;
+        (void)inserted; // for noassert builds
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated global name");
       } else {
         Literals init = self()->visit(global->init).values;
-        auto& definedGlobal = definedGlobals.emplace_back(init);
+        auto& definedGlobal = definedGlobals.emplace_back(std::move(init));
 
         auto [_, inserted] =
           allGlobals.try_emplace(global->name, &definedGlobal);
-        (void)_;
+        (void)inserted; // for noassert builds
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated global name");
       }
