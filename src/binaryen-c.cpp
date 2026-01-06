@@ -2698,12 +2698,13 @@ void BinaryenLoadSetPtr(BinaryenExpressionRef expr,
 bool BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
-  return static_cast<Store*>(expression)->isAtomic;
+  return static_cast<Store*>(expression)->isAtomic();
 }
 void BinaryenStoreSetAtomic(BinaryenExpressionRef expr, bool isAtomic) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
-  static_cast<Store*>(expression)->isAtomic = isAtomic != 0;
+  static_cast<Store*>(expression)->order =
+    isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
 }
 uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;

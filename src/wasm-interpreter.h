@@ -3966,7 +3966,7 @@ public:
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
       info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
-    if (curr->isAtomic) {
+    if (curr->isAtomic()) {
       info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
     }
     info.interface()->store(curr, addr, value.getSingleValue(), info.name);
@@ -5136,7 +5136,7 @@ protected:
     Store store;
     store.bytes = bytes;
     store.align = bytes;
-    store.isAtomic = true; // understatement
+    store.order = MemoryOrder::SeqCst;
     store.ptr = &ptr;
     store.value = &value;
     store.valueType = value.type;

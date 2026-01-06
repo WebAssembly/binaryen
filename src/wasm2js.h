@@ -1561,7 +1561,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           Fatal() << "Unhandled type in store: " << curr->valueType;
         }
       }
-      if (curr->isAtomic) {
+      if (curr->isAtomic()) {
         Ref call = ValueBuilder::makeCall(
           ValueBuilder::makeDot(ValueBuilder::makeName(ATOMICS), STORE));
         ValueBuilder::appendToCall(call, ret[1]);

@@ -505,7 +505,7 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
     return load->order;
   }
   if (auto* store = curr->dynCast<Store>()) {
-    return store->isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
+    return store->order;
   }
   if (curr->is<AtomicRMW>() || curr->is<AtomicWait>() ||
       curr->is<AtomicNotify>() || curr->is<AtomicFence>()) {

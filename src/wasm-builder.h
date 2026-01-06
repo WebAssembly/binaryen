@@ -428,7 +428,6 @@ public:
                    Type type,
                    Name memory) {
     auto* ret = wasm.allocator.alloc<Store>();
-    ret->isAtomic = false;
     ret->bytes = bytes;
     ret->offset = offset;
     ret->align = align;
@@ -436,6 +435,7 @@ public:
     ret->value = value;
     ret->valueType = type;
     ret->memory = memory;
+    ret->order = MemoryOrder::Unordered;
     ret->finalize();
     return ret;
   }
@@ -446,7 +446,7 @@ public:
                          Type type,
                          Name memory) {
     Store* store = makeStore(bytes, offset, bytes, ptr, value, type, memory);
-    store->isAtomic = true;
+    store->order = MemoryOrder::SeqCst;
     return store;
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op,
