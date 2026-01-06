@@ -1451,7 +1451,14 @@ void evalCtors(Module& wasm,
       std::cout << "  ...stopping since could not create module instance: "
                 << fail.why << "\n";
     }
-    return;
+  } catch (TopologicalSort::CycleException e) {
+    // We use a topological sort for GC globals. If there is a non-breakable
+    // cycle there, we will hit an error (we can break cycles in nullable fields
+    // by setting a null and filling in the value later, etc., but there is
+    // nothing we can do for non-nullable, immutable fields).
+    if (!quiet) {
+      std::cout << "  ...stopping since global sorting hit a cycle\n";
+    }
   }
 }
 

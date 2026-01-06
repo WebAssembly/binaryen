@@ -1271,6 +1271,10 @@
   )
  )
 )
+
+;; A circular reference using a non-nullable, immutable field. Unlike the cases
+;; above, we cannot break up such cycles, and must give up. We should at least
+;; not error.
 ;; CHECK:      (global $ctor-eval$global (ref (exact $A)) (struct.new $A
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
@@ -1291,3 +1295,44 @@
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+(module
+ ;; CHECK:      (type $struct (struct (field (mut (ref any)))))
+
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (type $array (array i8))
+ (type $array  (array i8))
+ (type $struct (struct (field (mut (ref any)))))
+
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (func $test (type $1)
+ ;; CHECK-NEXT:  (local $temp (ref $struct))
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (struct.new $struct
+ ;; CHECK-NEXT:    (array.new_fixed $array 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $struct 0
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (export "test")
+  (local $temp (ref $struct))
+
+  ;; Start with the struct referring to an array.
+  (local.set $temp
+   (struct.new $struct
+    (array.new_fixed $array 0)
+   )
+  )
+
+  ;; Make the struct refer to itself, circularly.
+  (struct.set $struct 0
+   (local.get $temp)
+   (local.get $temp)
+  )
+ )
+)
+
