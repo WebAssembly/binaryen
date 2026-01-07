@@ -67,12 +67,12 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
+class EvallingModuleRunner : public ModuleRunnerBase {
 public:
   EvallingModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
-    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
+    std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances_ = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
@@ -84,7 +84,7 @@ public:
                                 global->base.toString());
     }
 
-    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
+    return ModuleRunnerBase::visitGlobalGet(curr);
   }
 
   Flow visitTableGet(TableGet* curr) {
@@ -99,7 +99,7 @@ public:
     if (!allowContNew) {
       throw FailToEvalException("cont.new disallowed");
     }
-    return ModuleRunnerBase<EvallingModuleRunner>::visitContNew(curr);
+    return ModuleRunnerBase::visitContNew(curr);
   }
 
   // This needs to be duplicated from ModuleRunner, unfortunately.
@@ -182,7 +182,7 @@ static bool ignoreExternalInput = false;
 struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   Module* wasm;
   EvallingModuleRunner* instance;
-  std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances;
 
   // A representation of the contents of wasm memory as we execute.
   std::unordered_map<Name, std::vector<char>> memories;
@@ -198,8 +198,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   bool instanceInitialized = false;
 
   CtorEvalExternalInterface(
-    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
-      {}) {
+    std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances_ = {}) {
     linkedInstances.swap(linkedInstances_);
   }
 
@@ -216,9 +215,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     applyGlobalsToModule();
   }
 
-  void init(Module& wasm_, EvallingModuleRunner& instance_) override {
+  void init(Module& wasm_, ModuleRunnerBase& instance_) override {
     wasm = &wasm_;
-    instance = &instance_;
+    instance = static_cast<EvallingModuleRunner*>(&instance_);
     for (auto& memory : wasm->memories) {
       if (!memory->imported()) {
         std::vector<char> data;
@@ -1354,7 +1353,7 @@ void evalCtors(Module& wasm,
   std::unordered_set<std::string> keptExportsSet(keptExports.begin(),
                                                  keptExports.end());
 
-  std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances;
 
   // build and link the env module
   auto envModule = buildEnvModule(wasm);

@@ -94,15 +94,15 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
 
   std::map<Name, Memory> memories;
   std::unordered_map<Name, std::vector<Literal>> tables;
-  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances;
 
   ShellExternalInterface(
-    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {}) {
+    std::map<Name, std::shared_ptr<ModuleRunnerBase>> linkedInstances_ = {}) {
     linkedInstances.swap(linkedInstances_);
   }
   virtual ~ShellExternalInterface() = default;
 
-  ModuleRunner* getImportInstanceOrNull(Importable* import) {
+  ModuleRunnerBase* getImportInstanceOrNull(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
       return nullptr;
@@ -110,7 +110,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return it->second.get();
   }
 
-  ModuleRunner* getImportInstance(Importable* import) {
+  ModuleRunnerBase* getImportInstance(Importable* import) {
     auto* ret = getImportInstanceOrNull(import);
     if (!ret) {
       Fatal() << "getImportInstance: unknown import: " << import->module.str
@@ -119,7 +119,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return ret;
   }
 
-  void init(Module& wasm, ModuleRunner& instance) override {
+  void init(Module& wasm, ModuleRunnerBase& instance) override {
     ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
       auto shellMemory = Memory();
       shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
