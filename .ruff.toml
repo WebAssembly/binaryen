@@ -31,6 +31,7 @@ ignore = [
   "B011", # https://docs.astral.sh/ruff/rules/assert-false/
   "B023", # https://docs.astral.sh/ruff/rules/function-uses-loop-variable/
   "E501", # https://docs.astral.sh/ruff/rules/line-too-long/
+  "E741", # https://docs.astral.sh/ruff/rules/ambiguous-variable-name/
   "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
   "PLR0912", # https://docs.astral.sh/ruff/rules/too-many-branches/
   "PLR0913", # https://docs.astral.sh/ruff/rules/too-many-arguments/
