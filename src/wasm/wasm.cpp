@@ -2015,22 +2015,3 @@ void Module::clearDebugInfo() {
 }
 
 } // namespace wasm
-
-namespace std {
-
-std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
-  switch (mo) {
-    case wasm::MemoryOrder::Unordered:
-      os << "Unordered";
-      break;
-    case wasm::MemoryOrder::SeqCst:
-      os << "SeqCst";
-      break;
-    case wasm::MemoryOrder::AcqRel:
-      os << "AcqRel";
-      break;
-  }
-  return os;
-}
-
-} // namespace std
