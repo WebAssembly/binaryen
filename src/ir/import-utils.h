@@ -130,7 +130,7 @@ public:
 
   // Returns null if the `name` wasn't found. The returned Literals* lives as
   // long as the ImportResolver instance.
-  virtual Literals* getGlobalOrNull(ImportName name, Type type) const = 0;
+  virtual Literals* getGlobalOrNull(ImportNames name, Type type) const = 0;
 };
 
 // Looks up imports from the given `linkedInstances`.
@@ -141,7 +141,7 @@ public:
     std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances)
     : linkedInstances(std::move(linkedInstances)) {}
 
-  Literals* getGlobalOrNull(ImportName name, Type type) const override {
+  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
     auto it = linkedInstances.find(name.module);
     if (it == linkedInstances.end()) {
       return nullptr;

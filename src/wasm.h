@@ -2173,7 +2173,7 @@ struct Importable : Named {
   Name module, base;
 
   bool imported() const { return module.is(); }
-  ImportName importName() const { return ImportName{module, base}; };
+  ImportNames importNames() const { return ImportNames{module, base}; };
 };
 
 class Function;
@@ -2666,6 +2666,7 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
+std::ostream& operator<<(std::ostream& o, const wasm::ImportNames& importNames);
 
 } // namespace std
 

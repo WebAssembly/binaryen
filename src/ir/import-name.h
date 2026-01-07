@@ -23,13 +23,9 @@
 
 namespace wasm {
 
-struct ImportName {
+struct ImportNames {
   Name module;
   Name name;
-
-  friend std::ostream& operator<<(std::ostream& o, const ImportName& qname) {
-    return o << qname.module << "." << qname.name;
-  }
 };
 
 } // namespace wasm

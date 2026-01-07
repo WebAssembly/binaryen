@@ -73,7 +73,7 @@ class EvallingImportResolver : public ImportResolver {
 public:
   EvallingImportResolver() = default;
 
-  Literals* getGlobalOrNull(ImportName name, Type type) const override {
+  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
     throw FailToEvalException("Accessed imported global");
   }
 };

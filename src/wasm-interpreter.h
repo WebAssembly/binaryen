@@ -3424,12 +3424,12 @@ private:
 
     for (auto& global : wasm.globals) {
       if (global->imported()) {
-        auto importName = global->importName();
+        auto importNames = global->importNames();
         auto importedGlobal =
-          importResolver->getGlobalOrNull(importName, global->type);
+          importResolver->getGlobalOrNull(importNames, global->type);
         if (!importedGlobal) {
           externalInterface->trap((std::stringstream()
-                                   << "Imported global " << importName
+                                   << "Imported global " << importNames
                                    << " not found.")
                                     .str());
         }
