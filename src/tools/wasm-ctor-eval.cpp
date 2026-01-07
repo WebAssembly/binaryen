@@ -67,13 +67,27 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
+class EvallingModuleRunner;
+
+class EvallingImportResolver : public ImportResolver {
+public:
+  EvallingImportResolver() = default;
+
+  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
+    throw FailToEvalException("Accessed imported global");
+  }
+};
+
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
 public:
   EvallingModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
-    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
+    : ModuleRunnerBase(wasm,
+                       externalInterface,
+                       std::make_shared<EvallingImportResolver>(),
+                       linkedInstances_) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
     // Error on reads of imported globals.
@@ -147,19 +161,6 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
     }
   });
 
-  ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-    if (global->module == env->name) {
-      auto* copied = ModuleUtils::copyGlobal(global, *env);
-      copied->module = Name();
-      copied->base = Name();
-
-      Builder builder(*env);
-      copied->init = builder.makeConst(Literal::makeZero(global->type));
-      env->addExport(
-        builder.makeExport(global->base, copied->name, ExternalKind::Global));
-    }
-  });
-
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
     if (memory->module == env->name) {
@@ -229,26 +230,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     for (auto& global : wasm->globals) {
       usedGlobalNames.insert(global->name);
     }
-  }
-
-  void importGlobals(GlobalValueSet& globals, Module& wasm_) override {
-    ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
-      auto it = linkedInstances.find(global->module);
-      if (it != linkedInstances.end()) {
-        auto* inst = it->second.get();
-        auto* globalExport = inst->wasm.getExportOrNull(global->base);
-        if (!globalExport || globalExport->kind != ExternalKind::Global) {
-          throw FailToEvalException(std::string("importGlobals: ") +
-                                    global->module.toString() + "." +
-                                    global->base.toString());
-        }
-        globals[global->name] = inst->globals[*globalExport->getInternalName()];
-      } else {
-        throw FailToEvalException(std::string("importGlobals: ") +
-                                  global->module.toString() + "." +
-                                  global->base.toString());
-      }
-    });
   }
 
   Literal getImportedFunction(Function* import) override {
@@ -558,8 +539,8 @@ private:
   void applyGlobalsToModule() {
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
-      for (const auto& [name, values] : instance->globals) {
-        wasm->getGlobal(name)->init = getSerialization(values);
+      for (const auto& [name, values] : instance->allGlobals) {
+        wasm->getGlobal(name)->init = getSerialization(*values);
       }
       return;
     }
@@ -590,9 +571,9 @@ private:
       // for it. (If there is no value, then this is a new global we've added
       // during execution, for whom we've already set up a proper serialized
       // value when we created it.)
-      auto iter = instance->globals.find(oldGlobal->name);
-      if (iter != instance->globals.end()) {
-        oldGlobal->init = getSerialization(iter->second, name);
+      auto iter = instance->allGlobals.find(oldGlobal->name);
+      if (iter != instance->allGlobals.end()) {
+        oldGlobal->init = getSerialization(*iter->second, name);
       }
 
       // Add the global back to the module.
