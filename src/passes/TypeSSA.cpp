@@ -75,7 +75,9 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(std::vector<HeapType>&& types,
     std::vector<HeapType> types(group.begin(), group.end());
     // N.B. we use `insertOrGet` rather than `insert` because some passes (DAE,
     // BlockMerging) can create multiple types with the same shape, so we can't
-    // assume all the rec groups are already unique.
+    // assume all the rec groups are already unique. The rec groups will have
+    // different types, but their shapes will match considering how exactness,
+    // etc. will be erased by the binary writer.
     unique.insertOrGet(std::move(types));
   }
 
