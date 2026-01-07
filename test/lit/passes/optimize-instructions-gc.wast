@@ -27,8 +27,6 @@
   ;; CHECK:      (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
   (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
 
-  (type $empty (struct))
-
   ;; CHECK:      (type $C (sub $A (struct (field i32) (field i32) (field f64))))
 
   ;; CHECK:      (rec
@@ -37,6 +35,12 @@
   ;; CHECK:       (type $void2 (sub $void (func)))
 
   ;; CHECK:      (type $struct.ref (struct (field funcref)))
+
+  ;; CHECK:      (type $struct_i64 (func (param structref) (result i64)))
+
+  ;; CHECK:      (type $empty (struct))
+  (type $empty (struct))
+
   (type $struct.ref (struct (field funcref)))
 
   (type $C (sub $A (struct (field i32) (field i32) (field f64))))
@@ -48,7 +52,6 @@
     (type $void2 (sub $void (func)))
   )
 
-  ;; CHECK:      (type $struct_i64 (func (param structref) (result i64)))
   (type $struct_i64 (func (param (ref null struct)) (result i64)))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (type $8) (result i32)))
@@ -289,7 +292,7 @@
     )
   )
 
-  ;; CHECK:      (func $unneeded_unreachability (type $5)
+  ;; CHECK:      (func $unneeded_unreachability (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref func)
   ;; CHECK-NEXT:    (unreachable)
@@ -477,11 +480,11 @@
     )
   )
 
-  ;; CHECK:      (func $nothing (type $5)
+  ;; CHECK:      (func $nothing (type $4)
   ;; CHECK-NEXT: )
   (func $nothing)
 
-  ;; CHECK:      (func $ref-eq-corner-cases (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-eq-corner-cases (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (block (result eqref)
@@ -568,7 +571,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-ref-cast (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-eq-ref-cast (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -800,7 +803,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-squared (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-squared (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref null $struct)
   ;; CHECK-NEXT:    (local.get $x)
@@ -817,7 +820,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ref-cast-squared-fallthrough (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-squared-fallthrough (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct))
@@ -846,7 +849,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ref-cast-cubed (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-cubed (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref null $struct)
   ;; CHECK-NEXT:    (local.get $x)
@@ -865,7 +868,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ref-cast-squared-different (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-squared-different (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (local.get $x)
@@ -884,7 +887,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-null (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-eq-null (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -1560,7 +1563,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-null (type $5)
+  ;; CHECK:      (func $ref-cast-static-null (type $4)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.null none)
@@ -1703,7 +1706,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-squared (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-static-squared (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref null $A)
   ;; CHECK-NEXT:    (local.get $x)
@@ -1746,7 +1749,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-many (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-static-many (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref null $B-child)
   ;; CHECK-NEXT:    (local.get $x)
@@ -1837,7 +1840,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-very-many (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-static-very-many (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref null $B-child)
   ;; CHECK-NEXT:    (local.get $x)
@@ -1875,7 +1878,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $B))
   ;; CHECK-NEXT:    (call $ref-cast-static-fallthrough-remaining
@@ -1910,7 +1913,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-child (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-child (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref null $B)
   ;; CHECK-NEXT:    (block (result eqref)
@@ -2016,7 +2019,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-squared-impossible (type $4) (param $x eqref)
+  ;; CHECK:      (func $ref-cast-static-squared-impossible (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (local.get $x)
@@ -2755,7 +2758,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct.set.null.fallthrough (type $5)
+  ;; CHECK:      (func $struct.set.null.fallthrough (type $4)
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
@@ -2784,7 +2787,7 @@
     )
   )
 
-  ;; CHECK:      (func $set.array.null (type $5)
+  ;; CHECK:      (func $set.array.null (type $4)
   ;; CHECK-NEXT:  (local $temp (ref none))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
   ;; CHECK-NEXT:   (drop
@@ -2856,7 +2859,7 @@
     )
   )
 
-  ;; CHECK:      (func $refinalize.select.arm.flip (type $5)
+  ;; CHECK:      (func $refinalize.select.arm.flip (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $void2)))
   ;; CHECK-NEXT:    (ref.func $func.arm.2)
@@ -2995,7 +2998,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.test-fallthrough (type $5)
+  ;; CHECK:      (func $ref.test-fallthrough (type $4)
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
@@ -3084,7 +3087,7 @@
     )
   )
 
-  ;; CHECK:      (func $gc_to_unreachable_in_added_constants (type $5)
+  ;; CHECK:      (func $gc_to_unreachable_in_added_constants (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.wrap_i64
   ;; CHECK-NEXT:    (i64.add
@@ -3174,7 +3177,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct.new (type $5)
+  ;; CHECK:      (func $struct.new (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (drop
@@ -3259,7 +3262,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new (type $5)
+  ;; CHECK:      (func $array.new (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (drop
@@ -3328,7 +3331,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed (type $5)
+  ;; CHECK:      (func $array.new_fixed (type $4)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
@@ -3436,7 +3439,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed_fallthrough (type $5)
+  ;; CHECK:      (func $array.new_fixed_fallthrough (type $4)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3689,4 +3692,53 @@
      (i32.const 0)
     )
   )
+
+  ;; CHECK:      (func $comp-i31-struct-unreachable-if (type $4)
+  ;; CHECK-NEXT:  (ref.eq
+  ;; CHECK-NEXT:   (ref.i31
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $empty)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $comp-i31-struct-unreachable-if
+    ;; The if is unreachable because of its condition, however, it has reachable
+    ;; arms and is declared with a concrete type, so it only becomes unreachable
+    ;; when we refinalize (which can happen if we pull the ref.i31 out of the
+    ;; arms). We must be careful when handling the ref.eq: if we don't realize
+    ;; it is unreachable, we might think we can prove it returns 0 (since one
+    ;; arm is i31, the other a struct, both non-nullable, and hence there is no
+    ;; overlap). If we do that, and emit a 0, we'd be turning an unreachable
+    ;; into a concrete type, and nothing pops that type off the stack, so we
+    ;; would fail to validate. Instead, we should leave this code for DCE, aside
+    ;; from moving the ref.i31 out.
+    (ref.eq
+      (if (result (ref i31))
+        (unreachable)
+        (then
+          (ref.i31
+            (i32.const 0)
+          )
+        )
+        (else
+          (ref.i31
+            (i32.const 1)
+          )
+        )
+      )
+      (struct.new_default $empty)
+    )
+    ;; Nothing reads the ref.eq on the stack.
+    (unreachable)
+  )
 )
+

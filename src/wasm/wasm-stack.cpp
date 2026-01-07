@@ -248,7 +248,7 @@ void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
 }
 
 void BinaryInstWriter::visitLoad(Load* curr) {
-  if (!curr->isAtomic) {
+  if (!curr->isAtomic()) {
     switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
@@ -365,7 +365,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
 }
 
 void BinaryInstWriter::visitStore(Store* curr) {
-  if (!curr->isAtomic) {
+  if (!curr->isAtomic()) {
     switch (curr->valueType.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {

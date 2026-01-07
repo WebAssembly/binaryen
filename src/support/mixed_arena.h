@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_mixed_arena_h
-#define wasm_mixed_arena_h
+#ifndef wasm_support_mixed_arena_h
+#define wasm_support_mixed_arena_h
 
 #include <atomic>
 #include <cassert>
@@ -418,4 +418,4 @@ public:
   }
 };
 
-#endif // wasm_mixed_arena_h
+#endif // wasm_support_mixed_arena_h

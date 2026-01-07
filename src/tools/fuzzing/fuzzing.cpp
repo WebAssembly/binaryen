@@ -3239,7 +3239,7 @@ Expression* TranslateToFuzzReader::makeLoad(Type type) {
   // make it atomic
   auto* load = ret->cast<Load>();
   wasm.memories[0]->shared = true;
-  load->isAtomic = true;
+  load->order = MemoryOrder::SeqCst;
   load->signed_ = false;
   load->align = load->bytes;
   return load;
@@ -3358,7 +3358,7 @@ Expression* TranslateToFuzzReader::makeStore(Type type) {
   }
   // make it atomic
   wasm.memories[0]->shared = true;
-  store->isAtomic = true;
+  store->order = MemoryOrder::SeqCst;
   store->align = store->bytes;
   return store;
 }

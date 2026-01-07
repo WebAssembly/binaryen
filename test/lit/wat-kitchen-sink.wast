@@ -5139,7 +5139,7 @@
  )
 
  ;; The if is unreachable except through the break; make sure this is
- ;; parse correctly
+ ;; parsed correctly
  ;; CHECK:      (func $if-else-br-return (type $27) (param $a i32) (result i32)
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (if
@@ -5166,6 +5166,66 @@
    )
   )
   (i32.const 1)
+ )
+
+ ;; CHECK:      (func $if-else-unreachable-br-extra (type $1) (result i32)
+ ;; CHECK-NEXT:  (local $scratch nullref)
+ ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (local $scratch_2 i32)
+ ;; CHECK-NEXT:  (local $scratch_3 (ref none))
+ ;; CHECK-NEXT:  (local $scratch_4 i32)
+ ;; CHECK-NEXT:  (block $l (result i32)
+ ;; CHECK-NEXT:   (block $l0
+ ;; CHECK-NEXT:    (br $l
+ ;; CHECK-NEXT:     (if (result i32)
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:      (then
+ ;; CHECK-NEXT:       (local.set $scratch_1
+ ;; CHECK-NEXT:        (block (result i32)
+ ;; CHECK-NEXT:         (local.set $scratch_2
+ ;; CHECK-NEXT:          (i32.const 42)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (local.set $scratch
+ ;; CHECK-NEXT:          (ref.null none)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (local.get $scratch_2)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.set $scratch_3
+ ;; CHECK-NEXT:        (br_on_null $l0
+ ;; CHECK-NEXT:         (local.get $scratch)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.set $scratch_4
+ ;; CHECK-NEXT:        (local.get $scratch_1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (local.get $scratch_3)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.get $scratch_4)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (else
+ ;; CHECK-NEXT:       (i32.const 1337)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $scratch_1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-unreachable-br-extra (result i32)
+  ;; The condition is unreachable, making the if unreachable.
+  unreachable
+  if $l (result i32)
+   ;; Send an extra i32. We should not get confused because the if is
+   ;; unreachable.
+   i32.const 42
+   ref.null none
+   br_on_null $l
+   drop
+  else $l
+   i32.const 1337
+  end $l
  )
 
  ;; CHECK:      (func $try-br-catch-all-return (type $0)

@@ -1049,7 +1049,7 @@ struct OptimizeInstructions
         // extend operation.
         bool willBeSigned = curr->op == ExtendSInt32 && load->bytes == 4;
         if (!(curr->op == ExtendUInt32 && load->bytes <= 2 && load->signed_) &&
-            !(willBeSigned && load->isAtomic)) {
+            !(willBeSigned && load->isAtomic())) {
           if (willBeSigned) {
             load->signed_ = true;
           }
@@ -1092,7 +1092,7 @@ struct OptimizeInstructions
       // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
       // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
       if (auto* load = curr->value->dynCast<Load>()) {
-        if (!load->isAtomic && load->bytes == curr->type.getByteSize()) {
+        if (!load->isAtomic() && load->bytes == curr->type.getByteSize()) {
           load->type = curr->type;
           return replaceCurrent(load);
         }
@@ -1282,7 +1282,7 @@ struct OptimizeInstructions
         // instead of wrapping to 32, just store some of the bits in the i64
         curr->valueType = Type::i64;
         curr->value = unary->value;
-      } else if (!curr->isAtomic && Abstract::hasAnyReinterpret(unary->op) &&
+      } else if (!curr->isAtomic() && Abstract::hasAnyReinterpret(unary->op) &&
                  curr->bytes == curr->valueType.getByteSize()) {
         // f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
         // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
@@ -1800,13 +1800,18 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
-    // The types may prove that the same reference cannot appear on both sides.
+    // Check for unreachability. Note we must check both the children and the
+    // ref.eq itself, as in e.g. optimizeTernary, as we only refinalize at the
+    // end, so unreachable children may not update the parent yet.
     auto leftType = curr->left->type;
     auto rightType = curr->right->type;
-    if (leftType == Type::unreachable || rightType == Type::unreachable) {
+    if (leftType == Type::unreachable || rightType == Type::unreachable ||
+        curr->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
+
+    // The types may prove that the same reference cannot appear on both sides.
     auto leftHeapType = leftType.getHeapType();
     auto rightHeapType = rightType.getHeapType();
     auto leftIsHeapSubtype = HeapType::isSubType(leftHeapType, rightHeapType);
