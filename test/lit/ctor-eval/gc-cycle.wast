@@ -1271,7 +1271,6 @@
   )
  )
 )
-
 ;; CHECK:      (global $ctor-eval$global (ref (exact $A)) (struct.new $A
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
@@ -1293,7 +1292,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
- ;; A circular reference using a non-nullable, immutable field. Unlike the cases
+ ;; A circular reference using a non-nullable (but mutable) field. Unlike cases
  ;; above, we cannot break up such cycles, and must give up. We should at least
  ;; not error.
 
