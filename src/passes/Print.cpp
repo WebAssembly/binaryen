@@ -3944,4 +3944,9 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair) {
   return o << "(unnamed)";
 }
 
+std::ostream& operator<<(std::ostream& o,
+                         const wasm::ImportNames& importNames) {
+  return o << importNames.module << "." << importNames.name;
+}
+
 } // namespace std
