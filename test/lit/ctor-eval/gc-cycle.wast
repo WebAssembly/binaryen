@@ -1323,6 +1323,10 @@
  (func $test (export "test")
   (local $temp (ref $struct))
 
+  (global.set $global
+   (i32.const 1337)
+  )
+
   ;; Start with the struct referring to an array.
   (local.set $temp
    (struct.new $struct
