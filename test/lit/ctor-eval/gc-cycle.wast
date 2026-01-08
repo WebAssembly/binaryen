@@ -1272,9 +1272,6 @@
  )
 )
 
-;; A circular reference using a non-nullable, immutable field. Unlike the cases
-;; above, we cannot break up such cycles, and must give up. We should at least
-;; not error.
 ;; CHECK:      (global $ctor-eval$global (ref (exact $A)) (struct.new $A
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
@@ -1296,6 +1293,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
+ ;; A circular reference using a non-nullable, immutable field. Unlike the cases
+ ;; above, we cannot break up such cycles, and must give up. We should at least
+ ;; not error.
+
  ;; CHECK:      (type $array (array i8))
  (type $array  (array i8))
  ;; CHECK:      (type $struct (struct (field (mut (ref any)))))
@@ -1343,12 +1344,6 @@
   (struct.set $struct 0
    (local.get $temp)
    (local.get $temp)
-  )
-
-  ;; Use the global, to keep it alive. If we error during global processing
-  ;; (failing to sort the new globals, which have a cycle), we could error here.
-  (drop
-   (global.get $global)
   )
  )
 )
