@@ -1296,20 +1296,23 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
- ;; CHECK:      (type $struct (struct (field (mut (ref any)))))
-
- ;; CHECK:      (type $1 (func))
-
  ;; CHECK:      (type $array (array i8))
  (type $array  (array i8))
+ ;; CHECK:      (type $struct (struct (field (mut (ref any)))))
  (type $struct (struct (field (mut (ref any)))))
 
+ ;; CHECK:      (type $2 (func))
+
+ ;; CHECK:      (global $global (mut i32) (i32.const 42))
  (global $global (mut i32) (i32.const 42))
 
  ;; CHECK:      (export "test" (func $test))
 
- ;; CHECK:      (func $test (type $1)
+ ;; CHECK:      (func $test (type $2)
  ;; CHECK-NEXT:  (local $temp (ref $struct))
+ ;; CHECK-NEXT:  (global.set $global
+ ;; CHECK-NEXT:   (i32.const 1337)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (struct.new $struct
  ;; CHECK-NEXT:    (array.new_fixed $array 0)
@@ -1323,6 +1326,8 @@
  (func $test (export "test")
   (local $temp (ref $struct))
 
+  ;; Set the global. This will not get written out, as we will cancel all our
+  ;; work when we hit the cycle below. (TODO: improve that)
   (global.set $global
    (i32.const 1337)
   )
