@@ -1440,9 +1440,9 @@ void evalCtors(Module& wasm,
     }
   } catch (TopologicalSort::CycleException e) {
     // We use a topological sort for GC globals. If there is a non-breakable
-    // cycle there, we will hit an error (we can break cycles in nullable fields
-    // by setting a null and filling in the value later, etc., but there is
-    // nothing we can do for non-nullable, immutable fields).
+    // cycle there, we will hit an error (we can break cycles in nullable and
+    // mutable fields by setting a null and filling in the value later, but
+    // other situations are a problem).
     if (!quiet) {
       std::cout << "  ...stopping since global sorting hit a cycle\n";
     }
