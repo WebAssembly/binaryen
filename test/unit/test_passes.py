@@ -69,3 +69,18 @@ class PassesTest(utils.BinaryenTestCase):
 
         self.assertNotIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1']))
         self.assertNotIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1', '-O1']))
+
+    def test_string_builtins(self):
+        # When we enable string builtins, we lift early and lower late, and
+        # only do each once even if there are multiple -O2 operations.
+        passes = self.get_passes_run(['-O2', '-O2', '-all'])
+        self.assertEqual(passes.count('string-lifting'), 1)
+        self.assertEqual(passes.count('string-lowering-magic-imports'), 1)
+
+        # Other passes appear twice, when -O2 is repeated
+        self.assertEqual(passes.count('directize'), 2)
+
+        # Without the feature, we do not lift or lower.
+        passes = self.get_passes_run(['-O2', '-O2', '-all', '--disable-string-builtins'])
+        self.assertEqual(passes.count('string-lifting'), 0)
+        self.assertEqual(passes.count('string-lowering-magic-imports'), 0)

@@ -20,6 +20,7 @@
 --enable-bulk-memory-opt
 --enable-call-indirect-overlong
 --enable-custom-descriptors
+--enable-string-builtins
 (module
  (type $0 (func (result v128 externref)))
  (func $foo (type $0) (result v128 externref)

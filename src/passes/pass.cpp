@@ -616,13 +616,13 @@ void PassRunner::addIfNoDWARFIssues(std::string passName) {
   }
 }
 
-void PassRunner::addDefaultOptimizationPasses() {
-  addDefaultGlobalOptimizationPrePasses();
-  addDefaultFunctionOptimizationPasses();
-  addDefaultGlobalOptimizationPostPasses();
+void PassRunner::addDefaultOptimizationPasses(Ordering ordering) {
+  addDefaultGlobalOptimizationPrePasses(ordering);
+  addDefaultFunctionOptimizationPasses(ordering);
+  addDefaultGlobalOptimizationPostPasses(ordering);
 }
 
-void PassRunner::addDefaultFunctionOptimizationPasses() {
+void PassRunner::addDefaultFunctionOptimizationPasses(Ordering ordering) {
   // All the additions here are optional if DWARF must be preserved. That is,
   // when DWARF is relevant we run fewer optimizations.
   // FIXME: support DWARF in all of them.
@@ -734,7 +734,17 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("vacuum"); // just to be safe
 }
 
-void PassRunner::addDefaultGlobalOptimizationPrePasses() {
+void PassRunner::addDefaultGlobalOptimizationPrePasses(Ordering ordering) {
+  // If we are optimizing string builtins then we lift at the very start of the
+  // optimization pipeline, not just at the beginning here, but only when we are
+  // ordered before other bundles of passes.
+  //
+  // We check for GC for symmetry with the lowering pass, see comment in
+  // addDefaultGlobalOptimizationPostPasses() below.
+  if (wasm->features.hasStringBuiltins() && wasm->features.hasGC() &&
+      options.optimizeLevel >= 2 && ordering.first) {
+    addIfNoDWARFIssues("string-lifting");
+  }
   // Removing duplicate functions is fast and saves work later.
   addIfNoDWARFIssues("duplicate-function-elimination");
   // Do a global cleanup before anything heavy, as it is fairly fast and can
@@ -791,7 +801,7 @@ void PassRunner::add(std::string passName, std::optional<std::string> passArg) {
   doAdd(std::move(pass));
 }
 
-void PassRunner::addDefaultGlobalOptimizationPostPasses() {
+void PassRunner::addDefaultGlobalOptimizationPostPasses(Ordering ordering) {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("dae-optimizing");
   }
@@ -813,6 +823,20 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
+
+  // Lower away strings at the very very end. We do this before
+  // remove-unused-module-elements so we don't add unused imports, and also
+  // before reorder-globals, which will sort the new globals.
+  //
+  // Note we also test for GC here, as the pass adds imports that use GC arrays
+  // (and externref). Those imports may be unused, but they exist until
+  // remove-unused-module-elements cleans them up, which would cause an error in
+  // between.
+  if (wasm->features.hasStringBuiltins() && wasm->features.hasGC() &&
+      options.optimizeLevel >= 2 && ordering.last) {
+    addIfNoDWARFIssues("string-lowering-magic-imports");
+  }
+
   addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
     // Gather strings to globals right before reorder-globals, which will then

@@ -7,10 +7,11 @@
 ;; with constant field propagation etc. in closed world mode only.
 
 (module
-  ;; OPEN_WORLD:      (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
-  (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
+  ;; OPEN_WORLD:      (rec
+  ;; OPEN_WORLD-NEXT:  (type $0 (func))
 
-  ;; OPEN_WORLD:      (type $1 (func))
+  ;; OPEN_WORLD:       (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
+  (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
 
   ;; OPEN_WORLD:      (type $2 (func (result i32)))
 
@@ -25,7 +26,7 @@
 
   ;; OPEN_WORLD:      (export "main" (func $main))
 
-  ;; OPEN_WORLD:      (func $by-ref (type $1)
+  ;; OPEN_WORLD:      (func $by-ref (type $0)
   ;; OPEN_WORLD-NEXT:  (struct.set $struct 1
   ;; OPEN_WORLD-NEXT:   (global.get $glob)
   ;; OPEN_WORLD-NEXT:   (i32.const 200)

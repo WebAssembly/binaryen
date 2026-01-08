@@ -454,4 +454,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-bulk-memory-opt',
             '--enable-call-indirect-overlong',
             '--enable-custom-descriptors',
+            '--enable-string-builtins',
         ], p2.stdout.splitlines())

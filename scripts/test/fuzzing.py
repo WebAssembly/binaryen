@@ -18,10 +18,13 @@ import os
 unfuzzable = [
     # Float16 is still experimental.
     'f16.wast',
-    # TODO: fuzzer and interpreter support for strings
+    # TODO: fuzzer and interpreter support for strings, including limitations
+    #       like the fuzzer not handling (ref extern) imports (there is no way
+    #       to create a replacement value)
     'strings.wast',
     'simplify-locals-strings.wast',
     'string-lowering-instructions.wast',
+    'string-builtins.wast',
     # TODO: fuzzer and interpreter support for extern conversions
     'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm

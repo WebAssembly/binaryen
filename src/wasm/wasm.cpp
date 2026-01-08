@@ -61,6 +61,7 @@ const char* FP16Feature = "fp16";
 const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
+const char* StringBuiltinsFeature = "string-builtins";
 
 } // namespace BinaryConsts::CustomSections
 

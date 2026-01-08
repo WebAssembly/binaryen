@@ -1440,6 +1440,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
       case FeatureSet::CustomDescriptors:
         return BinaryConsts::CustomSections::CustomDescriptorsFeature;
+      case FeatureSet::StringBuiltins:
+        return BinaryConsts::CustomSections::StringBuiltinsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -5295,6 +5297,8 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
       feature = FeatureSet::FP16;
     } else if (name == BinaryConsts::CustomSections::CustomDescriptorsFeature) {
       feature = FeatureSet::CustomDescriptors;
+    } else if (name == BinaryConsts::CustomSections::StringBuiltinsFeature) {
+      feature = FeatureSet::StringBuiltins;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
