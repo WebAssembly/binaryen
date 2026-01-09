@@ -1328,6 +1328,12 @@ start_eval:
   }
 }
 
+// This is set when we find a situation we cannot handle in the middle of our
+// work. In that case we give up, throwing away the invalid state in memory.
+// TODO: Handle all those situations more gracefully, if that becomes useful
+//       enough at some point.
+static bool invalidState = false;
+
 // Eval all ctors in a module.
 void evalCtors(Module& wasm,
                std::vector<std::string>& ctors,
@@ -1432,7 +1438,19 @@ void evalCtors(Module& wasm,
       std::cout << "  ...stopping since could not create module instance: "
                 << fail.why << "\n";
     }
-    return;
+  } catch (TopologicalSort::CycleException e) {
+    // We use a topological sort for GC globals. If there is a non-breakable
+    // cycle there, we will hit an error (we can break cycles in nullable and
+    // mutable fields by setting a null and filling in the value later, but
+    // other situations are a problem).
+    if (!quiet) {
+      std::cout << "  ...stopping since global sorting hit a cycle\n";
+    }
+
+    // We found the cycle during the processing of globals, making wasm->globals
+    // invalid. Rather than refactor the code heavily to handle this very rare
+    // case, just give up entirely, and avoid writing out the current state.
+    invalidState = true;
   }
 }
 
@@ -1551,6 +1569,17 @@ int main(int argc, const char* argv[]) {
 
   if (canEval(wasm)) {
     evalCtors(wasm, ctors, keptExports);
+
+    if (invalidState) {
+      // We ended up in a state that cannot be written out. Forget about all of
+      // it, by re-reading the input and continuing from there (with nothing at
+      // all evalled, effectively).
+      auto features = wasm.features;
+      ModuleUtils::clearModule(wasm);
+      wasm.features = features;
+      ModuleReader reader;
+      reader.read(options.extra["infile"], wasm);
+    }
 
     if (!WasmValidator().validate(wasm)) {
       std::cout << wasm << '\n';
