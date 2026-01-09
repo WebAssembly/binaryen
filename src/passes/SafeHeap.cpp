@@ -243,9 +243,15 @@ struct SafeHeap : public Pass {
             if (align > bytes) {
               continue;
             }
-            for (auto memoryOrder : {MemoryOrder::Unordered,
-                                     MemoryOrder::AcqRel,
-                                     MemoryOrder::SeqCst}) {
+
+            std::vector<MemoryOrder> memoryOrders(
+              features.hasRelaxedAtomics()
+                ? std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
+                                                     MemoryOrder::AcqRel,
+                                                     MemoryOrder::SeqCst}
+                : std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
+                                                     MemoryOrder::SeqCst});
+            for (MemoryOrder memoryOrder : memoryOrders) {
               load.order = memoryOrder;
               if (load.isAtomic() &&
                   !isPossibleAtomicOperation(
