@@ -58,6 +58,23 @@ public:
   }
 };
 
+template<typename StringLike,
+         typename = std::enable_if_t<
+           std::is_convertible_v<StringLike, std::string_view>>>
+std::string join(const std::vector<StringLike>& strs, std::string_view sep) {
+  if (strs.empty()) {
+    return "";
+  }
+
+  std::string ret = std::string(strs[0]);
+  for (size_t i = 1; i < strs.size(); i++) {
+    ret.append(sep);
+    ret.append(strs[i]);
+  }
+
+  return ret;
+}
+
 // Handles bracketing in a list initially split by ",", but the list may
 // contain nested ","s. For example,
 //   void foo(int, double)

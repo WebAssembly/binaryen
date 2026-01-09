@@ -1351,7 +1351,8 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                       offset,
                       (Expression*)ptr,
                       Type(type),
-                      getMemoryName(module, memoryName)));
+                      getMemoryName(module, memoryName),
+                      MemoryOrder::SeqCst));
 }
 BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           uint32_t bytes,
