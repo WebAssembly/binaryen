@@ -753,6 +753,12 @@
 ;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors
 ;; CHECK-NEXT:                                                 (RTTs) and exact references
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-atomics                      Enable acquire/release atomic
+;; CHECK-NEXT:                                                 memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-atomics                     Disable acquire/release atomic
+;; CHECK-NEXT:                                                 memory operations
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-function-references           Deprecated compatibility flag

@@ -14,6 +14,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.assertIn(error, p.stderr)
         self.assertIn('Fatal: error validating input', p.stderr)
         self.assertNotEqual(p.returncode, 0)
+
         p = shared.run_process(
             shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull] +
             const_flags + [flag],
@@ -60,6 +61,9 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         # gc in binaryen, and implies reference types) and exceptions
         self.check_feature(module, error, '--enable-stack-switching',
                            ['--enable-gc', '--enable-reference-types', '--enable-exception-handling'])
+
+    def check_relaxed_atomics(self, module, error):
+        self.check_feature(module, error, '--enable-relaxed-atomics', ['--enable-threads'])
 
     def test_v128_signature(self):
         module = '''
@@ -330,6 +334,19 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         check_nop('--enable-call-indirect-overlong')
         check_nop('--disable-call-indirect-overlong')
 
+    def test_relaxed_atomics(self):
+        module = '''
+        (module
+          (memory 23 256 shared)
+          (func $acqrel (result i32)
+            (i32.atomic.load acqrel
+              (i32.const 1)
+            )
+          )
+        )
+        '''
+        self.check_relaxed_atomics(module, '')
+
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_atomics(self):
@@ -454,4 +471,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-bulk-memory-opt',
             '--enable-call-indirect-overlong',
             '--enable-custom-descriptors',
+            '--enable-relaxed-atomics',
         ], p2.stdout.splitlines())
