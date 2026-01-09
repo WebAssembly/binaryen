@@ -3894,10 +3894,6 @@ printStackIR(std::ostream& o, Module* module, const PassOptions& options) {
   return o;
 }
 
-} // namespace wasm
-
-namespace std {
-
 std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
   wasm::PassRunner runner(&module);
   wasm::Printer printer(&o);
@@ -3958,4 +3954,19 @@ std::ostream& operator<<(std::ostream& o,
   return o << importNames.module << "." << importNames.name;
 }
 
-} // namespace std
+std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
+  switch (mo) {
+    case wasm::MemoryOrder::Unordered:
+      os << "Unordered";
+      break;
+    case wasm::MemoryOrder::SeqCst:
+      os << "SeqCst";
+      break;
+    case wasm::MemoryOrder::AcqRel:
+      os << "AcqRel";
+      break;
+  }
+  return os;
+}
+
+} // namespace wasm
