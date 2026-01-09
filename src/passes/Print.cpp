@@ -574,6 +574,7 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
+    printMemoryOrder(curr->order);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -583,7 +584,7 @@ struct PrintExpressionContents
   }
   void visitStore(Store* curr) {
     prepareColor(o) << forceConcrete(curr->valueType);
-    if (curr->isAtomic) {
+    if (curr->isAtomic()) {
       o << ".atomic";
     }
     o << ".store";
@@ -2323,6 +2324,7 @@ struct PrintExpressionContents
       o << index;
     }
   }
+
   void printMemoryOrder(MemoryOrder order) {
     switch (order) {
       // Unordered should have a different base instruction, so there is nothing
@@ -2332,10 +2334,11 @@ struct PrintExpressionContents
       case MemoryOrder::SeqCst:
         break;
       case MemoryOrder::AcqRel:
-        o << "acqrel ";
+        o << " acqrel";
         break;
     }
   }
+
   void visitStructGet(StructGet* curr) {
     auto heapType = curr->ref->type.getHeapType();
     const auto& field = heapType.getStruct().fields[curr->index];
@@ -2345,25 +2348,27 @@ struct PrintExpressionContents
     }
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, ".get_s ");
+        printMedium(o, ".get_s");
       } else {
-        printMedium(o, ".get_u ");
+        printMedium(o, ".get_u");
       }
     } else {
-      printMedium(o, ".get ");
+      printMedium(o, ".get");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->order == MemoryOrder::Unordered) {
-      printMedium(o, "struct.set ");
+      printMedium(o, "struct.set");
     } else {
-      printMedium(o, "struct.atomic.set ");
+      printMedium(o, "struct.atomic.set");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
     o << ' ';
@@ -2374,9 +2379,9 @@ struct PrintExpressionContents
     o << "struct.atomic.rmw.";
     printAtomicRMWOp(curr->op);
     restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
     o << ' ';
-    printMemoryOrder(curr->order);
-    printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
     o << ' ';
@@ -2384,10 +2389,11 @@ struct PrintExpressionContents
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
     prepareColor(o);
-    o << "struct.atomic.rmw.cmpxchg ";
+    o << "struct.atomic.rmw.cmpxchg";
     restoreNormalColor(o);
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
+    o << ' ';
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
     o << ' ';
@@ -2430,23 +2436,25 @@ struct PrintExpressionContents
     }
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, ".get_s ");
+        printMedium(o, ".get_s");
       } else {
-        printMedium(o, ".get_u ");
+        printMedium(o, ".get_u");
       }
     } else {
-      printMedium(o, ".get ");
+      printMedium(o, ".get");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->order == MemoryOrder::Unordered) {
-      printMedium(o, "array.set ");
+      printMedium(o, "array.set");
     } else {
-      printMedium(o, "array.atomic.set ");
+      printMedium(o, "array.atomic.set");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
@@ -2477,18 +2485,19 @@ struct PrintExpressionContents
     o << "array.atomic.rmw.";
     printAtomicRMWOp(curr->op);
     restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
     o << ' ';
-    printMemoryOrder(curr->order);
-    printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
   }
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
     prepareColor(o);
-    o << "array.atomic.rmw.cmpxchg ";
+    o << "array.atomic.rmw.cmpxchg";
     restoreNormalColor(o);
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
+    o << ' ';
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
   }
@@ -3942,6 +3951,11 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair) {
     return o << it->second.name;
   }
   return o << "(unnamed)";
+}
+
+std::ostream& operator<<(std::ostream& o,
+                         const wasm::ImportNames& importNames) {
+  return o << importNames.module << "." << importNames.name;
 }
 
 } // namespace std

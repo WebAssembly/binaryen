@@ -384,10 +384,17 @@ public:
     ret->finalize();
     return ret;
   }
-  Load* makeAtomicLoad(
-    unsigned bytes, Address offset, Expression* ptr, Type type, Name memory) {
+  Load* makeAtomicLoad(unsigned bytes,
+                       Address offset,
+                       Expression* ptr,
+                       Type type,
+                       Name memory,
+                       MemoryOrder order) {
+    assert(order != MemoryOrder::Unordered &&
+           "Atomic loads can't be unordered");
+
     Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
-    load->order = MemoryOrder::SeqCst;
+    load->order = order;
     return load;
   }
   AtomicWait* makeAtomicWait(Expression* ptr,
@@ -428,7 +435,6 @@ public:
                    Type type,
                    Name memory) {
     auto* ret = wasm.allocator.alloc<Store>();
-    ret->isAtomic = false;
     ret->bytes = bytes;
     ret->offset = offset;
     ret->align = align;
@@ -436,6 +442,7 @@ public:
     ret->value = value;
     ret->valueType = type;
     ret->memory = memory;
+    ret->order = MemoryOrder::Unordered;
     ret->finalize();
     return ret;
   }
@@ -446,7 +453,7 @@ public:
                          Type type,
                          Name memory) {
     Store* store = makeStore(bytes, offset, bytes, ptr, value, type, memory);
-    store->isAtomic = true;
+    store->order = MemoryOrder::SeqCst;
     return store;
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op,

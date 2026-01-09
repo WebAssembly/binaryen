@@ -361,11 +361,16 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  emitMemoryAccess(curr->align, curr->bytes, curr->offset, curr->memory);
+  emitMemoryAccess(curr->align,
+                   curr->bytes,
+                   curr->offset,
+                   curr->memory,
+                   curr->order,
+                   /*isRMW=*/false);
 }
 
 void BinaryInstWriter::visitStore(Store* curr) {
-  if (!curr->isAtomic) {
+  if (!curr->isAtomic()) {
     switch (curr->valueType.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
@@ -469,7 +474,12 @@ void BinaryInstWriter::visitStore(Store* curr) {
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  emitMemoryAccess(curr->align, curr->bytes, curr->offset, curr->memory);
+  emitMemoryAccess(curr->align,
+                   curr->bytes,
+                   curr->offset,
+                   curr->memory,
+                   curr->order,
+                   /*isRMW=*/false);
 }
 
 void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
@@ -526,9 +536,12 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
     default:
       WASM_UNREACHABLE("unexpected op");
   }
-#undef CASE_FOR_OP
-
-  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset, curr->memory);
+  emitMemoryAccess(curr->bytes,
+                   curr->bytes,
+                   curr->offset,
+                   curr->memory,
+                   MemoryOrder::SeqCst,
+                   /*isRMW=*/true);
 }
 
 void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
@@ -570,7 +583,12 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     default:
       WASM_UNREACHABLE("unexpected type");
   }
-  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset, curr->memory);
+  emitMemoryAccess(curr->bytes,
+                   curr->bytes,
+                   curr->offset,
+                   curr->memory,
+                   MemoryOrder::SeqCst,
+                   /*isRMW=*/true);
 }
 
 void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
@@ -578,12 +596,14 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   switch (curr->expectedType.getBasic()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
-      emitMemoryAccess(4, 4, curr->offset, curr->memory);
+      emitMemoryAccess(
+        4, 4, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
       break;
     }
     case Type::i64: {
       o << int8_t(BinaryConsts::I64AtomicWait);
-      emitMemoryAccess(8, 8, curr->offset, curr->memory);
+      emitMemoryAccess(
+        8, 8, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
       break;
     }
     default:
@@ -593,7 +613,8 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
 
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
-  emitMemoryAccess(4, 4, curr->offset, curr->memory);
+  emitMemoryAccess(
+    4, 4, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
@@ -800,8 +821,12 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
       break;
   }
   assert(curr->align);
-  emitMemoryAccess(
-    curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
+  emitMemoryAccess(curr->align,
+                   /*(unused) bytes=*/0,
+                   curr->offset,
+                   curr->memory,
+                   MemoryOrder::Unordered,
+                   /*isRMW=*/false);
 }
 
 void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
@@ -833,8 +858,12 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       break;
   }
   assert(curr->align);
-  emitMemoryAccess(
-    curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
+  emitMemoryAccess(curr->align,
+                   /*(unused) bytes=*/0,
+                   curr->offset,
+                   curr->memory,
+                   MemoryOrder::Unordered,
+                   /*isRMW=*/false);
   o << curr->index;
 }
 
@@ -3204,17 +3233,35 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
                                         uint64_t offset,
-                                        Name memory) {
+                                        Name memory,
+                                        MemoryOrder order,
+                                        bool isRMW) {
   uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
   uint32_t memoryIdx = parent.getMemoryIndex(memory);
+
+  bool shouldWriteMemoryOrder = false;
+  switch (order) {
+    // On atomic memory accesses, the ordering is assumed to be SeqCst if not
+    // specified. Omit it here for a smaller binary size.
+    case MemoryOrder::Unordered:
+    case MemoryOrder::SeqCst:
+      break;
+    case MemoryOrder::AcqRel: {
+      shouldWriteMemoryOrder = true;
+      alignmentBits |= BinaryConsts::HasMemoryOrderMask;
+      break;
+    }
+  }
+
   if (memoryIdx > 0) {
-    // Set bit 6 in the alignment to indicate a memory index is present per:
-    // https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
-    alignmentBits = alignmentBits | 1 << 6;
+    alignmentBits |= BinaryConsts::HasMemoryIndexMask;
   }
   o << U32LEB(alignmentBits);
   if (memoryIdx > 0) {
     o << U32LEB(memoryIdx);
+  }
+  if (shouldWriteMemoryOrder) {
+    parent.writeMemoryOrder(order, isRMW);
   }
 
   bool memory64 = parent.getModule()->getMemory(memory)->is64();

@@ -9,7 +9,8 @@ class BinaryenTestCase(unittest.TestCase):
         return os.path.join(shared.options.binaryen_test, 'unit', 'input',
                             filename)
 
-    def roundtrip(self, filename, opts=[], debug=True):
+    def roundtrip(self, filename, opts=None, debug=True):
+        opts = opts if opts is not None else []
         opts = ['--mvp-features'] + opts
         if debug:
             opts.append('-g')

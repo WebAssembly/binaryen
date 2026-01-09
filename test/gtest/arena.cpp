@@ -1,4 +1,4 @@
-#include "mixed_arena.h"
+#include "support/mixed_arena.h"
 #include "gtest/gtest.h"
 
 using ArenaTest = ::testing::Test;

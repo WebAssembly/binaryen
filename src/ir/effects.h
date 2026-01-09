@@ -603,7 +603,7 @@ private:
     }
     void visitStore(Store* curr) {
       parent.writesMemory = true;
-      parent.isAtomic |= curr->isAtomic;
+      parent.isAtomic |= curr->isAtomic();
       parent.implicitTrap = true;
     }
     void visitAtomicRMW(AtomicRMW* curr) {
