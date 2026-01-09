@@ -1378,8 +1378,8 @@ void WasmBinaryWriter::writeLateCustomSections() {
       continue;
     }
 
-    if (section.name == BinaryConsts::CustomSections::SourceMapUrl && sourceMap
-         && !sourceMapUrl.empty()) {
+    if (section.name == BinaryConsts::CustomSections::SourceMapUrl &&
+        sourceMap && !sourceMapUrl.empty()) {
       // We are writing a SourceMapURL manually, following the user's request.
       // Do not emit the existing custom section as a second one.
       continue;
