@@ -5466,25 +5466,22 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 std::tuple<Address, Address, Index, MemoryOrder>
 WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   auto rawAlignment = getU32LEB();
-  bool hasMemIdx = false;
   Index memIdx = 0;
 
-  bool hasMemoryOrder = rawAlignment & (1 << 5);
+  bool hasMemoryOrder = rawAlignment & BinaryConsts::HasMemoryOrderMask;
   if (hasMemoryOrder && !isAtomic) {
     throwError("Memory order may only be set for atomic instructions.");
   }
 
   if (hasMemoryOrder) {
     // Clear the bit before we parse alignment
-    rawAlignment = rawAlignment & ~(1 << 5);
+    rawAlignment = rawAlignment & ~BinaryConsts::HasMemoryOrderMask;
   }
 
-  // Check bit 6 in the alignment to know whether a memory index is present per:
-  // https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
-  if (rawAlignment & (1 << 6)) {
-    hasMemIdx = true;
+  bool hasMemIdx = rawAlignment & BinaryConsts::HasMemoryIndexMask;
+  if (hasMemIdx) {
     // Clear the bit before we parse alignment
-    rawAlignment = rawAlignment & ~(1 << 6);
+    rawAlignment = rawAlignment & ~BinaryConsts::HasMemoryIndexMask;
   }
 
   if (rawAlignment > 8) {

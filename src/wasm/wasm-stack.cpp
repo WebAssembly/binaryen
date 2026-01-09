@@ -3248,15 +3248,13 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
       break;
     case MemoryOrder::AcqRel: {
       shouldWriteMemoryOrder = true;
-      alignmentBits |= 1 << 5;
+      alignmentBits |= BinaryConsts::HasMemoryOrderMask;
       break;
     }
   }
 
   if (memoryIdx > 0) {
-    // Set bit 6 in the alignment to indicate a memory index is present per:
-    // https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
-    alignmentBits |= 1 << 6;
+    alignmentBits |= BinaryConsts::HasMemoryIndexMask;
   }
   o << U32LEB(alignmentBits);
   if (memoryIdx > 0) {
