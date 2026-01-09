@@ -1576,9 +1576,9 @@ int main(int argc, const char* argv[]) {
       // all evalled, effectively).
       auto features = wasm.features;
       ModuleUtils::clearModule(wasm);
+      wasm.features = features;
       ModuleReader reader;
       reader.read(options.extra["infile"], wasm);
-      wasm.features = features;
     }
 
     if (!WasmValidator().validate(wasm)) {
