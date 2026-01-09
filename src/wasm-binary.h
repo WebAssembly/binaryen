@@ -1730,8 +1730,9 @@ public:
 
   std::tuple<Address, Address, Index, MemoryOrder>
   readMemoryAccess(bool isAtomic, bool isRMW);
-  std::tuple<Name, Address, Address, MemoryOrder> getMemarg(bool isAtomic,
-                                                            bool isRMW);
+  std::tuple<Name, Address, Address, MemoryOrder> getAtomicMemarg();
+  std::tuple<Name, Address, Address, MemoryOrder> getRMWMemarg();
+  std::tuple<Name, Address, Address> getMemarg();
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {
