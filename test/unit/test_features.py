@@ -421,16 +421,19 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
                             opts=['-mvp', '--detect-features', '--enable-simd'])
 
     def test_emit_all_features(self):
+        # We use text=False in this test because we pass binary modules via
+        # stdin and stdout.
         p = shared.run_process(shared.WASM_OPT +
                                ['--emit-target-features', '-all', '-o', '-'],
-                               input="(module)", check=False,
-                               capture_output=True, decode_output=False)
+                               input=b"(module)", check=False, text=False,
+                               capture_output=True)
         self.assertEqual(p.returncode, 0)
         p2 = shared.run_process(shared.WASM_OPT +
                                 ['--print-features', '-o', os.devnull],
-                                input=p.stdout, check=False,
+                                input=p.stdout, text=False, check=False,
                                 capture_output=True)
         self.assertEqual(p2.returncode, 0)
+        output = p2.stdout.debug('utf-8')
         self.assertEqual([
             '--enable-threads',
             '--enable-mutable-globals',
@@ -454,4 +457,4 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-bulk-memory-opt',
             '--enable-call-indirect-overlong',
             '--enable-custom-descriptors',
-        ], p2.stdout.splitlines())
+        ], output.splitlines())
