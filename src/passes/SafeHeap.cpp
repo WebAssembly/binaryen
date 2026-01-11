@@ -220,6 +220,13 @@ struct SafeHeap : public Pass {
   void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
+    std::vector<MemoryOrder> memoryOrdersToGenerate(
+      features.hasRelaxedAtomics()
+        ? std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
+                                             MemoryOrder::AcqRel,
+                                             MemoryOrder::SeqCst}
+        : std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
+                                             MemoryOrder::SeqCst});
     for (Type type : {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
       if (type == Type::v128 && !features.hasSIMD()) {
         continue;
@@ -243,9 +250,8 @@ struct SafeHeap : public Pass {
             if (align > bytes) {
               continue;
             }
-            for (auto memoryOrder : {MemoryOrder::Unordered,
-                                     MemoryOrder::AcqRel,
-                                     MemoryOrder::SeqCst}) {
+
+            for (MemoryOrder memoryOrder : memoryOrdersToGenerate) {
               load.order = memoryOrder;
               if (load.isAtomic() &&
                   !isPossibleAtomicOperation(
