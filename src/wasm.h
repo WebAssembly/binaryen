@@ -2654,15 +2654,6 @@ struct ShallowExpression {
   Module* module = nullptr;
 };
 
-} // namespace wasm
-
-namespace std {
-template<> struct hash<wasm::Address> {
-  size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::address64_t>()(a.addr);
-  }
-};
-
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
 std::ostream& operator<<(std::ostream& o, wasm::Function& func);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
@@ -2672,6 +2663,15 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
 std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo);
 std::ostream& operator<<(std::ostream& o, const wasm::ImportNames& importNames);
+
+} // namespace wasm
+
+namespace std {
+template<> struct hash<wasm::Address> {
+  size_t operator()(const wasm::Address a) const {
+    return std::hash<wasm::Address::address64_t>()(a.addr);
+  }
+};
 
 } // namespace std
 
