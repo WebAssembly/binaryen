@@ -1108,6 +1108,12 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "Atomic load should be i32 or i64");
   }
+  if (curr->order == MemoryOrder::AcqRel) {
+    shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                 curr,
+                 "Acquire/release operations require relaxed atomics "
+                 "[--enable-relaxed-atomics]");
+  }
   if (curr->type == Type::v128) {
     shouldBeTrue(getModule()->features.hasSIMD(),
                  curr,

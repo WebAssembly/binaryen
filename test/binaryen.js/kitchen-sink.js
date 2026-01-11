@@ -100,6 +100,7 @@ function test_features() {
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);
   console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
+  console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
