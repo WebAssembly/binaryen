@@ -1,6 +1,6 @@
 (module
   ;; an imported global that isn't accessed doesn't stop us from optimizing
-  (import "import" "global" (global $imported i32))
+  (import "import" "global" (global $imported (ref i31)))
   (global $g (mut i32) (i32.const 0))
   (func $setg (export "setg")
     (drop (i32.const 1))

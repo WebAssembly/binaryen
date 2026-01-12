@@ -71,17 +71,17 @@ class EvallingModuleRunner;
 
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver() = default;
+  EvallingImportResolver() : stubLiteral({Literal(0)}) {};
 
-  // We throw FailToEvalException on reading these. Provide a stub value that
-  // passes import validation.
+  // Return an unused stub value. We throw FailToEvalException on reading any
+  // imported globals. We ignore the type and return an i32 literal since some
+  // types can't be created anyway (e.g. ref none).
   Literals* getGlobalOrNull(ImportNames name, Type type) const override {
-    auto [it, _] = stubLiterals.try_emplace(type, Literals({Literal(type)}));
-    return &it->second;
+    return &stubLiteral;
   }
 
 private:
-  mutable std::unordered_map<Type, Literals> stubLiterals;
+  mutable Literals stubLiteral;
 };
 
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
