@@ -1,7 +1,8 @@
 (module
- (type $0 (func))
- (export "test1" (func $test1))
- (func $test1 (type $0)
-  (nop)
+ (type $0 (func (result i32)))
+ (global $g (mut i32) (i32.const 3))
+ (export "keepalive" (func $keepalive))
+ (func $keepalive (type $0) (result i32)
+  (global.get $g)
  )
 )

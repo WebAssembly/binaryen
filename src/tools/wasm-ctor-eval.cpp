@@ -71,11 +71,17 @@ class EvallingModuleRunner;
 
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver() = default;
+  EvallingImportResolver() : stubLiteral({Literal(0)}){};
 
+  // Return an unused stub value. We throw FailToEvalException on reading any
+  // imported globals. We ignore the type and return an i32 literal since some
+  // types can't be created anyway (e.g. ref none).
   Literals* getGlobalOrNull(ImportNames name, Type type) const override {
-    throw FailToEvalException("Accessed imported global");
+    return &stubLiteral;
   }
+
+private:
+  mutable Literals stubLiteral;
 };
 
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
@@ -557,6 +563,9 @@ private:
     wasm->updateMaps();
 
     for (auto& oldGlobal : oldGlobals) {
+      if (oldGlobal->imported()) {
+        continue;
+      }
       // Serialize the global's value. While doing so, pass in the name of this
       // global, as we may be able to reuse the global as the defining global
       // for the value. See getSerialization() for more details.

@@ -1,8 +1,16 @@
 (module
-  (import "import" "global" (global $imported i32))
-  (func $test1 (export "test1")
-    ;; This should be safe to eval in theory, but the imported global stops us,
-    ;; so this function will not be optimized out.
-    ;; TODO: perhaps if we never use that global that is ok?
+  ;; an imported global that isn't accessed doesn't stop us from optimizing
+  (import "import" "global" (global $imported (ref i31)))
+  (global $g (mut i32) (i32.const 0))
+  (func $setg (export "setg")
+    (drop (i32.const 1))
+    (global.set $g
+      (i32.add (i32.const 1) (i32.const 2))
+    )
+  )
+
+  (func $keepalive (export "keepalive") (result i32)
+    ;; Keep the global alive so we can see its value.
+    (global.get $g)
   )
 )
