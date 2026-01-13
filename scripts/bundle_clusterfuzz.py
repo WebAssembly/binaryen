@@ -109,6 +109,7 @@ features = [
     '--disable-fp16',
     '--disable-strings',
     '--disable-stack-switching',
+    '--disable-relaxed-atomics',
 ]
 
 with tarfile.open(output_file, "w:gz") as tar:
