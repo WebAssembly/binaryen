@@ -152,10 +152,11 @@ def randomize_feature_opts():
         # coverage, as enabling more features enables more optimizations and
         # code paths, and also allows all initial contents to run.
 
+        # Disable features not allowed in V8 to increase V8 fuzzing.
+        FEATURE_OPTS.extend(f'--disable-{feature}' for feature in DISALLOWED_FEATURES_IN_V8)
         # Relaxed SIMD's nondeterminism disables much but not
         # all of our V8 fuzzing, so avoid it.
         FEATURE_OPTS.append('--disable-relaxed-simd')
-        FEATURE_OPTS.extend(f'--disable-{feature}' for feature in DISALLOWED_FEATURES_IN_V8)
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
