@@ -33,8 +33,6 @@ namespace {
 struct ReorderingTypeRewriter : GlobalTypeRewriter {
   using InfoMap = InsertOrderedMap<HeapType, ModuleUtils::HeapTypeInfo>;
 
-  InfoMap& typeInfo;
-
   // Use a simpler cost calculation so the effects can be seen with smaller test
   // cases.
   bool forTesting;
@@ -45,8 +43,8 @@ struct ReorderingTypeRewriter : GlobalTypeRewriter {
   static constexpr float maxFactor = 1.0;
   static constexpr Index numFactors = 21;
 
-  ReorderingTypeRewriter(Module& wasm, InfoMap& typeInfo, bool forTesting)
-    : GlobalTypeRewriter(wasm), typeInfo(typeInfo), forTesting(forTesting) {}
+  ReorderingTypeRewriter(Module& wasm, bool forTesting)
+    : GlobalTypeRewriter(wasm), forTesting(forTesting) {}
 
   std::vector<HeapType> getSortedTypes(PredecessorGraph preds) override {
     auto numTypes = preds.size();
@@ -150,11 +148,7 @@ struct ReorderTypes : Pass {
       Fatal() << "ReorderTypes requires --closed-world";
     }
 
-    // Collect the use counts for each type.
-    auto typeInfo = ModuleUtils::collectHeapTypeInfo(
-      *module, ModuleUtils::TypeInclusion::BinaryTypes);
-
-    ReorderingTypeRewriter(*module, typeInfo, forTesting).update();
+    ReorderingTypeRewriter(*module, forTesting).update();
   }
 };
 

@@ -391,3 +391,28 @@
     (local (ref $Y))
   )
 )
+
+(module
+  ;; Regression test. ReorderTypes used to collect the types used in the binary
+  ;; for their counts, which in this case includes $multi because it is part of
+  ;; the rec group. However, GlobalTypeRewriter separately collected only the
+  ;; used IR types, which includes a standalone function type instead of $multi.
+  ;; The sort then tried to lookup the count for the standalone function type
+  ;; and crashed when it couldn't find it.
+  (rec
+    (type $multi (func (result (ref $A) (ref $B))))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (struct)))
+    ;; CHECK:       (type $B (sub $A (struct)))
+    (type $B (sub $A (struct)))
+  )
+  ;; CHECK:      (func $test (type $3) (param $0 i32) (result (ref $A) (ref $B))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test (param i32) (result (ref $A) (ref $B))
+    (block (type $multi) (result (ref $A) (ref $B))
+      (unreachable)
+    )
+  )
+)
