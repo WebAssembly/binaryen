@@ -1,4 +1,3 @@
-
 (module
   (func $test (param i32) (result i32)
     ;;@ waka:100:1
