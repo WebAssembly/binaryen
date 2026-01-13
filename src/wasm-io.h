@@ -53,6 +53,10 @@ public:
     skipFunctionBodies = skipFunctionBodies_;
   }
 
+  void setNeedCodeLocations(bool needCodeLocations_) {
+    needCodeLocations = needCodeLocations_;
+  }
+
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
@@ -74,6 +78,7 @@ private:
   IRProfile profile = IRProfile::Normal;
 
   bool skipFunctionBodies = false;
+  bool needCodeLocations = false;
 
   FeatureSet featuresSectionFeatures = FeatureSet::MVP;
 

@@ -64,6 +64,7 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   parser.setDebugInfo(debugInfo);
   parser.setDWARF(DWARF);
   parser.setSkipFunctionBodies(skipFunctionBodies);
+  parser.setNeedCodeLocations(needCodeLocations);
   parser.read();
   if (wasm.hasFeaturesSection) {
     featuresSectionFeatures = parser.getFeaturesSectionFeatures();

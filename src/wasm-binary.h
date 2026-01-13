@@ -1572,6 +1572,8 @@ public:
   void setSkipFunctionBodies(bool skipFunctionBodies_) {
     skipFunctionBodies = skipFunctionBodies_;
   }
+  void setNeedCodeLocations(bool value) { needCodeLocations = value; }
+
   void read();
   void readCustomSection(size_t payloadLen);
 

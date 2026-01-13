@@ -94,6 +94,7 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
   bool emitExnref = false;
+  bool needCodeLocations = false;
 
   const std::string WasmOptOption = "wasm-opt options";
 
@@ -280,7 +281,19 @@ For more on how to optimize effectively, see
          "post-translation optimizations.",
          WasmOptOption,
          Options::Arguments::Zero,
-         [&emitExnref](Options*, const std::string&) { emitExnref = true; });
+         [&emitExnref](Options*, const std::string&) { emitExnref = true; })
+    .add("--show-binary-offsets",
+         "-sbo",
+         "Show binary offsets when printing wat text",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&](Options*, const std::string&) {
+           // Track code locations, so we can print them.
+           needCodeLocations = true;
+           // Enable debugInfo, so that we print code locations (which are part
+           // of debugInfo).
+           options.passOptions.debugInfo = true;
+         });
   options.parse(argc, argv);
 
   Module wasm;
@@ -315,6 +328,7 @@ For more on how to optimize effectively, see
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
     reader.setProfile(options.profile);
+    reader.setNeedCodeLocations(needCodeLocations);
     try {
       reader.read(inputFile, wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
