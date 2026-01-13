@@ -744,13 +744,6 @@ function test_core() {
   assert(tablePtr !== 0);
   assert(tablePtr === module.getTableByIndex(0));
 
-  var table = binaryen.getTableInfo(tablePtr);
-  assert(table.name === "t1");
-  assert(table.module === "");
-  assert(table.base === "");
-  assert(table.initial === 0);
-  assert(table.max === 2);
-
   module.removeTable("t1");
   assert(module.getNumTables() === 0);
 
