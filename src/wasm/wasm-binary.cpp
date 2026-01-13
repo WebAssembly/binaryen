@@ -2023,7 +2023,6 @@ void WasmBinaryReader::preScan() {
   getInt32(); // version
 
   bool foundDWARF = false;
-//needCodeLocations = true;
 
   while (more()) {
     uint8_t sectionCode = getInt8();
