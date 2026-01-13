@@ -5,36 +5,56 @@
  ;; RTRIP:      (memory $0 23 256 shared)
  (memory $0 23 256 shared)
 
- ;; RTRIP:      (func $acqrel (type $0) (result i32)
- ;; RTRIP-NEXT:  (i32.atomic.load acqrel
+ ;; RTRIP:      (func $acqrel (type $0)
+ ;; RTRIP-NEXT:  (i32.atomic.store acqrel
+ ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:  )
+ ;; RTRIP-NEXT:  (drop
+ ;; RTRIP-NEXT:   (i32.atomic.load acqrel
+ ;; RTRIP-NEXT:    (i32.const 1)
+ ;; RTRIP-NEXT:   )
+ ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
- (func $acqrel (result i32)
-   (i32.atomic.load acqrel
-    (i32.const 1)
-   )
+ (func $acqrel
+   (i32.atomic.store acqrel (i32.const 1) (i32.const 1))
+   (drop
+    (i32.atomic.load acqrel
+     (i32.const 1)
+   ))
  )
 
  ;; Optional seqcst ordering is dropped in text output.
- ;; RTRIP:      (func $seqcst (type $0) (result i32)
+ ;; RTRIP:      (func $seqcst (type $0)
+ ;; RTRIP-NEXT:  (i32.atomic.store
+ ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:  )
+ ;; RTRIP-NEXT:  (i32.atomic.store
+ ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (drop
  ;; RTRIP-NEXT:   (i32.atomic.load
  ;; RTRIP-NEXT:    (i32.const 1)
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
- ;; RTRIP-NEXT:  (i32.atomic.load
- ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:  (drop
+ ;; RTRIP-NEXT:   (i32.atomic.load
+ ;; RTRIP-NEXT:    (i32.const 1)
+ ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
- (func $seqcst (result i32)
-   ;; seqcst may be omitted for atomic loads, it's the default
+ (func $seqcst
+   (i32.atomic.store seqcst (i32.const 1) (i32.const 1))
+   (i32.atomic.store 0 seqcst (i32.const 1) (i32.const 1))
    (drop (i32.atomic.load seqcst
     (i32.const 1)
    ))
    ;; allows memory index before memory ordering immediate
-   (i32.atomic.load 0 seqcst
+   (drop
+    (i32.atomic.load 0 seqcst
     (i32.const 1)
-   )
+   ))
  )
 )

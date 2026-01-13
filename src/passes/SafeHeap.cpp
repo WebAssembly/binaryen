@@ -63,15 +63,22 @@ static Name getLoadName(Load* curr) {
 }
 
 static Name getStoreName(Store* curr) {
-  std::string ret = "SAFE_HEAP_STORE_";
-  ret += curr->valueType.toString();
-  ret += "_" + std::to_string(curr->bytes) + "_";
-  if (curr->isAtomic()) {
-    ret += "A";
-  } else {
-    ret += std::to_string(curr->align);
+  std::vector<std::string> parts{curr->valueType.toString(),
+                                 std::to_string(curr->bytes)};
+  switch (curr->order) {
+    case MemoryOrder::Unordered: {
+      parts.push_back(std::to_string(curr->align));
+      break;
+    }
+    case MemoryOrder::SeqCst: {
+      parts.push_back("SC");
+      break;
+    }
+    case MemoryOrder::AcqRel: {
+      parts.push_back("AR");
+    }
   }
-  return ret;
+  return "SAFE_HEAP_STORE_" + String::join(parts, "_");
 }
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
@@ -287,10 +294,9 @@ struct SafeHeap : public Pass {
           if (align > bytes) {
             continue;
           }
-          for (auto isAtomic : {true, false}) {
-            store.order =
-              isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
-            if (isAtomic &&
+          for (auto memoryOrder : memoryOrdersToGenerate) {
+            store.order = memoryOrder;
+            if (store.isAtomic() &&
                 !isPossibleAtomicOperation(
                   align, bytes, module->memories[0]->shared, valueType)) {
               continue;

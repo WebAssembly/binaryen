@@ -451,9 +451,13 @@ public:
                          Expression* ptr,
                          Expression* value,
                          Type type,
-                         Name memory) {
+                         Name memory,
+                         MemoryOrder order) {
+    assert(order != MemoryOrder::Unordered &&
+           "Atomic stores can't be unordered");
+
     Store* store = makeStore(bytes, offset, bytes, ptr, value, type, memory);
-    store->order = MemoryOrder::SeqCst;
+    store->order = order;
     return store;
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op,

@@ -850,17 +850,6 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
   return ctx.makeMemType(addressType, *limits, shared);
 }
 
-// memorder ::= '' | 'seqcst' | 'acqrel'
-template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
-  if (ctx.in.takeKeyword("seqcst"sv)) {
-    return MemoryOrder::SeqCst;
-  }
-  if (ctx.in.takeKeyword("acqrel"sv)) {
-    return MemoryOrder::AcqRel;
-  }
-  return MemoryOrder::SeqCst;
-}
-
 // memorder ::= 'seqcst' | 'acqrel'
 template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx& ctx) {
   if (ctx.in.takeKeyword("seqcst"sv)) {
@@ -871,6 +860,13 @@ template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx& ctx) {
   }
 
   return {};
+}
+
+// memorder ::= '' | 'seqcst' | 'acqrel'
+template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
+  auto order = maybeMemOrder(ctx);
+  CHECK_ERR(order);
+  return order ? *order : MemoryOrder::SeqCst;
 }
 
 // tabletype ::= (limits32 | 'i32' limits32 | 'i64' limit64) reftype
@@ -1755,7 +1751,8 @@ Result<> makeLoad(Ctx& ctx,
   CHECK_ERR(mem);
 
   // We could only parse this when `isAtomic`, but this way gives a clearer
-  // error since `memIdx` can never be mistaken for a `memOrder`.
+  // error when a memorder is given for non-atomic operations
+  // since the next token can never be mistaken for a `memOrder`.
   auto maybeOrder = maybeMemOrder(ctx);
   CHECK_ERR(maybeOrder);
 
@@ -1787,10 +1784,26 @@ Result<> makeStore(Ctx& ctx,
                    bool isAtomic) {
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
+
+  auto maybeOrder = maybeMemOrder(ctx);
+  CHECK_ERR(maybeOrder);
+
+  if (maybeOrder && !isAtomic) {
+    return Err{"Memory ordering can only be provided for atomic stores."};
+  }
+
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
-  return ctx.makeStore(
-    pos, annotations, type, bytes, isAtomic, mem.getPtr(), *arg);
+  return ctx.makeStore(pos,
+                       annotations,
+                       type,
+                       bytes,
+                       isAtomic,
+                       mem.getPtr(),
+                       *arg,
+                       maybeOrder ? *maybeOrder
+                       : isAtomic ? MemoryOrder::SeqCst
+                                  : MemoryOrder::Unordered);
 }
 
 template<typename Ctx>

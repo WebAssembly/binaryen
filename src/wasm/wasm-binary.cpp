@@ -3667,31 +3667,38 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::I32AtomicStore8: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicStore(1, offset, Type::i32, mem);
+          return builder.makeAtomicStore(
+            1, offset, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicStore16: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicStore(2, offset, Type::i32, mem);
+          return builder.makeAtomicStore(
+            2, offset, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicStore: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicStore(4, offset, Type::i32, mem);
+          return builder.makeAtomicStore(
+            4, offset, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore8: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicStore(1, offset, Type::i64, mem);
+          return builder.makeAtomicStore(
+            1, offset, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore16: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicStore(2, offset, Type::i64, mem);
+          return builder.makeAtomicStore(
+            2, offset, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore32: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicStore(4, offset, Type::i64, mem);
+          return builder.makeAtomicStore(
+            4, offset, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicStore(8, offset, Type::i64, mem);
+          return builder.makeAtomicStore(
+            8, offset, Type::i64, mem, memoryOrder);
         }
 
 #define RMW(op)                                                                \
