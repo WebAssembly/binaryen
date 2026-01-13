@@ -54,6 +54,13 @@
 //
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
+//   --pass-arg=gsi-desc-casts
+//
+//      Optimize casts to descriptor casts when possible. If a cast has no
+//      relevant subtypes, and it has a known descriptor, then we can do a
+//      ref.cast_desc instead, which can be faster (but is larger, so this is
+//      not on by default yet).
+//
 
 #include <variant>
 
@@ -89,6 +96,8 @@ struct GlobalStructInference : public Pass {
   // type-based inference, and this remains empty.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
+  bool optimizeToDescCasts;
+
   std::unique_ptr<SubTypes> subTypes;
 
   void run(Module* module) override {
@@ -96,9 +105,9 @@ struct GlobalStructInference : public Pass {
       return;
     }
 
-    // When CD is enabled, we can optimize to ref.get_desc, depending on the
-    // presence of subtypes.
-    if (module->features.hasCustomDescriptors()) {
+    optimizeToDescCasts = hasArgument("gsi-desc-casts");
+    if (optimizeToDescCasts) {
+      // We need subtypes to know when to optimize to a desc cast.
       subTypes = std::make_unique<SubTypes>(*module);
     }
 
@@ -513,6 +522,9 @@ struct GlobalStructInference : public Pass {
         // than normal ones (and even more so if we get lucky and are in a loop,
         // where the global.get of the descriptor can be hoisted).
         // TODO: only do this when shrinkLevel == 0?
+        if (!parent.optimizeToDescCasts) {
+          return;
+        }
 
         // Check if we have a descriptor.
         auto type = curr->type;
