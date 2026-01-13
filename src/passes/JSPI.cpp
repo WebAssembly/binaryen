@@ -32,7 +32,7 @@
 //
 // Convert a module to be compatible with JavaScript promise integration (JSPI).
 // Promising exports will be wrapped with a function that will handle storing
-// the suspsender that is passed in as the first param from a "promising"
+// the suspender that is passed in as the first param from a "promising"
 // `WebAssembly.Function`. Suspending imports will also be wrapped, but they
 // will take the stored suspender and pass it as the first param to the imported
 // function that should be created from a "suspending" `WebAssembly.Function`.
@@ -49,12 +49,6 @@
 //
 //      Wrap each export in the comma-separated list. Similar to jspi-imports,
 //      wildcards and separate files are supported.
-//
-//   --pass-arg=jspi-split-module
-//
-//      Enables integration with wasm-split. A JSPI'ed function named
-//      `__load_secondary_module` will be injected that is used by wasm-split to
-//      load a secondary module.
 //
 
 namespace wasm {
@@ -92,22 +86,6 @@ struct JSPI : public Pass {
     auto stateChangingExports = String::trim(
       read_possible_response_file(getArgumentOrDefault("jspi-exports", "")));
     String::Split listedExports(stateChangingExports, ",");
-
-    bool wasmSplit = hasArgument("jspi-split-module");
-    if (wasmSplit) {
-      // Make an import for the load secondary module function so a JSPI wrapper
-      // version will be created.
-      auto import = Builder::makeFunction(
-        ModuleSplitting::LOAD_SECONDARY_MODULE,
-        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
-        {});
-      import->module = ENV;
-      import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
-      module->addFunction(std::move(import));
-      listedImports.push_back(
-        ENV.toString() + "." +
-        ModuleSplitting::LOAD_SECONDARY_MODULE.toString());
-    }
 
     // Create a global to store the suspender that is passed into exported
     // functions and will then need to be passed out to the imported functions.
@@ -168,7 +146,7 @@ struct JSPI : public Pass {
       if (im->imported() &&
           canChangeState(getFullFunctionName(im->module, im->base),
                          listedImports)) {
-        makeWrapperForImport(im, module, suspender, wasmSplit);
+        makeWrapperForImport(im, module, suspender);
       }
     }
   }
@@ -221,10 +199,7 @@ private:
     return module->addFunction(std::move(wrapperFunc))->name;
   }
 
-  void makeWrapperForImport(Function* im,
-                            Module* module,
-                            Name suspender,
-                            bool wasmSplit) {
+  void makeWrapperForImport(Function* im, Module* module, Name suspender) {
     Builder builder(*module);
     auto wrapperIm = std::make_unique<Function>();
     wrapperIm->name = Names::getValidFunctionName(
@@ -278,15 +253,6 @@ private:
     wrapperIm->type =
       Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
-    if (wasmSplit && im->name == ModuleSplitting::LOAD_SECONDARY_MODULE) {
-      // In non-debug builds the name of the JSPI wrapper function for loading
-      // the secondary module will be removed. Create an export of it so that
-      // wasm-split can find it.
-      module->addExport(
-        builder.makeExport(ModuleSplitting::LOAD_SECONDARY_MODULE,
-                           ModuleSplitting::LOAD_SECONDARY_MODULE,
-                           ExternalKind::Function));
-    }
     module->removeFunction(im->name);
     module->addFunction(std::move(stub));
     module->addFunction(std::move(wrapperIm));
