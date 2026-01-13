@@ -54,7 +54,7 @@ with open(in_js) as f:
 wasm_index = 0
 
 
-def replace_wasm(text):
+def replace_wasm(_text):
     global wasm_index
     wasm_file = in_wasms[wasm_index]
     wasm_index += 1

@@ -1,18 +1,18 @@
 (module
   (rec
-    (type $super (sub (descriptor $super.desc (struct))))
-    (type $super.desc (sub (describes $super (struct))))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
 
-    (type $sub (sub $super (descriptor $sub.desc (struct))))
-    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct)))
   )
 
   (global $super.desc1 (ref (exact $super.desc)) (struct.new $super.desc))
   (global $super.desc2 (ref (exact $super.desc)) (struct.new $super.desc))
-  (global $super1 (ref $super) (struct.new $super (global.get $super.desc1)))
+  (global $super1 (ref $super) (struct.new_desc $super (global.get $super.desc1)))
 
   (global $sub.desc (ref (exact $sub.desc)) (struct.new $sub.desc))
-  (global $sub (ref $sub) (struct.new $sub (global.get $sub.desc)))
+  (global $sub (ref $sub) (struct.new_desc $sub (global.get $sub.desc)))
 
   ;; br_on_cast_desc
 
@@ -229,13 +229,13 @@
 
 (assert_malformed
   ;; Input type must be a reference.
-  (module quote "(module (rec (type $struct (descriptor $desc (struct))) (type $desc (describes $struct (struct)))) (func (result anyref) (unreachable) (br_on_cast_desc 0 i32 (ref null $struct))))")
+  (module quote "(module (rec (type $struct (descriptor $desc) (struct)) (type $desc (describes $struct) (struct))) (func (result anyref) (unreachable) (br_on_cast_desc 0 i32 (ref null $struct))))")
   "expected reftype"
 )
 
 (assert_malformed
   ;; Input type must be a reference.
-  (module quote "(module (rec (type $struct (descriptor $desc (struct))) (type $desc (describes $struct (struct)))) (func (result anyref) (unreachable) (br_on_cast_desc_fail 0 i32 (ref null $struct))))")
+  (module quote "(module (rec (type $struct (descriptor $desc) (struct)) (type $desc (describes $struct) (struct))) (func (result anyref) (unreachable) (br_on_cast_desc_fail 0 i32 (ref null $struct))))")
   "expected reftype"
 )
 
@@ -295,8 +295,8 @@
 (assert_invalid
   (module
     (rec
-      (type $struct (descriptor $desc (struct)))
-      (type $desc (describes $struct (struct)))
+      (type $struct (descriptor $desc) (struct))
+      (type $desc (describes $struct) (struct))
     )
     (func (param anyref) (result anyref)
       (br_on_cast_desc_fail 0 eqref (ref null $struct)
@@ -312,11 +312,11 @@
 (assert_invalid
   (module
     (rec
-      (type $super (sub (descriptor $super.desc (struct))))
-      (type $super.desc (sub (describes $super (struct))))
+      (type $super (sub (descriptor $super.desc) (struct)))
+      (type $super.desc (sub (describes $super) (struct)))
 
-      (type $sub (sub $super (descriptor $sub.desc (struct))))
-      (type $sub.desc (sub $super.desc (describes $sub (struct))))
+      (type $sub (sub $super (descriptor $sub.desc) (struct)))
+      (type $sub.desc (sub $super.desc (describes $sub) (struct)))
     )
     (func (param $any anyref) (param $super.desc (ref null $super.desc)) (result anyref)
       (br_on_cast_desc 0 anyref (ref null $sub)
@@ -332,11 +332,11 @@
 (assert_invalid
   (module
     (rec
-      (type $super (sub (descriptor $super.desc (struct))))
-      (type $super.desc (sub (describes $super (struct))))
+      (type $super (sub (descriptor $super.desc) (struct)))
+      (type $super.desc (sub (describes $super) (struct)))
 
-      (type $sub (sub $super (descriptor $sub.desc (struct))))
-      (type $sub.desc (sub $super.desc (describes $sub (struct))))
+      (type $sub (sub $super (descriptor $sub.desc) (struct)))
+      (type $sub.desc (sub $super.desc (describes $sub) (struct)))
     )
     (func (param $any anyref) (param $super.desc (ref null $super.desc)) (result anyref)
       (br_on_cast_desc_fail 0 anyref (ref null $sub)
@@ -352,8 +352,8 @@
 (assert_invalid
   (module
     (rec
-      (type $struct (descriptor $desc (struct)))
-      (type $desc (describes $struct (struct)))
+      (type $struct (descriptor $desc) (struct))
+      (type $desc (describes $struct) (struct))
     )
     (func (param $any anyref) (param $desc (ref null $desc)) (result (ref null (exact $struct)))
       ;; The sent type cannnot be exact because the descriptor is not exact.
@@ -370,8 +370,8 @@
 (assert_invalid
   (module
     (rec
-      (type $struct (descriptor $desc (struct)))
-      (type $desc (describes $struct (struct)))
+      (type $struct (descriptor $desc) (struct))
+      (type $desc (describes $struct) (struct))
     )
     (func (param $any anyref) (param $desc (ref null $desc)) (result anyref)
       (block (result (ref null (exact $struct)))

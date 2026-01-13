@@ -26,6 +26,7 @@
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "pass.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -37,30 +38,47 @@ static const Name SEGFAULT_IMPORT("segfault");
 static const Name ALIGNFAULT_IMPORT("alignfault");
 
 static Name getLoadName(Load* curr) {
-  std::string ret = "SAFE_HEAP_LOAD_";
-  ret += curr->type.toString();
-  ret += "_" + std::to_string(curr->bytes) + "_";
+  std::vector<std::string> parts{curr->type.toString(),
+                                 std::to_string(curr->bytes)};
   if (LoadUtils::isSignRelevant(curr) && !curr->signed_) {
-    ret += "U_";
+    parts.push_back("U");
   }
-  if (curr->isAtomic) {
-    ret += "A";
-  } else {
-    ret += std::to_string(curr->align);
+
+  switch (curr->order) {
+    case MemoryOrder::Unordered: {
+      parts.push_back(std::to_string(curr->align));
+      break;
+    }
+    case MemoryOrder::SeqCst: {
+      parts.push_back("SC");
+      break;
+    }
+    case MemoryOrder::AcqRel: {
+      parts.push_back("AR");
+      break;
+    }
   }
-  return ret;
+
+  return "SAFE_HEAP_LOAD_" + String::join(parts, "_");
 }
 
 static Name getStoreName(Store* curr) {
-  std::string ret = "SAFE_HEAP_STORE_";
-  ret += curr->valueType.toString();
-  ret += "_" + std::to_string(curr->bytes) + "_";
-  if (curr->isAtomic) {
-    ret += "A";
-  } else {
-    ret += std::to_string(curr->align);
+  std::vector<std::string> parts{curr->valueType.toString(),
+                                 std::to_string(curr->bytes)};
+  switch (curr->order) {
+    case MemoryOrder::Unordered: {
+      parts.push_back(std::to_string(curr->align));
+      break;
+    }
+    case MemoryOrder::SeqCst: {
+      parts.push_back("SC");
+      break;
+    }
+    case MemoryOrder::AcqRel: {
+      parts.push_back("AR");
+    }
   }
-  return ret;
+  return "SAFE_HEAP_STORE_" + String::join(parts, "_");
 }
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
@@ -166,7 +184,9 @@ struct SafeHeap : public Pass {
       sbrk = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        GET_SBRK_PTR, Signature(Type::none, addressType), {});
+        GET_SBRK_PTR,
+        Type(Signature(Type::none, addressType), NonNullable, Inexact),
+        {});
       getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
       import->base = GET_SBRK_PTR;
@@ -176,7 +196,9 @@ struct SafeHeap : public Pass {
       segfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        SEGFAULT_IMPORT, Signature(Type::none, Type::none), {});
+        SEGFAULT_IMPORT,
+        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
+        {});
       segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
@@ -186,7 +208,9 @@ struct SafeHeap : public Pass {
       alignfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        ALIGNFAULT_IMPORT, Signature(Type::none, Type::none), {});
+        ALIGNFAULT_IMPORT,
+        Type(Signature(Type::none, Type::none), NonNullable, Inexact),
+        {});
 
       alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
@@ -203,6 +227,13 @@ struct SafeHeap : public Pass {
   void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
+    std::vector<MemoryOrder> memoryOrdersToGenerate(
+      features.hasRelaxedAtomics()
+        ? std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
+                                             MemoryOrder::AcqRel,
+                                             MemoryOrder::SeqCst}
+        : std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
+                                             MemoryOrder::SeqCst});
     for (Type type : {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
       if (type == Type::v128 && !features.hasSIMD()) {
         continue;
@@ -226,9 +257,10 @@ struct SafeHeap : public Pass {
             if (align > bytes) {
               continue;
             }
-            for (auto isAtomic : {true, false}) {
-              load.isAtomic = isAtomic;
-              if (isAtomic &&
+
+            for (MemoryOrder memoryOrder : memoryOrdersToGenerate) {
+              load.order = memoryOrder;
+              if (load.isAtomic() &&
                   !isPossibleAtomicOperation(
                     align, bytes, module->memories[0]->shared, type)) {
                 continue;
@@ -262,9 +294,9 @@ struct SafeHeap : public Pass {
           if (align > bytes) {
             continue;
           }
-          for (auto isAtomic : {true, false}) {
-            store.isAtomic = isAtomic;
-            if (isAtomic &&
+          for (auto memoryOrder : memoryOrdersToGenerate) {
+            store.order = memoryOrder;
+            if (store.isAtomic() &&
                 !isPossibleAtomicOperation(
                   align, bytes, module->memories[0]->shared, valueType)) {
               continue;
@@ -315,7 +347,7 @@ struct SafeHeap : public Pass {
     *load = style; // basically the same as the template we are given!
     load->ptr = builder.makeLocalGet(2, addressType);
     Expression* last = load;
-    if (load->isAtomic && load->signed_) {
+    if (load->isAtomic() && load->signed_) {
       // atomic loads cannot be signed, manually sign it
       last = Bits::makeSignExt(load, load->bytes, *module);
       load->signed_ = false;

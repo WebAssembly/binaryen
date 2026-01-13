@@ -738,10 +738,11 @@ struct SimplifyGlobals : public Pass {
 
       void visitGlobalGet(GlobalGet* curr) {
         // If this is a get of a global with a single get and no sets, then we
-        // can fold that code into here.
+        // can fold that code into here. We must also avoid an export, as it can
+        // have additional gets and sets that we do not see.
         auto name = curr->name;
         auto& info = infos[name];
-        if (info.written == 0 && info.read == 1) {
+        if (info.written == 0 && info.read == 1 && !info.exported) {
           auto* global = wasm.getGlobal(name);
           if (global->init) {
             // Copy that global's code. For simplicity we copy it as we have to

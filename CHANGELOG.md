@@ -14,10 +14,27 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+- The c api now has separate functions for `CallRef` and `ReturnCallRef` matching the semantics of `Call` and `ReturnCall`.
 
+v125
+----
+
+ - Add a ReorderTypes pass (#7879).
+ - C and JS APIs now assume RefFuncs are created after imported functions (non-
+   imported functions can still be created later). This is necessary because
+   imported function types can vary (due to Custom Descriptors), and we need to
+   look up that type at RefFunc creation time. (#7993)
  - The --mod-asyncify-never-unwind and --mod-asyncify-always-and-only-unwind
    passed were deleted.  They only existed to support the lazy code loading
    support in emscripten that was removed. (#7893)
+ - The cost modeling of calls was increased to a high number. That cost is
+   usually not something you can notice (as calls have effects that make
+   removing/replacing them impossible), but you may notice this when using
+   call.without.effects (calls will no longer be assumed to be cheap enough to
+   run unconditionally) or monomorphize (which inputs a cost factor as a
+   number). (#8047)
+ - Cross-module fuzzing: Add support generate and fuzz two linked files (#7947,
+   #7949, etc.)
 
 v124
 ----

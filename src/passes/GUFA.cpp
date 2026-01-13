@@ -173,16 +173,9 @@ struct GUFAOptimizer
     } else {
       // The type is not compatible: we cannot place |c| in this location, even
       // though we have proven it is the only value possible here.
-      if (Properties::isConstantExpression(c)) {
-        // The type is not compatible and this is a simple constant expression
-        // like a ref.func. That means this code must be unreachable. (See below
-        // for the case of a non-constant.)
-        replaceCurrent(getDroppedChildrenAndAppend(
-          curr, wasm, options, builder.makeUnreachable()));
-        optimized = true;
-      } else {
+      if (c->is<GlobalGet>() || c->is<RefFunc>()) {
         // This is not a constant expression, but we are certain it is the right
-        // value. Atm the only such case we handle is a global.get of an
+        // value. One such case that can happen is a global.get of an
         // immutable global. We don't know what the value will be, nor its
         // specific type, but we do know that a global.get will get that value
         // properly. However, in this case it does not have the right type for
@@ -204,9 +197,24 @@ struct GUFAOptimizer
         // non-nullable type like a ref.as_non_null must have, so we cannot
         // simply replace it.
         //
+        // Similarly, an imported function can cause this: imagine
+        //
+        //  (ref.cast (exact ..)
+        //    (ref.func $imported)
+        //  )
+        //
+        // The output of the cast is exact, but |c| is a RefFunc of inexact
+        // type. (In practice this will either trap at runtime or not.)
+        //
         // For now, do nothing here, but in some cases we could probably
-        // optimize (e.g. by adding a ref.as_non_null in the example) TODO
-        assert(c->is<GlobalGet>());
+        // optimize (e.g. by adding a ref.as_non_null in the first example) TODO
+      } else {
+        // Otherwise, the type is not compatible and this is a simple constant
+        // expression. That means this code must be unreachable.
+        assert(Properties::isConstantExpression(c));
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, wasm, options, builder.makeUnreachable()));
+        optimized = true;
       }
     }
   }
@@ -371,8 +379,8 @@ struct GUFAOptimizer
       bool optimized = false;
 
       void visitExpression(Expression* curr) {
-        if (!curr->type.isRef()) {
-          // Ignore anything we cannot infer a type for.
+        // Ignore anything we cannot emit a cast for.
+        if (!curr->type.isCastable()) {
           return;
         }
 

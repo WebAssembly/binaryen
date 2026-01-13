@@ -3,6 +3,7 @@
 
 # Install with `pip3 install -r requirements-dev.txt`
 
-flake8==7.1.1
+flake8==7.3.0
+ruff==0.14.1
 filecheck==0.0.22
 lit==0.11.0.post1

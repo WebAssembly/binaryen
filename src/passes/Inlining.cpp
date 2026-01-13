@@ -42,6 +42,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/properties.h"
+#include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "parsing.h"
@@ -198,6 +199,8 @@ struct FunctionInfoScanner
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   FunctionInfoScanner(NameInfoMap& infos) : infos(infos) {}
 
   std::unique_ptr<Pass> create() override {
@@ -322,6 +325,8 @@ struct InliningState {
 
 struct Planner : public WalkerPass<TryDepthWalker<Planner>> {
   bool isFunctionParallel() override { return true; }
+
+  bool modifiesBinaryenIR() override { return false; }
 
   Planner(InliningState* state) : state(state) {}
 
@@ -688,8 +693,9 @@ static void updateAfterInlining(Module* module, Function* into) {
   // Inlining unreachable contents can make things in the function we inlined
   // into unreachable.
   ReFinalize().walkFunctionInModule(into, module);
-  // New locals we added may require fixups for nondefaultability.
-  // FIXME Is this not done automatically?
+  // New locals we added may require fixups for nondefaultability. We do this
+  // here and not in the main pass (or its subpasses) so that we only do it
+  // where needed.
   TypeUpdating::handleNonDefaultableLocals(into, *module);
 }
 
@@ -709,6 +715,9 @@ using ChosenActions = std::unordered_map<Name, std::vector<InliningAction>>;
 // perform.
 struct DoInlining : public Pass {
   bool isFunctionParallel() override { return true; }
+
+  // We do this only where we inline, inside updateAfterInlining().
+  bool requiresNonNullableLocalFixups() override { return false; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<DoInlining>(chosenActions);
@@ -978,7 +987,19 @@ struct FunctionSplitter {
     if (finalItem && getItem(body, numIfs + 1)) {
       return InliningMode::Uninlineable;
     }
-    // This has the general shape we seek. Check each if.
+    // This has the general shape we seek. Check each if: it must be in the
+    // form mentioned above (simple condition, no returns in body). We must also
+    // have no sets of locals that the final item notices, as then we could
+    // have this:
+    //
+    //  if (A) {
+    //    x = 10;
+    //  }
+    //  return x;
+    //
+    // We cannot split out the if in such a case because of the local
+    // dependency.
+    std::unordered_set<Index> writtenLocals;
     for (Index i = 0; i < numIfs; i++) {
       auto* iff = getIf(body, i);
       // The if must have a simple condition and no else arm.
@@ -987,7 +1008,7 @@ struct FunctionSplitter {
       }
       if (iff->ifTrue->type == Type::none) {
         // This must have no returns.
-        if (!FindAll<Return>(iff->ifTrue).list.empty()) {
+        if (ReturnUtils::getInfo(iff->ifTrue).hasReturn) {
           return InliningMode::Uninlineable;
         }
       } else {
@@ -995,7 +1016,21 @@ struct FunctionSplitter {
         // unreachable, and we ruled out none before.
         assert(iff->ifTrue->type == Type::unreachable);
       }
+      if (finalItem) {
+        for (auto* set : FindAll<LocalSet>(iff).list) {
+          writtenLocals.insert(set->index);
+        }
+      }
     }
+    // Finish the locals check mentioned above.
+    if (finalItem) {
+      for (auto* get : FindAll<LocalGet>(finalItem).list) {
+        if (writtenLocals.count(get->index)) {
+          return InliningMode::Uninlineable;
+        }
+      }
+    }
+
     // Success, this matches the pattern.
 
     // If the outlined function will be worth inlining normally, skip the
@@ -1228,6 +1263,9 @@ struct Inlining : public Pass {
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
+  // We do this only where we inline, inside updateAfterInlining().
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // whether to optimize where we inline
   bool optimize = false;
 
@@ -1318,7 +1356,7 @@ struct Inlining : public Pass {
     // fill in info, as we operate on it in parallel (each function to its own
     // entry)
     for (auto& func : module->functions) {
-      infos[func->name];
+      infos.try_emplace(func->name);
     }
     {
       FunctionInfoScanner scanner(infos);
@@ -1362,7 +1400,7 @@ struct Inlining : public Pass {
     // without iterator invalidation.
     std::vector<Name> funcNames;
     for (auto& func : module->functions) {
-      state.actionsForFunction[func->name];
+      state.actionsForFunction.try_emplace(func->name);
       funcNames.push_back(func->name);
     }
 

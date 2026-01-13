@@ -15,18 +15,17 @@
 # limitations under the License.
 
 import glob
+import io
 import os
 import subprocess
 import sys
 import unittest
 from collections import OrderedDict
+from contextlib import contextmanager
+from multiprocessing.pool import ThreadPool
+from pathlib import Path
 
-from scripts.test import binaryenjs
-from scripts.test import lld
-from scripts.test import shared
-from scripts.test import support
-from scripts.test import wasm2js
-from scripts.test import wasm_opt
+from scripts.test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
 
 
 def get_changelog_version():
@@ -35,7 +34,7 @@ def get_changelog_version():
     lines = [line for line in lines if len(line.split()) == 1]
     lines = [line for line in lines if line.startswith('v')]
     version = lines[0][1:]
-    print("Parsed CHANGELOG.md version: %s" % version)
+    print(f"Parsed CHANGELOG.md version: {version}")
     return int(version)
 
 
@@ -49,19 +48,16 @@ def run_version_tests():
                    not any(f.endswith(s) for s in not_executable_suffix) and
                    any(os.path.basename(f).startswith(s) for s in executable_prefix)]
     executables = sorted(executables)
-    assert len(executables)
+    assert executables
 
     changelog_version = get_changelog_version()
     for e in executables:
-        print('.. %s --version' % e)
-        out, err = subprocess.Popen([e, '--version'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE).communicate()
-        out = out.decode('utf-8')
-        err = err.decode('utf-8')
-        assert len(err) == 0, 'Expected no stderr, got:\n%s' % err
-        assert os.path.basename(e).replace('.exe', '') in out, 'Expected version to contain program name, got:\n%s' % out
-        assert len(out.strip().splitlines()) == 1, 'Expected only version info, got:\n%s' % out
+        print(f'.. {e} --version')
+        proc = subprocess.run([e, '--version'], capture_output=True, text=True)
+        assert len(proc.stderr) == 0, f'Expected no stderr, got:\n{proc.stderr}'
+        out = proc.stdout
+        assert os.path.basename(e).replace('.exe', '') in out, f'Expected version to contain program name, got:\n{out}'
+        assert len(out.strip().splitlines()) == 1, f'Expected only version info, got:\n{out}'
         parts = out.split()
         assert parts[1] == 'version'
         version = int(parts[2])
@@ -155,7 +151,8 @@ def run_wasm_reduce_tests():
         print('..', os.path.basename(t))
         # convert to wasm
         support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all ' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+        cmd = shared.WASM_OPT[0]
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec -all ', '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
         with open('a.wat') as seen:
@@ -168,82 +165,149 @@ def run_wasm_reduce_tests():
         # TODO: re-enable multivalue once it is better optimized
         support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'lit/basic/signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+        cmd = shared.WASM_OPT[0]
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec --detect-features', '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
         # This number is a custom threshold to check if we have shrunk the
         # output sufficiently
         assert after < 0.85 * before, [before, after]
 
 
+def run_spec_test(wast, stdout=None):
+    cmd = shared.WASM_SHELL + [wast]
+    output = support.run_command(cmd, stdout=stdout, stderr=subprocess.PIPE)
+    # filter out binaryen interpreter logging that the spec suite
+    # doesn't expect
+    filtered = [line for line in output.splitlines() if not line.startswith('[trap')]
+    return '\n'.join(filtered) + '\n'
+
+
+def run_opt_test(wast, stdout=None):
+    # check optimization validation
+    cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
+    support.run_command(cmd, stdout=stdout)
+
+
+def check_expected(actual, expected, stdout=None):
+    if expected and os.path.exists(expected):
+        expected = open(expected).read()
+        print('       (using expected output)', file=stdout)
+        actual = actual.strip()
+        expected = expected.strip()
+        if actual != expected:
+            shared.fail(actual, expected)
+
+
+def run_one_spec_test(wast: Path, stdout=None):
+    test_name = wast.name
+
+    # /path/to/binaryen/test/spec/foo.wast -> test-spec-foo
+    base_name = "-".join(wast.relative_to(Path(shared.options.binaryen_root)).with_suffix("").parts)
+
+    print('..', test_name, file=stdout)
+    # windows has some failures that need to be investigated
+    if test_name == 'names.wast' and shared.skip_if_on_windows('spec: ' + test_name):
+        return
+
+    expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log')
+
+    # some spec tests should fail (actual process failure, not just assert_invalid)
+    try:
+        actual = run_spec_test(str(wast), stdout=stdout)
+    except Exception as e:
+        if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in test_name:
+            print('<< test failed as expected >>', file=stdout)
+            return  # don't try all the binary format stuff TODO
+        else:
+            shared.fail_with_error(str(e))
+            raise
+
+    check_expected(actual, expected, stdout=stdout)
+
+    # check binary format. here we can verify execution of the final
+    # result, no need for an output verification
+    actual = ''
+    transformed_path = base_name + ".transformed"
+    with open(transformed_path, 'w') as transformed_spec_file:
+        for i, (module, asserts) in enumerate(support.split_wast(str(wast))):
+            if not module:
+                # Skip any initial assertions that don't have a module
+                continue
+            print(f'        testing split module {i}', file=stdout)
+            split_name = base_name + f'_split{i}.wast'
+            support.write_wast(split_name, module)
+            run_opt_test(split_name, stdout=stdout)    # also that our optimizer doesn't break on it
+
+            result_wast_file = shared.binary_format_check(split_name, verify_final_result=False, base_name=base_name, stdout=stdout)
+            with open(result_wast_file) as f:
+                result_wast = f.read()
+                # add the asserts, and verify that the test still passes
+                transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
+
+    # compare all the outputs to the expected output
+    actual = run_spec_test(transformed_path, stdout=stdout)
+    check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'), stdout=stdout)
+
+
+def run_spec_test_with_wrapped_stdout(wast: Path):
+    """Return (bool, str) where the first element is whether the test was
+    successful and the second is the combined stdout and stderr of the test.
+    """
+    out = io.StringIO()
+    try:
+        run_one_spec_test(wast, stdout=out)
+    except Exception as e:
+        shared.num_failures += 1
+        # Serialize exceptions into the output string buffer
+        # so they can be reported on the main thread.
+        print(e, file=out)
+        return False, out.getvalue()
+    return True, out.getvalue()
+
+
+@contextmanager
+def red_output(file=sys.stdout):
+    print("\033[31m", end="", file=file)
+    try:
+        yield
+    finally:
+        print("\033[0m", end="", file=file)
+
+
+def red_stderr():
+    return red_output(file=sys.stderr)
+
+
 def run_spec_tests():
     print('\n[ checking wasm-shell spec testcases... ]\n')
 
-    for wast in shared.options.spec_tests:
-        base = os.path.basename(wast)
-        print('..', base)
-        # windows has some failures that need to be investigated
-        if base == 'names.wast' and shared.skip_if_on_windows('spec: ' + base):
-            continue
+    worker_count = os.cpu_count()
+    print("Running with", worker_count, "workers")
+    test_paths = (Path(x) for x in shared.options.spec_tests)
 
-        def run_spec_test(wast):
-            cmd = shared.WASM_SHELL + [wast]
-            output = support.run_command(cmd, stderr=subprocess.PIPE)
-            # filter out binaryen interpreter logging that the spec suite
-            # doesn't expect
-            filtered = [line for line in output.splitlines() if not line.startswith('[trap')]
-            return '\n'.join(filtered) + '\n'
-
-        def run_opt_test(wast):
-            # check optimization validation
-            cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
-            support.run_command(cmd)
-
-        def check_expected(actual, expected):
-            if expected and os.path.exists(expected):
-                expected = open(expected).read()
-                print('       (using expected output)')
-                actual = actual.strip()
-                expected = expected.strip()
-                if actual != expected:
-                    shared.fail(actual, expected)
-
-        expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log')
-
-        # some spec tests should fail (actual process failure, not just assert_invalid)
+    failed_stdouts = []
+    with ThreadPool(processes=worker_count) as pool:
         try:
-            actual = run_spec_test(wast)
-        except Exception as e:
-            if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in base:
-                print('<< test failed as expected >>')
-                continue  # don't try all the binary format stuff TODO
-            else:
-                shared.fail_with_error(str(e))
-
-        check_expected(actual, expected)
-
-        run_spec_test(wast)
-
-        # check binary format. here we can verify execution of the final
-        # result, no need for an output verification
-        actual = ''
-        with open(base, 'w') as transformed_spec_file:
-            for i, (module, asserts) in enumerate(support.split_wast(wast)):
-                if not module:
-                    # Skip any initial assertions that don't have a module
+            for success, stdout in pool.imap_unordered(run_spec_test_with_wrapped_stdout, test_paths):
+                if success:
+                    print(stdout, end="")
                     continue
-                print(f'        testing split module {i}')
-                split_name = os.path.splitext(base)[0] + f'_split{i}.wast'
-                support.write_wast(split_name, module)
-                run_opt_test(split_name)    # also that our optimizer doesn't break on it
-                result_wast_file = shared.binary_format_check(split_name, verify_final_result=False)
-                with open(result_wast_file) as f:
-                    result_wast = f.read()
-                    # add the asserts, and verify that the test still passes
-                    transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
-        # compare all the outputs to the expected output
-        actual = run_spec_test(base)
-        check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
+                failed_stdouts.append(stdout)
+                if shared.options.abort_on_first_failure:
+                    with red_stderr():
+                        print("Aborted spec test suite execution after first failure. Set --no-fail-fast to disable this.", file=sys.stderr)
+                    break
+        except KeyboardInterrupt:
+            # Hard exit to avoid threads continuing to run after Ctrl-C.
+            # There's no concern of deadlocking during shutdown here.
+            os._exit(1)
+
+    if failed_stdouts:
+        with red_stderr():
+            print("Failed tests:", file=sys.stderr)
+            for failed in failed_stdouts:
+                print(failed, end="", file=sys.stderr)
 
 
 def run_validator_tests():
@@ -380,7 +444,7 @@ def main():
 
     for r in shared.requested:
         if r not in all_suites:
-            print('invalid test suite: %s (see --list-suites)\n' % r)
+            print(f'invalid test suite: {r} (see --list-suites)\n')
             return 1
 
     if not shared.requested:

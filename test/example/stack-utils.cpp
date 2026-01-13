@@ -3,7 +3,7 @@
 
 #include "ir/stack-utils.h"
 #include "literal.h"
-#include "mixed_arena.h"
+#include "support/mixed_arena.h"
 #include "wasm-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"

@@ -14,7 +14,6 @@
 
 import os
 
-
 # Tests that the fuzzers should not operate on.
 unfuzzable = [
     # Float16 is still experimental.
@@ -107,6 +106,9 @@ unfuzzable = [
     'instrument-branch-hints.wast',
     # Contains a subtype chain that exceeds depth limits.
     'reorder-types-real.wast',
+    # Contains a name with "__fuzz_split", indicating it is emitted by
+    # wasm-split, confusing the fuzzer because it is in the initial content.
+    'fuzz_shell_second.wast',
 ]
 
 

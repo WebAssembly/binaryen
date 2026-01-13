@@ -119,7 +119,7 @@ struct ParamInfo {
       return (*literals)[0].type;
     } else if (auto callees = std::get_if<std::vector<Name>>(&values)) {
       auto* callee = module->getFunction((*callees)[0]);
-      return Type(callee->type, NonNullable);
+      return Type(callee->type.getHeapType(), NonNullable);
     } else {
       WASM_UNREACHABLE("unexpected const value type");
     }
@@ -131,9 +131,7 @@ struct ParamInfo {
     if (const auto literals = std::get_if<Literals>(&values)) {
       return builder.makeConst((*literals)[index]);
     } else if (auto callees = std::get_if<std::vector<Name>>(&values)) {
-      auto fnName = (*callees)[index];
-      auto heapType = module->getFunction(fnName)->type;
-      return builder.makeRefFunc(fnName, heapType);
+      return builder.makeRefFunc((*callees)[index]);
     } else {
       WASM_UNREACHABLE("unexpected const value type");
     }
@@ -613,8 +611,8 @@ Function* EquivalentClass::createShared(Module* module,
   Expression* body =
     ExpressionManipulator::flexibleCopy(primaryFunction->body, *module, copier);
   auto vars = primaryFunction->vars;
-  std::unique_ptr<Function> f =
-    builder.makeFunction(fnName, sig, std::move(vars), body);
+  std::unique_ptr<Function> f = builder.makeFunction(
+    fnName, Type(sig, NonNullable, Exact), std::move(vars), body);
   return module->addFunction(std::move(f));
 }
 

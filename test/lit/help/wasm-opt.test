@@ -38,6 +38,11 @@
 ;; CHECK-NEXT:                                                 after optimization, helping
 ;; CHECK-NEXT:                                                 fuzzing find bugs
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-exec-second                            A second module to link with the
+;; CHECK-NEXT:                                                 first, for fuzz-exec-before
+;; CHECK-NEXT:                                                 (only before, as optimizations
+;; CHECK-NEXT:                                                 are not applied to it)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --extra-fuzz-command,-efc                     An extra command to run on the
 ;; CHECK-NEXT:                                                 output before and after
 ;; CHECK-NEXT:                                                 optimizing. The output is
@@ -65,6 +70,9 @@
 ;; CHECK-NEXT:                                                 fuzzing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --fuzz-preserve-imports-exports               don't add imports and exports in
+;; CHECK-NEXT:                                                 -ttf mode
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in
 ;; CHECK-NEXT:                                                 -ttf mode
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-spec-wrapper,-esw                      Emit a wasm spec interpreter
@@ -581,8 +589,8 @@
 ;; CHECK-NEXT:                                                 type fields where possible
 ;; CHECK-NEXT:                                                 (using GUFA)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --type-ssa                                    create new nominal types to help
-;; CHECK-NEXT:                                                 other optimizations
+;; CHECK-NEXT:   --type-ssa                                    create new types to help other
+;; CHECK-NEXT:                                                 optimizations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-unfinalizing                           mark all types as non-final
 ;; CHECK-NEXT:                                                 (open)
@@ -812,6 +820,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors
 ;; CHECK-NEXT:                                                 (RTTs) and exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-atomics                      Enable acquire/release atomic
+;; CHECK-NEXT:                                                 memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-atomics                     Disable acquire/release atomic
+;; CHECK-NEXT:                                                 memory operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

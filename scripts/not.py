@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import subprocess
+import sys
 
 
 # Emulate the `not` tool from LLVM's test infrastructure for use with lit and

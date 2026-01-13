@@ -1892,3 +1892,158 @@
   )
  )
 )
+
+;; Even though our analysis has its own visitor for StructNew, it should still
+;; be able to collect subtype constraints from StructNews.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct (field (ref null $A)))))
+  (type $A (sub (struct (field (ref null $A)))))
+  ;; CHECK:       (type $B (sub $A (struct (field (ref null $A)))))
+  (type $B (sub $A (struct (field (ref null $A)))))
+
+  ;; CHECK:       (type $2 (func (param (ref null $B))))
+
+  ;; CHECK:      (func $test (type $2) (param $B (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $B (ref null $B))
+    (drop
+      ;; This requires B <: A.
+      (struct.new $A
+        (local.get $B)
+      )
+    )
+  )
+)
+
+;; extern.convert_any requires its input to remain a subtype of any.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
+  (type $A (sub (struct)))
+  ;; CHECK:       (type $B (sub $A (struct)))
+  (type $B (sub $A (struct)))
+
+  ;; CHECK:       (type $2 (func (result externref)))
+
+  ;; CHECK:       (type $3 (func (param anyref)))
+
+  ;; CHECK:      (func $test (type $2) (result externref)
+  ;; CHECK-NEXT:  (extern.convert_any
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result externref)
+    (extern.convert_any
+      (struct.new $B)
+    )
+  )
+
+  ;; CHECK:      (func $cast (type $3) (param $0 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref null $A)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast (param anyref)
+    (drop
+      ;; Since $B flows into any, it must remain a subtype of $A to continue
+      ;; passing this cast.
+      (ref.cast (ref null $A)
+        (local.get 0)
+      )
+    )
+  )
+)
+
+;; Same as above with shared types.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (shared (struct))))
+  (type $A (sub (shared (struct))))
+  ;; CHECK:       (type $B (sub $A (shared (struct))))
+  (type $B (sub $A (shared (struct))))
+
+  ;; CHECK:       (type $2 (func (result (ref null (shared extern)))))
+
+  ;; CHECK:       (type $3 (func (param (ref null (shared any)))))
+
+  ;; CHECK:      (func $test (type $2) (result (ref null (shared extern)))
+  ;; CHECK-NEXT:  (extern.convert_any
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref null (shared extern)))
+    (extern.convert_any
+      (struct.new $B)
+    )
+  )
+
+  ;; CHECK:      (func $cast (type $3) (param $0 (ref null (shared any)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref null $A)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast (param (ref null (shared any)))
+    (drop
+      ;; Since $B flows into any, it must remain a subtype of $A to continue
+      ;; passing this cast.
+      (ref.cast (ref null $A)
+        (local.get 0)
+      )
+    )
+  )
+)
+
+;; Regression test for an assertion failure when br_if has a tuple value and
+;; unreachable condition.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
+  (type $A (sub (struct)))
+  ;; CHECK:       (type $B (sub (struct)))
+  (type $B (sub $A (struct)))
+  ;; CHECK:       (type $C (sub $A (struct)))
+  (type $C (sub $B (struct)))
+  ;; CHECK:       (type $3 (func (param (ref $C)) (result (ref $A) (ref $A))))
+
+  ;; CHECK:      (func $test (type $3) (param $C (ref $C)) (result (ref $A) (ref $A))
+  ;; CHECK-NEXT:  (local $Bs (tuple (ref $B) (ref $B)))
+  ;; CHECK-NEXT:  (block $l
+  ;; CHECK-NEXT:   (local.tee $Bs
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (tuple.drop 2
+  ;; CHECK-NEXT:      (tuple.make 2
+  ;; CHECK-NEXT:       (local.get $C)
+  ;; CHECK-NEXT:       (local.get $C)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $C (ref $C)) (result (ref $A) (ref $A))
+    (local $Bs (tuple (ref $B) (ref $B)))
+    (block $l (result (ref $A) (ref $A))
+      (local.set $Bs
+        ;; Because the br_if is unreachable, we do not record $C <: $B.
+        (br_if $l
+          (tuple.make 2
+            (local.get $C)
+            (local.get $C)
+          )
+          (unreachable)
+        )
+      )
+    )
+  )
+)

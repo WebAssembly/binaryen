@@ -5,12 +5,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field (mut i32)))))
-    (type $struct (descriptor $desc (struct (field (mut i32)))))
-    ;; CHECK:       (type $desc (describes $struct (descriptor $meta (struct))))
-    (type $desc (describes $struct (descriptor $meta (struct))))
-    ;; CHECK:       (type $meta (describes $desc (struct)))
-    (type $meta (describes $desc (struct)))
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct (field (mut i32))))
+    (type $struct (descriptor $desc) (struct (field (mut i32))))
+    ;; CHECK:       (type $desc (describes $struct) (descriptor $meta) (struct))
+    (type $desc (describes $struct) (descriptor $meta) (struct))
+    ;; CHECK:       (type $meta (describes $desc) (struct))
+    (type $meta (describes $desc) (struct))
   )
 
   ;; CHECK:      (import "" "" (func $effect (type $3)))
@@ -19,7 +19,7 @@
   ;; CHECK:      (func $no-reorder (type $3)
   ;; CHECK-NEXT:  (local $struct (ref $struct))
   ;; CHECK-NEXT:  (local.set $struct
-  ;; CHECK-NEXT:   (struct.new_default $struct
+  ;; CHECK-NEXT:   (struct.new_default_desc $struct
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -36,7 +36,7 @@
     (local.set $struct
       ;; This traps on the null descriptor, so we cannot optimize the struct.set
       ;; into the struct.new (which would call $effect before the trap).
-      (struct.new_default $struct
+      (struct.new_default_desc $struct
         (ref.null none)
       )
     )
@@ -52,8 +52,8 @@
   ;; CHECK:      (func $no-reorder-nested (type $3)
   ;; CHECK-NEXT:  (local $struct (ref $struct))
   ;; CHECK-NEXT:  (local.set $struct
-  ;; CHECK-NEXT:   (struct.new_default $struct
-  ;; CHECK-NEXT:    (struct.new_default $desc
+  ;; CHECK-NEXT:   (struct.new_default_desc $struct
+  ;; CHECK-NEXT:    (struct.new_default_desc $desc
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -71,8 +71,8 @@
     ;; As above, but now it is not the top-level allocation that traps, but
     ;; rather its descriptor operand. We still cannot optimize.
     (local.set $struct
-      (struct.new_default $struct
-        (struct.new $desc
+      (struct.new_default_desc $struct
+        (struct.new_desc $desc
           (ref.null none)
         )
       )
@@ -89,12 +89,12 @@
   ;; CHECK:      (func $yes-reorder (type $3)
   ;; CHECK-NEXT:  (local $struct (ref $struct))
   ;; CHECK-NEXT:  (local.set $struct
-  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:   (struct.new_desc $struct
   ;; CHECK-NEXT:    (block $block (result i32)
   ;; CHECK-NEXT:     (call $effect)
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default $desc
+  ;; CHECK-NEXT:    (struct.new_default_desc $desc
   ;; CHECK-NEXT:     (struct.new_default $meta)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -105,8 +105,8 @@
     (local $struct (ref $struct))
     ;; Nothing traps, so we can reorder.
     (local.set $struct
-      (struct.new_default $struct
-        (struct.new $desc
+      (struct.new_default_desc $struct
+        (struct.new_desc $desc
           (struct.new $meta)
         )
       )

@@ -15,20 +15,15 @@
  */
 
 #include <algorithm>
-#include <array>
 #include <cassert>
-#include <map>
-#include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
-#include <variant>
 
-#include "compiler-support.h"
 #include "support/hash.h"
-#include "support/insert_ordered.h"
 #include "wasm-features.h"
 #include "wasm-type-printing.h"
+#include "wasm-type-shape.h"
 #include "wasm-type.h"
 
 #define TRACE_CANONICALIZATION 0
@@ -623,6 +618,8 @@ bool Type::isDefaultable() const {
   return isConcrete() && !isNonNullable();
 }
 
+bool Type::isCastable() const { return isRef() && getHeapType().isCastable(); }
+
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
@@ -887,6 +884,11 @@ Shareability HeapType::getShared() const {
   } else {
     return getHeapTypeInfo(*this)->share;
   }
+}
+
+bool HeapType::isCastable() {
+  return !isContinuation() && !isMaybeShared(HeapType::cont) &&
+         !isMaybeShared(HeapType::nocont);
 }
 
 Signature HeapType::getSignature() const {
@@ -1461,6 +1463,9 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type describes an invalid unshared type";
     case TypeBuilder::ErrorReason::RequiresCustomDescriptors:
       return os << "custom descriptors required but not enabled";
+    case TypeBuilder::ErrorReason::RecGroupCollision:
+      return os
+             << "distinct rec groups would be identical after binary writing";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -1816,12 +1821,12 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (auto desc = type.getDescribedType()) {
     os << "(describes ";
     printHeapTypeName(*desc);
-    os << ' ';
+    os << ") ";
   }
   if (auto desc = type.getDescriptorType()) {
     os << "(descriptor ";
     printHeapTypeName(*desc);
-    os << ' ';
+    os << ") ";
   }
   switch (type.getKind()) {
     case HeapTypeKind::Func:
@@ -1838,12 +1843,6 @@ std::ostream& TypePrinter::print(HeapType type) {
       break;
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
-  }
-  if (type.getDescriptorType()) {
-    os << ')';
-  }
-  if (type.getDescribedType()) {
-    os << ')';
   }
   if (type.isShared()) {
     os << ')';
@@ -2259,7 +2258,19 @@ struct TypeBuilder::Impl {
   // We will validate features as we go.
   FeatureSet features;
 
-  Impl(size_t n, FeatureSet features) : entries(n), features(features) {}
+  // We allow some types to be used even if their corresponding features are not
+  // enabled. For example, we allow exact references without custom descriptors
+  // and typed function references without GC. Allowing these more-refined types
+  // in the IR helps the optimizer be more powerful. However, these disallowed
+  // refinements will be erased when a module is written out as a binary, which
+  // could cause distinct rec groups to become identical and potentially change
+  // the results of casts, etc. To avoid this, we must disallow building rec
+  // groups that vary only in some refinement that will be removed in binary
+  // writing. Track this with a UniqueRecGroups set, which is feature-aware.
+  UniqueRecGroups unique;
+
+  Impl(size_t n, FeatureSet features)
+    : entries(n), features(features), unique(features) {}
 };
 
 TypeBuilder::TypeBuilder(size_t n, FeatureSet features) {
@@ -2389,10 +2400,12 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return false;
     }
   }
-  // A supertype of a type must have a describes clause iff the type has a
-  // describes clause.
-  if (bool(sub.described) != bool(super.described)) {
-    return false;
+  // A supertype of a type with a (describes $x) clause must have a (describes
+  // $y) clause where $y is the declared supertype of $x.
+  if (sub.described) {
+    if (!super.described || sub.described->supertype != super.described) {
+      return false;
+    }
   }
   SubTyper typer;
   switch (sub.kind) {
@@ -2688,6 +2701,17 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 
     assert(built->size() == groupSize);
     results.insert(results.end(), built->begin(), built->end());
+
+    // If we are building multiple groups, make sure there will be no conflicts
+    // after disallowed features are taken into account.
+    if (groupSize > 0 && groupSize != entryCount) {
+      auto expectedFirst = (*built)[0];
+      auto& types = impl->unique.insertOrGet(*built);
+      if (types[0] != expectedFirst) {
+        return {TypeBuilder::Error{
+          groupStart, TypeBuilder::ErrorReason::RecGroupCollision}};
+      }
+    }
 
     groupStart += groupSize;
   }

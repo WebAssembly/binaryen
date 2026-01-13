@@ -230,6 +230,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureSharedEverything(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureFP16(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedAtomics(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -1016,8 +1017,13 @@ BinaryenCallRef(BinaryenModuleRef module,
                 BinaryenExpressionRef target,
                 BinaryenExpressionRef* operands,
                 BinaryenIndex numOperands,
-                BinaryenType type,
-                bool isReturn);
+                BinaryenType type);
+BINARYEN_API BinaryenExpressionRef
+BinaryenReturnCallRef(BinaryenModuleRef module,
+                      BinaryenExpressionRef target,
+                      BinaryenExpressionRef* operands,
+                      BinaryenIndex numOperands,
+                      BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
                                                    BinaryenExpressionRef ref,
                                                    BinaryenType castType);

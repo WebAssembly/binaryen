@@ -22,7 +22,9 @@
 
 namespace wasm::WATParser {
 
-Result<> parseDecls(ParseDeclsCtx& decls);
+Result<> parseModule(ParseDeclsCtx& decls);
+
+Result<> parseModuleBody(ParseDeclsCtx& decls);
 
 Result<> parseTypeDefs(
   ParseDeclsCtx& decls,

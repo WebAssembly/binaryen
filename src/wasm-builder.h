@@ -44,10 +44,10 @@ public:
   // make* functions create an expression instance.
 
   static std::unique_ptr<Function> makeFunction(Name name,
-                                                HeapType type,
+                                                Type type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
-    assert(type.isSignature());
+    assert(type.isSignature() && type.isNonNullable());
     auto func = std::make_unique<Function>();
     func->name = name;
     func->type = type;
@@ -57,8 +57,16 @@ public:
   }
 
   static std::unique_ptr<Function> makeFunction(Name name,
-                                                std::vector<NameType>&& params,
                                                 HeapType type,
+                                                std::vector<Type>&& vars,
+                                                Expression* body = nullptr) {
+    return makeFunction(
+      name, Type(type, NonNullable, Exact), std::move(vars), body);
+  }
+
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                std::vector<NameType>&& params,
+                                                Type type,
                                                 std::vector<NameType>&& vars,
                                                 Expression* body = nullptr) {
     assert(type.isSignature());
@@ -80,6 +88,18 @@ public:
       func->localNames[index] = var.name;
     }
     return func;
+  }
+
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                std::vector<NameType>&& params,
+                                                HeapType type,
+                                                std::vector<NameType>&& vars,
+                                                Expression* body = nullptr) {
+    return makeFunction(name,
+                        std::move(params),
+                        Type(type, NonNullable, Exact),
+                        std::move(vars),
+                        body);
   }
 
   static std::unique_ptr<Table> makeTable(Name name,
@@ -353,7 +373,6 @@ public:
                  Type type,
                  Name memory) {
     auto* ret = wasm.allocator.alloc<Load>();
-    ret->isAtomic = false;
     ret->bytes = bytes;
     ret->signed_ = signed_;
     ret->offset = offset;
@@ -361,13 +380,21 @@ public:
     ret->ptr = ptr;
     ret->type = type;
     ret->memory = memory;
+    ret->order = MemoryOrder::Unordered;
     ret->finalize();
     return ret;
   }
-  Load* makeAtomicLoad(
-    unsigned bytes, Address offset, Expression* ptr, Type type, Name memory) {
+  Load* makeAtomicLoad(unsigned bytes,
+                       Address offset,
+                       Expression* ptr,
+                       Type type,
+                       Name memory,
+                       MemoryOrder order) {
+    assert(order != MemoryOrder::Unordered &&
+           "Atomic loads can't be unordered");
+
     Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
-    load->isAtomic = true;
+    load->order = order;
     return load;
   }
   AtomicWait* makeAtomicWait(Expression* ptr,
@@ -408,7 +435,6 @@ public:
                    Type type,
                    Name memory) {
     auto* ret = wasm.allocator.alloc<Store>();
-    ret->isAtomic = false;
     ret->bytes = bytes;
     ret->offset = offset;
     ret->align = align;
@@ -416,6 +442,7 @@ public:
     ret->value = value;
     ret->valueType = type;
     ret->memory = memory;
+    ret->order = MemoryOrder::Unordered;
     ret->finalize();
     return ret;
   }
@@ -424,9 +451,13 @@ public:
                          Expression* ptr,
                          Expression* value,
                          Type type,
-                         Name memory) {
+                         Name memory,
+                         MemoryOrder order) {
+    assert(order != MemoryOrder::Unordered &&
+           "Atomic stores can't be unordered");
+
     Store* store = makeStore(bytes, offset, bytes, ptr, value, type, memory);
-    store->isAtomic = true;
+    store->order = order;
     return store;
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op,
@@ -680,10 +711,19 @@ public:
     ret->finalize();
     return ret;
   }
-  RefFunc* makeRefFunc(Name func, HeapType heapType) {
+  RefFunc* makeRefFunc(Name func, Type type) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize(heapType);
+    // Just apply the type, trusting it completely. This is safe to do even in
+    // the middle of an operation (where the Module is in the process of being
+    // altered, and should not be read from, which finalize normally does).
+    ret->type = type;
+    return ret;
+  }
+  RefFunc* makeRefFunc(Name func) {
+    auto* ret = wasm.allocator.alloc<RefFunc>();
+    ret->func = func;
+    ret->finalize(wasm);
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
@@ -1339,7 +1379,7 @@ public:
       return makeRefNull(type.getHeapType());
     }
     if (type.isFunction()) {
-      return makeRefFunc(value.getFunc(), type.getHeapType());
+      return makeRefFunc(value.getFunc());
     }
     if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
       return makeRefI31(makeConst(value.geti31()),
@@ -1389,7 +1429,7 @@ public:
     Signature sig = func->getSig();
     std::vector<Type> params(sig.params.begin(), sig.params.end());
     params.push_back(type);
-    func->type = Signature(Type(params), sig.results);
+    func->type = func->type.with(Signature(Type(params), sig.results));
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;

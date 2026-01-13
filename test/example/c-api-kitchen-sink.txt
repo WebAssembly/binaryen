@@ -47,7 +47,8 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
-BinaryenFeatureAll: 4194303
+BinaryenFeatureRelaxedAtomics: 4194304
+BinaryenFeatureAll: 8388607
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -2110,6 +2111,13 @@ BinaryenFeatureAll: 4194303
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
        (i32.const 2449)
+      )
+      (return_call_ref $2
+       (i32.const 13)
+       (i64.const 37)
+       (f32.const 1.2999999523162842)
+       (f64.const 3.7)
+       (ref.func $"kitchen()sinker")
       )
       (drop
        (ref.is_null

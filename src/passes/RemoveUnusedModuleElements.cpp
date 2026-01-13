@@ -45,6 +45,7 @@
 #include "ir/module-utils.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
+#include "ir/table-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
@@ -136,7 +137,8 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
   void visitCall(Call* curr) {
     use({ModuleElementKind::Function, curr->target});
 
-    if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+    Intrinsics intrinsics(*getModule());
+    if (intrinsics.isCallWithoutEffects(curr)) {
       // A call-without-effects receives a function reference and calls it, the
       // same as a CallRef. When we have a flag for non-closed-world, we should
       // handle this automatically by the reference flowing out to an import,
@@ -157,6 +159,12 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
         callRef.target = target;
         visitCallRef(&callRef);
       }
+    } else if (intrinsics.isConfigureAll(curr)) {
+      // Every function that configureAll refers to is signature-called. Mark
+      // them all as called, as JS can call them.
+      for (auto func : intrinsics.getConfigureAllFunctions(curr)) {
+        use({ModuleElementKind::Function, func});
+      }
     }
   }
 
@@ -165,11 +173,6 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
     // the heap type we call with.
     reference({ModuleElementKind::Table, curr->table});
     noteIndirectCall(curr->table, curr->heapType);
-    // Note a possible call of a function reference as well, as something might
-    // be written into the table during runtime. With precise tracking of what
-    // is written into the table we could do better here; we could also see
-    // which tables are immutable. TODO
-    noteCallRef(curr->heapType);
   }
 
   void visitCallRef(CallRef* curr) {
@@ -268,10 +271,27 @@ struct Analyzer {
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
+  // Cached table data. Each time we see a new call_indirect form (a table and a
+  // type), we must find all the functions that might be called, and their
+  // element segments, as those are now reachable. We parse element segments
+  // once at the start to build an efficient "flat" data structure for later
+  // queries.
+  struct FlatTableInfo {
+    // Maps each heap type that is in this table to the items it can call: the
+    // functions, and their segments. This takes into account subtyping, that
+    // is, typeItemMap[foo] includes data for subtypes of foo, so that we just
+    // need to read one place.
+    std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
+    std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
+  };
+  std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
+
   Analyzer(Module* module,
            const PassOptions& options,
            const std::vector<ModuleElement>& roots)
     : module(module), options(options) {
+
+    prepare();
 
     // All roots are used.
     for (auto& element : roots) {
@@ -280,6 +300,28 @@ struct Analyzer {
 
     // Main loop on both the module and the expression queues.
     while (processExpressions() || processModule()) {
+    }
+  }
+
+  void prepare() {
+    for (auto& elem : module->elementSegments) {
+      if (!elem->table) {
+        continue;
+      }
+      auto& flatTableInfo = flatTableInfoMap[elem->table];
+      for (auto* item : elem->data) {
+        if (auto* refFunc = item->dynCast<RefFunc>()) {
+          auto* func = module->getFunction(refFunc->func);
+          std::optional<HeapType> type = func->type.getHeapType();
+          // Add this function and element to all relevant types: each function
+          // might be called by its type, or a supertype.
+          while (type) {
+            flatTableInfo.typeFuncs[*type].insert(func->name);
+            flatTableInfo.typeElems[*type].insert(elem->name);
+            type = type->getSuperType();
+          }
+        }
+      }
     }
   }
 
@@ -361,33 +403,33 @@ struct Analyzer {
 
   std::unordered_set<IndirectCall> usedIndirectCalls;
 
+  std::optional<TableUtils::TableInfoMap> tableInfoMap;
+
   void useIndirectCall(IndirectCall call) {
     auto [_, inserted] = usedIndirectCalls.insert(call);
     if (!inserted) {
       return;
     }
 
-    // TODO: use structured bindings with c++20, needed for the capture below
-    auto table = call.first;
-    auto type = call.second;
+    auto [table, type] = call;
 
-    // Any function in the table of that signature may be called.
-    ModuleUtils::iterTableSegments(
-      *module, table, [&](ElementSegment* segment) {
-        auto segmentReferenced = false;
-        for (auto* item : segment->data) {
-          if (auto* refFunc = item->dynCast<RefFunc>()) {
-            auto* func = module->getFunction(refFunc->func);
-            if (HeapType::isSubType(func->type, type)) {
-              use({ModuleElementKind::Function, refFunc->func});
-              segmentReferenced = true;
-            }
-          }
-        }
-        if (segmentReferenced) {
-          reference({ModuleElementKind::ElementSegment, segment->name});
-        }
-      });
+    // Find callable functions and segments.
+    for (auto& func : flatTableInfoMap[table].typeFuncs[type]) {
+      use({ModuleElementKind::Function, func});
+    }
+    for (auto& elem : flatTableInfoMap[table].typeElems[type]) {
+      reference({ModuleElementKind::ElementSegment, elem});
+    }
+
+    // Note a possible call of a function reference as well, if something else
+    // might be written into the table during runtime.
+    // TODO: Add an option for immutable initial content like Directize?
+    if (!tableInfoMap) {
+      tableInfoMap = TableUtils::computeTableInfo(*module);
+    }
+    if ((*tableInfoMap)[table].mayBeModified) {
+      useCallRefType(type);
+    }
   }
 
   void useRefFunc(Name func) {
@@ -402,7 +444,7 @@ struct Analyzer {
     // case where the target function is referenced but not used.
     auto element = ModuleElement{ModuleElementKind::Function, func};
 
-    auto type = module->getFunction(func)->type;
+    auto type = module->getFunction(func)->type.getHeapType();
     if (calledSignatures.count(type)) {
       // We must not have a type in both calledSignatures and
       // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it

@@ -79,6 +79,7 @@ int main(int argc, const char* argv[]) {
   bool converge = false;
   bool fuzzExecBefore = false;
   bool fuzzExecAfter = false;
+  std::string fuzzExecSecond;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
   std::string initialFuzz;
@@ -86,6 +87,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzMemory = true;
   bool fuzzOOB = true;
   bool fuzzPreserveImportsAndExports = false;
+  std::string fuzzImport;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
   std::string inputSourceMapFilename;
@@ -148,6 +150,15 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) {
            fuzzExecBefore = fuzzExecAfter = true;
          })
+    .add("--fuzz-exec-second",
+         "",
+         "A second module to link with the first, for fuzz-exec-before (only "
+         "before, as optimizations are not applied to it)",
+         WasmOptOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           fuzzExecSecond = arguments;
+         })
     .add("--extra-fuzz-command",
          "-efc",
          "An extra command to run on the output before and after optimizing. "
@@ -201,6 +212,13 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) {
            fuzzPreserveImportsAndExports = true;
          })
+    .add(
+      "--fuzz-import",
+      "",
+      "a module to use as an import in -ttf mode",
+      WasmOptOption,
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) { fuzzImport = arguments; })
     .add("--emit-spec-wrapper",
          "-esw",
          "Emit a wasm spec interpreter wrapper file that can run the wasm with "
@@ -328,12 +346,15 @@ For more on how to optimize effectively, see
   if (translateToFuzz) {
     TranslateToFuzzReader reader(
       wasm, options.extra["infile"], options.passOptions.closedWorld);
-    if (fuzzPasses) {
-      reader.pickPasses(options);
-    }
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
+    if (!fuzzImport.empty()) {
+      reader.setImportedModule(fuzzImport);
+    }
+    if (fuzzPasses) {
+      reader.pickPasses(options);
+    }
     reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, options.passOptions)) {
@@ -345,7 +366,16 @@ For more on how to optimize effectively, see
 
   ExecutionResults results;
   if (fuzzExecBefore) {
-    results.get(wasm);
+    if (fuzzExecSecond.empty()) {
+      results.collect(wasm);
+    } else {
+      // Add the second module.
+      Module second;
+      second.features = wasm.features;
+      ModuleReader().read(fuzzExecSecond, second);
+
+      results.collect(wasm, &second);
+    }
   }
 
   if (emitSpecWrapper.size() > 0) {

@@ -49,6 +49,7 @@ template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::MemTypeT> memtypeContinued(Ctx&, Type addressType);
 template<typename Ctx> Result<MemoryOrder> memorder(Ctx&);
+template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx&);
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx&, Type addressType);
@@ -244,8 +245,8 @@ makeBrOnNull(Ctx&, Index, const std::vector<Annotation>&, bool onFail = false);
 template<typename Ctx>
 Result<> makeBrOnCast(Ctx&, Index, const std::vector<Annotation>&, BrOnOp op);
 template<typename Ctx>
-Result<>
-makeStructNew(Ctx&, Index, const std::vector<Annotation>&, bool default_);
+Result<> makeStructNew(
+  Ctx&, Index, const std::vector<Annotation>&, bool default_, bool isDesc);
 template<typename Ctx>
 Result<> makeStructGet(Ctx&,
                        Index,
@@ -370,6 +371,8 @@ Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
 template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::TypeUseT> typeuse(Ctx&, bool allowNames = true);
+template<typename Ctx>
+Result<std::pair<typename Ctx::TypeUse, Exactness>> exacttypeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(Lexer&);
 Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> comptype(Ctx&);
@@ -847,15 +850,23 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
   return ctx.makeMemType(addressType, *limits, shared);
 }
 
-// memorder ::= '' | 'seqcst' | 'acqrel'
-template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
+// memorder ::= 'seqcst' | 'acqrel'
+template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx& ctx) {
   if (ctx.in.takeKeyword("seqcst"sv)) {
     return MemoryOrder::SeqCst;
   }
   if (ctx.in.takeKeyword("acqrel"sv)) {
     return MemoryOrder::AcqRel;
   }
-  return MemoryOrder::SeqCst;
+
+  return {};
+}
+
+// memorder ::= '' | 'seqcst' | 'acqrel'
+template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
+  auto order = maybeMemOrder(ctx);
+  CHECK_ERR(order);
+  return order ? *order : MemoryOrder::SeqCst;
 }
 
 // tabletype ::= (limits32 | 'i32' limits32 | 'i64' limit64) reftype
@@ -1735,12 +1746,33 @@ Result<> makeLoad(Ctx& ctx,
                   bool signed_,
                   int bytes,
                   bool isAtomic) {
+
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
+
+  // We could only parse this when `isAtomic`, but this way gives a clearer
+  // error when a memorder is given for non-atomic operations
+  // since the next token can never be mistaken for a `memOrder`.
+  auto maybeOrder = maybeMemOrder(ctx);
+  CHECK_ERR(maybeOrder);
+
+  if (maybeOrder && !isAtomic) {
+    return Err{"Memory ordering can only be provided for atomic loads."};
+  }
+
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
-  return ctx.makeLoad(
-    pos, annotations, type, signed_, bytes, isAtomic, mem.getPtr(), *arg);
+  return ctx.makeLoad(pos,
+                      annotations,
+                      type,
+                      signed_,
+                      bytes,
+                      isAtomic,
+                      mem.getPtr(),
+                      *arg,
+                      maybeOrder ? *maybeOrder
+                      : isAtomic ? MemoryOrder::SeqCst
+                                 : MemoryOrder::Unordered);
 }
 
 template<typename Ctx>
@@ -1752,10 +1784,26 @@ Result<> makeStore(Ctx& ctx,
                    bool isAtomic) {
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
+
+  auto maybeOrder = maybeMemOrder(ctx);
+  CHECK_ERR(maybeOrder);
+
+  if (maybeOrder && !isAtomic) {
+    return Err{"Memory ordering can only be provided for atomic stores."};
+  }
+
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
-  return ctx.makeStore(
-    pos, annotations, type, bytes, isAtomic, mem.getPtr(), *arg);
+  return ctx.makeStore(pos,
+                       annotations,
+                       type,
+                       bytes,
+                       isAtomic,
+                       mem.getPtr(),
+                       *arg,
+                       maybeOrder ? *maybeOrder
+                       : isAtomic ? MemoryOrder::SeqCst
+                                  : MemoryOrder::Unordered);
 }
 
 template<typename Ctx>
@@ -2313,13 +2361,14 @@ template<typename Ctx>
 Result<> makeStructNew(Ctx& ctx,
                        Index pos,
                        const std::vector<Annotation>& annotations,
-                       bool default_) {
+                       bool default_,
+                       bool isDesc) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   if (default_) {
-    return ctx.makeStructNewDefault(pos, annotations, *type);
+    return ctx.makeStructNewDefault(pos, annotations, *type, isDesc);
   }
-  return ctx.makeStructNew(pos, annotations, *type);
+  return ctx.makeStructNew(pos, annotations, *type, isDesc);
 }
 
 template<typename Ctx>
@@ -2740,6 +2789,21 @@ Result<> makeResumeThrow(Ctx& ctx,
   return ctx.makeResumeThrow(pos, annotations, *type, *exnTag, *resumetable);
 }
 
+// resume_throw_ref ::= 'resume_throw' typeidx ('(' 'on' tagidx labelidx |
+// 'on' tagidx switch ')')*
+template<typename Ctx>
+Result<> makeResumeThrowRef(Ctx& ctx,
+                            Index pos,
+                            const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  auto resumetable = makeResumeTable(ctx);
+  CHECK_ERR(resumetable);
+
+  return ctx.makeResumeThrowRef(pos, annotations, *type, *resumetable);
+}
+
 // switch ::= 'switch' typeidx tagidx
 template<typename Ctx>
 Result<> makeStackSwitch(Ctx& ctx,
@@ -3007,6 +3071,24 @@ Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx, bool allowNames) {
   return ctx.makeTypeUse(pos, type, namedParams.getPtr(), resultTypes.getPtr());
 }
 
+// exacttypeuse ::= typeuse |
+//                  '(' 'exact' typeuse ')'
+template<typename Ctx>
+Result<std::pair<typename Ctx::TypeUseT, Exactness>> exacttypeuse(Ctx& ctx) {
+  auto exact = Inexact;
+  if (ctx.in.takeSExprStart("exact"sv)) {
+    exact = Exact;
+  }
+  auto type = typeuse(ctx, true);
+  CHECK_ERR(type);
+  if (exact == Exact) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of exact type use");
+    }
+  }
+  return std::make_pair(*type, exact);
+}
+
 // ('(' 'import' mod:name nm:name ')')?
 inline MaybeResult<ImportNames> inlineImport(Lexer& in) {
   if (!in.takeSExprStart("import"sv)) {
@@ -3071,34 +3153,30 @@ template<typename Ctx> Result<> comptype(Ctx& ctx) {
   return ctx.in.err("expected type description");
 }
 
-// describedcomptype ::= '(' 'descriptor' typeidx ct:comptype ')'
-//                     | ct:comptype
+// describedcomptype ::= '(' 'descriptor' typeidx ')' comptype
+//                     | comptype
 template<typename Ctx> Result<> describedcomptype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("descriptor"sv)) {
-    auto x = typeidx(ctx);
-    CHECK_ERR(x);
-    ctx.setDescriptor(*x);
-    CHECK_ERR(comptype(ctx));
+    auto d = typeidx(ctx);
+    CHECK_ERR(d);
     if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of described type");
+      return ctx.in.err("expected end of descriptor");
     }
-    return Ok{};
+    ctx.setDescriptor(*d);
   }
   return comptype(ctx);
 }
 
-// describingcomptype ::= '(' 'describes' typeidx ct:describedcomptype ')'
-//                      | ct: describedcomptype
+// describingcomptype ::= '(' 'describes' typeidx ')' describedcomptype
+//                      | describedcomptype
 template<typename Ctx> Result<> describingcomptype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("describes"sv)) {
-    auto x = typeidx(ctx);
-    CHECK_ERR(x);
-    ctx.setDescribes(*x);
-    CHECK_ERR(describedcomptype(ctx));
+    auto d = typeidx(ctx);
+    CHECK_ERR(d);
     if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of describing type");
+      return ctx.in.err("expected end of describes");
     }
-    return Ok{};
+    ctx.setDescribes(*d);
   }
   return describedcomptype(ctx);
 }
@@ -3221,7 +3299,7 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
 }
 
 // import ::= '(' 'import' mod:name nm:name importdesc ')'
-// importdesc ::= '(' 'func' id? typeuse ')'
+// importdesc ::= '(' 'func' id? exacttypeuse ')'
 //              | '(' 'table' id? tabletype ')'
 //              | '(' 'memory' id? memtype ')'
 //              | '(' 'global' id? globaltype ')'
@@ -3246,11 +3324,12 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
 
   if (ctx.in.takeSExprStart("func"sv)) {
     auto name = ctx.in.takeID();
-    auto type = typeuse(ctx);
-    CHECK_ERR(type);
+    auto use = exacttypeuse(ctx);
+    CHECK_ERR(use);
+    auto [type, exact] = *use;
     // TODO: function import annotations
     CHECK_ERR(ctx.addFunc(
-      name ? *name : Name{}, {}, &names, *type, std::nullopt, {}, pos));
+      name ? *name : Name{}, {}, &names, type, exact, std::nullopt, {}, pos));
   } else if (ctx.in.takeSExprStart("table"sv)) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
@@ -3289,7 +3368,7 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
 // func ::= '(' 'func' id? ('(' 'export' name ')')*
 //              x,I:typeuse t*:vec(local) (in:instr)* ')'
 //        | '(' 'func' id? ('(' 'export' name ')')*
-//              '(' 'import' mod:name nm:name ')' typeuse ')'
+//              '(' 'import' mod:name nm:name ')' exacttypeuse ')'
 template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   auto pos = ctx.in.getPos();
   auto annotations = ctx.in.getAnnotations();
@@ -3309,11 +3388,19 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  auto type = typeuse(ctx);
-  CHECK_ERR(type);
-
+  typename Ctx::TypeUseT type;
+  Exactness exact = Exact;
   std::optional<typename Ctx::LocalsT> localVars;
-  if (!import) {
+
+  if (import) {
+    auto use = exacttypeuse(ctx);
+    CHECK_ERR(use);
+    type = use->first;
+    exact = use->second;
+  } else {
+    auto use = typeuse(ctx);
+    CHECK_ERR(use);
+    type = *use;
     if (auto l = locals(ctx)) {
       CHECK_ERR(l);
       localVars = *l;
@@ -3331,7 +3418,8 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   CHECK_ERR(ctx.addFunc(name,
                         *exports,
                         import.getPtr(),
-                        *type,
+                        type,
+                        exact,
                         localVars,
                         std::move(annotations),
                         pos));
@@ -3855,6 +3943,15 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
   return ctx.in.err("unrecognized module field");
 }
 
+// (m:modulefield)*
+template<typename Ctx> Result<> moduleBody(Ctx& ctx) {
+  while (auto field = modulefield(ctx)) {
+    CHECK_ERR(field);
+  }
+
+  return Ok{};
+}
+
 // module ::= '(' 'module' id? (m:modulefield)* ')'
 //          | (m:modulefield)* eof
 template<typename Ctx> Result<> module(Ctx& ctx) {
@@ -3866,9 +3963,7 @@ template<typename Ctx> Result<> module(Ctx& ctx) {
     }
   }
 
-  while (auto field = modulefield(ctx)) {
-    CHECK_ERR(field);
-  }
+  CHECK_ERR(moduleBody(ctx));
 
   if (outer && !ctx.in.takeRParen()) {
     return ctx.in.err("expected end of module");

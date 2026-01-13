@@ -516,7 +516,7 @@
     ;; Also a single function, but no refinement is possible.
     (type $sig-cannot-refine (sub (func (result (ref func)))))
 
-  ;; The single function never returns, so no refinement is possible.
+    ;; The single function never returns, so no refinement is possible.
     (type $sig-unreachable (sub (func (result anyref))))
   )
 

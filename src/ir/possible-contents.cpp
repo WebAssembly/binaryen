@@ -27,6 +27,7 @@
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "support/insert_ordered.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace std {
@@ -208,9 +209,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // Note the global's information, if we started as a global. In that case, the
   // code below will refine our type but we can remain a global, which we will
   // accomplish by restoring our global status at the end.
-  std::optional<Name> globalName;
+  std::optional<GlobalInfo> global;
   if (isGlobal()) {
-    globalName = getGlobal();
+    global = getGlobal();
   }
 
   if (hasFullCone() && other.hasFullCone()) {
@@ -230,9 +231,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
     value = ConeType{newType, std::min(newDepth, otherNewDepth)};
   }
 
-  if (globalName) {
+  if (global) {
     // Restore the global but keep the new and refined type.
-    value = GlobalInfo{*globalName, getType()};
+    value = GlobalInfo{global->name, global->kind, getType()};
   }
 }
 
@@ -445,8 +446,13 @@ namespace {
 
 // Information that is shared with InfoCollector.
 struct SharedInfo {
+  // Subtyping info.
+  const SubTypes& subTypes;
+
   // The names of tables that are imported or exported.
   std::unordered_set<Name> publicTables;
+
+  SharedInfo(const SubTypes& subTypes) : subTypes(subTypes) {}
 };
 
 // The data we gather from each function, as we process them in parallel. Later
@@ -641,9 +647,17 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    addRoot(curr,
-            PossibleContents::literal(
-              Literal::makeFunc(curr->func, curr->type.getHeapType())));
+    if (!getModule()->getFunction(curr->func)->imported()) {
+      // This is not imported, so we know the exact function literal.
+      addRoot(
+        curr,
+        PossibleContents::literal(Literal::makeFunc(curr->func, *getModule())));
+    } else {
+      // This is imported, so it is effectively a global.
+      addRoot(curr,
+              PossibleContents::global(
+                curr->func, ExternalKind::Function, curr->type));
+    }
 
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
@@ -651,12 +665,13 @@ struct InfoCollector
     // actually have a RefFunc.
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      info.links.push_back(
-        {SignatureParamLocation{func->type, i}, ParamLocation{func, i}});
+      info.links.push_back({SignatureParamLocation{func->type.getHeapType(), i},
+                            ParamLocation{func, i}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
-        {ResultLocation{func, i}, SignatureResultLocation{func->type, i}});
+        {ResultLocation{func, i},
+         SignatureResultLocation{func->type.getHeapType(), i}});
     }
 
     if (!options.closedWorld) {
@@ -816,29 +831,53 @@ struct InfoCollector
         return ResultLocation{target, i};
       });
   }
-  template<typename T> void handleIndirectCall(T* curr, HeapType targetType) {
+  template<typename T>
+  void handleIndirectCall(T* curr, HeapType targetType, Exactness exact) {
     // If the heap type is not a signature, which is the case for a bottom type
     // (null) then nothing can be called.
     if (!targetType.isSignature()) {
       assert(targetType.isBottom());
       return;
     }
+    // Connect us to the given type.
+    auto sig = targetType.getSignature();
     handleCall(
       curr,
       [&](Index i) {
-        assert(i <= targetType.getSignature().params.size());
+        assert(i <= sig.params.size());
         return SignatureParamLocation{targetType, i};
       },
       [&](Index i) {
-        assert(i <= targetType.getSignature().results.size());
+        assert(i <= sig.results.size());
         return SignatureResultLocation{targetType, i};
       });
+    // If the type is exact, we only need to read SignatureParamLocation /
+    // SignatureResultLocation of this exact type, and we are done.
+    if (exact == Exact) {
+      return;
+    }
+    // Inexact type, so subtyping is relevant: add the relevant links.
+    // TODO: SignatureParamLocation is handled below in an inefficient way, see
+    //       there.
+    // TODO: For CallRef, we could do something like readFromData() and use the
+    //       flowing function reference's type, not the static type. We could
+    //       even reuse ConeReadLocation if we generalized it to function types.
+    for (Index i = 0; i < sig.results.size(); i++) {
+      if (isRelevant(sig.results[i])) {
+        shared.subTypes.iterSubTypes(
+          targetType, [&](HeapType subType, Index depth) {
+            info.links.push_back({SignatureResultLocation{subType, i},
+                                  ExpressionLocation{curr, i}});
+          });
+      }
+    }
   }
   template<typename T> void handleIndirectCall(T* curr, Type targetType) {
     // If the type is unreachable, nothing can be called (and there is no heap
     // type to get).
     if (targetType != Type::unreachable) {
-      handleIndirectCall(curr, targetType.getHeapType());
+      handleIndirectCall(
+        curr, targetType.getHeapType(), targetType.getExactness());
     }
   }
 
@@ -881,7 +920,8 @@ struct InfoCollector
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: optimize the call target like CallRef
-    handleIndirectCall(curr, curr->heapType);
+    // CallIndirect only knows a heap type, so it is always inexact.
+    handleIndirectCall(curr, curr->heapType, Inexact);
 
     // If this goes to a public table, then we must root the output, as the
     // table could contain anything at all, and calling functions there could
@@ -1237,7 +1277,7 @@ struct InfoCollector
       }
     }
   }
-  void visitThrow(Throw* curr) {
+  template<typename T> void handleThrow(T* curr) {
     auto& operands = curr->operands;
     if (!isRelevant(operands)) {
       return;
@@ -1249,6 +1289,7 @@ struct InfoCollector
         {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
   }
+  void visitThrow(Throw* curr) { handleThrow(curr); }
   void visitRethrow(Rethrow* curr) {}
   void visitThrowRef(ThrowRef* curr) {}
 
@@ -1350,7 +1391,10 @@ struct InfoCollector
   }
 
   void visitResume(Resume* curr) { handleResume(curr); }
-  void visitResumeThrow(ResumeThrow* curr) { handleResume(curr); }
+  void visitResumeThrow(ResumeThrow* curr) {
+    handleResume(curr);
+    handleThrow(curr);
+  }
   void visitStackSwitch(StackSwitch* curr) {
     // TODO: optimize when possible
     addRoot(curr);
@@ -1759,9 +1803,9 @@ void TNHOracle::infer() {
         continue;
       }
       while (1) {
-        typeFunctions[type].push_back(func.get());
-        if (auto super = type.getDeclaredSuperType()) {
-          type = *super;
+        typeFunctions[type.getHeapType()].push_back(func.get());
+        if (auto super = type.getHeapType().getDeclaredSuperType()) {
+          type = type.with(*super);
         } else {
           break;
         }
@@ -1859,8 +1903,8 @@ void TNHOracle::infer() {
         //       as other opts will make this call direct later, after which a
         //       lot of other optimizations become possible anyhow.
         auto target = possibleTargets[0]->name;
-        info.inferences[call->target] = PossibleContents::literal(
-          Literal::makeFunc(target, wasm.getFunction(target)->type));
+        info.inferences[call->target] =
+          PossibleContents::literal(Literal::makeFunc(target, wasm));
         continue;
       }
 
@@ -2232,12 +2276,19 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "subtypes phase\n";
+#endif
+
+  subTypes = std::make_unique<SubTypes>(wasm);
+  maxDepths = subTypes->getMaxDepths();
+
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
 
   // Compute shared info that we need for the main pass over each function, such
   // as the imported/exported tables.
-  SharedInfo shared;
+  SharedInfo shared(*subTypes);
 
   for (auto& table : wasm.tables) {
     if (table->imported()) {
@@ -2411,12 +2462,51 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     }
   }
 
+  // In open world, public heap types may be written to from the outside.
+  if (!options.closedWorld) {
+    for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          roots[DataLocation{type, i}] =
+            PossibleContents::fromType(fields[i].type);
+        }
+        if (auto desc = type.getDescriptorType()) {
+          auto descType = Type(*desc, Nullable, Inexact);
+          roots[DataLocation{type, DataLocation::DescriptorIndex}] =
+            PossibleContents::fromType(descType);
+        }
+      } else if (type.isArray()) {
+        roots[DataLocation{type, 0}] =
+          PossibleContents::fromType(type.getArray().element.type);
+      }
+    }
+  }
+
 #ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "struct phase\n";
+  std::cout << "function subtyping phase\n";
 #endif
 
-  subTypes = std::make_unique<SubTypes>(wasm);
-  maxDepths = subTypes->getMaxDepths();
+  // Link function subtyping params. When a function of type B has a supertype
+  // A, then we may call B using A's type. That means the parameters to
+  // (indirect) calls to B must look at supertypes, which is the opposite of the
+  // logic for results, readFromData(), etc. For now, we just connect these
+  // types directly, which does not fully optimize exact types. TODO: Add a new
+  // mechanism to optimize here.
+  for (auto type : subTypes->types) {
+    if (!type.isFunction()) {
+      continue;
+    }
+    auto super = type.getSuperType();
+    if (!super) {
+      continue;
+    }
+    auto params = type.getSignature().params;
+    for (Index i = 0; i < params.size(); i++) {
+      links.insert(getIndexes(LocationLink{SignatureParamLocation{*super, i},
+                                           SignatureParamLocation{type, i}}));
+    }
+  }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "Link-targets phase\n";
@@ -2834,7 +2924,8 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // a cone/exact type *and* that something is equal to a global, in some
     // cases. See https://github.com/WebAssembly/binaryen/pull/5083
     if (contents.isMany() || contents.isConeType()) {
-      contents = PossibleContents::global(global->name, global->type);
+      contents = PossibleContents::global(
+        global->name, ExternalKind::Global, global->type);
 
       // TODO: We could do better here, to set global->init->type instead of
       //       global->type, or even the contents.getType() - either of those
@@ -3131,8 +3222,6 @@ void Flower::dump(Location location) {
     std::cout << "  sigparamloc " << '\n';
   } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
     std::cout << "  sigresultloc " << loc->type << " : " << loc->index << '\n';
-  } else if (auto* loc = std::get_if<RootLocation>(&location)) {
-    std::cout << "  rootloc " << loc->type << '\n';
   } else {
     std::cout << "  (other)\n";
   }

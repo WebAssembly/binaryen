@@ -321,7 +321,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void printUnreachableReplacement(Expression* curr);
   bool maybePrintUnreachableReplacement(Expression* curr, Type type);
   void visitRefCast(RefCast* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+    if ((curr->desc && curr->desc->type != Type::unreachable) ||
+        !maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
@@ -548,7 +549,7 @@ struct PrintExpressionContents
   }
   void visitLoad(Load* curr) {
     prepareColor(o) << forceConcrete(curr->type, curr->align);
-    if (curr->isAtomic) {
+    if (curr->isAtomic()) {
       o << ".atomic";
     }
     o << ".load";
@@ -573,6 +574,7 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
+    printMemoryOrder(curr->order);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -582,7 +584,7 @@ struct PrintExpressionContents
   }
   void visitStore(Store* curr) {
     prepareColor(o) << forceConcrete(curr->valueType);
-    if (curr->isAtomic) {
+    if (curr->isAtomic()) {
       o << ".atomic";
     }
     o << ".store";
@@ -603,6 +605,7 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
+    printMemoryOrder(curr->order);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -2224,7 +2227,20 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "ref.cast ");
     }
-    printType(curr->type);
+    if (curr->type != Type::unreachable) {
+      printType(curr->type);
+    } else {
+      // We can still recover a valid result type from the type of the
+      // descriptor.
+      auto described = curr->desc->type.getHeapType().getDescribedType();
+      if (described) {
+        printType(
+          Type(*described, NonNullable, curr->desc->type.getExactness()));
+      } else {
+        // Invalid, so it doesn't matter what we print.
+        printType(Type::unreachable);
+      }
+    }
   }
   void visitRefGetDesc(RefGetDesc* curr) {
     printMedium(o, "ref.get_desc ");
@@ -2295,6 +2311,9 @@ struct PrintExpressionContents
     if (curr->isWithDefault()) {
       printMedium(o, "_default");
     }
+    if (curr->desc) {
+      printMedium(o, "_desc");
+    }
     o << ' ';
     printHeapTypeName(curr->type.getHeapType());
   }
@@ -2306,6 +2325,7 @@ struct PrintExpressionContents
       o << index;
     }
   }
+
   void printMemoryOrder(MemoryOrder order) {
     switch (order) {
       // Unordered should have a different base instruction, so there is nothing
@@ -2315,10 +2335,11 @@ struct PrintExpressionContents
       case MemoryOrder::SeqCst:
         break;
       case MemoryOrder::AcqRel:
-        o << "acqrel ";
+        o << " acqrel";
         break;
     }
   }
+
   void visitStructGet(StructGet* curr) {
     auto heapType = curr->ref->type.getHeapType();
     const auto& field = heapType.getStruct().fields[curr->index];
@@ -2328,25 +2349,27 @@ struct PrintExpressionContents
     }
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, ".get_s ");
+        printMedium(o, ".get_s");
       } else {
-        printMedium(o, ".get_u ");
+        printMedium(o, ".get_u");
       }
     } else {
-      printMedium(o, ".get ");
+      printMedium(o, ".get");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->order == MemoryOrder::Unordered) {
-      printMedium(o, "struct.set ");
+      printMedium(o, "struct.set");
     } else {
-      printMedium(o, "struct.atomic.set ");
+      printMedium(o, "struct.atomic.set");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
     o << ' ';
@@ -2357,9 +2380,9 @@ struct PrintExpressionContents
     o << "struct.atomic.rmw.";
     printAtomicRMWOp(curr->op);
     restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
     o << ' ';
-    printMemoryOrder(curr->order);
-    printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
     o << ' ';
@@ -2367,10 +2390,11 @@ struct PrintExpressionContents
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
     prepareColor(o);
-    o << "struct.atomic.rmw.cmpxchg ";
+    o << "struct.atomic.rmw.cmpxchg";
     restoreNormalColor(o);
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
+    o << ' ';
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
     o << ' ';
@@ -2413,23 +2437,25 @@ struct PrintExpressionContents
     }
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, ".get_s ");
+        printMedium(o, ".get_s");
       } else {
-        printMedium(o, ".get_u ");
+        printMedium(o, ".get_u");
       }
     } else {
-      printMedium(o, ".get ");
+      printMedium(o, ".get");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->order == MemoryOrder::Unordered) {
-      printMedium(o, "array.set ");
+      printMedium(o, "array.set");
     } else {
-      printMedium(o, "array.atomic.set ");
+      printMedium(o, "array.atomic.set");
     }
     printMemoryOrder(curr->order);
+    o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
@@ -2460,18 +2486,19 @@ struct PrintExpressionContents
     o << "array.atomic.rmw.";
     printAtomicRMWOp(curr->op);
     restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
     o << ' ';
-    printMemoryOrder(curr->order);
-    printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
   }
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
     prepareColor(o);
-    o << "array.atomic.rmw.cmpxchg ";
+    o << "array.atomic.rmw.cmpxchg";
     restoreNormalColor(o);
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
+    o << ' ';
     auto heapType = curr->ref->type.getHeapType();
     printHeapTypeName(heapType);
   }
@@ -2606,11 +2633,15 @@ struct PrintExpressionContents
   void visitResumeThrow(ResumeThrow* curr) {
     assert(curr->cont->type.isContinuation());
     printMedium(o, "resume_throw");
-
+    if (!curr->tag) {
+      printMedium(o, "_ref");
+    }
     o << ' ';
     printHeapTypeName(curr->cont->type.getHeapType());
-    o << ' ';
-    curr->tag.print(o);
+    if (curr->tag) {
+      o << ' ';
+      curr->tag.print(o);
+    }
 
     handleResumeTable(o, curr);
   }
@@ -3064,10 +3095,19 @@ void PrintSExpression::handleSignature(Function* curr,
   o << '(';
   printMajor(o, "func ");
   curr->name.print(o);
+  if (curr->imported() && curr->type.isExact()) {
+    o << " (exact";
+  }
   if ((currModule && currModule->features.hasGC()) ||
-      requiresExplicitFuncType(curr->type)) {
+      requiresExplicitFuncType(curr->type.getHeapType())) {
     o << " (type ";
-    printHeapTypeName(curr->type) << ')';
+    printHeapTypeName(curr->type.getHeapType()) << ')';
+    if (full) {
+      // Print the full type in a comment. TODO the spec may add this too
+      o << " (; ";
+      printTypeOrName(curr->type, o, currModule);
+      o << " ;)";
+    }
   }
   bool inParam = false;
   Index i = 0;
@@ -3103,6 +3143,9 @@ void PrintSExpression::handleSignature(Function* curr,
   if (curr->getResults() != Type::none) {
     o << maybeSpace;
     printResultType(curr->getResults());
+  }
+  if (curr->imported() && curr->type.isExact()) {
+    o << ')';
   }
 }
 
@@ -3852,10 +3895,6 @@ printStackIR(std::ostream& o, Module* module, const PassOptions& options) {
   return o;
 }
 
-} // namespace wasm
-
-namespace std {
-
 std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
   wasm::PassRunner runner(&module);
   wasm::Printer printer(&o);
@@ -3903,4 +3942,32 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair) {
   return o;
 }
 
-} // namespace std
+std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair) {
+  if (auto it = pair.first.typeNames.find(pair.second);
+      it != pair.first.typeNames.end()) {
+    return o << it->second.name;
+  }
+  return o << "(unnamed)";
+}
+
+std::ostream& operator<<(std::ostream& o,
+                         const wasm::ImportNames& importNames) {
+  return o << importNames.module << "." << importNames.name;
+}
+
+std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
+  switch (mo) {
+    case wasm::MemoryOrder::Unordered:
+      os << "Unordered";
+      break;
+    case wasm::MemoryOrder::SeqCst:
+      os << "SeqCst";
+      break;
+    case wasm::MemoryOrder::AcqRel:
+      os << "AcqRel";
+      break;
+  }
+  return os;
+}
+
+} // namespace wasm

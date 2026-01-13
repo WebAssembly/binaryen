@@ -139,7 +139,7 @@ struct FunctionStructValuesMap
     // Initialize the data for each function in preparation for parallel
     // computation.
     for (auto& func : wasm.functions) {
-      (*this)[func.get()];
+      this->try_emplace(func.get());
     }
   }
 
@@ -167,12 +167,10 @@ struct FunctionStructValuesMap
 //
 //   void noteRMW(Expression* expr, HeapType type, Index index, T& info);
 //
-// * Note a copied value (read from this field and written to the same, possibly
-//   in another object). Note that we require that the two types (the one read
-//   from, and written to) are identical; allowing subtyping is possible, but
-//   would add complexity amid diminishing returns.
+// * Note a copied value (read from a struct field and written to another struct
+//   field).
 //
-//   void noteCopy(HeapType type, Index index, T& info);
+//   void noteCopy(StructGet* src, Type dstType, Index index, T& info);
 //
 // * Note a read.
 //
@@ -214,7 +212,7 @@ struct StructScanner
       if (curr->isWithDefault()) {
         self().noteDefault(fields[i].type, heapType, i, infos[i]);
       } else {
-        noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
+        noteExpressionOrCopy(curr->operands[i], type, i, infos[i]);
       }
     }
 
@@ -233,7 +231,7 @@ struct StructScanner
     auto ht = std::make_pair(type.getHeapType(), type.getExactness());
     noteExpressionOrCopy(
       curr->value,
-      type.getHeapType(),
+      type,
       curr->index,
       functionSetGetInfos[this->getFunction()][ht][curr->index]);
   }
@@ -265,7 +263,7 @@ struct StructScanner
     if (curr->op == RMWXchg) {
       // An xchg is really like a read and write combined.
       self().noteRead(heapType, index, info);
-      noteExpressionOrCopy(curr->value, heapType, index, info);
+      noteExpressionOrCopy(curr->value, type, index, info);
       return;
     }
 
@@ -287,7 +285,7 @@ struct StructScanner
 
     // A cmpxchg is like a read and conditional write.
     self().noteRead(heapType, index, info);
-    noteExpressionOrCopy(curr->replacement, heapType, index, info);
+    noteExpressionOrCopy(curr->replacement, type, index, info);
   }
 
   void visitRefCast(RefCast* curr) {
@@ -327,27 +325,22 @@ struct StructScanner
     }
   }
 
-  void
-  noteExpressionOrCopy(Expression* expr, HeapType type, Index index, T& info) {
-    // Look at the value falling through, if it has the exact same type
-    // (otherwise, we'd need to consider both the type actually written and the
-    // type of the fallthrough, somehow).
-    auto* fallthrough = Properties::getFallthrough(
-      expr,
-      this->getPassOptions(),
-      *this->getModule(),
-      static_cast<SubType*>(this)->getFallthroughBehavior());
+  void noteExpressionOrCopy(Expression* expr, Type type, Index index, T& info) {
+    auto* fallthrough =
+      Properties::getFallthrough(expr,
+                                 this->getPassOptions(),
+                                 *this->getModule(),
+                                 self().getFallthroughBehavior());
+    // TODO: Consider lifting this restriction on the use of fallthrough values.
     if (fallthrough->type == expr->type) {
       expr = fallthrough;
     }
-    if (auto* get = expr->dynCast<StructGet>()) {
-      if (get->index == index && get->ref->type != Type::unreachable &&
-          get->ref->type.getHeapType() == type) {
-        static_cast<SubType*>(this)->noteCopy(type, index, info);
-        return;
-      }
+    if (auto* get = expr->dynCast<StructGet>();
+        get && get->ref->type.isStruct()) {
+      self().noteCopy(get, type, index, info);
+      return;
     }
-    static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
+    self().noteExpression(expr, type.getHeapType(), index, info);
   }
 
   Properties::FallthroughBehavior getFallthroughBehavior() {

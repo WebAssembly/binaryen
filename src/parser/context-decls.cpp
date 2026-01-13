@@ -67,6 +67,7 @@ Result<> ParseDeclsCtx::addFunc(Name name,
                                 const std::vector<Name>& exports,
                                 ImportNames* import,
                                 TypeUseT type,
+                                Exactness exact,
                                 std::optional<LocalsT>,
                                 std::vector<Annotation>&& annotations,
                                 Index pos) {

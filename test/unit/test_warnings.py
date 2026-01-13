@@ -1,26 +1,31 @@
 import subprocess
 
 from scripts.test import shared
+
 from . import utils
+
+
+def run(cmd):
+    return shared.run_process(cmd, stderr=subprocess.PIPE).stderr
 
 
 class WarningsText(utils.BinaryenTestCase):
     def test_warn_on_no_passes(self):
-        err = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '-o', 'a.wasm'], stderr=subprocess.PIPE).stderr
+        err = run(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '-o', 'a.wasm'])
         self.assertIn('warning: no passes specified, not doing any work', err)
 
     def test_warn_on_no_output(self):
-        err = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '-O1'], stderr=subprocess.PIPE).stderr
+        err = run(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '-O1'])
         self.assertIn('warning: no output file specified, not emitting output', err)
 
     def test_quiet_suppresses_warnings(self):
-        err = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '-q'], stderr=subprocess.PIPE).stderr
+        err = run(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '-q'])
         self.assertNotIn('warning', err)
 
     def test_no_warn_on_print(self):
-        err = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--print'], stderr=subprocess.PIPE).stderr
+        err = run(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--print'])
         self.assertNotIn('warning: no output file specified, not emitting output', err)
 
     def test_no_warn_on_print_function_map(self):
-        err = shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--print-function-map'], stderr=subprocess.PIPE).stderr
+        err = run(shared.WASM_OPT + [self.input_path('asyncify-pure.wat'), '--print-function-map'])
         self.assertNotIn('warning: no output file specified, not emitting output', err)

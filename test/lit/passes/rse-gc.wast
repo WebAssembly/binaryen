@@ -303,4 +303,44 @@
     (local.get $s)
   )
  )
+
+ ;; CHECK:      (func $any-extern (type $3)
+ ;; CHECK-NEXT:  (local $any anyref)
+ ;; CHECK-NEXT:  (local.set $any
+ ;; CHECK-NEXT:   (any.convert_extern
+ ;; CHECK-NEXT:    (string.const "hello")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (any.convert_extern
+ ;; CHECK-NEXT:    (string.const "hello")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $any
+ ;; CHECK-NEXT:   (any.convert_extern
+ ;; CHECK-NEXT:    (string.const "world")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $any-extern
+  ;; Test internalized strings.
+  (local $any anyref)
+  (local.set $any
+   (any.convert_extern
+    (string.const "hello")
+   )
+  )
+  ;; This set can turn into a drop, as the value is already in the local.
+  (local.set $any
+   (any.convert_extern
+    (string.const "hello")
+   )
+  )
+  ;; This is a different string.
+  (local.set $any
+   (any.convert_extern
+    (string.const "world")
+   )
+  )
+ )
 )

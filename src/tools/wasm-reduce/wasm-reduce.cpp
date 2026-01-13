@@ -97,7 +97,6 @@ struct ProgramResult {
 #ifdef _WIN32
   void getFromExecution(std::string command) {
     Timer timer;
-    timer.start();
     SECURITY_ATTRIBUTES saAttr;
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
@@ -176,15 +175,13 @@ struct ProgramResult {
         output.append(chBuf);
       }
     }
-    timer.stop();
-    time = timer.getTotal();
+    time = timer.totalElapsed();
   }
 #else  // POSIX
   // runs the command and notes the output
   // TODO: also stderr, not just stdout?
   void getFromExecution(std::string command) {
     Timer timer;
-    timer.start();
     const int MAX_BUFFER = 1024;
     char buffer[MAX_BUFFER];
     FILE* stream = popen(
@@ -195,8 +192,7 @@ struct ProgramResult {
       output.append(buffer);
     }
     code = pclose(stream);
-    timer.stop();
-    time = timer.getTotal();
+    time = timer.totalElapsed();
   }
 #endif // _WIN32
 
@@ -1033,7 +1029,11 @@ struct Reducer
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->type = Signature(funcType.getSignature().params, child->type);
+          func->type =
+            Type(Signature(funcType.getHeapType().getSignature().params,
+                           child->type),
+                 NonNullable,
+                 Exact);
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!

@@ -71,15 +71,19 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(std::shared_ptr<FuncData> funcData, HeapType type)
-  : funcData(funcData), type(type, NonNullable, Exact) {
+Literal::Literal(std::shared_ptr<FuncData> funcData, Type type)
+  : funcData(funcData), type(type) {
   assert(funcData);
   assert(type.isSignature());
 }
 
-Literal Literal::makeFunc(Name func, HeapType type) {
+Literal Literal::makeFunc(Name func, Type type) {
   // Provide only the name of the function, without execution info.
   return Literal(std::make_shared<FuncData>(func), type);
+}
+
+Literal Literal::makeFunc(Name func, Module& wasm) {
+  return makeFunc(func, wasm.getFunction(func)->type);
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
@@ -489,12 +493,16 @@ bool Literal::operator==(const Literal& other) const {
     if (type.isData()) {
       return gcData == other.gcData;
     }
-    assert(type.getHeapType().isBasic());
-    if (type.getHeapType().isMaybeShared(HeapType::i31)) {
+    auto heapType = type.getHeapType();
+    assert(heapType.isBasic());
+    if (heapType.isMaybeShared(HeapType::i31)) {
       return i32 == other.i32;
     }
-    if (type.getHeapType().isMaybeShared(HeapType::ext)) {
+    if (heapType.isMaybeShared(HeapType::ext)) {
       return internalize() == other.internalize();
+    }
+    if (heapType.isMaybeShared(HeapType::any)) {
+      return externalize() == other.externalize();
     }
     WASM_UNREACHABLE("unexpected type");
   }

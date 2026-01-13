@@ -305,7 +305,7 @@ struct StringLowering : public StringGathering {
     // function, which must be modified either in TypeMapper - but as just
     // explained we cannot do that - or before it, which is what we do here).
     for (auto& func : module->functions) {
-      if (func->type.getRecGroup().size() != 1 ||
+      if (func->type.getHeapType().getRecGroup().size() != 1 ||
           !func->type.getFeatures().hasStrings()) {
         continue;
       }
@@ -320,18 +320,18 @@ struct StringLowering : public StringGathering {
         }
         return t;
       };
-      for (auto param : func->type.getSignature().params) {
+      for (auto param : func->type.getHeapType().getSignature().params) {
         params.push_back(fix(param));
       }
-      for (auto result : func->type.getSignature().results) {
+      for (auto result : func->type.getHeapType().getSignature().results) {
         results.push_back(fix(result));
       }
 
       // In addition to doing the update, mark it in the map of updates for
       // TypeMapper, so RefFuncs with this type get updated.
       auto old = func->type;
-      func->type = Signature(params, results);
-      updates[old] = func->type;
+      func->type = func->type.with(Signature(params, results));
+      updates[old.getHeapType()] = func->type.getHeapType();
     }
 
     // Strings turn into externref.
@@ -358,7 +358,8 @@ struct StringLowering : public StringGathering {
     auto name = Names::getValidFunctionName(*module, trueName);
     auto sig = Signature(params, results);
     Builder builder(*module);
-    auto* func = module->addFunction(builder.makeFunction(name, sig, {}));
+    auto* func = module->addFunction(
+      builder.makeFunction(name, Type(sig, NonNullable, Inexact), {}));
     func->module = WasmStringsModule;
     func->base = trueName;
     return name;

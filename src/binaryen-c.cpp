@@ -157,7 +157,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     }
   }
   if (heapType.isSignature()) {
-    return Literal::makeFunc(Name(x.func), heapType);
+    return Literal::makeFunc(Name(x.func), type);
   }
   assert(heapType.isData());
   WASM_UNREACHABLE("TODO: gc data");
@@ -486,6 +486,9 @@ BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void) {
 }
 BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CallIndirectOverlong);
+}
+BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -1351,7 +1354,8 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                       offset,
                       (Expression*)ptr,
                       Type(type),
-                      getMemoryName(module, memoryName)));
+                      getMemoryName(module, memoryName),
+                      MemoryOrder::SeqCst));
 }
 BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           uint32_t bytes,
@@ -1367,7 +1371,8 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                        (Expression*)ptr,
                        (Expression*)value,
                        Type(type),
-                       getMemoryName(module, memoryName)));
+                       getMemoryName(module, memoryName),
+                       MemoryOrder::SeqCst));
 }
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenOp op,
@@ -1609,8 +1614,22 @@ BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                       const char* func,
                                       BinaryenHeapType type) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefFunc(func, HeapType(type)));
+  // We can assume imports have been created at this point in time, but not
+  // other defined functions. See if the function exists already, and assume it
+  // is non-imported if not. TODO: If we want to allow creating imports later,
+  // we would need an API addition or change.
+  auto* wasm = (Module*)module;
+  if ([[maybe_unused]] auto* f = wasm->getFunctionOrNull(func)) {
+    assert(f->type.getHeapType() == HeapType(type));
+    // Use the HeapType constructor, which will do a lookup on the module.
+    return static_cast<Expression*>(
+      Builder(*(Module*)module).makeRefFunc(func));
+  } else {
+    // Assume non-imported, and provide the full type for that.
+    Type full = Type(HeapType(type), NonNullable, Exact);
+    return static_cast<Expression*>(
+      Builder(*(Module*)module).makeRefFunc(func, full));
+  }
 }
 
 BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
@@ -1717,15 +1736,27 @@ BinaryenExpressionRef BinaryenCallRef(BinaryenModuleRef module,
                                       BinaryenExpressionRef target,
                                       BinaryenExpressionRef* operands,
                                       BinaryenIndex numOperands,
-                                      BinaryenType type,
-                                      bool isReturn) {
+                                      BinaryenType type) {
   std::vector<Expression*> args;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     args.push_back((Expression*)operands[i]);
   }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeCallRef((Expression*)target, args, Type(type), isReturn));
+      .makeCallRef((Expression*)target, args, Type(type), false));
+}
+BinaryenExpressionRef BinaryenReturnCallRef(BinaryenModuleRef module,
+                                            BinaryenExpressionRef target,
+                                            BinaryenExpressionRef* operands,
+                                            BinaryenIndex numOperands,
+                                            BinaryenType type) {
+  std::vector<Expression*> args;
+  for (BinaryenIndex i = 0; i < numOperands; i++) {
+    args.push_back((Expression*)operands[i]);
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeCallRef((Expression*)target, args, Type(type), true));
 }
 BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
                                       BinaryenExpressionRef ref,
@@ -2607,12 +2638,14 @@ void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
 bool BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
-  return static_cast<Load*>(expression)->isAtomic;
+  return static_cast<Load*>(expression)->isAtomic();
 }
+
 void BinaryenLoadSetAtomic(BinaryenExpressionRef expr, bool isAtomic) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
-  static_cast<Load*>(expression)->isAtomic = isAtomic != 0;
+  static_cast<Load*>(expression)->order =
+    isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
 }
 bool BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -2670,12 +2703,13 @@ void BinaryenLoadSetPtr(BinaryenExpressionRef expr,
 bool BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
-  return static_cast<Store*>(expression)->isAtomic;
+  return static_cast<Store*>(expression)->isAtomic();
 }
 void BinaryenStoreSetAtomic(BinaryenExpressionRef expr, bool isAtomic) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
-  static_cast<Store*>(expression)->isAtomic = isAtomic != 0;
+  static_cast<Store*>(expression)->order =
+    isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
 }
 uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -4973,7 +5007,7 @@ static BinaryenFunctionRef addFunctionInternal(BinaryenModuleRef module,
                                                BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
-  ret->type = type;
+  ret->type = Type(type, NonNullable, Exact);
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -5096,8 +5130,9 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
     func->name = internalName;
     func->module = externalModuleName;
     func->base = externalBaseName;
-    // TODO: Take a HeapType rather than params and results.
-    func->type = Signature(Type(params), Type(results));
+    // TODO: Take a Type rather than params and results.
+    func->type =
+      Type(Signature(Type(params), Type(results)), NonNullable, Inexact);
     ((Module*)module)->addFunction(std::move(func));
   } else {
     // already exists so just set module and base
@@ -5285,7 +5320,7 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i]));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -5302,7 +5337,7 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i]));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -6017,10 +6052,10 @@ void BinaryenFunctionSetBody(BinaryenFunctionRef func,
   ((Function*)func)->body = (Expression*)body;
 }
 BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func) {
-  return ((Function*)func)->type.getID();
+  return ((Function*)func)->type.getHeapType().getID();
 }
 void BinaryenFunctionSetType(BinaryenFunctionRef func, BinaryenHeapType type) {
-  ((Function*)func)->type = HeapType(type);
+  ((Function*)func)->type = Type(HeapType(type), NonNullable, Exact);
 }
 void BinaryenFunctionOptimize(BinaryenFunctionRef func,
                               BinaryenModuleRef module) {

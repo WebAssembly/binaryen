@@ -555,7 +555,8 @@ struct NullInstrParserCtx {
                     int,
                     bool,
                     MemoryIdxT*,
-                    MemargT) {
+                    MemargT,
+                    MemoryOrder) {
     return Ok{};
   }
   Result<> makeStore(Index,
@@ -564,7 +565,8 @@ struct NullInstrParserCtx {
                      int,
                      bool,
                      MemoryIdxT*,
-                     MemargT) {
+                     MemargT,
+                     MemoryOrder) {
     return Ok{};
   }
   Result<> makeAtomicRMW(Index,
@@ -756,12 +758,13 @@ struct NullInstrParserCtx {
   }
 
   template<typename HeapTypeT>
-  Result<> makeStructNew(Index, const std::vector<Annotation>&, HeapTypeT) {
+  Result<>
+  makeStructNew(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
   Result<>
-  makeStructNewDefault(Index, const std::vector<Annotation>&, HeapTypeT) {
+  makeStructNewDefault(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -934,6 +937,13 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<> makeResumeThrowRef(Index,
+                              const std::vector<Annotation>&,
+                              HeapTypeT,
+                              const TagLabelListT&) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<>
   makeStackSwitch(Index, const std::vector<Annotation>&, HeapTypeT, TagIdxT) {
     return Ok{};
@@ -1078,6 +1088,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    const std::vector<Name>& exports,
                    ImportNames* import,
                    TypeUseT type,
+                   Exactness exact,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
                    Index pos);
@@ -1411,6 +1422,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUse type,
+                   Exactness exact,
                    std::optional<LocalsT> locals,
                    std::vector<Annotation>&&,
                    Index pos) {
@@ -1418,7 +1430,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     if (!type.type.isSignature()) {
       return in.err(pos, "expected signature type");
     }
-    f->type = type.type;
+    f->type = Type(type.type, NonNullable, exact);
     // If we are provided with too many names (more than the function has), we
     // will error on that later when we check the signature matches the type.
     // For now, avoid asserting in setLocalName.
@@ -1800,6 +1812,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUseT,
+                   Exactness,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
                    Index) {
@@ -2224,12 +2237,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     int bytes,
                     bool isAtomic,
                     Name* mem,
-                    Memarg memarg) {
+                    Memarg memarg,
+                    MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(pos,
-                     irBuilder.makeAtomicLoad(bytes, memarg.offset, type, *m));
+      return withLoc(
+        pos, irBuilder.makeAtomicLoad(bytes, memarg.offset, type, *m, order));
     }
     return withLoc(pos,
                    irBuilder.makeLoad(
@@ -2242,12 +2256,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                      int bytes,
                      bool isAtomic,
                      Name* mem,
-                     Memarg memarg) {
+                     Memarg memarg,
+                     MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(pos,
-                     irBuilder.makeAtomicStore(bytes, memarg.offset, type, *m));
+      return withLoc(
+        pos, irBuilder.makeAtomicStore(bytes, memarg.offset, type, *m, order));
     }
     return withLoc(
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
@@ -2647,14 +2662,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
 
   Result<> makeStructNew(Index pos,
                          const std::vector<Annotation>& annotations,
-                         HeapType type) {
-    return withLoc(pos, irBuilder.makeStructNew(type));
+                         HeapType type,
+                         bool isDesc) {
+    return withLoc(pos, irBuilder.makeStructNew(type, isDesc));
   }
 
   Result<> makeStructNewDefault(Index pos,
                                 const std::vector<Annotation>& annotations,
-                                HeapType type) {
-    return withLoc(pos, irBuilder.makeStructNewDefault(type));
+                                HeapType type,
+                                bool isDesc) {
+    return withLoc(pos, irBuilder.makeStructNewDefault(type, isDesc));
   }
 
   Result<> makeStructGet(Index pos,
@@ -2883,24 +2900,41 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return withLoc(pos, irBuilder.makeResume(type, tags, labels));
   }
 
+  struct ResumeThrowData {
+    std::vector<Name> tags;
+    std::vector<std::optional<Index>> labels;
+
+    ResumeThrowData(const std::vector<OnClauseInfo>& resumetable) {
+      tags.reserve(resumetable.size());
+      labels.reserve(resumetable.size());
+      for (const OnClauseInfo& info : resumetable) {
+        tags.push_back(info.tag);
+        if (info.isOnSwitch) {
+          labels.push_back(std::nullopt);
+        } else {
+          labels.push_back(std::optional<Index>(info.label));
+        }
+      }
+    }
+  };
+
   Result<> makeResumeThrow(Index pos,
                            const std::vector<Annotation>& annotations,
                            HeapType type,
                            Name tag,
                            const std::vector<OnClauseInfo>& resumetable) {
-    std::vector<Name> tags;
-    std::vector<std::optional<Index>> labels;
-    tags.reserve(resumetable.size());
-    labels.reserve(resumetable.size());
-    for (const OnClauseInfo& info : resumetable) {
-      tags.push_back(info.tag);
-      if (info.isOnSwitch) {
-        labels.push_back(std::nullopt);
-      } else {
-        labels.push_back(std::optional<Index>(info.label));
-      }
-    }
-    return withLoc(pos, irBuilder.makeResumeThrow(type, tag, tags, labels));
+    ResumeThrowData data(resumetable);
+    return withLoc(
+      pos, irBuilder.makeResumeThrow(type, tag, data.tags, data.labels));
+  }
+
+  Result<> makeResumeThrowRef(Index pos,
+                              const std::vector<Annotation>& annotations,
+                              HeapType type,
+                              const std::vector<OnClauseInfo>& resumetable) {
+    ResumeThrowData data(resumetable);
+    return withLoc(pos,
+                   irBuilder.makeResumeThrowRef(type, data.tags, data.labels));
   }
 
   Result<> makeStackSwitch(Index pos,

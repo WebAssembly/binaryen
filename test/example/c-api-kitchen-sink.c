@@ -374,6 +374,8 @@ void test_features() {
   printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
   printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
+  printf("BinaryenFeatureRelaxedAtomics: %d\n",
+         BinaryenFeatureRelaxedAtomics());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -1046,6 +1048,8 @@ void test_core() {
                                4,
                                iIfF,
                                BinaryenTypeInt32()),
+    BinaryenReturnCallRef(
+      module, funcrefExpr, callOperands4b, 4, BinaryenTypeNone()),
     // Reference types
     BinaryenRefIsNull(module, externrefExpr),
     BinaryenRefIsNull(module, funcrefExpr),
@@ -2264,8 +2268,7 @@ void test_callref_and_types() {
                     BinaryenRefFunc(module, "tiny", funcType),
                     NULL,
                     0,
-                    BinaryenTypeNone(),
-                    false);
+                    BinaryenTypeNone());
   BinaryenFunctionSetBody(tiny, callRef);
 
   bool didValidate = BinaryenModuleValidate(module);

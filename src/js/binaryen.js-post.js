@@ -39,6 +39,7 @@ function initializeConstants() {
     ['eqref', 'Eqref'],
     ['i31ref', 'I31ref'],
     ['structref', 'Structref'],
+    ['arrayref', 'Arrayref'],
     ['stringref', 'Stringref'],
     ['nullref', 'Nullref'],
     ['nullexternref', 'NullExternref'],
@@ -180,6 +181,7 @@ function initializeConstants() {
     'FP16',
     'BulkMemoryOpt',
     'CallIndirectOverlong',
+    'RelaxedAtomics',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2381,6 +2383,12 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  self['arrayref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['arrayref']);
+    }
+  };
+
   self['stringref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['stringref']);
@@ -2464,6 +2472,18 @@ function wrapModule(module, self = {}) {
       return Module['_BinaryenI31Get'](module, i31, 0);
     }
   };
+
+  self['call_ref'] = function(target, operands, type) {
+    return preserveStack(() =>
+      Module['_BinaryenCallRef'](module, target, i32sToStack(operands), operands.length, type)
+    );
+  };
+  
+  self['return_call_ref'] = function(target, operands, type) {
+    return preserveStack(() =>
+      Module['_BinaryenReturnCallRef'](module, target, i32sToStack(operands), operands.length, type)
+    );
+  }
 
   self['any'] = {
     'convert_extern'() {
@@ -2835,6 +2855,13 @@ function wrapModule(module, self = {}) {
   };
   self['optimize'] = function() {
     return Module['_BinaryenModuleOptimize'](module);
+  };
+  /**
+   * Updates the internal name mapping logic in a module. This must be called
+   * after renaming module elements.
+   */
+  self['updateMaps'] = function() {
+    Module['_BinaryenModuleUpdateMaps'](module);
   };
   self['optimizeFunction'] = function(func) {
     if (typeof func === 'string') func = self['getFunction'](func);
@@ -5143,6 +5170,39 @@ Module['I31Get'] = makeExpressionWrapper(Module['_BinaryenI31GetId'](), {
   },
   'setSigned'(expr, isSigned) {
     Module['_BinaryenI31GetSetSigned'](expr, isSigned);
+  }
+});
+
+Module['CallRef'] = makeExpressionWrapper(Module['_BinaryenCallRefId'](), {
+  'getNumOperands'(expr) {
+    return Module['_BinaryenCallRefGetNumOperands'](expr);
+  },
+  'getOperandAt'(expr, index) {
+    return Module['_BinaryenCallRefGetOperandAt'](expr, index);
+  },
+  'setOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenCallRefSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand'(expr, operandExpr) {
+    return Module['_BinaryenCallRefAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenCallRefInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt'(expr, index) {
+    return Module['_BinaryenCallRefRemoveOperandAt'](expr, index);
+  },
+  'getTarget'(expr) {
+    return Module['_BinaryenCallRefGetTarget'](expr);
+  },
+  'setTarget'(expr, targetExpr) {
+    Module['_BinaryenCallRefSetTarget'](expr, targetExpr);
+  },
+  'isReturn'(expr) {
+    return Boolean(Module['_BinaryenCallRefIsReturn'](expr));
+  },
+  'setReturn'(expr, isReturn) {
+    Module['_BinaryenCallRefSetReturn'](expr, isReturn);
   }
 });
 

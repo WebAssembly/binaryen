@@ -102,6 +102,7 @@
 #include "ir/names.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/string.h"
 #include "wasm-builder.h"
@@ -193,12 +194,15 @@ struct InstrumentBranchHints
       auto* func = module->getFunction(existing);
       func->body = Builder(*module).makeNop();
       func->module = func->base = Name();
+      func->type = func->type.with(Exact);
     }
 
     // Add our import.
     auto* func = module->addFunction(Builder::makeFunction(
       Names::getValidFunctionName(*module, BASE),
-      Signature({Type::i32, Type::i32, Type::i32}, Type::none),
+      Type(Signature({Type::i32, Type::i32, Type::i32}, Type::none),
+           NonNullable,
+           Inexact),
       {}));
     func->module = MODULE;
     func->base = BASE;
@@ -206,6 +210,10 @@ struct InstrumentBranchHints
 
     // Walk normally, using logBranch as we go.
     Super::doWalkModule(module);
+
+    // Update ref.func type changes.
+    ReFinalize().run(getPassRunner(), module);
+    ReFinalize().walkModuleCode(module);
   }
 };
 

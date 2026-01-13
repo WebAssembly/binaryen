@@ -33,9 +33,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ir/import-name.h"
 #include "literal.h"
-#include "mixed_arena.h"
 #include "support/index.h"
+#include "support/mixed_arena.h"
 #include "support/name.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
@@ -993,9 +994,11 @@ public:
   bool signed_ = false;
   Address offset;
   Address align;
-  bool isAtomic;
   Expression* ptr;
   Name memory;
+  MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   // type must be set during creation, cannot be inferred
 
@@ -1010,11 +1013,13 @@ public:
   uint8_t bytes;
   Address offset;
   Address align;
-  bool isAtomic;
   Expression* ptr;
   Expression* value;
   Type valueType;
   Name memory;
+  MemoryOrder order;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
@@ -1376,7 +1381,7 @@ public:
   Name func;
 
   void finalize();
-  void finalize(HeapType heapType);
+  void finalize(Module& wasm);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
@@ -2114,6 +2119,9 @@ public:
     : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
       sentTypes(allocator) {}
 
+  // If tag is set to a non-null Name, this is a resume_throw and |operands|
+  // contains the values to be set in an exception of that tag. If tag is null,
+  // this is resume_throw_ref and |operands| contains a single item, the exnref.
   Name tag;
   // See the comment on `Resume` above.
   ArenaVector<Name> handlerTags;
@@ -2169,6 +2177,7 @@ struct Importable : Named {
   Name module, base;
 
   bool imported() const { return module.is(); }
+  ImportNames importNames() const { return ImportNames{module, base}; };
 };
 
 class Function;
@@ -2224,7 +2233,9 @@ class EffectAnalyzer;
 
 class Function : public Importable {
 public:
-  HeapType type = HeapType(Signature()); // parameters and return value
+  // A non-nullable reference to a function type. Exact for defined functions.
+  // TODO: Inexact for imported functions.
+  Type type = Type(Signature(), NonNullable, Exact);
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
@@ -2307,11 +2318,15 @@ public:
   bool noPartialInline = false;
 
   // Methods
-  Signature getSig() { return type.getSignature(); }
+  Signature getSig() { return type.getHeapType().getSignature(); }
   Type getParams() { return getSig().params; }
   Type getResults() { return getSig().results; }
-  void setParams(Type params) { type = Signature(params, getResults()); }
-  void setResults(Type results) { type = Signature(getParams(), results); }
+  void setParams(Type params) {
+    type = type.with(Signature(params, getResults()));
+  }
+  void setResults(Type results) {
+    type = type.with(Signature(getParams(), results));
+  }
 
   size_t getNumParams();
   size_t getNumVars();
@@ -2336,15 +2351,20 @@ public:
   void clearDebugInfo();
 };
 
-// The kind of an import or export.
-enum class ExternalKind {
+// The kind of an import or export. Use a namespace to avoid polluting the wasm
+// namespace while maintaining implicit conversion to int, which an enum class
+// would not have.
+namespace ExternalKindImpl {
+enum Kind : uint32_t {
   Function = 0,
   Table = 1,
   Memory = 2,
   Global = 3,
   Tag = 4,
-  Invalid = -1
+  Invalid = uint32_t(-1)
 };
+} // namespace ExternalKindImpl
+using ExternalKind = ExternalKindImpl::Kind;
 
 // The kind of a top-level module item. (This overlaps with ExternalKind, but
 // C++ has no good way to extend an enum.) All such items are referred to by
@@ -2623,8 +2643,9 @@ public:
 // Utility for printing an expression with named types.
 using ModuleExpression = std::pair<Module&, Expression*>;
 
-// Utility for printing an type with a name, if the module defines a name.
+// Utilities for printing an type with a name, if the module defines a name.
 using ModuleType = std::pair<Module&, Type>;
+using ModuleHeapType = std::pair<Module&, HeapType>;
 
 // Utility for printing only the top level of an expression. Named types will be
 // used if `module` is non-null.
@@ -2632,6 +2653,16 @@ struct ShallowExpression {
   Expression* expr;
   Module* module = nullptr;
 };
+
+std::ostream& operator<<(std::ostream& o, wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, wasm::Function& func);
+std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
+std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
+std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo);
+std::ostream& operator<<(std::ostream& o, const wasm::ImportNames& importNames);
 
 } // namespace wasm
 
@@ -2641,13 +2672,6 @@ template<> struct hash<wasm::Address> {
     return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
-
-std::ostream& operator<<(std::ostream& o, wasm::Module& module);
-std::ostream& operator<<(std::ostream& o, wasm::Function& func);
-std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
-std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
-std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
-std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
 
 } // namespace std
 

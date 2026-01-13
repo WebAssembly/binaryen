@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -52,8 +53,9 @@ namespace wasm {
 //                                          subtype of anothers, for example,
 //                                          a block and its last child.
 //
-//  * noteCast(HeapType, HeapType) - A fixed type is cast to another, for
-//                                   example, in a CallIndirect.
+//  * noteCast(HeapType, Type) - A fixed type is cast to another, for example,
+//                               in a CallIndirect. The destination is a Type
+//                               rather than HeapType because it may be exact.
 //  * noteCast(Expression, Type) - An expression's type is cast to a fixed type,
 //                                 for example, in RefTest.
 //  * noteCast(Expression, Expression) - An expression's type is cast to
@@ -131,6 +133,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitBreak(Break* curr) {
     if (curr->value) {
       self()->noteSubtype(curr->value, self()->findBreakTarget(curr->name));
+      if (curr->condition && curr->type != Type::unreachable) {
+        self()->noteSubtype(curr->value, curr);
+      }
     }
   }
   void visitSwitch(Switch* curr) {
@@ -165,7 +170,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       //       this is a trivial situation that is not worth optimizing.
       self()->noteSubtype(tableType, curr->heapType);
     } else if (HeapType::isSubType(curr->heapType, tableType)) {
-      self()->noteCast(tableType, curr->heapType);
+      self()->noteCast(tableType, Type(curr->heapType, NonNullable, Inexact));
     } else {
       // The types are unrelated and the cast will fail. We can keep the types
       // unrelated.
@@ -221,8 +226,15 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
   void visitRefEq(RefEq* curr) {
-    self()->noteNonFlowSubtype(curr->left, Type(HeapType::eq, Nullable));
-    self()->noteNonFlowSubtype(curr->right, Type(HeapType::eq, Nullable));
+    // Match the shareability of the current content (if it exists).
+    // TODO: This could also allow both sides to flip.
+    HeapType eq = HeapType::eq;
+    if (curr->type != Type::unreachable) {
+      eq = eq.getBasic(curr->left->type.getHeapType().getShared());
+    }
+    auto type = Type(eq, Nullable);
+    self()->noteNonFlowSubtype(curr->left, type);
+    self()->noteNonFlowSubtype(curr->right, type);
   }
   void visitTableGet(TableGet* curr) {}
   void visitTableSet(TableSet* curr) {
@@ -311,8 +323,16 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefCast(RefCast* curr) { self()->noteCast(curr->ref, curr); }
   void visitRefGetDesc(RefGetDesc* curr) {}
   void visitBrOn(BrOn* curr) {
-    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-      self()->noteCast(curr->ref, curr->castType);
+    switch (curr->op) {
+      case BrOnNull:
+      case BrOnNonNull:
+        break;
+      case BrOnCast:
+      case BrOnCastFail:
+      case BrOnCastDesc:
+      case BrOnCastDescFail:
+        self()->noteCast(curr->ref, curr->castType);
+        break;
     }
     self()->noteSubtype(curr->getSentType(),
                         self()->findBreakTarget(curr->name));
@@ -428,8 +448,19 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->replacement, type);
   }
   void visitRefAs(RefAs* curr) {
-    if (curr->op == RefAsNonNull) {
-      self()->noteCast(curr->value, curr);
+    switch (curr->op) {
+      case RefAsNonNull:
+        self()->noteCast(curr->value, curr);
+        return;
+      case AnyConvertExtern:
+        return;
+      case ExternConvertAny:
+        if (curr->type != Type::unreachable) {
+          auto any =
+            HeapTypes::any.getBasic(curr->type.getHeapType().getShared());
+          self()->noteSubtype(curr->value, Type(any, Nullable));
+        }
+        return;
     }
   }
   void visitStringNew(StringNew* curr) {}
@@ -530,13 +561,16 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
     processResumeHandlers(
       curr->cont->type, curr->handlerTags, curr->handlerBlocks);
-    // The types we use to create the exception package must remain subtypes of
-    // the types expected by the exception tag.
-    auto params =
-      self()->getModule()->getTag(curr->tag)->type.getSignature().params;
-    assert(curr->operands.size() == params.size());
-    for (Index i = 0; i < curr->operands.size(); ++i) {
-      self()->noteSubtype(curr->operands[i], params[i]);
+
+    if (curr->tag) {
+      // The types we use to create the exception package must remain subtypes
+      // of the types expected by the exception tag.
+      auto params =
+        self()->getModule()->getTag(curr->tag)->type.getSignature().params;
+      assert(curr->operands.size() == params.size());
+      for (Index i = 0; i < curr->operands.size(); ++i) {
+        self()->noteSubtype(curr->operands[i], params[i]);
+      }
     }
   }
   void visitStackSwitch(StackSwitch* curr) {

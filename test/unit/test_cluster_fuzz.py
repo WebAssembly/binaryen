@@ -10,6 +10,7 @@ import tempfile
 import unittest
 
 from scripts.test import shared
+
 from . import utils
 
 
@@ -71,15 +72,14 @@ class ClusterFuzz(utils.BinaryenTestCase):
                                f'--output_dir={testcase_dir}',
                                f'--no_of_files={N}'],
                               text=True,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+                              capture_output=True)
         self.assertEqual(proc.returncode, 0)
 
         # We should have logged the creation of N testcases.
         self.assertEqual(proc.stdout.count('Created testcase:'), N)
 
         # We should have actually created them.
-        for i in range(0, N + 2):
+        for i in range(N + 2):
             fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
             flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
             # We actually emit the range [1, N], so 0 or N+1 should not exist.
@@ -136,7 +136,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # probability then something is very wrong, and we'd like to see
         # errors.)
         seen_num_passes = set()
-        for i in range(100):
+        for _ in range(100):
             os.environ['BINARYEN_PASS_DEBUG'] = '1'
             try:
                 proc = self.generate_testcases(N, temp_dir.name)
@@ -165,8 +165,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
         seen_sizes = []
         seen_exports = []
 
-        # Second wasm files are also emitted sometimes.
+        # Second wasm files are also emitted sometimes, and sometimes they
+        # import the primary module.
         seen_second_sizes = []
+        seen_primary_imports = 0
 
         # The number of struct.news appears in the metrics report like this:
         #
@@ -230,6 +232,12 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # sizes, is enough).
                 seen_second_sizes.append(os.path.getsize(second_binary_file))
 
+                # The primary module should be imported sometimes.
+                wat = subprocess.check_output(
+                    shared.WASM_DIS + [second_binary_file], text=True)
+                if '(import "primary" ' in wat:
+                    seen_primary_imports += 1
+
         print()
 
         print('struct.news can vary a lot, but should be ~10')
@@ -278,6 +286,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
+        # Primary imports appear in most second files.
+        print('number of primary imports should be around 22 +- 4')
+        print(f'number of primary_imports: {seen_primary_imports}')
+        assert seen_primary_imports >= 2, 'must see some primary imports'
+
+        print()
+
         # To check for interesting JS file contents, we'll note how many times
         # we build and run the wasm, and other things like JSPI.
         seen_builds = []
@@ -307,7 +322,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 js = f.read()
             seen_builds.append(js.count('build(binary);'))
             seen_calls.append(re.findall(call_exports_regex, js))
-            seen_second_builds.append(js.count('build(secondBinary);'))
+            seen_second_builds.append(js.count('build(secondBinary, true);'))
 
             # If JSPI is enabled, the async and await keywords should be
             # enabled (uncommented).
@@ -429,9 +444,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                        fuzz_file]
                 # Capture stderr even though we will not read it. It may
                 # contain warnings like us passing v8 experimental flags.
-                proc = subprocess.run(cmd,
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
+                proc = subprocess.run(cmd, capture_output=True)
 
                 # An execution is valid if we exited without error, and if we
                 # managed to run some code before exiting (modules with no
@@ -439,8 +452,20 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # rare, and in a sense they are actually unuseful).
                 if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
                     valid_executions += 1
+                else:
+                    print('====')
+                    print('invalid execution, returncode: ', proc.returncode)
+                    print('stdout:')
+                    print(proc.stdout)
+                    print('stderr:')
+                    print(proc.stderr)
+                    print('====')
 
-            print('Valid executions are distributed as ~ mean 0.99')
+            # We do not want valid executions to be 100%, as some amount of
+            # traps during startup are interesting (VMs can have bugs there),
+            # but the vast majority should be valid. (Startup traps can include
+            # null descriptors, segments out of bounds, etc.)
+            print('Valid executions are distributed as ~ mean 0.95')
             print(f'mean valid executions: {valid_executions / N}')
             # Assert on having at least half execute properly. Given the true mean
             # is 0.9, for half of 100 to fail is incredibly unlikely.
@@ -460,7 +485,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         failed = False
         try:
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(cmd, check=True, capture_output=True)
         except subprocess.CalledProcessError:
             # Expected error.
             failed = True

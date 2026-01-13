@@ -156,8 +156,10 @@ public:
                     Name mem);
   Result<> makeStore(
     unsigned bytes, Address offset, unsigned align, Type type, Name mem);
-  Result<> makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem);
-  Result<> makeAtomicStore(unsigned bytes, Address offset, Type type, Name mem);
+  Result<> makeAtomicLoad(
+    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
+  Result<> makeAtomicStore(
+    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
   Result<> makeAtomicRMW(
     AtomicRMWOp op, unsigned bytes, Address offset, Type type, Name mem);
   Result<>
@@ -229,8 +231,8 @@ public:
                     Type in = Type::none,
                     Type out = Type::none,
                     std::optional<bool> likely = std::nullopt);
-  Result<> makeStructNew(HeapType type);
-  Result<> makeStructNewDefault(HeapType type);
+  Result<> makeStructNew(HeapType type, bool isDesc);
+  Result<> makeStructNewDefault(HeapType type, bool isDesc);
   Result<>
   makeStructGet(HeapType type, Index field, bool signed_, MemoryOrder order);
   Result<> makeStructSet(HeapType type, Index field, MemoryOrder order);
@@ -273,6 +275,12 @@ public:
                            Name tag,
                            const std::vector<Name>& tags,
                            const std::vector<std::optional<Index>>& labels);
+  Result<> makeResumeThrowRef(HeapType ct,
+                              const std::vector<Name>& tags,
+                              const std::vector<std::optional<Index>>& labels) {
+    // resume_throw_ref has an empty tag.
+    return makeResumeThrow(ct, Name(), tags, labels);
+  }
   Result<> makeStackSwitch(HeapType ct, Name tag);
 
   // Private functions that must be public for technical reasons.
@@ -537,7 +545,7 @@ private:
     }
     Type getResultType() {
       if (auto* func = getFunction()) {
-        return func->type.getSignature().results;
+        return func->getResults();
       }
       if (auto* block = getBlock()) {
         return block->type;

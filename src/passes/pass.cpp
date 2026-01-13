@@ -569,7 +569,7 @@ void PassRegistry::registerPasses() {
                "merge types to their supertypes where possible",
                createTypeMergingPass);
   registerPass("type-ssa",
-               "create new nominal types to help other optimizations",
+               "create new types to help other optimizations",
                createTypeSSAPass);
   registerPass("type-unfinalizing",
                "mark all types as non-final (open)",
@@ -763,8 +763,15 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("remove-unused-module-elements");
     if (options.closedWorld) {
       addIfNoDWARFIssues("remove-unused-types");
-      addIfNoDWARFIssues("cfp");
-      addIfNoDWARFIssues("gsi");
+      // Allow ref.tests in cfp if we are aggressively optimizing for speed.
+      if (options.optimizeLevel >= 3) {
+        addIfNoDWARFIssues("cfp-reftest");
+      } else {
+        addIfNoDWARFIssues("cfp");
+      }
+    }
+    addIfNoDWARFIssues("gsi");
+    if (options.closedWorld) {
       addIfNoDWARFIssues("abstract-type-refining");
       addIfNoDWARFIssues("unsubtyping");
     }

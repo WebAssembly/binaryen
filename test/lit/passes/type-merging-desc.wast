@@ -7,10 +7,10 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (struct))
     (type $A (struct))
-    ;; CHECK:       (type $B (descriptor $C (struct)))
-    (type $B (descriptor $C (struct)))
-    ;; CHECK:       (type $C (describes $B (struct)))
-    (type $C (describes $B (struct)))
+    ;; CHECK:       (type $B (descriptor $C) (struct))
+    (type $B (descriptor $C) (struct))
+    ;; CHECK:       (type $C (describes $B) (struct))
+    (type $C (describes $B) (struct))
   )
 
   ;; The types have different shapes and should not be merged.
@@ -29,18 +29,18 @@
   ;; cannot merge $B into $A without also merging their full descriptor chains.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $C (sub $B (descriptor $C.desc (struct (field i32)))))
-    (type $C (sub $B (descriptor $C.desc (struct (field i32)))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct (field anyref)))))
-    (type $B.desc (sub $A.desc (describes $B (struct (field anyref)))))
-    ;; CHECK:       (type $C.desc (sub $B.desc (describes $C (struct (field eqref)))))
-    (type $C.desc (sub $B.desc (describes $C (struct (field eqref)))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; CHECK:       (type $C (sub $B (descriptor $C.desc) (struct (field i32))))
+    (type $C (sub $B (descriptor $C.desc) (struct (field i32))))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct (field anyref))))
+    (type $B.desc (sub $A.desc (describes $B) (struct (field anyref))))
+    ;; CHECK:       (type $C.desc (sub $B.desc (describes $C) (struct (field eqref))))
+    (type $C.desc (sub $B.desc (describes $C) (struct (field eqref))))
   )
 
   ;; CHECK:      (global $A (ref null $A) (ref.null none))
@@ -63,16 +63,16 @@
   ;; $A.meta to be merged into. We cannot optimize here.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (descriptor $B.meta (struct)))))
-    (type $B.desc (sub $A.desc (describes $B (descriptor $B.meta (struct)))))
-    ;; CHECK:       (type $B.meta (describes $B.desc (struct)))
-    (type $B.meta (describes $B.desc (struct)))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (descriptor $B.meta) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (descriptor $B.meta) (struct)))
+    ;; CHECK:       (type $B.meta (describes $B.desc) (struct))
+    (type $B.meta (describes $B.desc) (struct))
   )
 
   ;; CHECK:       (type $5 (func (result (ref $B.meta))))
@@ -85,8 +85,8 @@
   ;; CHECK:      (func $meta (type $5) (result (ref $B.meta))
   ;; CHECK-NEXT:  (ref.get_desc $B.desc
   ;; CHECK-NEXT:   (ref.get_desc $B
-  ;; CHECK-NEXT:    (struct.new_default $B
-  ;; CHECK-NEXT:     (struct.new_default $B.desc
+  ;; CHECK-NEXT:    (struct.new_default_desc $B
+  ;; CHECK-NEXT:     (struct.new_default_desc $B.desc
   ;; CHECK-NEXT:      (struct.new_default $B.meta)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -99,8 +99,8 @@
     ;; descriptor.
     (ref.get_desc $B.desc
       (ref.get_desc $B
-        (struct.new $B
-          (struct.new $B.desc
+        (struct.new_desc $B
+          (struct.new_desc $B.desc
             (struct.new $B.meta)
           )
         )
@@ -113,14 +113,14 @@
   ;; We cannot optimize because $B has an extra field.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct (field i32)))))
-    (type $B (sub $A (descriptor $B.desc (struct (field i32)))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct (field i32))))
+    (type $B (sub $A (descriptor $B.desc) (struct (field i32))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
 
   ;; CHECK:       (type $4 (func (result (ref $B.desc))))
@@ -132,14 +132,14 @@
 
   ;; CHECK:      (func $desc (type $4) (result (ref $B.desc))
   ;; CHECK-NEXT:  (ref.get_desc $B
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (struct.new_default $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (result (ref $B.desc))
     (ref.get_desc $B
-      (struct.new_default $B
+      (struct.new_default_desc $B
         (struct.new_default $B.desc)
       )
     )
@@ -150,14 +150,14 @@
   ;; We cannot optimize because $B.desc has an extra field.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct (field i32)))))
-    (type $B.desc (sub $A.desc (describes $B (struct (field i32)))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct (field i32))))
+    (type $B.desc (sub $A.desc (describes $B) (struct (field i32))))
   )
 
   ;; CHECK:       (type $4 (func (result (ref $B.desc))))
@@ -169,14 +169,14 @@
 
   ;; CHECK:      (func $desc (type $4) (result (ref $B.desc))
   ;; CHECK-NEXT:  (ref.get_desc $B
-  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:   (struct.new_default_desc $B
   ;; CHECK-NEXT:    (struct.new_default $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (result (ref $B.desc))
     (ref.get_desc $B
-      (struct.new_default $B
+      (struct.new_default_desc $B
         (struct.new_default $B.desc)
       )
     )
@@ -187,12 +187,12 @@
   ;; We can optimize because $B matches $A and $B.desc matches $A.desc.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
 
   ;; CHECK:       (type $2 (func (result (ref $A.desc))))
@@ -204,14 +204,14 @@
 
   ;; CHECK:      (func $desc (type $2) (result (ref $A.desc))
   ;; CHECK-NEXT:  (ref.get_desc $A
-  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:   (struct.new_default_desc $A
   ;; CHECK-NEXT:    (struct.new_default $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (result (ref $B.desc))
     (ref.get_desc $B
-      (struct.new_default $B
+      (struct.new_default_desc $B
         (struct.new_default $B.desc)
       )
     )
@@ -223,14 +223,14 @@
   ;; among the types in the chain differently. We cannot optimize.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (descriptor $A.desc (struct (field i32) (field f32) (field i64))))
-    (type $A (descriptor $A.desc (struct (field i32 f32 i64))))
-    ;; CHECK:       (type $A.desc (describes $A (struct (field f64))))
-    (type $A.desc (describes $A (struct (field f64))))
-    ;; CHECK:       (type $B (descriptor $B.desc (struct (field i32))))
-    (type $B (descriptor $B.desc (struct (field i32))))
-    ;; CHECK:       (type $B.desc (describes $B (struct (field f32) (field i64) (field f64))))
-    (type $B.desc (describes $B (struct (field f32 i64 f64))))
+    ;; CHECK-NEXT:  (type $A (descriptor $A.desc) (struct (field i32) (field f32) (field i64)))
+    (type $A (descriptor $A.desc) (struct (field i32 f32 i64)))
+    ;; CHECK:       (type $A.desc (describes $A) (struct (field f64)))
+    (type $A.desc (describes $A) (struct (field f64)))
+    ;; CHECK:       (type $B (descriptor $B.desc) (struct (field i32)))
+    (type $B (descriptor $B.desc) (struct (field i32)))
+    ;; CHECK:       (type $B.desc (describes $B) (struct (field f32) (field i64) (field f64)))
+    (type $B.desc (describes $B) (struct (field f32 i64 f64)))
   )
 
   ;; CHECK:      (global $A (ref null $A) (ref.null none))
@@ -248,14 +248,14 @@
   ;; subtype chain.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
 
   ;; CHECK:       (type $4 (func))
@@ -291,14 +291,14 @@
   ;; the supertype chain.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
 
   ;; CHECK:       (type $4 (func))
@@ -333,12 +333,12 @@
   ;; we can still merge.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
 
   ;; CHECK:       (type $2 (func (param anyref)))
@@ -373,10 +373,10 @@
   ;; They should not be merged.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X1 (descriptor $X2 (struct)))
-    (type $X1 (descriptor $X2 (struct)))
-    ;; CHECK:       (type $X2 (describes $X1 (struct)))
-    (type $X2 (describes $X1 (struct)))
+    ;; CHECK-NEXT:  (type $X1 (descriptor $X2) (struct))
+    (type $X1 (descriptor $X2) (struct))
+    ;; CHECK:       (type $X2 (describes $X1) (struct))
+    (type $X2 (describes $X1) (struct))
     ;; CHECK:       (type $A (struct (field (ref $X1))))
     (type $A (struct (ref $X1)))
     ;; CHECK:       (type $B (struct (field (ref $X2))))
@@ -396,10 +396,10 @@
   ;; Referring to a public child only later in a chain should not cause a crash.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $use-public (descriptor $use-public.desc (struct)))
-    (type $use-public (descriptor $use-public.desc (struct)))
-    ;; CHECK:       (type $use-public.desc (describes $use-public (struct (field (ref $public)))))
-    (type $use-public.desc (describes $use-public (struct (field (ref $public)))))
+    ;; CHECK-NEXT:  (type $use-public (descriptor $use-public.desc) (struct))
+    (type $use-public (descriptor $use-public.desc) (struct))
+    ;; CHECK:       (type $use-public.desc (describes $use-public) (struct (field (ref $public))))
+    (type $use-public.desc (describes $use-public) (struct (field (ref $public))))
   )
 
   ;; CHECK:      (global $public (ref null $public) (ref.null none))
@@ -417,10 +417,10 @@
   ;; cause a crash.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $public (descriptor $public.desc (struct)))
-    (type $public (descriptor $public.desc (struct)))
-    ;; CHECK:       (type $public.desc (describes $public (struct)))
-    (type $public.desc (describes $public (struct)))
+    ;; CHECK-NEXT:  (type $public (descriptor $public.desc) (struct))
+    (type $public (descriptor $public.desc) (struct))
+    ;; CHECK:       (type $public.desc (describes $public) (struct))
+    (type $public.desc (describes $public) (struct))
   )
   ;; CHECK:      (type $use-public (struct (field (ref null $public.desc))))
   (type $use-public (struct (ref null $public.desc)))
@@ -433,60 +433,4 @@
 
   ;; CHECK:      (export "public" (global $public))
   (export "public" (global $public))
-)
-
-(module
-  ;; In principle we could merge the $B chain into the $A chain, because $A and
-  ;; $B are mergeable as siblings and $B.desc is mergeable into its supertype
-  ;; A.desc. However we do not currently do this kind of merge in either phase.
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
-    (type $B (sub (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
-  )
-
-  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
-  (global $B.desc (ref null $B.desc) (ref.null none))
-)
-
-(module
-  (rec
-    ;; Like above, but now we have an unrelated C chain. We have these chains:
-    ;;
-    ;; A -> A.desc
-    ;;        ^
-    ;; B -> B.desc
-    ;;
-    ;; C -> C.desc
-    ;;
-    ;; The C chain should not be considered a sibling of the B chain because
-    ;; C.desc is not a subtype of A.desc, even though they would look like
-    ;; siblings if you only considered the base type in the chain.
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (descriptor $A.desc (struct)))
-    (type $A (descriptor $A.desc (struct)))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; CHECK:       (type $B (descriptor $B.desc (struct)))
-    (type $B (descriptor $B.desc (struct)))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
-    ;; CHECK:       (type $C (descriptor $C.desc (struct)))
-    (type $C (descriptor $C.desc (struct)))
-    ;; CHECK:       (type $C.desc (describes $C (struct)))
-    (type $C.desc (describes $C (struct)))
-  )
-
-  ;; CHECK:      (global $C (ref null $C) (ref.null none))
-  (global $C (ref null $C) (ref.null none))
-
-  ;; This would become invalid if $B.desc were merged into $C.desc.
-  ;; CHECK:      (global $A.desc (ref null $A.desc) (struct.new_default $B.desc))
-  (global $A.desc (ref null $A.desc) (struct.new_default $B.desc))
 )

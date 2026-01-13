@@ -198,6 +198,10 @@ struct ValidationInfo {
                                 Expression* curr,
                                 const char* text,
                                 Function* func = nullptr) {
+    if (!ty.isBasic()) {
+      fail(text, curr, func);
+      return;
+    }
     switch (ty.getBasic()) {
       case Type::i32:
       case Type::i64:
@@ -298,7 +302,7 @@ public:
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
     if (curr->name.is()) {
-      self->breakTypes[curr->name];
+      self->breakTypes.try_emplace(curr->name);
     }
   }
 
@@ -309,7 +313,7 @@ public:
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
     if (curr->name.is()) {
-      self->breakTypes[curr->name];
+      self->breakTypes.try_emplace(curr->name);
     }
   }
 
@@ -965,7 +969,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->type);
+  validateCallParamsAndResult(curr, target->type.getHeapType());
 
   if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
     // call.without.effects has the specific form of the last argument being a
@@ -1095,7 +1099,7 @@ void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
 void FunctionValidator::visitLoad(Load* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(!!memory, curr, "memory.load memory must exist");
-  if (curr->isAtomic) {
+  if (curr->isAtomic()) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
                  "Atomic operations require threads [--enable-threads]");
@@ -1104,6 +1108,12 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "Atomic load should be i32 or i64");
   }
+  if (curr->order == MemoryOrder::AcqRel) {
+    shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                 curr,
+                 "Acquire/release operations require relaxed atomics "
+                 "[--enable-relaxed-atomics]");
+  }
   if (curr->type == Type::v128) {
     shouldBeTrue(getModule()->features.hasSIMD(),
                  curr,
@@ -1111,13 +1121,14 @@ void FunctionValidator::visitLoad(Load* curr) {
   }
   validateMemBytes(curr->bytes, curr->type, curr);
   validateOffset(curr->offset, memory, curr);
-  validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
+  validateAlignment(
+    curr->align, curr->type, curr->bytes, curr->isAtomic(), curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
     memory->addressType,
     curr,
     "load pointer type must match memory index type");
-  if (curr->isAtomic) {
+  if (curr->isAtomic()) {
     shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
     shouldBeIntOrUnreachable(
       curr->type, curr, "atomic loads must be of integers");
@@ -1127,7 +1138,7 @@ void FunctionValidator::visitLoad(Load* curr) {
 void FunctionValidator::visitStore(Store* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(!!memory, curr, "memory.store memory must exist");
-  if (curr->isAtomic) {
+  if (curr->isAtomic()) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
                  "Atomic operations require threads [--enable-threads]");
@@ -1135,6 +1146,12 @@ void FunctionValidator::visitStore(Store* curr) {
                    curr->valueType == Type::unreachable,
                  curr,
                  "Atomic store should be i32 or i64");
+  }
+  if (curr->order == MemoryOrder::AcqRel) {
+    shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                 curr,
+                 "Acquire/release operations require relaxed atomics "
+                 "[--enable-relaxed-atomics]");
   }
   if (curr->valueType == Type::v128) {
     shouldBeTrue(getModule()->features.hasSIMD(),
@@ -1144,7 +1161,7 @@ void FunctionValidator::visitStore(Store* curr) {
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateOffset(curr->offset, memory, curr);
   validateAlignment(
-    curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
+    curr->align, curr->valueType, curr->bytes, curr->isAtomic(), curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
     memory->addressType,
@@ -1156,7 +1173,7 @@ void FunctionValidator::visitStore(Store* curr) {
                   "store value type must not be none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->value->type, curr->valueType, curr, "store value type must match");
-  if (curr->isAtomic) {
+  if (curr->isAtomic()) {
     shouldBeIntOrUnreachable(
       curr->valueType, curr, "atomic stores must be of integers");
   }
@@ -2385,11 +2402,10 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   if (!shouldBeTrue(!!func, curr, "function argument of ref.func must exist")) {
     return;
   }
-  shouldBeTrue(func->type == curr->type.getHeapType(),
-               curr,
-               "function reference type must match referenced function type");
-  shouldBeTrue(
-    curr->type.isExact(), curr, "function reference should be exact");
+  shouldBeEqual(curr->type,
+                func->type,
+                curr,
+                "function reference type must match referenced function type");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -2910,6 +2926,10 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
 void FunctionValidator::visitRefTest(RefTest* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.test requires gc [--enable-gc]");
+
+  shouldBeTrue(
+    curr->castType.isCastable(), curr, "ref.test cannot cast to invalid type");
+
   if (curr->ref->type == Type::unreachable) {
     return;
   }
@@ -2939,11 +2959,26 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
                  "ref.test of exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
   }
+
+  shouldBeTrue(
+    curr->ref->type.isCastable(), curr, "ref.test cannot cast invalid type");
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.cast requires gc [--enable-gc]");
+
+  // Require descriptors to be valid even if the ref is unreachable.
+  if (curr->desc && curr->desc->type != Type::unreachable) {
+    auto descType = curr->desc->type;
+    bool isNull = descType.isNull();
+    bool isDescriptor =
+      descType.isRef() && descType.getHeapType().getDescribedType();
+    shouldBeTrue(isNull || isDescriptor,
+                 curr,
+                 "ref.cast_desc descriptor must be a descriptor reference");
+  }
+
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -2987,6 +3022,11 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                  "[--enable-custom-descriptors]");
   }
 
+  shouldBeTrue(
+    curr->ref->type.isCastable(), curr, "ref.cast cannot cast invalid type");
+  shouldBeTrue(
+    curr->type.isCastable(), curr, "ref.cast cannot cast to invalid type");
+
   if (!curr->desc) {
     return;
   }
@@ -3006,11 +3046,7 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   }
 
   auto described = descriptor.getDescribedType();
-  if (!shouldBeTrue(bool(described),
-                    curr,
-                    "ref.cast_desc descriptor should have a described type")) {
-    return;
-  }
+  assert(described && "already checked descriptor");
   shouldBeEqual(*described,
                 curr->type.getHeapType(),
                 curr,
@@ -3114,6 +3150,10 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                      "br_on_cast* to exact type requires custom descriptors "
                      "[--enable-custom-descriptors]");
       }
+      shouldBeTrue(
+        curr->ref->type.isCastable(), curr, "br_on cannot cast invalid type");
+      shouldBeTrue(
+        curr->castType.isCastable(), curr, "br_on cannot cast to invalid type");
       break;
     }
   }
@@ -4073,9 +4113,29 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     curr,
     "sentTypes cache in resume_throw instruction has not been initialized");
 
-  auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
-    return;
+  if (curr->tag) {
+    // Normal resume_throw
+    auto* tag = getModule()->getTagOrNull(curr->tag);
+    if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
+      return;
+    }
+    shouldBeEqual(curr->operands.size(),
+                  tag->params().size(),
+                  curr,
+                  "resume_throw num operands must match the tag");
+    // TODO: validate operand types as well
+  } else {
+    // resume_throw_ref
+    Type exnref = Type(HeapType::exn, Nullable);
+    if (shouldBeEqual(curr->operands.size(),
+                      size_t(1),
+                      curr,
+                      "resume_throw_ref must have a single exnref operand")) {
+      shouldBeSubType(curr->operands[0]->type,
+                      exnref,
+                      curr,
+                      "resume_throw_ref must receive exnref");
+    }
   }
 
   if (curr->cont->type.isRef() &&
@@ -4135,6 +4195,16 @@ void FunctionValidator::visitFunction(Function* curr) {
   shouldBeTrue(features <= getModule()->features,
                curr->name,
                "all used types should be allowed");
+
+  if (curr->imported()) {
+    shouldBeTrue(
+      curr->type.isInexact() || getModule()->features.hasCustomDescriptors(),
+      curr->name,
+      "exact imports require custom descriptors [--enable-custom-descriptors]");
+  } else {
+    shouldBeTrue(
+      curr->type.isExact(), curr->name, "defined function should be exact");
+  }
 
   // validate optional local names
   std::unordered_set<Name> seen;

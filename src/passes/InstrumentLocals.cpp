@@ -195,7 +195,8 @@ private:
   Index id = 0;
 
   void addImport(Module* wasm, Name name, Type params, Type results) {
-    auto import = Builder::makeFunction(name, Signature(params, results), {});
+    auto import = Builder::makeFunction(
+      name, Type(Signature(params, results), NonNullable, Inexact), {});
     import->module = ENV;
     import->base = name;
     wasm->addFunction(std::move(import));

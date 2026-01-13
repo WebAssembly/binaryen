@@ -1166,7 +1166,6 @@ IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
 
     // If all the received values are in the scratch local, just fetch them out.
     if (receivedType == Type::none) {
-      assert(extraType == labelType);
       curr = builder.makeSequence(
         curr, builder.makeLocalGet(extraLocal, extraType), extraType);
       continue;
@@ -1412,6 +1411,9 @@ Result<> IRBuilder::makeLocalGet(Index local) {
   if (!func) {
     return Err{"local.get is only valid in a function context"};
   }
+  if (local >= func->getNumLocals()) {
+    return Err{"invalid local.get index"};
+  }
   push(builder.makeLocalGet(local, func->getLocalType(local)));
   return Ok{};
 }
@@ -1419,6 +1421,9 @@ Result<> IRBuilder::makeLocalGet(Index local) {
 Result<> IRBuilder::makeLocalSet(Index local) {
   if (!func) {
     return Err{"local.set is only valid in a function context"};
+  }
+  if (local >= func->getNumLocals()) {
+    return Err{"invalid local.set index"};
   }
   LocalSet curr;
   curr.index = local;
@@ -1430,6 +1435,9 @@ Result<> IRBuilder::makeLocalSet(Index local) {
 Result<> IRBuilder::makeLocalTee(Index local) {
   if (!func) {
     return Err{"local.tee is only valid in a function context"};
+  }
+  if (local >= func->getNumLocals()) {
+    return Err{"invalid local.tee index"};
   }
   LocalSet curr;
   curr.index = local;
@@ -1475,24 +1483,23 @@ Result<> IRBuilder::makeStore(
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem) {
+Result<> IRBuilder::makeAtomicLoad(
+  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
   Load curr;
   curr.memory = mem;
   CHECK_ERR(visitLoad(&curr));
-  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem));
+  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem, order));
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicStore(unsigned bytes,
-                                    Address offset,
-                                    Type type,
-                                    Name mem) {
+Result<> IRBuilder::makeAtomicStore(
+  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
   Store curr;
   curr.memory = mem;
   curr.valueType = type;
   CHECK_ERR(visitStore(&curr));
-  push(builder.makeAtomicStore(bytes, offset, curr.ptr, curr.value, type, mem));
+  push(builder.makeAtomicStore(
+    bytes, offset, curr.ptr, curr.value, type, mem, order));
   return Ok{};
 }
 
@@ -1736,7 +1743,7 @@ Result<> IRBuilder::makeRefIsNull() {
 }
 
 Result<> IRBuilder::makeRefFunc(Name func) {
-  push(builder.makeRefFunc(func, wasm.getFunction(func)->type));
+  push(builder.makeRefFunc(func));
   return Ok{};
 }
 
@@ -2121,10 +2128,17 @@ Result<> IRBuilder::makeBrOn(
   return Ok{};
 }
 
-Result<> IRBuilder::makeStructNew(HeapType type) {
+Result<> IRBuilder::makeStructNew(HeapType type, bool isDesc) {
   if (!type.isStruct()) {
     return Err{"expected struct type annotation on struct.new"};
   }
+  if (isDesc && !type.getDescriptorType()) {
+    return Err{"struct.new_desc of type without descriptor"};
+  }
+  // TODO: Uncomment this after a transition period.
+  // if (!isDesc && type.getDescriptorType()) {
+  //   return Err{"type with descriptor requires struct.new_desc"};
+  // }
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   curr.operands.resize(type.getStruct().fields.size());
@@ -2133,7 +2147,14 @@ Result<> IRBuilder::makeStructNew(HeapType type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStructNewDefault(HeapType type) {
+Result<> IRBuilder::makeStructNewDefault(HeapType type, bool isDesc) {
+  if (isDesc && !type.getDescriptorType()) {
+    return Err{"struct.new_default_desc of type without descriptor"};
+  }
+  // TODO: Uncomment this after a transition period.
+  // if (!isDesc && type.getDescriptorType()) {
+  //   return Err{"type with descriptor requires struct.new_default_desc"};
+  // }
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   CHECK_ERR(visitStructNew(&curr));
@@ -2145,6 +2166,9 @@ Result<> IRBuilder::makeStructGet(HeapType type,
                                   Index field,
                                   bool signed_,
                                   MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.get"};
+  }
   const auto& fields = type.getStruct().fields;
   StructGet curr;
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
@@ -2245,6 +2269,9 @@ Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
 
 Result<>
 IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.get"};
+  }
   ArrayGet curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2563,7 +2590,13 @@ IRBuilder::makeResumeThrow(HeapType ct,
 
   ResumeThrow curr(wasm.allocator);
   curr.tag = tag;
-  curr.operands.resize(wasm.getTag(tag)->params().size());
+  if (tag) {
+    // This is a normal resume_throw.
+    curr.operands.resize(wasm.getTag(tag)->params().size());
+  } else {
+    // This is a resume_throw_ref.
+    curr.operands.resize(1);
+  }
 
   Result<ResumeTable> resumetable = makeResumeTable(
     labels,

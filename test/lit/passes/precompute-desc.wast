@@ -6,18 +6,18 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
-    (type $struct (descriptor $desc (struct)))
-    ;; CHECK:       (type $desc (describes $struct (struct)))
-    (type $desc (describes $struct (struct)))
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new_default $desc))
   (global $desc (ref (exact $desc)) (struct.new $desc))
-  ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct
+  ;; CHECK:      (global $struct (ref $struct) (struct.new_default_desc $struct
   ;; CHECK-NEXT:  (global.get $desc)
   ;; CHECK-NEXT: ))
-  (global $struct (ref $struct) (struct.new $struct (global.get $desc)))
+  (global $struct (ref $struct) (struct.new_desc $struct (global.get $desc)))
 
   ;; CHECK:      (func $eq-descs (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
@@ -25,7 +25,7 @@
   (func $eq-descs (result i32)
     (ref.eq
       (ref.get_desc $struct
-        (struct.new $struct
+        (struct.new_desc $struct
           (global.get $desc)
         )
       )
@@ -39,7 +39,7 @@
   (func $different-descs (result i32)
     (ref.eq
       (ref.get_desc $struct
-        (struct.new $struct
+        (struct.new_desc $struct
           (struct.new $desc)
         )
       )

@@ -6,7 +6,7 @@
 (module
  ;; PRIMARY:      (type $0 (func (param i32) (result i32)))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (param i32) (result i32)))
 
  ;; PRIMARY:      (table $table 1 1 funcref)
  (table $table 1 1 funcref)
@@ -39,7 +39,7 @@
 
  ;; SECONDARY:      (import "primary" "table_3" (table $timport$0 1 funcref))
 
- ;; SECONDARY:      (import "primary" "foo" (func $foo (param i32) (result i32)))
+ ;; SECONDARY:      (import "primary" "foo" (func $foo (exact (param i32) (result i32))))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $bar)
 

@@ -100,6 +100,7 @@ function test_features() {
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);
   console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
+  console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -660,6 +661,7 @@ function test_core() {
     module.eqref.pop(),
     module.i31ref.pop(),
     module.structref.pop(),
+    module.arrayref.pop(),
     module.stringref.pop(),
 
     // Memory

@@ -33,9 +33,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "mixed_arena.h"
 #include "parser.h"
 #include "snprintf.h"
+#include "support/mixed_arena.h"
 #include "support/safe_integer.h"
 
 #define errv(str, ...) fprintf(stderr, str "\n", __VA_ARGS__);
@@ -310,13 +310,15 @@ struct Value {
   }
 
   char* parse(char* curr) {
-  /* space, tab, linefeed/newline, or return */
-#define is_json_space(x) (x == 32 || x == 9 || x == 10 || x == 13)
-#define skip()                                                                 \
-  {                                                                            \
-    while (*curr && is_json_space(*curr))                                      \
-      curr++;                                                                  \
-  }
+    /* space, tab, linefeed/newline, or return */
+    constexpr auto is_json_space = [](char x) {
+      return x == 32 || x == 9 || x == 10 || x == 13;
+    };
+    auto skip = [&curr, &is_json_space]() {
+      while (*curr && is_json_space(*curr)) {
+        curr++;
+      }
+    };
     skip();
     if (*curr == '"') {
       // String

@@ -1049,7 +1049,7 @@ struct OptimizeInstructions
         // extend operation.
         bool willBeSigned = curr->op == ExtendSInt32 && load->bytes == 4;
         if (!(curr->op == ExtendUInt32 && load->bytes <= 2 && load->signed_) &&
-            !(willBeSigned && load->isAtomic)) {
+            !(willBeSigned && load->isAtomic())) {
           if (willBeSigned) {
             load->signed_ = true;
           }
@@ -1092,7 +1092,7 @@ struct OptimizeInstructions
       // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
       // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
       if (auto* load = curr->value->dynCast<Load>()) {
-        if (!load->isAtomic && load->bytes == curr->type.getByteSize()) {
+        if (!load->isAtomic() && load->bytes == curr->type.getByteSize()) {
           load->type = curr->type;
           return replaceCurrent(load);
         }
@@ -1282,7 +1282,7 @@ struct OptimizeInstructions
         // instead of wrapping to 32, just store some of the bits in the i64
         curr->valueType = Type::i64;
         curr->value = unary->value;
-      } else if (!curr->isAtomic && Abstract::hasAnyReinterpret(unary->op) &&
+      } else if (!curr->isAtomic() && Abstract::hasAnyReinterpret(unary->op) &&
                  curr->bytes == curr->valueType.getByteSize()) {
         // f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
         // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
@@ -1800,13 +1800,18 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
-    // The types may prove that the same reference cannot appear on both sides.
+    // Check for unreachability. Note we must check both the children and the
+    // ref.eq itself, as in e.g. optimizeTernary, as we only refinalize at the
+    // end, so unreachable children may not update the parent yet.
     auto leftType = curr->left->type;
     auto rightType = curr->right->type;
-    if (leftType == Type::unreachable || rightType == Type::unreachable) {
+    if (leftType == Type::unreachable || rightType == Type::unreachable ||
+        curr->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
+
+    // The types may prove that the same reference cannot appear on both sides.
     auto leftHeapType = leftType.getHeapType();
     auto rightHeapType = rightType.getHeapType();
     auto leftIsHeapSubtype = HeapType::isSubType(leftHeapType, rightHeapType);
@@ -2551,6 +2556,17 @@ struct OptimizeInstructions
     //   (ref.cast (ref T) ..)
     //
     if (auto* as = curr->ref->dynCast<RefAs>(); as && as->op == RefAsNonNull) {
+      if (curr->desc) {
+        // There is another child here, whose effects we must consider (the same
+        // ordering situation as in skipNonNullCast: we want to move a trap on
+        // null past later children).
+        auto& options = getPassRunner()->options;
+        EffectAnalyzer descEffects(options, *getModule(), curr->desc);
+        ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
+        if (descEffects.invalidates(movingEffects)) {
+          return;
+        }
+      }
       curr->ref = as->value;
       curr->type = curr->type.with(NonNullable);
     }
@@ -5715,7 +5731,9 @@ private:
             // curr, and so they must be compatible to allow for a proper new
             // type after the transformation.
             //
-            // At minimum an LUB is required, as shown here:
+            // The children must have a shared supertype. For example, we cannot
+            // fold out the `drop` here because there would be no valid result
+            // type for the if afterward:
             //
             //  (if
             //    (condition)
@@ -5723,8 +5741,10 @@ private:
             //    (drop (f64.const 2.0))
             //  )
             //
-            // However, that may not be enough, as with nominal types we can
-            // have things like this:
+            // However, having a shared supertype may not be enough. If $A and
+            // $B have a shared supertype, but that supertype does not have a
+            // field at index 1, then we cannot fold the duplicated struct.get
+            // here:
             //
             //  (if
             //    (condition)
@@ -5732,47 +5752,25 @@ private:
             //    (struct.get $B 1 (..))
             //  )
             //
-            // It is possible that the LUB of $A and $B does not contain field
-            // "1". With structural types this specific problem is not possible,
-            // and it appears to be the case that with the GC MVP there is no
-            // instruction that poses a problem, but in principle it can happen
-            // there as well, if we add an instruction that returns the number
-            // of fields in a type, for example. For that reason, and to avoid
-            // a difference between structural and nominal typing here, disallow
-            // subtyping in both. (Note: In that example, the problem only
-            // happens because the type is not part of the struct.get - we infer
-            // it from the reference. That is why after hoisting the struct.get
-            // out, and computing a new type for the if that is now the child of
-            // the single struct.get, we get a struct.get of a supertype. So in
-            // principle we could fix this by modifying the IR as well, but the
-            // problem is more general, so avoid that.)
+            // (Note: In that example, the problem only happens because the type
+            // is not part of the struct.get - we infer it from the reference.
+            // That is why after hoisting the struct.get out, and computing a
+            // new type for the if that is now the child of the single
+            // struct.get, we get a struct.get of a supertype. So in principle
+            // we could fix this by modifying the IR as well, but the problem is
+            // more general, so avoid that.)
+            //
+            // For now, only support the case where the types of the children
+            // are the same.
+            //
+            // TODO: We could analyze whether the LUB of the children types
+            // would satisfy the constraints imposed by the shared parent
+            // instruction. This would require a version of ChildTyper that
+            // allows for generalizing type annotations.
             ChildIterator ifFalseChildren(curr->ifFalse);
             auto* ifTrueChild = *ifTrueChildren.begin();
             auto* ifFalseChild = *ifFalseChildren.begin();
             bool validTypes = ifTrueChild->type == ifFalseChild->type;
-
-            // In addition, after we move code outside of curr then we need to
-            // not change unreachability - if we did, we'd need to propagate
-            // that further, and we leave such work to DCE and Vacuum anyhow.
-            // This can happen in something like this for example, where the
-            // outer type changes from i32 to unreachable if we move the
-            // returns outside:
-            //
-            //  (if (result i32)
-            //    (local.get $x)
-            //    (return
-            //      (local.get $y)
-            //    )
-            //    (return
-            //      (local.get $z)
-            //    )
-            //  )
-            assert(curr->ifTrue->type == curr->ifFalse->type);
-            auto newOuterType = curr->ifTrue->type;
-            if ((newOuterType == Type::unreachable) !=
-                (curr->type == Type::unreachable)) {
-              validTypes = false;
-            }
 
             // If the expression we are about to move outside has side effects,
             // then we cannot do so in general with a select: we'd be reducing

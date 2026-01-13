@@ -284,7 +284,7 @@ struct ParallelFunctionAnalysis {
     // Fill in the map as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
-      map[func.get()];
+      map.insert({func.get(), {}});
     }
 
     doAnalysis(work);

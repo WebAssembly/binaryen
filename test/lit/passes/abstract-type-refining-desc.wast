@@ -12,28 +12,28 @@
   ;; relation between $B.desc and $A.desc.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-    (type $A (sub (descriptor $A.desc (struct))))
-    ;; YESTNH:       (type $A.desc (sub (describes $A (struct))))
-    ;; NO_TNH:       (type $A.desc (sub (describes $A (struct))))
-    (type $A.desc (sub (describes $A (struct))))
-    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc (struct))))
-    (type $B (sub $A (descriptor $B.desc (struct))))
-    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; YESTNH:       (type $A.desc (sub (describes $A) (struct)))
+    ;; NO_TNH:       (type $A.desc (sub (describes $A) (struct)))
+    (type $A.desc (sub (describes $A) (struct)))
+    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+    (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
-  ;; YESTNH:      (global $g (ref (exact $B)) (struct.new_default $B
+  ;; YESTNH:      (global $g (ref (exact $B)) (struct.new_default_desc $B
   ;; YESTNH-NEXT:  (ref.null none)
   ;; YESTNH-NEXT: ))
-  ;; NO_TNH:      (global $g (ref (exact $B)) (struct.new_default $B
+  ;; NO_TNH:      (global $g (ref (exact $B)) (struct.new_default_desc $B
   ;; NO_TNH-NEXT:  (ref.null none)
   ;; NO_TNH-NEXT: ))
   (global $g (ref (exact $B))
-    (struct.new_default $B
+    (struct.new_default_desc $B
       (ref.null none)
     )
   )
@@ -45,29 +45,29 @@
   ;; optimized to $B with TNH.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc (struct (field (ref null $B)) (field (ref null $B))))))
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct (field (ref null $B)) (field (ref null $B)))))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc (struct (field (ref null $A)) (field (ref null $B))))))
-    (type $A (sub (descriptor $A.desc (struct (field (ref null $A) (ref null $B))))))
-    ;; YESTNH:       (type $A.desc (sub (describes $A (struct (field nullref) (field nullref)))))
-    ;; NO_TNH:       (type $A.desc (sub (describes $A (struct (field nullref) (field nullref)))))
-    (type $A.desc (sub (describes $A (struct (field (ref null $A.desc) (ref null $B.desc))))))
-    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc (struct (field (ref null $B)) (field (ref null $B))))))
-    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc (struct (field (ref null $A)) (field (ref null $B))))))
-    (type $B (sub $A (descriptor $B.desc (struct (field (ref null $A) (ref null $B))))))
-    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B (struct (field nullref) (field nullref)))))
-    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B (struct (field nullref) (field nullref)))))
-    (type $B.desc (sub $A.desc (describes $B (struct (field (ref null $A.desc) (ref null $B.desc))))))
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc) (struct (field (ref null $A)) (field (ref null $B)))))
+    (type $A (sub (descriptor $A.desc) (struct (field (ref null $A) (ref null $B)))))
+    ;; YESTNH:       (type $A.desc (sub (describes $A) (struct (field nullref) (field nullref))))
+    ;; NO_TNH:       (type $A.desc (sub (describes $A) (struct (field nullref) (field nullref))))
+    (type $A.desc (sub (describes $A) (struct (field (ref null $A.desc) (ref null $B.desc)))))
+    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc) (struct (field (ref null $B)) (field (ref null $B)))))
+    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc) (struct (field (ref null $A)) (field (ref null $B)))))
+    (type $B (sub $A (descriptor $B.desc) (struct (field (ref null $A) (ref null $B)))))
+    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B) (struct (field nullref) (field nullref))))
+    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B) (struct (field nullref) (field nullref))))
+    (type $B.desc (sub $A.desc (describes $B) (struct (field (ref null $A.desc) (ref null $B.desc)))))
   )
 
-  ;; YESTNH:      (global $g (ref (exact $B)) (struct.new_default $B
+  ;; YESTNH:      (global $g (ref (exact $B)) (struct.new_default_desc $B
   ;; YESTNH-NEXT:  (ref.null none)
   ;; YESTNH-NEXT: ))
-  ;; NO_TNH:      (global $g (ref (exact $B)) (struct.new_default $B
+  ;; NO_TNH:      (global $g (ref (exact $B)) (struct.new_default_desc $B
   ;; NO_TNH-NEXT:  (ref.null none)
   ;; NO_TNH-NEXT: ))
   (global $g (ref (exact $B))
-    (struct.new_default $B
+    (struct.new_default_desc $B
       (ref.null none)
     )
   )
@@ -76,13 +76,13 @@
 (module
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $struct (descriptor $desc (struct)))
+    ;; YESTNH-NEXT:  (type $struct (descriptor $desc) (struct))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $struct (descriptor $desc (struct)))
-    (type $struct (descriptor $desc (struct)))
-    ;; YESTNH:       (type $desc (describes $struct (struct)))
-    ;; NO_TNH:       (type $desc (describes $struct (struct)))
-    (type $desc (describes $struct (struct)))
+    ;; NO_TNH-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; YESTNH:       (type $desc (describes $struct) (struct))
+    ;; NO_TNH:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; YESTNH:       (type $2 (func (param anyref (ref null $desc)) (result nullref)))
@@ -850,19 +850,19 @@
   ;; invalid allocations of its described type.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    ;; YESTNH-NEXT:  (type $struct (sub (descriptor $uninstantiated) (struct)))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
-    (type $struct (descriptor $uninstantiated (struct)))
-    ;; YESTNH:       (type $uninstantiated (sub (describes $struct (struct))))
-    ;; NO_TNH:       (type $uninstantiated (sub (describes $struct (struct))))
-    (type $uninstantiated (sub (describes $struct (struct))))
-    ;; YESTNH:       (type $other (descriptor $instantiated (struct)))
-    ;; NO_TNH:       (type $other (descriptor $instantiated (struct)))
-    (type $other (descriptor $instantiated (struct)))
-    ;; YESTNH:       (type $instantiated (sub $uninstantiated (describes $other (struct))))
-    ;; NO_TNH:       (type $instantiated (sub $uninstantiated (describes $other (struct))))
-    (type $instantiated (sub $uninstantiated (describes $other (struct))))
+    ;; NO_TNH-NEXT:  (type $struct (sub (descriptor $uninstantiated) (struct)))
+    (type $struct (sub (descriptor $uninstantiated) (struct)))
+    ;; YESTNH:       (type $uninstantiated (sub (describes $struct) (struct)))
+    ;; NO_TNH:       (type $uninstantiated (sub (describes $struct) (struct)))
+    (type $uninstantiated (sub (describes $struct) (struct)))
+    ;; YESTNH:       (type $sub (sub $struct (descriptor $instantiated) (struct)))
+    ;; NO_TNH:       (type $sub (sub $struct (descriptor $instantiated) (struct)))
+    (type $sub (sub $struct (descriptor $instantiated) (struct)))
+    ;; YESTNH:       (type $instantiated (sub $uninstantiated (describes $sub) (struct)))
+    ;; NO_TNH:       (type $instantiated (sub $uninstantiated (describes $sub) (struct)))
+    (type $instantiated (sub $uninstantiated (describes $sub) (struct)))
   )
 
   ;; YESTNH:       (type $4 (func (result (ref $struct))))
@@ -885,14 +885,14 @@
   ;; NO_TNH:      (global $fake-desc (ref null (exact $uninstantiated)) (ref.null none))
   (global $fake-desc (ref null (exact $uninstantiated)) (ref.null none))
 
-  ;; YESTNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; YESTNH:      (global $impossible (ref $struct) (struct.new_default_desc $struct
   ;; YESTNH-NEXT:  (ref.null none)
   ;; YESTNH-NEXT: ))
-  ;; NO_TNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; NO_TNH:      (global $impossible (ref $struct) (struct.new_default_desc $struct
   ;; NO_TNH-NEXT:  (global.get $fake-desc)
   ;; NO_TNH-NEXT: ))
   (global $impossible (ref $struct)
-    (struct.new $struct
+    (struct.new_desc $struct
       (global.get $fake-desc)
     )
   )
@@ -901,12 +901,12 @@
   ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $impossible (type $4) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (struct.new_default $struct
+  ;; NO_TNH-NEXT:  (struct.new_default_desc $struct
   ;; NO_TNH-NEXT:   (global.get $fake-desc)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $impossible (result (ref $struct))
-    (struct.new $struct
+    (struct.new_desc $struct
       (global.get $fake-desc)
     )
   )
@@ -921,7 +921,7 @@
   ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $impossible-effect (type $4) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (struct.new_default $struct
+  ;; NO_TNH-NEXT:  (struct.new_default_desc $struct
   ;; NO_TNH-NEXT:   (block (result (ref null (exact $uninstantiated)))
   ;; NO_TNH-NEXT:    (call $effect)
   ;; NO_TNH-NEXT:    (global.get $fake-desc)
@@ -929,7 +929,7 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $impossible-effect (result (ref $struct))
-    (struct.new $struct
+    (struct.new_desc $struct
       (block (result (ref null (exact $uninstantiated)))
         (call $effect)
         (global.get $fake-desc)
@@ -944,13 +944,13 @@
   ;; we can.
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated) (struct))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
-    (type $struct (descriptor $uninstantiated (struct)))
-    ;; YESTNH:       (type $uninstantiated (describes $struct (struct)))
-    ;; NO_TNH:       (type $uninstantiated (describes $struct (struct)))
-    (type $uninstantiated (describes $struct (struct)))
+    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated) (struct))
+    (type $struct (descriptor $uninstantiated) (struct))
+    ;; YESTNH:       (type $uninstantiated (describes $struct) (struct))
+    ;; NO_TNH:       (type $uninstantiated (describes $struct) (struct))
+    (type $uninstantiated (describes $struct) (struct))
   )
 
   ;; YESTNH:       (type $2 (func (result (ref $struct))))
@@ -969,14 +969,14 @@
   ;; NO_TNH:      (global $fake-desc nullref (ref.null none))
   (global $fake-desc (ref null (exact $uninstantiated)) (ref.null none))
 
-  ;; YESTNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; YESTNH:      (global $impossible (ref $struct) (struct.new_default_desc $struct
   ;; YESTNH-NEXT:  (ref.null none)
   ;; YESTNH-NEXT: ))
-  ;; NO_TNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; NO_TNH:      (global $impossible (ref $struct) (struct.new_default_desc $struct
   ;; NO_TNH-NEXT:  (ref.null none)
   ;; NO_TNH-NEXT: ))
   (global $impossible (ref $struct)
-    (struct.new $struct
+    (struct.new_desc $struct
       (global.get $fake-desc)
     )
   )
@@ -988,7 +988,7 @@
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $impossible (result (ref $struct))
-    (struct.new $struct
+    (struct.new_desc $struct
       (global.get $fake-desc)
     )
   )
@@ -1012,11 +1012,234 @@
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $impossible-effect (result (ref $struct))
-    (struct.new $struct
+    (struct.new_desc $struct
       (block (result (ref null (exact $uninstantiated)))
         (call $effect)
         (global.get $fake-desc)
       )
     )
   )
+)
+
+(module
+  ;; $B is never created. When removing it from the result of the function, we
+  ;; must remove the ref.get_desc too (otherwise it would return a non-
+  ;; validating type for the new result; and it traps anyhow).
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
+    (type $A (sub (descriptor $B) (struct)))
+    ;; YESTNH:       (type $B (describes $A) (struct))
+    ;; NO_TNH:       (type $B (describes $A) (struct))
+    (type $B (describes $A) (struct))
+  )
+
+  ;; YESTNH:       (type $2 (func (result (ref none))))
+
+  ;; YESTNH:       (type $3 (func (param (ref $A)) (result (ref none))))
+
+  ;; YESTNH:      (func $test (type $2) (result (ref none))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default_desc $A
+  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:       (type $2 (func (result (ref none))))
+
+  ;; NO_TNH:       (type $3 (func (param (ref $A)) (result (ref none))))
+
+  ;; NO_TNH:      (func $test (type $2) (result (ref none))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.new_default_desc $A
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $test (result (ref (exact $B)))
+    (ref.get_desc $A
+      (struct.new_default_desc $A
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $inexact (type $3) (param $inexact (ref $A)) (result (ref none))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (local.get $inexact)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $inexact (type $3) (param $inexact (ref $A)) (result (ref none))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (local.get $inexact)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $inexact (param $inexact (ref $A)) (result (ref $B))
+    ;; As above, but now the input type is inexact. There are no subtypes, so
+    ;; we still optimize.
+    (ref.get_desc $A
+      (local.get $inexact)
+    )
+  )
+)
+
+(module
+  ;; As above, but now there are subtypes $A.sub, $B.sub.
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
+    (type $A (sub (descriptor $B) (struct)))
+    ;; YESTNH:       (type $B (sub (describes $A) (struct)))
+    ;; NO_TNH:       (type $B (sub (describes $A) (struct)))
+    (type $B (sub (describes $A) (struct)))
+
+    ;; YESTNH:       (type $A.sub (sub $A (descriptor $B.sub) (struct)))
+    ;; NO_TNH:       (type $A.sub (sub $A (descriptor $B.sub) (struct)))
+    (type $A.sub (sub $A (descriptor $B.sub) (struct)))
+    ;; YESTNH:       (type $B.sub (sub $B (describes $A.sub) (struct)))
+    ;; NO_TNH:       (type $B.sub (sub $B (describes $A.sub) (struct)))
+    (type $B.sub (sub $B (describes $A.sub) (struct)))
+  )
+
+  ;; YESTNH:       (type $4 (func))
+
+  ;; YESTNH:       (type $5 (func (result (ref (exact $B.sub)))))
+
+  ;; YESTNH:       (type $6 (func (param (ref $A)) (result (ref $B.sub))))
+
+  ;; YESTNH:      (func $create (type $4)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default_desc $A.sub
+  ;; YESTNH-NEXT:    (struct.new_default $B.sub)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:       (type $4 (func))
+
+  ;; NO_TNH:       (type $5 (func (result (ref (exact $B)))))
+
+  ;; NO_TNH:       (type $6 (func (param (ref $A)) (result (ref $B))))
+
+  ;; NO_TNH:      (func $create (type $4)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.new_default_desc $A.sub
+  ;; NO_TNH-NEXT:    (struct.new_default $B.sub)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $create
+    ;; Make the subtypes not abstract.
+    (drop
+      (struct.new_default_desc $A.sub
+        (struct.new_default $B.sub)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $test (type $5) (result (ref (exact $B.sub)))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default_desc $A
+  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $test (type $5) (result (ref (exact $B)))
+  ;; NO_TNH-NEXT:  (ref.get_desc $A
+  ;; NO_TNH-NEXT:   (struct.new_default_desc $A
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $test (result (ref (exact $B)))
+    ;; We can still optimize here, thanks to exactness (when TNH).
+    (ref.get_desc $A
+      (struct.new_default_desc $A
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $inexact (type $6) (param $inexact (ref $A)) (result (ref $B.sub))
+  ;; YESTNH-NEXT:  (ref.get_desc $A.sub
+  ;; YESTNH-NEXT:   (ref.cast (ref $A.sub)
+  ;; YESTNH-NEXT:    (local.get $inexact)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $inexact (type $6) (param $inexact (ref $A)) (result (ref $B))
+  ;; NO_TNH-NEXT:  (ref.get_desc $A
+  ;; NO_TNH-NEXT:   (local.get $inexact)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $inexact (param $inexact (ref $A)) (result (ref $B))
+    ;; We do not optimize to an unreachable here, as the inexact reference may
+    ;; contain an $A.sub. We optimize to that, using a cast (in TNH).
+    (ref.get_desc $A
+      (local.get $inexact)
+    )
+  )
+)
+
+;; Shared abstract described types.
+(module
+ (rec
+  (type $A (sub (shared (descriptor $B) (struct))))
+  (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
+  (type $C (sub (shared (describes $B) (struct))))
+ )
+
+ ;; YESTNH:      (rec
+ ;; YESTNH-NEXT:  (type $0 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; YESTNH:       (type $1 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; YESTNH:      (func $A (type $0) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; YESTNH-NEXT:  (drop
+ ;; YESTNH-NEXT:   (local.get $x)
+ ;; YESTNH-NEXT:  )
+ ;; YESTNH-NEXT:  (unreachable)
+ ;; YESTNH-NEXT: )
+ ;; NO_TNH:      (rec
+ ;; NO_TNH-NEXT:  (type $0 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; NO_TNH:       (type $1 (func (param (ref (shared none))) (result (ref (shared none)))))
+
+ ;; NO_TNH:      (func $A (type $0) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; NO_TNH-NEXT:  (drop
+ ;; NO_TNH-NEXT:   (local.get $x)
+ ;; NO_TNH-NEXT:  )
+ ;; NO_TNH-NEXT:  (unreachable)
+ ;; NO_TNH-NEXT: )
+ (func $A (param $x (ref $A)) (result (ref $B))
+  (ref.get_desc $A
+   (local.get $x)
+  )
+ )
+
+ ;; YESTNH:      (func $B (type $1) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; YESTNH-NEXT:  (drop
+ ;; YESTNH-NEXT:   (local.get $x)
+ ;; YESTNH-NEXT:  )
+ ;; YESTNH-NEXT:  (unreachable)
+ ;; YESTNH-NEXT: )
+ ;; NO_TNH:      (func $B (type $1) (param $x (ref (shared none))) (result (ref (shared none)))
+ ;; NO_TNH-NEXT:  (drop
+ ;; NO_TNH-NEXT:   (local.get $x)
+ ;; NO_TNH-NEXT:  )
+ ;; NO_TNH-NEXT:  (unreachable)
+ ;; NO_TNH-NEXT: )
+ (func $B (param $x (ref $B)) (result (ref $C))
+  (ref.get_desc $B
+   (local.get $x)
+  )
+ )
 )

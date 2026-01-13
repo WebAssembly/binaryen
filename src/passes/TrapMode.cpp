@@ -22,8 +22,8 @@
 
 #include "asmjs/shared-constants.h"
 #include "ir/trapping.h"
-#include "mixed_arena.h"
 #include "pass.h"
+#include "support/mixed_arena.h"
 #include "support/name.h"
 #include "wasm-builder.h"
 #include "wasm-type.h"
@@ -133,7 +133,8 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
       result);
   }
   auto funcSig = Signature({type, type}, type);
-  auto func = Builder::makeFunction(getBinaryFuncName(curr), funcSig, {});
+  auto func = Builder::makeFunction(
+    getBinaryFuncName(curr), Type(funcSig, NonNullable, Exact), {});
   func->body =
     builder.makeIf(builder.makeUnary(eqZOp, builder.makeLocalGet(1, type)),
                    builder.makeConst(zeroLit),
@@ -194,7 +195,9 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
   }
 
   auto func =
-    Builder::makeFunction(getUnaryFuncName(curr), Signature(type, retType), {});
+    Builder::makeFunction(getUnaryFuncName(curr),
+                          Type(Signature(type, retType), NonNullable, Exact),
+                          {});
   func->body = builder.makeUnary(truncOp, builder.makeLocalGet(0, type));
   // too small XXX this is different than asm.js, which does frem. here we
   // clamp, which is much simpler/faster, and similar to native builds
@@ -251,7 +254,7 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer& trappingFunctions) {
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  import->type = Signature(Type::f64, Type::i32);
+  import->type = Type(Signature(Type::f64, Type::i32), NonNullable, Inexact);
   trappingFunctions.addImport(import);
 }
 

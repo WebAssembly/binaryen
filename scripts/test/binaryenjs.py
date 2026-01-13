@@ -13,39 +13,32 @@
 # limitations under the License.
 
 import os
-import shutil
 import subprocess
 
-from . import shared
-from . import support
+from . import shared, support
 
 
 def make_js_test_header(binaryen_js):
     # common wrapper code for JS tests, waiting for binaryen.js to become ready
     # and providing common utility used by all tests:
-    return '''
-import Binaryen from "%s";
+    return f'''
+import Binaryen from "{binaryen_js}";
 var binaryen = await Binaryen()
 
 // avoid stdout/stderr ordering issues in some js shells - use just stdout
 console.warn = console.error = console.log;
 
-function assert(x) {
+function assert(x) {{
     if (!x) throw Error('Test assertion failed');
-}
-''' % binaryen_js
+}}
+'''
 
 
 def make_js_test(input_js_file, binaryen_js):
-    # Copy the binaryen.js file to binaryen.mjs for now since file
-    # extensions matter under node.
-    # TODO(sbc): Should binaryen build as a `.mjs` file itself?
-    shutil.copyfile(binaryen_js, 'binaryen.mjs')
-
     basename = os.path.basename(input_js_file)
     outname = os.path.splitext(basename)[0] + '.mjs'
     with open(outname, 'w') as f:
-        f.write(make_js_test_header('./binaryen.mjs'))
+        f.write(make_js_test_header(binaryen_js))
         test_src = open(input_js_file).read()
         f.write(test_src)
     return outname

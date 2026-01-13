@@ -14,38 +14,53 @@
  * limitations under the License.
  */
 
-//
-// Timing helper
-//
-
 #ifndef wasm_support_timing_h
 #define wasm_support_timing_h
 
 #include <chrono>
-#include <iostream>
-#include <string>
+#include <utility>
 
 namespace wasm {
 
+// A utility for measuring time between readings as well as total elapsed time.
+// The timer starts upon construction, but can be restarted.
 class Timer {
-  std::string name;
   std::chrono::steady_clock::time_point startTime;
-  double total = 0;
+  std::chrono::steady_clock::time_point lastTime;
 
 public:
-  Timer(std::string name = "") : name(name) {}
+  Timer() { restart(); }
 
-  void start() { startTime = std::chrono::steady_clock::now(); }
-
-  void stop() {
-    total += std::chrono::duration<double>(std::chrono::steady_clock::now() -
-                                           startTime)
-               .count();
+  // Resets the timer's start time and returns the time since its last start.
+  void restart() {
+    auto now = std::chrono::steady_clock::now();
+    lastTime = startTime = now;
   }
 
-  double getTotal() { return total; }
+  // The time since the timer was started.
+  double totalElapsed() {
+    auto now = std::chrono::steady_clock::now();
+    auto sinceStart = std::chrono::duration<double>(now - startTime).count();
+    return sinceStart;
+  }
 
-  void dump() { std::cerr << "<Timer " << name << ": " << getTotal() << ">\n"; }
+  // The time since the last `lastElapsed` measurement, if any, or since the
+  // timer started.
+  double lastElapsed() {
+    auto now = std::chrono::steady_clock::now();
+    auto sinceLast = std::chrono::duration<double>(now - lastTime).count();
+    lastTime = now;
+    return sinceLast;
+  }
+
+  // The time elapsed since the last measurement and the total elapsed time.
+  std::pair<double, double> elapsed() {
+    auto now = std::chrono::steady_clock::now();
+    auto sinceLast = std::chrono::duration<double>(now - lastTime).count();
+    auto sinceStart = std::chrono::duration<double>(now - startTime).count();
+    lastTime = now;
+    return {sinceLast, sinceStart};
+  }
 };
 
 } // namespace wasm
