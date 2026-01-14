@@ -21,7 +21,7 @@
   (nop)
  )
 
- ;; CHECK:      (func $br_if_gc (type $4) (param $ref (ref any)) (result anyref)
+ ;; CHECK:      (func $br_if_gc (type $3) (param $ref (ref any)) (result anyref)
  ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (call $receive_any
  ;; CHECK-NEXT:    (ref.cast (ref any)
@@ -47,7 +47,7 @@
   )
  )
 
- ;; CHECK:      (func $br_if_cont (type $5) (result contref)
+ ;; CHECK:      (func $br_if_cont (type $4) (result contref)
  ;; CHECK-NEXT:  (local $0 (ref (exact $cont)))
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $scratch (ref (exact $cont)))
@@ -93,19 +93,19 @@
   )
  )
 
- ;; CHECK:      (func $receive_any (type $6) (param $0 (ref any))
+ ;; CHECK:      (func $receive_any (type $5) (param $0 (ref any))
  ;; CHECK-NEXT: )
  (func $receive_any (param (ref any))
  )
 
- ;; CHECK:      (func $receive_cont (type $7) (param $0 (ref $cont))
+ ;; CHECK:      (func $receive_cont (type $6) (param $0 (ref $cont))
  ;; CHECK-NEXT: )
  (func $receive_cont (param (ref $cont))
  )
 
  ;; As above, but with tuples.
 
- ;; CHECK:      (func $br_if_gc_tuple (type $8) (param $ref (ref any)) (result anyref i32)
+ ;; CHECK:      (func $br_if_gc_tuple (type $7) (param $ref (ref any)) (result anyref i32)
  ;; CHECK-NEXT:  (local $1 (ref any))
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
@@ -113,7 +113,7 @@
  ;; CHECK-NEXT:  (local $scratch_5 (ref any))
  ;; CHECK-NEXT:  (local $scratch_6 (tuple (ref any) i32))
  ;; CHECK-NEXT:  (local $scratch_7 (ref any))
- ;; CHECK-NEXT:  (block $block (type $3) (result anyref i32)
+ ;; CHECK-NEXT:  (block $block (type $8) (result anyref i32)
  ;; CHECK-NEXT:   (local.set $1
  ;; CHECK-NEXT:    (block (result (ref any))
  ;; CHECK-NEXT:     (local.set $scratch_5

@@ -12,55 +12,55 @@
 (module
   ;; CHECK-TEXT:      (type $0 (func))
 
-  ;; CHECK-TEXT:      (type $1 (func (result i32 i64)))
+  ;; CHECK-TEXT:      (type $1 (func (result exnref)))
 
-  ;; CHECK-TEXT:      (type $2 (func (result i32 i64 exnref)))
+  ;; CHECK-TEXT:      (type $2 (func (result i32)))
 
-  ;; CHECK-TEXT:      (type $3 (func (result exnref)))
+  ;; CHECK-TEXT:      (type $3 (func (result i32 i64)))
 
-  ;; CHECK-TEXT:      (type $4 (func (result i32)))
+  ;; CHECK-TEXT:      (type $4 (func (result i32 i64 exnref)))
 
-  ;; CHECK-TEXT:      (type $5 (func (result i32 exnref)))
+  ;; CHECK-TEXT:      (type $5 (func (param i32)))
 
-  ;; CHECK-TEXT:      (type $6 (func (param i32)))
+  ;; CHECK-TEXT:      (type $6 (func (param i64)))
 
-  ;; CHECK-TEXT:      (type $7 (func (param i64)))
+  ;; CHECK-TEXT:      (type $7 (func (param i32 i64)))
 
-  ;; CHECK-TEXT:      (type $8 (func (param i32 i64)))
+  ;; CHECK-TEXT:      (type $8 (func (param eqref)))
 
-  ;; CHECK-TEXT:      (type $9 (func (param eqref)))
+  ;; CHECK-TEXT:      (type $9 (func (result i32 exnref)))
 
-  ;; CHECK-TEXT:      (tag $e-i32 (type $6) (param i32))
+  ;; CHECK-TEXT:      (tag $e-i32 (type $5) (param i32))
   ;; CHECK-BIN:      (type $0 (func))
 
-  ;; CHECK-BIN:      (type $1 (func (result i32 i64)))
+  ;; CHECK-BIN:      (type $1 (func (result exnref)))
 
-  ;; CHECK-BIN:      (type $2 (func (result i32 i64 exnref)))
+  ;; CHECK-BIN:      (type $2 (func (result i32)))
 
-  ;; CHECK-BIN:      (type $3 (func (result exnref)))
+  ;; CHECK-BIN:      (type $3 (func (result i32 i64)))
 
-  ;; CHECK-BIN:      (type $4 (func (result i32)))
+  ;; CHECK-BIN:      (type $4 (func (result i32 i64 exnref)))
 
-  ;; CHECK-BIN:      (type $5 (func (result i32 exnref)))
+  ;; CHECK-BIN:      (type $5 (func (param i32)))
 
-  ;; CHECK-BIN:      (type $6 (func (param i32)))
+  ;; CHECK-BIN:      (type $6 (func (param i64)))
 
-  ;; CHECK-BIN:      (type $7 (func (param i64)))
+  ;; CHECK-BIN:      (type $7 (func (param i32 i64)))
 
-  ;; CHECK-BIN:      (type $8 (func (param i32 i64)))
+  ;; CHECK-BIN:      (type $8 (func (param eqref)))
 
-  ;; CHECK-BIN:      (type $9 (func (param eqref)))
+  ;; CHECK-BIN:      (type $9 (func (result i32 exnref)))
 
-  ;; CHECK-BIN:      (tag $e-i32 (type $6) (param i32))
+  ;; CHECK-BIN:      (tag $e-i32 (type $5) (param i32))
   (tag $e-i32 (param i32))
-  ;; CHECK-TEXT:      (tag $e-i64 (type $7) (param i64))
-  ;; CHECK-BIN:      (tag $e-i64 (type $7) (param i64))
+  ;; CHECK-TEXT:      (tag $e-i64 (type $6) (param i64))
+  ;; CHECK-BIN:      (tag $e-i64 (type $6) (param i64))
   (tag $e-i64 (param i64))
-  ;; CHECK-TEXT:      (tag $e-i32-i64 (type $8) (param i32 i64))
-  ;; CHECK-BIN:      (tag $e-i32-i64 (type $8) (param i32 i64))
+  ;; CHECK-TEXT:      (tag $e-i32-i64 (type $7) (param i32 i64))
+  ;; CHECK-BIN:      (tag $e-i32-i64 (type $7) (param i32 i64))
   (tag $e-i32-i64 (param i32 i64))
-  ;; CHECK-TEXT:      (tag $e-eqref (type $9) (param eqref))
-  ;; CHECK-BIN:      (tag $e-eqref (type $9) (param eqref))
+  ;; CHECK-TEXT:      (tag $e-eqref (type $8) (param eqref))
+  ;; CHECK-BIN:      (tag $e-eqref (type $8) (param eqref))
   (tag $e-eqref (param (ref null eq)))
   ;; CHECK-TEXT:      (tag $e-empty (type $0))
   ;; CHECK-BIN:      (tag $e-empty (type $0))
@@ -72,7 +72,7 @@
   ;; CHECK-BIN-NEXT: )
   (func $foo)
 
-  ;; CHECK-TEXT:      (func $exnref-nullexnref-test (type $3) (result exnref)
+  ;; CHECK-TEXT:      (func $exnref-nullexnref-test (type $1) (result exnref)
   ;; CHECK-TEXT-NEXT:  (local $exn exnref)
   ;; CHECK-TEXT-NEXT:  (local $null-exn nullexnref)
   ;; CHECK-TEXT-NEXT:  (if (result exnref)
@@ -93,7 +93,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $exnref-nullexnref-test (type $3) (result exnref)
+  ;; CHECK-BIN:      (func $exnref-nullexnref-test (type $1) (result exnref)
   ;; CHECK-BIN-NEXT:  (local $exn exnref)
   ;; CHECK-BIN-NEXT:  (local $null-exn nullexnref)
   ;; CHECK-BIN-NEXT:  (if (result exnref)
@@ -156,7 +156,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $simple-try-table-and-throw (type $4) (result i32)
+  ;; CHECK-TEXT:      (func $simple-try-table-and-throw (type $2) (result i32)
   ;; CHECK-TEXT-NEXT:  (block $l-catch (result i32)
   ;; CHECK-TEXT-NEXT:   (try_table (catch $e-i32 $l-catch)
   ;; CHECK-TEXT-NEXT:    (throw $e-i32
@@ -165,7 +165,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $simple-try-table-and-throw (type $4) (result i32)
+  ;; CHECK-BIN:      (func $simple-try-table-and-throw (type $2) (result i32)
   ;; CHECK-BIN-NEXT:  (block $block (result i32)
   ;; CHECK-BIN-NEXT:   (try_table (catch $e-i32 $block)
   ;; CHECK-BIN-NEXT:    (throw $e-i32
@@ -219,9 +219,9 @@
   ;; CHECK-TEXT:      (func $try-table-multivalue-tag (type $0)
   ;; CHECK-TEXT-NEXT:  (block $outer
   ;; CHECK-TEXT-NEXT:   (tuple.drop 3
-  ;; CHECK-TEXT-NEXT:    (block $l-catch-ref (type $2) (result i32 i64 exnref)
+  ;; CHECK-TEXT-NEXT:    (block $l-catch-ref (type $4) (result i32 i64 exnref)
   ;; CHECK-TEXT-NEXT:     (tuple.drop 2
-  ;; CHECK-TEXT-NEXT:      (block $l-catch (type $1) (result i32 i64)
+  ;; CHECK-TEXT-NEXT:      (block $l-catch (type $3) (result i32 i64)
   ;; CHECK-TEXT-NEXT:       (try_table (catch $e-i32-i64 $l-catch) (catch_ref $e-i32-i64 $l-catch-ref)
   ;; CHECK-TEXT-NEXT:        (throw $e-i32-i64
   ;; CHECK-TEXT-NEXT:         (i32.const 0)
@@ -247,13 +247,13 @@
   ;; CHECK-BIN-NEXT:     (local.set $scratch_4
   ;; CHECK-BIN-NEXT:      (tuple.extract 3 0
   ;; CHECK-BIN-NEXT:       (local.tee $scratch_2
-  ;; CHECK-BIN-NEXT:        (block $block1 (type $2) (result i32 i64 exnref)
+  ;; CHECK-BIN-NEXT:        (block $block1 (type $4) (result i32 i64 exnref)
   ;; CHECK-BIN-NEXT:         (drop
   ;; CHECK-BIN-NEXT:          (block (result i32)
   ;; CHECK-BIN-NEXT:           (local.set $scratch_1
   ;; CHECK-BIN-NEXT:            (tuple.extract 2 0
   ;; CHECK-BIN-NEXT:             (local.tee $scratch
-  ;; CHECK-BIN-NEXT:              (block $block (type $1) (result i32 i64)
+  ;; CHECK-BIN-NEXT:              (block $block (type $3) (result i32 i64)
   ;; CHECK-BIN-NEXT:               (try_table (catch $e-i32-i64 $block) (catch_ref $e-i32-i64 $block1)
   ;; CHECK-BIN-NEXT:                (throw $e-i32-i64
   ;; CHECK-BIN-NEXT:                 (i32.const 0)
@@ -396,7 +396,7 @@
   ;; CHECK-TEXT-NEXT:   (drop
   ;; CHECK-TEXT-NEXT:    (block $l-catch (result i32)
   ;; CHECK-TEXT-NEXT:     (tuple.drop 2
-  ;; CHECK-TEXT-NEXT:      (block $l-catch-ref (type $5) (result i32 exnref)
+  ;; CHECK-TEXT-NEXT:      (block $l-catch-ref (type $9) (result i32 exnref)
   ;; CHECK-TEXT-NEXT:       (block $l-catch-all
   ;; CHECK-TEXT-NEXT:        (throw_ref
   ;; CHECK-TEXT-NEXT:         (block $l-catch-all-ref (result exnref)
@@ -427,7 +427,7 @@
   ;; CHECK-BIN-NEXT:       (local.set $scratch_1
   ;; CHECK-BIN-NEXT:        (tuple.extract 2 0
   ;; CHECK-BIN-NEXT:         (local.tee $scratch
-  ;; CHECK-BIN-NEXT:          (block $block1 (type $5) (result i32 exnref)
+  ;; CHECK-BIN-NEXT:          (block $block1 (type $9) (result i32 exnref)
   ;; CHECK-BIN-NEXT:           (block $block2
   ;; CHECK-BIN-NEXT:            (throw_ref
   ;; CHECK-BIN-NEXT:             (block $block3 (result exnref)
@@ -491,9 +491,9 @@
   ;; CHECK-TEXT:      (func $try-table-all-catch-clauses-multivalue-tag (type $0)
   ;; CHECK-TEXT-NEXT:  (block $outer
   ;; CHECK-TEXT-NEXT:   (tuple.drop 2
-  ;; CHECK-TEXT-NEXT:    (block $l-catch (type $1) (result i32 i64)
+  ;; CHECK-TEXT-NEXT:    (block $l-catch (type $3) (result i32 i64)
   ;; CHECK-TEXT-NEXT:     (tuple.drop 3
-  ;; CHECK-TEXT-NEXT:      (block $l-catch-ref (type $2) (result i32 i64 exnref)
+  ;; CHECK-TEXT-NEXT:      (block $l-catch-ref (type $4) (result i32 i64 exnref)
   ;; CHECK-TEXT-NEXT:       (block $l-catch-all
   ;; CHECK-TEXT-NEXT:        (throw_ref
   ;; CHECK-TEXT-NEXT:         (block $l-catch-all-ref (result exnref)
@@ -525,13 +525,13 @@
   ;; CHECK-BIN-NEXT:     (local.set $scratch_4
   ;; CHECK-BIN-NEXT:      (tuple.extract 2 0
   ;; CHECK-BIN-NEXT:       (local.tee $scratch_3
-  ;; CHECK-BIN-NEXT:        (block $block (type $1) (result i32 i64)
+  ;; CHECK-BIN-NEXT:        (block $block (type $3) (result i32 i64)
   ;; CHECK-BIN-NEXT:         (drop
   ;; CHECK-BIN-NEXT:          (block (result i32)
   ;; CHECK-BIN-NEXT:           (local.set $scratch_2
   ;; CHECK-BIN-NEXT:            (tuple.extract 3 0
   ;; CHECK-BIN-NEXT:             (local.tee $scratch
-  ;; CHECK-BIN-NEXT:              (block $block1 (type $2) (result i32 i64 exnref)
+  ;; CHECK-BIN-NEXT:              (block $block1 (type $4) (result i32 i64 exnref)
   ;; CHECK-BIN-NEXT:               (block $block2
   ;; CHECK-BIN-NEXT:                (throw_ref
   ;; CHECK-BIN-NEXT:                 (block $block3 (result exnref)
@@ -612,7 +612,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $try-table-with-label-and-br (type $4) (result i32)
+  ;; CHECK-TEXT:      (func $try-table-with-label-and-br (type $2) (result i32)
   ;; CHECK-TEXT-NEXT:  (block $l-catch (result i32)
   ;; CHECK-TEXT-NEXT:   (block $l (result i32)
   ;; CHECK-TEXT-NEXT:    (try_table (result i32) (catch $e-i32 $l-catch)
@@ -623,7 +623,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $try-table-with-label-and-br (type $4) (result i32)
+  ;; CHECK-BIN:      (func $try-table-with-label-and-br (type $2) (result i32)
   ;; CHECK-BIN-NEXT:  (block $block (result i32)
   ;; CHECK-BIN-NEXT:   (block $block1 (result i32)
   ;; CHECK-BIN-NEXT:    (try_table (result i32) (catch $e-i32 $block)
@@ -642,7 +642,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $nested-try-table (type $3) (result exnref)
+  ;; CHECK-TEXT:      (func $nested-try-table (type $1) (result exnref)
   ;; CHECK-TEXT-NEXT:  (block $l-catch-outer (result exnref)
   ;; CHECK-TEXT-NEXT:   (drop
   ;; CHECK-TEXT-NEXT:    (block $l-catch-inner (result i32)
@@ -668,7 +668,7 @@
   ;; CHECK-TEXT-NEXT:   (ref.null noexn)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $nested-try-table (type $3) (result exnref)
+  ;; CHECK-BIN:      (func $nested-try-table (type $1) (result exnref)
   ;; CHECK-BIN-NEXT:  (block $block (result exnref)
   ;; CHECK-BIN-NEXT:   (drop
   ;; CHECK-BIN-NEXT:    (block $block1 (result i32)
@@ -722,38 +722,38 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (type $1 (func (result i32 i64)))
+;; CHECK-BIN-NODEBUG:      (type $1 (func (result exnref)))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (result i32 i64 exnref)))
+;; CHECK-BIN-NODEBUG:      (type $2 (func (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func (result exnref)))
+;; CHECK-BIN-NODEBUG:      (type $3 (func (result i32 i64)))
 
-;; CHECK-BIN-NODEBUG:      (type $4 (func (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $4 (func (result i32 i64 exnref)))
 
-;; CHECK-BIN-NODEBUG:      (type $5 (func (result i32 exnref)))
+;; CHECK-BIN-NODEBUG:      (type $5 (func (param i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $6 (func (param i32)))
+;; CHECK-BIN-NODEBUG:      (type $6 (func (param i64)))
 
-;; CHECK-BIN-NODEBUG:      (type $7 (func (param i64)))
+;; CHECK-BIN-NODEBUG:      (type $7 (func (param i32 i64)))
 
-;; CHECK-BIN-NODEBUG:      (type $8 (func (param i32 i64)))
+;; CHECK-BIN-NODEBUG:      (type $8 (func (param eqref)))
 
-;; CHECK-BIN-NODEBUG:      (type $9 (func (param eqref)))
+;; CHECK-BIN-NODEBUG:      (type $9 (func (result i32 exnref)))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $6) (param i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $5) (param i32))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $7) (param i64))
+;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $6) (param i64))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$2 (type $8) (param i32 i64))
+;; CHECK-BIN-NODEBUG:      (tag $tag$2 (type $7) (param i32 i64))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$3 (type $9) (param eqref))
+;; CHECK-BIN-NODEBUG:      (tag $tag$3 (type $8) (param eqref))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$4 (type $0))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $3) (result exnref)
+;; CHECK-BIN-NODEBUG:      (func $1 (type $1) (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 nullexnref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (if (result exnref)
@@ -784,7 +784,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $4) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $3 (type $2) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (try_table (catch $tag$0 $block)
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
@@ -820,13 +820,13 @@
 ;; CHECK-BIN-NODEBUG-NEXT:     (local.set $scratch_4
 ;; CHECK-BIN-NODEBUG-NEXT:      (tuple.extract 3 0
 ;; CHECK-BIN-NODEBUG-NEXT:       (local.tee $scratch_2
-;; CHECK-BIN-NODEBUG-NEXT:        (block $block1 (type $2) (result i32 i64 exnref)
+;; CHECK-BIN-NODEBUG-NEXT:        (block $block1 (type $4) (result i32 i64 exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:         (drop
 ;; CHECK-BIN-NODEBUG-NEXT:          (block (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:           (local.set $scratch_1
 ;; CHECK-BIN-NODEBUG-NEXT:            (tuple.extract 2 0
 ;; CHECK-BIN-NODEBUG-NEXT:             (local.tee $scratch
-;; CHECK-BIN-NODEBUG-NEXT:              (block $block (type $1) (result i32 i64)
+;; CHECK-BIN-NODEBUG-NEXT:              (block $block (type $3) (result i32 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:               (try_table (catch $tag$2 $block) (catch_ref $tag$2 $block1)
 ;; CHECK-BIN-NODEBUG-NEXT:                (throw $tag$2
 ;; CHECK-BIN-NODEBUG-NEXT:                 (i32.const 0)
@@ -907,7 +907,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:       (local.set $scratch_1
 ;; CHECK-BIN-NODEBUG-NEXT:        (tuple.extract 2 0
 ;; CHECK-BIN-NODEBUG-NEXT:         (local.tee $scratch
-;; CHECK-BIN-NODEBUG-NEXT:          (block $block1 (type $5) (result i32 exnref)
+;; CHECK-BIN-NODEBUG-NEXT:          (block $block1 (type $9) (result i32 exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:           (block $block2
 ;; CHECK-BIN-NODEBUG-NEXT:            (throw_ref
 ;; CHECK-BIN-NODEBUG-NEXT:             (block $block3 (result exnref)
@@ -950,13 +950,13 @@
 ;; CHECK-BIN-NODEBUG-NEXT:     (local.set $scratch_4
 ;; CHECK-BIN-NODEBUG-NEXT:      (tuple.extract 2 0
 ;; CHECK-BIN-NODEBUG-NEXT:       (local.tee $scratch_3
-;; CHECK-BIN-NODEBUG-NEXT:        (block $block (type $1) (result i32 i64)
+;; CHECK-BIN-NODEBUG-NEXT:        (block $block (type $3) (result i32 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:         (drop
 ;; CHECK-BIN-NODEBUG-NEXT:          (block (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:           (local.set $scratch_2
 ;; CHECK-BIN-NODEBUG-NEXT:            (tuple.extract 3 0
 ;; CHECK-BIN-NODEBUG-NEXT:             (local.tee $scratch
-;; CHECK-BIN-NODEBUG-NEXT:              (block $block1 (type $2) (result i32 i64 exnref)
+;; CHECK-BIN-NODEBUG-NEXT:              (block $block1 (type $4) (result i32 i64 exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:               (block $block2
 ;; CHECK-BIN-NODEBUG-NEXT:                (throw_ref
 ;; CHECK-BIN-NODEBUG-NEXT:                 (block $block3 (result exnref)
@@ -1007,7 +1007,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9 (type $4) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $9 (type $2) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:    (try_table (result i32) (catch $tag$0 $block)
@@ -1019,7 +1019,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10 (type $3) (result exnref)
+;; CHECK-BIN-NODEBUG:      (func $10 (type $1) (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:   (drop
 ;; CHECK-BIN-NODEBUG-NEXT:    (block $block1 (result i32)

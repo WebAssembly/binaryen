@@ -31,8 +31,6 @@ namespace wasm {
 namespace {
 
 struct ReorderingTypeRewriter : GlobalTypeRewriter {
-  using InfoMap = InsertOrderedMap<HeapType, ModuleUtils::HeapTypeInfo>;
-
   // Use a simpler cost calculation so the effects can be seen with smaller test
   // cases.
   bool forTesting;
