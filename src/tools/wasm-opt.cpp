@@ -282,9 +282,9 @@ For more on how to optimize effectively, see
          WasmOptOption,
          Options::Arguments::Zero,
          [&emitExnref](Options*, const std::string&) { emitExnref = true; })
-    .add("--show-binary-offsets",
-         "-sbo",
-         "Show binary offsets when printing wat text",
+    .add("--print-binary-offsets",
+         "-pbo",
+         "Print wat text annotated with binary offsets",
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options*, const std::string&) {
