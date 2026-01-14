@@ -33,6 +33,7 @@
 #include "ir/memory-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "shell-interface.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
@@ -78,6 +79,11 @@ public:
   // types can't be created anyway (e.g. ref none).
   Literals* getGlobalOrNull(ImportNames name, Type type) const override {
     return &stubLiteral;
+  }
+
+  RuntimeTable* getTableOrNull(ImportNames name,
+                               const Table& type) const override {
+    throw FailToEvalException{"Imported table access."};
   }
 
 private:
@@ -153,17 +159,6 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
       copied->body = builder.makeUnreachable();
       env->addExport(
         builder.makeExport(func->base, copied->name, ExternalKind::Function));
-    }
-  });
-
-  // create tables with similar initial and max values
-  ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    if (table->module == env->name) {
-      auto* copied = ModuleUtils::copyTable(table, *env);
-      copied->module = Name();
-      copied->base = Name();
-      env->addExport(Builder(*env).makeExport(
-        table->base, copied->name, ExternalKind::Table));
     }
   });
 
@@ -315,70 +310,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     WASM_UNREACHABLE("missing imported tag");
   }
 
-  // We assume the table is not modified FIXME
-  Literal tableLoad(Name tableName, Address index) override {
-    auto* table = wasm->getTableOrNull(tableName);
-    if (!table) {
-      throw FailToEvalException("tableLoad on non-existing table");
-    }
-
-    // Look through the segments and find the value. Segments can overlap,
-    // so we want the last one.
-    Expression* value = nullptr;
-    for (auto& segment : wasm->elementSegments) {
-      if (segment->table != tableName) {
-        continue;
-      }
-
-      Index start;
-      // look for the index in this segment. if it has a constant offset, we
-      // look in the proper range. if it instead gets a global, we rely on the
-      // fact that when not dynamically linking then the table is loaded at
-      // offset 0.
-      if (auto* c = segment->offset->dynCast<Const>()) {
-        start = c->value.getInteger();
-      } else if (segment->offset->is<GlobalGet>()) {
-        start = 0;
-      } else {
-        // wasm spec only allows const and global.get there
-        WASM_UNREACHABLE("invalid expr type");
-      }
-      auto end = start + segment->data.size();
-      if (start <= index && index < end) {
-        value = segment->data[index - start];
-      }
-    }
-
-    if (!value) {
-      // No segment had a value for this.
-      return Literal::makeNull(HeapTypes::func);
-    }
-    if (!Properties::isConstantExpression(value)) {
-      throw FailToEvalException("tableLoad of non-literal");
-    }
-    if (auto* r = value->dynCast<RefFunc>()) {
-      return instance->makeFuncData(r->func, r->type);
-    }
-    return Properties::getLiteral(value);
-  }
-
-  Index tableSize(Name tableName) override {
-    // See tableLoad above, we assume the table is not modified FIXME
-    return wasm->getTableOrNull(tableName)->initial;
-  }
-
-  // called during initialization
-  void
-  tableStore(Name tableName, Address index, const Literal& value) override {
-    // We allow stores to the table during initialization, but not after, as we
-    // assume the table does not change at runtime.
-    // TODO: Allow table changes by updating the table later like we do with the
-    //       memory, by tracking and serializing them.
-    if (instanceInitialized) {
-      throw FailToEvalException("tableStore after init: TODO");
-    }
-  }
-
   int8_t load8s(Address addr, Name memoryName) override {
     return doLoad<int8_t>(addr, memoryName);
   }
@@ -429,13 +360,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                   Address /*oldSize*/,
                   Address /*newSize*/) override {
     throw FailToEvalException("grow memory");
-  }
-
-  bool growTable(Name /*name*/,
-                 const Literal& /*value*/,
-                 Index /*oldSize*/,
-                 Index /*newSize*/) override {
-    throw FailToEvalException("grow table");
   }
 
   void trap(std::string_view why) override {
@@ -1144,6 +1068,9 @@ start_eval:
         if (!quiet) {
           std::cout << "  ...stopping due to non-constant func\n";
         }
+        break;
+      } catch (TrapException trap) {
+        std::cout << "  ...stopping due to trap";
         break;
       }
 
