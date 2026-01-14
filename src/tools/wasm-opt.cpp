@@ -293,6 +293,8 @@ For more on how to optimize effectively, see
            // Enable debugInfo, so that we print code locations (which are part
            // of debugInfo).
            options.passOptions.debugInfo = true;
+           // Run the print pass, to do the printing.
+           options.passes.push_back("print");
          });
   options.parse(argc, argv);
 
