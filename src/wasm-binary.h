@@ -1748,6 +1748,8 @@ public:
   // Allow users to query the target features section features after parsing.
   FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
 
+  size_t getCodeSectionLocation() { return codeSectionLocation; }
+
 private:
   // In certain modes we need to note the locations of expressions, to match
   // them against sections like DWARF or custom annotations. As this incurs

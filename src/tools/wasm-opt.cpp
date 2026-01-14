@@ -351,6 +351,15 @@ For more on how to optimize effectively, see
                  "request for silly amounts of memory)";
     }
 
+    if (needCodeLocations) {
+      if (auto codeSectionLocation = reader.getCodeSectionLocation()) {
+        std::cout << ";; Code section offset: 0x" << std::hex
+                  << *codeSectionLocation << std::dec << '\n'
+                  << ";; (binary offsets in VM stack traces include this;"
+                  << " add it to the offsets below)\n";
+      }
+    }
+
     options.applyOptionsAfterParse(wasm);
 
     if (options.passOptions.validate) {

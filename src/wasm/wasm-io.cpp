@@ -69,6 +69,7 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   if (wasm.hasFeaturesSection) {
     featuresSectionFeatures = parser.getFeaturesSectionFeatures();
   }
+  codeSectionLocation = parser.getCodeSectionLocation();
 }
 
 void ModuleReader::readBinary(std::string filename,

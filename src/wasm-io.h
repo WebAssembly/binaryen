@@ -72,6 +72,10 @@ public:
 
   FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
 
+  // Return the offset of the code section, or nothing if we did not read a
+  // binary.
+  std::optional<size_t> getCodeSectionLocation() { return codeSectionLocation; }
+
 private:
   bool DWARF = false;
 
@@ -81,6 +85,8 @@ private:
   bool needCodeLocations = false;
 
   FeatureSet featuresSectionFeatures = FeatureSet::MVP;
+
+  std::optional<size_t> codeSectionLocation;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 
