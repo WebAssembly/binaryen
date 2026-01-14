@@ -400,80 +400,44 @@ struct CodeScanner : PostWalker<CodeScanner> {
     setModule(&wasm);
   }
 
-  void visitCallIndirect(CallIndirect* curr) {
-    info.note(curr->heapType);
-  }
-  void visitCallRef(CallRef* curr) {
-    info.note(curr->target->type);
-  }
-  void visitRefNull(RefNull* curr) {
-    info.note(curr->type);
-  }
+  void visitCallIndirect(CallIndirect* curr) { info.note(curr->heapType); }
+  void visitCallRef(CallRef* curr) { info.note(curr->target->type); }
+  void visitRefNull(RefNull* curr) { info.note(curr->type); }
   void visitSelect(Select* curr) {
     if (curr->type.isRef()) {
       // This select will be annotated in the binary, so note it.
       info.note(curr->type);
     }
   }
-  void visitStructNew(StructNew* curr) {
-    info.note(curr->type);
-  }
-  void visitArrayNew(ArrayNew* curr) {
-    info.note(curr->type);
-  }
-  void visitArrayNewData(ArrayNewData* curr) {
-    info.note(curr->type);
-  }
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    info.note(curr->type);
-  }
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    info.note(curr->type);
-  }
+  void visitStructNew(StructNew* curr) { info.note(curr->type); }
+  void visitArrayNew(ArrayNew* curr) { info.note(curr->type); }
+  void visitArrayNewData(ArrayNewData* curr) { info.note(curr->type); }
+  void visitArrayNewElem(ArrayNewElem* curr) { info.note(curr->type); }
+  void visitArrayNewFixed(ArrayNewFixed* curr) { info.note(curr->type); }
   void visitArrayCopy(ArrayCopy* curr) {
     info.note(curr->destRef->type);
     info.note(curr->srcRef->type);
   }
-  void visitArrayFill(ArrayFill* curr) {
-    info.note(curr->ref->type);
-  }
-  void visitArrayInitData(ArrayInitData* curr) {
-    info.note(curr->ref->type);
-  }
-  void visitArrayInitElem(ArrayInitElem* curr) {
-    info.note(curr->ref->type);
-  }
-  void visitRefCast(RefCast* curr) {
-    info.note(curr->type);
-  }
-  void visitRefTest(RefTest* curr) {
-    info.note(curr->castType);
-  }
+  void visitArrayFill(ArrayFill* curr) { info.note(curr->ref->type); }
+  void visitArrayInitData(ArrayInitData* curr) { info.note(curr->ref->type); }
+  void visitArrayInitElem(ArrayInitElem* curr) { info.note(curr->ref->type); }
+  void visitRefCast(RefCast* curr) { info.note(curr->type); }
+  void visitRefTest(RefTest* curr) { info.note(curr->castType); }
   void visitBrOn(BrOn* curr) {
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       info.note(curr->ref->type);
       info.note(curr->castType);
     }
   }
-  void visitStructGet(StructGet* curr) {
-    info.note(curr->ref->type);
-  }
-  void visitStructSet(StructSet* curr) {
-    info.note(curr->ref->type);
-  }
-  void visitArrayGet(ArrayGet* curr) {
-    info.note(curr->ref->type);
-  }
-  void visitArraySet(ArraySet* curr) {
-    info.note(curr->ref->type);
-  }
+  void visitStructGet(StructGet* curr) { info.note(curr->ref->type); }
+  void visitStructSet(StructSet* curr) { info.note(curr->ref->type); }
+  void visitArrayGet(ArrayGet* curr) { info.note(curr->ref->type); }
+  void visitArraySet(ArraySet* curr) { info.note(curr->ref->type); }
   void visitContBind(ContBind* curr) {
     info.note(curr->cont->type);
     info.note(curr->type);
   }
-  void visitContNew(ContNew* curr) {
-    info.note(curr->type);
-  }
+  void visitContNew(ContNew* curr) { info.note(curr->type); }
   void visitResume(Resume* curr) {
     info.note(curr->cont->type);
     info.note(curr->type);
