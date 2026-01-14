@@ -33,6 +33,9 @@ namespace wasm {
 
 namespace TopologicalSort {
 
+// Thrown when no valid topological sort exists due to a cycle.
+struct CycleException {};
+
 // An adjacency list containing edges from vertices to their successors. Uses
 // `Index` because we are primarily sorting elements of Wasm modules. If we ever
 // need to sort signficantly larger objects, we might need to switch to
@@ -220,7 +223,10 @@ private:
     // Select the next available vertex, decrement in-degrees, and update the
     // sequence of available vertices. Return the Selector for the next vertex.
     Selector select(TopologicalOrdersImpl& ctx) {
-      assert(count >= 1);
+      if (count == 0) {
+        // No choices remain, indicating a cycle.
+        throw TopologicalSort::CycleException();
+      }
       assert(start + count <= ctx.buf.size());
       if constexpr (TopologicalOrdersImpl::useMinHeap) {
         ctx.buf[start] = ctx.popChoice();

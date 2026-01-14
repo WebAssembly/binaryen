@@ -108,6 +108,8 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::FP16, "float 16 operations")
       .addFeature(FeatureSet::CustomDescriptors,
                   "custom descriptors (RTTs) and exact references")
+      .addFeature(FeatureSet::RelaxedAtomics,
+                  "acquire/release atomic memory operations")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",

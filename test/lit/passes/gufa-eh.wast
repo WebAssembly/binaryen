@@ -58,3 +58,63 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $func (func))
+  (type $func (func))
+  ;; CHECK:      (type $cont (cont $func))
+  (type $cont (cont $func))
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (type $3 (func (result i32)))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (tag $tag (type $2) (param i32))
+  (tag $tag  (param i32))
+
+  ;; CHECK:      (export "handle" (func $handle))
+
+  ;; CHECK:      (func $func (type $func)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $func)
+    (nop)
+  )
+
+  ;; CHECK:      (func $handle (type $3) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (try_table (catch $tag $block)
+  ;; CHECK-NEXT:     (resume_throw $cont $tag
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (cont.new $cont
+  ;; CHECK-NEXT:       (ref.func $func)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $handle (export "handle") (result i32)
+    ;; Resume a new continuation and throw inside it immediately. We handle the
+    ;; exception in the try_table, returning 42. GUFA should not think we do not
+    ;; handle it (if it did, it would add an unreachable and trap). This tests
+    ;; that we see that resume_throw sends values to the tag, like a throw.
+    (block $block (result i32)
+      (try_table (catch $tag $block)
+        (resume_throw $cont $tag
+          (i32.const 42)
+          (cont.new $cont
+            (ref.func $func)
+          )
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+

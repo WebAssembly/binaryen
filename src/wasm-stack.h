@@ -129,7 +129,9 @@ private:
   void emitMemoryAccess(size_t alignment,
                         size_t bytes,
                         uint64_t offset,
-                        Name memory);
+                        Name memory,
+                        MemoryOrder order,
+                        bool isRMW);
   int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;

@@ -156,8 +156,10 @@ public:
                     Name mem);
   Result<> makeStore(
     unsigned bytes, Address offset, unsigned align, Type type, Name mem);
-  Result<> makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem);
-  Result<> makeAtomicStore(unsigned bytes, Address offset, Type type, Name mem);
+  Result<> makeAtomicLoad(
+    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
+  Result<> makeAtomicStore(
+    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
   Result<> makeAtomicRMW(
     AtomicRMWOp op, unsigned bytes, Address offset, Type type, Name mem);
   Result<>

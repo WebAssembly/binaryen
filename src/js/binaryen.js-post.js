@@ -181,6 +181,7 @@ function initializeConstants() {
     'FP16',
     'BulkMemoryOpt',
     'CallIndirectOverlong',
+    'RelaxedAtomics',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -5262,6 +5263,130 @@ Module['Function'] = (() => {
   };
   return Function;
 })();
+
+// Table wrapper
+Module['Table'] = (() => {
+  /** @constructor */
+  function Table(table) {
+    if (!(this instanceof Table)) {
+      if (!table) return null;
+      return new Table(table);
+    }
+    if (!table) throw Error("table reference must not be null");
+    this[thisPtr] = table;
+  }
+  /**
+   * Gets the name of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to get the name from.
+   * 
+   * @return {string} The name of the `Table`.
+   */
+  Table['getName'] = function(table) {
+    return UTF8ToString(Module['_BinaryenTableGetName'](table));
+  };
+
+  /**
+   * Sets the name of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to set the name for.
+   * @param {string} name - The new name for the `Table`.
+   * 
+   * @return {void}
+   */
+  Table['setName'] = function(table, name) {
+    preserveStack(() => {
+      Module['_BinaryenTableSetName'](table, strToStack(name));
+    });
+  };
+
+  /**
+   * Gets the initial number of pages of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to get the initial number of pages from.
+   * 
+   * @return {number} The initial number of pages of the `Table`.
+   */
+  Table['getInitial'] = function(table) {
+    return Module['_BinaryenTableGetInitial'](table);
+  };
+
+  /**
+   * Sets the initial number of pages of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to set the initial number of pages for.
+   * @param {number} initial - The new initial number of pages for the `Table`.
+   * 
+   * @return {void}
+   */
+  Table['setInitial'] = function(table, initial) {
+    Module['_BinaryenTableSetInitial'](table, initial);
+  };
+
+  /**
+   * Tests whether the specified `Table` has a maximum number of pages.
+   * 
+   * @param {Table} table - The `Table` to test.
+   * 
+   * @return {boolean} `true` if the `Table` has a maximum number of pages, `false` otherwise.
+   */
+  Table['hasMax'] = function(table) {
+    return Boolean(Module['_BinaryenTableHasMax'](table));
+  };
+
+  /**
+   * Gets the maximum number of pages of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to get the maximum number of pages from.
+   * 
+   * @return {number} The maximum number of pages of the `Table`.
+   */
+  Table['getMax'] = function(table) {
+    return Module['_BinaryenTableGetMax'](table);
+  };
+
+  /** 
+   * Sets the maximum number of pages of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to set the maximum number of pages for.
+   * @param {number} max - The new maximum number of pages for the `Table`.
+   * 
+   * @return {void}
+   */
+  Table['setMax'] = function(table, max) {
+    return Module['_BinaryenTableSetMax'](table, max);
+  };
+
+  /**
+   * Gets the table type of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to get the type from.
+   * 
+   * @return {number} The type of the `Table`.
+   */
+  Table['getType'] = function(table) {
+    return Module['_BinaryenTableGetType'](table);
+  };
+
+  /**
+   * Sets the table type of the specified `Table`.
+   * 
+   * @param {Table} table - The `Table` to set the type for.
+   * @param {Type} tableType - The new type for the `Table`.
+   * 
+   * @return {void}
+   */
+  Table['setType'] = function(table, tableType) {
+    return Module['_BinaryenTableSetType'](table, tableType);
+  };
+
+  deriveWrapperInstanceMembers(Table.prototype, Table);
+  Table.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Table;
+})();
+
 
 // Additional customizations
 
