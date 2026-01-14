@@ -221,7 +221,7 @@ if(NOT MSVC AND NOT EMSCRIPTEN)
   endif()
 endif()
 
-# The version of clang currently on our Mac bot's doesn't seem to support this flag.
+# The version of clang currently on our Mac bots doesn't seem to support this flag.
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND (LINUX OR WINDOWS))
   add_link_flag("-fuse-ld=lld")
 endif()
