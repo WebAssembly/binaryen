@@ -61,8 +61,8 @@ namespace wasm {
 
 namespace {
 
-// Ensure there are no conflicts between the newly built types and any existing
-// types.
+// Ensure there are no conflicts between the newly built types in the given
+// RecGroup and any existing types.
 std::vector<HeapType> ensureRecGroupIsUnique(RecGroup group, Module& wasm) {
   std::unordered_set<RecGroup> existing;
   for (auto type : ModuleUtils::collectHeapTypes(wasm)) {
