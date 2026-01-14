@@ -373,51 +373,51 @@ bool ComparableRecGroupShape::operator>(const RecGroupShape& other) const {
   return GT == compareComparable(*this, other);
 }
 
-const std::vector<HeapType>&
-UniqueRecGroups::insert(std::vector<HeapType> types) {
-  auto groupIt = groups.emplace(groups.end(), std::move(types));
-  auto& group = *groupIt;
-  if (shapes.emplace(RecGroupShape(group, features), groupIt).second) {
+RecGroup UniqueRecGroups::insert(RecGroup group) {
+  auto typesIt = groups.emplace(groups.end(), group.begin(), group.end());
+  auto& types = *typesIt;
+  if (shapes.emplace(RecGroupShape(types, features), group).second) {
     // The types are already unique.
     return group;
   }
   // There is a conflict. Find a brand that makes the group unique.
   BrandTypeIterator brand;
-  group.push_back(*brand);
-  while (!shapes.emplace(RecGroupShape(group, features), groupIt).second) {
-    group.back() = *++brand;
-  }
-  // Rebuild the rec group to include the brand. Map the old types (excluding
-  // the brand) to their corresponding new types to preserve recursions within
-  // the group.
-  Index size = group.size();
-  TypeBuilder builder(size);
-  std::unordered_map<HeapType, HeapType> newTypes;
-  for (Index i = 0; i < size - 1; ++i) {
-    newTypes[group[i]] = builder[i];
-  }
-  for (Index i = 0; i < size; ++i) {
-    builder[i].copy(group[i], [&](HeapType type) {
-      if (auto newType = newTypes.find(type); newType != newTypes.end()) {
-        return newType->second;
-      }
-      return type;
-    });
-  }
-  builder.createRecGroup(0, size);
-  group = *builder.build();
+  types.push_back(*brand);
+  Index size = types.size();
+  do {
+    types.back() = *brand;
+    ++brand;
+    TypeBuilder builder(size);
+    // Map the old types (excluding the brand) to their corresponding new types
+    // to preserve recursions within the group.
+    std::unordered_map<HeapType, HeapType> newTypes;
+    for (Index i = 0; i < size - 1; ++i) {
+      newTypes[group[i]] = builder[i];
+    }
+    for (Index i = 0; i < size; ++i) {
+      builder[i].copy(types[i], [&](HeapType type) {
+        if (auto newType = newTypes.find(type); newType != newTypes.end()) {
+          return newType->second;
+        }
+        return type;
+      });
+    }
+    builder.createRecGroup(0, size);
+    types = *builder.build();
+    group = types[0].getRecGroup();
+  } while (!shapes.emplace(RecGroupShape(types, features), group).second);
+
   return group;
 }
 
-const std::vector<HeapType>&
-UniqueRecGroups::insertOrGet(std::vector<HeapType> types) {
-  auto groupIt = groups.emplace(groups.end(), std::move(types));
+RecGroup UniqueRecGroups::insertOrGet(RecGroup group) {
+  auto typesIt = groups.emplace(groups.end(), group.begin(), group.end());
   auto [it, inserted] =
-    shapes.emplace(RecGroupShape(*groupIt, features), groupIt);
+    shapes.emplace(RecGroupShape(*typesIt, features), group);
   if (!inserted) {
-    groups.erase(groupIt);
+    groups.erase(typesIt);
   }
-  return *it->second;
+  return it->second;
 }
 
 } // namespace wasm

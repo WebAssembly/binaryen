@@ -41,9 +41,9 @@ GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm)
   for (auto& [type, info] : typeInfo) {
     if (info.visibility == ModuleUtils::Visibility::Public) {
       auto group = type.getRecGroup();
-      if (seenGroups.insert(type.getRecGroup()).second) {
-        std::vector<HeapType> groupTypes(group.begin(), group.end());
-        publicGroups.insert(std::move(groupTypes));
+      if (seenGroups.insert(group).second) {
+        [[maybe_unused]] RecGroup unique = publicGroups.insert(group);
+        assert(unique == group);
       }
     }
   }
@@ -199,12 +199,12 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
   }
 #endif
   // Ensure the new types are different from any public rec group.
-  const auto& newTypes = publicGroups.insert(*buildResults);
+  RecGroup newGroup = publicGroups.insert((*buildResults)[0].getRecGroup());
 
   // Map the old types to the new ones.
   TypeMap oldToNewTypes;
   for (auto [type, index] : typeIndices) {
-    oldToNewTypes[type] = newTypes[index];
+    oldToNewTypes[type] = newGroup[index];
   }
   mapTypeNamesAndIndices(oldToNewTypes);
   return oldToNewTypes;

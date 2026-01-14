@@ -164,20 +164,19 @@ struct BrandTypeIterator {
 struct UniqueRecGroups {
   using Groups = std::list<std::vector<HeapType>>;
   Groups groups;
-  std::unordered_map<RecGroupShape, Groups::iterator> shapes;
+  std::unordered_map<RecGroupShape, RecGroup> shapes;
 
   FeatureSet features;
 
   UniqueRecGroups(FeatureSet features) : features(features) {}
 
-  // Insert a rec group. If it is already unique, return the original types.
-  // Otherwise rebuild the group to make it unique and return the rebuilt types,
-  // including the brand.
-  const std::vector<HeapType>& insert(std::vector<HeapType> group);
+  // Insert a rec group. If it is already unique, return the original group.
+  // Otherwise rebuild the group to make it unique and return the rebuilt group.
+  RecGroup insert(RecGroup group);
 
   // If the group is unique, insert it and return the types. Otherwise, return
   // the types that already have this shape.
-  const std::vector<HeapType>& insertOrGet(std::vector<HeapType> group);
+  RecGroup insertOrGet(RecGroup group);
 };
 
 } // namespace wasm
