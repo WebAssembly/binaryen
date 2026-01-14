@@ -54,6 +54,13 @@
 //
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
+//   --pass-arg=gsi-desc-casts
+//
+//      Optimize casts to descriptor casts when possible. If a cast has no
+//      relevant subtypes, and it has a known descriptor, then we can do a
+//      ref.cast_desc instead, which can be faster (but is larger, so this is
+//      not on by default yet).
+//
 
 #include <variant>
 
@@ -89,9 +96,19 @@ struct GlobalStructInference : public Pass {
   // type-based inference, and this remains empty.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
+  bool optimizeToDescCasts;
+
+  std::unique_ptr<SubTypes> subTypes;
+
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
+    }
+
+    optimizeToDescCasts = hasArgument("gsi-desc-casts");
+    if (optimizeToDescCasts) {
+      // We need subtypes to know when to optimize to a desc cast.
+      subTypes = std::make_unique<SubTypes>(*module);
     }
 
     if (getPassOptions().closedWorld) {
@@ -496,6 +513,55 @@ struct GlobalStructInference : public Pass {
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref), getGlobal),
           left,
           right));
+      }
+
+      void visitRefCast(RefCast* curr) {
+        // When we see (ref.cast $T), and the type has a descriptor, and that
+        // descriptor only has a single global, then we can do (ref.cast_desc)
+        // using the descriptor. Descriptor casts are usually more efficient
+        // than normal ones (and even more so if we get lucky and are in a loop,
+        // where the global.get of the descriptor can be hoisted).
+        // TODO: only do this when shrinkLevel == 0?
+        if (!parent.optimizeToDescCasts) {
+          return;
+        }
+
+        // Check if we have a descriptor.
+        auto type = curr->type;
+        if (type == Type::unreachable) {
+          return;
+        }
+        auto heapType = type.getHeapType();
+        auto desc = heapType.getDescriptorType();
+        if (!desc) {
+          return;
+        }
+
+        // Check if the type has no (relevant) subtypes, as a ref.cast_desc will
+        // find precisely that type and nothing else.
+        if (!type.isExact() &&
+            !parent.subTypes->getStrictSubTypes(heapType).empty()) {
+          return;
+        }
+
+        // Check if we have a single global for the descriptor.
+        auto iter = parent.typeGlobals.find(*desc);
+        if (iter == parent.typeGlobals.end()) {
+          return;
+        }
+        const auto& globals = iter->second;
+        if (globals.size() != 1) {
+          return;
+        }
+
+        // We can optimize!
+        auto global = globals[0];
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+        auto* getGlobal =
+          builder.makeGlobalGet(global, wasm.getGlobal(global)->type);
+        auto* castDesc = builder.makeRefCast(curr->ref, getGlobal, curr->type);
+        replaceCurrent(castDesc);
       }
 
       void visitFunction(Function* func) {
