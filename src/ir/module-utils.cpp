@@ -391,8 +391,7 @@ struct TypeInfos {
   bool contains(HeapType type) { return info.count(type); }
 };
 
-struct CodeScanner
-  : PostWalker<CodeScanner, OverriddenVisitor<CodeScanner>> {
+struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
   TypeInclusion inclusion;
 
@@ -402,10 +401,10 @@ struct CodeScanner
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    info.note(call->heapType);
+    info.note(curr->heapType);
   }
   void visitCallRef(CallRef* curr) {
-    info.note(call->target->type);
+    info.note(curr->target->type);
   }
   void visitRefNull(RefNull* curr) {
     info.note(curr->type);
@@ -432,60 +431,60 @@ struct CodeScanner
     info.note(curr->type);
   }
   void visitArrayCopy(ArrayCopy* curr) {
-    info.note(copy->destRef->type);
-    info.note(copy->srcRef->type);
+    info.note(curr->destRef->type);
+    info.note(curr->srcRef->type);
   }
   void visitArrayFill(ArrayFill* curr) {
-    info.note(fill->ref->type);
+    info.note(curr->ref->type);
   }
   void visitArrayInitData(ArrayInitData* curr) {
-    info.note(init->ref->type);
+    info.note(curr->ref->type);
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
-    info.note(init->ref->type);
+    info.note(curr->ref->type);
   }
   void visitRefCast(RefCast* curr) {
-    info.note(cast->type);
+    info.note(curr->type);
   }
   void visitRefTest(RefTest* curr) {
-    info.note(cast->castType);
+    info.note(curr->castType);
   }
   void visitBrOn(BrOn* curr) {
-    if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-      info.note(cast->ref->type);
-      info.note(cast->castType);
+    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
+      info.note(curr->ref->type);
+      info.note(curr->castType);
     }
   }
   void visitStructGet(StructGet* curr) {
-    info.note(get->ref->type);
+    info.note(curr->ref->type);
   }
   void visitStructSet(StructSet* curr) {
-    info.note(set->ref->type);
+    info.note(curr->ref->type);
   }
   void visitArrayGet(ArrayGet* curr) {
-    info.note(get->ref->type);
+    info.note(curr->ref->type);
   }
   void visitArraySet(ArraySet* curr) {
-    info.note(set->ref->type);
+    info.note(curr->ref->type);
   }
   void visitContBind(ContBind* curr) {
-    info.note(contBind->cont->type);
-    info.note(contBind->type);
+    info.note(curr->cont->type);
+    info.note(curr->type);
   }
   void visitContNew(ContNew* curr) {
-    info.note(contNew->type);
+    info.note(curr->type);
   }
   void visitResume(Resume* curr) {
-    info.note(resume->cont->type);
-    info.note(resume->type);
+    info.note(curr->cont->type);
+    info.note(curr->type);
   }
   void visitResumeThrow(ResumeThrow* curr) {
-    info.note(resumeThrow->cont->type);
-    info.note(resumeThrow->type);
+    info.note(curr->cont->type);
+    info.note(curr->type);
   }
   void visitStackSwitch(StackSwitch* curr) {
-    info.note(switch_->cont->type);
-    info.note(switch_->type);
+    info.note(curr->cont->type);
+    info.note(curr->type);
   }
   void visitBlock(Block* curr) {
     info.noteControlFlow(Signature(Type::none, curr->type));
