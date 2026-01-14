@@ -566,16 +566,14 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
     // We've found all the types there are to find without considering more
     // control flow types. Consider one more control flow type and repeat.
     while (controlFlowIt != info.controlFlowSignatures.end()) {
-      auto& [sig, count] = *controlFlowIt;
+      auto& [sig, count] = *controlFlowIt++;
       if (auto it = seenSigs.find(sig); it != seenSigs.end()) {
         info.info[it->second].useCount += count;
-        ++controlFlowIt;
       } else {
         // We've never seen this signature before, so add a type for it.
         HeapType type(sig);
         noteNewType(type);
         info.info[type].useCount += count;
-        ++controlFlowIt;
         break;
       }
     }
