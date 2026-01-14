@@ -62,6 +62,11 @@ given_seed = None
 
 CLOSED_WORLD_FLAG = '--closed-world'
 
+# V8 does not support shared memories when running with
+# shared-everything enabled, so do not fuzz shared-everything
+# for now. The remaining features are not yet implemented in v8.
+DISALLOWED_FEATURES_IN_V8 = ['shared-everything', 'strings', 'stack-switching', 'relaxed-atomics']
+
 
 # utilities
 
@@ -143,19 +148,15 @@ def randomize_feature_opts():
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     elif random.random() < 0.9:
-        # 2/3 of the remaining 90% use them all. This is useful to maximize
+        # 90% of the remaining (2/3 * 0.9) use them all (0.54 probability). This is useful to maximize
         # coverage, as enabling more features enables more optimizations and
         # code paths, and also allows all initial contents to run.
 
-        # The shared-everything feature is new and we want to fuzz it, but it
-        # also currently disables fuzzing V8, so disable it most of the time.
-        # Same with strings. Relaxed SIMD's nondeterminism disables much but not
-        # all of our V8 fuzzing, so avoid it too. Stack Switching, as well, is
-        # not yet ready in V8.
-        FEATURE_OPTS.append('--disable-shared-everything')
-        FEATURE_OPTS.append('--disable-strings')
+        # Disable features not allowed in V8 to increase V8 fuzzing.
+        FEATURE_OPTS.extend(f'--disable-{feature}' for feature in DISALLOWED_FEATURES_IN_V8)
+        # Relaxed SIMD's nondeterminism disables much but not
+        # all of our V8 fuzzing, so avoid it.
         FEATURE_OPTS.append('--disable-relaxed-simd')
-        FEATURE_OPTS.append('--disable-stack-switching')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -824,11 +825,7 @@ class CompareVMs(TestCaseHandler):
                 return run_vm([shared.V8, get_fuzz_shell_js()] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
-                # V8 does not support shared memories when running with
-                # shared-everything enabled, so do not fuzz shared-everything
-                # for now. It also does not yet support strings, nor stack
-                # switching
-                return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
+                return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
@@ -886,7 +883,7 @@ class CompareVMs(TestCaseHandler):
                 if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
-                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'custom-descriptors'])
+                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'custom-descriptors', 'relaxed-atomics'])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -1187,7 +1184,7 @@ class Wasm2JS(TestCaseHandler):
         # implement wasm suspending using JS async/await.
         if JSPI:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'relaxed-atomics'])
 
 
 # Returns the wat for a wasm file. If it is already wat, it just returns that
@@ -1655,7 +1652,7 @@ class Split(TestCaseHandler):
             return False
 
         # see D8.can_run
-        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
+        return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
 
 # Check that the text format round-trips without error.
@@ -1944,7 +1941,7 @@ class Two(TestCaseHandler):
         # (as optimizations can lead to different outputs), and we must
         # disallow some features.
         # TODO: relax some of these
-        if NANS or not all_disallowed(['shared-everything', 'strings', 'stack-switching']):
+        if NANS or not all_disallowed(DISALLOWED_FEATURES_IN_V8):
             return
 
         output = run_d8_wasm(wasm, args=[second_wasm])

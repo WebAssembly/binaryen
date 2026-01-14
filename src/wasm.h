@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ir/import-name.h"
 #include "literal.h"
 #include "support/index.h"
 #include "support/mixed_arena.h"
@@ -995,7 +996,7 @@ public:
   Address align;
   Expression* ptr;
   Name memory;
-  MemoryOrder order;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
@@ -2176,6 +2177,7 @@ struct Importable : Named {
   Name module, base;
 
   bool imported() const { return module.is(); }
+  ImportNames importNames() const { return ImportNames{module, base}; };
 };
 
 class Function;
@@ -2652,15 +2654,6 @@ struct ShallowExpression {
   Module* module = nullptr;
 };
 
-} // namespace wasm
-
-namespace std {
-template<> struct hash<wasm::Address> {
-  size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::address64_t>()(a.addr);
-  }
-};
-
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
 std::ostream& operator<<(std::ostream& o, wasm::Function& func);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
@@ -2669,6 +2662,16 @@ std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
 std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo);
+std::ostream& operator<<(std::ostream& o, const wasm::ImportNames& importNames);
+
+} // namespace wasm
+
+namespace std {
+template<> struct hash<wasm::Address> {
+  size_t operator()(const wasm::Address a) const {
+    return std::hash<wasm::Address::address64_t>()(a.addr);
+  }
+};
 
 } // namespace std
 

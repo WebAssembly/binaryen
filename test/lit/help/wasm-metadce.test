@@ -221,9 +221,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --jspi                                        wrap imports and exports for
-;; CHECK-NEXT:                                                 JavaScript promise integration
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-and-prune-js-interface             legalizes the import/export
 ;; CHECK-NEXT:                                                 boundary and prunes when needed
 ;; CHECK-NEXT:
@@ -788,6 +785,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors
 ;; CHECK-NEXT:                                                 (RTTs) and exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-atomics                      Enable acquire/release atomic
+;; CHECK-NEXT:                                                 memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-atomics                     Disable acquire/release atomic
+;; CHECK-NEXT:                                                 memory operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

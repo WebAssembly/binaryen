@@ -67,13 +67,33 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
+class EvallingModuleRunner;
+
+class EvallingImportResolver : public ImportResolver {
+public:
+  EvallingImportResolver() : stubLiteral({Literal(0)}){};
+
+  // Return an unused stub value. We throw FailToEvalException on reading any
+  // imported globals. We ignore the type and return an i32 literal since some
+  // types can't be created anyway (e.g. ref none).
+  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
+    return &stubLiteral;
+  }
+
+private:
+  mutable Literals stubLiteral;
+};
+
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
 public:
   EvallingModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
-    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
+    : ModuleRunnerBase(wasm,
+                       externalInterface,
+                       std::make_shared<EvallingImportResolver>(),
+                       linkedInstances_) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
     // Error on reads of imported globals.
@@ -147,19 +167,6 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
     }
   });
 
-  ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-    if (global->module == env->name) {
-      auto* copied = ModuleUtils::copyGlobal(global, *env);
-      copied->module = Name();
-      copied->base = Name();
-
-      Builder builder(*env);
-      copied->init = builder.makeConst(Literal::makeZero(global->type));
-      env->addExport(
-        builder.makeExport(global->base, copied->name, ExternalKind::Global));
-    }
-  });
-
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
     if (memory->module == env->name) {
@@ -229,26 +236,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     for (auto& global : wasm->globals) {
       usedGlobalNames.insert(global->name);
     }
-  }
-
-  void importGlobals(GlobalValueSet& globals, Module& wasm_) override {
-    ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
-      auto it = linkedInstances.find(global->module);
-      if (it != linkedInstances.end()) {
-        auto* inst = it->second.get();
-        auto* globalExport = inst->wasm.getExportOrNull(global->base);
-        if (!globalExport || globalExport->kind != ExternalKind::Global) {
-          throw FailToEvalException(std::string("importGlobals: ") +
-                                    global->module.toString() + "." +
-                                    global->base.toString());
-        }
-        globals[global->name] = inst->globals[*globalExport->getInternalName()];
-      } else {
-        throw FailToEvalException(std::string("importGlobals: ") +
-                                  global->module.toString() + "." +
-                                  global->base.toString());
-      }
-    });
   }
 
   Literal getImportedFunction(Function* import) override {
@@ -558,8 +545,8 @@ private:
   void applyGlobalsToModule() {
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
-      for (const auto& [name, values] : instance->globals) {
-        wasm->getGlobal(name)->init = getSerialization(values);
+      for (const auto& [name, values] : instance->allGlobals) {
+        wasm->getGlobal(name)->init = getSerialization(*values);
       }
       return;
     }
@@ -576,6 +563,9 @@ private:
     wasm->updateMaps();
 
     for (auto& oldGlobal : oldGlobals) {
+      if (oldGlobal->imported()) {
+        continue;
+      }
       // Serialize the global's value. While doing so, pass in the name of this
       // global, as we may be able to reuse the global as the defining global
       // for the value. See getSerialization() for more details.
@@ -590,9 +580,9 @@ private:
       // for it. (If there is no value, then this is a new global we've added
       // during execution, for whom we've already set up a proper serialized
       // value when we created it.)
-      auto iter = instance->globals.find(oldGlobal->name);
-      if (iter != instance->globals.end()) {
-        oldGlobal->init = getSerialization(iter->second, name);
+      auto iter = instance->allGlobals.find(oldGlobal->name);
+      if (iter != instance->allGlobals.end()) {
+        oldGlobal->init = getSerialization(*iter->second, name);
       }
 
       // Add the global back to the module.
@@ -1347,6 +1337,12 @@ start_eval:
   }
 }
 
+// This is set when we find a situation we cannot handle in the middle of our
+// work. In that case we give up, throwing away the invalid state in memory.
+// TODO: Handle all those situations more gracefully, if that becomes useful
+//       enough at some point.
+static bool invalidState = false;
+
 // Eval all ctors in a module.
 void evalCtors(Module& wasm,
                std::vector<std::string>& ctors,
@@ -1451,7 +1447,19 @@ void evalCtors(Module& wasm,
       std::cout << "  ...stopping since could not create module instance: "
                 << fail.why << "\n";
     }
-    return;
+  } catch (TopologicalSort::CycleException e) {
+    // We use a topological sort for GC globals. If there is a non-breakable
+    // cycle there, we will hit an error (we can break cycles in nullable and
+    // mutable fields by setting a null and filling in the value later, but
+    // other situations are a problem).
+    if (!quiet) {
+      std::cout << "  ...stopping since global sorting hit a cycle\n";
+    }
+
+    // We found the cycle during the processing of globals, making wasm->globals
+    // invalid. Rather than refactor the code heavily to handle this very rare
+    // case, just give up entirely, and avoid writing out the current state.
+    invalidState = true;
   }
 }
 
@@ -1570,6 +1578,17 @@ int main(int argc, const char* argv[]) {
 
   if (canEval(wasm)) {
     evalCtors(wasm, ctors, keptExports);
+
+    if (invalidState) {
+      // We ended up in a state that cannot be written out. Forget about all of
+      // it, by re-reading the input and continuing from there (with nothing at
+      // all evalled, effectively).
+      auto features = wasm.features;
+      ModuleUtils::clearModule(wasm);
+      wasm.features = features;
+      ModuleReader reader;
+      reader.read(options.extra["infile"], wasm);
+    }
 
     if (!WasmValidator().validate(wasm)) {
       std::cout << wasm << '\n';

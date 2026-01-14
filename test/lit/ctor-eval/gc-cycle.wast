@@ -1291,3 +1291,59 @@
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+(module
+ ;; A circular reference using a non-nullable (but mutable) field. Unlike cases
+ ;; above, we cannot break up such cycles, and must give up. We should at least
+ ;; not error.
+
+ ;; CHECK:      (type $array (array i8))
+ (type $array  (array i8))
+ ;; CHECK:      (type $struct (struct (field (mut (ref any)))))
+ (type $struct (struct (field (mut (ref any)))))
+
+ ;; CHECK:      (type $2 (func))
+
+ ;; CHECK:      (global $global (mut i32) (i32.const 42))
+ (global $global (mut i32) (i32.const 42))
+
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (func $test (type $2)
+ ;; CHECK-NEXT:  (local $temp (ref $struct))
+ ;; CHECK-NEXT:  (global.set $global
+ ;; CHECK-NEXT:   (i32.const 1337)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (struct.new $struct
+ ;; CHECK-NEXT:    (array.new_fixed $array 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $struct 0
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (export "test")
+  (local $temp (ref $struct))
+
+  ;; Set the global. This will not get written out, as we will cancel all our
+  ;; work when we hit the cycle below. (TODO: improve that)
+  (global.set $global
+   (i32.const 1337)
+  )
+
+  ;; Start with the struct referring to an array.
+  (local.set $temp
+   (struct.new $struct
+    (array.new_fixed $array 0)
+   )
+  )
+
+  ;; Make the struct refer to itself, circularly.
+  (struct.set $struct 0
+   (local.get $temp)
+   (local.get $temp)
+  )
+ )
+)
+

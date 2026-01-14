@@ -57,7 +57,6 @@ set(passes_SOURCES
   Intrinsics.cpp
   J2CLItableMerging.cpp
   J2CLOpts.cpp
-  JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LLVMMemoryCopyFillLowering.cpp

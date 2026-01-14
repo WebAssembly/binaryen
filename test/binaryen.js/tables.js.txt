@@ -1,0 +1,6 @@
+GetTable is equal: true
+getTableInfo={"name":"a-table","module":"","base":"","initial":5,"max":15}
+(module
+ (table $a-table 5 15 funcref)
+)
+

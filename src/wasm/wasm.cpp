@@ -61,6 +61,7 @@ const char* FP16Feature = "fp16";
 const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
+const char* RelaxedAtomicsFeature = "relaxed-atomics";
 
 } // namespace BinaryConsts::CustomSections
 
@@ -2015,22 +2016,3 @@ void Module::clearDebugInfo() {
 }
 
 } // namespace wasm
-
-namespace std {
-
-std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
-  switch (mo) {
-    case wasm::MemoryOrder::Unordered:
-      os << "Unordered";
-      break;
-    case wasm::MemoryOrder::SeqCst:
-      os << "SeqCst";
-      break;
-    case wasm::MemoryOrder::AcqRel:
-      os << "AcqRel";
-      break;
-  }
-  return os;
-}
-
-} // namespace std

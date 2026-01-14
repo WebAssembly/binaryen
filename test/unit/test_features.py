@@ -5,6 +5,7 @@ from scripts.test import shared
 from . import utils
 
 
+# Consider adding new tests to test/lit/validation instead
 class FeatureValidationTest(utils.BinaryenTestCase):
     def check_feature(self, module, error, flag, const_flags=[]):
         p = shared.run_process(shared.WASM_OPT +
@@ -454,4 +455,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-bulk-memory-opt',
             '--enable-call-indirect-overlong',
             '--enable-custom-descriptors',
+            '--enable-relaxed-atomics',
         ], p2.stdout.splitlines())

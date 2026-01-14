@@ -358,6 +358,9 @@ enum BrOnCastFlag {
 
 constexpr uint32_t ExactImport = 1 << 5;
 
+constexpr uint32_t HasMemoryOrderMask = 1 << 5;
+constexpr uint32_t HasMemoryIndexMask = 1 << 6;
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f
@@ -457,6 +460,7 @@ extern const char* FP16Feature;
 extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
 extern const char* CustomDescriptorsFeature;
+extern const char* RelaxedAtomicsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1728,7 +1732,10 @@ public:
   size_t inlineHintsLen = 0;
   void readInlineHints(size_t payloadLen);
 
-  Index readMemoryAccess(Address& alignment, Address& offset);
+  std::tuple<Address, Address, Index, MemoryOrder>
+  readMemoryAccess(bool isAtomic, bool isRMW);
+  std::tuple<Name, Address, Address, MemoryOrder> getAtomicMemarg();
+  std::tuple<Name, Address, Address, MemoryOrder> getRMWMemarg();
   std::tuple<Name, Address, Address> getMemarg();
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
