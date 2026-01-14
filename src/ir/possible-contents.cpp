@@ -1277,7 +1277,7 @@ struct InfoCollector
       }
     }
   }
-  void visitThrow(Throw* curr) {
+  template<typename T> void handleThrow(T* curr) {
     auto& operands = curr->operands;
     if (!isRelevant(operands)) {
       return;
@@ -1289,6 +1289,7 @@ struct InfoCollector
         {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
   }
+  void visitThrow(Throw* curr) { handleThrow(curr); }
   void visitRethrow(Rethrow* curr) {}
   void visitThrowRef(ThrowRef* curr) {}
 
@@ -1390,7 +1391,10 @@ struct InfoCollector
   }
 
   void visitResume(Resume* curr) { handleResume(curr); }
-  void visitResumeThrow(ResumeThrow* curr) { handleResume(curr); }
+  void visitResumeThrow(ResumeThrow* curr) {
+    handleResume(curr);
+    handleThrow(curr);
+  }
   void visitStackSwitch(StackSwitch* curr) {
     // TODO: optimize when possible
     addRoot(curr);

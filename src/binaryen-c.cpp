@@ -487,6 +487,9 @@ BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void) {
 BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CallIndirectOverlong);
 }
+BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
@@ -1351,7 +1354,8 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                       offset,
                       (Expression*)ptr,
                       Type(type),
-                      getMemoryName(module, memoryName)));
+                      getMemoryName(module, memoryName),
+                      MemoryOrder::SeqCst));
 }
 BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           uint32_t bytes,
@@ -1367,7 +1371,8 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                        (Expression*)ptr,
                        (Expression*)value,
                        Type(type),
-                       getMemoryName(module, memoryName)));
+                       getMemoryName(module, memoryName),
+                       MemoryOrder::SeqCst));
 }
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenOp op,

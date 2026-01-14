@@ -555,7 +555,8 @@ struct NullInstrParserCtx {
                     int,
                     bool,
                     MemoryIdxT*,
-                    MemargT) {
+                    MemargT,
+                    MemoryOrder) {
     return Ok{};
   }
   Result<> makeStore(Index,
@@ -564,7 +565,8 @@ struct NullInstrParserCtx {
                      int,
                      bool,
                      MemoryIdxT*,
-                     MemargT) {
+                     MemargT,
+                     MemoryOrder) {
     return Ok{};
   }
   Result<> makeAtomicRMW(Index,
@@ -2235,12 +2237,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     int bytes,
                     bool isAtomic,
                     Name* mem,
-                    Memarg memarg) {
+                    Memarg memarg,
+                    MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(pos,
-                     irBuilder.makeAtomicLoad(bytes, memarg.offset, type, *m));
+      return withLoc(
+        pos, irBuilder.makeAtomicLoad(bytes, memarg.offset, type, *m, order));
     }
     return withLoc(pos,
                    irBuilder.makeLoad(
@@ -2253,12 +2256,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                      int bytes,
                      bool isAtomic,
                      Name* mem,
-                     Memarg memarg) {
+                     Memarg memarg,
+                     MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(pos,
-                     irBuilder.makeAtomicStore(bytes, memarg.offset, type, *m));
+      return withLoc(
+        pos, irBuilder.makeAtomicStore(bytes, memarg.offset, type, *m, order));
     }
     return withLoc(
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));

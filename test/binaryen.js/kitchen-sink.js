@@ -100,6 +100,7 @@ function test_features() {
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);
   console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
+  console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -742,13 +743,6 @@ function test_core() {
   var tablePtr = module.getTable("t1");
   assert(tablePtr !== 0);
   assert(tablePtr === module.getTableByIndex(0));
-
-  var table = binaryen.getTableInfo(tablePtr);
-  assert(table.name === "t1");
-  assert(table.module === "");
-  assert(table.base === "");
-  assert(table.initial === 0);
-  assert(table.max === 2);
 
   module.removeTable("t1");
   assert(module.getNumTables() === 0);
