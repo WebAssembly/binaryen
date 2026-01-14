@@ -142,19 +142,21 @@ public:
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();
-          if (index >= tables[exportedTable].size()) {
+          auto* table = instance->allTables[exportedTable];
+          if (index >= table->size()) {
             throwJSException();
           }
-          return {tableLoad(exportedTable, index)};
+          return table->get(index);
         } else if (import->base == "table-set") {
           if (!exportedTable) {
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();
-          if (index >= tables[exportedTable].size()) {
+          auto* table = instance->allTables[exportedTable];
+          if (index >= table->size()) {
             throwJSException();
           }
-          tableStore(exportedTable, index, arguments[1]);
+          table->set(index, arguments[1]);
           return {};
         } else if (import->base == "call-export") {
           callExportAsJS(arguments[0].geti32());

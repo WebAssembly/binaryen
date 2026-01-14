@@ -22,6 +22,7 @@
 #define wasm_shell_interface_h
 
 #include "asmjs/shared-constants.h"
+#include "interpreter/exception.h"
 #include "ir/module-utils.h"
 #include "shared-constants.h"
 #include "support/name.h"
@@ -30,17 +31,6 @@
 #include "wasm.h"
 
 namespace wasm {
-
-// An exception emitted when exit() is called.
-struct ExitException {};
-
-// An exception emitted when a wasm trap occurs.
-struct TrapException {};
-
-// An exception emitted when a host limitation is hit. (These are not wasm traps
-// as they are not in the spec; for example, the spec has no limit on how much
-// GC memory may be allocated, but hosts have limits.)
-struct HostLimitException {};
 
 struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
@@ -93,7 +83,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   };
 
   std::map<Name, Memory> memories;
-  std::unordered_map<Name, std::vector<Literal>> tables;
   std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   ShellExternalInterface(
@@ -125,8 +114,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
       memories[memory->name] = shellMemory;
     });
-    ModuleUtils::iterDefinedTables(
-      wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
   }
 
   Literal getImportedFunction(Function* import) override {
@@ -255,35 +242,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     auto& memory = it->second;
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
-
-  Index tableSize(Name tableName) override {
-    return (Index)tables[tableName].size();
-  }
-
-  void
-  tableStore(Name tableName, Address index, const Literal& entry) override {
-    auto& table = tables[tableName];
-    if (index >= table.size()) {
-      trap("out of bounds table access");
-    } else {
-      table[index] = entry;
-    }
-  }
-
-  Literal tableLoad(Name tableName, Address index) override {
-    auto it = tables.find(tableName);
-    if (it == tables.end()) {
-      trap("tableGet on non-existing table");
-    }
-
-    auto& table = it->second;
-    if (index >= table.size()) {
-      trap("out of bounds table access");
-    }
-
-    return table[index];
-  }
-
   bool
   growMemory(Name memoryName, Address /*oldSize*/, Address newSize) override {
     // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
@@ -299,20 +257,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     memory.resize(newSize);
     return true;
   }
-
-  bool growTable(Name name,
-                 const Literal& value,
-                 Index /*oldSize*/,
-                 Index newSize) override {
-    // Apply a reasonable limit on table size, 1GB, to avoid DOS on the
-    // interpreter.
-    if (newSize > 1024 * 1024 * 1024) {
-      return false;
-    }
-    tables[name].resize(newSize, value);
-    return true;
-  }
-
   void trap(std::string_view why) override {
     std::cout << "[trap " << why << "]\n";
     throw TrapException();
