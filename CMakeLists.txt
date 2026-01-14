@@ -221,7 +221,7 @@ if(NOT MSVC AND NOT EMSCRIPTEN)
   endif()
 endif()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND (LINUX OR WINDOWS))
   add_link_flag("-fuse-ld=lld")
 endif()
 
