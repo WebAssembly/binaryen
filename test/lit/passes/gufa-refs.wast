@@ -6056,17 +6056,17 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func (result i64 nullref i32)))
-
   ;; CHECK:      (type $array (sub (array (mut i8))))
   (type $array (sub (array (mut i8))))
 
-  ;; CHECK:      (type $2 (func))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $2 (func (result i64 nullref i32)))
 
   ;; CHECK:      (global $global (ref null $array) (array.new_fixed $array 0))
   (global $global (ref null $array) (array.new_fixed $array 0))
 
-  ;; CHECK:      (func $test-set-bottom (type $2)
+  ;; CHECK:      (func $test-set-bottom (type $1)
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result nullref)
@@ -6099,9 +6099,9 @@
     )
   )
 
-  ;; CHECK:      (func $loop-tuple-br_on (type $2)
+  ;; CHECK:      (func $loop-tuple-br_on (type $1)
   ;; CHECK-NEXT:  (tuple.drop 3
-  ;; CHECK-NEXT:   (loop $loop (type $0) (result i64 nullref i32)
+  ;; CHECK-NEXT:   (loop $loop (type $2) (result i64 nullref i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop

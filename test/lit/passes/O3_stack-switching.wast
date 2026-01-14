@@ -19,12 +19,12 @@
  (type $cont (cont $function_1))
  ;; CHECK:      (type $fiber (struct (field $handlers (ref $handlers)) (field $cont (ref $cont))))
  (type $fiber (struct (field $handlers (ref $handlers)) (field $cont (ref $cont))))
- ;; CHECK:      (tag $exception (type $8) (param (ref eq)))
+ ;; CHECK:      (tag $exception (type $7) (param (ref eq)))
  (tag $exception (param (ref eq)))
- ;; CHECK:      (tag $effect (type $9) (param (ref eq)) (result (ref eq) (ref eq)))
+ ;; CHECK:      (tag $effect (type $8) (param (ref eq)) (result (ref eq) (ref eq)))
  (tag $effect (param (ref eq)) (result (ref eq) (ref eq)))
 
- ;; CHECK:      (func $resume (type $10) (param $0 (ref $fiber)) (param $1 (ref $closure)) (param $2 (ref eq)) (result (ref eq))
+ ;; CHECK:      (func $resume (type $9) (param $0 (ref $fiber)) (param $1 (ref $closure)) (param $2 (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $3 (tuple (ref eq) (ref $cont)))
  ;; CHECK-NEXT:  (local $4 (ref $handlers))
  ;; CHECK-NEXT:  (local $5 (ref $closure_2))
@@ -33,7 +33,7 @@
  ;; CHECK-NEXT:    (return_call_ref $function_2
  ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.tee $3
- ;; CHECK-NEXT:       (block $handle_effect (type $7) (result (ref eq) (ref $cont))
+ ;; CHECK-NEXT:       (block $handle_effect (type $10) (result (ref eq) (ref $cont))
  ;; CHECK-NEXT:        (return_call_ref $function_1
  ;; CHECK-NEXT:         (try_table (result (ref eq)) (catch $exception $handle_exception)
  ;; CHECK-NEXT:          (resume $cont (on $effect $handle_effect)

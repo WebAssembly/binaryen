@@ -5,7 +5,7 @@
 
 (module
   ;; Regression test in which we need to calculate a proper LUB.
-  ;; CHECK:      (func $selectify-fresh-lub (type $5) (param $x i32) (result anyref)
+  ;; CHECK:      (func $selectify-fresh-lub (type $4) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (select (result i31ref)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (ref.i31
@@ -600,7 +600,7 @@
   ;; CHECK:      (func $restructure-select-no-multivalue (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block $block (type $4) (result i32 i32)
+  ;; CHECK-NEXT:   (block $block (type $5) (result i32 i32)
   ;; CHECK-NEXT:    (tuple.drop 2
   ;; CHECK-NEXT:     (br_if $block
   ;; CHECK-NEXT:      (tuple.make 2

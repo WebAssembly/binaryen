@@ -23,14 +23,14 @@
  ;; CHECK-BINARY:      (type $3 (func (param (ref $ct)) (result i32)))
 
  ;; CHECK-BINARY:      (tag $t (result i32))
- ;; CHECK-TEXT:      (type $2 (func (result i32 (ref $ct))))
+ ;; CHECK-TEXT:      (type $2 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-TEXT:      (type $3 (func (param (ref $ct)) (result i32)))
+ ;; CHECK-TEXT:      (type $3 (func (result i32 (ref $ct))))
 
  ;; CHECK-TEXT:      (tag $t (type $ft) (param i32) (result i32))
- ;; CHECK-BIN:      (type $2 (func (result i32 (ref $ct))))
+ ;; CHECK-BIN:      (type $2 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-BIN:      (type $3 (func (param (ref $ct)) (result i32)))
+ ;; CHECK-BIN:      (type $3 (func (result i32 (ref $ct))))
 
  ;; CHECK-BIN:      (tag $t (type $ft) (param i32) (result i32))
  (tag $t (param i32) (result i32))
@@ -48,9 +48,9 @@
  ;; CHECK-BINARY-NEXT:  )
  ;; CHECK-BINARY-NEXT:  (i32.const 123)
  ;; CHECK-BINARY-NEXT: )
- ;; CHECK-TEXT:      (func $go (type $3) (param $x (ref $ct)) (result i32)
+ ;; CHECK-TEXT:      (func $go (type $2) (param $x (ref $ct)) (result i32)
  ;; CHECK-TEXT-NEXT:  (tuple.extract 2 0
- ;; CHECK-TEXT-NEXT:   (block $handler (type $2) (result i32 (ref $ct))
+ ;; CHECK-TEXT-NEXT:   (block $handler (type $3) (result i32 (ref $ct))
  ;; CHECK-TEXT-NEXT:    (return
  ;; CHECK-TEXT-NEXT:     (resume $ct (on $t $handler)
  ;; CHECK-TEXT-NEXT:      (i32.const 123)
@@ -60,13 +60,13 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $go (type $3) (param $x (ref $ct)) (result i32)
+ ;; CHECK-BIN:      (func $go (type $2) (param $x (ref $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (local $scratch (tuple i32 (ref $ct)))
  ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
  ;; CHECK-BIN-NEXT:  (local.set $scratch_2
  ;; CHECK-BIN-NEXT:   (tuple.extract 2 0
  ;; CHECK-BIN-NEXT:    (local.tee $scratch
- ;; CHECK-BIN-NEXT:     (block $block (type $2) (result i32 (ref $ct))
+ ;; CHECK-BIN-NEXT:     (block $block (type $3) (result i32 (ref $ct))
  ;; CHECK-BIN-NEXT:      (return
  ;; CHECK-BIN-NEXT:       (resume $ct (on $t $block)
  ;; CHECK-BIN-NEXT:        (i32.const 123)
@@ -125,19 +125,19 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (cont $0))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (result i32 (ref $1))))
+;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref $1)) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func (param (ref $1)) (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $3 (func (result i32 (ref $1))))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0) (param i32) (result i32))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch (tuple i32 (ref $1)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $scratch_2
 ;; CHECK-BIN-NODEBUG-NEXT:   (tuple.extract 2 0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.tee $scratch
-;; CHECK-BIN-NODEBUG-NEXT:     (block $block (type $2) (result i32 (ref $1))
+;; CHECK-BIN-NODEBUG-NEXT:     (block $block (type $3) (result i32 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:      (return
 ;; CHECK-BIN-NODEBUG-NEXT:       (resume $1 (on $tag$0 $block)
 ;; CHECK-BIN-NODEBUG-NEXT:        (i32.const 123)
