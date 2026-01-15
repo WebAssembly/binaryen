@@ -178,6 +178,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gsi                                         globally optimize struct values
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gsi-desc-cast                               globally optimize struct values,
+;; CHECK-NEXT:                                                 also emitting ref.cast_desc
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gto                                         globally optimize GC types
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gufa                                        Grand Unified Flow Analysis:
