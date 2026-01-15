@@ -136,7 +136,7 @@ size_t wasm::file_size(std::string filename) {
   return infile.tellg();
 }
 
-void flush_and_quick_exit() {
+void wasm::flush_and_quick_exit() {
   std::cout << std::flush;
   std::cerr << std::flush;
   std::quick_exit(0);
