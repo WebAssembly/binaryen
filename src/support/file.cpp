@@ -135,3 +135,10 @@ size_t wasm::file_size(std::string filename) {
                        std::ifstream::ate | std::ifstream::binary);
   return infile.tellg();
 }
+
+void flush_and_quick_exit() {
+  std::cout << std::flush;
+  std::cerr << std::flush;
+  std::quick_exit(0);
+}
+

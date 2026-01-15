@@ -1619,5 +1619,5 @@ int main(int argc, const char* argv[]) {
     writer.write(wasm, options.extra["output"]);
   }
 
-  std::quick_exit(0);
+  flush_and_quick_exit();
 }

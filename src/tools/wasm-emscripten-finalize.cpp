@@ -290,5 +290,5 @@ int main(int argc, const char* argv[]) {
     writer.write(wasm, output);
   }
 
-  std::quick_exit(0);
+  flush_and_quick_exit();
 }

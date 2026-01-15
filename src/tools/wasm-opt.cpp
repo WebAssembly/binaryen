@@ -497,7 +497,5 @@ For more on how to optimize effectively, see
     }
   }
 
-  std::quick_exit(0);
-
-  return 0;
+  flush_and_quick_exit();
 }
