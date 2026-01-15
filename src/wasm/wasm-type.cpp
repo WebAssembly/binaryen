@@ -2705,9 +2705,9 @@ TypeBuilder::BuildResult TypeBuilder::build() {
     // If we are building multiple groups, make sure there will be no conflicts
     // after disallowed features are taken into account.
     if (groupSize > 0 && groupSize != entryCount) {
-      auto expectedFirst = (*built)[0];
-      auto& types = impl->unique.insertOrGet(*built);
-      if (types[0] != expectedFirst) {
+      auto group = (*built)[0].getRecGroup();
+      auto uniqueGroup = impl->unique.insertOrGet(group);
+      if (group != uniqueGroup) {
         return {TypeBuilder::Error{
           groupStart, TypeBuilder::ErrorReason::RecGroupCollision}};
       }

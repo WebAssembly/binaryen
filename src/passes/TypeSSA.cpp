@@ -61,10 +61,9 @@ namespace wasm {
 
 namespace {
 
-// Ensure there are no conflicts between the newly built types and any existing
-// types.
-std::vector<HeapType> ensureTypesAreInNewRecGroup(std::vector<HeapType>&& types,
-                                                  Module& wasm) {
+// Ensure there are no conflicts between the newly built types in the given
+// RecGroup and any existing types.
+std::vector<HeapType> ensureRecGroupIsUnique(RecGroup group, Module& wasm) {
   std::unordered_set<RecGroup> existing;
   for (auto type : ModuleUtils::collectHeapTypes(wasm)) {
     existing.insert(type.getRecGroup());
@@ -72,22 +71,21 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(std::vector<HeapType>&& types,
 
   UniqueRecGroups unique(wasm.features);
   for (auto group : existing) {
-    std::vector<HeapType> types(group.begin(), group.end());
     // N.B. we use `insertOrGet` rather than `insert` because some passes (DAE,
     // BlockMerging) can create multiple types with the same shape, so we can't
     // assume all the rec groups are already unique. The rec groups will have
     // different types, but their shapes will match considering how exactness,
     // etc. will be erased by the binary writer.
-    unique.insertOrGet(std::move(types));
+    unique.insertOrGet(group);
   }
 
-  auto num = types.size();
-  std::vector<HeapType> uniqueTypes = unique.insert(std::move(types));
-  if (uniqueTypes.size() != num) {
+  RecGroup uniqueGroup = unique.insert(group);
+  std::vector<HeapType> uniqueTypes(uniqueGroup.begin(), uniqueGroup.end());
+  if (uniqueTypes.size() != group.size()) {
     // Remove the brand type, which we do not need to consider further.
     uniqueTypes.pop_back();
   }
-  assert(uniqueTypes.size() == num);
+  assert(uniqueTypes.size() == group.size());
   return uniqueTypes;
 }
 
@@ -355,7 +353,7 @@ struct TypeSSA : public Pass {
     assert(newTypes.size() == num);
 
     // Make sure this is actually a new rec group.
-    newTypes = ensureTypesAreInNewRecGroup(std::move(newTypes), *module);
+    newTypes = ensureRecGroupIsUnique(newTypes[0].getRecGroup(), *module);
 
     // Success: we can apply the new types.
 
