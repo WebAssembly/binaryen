@@ -79,7 +79,8 @@ struct GlobalStructInference : public Pass {
   // Only modifies struct.get operations.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  GlobalStructInference(bool optimizeToDescCasts) : optimizeToDescCasts(optimizeToDescCasts) {}
+  GlobalStructInference(bool optimizeToDescCasts)
+    : optimizeToDescCasts(optimizeToDescCasts) {}
 
   // Maps optimizable struct types to the globals whose init is a struct.new of
   // them.
@@ -713,7 +714,11 @@ struct GlobalStructInference : public Pass {
 
 } // anonymous namespace
 
-Pass* createGlobalStructInferencePass() { return new GlobalStructInference(false); }
-Pass* createGlobalStructInferenceDescCastPass() { return new GlobalStructInference(true); }
+Pass* createGlobalStructInferencePass() {
+  return new GlobalStructInference(false);
+}
+Pass* createGlobalStructInferenceDescCastPass() {
+  return new GlobalStructInference(true);
+}
 
 } // namespace wasm
