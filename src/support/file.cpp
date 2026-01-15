@@ -141,4 +141,3 @@ void wasm::flush_and_quick_exit() {
   std::cerr << std::flush;
   std::quick_exit(0);
 }
-
