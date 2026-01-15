@@ -394,9 +394,7 @@ struct TypeInfos {
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
 
-  CodeScanner(Module& wasm, TypeInfos& info) : info(info) {
-    setModule(&wasm);
-  }
+  CodeScanner(Module& wasm, TypeInfos& info) : info(info) { setModule(&wasm); }
 
   void visitCallIndirect(CallIndirect* curr) { info.note(curr->heapType); }
   void visitCallRef(CallRef* curr) { info.note(curr->target->type); }
