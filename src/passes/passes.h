@@ -60,6 +60,7 @@ Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateGlobalEffectsPass();
 Pass* createGlobalRefiningPass();
 Pass* createGlobalStructInferencePass();
+Pass* createGlobalStructInferenceDescCastPass();
 Pass* createGlobalTypeOptimizationPass();
 Pass* createGUFAPass();
 Pass* createGUFACastAllPass();
