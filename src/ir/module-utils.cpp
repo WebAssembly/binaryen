@@ -393,12 +393,8 @@ struct TypeInfos {
 
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
-  TypeInclusion inclusion;
 
-  CodeScanner(Module& wasm, TypeInfos& info, TypeInclusion inclusion)
-    : info(info), inclusion(inclusion) {
-    setModule(&wasm);
-  }
+  CodeScanner(Module& wasm, TypeInfos& info) : info(info) { setModule(&wasm); }
 
   void visitCallIndirect(CallIndirect* curr) { info.note(curr->heapType); }
   void visitCallRef(CallRef* curr) { info.note(curr->target->type); }
@@ -476,7 +472,7 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm, TypeInclusion inclusion, VisibilityHandling visibility) {
   // Collect module-level info.
   TypeInfos info;
-  CodeScanner(wasm, info, inclusion).walkModuleCode(&wasm);
+  CodeScanner(wasm, info).walkModuleCode(&wasm);
   for (auto& curr : wasm.globals) {
     info.note(curr->type);
   }
@@ -501,7 +497,7 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
       // printing an error message on a partially parsed module whose declared
       // function bodies have not all been parsed yet.
       if (func->body) {
-        CodeScanner(wasm, info, inclusion).walk(func->body);
+        CodeScanner(wasm, info).walk(func->body);
       }
     });
 
