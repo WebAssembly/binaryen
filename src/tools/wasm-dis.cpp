@@ -98,10 +98,16 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }
-  Output output(options.extra["output"], Flags::Text);
-  output.getStream() << wasm << '\n';
+
+  // Ensure the destructor of Output runs before quick_exit.
+  {
+    Output output(options.extra["output"], Flags::Text);
+    output.getStream() << wasm << '\n';
+  }
 
   if (options.debug) {
     std::cerr << "Done." << std::endl;
   }
+
+  std::quick_exit(0);
 }

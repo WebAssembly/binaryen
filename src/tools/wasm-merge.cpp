@@ -832,4 +832,6 @@ Input source maps can be specified by adding an -ism option right after the modu
     }
     writer.write(merged, options.extra["output"]);
   }
+
+  std::quick_exit(0);
 }

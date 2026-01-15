@@ -131,19 +131,25 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "writing..." << std::endl;
   }
-  ModuleWriter writer(options.passOptions);
-  writer.setBinary(true);
-  writer.setDebugInfo(debugInfo);
-  if (sourceMapFilename.size()) {
-    writer.setSourceMapFilename(sourceMapFilename);
-    writer.setSourceMapUrl(sourceMapUrl);
+
+  // Ensure the destructor of ModuleWriter runs before quick_exit.
+  {
+    ModuleWriter writer(options.passOptions);
+    writer.setBinary(true);
+    writer.setDebugInfo(debugInfo);
+    if (sourceMapFilename.size()) {
+      writer.setSourceMapFilename(sourceMapFilename);
+      writer.setSourceMapUrl(sourceMapUrl);
+    }
+    if (symbolMap.size() > 0) {
+      writer.setSymbolMap(symbolMap);
+    }
+    writer.write(wasm, options.extra["output"]);
   }
-  if (symbolMap.size() > 0) {
-    writer.setSymbolMap(symbolMap);
-  }
-  writer.write(wasm, options.extra["output"]);
 
   if (options.debug) {
     std::cerr << "Done." << std::endl;
   }
+
+  std::quick_exit(0);
 }

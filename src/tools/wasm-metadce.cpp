@@ -674,4 +674,6 @@ int main(int argc, const char* argv[]) {
 
   // Clean up
   free(copy);
+
+  std::quick_exit(0);
 }

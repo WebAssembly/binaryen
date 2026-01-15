@@ -496,5 +496,8 @@ For more on how to optimize effectively, see
       Fatal() << "extra fuzz command output differs\n";
     }
   }
+
+  std::quick_exit(0);
+
   return 0;
 }

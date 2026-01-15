@@ -603,4 +603,6 @@ int main(int argc, const char* argv[]) {
   Colors::bold(std::cerr);
   std::cerr << "all checks passed.\n";
   Colors::normal(std::cerr);
+
+  std::quick_exit(0);
 }
