@@ -222,7 +222,7 @@ if(NOT MSVC AND NOT EMSCRIPTEN)
 endif()
 
 # The version of clang currently on our Mac bots doesn't seem to support this flag.
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND (LINUX OR WINDOWS))
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
   add_link_flag("-fuse-ld=lld")
 endif()
 
@@ -473,7 +473,7 @@ if(BUILD_STATIC_LIB)
 else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED)
-  if(LINUX)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # Disable interposition and resolve Binaryen symbols locally.
     add_link_flag("-Bsymbolic")
   endif()
