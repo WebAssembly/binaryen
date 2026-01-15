@@ -25,7 +25,7 @@
  (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2 (ref.i31 (i32.const 0)) (i32.const 1)))
 
 
- ;; CHECK:      (func $test-dead-get-non-nullable (type $7) (param $0 (ref struct))
+ ;; CHECK:      (func $test-dead-get-non-nullable (type $6) (param $0 (ref struct))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result (ref struct))
@@ -43,7 +43,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null (type $8) (param $0 (ref null $array)) (result (ref null $array))
+ ;; CHECK:      (func $br_on_null (type $7) (param $0 (ref null $array)) (result (ref null $array))
  ;; CHECK-NEXT:  (block $label$1 (result (ref null $array))
  ;; CHECK-NEXT:   (block $label$2
  ;; CHECK-NEXT:    (br $label$1
@@ -79,7 +79,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead (type $3)
+ ;; CHECK:      (func $nn-dead (type $2)
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -118,7 +118,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead-nameless (type $3)
+ ;; CHECK:      (func $nn-dead-nameless (type $2)
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -149,7 +149,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-null (type $3)
+ ;; CHECK:      (func $unreachable-get-null (type $2)
  ;; CHECK-NEXT:  (local $0 anyref)
  ;; CHECK-NEXT:  (local $1 i31ref)
  ;; CHECK-NEXT:  (unreachable)
@@ -178,12 +178,12 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-tuple (type $3)
+ ;; CHECK:      (func $unreachable-get-tuple (type $2)
  ;; CHECK-NEXT:  (local $0 (tuple anyref i32))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (tuple.extract 2 0
- ;; CHECK-NEXT:    (block (type $6) (result anyref i32)
+ ;; CHECK-NEXT:    (block (type $11) (result anyref i32)
  ;; CHECK-NEXT:     (tuple.make 2
  ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:      (i32.const 0)
@@ -242,7 +242,7 @@
   )
  )
 
- ;; CHECK:      (func $replace-i31-local (type $9) (result i32)
+ ;; CHECK:      (func $replace-i31-local (type $8) (result i32)
  ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (unreachable)
@@ -272,7 +272,7 @@
   )
  )
 
- ;; CHECK:      (func $replace-struct-param (type $10) (param $0 f64) (param $1 (ref null $A)) (result f32)
+ ;; CHECK:      (func $replace-struct-param (type $9) (param $0 f64) (param $1 (ref null $A)) (result f32)
  ;; CHECK-NEXT:  (call $replace-struct-param
  ;; CHECK-NEXT:   (block (result f64)
  ;; CHECK-NEXT:    (unreachable)
@@ -300,7 +300,7 @@
   )
  )
 
- ;; CHECK:      (func $test (type $11) (param $0 (ref any)) (result (ref any) i32)
+ ;; CHECK:      (func $test (type $10) (param $0 (ref any)) (result (ref any) i32)
  ;; CHECK-NEXT:  (local $1 (tuple anyref i32))
  ;; CHECK-NEXT:  (tuple.drop 2
  ;; CHECK-NEXT:   (tuple.make 2
@@ -328,9 +328,9 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (global.set $nn-tuple-global
- ;; CHECK-NEXT:   (block (type $1) (result (ref any) i32)
+ ;; CHECK-NEXT:   (block (type $4) (result (ref any) i32)
  ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (if (type $1) (result (ref any) i32)
+ ;; CHECK-NEXT:     (if (type $4) (result (ref any) i32)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (then
  ;; CHECK-NEXT:       (tuple.make 2

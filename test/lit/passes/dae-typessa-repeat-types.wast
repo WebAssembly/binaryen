@@ -5,13 +5,13 @@
   ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
-  ;; CHECK:      (type $1 (func (result i32 (ref (exact $struct)))))
-
   ;; CHECK:      (type $array (sub (array (mut i32))))
   (type $array (sub (array (mut i32))))
 
   ;; Trigger TypeSSA
-  ;; CHECK:      (type $3 (func))
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (result i32 (ref (exact $struct)))))
 
   ;; CHECK:      (type $array_1 (sub $array (array (mut i32))))
 
@@ -28,7 +28,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $3)
+  ;; CHECK:      (func $caller (type $2)
   ;; CHECK-NEXT:  (call $callee)
   ;; CHECK-NEXT: )
   (func $caller
@@ -40,14 +40,14 @@
     )
   )
 
-  ;; CHECK:      (func $callee (type $3)
+  ;; CHECK:      (func $callee (type $2)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block (type $1) (result i32 (ref (exact $struct)))
+  ;; CHECK-NEXT:   (block (type $3) (result i32 (ref (exact $struct)))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (type $1) (result i32 (ref (exact $struct)))
+  ;; CHECK-NEXT:    (block (type $3) (result i32 (ref (exact $struct)))
   ;; CHECK-NEXT:     (tuple.make 2
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (struct.new_default $struct)

@@ -55,8 +55,7 @@ void GlobalTypeRewriter::update() {
 
 GlobalTypeRewriter::PredecessorGraph
 GlobalTypeRewriter::getPrivatePredecessors() {
-  // Check if a type is private, looking for its info (if there is none, it is
-  // not private).
+  // Check if a type is private based on its collected info.
   auto isPublic = [&](HeapType type) {
     auto it = typeInfo.find(type);
     assert(it != typeInfo.end());

@@ -16,10 +16,10 @@
     (type $B (sub $A (struct)))
   )
 
-  ;; CHECK:      (func $test-local-tuple-1 (type $3) (param $B (ref $B)) (param $x i32) (result anyref i32)
+  ;; CHECK:      (func $test-local-tuple-1 (type $2) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $scratch (tuple (ref $B) i32))
   ;; CHECK-NEXT:  (local $scratch_3 (ref $B))
-  ;; CHECK-NEXT:  (block $block (type $2) (result (ref $A) i32)
+  ;; CHECK-NEXT:  (block $block (type $3) (result (ref $A) i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result (ref $B))
   ;; CHECK-NEXT:     (local.set $scratch_3
@@ -65,12 +65,12 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-2 (type $7) (param $B (ref $B)) (param $x i32) (result i32 i32)
+  ;; CHECK:      (func $test-local-tuple-2 (type $4) (param $B (ref $B)) (param $x i32) (result i32 i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
   ;; CHECK-NEXT:  (local $scratch_5 i32)
-  ;; CHECK-NEXT:  (block $block (type $4) (result i32 i32)
+  ;; CHECK-NEXT:  (block $block (type $6) (result i32 i32)
   ;; CHECK-NEXT:   (local.set $temp
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $scratch_5
@@ -115,12 +115,12 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-3 (type $3) (param $B (ref $B)) (param $x i32) (result anyref i32)
+  ;; CHECK:      (func $test-local-tuple-3 (type $2) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $scratch (tuple (ref $B) i32))
   ;; CHECK-NEXT:  (local $scratch_5 (ref $B))
-  ;; CHECK-NEXT:  (block $block (type $5) (result (ref $B) i32)
+  ;; CHECK-NEXT:  (block $block (type $7) (result (ref $B) i32)
   ;; CHECK-NEXT:   (local.set $temp
   ;; CHECK-NEXT:    (block (result (ref $B))
   ;; CHECK-NEXT:     (local.set $scratch_5
@@ -165,7 +165,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-4-bad (type $3) (param $B (ref $B)) (param $x i32) (result anyref i32)
+  ;; CHECK:      (func $test-local-tuple-4-bad (type $2) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (local $4 i32)
@@ -176,7 +176,7 @@
   ;; CHECK-NEXT:  (local $scratch_9 (tuple (ref $B) i32))
   ;; CHECK-NEXT:  (local $scratch_10 (ref $B))
   ;; CHECK-NEXT:  (local $scratch_11 (ref $B))
-  ;; CHECK-NEXT:  (block $block (type $2) (result (ref $A) i32)
+  ;; CHECK-NEXT:  (block $block (type $3) (result (ref $A) i32)
   ;; CHECK-NEXT:   (local.set $3
   ;; CHECK-NEXT:    (block (result (ref $B))
   ;; CHECK-NEXT:     (local.set $scratch_8
@@ -256,7 +256,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-4-bad-dupes (type $8) (param $B (ref $B)) (param $x i32) (result i32 anyref i32)
+  ;; CHECK:      (func $test-local-tuple-4-bad-dupes (type $5) (param $B (ref $B)) (param $x i32) (result i32 anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (local $4 (ref $B))
@@ -275,7 +275,7 @@
   ;; CHECK-NEXT:  (local $scratch_17 (ref $B))
   ;; CHECK-NEXT:  (local $scratch_18 i32)
   ;; CHECK-NEXT:  (local $scratch_19 (ref $B))
-  ;; CHECK-NEXT:  (block $block (type $6) (result i32 (ref $A) i32)
+  ;; CHECK-NEXT:  (block $block (type $8) (result i32 (ref $A) i32)
   ;; CHECK-NEXT:   (local.set $10
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $scratch_13
