@@ -2243,10 +2243,11 @@ private:
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
   Index getNormalizedConeDepth(Type type, Index depth) {
+    auto iter = maxDepths.find(type.getHeapType());
     // A max depth must be in the map (otherwise we would use the default 0,
     // making it exact, almost certainly incorrectly).
-    assert(maxDepths.count(type.getHeapType()));
-    return std::min(depth, maxDepths[type.getHeapType()]);
+    assert(iter != maxDepths.end());
+    return std::min(depth, iter->second);
   }
 
   void normalizeConeType(PossibleContents& cone) {
