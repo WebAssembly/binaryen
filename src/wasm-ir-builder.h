@@ -160,8 +160,12 @@ public:
     unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
   Result<> makeAtomicStore(
     unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
-  Result<> makeAtomicRMW(
-    AtomicRMWOp op, unsigned bytes, Address offset, Type type, Name mem);
+  Result<> makeAtomicRMW(AtomicRMWOp op,
+                         unsigned bytes,
+                         Address offset,
+                         Type type,
+                         Name mem,
+                         MemoryOrder order);
   Result<>
   makeAtomicCmpxchg(unsigned bytes, Address offset, Type type, Name mem);
   Result<> makeAtomicWait(Type type, Address offset, Name mem);

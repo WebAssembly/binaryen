@@ -1035,6 +1035,7 @@ public:
   Expression* ptr;
   Expression* value;
   Name memory;
+  MemoryOrder order = MemoryOrder::SeqCst;
 
   void finalize();
 };

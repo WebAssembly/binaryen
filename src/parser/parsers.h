@@ -1818,7 +1818,7 @@ Result<> makeAtomicRMW(Ctx& ctx,
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
   return ctx.makeAtomicRMW(
-    pos, annotations, op, type, bytes, mem.getPtr(), *arg);
+    pos, annotations, op, type, bytes, mem.getPtr(), *arg, MemoryOrder::SeqCst);
 }
 
 template<typename Ctx>
