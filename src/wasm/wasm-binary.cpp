@@ -3705,37 +3705,37 @@ Result<> WasmBinaryReader::readInst() {
   case BinaryConsts::I32AtomicRMW##op: {                                       \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 4, offset, Type::i32, mem, MemoryOrder::SeqCst);                \
+      RMW##op, 4, offset, Type::i32, mem, memoryOrder);                        \
   }                                                                            \
   case BinaryConsts::I32AtomicRMW##op##8U: {                                   \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 1, offset, Type::i32, mem, MemoryOrder::SeqCst);                \
+      RMW##op, 1, offset, Type::i32, mem, memoryOrder);                        \
   }                                                                            \
   case BinaryConsts::I32AtomicRMW##op##16U: {                                  \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 2, offset, Type::i32, mem, MemoryOrder::SeqCst);                \
+      RMW##op, 2, offset, Type::i32, mem, memoryOrder);                        \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op: {                                       \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 8, offset, Type::i64, mem, MemoryOrder::SeqCst);                \
+      RMW##op, 8, offset, Type::i64, mem, memoryOrder);                        \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op##8U: {                                   \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 1, offset, Type::i64, mem, MemoryOrder::SeqCst);                \
+      RMW##op, 1, offset, Type::i64, mem, memoryOrder);                        \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op##16U: {                                  \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 2, offset, Type::i64, mem, MemoryOrder::SeqCst);                \
+      RMW##op, 2, offset, Type::i64, mem, memoryOrder);                        \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op##32U: {                                  \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 4, offset, Type::i64, mem, MemoryOrder::SeqCst);                \
+      RMW##op, 4, offset, Type::i64, mem, memoryOrder);                        \
   }
 
           RMW(Add);
