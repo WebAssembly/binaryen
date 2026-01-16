@@ -135,6 +135,7 @@ struct SubTypes {
       basicDepth = std::max(basicDepth, depths[type] + 1);
     }
 
+    // Fill in the basic types themselves.
     for (auto share : {Unshared, Shared}) {
       depths[HeapTypes::eq.getBasic(share)] =
         std::max(depths[HeapTypes::struct_.getBasic(share)],
@@ -142,6 +143,12 @@ struct SubTypes {
         1;
       depths[HeapTypes::any.getBasic(share)] =
         depths[HeapTypes::eq.getBasic(share)] + 1;
+
+      depths[HeapTypes::i31.getBasic(share)] = 0;
+
+      // Extern has string as a subtype.
+      depths[HeapTypes::ext.getBasic(share)] = 1;
+      depths[HeapTypes::string.getBasic(share)] = 0;
     }
 
     return depths;
