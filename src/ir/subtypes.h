@@ -145,10 +145,12 @@ struct SubTypes {
         depths[HeapTypes::eq.getBasic(share)] + 1;
 
       depths[HeapTypes::i31.getBasic(share)] = 0;
+      depths[HeapTypes::exn.getBasic(share)] = 0;
 
       // Extern has string as a subtype.
       depths[HeapTypes::ext.getBasic(share)] = 1;
       depths[HeapTypes::string.getBasic(share)] = 0;
+
     }
 
     return depths;

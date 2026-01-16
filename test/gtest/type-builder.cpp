@@ -1605,6 +1605,7 @@ TEST_F(TypeTest, TestMaxStructDepths) {
   EXPECT_EQ(maxDepths[HeapType::eq], Index(3));
   EXPECT_EQ(maxDepths[HeapType::any], Index(4));
   EXPECT_EQ(maxDepths[HeapType::i31], Index(0));
+  EXPECT_EQ(maxDepths[HeapType::exn], Index(0));
   EXPECT_EQ(maxDepths[HeapType::ext], Index(1));
   EXPECT_EQ(maxDepths[HeapType::string], Index(0));
 }
