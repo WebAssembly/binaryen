@@ -466,7 +466,8 @@ public:
                            Expression* ptr,
                            Expression* value,
                            Type type,
-                           Name memory) {
+                           Name memory,
+                           MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<AtomicRMW>();
     ret->op = op;
     ret->bytes = bytes;
@@ -474,8 +475,9 @@ public:
     ret->ptr = ptr;
     ret->value = value;
     ret->type = type;
-    ret->finalize();
     ret->memory = memory;
+    ret->order = order;
+    ret->finalize();
     return ret;
   }
   AtomicCmpxchg* makeAtomicCmpxchg(unsigned bytes,
