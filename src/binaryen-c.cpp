@@ -1382,15 +1382,15 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenExpressionRef value,
                                         BinaryenType type,
                                         const char* memoryName) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeAtomicRMW(AtomicRMWOp(op),
-                     bytes,
-                     offset,
-                     (Expression*)ptr,
-                     (Expression*)value,
-                     Type(type),
-                     getMemoryName(module, memoryName)));
+  return Builder(*(Module*)module)
+    .makeAtomicRMW(AtomicRMWOp(op),
+                   bytes,
+                   offset,
+                   (Expression*)ptr,
+                   (Expression*)value,
+                   Type(type),
+                   Name(memoryName),
+                   MemoryOrder::SeqCst);
 }
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenIndex bytes,
