@@ -476,18 +476,23 @@ For more on how to optimize effectively, see
         std::cerr << "warning: no output file specified, not emitting output\n";
       }
     }
+
+    flush_and_quick_exit();
     return 0;
   }
 
-  BYN_TRACE("writing...\n");
-  ModuleWriter writer(options.passOptions);
-  writer.setBinary(emitBinary);
-  writer.setDebugInfo(options.passOptions.debugInfo);
-  if (outputSourceMapFilename.size()) {
-    writer.setSourceMapFilename(outputSourceMapFilename);
-    writer.setSourceMapUrl(outputSourceMapUrl);
+  // Ensure the destructor of ModuleWriter runs before quick_exit.
+  {
+    BYN_TRACE("writing...\n");
+    ModuleWriter writer(options.passOptions);
+    writer.setBinary(emitBinary);
+    writer.setDebugInfo(options.passOptions.debugInfo);
+    if (outputSourceMapFilename.size()) {
+      writer.setSourceMapFilename(outputSourceMapFilename);
+      writer.setSourceMapUrl(outputSourceMapUrl);
+    }
+    writer.write(wasm, options.extra["output"]);
   }
-  writer.write(wasm, options.extra["output"]);
 
   if (extraFuzzCommand.size() > 0) {
     auto secondOutput = runCommand(extraFuzzCommand);
