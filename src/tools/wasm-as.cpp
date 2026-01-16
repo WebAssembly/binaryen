@@ -151,5 +151,5 @@ int main(int argc, const char* argv[]) {
     std::cerr << "Done." << std::endl;
   }
 
-  flush_and_quick_exit();
+  flush_and_quick_exit(0);
 }

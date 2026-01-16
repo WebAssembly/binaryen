@@ -477,7 +477,7 @@ For more on how to optimize effectively, see
       }
     }
 
-    flush_and_quick_exit();
+    flush_and_quick_exit(0);
     return 0;
   }
 
@@ -502,5 +502,5 @@ For more on how to optimize effectively, see
     }
   }
 
-  flush_and_quick_exit();
+  flush_and_quick_exit(0);
 }

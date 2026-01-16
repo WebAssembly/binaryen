@@ -1619,5 +1619,5 @@ int main(int argc, const char* argv[]) {
     writer.write(wasm, options.extra["output"]);
   }
 
-  flush_and_quick_exit();
+  flush_and_quick_exit(0);
 }

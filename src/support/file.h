@@ -79,7 +79,7 @@ size_t file_size(std::string filename);
 // need flushing have been flushed, that is, no global ctors or RAII in main's
 // top level are depended on (using quick_exit then avoids running global dtors,
 // which saves otherwise wasted time).
-[[noreturn]] void flush_and_quick_exit();
+[[noreturn]] void flush_and_quick_exit(int code);
 
 } // namespace wasm
 
