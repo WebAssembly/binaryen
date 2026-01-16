@@ -373,7 +373,7 @@ protected:
     // Binaryen is generally not used in long-running programs so we just ignore
     // such leaks for now.
     // TODO: Add a cycle collector?
-    __lsan_ignore_object(allocation.get());
+    //__lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type.getHeapType());
   }
@@ -382,7 +382,7 @@ protected:
   Literal makeExnData(Tag* tag, const Literals& payload) {
     auto allocation = std::make_shared<ExnData>(tag, payload);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
+    //__lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation);
   }
@@ -406,7 +406,7 @@ public:
     // function.
     auto allocation = std::make_shared<FuncData>(name, this);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
+    //__lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type);
   }
@@ -5206,7 +5206,7 @@ public:
         return callFunction(name, arguments);
       });
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
+    //__lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type);
   }
