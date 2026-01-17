@@ -457,9 +457,9 @@ void ModuleSplitter::classifyFunctions() {
     // module since that would make them async when they may not have the JSPI
     // wrapper. Exported JSPI functions can still benefit from splitting though
     // since only the JSPI wrapper stub will remain in the primary module.
-    if (func->imported() || !configSecondaryFuncs.count(func->name) ||
+    if (func->imported() || !configSecondaryFuncs.contains(func->name) ||
         (config.jspi && ExportUtils::isExported(primary, *func)) ||
-        segmentReferrers.count(func->name)) {
+        segmentReferrers.contains(func->name)) {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
@@ -520,7 +520,7 @@ void ModuleSplitter::moveSecondaryFunctions() {
   for (auto& funcNames : config.secondaryFuncs) {
     auto secondary = initSecondary(primary);
     for (auto funcName : funcNames) {
-      if (allSecondaryFuncs.count(funcName)) {
+      if (allSecondaryFuncs.contains(funcName)) {
         auto* func = primary.getFunction(funcName);
         ModuleUtils::copyFunction(func, *secondary);
         primary.removeFunction(funcName);
@@ -567,7 +567,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        !allSecondaryFuncs.count(*ex->getInternalName())) {
+        !allSecondaryFuncs.contains(*ex->getInternalName())) {
       continue;
     }
     Name trampoline = getTrampoline(*ex->getInternalName());
@@ -609,7 +609,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       // 1. ref.func's target func is in one of the secondary modules and
       // 2. the current module is a different module (either the primary module
       //    or a different secondary module)
-      if (parent.allSecondaryFuncs.count(curr->func) &&
+      if (parent.allSecondaryFuncs.contains(curr->func) &&
           (currModule == &parent.primary ||
            parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->func))
                .get() != currModule)) {
@@ -645,7 +645,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     std::vector<RefFunc*> relevantRefFuncs;
     for (auto* refFunc : refFuncs) {
       assert(refFunc->func == name);
-      if (!ignore.count(refFunc)) {
+      if (!ignore.contains(refFunc)) {
         relevantRefFuncs.push_back(refFunc);
       }
     }
@@ -669,7 +669,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
     CallIndirector(ModuleSplitter& parent) : parent(parent) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
-      if (!parent.allSecondaryFuncs.count(curr->target)) {
+      if (!parent.allSecondaryFuncs.contains(curr->target)) {
         return;
       }
       // Return if the current module is the same module as the call's target,
@@ -719,12 +719,12 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
             : primaryFuncs(primaryFuncs),
               calledPrimaryToModules(calledPrimaryToModules) {}
           void visitCall(Call* curr) {
-            if (primaryFuncs.count(curr->target)) {
+            if (primaryFuncs.contains(curr->target)) {
               calledPrimaryToModules[curr->target].insert(getModule());
             }
           }
           void visitRefFunc(RefFunc* curr) {
-            if (primaryFuncs.count(curr->func)) {
+            if (primaryFuncs.contains(curr->func)) {
               calledPrimaryToModules[curr->func].insert(getModule());
             }
           }
@@ -760,7 +760,7 @@ void ModuleSplitter::setupTablePatching() {
       if (!ref) {
         return;
       }
-      if (!allSecondaryFuncs.count(ref->func)) {
+      if (!allSecondaryFuncs.contains(ref->func)) {
         return;
       }
       assert(table == tableManager.activeTable->name);

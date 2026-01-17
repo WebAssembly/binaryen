@@ -14,7 +14,9 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
-- The c api now has separate functions for `CallRef` and `ReturnCallRef` matching the semantics of `Call` and `ReturnCall`.
+- The c api now has separate functions for `CallRef` and `ReturnCallRef`
+  matching the semantics of `Call` and `ReturnCall`.
+- Binaryen now uses C++20, therefore requires a C++20 compliant compiler.
 
 v125
 ----
