@@ -1618,4 +1618,6 @@ int main(int argc, const char* argv[]) {
     writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);
   }
+
+  flush_and_quick_exit(0);
 }

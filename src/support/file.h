@@ -72,8 +72,14 @@ private:
 // Copies a file to another file
 void copy_file(std::string input, std::string output);
 
-// Retusn the size of a file
+// Return the size of a file
 size_t file_size(std::string filename);
+
+// Flush stdout and stderr, and quickly exit. This assumes that all files that
+// need flushing have been flushed, that is, no global ctors or RAII in main's
+// top level are depended on (using quick_exit then avoids running global dtors,
+// which saves otherwise wasted time).
+[[noreturn]] void flush_and_quick_exit(int code);
 
 } // namespace wasm
 
