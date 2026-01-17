@@ -193,6 +193,9 @@ void PassRegistry::registerPasses() {
     "global-refining", "refine the types of globals", createGlobalRefiningPass);
   registerPass(
     "gsi", "globally optimize struct values", createGlobalStructInferencePass);
+  registerPass("gsi-desc-cast",
+               "globally optimize struct values, also emitting ref.cast_desc",
+               createGlobalStructInferenceDescCastPass);
   registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
   registerPass("gufa",

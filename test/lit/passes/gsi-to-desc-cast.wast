@@ -2,8 +2,8 @@
 
 ;; We should optimize casts to desc casts only when the flag is set.
 
-;; RUN: foreach %s %t wasm-opt --gsi                           -all --closed-world -S -o - | filecheck %s
-;; RUN: foreach %s %t wasm-opt --gsi --pass-arg=gsi-desc-casts -all --closed-world -S -o - | filecheck %s --check-prefix=DESCC
+;; RUN: foreach %s %t wasm-opt --gsi           -all --closed-world -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --gsi-desc-cast -all --closed-world -S -o - | filecheck %s --check-prefix=DESCC
 
 ;; Two types with descriptors and subtyping between them.
 (module

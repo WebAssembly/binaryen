@@ -54,13 +54,6 @@
 //
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
-//   --pass-arg=gsi-desc-casts
-//
-//      Optimize casts to descriptor casts when possible. If a cast has no
-//      relevant subtypes, and it has a known descriptor, then we can do a
-//      ref.cast_desc instead, which can be faster (but is larger, so this is
-//      not on by default yet).
-//
 
 #include <variant>
 
@@ -86,6 +79,9 @@ struct GlobalStructInference : public Pass {
   // Only modifies struct.get operations.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  GlobalStructInference(bool optimizeToDescCasts)
+    : optimizeToDescCasts(optimizeToDescCasts) {}
+
   // Maps optimizable struct types to the globals whose init is a struct.new of
   // them.
   //
@@ -96,6 +92,9 @@ struct GlobalStructInference : public Pass {
   // type-based inference, and this remains empty.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
+  // Whether to optimize ref.cast to ref.cast_desc. This increases code size, so
+  // it may not always be beneficial (perhaps running it late in the pipeline,
+  // and before type-merging, could make sense).
   bool optimizeToDescCasts;
 
   std::unique_ptr<SubTypes> subTypes;
@@ -105,7 +104,6 @@ struct GlobalStructInference : public Pass {
       return;
     }
 
-    optimizeToDescCasts = hasArgument("gsi-desc-casts");
     if (optimizeToDescCasts) {
       // We need subtypes to know when to optimize to a desc cast.
       subTypes = std::make_unique<SubTypes>(*module);
@@ -716,6 +714,11 @@ struct GlobalStructInference : public Pass {
 
 } // anonymous namespace
 
-Pass* createGlobalStructInferencePass() { return new GlobalStructInference(); }
+Pass* createGlobalStructInferencePass() {
+  return new GlobalStructInference(false);
+}
+Pass* createGlobalStructInferenceDescCastPass() {
+  return new GlobalStructInference(true);
+}
 
 } // namespace wasm
