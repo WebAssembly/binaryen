@@ -2243,7 +2243,11 @@ private:
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
   Index getNormalizedConeDepth(Type type, Index depth) {
-    return std::min(depth, maxDepths[type.getHeapType()]);
+    auto iter = maxDepths.find(type.getHeapType());
+    // A max depth must be in the map (otherwise we would use the default 0,
+    // making it exact, almost certainly incorrectly).
+    assert(iter != maxDepths.end());
+    return std::min(depth, iter->second);
   }
 
   void normalizeConeType(PossibleContents& cone) {
@@ -2639,6 +2643,12 @@ bool Flower::updateContents(LocationIndex locationIndex,
     // more later (we compute that at the end), so use a temp out var for that.
     bool worthSendingMoreTemp = true;
     filterExpressionContents(newContents, *exprLoc, worthSendingMoreTemp);
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "  post-filtered exprLoc:\n";
+    newContents.dump(std::cout, &wasm);
+    std::cout << '\n';
+#endif
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     // Generic filtering. We do this both before and after.
     filterGlobalContents(newContents, *globalLoc);
