@@ -28,6 +28,7 @@ set(passes_SOURCES
   ConstHoisting.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
+  DeadArgumentElimination2.cpp
   DeadCodeElimination.cpp
   DeAlign.cpp
   DebugLocationPropagation.cpp
