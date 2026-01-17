@@ -13,7 +13,7 @@ include(GNUInstallDirs)
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with scripts/test/shared.py cxx_standard
 # The if condition allows embedding in a project with a higher default C++ standard set
-set(REQUIRED_CXX_STANDARD 17)
+set(REQUIRED_CXX_STANDARD 20)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD ${REQUIRED_CXX_STANDARD})
 elseif(CMAKE_CXX_STANDARD LESS ${REQUIRED_CXX_STANDARD})
