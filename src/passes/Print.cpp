@@ -188,14 +188,14 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       // Use indices for any remaining type names, skipping any that are already
       // used.
       for (auto type : types) {
-        if (parent.currModule->typeNames.count(type)) {
+        if (parent.currModule->typeNames.contains(type)) {
           ++i;
           continue;
         }
         Name name;
         do {
           name = std::to_string(i++);
-        } while (usedNames.count(name));
+        } while (usedNames.contains(name));
         fallbackNames[type] = {name, {}};
       }
     }

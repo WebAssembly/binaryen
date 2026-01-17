@@ -616,7 +616,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       queue.erase(iter);
       alive.insert(curr);
       for (auto* out : curr->out) {
-        if (!alive.count(out)) {
+        if (!alive.contains(out)) {
           queue.insert(out);
         }
       }
@@ -626,7 +626,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   void unlinkDeadBlocks(std::unordered_set<BasicBlock*> alive) {
     for (auto& block : basicBlocks) {
-      if (!alive.count(block.get())) {
+      if (!alive.contains(block.get())) {
         block->in.clear();
         block->out.clear();
         continue;
@@ -634,13 +634,13 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       block->in.erase(std::remove_if(block->in.begin(),
                                      block->in.end(),
                                      [&alive](BasicBlock* other) {
-                                       return !alive.count(other);
+                                       return !alive.contains(other);
                                      }),
                       block->in.end());
       block->out.erase(std::remove_if(block->out.begin(),
                                       block->out.end(),
                                       [&alive](BasicBlock* other) {
-                                        return !alive.count(other);
+                                        return !alive.contains(other);
                                       }),
                        block->out.end());
     }
@@ -664,17 +664,17 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     std::cout << "<==\nCFG [" << message << "]:\n";
     generateDebugIds();
     for (auto& block : basicBlocks) {
-      assert(debugIds.count(block.get()) > 0);
+      assert(debugIds.contains(block.get()));
       std::cout << "  block " << debugIds[block.get()] << " (" << block.get()
                 << "):\n";
       block->contents.dump(static_cast<SubType*>(this)->getFunction());
       for (auto& in : block->in) {
-        assert(debugIds.count(in) > 0);
+        assert(debugIds.contains(in));
         assert(std::find(in->out.begin(), in->out.end(), block.get()) !=
                in->out.end()); // must be a parallel link back
       }
       for (auto& out : block->out) {
-        assert(debugIds.count(out) > 0);
+        assert(debugIds.contains(out));
         std::cout << "    out: " << debugIds[out] << "\n";
         assert(std::find(out->in.begin(), out->in.end(), block.get()) !=
                out->in.end()); // must be a parallel link back

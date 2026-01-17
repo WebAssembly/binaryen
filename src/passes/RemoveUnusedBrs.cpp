@@ -1994,7 +1994,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               Index i = 0;
               while (1) {
                 defaultName = "tablify|" + std::to_string(i++);
-                if (usedNames.count(defaultName) == 0) {
+                if (!usedNames.contains(defaultName)) {
                   break;
                 }
               }

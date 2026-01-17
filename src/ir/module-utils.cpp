@@ -265,7 +265,7 @@ void copyModuleItems(const Module& in, Module& out) {
   }
 
   for (auto& [type, names] : in.typeNames) {
-    if (!out.typeNames.count(type)) {
+    if (!out.typeNames.contains(type)) {
       out.typeNames[type] = names;
     }
   }
@@ -390,7 +390,7 @@ struct TypeInfos {
       note(sig.results);
     }
   }
-  bool contains(HeapType type) { return info.count(type); }
+  bool contains(HeapType type) { return info.contains(type); }
 };
 
 struct CodeScanner : PostWalker<CodeScanner> {

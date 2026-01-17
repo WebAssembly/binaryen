@@ -2494,7 +2494,7 @@ validateTypeInfo(HeapTypeInfo& info,
   if (auto* super = info.supertype) {
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
-    if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
+    if (super->isTemp && !seenTypes.contains(HeapType(uintptr_t(super)))) {
       return TypeBuilder::ErrorReasonKind::ForwardSupertypeReference;
     }
     // The supertype must have a valid structure.
@@ -2510,7 +2510,7 @@ validateTypeInfo(HeapTypeInfo& info,
       return TypeBuilder::ErrorReasonKind::NonStructDescribes;
     }
     assert(desc->isTemp && "unexpected canonical described type");
-    if (!seenTypes.count(HeapType(uintptr_t(desc)))) {
+    if (!seenTypes.contains(HeapType(uintptr_t(desc)))) {
       return TypeBuilder::ErrorReasonKind::ForwardDescribesReference;
     }
     if (desc->descriptor != &info) {
@@ -2649,7 +2649,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto type = asHeapType(typeInfos[i]);
     for (auto child : type.getHeapTypeChildren()) {
-      if (isTemp(child) && !seenTypes.count(child)) {
+      if (isTemp(child) && !seenTypes.contains(child)) {
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReasonKind::ForwardChildReference}};
       }

@@ -66,7 +66,7 @@ std::string MinifiedNameGenerator::getName() {
       m *= (validLaterChars.size() + 1);
     }
     name = ss.str();
-  } while (reserved.count(name));
+  } while (reserved.contains(name));
   return name;
 }
 

@@ -705,7 +705,7 @@ struct Precompute
       InsertOrderedMap<Select*, ExpressionStack> stackMap;
 
       void visitSelect(Select* curr) {
-        if (parent.partiallyPrecomputable.count(curr)) {
+        if (parent.partiallyPrecomputable.contains(curr)) {
           stackMap[curr] = expressionStack;
         }
       }
@@ -743,7 +743,7 @@ struct Precompute
       Index selectIndex = stack.size() - 1;
       assert(selectIndex >= 1);
 
-      if (modified.count(select)) {
+      if (modified.contains(select)) {
         // This select was modified; go to the next one.
         continue;
       }
@@ -754,7 +754,7 @@ struct Precompute
       for (Index parentIndex = selectIndex - 1; parentIndex != Index(-1);
            parentIndex--) {
         auto* parent = stack[parentIndex];
-        if (modified.count(parent)) {
+        if (modified.contains(parent)) {
           // This parent was modified; exit the loop on parents as no upper
           // parent is valid to try either.
           break;
@@ -918,7 +918,7 @@ private:
     // Given a set, see if it has a constant value. If so, note that on
     // setValues and add to the work list.
     auto checkConstantSet = [&](LocalSet* set) {
-      if (setValues.count(set)) {
+      if (setValues.contains(set)) {
         // Already known to be constant.
         return;
       }
@@ -959,7 +959,7 @@ private:
 
     // The same, for a get.
     auto checkConstantGet = [&](LocalGet* get) {
-      if (getValues.count(get)) {
+      if (getValues.contains(get)) {
         // Already known to be constant.
         return;
       }

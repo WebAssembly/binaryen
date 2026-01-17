@@ -127,7 +127,7 @@ struct GenerateGlobalEffects : public Pass {
 
       // We must not already have an entry for this call (that would imply we
       // are doing wasted work).
-      assert(!callers[called].count(caller));
+      assert(!callers[called].contains(caller));
 
       // Apply the new call information.
       callers[called].insert(caller);
@@ -140,7 +140,7 @@ struct GenerateGlobalEffects : public Pass {
       //
       auto& calledInfo = analysis.map[module->getFunction(called)];
       for (auto calledByCalled : calledInfo.calledFunctions) {
-        if (!callers[calledByCalled].count(caller)) {
+        if (!callers[calledByCalled].contains(caller)) {
           work.push({caller, calledByCalled});
         }
       }
@@ -151,7 +151,7 @@ struct GenerateGlobalEffects : public Pass {
     // itself then it might recurse infinitely, which we consider an effect (a
     // trap).
     for (auto& [func, info] : analysis.map) {
-      if (callers[func->name].count(func->name)) {
+      if (callers[func->name].contains(func->name)) {
         if (info.effects) {
           info.effects->trap = true;
         }

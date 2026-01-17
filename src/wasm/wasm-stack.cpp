@@ -232,7 +232,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // stash the stack.
   std::vector<Type> typesOnStack;
 
-  auto needHandling = brIfsNeedingHandling.count(curr);
+  auto needHandling = brIfsNeedingHandling.contains(curr);
   if (needHandling) {
     // Tuples always need scratch locals. Uncastable types do as well, we we
     // can't fix them up below with a simple cast.
@@ -305,7 +305,7 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
-  if (deferredGets.count(curr)) {
+  if (deferredGets.contains(curr)) {
     // This local.get will be emitted as part of the instruction that consumes
     // it.
     return;
@@ -2456,7 +2456,7 @@ void BinaryInstWriter::visitTupleMake(TupleMake* curr) {
 }
 
 void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
-  if (extractedGets.count(curr->tuple)) {
+  if (extractedGets.contains(curr->tuple)) {
     // We already have just the extracted value on the stack.
     return;
   }
@@ -3010,7 +3010,7 @@ void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
   bool posDeferred = false;
   Index posIndex;
   if (auto* get = curr->pos->dynCast<LocalGet>()) {
-    assert(deferredGets.count(get));
+    assert(deferredGets.contains(get));
     posDeferred = true;
     posIndex = mappedLocals[{get->index, 0}];
   } else {
@@ -3037,8 +3037,8 @@ void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
   auto* startGet = curr->start->dynCast<LocalGet>();
   auto* endGet = curr->end->dynCast<LocalGet>();
   if (startGet && endGet) {
-    assert(deferredGets.count(startGet));
-    assert(deferredGets.count(endGet));
+    assert(deferredGets.contains(startGet));
+    assert(deferredGets.contains(endGet));
     deferred = true;
     startIndex = mappedLocals[{startGet->index, 0}];
     endIndex = mappedLocals[{endGet->index, 0}];

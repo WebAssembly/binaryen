@@ -178,7 +178,7 @@ struct SSAify : public Pass {
           set->value = tee;
           // the value may have been something we tracked the location
           // of. if so, update that, since we moved it into the tee
-          if (graph.locations.count(value) > 0) {
+          if (graph.locations.contains(value)) {
             assert(graph.locations[value] == &set->value);
             graph.locations[value] = &tee->value;
           }

@@ -5816,7 +5816,7 @@ void BinaryenClearPassArguments(void) { globalPassOptions.arguments.clear(); }
 
 bool BinaryenHasPassToSkip(const char* pass) {
   assert(pass);
-  return globalPassOptions.passesToSkip.count(pass);
+  return globalPassOptions.passesToSkip.contains(pass);
 }
 
 void BinaryenAddPassToSkip(const char* pass) {
@@ -5873,7 +5873,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i],
-                   globalPassOptions.arguments.count(passes[i]) > 0
+                   globalPassOptions.arguments.contains(passes[i])
                      ? globalPassOptions.arguments[passes[i]]
                      : std::optional<std::string>());
   }
@@ -6125,7 +6125,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i],
-                   globalPassOptions.arguments.count(passes[i]) > 0
+                   globalPassOptions.arguments.contains(passes[i])
                      ? globalPassOptions.arguments[passes[i]]
                      : std::optional<std::string>());
   }

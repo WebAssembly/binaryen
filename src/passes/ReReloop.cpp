@@ -239,7 +239,7 @@ struct ReReloop final : public Pass {
       }
       // the default may be among the targets, in which case, we can't add it
       // simply as it would be a duplicate, so create a temp block
-      if (targetValues.count(curr->default_) == 0) {
+      if (!targetValues.contains(curr->default_)) {
         parent.addSwitchBranch(
           before, parent.getBreakTarget(curr->default_), std::set<Index>());
       } else {

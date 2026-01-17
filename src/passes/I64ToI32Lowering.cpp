@@ -385,7 +385,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (!getFunction()) {
       return; // if in a global init, skip - we already handled that.
     }
-    if (!originallyI64Globals.count(curr->name)) {
+    if (!originallyI64Globals.contains(curr->name)) {
       return;
     }
     curr->type = Type::i32;
@@ -398,7 +398,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (!originallyI64Globals.count(curr->name)) {
+    if (!originallyI64Globals.contains(curr->name)) {
       return;
     }
     if (handleUnreachable(curr)) {

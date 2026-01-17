@@ -384,7 +384,7 @@ bool TypeMerging::merge(MergeKind kind) {
       std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
         return castTypes.contains(t);
       });
-    if (hasCast || !privateTypes.count(type)) {
+    if (hasCast || !privateTypes.contains(type)) {
       ensurePartition(type);
       continue;
     }
@@ -530,7 +530,7 @@ TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
   std::unordered_map<HeapType, Index> partitionIndices;
   for (auto type : mergeableSupertypesFirst(types)) {
     auto super = type.getDeclaredSuperType();
-    if (super && includedTypes.count(*super)) {
+    if (super && includedTypes.contains(*super)) {
       // We must already have a partition for the supertype we can add to.
       auto index = partitionIndices.at(*super);
       partitions[index].push_back(type);
@@ -582,7 +582,7 @@ std::pair<CastTypes, CastTypes> TypeMerging::findCastTypes() {
 std::vector<HeapType> TypeMerging::getPublicChildren(HeapType type) {
   std::vector<HeapType> publicChildren;
   for (auto child : type.getHeapTypeChildren()) {
-    if (!child.isBasic() && !privateTypes.count(child)) {
+    if (!child.isBasic() && !privateTypes.contains(child)) {
       publicChildren.push_back(child);
     }
   }
@@ -602,7 +602,7 @@ DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
   //
   // For private types, full descriptor chains are included in a single DFA
   // represented by their base described type.
-  if (privateTypes.count(type)) {
+  if (privateTypes.contains(type)) {
     assert(!type.getDescribedType());
     for (auto t : type.getDescriptorChain()) {
       for (auto child : t.getHeapTypeChildren()) {

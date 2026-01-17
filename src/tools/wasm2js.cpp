@@ -454,7 +454,7 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
           breakCapturers.push_back(node);
           continueCapturers.push_back(node);
         } else if (node[0] == cashew::BLOCK) {
-          if (labelled.count(node.get())) {
+          if (labelled.contains(node.get())) {
             // Cannot break to a block without the label.
             breakCapturers.push_back(Ref(&INVALID));
           }
@@ -473,7 +473,7 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
           breakCapturers.pop_back();
           continueCapturers.pop_back();
         } else if (node[0] == cashew::BLOCK) {
-          if (labelled.count(node.get())) {
+          if (labelled.contains(node.get())) {
             breakCapturers.pop_back();
           }
         } else if (node[0] == SWITCH) {
@@ -481,7 +481,7 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
         } else if (node[0] == BREAK || node[0] == CONTINUE) {
           if (!node[1]->isNull()) {
             auto label = node[1]->getIString();
-            assert(labelToValue.count(label));
+            assert(labelToValue.contains(label));
             auto& capturers =
               node[0] == BREAK ? breakCapturers : continueCapturers;
             assert(!capturers.empty());
@@ -508,7 +508,7 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
         }
       } else if (node[0] == LABEL) {
         auto label = node[1]->getIString();
-        if (usedLabelNames.count(label)) {
+        if (usedLabelNames.contains(label)) {
           // It's used; just erase it from the data structure.
           usedLabelNames.erase(label);
         } else {

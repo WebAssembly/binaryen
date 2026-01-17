@@ -277,7 +277,7 @@ struct SignaturePruning : public Pass {
       // to prune them.
       SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i) == 0) {
+        if (!usedParams.contains(i)) {
           unusedParams.insert(i);
         }
       }

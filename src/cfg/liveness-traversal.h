@@ -222,7 +222,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     // keep working while stuff is flowing
     std::unordered_set<BasicBlock*> queue;
     for (auto& curr : CFGWalker<SubType, VisitorType, Liveness>::basicBlocks) {
-      if (liveBlocks.count(curr.get()) == 0) {
+      if (!liveBlocks.contains(curr.get())) {
         continue; // ignore dead blocks
       }
       queue.insert(curr.get());

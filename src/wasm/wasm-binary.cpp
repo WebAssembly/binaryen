@@ -1019,7 +1019,7 @@ void WasmBinaryWriter::writeNames() {
   {
     std::vector<HeapType> namedTypes;
     for (auto type : indexedTypes.types) {
-      if (wasm->typeNames.count(type) && wasm->typeNames[type].name.is()) {
+      if (wasm->typeNames.contains(type) && wasm->typeNames[type].name.is()) {
         namedTypes.push_back(type);
       }
     }
@@ -1170,7 +1170,7 @@ void WasmBinaryWriter::writeNames() {
   if (wasm->features.hasGC()) {
     std::vector<HeapType> relevantTypes;
     for (auto& type : indexedTypes.types) {
-      if (type.isStruct() && wasm->typeNames.count(type) &&
+      if (type.isStruct() && wasm->typeNames.contains(type) &&
           !wasm->typeNames[type].fieldNames.empty()) {
         relevantTypes.push_back(type);
       }
@@ -1613,7 +1613,7 @@ void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
   // track locations of instructions that have code annotations, as their binary
   // location goes in the custom section.
   if (func && (!func->expressionLocations.empty() ||
-               func->codeAnnotations.count(curr))) {
+               func->codeAnnotations.contains(curr))) {
     binaryLocations.expressions[curr] =
       BinaryLocations::Span{BinaryLocation(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);

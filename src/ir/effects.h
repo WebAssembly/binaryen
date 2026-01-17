@@ -385,12 +385,13 @@ public:
     // write-write, write-read, and read-write conflicts on a local prevent
     // reordering.
     for (auto local : localsWritten) {
-      if (other.localsRead.count(local) || other.localsWritten.count(local)) {
+      if (other.localsRead.contains(local) ||
+          other.localsWritten.contains(local)) {
         return true;
       }
     }
     for (auto local : localsRead) {
-      if (other.localsWritten.count(local)) {
+      if (other.localsWritten.contains(local)) {
         return true;
       }
     }
@@ -401,13 +402,13 @@ public:
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.mutableGlobalsRead.count(global) ||
-          other.globalsWritten.count(global)) {
+      if (other.mutableGlobalsRead.contains(global) ||
+          other.globalsWritten.contains(global)) {
         return true;
       }
     }
     for (auto global : mutableGlobalsRead) {
-      if (other.globalsWritten.count(global)) {
+      if (other.globalsWritten.contains(global)) {
         return true;
       }
     }
@@ -568,7 +569,7 @@ private:
       // expression is not inside a try-catch_all. It is hard to figure out
       // whether the original try-delegate's body throws or not at this point.
       if (curr->name.is()) {
-        if (self->parent.delegateTargets.count(curr->name) &&
+        if (self->parent.delegateTargets.contains(curr->name) &&
             self->parent.tryDepth == 0) {
           self->parent.throws_ = true;
         }

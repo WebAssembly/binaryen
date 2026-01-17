@@ -227,8 +227,8 @@ struct HeapStoreOptimization
     // occurred; or, if it writes to that local, then it would cross another
     // write).
     auto setValueEffects = effects(set->value);
-    if (setValueEffects.localsRead.count(refLocalIndex) ||
-        setValueEffects.localsWritten.count(refLocalIndex)) {
+    if (setValueEffects.localsRead.contains(refLocalIndex) ||
+        setValueEffects.localsWritten.contains(refLocalIndex)) {
       return false;
     }
 

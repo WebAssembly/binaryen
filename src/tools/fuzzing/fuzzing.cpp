@@ -2247,7 +2247,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       // Note all scope names, and fix up all uses.
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
         if (name.is()) {
-          if (seen.count(name)) {
+          if (seen.contains(name)) {
             replace();
           } else {
             seen.insert(name);
@@ -2848,7 +2848,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
       addTag();
     }
     auto* tag = pick(exceptionTags);
-    if (usedTags.count(tag)) {
+    if (usedTags.contains(tag)) {
       continue;
     }
     usedTags.insert(tag);
