@@ -18,6 +18,8 @@
 // Command line helpers.
 //
 
+#include <filesystem>
+
 #include "support/path.h"
 #ifdef USE_WSTRING_PATHS
 #include "windows.h"
@@ -52,15 +54,7 @@ std::string wstring_to_string(const std::wstring& s) {
 PathString to_path(const std::string& s) { return s; }
 #endif
 
-char getPathSeparator() {
-  // TODO: use c++17's path separator
-  //       http://en.cppreference.com/w/cpp/experimental/fs/path
-#if defined(WIN32) || defined(_WIN32)
-  return '\\';
-#else
-  return '/';
-#endif
-}
+char getPathSeparator() { return std::filesystem::path::preferred_separator; }
 
 static std::string getAllPathSeparators() {
   // The canonical separator on Windows is `\`, but it also accepts `/`.
