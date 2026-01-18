@@ -419,6 +419,18 @@ BinaryenExternalKind BinaryenExternalTag(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Tag);
 }
 
+// MemoryOrder for atomic operations
+
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderUnordered(void) {
+  return static_cast<BinaryenMemoryOrder>(MemoryOrder::Unordered);
+}
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderSeqCst(void) {
+  return static_cast<BinaryenMemoryOrder>(MemoryOrder::SeqCst);
+}
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderAcqRel(void) {
+  return static_cast<BinaryenMemoryOrder>(MemoryOrder::AcqRel);
+}
+
 // Features
 
 BinaryenFeatures BinaryenFeatureMVP(void) {

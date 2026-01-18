@@ -157,6 +157,15 @@ function initializeConstants() {
     Module['ExternalKinds'][name] = Module['External' + name] = Module['_BinaryenExternal' + name]();
   });
 
+  // MemoryOrder for atomic operations
+  Module['MemoryOrder'] = {};
+  [ 'Unordered',
+    'SeqCst',
+    'AcqRel'
+   ].forEach(name => {
+    Module['MemoryOrder'][name] = Module['_BinaryenMemoryOrder' + name]()
+   });
+
   // Features
   Module['Features'] = {};
   [ 'MVP',
