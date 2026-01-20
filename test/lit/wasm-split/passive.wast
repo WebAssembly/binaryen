@@ -21,9 +21,7 @@
 
  ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0)
 
- ;; PRIMARY:      (export "table" (table $table))
-
- ;; PRIMARY:      (export "table_1" (table $1))
+ ;; PRIMARY:      (export "table" (table $1))
 
  ;; PRIMARY:      (func $in-table (type $0)
  ;; PRIMARY-NEXT: )
@@ -34,7 +32,7 @@
 
  ;; SECONDARY:      (type $0 (func))
 
- ;; SECONDARY:      (import "primary" "table_1" (table $timport$0 1 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $timport$0 1 funcref))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $second-in-table)
 
