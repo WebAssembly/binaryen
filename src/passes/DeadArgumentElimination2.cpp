@@ -1049,9 +1049,9 @@ Expression* Optimizer::getReplacement(Expression* curr) {
     LabelUtils::LabelManager& labels;
     Builder& builder;
 
-    // A stack of expressions we are building, one for each level of control
-    // flow structures we are inserting them into.
-    std::vector<Expression*> collectedStack = {nullptr};
+    // A stack of lists of expressions we are building, one list for each level
+    // of control flow structures we are inserting them into.
+    std::vector<std::vector<Expression*>> collectedStack = {{}};
 
     // Indices indicating which part of a Try we are currently constructing,
     // for every Try in the current expression stack. Index 0 is the body and
@@ -1068,11 +1068,31 @@ Expression* Optimizer::getReplacement(Expression* curr) {
       if (curr->type.isConcrete()) {
         curr = builder.makeDrop(curr);
       }
-      if (collectedStack.back()) {
-        collectedStack.back() = builder.blockify(collectedStack.back(), curr);
-      } else {
-        collectedStack.back() = curr;
+      collectedStack.back().push_back(curr);
+    }
+
+    Expression* collectExprsOrNull() {
+      auto& exprs = collectedStack.back();
+      Expression* result;
+      switch (exprs.size()) {
+        case 0:
+          return nullptr;
+        case 1:
+          result = exprs[0];
+          break;
+        default:
+          result = builder.makeBlock(exprs, Type::none);
+          break;
       }
+      exprs.clear();
+      return result;
+    }
+
+    Expression* collectExprsOrNop() {
+      if (auto* expr = collectExprsOrNull()) {
+        return expr;
+      }
+      return builder.makeNop();
     }
 
     void finishControlFlow(Expression* curr) {
@@ -1114,13 +1134,13 @@ Expression* Optimizer::getReplacement(Expression* curr) {
         self->pushTask(scan, &iff->ifTrue);
         // If conditions are always kept, so we do not need to scan them.
         self->pushTask(doPreVisit, currp);
-        self->collectedStack.push_back(nullptr);
+        self->collectedStack.emplace_back();
       } else if (auto* loop = curr->dynCast<Loop>()) {
         self->pushTask(doPostVisit, currp);
         self->pushTask(doEndLoop, currp);
         self->pushTask(scan, &loop->body);
         self->pushTask(doPreVisit, currp);
-        self->collectedStack.push_back(nullptr);
+        self->collectedStack.emplace_back();
       } else if (auto* try_ = curr->dynCast<Try>()) {
         self->pushTask(doPostVisit, currp);
         for (Index i = try_->catchBodies.size(); i > 0; --i) {
@@ -1131,7 +1151,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
         self->pushTask(scan, &try_->body);
         self->pushTask(doPreVisit, currp);
         self->tryIndexStack.push_back(0);
-        self->collectedStack.push_back(nullptr);
+        self->collectedStack.emplace_back();
       } else if (auto* block = curr->dynCast<Block>(); block && block->name) {
         self->pushTask(doPostVisit, currp);
         self->pushTask(doEndLabeledBlock, currp);
@@ -1139,7 +1159,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
           self->pushTask(scan, &block->list[i - 1]);
         }
         self->pushTask(doPreVisit, currp);
-        self->collectedStack.push_back(nullptr);
+        self->collectedStack.emplace_back();
       } else {
         Super::scan(self, currp);
       }
@@ -1149,7 +1169,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
       If* curr = (*currp)->cast<If>();
       // If this is null, we will just have erased the empty ifFalse arm,
       // which is fine.
-      curr->ifFalse = self->collectedStack.back();
+      curr->ifFalse = self->collectExprsOrNull();
       curr->finalize();
       self->finishControlFlow(curr);
     }
@@ -1159,15 +1179,12 @@ Expression* Optimizer::getReplacement(Expression* curr) {
       // There must be an ifFalse arm because the if must have concrete type
       // and we only process each removed control flow structure once.
       assert(curr->ifFalse);
-      curr->ifTrue = self->collectedStack.back() ? self->collectedStack.back()
-                                                 : self->builder.makeNop();
-      self->collectedStack.back() = nullptr;
+      curr->ifTrue = self->collectExprsOrNop();
     }
 
     static void doEndLoop(Collector* self, Expression** currp) {
       Loop* curr = (*currp)->cast<Loop>();
-      curr->body = self->collectedStack.back() ? self->collectedStack.back()
-                                               : self->builder.makeNop();
+      curr->body = self->collectExprsOrNop();
       curr->finalize();
       self->finishControlFlow(curr);
     }
@@ -1175,15 +1192,12 @@ Expression* Optimizer::getReplacement(Expression* curr) {
     static void doEndTryBody(Collector* self, Expression** currp) {
       Try* curr = (*currp)->cast<Try>();
       Index index = self->tryIndexStack.back()++;
-      auto* collected = self->collectedStack.back()
-                          ? self->collectedStack.back()
-                          : self->builder.makeNop();
+      auto* collected = self->collectExprsOrNop();
       if (index == 0) {
         curr->body = collected;
       } else {
         curr->catchBodies[index - 1] = collected;
       }
-      self->collectedStack.back() = nullptr;
       if (index == curr->catchBodies.size()) {
         self->tryIndexStack.pop_back();
         curr->finalize();
@@ -1196,7 +1210,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
       assert(curr->name);
       assert(curr->type.isConcrete());
 
-      if (!self->collectedStack.back()) {
+      if (self->collectedStack.back().empty()) {
         // This is the happy case where there cannot possibly be branches to
         // the block because we have not collected any expressions at all.
         // Since an empty block isn't useful, we don't need to collect
@@ -1219,8 +1233,10 @@ Expression* Optimizer::getReplacement(Expression* curr) {
       //  )
       // )
       Name fresh = self->labels.getUnique("trampoline");
-      auto* inner = self->builder.makeSequence(self->collectedStack.back(),
-                                               self->builder.makeBreak(fresh));
+      auto* collected = self->collectExprsOrNull();
+      assert(collected);
+      auto* inner =
+        self->builder.makeSequence(collected, self->builder.makeBreak(fresh));
       inner->name = curr->name;
       inner->type = curr->type;
       auto* drop = self->builder.makeDrop(inner);
@@ -1231,7 +1247,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
   Collector collector(removedExpressions, *labels, builder);
   collector.walk(curr);
   assert(collector.collectedStack.size() == 1);
-  return collector.collectedStack.back();
+  return collector.collectExprsOrNull();
 }
 
 void DAE2::optimize() {
