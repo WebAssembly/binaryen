@@ -111,7 +111,7 @@ struct SubTypes {
       depths[type] = depth;
     }
 
-    // Add the max depths of basic types.
+    // Add the max depths of basic types that have non-basic subtypes.
     for (auto type : types) {
       HeapType basic;
       auto share = type.getShared();
@@ -156,6 +156,10 @@ struct SubTypes {
       depths[HeapTypes::nofunc.getBasic(share)] = 0;
       depths[HeapTypes::nocont.getBasic(share)] = 0;
       depths[HeapTypes::noexn.getBasic(share)] = 0;
+
+      // func would appear already if we saw function types, but if not, ensure
+      // it exists here.
+      depths[HeapTypes::func.getBasic(share)];
     }
 
     return depths;
