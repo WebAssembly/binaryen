@@ -2714,8 +2714,12 @@
 (module
   ;; CHECK:      (type $0 (func))
 
+  ;; CHECK:      (type $1 (func (result i32)))
+
   ;; CHECK:      (import "" "" (func $effect (type $0)))
   (import "" "" (func $effect))
+  ;; CHECK:      (import "" "" (func $effect-i32 (type $1) (result i32)))
+  (import "" "" (func $effect-i32 (result i32)))
 
   ;; CHECK:      (tag $e (type $0))
   (tag $e)
@@ -2831,6 +2835,8 @@
 
   ;; CHECK:      (import "" "" (func $effect (type $1) (result i32)))
   (import "" "" (func $effect (result i32)))
+  ;; CHECK:      (import "" "" (func $effect-i32 (type $1) (result i32)))
+  (import "" "" (func $effect-i32 (result i32)))
 
   ;; CHECK:      (func $labeled-block (type $2)
   ;; CHECK-NEXT:  (local $unused i32)
@@ -3154,6 +3160,34 @@
           )
         )
         (local.get $unused)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $no-skip-effect (type $2)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $trampoline0
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block $block1 (result i32)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (br $trampoline0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $effect-i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-skip-effect (param $1 i32)
+    (drop
+      ;; We should not trampoline past the effect on the right hand side of the
+      ;; removed binary operation.
+      (i32.add
+        (block $block1 (result i32)
+          (nop)
+          (local.get $1)
+        )
+        (call $effect-i32)
       )
     )
   )
