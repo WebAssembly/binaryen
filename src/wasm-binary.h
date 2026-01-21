@@ -1733,9 +1733,9 @@ public:
   size_t inlineHintsLen = 0;
   void readInlineHints(size_t payloadLen);
 
-  size_t callsIfMovedHintsPos = 0;
-  size_t callsIfMovedHintsLen = 0;
-  void readCallsIfMovedHints(size_t payloadLen);
+  size_t effectsIfMovedHintsPos = 0;
+  size_t effectsIfMovedHintsLen = 0;
+  void readEffectsIfMovedHints(size_t payloadLen);
 
   std::tuple<Address, Address, Index, MemoryOrder>
   readMemoryAccess(bool isAtomic, bool isRMW);

@@ -2215,8 +2215,8 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     inlineHintsPos = pos;
     inlineHintsLen = payloadLen;
   } else if (sectionName == Annotations::EffectsIfMovedHint) {
-    effectsIfMovedHintPos = pos;
-    effectsIfMovedHintLen = payloadLen;
+    effectsIfMovedHintsPos = pos;
+    effectsIfMovedHintsLen = payloadLen;
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
