@@ -381,6 +381,7 @@ void test_features() {
   printf("BinaryenFeatureMultibyte: %d\n", BinaryenFeatureMultibyte());
   printf("BinaryenFeatureWideArithmetic: %d\n",
          BinaryenFeatureWideArithmetic());
+  printf("BinaryenFeatureCompactImports: %d\n", BinaryenFeatureCompactImports());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
