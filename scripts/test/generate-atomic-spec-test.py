@@ -1,9 +1,5 @@
-import subprocess
-import sys
-import tempfile
-from argparse import ArgumentParser
-from collections.abc import Iterator
-from pathlib import Path
+import itertools
+from dataclasses import dataclass
 
 # Workaround for python <3.10, escape characters can't appear in f-strings.
 # Although we require 3.10 in some places, the formatter complains without this.
@@ -53,7 +49,7 @@ def assert_invalid(module, reason):
     return f'''(assert_invalid {module} "{reason}")'''
 
 
-def generate_atomic_spec_test():
+def text_test():
     # Declare two memories so we have control over whether the memory immediate is printed
     # A memory immediate of 0 is allowed to be omitted.
     return module(
@@ -61,37 +57,6 @@ def generate_atomic_spec_test():
         "(memory 1 1 shared)",
         "",
         "\n\n".join([f'{func(memid, ordering)}' for memid in [None, "1"] for ordering in [None, "acqrel", "seqcst"]]))
-
-
-def to_binary(wasm_as, wat: str) -> bytes:
-    with tempfile.NamedTemporaryFile(mode="w+") as input, tempfile.NamedTemporaryFile(mode="rb") as output:
-        input.write(wat)
-        input.seek(0)
-
-        proc = subprocess.run([wasm_as, "--enable-multimemory", "--enable-threads", "--enable-relaxed-atomics", input.name, "-o", output.name], capture_output=True)
-        try:
-            proc.check_returncode()
-        except Exception:
-            print(proc.stderr.decode('utf-8'), end="", file=sys.stderr)
-            raise
-
-        return output.read()
-
-
-def findall(bytes, byte):
-    ix = -1
-    while ((ix := bytes.find(byte, ix + 1)) != -1):
-        yield ix
-
-
-def read_unsigned_leb(bytes, start):
-    """Returns (bytes read, value)"""
-    ret = 0
-    for i, byte in enumerate(bytes[start:]):
-        ret |= (byte & ~(1 << 7)) << (7 * i)
-        if not byte & (1 << 7):
-            return i + 1, ret
-    raise ValueError("Unexpected end of input, continuation bit was set for the last byte.")
 
 
 def to_unsigned_leb(num):
@@ -110,112 +75,94 @@ def to_unsigned_leb(num):
     return ret
 
 
-def unsigned_leb_add(bytes: bytearray, start, add) -> int:
-    """Returns number of bytes added"""
-    l, decoded = read_unsigned_leb(bytes, start)
-    added = to_unsigned_leb(decoded + add)
-
-    bytes[start:start + l] = added[:l]
-
-    if len(added) > l:
-        for i, b in enumerate(added[l:], start=l):
-            bytes.insert(i, b)
-
-    return len(added) - l
+def bin_to_str(bin):
+    return ''.join(f'{backslash}{byte:02x}' for byte in bin)
 
 
-def unsigned_leb_subtract(bytes, start, sub):
-    l, decoded = read_unsigned_leb(bytes, start)
-    subbed = to_unsigned_leb(decoded - sub)
-
-    bytes[start:start + len(subbed)] = subbed
-
-    diff = l - len(subbed)
-    for _ in range(diff):
-        bytes.pop(start + len(subbed))
-
-    return -diff
+@dataclass
+class statement:
+    bin: bytes
+    text: str
 
 
-def iterate_sections(bytes) -> Iterator[bytearray]:
-    bytes = bytes.removeprefix(b"\00asm\01\00\00\00")
-    start = 0
-    while True:
-        read, size = read_unsigned_leb(bytes, start + 1)
-
-        # section op + section size + body
-        yield bytearray(bytes[start:start + 1 + read + size])
-        start += 1 + read + size
-        if start > len(bytes):
-            raise ValueError("not expected", start, len(bytes))
-        elif start == len(bytes):
-            return
+@dataclass
+class function:
+    body: [statement]
+    memidx: bytes
+    ordering: bytes
 
 
-def iterate_functions(bytes) -> Iterator[bytearray]:
-    read, size = read_unsigned_leb(bytes, 1)
-    read2, size2 = read_unsigned_leb(bytes, 1 + read)
-    section_body = bytes[1 + read + read2:]
-
-    start = 0
-    while True:
-        read, size = read_unsigned_leb(section_body, start)
-        yield bytearray(section_body[start:start + read + size])
-        start += read + size
-        if start > len(section_body):
-            raise ValueError("not expected", start, len(section_body))
-        elif start == len(section_body):
-            return
+def normalize_spaces(s):
+    return " ".join(s.split())
 
 
-def binary_tests(b: bytes) -> bytes:
-    updated_tests = [b"\00asm\01\00\00\00"]
+def binary_line(bin):
+    return f'"{bin_to_str(bin)}"\n'
 
-    for section in iterate_sections(b):
-        if section[0] != 0x0a:
-            updated_tests.append(section)
-            continue
 
-        bytes_read, size = read_unsigned_leb(section, 1)
-        _, func_count = read_unsigned_leb(section, 1 + bytes_read)
+def binary_test_example():
+    return r'''(module binary
+  "\00asm\01\00\00\00" ;; header + version
+  "\01\05\01\60\00\01\7f\03\02\01\00\05\05\01\03\17\80\02" ;; other sections
+  "\0a\0c\01" ;; code section
+    "\0a\00" ;; func size + decl count
+    "\41\33" ;; i32.const 51
+    "\fe\10" ;; i32.atomic.load
+    "\62" ;; 2 | (1<<5) | (1<<6):  Alignment of 2 (32-bit load), with bit 5 set indicating that the next byte is a memory ordering
+    "\00" ;; memory index
+    "\01" ;; acqrel ordering
+    "\00" ;; offset
+    "\0b" ;; end
+)'''
 
-        updated_code_section = bytearray()
-        updated_code_section.append(0x0a)
-        updated_code_section += to_unsigned_leb(size)
 
-        updated_code_section += to_unsigned_leb(func_count)
+def binary_tests():
 
-        section_bytes_added = 0
-        for i, func in enumerate(iterate_functions(section)):
-            # TODO: this is wrong if the function size is 0xfe
-            ix = func.find(0xfe)
-            if ix == -1:
-                raise ValueError("Didn't find atomic operation")
-            if i not in (2, 5):
-                updated_code_section += func
-                continue
-            if func[ix + 2] & (1 << 5):
-                raise ValueError("Memory immediate was already set.")
-            func_bytes_added = 0
-            for i in findall(func, 0xfe):
-                func[i + 2] |= (1 << 5)
+    func_statements = [
+        [b"\x41\x33\xfe\x10%(align)s%(memidx)s%(ordering)s\x00\x1a", "(drop (i32.atomic.load %(memidx)s %(ordering)s (i32.const 51)))"],
+        # TODO 0b ends the function
+        [b"\x41\x33\x41\x33\xfe\x17%(align)s%(memidx)s%(ordering)s\x00", "(i32.atomic.store %(memidx)s %(ordering)s (i32.const 51) (i32.const 51))"],
+    ]
 
-                # ordering comes after mem idx
-                has_mem_idx = bool(func[i + 2] & (1 << 6))
-                func.insert(i + 3 + has_mem_idx, 0x00)
+    # Each function ends with 0x0b. Add it to the last statement for simplicity.
+    func_statements[-1][0] += b'\x0b'
 
-                func_bytes_added += 1
+    funcs: [function] = []
+    for memidx, ordering in itertools.product([b'', b'\x01'], [b'', b'\x00', b'\x01']):
+        func = function([], memidx, ordering)
+        for bin_statement, str_statement in func_statements:
+            align = 2 | (bool(memidx) << 5) | (bool(ordering) << 6)
+            s = statement(
+                bin=bin_statement % {b'align': int.to_bytes(align), b'ordering': ordering, b'memidx': memidx},
+                text=normalize_spaces(str_statement % {'ordering': ["seqcst", "acqrel"][ordering[0]] if ordering else '', 'memidx': "1" if memidx else ""}))
 
-            # adding to the func byte size might have added a byte
-            section_bytes_added += unsigned_leb_add(func, 0, func_bytes_added)
-            section_bytes_added += func_bytes_added
+            func.body.append(s)
+        funcs.append(func)
 
-            updated_code_section += func
+    # +1 for each function since we didn't count the local count byte yet, and +1 overall for the function count
+    section_size = sum(len(statement.bin) + 1 for func in funcs for statement in func.body) + 1
+    code_section = bytearray(b"\x0a") + to_unsigned_leb(section_size) + to_unsigned_leb(len(funcs))
 
-        _ = unsigned_leb_add(updated_code_section, 1, section_bytes_added)
-        updated_tests.append(updated_code_section)
+    '''(module
+        (memory 1 1 shared)
+        (memory 1 1 shared)
+       )
+    '''
+    module = b"\x00\x61\x73\x6d\x01\x00\x00\x00\x01\x04\01\x60\x00\x00\x03\x07\06\x00\x00\x00\x00\x00\x00\x05\07\x02\x03\x01\x01\x03\x01\x01"
 
-    return b''.join(updated_tests)
+    str_builder = [binary_line(module), f'"{bin_to_str(code_section)}" ;; code section\n']
+
+    for func in funcs:
+        bin_size = sum(len(statement.bin) for statement in func.body)
+        # body size plus 1 byte for the number of locals (0)
+        func_bytes = to_unsigned_leb(bin_size + 1)
+        # number of locals, none in our case
+        func_bytes.append(0x00)
+        str_builder.append(f'"{bin_to_str(func_bytes)}" ;; func\n')
+        for stmt in func.body:
+            str_builder.append(f'"{bin_to_str(stmt.bin)}" ;; {stmt.text}\n')
+
+    return f"(module binary\n{indent(''.join(str_builder))})"
 
 
 def failing_test(instruction, arg, /, memidx, drop):
@@ -238,16 +185,11 @@ def failing_tests():
 
 
 def main():
-    parser = ArgumentParser()
-    parser.add_argument("--wasm-as", default=Path("bin/wasm-as"), type=Path)
-
-    args = parser.parse_args()
-
-    wat = generate_atomic_spec_test()
-    bin = binary_tests(to_binary(args.wasm_as, wat))
-
-    print(wat)
-    print(module_binary(bin))
+    print(text_test())
+    print()
+    print(binary_test_example())
+    print()
+    print(binary_tests())
     print()
     print(failing_tests())
     print()
