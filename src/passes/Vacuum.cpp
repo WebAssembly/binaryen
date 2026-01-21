@@ -92,9 +92,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         return curr;
       }
       // Check if this expression itself has side effects, ignoring children.
-      EffectAnalyzer self(getPassOptions(), *getModule());
-      self.visit(curr);
-      if (self.hasUnremovableSideEffects()) {
+      if (hasShallowEffectsAssumingResultUnused(curr)) {
         return curr;
       }
       // The result isn't used, and this has no side effects itself, so we can
@@ -128,6 +126,25 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // Otherwise, give up.
       return curr;
     }
+  }
+
+  // Given an expression whose result is unused, see if it has effects (ignoring
+  // children, so only a shallow check). This is basically just a call to
+  // ShallowEffectAnalyzer, except that the knowledge of the result being unused
+  // lets us check the relevant hint.
+  bool hasShallowEffectsAssumingResultUnused(Expression* curr) { // canberemoved, to justifiy hasUnremovable
+    if (auto* call = curr->dynCast<Call>()) {
+      auto iter = getFunction()->codeAnnotations.find(call);
+      if iter != currFunction->codeAnnotations.end()) {
+        auto& annotation = iter->second;
+        if (annotation.effectsIfMoved) {
+          // No need to check effects, this can be removed.
+          return false;
+        }
+      }
+    }
+    ShallowEffectAnalyzer self(getPassOptions(), *getModule(), curr);
+    return self.hasUnremovableSideEffects();
   }
 
   void visitBlock(Block* curr) {
