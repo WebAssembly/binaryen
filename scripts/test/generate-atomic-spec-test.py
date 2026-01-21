@@ -1,11 +1,25 @@
 import itertools
-from dataclasses import dataclass
+from dataclasses import astuple, dataclass
 
 # Workaround for python <3.10, escape characters can't appear in f-strings.
 # Although we require 3.10 in some places, the formatter complains without this.
 newline = "\n"
 
 backslash = '\\'
+
+
+@dataclass
+class instruction_test:
+    op: str
+    arg: str
+    should_drop: bool
+    bin: bytes
+
+
+ALL_OPS = [
+    instruction_test("i32.atomic.load", "(i32.const 51)", True, b"\x41\x33\xfe\x10%(align)s%(memidx)s%(ordering)s\x00\x1a"),
+    instruction_test("i32.atomic.store", "(i32.const 51) (i32.const 51)", False, b"\x41\x33\x41\x33\xfe\x17%(align)s%(memidx)s%(ordering)s\x00"),
+]
 
 
 def indent(s):
@@ -17,21 +31,15 @@ def instruction(*args):
     return f"({' '.join(arg for arg in args if arg is not None)})"
 
 
-def atomic_instruction(op, memid, immediate, /, *args, drop):
+def atomic_instruction(op, memid, ordering, /, *args, drop):
     if drop:
-        return f"(drop {instruction(op, memid, immediate, *args)})"
-    return instruction(op, memid, immediate, *args)
+        return f"(drop {instruction(op, memid, ordering, *args)})"
+    return instruction(op, memid, ordering, *args)
 
 
-all_ops = [
-    ("i32.atomic.load", "(i32.const 51)", True),
-    ("i32.atomic.store", "(i32.const 51) (i32.const 51)", False),
-]
-
-
-def func(memid, immediate, ops=all_ops):
-    return f'''(func ${immediate if immediate is not None else "no_immediate"}{"_with_memid" if memid is not None else "_without_memid"}
-{indent(newline.join(atomic_instruction(op, memid, immediate, arg, drop=should_drop) for op, arg, should_drop in ops))}
+def func(memid, ordering):
+    return f'''(func ${ordering if ordering is not None else "no_ordering"}{"_with_memid" if memid is not None else "_without_memid"}
+{indent(newline.join(atomic_instruction(op, memid, ordering, arg, drop=should_drop) for op, arg, should_drop, _ in map(astuple, ALL_OPS)))}
 )'''
 
 
@@ -50,8 +58,8 @@ def assert_invalid(module, reason):
 
 
 def text_test():
-    # Declare two memories so we have control over whether the memory immediate is printed
-    # A memory immediate of 0 is allowed to be omitted.
+    # Declare two memories so we have control over whether the memory idx is printed
+    # A memory idx of 0 is allowed to be omitted.
     return module(
         "(memory 1 1 shared)",
         "(memory 1 1 shared)",
@@ -117,26 +125,18 @@ def binary_test_example():
 
 
 def binary_tests():
-
-    func_statements = [
-        [b"\x41\x33\xfe\x10%(align)s%(memidx)s%(ordering)s\x00\x1a", "(drop (i32.atomic.load %(memidx)s %(ordering)s (i32.const 51)))"],
-        # TODO 0b ends the function
-        [b"\x41\x33\x41\x33\xfe\x17%(align)s%(memidx)s%(ordering)s\x00", "(i32.atomic.store %(memidx)s %(ordering)s (i32.const 51) (i32.const 51))"],
-    ]
-
-    # Each function ends with 0x0b. Add it to the last statement for simplicity.
-    func_statements[-1][0] += b'\x0b'
-
     funcs: [function] = []
-    for memidx, ordering in itertools.product([b'', b'\x01'], [b'', b'\x00', b'\x01']):
+    for (memidx_bytes, memidx), (ordering_bytes, ordering) in itertools.product([(b'', None), (b'\x01', "1")], [(b'', None), (b'\x00', "seqcst"), (b'\x01', "acqrel")]):
         func = function([], memidx, ordering)
-        for bin_statement, str_statement in func_statements:
-            align = 2 | (bool(memidx) << 5) | (bool(ordering) << 6)
+        for test_case in ALL_OPS:
+            align = 2 | (bool(memidx_bytes) << 5) | (bool(ordering_bytes) << 6)
             s = statement(
-                bin=bin_statement % {b'align': int.to_bytes(align), b'ordering': ordering, b'memidx': memidx},
-                text=normalize_spaces(str_statement % {'ordering': ["seqcst", "acqrel"][ordering[0]] if ordering else '', 'memidx': "1" if memidx else ""}))
-
+                bin=test_case.bin % {b'align': int.to_bytes(align), b'ordering': ordering_bytes, b'memidx': memidx_bytes},
+                text=atomic_instruction(test_case.op, memidx, ordering, test_case.arg, drop=test_case.should_drop))
             func.body.append(s)
+
+        # Functions end with 0x0b.
+        func.body[-1].bin += b'\x0b'
         funcs.append(func)
 
     # +1 for each function since we didn't count the local count byte yet, and +1 overall for the function count
@@ -178,10 +178,10 @@ def drop_atomic(instruction):
 
 
 def failing_tests():
-    op, arg, should_drop = all_ops[0]
-    op = drop_atomic(op)
+    inst = ALL_OPS[0]
+    op = drop_atomic(inst.op)
 
-    return failing_test(op, arg, memidx=None, drop=should_drop)
+    return failing_test(op, inst.arg, memidx=None, drop=inst.should_drop)
 
 
 def main():

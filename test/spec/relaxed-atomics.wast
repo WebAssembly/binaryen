@@ -2,7 +2,7 @@
   (memory 1 1 shared)
   (memory 1 1 shared)
 
-  (func $no_immediate_without_memid
+  (func $no_ordering_without_memid
     (drop (i32.atomic.load (i32.const 51)))
     (i32.atomic.store (i32.const 51) (i32.const 51))
   )
@@ -17,7 +17,7 @@
     (i32.atomic.store seqcst (i32.const 51) (i32.const 51))
   )
 
-  (func $no_immediate_with_memid
+  (func $no_ordering_with_memid
     (drop (i32.atomic.load 1 (i32.const 51)))
     (i32.atomic.store 1 (i32.const 51) (i32.const 51))
   )
