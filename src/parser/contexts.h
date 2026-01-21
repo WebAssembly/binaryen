@@ -1330,6 +1330,18 @@ struct AnnotationParserCtx {
 
     return value;
   }
+
+  // Return the inline hint for a call instruction, if there is one.
+  std::optional<std::monostate>
+  getEffectsIfMovedHint(const std::vector<Annotation>& annotations) {
+    std::optional<std::monostate> hint;
+    for (auto& a : annotations) {
+      if (a.kind == Annotations::EffectsIfMovedHint) {
+        hint.emplace();
+      }
+    }
+    return hint;
+  }
 };
 
 // Phase 4: Parse and set the types of module elements.
@@ -2421,7 +2433,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     Name func,
                     bool isReturn) {
     auto inline_ = getInlineHint(annotations);
-    return withLoc(pos, irBuilder.makeCall(func, isReturn, inline_));
+    auto effectsIfMoved = getEffectsIfMovedHint(annotations);
+    return withLoc(pos, irBuilder.makeCall(func, isReturn, inline_, effectsIfMoved));
   }
 
   Result<> makeCallIndirect(Index pos,
