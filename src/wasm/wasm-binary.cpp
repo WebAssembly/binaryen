@@ -1489,6 +1489,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::CustomPageSizesFeature;
       case FeatureSet::WideArithmetic:
         return BinaryConsts::CustomSections::WideArithmeticFeature;
+      case FeatureSet::CompactImports:
+        return BinaryConsts::CustomSections::CompactImportsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -3156,6 +3158,18 @@ std::unique_ptr<Tag> WasmBinaryReader::readTagImport(Name module, Name base) {
   return curr;
 }
 
+template<typename T, typename ReadFunc>
+void WasmBinaryReader::readCompactImportsShared(Name module,
+                                                ReadFunc readBaseDetails) {
+  std::unique_ptr<T> baseDetails = readBaseDetails(Name());
+  size_t numCompactImports = getU32LEB();
+  while (numCompactImports--) {
+    auto details = std::make_unique<T>(*baseDetails);
+    details->base = getInlineString();
+    addImport(std::move(details));
+  }
+}
+
 void WasmBinaryReader::readImport(Name module, Name base, uint32_t kind) {
   switch (kind & ~BinaryConsts::ExactImport) {
     case ExternalKind::Function:
@@ -3183,8 +3197,52 @@ void WasmBinaryReader::readImports() {
   for (size_t i = 0; i < num; i++) {
     auto module = getInlineString();
     auto base = getInlineString();
-    auto kind = getU32LEB();
-    readImport(module, base, kind);
+    auto kind = getInt8();
+    if (base == "" && (kind == BinaryConsts::CompactImportsSharedModule ||
+                       kind == BinaryConsts::CompactImportsSharedAll)) {
+      if (!wasm.features.hasCompactImports()) {
+        throwError("compact imports not supported");
+      }
+      if (kind == BinaryConsts::CompactImportsSharedModule) {
+        size_t numCompactImports = getU32LEB();
+        while (numCompactImports--) {
+          base = getInlineString();
+          kind = getInt8();
+          readImport(module, base, kind);
+        }
+      } else {
+        kind = getInt8();
+        switch (kind & ~BinaryConsts::ExactImport) {
+          case ExternalKind::Function:
+            readCompactImportsShared<Function>(module, [&](Name base) {
+              return readFunctionImport(module, base, kind);
+            });
+            break;
+          case ExternalKind::Table:
+            readCompactImportsShared<Table>(
+              module, [&](Name base) { return readTableImport(module, base); });
+            break;
+          case ExternalKind::Memory:
+            readCompactImportsShared<Memory>(module, [&](Name base) {
+              return readMemoryImport(module, base);
+            });
+            break;
+          case ExternalKind::Global:
+            readCompactImportsShared<Global>(module, [&](Name base) {
+              return readGlobalImport(module, base);
+            });
+            break;
+          case ExternalKind::Tag:
+            readCompactImportsShared<Tag>(
+              module, [&](Name base) { return readTagImport(module, base); });
+            break;
+          default:
+            throwError("bad import kind");
+        }
+      }
+    } else {
+      readImport(module, base, kind);
+    }
   }
   numFuncImports = wasm.functions.size();
 }
@@ -5519,6 +5577,8 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
       feature = FeatureSet::CustomPageSizes;
     } else if (name == BinaryConsts::CustomSections::WideArithmeticFeature) {
       feature = FeatureSet::WideArithmetic;
+    } else if (name == BinaryConsts::CustomSections::CompactImportsFeature) {
+      feature = FeatureSet::CompactImports;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).

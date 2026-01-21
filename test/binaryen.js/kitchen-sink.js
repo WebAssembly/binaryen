@@ -103,6 +103,7 @@ function test_features() {
   console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
   console.log("Features.CustomPageSizes: " + binaryen.Features.CustomPageSizes);
   console.log("Features.WideArithmetic: " + binaryen.Features.WideArithmetic);
+  console.log("Features.CompactImports: " + binaryen.Features.CompactImports);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
