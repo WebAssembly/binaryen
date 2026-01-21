@@ -134,7 +134,7 @@ def binary_tests():
     for (memidx_bytes, memidx), (ordering_bytes, ordering) in itertools.product([(b'', None), (b'\x01', "1")], [(b'', None), (b'\x00', "seqcst"), (b'\x01', "acqrel")]):
         func = function([], memidx, ordering)
         for test_case in ALL_OPS:
-            align = 2 | (bool(memidx_bytes) << 5) | (bool(ordering_bytes) << 6)
+            align = 2 | (bool(ordering_bytes) << 5) | (bool(memidx_bytes) << 6)
             s = statement(
                 bin=test_case.bin % {b'align': int.to_bytes(align), b'ordering': ordering_bytes, b'memidx': memidx_bytes},
                 text=atomic_instruction(test_case.op, memidx, ordering, test_case.arg, drop=test_case.should_drop))

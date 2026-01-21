@@ -54,14 +54,14 @@
   "\41\33\fe\10\02\00\1a" ;; (drop (i32.atomic.load (i32.const 51)))
   "\41\33\41\33\fe\17\02\00\0b" ;; (i32.atomic.store (i32.const 51) (i32.const 51))
   "\13\00" ;; func
-  "\41\33\fe\10\42\00\00\1a" ;; (drop (i32.atomic.load seqcst (i32.const 51)))
-  "\41\33\41\33\fe\17\42\00\00\0b" ;; (i32.atomic.store seqcst (i32.const 51) (i32.const 51))
+  "\41\33\fe\10\22\00\00\1a" ;; (drop (i32.atomic.load seqcst (i32.const 51)))
+  "\41\33\41\33\fe\17\22\00\00\0b" ;; (i32.atomic.store seqcst (i32.const 51) (i32.const 51))
   "\13\00" ;; func
-  "\41\33\fe\10\42\01\00\1a" ;; (drop (i32.atomic.load acqrel (i32.const 51)))
-  "\41\33\41\33\fe\17\42\01\00\0b" ;; (i32.atomic.store acqrel (i32.const 51) (i32.const 51))
+  "\41\33\fe\10\22\01\00\1a" ;; (drop (i32.atomic.load acqrel (i32.const 51)))
+  "\41\33\41\33\fe\17\22\01\00\0b" ;; (i32.atomic.store acqrel (i32.const 51) (i32.const 51))
   "\13\00" ;; func
-  "\41\33\fe\10\22\01\00\1a" ;; (drop (i32.atomic.load 1 (i32.const 51)))
-  "\41\33\41\33\fe\17\22\01\00\0b" ;; (i32.atomic.store 1 (i32.const 51) (i32.const 51))
+  "\41\33\fe\10\42\01\00\1a" ;; (drop (i32.atomic.load 1 (i32.const 51)))
+  "\41\33\41\33\fe\17\42\01\00\0b" ;; (i32.atomic.store 1 (i32.const 51) (i32.const 51))
   "\15\00" ;; func
   "\41\33\fe\10\62\01\00\00\1a" ;; (drop (i32.atomic.load 1 seqcst (i32.const 51)))
   "\41\33\41\33\fe\17\62\01\00\00\0b" ;; (i32.atomic.store 1 seqcst (i32.const 51) (i32.const 51))
