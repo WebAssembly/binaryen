@@ -1764,6 +1764,19 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
     });
 }
 
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::getEffectsIfMovedHintsBuffer() {
+  return writeExpressionHints(
+    Annotations::EffectsIfMovedHint,
+    [](const Function::CodeAnnotation& annotation) {
+      return annotation.effectsIfMoved;
+    },
+    [](const Function::CodeAnnotation& annotation,
+       BufferWithRandomAccess& buffer) {
+      // Hint size, always 0 for now.
+      buffer << U32LEB(0);
+    });
+}
+
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
   for (size_t i = 0; i < size; i++) {
     o << int8_t(data[i]);
@@ -2035,7 +2048,8 @@ void WasmBinaryReader::preScan() {
       auto sectionName = getInlineString();
 
       if (sectionName == Annotations::BranchHint ||
-          sectionName == Annotations::InlineHint) {
+          sectionName == Annotations::InlineHint ||
+          sectionName == Annotations::EffectsIfMovedHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2167,6 +2181,10 @@ void WasmBinaryReader::read() {
     pos = inlineHintsPos;
     readInlineHints(inlineHintsLen);
   }
+  if (effectsIfMovedHintsPos) {
+    pos = effectsIfMovedHintsPos;
+    readEffectsIfMovedHints(effectsIfMovedHintsLen);
+  }
 
   validateBinary();
 }
@@ -2195,6 +2213,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::InlineHint) {
     inlineHintsPos = pos;
     inlineHintsLen = payloadLen;
+  } else if (sectionName == Annotations::EffectsIfMovedHint) {
+    effectsIfMovedHintPos = pos;
+    effectsIfMovedHintLen = payloadLen;
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5481,6 +5502,19 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
                         }
 
                         annotation.inline_ = inline_;
+                      });
+}
+
+void WasmBinaryReader::readEffectsIfMovedHints(size_t payloadLen) {
+  readExpressionHints(Annotations::EffectsIfMovedHint,
+                      payloadLen,
+                      [&](Function::CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 0) {
+                          throwError("bad EffectsIfMovedHint size");
+                        }
+
+                        annotation.effectsIfMoved.emplace();
                       });
 }
 

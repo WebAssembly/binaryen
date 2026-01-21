@@ -2298,7 +2298,8 @@ public:
 
     // Binaryen intrinsic: Mark as having side effects if moved, but having no
     // effects in the current position. See |callsIfMoved| in effects.h.
-    std::optional<bool> effectsIfMoved;
+    // TODO: link to spec
+    std::optional<std::monostate> effectsIfMoved;
 
     bool operator==(const CodeAnnotation& other) const {
       return branchLikely == other.branchLikely && inline_ == other.inline_ &&

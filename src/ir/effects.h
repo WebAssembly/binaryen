@@ -179,6 +179,13 @@ public:
   //
   // Concretely, this does not influence has*Effects(), but it does influence
   // invalidates(), which compares effects between things that might move.
+  //
+  // This implements effectsIfMoved from wasm.h. The concrete effect we apply is
+  // a call. (The difference in name is to avoid ambiguity: callsIfMoved in
+  // wasm.h might suggest that the actual call does not happen - but it does,
+  // just it is marked as having no effects unless moved. Put another way, we
+  // implement the side effects from the user-facing spec using a call effect;
+  // we could call the wasm.h field "callEffectsIfMoved", but prefer brevity.)
   bool callsIfMoved = false;
 
   // Helper functions to check for various effect types

@@ -1441,6 +1441,7 @@ public:
 
   std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
   std::optional<BufferWithRandomAccess> getInlineHintsBuffer();
+  std::optional<BufferWithRandomAccess> getEffectsIfMovedHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1731,6 +1732,10 @@ public:
   size_t inlineHintsPos = 0;
   size_t inlineHintsLen = 0;
   void readInlineHints(size_t payloadLen);
+
+  size_t callsIfMovedHintsPos = 0;
+  size_t callsIfMovedHintsLen = 0;
+  void readCallsIfMovedHints(size_t payloadLen);
 
   std::tuple<Address, Address, Index, MemoryOrder>
   readMemoryAccess(bool isAtomic, bool isRMW);

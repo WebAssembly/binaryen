@@ -1376,7 +1376,8 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
 
 Result<> IRBuilder::makeCall(Name func,
                              bool isReturn,
-                             std::optional<std::uint8_t> inline_) {
+                             std::optional<std::uint8_t> inline_,
+                             std::optional<std::monostate> effectsIfMoved) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
@@ -1386,6 +1387,7 @@ Result<> IRBuilder::makeCall(Name func,
     builder.makeCall(curr.target, curr.operands, sig.results, isReturn);
   push(call);
   addInlineHint(call, inline_);
+  addEffectsIfMovedHint(call, effectsIfMoved);
   return Ok{};
 }
 
@@ -2649,10 +2651,17 @@ void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
 void IRBuilder::addInlineHint(Expression* expr,
                               std::optional<uint8_t> inline_) {
   if (inline_) {
-    // Branches are only possible inside functions.
+    // Only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].inline_ = inline_;
   }
+}
+
+void IRBuilder::addEffectsIfMovedHint(Expression* expr,
+                              std::optional<uint8_t> effectsIfMoved) {
+  // Only possible inside functions.
+  assert(func);
+  func->codeAnnotations[expr].effectsIfMoved.emplace();
 }
 
 } // namespace wasm
