@@ -171,23 +171,6 @@ public:
   // more here.)
   bool hasReturnCallThrow = false;
 
-  // Similar to calls (an effect where anything can happen), but only if this is
-  // moved. That is, this has no effects where it is presently located, but if
-  // moved, it will have effects. As a result, this can be removed from its
-  // current location, but if we want to move it around, we must consider it as
-  // having the same effects as a call.
-  //
-  // Concretely, this does not influence has*Effects(), but it does influence
-  // invalidates(), which compares effects between things that might move.
-  //
-  // This implements effectsIfMoved from wasm.h. The concrete effect we apply is
-  // a call. (The difference in name is to avoid ambiguity: callsIfMoved in
-  // wasm.h might suggest that the actual call does not happen - but it does,
-  // just it is marked as having no effects unless moved. Put another way, we
-  // implement the side effects from the user-facing spec using a call effect;
-  // we could call the wasm.h field "callEffectsIfMoved", but prefer brevity.)
-  bool callsIfMoved = false;
-
   // Helper functions to check for various effect types
 
   bool accessesLocal() const {
@@ -263,8 +246,7 @@ public:
   bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
   // Checks if these effects would invalidate another set of effects (e.g., if
-  // we write, we invalidate someone that reads). This checks if we can move one
-  // set of effects past another, and similar situations.
+  // we write, we invalidate someone that reads).
   //
   // This assumes the things whose effects we are comparing will both execute,
   // at least if neither of them transfers control flow away. That is, we assume
@@ -297,22 +279,16 @@ public:
   // can reorder them even if B traps (even if A has a global effect like a
   // global.set, since we assume B does not trap in traps-never-happen).
   bool invalidates(const EffectAnalyzer& other) {
-    // For purposes of the following comparisons, callsIfMoved is the same as
-    // calls: We are comparing one set of effects to another, possibly because
-    // we are moving them across each other, and callsIfMoved has effects if we
-    // move it.
-    auto thisCalls = calls || callsIfMoved;
-    auto otherCalls = other.calls || other.callsIfMoved;
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
-        ((writesMemory || thisCalls) && other.accessesMemory()) ||
-        ((other.writesMemory || otherCalls) && accessesMemory()) ||
-        ((writesTable || thisCalls) && other.accessesTable()) ||
-        ((other.writesTable || otherCalls) && accessesTable()) ||
-        ((writesStruct || thisCalls) && other.accessesMutableStruct()) ||
-        ((other.writesStruct || otherCalls) && accessesMutableStruct()) ||
-        ((writesArray || thisCalls) && other.accessesArray()) ||
-        ((other.writesArray || otherCalls) && accessesArray()) ||
+        ((writesMemory || calls) && other.accessesMemory()) ||
+        ((other.writesMemory || other.calls) && accessesMemory()) ||
+        ((writesTable || calls) && other.accessesTable()) ||
+        ((other.writesTable || other.calls) && accessesTable()) ||
+        ((writesStruct || calls) && other.accessesMutableStruct()) ||
+        ((other.writesStruct || other.calls) && accessesMutableStruct()) ||
+        ((writesArray || calls) && other.accessesArray()) ||
+        ((other.writesArray || other.calls) && accessesArray()) ||
         (danglingPop || other.danglingPop)) {
       return true;
     }
@@ -332,8 +308,8 @@ public:
         return true;
       }
     }
-    if ((otherCalls && accessesMutableGlobal()) ||
-        (thisCalls && other.accessesMutableGlobal())) {
+    if ((other.calls && accessesMutableGlobal()) ||
+        (calls && other.accessesMutableGlobal())) {
       return true;
     }
     for (auto global : globalsWritten) {
@@ -387,8 +363,6 @@ public:
     throws_ = throws_ || other.throws_;
     danglingPop = danglingPop || other.danglingPop;
     mayNotReturn = mayNotReturn || other.mayNotReturn;
-    hasReturnCallThrow = hasReturnCallThrow || other.hasReturnCallThrow;
-    callsIfMoved = callsIfMoved || other.callsIfMoved;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
