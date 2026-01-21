@@ -5,10 +5,26 @@
 ;; RUN: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $func (type $0)
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (@binaryen.effects.if.moved)
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (type $0 (func))
+
+  ;; RTRIP:      (func $func (type $0)
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT: )
   (func $func
-    ;; Three calls, one annotated.
+    ;; Three calls, one annotated in the middle.
     (call $func)
-    (@binaryen.efects.if.moved)
+    (@binaryen.effects.if.moved)
+    (call $func)
     (call $func)
   )
 )

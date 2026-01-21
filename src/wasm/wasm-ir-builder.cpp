@@ -2659,9 +2659,11 @@ void IRBuilder::addInlineHint(Expression* expr,
 
 void IRBuilder::addEffectsIfMovedHint(Expression* expr,
                                       std::optional<std::monostate> effectsIfMoved) {
-  // Only possible inside functions.
-  assert(func);
-  func->codeAnnotations[expr].effectsIfMoved.emplace();
+  if (effectsIfMoved) {
+    // Only possible inside functions.
+    assert(func);
+    func->codeAnnotations[expr].effectsIfMoved.emplace();
+  }
 }
 
 } // namespace wasm

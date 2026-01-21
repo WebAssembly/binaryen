@@ -1338,6 +1338,7 @@ struct AnnotationParserCtx {
     for (auto& a : annotations) {
       if (a.kind == Annotations::EffectsIfMovedHint) {
         hint.emplace();
+        break;
       }
     }
     return hint;
