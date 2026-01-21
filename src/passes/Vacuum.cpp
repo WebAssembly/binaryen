@@ -134,8 +134,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   // lets us check the relevant hint.
   bool hasShallowEffectsAssumingResultUnused(Expression* curr) { // canberemoved, to justifiy hasUnremovable
     if (auto* call = curr->dynCast<Call>()) {
-      auto iter = getFunction()->codeAnnotations.find(call);
-      if iter != currFunction->codeAnnotations.end()) {
+      auto& annotations = getFunction()->codeAnnotations;
+      auto iter = annotations.find(call);
+      if (iter != annotations.end()) {
         auto& annotation = iter->second;
         if (annotation.effectsIfMoved) {
           // No need to check effects, this can be removed.
