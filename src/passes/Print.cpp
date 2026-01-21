@@ -2789,7 +2789,7 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
     }
     if (annotation.effectsIfMoved) {
       Colors::grey(o);
-      o << "(@" << Annotations::EffectsIfMovedHint << ""\")\n";
+      o << "(@" << Annotations::EffectsIfMovedHint << ")\n";
       restoreNormalColor(o);
       doIndent(o, indent);
     }
