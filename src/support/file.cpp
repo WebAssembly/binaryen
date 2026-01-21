@@ -135,3 +135,23 @@ size_t wasm::file_size(std::string filename) {
                        std::ifstream::ate | std::ifstream::binary);
   return infile.tellg();
 }
+
+void wasm::flush_and_quick_exit(int code) {
+  // We expect C++ files to be flushed by their destructors already. Flush the
+  // standard streams manually.
+  std::cout << std::flush;
+  std::cerr << std::flush;
+
+  // To be safe, also flush at the C level.
+  fflush(NULL);
+
+#if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer) ||     \
+  __has_feature(memory_sanitizer) || __has_feature(leak_sanitizer) ||          \
+  __has_feature(undefined_behavior_sanitizer)
+  // Avoid quick_exit when using sanitizers, so that leak checks and other
+  // things can run during shutdown normally.
+  std::exit(code);
+#else
+  std::quick_exit(code);
+#endif
+}
