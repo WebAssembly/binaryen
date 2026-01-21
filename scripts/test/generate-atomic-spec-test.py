@@ -139,18 +139,7 @@ def binary_tests():
         func.body[-1].bin += b'\x0b'
         funcs.append(func)
 
-    # +1 for each function since we didn't count the local count byte yet, and +1 overall for the function count
-    section_size = sum(len(statement.bin) + 1 for func in funcs for statement in func.body) + 1
-    code_section = bytearray(b"\x0a") + to_unsigned_leb(section_size) + to_unsigned_leb(len(funcs))
-
-    '''(module
-        (memory 1 1 shared)
-        (memory 1 1 shared)
-       )
-    '''
-    module = b"\x00\x61\x73\x6d\x01\x00\x00\x00\x01\x04\01\x60\x00\x00\x03\x07\06\x00\x00\x00\x00\x00\x00\x05\07\x02\x03\x01\x01\x03\x01\x01"
-
-    str_builder = [binary_line(module), f'"{bin_to_str(code_section)}" ;; code section\n']
+    str_builder = []
 
     for func in funcs:
         bin_size = sum(len(statement.bin) for statement in func.body)
@@ -161,6 +150,27 @@ def binary_tests():
         str_builder.append(f'"{bin_to_str(func_bytes)}" ;; func\n')
         for stmt in func.body:
             str_builder.append(f'"{bin_to_str(stmt.bin)}" ;; {stmt.text}\n')
+
+    section_size = (
+        # function body size
+        sum(len(statement.bin) for func in funcs for statement in func.body) +
+        # function count byte
+        1 +
+        # num locals per function (always 0)
+        len(funcs) +
+        # each function declares its size, add bytes for the LEB encoding of each function's size
+        sum(len(to_unsigned_leb(sum(len(statement.bin) for statement in func.body))) for func in funcs))
+
+    code_section = bytearray(b"\x0a") + to_unsigned_leb(section_size) + to_unsigned_leb(len(funcs))
+
+    '''(module
+        (memory 1 1 shared)
+        (memory 1 1 shared)
+       )
+    '''
+    module = b"\x00\x61\x73\x6d\x01\x00\x00\x00\x01\x04\01\x60\x00\x00\x03\x07\06\x00\x00\x00\x00\x00\x00\x05\07\x02\x03\x01\x01\x03\x01\x01"
+
+    str_builder = [binary_line(module), f'"{bin_to_str(code_section)}" ;; code section\n'] + str_builder
 
     return f"(module binary\n{indent(''.join(str_builder))})"
 
