@@ -96,7 +96,7 @@ public:
                        const bool& instanceInitialized,
                        const Module& wasm,
                        std::function<Literal(Name, Type)> makeFuncData)
-    : table(table), instanceInitialized(instanceInitialized), wasm(wasm),
+    : RuntimeTable(table), instanceInitialized(instanceInitialized), wasm(wasm),
       makeFuncData(std::move(makeFuncData)) {}
 
   void set(std::size_t i, Literal l) override {
@@ -110,7 +110,7 @@ public:
     // so we want the last one.
     Expression* value = nullptr;
     for (auto& segment : wasm.elementSegments) {
-      if (segment->table != table.name) {
+      if (segment->table != tableMeta_.name) {
         continue;
       }
 
@@ -119,11 +119,14 @@ public:
       // look in the proper range. if it instead gets a global, we rely on the
       // fact that when not dynamically linking then the table is loaded at
       // offset 0.
+      // TODO: This is an Emscripten-specific assumption. We can add an
+      // Emscripten-only mode and only make the assumption in that case.
       if (auto* c = segment->offset->dynCast<Const>()) {
         start = c->value.getInteger();
       } else if (segment->offset->is<GlobalGet>()) {
         start = 0;
       } else {
+        // TODO: Handle extended consts.
         // wasm spec only allows const and global.get there
         WASM_UNREACHABLE("invalid expr type");
       }
@@ -135,6 +138,7 @@ public:
 
     if (!value) {
       // No segment had a value for this.
+      // TODO: Handle non-function tables.
       return Literal::makeNull(HeapTypes::func);
     }
     if (!Properties::isConstantExpression(value)) {
@@ -153,13 +157,10 @@ public:
 
   std::size_t size() const override {
     // See set() above, we assume the table is not modified FIXME
-    return table.initial;
+    return tableMeta_.initial;
   }
 
-  virtual const Table* tableMeta() const override { return &table; }
-
 private:
-  Table table;
   const bool& instanceInitialized;
   const Module& wasm;
   const std::function<Literal(Name, Type)> makeFuncData;

@@ -3168,9 +3168,10 @@ public:
   // Keyed by internal name. All globals in the module, including imports.
   // `definedGlobals` contains non-imported globals. Points to `definedGlobals`
   // of this instance and other instances.
-  std::map<Name, Literals*> allGlobals;
+  std::unordered_map<Name, Literals*> allGlobals;
 
-  std::map<Name, RuntimeTable*> allTables;
+  // Like `allGlobals`. Keyed by internal name. All tables including imports.
+  std::unordered_map<Name, RuntimeTable*> allTables;
 
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
 

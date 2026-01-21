@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef wasm_ir_runtime_table_h
 #define wasm_ir_runtime_table_h
 
@@ -12,6 +28,7 @@ namespace wasm {
 // Traps on out of bounds access
 class RuntimeTable {
 public:
+  RuntimeTable(Table table) : tableMeta_(table) {}
   virtual ~RuntimeTable() = default;
 
   virtual void set(std::size_t i, Literal l) = 0;
@@ -24,12 +41,15 @@ public:
 
   virtual std::size_t size() const = 0;
 
-  virtual const Table* tableMeta() const = 0;
+  virtual const Table* tableMeta() const { return &tableMeta_; }
+
+protected:
+  const Table tableMeta_;
 };
 
 class RealRuntimeTable : public RuntimeTable {
 public:
-  RealRuntimeTable(Literal initial, Table table_) : tableMeta_(table_) {
+  RealRuntimeTable(Literal initial, Table table_) : RuntimeTable(table_) {
     table.resize(tableMeta_.initial, initial);
   }
 
@@ -44,10 +64,7 @@ public:
 
   std::size_t size() const override { return table.size(); }
 
-  const Table* tableMeta() const override { return &tableMeta_; }
-
 private:
-  const Table tableMeta_;
   std::vector<Literal> table;
 };
 
