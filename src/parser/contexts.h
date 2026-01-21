@@ -2434,7 +2434,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     bool isReturn) {
     auto inline_ = getInlineHint(annotations);
     auto effectsIfMoved = getEffectsIfMovedHint(annotations);
-    return withLoc(pos, irBuilder.makeCall(func, isReturn, inline_, effectsIfMoved));
+    return withLoc(pos,
+                   irBuilder.makeCall(func, isReturn, inline_, effectsIfMoved));
   }
 
   Result<> makeCallIndirect(Index pos,

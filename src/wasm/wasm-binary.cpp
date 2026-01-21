@@ -1764,7 +1764,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
     });
 }
 
-std::optional<BufferWithRandomAccess> WasmBinaryWriter::getEffectsIfMovedHintsBuffer() {
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getEffectsIfMovedHintsBuffer() {
   return writeExpressionHints(
     Annotations::EffectsIfMovedHint,
     [](const Function::CodeAnnotation& annotation) {

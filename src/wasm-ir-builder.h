@@ -136,10 +136,11 @@ public:
                      std::optional<bool> likely = std::nullopt);
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
-  Result<> makeCall(Name func,
-                    bool isReturn,
-                    std::optional<std::uint8_t> inline_ = std::nullopt,
-                    std::optional<std::monostate> effectsIfMoved = std::nullopt);
+  Result<>
+  makeCall(Name func,
+           bool isReturn,
+           std::optional<std::uint8_t> inline_ = std::nullopt,
+           std::optional<std::monostate> effectsIfMoved = std::nullopt);
   Result<> makeCallIndirect(Name table,
                             HeapType type,
                             bool isReturn,
@@ -739,7 +740,8 @@ private:
   void addInlineHint(Expression* expr, std::optional<std::uint8_t> inline_);
 
   // Add an effectsIfMoved hint, if present.
-  void addEffectsIfMovedHint(Expression* expr, std::optional<std::monostate> effectsIfMoved);
+  void addEffectsIfMovedHint(Expression* expr,
+                             std::optional<std::monostate> effectsIfMoved);
 
   void dump();
 };
