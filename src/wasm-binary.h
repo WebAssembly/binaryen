@@ -471,6 +471,7 @@ extern const char* CustomDescriptorsFeature;
 extern const char* RelaxedAtomicsFeature;
 extern const char* MultibyteFeature;
 extern const char* CustomPageSizesFeature;
+extern const char* CompactImportsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1662,6 +1663,12 @@ public:
                           uint8_t& pageSizeLog2,
                           Address defaultIfNoMax);
   void readImports();
+
+  void addImport(uint32_t kind, std::unique_ptr<Importable> importable);
+  std::unique_ptr<Importable>
+  readImportDetails(Name module, Name field, uint32_t kind);
+  std::unique_ptr<Importable> copyImportable(uint32_t kind,
+                                             Importable& details);
 
   // The signatures of each function, including imported functions, given in the
   // import and function sections. Store HeapTypes instead of Signatures because
