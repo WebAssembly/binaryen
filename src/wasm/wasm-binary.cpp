@@ -1623,6 +1623,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 
   append(getBranchHintsBuffer());
   append(getInlineHintsBuffer());
+  append(getEffectsIfMovedHintsBuffer());
   return ret;
 }
 

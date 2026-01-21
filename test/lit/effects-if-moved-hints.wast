@@ -17,6 +17,7 @@
 
   ;; RTRIP:      (func $func (type $0)
   ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT:  (@binaryen.effects.if.moved)
   ;; RTRIP-NEXT:  (call $func)
   ;; RTRIP-NEXT:  (call $func)
   ;; RTRIP-NEXT: )
