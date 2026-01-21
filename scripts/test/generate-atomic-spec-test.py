@@ -26,7 +26,6 @@ def indent(s):
     return "\n".join(f"  {line}" if line else "" for line in s.split("\n"))
 
 
-# skips None for convenience
 def instruction(*args):
     return f"({' '.join(arg for arg in args if arg is not None)})"
 
@@ -38,6 +37,12 @@ def atomic_instruction(op, memid, ordering, /, *args, drop):
 
 
 def func(memid, ordering):
+    """Return a function testing ALL_OPS e.g.
+      (func $acqrel_without_memid
+        (drop (i32.atomic.load acqrel (i32.const 51)))
+        ...
+      )
+    """
     return f'''(func ${ordering if ordering is not None else "no_ordering"}{"_with_memid" if memid is not None else "_without_memid"}
 {indent(newline.join(atomic_instruction(op, memid, ordering, arg, drop=should_drop) for op, arg, should_drop, _ in map(astuple, ALL_OPS)))}
 )'''
@@ -71,10 +76,8 @@ def to_unsigned_leb(num):
     ret = bytearray()
 
     if num == 0:
-        ret = bytearray()
         ret.append(0)
         return ret
-    ret = bytearray()
     while num > 0:
         rem = num >> 7
         ret.append((num & 0x7F) | (bool(rem) << 7))
@@ -83,7 +86,8 @@ def to_unsigned_leb(num):
     return ret
 
 
-def bin_to_str(bin):
+def bin_to_str(bin: bytes) -> str:
+    """Return binary formatted for .wast format e.g. \00\61\73\6d\01\00\00\00"""
     return ''.join(f'{backslash}{byte:02x}' for byte in bin)
 
 
@@ -125,6 +129,7 @@ def binary_test_example():
 
 
 def binary_tests():
+    """Return a (module binary ...) testing ALL_OPS"""
     funcs: [function] = []
     for (memidx_bytes, memidx), (ordering_bytes, ordering) in itertools.product([(b'', None), (b'\x01', "1")], [(b'', None), (b'\x00', "seqcst"), (b'\x01', "acqrel")]):
         func = function([], memidx, ordering)
