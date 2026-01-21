@@ -461,6 +461,7 @@ extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
 extern const char* CustomDescriptorsFeature;
 extern const char* RelaxedAtomicsFeature;
+extern const char* CompactImportsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1636,6 +1637,12 @@ public:
                           Type& addressType,
                           Address defaultIfNoMax);
   void readImports();
+
+  void addImport(uint32_t kind, std::unique_ptr<Importable> importable);
+  std::unique_ptr<Importable>
+  readImportDetails(Name module, Name field, uint32_t kind);
+  std::unique_ptr<Importable> copyImportable(uint32_t kind,
+                                             Importable& details);
 
   // The signatures of each function, including imported functions, given in the
   // import and function sections. Store HeapTypes instead of Signatures because

@@ -384,6 +384,7 @@ template<typename Ctx> MaybeResult<> typedef_(Ctx&);
 template<typename Ctx> MaybeResult<> rectype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
 template<typename Ctx> MaybeResult<> import_(Ctx&);
+template<typename Ctx> MaybeResult<> importItem(Ctx&, Name module);
 template<typename Ctx> MaybeResult<> func(Ctx&);
 template<typename Ctx> MaybeResult<> table(Ctx&);
 template<typename Ctx> MaybeResult<> memory(Ctx&);
@@ -3308,7 +3309,12 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
   return {};
 }
 
+template<typename Ctx> MaybeResult<> importItem(Ctx& ctx, Name name) {
+  return Ok{};
+}
+
 // import ::= '(' 'import' mod:name nm:name importdesc ')'
+//            '(' 'import' mod:name compactimportdesc ')'
 // importdesc ::= '(' 'func' id? exacttypeuse ')'
 //              | '(' 'table' id? tabletype ')'
 //              | '(' 'memory' id? memtype ')'
@@ -3324,6 +3330,16 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
   auto mod = ctx.in.takeName();
   if (!mod) {
     return ctx.in.err("expected import module name");
+  }
+
+  if (ctx.in.peekSExprStart("item"sv)) {
+    while (ctx.in.peekSExprStart("item"sv)) {
+      CHECK_ERR(importItem(ctx, *mod));
+    }
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of import");
+    }
+    return Ok{};
   }
 
   auto nm = ctx.in.takeName();
