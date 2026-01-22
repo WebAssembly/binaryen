@@ -2376,7 +2376,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     auto* func = wasm.getFunction(funcName);
     auto params = func->getParams();
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[getIndex(ParamLocation{func, i})] = PossibleContents::fromType(params[i]);
+      roots[getIndex(ParamLocation{func, i})] =
+        PossibleContents::fromType(params[i]);
     }
   };
 
@@ -2441,7 +2442,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       auto name = *ex->getInternalName();
       auto* global = wasm.getGlobal(name);
       if (global->mutable_) {
-        roots[getIndex(GlobalLocation{name})] = PossibleContents::fromType(global->type);
+        roots[getIndex(GlobalLocation{name})] =
+          PossibleContents::fromType(global->type);
       }
     }
   }
@@ -2462,7 +2464,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   for (auto tag : publicTags) {
     auto params = wasm.getTag(tag)->params();
     for (Index i = 0; i < params.size(); i++) {
-      roots[getIndex(TagLocation{tag, i})] = PossibleContents::fromType(params[i]);
+      roots[getIndex(TagLocation{tag, i})] =
+        PossibleContents::fromType(params[i]);
     }
   }
 
