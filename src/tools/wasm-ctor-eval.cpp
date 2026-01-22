@@ -70,7 +70,7 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver() : stubLiteral({Literal(0)}){};
+  EvallingImportResolver() : stubLiteral({Literal(0)}) {};
 
   // Return an unused stub value. We throw FailToEvalException on reading any
   // imported globals. We ignore the type and return an i32 literal since some
