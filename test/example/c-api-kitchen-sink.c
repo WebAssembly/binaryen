@@ -1113,7 +1113,8 @@ void test_core() {
                          "0",
                          BinaryenMemoryOrderSeqCst()),
       BinaryenTypeInt32(),
-      "0"),
+      "0",
+      BinaryenMemoryOrderSeqCst()),
     BinaryenDrop(module,
                  BinaryenAtomicWait(
                    module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),

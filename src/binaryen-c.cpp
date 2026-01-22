@@ -1376,7 +1376,8 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           BinaryenExpressionRef ptr,
                                           BinaryenExpressionRef value,
                                           BinaryenType type,
-                                          const char* memoryName) {
+                                          const char* memoryName,
+                                          uint8_t order) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeAtomicStore(bytes,
@@ -1385,7 +1386,7 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                        (Expression*)value,
                        Type(type),
                        getMemoryName(module, memoryName),
-                       MemoryOrder::SeqCst));
+                       static_cast<MemoryOrder>(order)));
 }
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenOp op,
@@ -1394,7 +1395,8 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenExpressionRef ptr,
                                         BinaryenExpressionRef value,
                                         BinaryenType type,
-                                        const char* memoryName) {
+                                        const char* memoryName,
+                                        uint8_t order) {
   return Builder(*(Module*)module)
     .makeAtomicRMW(AtomicRMWOp(op),
                    bytes,
@@ -1403,7 +1405,7 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                    (Expression*)value,
                    Type(type),
                    getMemoryName(module, memoryName),
-                   MemoryOrder::SeqCst);
+                   static_cast<MemoryOrder>(order));
 }
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenIndex bytes,
@@ -1412,16 +1414,18 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenExpressionRef expected,
                                             BinaryenExpressionRef replacement,
                                             BinaryenType type,
-                                            const char* memoryName) {
-  return Builder(*(Module*)module)
-    .makeAtomicCmpxchg(bytes,
-                       offset,
-                       (Expression*)ptr,
-                       (Expression*)expected,
-                       (Expression*)replacement,
-                       Type(type),
-                       getMemoryName(module, memoryName),
-                       MemoryOrder::SeqCst);
+                                            const char* memoryName,
+                                            uint8_t order) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeAtomicCmpxchg(bytes,
+                         offset,
+                         (Expression*)ptr,
+                         (Expression*)expected,
+                         (Expression*)replacement,
+                         Type(type),
+                         getMemoryName(module, memoryName),
+                         static_cast<MemoryOrder>(order)));
 }
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenExpressionRef ptr,

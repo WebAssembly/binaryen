@@ -866,7 +866,8 @@ BinaryenAtomicStore(BinaryenModuleRef module,
                     BinaryenExpressionRef ptr,
                     BinaryenExpressionRef value,
                     BinaryenType type,
-                    const char* memoryName);
+                    const char* memoryName,
+                    uint8_t order);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicRMW(BinaryenModuleRef module,
                   BinaryenOp op,
@@ -875,7 +876,8 @@ BinaryenAtomicRMW(BinaryenModuleRef module,
                   BinaryenExpressionRef ptr,
                   BinaryenExpressionRef value,
                   BinaryenType type,
-                  const char* memoryName);
+                  const char* memoryName,
+                  uint8_t order);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                       BinaryenIndex bytes,
@@ -884,7 +886,8 @@ BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                       BinaryenExpressionRef expected,
                       BinaryenExpressionRef replacement,
                       BinaryenType type,
-                      const char* memoryName);
+                      const char* memoryName,
+                      uint8_t order);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWait(BinaryenModuleRef module,
                    BinaryenExpressionRef ptr,
