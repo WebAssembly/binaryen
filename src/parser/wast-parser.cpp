@@ -167,6 +167,17 @@ Result<NaNKind> nan(Lexer& in) {
 }
 
 Result<ExpectedResult> result(Lexer& in) {
+  if (in.takeSExprStart("either"sv)) {
+    std::vector<ExpectedResult> alternatives;
+    do {
+      auto alternative = result(in);
+      CHECK_ERR(alternative);
+      // TODO move * or * move?
+      alternatives.push_back(std::move(*alternative));
+    } while (!in.takeRParen());
+    return alternatives;
+  }
+
   Lexer constLexer = in;
   auto c = const_(constLexer);
   // TODO: Generating and discarding errors like this can lead to quadratic

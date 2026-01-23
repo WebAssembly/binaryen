@@ -76,8 +76,16 @@ using LaneResult = std::variant<Literal, NaNResult>;
 
 using LaneResults = std::vector<LaneResult>;
 
-using ExpectedResult =
-  std::variant<Literal, NullRefResult, RefResult, NaNResult, LaneResults>;
+struct ExpectedResult : std::variant<Literal,
+                                     NullRefResult,
+                                     RefResult,
+                                     NaNResult,
+                                     LaneResults,
+                                     std::vector<ExpectedResult>> {
+  using variant::variant;
+};
+
+using Alternatives = std::vector<ExpectedResult>;
 
 using ExpectedResults = std::vector<ExpectedResult>;
 

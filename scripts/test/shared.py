@@ -453,7 +453,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'memory64.wast',        # Requires validations on the max memory size
     'imports3.wast',  # Requires better checking of exports from the special "spectest" module
     'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
-    'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
     'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
     'relaxed_dot_product.wast',   # Requires wast `either` support
     'relaxed_laneselect.wast',    # Requires wast `either` support

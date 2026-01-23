@@ -416,6 +416,25 @@ struct Shell {
           default:
             WASM_UNREACHABLE("unexpected number of lanes");
         }
+      }
+      // TODO: aggregate the errors.
+      else if (auto* either = std::get_if<Alternatives>(&expected)) {
+        std::optional<Err> lastError = std::nullopt;
+        for (const auto& alternative : *either) {
+          // iterate non-const?
+          auto alt = alternative;
+          auto aReturn = AssertReturn{assn.action, {alt}};
+          auto a = assertReturn(aReturn);
+          if (a.getErr()) {
+            lastError = *a.getErr();
+          } else {
+            lastError = std::nullopt;
+            break;
+          }
+        }
+        if (lastError) {
+          return std::move(*lastError);
+        }
       } else {
         WASM_UNREACHABLE("unexpected expectation");
       }
