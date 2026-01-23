@@ -25,7 +25,9 @@
 
 namespace wasm {
 
-// Traps on out of bounds access
+// Runtime representation of a table for interpreting use cases e.g.
+// wasm-interpreter.h. Effectively a vector of Literal. Throws TrapException on
+// out-of-bounds access.
 class RuntimeTable {
 public:
   RuntimeTable(Table table) : tableMeta_(table) {}

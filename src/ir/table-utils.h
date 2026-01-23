@@ -20,7 +20,6 @@
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
-#include "ir/runtime-table.h"
 #include "support/stdckdint.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
