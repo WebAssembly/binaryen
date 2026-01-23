@@ -158,6 +158,6 @@ void wasm::flush_and_quick_exit(int code) {
   // So instead use _Exit(); the only difference is that _Exit() does not call
   // handlers registered by at_quick_exit(). Currently Binaryen does not have
   // any of those.
-  _Exit();
+  _Exit(code);
 #endif
 }
