@@ -1206,9 +1206,12 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
                    "[--enable-relaxed-atomics]");
       break;
     }
-    // Unordered RMW should be impossible unless there's a bug in the code.
+    // Unordered RMW should be impossible unless there's a bug in the parser.
     case MemoryOrder::Unordered: {
-      WASM_UNREACHABLE("Atomic RMW can't be unordered");
+      shouldBeUnequal(curr->order,
+                      MemoryOrder::Unordered,
+                      curr,
+                      "Atomic RMW can't be unordered");
       break;
     }
     case MemoryOrder::SeqCst:
