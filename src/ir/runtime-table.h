@@ -41,7 +41,15 @@ public:
 
   virtual std::size_t size() const = 0;
 
-  virtual const Table* tableMeta() const { return &tableMeta_; }
+  // True iff this is a subtype of the definition `other`. i.e. This table can
+  // be imported with the definition of `other`
+  virtual bool isSubType(const Table& other) {
+    return tableMeta_.addressType == other.addressType &&
+           Type::isSubType(tableMeta_.type, other.type) &&
+           size() >= other.initial && tableMeta_.max <= other.max;
+  }
+
+  const Table* tableMeta() const { return &tableMeta_; }
 
 protected:
   const Table tableMeta_;
