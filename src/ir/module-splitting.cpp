@@ -938,14 +938,24 @@ void ModuleSplitter::shareImportableItems() {
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
-    if (kind == ModuleItemKind::Global) {                                      \
-      used.globals.insert(cast->field);                                        \
-    } else if (kind == ModuleItemKind::Table) {                                \
-      used.tables.insert(cast->field);                                         \
-    } else if (kind == ModuleItemKind::Memory) {                               \
-      used.memories.insert(cast->field);                                       \
-    } else if (kind == ModuleItemKind::Tag) {                                  \
-      used.tags.insert(cast->field);                                           \
+    switch (kind) {                                                            \
+      case ModuleItemKind::Table:                                              \
+        used.tables.insert(cast->field);                                       \
+        break;                                                                 \
+      case ModuleItemKind::Memory:                                             \
+        used.memories.insert(cast->field);                                     \
+        break;                                                                 \
+      case ModuleItemKind::Global:                                             \
+        used.globals.insert(cast->field);                                      \
+        break;                                                                 \
+      case ModuleItemKind::Tag:                                                \
+        used.tags.insert(cast->field);                                         \
+        break;                                                                 \
+      case ModuleItemKind::Function:                                           \
+      case ModuleItemKind::DataSegment:                                        \
+      case ModuleItemKind::ElementSegment:                                     \
+      case ModuleItemKind::Invalid:                                            \
+        break;                                                                 \
     }                                                                          \
   }
 
