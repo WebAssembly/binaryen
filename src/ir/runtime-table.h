@@ -30,7 +30,7 @@ namespace wasm {
 // out-of-bounds access.
 class RuntimeTable {
 public:
-  RuntimeTable(Table table) : tableMeta_(table) {}
+  RuntimeTable(Table table) : tableDefinition(table) {}
   virtual ~RuntimeTable() = default;
 
   virtual void set(std::size_t i, Literal l) = 0;
@@ -46,21 +46,21 @@ public:
   // True iff this is a subtype of the definition `other`. i.e. This table can
   // be imported with the definition of `other`
   virtual bool isSubType(const Table& other) {
-    return tableMeta_.addressType == other.addressType &&
-           Type::isSubType(tableMeta_.type, other.type) &&
-           size() >= other.initial && tableMeta_.max <= other.max;
+    return tableDefinition.addressType == other.addressType &&
+           Type::isSubType(tableDefinition.type, other.type) &&
+           size() >= other.initial && tableDefinition.max <= other.max;
   }
 
-  const Table* tableMeta() const { return &tableMeta_; }
+  const Table* getDefinition() const { return &tableDefinition; }
 
 protected:
-  const Table tableMeta_;
+  const Table tableDefinition;
 };
 
 class RealRuntimeTable : public RuntimeTable {
 public:
   RealRuntimeTable(Literal initial, Table table_) : RuntimeTable(table_) {
-    table.resize(tableMeta_.initial, initial);
+    table.resize(tableDefinition.initial, initial);
   }
 
   RealRuntimeTable(const RealRuntimeTable&) = delete;
