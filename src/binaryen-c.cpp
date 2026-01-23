@@ -1400,15 +1400,15 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenExpressionRef replacement,
                                             BinaryenType type,
                                             const char* memoryName) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeAtomicCmpxchg(bytes,
-                         offset,
-                         (Expression*)ptr,
-                         (Expression*)expected,
-                         (Expression*)replacement,
-                         Type(type),
-                         getMemoryName(module, memoryName)));
+  return Builder(*(Module*)module)
+    .makeAtomicCmpxchg(bytes,
+                       offset,
+                       (Expression*)ptr,
+                       (Expression*)expected,
+                       (Expression*)replacement,
+                       Type(type),
+                       getMemoryName(module, memoryName),
+                       MemoryOrder::SeqCst);
 }
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenExpressionRef ptr,

@@ -166,8 +166,8 @@ public:
                          Type type,
                          Name mem,
                          MemoryOrder order);
-  Result<>
-  makeAtomicCmpxchg(unsigned bytes, Address offset, Type type, Name mem);
+  Result<> makeAtomicCmpxchg(
+    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
   Result<> makeAtomicWait(Type type, Address offset, Name mem);
   Result<> makeAtomicNotify(Address offset, Name mem);
   Result<> makeAtomicFence();

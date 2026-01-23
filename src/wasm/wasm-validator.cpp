@@ -1238,6 +1238,28 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operations require threads [--enable-threads]");
+
+  switch (curr->order) {
+    case MemoryOrder::AcqRel: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Acquire/release operations require relaxed atomics "
+                   "[--enable-relaxed-atomics]");
+      break;
+    }
+    // Unordered cmpxchg should be impossible unless there's a bug in the
+    // parser.
+    case MemoryOrder::Unordered: {
+      shouldBeUnequal(curr->order,
+                      MemoryOrder::Unordered,
+                      curr,
+                      "Atomic cmpxchg can't be unordered");
+      break;
+    }
+    case MemoryOrder::SeqCst:
+      break;
+  }
+
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,

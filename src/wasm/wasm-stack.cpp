@@ -587,7 +587,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
                    curr->bytes,
                    curr->offset,
                    curr->memory,
-                   MemoryOrder::SeqCst,
+                   curr->order,
                    /*isRMW=*/true);
 }
 

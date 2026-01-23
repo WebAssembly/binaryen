@@ -86,6 +86,20 @@ templates = [
     Template(op="i64.atomic.rmw8.xor_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x3e"),
     Template(op="i64.atomic.rmw16.xor_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x3f"),
     Template(op="i64.atomic.rmw32.xor_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x40"),
+    Template(op="i32.atomic.rmw.xchg", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x41"),
+    Template(op="i64.atomic.rmw.xchg", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x42"),
+    Template(op="i32.atomic.rmw8.xchg_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x43"),
+    Template(op="i32.atomic.rmw16.xchg_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x44"),
+    Template(op="i64.atomic.rmw8.xchg_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x45"),
+    Template(op="i64.atomic.rmw16.xchg_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x46"),
+    Template(op="i64.atomic.rmw32.xchg_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x47"),
+    Template(op="i32.atomic.rmw.cmpxchg", value_type=ValueType.i32, args=3, should_drop=True, bin=b"\xfe\x48"),
+    Template(op="i64.atomic.rmw.cmpxchg", value_type=ValueType.i64, args=3, should_drop=True, bin=b"\xfe\x49"),
+    Template(op="i32.atomic.rmw8.cmpxchg_u", value_type=ValueType.i32, args=3, should_drop=True, bin=b"\xfe\x4a"),
+    Template(op="i32.atomic.rmw16.cmpxchg_u", value_type=ValueType.i32, args=3, should_drop=True, bin=b"\xfe\x4b"),
+    Template(op="i64.atomic.rmw8.cmpxchg_u", value_type=ValueType.i64, args=3, should_drop=True, bin=b"\xfe\x4c"),
+    Template(op="i64.atomic.rmw16.cmpxchg_u", value_type=ValueType.i64, args=3, should_drop=True, bin=b"\xfe\x4d"),
+    Template(op="i64.atomic.rmw32.cmpxchg_u", value_type=ValueType.i64, args=3, should_drop=True, bin=b"\xfe\x4e"),
 ]
 
 

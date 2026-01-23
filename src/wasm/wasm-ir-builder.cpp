@@ -1518,15 +1518,19 @@ Result<> IRBuilder::makeAtomicRMW(AtomicRMWOp op,
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicCmpxchg(unsigned bytes,
-                                      Address offset,
-                                      Type type,
-                                      Name mem) {
+Result<> IRBuilder::makeAtomicCmpxchg(
+  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
   AtomicCmpxchg curr;
   curr.memory = mem;
   CHECK_ERR(ChildPopper{*this}.visitAtomicCmpxchg(&curr, type));
-  push(builder.makeAtomicCmpxchg(
-    bytes, offset, curr.ptr, curr.expected, curr.replacement, type, mem));
+  push(builder.makeAtomicCmpxchg(bytes,
+                                 offset,
+                                 curr.ptr,
+                                 curr.expected,
+                                 curr.replacement,
+                                 type,
+                                 mem,
+                                 order));
   return Ok{};
 }
 
