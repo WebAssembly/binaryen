@@ -983,26 +983,13 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     NameCollector collector(used);
-    for (auto& global : secondary.globals) {
-      if (!global->imported()) {
-        collector.walk(global->init);
-      }
-    }
+    collector.walkModuleCode(&secondary);
     for (auto& segment : secondary.dataSegments) {
       used.memories.insert(segment->memory);
-      if (segment->offset) {
-        collector.walk(segment->offset);
-      }
     }
     for (auto& segment : secondary.elementSegments) {
       if (segment->table.is()) {
         used.tables.insert(segment->table);
-      }
-      if (segment->offset) {
-        collector.walk(segment->offset);
-      }
-      for (auto* item : segment->data) {
-        collector.walk(item);
       }
     }
 
