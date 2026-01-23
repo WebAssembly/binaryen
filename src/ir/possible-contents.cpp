@@ -27,6 +27,9 @@
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "support/insert_ordered.h"
+#ifdef POSSIBLE_CONTENTS_DEBUG
+#include "support/timing.h"
+#endif
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -2275,18 +2278,25 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   if (options.trapsNeverHappen && wasm.features.hasGC()) {
 #ifdef POSSIBLE_CONTENTS_DEBUG
     std::cout << "tnh phase\n";
+    Timer timer;
 #endif
     tnhOracle = std::make_unique<TNHOracle>(wasm, options);
+#ifdef POSSIBLE_CONTENTS_DEBUG
+    std::cout << "... " << timer.lastElapsed() << "\n";
+#endif
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "subtypes phase\n";
+  Timer timer;
 #endif
 
   subTypes = std::make_unique<SubTypes>(wasm);
   maxDepths = subTypes->getMaxDepths();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "parallel phase\n";
 #endif
 
@@ -2325,6 +2335,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     });
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "single phase\n";
 #endif
 
@@ -2335,6 +2347,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   finder.walkModuleCode(&wasm);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "global init phase\n";
 #endif
 
@@ -2359,6 +2373,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // go.
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "merging+indexing phase\n";
 #endif
 
@@ -2409,6 +2425,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   analysis.map.clear();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "external phase\n";
 #endif
 
@@ -2491,6 +2509,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "function subtyping phase\n";
 #endif
 
@@ -2516,6 +2536,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "Link-targets phase\n";
 #endif
 
@@ -2534,6 +2556,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 #endif
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "roots phase\n";
 #endif
 
@@ -2551,6 +2575,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+  timer.restart();
   std::cout << "flow phase\n";
   size_t iters = 0;
 #endif
@@ -2570,6 +2596,10 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
     flowAfterUpdate(locationIndex);
   }
+
+#ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "... " << timer.lastElapsed() << "\n";
+#endif
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
   //       including multiple levels of depth (necessary for itables in j2wasm).

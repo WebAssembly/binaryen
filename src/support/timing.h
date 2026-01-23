@@ -31,7 +31,7 @@ class Timer {
 public:
   Timer() { restart(); }
 
-  // Resets the timer's start time and returns the time since its last start.
+  // Resets the timer's start and last times.
   void restart() {
     auto now = std::chrono::steady_clock::now();
     lastTime = startTime = now;
