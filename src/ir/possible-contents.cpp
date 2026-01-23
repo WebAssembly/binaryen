@@ -2243,7 +2243,11 @@ private:
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
   Index getNormalizedConeDepth(Type type, Index depth) {
-    return std::min(depth, maxDepths[type.getHeapType()]);
+    auto iter = maxDepths.find(type.getHeapType());
+    // A max depth must be in the map (otherwise we would use the default 0,
+    // making it exact, almost certainly incorrectly).
+    assert(iter != maxDepths.end());
+    return std::min(depth, iter->second);
   }
 
   void normalizeConeType(PossibleContents& cone) {
@@ -2364,7 +2368,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   //
   // This must be insert-ordered for the same reason as |workQueue| is, see
   // above.
-  InsertOrderedMap<Location, PossibleContents> roots;
+  InsertOrderedMap<LocationIndex, PossibleContents> roots;
 
   // Any function that may be called from the outside, like an export, is a
   // root, since they can be called with unknown parameters.
@@ -2372,7 +2376,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     auto* func = wasm.getFunction(funcName);
     auto params = func->getParams();
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
+      roots[getIndex(ParamLocation{func, i})] =
+        PossibleContents::fromType(params[i]);
     }
   };
 
@@ -2381,7 +2386,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       links.insert(getIndexes(link));
     }
     for (auto& [root, value] : info.roots) {
-      roots[root] = value;
+      roots[getIndex(root)] = value;
 
       // Ensure an index even for a root with no links to it - everything needs
       // an index.
@@ -2437,7 +2442,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       auto name = *ex->getInternalName();
       auto* global = wasm.getGlobal(name);
       if (global->mutable_) {
-        roots[GlobalLocation{name}] = PossibleContents::fromType(global->type);
+        roots[getIndex(GlobalLocation{name})] =
+          PossibleContents::fromType(global->type);
       }
     }
   }
@@ -2458,7 +2464,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   for (auto tag : publicTags) {
     auto params = wasm.getTag(tag)->params();
     for (Index i = 0; i < params.size(); i++) {
-      roots[TagLocation{tag, i}] = PossibleContents::fromType(params[i]);
+      roots[getIndex(TagLocation{tag, i})] =
+        PossibleContents::fromType(params[i]);
     }
   }
 
@@ -2468,16 +2475,16 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       if (type.isStruct()) {
         auto& fields = type.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {
-          roots[DataLocation{type, i}] =
+          roots[getIndex(DataLocation{type, i})] =
             PossibleContents::fromType(fields[i].type);
         }
         if (auto desc = type.getDescriptorType()) {
           auto descType = Type(*desc, Nullable, Inexact);
-          roots[DataLocation{type, DataLocation::DescriptorIndex}] =
+          roots[getIndex(DataLocation{type, DataLocation::DescriptorIndex})] =
             PossibleContents::fromType(descType);
         }
       } else if (type.isArray()) {
-        roots[DataLocation{type, 0}] =
+        roots[getIndex(DataLocation{type, 0})] =
           PossibleContents::fromType(type.getArray().element.type);
       }
     }
@@ -2639,6 +2646,12 @@ bool Flower::updateContents(LocationIndex locationIndex,
     // more later (we compute that at the end), so use a temp out var for that.
     bool worthSendingMoreTemp = true;
     filterExpressionContents(newContents, *exprLoc, worthSendingMoreTemp);
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "  post-filtered exprLoc:\n";
+    newContents.dump(std::cout, &wasm);
+    std::cout << '\n';
+#endif
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     // Generic filtering. We do this both before and after.
     filterGlobalContents(newContents, *globalLoc);

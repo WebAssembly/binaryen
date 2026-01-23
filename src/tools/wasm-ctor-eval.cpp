@@ -33,6 +33,7 @@
 #include "ir/memory-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "shell-interface.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
@@ -67,11 +68,9 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-class EvallingModuleRunner;
-
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver() : stubLiteral({Literal(0)}){};
+  EvallingImportResolver() : stubLiteral({Literal(0)}) {};
 
   // Return an unused stub value. We throw FailToEvalException on reading any
   // imported globals. We ignore the type and return an i32 literal since some
@@ -80,8 +79,91 @@ public:
     return &stubLiteral;
   }
 
+  RuntimeTable* getTableOrNull(ImportNames name,
+                               const Table& type) const override {
+    throw FailToEvalException{"Imported table access."};
+  }
+
 private:
   mutable Literals stubLiteral;
+};
+
+class EvallingRuntimeTable : public RuntimeTable {
+public:
+  // TODO: putting EvallingModuleRunner into its own header would allow us to
+  // take an EvallingModuleRunner as input here instead of passing functions.
+  EvallingRuntimeTable(Table table,
+                       const bool& instanceInitialized,
+                       const Module& wasm,
+                       std::function<Literal(Name, Type)> makeFuncData)
+    : RuntimeTable(table), instanceInitialized(instanceInitialized), wasm(wasm),
+      makeFuncData(std::move(makeFuncData)) {}
+
+  void set(std::size_t i, Literal l) override {
+    if (instanceInitialized) {
+      throw FailToEvalException("tableStore after init: TODO");
+    }
+  }
+
+  Literal get(std::size_t index) const override {
+    // Look through the segments and find the value. Segments can overlap,
+    // so we want the last one.
+    Expression* value = nullptr;
+    for (auto& segment : wasm.elementSegments) {
+      if (segment->table != tableMeta_.name) {
+        continue;
+      }
+
+      Index start;
+      // look for the index in this segment. if it has a constant offset, we
+      // look in the proper range. if it instead gets a global, we rely on the
+      // fact that when not dynamically linking then the table is loaded at
+      // offset 0.
+      // TODO: This is an Emscripten-specific assumption. We can add an
+      // Emscripten-only mode and only make the assumption in that case.
+      if (auto* c = segment->offset->dynCast<Const>()) {
+        start = c->value.getInteger();
+      } else if (segment->offset->is<GlobalGet>()) {
+        start = 0;
+      } else {
+        // TODO: Handle extended consts.
+        // wasm spec only allows const and global.get there
+        WASM_UNREACHABLE("invalid expr type");
+      }
+      auto end = start + segment->data.size();
+      if (start <= index && index < end) {
+        value = segment->data[index - start];
+      }
+    }
+
+    if (!value) {
+      // No segment had a value for this.
+      // TODO: Handle non-function tables.
+      return Literal::makeNull(HeapTypes::func);
+    }
+    if (!Properties::isConstantExpression(value)) {
+      throw FailToEvalException("tableLoad of non-literal");
+    }
+    if (auto* r = value->dynCast<RefFunc>()) {
+      return makeFuncData(r->func, r->type);
+    }
+    return Properties::getLiteral(value);
+  }
+
+  [[nodiscard]] virtual std::optional<std::size_t> grow(std::size_t delta,
+                                                        Literal fill) override {
+    throw FailToEvalException("grow table");
+  }
+
+  std::size_t size() const override {
+    // See set() above, we assume the table is not modified FIXME
+    return tableMeta_.initial;
+  }
+
+private:
+  const bool& instanceInitialized;
+  const Module& wasm;
+  const std::function<Literal(Name, Type)> makeFuncData;
 };
 
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
@@ -89,11 +171,22 @@ public:
   EvallingModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
+    const bool& instanceInitialized,
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
-    : ModuleRunnerBase(wasm,
-                       externalInterface,
-                       std::make_shared<EvallingImportResolver>(),
-                       linkedInstances_) {}
+    : ModuleRunnerBase(
+        wasm,
+        externalInterface,
+        std::make_shared<EvallingImportResolver>(),
+        linkedInstances_,
+        // TODO: Only use EvallingRuntimeTable for table imports. We can use
+        // RealRuntimeTable for non-imported tables.
+        [this, &instanceInitialized](Literal initial, Table table) {
+          return std::make_unique<EvallingRuntimeTable>(
+            table,
+            instanceInitialized,
+            this->wasm,
+            [this](Name name, Type type) { return makeFuncData(name, type); });
+        }) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
     // Error on reads of imported globals.
@@ -153,17 +246,6 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
       copied->body = builder.makeUnreachable();
       env->addExport(
         builder.makeExport(func->base, copied->name, ExternalKind::Function));
-    }
-  });
-
-  // create tables with similar initial and max values
-  ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    if (table->module == env->name) {
-      auto* copied = ModuleUtils::copyTable(table, *env);
-      copied->module = Name();
-      copied->base = Name();
-      env->addExport(Builder(*env).makeExport(
-        table->base, copied->name, ExternalKind::Table));
     }
   });
 
@@ -315,70 +397,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     WASM_UNREACHABLE("missing imported tag");
   }
 
-  // We assume the table is not modified FIXME
-  Literal tableLoad(Name tableName, Address index) override {
-    auto* table = wasm->getTableOrNull(tableName);
-    if (!table) {
-      throw FailToEvalException("tableLoad on non-existing table");
-    }
-
-    // Look through the segments and find the value. Segments can overlap,
-    // so we want the last one.
-    Expression* value = nullptr;
-    for (auto& segment : wasm->elementSegments) {
-      if (segment->table != tableName) {
-        continue;
-      }
-
-      Index start;
-      // look for the index in this segment. if it has a constant offset, we
-      // look in the proper range. if it instead gets a global, we rely on the
-      // fact that when not dynamically linking then the table is loaded at
-      // offset 0.
-      if (auto* c = segment->offset->dynCast<Const>()) {
-        start = c->value.getInteger();
-      } else if (segment->offset->is<GlobalGet>()) {
-        start = 0;
-      } else {
-        // wasm spec only allows const and global.get there
-        WASM_UNREACHABLE("invalid expr type");
-      }
-      auto end = start + segment->data.size();
-      if (start <= index && index < end) {
-        value = segment->data[index - start];
-      }
-    }
-
-    if (!value) {
-      // No segment had a value for this.
-      return Literal::makeNull(HeapTypes::func);
-    }
-    if (!Properties::isConstantExpression(value)) {
-      throw FailToEvalException("tableLoad of non-literal");
-    }
-    if (auto* r = value->dynCast<RefFunc>()) {
-      return instance->makeFuncData(r->func, r->type);
-    }
-    return Properties::getLiteral(value);
-  }
-
-  Index tableSize(Name tableName) override {
-    // See tableLoad above, we assume the table is not modified FIXME
-    return wasm->getTableOrNull(tableName)->initial;
-  }
-
-  // called during initialization
-  void
-  tableStore(Name tableName, Address index, const Literal& value) override {
-    // We allow stores to the table during initialization, but not after, as we
-    // assume the table does not change at runtime.
-    // TODO: Allow table changes by updating the table later like we do with the
-    //       memory, by tracking and serializing them.
-    if (instanceInitialized) {
-      throw FailToEvalException("tableStore after init: TODO");
-    }
-  }
-
   int8_t load8s(Address addr, Name memoryName) override {
     return doLoad<int8_t>(addr, memoryName);
   }
@@ -429,13 +447,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                   Address /*oldSize*/,
                   Address /*newSize*/) override {
     throw FailToEvalException("grow memory");
-  }
-
-  bool growTable(Name /*name*/,
-                 const Literal& /*value*/,
-                 Index /*oldSize*/,
-                 Index /*newSize*/) override {
-    throw FailToEvalException("grow table");
   }
 
   void trap(std::string_view why) override {
@@ -1355,14 +1366,15 @@ void evalCtors(Module& wasm,
   // build and link the env module
   auto envModule = buildEnvModule(wasm);
   CtorEvalExternalInterface envInterface;
-  auto envInstance =
-    std::make_shared<EvallingModuleRunner>(*envModule, &envInterface);
+  auto envInstance = std::make_shared<EvallingModuleRunner>(
+    *envModule, &envInterface, envInterface.instanceInitialized);
   linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {
     // create an instance for evalling
-    EvallingModuleRunner instance(wasm, &interface, linkedInstances);
+    EvallingModuleRunner instance(
+      wasm, &interface, interface.instanceInitialized, linkedInstances);
     instance.instantiate();
     interface.instanceInitialized = true;
     // go one by one, in order, until we fail
@@ -1618,4 +1630,6 @@ int main(int argc, const char* argv[]) {
     writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);
   }
+
+  flush_and_quick_exit(0);
 }

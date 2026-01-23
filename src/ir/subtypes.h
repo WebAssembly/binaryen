@@ -111,7 +111,7 @@ struct SubTypes {
       depths[type] = depth;
     }
 
-    // Add the max depths of basic types.
+    // Add the max depths of basic types that have non-basic subtypes.
     for (auto type : types) {
       HeapType basic;
       auto share = type.getShared();
@@ -135,6 +135,7 @@ struct SubTypes {
       basicDepth = std::max(basicDepth, depths[type] + 1);
     }
 
+    // Fill in the other basic types.
     for (auto share : {Unshared, Shared}) {
       depths[HeapTypes::eq.getBasic(share)] =
         std::max(depths[HeapTypes::struct_.getBasic(share)],
@@ -142,6 +143,23 @@ struct SubTypes {
         1;
       depths[HeapTypes::any.getBasic(share)] =
         depths[HeapTypes::eq.getBasic(share)] + 1;
+
+      depths[HeapTypes::i31.getBasic(share)] = 0;
+      depths[HeapTypes::exn.getBasic(share)] = 0;
+
+      // Extern has string as a subtype.
+      depths[HeapTypes::ext.getBasic(share)] = 1;
+      depths[HeapTypes::string.getBasic(share)] = 0;
+
+      depths[HeapTypes::none.getBasic(share)] = 0;
+      depths[HeapTypes::noext.getBasic(share)] = 0;
+      depths[HeapTypes::nofunc.getBasic(share)] = 0;
+      depths[HeapTypes::nocont.getBasic(share)] = 0;
+      depths[HeapTypes::noexn.getBasic(share)] = 0;
+
+      // func would appear already if we saw function types, but if not, ensure
+      // it exists here.
+      depths[HeapTypes::func.getBasic(share)];
     }
 
     return depths;
