@@ -152,6 +152,12 @@ void wasm::flush_and_quick_exit(int code) {
   // things can run during shutdown normally.
   std::exit(code);
 #else
-  std::quick_exit(code);
+  // A "better" function to use here would be std::quick_exit, however on older
+  // version of MacOS (at least as new as 13.2 which currently runs on our CI)
+  // the C symbol _quick_exit (which is called by std::quick_exit) is missing.
+  // So instead use _Exit(); the only difference is that _Exit() does not call
+  // handlers registered by at_quick_exit(). Currently Binaryen does not have
+  // any of those.
+  _Exit();
 #endif
 }
