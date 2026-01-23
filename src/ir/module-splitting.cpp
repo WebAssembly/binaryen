@@ -985,7 +985,9 @@ void ModuleSplitter::shareImportableItems() {
     NameCollector collector(used);
     collector.walkModuleCode(&secondary);
     for (auto& segment : secondary.dataSegments) {
-      used.memories.insert(segment->memory);
+      if (segment->memory.is()) {
+        used.memories.insert(segment->memory);
+      }
     }
     for (auto& segment : secondary.elementSegments) {
       if (segment->table.is()) {
