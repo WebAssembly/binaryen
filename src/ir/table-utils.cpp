@@ -21,11 +21,6 @@
 
 namespace wasm::TableUtils {
 
-bool isSubType(const Table& a, const Table& b) {
-  return a.addressType == b.addressType && Type::isSubType(a.type, b.type) &&
-         a.initial >= b.initial && a.max <= b.max;
-}
-
 std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   // Without reference types there are no ref.funcs or elem declare.
   if (!wasm.features.hasReferenceTypes()) {

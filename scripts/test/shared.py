@@ -428,7 +428,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     # and splitting for module instances
     'instance.wast',
     'table64.wast',   # Requires validations for table size
-    'table_grow.wast',  # Incorrect table linking semantics in interpreter
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'try_table.wast',  # Requires try_table interpretation
     'local_init.wast',  # Requires local validation to respect unnamed blocks

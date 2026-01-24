@@ -2664,6 +2664,7 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
 std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo);
 std::ostream& operator<<(std::ostream& o, const wasm::ImportNames& importNames);
+std::ostream& operator<<(std::ostream& o, const Table& table);
 
 } // namespace wasm
 
