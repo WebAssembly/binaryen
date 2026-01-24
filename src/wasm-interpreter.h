@@ -3415,7 +3415,7 @@ private:
           if (!importedTable->isSubType(**tableDecl)) {
             trap(
               (std::stringstream()
-               << "Imported table " << importedTable->tableMeta()
+               << "Imported table " << importedTable->getDefinition()
                << " with size " << importedTable->size()
                << " isn't compatible with import declaration: " << **tableDecl)
                 .str());
@@ -3858,7 +3858,7 @@ public:
   Flow visitTableSize(TableSize* curr) {
     auto* table = allTables[curr->table];
     return Literal::makeFromInt64(static_cast<int64_t>(table->size()),
-                                  table->tableMeta()->addressType);
+                                  table->getDefinition()->addressType);
   }
 
   Flow visitTableGrow(TableGrow* curr) {
@@ -3868,10 +3868,11 @@ public:
     auto* table = allTables[curr->table];
     if (auto newSize = table->grow(deltaFlow.getSingleValue().getUnsigned(),
                                    valueFlow.getSingleValue())) {
-      return Literal::makeFromInt64(*newSize, table->tableMeta()->addressType);
+      return Literal::makeFromInt64(*newSize,
+                                    table->getDefinition()->addressType);
     }
 
-    return Literal::makeFromInt64(-1, table->tableMeta()->addressType);
+    return Literal::makeFromInt64(-1, table->getDefinition()->addressType);
   }
 
   Flow visitTableFill(TableFill* curr) {
