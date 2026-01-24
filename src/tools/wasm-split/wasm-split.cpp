@@ -465,7 +465,10 @@ void multiSplitModule(const WasmSplitOptions& options) {
     if (options.emitModuleNames) {
       secondary.name = Path::getBaseName(moduleName);
     }
-    writeModule(secondary, moduleName, options);
+    {
+      Timer timer("writeModule_secondary");
+      writeModule(secondary, moduleName, options);
+    }
   }
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.output + ".symbols");
@@ -474,7 +477,10 @@ void multiSplitModule(const WasmSplitOptions& options) {
     writePlaceholderMap(
       wasm, splitResults.placeholderMap, options.output + ".placeholders");
   }
-  writeModule(wasm, options.output, options);
+  {
+    Timer timer("writeModule_primary");
+    writeModule(wasm, options.output, options);
+  }
 }
 
 void mergeProfiles(const WasmSplitOptions& options) {
