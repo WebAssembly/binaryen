@@ -1006,6 +1006,11 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     for (auto& table : primary.tables) {
+      // 1. In case we copied this table to this secondary module in
+      //    setupTablePatching(), secondary.getTableOrNull(table->name) is not
+      //    null, and we need to export it.
+      // 2. As in the case with other module elements, if the table is used in
+      //    the secondary module's instructions, we need to export it.
       auto secondaryTable = secondary.getTableOrNull(table->name);
       if (!secondaryTable && !used.tables.count(table->name)) {
         continue;
