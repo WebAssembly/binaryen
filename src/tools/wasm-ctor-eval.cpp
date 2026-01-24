@@ -110,7 +110,7 @@ public:
     // so we want the last one.
     Expression* value = nullptr;
     for (auto& segment : wasm.elementSegments) {
-      if (segment->table != tableMeta_.name) {
+      if (segment->table != tableDefinition.name) {
         continue;
       }
 
@@ -157,7 +157,7 @@ public:
 
   std::size_t size() const override {
     // See set() above, we assume the table is not modified FIXME
-    return tableMeta_.initial;
+    return tableDefinition.initial;
   }
 
 private:

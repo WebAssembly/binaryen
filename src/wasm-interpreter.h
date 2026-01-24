@@ -3364,6 +3364,9 @@ private:
   // Trap if types don't match between all imports and their corresponding
   // exports. Imported memories and tables must also be a subtype of their
   // export.
+  // TODO: we should also *resolve* the imports here e.g. by writing to
+  // allGlobals / allTables etc. First finish migrating all imports here, then
+  // enable this code to run in all cases e.g. ctor-eval.
   void validateImports() {
     ModuleUtils::iterImportable(
       wasm,
@@ -3374,6 +3377,8 @@ private:
 
         // These two modules are injected implicitly to tests. We won't find any
         // import information for them.
+        // TODO: remove this workaround once we have a better way of handling
+        // intrinsic / spec function imports.
         if (importable->module == "binaryen-intrinsics" ||
             (importable->module == "spectest" &&
              importable->base.startsWith("print")) ||
@@ -3399,12 +3404,21 @@ private:
           }
         }
 
-        // TODO: Use the table's runtime information when checking this.
-        if (auto** table = std::get_if<Table*>(&import)) {
-          Table* exportedTable =
-            importedInstance->wasm.getTable(*export_->getInternalName());
-          if (!TableUtils::isSubType(*exportedTable, **table)) {
-            trap("Imported table isn't compatible");
+        if (auto** tableDecl = std::get_if<Table*>(&import)) {
+          auto* importedTable = importResolver->getTableOrNull(
+            importable->importNames(), **tableDecl);
+          if (!importedTable) {
+            trap((std::stringstream() << "No imported table found for export "
+                                      << importable->importNames())
+                   .str());
+          }
+          if (!importedTable->isSubType(**tableDecl)) {
+            trap(
+              (std::stringstream()
+               << "Imported table " << importedTable->getDefinition()
+               << " with size " << importedTable->size()
+               << " isn't compatible with import declaration: " << **tableDecl)
+                .str());
           }
         }
       });
@@ -3844,7 +3858,7 @@ public:
   Flow visitTableSize(TableSize* curr) {
     auto* table = allTables[curr->table];
     return Literal::makeFromInt64(static_cast<int64_t>(table->size()),
-                                  table->tableMeta()->addressType);
+                                  table->getDefinition()->addressType);
   }
 
   Flow visitTableGrow(TableGrow* curr) {
@@ -3854,10 +3868,11 @@ public:
     auto* table = allTables[curr->table];
     if (auto newSize = table->grow(deltaFlow.getSingleValue().getUnsigned(),
                                    valueFlow.getSingleValue())) {
-      return Literal::makeFromInt64(*newSize, table->tableMeta()->addressType);
+      return Literal::makeFromInt64(*newSize,
+                                    table->getDefinition()->addressType);
     }
 
-    return Literal::makeFromInt64(-1, table->tableMeta()->addressType);
+    return Literal::makeFromInt64(-1, table->getDefinition()->addressType);
   }
 
   Flow visitTableFill(TableFill* curr) {
