@@ -402,7 +402,6 @@ SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
 
 # Paths are relative to the test/spec/testsuite directory
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
-    'address.wast',  # 64-bit offset allowed by memory64
     'array_new_elem.wast',  # Failure to parse element segment item abbreviation
     'binary.wast',   # Missing data count section validation
     'call_indirect64.wast',  # Failure to parse element segment abbreviation
@@ -429,7 +428,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'instance.wast',
     'table64.wast',   # Requires validations for table size
     'tag.wast',      # Non-empty tag results allowed by stack switching
-    'try_table.wast',  # Requires try_table interpretation
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
     'ref_is_null.wast',  # Requires support for non-nullable reference types in tables
@@ -448,11 +446,9 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'struct.wast',    # Duplicate field names not properly rejected
     'type-rec.wast',  # Missing function type validation on instantiation
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
-    'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
     'memory64.wast',        # Requires validations on the max memory size
     'imports3.wast',  # Requires better checking of exports from the special "spectest" module
     'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
-    'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
     'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
     'relaxed_dot_product.wast',   # Requires wast `either` support
     'relaxed_laneselect.wast',    # Requires wast `either` support
