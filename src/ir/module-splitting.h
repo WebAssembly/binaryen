@@ -45,7 +45,6 @@
 #define wasm_ir_module_splitting_h
 
 #include "wasm.h"
-#include <chrono>
 
 namespace wasm::ModuleSplitting {
 
@@ -92,18 +91,5 @@ struct Results {
 Results splitFunctions(Module& primary, const Config& config);
 
 } // namespace wasm::ModuleSplitting
-
-struct Timer {
-  std::chrono::time_point<std::chrono::high_resolution_clock> start;
-  const char* name;
-  Timer(const char* name) : name(name) {
-    start = std::chrono::high_resolution_clock::now();
-  }
-  ~Timer() {
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> ms = end - start;
-    std::cerr << "[ModuleSplitter] " << name << ": " << ms.count() << " ms\n";
-  }
-};
 
 #endif // wasm_ir_module_splitting_h

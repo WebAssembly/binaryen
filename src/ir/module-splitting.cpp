@@ -85,17 +85,9 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-#include <iostream>
-
 namespace wasm::ModuleSplitting {
 
 namespace {
-
-template<typename F>
-auto timed(const char* name, F f) {
-  Timer t(name);
-  return f();
-}
 
 static const Name LOAD_SECONDARY_STATUS = "load_secondary_module_status";
 
@@ -354,44 +346,18 @@ struct ModuleSplitter {
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), primary(primary), tableManager(primary),
-      exportedPrimaryFuncs(timed("initExportedPrimaryFuncs", [&] {
-        return initExportedPrimaryFuncs(primary);
-      })) {
-    {
-      Timer timer("classifyFunctions");
-      classifyFunctions();
-    }
+      exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
+    classifyFunctions();
     if (config.jspi) {
       setupJSPI();
     }
-    {
-      Timer timer("moveSecondaryFunctions");
-      moveSecondaryFunctions();
-    }
-    {
-      Timer timer("thunkExportedSecondaryFunctions");
-      thunkExportedSecondaryFunctions();
-    }
-    {
-      Timer timer("indirectReferencesToSecondaryFunctions");
-      indirectReferencesToSecondaryFunctions();
-    }
-    {
-      Timer timer("indirectCallsToSecondaryFunctions");
-      indirectCallsToSecondaryFunctions();
-    }
-    {
-      Timer timer("exportImportCalledPrimaryFunctions");
-      exportImportCalledPrimaryFunctions();
-    }
-    {
-      Timer timer("setupTablePatching");
-      setupTablePatching();
-    }
-    {
-      Timer timer("shareImportableItems");
-      shareImportableItems();
-    }
+    moveSecondaryFunctions();
+    thunkExportedSecondaryFunctions();
+    indirectReferencesToSecondaryFunctions();
+    indirectCallsToSecondaryFunctions();
+    exportImportCalledPrimaryFunctions();
+    setupTablePatching();
+    shareImportableItems();
   }
 };
 
