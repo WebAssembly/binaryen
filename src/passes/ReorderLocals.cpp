@@ -119,8 +119,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
       Function* func;
       std::vector<Index>& oldToNew;
 
-      ReIndexer(Function* func, std::vector<Index>& oldToNew)
-        : func(func), oldToNew(oldToNew) {}
+      ReIndexer(std::vector<Index>& oldToNew) : oldToNew(oldToNew) {}
 
       void visitLocalGet(LocalGet* curr) {
         curr->index = oldToNew[curr->index];
@@ -130,7 +129,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         curr->index = oldToNew[curr->index];
       }
     };
-    ReIndexer reIndexer(curr, oldToNew);
+    ReIndexer reIndexer(oldToNew);
     reIndexer.walk(curr->body);
     // apply to the names
     auto oldLocalNames = curr->localNames;
