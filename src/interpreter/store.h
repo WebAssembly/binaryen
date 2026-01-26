@@ -31,7 +31,7 @@ struct Instance {
   std::shared_ptr<Module> wasm;
   std::unordered_map<Name, Literal> globalValues;
 
-  Instance(std::shared_ptr<Module> wasm) : wasm(std::move(wasm)){};
+  Instance(std::shared_ptr<Module> wasm) : wasm(std::move(wasm)) {};
 };
 
 // A frame of execution for a function call.
@@ -42,7 +42,7 @@ struct Frame {
   ExpressionIterator exprs;
 
   Frame(Instance& instance, ExpressionIterator&& exprs)
-    : instance(instance), exprs(std::move(exprs)){};
+    : instance(instance), exprs(std::move(exprs)) {};
 
   // TODO: Map loops to ExpressionIterators so we can branch backwards.
 

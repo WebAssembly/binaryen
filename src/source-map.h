@@ -26,8 +26,8 @@ namespace wasm {
 
 struct MapParseException {
   std::string errorText;
-  MapParseException(std::string errorText) : errorText(errorText){};
-  MapParseException(json::JsonParseException ex) : errorText(ex.errorText){};
+  MapParseException(std::string errorText) : errorText(errorText) {};
+  MapParseException(json::JsonParseException ex) : errorText(ex.errorText) {};
   void dump(std::ostream& o) const;
 };
 

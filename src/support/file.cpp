@@ -36,7 +36,9 @@ std::vector<char> wasm::read_stdin() {
   return input;
 }
 
-template<typename T> struct do_read_stdin { T operator()(); };
+template<typename T> struct do_read_stdin {
+  T operator()();
+};
 
 template<> std::vector<char> do_read_stdin<std::vector<char>>::operator()() {
   return wasm::read_stdin();

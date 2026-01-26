@@ -568,7 +568,8 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doStartTryTable, currp);
         break;
       }
-      default: {}
+      default: {
+      }
     }
   }
 
