@@ -107,7 +107,8 @@ inline bool allInputsIdentical(Node* node) {
       }
       return true;
     }
-    default: {}
+    default:
+      break;
   }
   return false;
 }
@@ -136,7 +137,8 @@ inline bool allInputsConstant(Node* node) {
       }
       return true;
     }
-    default: {}
+    default:
+      break;
   }
   return false;
 }

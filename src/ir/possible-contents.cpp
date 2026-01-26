@@ -979,9 +979,8 @@ struct InfoCollector
       }
     } else {
       // Link the operands to the struct's fields.
-      linkChildList(curr->operands, [&](Index i) {
-        return DataLocation{type, i};
-      });
+      linkChildList(curr->operands,
+                    [&](Index i) { return DataLocation{type, i}; });
     }
     if (curr->desc) {
       info.links.push_back({ExpressionLocation{curr->desc, 0},
@@ -3137,12 +3136,12 @@ void Flower::readFromData(Type declaredType,
   if (!hasIndex(coneReadLocation)) {
     // This is the first time we use this location, so create the links for it
     // in the graph.
-    subTypes->iterSubTypes(
-      cone.type.getHeapType(),
-      normalizedDepth,
-      [&](HeapType type, Index depth) {
-        connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
-      });
+    subTypes->iterSubTypes(cone.type.getHeapType(),
+                           normalizedDepth,
+                           [&](HeapType type, Index depth) {
+                             connectDuringFlow(DataLocation{type, fieldIndex},
+                                               coneReadLocation);
+                           });
 
     // TODO: we can end up with redundant links here if we see one cone first
     //       and then a larger one later. But removing links is not efficient,

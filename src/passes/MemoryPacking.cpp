@@ -869,7 +869,7 @@ void MemoryPacking::replaceSegmentOps(Module* module,
 
     Replacements& replacements;
 
-    Replacer(Replacements& replacements) : replacements(replacements){};
+    Replacer(Replacements& replacements) : replacements(replacements) {};
     std::unique_ptr<Pass> create() override {
       return std::make_unique<Replacer>(replacements);
     }

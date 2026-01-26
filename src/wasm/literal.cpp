@@ -926,9 +926,15 @@ Literal Literal::convertF32ToF16() const {
   return Literal(fp16_ieee_from_fp32_value(getf32()));
 }
 
-template<typename F> struct AsInt { using type = void; };
-template<> struct AsInt<float> { using type = int32_t; };
-template<> struct AsInt<double> { using type = int64_t; };
+template<typename F> struct AsInt {
+  using type = void;
+};
+template<> struct AsInt<float> {
+  using type = int32_t;
+};
+template<> struct AsInt<double> {
+  using type = int64_t;
+};
 
 template<typename F, typename I, bool (*RangeCheck)(typename AsInt<F>::type)>
 static Literal saturating_trunc(typename AsInt<F>::type val) {
@@ -2068,7 +2074,7 @@ Literal Literal::nearestF64x2() const {
 
 template<int Lanes, typename LaneFrom, typename LaneTo>
 static Literal extAddPairwise(const Literal& vec) {
-  LaneArray<Lanes* 2> lanes = getLanes<LaneFrom, Lanes * 2>(vec);
+  LaneArray<Lanes * 2> lanes = getLanes<LaneFrom, Lanes * 2>(vec);
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; i++) {
     result[i] = Literal((LaneTo)(LaneFrom)lanes[i * 2 + 0].geti32() +
@@ -2640,8 +2646,8 @@ template<size_t Lanes,
          size_t Factor,
          LaneArray<Lanes * Factor> (Literal::*IntoLanes)() const>
 static Literal dot(const Literal& left, const Literal& right) {
-  LaneArray<Lanes* Factor> lhs = (left.*IntoLanes)();
-  LaneArray<Lanes* Factor> rhs = (right.*IntoLanes)();
+  LaneArray<Lanes * Factor> lhs = (left.*IntoLanes)();
+  LaneArray<Lanes * Factor> rhs = (right.*IntoLanes)();
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; ++i) {
     result[i] = Literal(int32_t(0));
@@ -2684,8 +2690,12 @@ Literal Literal::bitselectV128(const Literal& left,
 }
 
 template<typename T> struct TwiceWidth {};
-template<> struct TwiceWidth<int8_t> { using type = int16_t; };
-template<> struct TwiceWidth<int16_t> { using type = int32_t; };
+template<> struct TwiceWidth<int8_t> {
+  using type = int16_t;
+};
+template<> struct TwiceWidth<int16_t> {
+  using type = int32_t;
+};
 
 template<typename T>
 Literal saturating_narrow(
@@ -2730,7 +2740,7 @@ enum class LaneOrder { Low, High };
 
 template<size_t Lanes, typename LaneFrom, typename LaneTo, LaneOrder Side>
 Literal extend(const Literal& vec) {
-  LaneArray<Lanes* 2> lanes = getLanes<LaneFrom, Lanes * 2>(vec);
+  LaneArray<Lanes * 2> lanes = getLanes<LaneFrom, Lanes * 2>(vec);
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; ++i) {
     size_t idx = (Side == LaneOrder::Low) ? i : i + Lanes;
@@ -2788,8 +2798,8 @@ Literal Literal::extendHighUToI64x2() const {
 
 template<size_t Lanes, typename LaneFrom, typename LaneTo, LaneOrder Side>
 Literal extMul(const Literal& a, const Literal& b) {
-  LaneArray<Lanes* 2> lhs = getLanes<LaneFrom, Lanes * 2>(a);
-  LaneArray<Lanes* 2> rhs = getLanes<LaneFrom, Lanes * 2>(b);
+  LaneArray<Lanes * 2> lhs = getLanes<LaneFrom, Lanes * 2>(a);
+  LaneArray<Lanes * 2> rhs = getLanes<LaneFrom, Lanes * 2>(b);
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; ++i) {
     size_t idx = (Side == LaneOrder::Low) ? i : i + Lanes;

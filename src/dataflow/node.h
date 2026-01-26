@@ -187,7 +187,8 @@ struct Node {
         }
         break;
       }
-      default: {}
+      default:
+        break;
     }
     if (values.size() != other.values.size()) {
       return false;

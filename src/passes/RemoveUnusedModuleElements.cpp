@@ -914,9 +914,8 @@ struct RemoveUnusedModuleElements : public Pass {
       // See TODO in addReferences - we may be able to do better here.
       return !needed({ModuleElementKind::Global, curr->name});
     });
-    module->removeTags([&](Tag* curr) {
-      return !needed({ModuleElementKind::Tag, curr->name});
-    });
+    module->removeTags(
+      [&](Tag* curr) { return !needed({ModuleElementKind::Tag, curr->name}); });
     module->removeMemories([&](Memory* curr) {
       return !needed(ModuleElement(ModuleElementKind::Memory, curr->name));
     });

@@ -81,7 +81,8 @@ inline FeatureSet get(UnaryOp op) {
       ret.setRelaxedSIMD();
       break;
     }
-    default: {}
+    default:
+      break;
   }
   return ret;
 }
@@ -177,7 +178,8 @@ inline FeatureSet get(BinaryOp op) {
       ret.setRelaxedSIMD();
       break;
     }
-    default: {}
+    default:
+      break;
   }
   return ret;
 }
