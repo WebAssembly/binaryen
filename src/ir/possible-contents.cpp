@@ -2371,15 +2371,9 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   InsertOrderedMap<LocationIndex, PossibleContents> roots;
 
   // Any function that may be called from the outside, like an export, is a
-  // root, since they can be called with unknown parameters.
-  auto calledFromOutside = [&](Name funcName) {
-    auto* func = wasm.getFunction(funcName);
-    auto params = func->getParams();
-    for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[getIndex(ParamLocation{func, i})] =
-        PossibleContents::fromType(params[i]);
-    }
-  };
+  // root, since they can be called with unknown parameters. Collect all such
+  // functions.
+  std::unordered_set<Name> calledFromOutside;
 
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
@@ -2401,7 +2395,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     }
 
     for (auto func : info.calledFromOutside) {
-      calledFromOutside(func);
+      calledFromOutside.insert(func);
     }
   }
 
@@ -2415,7 +2409,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Exports can be modified from the outside.
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
-      calledFromOutside(*ex->getInternalName());
+      calledFromOutside.insert(*ex->getInternalName());
     } else if (ex->kind == ExternalKind::Table) {
       // If any table is exported, assume any function in any table (including
       // other tables) can be called from the outside.
@@ -2432,7 +2426,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       for (auto& elementSegment : wasm.elementSegments) {
         for (auto* curr : elementSegment->data) {
           if (auto* refFunc = curr->dynCast<RefFunc>()) {
-            calledFromOutside(refFunc->func);
+            calledFromOutside.insert(refFunc->func);
           }
         }
       }
@@ -2445,6 +2439,16 @@ Flower::Flower(Module& wasm, const PassOptions& options)
         roots[getIndex(GlobalLocation{name})] =
           PossibleContents::fromType(global->type);
       }
+    }
+  }
+
+  // Apply changes to all functions called from outside.
+  for (auto funcName : calledFromOutside) {
+    auto* func = wasm.getFunction(funcName);
+    auto params = func->getParams();
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      roots[getIndex(ParamLocation{func, i})] =
+        PossibleContents::fromType(params[i]);
     }
   }
 
