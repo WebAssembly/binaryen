@@ -138,12 +138,12 @@ public:
   // Unlike Builder::makeCall, this assumes the function already exists.
   Result<> makeCall(Name func,
                     bool isReturn,
-                    const CodeAnnotations& annotations = CodeAnnotations());
+                    const CodeAnnotation& annotations = CodeAnnotation());
   Result<>
   makeCallIndirect(Name table,
                    HeapType type,
                    bool isReturn,
-                   const CodeAnnotations& annotations = CodeAnnotations());
+                   const CodeAnnotation& annotations = CodeAnnotation());
   Result<> makeLocalGet(Index local);
   Result<> makeLocalSet(Index local);
   Result<> makeLocalTee(Index local);
@@ -227,7 +227,7 @@ public:
   Result<> makeI31Get(bool signed_);
   Result<> makeCallRef(HeapType type,
                        bool isReturn,
-                       const CodeAnnotations& annotations = CodeAnnotations());
+                       const CodeAnnotation& annotations = CodeAnnotation());
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type, bool isDesc);
   Result<> makeRefGetDesc(HeapType type);
@@ -736,7 +736,7 @@ private:
   Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
-  void applyAnnotations(Expression* expr, const CodeAnnotations& annotations);
+  void applyAnnotations(Expression* expr, const CodeAnnotation& annotation);
 
   void dump();
 };

@@ -1377,7 +1377,7 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
 Result<>
 IRBuilder::makeCall(Name func,
                     bool isReturn,
-                    const CodeAnnotations& annotations = CodeAnnotations()) {
+                    const CodeAnnotation& annotations) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
@@ -1394,7 +1394,7 @@ Result<> IRBuilder::makeCallIndirect(
   Name table,
   HeapType type,
   bool isReturn,
-  const CodeAnnotations& annotations = CodeAnnotations()) {
+  const CodeAnnotation& annotations) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_indirect"};
   }
@@ -1920,7 +1920,7 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
 Result<>
 IRBuilder::makeCallRef(HeapType type,
                        bool isReturn,
-                       const CodeAnnotations& annotations = CodeAnnotations()) {
+                       const CodeAnnotation& annotations) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_ref"};
   }
@@ -2646,20 +2646,20 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
 }
 
 void IRBuilder::applyAnnotations(Expression* expr,
-                                 const CodeAnnotations& annotations) {
-  if (annotations.branchLikely) {
+                                 const CodeAnnotation& annotation) {
+  if (annotation.branchLikely) {
     // Branches are only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].branchLikely = annotations.branchLikely;
+    func->codeAnnotations[expr].branchLikely = annotation.branchLikely;
   }
 
-  if (annotations.inline_) {
+  if (annotation.inline_) {
     // Only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].inline_ = annotations.inline_;
+    func->codeAnnotations[expr].inline_ = annotation.inline_;
   }
 
-  if (annotations.effectsIfMoved) {
+  if (annotation.effectsIfMoved) {
     // Only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].effectsIfMoved.emplace();
