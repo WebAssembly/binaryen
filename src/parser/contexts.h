@@ -1297,52 +1297,45 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
 };
 
 struct AnnotationParserCtx {
-  // Return the inline hint for a call instruction, if there is one.
-  std::optional<std::uint8_t>
-  getInlineHint(const std::vector<Annotation>& annotations) {
-    // Find and apply (the last) inline hint.
-    const Annotation* hint = nullptr;
+  // Parse annotations into IR.
+  CodeAnnotation parseAnnotations(const std::vector<Annotation>& annotations) {
+    CodeAnnotation ret;
+
+    // Find the hints. For hints with content we must find the last one, which
+    // overrides the others.
+    const Annotation* inlineHint = nullptr;
     for (auto& a : annotations) {
       if (a.kind == Annotations::InlineHint) {
-        hint = &a;
+        inlineHint = &a;
+      } else if (a.kind == Annotations::EffectsIfMovedHint) {
+        ret.effectsIfMovedHint.emplace();
       }
     }
-    if (!hint) {
-      return std::nullopt;
-    }
 
-    Lexer lexer(hint->contents);
-    if (lexer.empty()) {
-      std::cerr << "warning: empty InlineHint\n";
-      return std::nullopt;
-    }
-
-    auto str = lexer.takeString();
-    if (!str || str->size() != 1) {
-      std::cerr << "warning: invalid InlineHint string\n";
-      return std::nullopt;
-    }
-
-    uint8_t value = (*str)[0];
-    if (value > 127) {
-      std::cerr << "warning: invalid InlineHint value\n";
-      return std::nullopt;
-    }
-
-    return value;
-  }
-
-  // Return the inline hint for a call instruction, if there is one.
-  std::optional<std::monostate>
-  getEffectsIfMovedHint(const std::vector<Annotation>& annotations) {
-    std::optional<std::monostate> hint;
-    for (auto& a : annotations) {
-      if (a.kind == Annotations::EffectsIfMovedHint) {
-        hint.emplace();
-        break;
+    // Apply the last inline hint, if any.
+    if (inlineHint) {
+      Lexer lexer(inlineHint->contents);
+      if (lexer.empty()) {
+        std::cerr << "warning: empty InlineHint\n";
+        return std::nullopt;
       }
+
+      auto str = lexer.takeString();
+      if (!str || str->size() != 1) {
+        std::cerr << "warning: invalid InlineHint string\n";
+        return std::nullopt;
+      }
+
+      uint8_t value = (*str)[0];
+      if (value > 127) {
+        std::cerr << "warning: invalid InlineHint value\n";
+        return std::nullopt;
+      }
+
+      ret.inline_ = value;
     }
-    return hint;
+
+    return ret;
   }
 };
 
@@ -2435,10 +2428,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     const std::vector<Annotation>& annotations,
                     Name func,
                     bool isReturn) {
-    auto inline_ = getInlineHint(annotations);
-    auto effectsIfMoved = getEffectsIfMovedHint(annotations);
-    return withLoc(pos,
-                   irBuilder.makeCall(func, isReturn, inline_, effectsIfMoved));
+    return withLoc(
+      pos, irBuilder.makeCall(func, isReturn, parseAnnotations(annotations)));
   }
 
   Result<> makeCallIndirect(Index pos,
@@ -2448,9 +2439,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                             bool isReturn) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
-    auto inline_ = getInlineHint(annotations);
     return withLoc(pos,
-                   irBuilder.makeCallIndirect(*t, type, isReturn, inline_));
+                   irBuilder.makeCallIndirect(
+                     *t, type, isReturn, parseAnnotations(annotations)));
   }
 
   // Return the branch hint for a branching instruction, if there is one.
@@ -2632,8 +2623,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                        const std::vector<Annotation>& annotations,
                        HeapType type,
                        bool isReturn) {
-    auto inline_ = getInlineHint(annotations);
-    return withLoc(pos, irBuilder.makeCallRef(type, isReturn, inline_));
+    return withLoc(
+      pos,
+      irBuilder.makeCallRef(type, isReturn, parseAnnotations(annotations)));
   }
 
   Result<> makeRefI31(Index pos,

@@ -2232,6 +2232,27 @@ struct BinaryLocations {
 // Forward declaration for FuncEffectsMap.
 class EffectAnalyzer;
 
+// Code annotations for VMs.
+struct CodeAnnotation {
+  // Branch Hinting proposal: Whether the branch is likely, or unlikely.
+  std::optional<bool> branchLikely;
+
+  // Compilation Hints proposal.
+  static const uint8_t NeverInline = 0;
+  static const uint8_t AlwaysInline = 127;
+  std::optional<uint8_t> inline_;
+
+  // Binaryen intrinsic: Mark as having side effects if moved, but having no
+  // effects in the current position. See |callsIfMoved| in effects.h.
+  // TODO: link to spec
+  std::optional<std::monostate> effectsIfMoved;
+
+  bool operator==(const CodeAnnotation& other) const {
+    return branchLikely == other.branchLikely && inline_ == other.inline_ &&
+           effectsIfMoved == other.effectsIfMoved;
+  }
+};
+
 class Function : public Importable {
 public:
   // A non-nullable reference to a function type. Exact for defined functions.
@@ -2285,31 +2306,10 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
-  // Code annotations for VMs. As with debug info, we do not store these on
+  // Function-level annotations are implemented with a key of nullptr, matching
+  // the 0 byte offset in the spec. As with debug info, we do not store these on
   // Expressions as we assume most instances are unannotated, and do not want to
   // add constant memory overhead.
-  struct CodeAnnotation {
-    // Branch Hinting proposal: Whether the branch is likely, or unlikely.
-    std::optional<bool> branchLikely;
-
-    // Compilation Hints proposal.
-    static const uint8_t NeverInline = 0;
-    static const uint8_t AlwaysInline = 127;
-    std::optional<uint8_t> inline_;
-
-    // Binaryen intrinsic: Mark as having side effects if moved, but having no
-    // effects in the current position. See |callsIfMoved| in effects.h.
-    // TODO: link to spec
-    std::optional<std::monostate> effectsIfMoved;
-
-    bool operator==(const CodeAnnotation& other) const {
-      return branchLikely == other.branchLikely && inline_ == other.inline_ &&
-             effectsIfMoved == other.effectsIfMoved;
-    }
-  };
-
-  // Function-level annotations are implemented with a key of nullptr, matching
-  // the 0 byte offset in the spec.
   std::unordered_map<Expression*, CodeAnnotation> codeAnnotations;
 
   // The effects for this function, if they have been computed. We use a shared

@@ -1374,10 +1374,10 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
   return Ok{};
 }
 
-Result<> IRBuilder::makeCall(Name func,
-                             bool isReturn,
-                             std::optional<std::uint8_t> inline_,
-                             std::optional<std::monostate> effectsIfMoved) {
+Result<>
+IRBuilder::makeCall(Name func,
+                    bool isReturn,
+                    const CodeAnnotations& annotations = CodeAnnotations()) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
@@ -1386,15 +1386,15 @@ Result<> IRBuilder::makeCall(Name func,
   auto* call =
     builder.makeCall(curr.target, curr.operands, sig.results, isReturn);
   push(call);
-  addInlineHint(call, inline_);
-  addEffectsIfMovedHint(call, effectsIfMoved);
+  applyAnnotations(call, annotations);
   return Ok{};
 }
 
-Result<> IRBuilder::makeCallIndirect(Name table,
-                                     HeapType type,
-                                     bool isReturn,
-                                     std::optional<std::uint8_t> inline_) {
+Result<> IRBuilder::makeCallIndirect(
+  Name table,
+  HeapType type,
+  bool isReturn,
+  const CodeAnnotations& annotations = CodeAnnotations()) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_indirect"};
   }
@@ -1405,7 +1405,7 @@ Result<> IRBuilder::makeCallIndirect(Name table,
   auto* call =
     builder.makeCallIndirect(table, curr.target, curr.operands, type, isReturn);
   push(call);
-  addInlineHint(call, inline_);
+  applyAnnotations(call, annotations);
   return Ok{};
 }
 
@@ -1917,9 +1917,10 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeCallRef(HeapType type,
-                                bool isReturn,
-                                std::optional<std::uint8_t> inline_) {
+Result<>
+IRBuilder::makeCallRef(HeapType type,
+                       bool isReturn,
+                       const CodeAnnotations& annotations = CodeAnnotations()) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_ref"};
   }
@@ -1934,7 +1935,7 @@ Result<> IRBuilder::makeCallRef(HeapType type,
   auto* call =
     builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn);
   push(call);
-  addInlineHint(call, inline_);
+  applyAnnotations(call, annotations);
   return Ok{};
 }
 
@@ -2644,26 +2645,21 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   return Ok{};
 }
 
-void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
-  if (likely) {
+void IRBuilder::applyAnnotations(Expression* expr,
+                                 const CodeAnnotations& annotations) {
+  if (annotations.branchLikely) {
     // Branches are only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].branchLikely = likely;
+    func->codeAnnotations[expr].branchLikely = annotations.branchLikely;
   }
-}
 
-void IRBuilder::addInlineHint(Expression* expr,
-                              std::optional<uint8_t> inline_) {
-  if (inline_) {
+  if (annotations.inline_) {
     // Only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].inline_ = inline_;
+    func->codeAnnotations[expr].inline_ = annotations.inline_;
   }
-}
 
-void IRBuilder::addEffectsIfMovedHint(
-  Expression* expr, std::optional<std::monostate> effectsIfMoved) {
-  if (effectsIfMoved) {
+  if (annotations.effectsIfMoved) {
     // Only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].effectsIfMoved.emplace();

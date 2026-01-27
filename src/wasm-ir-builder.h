@@ -136,15 +136,14 @@ public:
                      std::optional<bool> likely = std::nullopt);
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
+  Result<> makeCall(Name func,
+                    bool isReturn,
+                    const CodeAnnotations& annotations = CodeAnnotations());
   Result<>
-  makeCall(Name func,
-           bool isReturn,
-           std::optional<std::uint8_t> inline_ = std::nullopt,
-           std::optional<std::monostate> effectsIfMoved = std::nullopt);
-  Result<> makeCallIndirect(Name table,
-                            HeapType type,
-                            bool isReturn,
-                            std::optional<std::uint8_t> inline_ = std::nullopt);
+  makeCallIndirect(Name table,
+                   HeapType type,
+                   bool isReturn,
+                   const CodeAnnotations& annotations = CodeAnnotations());
   Result<> makeLocalGet(Index local);
   Result<> makeLocalSet(Index local);
   Result<> makeLocalTee(Index local);
@@ -228,7 +227,7 @@ public:
   Result<> makeI31Get(bool signed_);
   Result<> makeCallRef(HeapType type,
                        bool isReturn,
-                       std::optional<std::uint8_t> inline_ = std::nullopt);
+                       const CodeAnnotations& annotations = CodeAnnotations());
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type, bool isDesc);
   Result<> makeRefGetDesc(HeapType type);
@@ -737,15 +736,7 @@ private:
   Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
-  // Add a branch hint, if |likely| is present.
-  void addBranchHint(Expression* expr, std::optional<bool> likely);
-
-  // Add an inlining hint, if present.
-  void addInlineHint(Expression* expr, std::optional<std::uint8_t> inline_);
-
-  // Add an effectsIfMoved hint, if present.
-  void addEffectsIfMovedHint(Expression* expr,
-                             std::optional<std::monostate> effectsIfMoved);
+  void applyAnnotations(Expression* expr, const CodeAnnotations& annotations);
 
   void dump();
 };
