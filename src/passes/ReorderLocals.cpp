@@ -116,7 +116,6 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     }
     // apply the renaming to AST nodes
     struct ReIndexer : public PostWalker<ReIndexer> {
-      Function* func;
       std::vector<Index>& oldToNew;
 
       ReIndexer(std::vector<Index>& oldToNew) : oldToNew(oldToNew) {}
