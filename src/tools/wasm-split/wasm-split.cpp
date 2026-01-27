@@ -115,11 +115,11 @@ void instrumentModule(const WasmSplitOptions& options) {
 
   uint64_t moduleHash = hashFile(options.inputFiles[0]);
   InstrumenterConfig config;
-  if (options.hasImportNamespace) {
-    config.importNamespace = options.importNamespace;
+  if (options.importNamespace) {
+    config.importNamespace = *options.importNamespace;
   }
-  if (options.hasSecondaryMemoryName) {
-    config.secondaryMemoryName = options.secondaryMemoryName;
+  if (options.secondaryMemoryName) {
+    config.secondaryMemoryName = *options.secondaryMemoryName;
   }
   config.storageKind = options.storageKind;
   config.profileExport = options.profileExport;
@@ -226,14 +226,14 @@ void setCommonSplitConfigs(ModuleSplitting::Config& config,
                            const WasmSplitOptions& options) {
   config.usePlaceholders = options.usePlaceholders;
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
-  if (options.hasImportNamespace) {
-    config.importNamespace = options.importNamespace;
+  if (options.importNamespace) {
+    config.importNamespace = *options.importNamespace;
   }
-  if (options.hasExportPrefix) {
-    config.newExportPrefix = options.exportPrefix;
+  if (options.exportPrefix) {
+    config.newExportPrefix = *options.exportPrefix;
   }
-  if (options.hasPlaceholderNamespacePrefix) {
-    config.placeholderNamespacePrefix = options.placeholderNamespacePrefix;
+  if (options.placeholderNamespacePrefix) {
+    config.placeholderNamespacePrefix = *options.placeholderNamespacePrefix;
   }
 }
 

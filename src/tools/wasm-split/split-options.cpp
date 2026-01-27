@@ -235,7 +235,6 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
-           hasImportNamespace = true;
          })
     .add("--placeholder-namespace-prefix",
          "",
@@ -247,7 +246,6 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespacePrefix = argument;
-           hasPlaceholderNamespacePrefix = true;
          })
     .add("--placeholder-namespace",
          "",
@@ -257,7 +255,6 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespacePrefix = argument;
-           hasPlaceholderNamespacePrefix = true;
          })
     .add("--jspi",
          "",
@@ -276,7 +273,6 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            exportPrefix = argument;
-           hasExportPrefix = true;
          })
     .add("--profile-export",
          "",
@@ -324,7 +320,6 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            secondaryMemoryName = argument;
-           hasSecondaryMemoryName = true;
          })
     .add(
       "--emit-module-names",
