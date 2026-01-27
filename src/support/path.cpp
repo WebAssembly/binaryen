@@ -22,7 +22,7 @@
 
 #include "support/path.h"
 #ifdef USE_WSTRING_PATHS
-#include "windows.h"
+#include <windows.h>
 #endif
 
 namespace wasm::Path {

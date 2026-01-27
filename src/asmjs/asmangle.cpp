@@ -195,7 +195,7 @@ std::string asmangle(std::string name) {
         }
         break;
       }
-      mangleKeyword : { name = name + "_"; }
+      mangleKeyword: { name = name + "_"; }
     }
   }
   return name;

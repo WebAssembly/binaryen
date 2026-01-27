@@ -389,7 +389,7 @@ private:
     // elements to be worth that extra block (although, there is
     // some chance the block would get merged higher up, see later)
     std::vector<Expression*> mergeable; // the elements we can merge
-    Index saved = 0; // how much we can save
+    Index saved = 0;                    // how much we can save
     for (Index num = 0; true; ++num) {
       auto* item = getMergeable(tails[0], num);
       if (!item) {

@@ -41,6 +41,7 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/runtime-table.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
@@ -2973,10 +2974,6 @@ public:
     virtual void init(Module& wasm, SubType& instance) {}
     virtual Literal getImportedFunction(Function* import) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
-    virtual bool growTable(Name name,
-                           const Literal& value,
-                           Index oldSize,
-                           Index newSize) = 0;
     virtual void trap(std::string_view why) = 0;
     virtual void hostLimit(std::string_view why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
@@ -3158,16 +3155,6 @@ public:
     store128(Address addr, const std::array<uint8_t, 16>&, Name memoryName) {
       WASM_UNREACHABLE("unimp");
     }
-
-    virtual Index tableSize(Name tableName) = 0;
-
-    virtual void
-    tableStore(Name tableName, Address index, const Literal& entry) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual Literal tableLoad(Name tableName, Address index) {
-      WASM_UNREACHABLE("unimp");
-    }
   };
 
   SubType* self() { return static_cast<SubType*>(this); }
@@ -3181,17 +3168,30 @@ public:
   // Keyed by internal name. All globals in the module, including imports.
   // `definedGlobals` contains non-imported globals. Points to `definedGlobals`
   // of this instance and other instances.
-  std::map<Name, Literals*> allGlobals;
+  std::unordered_map<Name, Literals*> allGlobals;
+
+  // Like `allGlobals`. Keyed by internal name. All tables including imports.
+  std::unordered_map<Name, RuntimeTable*> allTables;
+
+  using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
 
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::shared_ptr<ImportResolver> importResolver,
-    std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
+    std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {},
+    std::function<CreateTableFunc> createTable = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
       externalInterface(externalInterface),
       linkedInstances(std::move(linkedInstances_)),
-      importResolver(std::move(importResolver)) {
+      importResolver(std::move(importResolver)),
+      createTable(
+        createTable != nullptr
+          ? std::move(createTable)
+          : static_cast<std::function<CreateTableFunc>>(
+              [](Literal initial, Table t) -> std::unique_ptr<RuntimeTable> {
+                return std::make_unique<RealRuntimeTable>(initial, t);
+              })) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3217,13 +3217,13 @@ public:
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
 
-    initializeGlobals();
-
     if (validateImports_) {
       validateImports();
     }
 
-    initializeTableContents();
+    initializeGlobals();
+    initializeTables();
+
     initializeMemoryContents();
 
     // run start, if present
@@ -3272,6 +3272,19 @@ public:
     return iter->second;
   }
 
+  RuntimeTable* getExportedTableOrNull(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Table) {
+      return nullptr;
+    }
+    Name internalName = *export_->getInternalName();
+    auto iter = allTables.find(internalName);
+    if (iter == allTables.end()) {
+      return nullptr;
+    }
+    return iter->second;
+  }
+
   Literals& getExportedGlobalOrTrap(Name name) {
     auto* global = getExportedGlobalOrNull(name);
     if (!global) {
@@ -3309,6 +3322,7 @@ private:
   // `allGlobals` contains these values + imported globals, keyed by their
   // internal name.
   std::vector<Literals> definedGlobals;
+  std::vector<std::unique_ptr<RuntimeTable>> definedTables;
 
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
@@ -3319,15 +3333,6 @@ private:
 
   std::unordered_set<Name> droppedDataSegments;
   std::unordered_set<Name> droppedElementSegments;
-
-  struct TableInstanceInfo {
-    // The ModuleRunner instance in which the memory is defined.
-    SubType* instance;
-    // The external interface in which the table is defined
-    ExternalInterface* interface() { return instance->externalInterface; }
-    // The name the table has in that interface.
-    Name name;
-  };
 
   // Validates that the export that provides `importable` exists and has the
   // same kind that the import expects (`kind`).
@@ -3359,6 +3364,9 @@ private:
   // Trap if types don't match between all imports and their corresponding
   // exports. Imported memories and tables must also be a subtype of their
   // export.
+  // TODO: we should also *resolve* the imports here e.g. by writing to
+  // allGlobals / allTables etc. First finish migrating all imports here, then
+  // enable this code to run in all cases e.g. ctor-eval.
   void validateImports() {
     ModuleUtils::iterImportable(
       wasm,
@@ -3369,6 +3377,8 @@ private:
 
         // These two modules are injected implicitly to tests. We won't find any
         // import information for them.
+        // TODO: remove this workaround once we have a better way of handling
+        // intrinsic / spec function imports.
         if (importable->module == "binaryen-intrinsics" ||
             (importable->module == "spectest" &&
              importable->base.startsWith("print")) ||
@@ -3394,26 +3404,24 @@ private:
           }
         }
 
-        if (auto** table = std::get_if<Table*>(&import)) {
-          Table* exportedTable =
-            importedInstance->wasm.getTable(*export_->getInternalName());
-          if (!TableUtils::isSubType(*exportedTable, **table)) {
-            trap("Imported table isn't compatible");
+        if (auto** tableDecl = std::get_if<Table*>(&import)) {
+          auto* importedTable = importResolver->getTableOrNull(
+            importable->importNames(), **tableDecl);
+          if (!importedTable) {
+            trap((std::stringstream() << "No imported table found for export "
+                                      << importable->importNames())
+                   .str());
+          }
+          if (!importedTable->isSubType(**tableDecl)) {
+            trap(
+              (std::stringstream()
+               << "Imported table " << importedTable->getDefinition()
+               << " with size " << importedTable->size()
+               << " isn't compatible with import declaration: " << **tableDecl)
+                .str());
           }
         }
       });
-  }
-
-  TableInstanceInfo getTableInstanceInfo(Name name) {
-    auto* table = wasm.getTable(name);
-    if (table->imported()) {
-      auto& importedInstance = linkedInstances.at(table->module);
-      auto* tableExport = importedInstance->wasm.getExport(table->base);
-      return importedInstance->getTableInstanceInfo(
-        *tableExport->getInternalName());
-    }
-
-    return TableInstanceInfo{self(), name};
   }
 
   void initializeGlobals() {
@@ -3451,15 +3459,38 @@ private:
     }
   }
 
-  void initializeTableContents() {
+  void initializeTables() {
+    int definedTableCount = 0;
+    ModuleUtils::iterDefinedTables(
+      wasm, [&definedTableCount](auto&& _) { ++definedTableCount; });
+    definedTables.reserve(definedTableCount);
+
     for (auto& table : wasm.tables) {
-      if (table->type.isNullable()) {
-        // Initial with nulls in a nullable table.
-        auto info = getTableInstanceInfo(table->name);
-        auto null = Literal::makeNull(table->type.getHeapType());
-        for (Address i = 0; i < table->initial; i++) {
-          info.interface()->tableStore(info.name, i, null);
+      if (table->imported()) {
+        auto importNames = table->importNames();
+        auto* importedTable =
+          importResolver->getTableOrNull(importNames, *table);
+        if (!importedTable) {
+          externalInterface->trap((std::stringstream()
+                                   << "Imported table " << importNames
+                                   << " not found.")
+                                    .str());
         }
+        auto [_, inserted] = allTables.try_emplace(table->name, importedTable);
+        (void)inserted; // for noassert builds
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated table name");
+      } else {
+        assert(table->type.isNullable() &&
+               "We only support nullable tables today");
+
+        auto null = Literal::makeNull(table->type.getHeapType());
+        auto& runtimeTable =
+          definedTables.emplace_back(createTable(null, *table));
+        auto [_, inserted] =
+          allTables.try_emplace(table->name, runtimeTable.get());
+        (void)inserted; // for noassert builds
+        assert(inserted && "Unexpected repeated table name");
       }
     }
 
@@ -3728,11 +3759,10 @@ public:
     VISIT(target, curr->target)
 
     auto index = target.getSingleValue().getUnsigned();
-    auto info = getTableInstanceInfo(curr->table);
     Literal funcref;
     if (!self()->isResuming()) {
       // Normal execution: Load from the table.
-      funcref = info.interface()->tableLoad(info.name, index);
+      funcref = allTables[curr->table]->get(index);
     } else {
       // Use the stashed funcref (see below).
       auto entry = self()->popResumeEntry("call_indirect");
@@ -3812,70 +3842,55 @@ public:
 
   Flow visitTableGet(TableGet* curr) {
     VISIT(index, curr->index)
-    auto info = getTableInstanceInfo(curr->table);
     auto address = index.getSingleValue().getUnsigned();
-    return info.interface()->tableLoad(info.name, address);
+    return allTables[curr->table]->get(address);
   }
   Flow visitTableSet(TableSet* curr) {
     VISIT(index, curr->index)
     VISIT(value, curr->value)
-    auto info = getTableInstanceInfo(curr->table);
     auto address = index.getSingleValue().getUnsigned();
-    info.interface()->tableStore(info.name, address, value.getSingleValue());
+
+    allTables[curr->table]->set(address, value.getSingleValue());
+
     return Flow();
   }
 
   Flow visitTableSize(TableSize* curr) {
-    auto info = getTableInstanceInfo(curr->table);
-    auto* table = info.instance->wasm.getTable(info.name);
-    Index tableSize = info.interface()->tableSize(curr->table);
-    return Literal::makeFromInt64(tableSize, table->addressType);
+    auto* table = allTables[curr->table];
+    return Literal::makeFromInt64(static_cast<int64_t>(table->size()),
+                                  table->getDefinition()->addressType);
   }
 
   Flow visitTableGrow(TableGrow* curr) {
     VISIT(valueFlow, curr->value)
     VISIT(deltaFlow, curr->delta)
-    auto info = getTableInstanceInfo(curr->table);
 
-    uint64_t tableSize = info.interface()->tableSize(info.name);
-    auto* table = info.instance->wasm.getTable(info.name);
-    Flow ret = Literal::makeFromInt64(tableSize, table->addressType);
-    Flow fail = Literal::makeFromInt64(-1, table->addressType);
-    uint64_t delta = deltaFlow.getSingleValue().getUnsigned();
+    auto* table = allTables[curr->table];
+    if (auto newSize = table->grow(deltaFlow.getSingleValue().getUnsigned(),
+                                   valueFlow.getSingleValue())) {
+      return Literal::makeFromInt64(*newSize,
+                                    table->getDefinition()->addressType);
+    }
 
-    uint64_t newSize;
-    if (std::ckd_add(&newSize, tableSize, delta)) {
-      return fail;
-    }
-    if (newSize > table->max || newSize > WebLimitations::MaxTableSize) {
-      return fail;
-    }
-    if (!info.interface()->growTable(
-          info.name, valueFlow.getSingleValue(), tableSize, newSize)) {
-      // We failed to grow the table in practice, even though it was valid
-      // to try to do so.
-      return fail;
-    }
-    return ret;
+    return Literal::makeFromInt64(-1, table->getDefinition()->addressType);
   }
 
   Flow visitTableFill(TableFill* curr) {
     VISIT(destFlow, curr->dest)
     VISIT(valueFlow, curr->value)
     VISIT(sizeFlow, curr->size)
-    auto info = getTableInstanceInfo(curr->table);
 
     auto dest = destFlow.getSingleValue().getUnsigned();
     Literal value = valueFlow.getSingleValue();
     auto size = sizeFlow.getSingleValue().getUnsigned();
 
-    auto tableSize = info.interface()->tableSize(info.name);
-    if (dest + size > tableSize) {
+    auto* table = allTables[curr->table];
+    if (dest + size > table->size()) {
       trap("out of bounds table access");
     }
 
     for (uint64_t i = 0; i < size; i++) {
-      info.interface()->tableStore(info.name, dest + i, value);
+      table->set(dest + i, value);
     }
     return Flow();
   }
@@ -3888,12 +3903,10 @@ public:
     Address sourceVal(source.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    auto destInfo = getTableInstanceInfo(curr->destTable);
-    auto sourceInfo = getTableInstanceInfo(curr->sourceTable);
-    auto destTableSize = destInfo.interface()->tableSize(destInfo.name);
-    auto sourceTableSize = sourceInfo.interface()->tableSize(sourceInfo.name);
-    if (sourceVal + sizeVal > sourceTableSize ||
-        destVal + sizeVal > destTableSize ||
+    auto* destTable = allTables[curr->destTable];
+    auto* sourceTable = allTables[curr->sourceTable];
+    if (sourceVal + sizeVal > sourceTable->size() ||
+        destVal + sizeVal > destTable->size() ||
         // FIXME: better/cheaper way to detect wrapping?
         sourceVal + sizeVal < sourceVal || sourceVal + sizeVal < sizeVal ||
         destVal + sizeVal < destVal || destVal + sizeVal < sizeVal) {
@@ -3910,10 +3923,7 @@ public:
       step = -1;
     }
     for (int64_t i = start; i != end; i += step) {
-      destInfo.interface()->tableStore(
-        destInfo.name,
-        destVal + i,
-        sourceInfo.interface()->tableLoad(sourceInfo.name, sourceVal + i));
+      destTable->set(destVal + i, sourceTable->get(sourceVal + i));
     }
     return {};
   }
@@ -3936,9 +3946,9 @@ public:
     if (offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in table.init");
     }
-    auto info = getTableInstanceInfo(curr->table);
-    auto tableSize = info.interface()->tableSize(info.name);
-    if (destVal + sizeVal > tableSize) {
+
+    auto* table = allTables[curr->table];
+    if (destVal + sizeVal > table->size()) {
       trap("out of bounds table access in table.init");
     }
     for (size_t i = 0; i < sizeVal; ++i) {
@@ -3947,8 +3957,9 @@ public:
       //        and then read here as needed. For example, if we had a
       //        struct.new here then we should not allocate a new struct each
       //        time we table.init that data.
-      auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
-      info.interface()->tableStore(info.name, destVal + i, value);
+      Literal value =
+        self()->visit(segment->data[offsetVal + i]).getSingleValue();
+      table->set(destVal + i, value);
     }
     return {};
   }
@@ -5183,6 +5194,7 @@ protected:
   ExternalInterface* externalInterface;
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
   std::shared_ptr<ImportResolver> importResolver;
+  std::function<CreateTableFunc> createTable;
 };
 
 class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {

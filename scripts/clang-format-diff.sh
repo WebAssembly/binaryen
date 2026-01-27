@@ -11,7 +11,7 @@ else
   BRANCH="@{upstream}"
 fi
 
-LLVM_VERSION=${LLVM_VERSION:=17}
+LLVM_VERSION=${LLVM_VERSION:=21}
 
 MERGE_BASE=$(git merge-base $BRANCH HEAD)
 FORMAT_ARGS="--binary=clang-format-${LLVM_VERSION} ${MERGE_BASE}"

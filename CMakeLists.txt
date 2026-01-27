@@ -219,7 +219,8 @@ if(NOT MSVC AND NOT EMSCRIPTEN)
   endif()
 endif()
 
-# The version of clang currently on our Mac bots doesn't seem to support this flag.
+# The version of clang currently on Binaryen's Mac CI doesn't seem to support
+# this flag, so don't enable it by default. LTO also enables lld separately.
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
   add_link_flag("-fuse-ld=lld")
 endif()
@@ -228,6 +229,7 @@ if(BYN_ENABLE_LTO)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "ThinLTO is only supported by clang")
   endif()
+  add_link_flag("-fuse-ld=lld")
   set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=2)
   set(CMAKE_JOB_POOL_LINK link_job_pool)
   add_compile_flag("-flto=thin")
