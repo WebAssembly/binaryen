@@ -61,7 +61,9 @@ def func():
       )
     """
     statements = [statement(template, mem_idx, ordering) for template in templates for mem_idx in [None, "0", "1"] for ordering in [None, Ordering.acqrel, Ordering.seqcst]]
-    return f'''(func $test-all-ops
+    return f''';; Memory index must come before memory ordering if present.
+;; Both immediates are optional; an ommitted memory ordering will be treated as seqcst.
+(func $test-all-ops
 {indent(newline.join(statements))}
 )'''
 
