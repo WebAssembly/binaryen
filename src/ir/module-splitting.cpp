@@ -515,13 +515,26 @@ void ModuleSplitter::exportImportFunction(Name funcName,
 
 void ModuleSplitter::moveSecondaryFunctions() {
   // Move the specified functions from the primary to the secondary modules.
+  std::unordered_map<Name, std::unique_ptr<Function>> movedFunctions;
+  auto& functions = primary.functions;
+  for (auto& func : functions) {
+    if (allSecondaryFuncs.count(func->name)) {
+      movedFunctions[func->name] = std::move(func);
+    }
+  }
+  functions.erase(
+    std::remove_if(functions.begin(),
+                   functions.end(),
+                   [](const std::unique_ptr<Function>& func) { return !func; }),
+    functions.end());
+  primary.updateFunctionsMap();
+
   for (auto& funcNames : config.secondaryFuncs) {
     auto secondary = initSecondary(primary);
     for (auto funcName : funcNames) {
       if (allSecondaryFuncs.count(funcName)) {
-        auto* func = primary.getFunction(funcName);
-        ModuleUtils::copyFunction(func, *secondary);
-        primary.removeFunction(funcName);
+        assert(movedFunctions.count(funcName));
+        secondary->addFunction(std::move(movedFunctions[funcName]));
         funcToSecondaryIndex[funcName] = secondaries.size();
       }
     }
