@@ -22,9 +22,7 @@
 
  ;; PRIMARY:      (export "foo" (func $foo))
 
- ;; PRIMARY:      (export "table" (table $table))
-
- ;; PRIMARY:      (export "table_3" (table $1))
+ ;; PRIMARY:      (export "table" (table $1))
 
  ;; PRIMARY:      (func $foo (param $0 i32) (result i32)
  ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
@@ -37,7 +35,7 @@
  )
  ;; SECONDARY:      (type $0 (func (param i32) (result i32)))
 
- ;; SECONDARY:      (import "primary" "table_3" (table $timport$0 1 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $timport$0 1 funcref))
 
  ;; SECONDARY:      (import "primary" "foo" (func $foo (exact (param i32) (result i32))))
 
