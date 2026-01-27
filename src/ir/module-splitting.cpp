@@ -343,7 +343,6 @@ struct ModuleSplitter {
   void exportImportCalledPrimaryFunctions();
   void setupTablePatching();
   void shareImportableItems();
-  void removeUnusedSecondaryElements();
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), primary(primary), tableManager(primary),
@@ -359,7 +358,6 @@ struct ModuleSplitter {
     exportImportCalledPrimaryFunctions();
     setupTablePatching();
     shareImportableItems();
-    removeUnusedSecondaryElements();
   }
 };
 
@@ -911,27 +909,122 @@ void ModuleSplitter::shareImportableItems() {
     }
   };
 
-  // TODO: Be more selective by only sharing global items that are actually used
-  // in the secondary module, just like we do for functions.
+  struct UsedNames {
+    std::unordered_set<Name> globals;
+    std::unordered_set<Name> memories;
+    std::unordered_set<Name> tables;
+    std::unordered_set<Name> tags;
+  };
+
+  struct NameCollector
+    : public PostWalker<NameCollector,
+                        UnifiedExpressionVisitor<NameCollector>> {
+    UsedNames& used;
+    NameCollector(UsedNames& used) : used(used) {}
+
+    void visitExpression(Expression* curr) {
+#define DELEGATE_ID curr->_id
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+#define DELEGATE_GET_FIELD(id, field) cast->field
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (cast->field.is()) {                                                      \
+    switch (kind) {                                                            \
+      case ModuleItemKind::Table:                                              \
+        used.tables.insert(cast->field);                                       \
+        break;                                                                 \
+      case ModuleItemKind::Memory:                                             \
+        used.memories.insert(cast->field);                                     \
+        break;                                                                 \
+      case ModuleItemKind::Global:                                             \
+        used.globals.insert(cast->field);                                      \
+        break;                                                                 \
+      case ModuleItemKind::Tag:                                                \
+        used.tags.insert(cast->field);                                         \
+        break;                                                                 \
+      case ModuleItemKind::Function:                                           \
+      case ModuleItemKind::DataSegment:                                        \
+      case ModuleItemKind::ElementSegment:                                     \
+      case ModuleItemKind::Invalid:                                            \
+        break;                                                                 \
+    }                                                                          \
+  }
+
+#include "wasm-delegations-fields.def"
+    }
+  };
 
   for (auto& secondaryPtr : secondaries) {
     Module& secondary = *secondaryPtr;
+
+    // Collect names used in the secondary module
+    UsedNames used;
+    ModuleUtils::ParallelFunctionAnalysis<UsedNames> nameCollector(
+      secondary, [&](Function* func, UsedNames& used) {
+        if (!func->imported()) {
+          NameCollector(used).walk(func->body);
+        }
+      });
+
+    for (auto& [_, funcUsed] : nameCollector.map) {
+      used.globals.insert(funcUsed.globals.begin(), funcUsed.globals.end());
+      used.memories.insert(funcUsed.memories.begin(), funcUsed.memories.end());
+      used.tables.insert(funcUsed.tables.begin(), funcUsed.tables.end());
+      used.tags.insert(funcUsed.tags.begin(), funcUsed.tags.end());
+    }
+
+    NameCollector collector(used);
+    collector.walkModuleCode(&secondary);
+    for (auto& segment : secondary.dataSegments) {
+      if (segment->memory.is()) {
+        used.memories.insert(segment->memory);
+      }
+    }
+    for (auto& segment : secondary.elementSegments) {
+      if (segment->table.is()) {
+        used.tables.insert(segment->table);
+      }
+    }
+
+    // Export module items that are used in the secondary module
     for (auto& memory : primary.memories) {
+      if (!used.memories.count(memory->name)) {
+        continue;
+      }
       auto secondaryMemory = ModuleUtils::copyMemory(memory.get(), secondary);
       makeImportExport(
         *memory, *secondaryMemory, "memory", ExternalKind::Memory);
     }
 
     for (auto& table : primary.tables) {
+      // 1. In case we copied this table to this secondary module in
+      //    setupTablePatching(), secondary.getTableOrNull(table->name) is not
+      //    null, and we need to export it.
+      // 2. As in the case with other module elements, if the table is used in
+      //    the secondary module's instructions, we need to export it.
       auto secondaryTable = secondary.getTableOrNull(table->name);
+      if (!secondaryTable && !used.tables.count(table->name)) {
+        continue;
+      }
       if (!secondaryTable) {
         secondaryTable = ModuleUtils::copyTable(table.get(), secondary);
       }
-
       makeImportExport(*table, *secondaryTable, "table", ExternalKind::Table);
     }
 
     for (auto& global : primary.globals) {
+      if (!used.globals.count(global->name)) {
+        continue;
+      }
       if (global->mutable_) {
         assert(primary.features.hasMutableGlobals() &&
                "TODO: add wrapper functions for disallowed mutable globals");
@@ -949,24 +1042,14 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     for (auto& tag : primary.tags) {
+      if (!used.tags.count(tag->name)) {
+        continue;
+      }
       auto secondaryTag = std::make_unique<Tag>();
       secondaryTag->type = tag->type;
       makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
       secondary.addTag(std::move(secondaryTag));
     }
-  }
-}
-
-void ModuleSplitter::removeUnusedSecondaryElements() {
-  // TODO: It would be better to be more selective about only exporting and
-  // importing those items that the secondary module needs. This would reduce
-  // code size in the primary module as well.
-  for (auto& secondaryPtr : secondaries) {
-    PassRunner runner(secondaryPtr.get());
-    // Do not validate here in the middle, as the IR still needs updating later.
-    runner.options.validate = false;
-    runner.add("remove-unused-module-elements");
-    runner.run();
   }
 }
 

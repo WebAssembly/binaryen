@@ -57,7 +57,7 @@ public:
     Child getNext(bool& error) const;
 
   public:
-    Child(){};
+    Child() {};
     Child(const Archive* parent, const uint8_t* data, bool* error);
     // Size of actual member data (no header/padding)
     uint32_t getSize() const;

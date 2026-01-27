@@ -540,7 +540,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
                    curr->bytes,
                    curr->offset,
                    curr->memory,
-                   MemoryOrder::SeqCst,
+                   curr->order,
                    /*isRMW=*/true);
 }
 

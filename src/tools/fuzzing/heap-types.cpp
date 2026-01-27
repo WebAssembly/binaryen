@@ -912,9 +912,8 @@ void Inhabitator::markNullable(FieldPos field) {
       // this extra `index` variable once we have C++20. It's a workaround for
       // lambdas being unable to capture structured bindings.
       const size_t index = idx;
-      subtypes.iterSubTypes(curr, [&](HeapType type, Index) {
-        nullables.insert({type, index});
-      });
+      subtypes.iterSubTypes(
+        curr, [&](HeapType type, Index) { nullables.insert({type, index}); });
       break;
   }
 }

@@ -4770,7 +4770,8 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
       ptr,
       value,
       type,
-      wasm.memories[0]->name);
+      wasm.memories[0]->name,
+      MemoryOrder::SeqCst);
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);

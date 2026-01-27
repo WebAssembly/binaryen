@@ -59,9 +59,7 @@
 ;; PRIMARY-REF-NEXT:  (elem $0 (table $table) (global.get $g) func $foo)
 ;; PRIMARY-REF-NEXT:  (elem $1 (table $1) (i32.const 0) func $placeholder_0)
 ;; PRIMARY-REF-NEXT:  (export "%foo" (func $foo))
-;; PRIMARY-REF-NEXT:  (export "%table" (table $table))
-;; PRIMARY-REF-NEXT:  (export "%table_2" (table $1))
-;; PRIMARY-REF-NEXT:  (export "%global" (global $g))
+;; PRIMARY-REF-NEXT:  (export "%table" (table $1))
 ;; PRIMARY-REF-NEXT:  (func $foo (param $0 i32) (result i32)
 ;; PRIMARY-REF-NEXT:   (call_indirect $1 (type $0)
 ;; PRIMARY-REF-NEXT:    (i32.const 0)
@@ -72,7 +70,7 @@
 
 ;; SECONDARY-REF:      (module
 ;; SECONDARY-REF-NEXT:  (type $0 (func (param i32) (result i32)))
-;; SECONDARY-REF-NEXT:  (import "primary" "%table_2" (table $timport$0 1 funcref))
+;; SECONDARY-REF-NEXT:  (import "primary" "%table" (table $timport$0 1 funcref))
 ;; SECONDARY-REF-NEXT:  (import "primary" "%foo" (func $foo (param i32) (result i32)))
 ;; SECONDARY-REF-NEXT:  (elem $0 (i32.const 0) $bar)
 ;; SECONDARY-REF-NEXT:  (func $bar (param $0 i32) (result i32)

@@ -1503,14 +1503,18 @@ Result<> IRBuilder::makeAtomicStore(
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicRMW(
-  AtomicRMWOp op, unsigned bytes, Address offset, Type type, Name mem) {
+Result<> IRBuilder::makeAtomicRMW(AtomicRMWOp op,
+                                  unsigned bytes,
+                                  Address offset,
+                                  Type type,
+                                  Name mem,
+                                  MemoryOrder order) {
   AtomicRMW curr;
   curr.memory = mem;
   curr.type = type;
   CHECK_ERR(visitAtomicRMW(&curr));
-  push(
-    builder.makeAtomicRMW(op, bytes, offset, curr.ptr, curr.value, type, mem));
+  push(builder.makeAtomicRMW(
+    op, bytes, offset, curr.ptr, curr.value, type, mem, order));
   return Ok{};
 }
 

@@ -126,8 +126,7 @@ static void traversePrePost(Ref node,
 }
 
 static void traversePost(Ref node, std::function<void(Ref)> visit) {
-  traversePrePost(
-    node, [](Ref node) {}, visit);
+  traversePrePost(node, [](Ref node) {}, visit);
 }
 
 static void replaceInPlace(Ref target, Ref value) {

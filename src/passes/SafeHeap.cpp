@@ -436,8 +436,9 @@ struct SafeHeap : public Pass {
                               bool is64,
                               Name memory) {
     bool lowMemUnused = getPassOptions().lowMemoryUnused;
-    auto upperOp = is64 ? lowMemUnused ? LtUInt64 : EqInt64
-                        : lowMemUnused ? LtUInt32 : EqInt32;
+    auto upperOp = is64           ? lowMemUnused ? LtUInt64 : EqInt64
+                   : lowMemUnused ? LtUInt32
+                                  : EqInt32;
     auto upperBound = lowMemUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {

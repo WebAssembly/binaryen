@@ -288,9 +288,7 @@ fuzztest::Domain<TypeBuilderPlan> InitTypeBuilderPlan() {
   // Create a TypeBuilderPlan with `size` and `curr` set to the same choice
   // of size. `curr` represents how many slots still need a rec group.
   return fuzztest::FlatMap(
-    [](size_t size) {
-      return fuzztest::Just(TypeBuilderPlan{size, size});
-    },
+    [](size_t size) { return fuzztest::Just(TypeBuilderPlan{size, size}); },
     TypeBuilderPlanSize());
 }
 
@@ -786,11 +784,8 @@ fuzztest::Domain<FieldPlan> AvailableSubField(TypeBuilderPlan plan,
     // Mutable fields cannot be modified in subtypes.
     return fuzztest::Just(super);
   }
-  return fuzztest::Map(
-    [&](auto type) {
-      return FieldPlan{type, false};
-    },
-    AvailableSubFieldType(std::move(plan), super.type));
+  return fuzztest::Map([&](auto type) { return FieldPlan{type, false}; },
+                       AvailableSubFieldType(std::move(plan), super.type));
 }
 
 fuzztest::Domain<FuncPlan> FuncDef(TypeBuilderPlan plan) {

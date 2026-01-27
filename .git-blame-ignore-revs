@@ -5,5 +5,8 @@
 #
 # $ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
+# clang-format for LLVM version 21
+fc5afd738a85b5adf2e7d4729704b2da8c1f1011
+
 # Mass change to apply clang-format to everything
 db9124f1de0478dcac525009b6f1589b44a7edd8

@@ -56,7 +56,7 @@ std::optional<std::size_t> RealRuntimeTable::grow(std::size_t delta,
     return std::nullopt;
   }
 
-  if (newSize > WebLimitations::MaxTableSize || newSize > tableMeta_.max) {
+  if (newSize > WebLimitations::MaxTableSize || newSize > tableDefinition.max) {
     return std::nullopt;
   }
 

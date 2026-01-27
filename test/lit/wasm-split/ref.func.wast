@@ -36,13 +36,7 @@
 
  ;; PRIMARY:      (export "prime" (func $prime))
 
- ;; PRIMARY:      (export "table" (table $table))
-
- ;; PRIMARY:      (export "table_2" (table $1))
-
- ;; PRIMARY:      (export "global" (global $glob1))
-
- ;; PRIMARY:      (export "global_4" (global $glob2))
+ ;; PRIMARY:      (export "table" (table $1))
 
  ;; PRIMARY:      (func $prime (type $0)
  ;; PRIMARY-NEXT:  (drop
@@ -63,7 +57,7 @@
 
  ;; SECONDARY:      (type $0 (func))
 
- ;; SECONDARY:      (import "primary" "table_2" (table $timport$0 2 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $timport$0 2 funcref))
 
  ;; SECONDARY:      (import "primary" "prime" (func $prime (exact (type $0))))
 

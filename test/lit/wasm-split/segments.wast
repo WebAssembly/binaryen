@@ -29,8 +29,6 @@
 
  ;; PRIMARY:      (elem $1 (i32.const 0) $placeholder_0)
 
- ;; PRIMARY:      (export "memory" (memory $mem))
-
  ;; PRIMARY:      (export "table" (table $0))
 
  ;; PRIMARY:      (func $data.drop
