@@ -2454,6 +2454,11 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     }
   }
 
+  // configureAll functions are called from outside the module, as if exported.
+  for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+    calledFromOutside.insert(func);
+  }
+
   // Apply changes to all functions called from outside.
   for (auto funcName : calledFromOutside) {
     auto* func = wasm.getFunction(funcName);
