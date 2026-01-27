@@ -235,6 +235,7 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
+           hasImportNamespace = true;
          })
     .add("--placeholder-namespace-prefix",
          "",
@@ -246,6 +247,7 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespacePrefix = argument;
+           hasPlaceholderNamespacePrefix = true;
          })
     .add("--placeholder-namespace",
          "",
@@ -255,6 +257,7 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespacePrefix = argument;
+           hasPlaceholderNamespacePrefix = true;
          })
     .add("--jspi",
          "",
@@ -272,7 +275,10 @@ WasmSplitOptions::WasmSplitOptions()
       WasmSplitOption,
       {Mode::Split, Mode::MultiSplit},
       Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { exportPrefix = argument; })
+      [&](Options* o, const std::string& argument) {
+        exportPrefix = argument;
+        hasExportPrefix = true;
+      })
     .add("--profile-export",
          "",
          "The export name of the function the embedder calls to write the "
@@ -319,6 +325,7 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            secondaryMemoryName = argument;
+           hasSecondaryMemoryName = true;
          })
     .add(
       "--emit-module-names",

@@ -67,9 +67,13 @@ struct WasmSplitOptions : ToolOptions {
   std::string secondaryOutput;
 
   std::string importNamespace;
+  bool hasImportNamespace = false;
   std::string placeholderNamespacePrefix;
+  bool hasPlaceholderNamespacePrefix = false;
   std::string secondaryMemoryName;
+  bool hasSecondaryMemoryName = false;
   std::string exportPrefix;
+  bool hasExportPrefix = false;
 
   std::string manifestFile;
   std::string outPrefix;
