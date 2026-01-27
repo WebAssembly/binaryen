@@ -18,6 +18,7 @@
 #define wasm_ir_import_h
 
 #include "ir/import-name.h"
+#include "ir/runtime-table.h"
 #include "literal.h"
 #include "wasm.h"
 
@@ -131,6 +132,11 @@ public:
   // Returns null if the `name` wasn't found. The returned Literals* lives as
   // long as the ImportResolver instance.
   virtual Literals* getGlobalOrNull(ImportNames name, Type type) const = 0;
+
+  // Returns null if the `name` wasn't found. The returned RuntimeTable* lives
+  // as long as the ImportResolver instance.
+  virtual RuntimeTable* getTableOrNull(ImportNames name,
+                                       const Table& type) const = 0;
 };
 
 // Looks up imports from the given `linkedInstances`.
@@ -149,6 +155,17 @@ public:
 
     ModuleRunnerType* instance = it->second.get();
     return instance->getExportedGlobalOrNull(name.name);
+  }
+
+  RuntimeTable* getTableOrNull(ImportNames name,
+                               const Table& type) const override {
+    auto it = linkedInstances.find(name.module);
+    if (it == linkedInstances.end()) {
+      return nullptr;
+    }
+
+    ModuleRunnerType* instance = it->second.get();
+    return instance->getExportedTableOrNull(name.name);
   }
 
 private:

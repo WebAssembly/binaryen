@@ -126,8 +126,7 @@ static void traversePrePost(Ref node,
 }
 
 static void traversePost(Ref node, std::function<void(Ref)> visit) {
-  traversePrePost(
-    node, [](Ref node) {}, visit);
+  traversePrePost(node, [](Ref node) {}, visit);
 }
 
 static void replaceInPlace(Ref target, Ref value) {
@@ -993,14 +992,20 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "j-printing..." << std::endl;
   }
-  Output output(options.extra["output"], Flags::Text);
-  if (script && options.extra["asserts"] == "1") {
-    AssertionEmitter(*script, output, flags, options).emit();
-  } else {
-    emitWasm(*wasm, output, flags, options.passOptions, "asmFunc");
+
+  // Ensure the destructor of Output runs before quick_exit.
+  {
+    Output output(options.extra["output"], Flags::Text);
+    if (script && options.extra["asserts"] == "1") {
+      AssertionEmitter(*script, output, flags, options).emit();
+    } else {
+      emitWasm(*wasm, output, flags, options.passOptions, "asmFunc");
+    }
   }
 
   if (options.debug) {
     std::cerr << "done." << std::endl;
   }
+
+  flush_and_quick_exit(0);
 }

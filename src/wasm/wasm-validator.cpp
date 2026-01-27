@@ -1108,11 +1108,17 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "Atomic load should be i32 or i64");
   }
-  if (curr->order == MemoryOrder::AcqRel) {
-    shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
-                 curr,
-                 "Acquire/release operations require relaxed atomics "
-                 "[--enable-relaxed-atomics]");
+  switch (curr->order) {
+    case MemoryOrder::AcqRel: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Acquire/release operations require relaxed atomics "
+                   "[--enable-relaxed-atomics]");
+      break;
+    }
+    case MemoryOrder::Unordered:
+    case MemoryOrder::SeqCst:
+      break;
   }
   if (curr->type == Type::v128) {
     shouldBeTrue(getModule()->features.hasSIMD(),
@@ -1147,11 +1153,17 @@ void FunctionValidator::visitStore(Store* curr) {
                  curr,
                  "Atomic store should be i32 or i64");
   }
-  if (curr->order == MemoryOrder::AcqRel) {
-    shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
-                 curr,
-                 "Acquire/release operations require relaxed atomics "
-                 "[--enable-relaxed-atomics]");
+  switch (curr->order) {
+    case MemoryOrder::AcqRel: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Acquire/release operations require relaxed atomics "
+                   "[--enable-relaxed-atomics]");
+      break;
+    }
+    case MemoryOrder::Unordered:
+    case MemoryOrder::SeqCst:
+      break;
   }
   if (curr->valueType == Type::v128) {
     shouldBeTrue(getModule()->features.hasSIMD(),
@@ -1185,6 +1197,27 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operations require threads [--enable-threads]");
+
+  switch (curr->order) {
+    case MemoryOrder::AcqRel: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Acquire/release operations require relaxed atomics "
+                   "[--enable-relaxed-atomics]");
+      break;
+    }
+    // Unordered RMW should be impossible unless there's a bug in the parser.
+    case MemoryOrder::Unordered: {
+      shouldBeUnequal(curr->order,
+                      MemoryOrder::Unordered,
+                      curr,
+                      "Atomic RMW can't be unordered");
+      break;
+    }
+    case MemoryOrder::SeqCst:
+      break;
+  }
+
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,

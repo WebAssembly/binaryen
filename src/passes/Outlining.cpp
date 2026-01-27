@@ -286,7 +286,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
     std::function<bool(const Expression*)> condition;
 
     FilterStringifyWalker(std::function<bool(const Expression*)> condition)
-      : condition(condition){};
+      : condition(condition) {};
 
     void walk(Expression* curr) {
       hasFilterValue = false;

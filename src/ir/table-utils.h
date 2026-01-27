@@ -26,8 +26,6 @@
 
 namespace wasm::TableUtils {
 
-bool isSubType(const Table& a, const Table& b);
-
 struct FlatTable {
   std::vector<Name> names;
   bool valid;

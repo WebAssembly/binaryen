@@ -289,5 +289,6 @@ int main(int argc, const char* argv[]) {
     }
     writer.write(wasm, output);
   }
-  return 0;
+
+  flush_and_quick_exit(0);
 }

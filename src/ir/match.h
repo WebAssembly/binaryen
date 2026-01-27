@@ -321,7 +321,7 @@ struct SubMatchers<CurrMatcher, NextMatchers...> {
   CurrMatcher curr;
   SubMatchers<NextMatchers...> next;
   SubMatchers(CurrMatcher curr, NextMatchers... next)
-    : curr(curr), next(next...){};
+    : curr(curr), next(next...) {};
 };
 
 // Iterates through the components of the candidate, applying a submatcher to
@@ -476,7 +476,9 @@ inline decltype(auto) NumberLit(Literal* binder, int32_t expected) {
 }
 
 // Const
-template<> struct NumComponents<Const*> { static constexpr size_t value = 1; };
+template<> struct NumComponents<Const*> {
+  static constexpr size_t value = 1;
+};
 template<> struct GetComponent<Const*, 0> {
   Literal operator()(Const* c) { return c->value; }
 };
@@ -485,7 +487,9 @@ template<class S> inline decltype(auto) ConstMatcher(Const** binder, S&& s) {
 }
 
 // Unary, UnaryOp and AbstractUnaryOp
-template<> struct NumComponents<Unary*> { static constexpr size_t value = 2; };
+template<> struct NumComponents<Unary*> {
+  static constexpr size_t value = 2;
+};
 template<> struct GetComponent<Unary*, 0> {
   UnaryOp operator()(Unary* curr) { return curr->op; }
 };
@@ -533,7 +537,9 @@ AbstractUnaryOpMatcher(Unary** binder, Abstract::Op op, S&& s) {
 }
 
 // Binary, BinaryOp and AbstractBinaryOp
-template<> struct NumComponents<Binary*> { static constexpr size_t value = 3; };
+template<> struct NumComponents<Binary*> {
+  static constexpr size_t value = 3;
+};
 template<> struct GetComponent<Binary*, 0> {
   BinaryOp operator()(Binary* curr) { return curr->op; }
 };
@@ -589,7 +595,9 @@ AbstractBinaryOpMatcher(Binary** binder, Abstract::Op op, S1&& s1, S2&& s2) {
 }
 
 // Select
-template<> struct NumComponents<Select*> { static constexpr size_t value = 3; };
+template<> struct NumComponents<Select*> {
+  static constexpr size_t value = 3;
+};
 template<> struct GetComponent<Select*, 0> {
   Expression* operator()(Select* curr) { return curr->ifTrue; }
 };

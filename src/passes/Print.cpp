@@ -661,6 +661,7 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
+    printMemoryOrder(curr->order);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -3974,6 +3975,13 @@ std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
       break;
   }
   return os;
+}
+
+std::ostream& operator<<(std::ostream& o, const Table& table) {
+  wasm::PrintSExpression printer(o);
+  // TODO: printTableHeader should take a const Table*
+  printer.printTableHeader(const_cast<Table*>(&table));
+  return o;
 }
 
 } // namespace wasm

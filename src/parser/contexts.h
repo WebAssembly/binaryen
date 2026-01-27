@@ -575,7 +575,8 @@ struct NullInstrParserCtx {
                          Type,
                          int,
                          MemoryIdxT*,
-                         MemargT) {
+                         MemargT,
+                         MemoryOrder) {
     return Ok{};
   }
   Result<> makeAtomicCmpxchg(
@@ -2287,11 +2288,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                          Type type,
                          int bytes,
                          Name* mem,
-                         Memarg memarg) {
+                         Memarg memarg,
+                         MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return withLoc(pos,
-                   irBuilder.makeAtomicRMW(op, bytes, memarg.offset, type, *m));
+    return withLoc(
+      pos, irBuilder.makeAtomicRMW(op, bytes, memarg.offset, type, *m, order));
   }
 
   Result<> makeAtomicCmpxchg(Index pos,

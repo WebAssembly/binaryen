@@ -160,7 +160,6 @@
 ;; KEEP-BOTH-PRIMARY-NEXT:  (type $0 (func (param i32) (result i32)))
 ;; KEEP-BOTH-PRIMARY-NEXT:  (table $table 1 1 funcref)
 ;; KEEP-BOTH-PRIMARY-NEXT:  (elem $0 (i32.const 0) $foo)
-;; KEEP-BOTH-PRIMARY-NEXT:  (export "%table" (table $table))
 ;; KEEP-BOTH-PRIMARY-NEXT:  (func $foo (param $0 i32) (result i32)
 ;; KEEP-BOTH-PRIMARY-NEXT:   (call $bar
 ;; KEEP-BOTH-PRIMARY-NEXT:    (i32.const 0)
