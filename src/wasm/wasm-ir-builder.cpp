@@ -1374,10 +1374,9 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeCall(Name func,
-                    bool isReturn,
-                    const CodeAnnotation& annotations) {
+Result<> IRBuilder::makeCall(Name func,
+                             bool isReturn,
+                             const CodeAnnotation& annotations) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
@@ -1390,11 +1389,10 @@ IRBuilder::makeCall(Name func,
   return Ok{};
 }
 
-Result<> IRBuilder::makeCallIndirect(
-  Name table,
-  HeapType type,
-  bool isReturn,
-  const CodeAnnotation& annotations) {
+Result<> IRBuilder::makeCallIndirect(Name table,
+                                     HeapType type,
+                                     bool isReturn,
+                                     const CodeAnnotation& annotations) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_indirect"};
   }
@@ -1917,10 +1915,9 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeCallRef(HeapType type,
-                       bool isReturn,
-                       const CodeAnnotation& annotations) {
+Result<> IRBuilder::makeCallRef(HeapType type,
+                                bool isReturn,
+                                const CodeAnnotation& annotations) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_ref"};
   }
