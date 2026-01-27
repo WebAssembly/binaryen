@@ -2295,7 +2295,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "parallel phase\n";
 #endif
 
@@ -2335,7 +2334,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "single phase\n";
 #endif
 
@@ -2347,7 +2345,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "global init phase\n";
 #endif
 
@@ -2373,7 +2370,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "merging+indexing phase\n";
 #endif
 
@@ -2419,7 +2415,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "external phase\n";
 #endif
 
@@ -2513,7 +2508,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "function subtyping phase\n";
 #endif
 
@@ -2540,7 +2534,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "Link-targets phase\n";
 #endif
 
@@ -2560,7 +2553,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "roots phase\n";
 #endif
 
@@ -2579,7 +2571,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
-  timer.restart();
   std::cout << "flow phase\n";
   size_t iters = 0;
 #endif
