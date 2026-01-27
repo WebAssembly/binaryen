@@ -23,6 +23,15 @@
    (i64.const -4611686018427387904)
   )
  )
+
+ ;; CHECK:      [fuzz-exec] calling i8x16.avgr_u
+ ;; CHECK-NEXT: [fuzz-exec] note result: i8x16.avgr_u => i32x4 0x80808080 0x80808080 0x80808080 0x80808080
+ (func $i8x16.avgr_u (export "i8x16.avgr_u") (result v128)
+  (i8x16.avgr_u
+   (v128.const i8x16 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128)
+   (v128.const i8x16 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128 -128)
+  )
+ )
 )
 
 ;; CHECK:      [fuzz-exec] calling load8x8_s
@@ -30,5 +39,9 @@
 
 ;; CHECK:      [fuzz-exec] calling load32x2_u
 ;; CHECK-NEXT: [trap final > memory: 13835058055282163712 > 1048576]
+
+;; CHECK:      [fuzz-exec] calling i8x16.avgr_u
+;; CHECK-NEXT: [fuzz-exec] note result: i8x16.avgr_u => i32x4 0x80808080 0x80808080 0x80808080 0x80808080
+;; CHECK-NEXT: [fuzz-exec] comparing i8x16.avgr_u
 ;; CHECK-NEXT: [fuzz-exec] comparing load32x2_u
 ;; CHECK-NEXT: [fuzz-exec] comparing load8x8_s

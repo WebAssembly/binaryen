@@ -1161,9 +1161,9 @@ Literal Literal::demote() const {
 Literal Literal::add(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
-      return Literal(uint32_t(i32) + uint32_t(other.i32));
+      return Literal(bit_cast<uint32_t>(i32) + bit_cast<uint32_t>(other.i32));
     case Type::i64:
-      return Literal(uint64_t(i64) + uint64_t(other.i64));
+      return Literal(bit_cast<uint64_t>(i64) + bit_cast<uint64_t>(other.i64));
     case Type::f32:
       return standardizeNaN(Literal(getf32() + other.getf32()));
     case Type::f64:
@@ -1408,6 +1408,8 @@ Literal Literal::maxUInt(const Literal& other) const {
 }
 
 Literal Literal::avgrUInt(const Literal& other) const {
+  // This looks like it could overflow, but these are promoted from uint8 in the
+  // caller (`binary`).
   return Literal((geti32() + other.geti32() + 1) / 2);
 }
 
@@ -2652,8 +2654,7 @@ static Literal dot(const Literal& left, const Literal& right) {
   for (size_t i = 0; i < Lanes; ++i) {
     result[i] = Literal(int32_t(0));
     for (size_t j = 0; j < Factor; ++j) {
-      result[i] = Literal(result[i].geti32() + lhs[i * Factor + j].geti32() *
-                                                 rhs[i * Factor + j].geti32());
+      result[i] = result[i].add(lhs[i * Factor + j].mul(rhs[i * Factor + j]));
     }
   }
   return Literal(result);
