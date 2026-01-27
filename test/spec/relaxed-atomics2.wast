@@ -51,3 +51,281 @@
 
   (func $i32load (drop (i32.load acqrel (i32.const 51))))
 ) "Can't set memory ordering for non-atomic i32.load")
+
+(module binary
+  "\00asm\01\00\00\00" ;; Wasm header
+  "\01\04\01" ;; Type section
+    "\60\00\00" ;; $test-all-ops type
+  "\03\02\01\00" ;; Function section
+  "\05\07\02" ;; Memory section
+  "\01\01\01" ;; (memory i32 1 1)
+  "\05\01\01" ;; (memory i64 1 1)
+  "\0a\c3\02\01" ;; code section
+  "\c0\02\00" ;; func $test-all-ops
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\02" ;; Alignment of 2
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\42\33" ;; (i64.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\42\33" ;; (i64.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\42\33" ;; (i64.const 51)
+  "\fe\10" ;; i32.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\02" ;; Alignment of 2
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\42\33" ;; (i64.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\42\33" ;; (i64.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\42\33" ;; (i64.const 51)
+  "\fe\11" ;; i64.atomic.load
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+  "\1a" ;; drop
+
+  "\41\33" ;; (i32.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\02" ;; Alignment of 2
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+
+  "\42\33" ;; (i64.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; offset
+
+  "\42\33" ;; (i64.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+
+  "\42\33" ;; (i64.const 51)
+  "\41\33" ;; (i32.const 51)
+  "\fe\17" ;; i32.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\02" ;; Alignment of 2
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+
+  "\41\33" ;; (i32.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\00" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+
+  "\42\33" ;; (i64.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; offset
+
+  "\42\33" ;; (i64.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\01" ;; acqrel memory ordering
+  "\00" ;; offset
+
+  "\42\33" ;; (i64.const 51)
+  "\42\33" ;; (i64.const 51)
+  "\fe\18" ;; i64.atomic.store
+  "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+  "\01" ;; memory index
+  "\00" ;; seqcst memory ordering
+  "\00" ;; offset
+
+  "\0b" ;; end
+)
