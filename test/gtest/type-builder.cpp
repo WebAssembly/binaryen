@@ -1614,6 +1614,7 @@ TEST_F(TypeTest, TestMaxStructDepths) {
   EXPECT_EQ(maxDepths[HeapType::nocont], Index(0));
   EXPECT_EQ(maxDepths[HeapType::noexn], Index(0));
   EXPECT_EQ(maxDepths[HeapType::func], Index(0));
+  EXPECT_EQ(maxDepths[HeapType::cont], Index(0));
 }
 
 TEST_F(TypeTest, TestMaxArrayDepths) {
