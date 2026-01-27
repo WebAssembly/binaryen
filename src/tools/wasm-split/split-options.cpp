@@ -264,16 +264,15 @@ WasmSplitOptions::WasmSplitOptions()
          {Mode::Split},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { jspi = true; })
-    .add("--export-prefix",
-         "",
-         "An identifying prefix to prepend to new export names created "
-         "by module splitting.",
-         WasmSplitOption,
-         {Mode::Split, Mode::MultiSplit},
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           exportPrefix = argument;
-         })
+    .add(
+      "--export-prefix",
+      "",
+      "An identifying prefix to prepend to new export names created "
+      "by module splitting.",
+      WasmSplitOption,
+      {Mode::Split, Mode::MultiSplit},
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { exportPrefix = argument; })
     .add("--profile-export",
          "",
          "The export name of the function the embedder calls to write the "
