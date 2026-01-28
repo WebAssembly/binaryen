@@ -204,10 +204,10 @@ def binary_func_body():
         len(to_unsigned_leb(func_body_size)) +  # LEB encoding of function body size
         1)  # Function count byte (0)
     code_section_strs = \
-        [rf'"\0a{bin_to_str(to_unsigned_leb(section_size))}\01" ;; code section' "\n"
+        [rf'"\0a{bin_to_str(to_unsigned_leb(section_size))}\01" ;; Code section' "\n"
          rf'"{bin_to_str(to_unsigned_leb(func_body_size))}\00" ;; func {FUNC_NAME}'] + \
-        statement_strs + \
-        [r'"\0b" ;; end']
+        list(map(indent, statement_strs)) + \
+        [r'  "\0b" ;; end']
 
     return "\n\n".join(code_section_strs) + "\n"
 
@@ -223,8 +223,8 @@ def binary_test():
   "\60\00\00" ;; {FUNC_NAME} type
 "\03\02\01\00" ;; Function section
 "\05\07\02" ;; Memory section
-"\01\01\01" ;; (memory i32 1 1)
-"\05\01\01" ;; (memory i64 1 1)'''
+  "\01\01\01" ;; (memory i32 1 1)
+  "\05\01\01" ;; (memory i64 1 1)'''
     return module_binary(header + "\n" + binary_func_body())
 
 
