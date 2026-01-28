@@ -27,9 +27,6 @@
 
 namespace wasm {
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
 struct Strip : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
@@ -76,7 +73,5 @@ Pass* createStripProducersPass() {
     return curr.name == BinaryConsts::CustomSections::Producers;
   });
 }
-
-#pragma GCC diagnostic pop
 
 } // namespace wasm
