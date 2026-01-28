@@ -1317,7 +1317,7 @@ Result<>
 IRBuilder::makeIf(Name label, Signature sig, const CodeAnnotation& annotations) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
-  applyAnnotations(annotations);
+  applyAnnotations(iff, annotations);
   return visitIfStart(iff, label, sig.params);
 }
 
@@ -1342,7 +1342,7 @@ Result<> IRBuilder::makeBreak(Index label,
   curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(ChildPopper{*this}.visitBreak(&curr, *labelType));
   auto* br = builder.makeBreak(curr.name, curr.value, curr.condition);
-  applyAnnotations(annotations);
+  applyAnnotations(br, annotations);
   push(br);
 
   return Ok{};
@@ -2062,7 +2062,7 @@ Result<> IRBuilder::makeBrOn(
     CHECK_ERR(name);
 
     auto* br = builder.makeBrOn(op, *name, curr.ref, out, curr.desc);
-    applyAnnotations(annotations);
+    applyAnnotations(br, annotations);
     push(br);
     return Ok{};
   }
@@ -2086,7 +2086,7 @@ Result<> IRBuilder::makeBrOn(
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
   auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out, curr.desc);
-  applyAnnotations(annotations);
+  applyAnnotations(br, annotations);
   push(br);
 
   // If the branch wasn't taken, we need to leave the extra values on the
