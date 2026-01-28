@@ -1623,7 +1623,6 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 
   append(getBranchHintsBuffer());
   append(getInlineHintsBuffer());
-  append(getEffectsIfMovedHintsBuffer());
   return ret;
 }
 
@@ -1756,17 +1755,6 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
 
       // Hint contents: inline frequency count
       buffer << U32LEB(*annotation.inline_);
-    });
-}
-
-std::optional<BufferWithRandomAccess>
-WasmBinaryWriter::getEffectsIfMovedHintsBuffer() {
-  return writeExpressionHints(
-    Annotations::EffectsIfMovedHint,
-    [](const CodeAnnotation& annotation) { return annotation.effectsIfMoved; },
-    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
-      // Hint size, always 0 for now.
-      buffer << U32LEB(0);
     });
 }
 
@@ -2041,8 +2029,7 @@ void WasmBinaryReader::preScan() {
       auto sectionName = getInlineString();
 
       if (sectionName == Annotations::BranchHint ||
-          sectionName == Annotations::InlineHint ||
-          sectionName == Annotations::EffectsIfMovedHint) {
+          sectionName == Annotations::InlineHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2199,9 +2186,6 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::InlineHint) {
     deferredAnnotationSections.push_back(
       AnnotationSectionInfo{pos, [=]() { readInlineHints(payloadLen); }});
-  } else if (sectionName == Annotations::EffectsIfMovedHint) {
-    deferredAnnotationSections.push_back(AnnotationSectionInfo{
-      pos, [=]() { readEffectsIfMovedHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5494,19 +5478,6 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 
       annotation.inline_ = inline_;
     });
-}
-
-void WasmBinaryReader::readEffectsIfMovedHints(size_t payloadLen) {
-  readExpressionHints(Annotations::EffectsIfMovedHint,
-                      payloadLen,
-                      [&](CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 0) {
-                          throwError("bad EffectsIfMovedHint size");
-                        }
-
-                        annotation.effectsIfMoved.emplace();
-                      });
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>
