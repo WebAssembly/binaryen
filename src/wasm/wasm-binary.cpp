@@ -2182,10 +2182,10 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::BranchHint) {
     // Deferred.
     deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [=]() { readBranchHints(payloadLen); }});
+      AnnotationSectionInfo{pos, [=,this]() { readBranchHints(payloadLen); }});
   } else if (sectionName == Annotations::InlineHint) {
     deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [=]() { readInlineHints(payloadLen); }});
+      AnnotationSectionInfo{pos, [=,this]() { readInlineHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
