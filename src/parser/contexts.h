@@ -2026,9 +2026,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     if (!type.isSignature()) {
       return in.err(pos, "expected function type");
     }
-    return withLoc(
-      pos,
-      irBuilder.makeIf(label ? *label : Name{}, type.getSignature(), parseAnnotations(annotations)));
+    return withLoc(pos,
+                   irBuilder.makeIf(label ? *label : Name{},
+                                    type.getSignature(),
+                                    parseAnnotations(annotations)));
   }
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
@@ -2467,7 +2468,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                      const std::vector<Annotation>& annotations,
                      Index label,
                      bool isConditional) {
-    return withLoc(pos, irBuilder.makeBreak(label, isConditional, parseAnnotations(annotations)));
+    return withLoc(
+      pos,
+      irBuilder.makeBreak(label, isConditional, parseAnnotations(annotations)));
   }
 
   Result<> makeSwitch(Index pos,
@@ -2648,7 +2651,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     BrOnOp op,
                     Type in = Type::none,
                     Type out = Type::none) {
-    return withLoc(pos, irBuilder.makeBrOn(label, op, in, out, parseAnnotations(annotations)));
+    return withLoc(
+      pos,
+      irBuilder.makeBrOn(label, op, in, out, parseAnnotations(annotations)));
   }
 
   Result<> makeStructNew(Index pos,

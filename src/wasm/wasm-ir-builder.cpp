@@ -1313,8 +1313,9 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   return visitBlockStart(block, sig.params);
 }
 
-Result<>
-IRBuilder::makeIf(Name label, Signature sig, const CodeAnnotation& annotations) {
+Result<> IRBuilder::makeIf(Name label,
+                           Signature sig,
+                           const CodeAnnotation& annotations) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
   applyAnnotations(iff, annotations);
@@ -1980,8 +1981,11 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(
-  Index label, BrOnOp op, Type in, Type out, const CodeAnnotation& annotations) {
+Result<> IRBuilder::makeBrOn(Index label,
+                             BrOnOp op,
+                             Type in,
+                             Type out,
+                             const CodeAnnotation& annotations) {
   std::optional<HeapType> descriptor;
   if (op == BrOnCastDesc || op == BrOnCastDescFail) {
     assert(out.isRef());

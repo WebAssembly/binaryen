@@ -1727,11 +1727,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
   return writeExpressionHints(
     Annotations::BranchHint,
-    [](const CodeAnnotation& annotation) {
-      return annotation.branchLikely;
-    },
-    [](const CodeAnnotation& annotation,
-       BufferWithRandomAccess& buffer) {
+    [](const CodeAnnotation& annotation) { return annotation.branchLikely; },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
 
@@ -1746,11 +1743,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
   return writeExpressionHints(
     Annotations::InlineHint,
-    [](const CodeAnnotation& annotation) {
-      return annotation.inline_;
-    },
-    [](const CodeAnnotation& annotation,
-       BufferWithRandomAccess& buffer) {
+    [](const CodeAnnotation& annotation) { return annotation.inline_; },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
 
@@ -1769,11 +1763,8 @@ std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getEffectsIfMovedHintsBuffer() {
   return writeExpressionHints(
     Annotations::EffectsIfMovedHint,
-    [](const CodeAnnotation& annotation) {
-      return annotation.effectsIfMoved;
-    },
-    [](const CodeAnnotation& annotation,
-       BufferWithRandomAccess& buffer) {
+    [](const CodeAnnotation& annotation) { return annotation.effectsIfMoved; },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always 0 for now.
       buffer << U32LEB(0);
     });
@@ -5479,39 +5470,37 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
 }
 
 void WasmBinaryReader::readBranchHints(size_t payloadLen) {
-  readExpressionHints(Annotations::BranchHint,
-                      payloadLen,
-                      [&](CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 1) {
-                          throwError("bad BranchHint size");
-                        }
+  readExpressionHints(
+    Annotations::BranchHint, payloadLen, [&](CodeAnnotation& annotation) {
+      auto size = getU32LEB();
+      if (size != 1) {
+        throwError("bad BranchHint size");
+      }
 
-                        auto likely = getU32LEB();
-                        if (likely != 0 && likely != 1) {
-                          throwError("bad BranchHint value");
-                        }
+      auto likely = getU32LEB();
+      if (likely != 0 && likely != 1) {
+        throwError("bad BranchHint value");
+      }
 
-                        annotation.branchLikely = likely;
-                      });
+      annotation.branchLikely = likely;
+    });
 }
 
 void WasmBinaryReader::readInlineHints(size_t payloadLen) {
-  readExpressionHints(Annotations::InlineHint,
-                      payloadLen,
-                      [&](CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 1) {
-                          throwError("bad InlineHint size");
-                        }
+  readExpressionHints(
+    Annotations::InlineHint, payloadLen, [&](CodeAnnotation& annotation) {
+      auto size = getU32LEB();
+      if (size != 1) {
+        throwError("bad InlineHint size");
+      }
 
-                        uint8_t inline_ = getInt8();
-                        if (inline_ > 127) {
-                          throwError("bad InlineHint value");
-                        }
+      uint8_t inline_ = getInt8();
+      if (inline_ > 127) {
+        throwError("bad InlineHint value");
+      }
 
-                        annotation.inline_ = inline_;
-                      });
+      annotation.inline_ = inline_;
+    });
 }
 
 void WasmBinaryReader::readEffectsIfMovedHints(size_t payloadLen) {
