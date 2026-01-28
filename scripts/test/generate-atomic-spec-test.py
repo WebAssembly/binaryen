@@ -51,10 +51,13 @@ def all_combinations() -> Iterator[(Template, int, Ordering)]:
       and ordering is an `Ordering` enum or None representing an implicit seqcst ordering.
     """
 
-    return itertools.product(templates, [None, 0, 1], [None, Ordering.acqrel, Ordering.seqcst])
+    # See the memory section defined in `binary_test`
+    memories = [(None, ValueType.i32), (0, ValueType.i32), (1, ValueType.i64)]
+
+    return itertools.product(templates, memories, [None, Ordering.acqrel, Ordering.seqcst])
 
 
-def statement(template, mem_idx: int | None, ordering: Ordering | None):
+def statement(template, mem_idx: int | None, mem_ptr_type: ValueType, ordering: Ordering | None):
     """Return a statement exercising the op in `template` e.g. (i32.atomic.store 1 acqrel (i64.const 42) (i32.const 42))"""
     memargs = []
     if mem_idx is not None:
@@ -63,10 +66,9 @@ def statement(template, mem_idx: int | None, ordering: Ordering | None):
         memargs.append(ordering.name)
 
     memarg_str = " ".join(memargs) + " " if memargs else ""
-    idx_type = ValueType.i64 if mem_idx == 1 else ValueType.i32 if mem_idx == 0 else ValueType.i32
 
     # The first argument (the memory location) must match the memory that we're indexing. Other arguments match the op (e.g. i32 for i32.atomic.load).
-    args = [f"({idx_type.name}.const 42)"] + [f"({template.value_type.name}.const 42)" for _ in range(template.args - 1)]
+    args = [f"({mem_ptr_type.name}.const 42)"] + [f"({template.value_type.name}.const 42)" for _ in range(template.args - 1)]
 
     op_str = "(" + "".join([template.op, " ", memarg_str, " ".join(args)]) + ")"
     if not template.should_drop:
@@ -85,7 +87,7 @@ def func():
     return f''';; Memory index must come before memory ordering if present.
 ;; Both immediates are optional; an ommitted memory ordering will be treated as seqcst.
 (func $test-all-ops
-{indent(newline.join(statement(template, mem_idx, ordering) for template, mem_idx, ordering in all_combinations()))}
+{indent(newline.join(statement(template, mem_idx, mem_ptr_type, ordering) for template, (mem_idx, mem_ptr_type), ordering in all_combinations()))}
 )'''
 
 
@@ -120,15 +122,14 @@ I64CONST = b"\x42\x33"
 I32CONST = b"\x41\x33"
 
 
-def bin_statement_lines(template, mem_idx: int, ordering: Ordering) -> Iterator[(bytes, str)]:
+def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueType, ordering: Ordering) -> Iterator[(bytes, str)]:
     """Yield (b, comment) where `b` is a part of the statement using `template`, and `comment` explains that part, e.g.
         (b"\xfe\x11", "i64.atomic.load")
     The entire iterator represents a complete expression using the `template`. e.g.
         (drop (i32.atomic.load (i32.const 42)))
     """
-    index_type = ValueType.i64 if mem_idx == 1 else ValueType.i32
-    arg_one_bin = I64CONST if index_type == ValueType.i64 else I32CONST
-    yield arg_one_bin, f"({index_type.name}.const 51)"
+    arg_one_bin = I64CONST if mem_ptr_type == ValueType.i64 else I32CONST
+    yield arg_one_bin, f"({mem_ptr_type.name}.const 51)"
     for _ in range(template.args - 1):
         const = I64CONST if template.value_type == ValueType.i64 else I32CONST
         yield const, f"({template.value_type.name}.const 51)"
@@ -157,7 +158,7 @@ def bin_statement_lines(template, mem_idx: int, ordering: Ordering) -> Iterator[
         yield b"\x1a", "drop"
 
 
-def bin_statement(template, mem_idx, ordering):
+def bin_statement(template: Template, mem_idx: int, mem_ptr_type: ValueType, ordering: Ordering) -> (bytes, str):
     """Return (b, s) where `b` is the binary exercising an instruction, e.g.
         (drop (i32.atomic.load (i32.const 42)))
        and `s` is a str containing the binary along with comments explaining it, e.g.
@@ -172,7 +173,7 @@ def bin_statement(template, mem_idx, ordering):
     bins = []
     strs = []
 
-    for bin, comment in bin_statement_lines(template, mem_idx, ordering):
+    for bin, comment in bin_statement_lines(template, mem_idx, mem_ptr_type, ordering):
         bins.append(bin)
         strs.append(f'"{bin_to_str(bin)}" ;; {comment}')
 
@@ -198,8 +199,8 @@ def binary_func_body():
     statement_strs = []
     statement_bins = []
 
-    for template, mem_idx, ordering in all_combinations():
-        bin, s = bin_statement(template, mem_idx, ordering)
+    for template, (mem_idx, mem_ptr_type), ordering in all_combinations():
+        bin, s = bin_statement(template, mem_idx, mem_ptr_type, ordering)
         statement_bins.append(bin)
         statement_strs.append(s)
 
