@@ -1329,7 +1329,7 @@ struct AnnotationParserCtx {
           if (value != 0 && value != 1) {
             std::cerr << "warning: invalid BranchHint value\n";
           } else {
-            return ret.branchLikely = bool(value);
+            ret.branchLikely = bool(value);
           }
         }
       }
