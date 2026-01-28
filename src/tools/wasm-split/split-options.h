@@ -17,8 +17,9 @@
 #ifndef wasm_tools_wasm_split_options_h
 #define wasm_tools_wasm_split_options_h
 
-#include "tools/tool-options.h"
 #include <optional>
+
+#include "tools/tool-options.h"
 
 namespace wasm {
 
