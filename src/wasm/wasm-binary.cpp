@@ -2165,18 +2165,11 @@ void WasmBinaryReader::read() {
     }
   }
 
-  // Go back and parse things we deferred.
-  if (branchHintsPos) {
-    pos = branchHintsPos;
-    readBranchHints(branchHintsLen);
-  }
-  if (inlineHintsPos) {
-    pos = inlineHintsPos;
-    readInlineHints(inlineHintsLen);
-  }
-  if (effectsIfMovedHintsPos) {
-    pos = effectsIfMovedHintsPos;
-    readEffectsIfMovedHints(effectsIfMovedHintsLen);
+  // Go back and parse annotations we deferred.
+  for (auto& [annotationPos, read] : deferredAnnotationSections) {
+    // Rewind to the right position, and read.
+    pos = annotationPos;
+    read();
   }
 
   validateBinary();
@@ -2200,15 +2193,15 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
     readDylink0(payloadLen);
   } else if (sectionName == Annotations::BranchHint) {
-    // Only note the position and length, we read this later.
-    branchHintsPos = pos;
-    branchHintsLen = payloadLen;
+    // Deferred.
+    deferredAnnotationSections.push_back(
+      AnnotationSectionInfo{pos, [=]() { readBranchHints(payloadLen); }});
   } else if (sectionName == Annotations::InlineHint) {
-    inlineHintsPos = pos;
-    inlineHintsLen = payloadLen;
+    deferredAnnotationSections.push_back(
+      AnnotationSectionInfo{pos, [=]() { readInlineHints(payloadLen); }});
   } else if (sectionName == Annotations::EffectsIfMovedHint) {
-    effectsIfMovedHintsPos = pos;
-    effectsIfMovedHintsLen = payloadLen;
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [=]() { readEffectsIfMovedHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
