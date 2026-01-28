@@ -44,10 +44,11 @@ templates = [
 ]
 
 
-def all_combinations() -> Iterator[(Template, int, Ordering)]:
+def all_combinations() -> Iterator[(Template, (int, ValueType), Ordering)]:
     """Yield tuples covering all possible combinations of atomic memory operations.
-    (template, idx, ordering)
+    (template, (idx, memory_ptr_type), ordering)
     where idx is a memory index or None representing an implicit 0 index
+      and memory_ptr_type is i32 or i64 based on the memory being indexed
       and ordering is an `Ordering` enum or None representing an implicit seqcst ordering.
     """
 
