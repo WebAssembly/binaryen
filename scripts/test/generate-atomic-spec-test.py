@@ -39,8 +39,53 @@ class Template:
 templates = [
     Template(op="i32.atomic.load", value_type=ValueType.i32, args=1, should_drop=True, bin=b"\xfe\x10"),
     Template(op="i64.atomic.load", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x11"),
+    Template(op="i32.atomic.load8_u", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x12"),
+    Template(op="i32.atomic.load16_u", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x13"),
+    Template(op="i64.atomic.load8_u", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x14"),
+    Template(op="i64.atomic.load16_u", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x15"),
+    Template(op="i64.atomic.load32_u", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x16"),
     Template(op="i32.atomic.store", value_type=ValueType.i32, args=2, should_drop=False, bin=b"\xfe\x17"),
     Template(op="i64.atomic.store", value_type=ValueType.i64, args=2, should_drop=False, bin=b"\xfe\x18"),
+    Template(op="i32.atomic.store8", value_type=ValueType.i32, args=2, should_drop=False, bin=b"\xfe\x19"),
+    Template(op="i32.atomic.store16", value_type=ValueType.i32, args=2, should_drop=False, bin=b"\xfe\x1a"),
+    Template(op="i64.atomic.store8", value_type=ValueType.i64, args=2, should_drop=False, bin=b"\xfe\x1b"),
+    Template(op="i64.atomic.store16", value_type=ValueType.i64, args=2, should_drop=False, bin=b"\xfe\x1c"),
+    Template(op="i64.atomic.store32", value_type=ValueType.i64, args=2, should_drop=False, bin=b"\xfe\x1d"),
+    Template(op="i32.atomic.rmw.add", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x1e"),
+    Template(op="i64.atomic.rmw.add", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x1f"),
+    Template(op="i32.atomic.rmw8.add_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x20"),
+    Template(op="i32.atomic.rmw16.add_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x21"),
+    Template(op="i64.atomic.rmw8.add_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x22"),
+    Template(op="i64.atomic.rmw16.add_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x23"),
+    Template(op="i64.atomic.rmw32.add_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x24"),
+    Template(op="i32.atomic.rmw.sub", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x25"),
+    Template(op="i64.atomic.rmw.sub", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x26"),
+    Template(op="i32.atomic.rmw8.sub_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x27"),
+    Template(op="i32.atomic.rmw16.sub_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x28"),
+    Template(op="i64.atomic.rmw8.sub_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x29"),
+    Template(op="i64.atomic.rmw16.sub_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x2a"),
+    Template(op="i64.atomic.rmw32.sub_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x2b"),
+    Template(op="i32.atomic.rmw.and", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x2c"),
+    Template(op="i64.atomic.rmw.and", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x2d"),
+    Template(op="i32.atomic.rmw8.and_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x2e"),
+    Template(op="i32.atomic.rmw16.and_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x2f"),
+    Template(op="i64.atomic.rmw8.and_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x30"),
+    Template(op="i64.atomic.rmw16.and_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x31"),
+    Template(op="i64.atomic.rmw32.and_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x32"),
+    Template(op="i32.atomic.rmw.or", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x33"),
+    Template(op="i64.atomic.rmw.or", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x34"),
+    Template(op="i32.atomic.rmw8.or_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x35"),
+    Template(op="i32.atomic.rmw16.or_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x36"),
+    Template(op="i64.atomic.rmw8.or_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x37"),
+    Template(op="i64.atomic.rmw16.or_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x38"),
+    Template(op="i64.atomic.rmw32.or_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x39"),
+    Template(op="i32.atomic.rmw.xor", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x3a"),
+    Template(op="i64.atomic.rmw.xor", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x3b"),
+    Template(op="i32.atomic.rmw8.xor_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x3c"),
+    Template(op="i32.atomic.rmw16.xor_u", value_type=ValueType.i32, args=2, should_drop=True, bin=b"\xfe\x3d"),
+    Template(op="i64.atomic.rmw8.xor_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x3e"),
+    Template(op="i64.atomic.rmw16.xor_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x3f"),
+    Template(op="i64.atomic.rmw32.xor_u", value_type=ValueType.i64, args=2, should_drop=True, bin=b"\xfe\x40"),
 ]
 
 
@@ -151,7 +196,11 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
         yield int.to_bytes(mem_idx), "memory index"
 
     if has_ordering:
-        yield int.to_bytes(ordering.value), f"{ordering.name} memory ordering"
+        ordering_num = ordering.value
+        if "rmw" in template.op:
+            ordering_num |= ordering_num << 4
+
+        yield int.to_bytes(ordering_num), f"{ordering.name} memory ordering"
 
     yield b"\x00", "offset"
 
