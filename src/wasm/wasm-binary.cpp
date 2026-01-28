@@ -1635,7 +1635,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
     Expression* expr;
     // The offset we will write in the custom section.
     BinaryLocation offset;
-    Function::CodeAnnotation* hint;
+    CodeAnnotation* hint;
   };
 
   struct FuncHints {
@@ -1727,10 +1727,10 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
   return writeExpressionHints(
     Annotations::BranchHint,
-    [](const Function::CodeAnnotation& annotation) {
+    [](const CodeAnnotation& annotation) {
       return annotation.branchLikely;
     },
-    [](const Function::CodeAnnotation& annotation,
+    [](const CodeAnnotation& annotation,
        BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
@@ -1746,10 +1746,10 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
   return writeExpressionHints(
     Annotations::InlineHint,
-    [](const Function::CodeAnnotation& annotation) {
+    [](const CodeAnnotation& annotation) {
       return annotation.inline_;
     },
-    [](const Function::CodeAnnotation& annotation,
+    [](const CodeAnnotation& annotation,
        BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
@@ -1769,10 +1769,10 @@ std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getEffectsIfMovedHintsBuffer() {
   return writeExpressionHints(
     Annotations::EffectsIfMovedHint,
-    [](const Function::CodeAnnotation& annotation) {
+    [](const CodeAnnotation& annotation) {
       return annotation.effectsIfMoved;
     },
-    [](const Function::CodeAnnotation& annotation,
+    [](const CodeAnnotation& annotation,
        BufferWithRandomAccess& buffer) {
       // Hint size, always 0 for now.
       buffer << U32LEB(0);
@@ -5481,7 +5481,7 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
 void WasmBinaryReader::readBranchHints(size_t payloadLen) {
   readExpressionHints(Annotations::BranchHint,
                       payloadLen,
-                      [&](Function::CodeAnnotation& annotation) {
+                      [&](CodeAnnotation& annotation) {
                         auto size = getU32LEB();
                         if (size != 1) {
                           throwError("bad BranchHint size");
@@ -5499,7 +5499,7 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
 void WasmBinaryReader::readInlineHints(size_t payloadLen) {
   readExpressionHints(Annotations::InlineHint,
                       payloadLen,
-                      [&](Function::CodeAnnotation& annotation) {
+                      [&](CodeAnnotation& annotation) {
                         auto size = getU32LEB();
                         if (size != 1) {
                           throwError("bad InlineHint size");
@@ -5517,7 +5517,7 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 void WasmBinaryReader::readEffectsIfMovedHints(size_t payloadLen) {
   readExpressionHints(Annotations::EffectsIfMovedHint,
                       payloadLen,
-                      [&](Function::CodeAnnotation& annotation) {
+                      [&](CodeAnnotation& annotation) {
                         auto size = getU32LEB();
                         if (size != 0) {
                           throwError("bad EffectsIfMovedHint size");
