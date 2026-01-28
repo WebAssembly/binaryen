@@ -1298,6 +1298,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
 
 struct AnnotationParserCtx {
   // Parse annotations into IR.
+  // TODO add branch hints
   CodeAnnotation parseAnnotations(const std::vector<Annotation>& annotations) {
     CodeAnnotation ret;
 
@@ -1308,7 +1309,7 @@ struct AnnotationParserCtx {
       if (a.kind == Annotations::InlineHint) {
         inlineHint = &a;
       } else if (a.kind == Annotations::EffectsIfMovedHint) {
-        ret.effectsIfMovedHint.emplace();
+        ret.effectsIfMoved.emplace();
       }
     }
 
@@ -1317,19 +1318,19 @@ struct AnnotationParserCtx {
       Lexer lexer(inlineHint->contents);
       if (lexer.empty()) {
         std::cerr << "warning: empty InlineHint\n";
-        return std::nullopt;
+        return ret;
       }
 
       auto str = lexer.takeString();
       if (!str || str->size() != 1) {
         std::cerr << "warning: invalid InlineHint string\n";
-        return std::nullopt;
+        return ret;
       }
 
       uint8_t value = (*str)[0];
       if (value > 127) {
         std::cerr << "warning: invalid InlineHint value\n";
-        return std::nullopt;
+        return ret;
       }
 
       ret.inline_ = value;

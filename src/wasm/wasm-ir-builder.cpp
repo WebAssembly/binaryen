@@ -1314,10 +1314,10 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
 }
 
 Result<>
-IRBuilder::makeIf(Name label, Signature sig, std::optional<bool> likely) {
+IRBuilder::makeIf(Name label, Signature sig, const CodeAnnotation& annotations) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
-  addBranchHint(iff, likely);
+  applyAnnotations(annotations);
   return visitIfStart(iff, label, sig.params);
 }
 
@@ -1330,7 +1330,7 @@ Result<> IRBuilder::makeLoop(Name label, Signature sig) {
 
 Result<> IRBuilder::makeBreak(Index label,
                               bool isConditional,
-                              std::optional<bool> likely) {
+                              const CodeAnnotation& annotations) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   auto labelType = getLabelType(label);
@@ -1342,7 +1342,7 @@ Result<> IRBuilder::makeBreak(Index label,
   curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(ChildPopper{*this}.visitBreak(&curr, *labelType));
   auto* br = builder.makeBreak(curr.name, curr.value, curr.condition);
-  addBranchHint(br, likely);
+  applyAnnotations(annotations);
   push(br);
 
   return Ok{};
@@ -1981,7 +1981,7 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
 }
 
 Result<> IRBuilder::makeBrOn(
-  Index label, BrOnOp op, Type in, Type out, std::optional<bool> likely) {
+  Index label, BrOnOp op, Type in, Type out, const CodeAnnotation& annotations) {
   std::optional<HeapType> descriptor;
   if (op == BrOnCastDesc || op == BrOnCastDescFail) {
     assert(out.isRef());
@@ -2062,7 +2062,7 @@ Result<> IRBuilder::makeBrOn(
     CHECK_ERR(name);
 
     auto* br = builder.makeBrOn(op, *name, curr.ref, out, curr.desc);
-    addBranchHint(br, likely);
+    applyAnnotations(annotations);
     push(br);
     return Ok{};
   }
@@ -2086,7 +2086,7 @@ Result<> IRBuilder::makeBrOn(
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
   auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out, curr.desc);
-  addBranchHint(br, likely);
+  applyAnnotations(annotations);
   push(br);
 
   // If the branch wasn't taken, we need to leave the extra values on the

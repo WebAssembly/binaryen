@@ -129,11 +129,11 @@ public:
   Result<> makeNop();
   Result<> makeBlock(Name label, Signature sig);
   Result<>
-  makeIf(Name label, Signature sig, std::optional<bool> likely = std::nullopt);
+  makeIf(Name label, Signature sig, const CodeAnnotation& annotations = CodeAnnotation());
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
-                     std::optional<bool> likely = std::nullopt);
+                     const CodeAnnotation& annotations = CodeAnnotation());
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   Result<> makeCall(Name func,
@@ -235,7 +235,7 @@ public:
                     BrOnOp op,
                     Type in = Type::none,
                     Type out = Type::none,
-                    std::optional<bool> likely = std::nullopt);
+                    const CodeAnnotation& annotations = CodeAnnotation());
   Result<> makeStructNew(HeapType type, bool isDesc);
   Result<> makeStructNewDefault(HeapType type, bool isDesc);
   Result<>
