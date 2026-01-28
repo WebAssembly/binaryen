@@ -624,6 +624,18 @@ function test_core() {
         module.i32.const(0)
       )
     ),
+    module.i32.atomic.store(0,
+      module.i32.const(0),
+      module.i32.atomic.load(0,
+        module.i32.const(0),
+        undefined,
+        undefined,
+        binaryen.MemoryOrder.AcqRel
+      ),
+      undefined,
+      undefined,
+      binaryen.MemoryOrder.AcqRel
+    ),
     module.drop(
       module.memory.atomic.wait32(
         module.i32.const(0),
