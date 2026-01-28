@@ -17,6 +17,8 @@
 #ifndef wasm_tools_wasm_split_options_h
 #define wasm_tools_wasm_split_options_h
 
+#include <optional>
+
 #include "tools/tool-options.h"
 
 namespace wasm {
@@ -66,10 +68,10 @@ struct WasmSplitOptions : ToolOptions {
   std::string primaryOutput;
   std::string secondaryOutput;
 
-  std::string importNamespace;
-  std::string placeholderNamespacePrefix;
-  std::string secondaryMemoryName;
-  std::string exportPrefix;
+  std::optional<std::string> importNamespace;
+  std::optional<std::string> placeholderNamespacePrefix;
+  std::optional<std::string> secondaryMemoryName;
+  std::optional<std::string> exportPrefix;
 
   std::string manifestFile;
   std::string outPrefix;
