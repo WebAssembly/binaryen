@@ -2181,11 +2181,11 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     readDylink0(payloadLen);
   } else if (sectionName == Annotations::BranchHint) {
     // Deferred.
-    deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [=, this]() { this->readBranchHints(payloadLen); }});
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readBranchHints(payloadLen); }});
   } else if (sectionName == Annotations::InlineHint) {
-    deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [=, this]() { this->readInlineHints(payloadLen); }});
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
