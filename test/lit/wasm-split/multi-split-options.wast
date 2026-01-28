@@ -12,6 +12,13 @@
 ;; RUN: wasm-split -all -g --multi-split %s --manifest %S/multi-split.wast.manifest --out-prefix=%t --placeholder-namespace=placeholder_env -o %t.wasm
 ;; RUN: wasm-dis %t.wasm | filecheck %s --check-prefix=PRIMARY-PLACEHOLDER-NAMESPACE
 
+;; Check if empty strings work for options.
+;; RUN: wasm-split -all -g --multi-split %s --manifest %S/multi-split.wast.manifest --out-prefix=%t --import-namespace= --placeholder-namespace= --export-prefix= -o %t.wasm
+;; RUN: wasm-dis %t.wasm | filecheck %s --check-prefix=PRIMARY-EMPTY
+;; RUN: wasm-dis %t1.wasm | filecheck %s --check-prefix=MOD1-EMPTY
+;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=MOD2-EMPTY
+;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=MOD3-EMPTY
+
 (module
  ;; PRIMARY-OPTIONS:      (type $ret-i64 (func (result i64)))
 
@@ -23,6 +30,11 @@
  ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (type $ret-f32 (func (result f32)))
 
  ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (type $ret-i32 (func (result i32)))
+ ;; PRIMARY-EMPTY:      (type $ret-i64 (func (result i64)))
+
+ ;; PRIMARY-EMPTY:      (type $ret-f32 (func (result f32)))
+
+ ;; PRIMARY-EMPTY:      (type $ret-i32 (func (result i32)))
  (type $ret-i32 (func (result i32)))
  (type $ret-i64 (func (result i64)))
  (type $ret-f32 (func (result f32)))
@@ -59,6 +71,38 @@
  ;; MOD1-OPTIONS-NEXT:  )
  ;; MOD1-OPTIONS-NEXT:  (i32.const 0)
  ;; MOD1-OPTIONS-NEXT: )
+ ;; MOD1-EMPTY:      (type $0 (func (result i64)))
+
+ ;; MOD1-EMPTY:      (type $1 (func (result f32)))
+
+ ;; MOD1-EMPTY:      (type $2 (func (result i32)))
+
+ ;; MOD1-EMPTY:      (import "" "table" (table $timport$0 3 funcref))
+
+ ;; MOD1-EMPTY:      (import "" "trampoline_B" (func $trampoline_B (exact (result i64))))
+
+ ;; MOD1-EMPTY:      (import "" "trampoline_C" (func $trampoline_C (exact (result f32))))
+
+ ;; MOD1-EMPTY:      (elem $0 (i32.const 2) $A)
+
+ ;; MOD1-EMPTY:      (func $A (result i32)
+ ;; MOD1-EMPTY-NEXT:  (drop
+ ;; MOD1-EMPTY-NEXT:   (call_ref $2
+ ;; MOD1-EMPTY-NEXT:    (ref.func $A)
+ ;; MOD1-EMPTY-NEXT:   )
+ ;; MOD1-EMPTY-NEXT:  )
+ ;; MOD1-EMPTY-NEXT:  (drop
+ ;; MOD1-EMPTY-NEXT:   (call_ref $0
+ ;; MOD1-EMPTY-NEXT:    (ref.func $trampoline_B)
+ ;; MOD1-EMPTY-NEXT:   )
+ ;; MOD1-EMPTY-NEXT:  )
+ ;; MOD1-EMPTY-NEXT:  (drop
+ ;; MOD1-EMPTY-NEXT:   (call_ref $1
+ ;; MOD1-EMPTY-NEXT:    (ref.func $trampoline_C)
+ ;; MOD1-EMPTY-NEXT:   )
+ ;; MOD1-EMPTY-NEXT:  )
+ ;; MOD1-EMPTY-NEXT:  (i32.const 0)
+ ;; MOD1-EMPTY-NEXT: )
  (func $A (type $ret-i32) (result i32)
   (drop
    (call_ref $ret-i32
@@ -110,6 +154,38 @@
  ;; MOD2-OPTIONS-NEXT:  )
  ;; MOD2-OPTIONS-NEXT:  (i64.const 0)
  ;; MOD2-OPTIONS-NEXT: )
+ ;; MOD2-EMPTY:      (type $0 (func (result i32)))
+
+ ;; MOD2-EMPTY:      (type $1 (func (result f32)))
+
+ ;; MOD2-EMPTY:      (type $2 (func (result i64)))
+
+ ;; MOD2-EMPTY:      (import "" "table" (table $timport$0 3 funcref))
+
+ ;; MOD2-EMPTY:      (import "" "trampoline_A" (func $trampoline_A (exact (result i32))))
+
+ ;; MOD2-EMPTY:      (import "" "trampoline_C" (func $trampoline_C (exact (result f32))))
+
+ ;; MOD2-EMPTY:      (elem $0 (i32.const 0) $B)
+
+ ;; MOD2-EMPTY:      (func $B (result i64)
+ ;; MOD2-EMPTY-NEXT:  (drop
+ ;; MOD2-EMPTY-NEXT:   (call_ref $0
+ ;; MOD2-EMPTY-NEXT:    (ref.func $trampoline_A)
+ ;; MOD2-EMPTY-NEXT:   )
+ ;; MOD2-EMPTY-NEXT:  )
+ ;; MOD2-EMPTY-NEXT:  (drop
+ ;; MOD2-EMPTY-NEXT:   (call_ref $2
+ ;; MOD2-EMPTY-NEXT:    (ref.func $B)
+ ;; MOD2-EMPTY-NEXT:   )
+ ;; MOD2-EMPTY-NEXT:  )
+ ;; MOD2-EMPTY-NEXT:  (drop
+ ;; MOD2-EMPTY-NEXT:   (call_ref $1
+ ;; MOD2-EMPTY-NEXT:    (ref.func $trampoline_C)
+ ;; MOD2-EMPTY-NEXT:   )
+ ;; MOD2-EMPTY-NEXT:  )
+ ;; MOD2-EMPTY-NEXT:  (i64.const 0)
+ ;; MOD2-EMPTY-NEXT: )
  (func $B (type $ret-i64) (result i64)
   (drop
    (call_ref $ret-i32
@@ -161,6 +237,38 @@
  ;; MOD3-OPTIONS-NEXT:  )
  ;; MOD3-OPTIONS-NEXT:  (f32.const 0)
  ;; MOD3-OPTIONS-NEXT: )
+ ;; MOD3-EMPTY:      (type $0 (func (result i32)))
+
+ ;; MOD3-EMPTY:      (type $1 (func (result i64)))
+
+ ;; MOD3-EMPTY:      (type $2 (func (result f32)))
+
+ ;; MOD3-EMPTY:      (import "" "table" (table $timport$0 3 funcref))
+
+ ;; MOD3-EMPTY:      (import "" "trampoline_A" (func $trampoline_A (exact (result i32))))
+
+ ;; MOD3-EMPTY:      (import "" "trampoline_B" (func $trampoline_B (exact (result i64))))
+
+ ;; MOD3-EMPTY:      (elem $0 (i32.const 1) $C)
+
+ ;; MOD3-EMPTY:      (func $C (result f32)
+ ;; MOD3-EMPTY-NEXT:  (drop
+ ;; MOD3-EMPTY-NEXT:   (call_ref $0
+ ;; MOD3-EMPTY-NEXT:    (ref.func $trampoline_A)
+ ;; MOD3-EMPTY-NEXT:   )
+ ;; MOD3-EMPTY-NEXT:  )
+ ;; MOD3-EMPTY-NEXT:  (drop
+ ;; MOD3-EMPTY-NEXT:   (call_ref $1
+ ;; MOD3-EMPTY-NEXT:    (ref.func $trampoline_B)
+ ;; MOD3-EMPTY-NEXT:   )
+ ;; MOD3-EMPTY-NEXT:  )
+ ;; MOD3-EMPTY-NEXT:  (drop
+ ;; MOD3-EMPTY-NEXT:   (call_ref $2
+ ;; MOD3-EMPTY-NEXT:    (ref.func $C)
+ ;; MOD3-EMPTY-NEXT:   )
+ ;; MOD3-EMPTY-NEXT:  )
+ ;; MOD3-EMPTY-NEXT:  (f32.const 0)
+ ;; MOD3-EMPTY-NEXT: )
  (func $C (type $ret-f32) (result f32)
   (drop
    (call_ref $ret-i32
@@ -245,3 +353,39 @@
 ;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:   (i32.const 2)
 ;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  )
 ;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT: )
+
+;; PRIMARY-EMPTY:      (import ".2" "0" (func $placeholder_0 (result i64)))
+
+;; PRIMARY-EMPTY:      (import ".3" "1" (func $placeholder_1 (result f32)))
+
+;; PRIMARY-EMPTY:      (import ".1" "2" (func $placeholder_2 (result i32)))
+
+;; PRIMARY-EMPTY:      (table $0 3 funcref)
+
+;; PRIMARY-EMPTY:      (elem $0 (i32.const 0) $placeholder_0 $placeholder_1 $placeholder_2)
+
+;; PRIMARY-EMPTY:      (export "trampoline_B" (func $trampoline_B))
+
+;; PRIMARY-EMPTY:      (export "trampoline_C" (func $trampoline_C))
+
+;; PRIMARY-EMPTY:      (export "trampoline_A" (func $trampoline_A))
+
+;; PRIMARY-EMPTY:      (export "table" (table $0))
+
+;; PRIMARY-EMPTY:      (func $trampoline_B (result i64)
+;; PRIMARY-EMPTY-NEXT:  (call_indirect (type $ret-i64)
+;; PRIMARY-EMPTY-NEXT:   (i32.const 0)
+;; PRIMARY-EMPTY-NEXT:  )
+;; PRIMARY-EMPTY-NEXT: )
+
+;; PRIMARY-EMPTY:      (func $trampoline_C (result f32)
+;; PRIMARY-EMPTY-NEXT:  (call_indirect (type $ret-f32)
+;; PRIMARY-EMPTY-NEXT:   (i32.const 1)
+;; PRIMARY-EMPTY-NEXT:  )
+;; PRIMARY-EMPTY-NEXT: )
+
+;; PRIMARY-EMPTY:      (func $trampoline_A (result i32)
+;; PRIMARY-EMPTY-NEXT:  (call_indirect (type $ret-i32)
+;; PRIMARY-EMPTY-NEXT:   (i32.const 2)
+;; PRIMARY-EMPTY-NEXT:  )
+;; PRIMARY-EMPTY-NEXT: )

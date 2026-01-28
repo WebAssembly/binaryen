@@ -158,8 +158,9 @@ struct SubTypes {
       depths[HeapTypes::noexn.getBasic(share)] = 0;
 
       // func would appear already if we saw function types, but if not, ensure
-      // it exists here.
+      // it exists here. Ditto for cont.
       depths[HeapTypes::func.getBasic(share)];
+      depths[HeapTypes::cont.getBasic(share)];
     }
 
     return depths;
