@@ -269,14 +269,14 @@
   ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
   (global $B.desc (ref null $B.desc) (ref.null none))
 
-  ;; CHECK:      (func $cast-desc (type $4)
+  ;; CHECK:      (func $cast-desc-eq (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref (exact $B.desc))
   ;; CHECK-NEXT:    (struct.new_default $B.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc
+  (func $cast-desc-eq
     (drop
       (ref.test (ref $B.desc)
         (struct.new $B.desc)
@@ -312,14 +312,14 @@
   ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
   (global $B.desc (ref null $B.desc) (ref.null none))
 
-  ;; CHECK:      (func $cast-desc (type $4)
+  ;; CHECK:      (func $cast-desc-eq (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref (exact $A.desc))
   ;; CHECK-NEXT:    (struct.new_default $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc
+  (func $cast-desc-eq
     (drop
       (ref.test (ref (exact $A.desc))
         (struct.new $A.desc)
@@ -352,14 +352,14 @@
   ;; CHECK:      (global $B.desc (ref null $A.desc) (ref.null none))
   (global $B.desc (ref null $B.desc) (ref.null none))
 
-  ;; CHECK:      (func $cast-desc (type $2) (param $0 anyref)
+  ;; CHECK:      (func $cast-desc-eq (type $2) (param $0 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref $A.desc)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc (param anyref)
+  (func $cast-desc-eq (param anyref)
     (drop
       (ref.test (ref $A.desc)
         (local.get 0)

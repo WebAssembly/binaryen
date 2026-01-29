@@ -1952,7 +1952,7 @@ Result<> IRBuilder::makeRefCast(Type type, bool isDesc) {
 
   RefCast curr;
   curr.type = type;
-  // Placeholder value to differentiate ref.cast_desc.
+  // Placeholder value to differentiate ref.cast_desc_eq.
   curr.desc = isDesc ? &curr : nullptr;
   CHECK_ERR(visitRefCast(&curr));
 
@@ -1979,7 +1979,7 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
 Result<> IRBuilder::makeBrOn(
   Index label, BrOnOp op, Type in, Type out, std::optional<bool> likely) {
   std::optional<HeapType> descriptor;
-  if (op == BrOnCastDesc || op == BrOnCastDescFail) {
+  if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
     assert(out.isRef());
     descriptor = out.getHeapType().getDescriptorType();
     if (!descriptor) {
@@ -1998,8 +1998,8 @@ Result<> IRBuilder::makeBrOn(
     case BrOnNull:
     case BrOnNonNull:
       break;
-    case BrOnCastDesc:
-    case BrOnCastDescFail: {
+    case BrOnCastDescEq:
+    case BrOnCastDescEqFail: {
       CHECK_ERR(validateTypeAnnotation(out.with(*descriptor).with(Nullable),
                                        curr.desc));
     }
@@ -2021,8 +2021,8 @@ Result<> IRBuilder::makeBrOn(
     case BrOnNonNull:
     case BrOnCast:
     case BrOnCastFail:
-    case BrOnCastDesc:
-    case BrOnCastDescFail:
+    case BrOnCastDescEq:
+    case BrOnCastDescEqFail:
       // Modeled as sending one value.
       if (extraArity == 0) {
         return Err{"br_on target does not expect a value"};
@@ -2042,8 +2042,8 @@ Result<> IRBuilder::makeBrOn(
       break;
     case BrOnCast:
     case BrOnCastFail:
-    case BrOnCastDesc:
-    case BrOnCastDescFail:
+    case BrOnCastDescEq:
+    case BrOnCastDescEqFail:
       testType = in;
       break;
   }
@@ -2102,7 +2102,7 @@ Result<> IRBuilder::makeBrOn(
     case BrOnNonNull:
       WASM_UNREACHABLE("unexpected op");
     case BrOnCast:
-    case BrOnCastDesc:
+    case BrOnCastDescEq:
       if (out.isNullable()) {
         resultType = Type(in.getHeapType(), NonNullable);
       } else {
@@ -2110,7 +2110,7 @@ Result<> IRBuilder::makeBrOn(
       }
       break;
     case BrOnCastFail:
-    case BrOnCastDescFail:
+    case BrOnCastDescEqFail:
       if (in.isNonNullable()) {
         resultType = Type(out.getHeapType(), NonNullable);
       } else {

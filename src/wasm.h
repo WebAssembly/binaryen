@@ -609,8 +609,8 @@ enum BrOnOp {
   BrOnNonNull,
   BrOnCast,
   BrOnCastFail,
-  BrOnCastDesc,
-  BrOnCastDescFail,
+  BrOnCastDescEq,
+  BrOnCastDescEqFail,
 };
 
 enum StringNewOp {
@@ -1644,7 +1644,7 @@ public:
 
   Expression* ref;
 
-  // Used only for ref.cast_desc.
+  // Used only for ref.cast_desc_eq.
   Expression* desc;
 
   void finalize();
@@ -1671,7 +1671,7 @@ public:
   Name name;
   Expression* ref;
 
-  // Only used for br_on_cast_desc{,_fail}
+  // Only used for br_on_cast_desc_eq{,_fail}
   Expression* desc;
 
   // Only used for br_on_cast{,_desc}{,_fail}

@@ -911,15 +911,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
         return;
       case BrOnCast:
       case BrOnCastFail:
-      case BrOnCastDesc:
-      case BrOnCastDescFail: {
+      case BrOnCastDescEq:
+      case BrOnCastDescEqFail: {
         if (!target) {
           assert(curr->castType.isRef());
           target = curr->castType;
         }
         auto top = target->getHeapType().getTop();
         note(&curr->ref, Type(top, Nullable));
-        if (curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail) {
+        if (curr->op == BrOnCastDescEq || curr->op == BrOnCastDescEqFail) {
           auto desc = target->getHeapType().getDescriptorType();
           assert(desc);
           note(&curr->desc, Type(*desc, Nullable));
