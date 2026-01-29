@@ -276,6 +276,8 @@ private:
   // overridden using another context in an RAII manner).
   std::unique_ptr<FuzzParamsContext> globalParams;
 
+  std::vector<MemoryOrder> atomicMemoryOrders;
+
 public:
   int nesting = 0;
 

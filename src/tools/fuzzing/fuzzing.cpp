@@ -34,6 +34,9 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features),
+    atomicMemoryOrders(wasm.features.hasRelaxedAtomics()
+                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
+                         : std::vector{MemoryOrder::SeqCst}),
     publicTypeValidator(wasm.features) {
 
   haveInitialFunctions = !wasm.functions.empty();
@@ -3239,7 +3242,7 @@ Expression* TranslateToFuzzReader::makeLoad(Type type) {
   // make it atomic
   auto* load = ret->cast<Load>();
   wasm.memories[0]->shared = true;
-  load->order = MemoryOrder::SeqCst;
+  load->order = pick(atomicMemoryOrders);
   load->signed_ = false;
   load->align = load->bytes;
   return load;
@@ -3358,7 +3361,7 @@ Expression* TranslateToFuzzReader::makeStore(Type type) {
   }
   // make it atomic
   wasm.memories[0]->shared = true;
-  store->order = MemoryOrder::SeqCst;
+  store->order = pick(atomicMemoryOrders);
   store->align = store->bytes;
   return store;
 }
@@ -4771,7 +4774,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
       value,
       type,
       wasm.memories[0]->name,
-      MemoryOrder::SeqCst);
+      pick(atomicMemoryOrders));
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);
@@ -4782,7 +4785,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
                                      replacement,
                                      type,
                                      wasm.memories[0]->name,
-                                     MemoryOrder::SeqCst);
+                                     pick(atomicMemoryOrders));
   }
 }
 
