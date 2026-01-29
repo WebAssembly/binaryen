@@ -2194,14 +2194,14 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     readDylink0(payloadLen);
   } else if (sectionName == Annotations::BranchHint) {
     // Deferred.
-    deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [=]() { readBranchHints(payloadLen); }});
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readBranchHints(payloadLen); }});
   } else if (sectionName == Annotations::InlineHint) {
-    deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [=]() { readInlineHints(payloadLen); }});
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
   } else if (sectionName == Annotations::EffectsIfMovedHint) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
-      pos, [=]() { readEffectsIfMovedHints(payloadLen); }});
+      pos, [this, payloadLen]() { this->readEffectsIfMovedHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -3754,31 +3754,38 @@ Result<> WasmBinaryReader::readInst() {
 
         case BinaryConsts::I32AtomicCmpxchg: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
-          return builder.makeAtomicCmpxchg(4, offset, Type::i32, mem);
+          return builder.makeAtomicCmpxchg(
+            4, offset, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicCmpxchg8U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
-          return builder.makeAtomicCmpxchg(1, offset, Type::i32, mem);
+          return builder.makeAtomicCmpxchg(
+            1, offset, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicCmpxchg16U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
-          return builder.makeAtomicCmpxchg(2, offset, Type::i32, mem);
+          return builder.makeAtomicCmpxchg(
+            2, offset, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
-          return builder.makeAtomicCmpxchg(8, offset, Type::i64, mem);
+          return builder.makeAtomicCmpxchg(
+            8, offset, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg8U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
-          return builder.makeAtomicCmpxchg(1, offset, Type::i64, mem);
+          return builder.makeAtomicCmpxchg(
+            1, offset, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg16U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
-          return builder.makeAtomicCmpxchg(2, offset, Type::i64, mem);
+          return builder.makeAtomicCmpxchg(
+            2, offset, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg32U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
-          return builder.makeAtomicCmpxchg(4, offset, Type::i64, mem);
+          return builder.makeAtomicCmpxchg(
+            4, offset, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicWait: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
@@ -4602,12 +4609,12 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeRefCast(Type(heapType, Nullable, exactness),
                                      false);
         }
-        case BinaryConsts::RefCastDesc: {
+        case BinaryConsts::RefCastDescEq: {
           auto [heapType, exactness] = getHeapType();
           return builder.makeRefCast(Type(heapType, NonNullable, exactness),
                                      true);
         }
-        case BinaryConsts::RefCastDescNull: {
+        case BinaryConsts::RefCastDescEqNull: {
           auto [heapType, exactness] = getHeapType();
           return builder.makeRefCast(Type(heapType, Nullable, exactness), true);
         }
@@ -4617,8 +4624,8 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::BrOnCast:
         case BinaryConsts::BrOnCastFail:
-        case BinaryConsts::BrOnCastDesc:
-        case BinaryConsts::BrOnCastDescFail: {
+        case BinaryConsts::BrOnCastDescEq:
+        case BinaryConsts::BrOnCastDescEqFail: {
           auto flags = getInt8();
           auto srcNull = (flags & BinaryConsts::BrOnCastFlag::InputNullable)
                            ? Nullable
@@ -4631,10 +4638,10 @@ Result<> WasmBinaryReader::readInst() {
           auto [dstType, dstExact] = getHeapType();
           auto in = Type(srcType, srcNull, srcExact);
           auto cast = Type(dstType, dstNull, dstExact);
-          auto kind = op == BinaryConsts::BrOnCast       ? BrOnCast
-                      : op == BinaryConsts::BrOnCastFail ? BrOnCastFail
-                      : op == BinaryConsts::BrOnCastDesc ? BrOnCastDesc
-                                                         : BrOnCastDescFail;
+          auto kind = op == BinaryConsts::BrOnCast         ? BrOnCast
+                      : op == BinaryConsts::BrOnCastFail   ? BrOnCastFail
+                      : op == BinaryConsts::BrOnCastDescEq ? BrOnCastDescEq
+                                                           : BrOnCastDescEqFail;
           return builder.makeBrOn(label, kind, in, cast);
         }
         case BinaryConsts::StructNew:

@@ -300,7 +300,7 @@ struct StructScanner
 
   void visitBrOn(BrOn* curr) {
     if (curr->desc &&
-        (curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail)) {
+        (curr->op == BrOnCastDescEq || curr->op == BrOnCastDescEqFail)) {
       handleDescRead(curr->getCastType());
     }
   }

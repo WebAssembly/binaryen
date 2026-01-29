@@ -1839,10 +1839,19 @@ Result<> makeAtomicCmpxchg(Ctx& ctx,
                            uint8_t bytes) {
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
+
+  auto maybeOrder = maybeMemOrder(ctx);
+  CHECK_ERR(maybeOrder);
+
   auto arg = memarg(ctx, bytes);
   CHECK_ERR(arg);
-  return ctx.makeAtomicCmpxchg(
-    pos, annotations, type, bytes, mem.getPtr(), *arg);
+  return ctx.makeAtomicCmpxchg(pos,
+                               annotations,
+                               type,
+                               bytes,
+                               mem.getPtr(),
+                               *arg,
+                               maybeOrder ? *maybeOrder : MemoryOrder::SeqCst);
 }
 
 template<typename Ctx>

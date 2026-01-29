@@ -1238,6 +1238,28 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operations require threads [--enable-threads]");
+
+  switch (curr->order) {
+    case MemoryOrder::AcqRel: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Acquire/release operations require relaxed atomics "
+                   "[--enable-relaxed-atomics]");
+      break;
+    }
+    // Unordered cmpxchg should be impossible unless there's a bug in the
+    // parser.
+    case MemoryOrder::Unordered: {
+      shouldBeUnequal(curr->order,
+                      MemoryOrder::Unordered,
+                      curr,
+                      "Atomic cmpxchg can't be unordered");
+      break;
+    }
+    case MemoryOrder::SeqCst:
+      break;
+  }
+
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -3009,7 +3031,7 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
       descType.isRef() && descType.getHeapType().getDescribedType();
     shouldBeTrue(isNull || isDescriptor,
                  curr,
-                 "ref.cast_desc descriptor must be a descriptor reference");
+                 "ref.cast_desc_eq descriptor must be a descriptor reference");
   }
 
   if (curr->type == Type::unreachable) {
@@ -3066,11 +3088,11 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
 
   shouldBeTrue(getModule()->features.hasCustomDescriptors(),
                curr,
-               "ref.cast_desc requires custom descriptors "
+               "ref.cast_desc_eq requires custom descriptors "
                "[--enable-custom-descriptors]");
   if (!shouldBeTrue(curr->desc && curr->desc->type.isRef(),
                     curr,
-                    "ref.cast_desc descriptor must have ref type")) {
+                    "ref.cast_desc_eq descriptor must have ref type")) {
     return;
   }
   auto descriptor = curr->desc->type.getHeapType();
@@ -3083,12 +3105,12 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeEqual(*described,
                 curr->type.getHeapType(),
                 curr,
-                "ref.cast_desc cast type should be described by descriptor");
+                "ref.cast_desc_eq cast type should be described by descriptor");
   shouldBeEqual(
     curr->type.getExactness(),
     curr->desc->type.getExactness(),
     curr,
-    "ref.cast_desc cast exactness should match descriptor exactness");
+    "ref.cast_desc_eq cast exactness should match descriptor exactness");
 }
 
 void FunctionValidator::visitRefGetDesc(RefGetDesc* curr) {
@@ -3129,15 +3151,15 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                     curr,
                     "non-cast br_on* must not set castType field");
       break;
-    case BrOnCastDesc:
-    case BrOnCastDescFail: {
+    case BrOnCastDescEq:
+    case BrOnCastDescEqFail: {
       shouldBeTrue(getModule()->features.hasCustomDescriptors(),
                    curr,
-                   "br_on_cast_desc* requires custom descriptors "
+                   "br_on_cast_desc_eq* requires custom descriptors "
                    "[--enable-custom-descriptors]");
       if (!shouldBeTrue(curr->desc && curr->desc->type.isRef(),
                         curr,
-                        "br_on_cast_desc* descriptor must have ref type")) {
+                        "br_on_cast_desc_eq* descriptor must have ref type")) {
         return;
       }
       auto descriptor = curr->desc->type.getHeapType();
@@ -3146,23 +3168,23 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
         if (!shouldBeTrue(
               bool(described),
               curr,
-              "br_on_cast_desc* descriptor should have a described type")) {
+              "br_on_cast_desc_eq* descriptor should have a described type")) {
           return;
         }
         shouldBeEqual(
           *described,
           curr->castType.getHeapType(),
           curr,
-          "br_on_cast_desc* cast type should be described by descriptor");
-        shouldBeEqual(
-          curr->castType.getExactness(),
-          curr->desc->type.getExactness(),
-          curr,
-          "br_on_cast_desc* cast exactness should match descriptor exactness");
+          "br_on_cast_desc_eq* cast type should be described by descriptor");
+        shouldBeEqual(curr->castType.getExactness(),
+                      curr->desc->type.getExactness(),
+                      curr,
+                      "br_on_cast_desc_eq* cast exactness should match "
+                      "descriptor exactness");
         shouldBeTrue(curr->ref->type.isNullable() ||
                        curr->castType.isNonNullable(),
                      curr,
-                     "br_on_cast_desc* with non-nullable ref should have "
+                     "br_on_cast_desc_eq* with non-nullable ref should have "
                      "non-nullable cast type");
       }
       break;

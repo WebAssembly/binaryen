@@ -510,6 +510,9 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
   if (auto* rmw = curr->dynCast<AtomicRMW>()) {
     return rmw->order;
   }
+  if (auto* cmpxchg = curr->dynCast<AtomicCmpxchg>()) {
+    return cmpxchg->order;
+  }
   if (curr->is<AtomicWait>() || curr->is<AtomicNotify>() ||
       curr->is<AtomicFence>()) {
     return MemoryOrder::SeqCst;

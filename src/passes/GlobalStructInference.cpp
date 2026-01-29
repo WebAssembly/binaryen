@@ -92,9 +92,9 @@ struct GlobalStructInference : public Pass {
   // type-based inference, and this remains empty.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
-  // Whether to optimize ref.cast to ref.cast_desc. This increases code size, so
-  // it may not always be beneficial (perhaps running it late in the pipeline,
-  // and before type-merging, could make sense).
+  // Whether to optimize ref.cast to ref.cast_desc_eq. This increases code size,
+  // so it may not always be beneficial (perhaps running it late in the
+  // pipeline, and before type-merging, could make sense).
   bool optimizeToDescCasts;
 
   std::unique_ptr<SubTypes> subTypes;
@@ -515,10 +515,11 @@ struct GlobalStructInference : public Pass {
 
       void visitRefCast(RefCast* curr) {
         // When we see (ref.cast $T), and the type has a descriptor, and that
-        // descriptor only has a single global, then we can do (ref.cast_desc)
-        // using the descriptor. Descriptor casts are usually more efficient
-        // than normal ones (and even more so if we get lucky and are in a loop,
-        // where the global.get of the descriptor can be hoisted).
+        // descriptor only has a single global, then we can do
+        // (ref.cast_desc_eq) using the descriptor. Descriptor casts are usually
+        // more efficient than normal ones (and even more so if we get lucky and
+        // are in a loop, where the global.get of the descriptor can be
+        // hoisted).
         // TODO: only do this when shrinkLevel == 0?
         if (!parent.optimizeToDescCasts) {
           return;
@@ -535,8 +536,8 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
-        // Check if the type has no (relevant) subtypes, as a ref.cast_desc will
-        // find precisely that type and nothing else.
+        // Check if the type has no (relevant) subtypes, as a ref.cast_desc_eq
+        // will find precisely that type and nothing else.
         if (!type.isExact() &&
             !parent.subTypes->getStrictSubTypes(heapType).empty()) {
           return;

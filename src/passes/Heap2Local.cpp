@@ -402,10 +402,10 @@ struct EscapeAnalyzer {
           }
         } else {
           // Either the child is the descriptor, in which case we consume it, or
-          // we have already optimized this ref.cast_desc for an allocation that
-          // flowed through as its `ref`. In the latter case the current child
-          // must have originally been the descriptor, so we can still say it's
-          // fully consumed, but we cannot assert that curr->desc == child.
+          // we have already optimized this ref.cast_desc_eq for an allocation
+          // that flowed through as its `ref`. In the latter case the current
+          // child must have originally been the descriptor, so we can still say
+          // it's fully consumed, but we cannot assert that curr->desc == child.
           fullyConsumes = true;
         }
       }
@@ -869,7 +869,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                         builder.makeUnreachable()));
       };
 
-      // If we are doing a ref.cast_desc of the optimized allocation, but the
+      // If we are doing a ref.cast_desc_eq of the optimized allocation, but the
       // allocation does not have a descriptor, then we know the cast must fail.
       // We also know the cast must fail (except for nulls it might let through)
       // if the optimized allocation flows in as the descriptor, since it cannot
@@ -877,15 +877,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // having been considered to escape.
       bool allocIsCastRef =
         analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows;
-      bool allocIsCastDesc =
+      bool allocIsCastDescEq =
         analyzer.getInteraction(curr->desc) == ParentChildInteraction::Flows;
-      if (!allocation->desc || allocIsCastDesc) {
+      if (!allocation->desc || allocIsCastDescEq) {
         // It would seem convenient to use ChildLocalizer here, but we cannot.
         // ChildLocalizer would create a local.set for a desc operand with
         // side effects, but that local.set would not be reflected in the parent
         // map, so it would not be updated if the allocation flowing through
         // that desc operand were later optimized.
-        if (allocIsCastDesc && !allocIsCastRef && curr->type.isNullable()) {
+        if (allocIsCastDescEq && !allocIsCastRef && curr->type.isNullable()) {
           // There might be a null value to let through. Reuse curr as a cast to
           // null. Use a scratch local to move the reference value past the desc
           // value.
