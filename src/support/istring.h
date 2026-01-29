@@ -36,9 +36,11 @@ private:
   static std::string_view interned(std::string_view s, bool reuse = true);
 
 public:
-  const std::string_view str;
+  std::string_view str;
 
   IString() = default;
+  IString(const IString& other) = default;
+  IString& operator=(const IString& other) = default;
 
   // TODO: This is a wildly unsafe default inherited from the previous
   // implementation. Change it?
@@ -48,12 +50,6 @@ public:
   // But other C strings generally do need to be copied.
   IString(const char* str) : str(interned(str, false)) {}
   IString(const std::string& str) : str(interned(str, false)) {}
-
-  IString(const IString& other) = default;
-
-  IString& operator=(const IString& other) {
-    return *(new (this) IString(other));
-  }
 
   bool operator==(const IString& other) const {
     // Fast! No need to compare contents due to interning
