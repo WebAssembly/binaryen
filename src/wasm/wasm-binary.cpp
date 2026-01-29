@@ -2200,8 +2200,10 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
   } else if (sectionName == Annotations::EffectsIfMovedHint) {
-    deferredAnnotationSections.push_back(AnnotationSectionInfo{
-      pos, [this, payloadLen]() { this->readEffectsIfMovedHints(payloadLen); }});
+    deferredAnnotationSections.push_back(
+      AnnotationSectionInfo{pos, [this, payloadLen]() {
+                              this->readEffectsIfMovedHints(payloadLen);
+                            }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
