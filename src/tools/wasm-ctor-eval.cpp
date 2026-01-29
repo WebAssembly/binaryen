@@ -400,11 +400,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                    import->type);
   }
 
-  // TODO
-  Tag* getImportedTag(Tag* tag) override {
-    WASM_UNREACHABLE("missing imported tag");
-  }
-
   int8_t load8s(Address addr, Name memoryName) override {
     return doLoad<int8_t>(addr, memoryName);
   }
