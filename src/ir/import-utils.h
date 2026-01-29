@@ -137,6 +137,8 @@ public:
   // as long as the ImportResolver instance.
   virtual RuntimeTable* getTableOrNull(ImportNames name,
                                        const Table& type) const = 0;
+
+  virtual Tag* getTagOrNull(ImportNames name, const Signature& type) const = 0;
 };
 
 // Looks up imports from the given `linkedInstances`.
@@ -166,6 +168,16 @@ public:
 
     ModuleRunnerType* instance = it->second.get();
     return instance->getExportedTableOrNull(name.name);
+  }
+
+  Tag* getTagOrNull(ImportNames name, const Signature& type) const override {
+    auto it = linkedInstances.find(name.module);
+    if (it == linkedInstances.end()) {
+      return nullptr;
+    }
+
+    ModuleRunnerType* instance = it->second.get();
+    return instance->getExportedTagOrNull(name.name);
   }
 
 private:

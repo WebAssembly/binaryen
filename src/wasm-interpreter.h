@@ -2979,7 +2979,9 @@ public:
     virtual void throwException(const WasmException& exn) = 0;
     // Get the Tag instance for a tag implemented in the host, that is, not
     // among the linked ModuleRunner instances, but imported from the host.
-    virtual Tag* getImportedTag(Tag* tag) = 0;
+    virtual Tag* getImportedTag(Tag* tag) {
+      WASM_UNREACHABLE("TODO remove this");
+    }
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -3173,6 +3175,8 @@ public:
   // Like `allGlobals`. Keyed by internal name. All tables including imports.
   std::unordered_map<Name, RuntimeTable*> allTables;
 
+  std::unordered_map<Name, Tag*> allTags;
+
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
 
   ModuleRunnerBase(
@@ -3223,6 +3227,7 @@ public:
 
     initializeGlobals();
     initializeTables();
+    initializeTags();
 
     initializeMemoryContents();
 
@@ -3296,16 +3301,28 @@ public:
     return *global;
   }
 
-  Tag* getExportedTag(Name name) {
+  Tag* getExportedTagOrNull(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Tag) {
-      externalInterface->trap("exported tag not found");
+      return nullptr;
     }
-    auto* tag = wasm.getTag(*export_->getInternalName());
-    if (tag->imported()) {
-      tag = externalInterface->getImportedTag(tag);
+    Name internalName = *export_->getInternalName();
+    auto it = allTags.find(internalName);
+    if (it == allTags.end()) {
+      return nullptr;
     }
-    return tag;
+    return it->second;
+  }
+
+  Tag& getExportedTagOrTrap(Name name) {
+    auto* tag = getExportedTagOrNull(name);
+    if (!tag) {
+      externalInterface->trap((std::stringstream() << "getExportedTag: export "
+                                                   << name << " not found.")
+                                .str());
+    }
+
+    return *tag;
   }
 
   std::string printFunctionStack() {
@@ -3323,6 +3340,7 @@ private:
   // internal name.
   std::vector<Literals> definedGlobals;
   std::vector<std::unique_ptr<RuntimeTable>> definedTables;
+  std::vector<Tag> definedTags;
 
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
@@ -3455,6 +3473,42 @@ private:
         (void)inserted; // for noassert builds
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated global name");
+      }
+    }
+  }
+
+  void initializeTags() {
+    int definedTagCount = 0;
+    ModuleUtils::iterDefinedTags(
+      wasm, [&definedTagCount](auto&& _) { ++definedTagCount; });
+    definedTags.reserve(definedTagCount);
+
+    for (auto& tag : wasm.tags) {
+      if (tag->imported()) {
+        auto importNames = tag->importNames();
+        // TODO is getSignature correct here?
+        auto importedTag =
+          importResolver->getTagOrNull(importNames, tag->type.getSignature());
+        if (!importedTag) {
+          externalInterface->trap((std::stringstream()
+                                   << "Imported tag " << importNames
+                                   << " not found.")
+                                    .str());
+        }
+        auto [_, inserted] = allTags.try_emplace(tag->name, importedTag);
+        (void)inserted; // for noassert builds
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated tag name");
+      } else {
+        // Tags in Wasm generally represent exception types/events
+        // rather than literal initialized values, but keeping the
+        // structure consistent with your snippet:
+        auto& definedTag = definedTags.emplace_back(*tag);
+
+        auto [_, inserted] = allTags.try_emplace(tag->name, &definedTag);
+        (void)inserted; // for noassert builds
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated tag name");
       }
     }
   }
@@ -3706,19 +3760,19 @@ protected:
   // the name of the tag in the current module, and finds the actual canonical
   // Tag* object for it: the Tag in this module, if not imported, and if
   // imported, the Tag in the originating module.
-  Tag* getCanonicalTag(Name name) {
-    auto* inst = self();
-    auto* tag = inst->wasm.getTag(name);
-    if (!tag->imported()) {
-      return tag;
-    }
-    auto iter = inst->linkedInstances.find(tag->module);
-    if (iter == inst->linkedInstances.end()) {
-      return externalInterface->getImportedTag(tag);
-    }
-    inst = iter->second.get();
-    return inst->getExportedTag(tag->base);
-  }
+  // Tag* getCanonicalTag(Name name) {
+  //   auto* inst = self();
+  //   auto* tag = inst->wasm.getTag(name);
+  //   if (!tag->imported()) {
+  //     return tag;
+  //   }
+  //   auto iter = inst->linkedInstances.find(tag->module);
+  //   if (iter == inst->linkedInstances.end()) {
+  //     return externalInterface->getImportedTag(tag);
+  //   }
+  //   inst = iter->second.get();
+  //   return inst->getExportedTag(tag->base);
+  // }
 
 public:
   Flow visitCall(Call* curr) {
@@ -4608,7 +4662,7 @@ public:
 
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        auto* tag = self()->getCanonicalTag(curr->catchTags[i]);
+        auto* tag = allTags[curr->catchTags[i]];
         if (tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
@@ -4631,8 +4685,7 @@ public:
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
-        if (!catchTag.is() ||
-            self()->getCanonicalTag(catchTag) == exnData->tag) {
+        if (!catchTag.is() || allTags[catchTag] == exnData->tag) {
           Flow ret;
           ret.breakTo = curr->catchDests[i];
           if (catchTag.is()) {
@@ -4653,8 +4706,8 @@ public:
   Flow visitThrow(Throw* curr) {
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    throwException(WasmException{
-      self()->makeExnData(self()->getCanonicalTag(curr->tag), arguments)});
+    throwException(
+      WasmException{self()->makeExnData(allTags[curr->tag], arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -4749,7 +4802,7 @@ public:
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
     auto old = self()->getCurrContinuationOrNull();
-    auto* tag = self()->getCanonicalTag(curr->tag);
+    auto* tag = allTags[curr->tag];
     if (!old) {
       return Flow(SUSPEND_FLOW, tag, std::move(arguments));
     }
@@ -4804,8 +4857,9 @@ public:
       if (auto* resumeThrow = curr->template dynCast<ResumeThrow>()) {
         if (resumeThrow->tag) {
           // resume_throw
-          contData->exceptionTag =
-            self()->getModule()->getTag(resumeThrow->tag);
+          // this seems wrong
+          contData->exceptionTag = allTags[resumeThrow->tag];
+          // self()->getModule()->getTag(resumeThrow->tag);
         } else {
           // resume_throw_ref
           contData->exception = arguments[0];
@@ -4835,7 +4889,7 @@ public:
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-        auto* handlerTag = self()->getCanonicalTag(curr->handlerTags[i]);
+        auto* handlerTag = allTags[curr->handlerTags[i]];
         if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching.
           ret.suspendTag = nullptr;

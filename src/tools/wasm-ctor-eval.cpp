@@ -84,6 +84,13 @@ public:
     throw FailToEvalException{"Imported table access."};
   }
 
+  Tag* getTagOrNull(ImportNames name,
+                    const Signature& signature) const override {
+    Fatal() << "TODO";
+    WASM_UNREACHABLE("TODO");
+    return nullptr;
+  }
+
 private:
   mutable Literals stubLiteral;
 };
@@ -393,6 +400,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                    import->type);
   }
 
+  // TODO
   Tag* getImportedTag(Tag* tag) override {
     WASM_UNREACHABLE("missing imported tag");
   }
