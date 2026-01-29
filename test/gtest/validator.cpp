@@ -67,10 +67,10 @@ TEST(ValidatorTest, ReturnUnreachable) {
   EXPECT_FALSE(WasmValidator{}.validate(func.get(), module, flags));
 }
 
-TEST(ValidatorTest, UnreachableCastDesc) {
-  // The parser will error trying to parse a ref.cast_desc with a non-matching
-  // descriptor type, so we must construct the IR directly to test the
-  // validator.
+TEST(ValidatorTest, UnreachableCastDescEq) {
+  // The parser will error trying to parse a ref.cast_desc_eq with a
+  // non-matching descriptor type, so we must construct the IR directly to test
+  // the validator.
   Module module;
   module.features = FeatureSet::All;
   Builder builder(module);

@@ -961,8 +961,8 @@ public:
                  Expression* ref,
                  Type castType = Type::none,
                  Expression* desc = nullptr) {
-    assert((desc && (op == BrOnCastDesc || op == BrOnCastDescFail)) ||
-           (!desc && op != BrOnCastDesc && op != BrOnCastDescFail));
+    assert((desc && (op == BrOnCastDescEq || op == BrOnCastDescEqFail)) ||
+           (!desc && op != BrOnCastDescEq && op != BrOnCastDescEqFail));
     auto* ret = wasm.allocator.alloc<BrOn>();
     ret->op = op;
     ret->name = name;

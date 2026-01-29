@@ -56,7 +56,7 @@
   ;; DESCC-NEXT:   )
   ;; DESCC-NEXT:  )
   ;; DESCC-NEXT:  (drop
-  ;; DESCC-NEXT:   (ref.cast_desc (ref $B)
+  ;; DESCC-NEXT:   (ref.cast_desc_eq (ref $B)
   ;; DESCC-NEXT:    (local.get $any)
   ;; DESCC-NEXT:    (global.get $B.desc)
   ;; DESCC-NEXT:   )
@@ -64,7 +64,7 @@
   ;; DESCC-NEXT: )
   (func $test (param $any anyref)
     ;; The second cast here is optimizable: it can only be to a single type with
-    ;; no subtypes, so we can use ref.cast_desc.
+    ;; no subtypes, so we can use ref.cast_desc_eq.
     (drop
       (ref.cast (ref $A)
         (local.get $any)
@@ -96,7 +96,7 @@
   ;; DESCC-NEXT:   )
   ;; DESCC-NEXT:  )
   ;; DESCC-NEXT:  (drop
-  ;; DESCC-NEXT:   (ref.cast_desc (ref $B)
+  ;; DESCC-NEXT:   (ref.cast_desc_eq (ref $B)
   ;; DESCC-NEXT:    (local.get $any)
   ;; DESCC-NEXT:    (global.get $B.desc)
   ;; DESCC-NEXT:   )
@@ -164,13 +164,13 @@
   ;; CHECK-NEXT: )
   ;; DESCC:      (func $test (type $4) (param $any anyref)
   ;; DESCC-NEXT:  (drop
-  ;; DESCC-NEXT:   (ref.cast_desc (ref $A)
+  ;; DESCC-NEXT:   (ref.cast_desc_eq (ref $A)
   ;; DESCC-NEXT:    (local.get $any)
   ;; DESCC-NEXT:    (global.get $A.desc)
   ;; DESCC-NEXT:   )
   ;; DESCC-NEXT:  )
   ;; DESCC-NEXT:  (drop
-  ;; DESCC-NEXT:   (ref.cast_desc (ref $B)
+  ;; DESCC-NEXT:   (ref.cast_desc_eq (ref $B)
   ;; DESCC-NEXT:    (local.get $any)
   ;; DESCC-NEXT:    (global.get $B.desc)
   ;; DESCC-NEXT:   )
@@ -366,7 +366,7 @@
   ;; CHECK-NEXT: )
   ;; DESCC:      (func $test (type $2) (param $any anyref)
   ;; DESCC-NEXT:  (drop
-  ;; DESCC-NEXT:   (ref.cast_desc (ref null $A)
+  ;; DESCC-NEXT:   (ref.cast_desc_eq (ref null $A)
   ;; DESCC-NEXT:    (local.get $any)
   ;; DESCC-NEXT:    (global.get $A.desc)
   ;; DESCC-NEXT:   )

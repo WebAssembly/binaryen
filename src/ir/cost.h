@@ -692,8 +692,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case BrOnCast:
       case BrOnCastFail:
         return CastCost + visit(curr->ref);
-      case BrOnCastDesc:
-      case BrOnCastDescFail:
+      case BrOnCastDescEq:
+      case BrOnCastDescEqFail:
         // These are not as expensive as full casts, since they just do a
         // identity check on the descriptor.
         return 2 + visit(curr->ref) + visit(curr->desc);

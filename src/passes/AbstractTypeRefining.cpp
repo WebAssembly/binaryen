@@ -345,7 +345,7 @@ struct AbstractTypeRefining : public Pass {
 
       // We may have casts like this:
       //
-      //   (ref.cast_desc (ref null $optimized-to-bottom)
+      //   (ref.cast_desc_eq (ref null $optimized-to-bottom)
       //     (some struct...)
       //     (some desc...)
       //   )
@@ -435,7 +435,7 @@ struct AbstractTypeRefining : public Pass {
         }
         // Optimize the same way we optimize ref.cast*.
         Builder builder(*getModule());
-        bool isFail = curr->op == BrOnCastDescFail;
+        bool isFail = curr->op == BrOnCastDescEqFail;
         if (curr->castType.isExact() || (curr->desc && optimized->isBottom())) {
           if (curr->desc) {
             if (curr->desc->type.isNullable() &&

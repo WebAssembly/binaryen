@@ -385,7 +385,7 @@
   )
 )
 
-;; ref.cast_desc requires a descriptor and also still affects subtyping like a
+;; ref.cast_desc_eq requires a descriptor and also still affects subtyping like a
 ;; normal cast.
 (module
   (rec
@@ -407,17 +407,17 @@
   ;; CHECK-NEXT: ))
   (global $bot-sub-any anyref (struct.new_desc $bot (struct.new $bot.desc)))
 
-  ;; CHECK:      (func $ref.cast_desc (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
+  ;; CHECK:      (func $ref.cast_desc_eq (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc (ref null $top)
+  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref null $top)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:    (local.get $top.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.cast_desc (param $any anyref) (param $top.desc (ref $top.desc))
+  (func $ref.cast_desc_eq (param $any anyref) (param $top.desc (ref $top.desc))
     (drop
-      (ref.cast_desc (ref null $top)
+      (ref.cast_desc_eq (ref null $top)
         (local.get $any)
         (local.get $top.desc)
       )
@@ -425,7 +425,7 @@
   )
 )
 
-;; If the ref.cast_desc is exact, then it doesn't need to transitively require
+;; If the ref.cast_desc_eq is exact, then it doesn't need to transitively require
 ;; any subtypings except that the cast destination is a subtype of the cast
 ;; source.
 (module
@@ -445,18 +445,18 @@
   ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot))
   (global $bot-sub-any anyref (struct.new_desc $bot (struct.new $bot.desc)))
 
-  ;; CHECK:      (func $ref.cast_desc (type $3) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  ;; CHECK:      (func $ref.cast_desc_eq (type $3) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc (ref null (exact $top))
+  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref null (exact $top))
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:    (local.get $top.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.cast_desc (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  (func $ref.cast_desc_eq (param $any anyref) (param $top.desc (ref (exact $top.desc)))
     (drop
       ;; This is now exact.
-      (ref.cast_desc (ref null (exact $top))
+      (ref.cast_desc_eq (ref null (exact $top))
         (local.get $any)
         (local.get $top.desc)
       )
@@ -464,7 +464,7 @@
   )
 )
 
-;; br_on_cast_desc requires a descriptor and also still affects subtyping like a
+;; br_on_cast_desc_eq requires a descriptor and also still affects subtyping like a
 ;; normal cast.
 (module
   (rec
@@ -486,20 +486,20 @@
   ;; CHECK-NEXT: ))
   (global $bot-sub-any anyref (struct.new_desc $bot (struct.new $bot.desc)))
 
-  ;; CHECK:      (func $br_on_cast_desc (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
+  ;; CHECK:      (func $br_on_cast_desc_eq (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result anyref)
-  ;; CHECK-NEXT:    (br_on_cast_desc $l anyref (ref null $top)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l anyref (ref null $top)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:     (local.get $top.desc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_cast_desc (param $any anyref) (param $top.desc (ref $top.desc))
+  (func $br_on_cast_desc_eq (param $any anyref) (param $top.desc (ref $top.desc))
     (drop
       (block $l (result anyref)
-        (br_on_cast_desc $l anyref (ref null $top)
+        (br_on_cast_desc_eq $l anyref (ref null $top)
           (local.get $any)
           (local.get $top.desc)
         )
@@ -508,7 +508,7 @@
   )
 )
 
-;; If the br_on_cast_desc is exact, then it doesn't need to transitively require
+;; If the br_on_cast_desc_eq is exact, then it doesn't need to transitively require
 ;; any subtypings except that the cast destination is a subtype of the cast
 ;; source.
 (module
@@ -528,21 +528,21 @@
   ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot))
   (global $bot-sub-any anyref (struct.new_desc $bot (struct.new $bot.desc)))
 
-  ;; CHECK:      (func $br_on_cast_desc (type $3) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  ;; CHECK:      (func $br_on_cast_desc_eq (type $3) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result anyref)
-  ;; CHECK-NEXT:    (br_on_cast_desc $l anyref (ref null (exact $top))
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l anyref (ref null (exact $top))
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:     (local.get $top.desc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_cast_desc (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  (func $br_on_cast_desc_eq (param $any anyref) (param $top.desc (ref (exact $top.desc)))
     (drop
       (block $l (result anyref)
         ;; This is now exact.
-        (br_on_cast_desc $l anyref (ref null (exact $top))
+        (br_on_cast_desc_eq $l anyref (ref null (exact $top))
           (local.get $any)
           (local.get $top.desc)
         )
@@ -551,7 +551,7 @@
   )
 )
 
-;; br_on_cast_desc_fail requires a descriptor and also still affects subtyping
+;; br_on_cast_desc_eq_fail requires a descriptor and also still affects subtyping
 ;; like a normal cast.
 (module
   (rec
@@ -573,20 +573,20 @@
   ;; CHECK-NEXT: ))
   (global $bot-sub-any anyref (struct.new_desc $bot (struct.new $bot.desc)))
 
-  ;; CHECK:      (func $br_on_cast_desc_fail (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
+  ;; CHECK:      (func $br_on_cast_desc_eq_fail (type $4) (param $any anyref) (param $top.desc (ref $top.desc))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result anyref)
-  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l anyref (ref null $top)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq_fail $l anyref (ref null $top)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:     (local.get $top.desc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_cast_desc_fail (param $any anyref) (param $top.desc (ref $top.desc))
+  (func $br_on_cast_desc_eq_fail (param $any anyref) (param $top.desc (ref $top.desc))
     (drop
       (block $l (result anyref)
-        (br_on_cast_desc_fail $l anyref (ref null $top)
+        (br_on_cast_desc_eq_fail $l anyref (ref null $top)
           (local.get $any)
           (local.get $top.desc)
         )
@@ -595,7 +595,7 @@
   )
 )
 
-;; If the br_on_cast_desc_fail is exact, then it doesn't need to transitively
+;; If the br_on_cast_desc_eq_fail is exact, then it doesn't need to transitively
 ;; require any subtypings except that the cast destination is a subtype of the
 ;; cast source.
 (module
@@ -615,21 +615,21 @@
   ;; CHECK:      (global $bot-sub-any anyref (struct.new_default $bot))
   (global $bot-sub-any anyref (struct.new_desc $bot (struct.new $bot.desc)))
 
-  ;; CHECK:      (func $br_on_cast_desc_fail (type $3) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  ;; CHECK:      (func $br_on_cast_desc_eq_fail (type $3) (param $any anyref) (param $top.desc (ref (exact $top.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result anyref)
-  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l anyref (ref null (exact $top))
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq_fail $l anyref (ref null (exact $top))
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:     (local.get $top.desc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_cast_desc_fail (param $any anyref) (param $top.desc (ref (exact $top.desc)))
+  (func $br_on_cast_desc_eq_fail (param $any anyref) (param $top.desc (ref (exact $top.desc)))
     (drop
       (block $l (result anyref)
         ;; This is now exact.
-        (br_on_cast_desc_fail $l anyref (ref null (exact $top))
+        (br_on_cast_desc_eq_fail $l anyref (ref null (exact $top))
           (local.get $any)
           (local.get $top.desc)
         )
@@ -1225,7 +1225,7 @@
   ;; CHECK-NEXT:  (local $struct (ref $struct))
   ;; CHECK-NEXT:  (local $desc (ref $desc))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc (ref (exact $struct))
+  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref (exact $struct))
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (struct.new_default $desc)
   ;; CHECK-NEXT:   )
@@ -1235,7 +1235,7 @@
     (local $struct (ref $struct))
     (local $desc (ref $desc))
     (drop
-      (ref.cast_desc (ref $struct)
+      (ref.cast_desc_eq (ref $struct)
         (unreachable)
         (struct.new $desc)
       )

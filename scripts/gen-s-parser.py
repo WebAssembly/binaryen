@@ -618,14 +618,17 @@ instructions = [
     ("i31.get_u",            "makeI31Get(false)"),
     ("ref.test",             "makeRefTest()"),
     ("ref.cast",             "makeRefCast(false)"),
-    ("ref.cast_desc",        "makeRefCast(true)"),
+    ("ref.cast_desc",        "makeRefCast(true)"),  # Deprecated
+    ("ref.cast_desc_eq",     "makeRefCast(true)"),
     ("ref.get_desc",         "makeRefGetDesc()"),
     ("br_on_null",           "makeBrOnNull()"),
     ("br_on_non_null",       "makeBrOnNull(true)"),
     ("br_on_cast",           "makeBrOnCast(BrOnCast)"),
     ("br_on_cast_fail",      "makeBrOnCast(BrOnCastFail)"),
-    ("br_on_cast_desc",      "makeBrOnCast(BrOnCastDesc)"),
-    ("br_on_cast_desc_fail", "makeBrOnCast(BrOnCastDescFail)"),
+    ("br_on_cast_desc",      "makeBrOnCast(BrOnCastDescEq)"),  # Deprecated
+    ("br_on_cast_desc_fail", "makeBrOnCast(BrOnCastDescEqFail)"),  # Deprecated
+    ("br_on_cast_desc_eq",      "makeBrOnCast(BrOnCastDescEq)"),
+    ("br_on_cast_desc_eq_fail", "makeBrOnCast(BrOnCastDescEqFail)"),
     ("struct.new",           "makeStructNew(false, false)"),
     ("struct.new_default",   "makeStructNew(true, false)"),
     ("struct.new_desc",      "makeStructNew(false, true)"),
