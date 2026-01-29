@@ -130,7 +130,7 @@ bool equal(Function* a, Function* b) {
                  bList.list[i],
                  a->codeAnnotations,
                  b->codeAnnotations,
-                 Function::CodeAnnotation())) {
+                 CodeAnnotation())) {
       return false;
     }
   }
