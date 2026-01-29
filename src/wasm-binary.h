@@ -1719,17 +1719,19 @@ public:
   void readDylink(size_t payloadLen);
   void readDylink0(size_t payloadLen);
 
-  // We read branch hints *after* the code section, even though they appear
+  // We read code annotations *after* the code section, even though they appear
   // earlier. That is simpler for us as we note expression locations as we scan
-  // code, and then just need to match them up. To do this, we note the branch
-  // hint position and size in the first pass, and handle it later.
-  size_t branchHintsPos = 0;
-  size_t branchHintsLen = 0;
-  void readBranchHints(size_t payloadLen);
+  // code, and then just need to match them up. To do this, we note the
+  // positions of annotation sections in the first pass, and handle them later.
+  struct AnnotationSectionInfo {
+    // The start position of the section. We will rewind to there to read it.
+    size_t pos;
+    // A lambda that will read the section, from that position.
+    std::function<void()> read;
+  };
+  std::vector<AnnotationSectionInfo> deferredAnnotationSections;
 
-  // Like branch hints, we note where the section is to read it later.
-  size_t inlineHintsPos = 0;
-  size_t inlineHintsLen = 0;
+  void readBranchHints(size_t payloadLen);
   void readInlineHints(size_t payloadLen);
 
   std::tuple<Address, Address, Index, MemoryOrder>

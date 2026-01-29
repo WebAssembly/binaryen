@@ -1313,11 +1313,12 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   return visitBlockStart(block, sig.params);
 }
 
-Result<>
-IRBuilder::makeIf(Name label, Signature sig, std::optional<bool> likely) {
+Result<> IRBuilder::makeIf(Name label,
+                           Signature sig,
+                           const CodeAnnotation& annotations) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
-  addBranchHint(iff, likely);
+  applyAnnotations(iff, annotations);
   return visitIfStart(iff, label, sig.params);
 }
 
@@ -1330,7 +1331,7 @@ Result<> IRBuilder::makeLoop(Name label, Signature sig) {
 
 Result<> IRBuilder::makeBreak(Index label,
                               bool isConditional,
-                              std::optional<bool> likely) {
+                              const CodeAnnotation& annotations) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   auto labelType = getLabelType(label);
@@ -1342,7 +1343,7 @@ Result<> IRBuilder::makeBreak(Index label,
   curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(ChildPopper{*this}.visitBreak(&curr, *labelType));
   auto* br = builder.makeBreak(curr.name, curr.value, curr.condition);
-  addBranchHint(br, likely);
+  applyAnnotations(br, annotations);
   push(br);
 
   return Ok{};
@@ -1376,7 +1377,7 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
 
 Result<> IRBuilder::makeCall(Name func,
                              bool isReturn,
-                             std::optional<std::uint8_t> inline_) {
+                             const CodeAnnotation& annotations) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
@@ -1385,14 +1386,14 @@ Result<> IRBuilder::makeCall(Name func,
   auto* call =
     builder.makeCall(curr.target, curr.operands, sig.results, isReturn);
   push(call);
-  addInlineHint(call, inline_);
+  applyAnnotations(call, annotations);
   return Ok{};
 }
 
 Result<> IRBuilder::makeCallIndirect(Name table,
                                      HeapType type,
                                      bool isReturn,
-                                     std::optional<std::uint8_t> inline_) {
+                                     const CodeAnnotation& annotations) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_indirect"};
   }
@@ -1403,7 +1404,7 @@ Result<> IRBuilder::makeCallIndirect(Name table,
   auto* call =
     builder.makeCallIndirect(table, curr.target, curr.operands, type, isReturn);
   push(call);
-  addInlineHint(call, inline_);
+  applyAnnotations(call, annotations);
   return Ok{};
 }
 
@@ -1921,7 +1922,7 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
 
 Result<> IRBuilder::makeCallRef(HeapType type,
                                 bool isReturn,
-                                std::optional<std::uint8_t> inline_) {
+                                const CodeAnnotation& annotations) {
   if (!type.isSignature()) {
     return Err{"expected function type annotation on call_ref"};
   }
@@ -1936,7 +1937,7 @@ Result<> IRBuilder::makeCallRef(HeapType type,
   auto* call =
     builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn);
   push(call);
-  addInlineHint(call, inline_);
+  applyAnnotations(call, annotations);
   return Ok{};
 }
 
@@ -1984,8 +1985,11 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(
-  Index label, BrOnOp op, Type in, Type out, std::optional<bool> likely) {
+Result<> IRBuilder::makeBrOn(Index label,
+                             BrOnOp op,
+                             Type in,
+                             Type out,
+                             const CodeAnnotation& annotations) {
   std::optional<HeapType> descriptor;
   if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
     assert(out.isRef());
@@ -2066,7 +2070,7 @@ Result<> IRBuilder::makeBrOn(
     CHECK_ERR(name);
 
     auto* br = builder.makeBrOn(op, *name, curr.ref, out, curr.desc);
-    addBranchHint(br, likely);
+    applyAnnotations(br, annotations);
     push(br);
     return Ok{};
   }
@@ -2090,7 +2094,7 @@ Result<> IRBuilder::makeBrOn(
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
   auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out, curr.desc);
-  addBranchHint(br, likely);
+  applyAnnotations(br, annotations);
   push(br);
 
   // If the branch wasn't taken, we need to leave the extra values on the
@@ -2646,20 +2650,18 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   return Ok{};
 }
 
-void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
-  if (likely) {
+void IRBuilder::applyAnnotations(Expression* expr,
+                                 const CodeAnnotation& annotation) {
+  if (annotation.branchLikely) {
     // Branches are only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].branchLikely = likely;
+    func->codeAnnotations[expr].branchLikely = annotation.branchLikely;
   }
-}
 
-void IRBuilder::addInlineHint(Expression* expr,
-                              std::optional<uint8_t> inline_) {
-  if (inline_) {
-    // Branches are only possible inside functions.
+  if (annotation.inline_) {
+    // Only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].inline_ = inline_;
+    func->codeAnnotations[expr].inline_ = annotation.inline_;
   }
 }
 

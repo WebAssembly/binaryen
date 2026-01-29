@@ -1634,7 +1634,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
     Expression* expr;
     // The offset we will write in the custom section.
     BinaryLocation offset;
-    Function::CodeAnnotation* hint;
+    CodeAnnotation* hint;
   };
 
   struct FuncHints {
@@ -1726,11 +1726,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
   return writeExpressionHints(
     Annotations::BranchHint,
-    [](const Function::CodeAnnotation& annotation) {
-      return annotation.branchLikely;
-    },
-    [](const Function::CodeAnnotation& annotation,
-       BufferWithRandomAccess& buffer) {
+    [](const CodeAnnotation& annotation) { return annotation.branchLikely; },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
 
@@ -1745,11 +1742,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
   return writeExpressionHints(
     Annotations::InlineHint,
-    [](const Function::CodeAnnotation& annotation) {
-      return annotation.inline_;
-    },
-    [](const Function::CodeAnnotation& annotation,
-       BufferWithRandomAccess& buffer) {
+    [](const CodeAnnotation& annotation) { return annotation.inline_; },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
 
@@ -2158,14 +2152,11 @@ void WasmBinaryReader::read() {
     }
   }
 
-  // Go back and parse things we deferred.
-  if (branchHintsPos) {
-    pos = branchHintsPos;
-    readBranchHints(branchHintsLen);
-  }
-  if (inlineHintsPos) {
-    pos = inlineHintsPos;
-    readInlineHints(inlineHintsLen);
+  // Go back and parse annotations we deferred.
+  for (auto& [annotationPos, read] : deferredAnnotationSections) {
+    // Rewind to the right position, and read.
+    pos = annotationPos;
+    read();
   }
 
   validateBinary();
@@ -2189,12 +2180,12 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
     readDylink0(payloadLen);
   } else if (sectionName == Annotations::BranchHint) {
-    // Only note the position and length, we read this later.
-    branchHintsPos = pos;
-    branchHintsLen = payloadLen;
+    // Deferred.
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readBranchHints(payloadLen); }});
   } else if (sectionName == Annotations::InlineHint) {
-    inlineHintsPos = pos;
-    inlineHintsLen = payloadLen;
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5463,39 +5454,37 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
 }
 
 void WasmBinaryReader::readBranchHints(size_t payloadLen) {
-  readExpressionHints(Annotations::BranchHint,
-                      payloadLen,
-                      [&](Function::CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 1) {
-                          throwError("bad BranchHint size");
-                        }
+  readExpressionHints(
+    Annotations::BranchHint, payloadLen, [&](CodeAnnotation& annotation) {
+      auto size = getU32LEB();
+      if (size != 1) {
+        throwError("bad BranchHint size");
+      }
 
-                        auto likely = getU32LEB();
-                        if (likely != 0 && likely != 1) {
-                          throwError("bad BranchHint value");
-                        }
+      auto likely = getU32LEB();
+      if (likely != 0 && likely != 1) {
+        throwError("bad BranchHint value");
+      }
 
-                        annotation.branchLikely = likely;
-                      });
+      annotation.branchLikely = likely;
+    });
 }
 
 void WasmBinaryReader::readInlineHints(size_t payloadLen) {
-  readExpressionHints(Annotations::InlineHint,
-                      payloadLen,
-                      [&](Function::CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 1) {
-                          throwError("bad InlineHint size");
-                        }
+  readExpressionHints(
+    Annotations::InlineHint, payloadLen, [&](CodeAnnotation& annotation) {
+      auto size = getU32LEB();
+      if (size != 1) {
+        throwError("bad InlineHint size");
+      }
 
-                        uint8_t inline_ = getInt8();
-                        if (inline_ > 127) {
-                          throwError("bad InlineHint value");
-                        }
+      uint8_t inline_ = getInt8();
+      if (inline_ > 127) {
+        throwError("bad InlineHint value");
+      }
 
-                        annotation.inline_ = inline_;
-                      });
+      annotation.inline_ = inline_;
+    });
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>
