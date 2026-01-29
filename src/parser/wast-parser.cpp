@@ -520,9 +520,6 @@ Result<WASTCommand> command(Lexer& in) {
   return *module;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
 Result<WASTScript> wast(Lexer& in) {
   WASTScript cmds;
   while (!in.empty()) {
@@ -547,8 +544,6 @@ Result<WASTScript> wast(Lexer& in) {
   }
   return cmds;
 }
-
-#pragma GCC diagnostic pop
 
 } // anonymous namespace
 

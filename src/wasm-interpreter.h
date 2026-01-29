@@ -4457,10 +4457,7 @@ public:
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
-    uint64_t end;
+    uint64_t end = 0;
     if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }
@@ -4472,8 +4469,6 @@ public:
       auto addr = (void*)&seg.data[i];
       contents.push_back(this->makeFromMemory(addr, element));
     }
-
-#pragma GCC diagnostic pop
 
     return self()->makeGCData(std::move(contents), curr->type);
   }
