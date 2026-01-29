@@ -486,7 +486,8 @@ public:
                                    Expression* expected,
                                    Expression* replacement,
                                    Type type,
-                                   Name memory) {
+                                   Name memory,
+                                   MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<AtomicCmpxchg>();
     ret->bytes = bytes;
     ret->offset = offset;
@@ -494,8 +495,9 @@ public:
     ret->expected = expected;
     ret->replacement = replacement;
     ret->type = type;
-    ret->finalize();
     ret->memory = memory;
+    ret->order = order;
+    ret->finalize();
     return ret;
   }
   SIMDExtract*

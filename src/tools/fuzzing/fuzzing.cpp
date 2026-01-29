@@ -4775,8 +4775,14 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);
-    return builder.makeAtomicCmpxchg(
-      bytes, offset, ptr, expected, replacement, type, wasm.memories[0]->name);
+    return builder.makeAtomicCmpxchg(bytes,
+                                     offset,
+                                     ptr,
+                                     expected,
+                                     replacement,
+                                     type,
+                                     wasm.memories[0]->name,
+                                     MemoryOrder::SeqCst);
   }
 }
 

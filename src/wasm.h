@@ -1051,6 +1051,7 @@ public:
   Expression* expected;
   Expression* replacement;
   Name memory;
+  MemoryOrder order = MemoryOrder::SeqCst;
 
   void finalize();
 };

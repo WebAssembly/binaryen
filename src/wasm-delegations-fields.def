@@ -385,6 +385,7 @@ DELEGATE_FIELD_CHILD(AtomicCmpxchg, expected)
 DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr)
 DELEGATE_FIELD_INT(AtomicCmpxchg, bytes)
 DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset)
+DELEGATE_FIELD_INT(AtomicCmpxchg, order)
 DELEGATE_FIELD_NAME_KIND(AtomicCmpxchg, memory, ModuleItemKind::Memory)
 DELEGATE_FIELD_CASE_END(AtomicCmpxchg)
 

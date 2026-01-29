@@ -579,8 +579,13 @@ struct NullInstrParserCtx {
                          MemoryOrder) {
     return Ok{};
   }
-  Result<> makeAtomicCmpxchg(
-    Index, const std::vector<Annotation>&, Type, int, MemoryIdxT*, MemargT) {
+  Result<> makeAtomicCmpxchg(Index,
+                             const std::vector<Annotation>&,
+                             Type,
+                             int,
+                             MemoryIdxT*,
+                             MemargT,
+                             MemoryOrder) {
     return Ok{};
   }
   Result<> makeAtomicWait(
@@ -2288,11 +2293,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                              Type type,
                              int bytes,
                              Name* mem,
-                             Memarg memarg) {
+                             Memarg memarg,
+                             MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return withLoc(pos,
-                   irBuilder.makeAtomicCmpxchg(bytes, memarg.offset, type, *m));
+    return withLoc(
+      pos, irBuilder.makeAtomicCmpxchg(bytes, memarg.offset, type, *m, order));
   }
 
   Result<> makeAtomicWait(Index pos,
