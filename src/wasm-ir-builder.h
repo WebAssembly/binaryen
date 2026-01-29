@@ -130,21 +130,21 @@ public:
   Result<> makeBlock(Name label, Signature sig);
   Result<> makeIf(Name label,
                   Signature sig,
-                  const CodeAnnotation& annotations = CodeAnnotation());
+                  const CodeAnnotation& annotations = {});
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
-                     const CodeAnnotation& annotations = CodeAnnotation());
+                     const CodeAnnotation& annotations = {});
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   Result<> makeCall(Name func,
                     bool isReturn,
-                    const CodeAnnotation& annotations = CodeAnnotation());
+                    const CodeAnnotation& annotations = {});
   Result<>
   makeCallIndirect(Name table,
                    HeapType type,
                    bool isReturn,
-                   const CodeAnnotation& annotations = CodeAnnotation());
+                   const CodeAnnotation& annotations = {});
   Result<> makeLocalGet(Index local);
   Result<> makeLocalSet(Index local);
   Result<> makeLocalTee(Index local);
@@ -228,7 +228,7 @@ public:
   Result<> makeI31Get(bool signed_);
   Result<> makeCallRef(HeapType type,
                        bool isReturn,
-                       const CodeAnnotation& annotations = CodeAnnotation());
+                       const CodeAnnotation& annotations = {});
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type, bool isDesc);
   Result<> makeRefGetDesc(HeapType type);
@@ -236,7 +236,7 @@ public:
                     BrOnOp op,
                     Type in = Type::none,
                     Type out = Type::none,
-                    const CodeAnnotation& annotations = CodeAnnotation());
+                    const CodeAnnotation& annotations = {});
   Result<> makeStructNew(HeapType type, bool isDesc);
   Result<> makeStructNewDefault(HeapType type, bool isDesc);
   Result<>
