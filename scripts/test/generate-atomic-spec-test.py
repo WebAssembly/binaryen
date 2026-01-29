@@ -1,5 +1,5 @@
-import enum
 import itertools
+import math
 from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
@@ -18,8 +18,8 @@ def indent(s):
 
 
 class ValueType(Enum):
-    i32 = enum.auto()
-    i64 = enum.auto()
+    i32 = 32
+    i64 = 64
 
 
 class Ordering(Enum):
@@ -128,7 +128,7 @@ def statement(template, mem_idx: int | None, mem_ptr_type: ValueType, ordering: 
     memarg_str = " ".join(memargs) + " " if memargs else ""
 
     # The first argument (the memory location) must match the memory that we're indexing. Other arguments match the op (e.g. i32 for i32.atomic.load).
-    args = [f"({mem_ptr_type.name}.const 42)"] + [f"({template.value_type.name}.const 42)" for _ in range(template.args - 1)]
+    args = [f"({mem_ptr_type.name}.const 0)"] + [f"({template.value_type.name}.const 42)" for _ in range(template.args - 1)]
 
     op_str = "(" + "".join([template.op, " ", memarg_str, " ".join(args)]) + ")"
     if not template.should_drop:
@@ -174,12 +174,12 @@ def bin_to_str(bin: bytes) -> str:
     return ''.join(f'{backslash}{byte:02x}' for byte in bin)
 
 
-# (i64.const 51)
-I64CONST = b"\x42\x33"
+# (i64.const 0)
+I64CONST = b"\x42\x00"
 
 
-# (i32.const 51)
-I32CONST = b"\x41\x33"
+# (i32.const 0)
+I32CONST = b"\x41\x00"
 
 
 def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueType, ordering: Ordering) -> Iterator[(bytes, str)]:
@@ -189,7 +189,7 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
         (drop (i32.atomic.load (i32.const 42)))
     """
     arg_one_bin = I64CONST if mem_ptr_type == ValueType.i64 else I32CONST
-    yield arg_one_bin, f"({mem_ptr_type.name}.const 51)"
+    yield arg_one_bin, f"({mem_ptr_type.name}.const 0)"
     for _ in range(template.args - 1):
         const = I64CONST if template.value_type == ValueType.i64 else I32CONST
         yield const, f"({template.value_type.name}.const 51)"
@@ -198,8 +198,9 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
 
     has_ordering = ordering is not None
     has_mem_idx = mem_idx is not None
-    alignment = 2 | (has_ordering << 5) | (has_mem_idx << 6)
-    comment = "Alignment of 2" \
+    raw_alignment = int(math.log2(mem_ptr_type.value // 8))
+    alignment = raw_alignment | (has_ordering << 5) | (has_mem_idx << 6)
+    comment = f"Alignment of {raw_alignment}" \
               f'{" with bit 5 set indicating that an ordering immediate follows" if has_ordering else ""}' \
               f'{" and" if has_ordering and has_mem_idx else ""}' \
               f'{" with bit 6 set indicating that a memory index immediate follows" if has_mem_idx else ""}'
