@@ -2348,13 +2348,13 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isNullable()) {
     if (curr->desc) {
-      o << U32LEB(BinaryConsts::RefCastDescNull);
+      o << U32LEB(BinaryConsts::RefCastDescEqNull);
     } else {
       o << U32LEB(BinaryConsts::RefCastNull);
     }
   } else {
     if (curr->desc) {
-      o << U32LEB(BinaryConsts::RefCastDesc);
+      o << U32LEB(BinaryConsts::RefCastDescEq);
     } else {
       o << U32LEB(BinaryConsts::RefCast);
     }
@@ -2372,7 +2372,7 @@ void BinaryInstWriter::visitRefGetDesc(RefGetDesc* curr) {
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
-  bool hasDesc = curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail;
+  bool hasDesc = curr->op == BrOnCastDescEq || curr->op == BrOnCastDescEqFail;
   if (hasDesc && curr->desc->type.isNull()) {
     emitUnreachable();
     return;
@@ -2392,12 +2392,13 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
     case BrOnCastFail:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastFail);
       break;
-    case BrOnCastDesc:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastDesc);
-      break;
-    case BrOnCastDescFail:
+    case BrOnCastDescEq:
       o << int8_t(BinaryConsts::GCPrefix)
-        << U32LEB(BinaryConsts::BrOnCastDescFail);
+        << U32LEB(BinaryConsts::BrOnCastDescEq);
+      break;
+    case BrOnCastDescEqFail:
+      o << int8_t(BinaryConsts::GCPrefix)
+        << U32LEB(BinaryConsts::BrOnCastDescEqFail);
       break;
   }
   assert(curr->ref->type.isRef());

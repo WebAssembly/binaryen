@@ -239,7 +239,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-success (type $10)
+  ;; CHECK:      (func $cast-desc-eq-success (type $10)
   ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local $2 (ref (exact $super.desc)))
@@ -276,13 +276,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-success
+  (func $cast-desc-eq-success
     (local $desc (ref null (exact $super.desc)))
     (local.set $desc
       (struct.new $super.desc)
     )
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (struct.new_desc $super
           (local.get $desc)
         )
@@ -291,7 +291,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-fail (type $11) (param $desc (ref null (exact $super.desc)))
+  ;; CHECK:      (func $cast-desc-eq-fail (type $11) (param $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
@@ -322,9 +322,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-fail (param $desc (ref null (exact $super.desc)))
+  (func $cast-desc-eq-fail (param $desc (ref null (exact $super.desc)))
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (struct.new_desc $super
           (struct.new $super.desc)
         )
@@ -333,7 +333,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-fail-reverse (type $11) (param $desc (ref null (exact $super.desc)))
+  ;; CHECK:      (func $cast-desc-eq-fail-reverse (type $11) (param $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
@@ -368,10 +368,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-fail-reverse (param $desc (ref null (exact $super.desc)))
+  (func $cast-desc-eq-fail-reverse (param $desc (ref null (exact $super.desc)))
     ;; Same as above, but change where the parameter is used.
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (struct.new_desc $super
           (local.get $desc)
         )
@@ -380,7 +380,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-fail-param (type $12) (param $ref (ref null (exact $super)))
+  ;; CHECK:      (func $cast-desc-eq-fail-param (type $12) (param $ref (ref null (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -395,18 +395,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-fail-param (param $ref (ref null (exact $super)))
+  (func $cast-desc-eq-fail-param (param $ref (ref null (exact $super)))
     ;; Now cast the parameter. We know it can't have the locally allocated
     ;; descriptor, so the cast fails.
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (local.get $ref)
         (struct.new $super.desc)
       )
     )
   )
 
-  ;; CHECK:      (func $cast-desc-fail-param-effect (type $12) (param $ref (ref null (exact $super)))
+  ;; CHECK:      (func $cast-desc-eq-fail-param-effect (type $12) (param $ref (ref null (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -427,10 +427,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-fail-param-effect (param $ref (ref null (exact $super)))
+  (func $cast-desc-eq-fail-param-effect (param $ref (ref null (exact $super)))
     ;; Same, but with effects we cannot drop.
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (block (result (ref null (exact $super)))
           (call $effect)
           (local.get $ref)
@@ -443,7 +443,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-fail-param-nullable (type $12) (param $ref (ref null (exact $super)))
+  ;; CHECK:      (func $cast-desc-eq-fail-param-nullable (type $12) (param $ref (ref null (exact $super)))
   ;; CHECK-NEXT:  (local $1 (ref null (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
@@ -461,17 +461,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-fail-param-nullable (param $ref (ref null (exact $super)))
+  (func $cast-desc-eq-fail-param-nullable (param $ref (ref null (exact $super)))
     ;; Now the cast admits nulls.
     (drop
-      (ref.cast_desc (ref null (exact $super))
+      (ref.cast_desc_eq (ref null (exact $super))
         (local.get $ref)
         (struct.new $super.desc)
       )
     )
   )
 
-  ;; CHECK:      (func $cast-desc-fail-param-nullable-effect (type $12) (param $ref (ref null (exact $super)))
+  ;; CHECK:      (func $cast-desc-eq-fail-param-nullable-effect (type $12) (param $ref (ref null (exact $super)))
   ;; CHECK-NEXT:  (local $1 (ref null (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
@@ -495,10 +495,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-fail-param-nullable-effect (param $ref (ref null (exact $super)))
+  (func $cast-desc-eq-fail-param-nullable-effect (param $ref (ref null (exact $super)))
     ;; Now the cast admits nulls and there are effects we cannot remove.
     (drop
-      (ref.cast_desc (ref null (exact $super))
+      (ref.cast_desc_eq (ref null (exact $super))
         (block (result (ref null (exact $super)))
           (call $effect)
           (local.get $ref)
@@ -529,7 +529,7 @@
   (func $cast-no-desc (param $desc (ref null (exact $super.desc)))
     ;; The allocation does not have a descriptor, so we know the cast must fail.
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (struct.new $no-desc)
         (local.get $desc)
       )
@@ -560,7 +560,7 @@
   (func $cast-no-desc-effect (param $desc (ref null (exact $super.desc)))
     ;; Same, but with effects we cannot drop.
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (block (result (ref (exact $no-desc)))
           (call $effect)
           (struct.new $no-desc)
@@ -593,7 +593,7 @@
     ;; Although the cast admits nulls, we know we don't have a null here, so we
     ;; don't need to preserve a null cast.
     (drop
-      (ref.cast_desc (ref null (exact $super))
+      (ref.cast_desc_eq (ref null (exact $super))
         (struct.new $no-desc)
         (local.get $desc)
       )
@@ -624,7 +624,7 @@
   (func $cast-no-desc-nullable-effect (param $desc (ref null (exact $super.desc)))
     ;; Same, but with effects we cannot drop.
     (drop
-      (ref.cast_desc (ref null (exact $super))
+      (ref.cast_desc_eq (ref null (exact $super))
         (block (result (ref (exact $no-desc)))
           (call $effect)
           (struct.new $no-desc)
@@ -637,7 +637,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-and-ref (type $14) (param $desc (ref null (exact $chain-descriptor)))
+  ;; CHECK:      (func $cast-desc-eq-and-ref (type $14) (param $desc (ref null (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (local $middle (ref null (exact $chain-middle)))
   ;; CHECK-NEXT:  (local $2 (ref (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (local $3 (ref (exact $chain-descriptor)))
@@ -666,7 +666,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-and-ref (param $desc (ref null (exact $chain-descriptor)))
+  (func $cast-desc-eq-and-ref (param $desc (ref null (exact $chain-descriptor)))
     ;; The same allocation flows into both the descriptor and the reference. The
     ;; cast must fail because a value cannot be its own descriptor. We make sure
     ;; the descriptor itself has a descriptor so it is not handled by the same
@@ -678,14 +678,14 @@
       )
     )
     (drop
-      (ref.cast_desc (ref (exact $chain-described))
+      (ref.cast_desc_eq (ref (exact $chain-described))
         (local.get $middle)
         (local.get $middle)
       )
     )
   )
 
-  ;; CHECK:      (func $cast-desc-and-ref-nullable (type $14) (param $desc (ref null (exact $chain-descriptor)))
+  ;; CHECK:      (func $cast-desc-eq-and-ref-nullable (type $14) (param $desc (ref null (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (local $middle (ref null (exact $chain-middle)))
   ;; CHECK-NEXT:  (local $2 (ref (exact $chain-descriptor)))
   ;; CHECK-NEXT:  (local $3 (ref (exact $chain-descriptor)))
@@ -714,7 +714,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-and-ref-nullable (param $desc (ref null (exact $chain-descriptor)))
+  (func $cast-desc-eq-and-ref-nullable (param $desc (ref null (exact $chain-descriptor)))
     ;; Same, but now the cast allows nulls. It should still trap.
     (local $middle (ref null (exact $chain-middle)))
     (local.set $middle
@@ -723,14 +723,14 @@
       )
     )
     (drop
-      (ref.cast_desc (ref null (exact $chain-described))
+      (ref.cast_desc_eq (ref null (exact $chain-described))
         (local.get $middle)
         (local.get $middle)
       )
     )
   )
 
-  ;; CHECK:      (func $cast-desc-and-ref-tee (type $10)
+  ;; CHECK:      (func $cast-desc-eq-and-ref-tee (type $10)
   ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -746,12 +746,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-and-ref-tee
+  (func $cast-desc-eq-and-ref-tee
     ;; The same allocation flows into both the descriptor and the reference
     ;; again, but now it uses a tee. The allocation does not have a descriptor.
     (local $desc (ref null (exact $super.desc)))
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         (local.tee $desc
           (struct.new $super.desc)
         )
@@ -760,7 +760,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-and-ref-tee-nullable (type $10)
+  ;; CHECK:      (func $cast-desc-eq-and-ref-tee-nullable (type $10)
   ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -776,11 +776,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-and-ref-tee-nullable
+  (func $cast-desc-eq-and-ref-tee-nullable
     ;; Same, but the cast allows nulls. It should still trap.
     (local $desc (ref null (exact $super.desc)))
     (drop
-      (ref.cast_desc (ref null (exact $super))
+      (ref.cast_desc_eq (ref null (exact $super))
         (local.tee $desc
           (struct.new $super.desc)
         )
@@ -789,7 +789,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-stale-parent (type $15) (result (ref (exact $super)))
+  ;; CHECK:      (func $cast-desc-eq-stale-parent (type $15) (result (ref (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (ref.null none)
@@ -805,10 +805,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-desc-stale-parent (result (ref (exact $super)))
-    (ref.cast_desc (ref (exact $super))
+  (func $cast-desc-eq-stale-parent (result (ref (exact $super)))
+    (ref.cast_desc_eq (ref (exact $super))
       ;; We will optimize this allocation first, causing the parent
-      ;; ref.cast_desc to be optimized out. The parent map will no longer be up
+      ;; ref.cast_desc_eq to be optimized out. The parent map will no longer be up
       ;; to date when we optimize the second allocation, but we should sill be
       ;; able to optimize successfully without crashing.
       (struct.new_default $no-desc)
@@ -819,7 +819,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-stale-parent-escape (type $16) (result (ref (exact $super.desc)))
+  ;; CHECK:      (func $cast-desc-eq-stale-parent-escape (type $16) (result (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -840,10 +840,10 @@
   ;; CHECK-NEXT:   (local.get $desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-desc-stale-parent-escape (result (ref (exact $super.desc)))
+  (func $cast-desc-eq-stale-parent-escape (result (ref (exact $super.desc)))
     (local $desc (ref (exact $super.desc)))
     (drop
-      (ref.cast_desc (ref (exact $super))
+      (ref.cast_desc_eq (ref (exact $super))
         ;; Same as above, but now the second alloocation escapes. We should still
         ;; optimize the first allocation and the cast, and we should still not
         ;; crash.
@@ -996,7 +996,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $A (result (ref $A))
-    (ref.cast_desc (ref $A)
+    (ref.cast_desc_eq (ref $A)
       (struct.new_default_desc $A2
         (struct.new_default $B2)
       )
@@ -1129,7 +1129,7 @@
     )
     (local.set $v
       (struct.get $A 0
-        (ref.cast_desc (ref $A)
+        (ref.cast_desc_eq (ref $A)
           (struct.new_default_desc $A
             (ref.as_non_null
               (ref.null none)
@@ -1201,13 +1201,13 @@
     (local $temp (ref $C))
     (local.set $temp
       ;; We optimize this first, making the |local.get| below unreachable, and
-      ;; making that inner ref.cast_desc unreachable, which leads to the
+      ;; making that inner ref.cast_desc_eq unreachable, which leads to the
       ;; |struct.new_default $B| being dropped, and in particular having a new
       ;; parent (the drop). We should not get confused and error internally.
       (struct.new_default $C)
     )
-    (ref.cast_desc (ref $B)
-      (ref.cast_desc (ref $B)
+    (ref.cast_desc_eq (ref $B)
+      (ref.cast_desc_eq (ref $B)
         (struct.new_default_desc $B
           (ref.null (shared none))
         )
@@ -1264,13 +1264,13 @@
       (struct.new_default $desc)
     )
     ;; After we optimize the struct.new above, the local.get below will get
-    ;; removed, and we will see that the ref.cast_desc traps (the input
+    ;; removed, and we will see that the ref.cast_desc_eq traps (the input
     ;; descriptor differs from the one we test, the allocation we just
     ;; removed). When optimizing that, we should not emit invalid IR for the
     ;; ref.is_null: It has an i32 result normally, but in unreachable code it
     ;; must remain unreachable.
     (ref.is_null
-      (ref.cast_desc (ref $struct)
+      (ref.cast_desc_eq (ref $struct)
         (struct.new_default_desc $struct
           (struct.new_default $desc)
         )

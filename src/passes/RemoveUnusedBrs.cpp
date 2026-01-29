@@ -945,12 +945,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             return;
           case BrOnCast:
           case BrOnCastFail:
-          case BrOnCastDesc:
-          case BrOnCastDescFail: {
+          case BrOnCastDescEq:
+          case BrOnCastDescEqFail: {
             bool onFail =
-              curr->op == BrOnCastFail || curr->op == BrOnCastDescFail;
+              curr->op == BrOnCastFail || curr->op == BrOnCastDescEqFail;
             bool isDesc =
-              curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail;
+              curr->op == BrOnCastDescEq || curr->op == BrOnCastDescEqFail;
 
             // Improve the cast target type as much as possible given what we
             // know about the input. Unlike in BrOn::finalize(), we consider

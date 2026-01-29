@@ -113,7 +113,7 @@
   ;; CKTNH-NEXT: )
   (func $cast-null-desc (param $ref anyref) (param $desc nullref)
     (drop
-      (ref.cast_desc (ref null $struct)
+      (ref.cast_desc_eq (ref null $struct)
         (local.get $ref)
         (local.get $desc)
       )
@@ -122,7 +122,7 @@
 
   ;; CHECK:      (func $cast-nullable-desc (type $3) (param $ref anyref) (param $desc (ref null $desc))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc (ref null $struct)
+  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref null $struct)
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $desc)
   ;; CHECK-NEXT:   )
@@ -136,7 +136,7 @@
   ;; CKTNH-NEXT: )
   (func $cast-nullable-desc (param $ref anyref) (param $desc (ref null $desc))
     (drop
-      (ref.cast_desc (ref null $struct)
+      (ref.cast_desc_eq (ref null $struct)
         (local.get $ref)
         (local.get $desc)
       )
@@ -145,7 +145,7 @@
 
   ;; CHECK:      (func $cast-non-nullable-desc (type $4) (param $ref anyref) (param $desc (ref $desc))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc (ref null $struct)
+  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref null $struct)
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $desc)
   ;; CHECK-NEXT:   )
@@ -160,7 +160,7 @@
   (func $cast-non-nullable-desc (param $ref anyref) (param $desc (ref $desc))
     (drop
       ;; The cast can still trap on failure, so by default we cannot remove it.
-      (ref.cast_desc (ref null $struct)
+      (ref.cast_desc_eq (ref null $struct)
         (local.get $ref)
         (local.get $desc)
       )
@@ -203,7 +203,7 @@
   (func $br-on-cast-null-desc (param $ref anyref) (param $desc nullref)
     (drop
       (block $l (result anyref)
-        (br_on_cast_desc $l anyref (ref null $struct)
+        (br_on_cast_desc_eq $l anyref (ref null $struct)
           (local.get $ref)
           (local.get $desc)
         )
@@ -214,7 +214,7 @@
   ;; CHECK:      (func $br-on-cast-nullable-desc (type $3) (param $ref anyref) (param $desc (ref null $desc))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result anyref)
-  ;; CHECK-NEXT:    (br_on_cast_desc $l anyref (ref null $struct)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l anyref (ref null $struct)
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:     (local.get $desc)
   ;; CHECK-NEXT:    )
@@ -230,7 +230,7 @@
   (func $br-on-cast-nullable-desc (param $ref anyref) (param $desc (ref null $desc))
     (drop
       (block $l (result anyref)
-        (br_on_cast_desc $l anyref (ref null $struct)
+        (br_on_cast_desc_eq $l anyref (ref null $struct)
           (local.get $ref)
           (local.get $desc)
         )
@@ -250,7 +250,7 @@
   (func $br-on-cast-non-nullable-desc (param $ref anyref) (param $desc (ref $desc))
     (drop
       (block $l (result anyref)
-        (br_on_cast_desc $l anyref (ref null $struct)
+        (br_on_cast_desc_eq $l anyref (ref null $struct)
           (local.get $ref)
           (local.get $desc)
         )

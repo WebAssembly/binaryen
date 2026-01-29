@@ -329,8 +329,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
         break;
       case BrOnCast:
       case BrOnCastFail:
-      case BrOnCastDesc:
-      case BrOnCastDescFail:
+      case BrOnCastDescEq:
+      case BrOnCastDescEqFail:
         self()->noteCast(curr->ref, curr->castType);
         break;
     }

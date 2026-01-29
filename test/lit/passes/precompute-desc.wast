@@ -47,14 +47,14 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc (type $0) (result i32)
+  ;; CHECK:      (func $br-on-cast-desc-eq (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc (result i32)
+  (func $br-on-cast-desc-eq (result i32)
     (ref.eq
       (block $l (result eqref)
         (drop
-          (br_on_cast_desc $l eqref (ref $struct)
+          (br_on_cast_desc_eq $l eqref (ref $struct)
             (global.get $struct)
             (global.get $desc)
           )
@@ -65,14 +65,14 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-fail (type $0) (result i32)
+  ;; CHECK:      (func $br-on-cast-desc-eq-fail (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-fail (result i32)
+  (func $br-on-cast-desc-eq-fail (result i32)
     (ref.eq
       (block $l (result eqref)
         (drop
-          (br_on_cast_desc_fail $l eqref (ref $struct)
+          (br_on_cast_desc_eq_fail $l eqref (ref $struct)
             (global.get $struct)
             (global.get $desc)
           )

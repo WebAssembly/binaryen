@@ -126,7 +126,7 @@
     ;; optimize out this cast because otherwise ReFinalization would make its
     ;; result (ref $struct) again and it would not be valid for the optimized
     ;; function result type.
-    (ref.cast_desc (ref null $struct)
+    (ref.cast_desc_eq (ref null $struct)
       (local.get $ref)
       (local.get $desc)
     )
@@ -174,7 +174,7 @@
   ;; NO_TNH-NEXT: )
   (func $cast-nullable-effect (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
     ;; Same, but with side effects we cannot drop.
-    (ref.cast_desc (ref null $struct)
+    (ref.cast_desc_eq (ref null $struct)
       (block (result anyref)
         (call $effect)
         (local.get $ref)
@@ -204,7 +204,7 @@
   ;; NO_TNH-NEXT: )
   (func $cast-non-nullable (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
     ;; Same, but now the cast does not admit null.
-    (ref.cast_desc (ref $struct)
+    (ref.cast_desc_eq (ref $struct)
       (local.get $ref)
       (local.get $desc)
     )
@@ -222,7 +222,7 @@
   ;; NO_TNH-NEXT: )
   (func $cast-non-nullable-desc (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
     ;; Same, but now the descriptor is additionally non-null.
-    (ref.cast_desc (ref $struct)
+    (ref.cast_desc_eq (ref $struct)
       (local.get $ref)
       (local.get $desc)
     )
@@ -268,7 +268,7 @@
   ;; NO_TNH-NEXT: )
   (func $cast-non-nullable-effect (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
     ;; Same, but with side effects we cannot drop.
-    (ref.cast_desc (ref $struct)
+    (ref.cast_desc_eq (ref $struct)
       (block (result anyref)
         (call $effect)
         (local.get $ref)
@@ -313,8 +313,8 @@
   (func $branch-nullable (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
     (block $block (result (ref null $struct))
       (drop
-        ;; Same, but with br_on_cast_desc.
-        (br_on_cast_desc $block anyref (ref null $struct)
+        ;; Same, but with br_on_cast_desc_eq.
+        (br_on_cast_desc_eq $block anyref (ref null $struct)
           (local.get $ref)
           (local.get $desc)
         )
@@ -381,7 +381,7 @@
     (block $block (result (ref null $struct))
       (drop
         ;; Same, but with effects we cannot drop.
-        (br_on_cast_desc $block anyref (ref null $struct)
+        (br_on_cast_desc_eq $block anyref (ref null $struct)
           (block (result anyref)
             (call $effect)
             (local.get $ref)
@@ -430,7 +430,7 @@
     (block $block (result (ref null $struct))
       (drop
         ;; Same, but now the cast does not admit nulls.
-        (br_on_cast_desc $block anyref (ref $struct)
+        (br_on_cast_desc_eq $block anyref (ref $struct)
           (local.get $ref)
           (local.get $desc)
         )
@@ -467,7 +467,7 @@
     (block $block (result (ref null $struct))
       (drop
         ;; Same, but now the descriptor is additionally non-null.
-        (br_on_cast_desc $block anyref (ref $struct)
+        (br_on_cast_desc_eq $block anyref (ref $struct)
           (local.get $ref)
           (local.get $desc)
         )
@@ -532,7 +532,7 @@
     (block $block (result (ref null $struct))
       (drop
         ;; Same, but with effects we cannot drop.
-        (br_on_cast_desc $block anyref (ref $struct)
+        (br_on_cast_desc_eq $block anyref (ref $struct)
           (block (result anyref)
             (call $effect)
             (local.get $ref)
@@ -585,8 +585,8 @@
     (drop
       (block $block (result anyref)
         (return
-          ;; Same, but with br_on_cast_desc_fail.
-          (br_on_cast_desc_fail $block anyref (ref null $struct)
+          ;; Same, but with br_on_cast_desc_eq_fail.
+          (br_on_cast_desc_eq_fail $block anyref (ref null $struct)
             (local.get $ref)
             (local.get $desc)
           )
@@ -659,7 +659,7 @@
       (block $block (result anyref)
         (return
           ;; Same, but with effects.
-          (br_on_cast_desc_fail $block anyref (ref null $struct)
+          (br_on_cast_desc_eq_fail $block anyref (ref null $struct)
             (block (result anyref)
               (call $effect)
               (local.get $ref)
@@ -714,7 +714,7 @@
       (block $block (result anyref)
         (return
           ;; Same, but now without admitting null.
-          (br_on_cast_desc_fail $block anyref (ref $struct)
+          (br_on_cast_desc_eq_fail $block anyref (ref $struct)
             (local.get $ref)
             (local.get $desc)
           )
@@ -757,7 +757,7 @@
       (block $block (result anyref)
         (return
           ;; Same, but now the descriptor is additionally non-null.
-          (br_on_cast_desc_fail $block anyref (ref $struct)
+          (br_on_cast_desc_eq_fail $block anyref (ref $struct)
             (local.get $ref)
             (local.get $desc)
           )
@@ -828,7 +828,7 @@
       (block $block (result anyref)
         (return
           ;; Same, but with effects.
-          (br_on_cast_desc_fail $block anyref (ref $struct)
+          (br_on_cast_desc_eq_fail $block anyref (ref $struct)
             (block (result anyref)
               (call $effect)
               (local.get $ref)

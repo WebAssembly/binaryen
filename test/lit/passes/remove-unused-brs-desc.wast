@@ -25,7 +25,7 @@
   ;; CHECK:      (func $no-glb (type $6) (param $sub (ref $sub)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc $l (ref $sub) (ref $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l (ref $sub) (ref $super)
   ;; CHECK-NEXT:     (local.get $sub)
   ;; CHECK-NEXT:     (local.get $super.desc)
   ;; CHECK-NEXT:    )
@@ -38,7 +38,7 @@
       (drop
         ;; We cannot improve the cast type even though it is a supertype of the
         ;; ref type because the cast type is determined by the descriptor.
-        (br_on_cast_desc $l (ref $sub) (ref $super)
+        (br_on_cast_desc_eq $l (ref $sub) (ref $super)
           (local.get $sub)
           (local.get $super.desc)
         )
@@ -51,7 +51,7 @@
   ;; CHECK-NEXT:  (block $l (result (ref null $super))
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (br_on_cast_desc $l (ref $sub) (ref $super)
+  ;; CHECK-NEXT:     (br_on_cast_desc_eq $l (ref $sub) (ref $super)
   ;; CHECK-NEXT:      (block (result (ref $sub))
   ;; CHECK-NEXT:       (local.get $sub)
   ;; CHECK-NEXT:      )
@@ -66,7 +66,7 @@
     (block $l (result anyref)
       (drop
         ;; We can improve the nullability, though, even via fallthrough.
-        (br_on_cast_desc $l anyref (ref null $super)
+        (br_on_cast_desc_eq $l anyref (ref null $super)
           (block (result anyref)
             (local.get $sub)
           )
@@ -80,7 +80,7 @@
   ;; CHECK:      (func $only-improve-nullability (type $10) (param $sub (ref null $sub)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc $l anyref (ref $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l anyref (ref $super)
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (local.get $sub)
   ;; CHECK-NEXT:     )
@@ -94,7 +94,7 @@
     (block $l (result anyref)
       (drop
         ;; We do not flip the nullability if the target is already non-nullable.
-        (br_on_cast_desc $l anyref (ref $super)
+        (br_on_cast_desc_eq $l anyref (ref $super)
           (block (result anyref)
             (local.get $sub)
           )
@@ -108,7 +108,7 @@
   ;; CHECK:      (func $fail-no-glb (type $6) (param $sub (ref $sub)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l (ref $sub) (ref $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq_fail $l (ref $sub) (ref $super)
   ;; CHECK-NEXT:     (local.get $sub)
   ;; CHECK-NEXT:     (local.get $super.desc)
   ;; CHECK-NEXT:    )
@@ -121,7 +121,7 @@
       (drop
         ;; We cannot improve the cast type even though it is a supertype of the
         ;; ref type because the cast type is determined by the descriptor.
-        (br_on_cast_desc_fail $l (ref $sub) (ref $super)
+        (br_on_cast_desc_eq_fail $l (ref $sub) (ref $super)
           (local.get $sub)
           (local.get $super.desc)
         )
@@ -133,7 +133,7 @@
   ;; CHECK:      (func $fail-no-improve-nullability (type $6) (param $sub (ref $sub)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l anyref (ref null $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq_fail $l anyref (ref null $super)
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (local.get $sub)
   ;; CHECK-NEXT:     )
@@ -148,7 +148,7 @@
       (drop
         ;; In the fail case we cannot improve the nullability, either, because
         ;; that would make the sent values nullable, which might not be allowed.
-        (br_on_cast_desc_fail $l anyref (ref null $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref null $super)
           (block (result anyref)
             (local.get $sub)
           )
@@ -162,7 +162,7 @@
   ;; CHECK:      (func $fail-only-improve-nullability (type $10) (param $sub (ref null $sub)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l anyref (ref $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq_fail $l anyref (ref $super)
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (local.get $sub)
   ;; CHECK-NEXT:     )
@@ -176,7 +176,7 @@
     (block $l (result anyref)
       (drop
         ;; We do not flip the nullability if the target is already non-nullable.
-        (br_on_cast_desc_fail $l anyref (ref $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref $super)
           (block (result anyref)
             (local.get $sub)
           )
@@ -190,7 +190,7 @@
   ;; CHECK:      (func $unknown-result (type $11) (param $super (ref $super)) (param $sub.desc (ref $sub.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc $l (ref $super) (ref $sub)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l (ref $super) (ref $sub)
   ;; CHECK-NEXT:     (local.get $super)
   ;; CHECK-NEXT:     (local.get $sub.desc)
   ;; CHECK-NEXT:    )
@@ -203,7 +203,7 @@
       (drop
         ;; We do not know anything about the result of this cast and cannot
         ;; optimize.
-        (br_on_cast_desc $l anyref (ref $sub)
+        (br_on_cast_desc_eq $l anyref (ref $sub)
           (local.get $super)
           (local.get $sub.desc)
         )
@@ -215,7 +215,7 @@
   ;; CHECK:      (func $fail-unknown-result (type $11) (param $super (ref $super)) (param $sub.desc (ref $sub.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l (ref $super) (ref $sub)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq_fail $l (ref $super) (ref $sub)
   ;; CHECK-NEXT:     (local.get $super)
   ;; CHECK-NEXT:     (local.get $sub.desc)
   ;; CHECK-NEXT:    )
@@ -228,7 +228,7 @@
       (drop
         ;; We do not know anything about the result of this cast and cannot
         ;; optimize.
-        (br_on_cast_desc_fail $l anyref (ref $sub)
+        (br_on_cast_desc_eq_fail $l anyref (ref $sub)
           (local.get $super)
           (local.get $sub.desc)
         )
@@ -249,7 +249,7 @@
     (block $l (result anyref)
       (drop
         ;; The cast cannot be reached, so we can optimize it out entirely.
-        (br_on_cast_desc $l anyref (ref $super)
+        (br_on_cast_desc_eq $l anyref (ref $super)
           (local.get $uninhabitable)
           (local.get $super.desc)
         )
@@ -284,7 +284,7 @@
     (block $l (result anyref)
       (drop
         ;; Same, but now there are effects we must preserve.
-        (br_on_cast_desc $l anyref (ref $super)
+        (br_on_cast_desc_eq $l anyref (ref $super)
           (block (result (ref none))
             (call $effect)
             (local.get $uninhabitable)
@@ -311,7 +311,7 @@
     (block $l (result anyref)
       (drop
         ;; The cast cannot be reached, so we can optimize it out entirely.
-        (br_on_cast_desc_fail $l anyref (ref $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref $super)
           (local.get $uninhabitable)
           (local.get $super.desc)
         )
@@ -346,7 +346,7 @@
     (block $l (result anyref)
       (drop
         ;; Same, but now there are effects we must preserve.
-        (br_on_cast_desc_fail $l anyref (ref $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref $super)
           (block (result (ref none))
             (call $effect)
             (local.get $uninhabitable)
@@ -364,7 +364,7 @@
   ;; CHECK:      (func $cast-success-on-null (type $9) (param $other (ref null $other)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc $l (ref null $other) (ref null $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l (ref null $other) (ref null $super)
   ;; CHECK-NEXT:     (local.get $other)
   ;; CHECK-NEXT:     (local.get $super.desc)
   ;; CHECK-NEXT:    )
@@ -378,7 +378,7 @@
         ;; We know the cast can only succeed if the value is null. We can
         ;; optimize to a branch on null in principle, but we do not do this yet
         ;; TODO.
-        (br_on_cast_desc $l anyref (ref null $super)
+        (br_on_cast_desc_eq $l anyref (ref null $super)
           (local.get $other)
           (local.get $super.desc)
         )
@@ -407,7 +407,7 @@
       (drop
         ;; We know the cast can only succeed if the value is null. We can
         ;; optimize to a branch on non-null.
-        (br_on_cast_desc_fail $l anyref (ref null $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref null $super)
           (local.get $other)
           (local.get $super.desc)
         )
@@ -442,7 +442,7 @@
       (drop
         ;; Same as above, but now the descriptor is nullable so we have to
         ;; insert a ref.as_non_null to preserve the trap on a null descriptor.
-        (br_on_cast_desc_fail $l anyref (ref null $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref null $super)
           (local.get $other)
           (local.get $super.desc)
         )
@@ -484,7 +484,7 @@
     (block $l (result anyref)
       (drop
         ;; Same, but now there are other effects we must preserve instead.
-        (br_on_cast_desc_fail $l anyref (ref null $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref null $super)
           (block (result (ref null $other))
             (call $effect)
             (local.get $other)
@@ -502,7 +502,7 @@
   ;; CHECK:      (func $cast-success-on-nonnull (type $12) (param $super (ref null $super)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc $l (ref null $super) (ref $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $l (ref null $super) (ref $super)
   ;; CHECK-NEXT:     (local.get $super)
   ;; CHECK-NEXT:     (local.get $super.desc)
   ;; CHECK-NEXT:    )
@@ -515,7 +515,7 @@
       (drop
         ;; We cannot replace this with a br_on_non_null because we would also
         ;; have to check that the descriptor values match.
-        (br_on_cast_desc $l anyref (ref $super)
+        (br_on_cast_desc_eq $l anyref (ref $super)
           (local.get $super)
           (local.get $super.desc)
         )
@@ -527,7 +527,7 @@
   ;; CHECK:      (func $fail-cast-success-on-nonnull (type $12) (param $super (ref null $super)) (param $super.desc (ref $super.desc)) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast_desc_fail $l (ref null $super) (ref $super)
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq_fail $l (ref null $super) (ref $super)
   ;; CHECK-NEXT:     (local.get $super)
   ;; CHECK-NEXT:     (local.get $super.desc)
   ;; CHECK-NEXT:    )
@@ -540,7 +540,7 @@
       (drop
         ;; We cannot replace this with a br_on_null because we would also have
         ;; to check that the descriptor values match.
-        (br_on_cast_desc_fail $l anyref (ref $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref $super)
           (local.get $super)
           (local.get $super.desc)
         )
@@ -563,7 +563,7 @@
     (block $l (result anyref)
       (drop
         ;; We know based on the types that the cast will fail. We can remove it.
-        (br_on_cast_desc $l anyref (ref $super)
+        (br_on_cast_desc_eq $l anyref (ref $super)
           (local.get $other)
           (local.get $super.desc)
         )
@@ -593,7 +593,7 @@
       (drop
         ;; Same, but the descriptor is now nullable, so we need to insert a
         ;; ref.as_non_null to preserve the trap on null descriptor.
-        (br_on_cast_desc $l anyref (ref $super)
+        (br_on_cast_desc_eq $l anyref (ref $super)
           (local.get $other)
           (local.get $super.desc)
         )
@@ -630,7 +630,7 @@
     (block $l (result anyref)
       (drop
         ;; Same, but now there are other effects to preserve.
-        (br_on_cast_desc $l anyref (ref $super)
+        (br_on_cast_desc_eq $l anyref (ref $super)
           (block (result (ref $other))
             (call $effect)
             (local.get $other)
@@ -662,7 +662,7 @@
       (drop
         ;; We know based on the types that the cast will fail. We can replace it
         ;; with an unconditional branch.
-        (br_on_cast_desc_fail $l anyref (ref $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref $super)
           (local.get $other)
           (local.get $super.desc)
         )
@@ -694,7 +694,7 @@
       (drop
         ;; Same, but now the descriptor is nullable and we need to preserve the
         ;; trap on null descriptor.
-        (br_on_cast_desc_fail $l anyref (ref $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref $super)
           (local.get $other)
           (local.get $super.desc)
         )
@@ -733,7 +733,7 @@
     (block $l (result anyref)
       (drop
         ;; Same, but now there are other effects to preserve.
-        (br_on_cast_desc_fail $l anyref (ref $super)
+        (br_on_cast_desc_eq_fail $l anyref (ref $super)
           (block (result (ref $other))
             (call $effect)
             (local.get $other)
@@ -767,7 +767,7 @@
     (block $block (result anyref)
       ;; 3) ReFinalize will make this unreachable BrOn a block. The ref.null
       ;; below needs to be dropped for the block to be valid.
-      (br_on_cast_desc $block nullref (ref null $super)
+      (br_on_cast_desc_eq $block nullref (ref null $super)
         (ref.null none)
         ;; 2) ReFinalize will make this block unreachable because it is no
         ;; longer a branch target.

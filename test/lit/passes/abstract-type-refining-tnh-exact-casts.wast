@@ -95,23 +95,23 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-desc (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $ref-cast-desc-eq (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (ref.cast (ref none)
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref-cast-desc (param $ref anyref) (result anyref)
+  (func $ref-cast-desc-eq (param $ref anyref) (result anyref)
     ;; Unlike the normal casts, it would not be safe to update the target of a
     ;; descriptor cast because it is determined by the descriptor operand and
     ;; changing it would be invalid. But we optimize to a bottom cast anyway, so
     ;; there is no problem.
-    (ref.cast_desc (ref (exact $uninstantiated))
+    (ref.cast_desc_eq (ref (exact $uninstantiated))
       (local.get $ref)
       (struct.new $uninstantiated.desc)
     )
   )
 
-  ;; CHECK:      (func $ref-cast-desc-effect (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $ref-cast-desc-eq-effect (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:  (local.set $1
@@ -130,9 +130,9 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref-cast-desc-effect (param $ref anyref) (result anyref)
+  (func $ref-cast-desc-eq-effect (param $ref anyref) (result anyref)
     ;; Same, but with side effects we cannot drop.
-    (ref.cast_desc (ref (exact $uninstantiated))
+    (ref.cast_desc_eq (ref (exact $uninstantiated))
       (block (result anyref)
         (call $effect)
         (local.get $ref)
@@ -144,20 +144,20 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-desc-null (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $ref-cast-desc-eq-null (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (ref.cast nullref
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref-cast-desc-null (param $ref anyref) (result anyref)
+  (func $ref-cast-desc-eq-null (param $ref anyref) (result anyref)
     ;; If the descriptor cast admits null, we optimize it to a null check.
-    (ref.cast_desc (ref null (exact $uninstantiated))
+    (ref.cast_desc_eq (ref null (exact $uninstantiated))
       (local.get $ref)
       (struct.new $uninstantiated.desc)
     )
   )
 
-  ;; CHECK:      (func $ref-cast-desc-null-effect (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $ref-cast-desc-eq-null-effect (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:  (local.set $1
@@ -176,9 +176,9 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref-cast-desc-null-effect (param $ref anyref) (result anyref)
+  (func $ref-cast-desc-eq-null-effect (param $ref anyref) (result anyref)
     ;; Same, but with side effects we cannot drop.
-    (ref.cast_desc (ref null (exact $uninstantiated))
+    (ref.cast_desc_eq (ref null (exact $uninstantiated))
       (block (result anyref)
         (call $effect)
         (local.get $ref)
@@ -198,7 +198,7 @@
   (func $ref-cast-nullable-desc (param $ref anyref) (result anyref)
     ;; Now the descriptor is nullable, but we assume traps never happen, so
     ;; we don't need to add a null check on it.
-    (ref.cast_desc (ref (exact $uninstantiated))
+    (ref.cast_desc_eq (ref (exact $uninstantiated))
       (local.get $ref)
       (global.get $nullable-desc)
 
@@ -226,7 +226,7 @@
   ;; CHECK-NEXT: )
   (func $ref-cast-nullable-desc-effect (param $ref anyref) (result anyref)
     ;; Same, but with side effects we cannot drop.
-    (ref.cast_desc (ref (exact $uninstantiated))
+    (ref.cast_desc_eq (ref (exact $uninstantiated))
       (block (result anyref)
         (call $effect)
         (local.get $ref)
@@ -318,7 +318,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (br_on_cast $l anyref (ref none)
@@ -327,18 +327,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq (param $ref anyref) (result anyref)
     (block $l (result anyref)
       ;; As with normal br_on_cast, we know this cast will never succeed, so we
       ;; optimize the branch target to be uninhabitable.
-      (br_on_cast_desc $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq $l anyref (ref (exact $uninstantiated))
         (local.get $ref)
         (struct.new $uninstantiated.desc)
       )
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-effect (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-effect (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:  (block $l (result anyref)
@@ -361,10 +361,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-effect (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-effect (param $ref anyref) (result anyref)
     ;; Same, but with side effects we cannot drop.
     (block $l (result anyref)
-      (br_on_cast_desc $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq $l anyref (ref (exact $uninstantiated))
         (block (result anyref)
           (call $effect)
           (local.get $ref)
@@ -377,7 +377,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-null (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-null (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (block (result (ref any))
   ;; CHECK-NEXT:    (br_on_cast $l anyref nullref
@@ -386,18 +386,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-null (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-null (param $ref anyref) (result anyref)
     (block $l (result anyref)
       ;; Same, but now the cast admits nulls, so we must optimize it to a null
       ;; check.
-      (br_on_cast_desc $l anyref (ref null (exact $uninstantiated))
+      (br_on_cast_desc_eq $l anyref (ref null (exact $uninstantiated))
         (local.get $ref)
         (struct.new $uninstantiated.desc)
       )
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-null-effect (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-null-effect (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:  (block $l (result anyref)
@@ -420,10 +420,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-null-effect (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-null-effect (param $ref anyref) (result anyref)
     ;; Same, but with side effects we cannot drop.
     (block $l (result anyref)
-      (br_on_cast_desc $l anyref (ref null (exact $uninstantiated))
+      (br_on_cast_desc_eq $l anyref (ref null (exact $uninstantiated))
         (block (result anyref)
           (call $effect)
           (local.get $ref)
@@ -449,7 +449,7 @@
     (block $l (result anyref)
       ;; Now the descriptor is nullable, but we assume traps never happen, so
       ;; we don't need to add a null check on it.
-      (br_on_cast_desc $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq $l anyref (ref (exact $uninstantiated))
         (local.get $ref)
         (global.get $nullable-desc)
       )
@@ -482,7 +482,7 @@
   (func $br-on-cast-nullable-desc-effect (param $ref anyref) (result anyref)
     (block $l (result anyref)
       ;; Same, but with side effects we cannot drop.
-      (br_on_cast_desc $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq $l anyref (ref (exact $uninstantiated))
         (block (result anyref)
           (call $effect)
           (local.get $ref)
@@ -571,7 +571,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-fail (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-fail (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (block (result (ref none))
   ;; CHECK-NEXT:    (br_on_cast_fail $l anyref (ref none)
@@ -580,17 +580,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-fail (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-fail (param $ref anyref) (result anyref)
     (block $l (result anyref)
       ;; Now we know the cast will always be taken.
-      (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq_fail $l anyref (ref (exact $uninstantiated))
         (local.get $ref)
         (struct.new $uninstantiated.desc)
       )
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-fail-effect (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-fail-effect (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:  (block $l (result anyref)
@@ -613,10 +613,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-fail-effect (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-fail-effect (param $ref anyref) (result anyref)
     ;; Same, but with side effects we cannot drop.
     (block $l (result anyref)
-      (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq_fail $l anyref (ref (exact $uninstantiated))
         (block (result anyref)
           (call $effect)
           (local.get $ref)
@@ -629,7 +629,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-fail-null (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-fail-null (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (br_on_cast_fail $l anyref nullref
@@ -638,10 +638,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-fail-null (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-fail-null (param $ref anyref) (result anyref)
     (block $l (result anyref)
       ;; Now we know the cast will always be taken, except on nulls.
-      (br_on_cast_desc_fail $l anyref (ref null (exact $uninstantiated))
+      (br_on_cast_desc_eq_fail $l anyref (ref null (exact $uninstantiated))
         (local.get $ref)
         (struct.new $uninstantiated.desc)
       )
@@ -649,7 +649,7 @@
   )
 
 
-  ;; CHECK:      (func $br-on-cast-desc-fail-null-effect (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-fail-null-effect (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:  (block $l (result anyref)
@@ -672,10 +672,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-fail-null-effect (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-fail-null-effect (param $ref anyref) (result anyref)
     ;; Same, but with side effects we cannot drop.
     (block $l (result anyref)
-      (br_on_cast_desc_fail $l anyref (ref null (exact $uninstantiated))
+      (br_on_cast_desc_eq_fail $l anyref (ref null (exact $uninstantiated))
         (block (result anyref)
           (call $effect)
           (local.get $ref)
@@ -701,7 +701,7 @@
     (block $l (result anyref)
       ;; Now the descriptor is nullable, but we assume traps never happen, so
       ;; we don't need to add a null check on it.
-      (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq_fail $l anyref (ref (exact $uninstantiated))
         (local.get $ref)
         (global.get $nullable-desc)
       )
@@ -734,7 +734,7 @@
   (func $br-on-cast-nullable-desc-fail-effect (param $ref anyref) (result anyref)
     (block $l (result anyref)
       ;; Same, but with side effects we cannot drop.
-      (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
+      (br_on_cast_desc_eq_fail $l anyref (ref (exact $uninstantiated))
         (block (result anyref)
           (call $effect)
           (local.get $ref)
@@ -747,7 +747,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-fail-squared (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-fail-squared (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 (ref none))
   ;; CHECK-NEXT:  (block $l (result anyref)
   ;; CHECK-NEXT:   (block (result (ref none))
@@ -764,13 +764,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-desc-fail-squared (param $ref anyref) (result anyref)
+  (func $br-on-cast-desc-eq-fail-squared (param $ref anyref) (result anyref)
     (block $l (result anyref)
-      ;; We should update the type of the inner br_on_cast_desc_fail after
+      ;; We should update the type of the inner br_on_cast_desc_eq_fail after
       ;; optimizing it so that the local produced when optimizing the outer
-      ;; br_on_cast_desc_fail has the more refined type.
-      (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
-        (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
+      ;; br_on_cast_desc_eq_fail has the more refined type.
+      (br_on_cast_desc_eq_fail $l anyref (ref (exact $uninstantiated))
+        (br_on_cast_desc_eq_fail $l anyref (ref (exact $uninstantiated))
           (local.get $ref)
           (struct.new $uninstantiated.desc)
         )

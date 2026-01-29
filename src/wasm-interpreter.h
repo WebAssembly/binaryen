@@ -2099,13 +2099,13 @@ public:
     switch (curr->op) {
       case BrOnCast:
       case BrOnCastFail:
-      case BrOnCastDesc:
-      case BrOnCastDescFail: {
+      case BrOnCastDescEq:
+      case BrOnCastDescEqFail: {
         auto cast = curr->desc ? doDescCast(curr) : doCast(curr);
         if (auto* breaking = cast.getBreaking()) {
           return *breaking;
         } else if (auto* original = cast.getFailure()) {
-          if (curr->op == BrOnCast || curr->op == BrOnCastDesc) {
+          if (curr->op == BrOnCast || curr->op == BrOnCastDescEq) {
             return *original;
           } else {
             return Flow(curr->name, *original);
@@ -2113,7 +2113,7 @@ public:
         } else {
           auto* result = cast.getSuccess();
           assert(result);
-          if (curr->op == BrOnCast || curr->op == BrOnCastDesc) {
+          if (curr->op == BrOnCast || curr->op == BrOnCastDescEq) {
             return Flow(curr->name, *result);
           } else {
             return *result;

@@ -4602,12 +4602,12 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeRefCast(Type(heapType, Nullable, exactness),
                                      false);
         }
-        case BinaryConsts::RefCastDesc: {
+        case BinaryConsts::RefCastDescEq: {
           auto [heapType, exactness] = getHeapType();
           return builder.makeRefCast(Type(heapType, NonNullable, exactness),
                                      true);
         }
-        case BinaryConsts::RefCastDescNull: {
+        case BinaryConsts::RefCastDescEqNull: {
           auto [heapType, exactness] = getHeapType();
           return builder.makeRefCast(Type(heapType, Nullable, exactness), true);
         }
@@ -4617,8 +4617,8 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::BrOnCast:
         case BinaryConsts::BrOnCastFail:
-        case BinaryConsts::BrOnCastDesc:
-        case BinaryConsts::BrOnCastDescFail: {
+        case BinaryConsts::BrOnCastDescEq:
+        case BinaryConsts::BrOnCastDescEqFail: {
           auto flags = getInt8();
           auto srcNull = (flags & BinaryConsts::BrOnCastFlag::InputNullable)
                            ? Nullable
@@ -4631,10 +4631,10 @@ Result<> WasmBinaryReader::readInst() {
           auto [dstType, dstExact] = getHeapType();
           auto in = Type(srcType, srcNull, srcExact);
           auto cast = Type(dstType, dstNull, dstExact);
-          auto kind = op == BinaryConsts::BrOnCast       ? BrOnCast
-                      : op == BinaryConsts::BrOnCastFail ? BrOnCastFail
-                      : op == BinaryConsts::BrOnCastDesc ? BrOnCastDesc
-                                                         : BrOnCastDescFail;
+          auto kind = op == BinaryConsts::BrOnCast         ? BrOnCast
+                      : op == BinaryConsts::BrOnCastFail   ? BrOnCastFail
+                      : op == BinaryConsts::BrOnCastDescEq ? BrOnCastDescEq
+                                                           : BrOnCastDescEqFail;
           return builder.makeBrOn(label, kind, in, cast);
         }
         case BinaryConsts::StructNew:
