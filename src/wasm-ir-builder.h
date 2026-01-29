@@ -128,23 +128,20 @@ public:
   // signatures ensure that there are no missing fields.
   Result<> makeNop();
   Result<> makeBlock(Name label, Signature sig);
-  Result<> makeIf(Name label,
-                  Signature sig,
-                  const CodeAnnotation& annotations = {});
+  Result<>
+  makeIf(Name label, Signature sig, const CodeAnnotation& annotations = {});
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
                      const CodeAnnotation& annotations = {});
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
-  Result<> makeCall(Name func,
-                    bool isReturn,
-                    const CodeAnnotation& annotations = {});
   Result<>
-  makeCallIndirect(Name table,
-                   HeapType type,
-                   bool isReturn,
-                   const CodeAnnotation& annotations = {});
+  makeCall(Name func, bool isReturn, const CodeAnnotation& annotations = {});
+  Result<> makeCallIndirect(Name table,
+                            HeapType type,
+                            bool isReturn,
+                            const CodeAnnotation& annotations = {});
   Result<> makeLocalGet(Index local);
   Result<> makeLocalSet(Index local);
   Result<> makeLocalTee(Index local);
