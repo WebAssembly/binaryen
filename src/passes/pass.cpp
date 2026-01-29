@@ -867,9 +867,11 @@ void PassRunner::run() {
     for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
       // pass breaks it, so we can print the before and after
-      std::stringstream moduleBefore;
+      std::string moduleBefore;
       if (passDebug == 2 && !isNested) {
-        moduleBefore << *wasm << '\n';
+        std::stringstream ss;
+        ss << *wasm << '\n';
+        moduleBefore = ss.str();
       }
       // prepare to run
       std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
@@ -896,7 +898,7 @@ void PassRunner::run() {
           if (passDebug >= 2) {
             Fatal() << "Last pass (" << pass->name
                     << ") broke validation. Here is the module before: \n"
-                    << moduleBefore.str() << "\n";
+                    << moduleBefore << "\n";
           } else {
             Fatal() << "Last pass (" << pass->name
                     << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 "
@@ -1026,9 +1028,12 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   // useful - leave it to the entire module to fail validation in that case.
   bool extraFunctionValidation =
     passDebug == 2 && options.validate && !pass->name.empty();
-  std::stringstream bodyBefore;
+
+  std::string bodyBefore;
   if (extraFunctionValidation) {
-    bodyBefore << *func->body << '\n';
+    std::stringstream ss;
+    ss << *func->body << '\n';
+    bodyBefore = ss.str();
   }
 
   // Function-parallel passes get a new instance per function
@@ -1042,7 +1047,7 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
       Fatal() << "Last nested function-parallel pass (" << pass->name
               << ") broke validation of function " << func->name
               << ". Here is the function body before:\n"
-              << bodyBefore.str() << "\n\nAnd here it is now:\n"
+              << bodyBefore << "\n\nAnd here it is now:\n"
               << *func->body << '\n';
     }
   }
