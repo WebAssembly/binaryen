@@ -78,15 +78,6 @@ public:
     jsTag.type = Signature(Type(HeapType::ext, Nullable), Type::none);
   }
 
-  Tag* getImportedTag(Tag* tag) override {
-    for (auto* imported : {&wasmTag, &jsTag}) {
-      if (imported->module == tag->module && imported->base == tag->base) {
-        return imported;
-      }
-    }
-    Fatal() << "missing host tag " << tag->module << '.' << tag->base;
-  }
-
   Literal getImportedFunction(Function* import) override {
     if (linkedInstances.count(import->module)) {
       return getImportInstance(import)->getExportedFunction(import->base);

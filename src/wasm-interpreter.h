@@ -2977,11 +2977,6 @@ public:
     virtual void trap(std::string_view why) = 0;
     virtual void hostLimit(std::string_view why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
-    // Get the Tag instance for a tag implemented in the host, that is, not
-    // among the linked ModuleRunner instances, but imported from the host.
-    virtual Tag* getImportedTag(Tag* tag) {
-      WASM_UNREACHABLE("TODO remove this");
-    }
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -3755,24 +3750,6 @@ protected:
     inst = iter->second.get();
     return inst->getExportedFunction(func->base);
   }
-
-  // Get a tag object while looking through imports, i.e., this uses the name as
-  // the name of the tag in the current module, and finds the actual canonical
-  // Tag* object for it: the Tag in this module, if not imported, and if
-  // imported, the Tag in the originating module.
-  // Tag* getCanonicalTag(Name name) {
-  //   auto* inst = self();
-  //   auto* tag = inst->wasm.getTag(name);
-  //   if (!tag->imported()) {
-  //     return tag;
-  //   }
-  //   auto iter = inst->linkedInstances.find(tag->module);
-  //   if (iter == inst->linkedInstances.end()) {
-  //     return externalInterface->getImportedTag(tag);
-  //   }
-  //   inst = iter->second.get();
-  //   return inst->getExportedTag(tag->base);
-  // }
 
 public:
   Flow visitCall(Call* curr) {
