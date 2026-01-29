@@ -84,6 +84,12 @@ public:
     throw FailToEvalException{"Imported table access."};
   }
 
+  Tag* getTagOrNull(ImportNames name,
+                    const Signature& signature) const override {
+    Fatal() << "Not implemented.";
+    return nullptr;
+  }
+
 private:
   mutable Literals stubLiteral;
 };
@@ -391,10 +397,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     // TODO: Be more precise about the types we allow these imports to have.
     return Literal(std::make_shared<FuncData>(import->name, nullptr, f),
                    import->type);
-  }
-
-  Tag* getImportedTag(Tag* tag) override {
-    WASM_UNREACHABLE("missing imported tag");
   }
 
   int8_t load8s(Address addr, Name memoryName) override {

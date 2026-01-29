@@ -23,7 +23,36 @@
 
 namespace wasm {
 
+namespace {
+
 using Loggings = std::vector<Literal>;
+
+Tag& getWasmTag() {
+  static Tag tag = []() {
+    Tag tag;
+    tag.module = "fuzzing-support";
+    tag.base = "wasmtag";
+    tag.name = "imported-wasm-tag";
+    tag.type = Signature(Type::i32, Type::none);
+
+    return tag;
+  }();
+  return tag;
+}
+
+Tag& getJsTag() {
+  static Tag tag = []() {
+    Tag tag;
+    tag.module = "fuzzing-support";
+    tag.base = "jstag";
+    tag.name = "imported-js-tag";
+    tag.type = Signature(Type(HeapType::ext, Nullable), Type::none);
+    return tag;
+  }();
+  return tag;
+}
+
+} // namespace
 
 // Logs every relevant import call parameter.
 struct LoggingExternalInterface : public ShellExternalInterface {
@@ -43,10 +72,10 @@ private:
   Module& wasm;
 
   // The imported fuzzing tag for wasm.
-  Tag wasmTag;
+  const Tag& wasmTag;
 
   // The imported tag for js exceptions.
-  Tag jsTag;
+  const Tag& jsTag;
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
@@ -57,34 +86,14 @@ public:
     Loggings& loggings,
     Module& wasm,
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
-    : ShellExternalInterface(linkedInstances_), loggings(loggings), wasm(wasm) {
+    : ShellExternalInterface(linkedInstances_), loggings(loggings), wasm(wasm),
+      wasmTag(getWasmTag()), jsTag(getJsTag()) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = *exp->getInternalName();
         break;
       }
     }
-
-    // Set up tags. (Setting these values is useful for debugging - making the
-    // Tag objects valid - and also appears in fuzz-exec logging.)
-    wasmTag.module = "fuzzing-support";
-    wasmTag.base = "wasmtag";
-    wasmTag.name = "imported-wasm-tag";
-    wasmTag.type = Signature(Type::i32, Type::none);
-
-    jsTag.module = "fuzzing-support";
-    jsTag.base = "jstag";
-    jsTag.name = "imported-js-tag";
-    jsTag.type = Signature(Type(HeapType::ext, Nullable), Type::none);
-  }
-
-  Tag* getImportedTag(Tag* tag) override {
-    for (auto* imported : {&wasmTag, &jsTag}) {
-      if (imported->module == tag->module && imported->base == tag->base) {
-        return imported;
-      }
-    }
-    Fatal() << "missing host tag " << tag->module << '.' << tag->base;
   }
 
   Literal getImportedFunction(Function* import) override {
@@ -299,6 +308,27 @@ public:
   void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
 };
 
+class FuzzerImportResolver
+  : public LinkedInstancesImportResolver<ModuleRunner> {
+  using LinkedInstancesImportResolver::LinkedInstancesImportResolver;
+  Tag* getTagOrNull(ImportNames name, const Signature& type) const override {
+    if (name.module == "fuzzing-support") {
+      if (name.name == "wasmtag") {
+        return &wasmTag;
+      }
+      if (name.name == "jstag") {
+        return &jsTag;
+      }
+    }
+
+    return LinkedInstancesImportResolver::getTagOrNull(name, type);
+  }
+
+private:
+  Tag& wasmTag = getWasmTag();
+  Tag& jsTag = getJsTag();
+};
+
 // gets execution results from a wasm module. this is useful for fuzzing
 //
 // we can only get results when there are no imports. we then call each method
@@ -319,12 +349,19 @@ struct ExecutionResults {
     try {
       // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
-      auto instance = std::make_shared<ModuleRunner>(wasm, &interface);
+
+      // `linkedInstances` is empty at this point and the below constructors
+      // make copies.
+      std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
+      auto instance = std::make_shared<ModuleRunner>(
+        wasm,
+        &interface,
+        linkedInstances,
+        std::make_shared<FuzzerImportResolver>(linkedInstances));
       instantiate(*instance, interface);
 
       // Instantiate the second, if there is one (we instantiate both before
       // running anything, so that we match the behavior of fuzz_shell.js).
-      std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
       std::unique_ptr<LoggingExternalInterface> secondInterface;
       std::shared_ptr<ModuleRunner> secondInstance;
       if (second) {
