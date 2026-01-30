@@ -2233,7 +2233,7 @@ struct BinaryLocations {
 // Forward declaration for FuncEffectsMap.
 class EffectAnalyzer;
 
-// Code annotations for VMs.
+// Code annotations.
 struct CodeAnnotation {
   // Branch Hinting proposal: Whether the branch is likely, or unlikely.
   std::optional<bool> branchLikely;
@@ -2243,9 +2243,11 @@ struct CodeAnnotation {
   static const uint8_t AlwaysInline = 127;
   std::optional<uint8_t> inline_;
 
-  // Binaryen intrinsic: Mark as having side effects if moved, but having no
-  // effects in the current position. See |deadIfUnused| in effects.h.
-  // TODO: link to spec
+  // Toolchain hint: If this expression's result is unused, then the entire
+  // thing can be considered dead and removable.
+  // TODO: link to spec somewhere
+  // This is implemented as an optional of monostate (rather than a bool) for
+  // consistency with the other hints, all of whom are optionals.
   std::optional<std::monostate> deadIfUnused;
 
   bool operator==(const CodeAnnotation& other) const {

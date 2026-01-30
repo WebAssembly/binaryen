@@ -131,7 +131,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   // Check if a parent expression must be kept around, given the knowledge that
   // its result is unused (dropped). This is basically just a call to
   // ShallowEffectAnalyzer to see if we can remove it, except that given the
-  // result is unused, the relevant hint may help us.
+  // result is unused, the relevant hint may help us. (This just checks the
+  // parent itself: it may have children that the caller must check and keep
+  // around if so.)
   bool mustKeepUnusedParent(Expression* curr) {
     if (auto* call = curr->dynCast<Call>()) {
       auto& annotations = getFunction()->codeAnnotations;
@@ -139,7 +141,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       if (iter != annotations.end()) {
         auto& annotation = iter->second;
         if (annotation.deadIfUnused) {
-          // No need to check effects, this can be removed.
+          // This is unused, so it is dead - no need to even check effects.
           return false;
         }
       }

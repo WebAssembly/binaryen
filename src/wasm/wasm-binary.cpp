@@ -1765,7 +1765,7 @@ WasmBinaryWriter::getDeadIfUnusedHintsBuffer() {
     Annotations::DeadIfUnusedHint,
     [](const CodeAnnotation& annotation) { return annotation.deadIfUnused; },
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
-      // Hint size, always 0 for now.
+      // Hint size, always empty.
       buffer << U32LEB(0);
     });
 }
