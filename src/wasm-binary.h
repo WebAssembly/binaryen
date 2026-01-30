@@ -1441,6 +1441,7 @@ public:
 
   std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
   std::optional<BufferWithRandomAccess> getInlineHintsBuffer();
+  std::optional<BufferWithRandomAccess> getDeadIfUnusedHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1733,6 +1734,7 @@ public:
 
   void readBranchHints(size_t payloadLen);
   void readInlineHints(size_t payloadLen);
+  void readDeadIfUnusedHints(size_t payloadLen);
 
   std::tuple<Address, Address, Index, MemoryOrder>
   readMemoryAccess(bool isAtomic, bool isRMW);

@@ -91,10 +91,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           curr->is<Loop>() || curr->is<Try>() || curr->is<TryTable>()) {
         return curr;
       }
-      // Check if this expression itself has side effects, ignoring children.
-      EffectAnalyzer self(getPassOptions(), *getModule());
-      self.visit(curr);
-      if (self.hasUnremovableSideEffects()) {
+      // Check if this expression itself must be kept.
+      if (mustKeepUnusedParent(curr)) {
         return curr;
       }
       // The result isn't used, and this has no side effects itself, so we can
@@ -128,6 +126,26 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // Otherwise, give up.
       return curr;
     }
+  }
+
+  // Check if a parent expression must be kept around, given the knowledge that
+  // its result is unused (dropped). This is basically just a call to
+  // ShallowEffectAnalyzer to see if we can remove it, except that given the
+  // result is unused, the relevant hint may help us.
+  bool mustKeepUnusedParent(Expression* curr) {
+    if (auto* call = curr->dynCast<Call>()) {
+      auto& annotations = getFunction()->codeAnnotations;
+      auto iter = annotations.find(call);
+      if (iter != annotations.end()) {
+        auto& annotation = iter->second;
+        if (annotation.deadIfUnused) {
+          // No need to check effects, this can be removed.
+          return false;
+        }
+      }
+    }
+    ShallowEffectAnalyzer self(getPassOptions(), *getModule(), curr);
+    return self.hasUnremovableSideEffects();
   }
 
   void visitBlock(Block* curr) {
