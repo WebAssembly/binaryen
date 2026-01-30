@@ -629,10 +629,10 @@ function test_core() {
       module.i32.atomic.load(0,
         module.i32.const(0),
         /* name=*/undefined,
-        binaryen.MemoryOrder.AcqRel
+        binaryen.MemoryOrder.acqrel
       ),
       /*name=*/undefined,
-      binaryen.MemoryOrder.AcqRel
+      binaryen.MemoryOrder.acqrel
     ),
     module.drop(
       module.memory.atomic.wait32(
@@ -1184,19 +1184,19 @@ function test_relaxed_atomics() {
   module.setMemory(1, 1, "memory", [], false, false, "0");
 
   var load = module.i32.load(0, 0, makeInt32(0), "0");
-  binaryen.Load.setMemoryOrder(load, binaryen.MemoryOrder.AcqRel);
+  binaryen.Load.setMemoryOrder(load, binaryen.MemoryOrder.acqrel);
   console.log("Load memory order: " + binaryen.Load.getMemoryOrder(load));
 
   var store = module.i32.store(0, 0, makeInt32(0), makeInt32(1), "0");
-  binaryen.Store.setMemoryOrder(store, binaryen.MemoryOrder.AcqRel);
+  binaryen.Store.setMemoryOrder(store, binaryen.MemoryOrder.acqrel);
   console.log("Store memory order: " + binaryen.Store.getMemoryOrder(store));
 
-  var rmw = module.i32.atomic.rmw.add(0, makeInt32(0), makeInt32(1), "0", binaryen.MemoryOrder.SeqCst);
-  binaryen.AtomicRMW.setMemoryOrder(rmw, binaryen.MemoryOrder.AcqRel);
+  var rmw = module.i32.atomic.rmw.add(0, makeInt32(0), makeInt32(1), "0", binaryen.MemoryOrder.seqcst);
+  binaryen.AtomicRMW.setMemoryOrder(rmw, binaryen.MemoryOrder.acqrel);
   console.log("RMW memory order: " + binaryen.AtomicRMW.getMemoryOrder(rmw));
 
-  var cmpxchg = module.i32.atomic.rmw.cmpxchg(0, makeInt32(0), makeInt32(0), makeInt32(1), "0", binaryen.MemoryOrder.SeqCst);
-  binaryen.AtomicCmpxchg.setMemoryOrder(cmpxchg, binaryen.MemoryOrder.AcqRel);
+  var cmpxchg = module.i32.atomic.rmw.cmpxchg(0, makeInt32(0), makeInt32(0), makeInt32(1), "0", binaryen.MemoryOrder.seqcst);
+  binaryen.AtomicCmpxchg.setMemoryOrder(cmpxchg, binaryen.MemoryOrder.acqrel);
   console.log("Cmpxchg memory order: " + binaryen.AtomicCmpxchg.getMemoryOrder(cmpxchg));
 
   var body = module.block("body", [
