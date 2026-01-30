@@ -2243,14 +2243,8 @@ struct CodeAnnotation {
   static const uint8_t AlwaysInline = 127;
   std::optional<uint8_t> inline_;
 
-  // Binaryen intrinsic: Mark as having side effects if moved, but having no
-  // effects in the current position. See |callsIfMoved| in effects.h.
-  // TODO: link to spec
-  std::optional<std::monostate> effectsIfMoved;
-
   bool operator==(const CodeAnnotation& other) const {
-    return branchLikely == other.branchLikely && inline_ == other.inline_ &&
-           effectsIfMoved == other.effectsIfMoved;
+    return branchLikely == other.branchLikely && inline_ == other.inline_;
   }
 };
 

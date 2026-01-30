@@ -2663,12 +2663,6 @@ void IRBuilder::applyAnnotations(Expression* expr,
     assert(func);
     func->codeAnnotations[expr].inline_ = annotation.inline_;
   }
-
-  if (annotation.effectsIfMoved) {
-    // Only possible inside functions.
-    assert(func);
-    func->codeAnnotations[expr].effectsIfMoved.emplace();
-  }
 }
 
 } // namespace wasm

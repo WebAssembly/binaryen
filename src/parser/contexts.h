@@ -1315,8 +1315,6 @@ struct AnnotationParserCtx {
         branchHint = &a;
       } else if (a.kind == Annotations::InlineHint) {
         inlineHint = &a;
-      } else if (a.kind == Annotations::EffectsIfMovedHint) {
-        ret.effectsIfMoved.emplace();
       }
     }
 
