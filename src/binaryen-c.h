@@ -1554,13 +1554,9 @@ BINARYEN_API void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
 
 // Load
 
-// Gets whether a `load` expression is atomic (is an `atomic.load`). See also
-// `BinaryenLoadGetMemoryOrder`.
+// Gets whether a `load` expression is atomic (is an `atomic.load`), i.e. has a
+// memory order other than Unordered. See also `BinaryenLoadGetMemoryOrder`.
 BINARYEN_API bool BinaryenLoadIsAtomic(BinaryenExpressionRef expr);
-// Deprecated in favor of `BinaryenLoadSetMemoryOrder`. Sets a `load`'s memory
-// ordering to `BinaryenMemoryOrderSeqCst`.
-WASM_DEPRECATED BINARYEN_API void
-BinaryenLoadSetAtomic(BinaryenExpressionRef expr, bool isAtomic);
 // Get the (atomic / non-atomic) memory order of a Load. See
 // `BinaryenMemoryOrder`.
 BINARYEN_API BinaryenMemoryOrder
@@ -1598,13 +1594,9 @@ BINARYEN_API void BinaryenLoadSetPtr(BinaryenExpressionRef expr,
 
 // Store
 
-// Gets whether a `store` expression is atomic (is an `atomic.store`). See also
-// `BinaryenStoreGetMemoryOrder`.
+// Gets whether a `store` expression is atomic (is an `atomic.store`), i.e. as a
+// memory order other than Unordered. See also `BinaryenStoreGetMemoryOrder`.
 BINARYEN_API bool BinaryenStoreIsAtomic(BinaryenExpressionRef expr);
-// Deprecated in favor of `BinaryenStoreSetMemoryOrder`. Sets a `store`'s
-// memory ordering to `BinaryenMemoryOrderSeqCst`.
-WASM_DEPRECATED BINARYEN_API void
-BinaryenStoreSetAtomic(BinaryenExpressionRef expr, bool isAtomic);
 // Get the (atomic / non-atomic) memory order of a Store. See
 // `BinaryenMemoryOrder`.
 BINARYEN_API BinaryenMemoryOrder
