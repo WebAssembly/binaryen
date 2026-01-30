@@ -2200,10 +2200,8 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
   } else if (sectionName == Annotations::DeadIfUnusedHint) {
-    deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [this, payloadLen]() {
-                              this->readDeadIfUnusedHints(payloadLen);
-                            }});
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readDeadIfUnusedHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5506,16 +5504,15 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 }
 
 void WasmBinaryReader::readDeadIfUnusedHints(size_t payloadLen) {
-  readExpressionHints(Annotations::DeadIfUnusedHint,
-                      payloadLen,
-                      [&](CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 0) {
-                          throwError("bad DeadIfUnusedHint size");
-                        }
+  readExpressionHints(
+    Annotations::DeadIfUnusedHint, payloadLen, [&](CodeAnnotation& annotation) {
+      auto size = getU32LEB();
+      if (size != 0) {
+        throwError("bad DeadIfUnusedHint size");
+      }
 
-                        annotation.deadIfUnused.emplace();
-                      });
+      annotation.deadIfUnused.emplace();
+    });
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>
