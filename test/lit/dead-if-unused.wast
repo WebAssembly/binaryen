@@ -9,7 +9,7 @@
 
   ;; CHECK:      (func $func (type $0)
   ;; CHECK-NEXT:  (call $func)
-  ;; CHECK-NEXT:  (@binaryen.effects.if.moved)
+  ;; CHECK-NEXT:  (@binaryen.dead.if.unused)
   ;; CHECK-NEXT:  (call $func)
   ;; CHECK-NEXT:  (call $func)
   ;; CHECK-NEXT: )
@@ -17,14 +17,14 @@
 
   ;; RTRIP:      (func $func (type $0)
   ;; RTRIP-NEXT:  (call $func)
-  ;; RTRIP-NEXT:  (@binaryen.effects.if.moved)
+  ;; RTRIP-NEXT:  (@binaryen.dead.if.unused)
   ;; RTRIP-NEXT:  (call $func)
   ;; RTRIP-NEXT:  (call $func)
   ;; RTRIP-NEXT: )
   (func $func
     ;; Three calls, one annotated in the middle.
     (call $func)
-    (@binaryen.effects.if.moved)
+    (@binaryen.dead.if.unused)
     (call $func)
     (call $func)
   )

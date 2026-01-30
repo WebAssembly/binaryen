@@ -16,7 +16,7 @@
  (func $calls-dropped (param $x i32) (result i32)
   ;; This call is dropped, and marked with the hint, so we can remove it.
   (drop
-   (@binaryen.effects.if.moved)
+   (@binaryen.dead.if.unused)
    (call $calls-dropped
     (i32.const 0)
    )
@@ -24,7 +24,7 @@
   ;; As above, but a parameter has effects. We must keep that around, without
   ;; the call.
   (drop
-   (@binaryen.effects.if.moved)
+   (@binaryen.dead.if.unused)
    (call $calls-dropped
     (local.tee $x
      (i32.const 1)
@@ -42,13 +42,13 @@
 
  ;; CHECK:      (func $calls-used (type $0) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (local.set $x
- ;; CHECK-NEXT:   (@binaryen.effects.if.moved)
+ ;; CHECK-NEXT:   (@binaryen.dead.if.unused)
  ;; CHECK-NEXT:   (call $calls-used
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $x
- ;; CHECK-NEXT:   (@binaryen.effects.if.moved)
+ ;; CHECK-NEXT:   (@binaryen.dead.if.unused)
  ;; CHECK-NEXT:   (call $calls-used
  ;; CHECK-NEXT:    (local.tee $x
  ;; CHECK-NEXT:     (i32.const 1)
@@ -65,13 +65,13 @@
  (func $calls-used (param $x i32) (result i32)
   ;; As above, but the calls are not dropped, so we keep them.
   (local.set $x
-   (@binaryen.effects.if.moved)
+   (@binaryen.dead.if.unused)
    (call $calls-used
     (i32.const 0)
    )
   )
   (local.set $x
-   (@binaryen.effects.if.moved)
+   (@binaryen.dead.if.unused)
    (call $calls-used
     (local.tee $x
      (i32.const 1)
