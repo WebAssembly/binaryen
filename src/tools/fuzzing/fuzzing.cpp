@@ -34,10 +34,11 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features),
-    atomicMemoryOrders(wasm.features.hasRelaxedAtomics()
-                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
-                         : std::vector{MemoryOrder::SeqCst}),
     publicTypeValidator(wasm.features) {
+
+  atomicMemoryOrders = wasm.features.hasRelaxedAtomics()
+                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
+                         : std::vector{MemoryOrder::SeqCst};
 
   haveInitialFunctions = !wasm.functions.empty();
 
