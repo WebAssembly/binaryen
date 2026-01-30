@@ -2233,7 +2233,8 @@ struct BinaryLocations {
 // Forward declaration for FuncEffectsMap.
 class EffectAnalyzer;
 
-// Code annotations.
+// Annotation for a particular piece of code. This includes std::optionals for
+// all possible annotations, with the ones present being filled in.
 struct CodeAnnotation {
   // Branch Hinting proposal: Whether the branch is likely, or unlikely.
   std::optional<bool> branchLikely;
@@ -2246,8 +2247,6 @@ struct CodeAnnotation {
   // Toolchain hint: If this expression's result is unused, then the entire
   // thing can be considered dead and removable.
   // TODO: link to spec somewhere
-  // This is implemented as an optional of monostate (rather than a bool) for
-  // consistency with the other hints, all of whom are optionals.
   std::optional<std::monostate> deadIfUnused;
 
   bool operator==(const CodeAnnotation& other) const {
