@@ -69,7 +69,7 @@ namespace Annotations {
 
 const Name BranchHint = "metadata.code.branch_hint";
 const Name InlineHint = "metadata.code.inline";
-const Name DeadIfUnusedHint = "binaryen.effects.if.moved";
+const Name DeadIfUnusedHint = "binaryen.dead.if.unused";
 
 } // namespace Annotations
 
