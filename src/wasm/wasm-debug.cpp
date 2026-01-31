@@ -69,9 +69,9 @@ struct BinaryenDWARFInfo {
   BinaryenDWARFInfo(const Module& wasm) {
     // Get debug sections from the wasm.
     for (auto& section : wasm.customSections) {
-      if (Name(section.name).startsWith(".debug_") && section.data.data()) {
+      if (llvm::StringRef(section.name).startswith(".debug_") && section.data.data()) {
         // TODO: efficiency
-        sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(
+        sections[llvm::StringRef(section.name).substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(
           llvm::StringRef(section.data.data(), section.data.size()));
       }
     }
@@ -290,7 +290,7 @@ struct LineState {
       // FIXME: look at AddrSize on the Unit.
       auto item = makeItem(llvm::dwarf::DW_LNE_set_address, 5);
       item.Data = addr;
-      newOpcodes.push_back(item);
+      newOpcodes.push_back(std::move(item));
     }
     if (line != old.line && !useSpecial) {
       auto item = makeItem(llvm::dwarf::DW_LNS_advance_line);
@@ -298,28 +298,28 @@ struct LineState {
       // negative (note that SData is 64-bit, as LLVM supports 64-bit
       // addresses too).
       item.SData = int32_t(line - old.line);
-      newOpcodes.push_back(item);
+      newOpcodes.push_back(std::move(item));
     }
     if (col != old.col) {
       auto item = makeItem(llvm::dwarf::DW_LNS_set_column);
       item.Data = col;
-      newOpcodes.push_back(item);
+      newOpcodes.push_back(std::move(item));
     }
     if (file != old.file) {
       auto item = makeItem(llvm::dwarf::DW_LNS_set_file);
       item.Data = file;
-      newOpcodes.push_back(item);
+      newOpcodes.push_back(std::move(item));
     }
     if (isa != old.isa) {
       auto item = makeItem(llvm::dwarf::DW_LNS_set_isa);
       item.Data = isa;
-      newOpcodes.push_back(item);
+      newOpcodes.push_back(std::move(item));
     }
     if (discriminator != old.discriminator) {
       // len = 1 (subopcode) + 4 (wasm32 address)
       auto item = makeItem(llvm::dwarf::DW_LNE_set_discriminator, 5);
       item.Data = discriminator;
-      newOpcodes.push_back(item);
+      newOpcodes.push_back(std::move(item));
     }
     if (isStmt != old.isStmt) {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_negate_stmt));
@@ -391,6 +391,19 @@ struct AddrExprMap {
 
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
+    size_t numExprs = 0, numDelims = 0;
+    for (auto& func : wasm.functions) {
+      numExprs += func->expressionLocations.size();
+
+      for (auto& [expr, delim] : func->delimiterLocations) {
+        // May be a little large if 0-delimiters exist
+        numDelims += delim.size();
+      }
+    }
+    startMap.reserve(numExprs);
+    endMap.reserve(numExprs);
+    delimiterMap.reserve(numDelims);
+
     for (auto& func : wasm.functions) {
       for (auto& [expr, span] : func->expressionLocations) {
         add(expr, span);
@@ -427,18 +440,22 @@ struct AddrExprMap {
 
 private:
   void add(Expression* expr, const BinaryLocations::Span span) {
-    assert(startMap.count(span.start) == 0);
-    startMap[span.start] = expr;
-    assert(endMap.count(span.end) == 0);
-    endMap[span.end] = expr;
+    {
+      [[maybe_unused]] bool inserted = startMap.emplace(span.start, expr).second;
+      assert(inserted);
+    }
+    {
+      [[maybe_unused]] bool inserted = endMap.emplace(span.end, expr).second;
+      assert(inserted);
+    }
   }
 
   void add(Expression* expr,
            const BinaryLocations::DelimiterLocations& delimiter) {
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
-        assert(delimiterMap.count(delimiter[i]) == 0);
-        delimiterMap[delimiter[i]] = DelimiterInfo{expr, i};
+        [[maybe_unused]] bool inserted = delimiterMap.emplace(delimiter[i], DelimiterInfo{expr, i}).second;
+        assert(inserted);
       }
     }
   }
@@ -622,23 +639,27 @@ struct LocationUpdater {
   // TODO: should we track the start and end of delimiters, even though they
   //       are just one byte?
   BinaryLocation getNewStart(BinaryLocation oldStart) const {
-    if (hasOldExprStart(oldStart)) {
-      return getNewExprStart(oldStart);
-    } else if (hasOldFuncStart(oldStart)) {
-      return getNewFuncStart(oldStart);
-    } else if (hasOldDelimiter(oldStart)) {
-      return getNewDelimiter(oldStart);
+    if (auto loc = getNewExprStart(oldStart)) {
+      return loc;
+    }
+    if (auto loc = getNewFuncStart(oldStart)) {
+      return loc;
+    }
+    if (auto loc = getNewDelimiter(oldStart)) {
+      return loc;
     }
     return 0;
   }
 
   BinaryLocation getNewEnd(BinaryLocation oldEnd) const {
-    if (hasOldExprEnd(oldEnd)) {
-      return getNewExprEnd(oldEnd);
-    } else if (hasOldFuncEnd(oldEnd)) {
-      return getNewFuncEnd(oldEnd);
-    } else if (hasOldDelimiter(oldEnd)) {
-      return getNewDelimiter(oldEnd);
+    if (auto loc = getNewExprEnd(oldEnd)) {
+      return loc;
+    }
+    if (auto loc = getNewFuncEnd(oldEnd)) {
+      return loc;
+    }
+    if (auto loc = getNewDelimiter(oldEnd)) {
+      return loc;
     }
     return 0;
   }
@@ -706,21 +727,21 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         // it away.
         BinaryLocation oldAddr = state.addr;
         BinaryLocation newAddr = 0;
-        if (locationUpdater.hasOldExprStart(oldAddr)) {
-          newAddr = locationUpdater.getNewExprStart(oldAddr);
+        if (auto loc = locationUpdater.getNewExprStart(oldAddr)) {
+          newAddr = loc;
         }
         // Test for a function's end address first, as LLVM output appears to
         // use 1-past-the-end-of-the-function as a location in that function,
         // and not the next (but the first byte of the next function, which is
         // ambiguously identical to that value, is used at least in low_pc).
-        else if (locationUpdater.hasOldFuncEnd(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncEnd(oldAddr);
-        } else if (locationUpdater.hasOldFuncStart(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncStart(oldAddr);
-        } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
-          newAddr = locationUpdater.getNewDelimiter(oldAddr);
-        } else if (locationUpdater.hasOldExprEnd(oldAddr)) {
-          newAddr = locationUpdater.getNewExprEnd(oldAddr);
+        else if ((loc = locationUpdater.getNewFuncEnd(oldAddr))) {
+          newAddr = loc;
+        } else if ((loc = locationUpdater.getNewFuncStart(oldAddr))) {
+          newAddr = loc;
+        } else if ((loc = locationUpdater.getNewDelimiter(oldAddr))) {
+          newAddr = loc;
+        } else if ((loc = locationUpdater.getNewExprEnd(oldAddr))) {
+          newAddr = loc;
         }
         if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should
@@ -1075,36 +1096,42 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
 }
 
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
-  BinaryenDWARFInfo info(wasm);
+  llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> newSections;
+  {
+    BinaryenDWARFInfo info(wasm);
 
-  // Convert to Data representation, which YAML can use to write.
-  llvm::DWARFYAML::Data data;
-  if (dwarf2yaml(*info.context, data)) {
-    Fatal() << "Failed to parse DWARF to YAML";
+    // Convert to Data representation, which YAML can use to write.
+    llvm::DWARFYAML::Data data;
+    if (dwarf2yaml(*info.context, data)) {
+      Fatal() << "Failed to parse DWARF to YAML";
+    }
+
+    {
+      LocationUpdater locationUpdater(wasm, newLocations);
+
+      updateDebugLines(data, locationUpdater);
+
+      bool is64 = wasm.memories.size() > 0 ? wasm.memories[0]->is64() : false;
+      updateCompileUnits(info, data, locationUpdater, is64);
+
+      updateRanges(data, locationUpdater);
+
+      updateLoc(data, locationUpdater);
+    }
+
+    // Convert to binary sections.
+    newSections =
+      EmitDebugSections(data, false /* EmitFixups for debug_info */);
   }
-
-  LocationUpdater locationUpdater(wasm, newLocations);
-
-  updateDebugLines(data, locationUpdater);
-
-  bool is64 = wasm.memories.size() > 0 ? wasm.memories[0]->is64() : false;
-  updateCompileUnits(info, data, locationUpdater, is64);
-
-  updateRanges(data, locationUpdater);
-
-  updateLoc(data, locationUpdater);
-
-  // Convert to binary sections.
-  auto newSections =
-    EmitDebugSections(data, false /* EmitFixups for debug_info */);
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
   for (auto& section : wasm.customSections) {
-    if (Name(section.name).startsWith(".debug_")) {
-      auto llvmName = section.name.substr(1);
-      if (newSections.count(llvmName)) {
-        auto llvmData = newSections[llvmName]->getBuffer();
+    if (llvm::StringRef(section.name).startswith(".debug_")) {
+      auto llvmName = llvm::StringRef(section.name).substr(1);
+      auto it = newSections.find(llvmName);
+      if (it != newSections.end()) {
+        auto llvmData = it->second->getBuffer();
         section.data.resize(llvmData.size());
         std::copy(llvmData.begin(), llvmData.end(), section.data.data());
       }

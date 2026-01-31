@@ -26,14 +26,21 @@ void dumpInitialLength(DataExtractor &Data, uint64_t &Offset,
 void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   auto AbbrevSetPtr = DCtx.getDebugAbbrev();
   if (AbbrevSetPtr) {
-    for (auto AbbrvDeclSet : *AbbrevSetPtr) {
+    size_t ReserveAttrs = 0;
+    for (const auto &AbbrvDeclSet : *AbbrevSetPtr) {
+      ReserveAttrs += AbbrvDeclSet.second.end() - AbbrvDeclSet.second.begin() + 1;
+    }
+    Y.AbbrevDecls.reserve(Y.AbbrevDecls.size() + ReserveAttrs);
+
+    for (const auto &AbbrvDeclSet : *AbbrevSetPtr) {
       auto ListOffset = AbbrvDeclSet.second.getOffset();
-      for (auto AbbrvDecl : AbbrvDeclSet.second) {
+      for (const auto &AbbrvDecl : AbbrvDeclSet.second) {
         DWARFYAML::Abbrev Abbrv;
         Abbrv.Code = AbbrvDecl.getCode();
         Abbrv.Tag = AbbrvDecl.getTag();
         Abbrv.Children = AbbrvDecl.hasChildren() ? dwarf::DW_CHILDREN_yes
                                                  : dwarf::DW_CHILDREN_no;
+        Abbrv.Attributes.reserve(AbbrvDecl.getNumAttributes());
         for (auto Attribute : AbbrvDecl.attributes()) {
           DWARFYAML::AttributeAbbrev AttAbrv;
           AttAbrv.Attribute = Attribute.Attr;
@@ -43,7 +50,7 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
           Abbrv.Attributes.push_back(AttAbrv);
         }
         Abbrv.ListOffset = ListOffset;
-        Y.AbbrevDecls.push_back(Abbrv);
+        Y.AbbrevDecls.push_back(std::move(Abbrv));
       }
       // XXX BINARYEN: null-terminate the DeclSet. This is needed to separate
       // DeclSets from each other, and to null-terminate the entire list
@@ -52,7 +59,7 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
       DWARFYAML::Abbrev Abbrv;
       Abbrv.Code = 0;
       Abbrv.Tag = dwarf::Tag(0);
-      Y.AbbrevDecls.push_back(Abbrv);
+      Y.AbbrevDecls.push_back(std::move(Abbrv));
     }
   }
 }
@@ -79,13 +86,15 @@ void dumpDebugARanges(DWARFContext &DCtx, DWARFYAML::Data &Y) {
     Range.CuOffset = Set.getHeader().CuOffset;
     Range.AddrSize = Set.getHeader().AddrSize;
     Range.SegSize = Set.getHeader().SegSize;
+
+    Range.Descriptors.reserve(Set.descriptors().end() - Set.descriptors().begin());
     for (auto Descriptor : Set.descriptors()) {
       DWARFYAML::ARangeDescriptor Desc;
       Desc.Address = Descriptor.Address;
       Desc.Length = Descriptor.Length;
       Range.Descriptors.push_back(Desc);
     }
-    Y.ARanges.push_back(Range);
+    Y.ARanges.push_back(std::move(Range));
   }
 }
 
@@ -139,17 +148,18 @@ void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
       DWARFYAML::Loc loc;
       loc.Start = entry.Begin;
       loc.End = entry.End;
+      loc.Location.reserve(entry.Loc.size());
       for (auto x : entry.Loc) {
         loc.Location.push_back(x);
       }
       loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
-      Y.Locs.push_back(loc);
+      Y.Locs.push_back(std::move(loc));
     }
     DWARFYAML::Loc loc;
     loc.Start = 0;
     loc.End = 0;
     loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
-    Y.Locs.push_back(loc);
+    Y.Locs.push_back(std::move(loc));
   }
 }
 
@@ -188,6 +198,7 @@ void dumpDebugPubSections(DWARFContext &DCtx, DWARFYAML::Data &Y) {
 }
 
 void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
+  Y.CompileUnits.reserve(DCtx.getNumCompileUnits());
   for (const auto &CU : DCtx.compile_units()) {
     DWARFYAML::Unit NewUnit;
     NewUnit.Length.setLength(CU->getLength());
@@ -198,6 +209,7 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
       NewUnit.AbbrOffset = Abbreviations->getOffset();
     }
     NewUnit.AddrSize = CU->getAddressByteSize();
+    NewUnit.Entries.reserve(CU->getNumDIEs());
     for (auto DIE : CU->dies()) {
       DWARFYAML::Entry NewEntry;
       DataExtractor EntryData = CU->getDebugInfoExtractor();
@@ -211,6 +223,7 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
 
       auto AbbrevDecl = DIE.getAbbreviationDeclarationPtr();
       if (AbbrevDecl) {
+        NewEntry.Values.reserve(AbbrevDecl->getNumAttributes());
         for (const auto &AttrSpec : AbbrevDecl->attributes()) {
           DWARFYAML::FormValue NewValue;
           NewValue.Value = 0xDEADBEEFDEADBEEF;
@@ -297,13 +310,13 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
               break;
             }
           } while (indirect);
-          NewEntry.Values.push_back(NewValue);
+          NewEntry.Values.push_back(std::move(NewValue));
         }
       }
 
-      NewUnit.Entries.push_back(NewEntry);
+      NewUnit.Entries.push_back(std::move(NewEntry));
     }
-    Y.CompileUnits.push_back(NewUnit);
+    Y.CompileUnits.push_back(std::move(NewUnit));
   }
 }
 
@@ -422,9 +435,9 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
               NewOp.StandardOpcodeData.push_back(LineData.getULEB128(&Offset));
           }
         }
-        DebugLines.Opcodes.push_back(NewOp);
+        DebugLines.Opcodes.push_back(std::move(NewOp));
       }
-      Y.DebugLines.push_back(DebugLines);
+      Y.DebugLines.push_back(std::move(DebugLines));
     }
   }
 }
