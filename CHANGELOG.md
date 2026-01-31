@@ -14,9 +14,9 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
-- The C api now has separate functions for `CallRef` and `ReturnCallRef` matching the semantics of `Call` and `ReturnCall`.
+- The C api now has separate functions for `CallRef` and `ReturnCallRef` matching the semantics of `Call` and `ReturnCall` (#8121).
 - Breaking changes to the C and JS APIs related to atomic operations, in order
-to support the relaxed atomics proposal (currently a part of the [shared everything threads proposal](https://github.com/WebAssembly/shared-everything-threads))
+to support the relaxed atomics proposal (currently a part of the [shared everything threads proposal](https://github.com/WebAssembly/shared-everything-threads)) (#8248).
   - `setAtomic` on atomic loads/stores is removed in favor of `setMemoryOrder`
     `BinaryenLoadSetAtomic(expr, false)` / `load.setAtomic(false)` may be replaced with `BinaryenLoadSetMemoryOrder(expr, BinaryenMemoryOrderUnordered())`,
     `BinaryenLoadSetAtomic(expr, true)` / `load.setAtomic(true)` may be replaced with `BinaryenLoadSetMemoryOrder(expr, BinaryenMemoryOrderSeqCst())`,
