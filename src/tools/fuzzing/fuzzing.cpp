@@ -29,27 +29,40 @@
 
 namespace wasm {
 
+namespace {
+template<typename T>
+std::vector<T> concat(const std::vector<T> a, const std::vector<T> b) {
+  auto added = a;
+  std::copy(b.begin(), b.end(), std::back_inserter(added));
+  return added;
+}
+} // namespace
+
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features),
+    // - funcref cannot be logged because referenced functions can be inlined or
+    // removed during optimization
+    // - there's no point in logging anyref because it is opaque
+    // - don't bother logging tuples
+    loggableTypes(concat(
+      std::vector<Type>{
+        Type::i32,
+        Type::i64,
+        Type::f32,
+        Type::f64,
+      },
+      wasm.features.hasSIMD() ? std::vector<Type>{Type::v128}
+                              : std::vector<Type>())),
+    atomicMemoryOrders(wasm.features.hasRelaxedAtomics()
+                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
+                         : std::vector{MemoryOrder::SeqCst}),
+
     publicTypeValidator(wasm.features) {
 
-  atomicMemoryOrders = wasm.features.hasRelaxedAtomics()
-                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
-                         : std::vector{MemoryOrder::SeqCst};
-
   haveInitialFunctions = !wasm.functions.empty();
-
-  // - funcref cannot be logged because referenced functions can be inlined or
-  // removed during optimization
-  // - there's no point in logging anyref because it is opaque
-  // - don't bother logging tuples
-  loggableTypes = {Type::i32, Type::i64, Type::f32, Type::f64};
-  if (wasm.features.hasSIMD()) {
-    loggableTypes.push_back(Type::v128);
-  }
 
   // Setup params. Start with the defaults.
   globalParams = std::make_unique<FuzzParamsContext>(*this);
