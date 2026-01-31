@@ -157,6 +157,15 @@ function initializeConstants() {
     Module['ExternalKinds'][name] = Module['External' + name] = Module['_BinaryenExternal' + name]();
   });
 
+  // MemoryOrder for atomic operations
+  Module['MemoryOrder'] = {};
+  [ 'Unordered',
+    'SeqCst',
+    'AcqRel'
+   ].forEach(name => {
+    Module['MemoryOrder'][name.toLowerCase()] = Module['_BinaryenMemoryOrder' + name]()
+   });
+
   // Features
   Module['Features'] = {};
   [ 'MVP',
@@ -944,112 +953,112 @@ function wrapModule(module, self = {}) {
       return Module['_BinaryenBinary'](module, Module['GeUInt32'], left, right);
     },
     'atomic': {
-      'load'(offset, ptr, name) {
-        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr, strToStack(name)));
+      'load'(offset, ptr, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr, strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'load8_u'(offset, ptr, name) {
-        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i32'], ptr, strToStack(name)));
+      'load8_u'(offset, ptr, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i32'], ptr, strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
       'load16_u'(offset, ptr, name) {
-        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i32'], ptr, strToStack(name)));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i32'], ptr, strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'store'(offset, ptr, value, name) {
-        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i32'], strToStack(name)));
+      'store'(offset, ptr, value, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'store8'(offset, ptr, value, name) {
-        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i32'], strToStack(name)));
+      'store8'(offset, ptr, value, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'store16'(offset, ptr, value, name) {
-        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i32'], strToStack(name)));
+      'store16'(offset, ptr, value, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
       'rmw': {
-        'add'(offset, ptr, value, name) {
+        'add'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'sub'(offset, ptr, value, name) {
+        'sub'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'and'(offset, ptr, value, name) {
+        'and'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'or'(offset, ptr, value, name) {
+        'or'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xor'(offset, ptr, value, name) {
+        'xor'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xchg'(offset, ptr, value, name) {
+        'xchg'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'cmpxchg'(offset, ptr, expected, replacement, name) {
+        'cmpxchg'(offset, ptr, expected, replacement, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
       },
       'rmw8_u': {
-        'add'(offset, ptr, value, name) {
+        'add'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'sub'(offset, ptr, value, name) {
+        'sub'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'and'(offset, ptr, value, name) {
+        'and'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'or'(offset, ptr, value, name) {
+        'or'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xor'(offset, ptr, value, name) {
+        'xor'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xchg'(offset, ptr, value, name) {
+        'xchg'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'cmpxchg'(offset, ptr, expected, replacement, name) {
+        'cmpxchg'(offset, ptr, expected, replacement, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
       },
       'rmw16_u': {
-        'add'(offset, ptr, value, name) {
+        'add'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'sub'(offset, ptr, value, name) {
+        'sub'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'and'(offset, ptr, value, name) {
+        'and'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'or'(offset, ptr, value, name) {
+        'or'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xor'(offset, ptr, value, name) {
+        'xor'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xchg'(offset, ptr, value, name) {
+        'xchg'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'cmpxchg'(offset, ptr, expected, replacement, name) {
+        'cmpxchg'(offset, ptr, expected, replacement, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'], strToStack(name)));
+            Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
       },
     },
@@ -1237,148 +1246,148 @@ function wrapModule(module, self = {}) {
       return Module['_BinaryenBinary'](module, Module['GeUInt64'], left, right);
     },
     'atomic': {
-      'load'(offset, ptr, name) {
-        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr, strToStack(name)));
+      'load'(offset, ptr, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr, strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'load8_u'(offset, ptr, name) {
-        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i64'], ptr, strToStack(name)));
+      'load8_u'(offset, ptr, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i64'], ptr, strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'load16_u'(offset, ptr, name) {
-        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i64'], ptr, strToStack(name)));
+      'load16_u'(offset, ptr, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i64'], ptr, strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'load32_u'(offset, ptr, name) {
-        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i64'], ptr, strToStack(name)));
+      'load32_u'(offset, ptr, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i64'], ptr, strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'store'(offset, ptr, value, name) {
-        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 8, offset, ptr, value, Module['i64'], strToStack(name)));
+      'store'(offset, ptr, value, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 8, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'store8'(offset, ptr, value, name) {
-        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i64'], strToStack(name)));
+      'store8'(offset, ptr, value, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'store16'(offset, ptr, value, name) {
-        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i64'], strToStack(name)));
+      'store16'(offset, ptr, value, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
-      'store32'(offset, ptr, value, name) {
-        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i64'], strToStack(name)));
+      'store32'(offset, ptr, value, name, order) {
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
       },
       'rmw': {
-        'add'(offset, ptr, value, name) {
+        'add'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 8, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'sub'(offset, ptr, value, name) {
+        'sub'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 8, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'and'(offset, ptr, value, name) {
+        'and'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 8, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'or'(offset, ptr, value, name) {
+        'or'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 8, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xor'(offset, ptr, value, name) {
+        'xor'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 8, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xchg'(offset, ptr, value, name) {
+        'xchg'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 8, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'cmpxchg'(offset, ptr, expected, replacement, name) {
+        'cmpxchg'(offset, ptr, expected, replacement, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicCmpxchg'](module, 8, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicCmpxchg'](module, 8, offset, ptr, expected, replacement, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
       },
       'rmw8_u': {
-        'add'(offset, ptr, value, name) {
+        'add'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'sub'(offset, ptr, value, name) {
+        'sub'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'and'(offset, ptr, value, name) {
+        'and'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'or'(offset, ptr, value, name) {
+        'or'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xor'(offset, ptr, value, name) {
+        'xor'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xchg'(offset, ptr, value, name) {
+        'xchg'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'cmpxchg'(offset, ptr, expected, replacement, name) {
+        'cmpxchg'(offset, ptr, expected, replacement, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
       },
       'rmw16_u': {
-        'add'(offset, ptr, value, name) {
+        'add'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'sub'(offset, ptr, value, name) {
+        'sub'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'and'(offset, ptr, value, name) {
+        'and'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'or'(offset, ptr, value, name) {
+        'or'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xor'(offset, ptr, value, name) {
+        'xor'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xchg'(offset, ptr, value, name) {
+        'xchg'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'cmpxchg'(offset, ptr, expected, replacement, name) {
+        'cmpxchg'(offset, ptr, expected, replacement, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
       },
       'rmw32_u': {
-        'add'(offset, ptr, value, name) {
+        'add'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'sub'(offset, ptr, value, name) {
+        'sub'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'and'(offset, ptr, value, name) {
+        'and'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'or'(offset, ptr, value, name) {
+        'or'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xor'(offset, ptr, value, name) {
+        'xor'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'xchg'(offset, ptr, value, name) {
+        'xchg'(offset, ptr, value, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
-        'cmpxchg'(offset, ptr, expected, replacement, name) {
+        'cmpxchg'(offset, ptr, expected, replacement, name, order) {
           return preserveStack(() =>
-            Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
+            Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'], strToStack(name), typeof order !== 'undefined' ? order : Module['MemoryOrder']['seqcst']));
         },
       },
     },
@@ -3932,8 +3941,11 @@ Module['Load'] = makeExpressionWrapper(Module['_BinaryenLoadId'](), {
   'isAtomic'(expr) {
     return Boolean(Module['_BinaryenLoadIsAtomic'](expr));
   },
-  'setAtomic'(expr, isAtomic) {
-    Module['_BinaryenLoadSetAtomic'](expr, isAtomic);
+  'getMemoryOrder'(expr) {
+    return Module['_BinaryenLoadGetMemoryOrder'](expr);
+  },
+  'setMemoryOrder'(expr, order) {
+    Module['_BinaryenLoadSetMemoryOrder'](expr, order);
   },
   'isSigned'(expr) {
     return Boolean(Module['_BinaryenLoadIsSigned'](expr));
@@ -3971,8 +3983,11 @@ Module['Store'] = makeExpressionWrapper(Module['_BinaryenStoreId'](), {
   'isAtomic'(expr) {
     return Boolean(Module['_BinaryenStoreIsAtomic'](expr));
   },
-  'setAtomic'(expr, isAtomic) {
-    Module['_BinaryenStoreSetAtomic'](expr, isAtomic);
+  'getMemoryOrder'(expr) {
+    return Module['_BinaryenStoreGetMemoryOrder'](expr);
+  },
+  'setMemoryOrder'(expr, order) {
+    Module['_BinaryenStoreSetMemoryOrder'](expr, order);
   },
   'getBytes'(expr) {
     return Module['_BinaryenStoreGetBytes'](expr);
@@ -4148,6 +4163,12 @@ Module['AtomicRMW'] = makeExpressionWrapper(Module['_BinaryenAtomicRMWId'](), {
   'setOp'(expr, op) {
     Module['_BinaryenAtomicRMWSetOp'](expr, op);
   },
+  'getMemoryOrder'(expr) {
+    return Module['_BinaryenAtomicRMWGetMemoryOrder'](expr);
+  },
+  'setMemoryOrder'(expr, order) {
+    Module['_BinaryenAtomicRMWSetMemoryOrder'](expr, order);
+  },
   'getBytes'(expr) {
     return Module['_BinaryenAtomicRMWGetBytes'](expr);
   },
@@ -4175,6 +4196,12 @@ Module['AtomicRMW'] = makeExpressionWrapper(Module['_BinaryenAtomicRMWId'](), {
 });
 
 Module['AtomicCmpxchg'] = makeExpressionWrapper(Module['_BinaryenAtomicCmpxchgId'](), {
+  'getMemoryOrder'(expr) {
+    return Module['_BinaryenAtomicCmpxchgGetMemoryOrder'](expr);
+  },
+  'setMemoryOrder'(expr, order) {
+    Module['_BinaryenAtomicCmpxchgSetMemoryOrder'](expr, order);
+  },
   'getBytes'(expr) {
     return Module['_BinaryenAtomicCmpxchgGetBytes'](expr);
   },
