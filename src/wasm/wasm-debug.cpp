@@ -396,7 +396,7 @@ struct AddrExprMap {
       numExprs += func->expressionLocations.size();
 
       for (auto& [expr, delim] : func->delimiterLocations) {
-        // May be a little large if 0-delimiters exist
+        // May be a little large if 0-delimiters exist.
         numDelims += delim.size();
       }
     }
