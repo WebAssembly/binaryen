@@ -69,9 +69,9 @@ struct BinaryenDWARFInfo {
   BinaryenDWARFInfo(const Module& wasm) {
     // Get debug sections from the wasm.
     for (auto& section : wasm.customSections) {
-      if (llvm::StringRef(section.name).startswith(".debug_") && section.data.data()) {
+      if (Name(section.name).startsWith(".debug_") && section.data.data()) {
         // TODO: efficiency
-        sections[llvm::StringRef(section.name).substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(
+        sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(
           llvm::StringRef(section.data.data(), section.data.size()));
       }
     }
@@ -1127,8 +1127,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   // Update the custom sections in the wasm.
   // TODO: efficiency
   for (auto& section : wasm.customSections) {
-    if (llvm::StringRef(section.name).startswith(".debug_")) {
-      auto llvmName = llvm::StringRef(section.name).substr(1);
+    if (Name(section.name).startsWith(".debug_")) {
+      auto llvmName = section.name.substr(1);
       auto it = newSections.find(llvmName);
       if (it != newSections.end()) {
         auto llvmData = it->second->getBuffer();
