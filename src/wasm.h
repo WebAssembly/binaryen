@@ -33,7 +33,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ir/import-name.h"
+#include "ir/import-names.h"
 #include "literal.h"
 #include "support/index.h"
 #include "support/mixed_arena.h"
