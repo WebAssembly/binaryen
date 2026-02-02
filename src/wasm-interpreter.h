@@ -3177,25 +3177,15 @@ public:
 
   std::unordered_map<Name, Tag*> allTags;
 
-  using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
-
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::shared_ptr<ImportResolver> importResolver,
-    std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {},
-    std::function<CreateTableFunc> createTable = {})
+    std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
       externalInterface(externalInterface),
       linkedInstances(std::move(linkedInstances_)),
-      importResolver(std::move(importResolver)),
-      createTable(
-        createTable != nullptr
-          ? std::move(createTable)
-          : static_cast<std::function<CreateTableFunc>>(
-              [](Literal initial, Table t) -> std::unique_ptr<RuntimeTable> {
-                return std::make_unique<RealRuntimeTable>(initial, t);
-              })) {
+      importResolver(std::move(importResolver)) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3533,8 +3523,8 @@ private:
                "We only support nullable tables today");
 
         auto null = Literal::makeNull(table->type.getHeapType());
-        auto& runtimeTable =
-          definedTables.emplace_back(createTable(null, *table));
+        auto& runtimeTable = definedTables.emplace_back(
+          std::make_unique<RealRuntimeTable>(null, *table));
         [[maybe_unused]] auto [_, inserted] =
           allTables.try_emplace(table->name, runtimeTable.get());
         assert(inserted && "Unexpected repeated table name");
@@ -5245,7 +5235,6 @@ protected:
   ExternalInterface* externalInterface;
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
   std::shared_ptr<ImportResolver> importResolver;
-  std::function<CreateTableFunc> createTable;
 };
 
 class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
