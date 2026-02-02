@@ -83,6 +83,11 @@
     )
   )
 
-  ;; TODO: test function annotations, after
-  ;; https://github.com/WebAssembly/tool-conventions/issues/251
+  (@metadata.code.inline "\12")
+  (func $func-annotation
+    ;; The annotation here is on the function.
+    (drop
+      (i32.const 0)
+    )
+  )
 )
