@@ -3859,7 +3859,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::noexn: {
       auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
-        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
