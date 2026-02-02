@@ -11,7 +11,6 @@
  ;; CHECK:      (elem $init (i32.const 0) $nop)
  (elem $init (i32.const 0) $nop)
 
- ;; CHECK:      (elem $later func $trap)
  (elem $later $trap)
 
  (export "run" (func $run))
@@ -43,19 +42,11 @@
   (nop)
  )
 
- ;; CHECK:      (func $trap (type $none_=>_none)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $trap (type $none_=>_none)
   (unreachable)
  )
 )
 ;; CHECK:      (func $run_3 (type $none_=>_none)
-;; CHECK-NEXT:  (table.init $table $later
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call_indirect $table (type $none_=>_none)
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:  )
