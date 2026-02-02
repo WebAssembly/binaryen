@@ -84,6 +84,16 @@
   )
 
   (@metadata.code.inline "\12")
+  ;; CHECK:      (func $func-annotation (type $func)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $func-annotation (type $func)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 0)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
   (func $func-annotation
     ;; The annotation here is on the function.
     (drop

@@ -1476,6 +1476,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     }
     // Function-level annotations are stored using the nullptr key, as they are
     // not tied to a particular instruction.
+std::cout << "make func " << name << " : " << annotations.size() << '\n';
     if (!annotations.empty()) {
       f->codeAnnotations[nullptr] = parseAnnotations(annotations);
     }

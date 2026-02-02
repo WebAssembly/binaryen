@@ -2768,8 +2768,10 @@ void PrintSExpression::printDebugDelimiterLocation(Expression* curr, Index i) {
 }
 
 void PrintSExpression::printCodeAnnotations(Expression* curr) {
+std::cout << "check annot " << curr << '\n';
   if (auto iter = currFunction->codeAnnotations.find(curr);
       iter != currFunction->codeAnnotations.end()) {
+std::cout << "  yep, have annot\n";
     auto& annotation = iter->second;
     if (annotation.branchLikely) {
       Colors::grey(o);
@@ -3246,6 +3248,7 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
   lastPrintedLocation = std::nullopt;
   o << '(';
   emitImportHeader(curr);
+  printCodeAnnotations(nullptr);
   handleSignature(curr);
   o << "))";
   o << maybeNewLine;
@@ -3259,9 +3262,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   if (currFunction->prologLocation) {
     printDebugLocation(*currFunction->prologLocation);
   }
-  // TODO: print code annotations in the right place, depending on
-  // https://github.com/WebAssembly/tool-conventions/issues/251
-  // printCodeAnnotations(nullptr);
+  printCodeAnnotations(nullptr);
   handleSignature(curr, true);
   incIndent();
   for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
