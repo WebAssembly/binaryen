@@ -456,8 +456,11 @@ void WasmBinaryWriter::writeFunctions() {
         }
       }
     }
+    // We need to track the function location if we are tracking the locations
+    // of expressions inside it, or, if it has code annotations (the function
+    // itself may be annotated, even if nothing inside it is).
     if (!binaryLocationTrackedExpressionsForFunc.empty() ||
-        !func->codeAnnotations.empty()) { // may be only annots on func
+        !func->codeAnnotations.empty()) {
       binaryLocations.functions[func] = BinaryLocations::FunctionLocations{
         BinaryLocation(sizePos),
         BinaryLocation(start - adjustmentForLEBShrinking),
