@@ -3264,10 +3264,10 @@ function handleFatalError(func) {
   } catch (e) {
     // C++ exceptions are thrown as pointers (numbers).
     if (typeof e === 'number') {
-      // Fatal errors begin with that prefix. Strip it out.
+      // Fatal errors begin with that prefix. Strip it out, and the newline.
       var [_, message] = getExceptionMessage(e);
       if (message?.startsWith('Fatal: ')) {
-        throw new Error(message.substr(7));
+        throw new Error(message.substr(7).trim());
       }
     }
     // Rethrow anything else.
