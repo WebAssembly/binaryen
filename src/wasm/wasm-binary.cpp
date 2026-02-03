@@ -5447,9 +5447,13 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
     for (Index hint = 0; hint < numHints; hint++) {
       // Find the expression this hint is for. If the relative offset is 0, then
       // it is for the entire function, with expr==null.
-      Expression* expr = nullptr;
+      Expression* expr;
       auto relativeOffset = getU32LEB();
-      if (relativeOffset) {
+      if (relativeOffset == 0) {
+        // Function-level annotations have expr==0 and an offset of the start
+        // of the function.
+        expr = nullptr;
+      } else {
         // To get the absolute offset, add the function's offset.
         auto absoluteOffset = funcLocalsOffset + relativeOffset;
 
