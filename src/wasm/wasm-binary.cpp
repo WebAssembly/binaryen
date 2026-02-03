@@ -1656,8 +1656,6 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (has(annotation)) {
         if (!funcDeclarationsOffset) {
-std::cout << func.get() << '\n';
-for (auto& [x, y] : binaryLocations.functions) std::cout << "func " << x << " at " << y.start << '\n';
           auto funcIter = binaryLocations.functions.find(func.get());
           assert(funcIter != binaryLocations.functions.end());
           funcDeclarationsOffset = funcIter->second.declarations;
