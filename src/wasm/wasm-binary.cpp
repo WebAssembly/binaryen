@@ -1658,12 +1658,6 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
 
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (has(annotation)) {
-        if (!funcDeclarationsOffset) {
-          auto funcIter = binaryLocations.functions.find(func.get());
-          assert(funcIter != binaryLocations.functions.end());
-          funcDeclarationsOffset = funcIter->second.declarations;
-        }
-
         BinaryLocation offset;
         if (expr == nullptr) {
           // Function-level annotations have expr==0 and an offset of the start
@@ -1677,6 +1671,12 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
             continue;
           }
           auto exprOffset = exprIter->second.start;
+
+          if (!funcDeclarationsOffset) {
+            auto funcIter = binaryLocations.functions.find(func.get());
+            assert(funcIter != binaryLocations.functions.end());
+            funcDeclarationsOffset = funcIter->second.declarations;
+          }
 
           // Compute the offset: it should be relative to the start of the
           // function locals (i.e. the function declarations).
