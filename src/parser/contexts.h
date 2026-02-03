@@ -1456,7 +1456,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    TypeUse type,
                    Exactness exact,
                    std::optional<LocalsT> locals,
-                   std::vector<Annotation>&&,
+                   std::vector<Annotation>&& annotations,
                    Index pos) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {

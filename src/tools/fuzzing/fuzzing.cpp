@@ -36,6 +36,10 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     random(std::move(input), wasm.features),
     publicTypeValidator(wasm.features) {
 
+  atomicMemoryOrders = wasm.features.hasRelaxedAtomics()
+                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
+                         : std::vector{MemoryOrder::SeqCst};
+
   haveInitialFunctions = !wasm.functions.empty();
 
   // - funcref cannot be logged because referenced functions can be inlined or
@@ -3239,7 +3243,7 @@ Expression* TranslateToFuzzReader::makeLoad(Type type) {
   // make it atomic
   auto* load = ret->cast<Load>();
   wasm.memories[0]->shared = true;
-  load->order = MemoryOrder::SeqCst;
+  load->order = pick(atomicMemoryOrders);
   load->signed_ = false;
   load->align = load->bytes;
   return load;
@@ -3358,7 +3362,7 @@ Expression* TranslateToFuzzReader::makeStore(Type type) {
   }
   // make it atomic
   wasm.memories[0]->shared = true;
-  store->order = MemoryOrder::SeqCst;
+  store->order = pick(atomicMemoryOrders);
   store->align = store->bytes;
   return store;
 }
@@ -3859,7 +3863,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::noexn: {
       auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
-        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -4771,7 +4774,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
       value,
       type,
       wasm.memories[0]->name,
-      MemoryOrder::SeqCst);
+      pick(atomicMemoryOrders));
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);
@@ -4782,7 +4785,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
                                      replacement,
                                      type,
                                      wasm.memories[0]->name,
-                                     MemoryOrder::SeqCst);
+                                     pick(atomicMemoryOrders));
   }
 }
 

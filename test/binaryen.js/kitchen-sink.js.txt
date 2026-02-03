@@ -2120,6 +2120,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 0)
        )
       )
+      (i32.atomic.store acqrel
+       (i32.const 0)
+       (i32.atomic.load acqrel
+        (i32.const 0)
+       )
+      )
       (drop
        (memory.atomic.wait32
         (i32.const 0)
@@ -2826,3 +2832,39 @@ sizeof Literal: 24
 
 getExpressionInfo(memory.grow)={"id":21,"type":2,"delta":1}
 getExpressionInfo(switch)={"id":5,"type":1,"numNames":1,"names":["label"],"defaultName":"label","condition":0,"value":0}
+Load memory order: 2
+Store memory order: 2
+RMW memory order: 2
+Cmpxchg memory order: 2
+(module
+ (type $0 (func))
+ (memory $0 1 1)
+ (export "memory" (memory $0))
+ (func $relaxed-atomics (type $0)
+  (block $body
+   (drop
+    (i32.atomic.load acqrel
+     (i32.const 0)
+    )
+   )
+   (i32.atomic.store acqrel
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (drop
+    (i32.atomic.rmw.add acqrel
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+   (drop
+    (i32.atomic.rmw.cmpxchg acqrel
+     (i32.const 0)
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+)
+
