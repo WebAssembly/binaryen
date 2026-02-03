@@ -2768,10 +2768,8 @@ void PrintSExpression::printDebugDelimiterLocation(Expression* curr, Index i) {
 }
 
 void PrintSExpression::printCodeAnnotations(Expression* curr) {
-std::cout << "check annot " << curr << '\n';
   if (auto iter = currFunction->codeAnnotations.find(curr);
       iter != currFunction->codeAnnotations.end()) {
-std::cout << "  yep, have annot\n";
     auto& annotation = iter->second;
     if (annotation.branchLikely) {
       Colors::grey(o);
