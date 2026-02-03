@@ -1,3 +1,22 @@
+
+
+try {
+  console.log('parsing invalid text...');
+  binaryen.parseText(`(module
+    (func (export "foo") (param $a i32) local.get $a)
+    (func (export "bar") (paXam $b i32) local.get $b)
+  )`)
+  console.log('no error');
+} catch (e) {
+  console.log('outside caught', e);
+  console.log(typeof e)
+  console.log(JSON.stringify(e));
+  console.log(e.message);
+  console.log(JSON.stringify(e.message));
+}
+
+throw 'foo';
+
 var wast = `
 (module
   (memory $0 1 1 shared)
