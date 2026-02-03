@@ -185,7 +185,7 @@ public:
   const std::vector<Annotation> getAnnotations() { return annotations; }
   std::vector<Annotation> takeAnnotations() { return std::move(annotations); }
 
-  void setAnnotations(std::vector<Annotation>&& annotations) {
+  void setAnnotations(std::vector<Annotation> annotations) {
     this->annotations = std::move(annotations);
   }
 
