@@ -136,8 +136,20 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   // around if so.)
   bool mustKeepUnusedParent(Expression* curr) {
     if (auto* call = curr->dynCast<Call>()) {
+      // Look for an annotation on the call. TODO howww
       auto& annotations = getFunction()->codeAnnotations;
       auto iter = annotations.find(call);
+      if (iter != annotations.end()) {
+        auto& annotation = iter->second;
+        if (annotation.deadIfUnused) {
+          // This is unused, so it is dead - no need to even check effects.
+          return false;
+        }
+      }
+
+      // Look for an annotation on the called function.
+      auto* func = getModule()->getFunction(call->target);
+      auto iter = annotations.find(nullptr);
       if (iter != annotations.end()) {
         auto& annotation = iter->second;
         if (annotation.deadIfUnused) {
