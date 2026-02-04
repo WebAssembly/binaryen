@@ -392,10 +392,10 @@ struct AddrExprMap {
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
     size_t numExprs = 0, numDelims = 0;
-    for (auto& func : wasm.functions) {
+    for (const auto& func : wasm.functions) {
       numExprs += func->expressionLocations.size();
 
-      for (auto& [expr, delim] : func->delimiterLocations) {
+      for (const auto& [_, delim] : func->delimiterLocations) {
         // May be a little large if 0-delimiters exist.
         numDelims += delim.size();
       }
@@ -441,11 +441,11 @@ struct AddrExprMap {
 private:
   void add(Expression* expr, const BinaryLocations::Span span) {
     {
-      [[maybe_unused]] bool inserted = startMap.emplace(span.start, expr).second;
+      [[maybe_unused]] auto [_, inserted] = startMap.emplace(span.start, expr);
       assert(inserted);
     }
     {
-      [[maybe_unused]] bool inserted = endMap.emplace(span.end, expr).second;
+      [[maybe_unused]] auto [_, inserted] = endMap.emplace(span.end, expr);
       assert(inserted);
     }
   }
@@ -454,7 +454,7 @@ private:
            const BinaryLocations::DelimiterLocations& delimiter) {
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
-        [[maybe_unused]] bool inserted = delimiterMap.emplace(delimiter[i], DelimiterInfo{expr, i}).second;
+        [[maybe_unused]] auto [_, inserted] = delimiterMap.emplace(delimiter[i], DelimiterInfo{expr, i});
         assert(inserted);
       }
     }
