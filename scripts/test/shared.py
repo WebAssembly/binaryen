@@ -394,6 +394,9 @@ SPEC_TESTS_TO_SKIP = [
 
     # Test invalid
     'elem.wast',
+
+    # Requires module splitting to work with module instances
+    'instance.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
     'custom-page-sizes',
@@ -423,8 +426,8 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'id.wast',       # Empty IDs should be disallowed
-    # Requires correct handling of tag imports from different instances of the same module
-    # and splitting for module instances
+    # Requires support for table default elements and
+    # requires module splitting to work with module instances
     'instance.wast',
     'table64.wast',   # Requires validations for table size
     'tag.wast',      # Non-empty tag results allowed by stack switching
