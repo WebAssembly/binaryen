@@ -3454,18 +3454,18 @@ private:
                                    << " not found.")
                                     .str());
         }
-        auto [_, inserted] =
+        // Unused in noassert builds
+        [[maybe_unused]] auto [_, inserted] =
           allGlobals.try_emplace(global->name, importedGlobal);
-        (void)inserted; // for noassert builds
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated global name");
       } else {
         Literals init = self()->visit(global->init).values;
         auto& definedGlobal = definedGlobals.emplace_back(std::move(init));
 
-        auto [_, inserted] =
+        // Unused in noassert builds
+        [[maybe_unused]] auto [_, inserted] =
           allGlobals.try_emplace(global->name, &definedGlobal);
-        (void)inserted; // for noassert builds
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated global name");
       }
@@ -3489,15 +3489,17 @@ private:
                                    << " not found.")
                                     .str());
         }
-        auto [_, inserted] = allTags.try_emplace(tag->name, importedTag);
-        (void)inserted; // for noassert builds
+        // Unused in noassert builds
+        [[maybe_unused]] auto [_, inserted] =
+          allTags.try_emplace(tag->name, importedTag);
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated tag name");
       } else {
         auto& definedTag = definedTags.emplace_back(*tag);
 
-        auto [_, inserted] = allTags.try_emplace(tag->name, &definedTag);
-        (void)inserted; // for noassert builds
+        // Unused in noassert builds
+        [[maybe_unused]] auto [_, inserted] =
+          allTags.try_emplace(tag->name, &definedTag);
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated tag name");
       }
@@ -3521,8 +3523,9 @@ private:
                                    << " not found.")
                                     .str());
         }
-        auto [_, inserted] = allTables.try_emplace(table->name, importedTable);
-        (void)inserted; // for noassert builds
+        // Unused in noassert builds
+        [[maybe_unused]] auto [_, inserted] =
+          allTables.try_emplace(table->name, importedTable);
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated table name");
       } else {
@@ -3532,9 +3535,9 @@ private:
         auto null = Literal::makeNull(table->type.getHeapType());
         auto& runtimeTable =
           definedTables.emplace_back(createTable(null, *table));
-        auto [_, inserted] =
+        // Unused in noassert builds
+        [[maybe_unused]] auto [_, inserted] =
           allTables.try_emplace(table->name, runtimeTable.get());
-        (void)inserted; // for noassert builds
         assert(inserted && "Unexpected repeated table name");
       }
     }

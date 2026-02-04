@@ -86,7 +86,7 @@ public:
 
   Tag* getTagOrNull(ImportNames name,
                     const Signature& signature) const override {
-    Fatal() << "Not implemented.";
+    Fatal() << "getTagOrNull not implemented in ctor-eval.";
     return nullptr;
   }
 
