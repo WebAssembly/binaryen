@@ -1,4 +1,4 @@
-# For use in generate-atomic-spec-test.py
+# For use in generate_atomic_spec_test.py
 
 acqrel_execution_tests = """;; Execution of acqrel atomics
 
