@@ -55,7 +55,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (call $calls-used
  ;; CHECK-NEXT:    (i32.const 2)
  ;; CHECK-NEXT:   )
@@ -78,7 +78,7 @@
     )
    )
   )
-  (drop
+  (local.set $x
    (call $calls-used
     (i32.const 2)
    )
