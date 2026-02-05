@@ -2665,7 +2665,7 @@ void IRBuilder::applyAnnotations(Expression* expr,
   if (annotation.deadIfUnused) {
     // Only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].deadIfUnused.emplace();
+    func->codeAnnotations[expr].deadIfUnused = true;
   }
 }
 

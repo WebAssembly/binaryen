@@ -5531,7 +5531,7 @@ void WasmBinaryReader::readDeadIfUnusedHints(size_t payloadLen) {
         throwError("bad DeadIfUnusedHint size");
       }
 
-      annotation.deadIfUnused.emplace();
+      annotation.deadIfUnused = true;
     });
 }
 
