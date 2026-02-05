@@ -154,9 +154,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       if (checkDeadIfUnused(getFunction(), call)) {
         return false;
       }
-      // Check on the called function.
-      if (checkDeadIfUnused(getModule()->getFunction(call->target), nullptr)) {
-        return false;
+      // Check on the called function, if it exists (it may not if the IR is
+      // still being built up).
+      if (auto* target = getModule()->getFunctionOrNull(call->target)) {
+        if (checkDeadIfUnused(target, nullptr)) {
+          return false;
+        }
       }
     }
     ShallowEffectAnalyzer self(getPassOptions(), *getModule(), curr);
