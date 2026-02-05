@@ -2234,7 +2234,8 @@ struct BinaryLocations {
 class EffectAnalyzer;
 
 // Annotation for a particular piece of code. This includes std::optionals for
-// all possible annotations, with the ones present being filled in.
+// all possible annotations, with the ones present being filled in (or just a
+// bool for an annotation with one possible value).
 struct CodeAnnotation {
   // Branch Hinting proposal: Whether the branch is likely, or unlikely.
   std::optional<bool> branchLikely;
@@ -2247,7 +2248,7 @@ struct CodeAnnotation {
   // Toolchain hint: If this expression's result is unused, then the entire
   // thing can be considered dead and removable.
   // TODO: link to spec somewhere
-  std::optional<std::monostate> deadIfUnused;
+  bool deadIfUnused;
 
   bool operator==(const CodeAnnotation& other) const {
     return branchLikely == other.branchLikely && inline_ == other.inline_ &&
