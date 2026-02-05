@@ -619,7 +619,8 @@ Ref AssertionEmitter::emitAssertReturnFunc(AssertReturn& assn,
     } else {
       body = actual;
     }
-  } else if (auto* expectedVal = std::get_if<Literal>(&assn.expected[0])) {
+  } else if (auto* expectedVal =
+               std::get_if<Literal>(&assn.expected[0].at(0))) {
     if (!expectedVal->type.isBasic()) {
       Fatal() << "unsupported type in assert_return: " << expectedVal->type;
     }
@@ -648,7 +649,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(AssertReturn& assn,
         Fatal() << "Unhandled type in assert: " << expected->type;
       }
     }
-  } else if (std::get_if<NaNResult>(&assn.expected[0])) {
+  } else if (std::get_if<NaNResult>(&assn.expected[0].at(0))) {
     body = builder.makeCall("isNaN", {actual}, Type::i32);
   }
   std::unique_ptr<Function> testFunc(

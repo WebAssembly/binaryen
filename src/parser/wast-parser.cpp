@@ -286,10 +286,30 @@ Result<ExpectedResult> result(Lexer& in) {
   return in.err("unrecognized result");
 }
 
+Result<ResultAlternatives> eitherResult(Lexer& in) {
+  if (in.takeSExprStart("either"sv)) {
+    ResultAlternatives alternatives;
+    do {
+      auto r = result(in);
+      CHECK_ERR(r);
+
+      // move * or * move?
+      alternatives.push_back(std::move(*r));
+    } while (!in.takeRParen());
+
+    return alternatives;
+  }
+
+  auto r = result(in);
+  CHECK_ERR(r);
+  // move?
+  return ResultAlternatives{*r};
+}
+
 Result<ExpectedResults> results(Lexer& in) {
   ExpectedResults res;
   while (!in.peekRParen()) {
-    auto r = result(in);
+    auto r = eitherResult(in);
     CHECK_ERR(r);
     res.emplace_back(std::move(*r));
   }

@@ -79,7 +79,13 @@ using LaneResults = std::vector<LaneResult>;
 using ExpectedResult =
   std::variant<Literal, NullRefResult, RefResult, NaNResult, LaneResults>;
 
-using ExpectedResults = std::vector<ExpectedResult>;
+using ResultAlternatives = std::vector<ExpectedResult>;
+
+// The WAST spec states that `either`s maybe be nested arbitrarily e.g.
+// (either (either "a" "b") (either "a" "c"))
+// but we store this flattened since there's no way to tell the difference
+// anyway.
+using ExpectedResults = std::vector<ResultAlternatives>;
 
 struct AssertReturn {
   Action action;

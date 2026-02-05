@@ -341,6 +341,86 @@ struct Shell {
     return Ok{};
   }
 
+  // Result<> matchAlternative(const Literals& result, const ExpectedResult&
+  // expected) {
+  //   std::stringstream err;
+  //   auto* values = &result;
+  //   if (values->size() != expected.size()) {
+  //     err << "expected " << assn.expected.size() << " values, got "
+  //         << resultToString(result);
+  //     return Err{err.str()};
+  //   }
+  //   for (Index i = 0; i < values->size(); ++i) {
+  //     auto atIndex = [&]() {
+  //       if (values->size() <= 1) {
+  //         return std::string{};
+  //       }
+  //       std::stringstream ss;
+  //       ss << " at index " << i;
+  //       return ss.str();
+  //     };
+
+  //     Literal val = (*values)[i];
+  //     auto& expected = assn.expected[i];
+  //     if (auto* v = std::get_if<Literal>(&expected)) {
+  //       if (val != *v) {
+  //         err << "expected " << *v << ", got " << val << atIndex();
+  //         return Err{err.str()};
+  //       }
+  //     } else if (auto* ref = std::get_if<RefResult>(&expected)) {
+  //       if (!val.type.isRef() ||
+  //           !HeapType::isSubType(val.type.getHeapType(), ref->type)) {
+  //         err << "expected " << ref->type << " reference, got " << val
+  //             << atIndex();
+  //         return Err{err.str()};
+  //       }
+  //     } else if ([[maybe_unused]] auto* nullRef =
+  //                  std::get_if<NullRefResult>(&expected)) {
+  //       if (!val.isNull()) {
+  //         err << "expected ref.null, got " << val << atIndex();
+  //         return Err{err.str()};
+  //       }
+  //     } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
+  //       auto check = checkNaN(val, *nan);
+  //       if (auto* e = check.getErr()) {
+  //         err << e->msg << atIndex();
+  //         return Err{err.str()};
+  //       }
+  //     } else if (auto* lanes = std::get_if<LaneResults>(&expected)) {
+  //       switch (lanes->size()) {
+  //         case 4: {
+  //           auto vals = val.getLanesF32x4();
+  //           for (Index i = 0; i < 4; ++i) {
+  //             auto check = checkLane(vals[i], (*lanes)[i], i);
+  //             if (auto* e = check.getErr()) {
+  //               err << e->msg << atIndex();
+  //               return Err{err.str()};
+  //             }
+  //           }
+  //           break;
+  //         }
+  //         case 2: {
+  //           auto vals = val.getLanesF64x2();
+  //           for (Index i = 0; i < 2; ++i) {
+  //             auto check = checkLane(vals[i], (*lanes)[i], i);
+  //             if (auto* e = check.getErr()) {
+  //               err << e->msg << atIndex();
+  //               return Err{err.str()};
+  //             }
+  //           }
+  //           break;
+  //         }
+  //         default:
+  //           WASM_UNREACHABLE("unexpected number of lanes");
+  //       }
+  //     } else {
+  //       WASM_UNREACHABLE("unexpected expectation");
+  //     }
+  //   }
+  //   return Ok{};
+
+  // }
+
   Result<> assertReturn(AssertReturn& assn) {
     std::stringstream err;
     auto result = doAction(assn.action);
@@ -364,7 +444,7 @@ struct Shell {
       };
 
       Literal val = (*values)[i];
-      auto& expected = assn.expected[i];
+      auto& expected = assn.expected[i].at(0);
       if (auto* v = std::get_if<Literal>(&expected)) {
         if (val != *v) {
           err << "expected " << *v << ", got " << val << atIndex();
