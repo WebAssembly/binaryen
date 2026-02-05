@@ -112,6 +112,7 @@ unfuzzable = [
     # We cannot fuzz semantics-altering intrinsics, as when we optimize the
     # behavior changes.
     'dead-if-unused.wast',
+    'dead-if-unused-func.wast',
     'vacuum-dead-if-unused.wast',
     'vacuum-dead-if-unused-func.wast',
 ]
