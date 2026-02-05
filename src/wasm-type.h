@@ -198,6 +198,10 @@ public:
   std::optional<HeapType> getDescribedType() const;
   DescriptorChain getDescriptorChain() const;
 
+  // Whether this is a struct type whose first field is immutable and a subtype
+  // of externref.
+  bool hasPossibleJSPrototypeField() const;
+
   // Return the depth of this heap type in the type hierarchy, i.e. the number
   // of supertypes in its supertype chain.
   size_t getDepth() const;

@@ -1045,6 +1045,23 @@ size_t HeapType::getDepth() const {
   return depth;
 }
 
+bool HeapType::hasPossibleJSPrototypeField() const {
+  if (!isStruct()) {
+    return false;
+  }
+  const auto& fields = getStruct().fields;
+  if (fields.empty()) {
+    return false;
+  }
+  if (fields[0].mutable_ == Mutable) {
+    return false;
+  }
+  if (!fields[0].type.isRef()) {
+    return false;
+  }
+  return fields[0].type.getHeapType().isMaybeShared(HeapType::ext);
+}
+
 HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
   if (isBasic()) {
     switch (getBasic(Unshared)) {

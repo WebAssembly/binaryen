@@ -184,8 +184,7 @@ struct FunctionStructValuesMap
 // Descriptors are treated as fields in that we call the above functions on
 // them. We pass DescriptorIndex for their index as a fake value.
 template<typename T, typename SubType>
-struct StructScanner
-  : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
+struct StructScanner : public WalkerPass<PostWalker<SubType>> {
   bool isFunctionParallel() override { return true; }
 
   bool modifiesBinaryenIR() override { return false; }

@@ -554,6 +554,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     // Initialize the subtype relation based on what is immediately required to
     // keep the code and public types valid.
     analyzePublicTypes(*wasm);
+    analyzeJSCalledFunctions(*wasm);
     analyzeModule(*wasm);
 
     // Find further subtypings and iterate to a fixed point.
@@ -601,6 +602,35 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       }
       if (auto desc = type.getDescriptorType()) {
         noteDescriptor(type, *desc);
+      }
+    }
+  }
+
+  void analyzeJSCalledFunctions(Module& wasm) {
+    if (!wasm.features.hasCustomDescriptors()) {
+      return;
+    }
+    Type anyref(HeapType::any, Nullable);
+    for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+      for (auto type : wasm.getFunction(func)->getParams()) {
+        if (Type::isSubType(type, anyref)) {
+          // This type is cast from anyref on the boundary.
+          noteCast(HeapType::any, type);
+        }
+      }
+      for (auto type : wasm.getFunction(func)->getResults()) {
+        if (Type::isSubType(type, anyref)) {
+          auto heapType = type.getHeapType();
+          // This type is implicitly converted to externref, which means it can
+          // flow into locations typed any.
+          noteSubtype(heapType, HeapType::any);
+          if (auto desc = heapType.getDescriptorType();
+              desc && desc->hasPossibleJSPrototypeField()) {
+            // This descriptor will expose a prototype to JS, so we must keep
+            // it.
+            noteDescriptor(heapType, *desc);
+          }
+        }
       }
     }
   }
@@ -746,6 +776,14 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     for (auto& [sub, super] : collectedInfo.subtypings) {
       noteSubtype(sub, super);
     }
+    // Combine casts we have already noted into the newly gathered casts.
+    for (auto& [src, dsts] : casts) {
+      for (auto dst : dsts) {
+        collectedInfo.casts.insert({src, dst});
+      }
+      dsts.clear();
+    }
+    // Record the deduplicated cast info.
     for (auto [src, dst] : collectedInfo.casts) {
       casts[src].push_back(dst);
     }
