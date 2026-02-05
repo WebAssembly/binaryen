@@ -42,6 +42,7 @@
 #include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "ir/runtime-table.h"
+#include "ir/runtime-tag.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
@@ -85,15 +86,17 @@ public:
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
   Flow(Name breakTo, Literals&& values)
     : values(std::move(values)), breakTo(breakTo) {}
-  Flow(Name breakTo, Tag* suspendTag, Literals&& values)
-    : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
+  // TODO
+  Flow(Name breakTo, const RuntimeTag& suspendTag, Literals&& values)
+    : values(std::move(values)), breakTo(breakTo), suspendTag(&suspendTag) {
     assert(breakTo == SUSPEND_FLOW);
   }
 
   Literals values;
-  Name breakTo;              // if non-null, a break is going on
-  Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
-                             // this is the tag being suspended
+  Name breakTo; // if non-null, a break is going on
+  std::optional<const RuntimeTag*> suspendTag =
+    std::nullopt; // if non-null, breakTo must be SUSPEND_FLOW, and
+                  // this is the tag being suspended
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
@@ -128,7 +131,7 @@ public:
       o << flow.values[i];
     }
     if (flow.suspendTag) {
-      o << " [suspend:" << flow.suspendTag->name << ']';
+      o << " [suspend:" << (*flow.suspendTag)->definition->name << ']';
     }
     o << "})";
     return o;
@@ -167,10 +170,11 @@ struct FuncData {
 
 // The data of a (ref exn) literal.
 struct ExnData {
-  const Tag* tag;
+  const RuntimeTag& tag;
   Literals payload;
 
-  ExnData(const Tag* tag, Literals payload) : tag(tag), payload(payload) {}
+  ExnData(const RuntimeTag& tag, Literals payload)
+    : tag(tag), payload(payload) {}
 };
 
 // Suspend/resume support.
@@ -275,7 +279,7 @@ struct ContData {
 
   // If set, this is the tag for an exception to be thrown at the resume point
   // (from resume_throw).
-  Tag* exceptionTag = nullptr;
+  RuntimeTag* exceptionTag = nullptr;
 
   // If set, this is the exception ref to be thrown at the resume point (from
   // resume_throw_ref).
@@ -375,7 +379,7 @@ protected:
   }
 
   // Same as makeGCData but for ExnData.
-  Literal makeExnData(Tag* tag, const Literals& payload) {
+  Literal makeExnData(const RuntimeTag& tag, const Literals& payload) {
     auto allocation = std::make_shared<ExnData>(tag, payload);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
@@ -1950,19 +1954,23 @@ public:
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
-    // Single-module implementation. This is used from Precompute, for example.
-    // It is overriden in ModuleRunner to add logic for finding the proper
-    // imported tag (which single-module cases don't care about).
-    Literals arguments;
-    VISIT_ARGUMENTS(flow, curr->operands, arguments);
-    auto* tag = self()->getModule()->getTag(curr->tag);
-    if (tag->imported()) {
-      // The same tag can be imported twice, so by looking at only the current
-      // module we can't tell if two tags are the same or not.
-      return NONCONSTANT_FLOW;
-    }
-    throwException(WasmException{self()->makeExnData(tag, arguments)});
-    WASM_UNREACHABLE("throw");
+    // todo?
+    WASM_UNREACHABLE("unimp");
+    // // Single-module implementation. This is used from Precompute, for
+    // example.
+    // // It is overriden in ModuleRunner to add logic for finding the proper
+    // // imported tag (which single-module cases don't care about).
+    // Literals arguments;
+    // VISIT_ARGUMENTS(flow, curr->operands, arguments);
+    // auto* tag = self()->getModule()->getTag(curr->tag);
+    // if (tag->imported()) {
+    //   // The same tag can be imported twice, so by looking at only the
+    //   current
+    //   // module we can't tell if two tags are the same or not.
+    //   return NONCONSTANT_FLOW;
+    // }
+    // throwException(WasmException{self()->makeExnData(tag, arguments)});
+    // WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrowRef(ThrowRef* curr) {
@@ -3165,7 +3173,8 @@ public:
   // Like `allGlobals`. Keyed by internal name. All tables including imports.
   std::unordered_map<Name, RuntimeTable*> allTables;
 
-  std::unordered_map<Name, Tag*> allTags;
+  // TODO: maybe these should just be values.
+  std::unordered_map<Name, RuntimeTag*> allTags;
 
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
 
@@ -3291,7 +3300,7 @@ public:
     return *global;
   }
 
-  Tag* getExportedTagOrNull(Name name) {
+  RuntimeTag* getExportedTagOrNull(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Tag) {
       return nullptr;
@@ -3304,7 +3313,7 @@ public:
     return it->second;
   }
 
-  Tag& getExportedTagOrTrap(Name name) {
+  RuntimeTag& getExportedTagOrTrap(Name name) {
     auto* tag = getExportedTagOrNull(name);
     if (!tag) {
       externalInterface->trap((std::stringstream() << "getExportedTag: export "
@@ -3330,7 +3339,7 @@ private:
   // internal name.
   std::vector<Literals> definedGlobals;
   std::vector<std::unique_ptr<RuntimeTable>> definedTables;
-  std::vector<Tag> definedTags;
+  std::vector<RuntimeTag> definedTags;
 
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
@@ -4632,7 +4641,7 @@ public:
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto* tag = allTags[curr->catchTags[i]];
-        if (tag == exnData->tag) {
+        if (*tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
@@ -4667,7 +4676,7 @@ public:
         // tag is imported from each instance. See the instance.wast spec test.
         if (auto tag = allTags.find(catchTag);
             !catchTag.is() ||
-            ((tag != allTags.end()) && tag->second == exnData->tag)) {
+            ((tag != allTags.end()) && *tag->second == exnData->tag)) {
           Flow ret;
           ret.breakTo = curr->catchDests[i];
           if (catchTag.is()) {
@@ -4689,7 +4698,7 @@ public:
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
     throwException(
-      WasmException{self()->makeExnData(allTags[curr->tag], arguments)});
+      WasmException{self()->makeExnData(*allTags[curr->tag], arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -4745,7 +4754,7 @@ public:
     if (tag) {
       // resume_throw
       throwException(WasmException{
-        self()->makeExnData(tag, currContinuation->resumeArguments)});
+        self()->makeExnData(*tag, currContinuation->resumeArguments)});
     } else if (exnref) {
       // resume_throw_ref
       throwException(WasmException{currContinuation->exception});
@@ -4786,7 +4795,7 @@ public:
     auto old = self()->getCurrContinuationOrNull();
     auto* tag = allTags[curr->tag];
     if (!old) {
-      return Flow(SUSPEND_FLOW, tag, std::move(arguments));
+      return Flow(SUSPEND_FLOW, *tag, std::move(arguments));
     }
     assert(old->executed);
     // An old one exists, so we can create a proper new one. It starts out
@@ -4805,7 +4814,7 @@ public:
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
-    return Flow(SUSPEND_FLOW, tag, std::move(arguments));
+    return Flow(SUSPEND_FLOW, *tag, std::move(arguments));
   }
   template<typename T> Flow doResume(T* curr) {
     Literals arguments;
@@ -4870,7 +4879,7 @@ public:
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
         auto* handlerTag = allTags[curr->handlerTags[i]];
-        if (handlerTag == ret.suspendTag) {
+        if (ret.suspendTag && *handlerTag == **ret.suspendTag) {
           // Switch the flow from suspending to branching.
           ret.suspendTag = nullptr;
           ret.breakTo = curr->handlerBlocks[i];
