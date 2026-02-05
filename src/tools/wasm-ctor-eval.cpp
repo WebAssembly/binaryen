@@ -84,8 +84,8 @@ public:
     throw FailToEvalException{"Imported table access."};
   }
 
-  Tag* getTagOrNull(ImportNames name,
-                    const Signature& signature) const override {
+  RuntimeTag* getTagOrNull(ImportNames name,
+                           const Signature& signature) const override {
     Fatal() << "getTagOrNull not implemented in ctor-eval.";
     return nullptr;
   }

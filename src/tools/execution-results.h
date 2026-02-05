@@ -18,6 +18,7 @@
 // Shared execution result checking code
 //
 
+#include "ir/runtime-tag.h"
 #include "shell-interface.h"
 #include "wasm.h"
 
@@ -27,7 +28,7 @@ namespace {
 
 using Loggings = std::vector<Literal>;
 
-Tag& getWasmTag() {
+RuntimeTag getWasmTag() {
   static Tag tag = []() {
     Tag tag;
     tag.module = "fuzzing-support";
@@ -37,10 +38,10 @@ Tag& getWasmTag() {
 
     return tag;
   }();
-  return tag;
+  return RuntimeTag{tag};
 }
 
-Tag& getJsTag() {
+RuntimeTag getJsTag() {
   static Tag tag = []() {
     Tag tag;
     tag.module = "fuzzing-support";
@@ -49,7 +50,9 @@ Tag& getJsTag() {
     tag.type = Signature(Type(HeapType::ext, Nullable), Type::none);
     return tag;
   }();
-  return tag;
+
+  // todo make this static also?
+  return RuntimeTag{tag};
 }
 
 } // namespace
@@ -72,10 +75,10 @@ private:
   Module& wasm;
 
   // The imported fuzzing tag for wasm.
-  const Tag& wasmTag;
+  RuntimeTag wasmTag;
 
   // The imported tag for js exceptions.
-  const Tag& jsTag;
+  RuntimeTag jsTag;
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
@@ -140,7 +143,7 @@ public:
           if (arguments[0].geti32() == 0) {
             throwJSException();
           } else {
-            auto payload = std::make_shared<ExnData>(&wasmTag, arguments);
+            auto payload = std::make_shared<ExnData>(wasmTag, arguments);
             throwException(WasmException{Literal(payload)});
           }
         } else if (import->base == "table-get") {
@@ -233,7 +236,7 @@ public:
     auto empty = HeapType(Struct{});
     auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
     Literals arguments = {inner.externalize()};
-    auto payload = std::make_shared<ExnData>(&jsTag, arguments);
+    auto payload = std::make_shared<ExnData>(jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
 
@@ -311,7 +314,8 @@ public:
 class FuzzerImportResolver
   : public LinkedInstancesImportResolver<ModuleRunner> {
   using LinkedInstancesImportResolver::LinkedInstancesImportResolver;
-  Tag* getTagOrNull(ImportNames name, const Signature& type) const override {
+  RuntimeTag* getTagOrNull(ImportNames name,
+                           const Signature& type) const override {
     if (name.module == "fuzzing-support") {
       if (name.name == "wasmtag") {
         return &wasmTag;
@@ -325,8 +329,8 @@ class FuzzerImportResolver
   }
 
 private:
-  Tag& wasmTag = getWasmTag();
-  Tag& jsTag = getJsTag();
+  mutable RuntimeTag wasmTag = getWasmTag();
+  mutable RuntimeTag jsTag = getJsTag();
 };
 
 // gets execution results from a wasm module. this is useful for fuzzing
