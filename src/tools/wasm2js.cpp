@@ -605,7 +605,15 @@ Ref AssertionEmitter::emitAssertReturnFunc(AssertReturn& assn,
                                            Name asmModule) {
   if (assn.expected.size() > 1) {
     Fatal() << "multivalue assert_return not supported";
+    return {};
   }
+  for (const auto& alternatives : assn.expected) {
+    if (alternatives.size() > 1) {
+      Fatal() << "(either ...) not supported";
+      return {};
+    }
+  }
+
   auto* invoke = std::get_if<InvokeAction>(&assn.action);
   if (!invoke) {
     Fatal() << "only invoke actions are supported in assert_return";
@@ -619,7 +627,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(AssertReturn& assn,
     } else {
       body = actual;
     }
-  } else if (auto* expectedVal = std::get_if<Literal>(&assn.expected[0])) {
+  } else if (auto* expectedVal = std::get_if<Literal>(&assn.expected[0][0])) {
     if (!expectedVal->type.isBasic()) {
       Fatal() << "unsupported type in assert_return: " << expectedVal->type;
     }
@@ -648,7 +656,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(AssertReturn& assn,
         Fatal() << "Unhandled type in assert: " << expected->type;
       }
     }
-  } else if (std::get_if<NaNResult>(&assn.expected[0])) {
+  } else if (std::get_if<NaNResult>(&assn.expected[0][0])) {
     body = builder.makeCall("isNaN", {actual}, Type::i32);
   }
   std::unique_ptr<Function> testFunc(
