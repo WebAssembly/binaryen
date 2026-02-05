@@ -22,6 +22,7 @@
 #include <ir/branch-hints.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
+#include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
@@ -138,28 +139,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     if (auto* call = curr->dynCast<Call>()) {
       // Return true if a target in a function is annotated as dead if unused.
       // If |curr| is marked so, then it is dead without even checking effects.
-      auto checkDeadIfUnused = [](Function* func, Expression* target) {
-        auto& annotations = func->codeAnnotations;
-        auto iter = annotations.find(target);
-        if (iter != annotations.end()) {
-          auto& annotation = iter->second;
-          if (annotation.deadIfUnused) {
-            return true;
-          }
-        }
+      if (Intrinsics(*getModule())
+            .getCallAnnotations(call, getFunction())
+            .deadIfUnused) {
         return false;
-      };
-
-      // Look for an annotation on the call.
-      if (checkDeadIfUnused(getFunction(), call)) {
-        return false;
-      }
-      // Check on the called function, if it exists (it may not if the IR is
-      // still being built up).
-      if (auto* target = getModule()->getFunctionOrNull(call->target)) {
-        if (checkDeadIfUnused(target, nullptr)) {
-          return false;
-        }
       }
     }
     ShallowEffectAnalyzer self(getPassOptions(), *getModule(), curr);
