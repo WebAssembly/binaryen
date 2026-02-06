@@ -3454,7 +3454,6 @@ private:
                                    << " not found.")
                                     .str());
         }
-        // Unused in noassert builds
         [[maybe_unused]] auto [_, inserted] =
           allGlobals.try_emplace(global->name, importedGlobal);
         // parsing/validation checked this already.
@@ -3463,7 +3462,6 @@ private:
         Literals init = self()->visit(global->init).values;
         auto& definedGlobal = definedGlobals.emplace_back(std::move(init));
 
-        // Unused in noassert builds
         [[maybe_unused]] auto [_, inserted] =
           allGlobals.try_emplace(global->name, &definedGlobal);
         // parsing/validation checked this already.
@@ -3489,7 +3487,6 @@ private:
                                    << " not found.")
                                     .str());
         }
-        // Unused in noassert builds
         [[maybe_unused]] auto [_, inserted] =
           allTags.try_emplace(tag->name, importedTag);
         // parsing/validation checked this already.
@@ -3497,7 +3494,6 @@ private:
       } else {
         auto& definedTag = definedTags.emplace_back(*tag);
 
-        // Unused in noassert builds
         [[maybe_unused]] auto [_, inserted] =
           allTags.try_emplace(tag->name, &definedTag);
         // parsing/validation checked this already.
@@ -3523,7 +3519,6 @@ private:
                                    << " not found.")
                                     .str());
         }
-        // Unused in noassert builds
         [[maybe_unused]] auto [_, inserted] =
           allTables.try_emplace(table->name, importedTable);
         // parsing/validation checked this already.
@@ -3535,7 +3530,6 @@ private:
         auto null = Literal::makeNull(table->type.getHeapType());
         auto& runtimeTable =
           definedTables.emplace_back(createTable(null, *table));
-        // Unused in noassert builds
         [[maybe_unused]] auto [_, inserted] =
           allTables.try_emplace(table->name, runtimeTable.get());
         assert(inserted && "Unexpected repeated table name");

@@ -2492,7 +2492,6 @@ public:
 
 class Tag : public Importable {
 public:
-  // TODO: This should ideally be const.
   HeapType type;
 
   Type params() const { return type.getSignature().params; }
