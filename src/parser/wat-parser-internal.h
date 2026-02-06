@@ -80,6 +80,7 @@ Result<> parseDefs(Ctx& ctx,
   for (auto& def : defs) {
     ctx.index = def.index;
     WithPosition with(ctx, def.pos);
+    ctx.in.setAnnotations(def.annotations);
     if (auto parsed = parser(ctx)) {
       CHECK_ERR(parsed);
     } else {

@@ -4058,7 +4058,7 @@ public:
     auto addr =
       info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
     auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySize);
+      addr, curr->bytes, curr->type, info.name, memorySize, curr->order);
     auto computed = value.getSingleValue();
     switch (curr->op) {
       case RMWAdd:
@@ -4093,7 +4093,7 @@ public:
       info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
     expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
     auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySize);
+      addr, curr->bytes, curr->type, info.name, memorySize, curr->order);
     if (loaded == expected.getSingleValue()) {
       info.instance->doAtomicStore(
         addr, curr->bytes, replacement.getSingleValue(), info.name, memorySize);
@@ -4109,8 +4109,12 @@ public:
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), bytes, memorySize);
-    auto loaded = info.instance->doAtomicLoad(
-      addr, bytes, curr->expectedType, info.name, memorySize);
+    auto loaded = info.instance->doAtomicLoad(addr,
+                                              bytes,
+                                              curr->expectedType,
+                                              info.name,
+                                              memorySize,
+                                              MemoryOrder::SeqCst);
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t(1)); // not equal
     }
@@ -5183,8 +5187,15 @@ protected:
     }
   }
 
-  Literal doAtomicLoad(
-    Address addr, Index bytes, Type type, Name memoryName, Address memorySize) {
+  Literal doAtomicLoad(Address addr,
+                       Index bytes,
+                       Type type,
+                       Name memoryName,
+                       Address memorySize,
+                       MemoryOrder order) {
+    if (order == MemoryOrder::Unordered) {
+      Fatal() << "Expected a non-unordered MemoryOrder in doAtomicLoad";
+    }
     checkAtomicAddress(addr, bytes, memorySize);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
@@ -5195,7 +5206,7 @@ protected:
     // always an unsigned extension.
     load.signed_ = false;
     load.align = bytes;
-    load.order = MemoryOrder::SeqCst;
+    load.order = order;
     load.ptr = &ptr;
     load.type = type;
     load.memory = memoryName;

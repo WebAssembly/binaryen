@@ -2418,17 +2418,13 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->isWithDefault()) {
     if (curr->desc) {
-      // TODO: Start emitting the new opcode once V8 supports it.
-      // o << U32LEB(BinaryConsts::StructNewDefaultDesc);
-      o << U32LEB(BinaryConsts::StructNewDefault);
+      o << U32LEB(BinaryConsts::StructNewDefaultDesc);
     } else {
       o << U32LEB(BinaryConsts::StructNewDefault);
     }
   } else {
     if (curr->desc) {
-      // TODO: Start emitting the new opcode once V8 supports it.
-      // o << U32LEB(BinaryConsts::StructNewDesc);
-      o << U32LEB(BinaryConsts::StructNew);
+      o << U32LEB(BinaryConsts::StructNewDesc);
     } else {
       o << U32LEB(BinaryConsts::StructNew);
     }
