@@ -394,9 +394,6 @@ SPEC_TESTS_TO_SKIP = [
 
     # Test invalid
     'elem.wast',
-
-    # Requires module splitting to work with module instances
-    'instance.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
     'custom-page-sizes',
