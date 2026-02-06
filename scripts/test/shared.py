@@ -448,12 +448,12 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'memory64.wast',        # Requires validations on the max memory size
     'imports3.wast',  # Requires better checking of exports from the special "spectest" module
-    'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
-    'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
-    'relaxed_dot_product.wast',   # Requires wast `either` support
-    'relaxed_laneselect.wast',    # Requires wast `either` support
-    'relaxed_madd_nmadd.wast',    # Requires wast `either` support
-    'relaxed_min_max.wast',       # Requires wast `either` support
+    # 'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
+    # 'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
+    # 'relaxed_dot_product.wast',   # Requires wast `either` support
+    # 'relaxed_laneselect.wast',    # Requires wast `either` support
+    # 'relaxed_madd_nmadd.wast',    # Requires wast `either` support
+    # 'relaxed_min_max.wast',       # Requires wast `either` support
     'simd_const.wast',            # Hex float constant not recognized as out of range
     'simd_conversions.wast',      # Promoted NaN should be canonical
     'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN

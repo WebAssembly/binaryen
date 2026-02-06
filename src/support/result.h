@@ -36,21 +36,22 @@ struct Err {
 // Check a Result or MaybeResult for error and return the error if it exists.
 #define CHECK_ERR(val)                                                         \
   if (auto _val = (val); auto err = _val.getErr()) {                           \
-    return Err{*err};                                                          \
+    return (typename decltype(_val)::ErrorType)(*err);                         \
   }
 
 // Represent a result of type T or an error message.
-template<typename T = Ok> struct [[nodiscard]] Result {
-  std::variant<T, Err> val;
+template<typename T = Ok, typename E = Err> struct [[nodiscard]] Result {
+  using ErrorType = E;
+  std::variant<T, E> val;
 
-  Result(Result<T>& other) = default;
-  Result(Result<T>&& other) = default;
-  Result(const Err& e) : val(std::in_place_type<Err>, e) {}
-  Result(Err&& e) : val(std::in_place_type<Err>, std::move(e)) {}
+  Result(Result<T, E>& other) = default;
+  Result(Result<T, E>&& other) = default;
+  Result(const E& e) : val(std::in_place_type<E>, e) {}
+  Result(E&& e) : val(std::in_place_type<E>, std::move(e)) {}
   template<typename U = T>
   Result(U&& u) : val(std::in_place_type<T>, std::forward<U>(u)) {}
 
-  Err* getErr() { return std::get_if<Err>(&val); }
+  E* getErr() { return std::get_if<E>(&val); }
   T& operator*() { return *std::get_if<T>(&val); }
   T* operator->() { return std::get_if<T>(&val); }
 };
@@ -58,6 +59,7 @@ template<typename T = Ok> struct [[nodiscard]] Result {
 // Represent an optional result of type T or an error message.
 template<typename T = Ok> struct [[nodiscard]] MaybeResult {
   std::variant<T, None, Err> val;
+  using ErrorType = Err;
 
   MaybeResult() : val(None{}) {}
   MaybeResult(MaybeResult<T>& other) = default;
