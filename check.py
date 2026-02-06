@@ -198,6 +198,13 @@ def check_expected(actual, expected, stdout=None):
             shared.fail(actual, expected)
 
 
+UNSPLITTABLE_TESTS = [Path(x) for x in ["spec/testsuite/instance.wast"]]
+
+
+def is_splittable(wast: Path):
+    return not any(wast.match(unsplittable_test) for unsplittable_test in UNSPLITTABLE_TESTS)
+
+
 def run_one_spec_test(wast: Path, stdout=None):
     test_name = wast.name
 
@@ -223,6 +230,9 @@ def run_one_spec_test(wast: Path, stdout=None):
             raise
 
     check_expected(actual, expected, stdout=stdout)
+
+    if not is_splittable(wast):
+        return
 
     # check binary format. here we can verify execution of the final
     # result, no need for an output verification
