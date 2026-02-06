@@ -547,10 +547,6 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldExprStart(BinaryLocation oldAddr) const {
-    return oldExprAddrMap.getStart(oldAddr);
-  }
-
   BinaryLocation getNewExprEnd(BinaryLocation oldAddr) const {
     if (auto* expr = oldExprAddrMap.getEnd(oldAddr)) {
       auto iter = newLocations.expressions.find(expr);
@@ -559,10 +555,6 @@ struct LocationUpdater {
       }
     }
     return 0;
-  }
-
-  bool hasOldExprEnd(BinaryLocation oldAddr) const {
-    return oldExprAddrMap.getEnd(oldAddr);
   }
 
   BinaryLocation getNewFuncStart(BinaryLocation oldAddr) const {
@@ -584,10 +576,6 @@ struct LocationUpdater {
     return 0;
   }
 
-  bool hasOldFuncStart(BinaryLocation oldAddr) const {
-    return oldFuncAddrMap.getStart(oldAddr);
-  }
-
   BinaryLocation getNewFuncEnd(BinaryLocation oldAddr) const {
     if (auto* func = oldFuncAddrMap.getEnd(oldAddr)) {
       // The function might have been optimized away, check.
@@ -607,19 +595,6 @@ struct LocationUpdater {
     return 0;
   }
 
-  // Check for either the end opcode, or one past the end.
-  bool hasOldFuncEnd(BinaryLocation oldAddr) const {
-    return oldFuncAddrMap.getEnd(oldAddr);
-  }
-
-  // Check specifically for the end opcode.
-  bool hasOldFuncEndOpcode(BinaryLocation oldAddr) const {
-    if (auto* func = oldFuncAddrMap.getEnd(oldAddr)) {
-      return oldAddr == func->funcLocation.end - 1;
-    }
-    return false;
-  }
-
   BinaryLocation getNewDelimiter(BinaryLocation oldAddr) const {
     auto info = oldExprAddrMap.getDelimiter(oldAddr);
     if (info.expr) {
@@ -629,10 +604,6 @@ struct LocationUpdater {
       }
     }
     return 0;
-  }
-
-  bool hasOldDelimiter(BinaryLocation oldAddr) const {
-    return oldExprAddrMap.getDelimiter(oldAddr).expr;
   }
 
   // getNewStart|EndAddr utilities.
