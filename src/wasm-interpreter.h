@@ -167,12 +167,7 @@ struct FuncData {
 
 // The data of a (ref exn) literal.
 struct ExnData {
-  // The tag of this exn data.
-  // TODO: Add self, like in FuncData, to handle the case of a module that is
-  //       instantiated multiple times.
   const Tag* tag;
-
-  // The payload of this exn data.
   Literals payload;
 
   ExnData(const Tag* tag, Literals payload) : tag(tag), payload(payload) {}
@@ -4662,7 +4657,14 @@ public:
 
         // note: allTags[catchTag] will be null if it's a tag that we don't know
         // about, i.e. an unimported tag.
-        // Pointer comparison.
+        // We do a pointer comparison here (`tag->second == exnData->tag`)
+        // because a tag just consists of a signature, and two tags may look the
+        // same but have different identities, e.g. given
+        // (tag $a (param i32))
+        // (tag $b (param i32))
+        // a catch clause for $b won't catch $a and vice versa.
+        // This can also happen when a module is instantiated twice and the same
+        // tag is imported from each instance. See the instance.wast spec test.
         if (auto tag = allTags.find(catchTag);
             !catchTag.is() ||
             ((tag != allTags.end()) && tag->second == exnData->tag)) {

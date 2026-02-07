@@ -1,5 +1,5 @@
 ;; Copy of test/spec/testsuite/instance.wast
-;; TODO: Use the upstream test after adding support for default values for tables and module splitting testing with module instances.
+;; TODO: Use the upstream test after adding support for default values for tables.
 
 ;; Instantiation is generative
 
