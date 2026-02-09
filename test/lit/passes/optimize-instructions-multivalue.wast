@@ -103,7 +103,7 @@
   )
 
   ;; CHECK:      (func $extract-make-unreachable (param $x i32) (param $y i32) (result i32)
-  ;; CHECK-NEXT:  (tuple.extract 1 0
+  ;; CHECK-NEXT:  (tuple.extract 2 0
   ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (local.get $y)

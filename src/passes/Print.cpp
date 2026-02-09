@@ -2203,7 +2203,9 @@ struct PrintExpressionContents
     // If the tuple is unreachable, its size will be reported as 1, but that's
     // not a valid tuple size. The size we print mostly doesn't matter if the
     // tuple is unreachable, but it does have to be valid.
-    o << std::max(curr->tuple->type.size(), size_t(2), size_t(curr->index + 1)) << " ";
+    o << std::max(
+           {curr->tuple->type.size(), size_t(2), size_t(curr->index + 1)})
+      << " ";
     o << curr->index;
   }
   void visitRefI31(RefI31* curr) {
