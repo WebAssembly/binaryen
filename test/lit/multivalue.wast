@@ -506,4 +506,13 @@
    )
   )
  )
+
+ (func $unreachable-tuple-high-index
+  ;; We normally compute the tuple size (3 in the input) from the type. Here
+  ;; the type is unreachable, so we can't do that, but we must make sure to pick
+  ;; a size big enough for the index, 2.
+  (tuple.extract 3 2
+   (return)
+  )
+ )
 )
