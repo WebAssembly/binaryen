@@ -580,7 +580,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 2 0
+  ;; CHECK-NEXT:   (tuple.extract 1 0
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1068,7 +1068,7 @@
   ;; CHECK:      (func $unreachable.tuple.extract (type $3) (result i32)
   ;; CHECK-NEXT:  (local $tuple (tuple i32 i64))
   ;; CHECK-NEXT:  (local $non-tuple i32)
-  ;; CHECK-NEXT:  (tuple.extract 2 0
+  ;; CHECK-NEXT:  (tuple.extract 1 0
   ;; CHECK-NEXT:   (local.tee $non-tuple
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )

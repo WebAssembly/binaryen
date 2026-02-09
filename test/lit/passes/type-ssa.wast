@@ -75,7 +75,7 @@
   )
 
   ;; CHECK:      (func $tuple-unreachable (type $1)
-  ;; CHECK-NEXT:  (tuple.extract 2 0
+  ;; CHECK-NEXT:  (tuple.extract 1 0
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
