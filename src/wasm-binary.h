@@ -1441,7 +1441,7 @@ public:
 
   std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
   std::optional<BufferWithRandomAccess> getInlineHintsBuffer();
-  std::optional<BufferWithRandomAccess> getremovableIfUnusedHintsBuffer();
+  std::optional<BufferWithRandomAccess> getRemovableIfUnusedHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
