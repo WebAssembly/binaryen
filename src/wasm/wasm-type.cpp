@@ -2719,7 +2719,7 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   return {results};
 }
 
-void TypeBuilder::dump() {
+void TypeBuilder::dump() const {
   std::vector<HeapType> types;
   for (size_t i = 0; i < size(); ++i) {
     types.push_back((*this)[i]);
