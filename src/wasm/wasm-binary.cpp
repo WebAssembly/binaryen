@@ -1774,7 +1774,9 @@ std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
   return writeExpressionHints(
     Annotations::removableIfUnusedHint,
-    [](const CodeAnnotation& annotation) { return annotation.removableIfUnused; },
+    [](const CodeAnnotation& annotation) {
+      return annotation.removableIfUnused;
+    },
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always empty.
       buffer << U32LEB(0);
@@ -2211,8 +2213,10 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
   } else if (sectionName == Annotations::removableIfUnusedHint) {
-    deferredAnnotationSections.push_back(AnnotationSectionInfo{
-      pos, [this, payloadLen]() { this->readremovableIfUnusedHints(payloadLen); }});
+    deferredAnnotationSections.push_back(
+      AnnotationSectionInfo{pos, [this, payloadLen]() {
+                              this->readremovableIfUnusedHints(payloadLen);
+                            }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5524,15 +5528,16 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 }
 
 void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
-  readExpressionHints(
-    Annotations::removableIfUnusedHint, payloadLen, [&](CodeAnnotation& annotation) {
-      auto size = getU32LEB();
-      if (size != 0) {
-        throwError("bad removableIfUnusedHint size");
-      }
+  readExpressionHints(Annotations::removableIfUnusedHint,
+                      payloadLen,
+                      [&](CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 0) {
+                          throwError("bad removableIfUnusedHint size");
+                        }
 
-      annotation.removableIfUnused = true;
-    });
+                        annotation.removableIfUnused = true;
+                      });
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>
