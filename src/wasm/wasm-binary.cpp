@@ -1773,7 +1773,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
 std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
   return writeExpressionHints(
-    Annotations::removableIfUnusedHint,
+    Annotations::RemovableIfUnusedHint,
     [](const CodeAnnotation& annotation) {
       return annotation.removableIfUnused;
     },
@@ -2055,7 +2055,7 @@ void WasmBinaryReader::preScan() {
 
       if (sectionName == Annotations::BranchHint ||
           sectionName == Annotations::InlineHint ||
-          sectionName == Annotations::removableIfUnusedHint) {
+          sectionName == Annotations::RemovableIfUnusedHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2212,7 +2212,7 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::InlineHint) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
-  } else if (sectionName == Annotations::removableIfUnusedHint) {
+  } else if (sectionName == Annotations::RemovableIfUnusedHint) {
     deferredAnnotationSections.push_back(
       AnnotationSectionInfo{pos, [this, payloadLen]() {
                               this->readremovableIfUnusedHints(payloadLen);
@@ -5528,7 +5528,7 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 }
 
 void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
-  readExpressionHints(Annotations::removableIfUnusedHint,
+  readExpressionHints(Annotations::RemovableIfUnusedHint,
                       payloadLen,
                       [&](CodeAnnotation& annotation) {
                         auto size = getU32LEB();

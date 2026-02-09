@@ -2791,7 +2791,7 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
     }
     if (annotation.removableIfUnused) {
       Colors::grey(o);
-      o << "(@" << Annotations::removableIfUnusedHint << ")\n";
+      o << "(@" << Annotations::RemovableIfUnusedHint << ")\n";
       restoreNormalColor(o);
       doIndent(o, indent);
     }
