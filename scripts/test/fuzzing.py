@@ -111,10 +111,10 @@ unfuzzable = [
     'fuzz_shell_second.wast',
     # We cannot fuzz semantics-altering intrinsics, as when we optimize the
     # behavior changes.
-    'dead-if-unused.wast',
-    'dead-if-unused-func.wast',
-    'vacuum-dead-if-unused.wast',
-    'vacuum-dead-if-unused-func.wast',
+    'removable-if-unused.wast',
+    'removable-if-unused-func.wast',
+    'vacuum-removable-if-unused.wast',
+    'vacuum-removable-if-unused-func.wast',
 ]
 
 
