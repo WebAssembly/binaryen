@@ -3254,6 +3254,27 @@ Module['emitText'] = function(expr) {
   return ret;
 };
 
+// Calls a function, wrapping it in error handling code so that if it hits a
+// fatal error, we throw a JS exception (which JS can handle) rather than
+// abort the entire process (which would not be a friendly behavior for a
+// library like binaryen.js).
+function handleFatalError(func) {
+  try {
+    return func();
+  } catch (e) {
+    // C++ exceptions are thrown as pointers (numbers).
+    if (typeof e === 'number') {
+      // Fatal errors begin with that prefix. Strip it out, and the newline.
+      var [_, message] = getExceptionMessage(e);
+      if (message?.startsWith('Fatal: ')) {
+        throw new Error(message.substr(7).trim());
+      }
+    }
+    // Rethrow anything else.
+    throw e;
+  }
+}
+
 // Parses a binary to a module
 
 // If building with Emscripten ASSERTIONS, there is a property added to
@@ -3264,7 +3285,7 @@ Object.defineProperty(Module, 'readBinary', { writable: true });
 Module['readBinary'] = function(data) {
   const buffer = _malloc(data.length);
   HEAP8.set(data, buffer);
-  const ptr = Module['_BinaryenModuleRead'](buffer, data.length);
+  const ptr = handleFatalError(() => Module['_BinaryenModuleRead'](buffer, data.length));
   _free(buffer);
   return wrapModule(ptr);
 };
@@ -3273,7 +3294,7 @@ Module['readBinary'] = function(data) {
 Module['parseText'] = function(text) {
   const buffer = _malloc(text.length + 1);
   stringToAscii(text, buffer);
-  const ptr = Module['_BinaryenModuleParse'](buffer);
+  const ptr = handleFatalError(() => Module['_BinaryenModuleParse'](buffer));
   _free(buffer);
   return wrapModule(ptr);
 };
