@@ -146,8 +146,8 @@ public:
       if (!ret.inline_) {
         ret.inline_ = funcAnnotations.inline_;
       }
-      if (!ret.deadIfUnused) {
-        ret.deadIfUnused = funcAnnotations.deadIfUnused;
+      if (!ret.removableIfUnused) {
+        ret.removableIfUnused = funcAnnotations.removableIfUnused;
       }
     }
 

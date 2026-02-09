@@ -1627,7 +1627,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 
   append(getBranchHintsBuffer());
   append(getInlineHintsBuffer());
-  append(getDeadIfUnusedHintsBuffer());
+  append(getRemovableIfUnusedHintsBuffer());
   return ret;
 }
 
@@ -1771,10 +1771,10 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
 }
 
 std::optional<BufferWithRandomAccess>
-WasmBinaryWriter::getDeadIfUnusedHintsBuffer() {
+WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
   return writeExpressionHints(
-    Annotations::DeadIfUnusedHint,
-    [](const CodeAnnotation& annotation) { return annotation.deadIfUnused; },
+    Annotations::removableIfUnusedHint,
+    [](const CodeAnnotation& annotation) { return annotation.removableIfUnused; },
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always empty.
       buffer << U32LEB(0);
@@ -2053,7 +2053,7 @@ void WasmBinaryReader::preScan() {
 
       if (sectionName == Annotations::BranchHint ||
           sectionName == Annotations::InlineHint ||
-          sectionName == Annotations::DeadIfUnusedHint) {
+          sectionName == Annotations::removableIfUnusedHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2210,9 +2210,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::InlineHint) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
-  } else if (sectionName == Annotations::DeadIfUnusedHint) {
+  } else if (sectionName == Annotations::removableIfUnusedHint) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
-      pos, [this, payloadLen]() { this->readDeadIfUnusedHints(payloadLen); }});
+      pos, [this, payloadLen]() { this->readremovableIfUnusedHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5523,15 +5523,15 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
     });
 }
 
-void WasmBinaryReader::readDeadIfUnusedHints(size_t payloadLen) {
+void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
   readExpressionHints(
-    Annotations::DeadIfUnusedHint, payloadLen, [&](CodeAnnotation& annotation) {
+    Annotations::removableIfUnusedHint, payloadLen, [&](CodeAnnotation& annotation) {
       auto size = getU32LEB();
       if (size != 0) {
-        throwError("bad DeadIfUnusedHint size");
+        throwError("bad removableIfUnusedHint size");
       }
 
-      annotation.deadIfUnused = true;
+      annotation.removableIfUnused = true;
     });
 }
 

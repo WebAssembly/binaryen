@@ -1,8 +1,8 @@
 ;; RUN: wasm-opt -all --vacuum %s -S -o - | filecheck %s
 
-;; Test the function-level annotation of dead.if.unused.
+;; Test the function-level annotation of removable.if.unused.
 (module
- (@binaryen.dead.if.unused)
+ (@binaryen.removable.if.unused)
  (func $calls-marked (param $x i32) (result i32)
   ;; The function is marked as dead if unused, and this is dropped, so optimize.
   (drop
@@ -54,7 +54,7 @@
 
 ;; CHECK:      (module
 ;; CHECK-NEXT:  (type $0 (func (param i32) (result i32)))
-;; CHECK-NEXT:  (@binaryen.dead.if.unused)
+;; CHECK-NEXT:  (@binaryen.removable.if.unused)
 ;; CHECK-NEXT:  (func $calls-marked (type $0) (param $x i32) (result i32)
 ;; CHECK-NEXT:   (local.set $x
 ;; CHECK-NEXT:    (call $calls-marked

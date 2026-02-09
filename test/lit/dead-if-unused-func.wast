@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt -all --roundtrip %s -S -o - | filecheck %s
 
 (module
-  (@binaryen.dead.if.unused)
+  (@binaryen.removable.if.unused)
   (func $func-annotation
     ;; The annotation here is on the function.
     (drop
@@ -13,7 +13,7 @@
 
 ;; CHECK: (module
 ;; CHECK-NEXT:  (type $0 (func))
-;; CHECK-NEXT:  (@binaryen.dead.if.unused)
+;; CHECK-NEXT:  (@binaryen.removable.if.unused)
 ;; CHECK-NEXT:  (func $func-annotation
 ;; CHECK-NEXT:   (drop
 ;; CHECK-NEXT:    (i32.const 0)

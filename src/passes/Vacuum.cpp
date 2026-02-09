@@ -141,7 +141,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // If |curr| is marked so, then it is dead without even checking effects.
       if (Intrinsics(*getModule())
             .getCallAnnotations(call, getFunction())
-            .deadIfUnused) {
+            .removableIfUnused) {
         return false;
       }
     }

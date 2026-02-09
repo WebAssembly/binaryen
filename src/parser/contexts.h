@@ -1315,8 +1315,8 @@ struct AnnotationParserCtx {
         branchHint = &a;
       } else if (a.kind == Annotations::InlineHint) {
         inlineHint = &a;
-      } else if (a.kind == Annotations::DeadIfUnusedHint) {
-        ret.deadIfUnused = true;
+      } else if (a.kind == Annotations::removableIfUnusedHint) {
+        ret.removableIfUnused = true;
       }
     }
 

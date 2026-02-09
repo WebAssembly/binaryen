@@ -2248,11 +2248,11 @@ struct CodeAnnotation {
   // Toolchain hint: If this expression's result is unused, then the entire
   // thing can be considered dead and removable.
   // TODO: link to spec somewhere
-  bool deadIfUnused = false;
+  bool removableIfUnused = false;
 
   bool operator==(const CodeAnnotation& other) const {
     return branchLikely == other.branchLikely && inline_ == other.inline_ &&
-           deadIfUnused == other.deadIfUnused;
+           removableIfUnused == other.removableIfUnused;
   }
 };
 

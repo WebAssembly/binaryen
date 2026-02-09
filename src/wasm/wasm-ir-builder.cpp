@@ -2662,10 +2662,10 @@ void IRBuilder::applyAnnotations(Expression* expr,
     func->codeAnnotations[expr].inline_ = annotation.inline_;
   }
 
-  if (annotation.deadIfUnused) {
+  if (annotation.removableIfUnused) {
     // Only possible inside functions.
     assert(func);
-    func->codeAnnotations[expr].deadIfUnused = true;
+    func->codeAnnotations[expr].removableIfUnused = true;
   }
 }
 
