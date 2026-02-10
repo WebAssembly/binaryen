@@ -1279,3 +1279,84 @@
     )
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field funcref))))
+    (type $desc (sub (describes $struct) (struct (field funcref))))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $desc (ref $desc))
+  ;; CHECK-NEXT:  (local $func funcref)
+  ;; CHECK-NEXT:  (local $2 funcref)
+  ;; CHECK-NEXT:  (local $3 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $4 (ref (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (ref.null nofunc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.tee $func
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces unreachable RefGetDesc we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (block (result nullref)
+  ;; CHECK-NEXT:          (local.set $4
+  ;; CHECK-NEXT:           (struct.new_default $desc)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (local.set $3
+  ;; CHECK-NEXT:           (local.get $4)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (ref.null none)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $desc (ref $desc))
+    (local $func funcref)
+
+    (local.set $desc
+      (struct.new_default $desc)
+    )
+
+    (local.set $func
+      (struct.get $desc 0
+        ;; This ref.get_desc will become unreachable (as the desc does not
+        ;; match, after expanding locals). We should not generate invalid code
+        ;; from that point - it is unreachable, and we can leave it as is.
+        (ref.get_desc $struct
+          (ref.cast_desc_eq (ref $struct)
+            (struct.new_default_desc $struct
+              (struct.new_default $desc)
+            )
+            (local.get $desc)
+          )
+        )
+      )
+    )
+  )
+)
