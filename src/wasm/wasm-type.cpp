@@ -2250,7 +2250,7 @@ struct TypeBuilder::Impl {
       }
       initialized = true;
     }
-    HeapType get() { return HeapType(TypeID(info.get())); }
+    HeapType get() const { return HeapType(TypeID(info.get())); }
   };
 
   std::vector<Entry> entries;
@@ -2287,7 +2287,7 @@ void TypeBuilder::grow(size_t n) {
   impl->entries.resize(size() + n);
 }
 
-size_t TypeBuilder::size() { return impl->entries.size(); }
+size_t TypeBuilder::size() const { return impl->entries.size(); }
 
 void TypeBuilder::setHeapType(size_t i, Signature signature) {
   assert(i < size() && "index out of bounds");
@@ -2314,7 +2314,7 @@ void TypeBuilder::setHeapType(size_t i, Array array) {
   impl->entries[i].set(array);
 }
 
-HeapType TypeBuilder::getTempHeapType(size_t i) {
+HeapType TypeBuilder::getTempHeapType(size_t i) const {
   assert(i < size() && "index out of bounds");
   return impl->entries[i].get();
 }
@@ -2722,7 +2722,7 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 void TypeBuilder::dump() const {
   std::vector<HeapType> types;
   for (size_t i = 0; i < size(); ++i) {
-    types.push_back((*this)[i]);
+    types.push_back(getTempHeapType(i));
   }
   IndexedTypeNameGenerator<DefaultTypeNameGenerator> print(types);
 
