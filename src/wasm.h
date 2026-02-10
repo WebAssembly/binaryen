@@ -2292,7 +2292,7 @@ public:
                ? columnNumber < other.columnNumber
                : symbolNameIndex < other.symbolNameIndex;
     }
-    void dump() {
+    void dump() const {
       std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) << " @ "
                 << fileIndex << ":" << lineNumber << ":" << columnNumber
                 << "\n";
@@ -2503,8 +2503,8 @@ class Tag : public Importable {
 public:
   HeapType type;
 
-  Type params() { return type.getSignature().params; }
-  Type results() { return type.getSignature().results; }
+  Type params() const { return type.getSignature().params; }
+  Type results() const { return type.getSignature().results; }
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

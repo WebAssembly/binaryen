@@ -29,6 +29,7 @@
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/struct-utils.h"
 #include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -425,7 +426,108 @@ private:
   }
 };
 
-struct Unsubtyping : Pass {
+// There are two contexts where we have to note subtypings and casts: in the
+// initial parallel analysis of the module and in the follow-on fixed point
+// analysis over the type tree. Most of the logic is the same in both cases, but
+// the final update of data structures is different. This CRTP utility
+// deduplicates the shared logic.
+template<typename Self> struct Noter {
+  Self& self() { return *static_cast<Self*>(this); }
+
+  void noteSubtype(HeapType sub, HeapType super) {
+    // Bottom types are uninteresting, but other basic heap types can be
+    // interesting because of their interactions with casts.
+    if (sub == super || sub.isBottom()) {
+      return;
+    }
+    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, sub)
+                  << " <: " << ModuleHeapType(*wasm, super) << '\n');
+    self().doNoteSubtype(sub, super);
+  }
+
+  void noteSubtype(Type sub, Type super) {
+    if (sub.isTuple()) {
+      assert(super.isTuple() && sub.size() == super.size());
+      for (size_t i = 0, size = sub.size(); i < size; ++i) {
+        noteSubtype(sub[i], super[i]);
+      }
+      return;
+    }
+    if (!sub.isRef() || !super.isRef()) {
+      return;
+    }
+    noteSubtype(sub.getHeapType(), super.getHeapType());
+  }
+
+  void noteSubtype(Type sub, Expression* super) {
+    noteSubtype(sub, super->type);
+  }
+
+  void noteSubtype(Expression* sub, Type super) {
+    noteSubtype(sub->type, super);
+  }
+
+  void noteSubtype(Expression* sub, Expression* super) {
+    noteSubtype(sub->type, super->type);
+  }
+
+  void noteDescriptor(HeapType described, HeapType descriptor) {
+    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, described) << " -> "
+                  << ModuleHeapType(*wasm, descriptor) << '\n');
+    self().doNoteDescriptor(described, descriptor);
+  }
+
+  void noteDescribed(HeapType type) {
+    auto desc = type.getDescriptorType();
+    assert(desc);
+    noteDescriptor(type, *desc);
+  }
+
+  void noteDescriptor(HeapType type) {
+    auto desc = type.getDescribedType();
+    assert(desc);
+    noteDescriptor(*desc, type);
+  }
+
+  void noteCast(HeapType src, Type dstType) {
+    auto dst = dstType.getHeapType();
+    // Casts to self and casts that must fail because they have incompatible
+    // types are uninteresting.
+    if (dst == src) {
+      return;
+    }
+    if (HeapType::isSubType(dst, src)) {
+      if (dstType.isExact()) {
+        // This cast only tests that the exact destination type is a subtype
+        // of the source type and does not impose additional requirements on
+        // subtypes of the destination type like a normal cast does.
+        noteSubtype(dst, src);
+        return;
+      }
+      self().doNoteCast(src, dst);
+      return;
+    }
+    if (HeapType::isSubType(src, dst)) {
+      // This is an upcast that will always succeed, but only if we ensure
+      // src <: dst.
+      noteSubtype(src, dst);
+    }
+  }
+
+  void noteCast(Expression* src, Type dst) {
+    if (src->type.isRef() && dst.isRef()) {
+      noteCast(src->type.getHeapType(), dst);
+    }
+  }
+
+  void noteCast(Expression* src, Expression* dst) {
+    if (src->type.isRef() && dst->type.isRef()) {
+      noteCast(src->type.getHeapType(), dst->type);
+    }
+  }
+};
+
+struct Unsubtyping : Pass, Noter<Unsubtyping> {
   // The kind of work to process.
   enum class Kind { Subtype, Descriptor };
   // (sub, super) pairs that we have discovered but not yet processed.
@@ -453,6 +555,7 @@ struct Unsubtyping : Pass {
     // Initialize the subtype relation based on what is immediately required to
     // keep the code and public types valid.
     analyzePublicTypes(*wasm);
+    analyzeJSCalledFunctions(*wasm);
     analyzeModule(*wasm);
 
     // Find further subtypings and iterate to a fixed point.
@@ -482,34 +585,13 @@ struct Unsubtyping : Pass {
     ReFinalize().run(getPassRunner(), wasm);
   }
 
-  void noteSubtype(HeapType sub, HeapType super) {
-    // Bottom types are uninteresting, but other basic heap types can be
-    // interesting because of their interactions with casts.
-    if (sub == super || sub.isBottom()) {
-      return;
-    }
-    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, sub)
-                  << " <: " << ModuleHeapType(*wasm, super) << '\n');
+  void doNoteSubtype(HeapType sub, HeapType super) {
     work.push_back({Kind::Subtype, sub, super});
   }
 
-  void noteSubtype(Type sub, Type super) {
-    if (sub.isTuple()) {
-      assert(super.isTuple() && sub.size() == super.size());
-      for (size_t i = 0, size = sub.size(); i < size; ++i) {
-        noteSubtype(sub[i], super[i]);
-      }
-      return;
-    }
-    if (!sub.isRef() || !super.isRef()) {
-      return;
-    }
-    noteSubtype(sub.getHeapType(), super.getHeapType());
-  }
+  void doNoteCast(HeapType src, HeapType dst) { casts[src].push_back(dst); }
 
-  void noteDescriptor(HeapType described, HeapType descriptor) {
-    DBG(std::cerr << "noting " << ModuleHeapType(*wasm, described) << " -> "
-                  << ModuleHeapType(*wasm, descriptor) << '\n');
+  void doNoteDescriptor(HeapType described, HeapType descriptor) {
     work.push_back({Kind::Descriptor, described, descriptor});
   }
 
@@ -521,6 +603,33 @@ struct Unsubtyping : Pass {
       }
       if (auto desc = type.getDescriptorType()) {
         noteDescriptor(type, *desc);
+      }
+    }
+  }
+
+  void analyzeJSCalledFunctions(Module& wasm) {
+    if (!wasm.features.hasCustomDescriptors()) {
+      return;
+    }
+    Type anyref(HeapType::any, Nullable);
+    for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+      // Parameter types flow into Wasm and are implicitly cast from any.
+      for (auto type : wasm.getFunction(func)->getParams()) {
+        if (Type::isSubType(type, anyref)) {
+          noteCast(HeapType::any, type);
+        }
+      }
+      for (auto type : wasm.getFunction(func)->getResults()) {
+        // Result types flow into JS and are implicitly converted from any to
+        // extern. They may also expose configured prototypes that we must keep.
+        if (Type::isSubType(type, anyref)) {
+          auto heapType = type.getHeapType();
+          noteSubtype(heapType, HeapType::any);
+          if (auto desc = heapType.getDescriptorType();
+              desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+            noteDescriptor(heapType, *desc);
+          }
+        }
       }
     }
   }
@@ -538,7 +647,8 @@ struct Unsubtyping : Pass {
     };
 
     struct Collector
-      : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>> {
+      : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>>,
+        Noter<Collector> {
       using Super =
         ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>>;
 
@@ -548,35 +658,10 @@ struct Unsubtyping : Pass {
       Collector(Info& info, bool trapsNeverHappen)
         : info(info), trapsNeverHappen(trapsNeverHappen) {}
 
-      void noteSubtype(Type sub, Type super) {
-        if (sub.isTuple()) {
-          assert(super.isTuple() && sub.size() == super.size());
-          for (size_t i = 0, size = sub.size(); i < size; ++i) {
-            noteSubtype(sub[i], super[i]);
-          }
-          return;
-        }
-        if (!sub.isRef() || !super.isRef()) {
-          return;
-        }
-        noteSubtype(sub.getHeapType(), super.getHeapType());
-      }
-      void noteSubtype(HeapType sub, HeapType super) {
-        assert(HeapType::isSubType(sub, super));
-        if (sub == super || sub.isBottom()) {
-          return;
-        }
+      void doNoteSubtype(HeapType sub, HeapType super) {
         info.subtypings.insert({sub, super});
       }
-      void noteSubtype(Type sub, Expression* super) {
-        noteSubtype(sub, super->type);
-      }
-      void noteSubtype(Expression* sub, Type super) {
-        noteSubtype(sub->type, super);
-      }
-      void noteSubtype(Expression* sub, Expression* super) {
-        noteSubtype(sub->type, super->type);
-      }
+
       void noteNonFlowSubtype(Expression* sub, Type super) {
         // This expression's type must be a subtype of |super|, but the value
         // does not flow anywhere - this is a static constraint. As the value
@@ -603,52 +688,15 @@ struct Unsubtyping : Pass {
         // Otherwise, we must take this into account.
         noteSubtype(sub, super);
       }
-      void noteCast(HeapType src, Type dstType) {
-        auto dst = dstType.getHeapType();
-        // Casts to self and casts that must fail because they have incompatible
-        // types are uninteresting.
-        if (dst == src) {
-          return;
-        }
-        if (HeapType::isSubType(dst, src)) {
-          if (dstType.isExact()) {
-            // This cast only tests that the exact destination type is a subtype
-            // of the source type and does not impose additional requirements on
-            // subtypes of the destination type like a normal cast does.
-            info.subtypings.insert({dst, src});
-            return;
-          }
-          info.casts.insert({src, dst});
-          return;
-        }
-        if (HeapType::isSubType(src, dst)) {
-          // This is an upcast that will always succeed, but only if we ensure
-          // src <: dst.
-          info.subtypings.insert({src, dst});
-        }
-      }
-      void noteCast(Expression* src, Type dst) {
-        if (src->type.isRef() && dst.isRef()) {
-          noteCast(src->type.getHeapType(), dst);
-        }
-      }
-      void noteCast(Expression* src, Expression* dst) {
-        if (src->type.isRef() && dst->type.isRef()) {
-          noteCast(src->type.getHeapType(), dst->type);
-        }
+
+      void doNoteCast(HeapType src, HeapType dst) {
+        info.casts.insert({src, dst});
       }
 
-      // Visitors for finding required descriptors.
-      void noteDescribed(HeapType type) {
-        auto desc = type.getDescriptorType();
-        assert(desc);
-        info.descriptors.insert({type, *desc});
+      void doNoteDescriptor(HeapType described, HeapType descriptor) {
+        info.descriptors.insert({described, descriptor});
       }
-      void noteDescriptor(HeapType type) {
-        auto desc = type.getDescribedType();
-        assert(desc);
-        info.descriptors.insert({*desc, type});
-      }
+
       void visitRefGetDesc(RefGetDesc* curr) {
         Super::visitRefGetDesc(curr);
         if (!curr->ref->type.isStruct()) {
@@ -727,6 +775,14 @@ struct Unsubtyping : Pass {
     for (auto& [sub, super] : collectedInfo.subtypings) {
       noteSubtype(sub, super);
     }
+    // Combine casts we have already noted into the newly gathered casts.
+    for (auto& [src, dsts] : casts) {
+      for (auto dst : dsts) {
+        collectedInfo.casts.insert({src, dst});
+      }
+      dsts.clear();
+    }
+    // Record the deduplicated cast info.
     for (auto [src, dst] : collectedInfo.casts) {
       casts[src].push_back(dst);
     }
