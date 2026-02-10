@@ -365,9 +365,6 @@ std::ostream& writeWTF16CodePoint(std::ostream& os, uint32_t u) {
   return os;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
 bool convertWTF8ToWTF16(std::ostream& os, std::string_view str) {
   bool valid = true;
   bool lastWasLeadingSurrogate = false;
@@ -392,8 +389,6 @@ bool convertWTF8ToWTF16(std::ostream& os, std::string_view str) {
 
   return valid;
 }
-
-#pragma GCC diagnostic pop
 
 bool convertWTF16ToWTF8(std::ostream& os, std::string_view str) {
   return doConvertWTF16ToWTF8(os, str, true);
