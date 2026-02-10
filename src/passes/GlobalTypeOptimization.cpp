@@ -124,7 +124,7 @@ struct FieldInfoScanner
     }
     auto exact = curr->value->type.getExactness();
     if (auto desc = curr->value->type.getHeapType().getDescriptorType();
-        desc && desc->hasPossibleJSPrototypeField()) {
+        desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
       functionSetGetInfos[getFunction()][{*desc, exact}][0].noteRead();
     }
   }
@@ -426,7 +426,7 @@ struct GlobalTypeOptimization : public Pass {
           continue;
         }
         if (auto desc = type.getHeapType().getDescriptorType();
-            desc && desc->hasPossibleJSPrototypeField()) {
+            desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
           // This field holds a JS-visible prototype. Do not remove it.
           auto exact = type.getExactness();
           combinedSetGetInfos[std::make_pair(*desc, exact)][0].noteRead();

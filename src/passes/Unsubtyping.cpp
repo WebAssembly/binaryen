@@ -29,6 +29,7 @@
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/struct-utils.h"
 #include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -625,7 +626,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
           // flow into locations typed any.
           noteSubtype(heapType, HeapType::any);
           if (auto desc = heapType.getDescriptorType();
-              desc && desc->hasPossibleJSPrototypeField()) {
+              desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
             // This descriptor will expose a prototype to JS, so we must keep
             // it.
             noteDescriptor(heapType, *desc);
