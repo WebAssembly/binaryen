@@ -274,7 +274,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       auto afterIfFalseState = locals; // TODO: optimize
       mergeIf(afterIfTrueState, afterIfFalseState, condition, curr, locals);
     } else {
-      mergeIf(initialState, afterIfTrueState, condition, curr, locals);
+      mergeIf(afterIfTrueState, initialState, condition, curr, locals);
     }
     parent = oldParent;
     return &bad;
