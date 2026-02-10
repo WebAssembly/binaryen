@@ -166,8 +166,8 @@ function logValue(x, y) {
 function logRef(ref) {
   // Look for VM bugs by doing some basic operations on the reference:
   // first, convert it to various things.
-  +ref;
-  ref + '';
+  //+ref; // traps
+  //ref + ''; // traps
   JSON.stringify(ref);
   // If not null, try to read a property, which might exercise an
   // interesting code path.
