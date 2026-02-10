@@ -30,12 +30,24 @@
 namespace wasm {
 
 namespace {
-template<typename T>
-std::vector<T> concat(const std::vector<T> a, const std::vector<T> b) {
-  auto added = a;
-  std::copy(b.begin(), b.end(), std::back_inserter(added));
-  return added;
+
+std::vector<Type> getLoggableTypes(bool hasSimd) {
+  // - funcref cannot be logged because referenced functions can be inlined or
+  // removed during optimization
+  // - there's no point in logging anyref because it is opaque
+  // - don't bother logging tuples
+  std::vector<Type> loggableTypes = {
+    Type::i32,
+    Type::i64,
+    Type::f32,
+    Type::f64,
+  };
+  if (hasSimd) {
+    loggableTypes.push_back(Type::v128);
+  }
+  return loggableTypes;
 }
+
 } // namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
@@ -43,19 +55,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features),
-    // - funcref cannot be logged because referenced functions can be inlined or
-    // removed during optimization
-    // - there's no point in logging anyref because it is opaque
-    // - don't bother logging tuples
-    loggableTypes(concat(
-      std::vector<Type>{
-        Type::i32,
-        Type::i64,
-        Type::f32,
-        Type::f64,
-      },
-      wasm.features.hasSIMD() ? std::vector<Type>{Type::v128}
-                              : std::vector<Type>())),
+    loggableTypes(getLoggableTypes(wasm.features.hasSIMD())),
     atomicMemoryOrders(wasm.features.hasRelaxedAtomics()
                          ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
                          : std::vector{MemoryOrder::SeqCst}),
