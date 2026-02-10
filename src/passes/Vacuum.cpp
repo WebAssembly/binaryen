@@ -137,8 +137,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   // around if so.)
   bool mustKeepUnusedParent(Expression* curr) {
     if (auto* call = curr->dynCast<Call>()) {
-      // Return true if a target in a function is annotated as dead if unused.
-      // If |curr| is marked so, then it is dead without even checking effects.
+      // If |curr| is marked as removable if unused, then it is removable without even checking effects.
       if (Intrinsics(*getModule())
             .getCallAnnotations(call, getFunction())
             .removableIfUnused) {
