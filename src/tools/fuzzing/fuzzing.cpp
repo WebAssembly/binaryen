@@ -53,7 +53,9 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   if (wasm.features.hasGC()) {
     loggableTypes.push_back(Type(HeapType::any, Nullable));
     loggableTypes.push_back(Type(HeapType::func, Nullable));
-    // TODO: cont, extern (, exn?)
+    loggableTypes.push_back(Type(HeapType::cont, Nullable));
+    loggableTypes.push_back(Type(HeapType::ext, Nullable));
+    loggableTypes.push_back(Type(HeapType::exn, Nullable));
   }
 
   // Setup params. Start with the defaults.
