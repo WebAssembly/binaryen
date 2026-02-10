@@ -5512,7 +5512,8 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   return ((Module*)module)->dataSegments.size();
 }
-bool BinaryenHasMemorySegment(BinaryenModuleRef module, const char* segmentName) {
+bool BinaryenHasMemorySegment(BinaryenModuleRef module,
+                              const char* segmentName) {
   return (Module*)module->getDataSegmentOrNull(Name(segmentName)) != NULL;
 }
 uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
