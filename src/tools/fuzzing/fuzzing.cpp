@@ -50,6 +50,11 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   if (wasm.features.hasSIMD()) {
     loggableTypes.push_back(Type::v128);
   }
+  if (wasm.features.hasGC()) {
+    loggableTypes.push_back(Type(HeapType::any, Nullable));
+    loggableTypes.push_back(Type(HeapType::func, Nullable));
+    // TODO: cont, extern (, exn?)
+  }
 
   // Setup params. Start with the defaults.
   globalParams = std::make_unique<FuzzParamsContext>(*this);

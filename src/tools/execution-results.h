@@ -447,11 +447,12 @@ struct ExecutionResults {
     // simple and stable internal structures that optimizations will not alter.
     auto type = value.type;
     if (type.isRef()) {
+      auto heapType = type.getHeapType();
       if (type.isString() || type.getHeapType().isMaybeShared(HeapType::i31)) {
         std::cout << value << '\n';
       } else if (value.isNull()) {
         std::cout << "null\n";
-      } else if (type.isFunction()) {
+      } else if (heapType.getTop() == HeapType::func) {
         std::cout << "function\n";
       } else {
         std::cout << "object\n";

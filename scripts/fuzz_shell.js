@@ -163,6 +163,21 @@ function logValue(x, y) {
   console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
+function logRef(ref) {
+  // Look for VM bugs by doing some basic operations on the reference:
+  // first, convert it to various things.
+  +ref;
+  ref + '';
+  JSON.stringify(ref);
+  // If not null, try to read a property, which might exercise an
+  // interesting code path.
+  if (ref) {
+    ref.foobar;
+  }
+  // Finally, log normally as with all other loggers.
+  logValue(ref);
+}
+
 // Track the exports in a map (similar to the Exports object from wasm, i.e.,
 // whose keys are strings and whose values are the corresponding exports).
 var exports = {};
@@ -290,6 +305,8 @@ var imports = {
     // we could avoid running JS on code with SIMD in it, but it is useful to
     // fuzz such code as much as we can.)
     'log-v128': logValue,
+    'log-anyref': logRef,
+    'log-funcref': logRef,
 
     // Throw an exception from JS.
     'throw': (which) => {
