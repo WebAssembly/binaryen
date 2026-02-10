@@ -32,7 +32,7 @@ namespace StructUtils {
 
 // Whether this is a descriptor struct type whose first field is immutable and a
 // subtype of externref.
-bool hasPossibleJSPrototypeField(HeapType type) {
+inline bool hasPossibleJSPrototypeField(HeapType type) {
   if (!type.getDescribedType()) {
     return false;
   }
