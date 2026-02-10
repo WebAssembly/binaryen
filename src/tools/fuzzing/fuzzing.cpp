@@ -53,8 +53,12 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   if (wasm.features.hasGC()) {
     loggableTypes.push_back(Type(HeapType::any, Nullable));
     loggableTypes.push_back(Type(HeapType::func, Nullable));
-    loggableTypes.push_back(Type(HeapType::cont, Nullable));
     loggableTypes.push_back(Type(HeapType::ext, Nullable));
+  }
+  if (wasm.features.hasStackSwitching()) {
+    loggableTypes.push_back(Type(HeapType::cont, Nullable));
+  }
+  if (wasm.features.hasExceptionHandling()) {
     loggableTypes.push_back(Type(HeapType::exn, Nullable));
   }
 
