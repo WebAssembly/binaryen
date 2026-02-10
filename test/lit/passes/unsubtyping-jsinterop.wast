@@ -24,13 +24,15 @@
     (type $struct-not-sent (descriptor $desc-not-sent) (struct))
     (type $desc-not-sent (describes $struct-not-sent) (struct (field externref)))
 
-    ;; Receiving a type from JS as means it is implicitly cast from any.
+    ;; Receiving a type from JS as means it is implicitly cast from any, which
+    ;; can cause the subtype relationship to be kept.
     ;; CHECK:       (type $super-param (sub (struct)))
     (type $super-param (sub (struct)))
     ;; CHECK:       (type $sub-param (sub $super-param (struct)))
     (type $sub-param (sub $super-param (struct)))
 
-    ;; Returning a type to JS means it can come back in as an anyref.
+    ;; Returning a type to JS means it flows into an anyref posistion, which
+    ;; can cause the subytpe relationship to be kept.
     ;; CHECK:       (type $super-result (sub (struct)))
     (type $super-result (sub (struct)))
     ;; CHECK:       (type $sub-result (sub $super-result (struct)))
