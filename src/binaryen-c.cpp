@@ -5281,7 +5281,7 @@ void BinaryenAddTagImport(BinaryenModuleRef module,
                           const char* externalBaseName,
                           BinaryenType params,
                           BinaryenType results) {
-  auto* tag = ((Module*)module)->getGlobalOrNull(internalName);
+  auto* tag = ((Module*)module)->getTagOrNull(internalName);
   if (tag == nullptr) {
     auto tag = std::make_unique<Tag>();
     tag->name = internalName;
