@@ -30,6 +30,26 @@ using StructField = std::pair<HeapType, Index>;
 
 namespace StructUtils {
 
+// Whether this is a descriptor struct type whose first field is immutable and a
+// subtype of externref.
+inline bool hasPossibleJSPrototypeField(HeapType type) {
+  if (!type.getDescribedType()) {
+    return false;
+  }
+  assert(type.isStruct());
+  const auto& fields = type.getStruct().fields;
+  if (fields.empty()) {
+    return false;
+  }
+  if (fields[0].mutable_ == Mutable) {
+    return false;
+  }
+  if (!fields[0].type.isRef()) {
+    return false;
+  }
+  return fields[0].type.getHeapType().isMaybeShared(HeapType::ext);
+}
+
 // A value that has a single bool, and implements combine() so it can be used in
 // StructValues.
 struct CombinableBool {
@@ -184,8 +204,7 @@ struct FunctionStructValuesMap
 // Descriptors are treated as fields in that we call the above functions on
 // them. We pass DescriptorIndex for their index as a fake value.
 template<typename T, typename SubType>
-struct StructScanner
-  : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
+struct StructScanner : public WalkerPass<PostWalker<SubType>> {
   bool isFunctionParallel() override { return true; }
 
   bool modifiesBinaryenIR() override { return false; }
