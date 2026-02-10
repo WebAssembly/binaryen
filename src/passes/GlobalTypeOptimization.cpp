@@ -23,6 +23,7 @@
 //
 
 #include "ir/eh-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/localize.h"
 #include "ir/names.h"
 #include "ir/ordering.h"
@@ -111,6 +112,22 @@ struct FieldInfoScanner
     info.noteRead();
     info.noteWrite();
   }
+
+  // Converting a reference to externref makes the prototype field on its
+  // descriptor available to be read by JS, if such a field exists.
+  void visitRefAs(RefAs* curr) {
+    if (curr->op != ExternConvertAny) {
+      return;
+    }
+    if (!curr->value->type.isRef()) {
+      return;
+    }
+    if (auto desc = curr->value->type.getHeapType().getDescriptorType();
+        desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+      auto exact = curr->value->type.getExactness();
+      functionSetGetInfos[getFunction()][{*desc, exact}][0].noteRead();
+    }
+  }
 };
 
 struct GlobalTypeOptimization : public Pass {
@@ -150,6 +167,10 @@ struct GlobalTypeOptimization : public Pass {
 
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
+
+    // Analyze functions called by JS to find fields holding configured
+    // prototypes that cannot be removed.
+    analyzeJSCalledFunctions(*module);
 
     // Propagate information to super and subtypes on set/get infos:
     //
@@ -201,7 +222,7 @@ struct GlobalTypeOptimization : public Pass {
       auto& fields = type.getStruct().fields;
       // Use the exact entry because information from the inexact entry in
       // dataFromSupersMap will have been propagated down into it but not vice
-      // versa. (This doesn't matter or dataFromSubsAndSupers because the exact
+      // versa. (This doesn't matter for dataFromSubsAndSupers because the exact
       // and inexact entries will have the same data.)
       auto ht = std::make_pair(type, Exact);
       auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[ht];
@@ -392,6 +413,27 @@ struct GlobalTypeOptimization : public Pass {
     // Update the types in the entire module.
     if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty()) {
       updateTypes(*module);
+    }
+  }
+
+  void analyzeJSCalledFunctions(Module& wasm) {
+    if (!wasm.features.hasCustomDescriptors()) {
+      return;
+    }
+    for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+      // Look at the result types being returned to JS and make sure we preserve
+      // any configured prototypes they might expose.
+      for (auto type : wasm.getFunction(func)->getResults()) {
+        if (!type.isRef()) {
+          continue;
+        }
+        if (auto desc = type.getHeapType().getDescriptorType();
+            desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+          // This field holds a JS-visible prototype. Do not remove it.
+          auto exact = type.getExactness();
+          combinedSetGetInfos[std::make_pair(*desc, exact)][0].noteRead();
+        }
+      }
     }
   }
 

@@ -84,14 +84,22 @@ public:
     throw FailToEvalException{"Imported table access."};
   }
 
+  // We assume that each tag import is distinct. This is wrong if the same tag
+  // instantiation is imported twice with different import names.
   Tag* getTagOrNull(ImportNames name,
                     const Signature& signature) const override {
-    Fatal() << "getTagOrNull not implemented in ctor-eval.";
-    return nullptr;
+    auto [it, inserted] = importedTags.try_emplace(name, Tag{});
+    if (inserted) {
+      auto& tag = it->second;
+      tag.type = HeapType(signature);
+    }
+
+    return &it->second;
   }
 
 private:
   mutable Literals stubLiteral;
+  mutable std::unordered_map<ImportNames, Tag> importedTags;
 };
 
 class EvallingRuntimeTable : public RuntimeTable {
