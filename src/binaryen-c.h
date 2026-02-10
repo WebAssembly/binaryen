@@ -3017,6 +3017,7 @@ BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenHasMemorySegment(BinaryenModuleRef module, const char* segmentName);
 BINARYEN_API uint32_t BinaryenGetMemorySegmentByteOffset(
   BinaryenModuleRef module, const char* segmentName);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,

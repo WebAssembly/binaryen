@@ -2757,6 +2757,14 @@ function wrapModule(module, self = {}) {
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
+  /**
+   * Determines wether a memory segment with the given name exists within the given module.
+   * @param {string} name - The name of the memory segment to check exists.
+   * @returns `true` if the memory segment exists, `false` otherwise
+   */
+  self['hasMemorySegment'] = function(name) {
+    return Boolean(Module['_BinaryenHasMemorySegment'](module, strToStack(name)));
+  };
   self['getMemorySegmentInfo'] = function(name) {
     return preserveStack(() => {
       const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
