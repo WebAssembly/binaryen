@@ -198,7 +198,9 @@ def check_expected(actual, expected, stdout=None):
             shared.fail(actual, expected)
 
 
-UNSPLITTABLE_TESTS = [Path(x) for x in ["spec/testsuite/instance.wast"]]
+UNSPLITTABLE_TESTS = [Path(x) for x in [
+    "spec/testsuite/instance.wast",
+    "spec/instance.wast"]]
 
 
 def is_splittable(wast: Path):
