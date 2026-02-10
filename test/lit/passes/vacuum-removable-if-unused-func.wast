@@ -4,7 +4,7 @@
 (module
  (@binaryen.removable.if.unused)
  (func $calls-marked (param $x i32) (result i32)
-  ;; The function is marked as dead if unused, and this is dropped, so optimize.
+  ;; The function is marked as removable if unused, and this is dropped, so optimize.
   (drop
    (call $calls-marked
     (i32.const 0)
