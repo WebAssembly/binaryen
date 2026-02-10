@@ -41,6 +41,7 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/runtime-memory.h"
 #include "ir/runtime-table.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
