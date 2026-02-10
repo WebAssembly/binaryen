@@ -2283,7 +2283,7 @@ public:
                ? columnNumber < other.columnNumber
                : symbolNameIndex < other.symbolNameIndex;
     }
-    void dump() {
+    void dump() const {
       std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) << " @ "
                 << fileIndex << ":" << lineNumber << ":" << columnNumber
                 << "\n";
