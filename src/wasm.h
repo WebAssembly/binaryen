@@ -2246,8 +2246,9 @@ struct CodeAnnotation {
   std::optional<uint8_t> inline_;
 
   // Toolchain hint: If this expression's result is unused, then the entire
-  // thing can be considered dead and removable.
-  // TODO: link to spec somewhere
+  // thing can be considered dead and removable. See
+  //
+  // https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook#intrinsics
   bool removableIfUnused = false;
 
   bool operator==(const CodeAnnotation& other) const {
