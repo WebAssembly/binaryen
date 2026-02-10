@@ -613,22 +613,20 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
     Type anyref(HeapType::any, Nullable);
     for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+      // Parameter types flow into Wasm and are implicitly cast from any.
       for (auto type : wasm.getFunction(func)->getParams()) {
         if (Type::isSubType(type, anyref)) {
-          // This type is cast from anyref on the boundary.
           noteCast(HeapType::any, type);
         }
       }
       for (auto type : wasm.getFunction(func)->getResults()) {
+        // Result types flow into JS and are implicitly converted from any to
+        // extern. They may also expose configured prototypes that we must keep.
         if (Type::isSubType(type, anyref)) {
           auto heapType = type.getHeapType();
-          // This type is implicitly converted to externref, which means it can
-          // flow into locations typed any.
           noteSubtype(heapType, HeapType::any);
           if (auto desc = heapType.getDescriptorType();
               desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
-            // This descriptor will expose a prototype to JS, so we must keep
-            // it.
             noteDescriptor(heapType, *desc);
           }
         }

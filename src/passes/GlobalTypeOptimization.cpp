@@ -122,9 +122,9 @@ struct FieldInfoScanner
     if (!curr->value->type.isRef()) {
       return;
     }
-    auto exact = curr->value->type.getExactness();
     if (auto desc = curr->value->type.getHeapType().getDescriptorType();
         desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+      auto exact = curr->value->type.getExactness();
       functionSetGetInfos[getFunction()][{*desc, exact}][0].noteRead();
     }
   }
@@ -421,6 +421,8 @@ struct GlobalTypeOptimization : public Pass {
       return;
     }
     for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+      // Look at the result types being returned to JS and make sure we preserve
+      // any configured prototypes they might expose.
       for (auto type : wasm.getFunction(func)->getResults()) {
         if (!type.isRef()) {
           continue;
