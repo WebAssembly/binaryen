@@ -2763,7 +2763,7 @@ function wrapModule(module, self = {}) {
    * @returns `true` if the memory segment exists, `false` otherwise
    */
   self['hasMemorySegment'] = function(name) {
-    return Boolean(Module['_BinaryenHasMemorySegment'](module, strToStack(name)));
+    return preserveStack(() => Boolean(Module['_BinaryenHasMemorySegment'](module, strToStack(name))));
   };
   self['getMemorySegmentInfo'] = function(name) {
     return preserveStack(() => {
