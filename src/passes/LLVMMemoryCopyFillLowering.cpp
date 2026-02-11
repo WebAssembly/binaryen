@@ -246,11 +246,11 @@ struct LLVMMemoryCopyFillLowering
     module->getFunction(memFillFuncName)->body = body;
   }
 
-  void VisitTableCopy(TableCopy* curr) {
+  void visitTableCopy(TableCopy* curr) {
     Fatal() << "table.copy instruction found. Memory copy lowering is not "
                "designed to work on modules with bulk table operations";
   }
-  void VisitTableFill(TableCopy* curr) {
+  void visitTableFill(TableFill* curr) {
     Fatal() << "table.fill instruction found. Memory copy lowering is not "
                "designed to work on modules with bulk table operations";
   }
