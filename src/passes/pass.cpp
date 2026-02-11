@@ -408,6 +408,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
+  registerPass("remove-relaxed-simd",
+               "replaces relaxed SIMD instructions with unreachable",
+               createRemoveRelaxedSIMDPass);
   registerPass("remove-imports",
                "removes imports and replaces them with nops",
                createRemoveImportsPass);
