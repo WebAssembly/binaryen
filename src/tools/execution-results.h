@@ -52,6 +52,47 @@ Tag& getJsTag() {
   return tag;
 }
 
+void printValue(Literal value) {
+  // Unwrap an externalized GC value to get the actual value, but not strings,
+  // which are normally a subtype of ext.
+  if (Type::isSubType(value.type, Type(HeapType::ext, Nullable)) &&
+      !value.type.isString()) {
+    value = value.internalize();
+  }
+
+  // An anyref literal is a string.
+  if (value.type.isRef() &&
+      value.type.getHeapType().isMaybeShared(HeapType::any)) {
+    value = value.externalize();
+  }
+
+  // Don't print most reference values, as e.g. funcref(N) contains an index,
+  // which is not guaranteed to remain identical after optimizations. Do not
+  // print the type in detail (as even that may change due to closed-world
+  // optimizations); just print a simple type like JS does, 'object' or
+  // 'function', but also print null for a null (so a null function does not
+  // get printed as object, as in JS we have typeof null == 'object').
+  //
+  // The only references we print in full are strings and i31s, which have
+  // simple and stable internal structures that optimizations will not alter.
+  auto type = value.type;
+  if (type.isRef()) {
+    if (type.isString() || type.getHeapType().isMaybeShared(HeapType::i31)) {
+      std::cout << value;
+    } else if (value.isNull()) {
+      std::cout << "null";
+    } else if (type.isFunction()) {
+      std::cout << "function";
+    } else {
+      std::cout << "object";
+    }
+    return;
+  }
+
+  // Non-references can be printed in full.
+  std::cout << value;
+}
+
 } // namespace
 
 // Logs every relevant import call parameter.
@@ -127,7 +168,8 @@ public:
               std::cout << ' ' << high;
               loggings.push_back(high);
             } else {
-              std::cout << ' ' << argument;
+              std::cout << ' ';
+              printValue(argument);
               loggings.push_back(argument);
             }
           }
@@ -416,51 +458,11 @@ struct ExecutionResults {
           std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
           for (auto value : *values) {
             printValue(value);
+            std::cout << '\n';
           }
         }
       }
     }
-  }
-
-  void printValue(Literal value) {
-    // Unwrap an externalized GC value to get the actual value, but not strings,
-    // which are normally a subtype of ext.
-    if (Type::isSubType(value.type, Type(HeapType::ext, Nullable)) &&
-        !value.type.isString()) {
-      value = value.internalize();
-    }
-
-    // An anyref literal is a string.
-    if (value.type.isRef() &&
-        value.type.getHeapType().isMaybeShared(HeapType::any)) {
-      value = value.externalize();
-    }
-
-    // Don't print most reference values, as e.g. funcref(N) contains an index,
-    // which is not guaranteed to remain identical after optimizations. Do not
-    // print the type in detail (as even that may change due to closed-world
-    // optimizations); just print a simple type like JS does, 'object' or
-    // 'function', but also print null for a null (so a null function does not
-    // get printed as object, as in JS we have typeof null == 'object').
-    //
-    // The only references we print in full are strings and i31s, which have
-    // simple and stable internal structures that optimizations will not alter.
-    auto type = value.type;
-    if (type.isRef()) {
-      if (type.isString() || type.getHeapType().isMaybeShared(HeapType::i31)) {
-        std::cout << value << '\n';
-      } else if (value.isNull()) {
-        std::cout << "null\n";
-      } else if (type.isFunction()) {
-        std::cout << "function\n";
-      } else {
-        std::cout << "object\n";
-      }
-      return;
-    }
-
-    // Non-references can be printed in full.
-    std::cout << value << '\n';
   }
 
   // get current results and check them against previous ones

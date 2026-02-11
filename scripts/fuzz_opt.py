@@ -2689,12 +2689,12 @@ if __name__ == '__main__':
                 # We can't do this if a.wasm doesn't exist, which can be the
                 # case if we failed to even generate the wasm.
                 if not os.path.exists('a.wasm'):
-                    print('''\
+                    print(f'''\
 ================================================================================
 You found a bug in the fuzzer itself! It failed to generate a valid wasm file
 from the random input. Please report it with
 
-  seed: %(seed)d
+  seed: {seed}
 
 and the exact version of Binaryen you found it on, plus the exact Python
 version (hopefully deterministic random numbers will be identical).
