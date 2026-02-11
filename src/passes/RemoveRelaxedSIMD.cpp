@@ -18,12 +18,13 @@
 // Replaces relaxed SIMD instructions with traps.
 //
 
+#include <memory>
+
 #include "ir/localize.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
-#include <memory>
 
 namespace wasm {
 
