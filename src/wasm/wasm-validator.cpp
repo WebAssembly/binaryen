@@ -4319,10 +4319,8 @@ void FunctionValidator::validateOffset(Address offset,
 void FunctionValidator::validateAlignment(
   size_t align, Type type, Index bytes, bool isAtomic, Expression* curr) {
   if (isAtomic) {
-    shouldBeEqual(align,
-                  (size_t)bytes,
-                  curr,
-                  "atomic accesses must have natural alignment");
+    shouldBeEqual(
+      align, (size_t)bytes, curr, "atomic alignment must be natural");
     return;
   }
   switch (align) {
