@@ -943,6 +943,54 @@ TEST(InterpreterTest, GlobalI32) {
   EXPECT_EQ(results, expected);
 }
 
+TEST(InterpreterTest, ImportedGlobalI32) {
+  auto wasm = std::make_shared<Module>();
+  Builder builder(*wasm);
+
+  auto importedGlobal =
+    builder.makeGlobal("g", Type::i32, nullptr, Builder::Immutable);
+  importedGlobal->module = "env";
+  importedGlobal->base = "g";
+  wasm->addGlobal(std::move(importedGlobal));
+
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(wasm);
+  EXPECT_FALSE(result.getErr());
+}
+
+TEST(InterpreterTest, MixedImportedAndLocalGlobals) {
+  auto wasm = std::make_shared<Module>();
+  Builder builder(*wasm);
+  IRBuilder irBuilder(*wasm);
+
+  auto importedGlobal =
+    builder.makeGlobal("imported", Type::i32, nullptr, Builder::Immutable);
+  importedGlobal->module = "env";
+  importedGlobal->base = "imported";
+  wasm->addGlobal(std::move(importedGlobal));
+
+  wasm->addGlobal(builder.makeGlobal("local",
+                                     Type::i32,
+                                     builder.makeConst(Literal(int32_t(42))),
+                                     Builder::Mutable));
+
+  ASSERT_FALSE(
+    irBuilder.makeBlock(Name{}, Signature(Type::none, Type::i32)).getErr());
+  ASSERT_FALSE(irBuilder.makeGlobalGet("local").getErr());
+  ASSERT_FALSE(irBuilder.visitEnd().getErr());
+
+  auto expr = irBuilder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(wasm);
+  ASSERT_FALSE(result.getErr());
+
+  auto results = interpreter.runTest(*expr);
+  std::vector<Literal> expected{Literal(int32_t(42))};
+  EXPECT_EQ(results, expected);
+}
+
 TEST(InterpreterTest, GlobalInitI32) {
   auto wasm = std::make_shared<Module>();
   Builder builder(*wasm);
