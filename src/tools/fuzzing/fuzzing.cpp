@@ -42,13 +42,20 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 
   haveInitialFunctions = !wasm.functions.empty();
 
-  // - funcref cannot be logged because referenced functions can be inlined or
-  // removed during optimization
-  // - there's no point in logging anyref because it is opaque
-  // - don't bother logging tuples
   loggableTypes = {Type::i32, Type::i64, Type::f32, Type::f64};
   if (wasm.features.hasSIMD()) {
     loggableTypes.push_back(Type::v128);
+  }
+  if (wasm.features.hasReferenceTypes()) {
+    if (wasm.features.hasGC()) {
+      loggableTypes.push_back(Type(HeapType::any, Nullable));
+      loggableTypes.push_back(Type(HeapType::func, Nullable));
+      loggableTypes.push_back(Type(HeapType::ext, Nullable));
+    }
+    if (wasm.features.hasStackSwitching()) {
+      loggableTypes.push_back(Type(HeapType::cont, Nullable));
+    }
+    // Note: exnref traps on the JS boundary, so we cannot try to log it.
   }
 
   // Setup params. Start with the defaults.
