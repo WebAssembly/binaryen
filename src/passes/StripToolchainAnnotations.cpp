@@ -26,12 +26,15 @@
 
 namespace wasm {
 
-struct StripToolchainAnnotations : public WalkerPass<PostWalker<StripToolchainAnnotations>> {
+struct StripToolchainAnnotations
+  : public WalkerPass<PostWalker<StripToolchainAnnotations>> {
   bool isFunctionParallel() override { return true; }
 
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  std::unique_ptr<Pass> create() override { return std::make_unique<StripToolchainAnnotations>(); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<StripToolchainAnnotations>();
+  }
 
   void doWalkFunction(Function* func) {
     auto& annotations = func->codeAnnotations;
