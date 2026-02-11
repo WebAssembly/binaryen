@@ -2,17 +2,39 @@
 ;; RUN: wasm-opt %s -all --strip-toolchain-annotations -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $test (type $0)
+  ;; CHECK:      (func $test (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (@metadata.code.inline "\00")
-  ;; CHECK-NEXT:  (call $test)
-  ;; CHECK-NEXT:  (call $test)
+  ;; CHECK-NEXT:  (call $test
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $test
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.inline "\00")
+  ;; CHECK-NEXT:  (call $test
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.inline "\00")
+  ;; CHECK-NEXT:  (call $test
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (param i32)
     ;; Inlining hints are not removed, as they are for the VM too.
     (@metadata.code.inline "\00")
-    (call $test)
+    (call $test (i32.const 0))
+
     ;; Toolchain hints are removed.
     (@binaryen.removable.if.unused)
-    (call $test)
+    (call $test (i32.const 1))
+
+    ;; When both are present, remove the toolchain one, in either order.
+    (@binaryen.removable.if.unused)
+    (@metadata.code.inline "\00")
+    (call $test (i32.const 2))
+
+    (@metadata.code.inline "\00")
+    (@binaryen.removable.if.unused)
+    (call $test (i32.const 3))
   )
 )
