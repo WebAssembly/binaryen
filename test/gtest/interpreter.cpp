@@ -17,6 +17,7 @@
 // TODO: Replace this test file with spec tests as soon as possible.
 
 #include "interpreter/interpreter.h"
+#include "interpreter/store.h"
 #include "literal.h"
 #include "wasm-ir-builder.h"
 #include "wasm.h"
@@ -1016,4 +1017,32 @@ TEST(InterpreterTest, GlobalInitI32) {
   std::vector<Literal> expected{Literal(int32_t(5))};
 
   EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, InstanceReferenceStability) {
+  using namespace interpreter;
+
+  auto module = std::make_shared<Module>();
+
+  WasmStore store;
+  store.instances.emplace_back(module);
+  store.instances[0].globalValues["x"] = Literal(int32_t(42));
+
+  Instance* addrBefore = &store.instances[0];
+
+  ExpressionIterator emptyIter;
+  store.callStack.emplace_back(store.instances[0], std::move(emptyIter));
+
+  // Add many more instances to exercise container growth.
+  for (int i = 0; i < 100; ++i) {
+    store.instances.emplace_back(module);
+  }
+
+  // With std::deque, existing elements are never relocated.
+  Instance* addrAfter = &store.instances[0];
+  EXPECT_EQ(addrBefore, addrAfter);
+
+  // The frame's Instance& reference is still valid.
+  EXPECT_EQ(store.callStack.back().instance.globalValues["x"],
+            Literal(int32_t(42)));
 }
