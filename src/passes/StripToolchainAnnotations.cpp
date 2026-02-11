@@ -37,7 +37,7 @@ struct StripToolchainAnnotations : public WalkerPass<PostWalker<StripToolchainAn
     while (iter != func->codeAnnotations.end()) {
       // Remove the toolchain-specific annotations.
       auto& annotation = iter->second;
-      annotation.deadIfUnused = false;
+      annotation.removableIfUnused = false;
 
       // If nothing remains, remove the entire annotation.
       if (annotation == CodeAnnotation()) {
