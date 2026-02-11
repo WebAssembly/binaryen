@@ -551,6 +551,9 @@
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features
 ;; CHECK-NEXT:                                                 section
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-toolchain-annotations                 strip all toolchain-specific
+;; CHECK-NEXT:                                                 code annotations
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --stub-unsupported-js                         stub out unsupported JS
 ;; CHECK-NEXT:                                                 operations
 ;; CHECK-NEXT:
