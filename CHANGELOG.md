@@ -116,6 +116,9 @@ v122
  - Add experimental support for atomic struct get and set (#7155) and RMW
    (#7225) operations.
 
+ - Binaryen.js now builds with BigInt support. The i64.const and f64.const_bits
+   functions now take BigInt parameters rather than pairs of numbers.
+
 v121
 ----
 

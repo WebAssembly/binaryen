@@ -1101,10 +1101,10 @@ function wrapModule(module, self = {}) {
     'store32'(offset, align, ptr, value, name) {
       return preserveStack(() => Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64'], strToStack(name)));
     },
-    'const'(x, y) {
+    'const'(x) {
       return preserveStack(() => {
         const tempLiteral = stackAlloc(sizeOfLiteral);
-        Module['_BinaryenLiteralInt64'](tempLiteral, x, y);
+        Module['_BinaryenLiteralInt64'](tempLiteral, BigInt(x));
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
@@ -1518,10 +1518,10 @@ function wrapModule(module, self = {}) {
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'const_bits'(x, y) {
+    'const_bits'(x) {
       return preserveStack(() => {
         const tempLiteral = stackAlloc(sizeOfLiteral);
-        Module['_BinaryenLiteralFloat64Bits'](tempLiteral, x, y);
+        Module['_BinaryenLiteralFloat64Bits'](tempLiteral, BigInt(x));
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
