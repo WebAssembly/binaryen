@@ -28,7 +28,11 @@
 namespace wasm {
 
 struct RemoveRelaxedSIMD : WalkerPass<PostWalker<RemoveRelaxedSIMD>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<RemoveRelaxedSIMD>();
+  }
 
   void replace(Expression* curr) {
     auto* block =
@@ -89,10 +93,6 @@ struct RemoveRelaxedSIMD : WalkerPass<PostWalker<RemoveRelaxedSIMD>> {
 
   void visitFunction(Function* func) {
     ReFinalize().walkFunctionInModule(func, getModule());
-  }
-
-  std::unique_ptr<Pass> create() {
-    return std::make_unique<RemoveRelaxedSIMD>();
   }
 };
 

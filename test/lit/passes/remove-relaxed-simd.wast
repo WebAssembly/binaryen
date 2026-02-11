@@ -3,7 +3,8 @@
 ;; RUN: wasm-opt %s -all --remove-relaxed-simd -S -o - | filecheck %s
 
 (module
-
+  ;; CHECK:      (import "" "" (func $effect (type $1) (result v128)))
+  (import "" "" (func $effect (result v128)))
   ;; CHECK:      (func $unary (type $0) (param $0 v128)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -40,7 +41,7 @@
     (drop (v128.not (local.get 0)))
   )
 
-  ;; CHECK:      (func $binary (type $1) (param $0 v128) (param $1 v128)
+  ;; CHECK:      (func $binary (type $2) (param $0 v128) (param $1 v128)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (unreachable)
@@ -95,7 +96,7 @@
     (drop (v128.xor (local.get 0) (local.get 1)))
   )
 
-  ;; CHECK:      (func $ternary (type $2) (param $0 v128) (param $1 v128) (param $2 v128)
+  ;; CHECK:      (func $ternary (type $3) (param $0 v128) (param $1 v128) (param $2 v128)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (unreachable)
@@ -165,6 +166,41 @@
       ;; This block should become unreachable.
       (block $l (result v128)
         (i32x4.relaxed_trunc_f32x4_s (local.get 0))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $effects (type $0) (param $0 v128)
+  ;; CHECK-NEXT:  (local $1 v128)
+  ;; CHECK-NEXT:  (local $2 v128)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $effect)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (block (result v128)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (call $effect)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $effects (param v128)
+    (drop
+      (f16x8.relaxed_madd
+        (call $effect)
+        (local.get 0)
+        (block (result v128)
+          (drop
+            (call $effect)
+          )
+          (local.get 0)
+        )
       )
     )
   )
