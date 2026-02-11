@@ -4,7 +4,7 @@
 
 (module
   (rec
-    ;; We can optimize out the externref field on the field because it is never
+    ;; We can optimize out the externref field on the struct because it is never
     ;; used.
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
@@ -290,8 +290,6 @@
   ;; CHECK-NEXT: )
   (func $externalize
     (local $struct (ref null $struct))
-    ;; Externalizing a reference may in general make it available to JS and
-    ;; and force us to keep fields holding exposed prototypes.
     (drop
       (extern.convert_any
         (local.get $struct)
