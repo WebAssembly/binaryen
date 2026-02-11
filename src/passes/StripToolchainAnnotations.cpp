@@ -15,9 +15,9 @@
  */
 
 //
-// Removes toolchain-specific annotations from the IR. This is useful after all
-// toolchain work is complete, because those annotations will not be used by
-// VMs later, so they just waste space.annotations
+// Removes toolchain-specific annotations from the IR. Typically this should be
+// done after toolchain optimizations no longer need the annotations, and before
+// shipping the final wasm (VMs do not need these toolchain annotations).
 //
 
 #include "pass.h"
