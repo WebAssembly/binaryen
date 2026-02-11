@@ -15,7 +15,9 @@
  */
 
 #include "source-map.h"
+#include "ir/module-utils.h"
 #include "print-test.h"
+#include "wasm-builder.h"
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
@@ -231,4 +233,70 @@ TEST_F(SourceMapTest, SourcesContent) {
   EXPECT_EQ(wasm.debugInfoSourcesContent[0],
             "#include <stdio.h> int main()\\n{ printf(\\\"Gr\\u00fc\\u00df "
             "Gott, Welt!\\\"); return 0;}");
+}
+
+// Regression test: updateSymbol calls for prologLocation/epilogLocation were
+// inside the debugLocations loop instead of outside. When debugLocations is
+// empty, the loop never executes and the locations are not updated.
+TEST(SourceMapCopyTest, UpdateSymbolOutsideLoop) {
+  Module srcModule;
+  Module dstModule;
+  Builder builder(srcModule);
+
+  auto func = builder.makeFunction(
+    "test", {}, Signature(Type::none, Type::none), {}, builder.makeNop());
+
+  // Set prologLocation and epilogLocation with symbolNameIndex values,
+  // but leave debugLocations empty.
+  func->prologLocation =
+    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)};
+  func->epilogLocation =
+    Function::DebugLocation{0, 2, 1, std::optional<BinaryLocation>(1)};
+
+  // Symbol name index map: 0->10, 1->11.
+  std::vector<Index> symbolNameIndexMap = {10, 11};
+
+  auto copied = ModuleUtils::copyFunctionWithoutAdd(
+    func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
+
+  ASSERT_TRUE(copied->prologLocation.has_value());
+  ASSERT_TRUE(copied->prologLocation->symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->prologLocation->symbolNameIndex, 10u);
+
+  ASSERT_TRUE(copied->epilogLocation.has_value());
+  ASSERT_TRUE(copied->epilogLocation->symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->epilogLocation->symbolNameIndex, 11u);
+}
+
+// When debugLocations has multiple entries, updateSymbol should only run once
+// per location, not once per loop iteration (which would double-remap).
+TEST(SourceMapCopyTest, UpdateSymbolNotDoubleRemapped) {
+  Module srcModule;
+  Module dstModule;
+  Builder builder(srcModule);
+
+  auto func = builder.makeFunction(
+    "test", {}, Signature(Type::none, Type::none), {}, builder.makeNop());
+
+  func->prologLocation =
+    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)};
+
+  // Add multiple debug locations so the loop runs multiple times.
+  auto* nop1 = srcModule.allocator.alloc<Nop>();
+  auto* nop2 = srcModule.allocator.alloc<Nop>();
+  func->debugLocations[nop1] =
+    Function::DebugLocation{0, 10, 1, std::optional<BinaryLocation>(0)};
+  func->debugLocations[nop2] =
+    Function::DebugLocation{0, 11, 1, std::optional<BinaryLocation>(1)};
+
+  // Map: 0->5, 1->6.
+  std::vector<Index> symbolNameIndexMap = {5, 6};
+
+  auto copied = ModuleUtils::copyFunctionWithoutAdd(
+    func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
+
+  // Should be remapped exactly once: 0 -> 5.
+  ASSERT_TRUE(copied->prologLocation.has_value());
+  ASSERT_TRUE(copied->prologLocation->symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->prologLocation->symbolNameIndex, 5u);
 }
