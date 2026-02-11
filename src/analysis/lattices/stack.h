@@ -120,12 +120,15 @@ template<Lattice L> struct Stack {
       if (itA == a.rend()) {
         // The rest of A's elements are bottom, but B has a non-bottom element
         // because of our invariant that the base of the materialized stack must
-        // not be bottom.
-        return LESS;
+        // not be bottom. If we previously found A > B for some element, the
+        // overall result is incomparable.
+        return result == GREATER ? NO_RELATION : LESS;
       }
       if (itB == b.rend()) {
         // The rest of B's elements are bottom, but A has a non-bottom element.
-        return GREATER;
+        // If we previously found A < B for some element, the overall result is
+        // incomparable.
+        return result == LESS ? NO_RELATION : GREATER;
       }
       switch (lattice.compare(*itA, *itB)) {
         case NO_RELATION:

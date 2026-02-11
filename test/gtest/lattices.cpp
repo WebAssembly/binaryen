@@ -749,6 +749,22 @@ TEST(StackLattice, Join) {
                   {flat.get(0u), flat.getTop()});
 }
 
+TEST(StackLattice, CompareDifferentSizeConflict) {
+  analysis::Stack stack{analysis::Bool{}};
+
+  // a=[true, false]: base=true (valid, not bottom=false), top=false
+  // b=[true]: base=true (valid), top=true
+  //
+  // Comparison from the top of stack (rbegin):
+  //   false vs true -> LESS, then b is exhausted while a has extra elements.
+  //   The size difference implies GREATER, but the element comparison found
+  //   LESS, so the stacks are incomparable.
+  analysis::Stack<analysis::Bool>::Element a = {true, false};
+  analysis::Stack<analysis::Bool>::Element b = {true};
+  EXPECT_EQ(stack.compare(a, b), analysis::NO_RELATION);
+  EXPECT_EQ(stack.compare(b, a), analysis::NO_RELATION);
+}
+
 using OddEvenInt = analysis::Flat<uint32_t>;
 using OddEvenBool = analysis::Flat<bool>;
 struct OddEvenAbstraction
