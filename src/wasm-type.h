@@ -17,6 +17,7 @@
 #ifndef wasm_wasm_type_h
 #define wasm_wasm_type_h
 
+#include <algorithm>
 #include <functional>
 #include <optional>
 #include <ostream>
@@ -591,6 +592,23 @@ public:
 };
 
 Type Type::asWrittenGivenFeatures(FeatureSet feats) const {
+  if (isTuple()) {
+    // Check whether we would change anything before doing the work of
+    // constructing a new tuple type.
+    const auto& tuple = getTuple();
+    bool hasChange = std::any_of(tuple.begin(), tuple.end(), [&](Type t) {
+      return t.asWrittenGivenFeatures(feats) != t;
+    });
+    if (!hasChange) {
+      return *this;
+    }
+    std::vector<Type> elems;
+    elems.reserve(size());
+    for (Index i = 0; i < size(); ++i) {
+      elems.push_back(tuple[i].asWrittenGivenFeatures(feats));
+    }
+    return Type(elems);
+  }
   if (!isRef()) {
     return *this;
   }

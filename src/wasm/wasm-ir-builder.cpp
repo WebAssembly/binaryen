@@ -76,15 +76,22 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
     return HoistedVal{Index(index), nullptr};
   }
   auto*& expr = stack[index];
-  auto type = expr->type;
-  if (type == Type::unreachable) {
+  if (expr->type == Type::unreachable) {
     // Make sure the top of the stack also has an unreachable expression.
     if (stack.back()->type != Type::unreachable) {
       pushSynthetic(builder.makeUnreachable());
     }
     return HoistedVal{Index(index), nullptr};
   }
-  // Hoist with a scratch local.
+  // Hoist with a scratch local. Normally the scratch local is the same type as
+  // the hoisted expression, but we may need to adjust it given the enabled
+  // features. Otherwise, if the expression has a tuple type with a more refined
+  // element than would be written to a binary, then that refined element type
+  // would end up in a multivalue block return. But that could cause us to fail
+  // text roundtripping if the block type would conflict after binary writing
+  // with another function type in the module. Avoid this problem by
+  // generalizing the scratch local type eagerly.
+  auto type = expr->type.asWrittenGivenFeatures(wasm.features);
   auto scratchIdx = addScratchLocal(type);
   CHECK_ERR(scratchIdx);
   expr = builder.makeLocalSet(*scratchIdx, expr);
