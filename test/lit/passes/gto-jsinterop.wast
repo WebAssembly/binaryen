@@ -143,35 +143,6 @@
   )
 )
 
-(module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
-    (type $struct (descriptor $desc) (struct))
-    ;; Maybe we will support shared prototypes someday.
-    ;; CHECK:       (type $desc (describes $struct) (struct (field (ref null (shared extern)))))
-    (type $desc (describes $struct) (struct (field (ref null (shared extern)))))
-  )
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (func $externalize (type $2)
-  ;; CHECK-NEXT:  (local $struct (ref null $struct))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (extern.convert_any
-  ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $externalize
-    (local $struct (ref null $struct))
-    (drop
-      (extern.convert_any
-        (local.get $struct)
-      )
-    )
-  )
-)
 
 (module
   (rec

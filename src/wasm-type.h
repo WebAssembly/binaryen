@@ -904,6 +904,8 @@ struct TypeBuilder {
     ForwardChildReference,
     // A continuation reference that does not refer to a function type.
     InvalidFuncType,
+    // A shared type with shared-everything disabled.
+    InvalidSharedType,
     // A non-shared field of a shared heap type.
     InvalidUnsharedField,
     // A describes clause on a non-struct type.
