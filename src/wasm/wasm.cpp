@@ -69,6 +69,7 @@ namespace Annotations {
 
 const Name BranchHint = "metadata.code.branch_hint";
 const Name InlineHint = "metadata.code.inline";
+const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 
 } // namespace Annotations
 

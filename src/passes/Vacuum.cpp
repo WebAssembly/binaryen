@@ -22,6 +22,7 @@
 #include <ir/branch-hints.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
+#include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
@@ -91,10 +92,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           curr->is<Loop>() || curr->is<Try>() || curr->is<TryTable>()) {
         return curr;
       }
-      // Check if this expression itself has side effects, ignoring children.
-      EffectAnalyzer self(getPassOptions(), *getModule());
-      self.visit(curr);
-      if (self.hasUnremovableSideEffects()) {
+      // Check if this expression itself must be kept.
+      if (mustKeepUnusedParent(curr)) {
         return curr;
       }
       // The result isn't used, and this has no side effects itself, so we can
@@ -128,6 +127,26 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // Otherwise, give up.
       return curr;
     }
+  }
+
+  // Check if a parent expression must be kept around, given the knowledge that
+  // its result is unused (dropped). This is basically just a call to
+  // ShallowEffectAnalyzer to see if we can remove it, except that given the
+  // result is unused, the relevant hint may help us. (This just checks the
+  // parent itself: it may have children that the caller must check and keep
+  // around if so.)
+  bool mustKeepUnusedParent(Expression* curr) {
+    if (auto* call = curr->dynCast<Call>()) {
+      // If |curr| is marked as removable if unused, then it is removable
+      // without even checking effects.
+      if (Intrinsics(*getModule())
+            .getCallAnnotations(call, getFunction())
+            .removableIfUnused) {
+        return false;
+      }
+    }
+    ShallowEffectAnalyzer self(getPassOptions(), *getModule(), curr);
+    return self.hasUnremovableSideEffects();
   }
 
   void visitBlock(Block* curr) {

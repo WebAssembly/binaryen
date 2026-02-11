@@ -2668,6 +2668,12 @@ void IRBuilder::applyAnnotations(Expression* expr,
     assert(func);
     func->codeAnnotations[expr].inline_ = annotation.inline_;
   }
+
+  if (annotation.removableIfUnused) {
+    // Only possible inside functions.
+    assert(func);
+    func->codeAnnotations[expr].removableIfUnused = true;
+  }
 }
 
 } // namespace wasm
