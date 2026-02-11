@@ -32,19 +32,18 @@ struct StripToolchainAnnotations : public WalkerPass<PostWalker<StripToolchainAn
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void doWalkFunction(Function* func) {
-    auto& annotations = annotations;
-    auto iter = func->codeAnnotations.begin();
-    while (iter != func->codeAnnotations.end()) {
+    auto& annotations = func->codeAnnotations;
+    auto iter = annotations.begin();
+    while (iter != annotations.end()) {
       // Remove the toolchain-specific annotations.
       auto& annotation = iter->second;
       annotation.removableIfUnused = false;
 
       // If nothing remains, remove the entire annotation.
       if (annotation == CodeAnnotation()) {
-        iter = annotations.erase(it); 
+        iter = annotations.erase(iter);
       } else {
         ++iter;
-        // TODO test
       }
     }
   }
