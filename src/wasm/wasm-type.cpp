@@ -1445,6 +1445,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type has an undeclared child";
     case TypeBuilder::ErrorReason::InvalidFuncType:
       return os << "Continuation has invalid function type";
+    case TypeBuilder::ErrorReason::InvalidSharedType:
+      return os << "Shared types require shared-everything";
     case TypeBuilder::ErrorReason::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
     case TypeBuilder::ErrorReason::NonStructDescribes:
@@ -2470,6 +2472,9 @@ validateType(HeapTypeInfo& info,
     }
   }
   if (info.share == Shared) {
+    if (!features.hasSharedEverything()) {
+      return TypeBuilder::ErrorReason::InvalidSharedType;
+    }
     if (info.described && info.described->share != Shared) {
       return TypeBuilder::ErrorReason::InvalidUnsharedDescribes;
     }
