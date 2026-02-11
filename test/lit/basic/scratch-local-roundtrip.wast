@@ -35,6 +35,7 @@
       br_if $l ;; package the i32 and nullexternref into a tuple
       nop      ;; force creation of a scratch local
       br $l    ;; consume a scratch local block with (result i32 nullexternref)
+               ;; the nullexternref will become externref, as gc is disabled.
     end
   )
 )
