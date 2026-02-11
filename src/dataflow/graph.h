@@ -615,8 +615,11 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   }
 
   // Merge local state for an if, also creating a block and conditions.
-  void mergeIf(Locals& aState,
-               Locals& bState,
+  // ifTrueState is the state if the condition is true, while otherState is
+  // the state otherwise (either from before the if, if there is no other arm,
+  // or the else arm if there is).
+  void mergeIf(Locals& ifTrueState,
+               Locals& otherState,
                Node* condition,
                Expression* expr,
                Locals& out) {
@@ -635,11 +638,11 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     }
     // Finally, merge the state with that block. TODO optimize
     std::vector<FlowState> states;
-    if (!isInUnreachable(aState)) {
-      states.emplace_back(aState, ifTrue);
+    if (!isInUnreachable(ifTrueState)) {
+      states.emplace_back(ifTrueState, ifTrue);
     }
-    if (!isInUnreachable(bState)) {
-      states.emplace_back(bState, ifFalse);
+    if (!isInUnreachable(otherState)) {
+      states.emplace_back(otherState, ifFalse);
     }
     merge(states, out);
   }
