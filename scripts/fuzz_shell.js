@@ -307,7 +307,6 @@ var imports = {
     'log-funcref': logRef,
     'log-contref': logRef,
     'log-externref': logRef,
-    'log-exnref': logRef,
 
     // Throw an exception from JS.
     'throw': (which) => {

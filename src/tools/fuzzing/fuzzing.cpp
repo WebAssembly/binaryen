@@ -59,9 +59,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     if (wasm.features.hasStackSwitching()) {
       loggableTypes.push_back(Type(HeapType::cont, Nullable));
     }
-    if (wasm.features.hasExceptionHandling()) {
-      loggableTypes.push_back(Type(HeapType::exn, Nullable));
-    }
+    // Note: exnref traps on the JS boundary, so we cannot try to log it.
   }
 
   // Setup params. Start with the defaults.

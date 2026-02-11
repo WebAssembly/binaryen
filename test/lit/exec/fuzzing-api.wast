@@ -10,7 +10,6 @@
  (import "fuzzing-support" "log-anyref" (func $log-anyref (param anyref)))
  (import "fuzzing-support" "log-funcref" (func $log-funcref (param funcref)))
  (import "fuzzing-support" "log-contref" (func $log-contref (param contref)))
- (import "fuzzing-support" "log-exnref" (func $log-exnref (param exnref)))
  (import "fuzzing-support" "log-externref" (func $log-externref (param externref)))
 
  (import "fuzzing-support" "throw" (func $throw (param i32)))
@@ -68,9 +67,6 @@
   )
   (call $log-contref
    (ref.null cont)
-  )
-  (call $log-exnref
-   (ref.null exn)
   )
   (call $log-externref
    (ref.null extern)
