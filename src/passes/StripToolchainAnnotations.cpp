@@ -31,6 +31,8 @@ struct StripToolchainAnnotations : public WalkerPass<PostWalker<StripToolchainAn
 
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  std::unique_ptr<Pass> create() override { return std::make_unique<StripToolchainAnnotations>(); }
+
   void doWalkFunction(Function* func) {
     auto& annotations = func->codeAnnotations;
     auto iter = annotations.begin();
