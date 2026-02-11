@@ -42,10 +42,6 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 
   haveInitialFunctions = !wasm.functions.empty();
 
-  // - funcref cannot be logged because referenced functions can be inlined or
-  // removed during optimization
-  // - there's no point in logging anyref because it is opaque
-  // - don't bother logging tuples
   loggableTypes = {Type::i32, Type::i64, Type::f32, Type::f64};
   if (wasm.features.hasSIMD()) {
     loggableTypes.push_back(Type::v128);

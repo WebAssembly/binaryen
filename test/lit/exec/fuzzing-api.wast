@@ -44,7 +44,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  (func $logging (export "logging")
   (call $log-i32
    (i32.const 42)
@@ -141,7 +140,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $export.calling (export "export.calling")
   ;; At index 0 in the exports we have $logging, so we will do those loggings.
@@ -163,7 +161,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
@@ -188,7 +185,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
@@ -217,7 +213,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $ref.calling (export "ref.calling")
   ;; This will emit some logging.
@@ -241,7 +236,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $ref.calling.rethrow (export "ref.calling.rethrow")
   ;; As with calling an export, when we set the flags to 1 exceptions are
@@ -263,7 +257,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
@@ -481,7 +474,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 
 ;; CHECK:      [fuzz-exec] calling throwing
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
@@ -505,7 +497,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling export.calling.rethrow
@@ -516,7 +507,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling export.calling.catching
@@ -525,7 +515,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
@@ -539,7 +528,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
@@ -550,7 +538,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.catching
@@ -559,7 +546,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
