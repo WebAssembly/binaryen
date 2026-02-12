@@ -281,6 +281,8 @@ public:
   bool invalidates(const EffectAnalyzer& other) {
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
+        (mayNotReturn && other.writesGlobalState()) ||
+        (other.mayNotReturn && writesGlobalState()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
         ((writesTable || calls) && other.accessesTable()) ||
