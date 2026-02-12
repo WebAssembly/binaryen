@@ -23,17 +23,22 @@ namespace wasm {
 
 // TODO split into pure virtual class
 class RuntimeMemory {
+public:
   RuntimeMemory(Memory memory) : memoryDefinition(memory) {}
+
+  virtual ~RuntimeMemory() = default;
 
   // variants for load8 etc?
   // Do we care about the order here?
-  Literal load(Address addr) const { return {}; }
+  virtual Literal load(Address addr) const { return {}; }
 
   const Memory* getDefinition() const { return &memoryDefinition; }
 
-private:
+protected:
   const Memory memoryDefinition;
 };
+
+class RealRuntimeMemory : public RuntimeMemory {};
 
 } // namespace wasm
 

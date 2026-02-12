@@ -95,6 +95,12 @@ public:
     return &it->second;
   }
 
+  RuntimeMemory* getMemoryOrNull(ImportNames name,
+                                 const Memory& memory) const override {
+    Fatal() << "todo";
+    return nullptr;
+  }
+
 private:
   mutable Literals stubLiteral;
   mutable std::unordered_map<ImportNames, Tag> importedTags;

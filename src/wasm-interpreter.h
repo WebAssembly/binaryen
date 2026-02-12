@@ -3208,6 +3208,8 @@ public:
 
   std::unordered_map<Name, Tag*> allTags;
 
+  std::unordered_map<Name, RuntimeMemory*> allMemories;
+
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
 
   ModuleRunnerBase(
@@ -3321,6 +3323,19 @@ public:
     return iter->second;
   }
 
+  RuntimeMemory* getExportedMemoryOrNull(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Memory) {
+      return nullptr;
+    }
+    Name internalName = *export_->getInternalName();
+    auto iter = allMemories.find(internalName);
+    if (iter == allMemories.end()) {
+      return nullptr;
+    }
+    return iter->second;
+  }
+
   Literals& getExportedGlobalOrTrap(Name name) {
     auto* global = getExportedGlobalOrNull(name);
     if (!global) {
@@ -3372,6 +3387,7 @@ private:
   std::vector<Literals> definedGlobals;
   std::vector<std::unique_ptr<RuntimeTable>> definedTables;
   std::vector<Tag> definedTags;
+  std::vector<std::unique_ptr<RuntimeMemory>> definedMemories;
 
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
@@ -3593,6 +3609,37 @@ private:
 
       droppedElementSegments.insert(segment->name);
     });
+  }
+
+  void initializeMemories() {
+    int definedMemoryCount = 0;
+    ModuleUtils::iterDefinedMemories(
+      wasm, [&definedMemoryCount](auto&& _) { ++definedMemoryCount; });
+    definedMemories.reserve(definedMemoryCount);
+
+    for (auto& memory : wasm.memories) {
+      if (memory->imported()) {
+        auto importNames = memory->importNames();
+        auto* importedMemory =
+          importResolver->getMemoryOrNull(importNames, *memory);
+        if (!importedMemory) {
+          externalInterface->trap((std::stringstream()
+                                   << "Imported memory " << importNames
+                                   << " not found.")
+                                    .str());
+        }
+        [[maybe_unused]] auto [_, inserted] =
+          allMemories.try_emplace(memory->name, importedMemory);
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated memory name");
+      } else {
+        auto& runtimeMemory = definedMemories.emplace_back(
+          std::make_unique<RealRuntimeMemory>(memory));
+        [[maybe_unused]] auto [_, inserted] =
+          allMemories.try_emplace(memory->name, runtimeMemory.get());
+        assert(inserted && "Unexpected repeated memory name");
+      }
+    }
   }
 
   struct MemoryInstanceInfo {

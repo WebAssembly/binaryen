@@ -30,7 +30,6 @@ namespace wasm {
 // out-of-bounds access.
 class RuntimeTable {
 public:
-  RuntimeTable(Table table) : tableDefinition(table) {}
   virtual ~RuntimeTable() = default;
 
   virtual void set(Address i, Literal l) = 0;
@@ -54,6 +53,8 @@ public:
   const Table* getDefinition() const { return &tableDefinition; }
 
 protected:
+  RuntimeTable(Table table) : tableDefinition(table) {}
+
   const Table tableDefinition;
 };
 
