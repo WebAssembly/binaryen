@@ -32,10 +32,6 @@ namespace wasm {
 namespace {
 
 std::vector<Type> getLoggableTypes(const FeatureSet& features) {
-  // - funcref cannot be logged because referenced functions can be inlined or
-  // removed during optimization
-  // - there's no point in logging anyref because it is opaque
-  // - don't bother logging tuples
   std::vector<Type> loggableTypes = {
     Type::i32, Type::i64, Type::f32, Type::f64};
   if (features.hasSIMD()) {
