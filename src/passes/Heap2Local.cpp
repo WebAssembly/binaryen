@@ -1038,6 +1038,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // As with RefGetDesc and StructGet, above.
+      return;
+    }
+
     [[maybe_unused]] auto& field = fields[curr->index];
     auto type = curr->type;
     assert(type == field.type);
@@ -1105,6 +1110,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // anything because we would still be performing the cmpxchg on a real
       // struct. We only need to replace the cmpxchg if the ref is being
       // replaced with locals.
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // As with RefGetDesc and StructGet, above.
       return;
     }
 
