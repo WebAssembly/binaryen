@@ -26,12 +26,6 @@ void dumpInitialLength(DataExtractor &Data, uint64_t &Offset,
 void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   auto AbbrevSetPtr = DCtx.getDebugAbbrev();
   if (AbbrevSetPtr) {
-    size_t ReserveAttrs = 0;
-    for (const auto &AbbrvDeclSet : *AbbrevSetPtr) {
-      ReserveAttrs += AbbrvDeclSet.second.end() - AbbrvDeclSet.second.begin() + 1;
-    }
-    Y.AbbrevDecls.reserve(Y.AbbrevDecls.size() + ReserveAttrs);
-
     for (const auto &AbbrvDeclSet : *AbbrevSetPtr) {
       auto ListOffset = AbbrvDeclSet.second.getOffset();
       for (const auto &AbbrvDecl : AbbrvDeclSet.second) {
