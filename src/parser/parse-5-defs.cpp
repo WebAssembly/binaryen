@@ -45,6 +45,7 @@ Result<> parseDefinitions(
     auto* f = decls.wasm.functions[i].get();
     WithPosition with(ctx, decls.funcDefs[i].pos);
     ctx.setSrcLoc(decls.funcDefs[i].annotations);
+    ctx.in.setAnnotations(std::move(decls.funcDefs[i].annotations));
     if (!f->imported()) {
       CHECK_ERR(ctx.visitFunctionStart(f));
     }

@@ -693,4 +693,61 @@
       (i32.const 2)
     )
   )
+
+  ;; CHECK:      (func $rmw-unreachable-value (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructRMW we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-unreachable-value (result i32)
+    ;; When the value is unreachable, the whole expression is unreachable.
+    ;; We should not attempt to optimize this (it would hit an assertion
+    ;; on type == field.type since unreachable != i32).
+    (struct.atomic.rmw.add $i32 0
+      (struct.new_default $i32)
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $cmpxchg-unreachable-expected (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructCmpxchg we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cmpxchg-unreachable-expected (result i32)
+    ;; When the expected operand is unreachable, the whole expression is
+    ;; unreachable. We should not attempt to optimize this.
+    (struct.atomic.rmw.cmpxchg $i32 0
+      (struct.new_default $i32)
+      (unreachable)
+      (i32.const 1)
+    )
+  )
 )

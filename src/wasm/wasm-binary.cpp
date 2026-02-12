@@ -456,7 +456,11 @@ void WasmBinaryWriter::writeFunctions() {
         }
       }
     }
-    if (!binaryLocationTrackedExpressionsForFunc.empty()) {
+    // We need to track the function location if we are tracking the locations
+    // of expressions inside it, or, if it has code annotations (the function
+    // itself may be annotated, even if nothing inside it is).
+    if (!binaryLocationTrackedExpressionsForFunc.empty() ||
+        !func->codeAnnotations.empty()) {
       binaryLocations.functions[func] = BinaryLocations::FunctionLocations{
         BinaryLocation(sizePos),
         BinaryLocation(start - adjustmentForLEBShrinking),
@@ -1623,6 +1627,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 
   append(getBranchHintsBuffer());
   append(getInlineHintsBuffer());
+  append(getRemovableIfUnusedHintsBuffer());
   return ret;
 }
 
@@ -1654,23 +1659,30 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
 
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (has(annotation)) {
-        auto exprIter = binaryLocations.expressions.find(expr);
-        if (exprIter == binaryLocations.expressions.end()) {
-          // No expression exists for this annotation - perhaps optimizations
-          // removed it.
-          continue;
-        }
-        auto exprOffset = exprIter->second.start;
+        BinaryLocation offset;
+        if (expr == nullptr) {
+          // Function-level annotations have expr==0 and an offset of the start
+          // of the function.
+          offset = 0;
+        } else {
+          auto exprIter = binaryLocations.expressions.find(expr);
+          if (exprIter == binaryLocations.expressions.end()) {
+            // No expression exists for this annotation - perhaps optimizations
+            // removed it.
+            continue;
+          }
+          auto exprOffset = exprIter->second.start;
 
-        if (!funcDeclarationsOffset) {
-          auto funcIter = binaryLocations.functions.find(func.get());
-          assert(funcIter != binaryLocations.functions.end());
-          funcDeclarationsOffset = funcIter->second.declarations;
-        }
+          if (!funcDeclarationsOffset) {
+            auto funcIter = binaryLocations.functions.find(func.get());
+            assert(funcIter != binaryLocations.functions.end());
+            funcDeclarationsOffset = funcIter->second.declarations;
+          }
 
-        // Compute the offset: it should be relative to the start of the
-        // function locals (i.e. the function declarations).
-        auto offset = exprOffset - funcDeclarationsOffset;
+          // Compute the offset: it should be relative to the start of the
+          // function locals (i.e. the function declarations).
+          offset = exprOffset - funcDeclarationsOffset;
+        }
 
         funcHints.exprHints.push_back(ExprHint{expr, offset, &annotation});
       }
@@ -1755,6 +1767,19 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
 
       // Hint contents: inline frequency count
       buffer << U32LEB(*annotation.inline_);
+    });
+}
+
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
+  return writeExpressionHints(
+    Annotations::RemovableIfUnusedHint,
+    [](const CodeAnnotation& annotation) {
+      return annotation.removableIfUnused;
+    },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
+      // Hint size, always empty.
+      buffer << U32LEB(0);
     });
 }
 
@@ -2029,7 +2054,8 @@ void WasmBinaryReader::preScan() {
       auto sectionName = getInlineString();
 
       if (sectionName == Annotations::BranchHint ||
-          sectionName == Annotations::InlineHint) {
+          sectionName == Annotations::InlineHint ||
+          sectionName == Annotations::RemovableIfUnusedHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2186,6 +2212,11 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::InlineHint) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readInlineHints(payloadLen); }});
+  } else if (sectionName == Annotations::RemovableIfUnusedHint) {
+    deferredAnnotationSections.push_back(
+      AnnotationSectionInfo{pos, [this, payloadLen]() {
+                              this->readremovableIfUnusedHints(payloadLen);
+                            }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5434,15 +5465,24 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
 
     auto numHints = getU32LEB();
     for (Index hint = 0; hint < numHints; hint++) {
-      // To get the absolute offset, add the function's offset.
+      // Find the expression this hint is for. If the relative offset is 0, then
+      // it is for the entire function, with expr==null.
+      Expression* expr;
       auto relativeOffset = getU32LEB();
-      auto absoluteOffset = funcLocalsOffset + relativeOffset;
+      if (relativeOffset == 0) {
+        // Function-level annotations have expr==0 and an offset of the start
+        // of the function.
+        expr = nullptr;
+      } else {
+        // To get the absolute offset, add the function's offset.
+        auto absoluteOffset = funcLocalsOffset + relativeOffset;
 
-      auto iter = locationsMap.find(absoluteOffset);
-      if (iter == locationsMap.end()) {
-        throwError("bad offset in " + sectionName.toString());
+        auto iter = locationsMap.find(absoluteOffset);
+        if (iter == locationsMap.end()) {
+          throwError("bad offset in " + sectionName.toString());
+        }
+        expr = iter->second;
       }
-      auto* expr = iter->second;
 
       read(func->codeAnnotations[expr]);
     }
@@ -5485,6 +5525,19 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 
       annotation.inline_ = inline_;
     });
+}
+
+void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
+  readExpressionHints(Annotations::RemovableIfUnusedHint,
+                      payloadLen,
+                      [&](CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 0) {
+                          throwError("bad removableIfUnusedHint size");
+                        }
+
+                        annotation.removableIfUnused = true;
+                      });
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>

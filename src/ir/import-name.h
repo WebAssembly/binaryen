@@ -19,6 +19,7 @@
 
 #include <ostream>
 
+#include "support/hash.h"
 #include "support/name.h"
 
 namespace wasm {
@@ -26,8 +27,24 @@ namespace wasm {
 struct ImportNames {
   Name module;
   Name name;
+
+  bool operator==(const ImportNames& other) const {
+    return module == other.module && name == other.name;
+  }
 };
 
 } // namespace wasm
+
+namespace std {
+
+template<> struct hash<wasm::ImportNames> {
+  std::size_t operator()(const wasm::ImportNames& importNames) const noexcept {
+    size_t val = hash<wasm::Name>{}(importNames.module);
+    wasm::rehash(val, importNames.name);
+    return val;
+  }
+};
+
+} // namespace std
 
 #endif // wasm_ir_import_name_h

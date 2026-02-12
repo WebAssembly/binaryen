@@ -958,6 +958,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // We must not modify unreachable code here, as we will replace it with a
+      // local.get, which has a concrete type (another option could be to run
+      // DCE and not only ReFinalize - DCE will propagate an unreachable out of
+      // a concrete block, like we emit here - but we can just ignore such
+      // code).
+      return;
+    }
+
     auto descIndex = localIndexes[fields.size()];
     Expression* value = builder.makeLocalGet(descIndex, descType);
     replaceCurrent(builder.blockify(builder.makeDrop(curr->ref), value));
@@ -990,11 +999,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
 
     if (curr->type == Type::unreachable) {
-      // We must not modify unreachable code here, as we will replace it with a
-      // local.get, which has a concrete type (another option could be to run
-      // DCE and not only ReFinalize - DCE will propagate an unreachable out of
-      // a concrete block, like we emit here - but we can just ignore such
-      // code).
+      // As with RefGetDesc, above.
       return;
     }
 
@@ -1030,6 +1035,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   void visitStructRMW(StructRMW* curr) {
     if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // As with RefGetDesc and StructGet, above.
       return;
     }
 
@@ -1100,6 +1110,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // anything because we would still be performing the cmpxchg on a real
       // struct. We only need to replace the cmpxchg if the ref is being
       // replaced with locals.
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // As with RefGetDesc and StructGet, above.
       return;
     }
 

@@ -82,7 +82,4 @@
       (ref.func $func)
     )
   )
-
-  ;; TODO: test function annotations, after
-  ;; https://github.com/WebAssembly/tool-conventions/issues/251
 )

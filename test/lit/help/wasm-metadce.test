@@ -391,6 +391,9 @@
 ;; CHECK-NEXT:   --remove-non-js-ops                           removes operations incompatible
 ;; CHECK-NEXT:                                                 with js
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --remove-relaxed-simd                         replaces relaxed SIMD
+;; CHECK-NEXT:                                                 instructions with unreachable
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --remove-unused-brs                           removes breaks from locations
 ;; CHECK-NEXT:                                                 that are not needed
 ;; CHECK-NEXT:
@@ -518,6 +521,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features
 ;; CHECK-NEXT:                                                 section
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-toolchain-annotations                 strip all toolchain-specific
+;; CHECK-NEXT:                                                 code annotations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --stub-unsupported-js                         stub out unsupported JS
 ;; CHECK-NEXT:                                                 operations

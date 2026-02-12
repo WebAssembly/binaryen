@@ -31,20 +31,28 @@ namespace wasm {
 
 namespace {
 
-std::vector<Type> getLoggableTypes(bool hasSimd) {
+std::vector<Type> getLoggableTypes(const FeatureSet& features) {
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
   // - there's no point in logging anyref because it is opaque
   // - don't bother logging tuples
   std::vector<Type> loggableTypes = {
-    Type::i32,
-    Type::i64,
-    Type::f32,
-    Type::f64,
-  };
-  if (hasSimd) {
+    Type::i32, Type::i64, Type::f32, Type::f64};
+  if (features.hasSIMD()) {
     loggableTypes.push_back(Type::v128);
   }
+  if (features.hasReferenceTypes()) {
+    if (features.hasGC()) {
+      loggableTypes.push_back(Type(HeapType::any, Nullable));
+      loggableTypes.push_back(Type(HeapType::func, Nullable));
+      loggableTypes.push_back(Type(HeapType::ext, Nullable));
+    }
+    if (features.hasStackSwitching()) {
+      loggableTypes.push_back(Type(HeapType::cont, Nullable));
+    }
+    // Note: exnref traps on the JS boundary, so we cannot try to log it.
+  }
+
   return loggableTypes;
 }
 
@@ -3876,7 +3884,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::noexn: {
       auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
-        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;

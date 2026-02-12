@@ -93,9 +93,9 @@ copyFunctionWithoutAdd(Function* func,
             (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
         }
       }
-      updateSymbol(ret->prologLocation, *symbolNameIndexMap);
-      updateSymbol(ret->epilogLocation, *symbolNameIndexMap);
     }
+    updateSymbol(ret->prologLocation, *symbolNameIndexMap);
+    updateSymbol(ret->epilogLocation, *symbolNameIndexMap);
   }
   ret->module = func->module;
   ret->base = func->base;

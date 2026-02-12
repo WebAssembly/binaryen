@@ -151,10 +151,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return Literal::makeFunc(import->name, import->type);
   }
 
-  Tag* getImportedTag(Tag* tag) override {
-    WASM_UNREACHABLE("missing imported tag");
-  }
-
   int8_t load8s(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
     assert(it != memories.end());

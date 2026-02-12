@@ -66,7 +66,7 @@ struct Address {
   }
 };
 
-enum class MemoryOrder {
+enum class MemoryOrder : uint8_t {
   Unordered,
   SeqCst,
   AcqRel,
@@ -2233,7 +2233,9 @@ struct BinaryLocations {
 // Forward declaration for FuncEffectsMap.
 class EffectAnalyzer;
 
-// Code annotations for VMs.
+// Annotation for a particular piece of code. This includes std::optionals for
+// all possible annotations, with the ones present being filled in (or just a
+// bool for an annotation with one possible value).
 struct CodeAnnotation {
   // Branch Hinting proposal: Whether the branch is likely, or unlikely.
   std::optional<bool> branchLikely;
@@ -2243,8 +2245,15 @@ struct CodeAnnotation {
   static const uint8_t AlwaysInline = 127;
   std::optional<uint8_t> inline_;
 
+  // Toolchain hint: If this expression's result is unused, then the entire
+  // thing can be considered dead and removable. See
+  //
+  // https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook#intrinsics
+  bool removableIfUnused = false;
+
   bool operator==(const CodeAnnotation& other) const {
-    return branchLikely == other.branchLikely && inline_ == other.inline_;
+    return branchLikely == other.branchLikely && inline_ == other.inline_ &&
+           removableIfUnused == other.removableIfUnused;
   }
 };
 
@@ -2283,7 +2292,7 @@ public:
                ? columnNumber < other.columnNumber
                : symbolNameIndex < other.symbolNameIndex;
     }
-    void dump() {
+    void dump() const {
       std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) << " @ "
                 << fileIndex << ":" << lineNumber << ":" << columnNumber
                 << "\n";
@@ -2494,8 +2503,8 @@ class Tag : public Importable {
 public:
   HeapType type;
 
-  Type params() { return type.getSignature().params; }
-  Type results() { return type.getSignature().results; }
+  Type params() const { return type.getSignature().params; }
+  Type results() const { return type.getSignature().results; }
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

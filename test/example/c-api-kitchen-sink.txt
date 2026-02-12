@@ -3092,3 +3092,38 @@ module with a call_ref:
   )
  )
 )
+Load memory order: 2
+Store memory order: 2
+RMW memory order: 2
+Cmpxchg memory order: 2
+(module
+ (type $0 (func))
+ (memory $0 1 1)
+ (export "memory" (memory $0))
+ (func $relaxed-atomics (type $0)
+  (block $body
+   (drop
+    (i32.atomic.load acqrel
+     (i32.const 0)
+    )
+   )
+   (i32.atomic.store acqrel
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (drop
+    (i32.atomic.rmw.add acqrel
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+   (drop
+    (i32.atomic.rmw.cmpxchg acqrel
+     (i32.const 0)
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+)

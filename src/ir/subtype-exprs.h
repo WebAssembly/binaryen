@@ -524,7 +524,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       auto expected = self()->findBreakTarget(handlerBlocks[i])->type;
       assert(tagSig.params.size() + 1 == expected.size());
       for (Index j = 0; j < tagSig.params.size(); ++j) {
-        self()->noteSubtype(tagSig.params[i], expected[i]);
+        self()->noteSubtype(tagSig.params[j], expected[j]);
       }
       auto nextSig = expected[expected.size() - 1]
                        .getHeapType()

@@ -2203,7 +2203,9 @@ struct PrintExpressionContents
     // If the tuple is unreachable, its size will be reported as 1, but that's
     // not a valid tuple size. The size we print mostly doesn't matter if the
     // tuple is unreachable, but it does have to be valid.
-    o << std::max(curr->tuple->type.size(), size_t(2)) << " ";
+    o << std::max(
+           {curr->tuple->type.size(), size_t(2), size_t(curr->index + 1)})
+      << " ";
     o << curr->index;
   }
   void visitRefI31(RefI31* curr) {
@@ -2789,6 +2791,12 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
       restoreNormalColor(o);
       doIndent(o, indent);
     }
+    if (annotation.removableIfUnused) {
+      Colors::grey(o);
+      o << "(@" << Annotations::RemovableIfUnusedHint << ")\n";
+      restoreNormalColor(o);
+      doIndent(o, indent);
+    }
   }
 }
 
@@ -3246,6 +3254,7 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
   lastPrintedLocation = std::nullopt;
   o << '(';
   emitImportHeader(curr);
+  printCodeAnnotations(nullptr);
   handleSignature(curr);
   o << "))";
   o << maybeNewLine;
@@ -3259,9 +3268,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   if (currFunction->prologLocation) {
     printDebugLocation(*currFunction->prologLocation);
   }
-  // TODO: print code annotations in the right place, depending on
-  // https://github.com/WebAssembly/tool-conventions/issues/251
-  // printCodeAnnotations(nullptr);
+  printCodeAnnotations(nullptr);
   handleSignature(curr, true);
   incIndent();
   for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -3947,7 +3954,10 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair) {
 std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair) {
   if (auto it = pair.first.typeNames.find(pair.second);
       it != pair.first.typeNames.end()) {
-    return o << it->second.name;
+    return o << '$' << it->second.name;
+  }
+  if (pair.second.isBasic()) {
+    return o << pair.second;
   }
   return o << "(unnamed)";
 }
