@@ -2272,8 +2272,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(
-        pos, irBuilder.makeAtomicLoad(bytes, memarg.offset, type, *m, order));
+      return withLoc(pos,
+                     irBuilder.makeAtomicLoad(
+                       bytes, memarg.offset, memarg.align, type, *m, order));
     }
     return withLoc(pos,
                    irBuilder.makeLoad(
@@ -2291,8 +2292,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(
-        pos, irBuilder.makeAtomicStore(bytes, memarg.offset, type, *m, order));
+      return withLoc(pos,
+                     irBuilder.makeAtomicStore(
+                       bytes, memarg.offset, memarg.align, type, *m, order));
     }
     return withLoc(
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
