@@ -399,11 +399,25 @@
   )
 
   ;; CHECK:      (func $test_table_grow (result i64)
-  ;; CHECK-NEXT:  (i64.extend_i32_u
-  ;; CHECK-NEXT:   (table.grow $t64
-  ;; CHECK-NEXT:    (ref.null nofunc)
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const 10)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (if (result i64)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (local.tee $0
+  ;; CHECK-NEXT:     (table.grow $t64
+  ;; CHECK-NEXT:      (ref.null nofunc)
+  ;; CHECK-NEXT:      (i32.wrap_i64
+  ;; CHECK-NEXT:       (i64.const 10)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
