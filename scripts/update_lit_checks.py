@@ -57,6 +57,8 @@ ITEM_RE = re.compile(r'(?:^\s*\(rec\s*)?(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM
 
 FUZZ_EXEC_FUNC = re.compile(r'^\[fuzz-exec\] calling (?P<name>\S*)$')
 
+ANNOTATION_RE = re.compile(r'^\s*\(\@.*')
+
 
 def indentKindName(match):
     # Return the indent, kind, and name from an ITEM_RE match
@@ -127,6 +129,31 @@ def find_end(module, start):
     return end
 
 
+def find_annotations(module, start):
+    # Search backward to find the start of the line containing the first of the
+    # annotations preceding `start`, if any.
+    depth = 0
+    annotation = start
+    for i in range(start - 1, -1, -1):
+        if module[i] == ')':
+            depth += 1
+        elif module[i] == '(':
+            depth -= 1
+            if depth == 0:
+                if module[i + 1] == '@':
+                    # Found the start of a new annotation.
+                    annotation = i
+                else:
+                    # Found something that isn't an annotation.
+                    break
+    # Look for the start of the line containin the first annoation.
+    for i in range(annotation - 1, -1, -1):
+        if module[i] == '\n':
+            return i + 1
+    # The annotation should not have been on the first line of the module
+    assert False
+
+
 def split_modules(text):
     # Return a list of strings; one for each module
     module_starts = [match.start() for match in MODULE_RE.finditer(text)]
@@ -150,8 +177,9 @@ def parse_output_modules(text):
         items = []
         for match in ITEM_RE.finditer(module):
             _, kind, name = indentKindName(match)
+            start = find_annotations(module, match.start())
             end = find_end(module, match.end(1))
-            lines = module[match.start():end].split('\n')
+            lines = module[start:end].split('\n')
             items.append(((kind, name), lines))
         modules.append(items)
     return modules
@@ -277,7 +305,12 @@ def update_test(args, test, lines, tmp):
     # Remove extra newlines at the end of modules
     input_modules = [m[:-1] for m in input_modules[:-1]] + [input_modules[-1]]
 
+    # Collect annotation lines as we see them so we can put them after any
+    # checks we generate.
+    annotation_lines = []
+
     for module_idx in range(len(input_modules)):
+        assert len(annotation_lines) == 0
         output = command_output[module_idx] \
             if module_idx < len(command_output) else {}
 
@@ -286,8 +319,16 @@ def update_test(args, test, lines, tmp):
             if check_line_re.match(line):
                 continue
 
+            # Collect annotations to emit later once we know what they should
+            # attach to.
+            if ANNOTATION_RE.match(line):
+                annotation_lines.append(line)
+                continue
+
             match = ITEM_RE.match(line)
             if not match:
+                output_lines.extend(annotation_lines)
+                annotation_lines = []
                 output_lines.append(line)
                 continue
 
@@ -313,6 +354,8 @@ def update_test(args, test, lines, tmp):
                             emit_checks(indent, prefix, lines)
                         if name and (kind, name) == kind_name:
                             break
+            output_lines.extend(annotation_lines)
+            annotation_lines = []
             output_lines.append(line)
 
         # Output any remaining checks for each prefix
