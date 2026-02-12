@@ -87,6 +87,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
   void visitStore(Store* curr) { wrapAddress64(curr->ptr, curr->memory); }
 
+  void visitSIMDLoad(SIMDLoad* curr) { wrapAddress64(curr->ptr, curr->memory); }
+
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    wrapAddress64(curr->ptr, curr->memory);
+  }
+
   void visitMemorySize(MemorySize* curr) {
     auto& module = *getModule();
     auto* memory = module.getMemory(curr->memory);
