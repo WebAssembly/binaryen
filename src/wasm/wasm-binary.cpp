@@ -5556,6 +5556,19 @@ void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) {
                       });
 }
 
+void WasmBinaryReader::readJSCalledHints(size_t payloadLen) {
+  readExpressionHints(Annotations::JSCalledHint,
+                      payloadLen,
+                      [&](CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 0) {
+                          throwError("bad jsCalledHint size");
+                        }
+
+                        annotation.jsCalled = true;
+                      });
+}
+
 std::tuple<Address, Address, Index, MemoryOrder>
 WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   auto rawAlignment = getU32LEB();
