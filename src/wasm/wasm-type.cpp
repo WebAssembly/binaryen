@@ -2426,9 +2426,66 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
 }
 
 std::optional<TypeBuilder::ErrorReason>
-validateType(HeapTypeInfo& info,
-             std::unordered_set<HeapType>& seenTypes,
-             FeatureSet features) {
+validateType(Type type, FeatureSet feats, bool isShared) {
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (isShared && !heapType.isShared()) {
+      return TypeBuilder::ErrorReason::InvalidUnsharedField;
+    }
+    if (heapType.isShared() && !feats.hasSharedEverything()) {
+      return TypeBuilder::ErrorReason::InvalidSharedType;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<TypeBuilder::ErrorReason>
+validateStruct(const Struct& struct_, FeatureSet feats, bool isShared) {
+  for (auto& field : struct_.fields) {
+    if (auto err = validateType(field.type, feats, isShared)) {
+      return err;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<TypeBuilder::ErrorReason>
+validateArray(Array array, FeatureSet feats, bool isShared) {
+  return validateType(array.element.type, feats, isShared);
+}
+
+std::optional<TypeBuilder::ErrorReason>
+validateSignature(Signature sig, FeatureSet feats, bool isShared) {
+  // Allow unshared parameters and results even in shared functions.
+  // TODO: Figure out and enforce shared function rules.
+  for (auto t : sig.params) {
+    if (auto err = validateType(t, feats, /*isShared=*/false)) {
+      return err;
+    }
+  }
+  for (auto t : sig.results) {
+    if (auto err = validateType(t, feats, /*isShared*/ false)) {
+      return err;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<TypeBuilder::ErrorReason>
+validateContinuation(Continuation cont, FeatureSet feats, bool isShared) {
+  if (!cont.type.isSignature()) {
+    return TypeBuilder::ErrorReason::InvalidFuncType;
+  }
+  if (isShared != cont.type.isShared()) {
+    return TypeBuilder::ErrorReason::InvalidFuncType;
+  }
+  return std::nullopt;
+}
+
+std::optional<TypeBuilder::ErrorReason>
+validateTypeInfo(HeapTypeInfo& info,
+                 std::unordered_set<HeapType>& seenTypes,
+                 FeatureSet features) {
   if (auto* super = info.supertype) {
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
@@ -2466,11 +2523,6 @@ validateType(HeapTypeInfo& info,
       return TypeBuilder::ErrorReason::MismatchedDescriptor;
     }
   }
-  if (info.isContinuation()) {
-    if (!info.continuation.type.isSignature()) {
-      return TypeBuilder::ErrorReason::InvalidFuncType;
-    }
-  }
   if (info.share == Shared) {
     if (!features.hasSharedEverything()) {
       return TypeBuilder::ErrorReason::InvalidSharedType;
@@ -2481,32 +2533,23 @@ validateType(HeapTypeInfo& info,
     if (info.descriptor && info.descriptor->share != Shared) {
       return TypeBuilder::ErrorReason::InvalidUnsharedDescriptor;
     }
-    switch (info.kind) {
-      case HeapTypeKind::Func:
-        // TODO: Figure out and enforce shared function rules.
-        break;
-      case HeapTypeKind::Cont:
-        if (!info.continuation.type.isShared()) {
-          return TypeBuilder::ErrorReason::InvalidFuncType;
-        }
-        break;
-      case HeapTypeKind::Struct:
-        for (auto& field : info.struct_.fields) {
-          if (field.type.isRef() && !field.type.getHeapType().isShared()) {
-            return TypeBuilder::ErrorReason::InvalidUnsharedField;
-          }
-        }
-        break;
-      case HeapTypeKind::Array: {
-        auto elem = info.array.element.type;
-        if (elem.isRef() && !elem.getHeapType().isShared()) {
-          return TypeBuilder::ErrorReason::InvalidUnsharedField;
-        }
-        break;
-      }
-      case HeapTypeKind::Basic:
-        WASM_UNREACHABLE("unexpected kind");
-    }
+  }
+  bool isShared = info.share == Shared;
+  switch (info.kind) {
+    case HeapTypeKind::Func:
+      return validateSignature(info.signature, features, isShared);
+      break;
+    case HeapTypeKind::Cont:
+      return validateContinuation(info.continuation, features, isShared);
+      break;
+    case HeapTypeKind::Struct:
+      return validateStruct(info.struct_, features, isShared);
+      break;
+    case HeapTypeKind::Array:
+      return validateArray(info.array, features, isShared);
+      break;
+    case HeapTypeKind::Basic:
+      WASM_UNREACHABLE("unexpected kind");
   }
   return std::nullopt;
 }
@@ -2590,7 +2633,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   std::unordered_set<HeapType> seenTypes;
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto& info = typeInfos[i];
-    if (auto err = validateType(*info, seenTypes, features)) {
+    if (auto err = validateTypeInfo(*info, seenTypes, features)) {
       return {TypeBuilder::Error{i, *err}};
     }
     seenTypes.insert(asHeapType(info));
