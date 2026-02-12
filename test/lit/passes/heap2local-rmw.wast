@@ -7,7 +7,6 @@
   (type $i64 (struct (field (mut i64))))
   ;; CHECK:      (type $struct (struct (field (mut (ref null $struct)))))
   (type $struct (struct (field (mut (ref null $struct)))))
-
   ;; CHECK:      (type $1 (func (result i32)))
 
   ;; CHECK:      (type $2 (func (result i64)))
@@ -15,6 +14,11 @@
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result (ref null $struct))))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct) (ref null $struct)) (result (ref null $struct))))
+
+  ;; CHECK:      (type $5 (func (param i32) (result i32)))
+
+  ;; CHECK:      (type $arr (array (mut i32)))
+  (type $arr (array (mut i32)))
 
   ;; CHECK:      (func $escape-rmw (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $struct 0
@@ -747,6 +751,141 @@
     (struct.atomic.rmw.cmpxchg $i32 0
       (struct.new_default $i32)
       (unreachable)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $array-rmw-add (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $5
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $4)
+  ;; CHECK-NEXT: )
+  (func $array-rmw-add (result i32)
+    ;; Array atomic RMW on a non-escaping fixed-size array should be
+    ;; optimized: the array is converted to a struct, then to locals.
+    (array.atomic.rmw.add $arr
+      (array.new_fixed $arr 2
+        (i32.const 0)
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $5
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $6
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $6)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $4)
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg (result i32)
+    ;; Array atomic cmpxchg on a non-escaping fixed-size array should be
+    ;; optimized similarly.
+    (array.atomic.rmw.cmpxchg $arr
+      (array.new_fixed $arr 2
+        (i32.const 0)
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 10)
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $array-rmw-nonconstant-index (type $5) (param $idx i32) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.rmw.add $arr
+  ;; CHECK-NEXT:   (array.new_fixed $arr 2
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $idx)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-rmw-nonconstant-index (param $idx i32) (result i32)
+    ;; A non-constant index prevents the optimization, since Array2Struct
+    ;; needs to know which struct field to access at compile time.
+    (array.atomic.rmw.add $arr
+      (array.new_fixed $arr 2
+        (i32.const 0)
+        (i32.const 0)
+      )
+      (local.get $idx)
       (i32.const 1)
     )
   )
