@@ -109,8 +109,11 @@ public:
   //
   // where the segment $seg is of size N.
   std::vector<Name> getConfigureAllFunctions(Call* call);
-  // As above, but looks through the module to find the configureAll.
-  std::vector<Name> getConfigureAllFunctions();
+
+  // Returns the names of all functions that are JS-called. That includes ones
+  // in configureAll (which we look through the module for), and also those
+  // annotated with @binaryen.js.called.
+  std::vector<Name> getJSCalledFunctions();
 
   // Get the code annotations for an expression in a function.
   CodeAnnotation getAnnotations(Expression* curr, Function* func) {

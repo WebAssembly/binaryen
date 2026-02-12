@@ -176,9 +176,8 @@ struct SignaturePruning : public Pass {
       allInfo[tag->type].optimizable = false;
     }
 
-    // configureAll functions are signature-called, and must also not be
-    // modified.
-    for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
+    // Signature-called functions must also not be modified.
+    for (auto func : Intrinsics(*module).getJSCalledFunctions()) {
       allInfo[module->getFunction(func)->type.getHeapType()].optimizable =
         false;
     }

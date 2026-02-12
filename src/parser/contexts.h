@@ -1318,7 +1318,7 @@ struct AnnotationParserCtx {
       } else if (a.kind == Annotations::RemovableIfUnusedHint) {
         ret.removableIfUnused = true;
       } else if (a.kind == Annotations::JSCalledHint) {
-        ret.JSCalled = true;
+        ret.jsCalled = true;
       }
     }
 

@@ -159,12 +159,6 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
         callRef.target = target;
         visitCallRef(&callRef);
       }
-    } else if (intrinsics.isConfigureAll(curr)) {
-      // Every function that configureAll refers to is signature-called. Mark
-      // them all as called, as JS can call them.
-      for (auto func : intrinsics.getConfigureAllFunctions(curr)) {
-        use({ModuleElementKind::Function, func});
-      }
     }
   }
 
@@ -322,6 +316,12 @@ struct Analyzer {
           }
         }
       }
+    }
+
+    // Every JS-called function needs to be marked as called, so JS calls do not
+    // break.
+    for (auto func : Intrinsics(*module).getJSCalledFunctions()) {
+      use({ModuleElementKind::Function, func});
     }
   }
 
