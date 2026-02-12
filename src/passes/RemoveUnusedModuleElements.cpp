@@ -159,6 +159,12 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
         callRef.target = target;
         visitCallRef(&callRef);
       }
+    } else if (intrinsics.isConfigureAll(curr)) {
+      // Every function that configureAll refers to is signature-called. Mark
+      // them all as called, as JS can call them.
+      for (auto func : intrinsics.getConfigureAllFunctions(curr)) {
+        use({ModuleElementKind::Function, func});
+      }
     }
   }
 
@@ -178,7 +184,16 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
     noteCallRef(curr->target->type.getHeapType());
   }
 
-  void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
+  void visitRefFunc(RefFunc* curr) {
+    // If the target is js-called then a reference is as strong as a use.
+    auto target = curr->func;
+    Intrinsics intrinsics(*getModule());
+    if (intrinsics.getAnnotations(getModule()->getFunction(target)).jsCalled) {
+      use({ModuleElementKind::Function, target});
+    } else {
+      noteRefFunc(target);
+    }
+  }
 
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
@@ -316,12 +331,6 @@ struct Analyzer {
           }
         }
       }
-    }
-
-    // Every JS-called function needs to be marked as called, so JS calls do not
-    // break.
-    for (auto func : Intrinsics(*module).getJSCalledFunctions()) {
-      use({ModuleElementKind::Function, func});
     }
   }
 

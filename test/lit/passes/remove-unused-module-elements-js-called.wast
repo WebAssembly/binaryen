@@ -30,11 +30,6 @@
   )
 
   (@binaryen.js.called)
-  ;; CHECK:      (func $js.called.unreferred (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $js.called.unreferred
     ;; This is jsCalled, and not referred anywhere. The annotation does not
     ;; stop the function from being removed entirely.
