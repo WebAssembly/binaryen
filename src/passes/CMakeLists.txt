@@ -106,6 +106,7 @@ set(passes_SOURCES
   RemoveImports.cpp
   RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
+  RemoveRelaxedSIMD.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
