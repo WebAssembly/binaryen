@@ -31,6 +31,9 @@ set(unittest_SOURCES
   wat-lexer.cpp
   validator.cpp
 )
+if(CMAKE_CXX_STANDARD GREATER_EQUAL 20)
+  list(APPEND unittest_SOURCES coro.cpp)
+endif()
 
 if(BUILD_FUZZTEST)
   set(unittest_SOURCES ${unittest_SOURCES} type-domains.cpp)
