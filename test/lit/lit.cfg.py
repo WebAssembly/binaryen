@@ -25,9 +25,10 @@ for tool_file in os.listdir(bin_dir):
 for tool in ('not', 'foreach'):
     tool_file = config.binaryen_src_root + '/scripts/' + tool + '.py'
     python = sys.executable.replace('\\', '/')
-    # Add a space after, to avoid replacing every 'not' in the command (like in
+    # Add spaces to avoid replacing every 'not' in the command (like in
     # "--strip-anNOTations"; capitalization for emphasis).
-    config.substitutions.append((tool + ' ', python + ' ' + tool_file + ' '))
+    config.substitutions.append((' ' + tool + ' ',
+                                 ' ' + python + ' ' + tool_file + ' '))
 
 if 'linux' in sys.platform:
     config.available_features.add('linux')
