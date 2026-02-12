@@ -2,7 +2,21 @@
 
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --closed-world -all -S -o - | filecheck %s
 
-TODO test basics
+(module
+  (@binaryen.js.called)
+  (func $js.called.referred
+    ;; This is jsCalled, and referred below, so it is kept.
+    (drop (i32.const 10))
+  )
 
-TODO test no uses but annotation is no problem
+  (func $export (export "export")
+    (drop (ref.func $js.called.referred))
+  )
 
+  (@binaryen.js.called)
+  (func $js.called.unreferred
+    ;; This is jsCalled, and not referred anywhere. The annotation does not
+    ;; stop the function from being removed entirely.
+    (drop (i32.const 20))
+  )
+)
