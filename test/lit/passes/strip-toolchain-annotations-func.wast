@@ -19,8 +19,9 @@
 
   (@binaryen.removable.if.unused)
   (@metadata.code.inline "\00")
+  (@binaryen.js.called)
   (func $test-func-d
-    ;; Reverse order of above.
+    ;; Reverse order of above, and also includes js.called which is removed.
   )
 )
 
