@@ -90,8 +90,9 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     if (curr->offset < k32GLimit) {
       return wrapAddress64(curr->ptr, curr->memory);
     }
-    Block* b = ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
-                 .getChildrenReplacement();
+    Block* b =
+      ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+        .getChildrenReplacement();
     b->list.push_back(Builder(*getModule()).makeUnreachable());
     b->type = Type::unreachable;
     replaceCurrent(b);
