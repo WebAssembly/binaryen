@@ -4107,15 +4107,18 @@ public:
 
   Flow visitLoad(Load* curr) {
     VISIT(flow, curr->ptr)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addr = info.instance->getFinalAddress(
-      curr, flow.getSingleValue(), memorySizeBytes);
-    if (curr->isAtomic()) {
-      info.instance->checkAtomicAddress(addr, curr->bytes, memorySizeBytes);
-    }
-    auto ret = info.interface()->load(curr, addr, info.name);
-    return ret;
+    auto* memory = allMemories[curr->memory];
+    return memory->load(static_cast<uint32_t>(flow.getSingleValue().geti32()));
+    // auto info = getMemoryInstanceInfo(curr->memory);
+    // auto memorySize = info.instance->getMemorySize(info.name);
+    // auto addr =
+    //   info.instance->getFinalAddress(curr, flow.getSingleValue(),
+    //   memorySize);
+    // if (curr->isAtomic()) {
+    //   info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
+    // }
+    // auto ret = info.interface()->load(curr, addr, info.name);
+    // return ret;
   }
   Flow visitStore(Store* curr) {
     VISIT(ptr, curr->ptr)

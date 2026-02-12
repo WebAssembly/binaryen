@@ -30,7 +30,9 @@ public:
 
   // variants for load8 etc?
   // Do we care about the order here?
-  virtual Literal load(Address addr) const { return {}; }
+  // todo: address types? Address::address32_t is strange
+  virtual Literal load(uint32_t addr) const { return {}; }
+  virtual Literal load(uint64_t addr) const { return {}; }
 
   const Memory* getDefinition() const { return &memoryDefinition; }
 
