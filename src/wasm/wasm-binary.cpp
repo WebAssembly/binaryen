@@ -1788,9 +1788,7 @@ std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getJSCalledHintsBuffer() {
   return writeExpressionHints(
     Annotations::JSCalledHint,
-    [](const CodeAnnotation& annotation) {
-      return annotation.jsCalled;
-    },
+    [](const CodeAnnotation& annotation) { return annotation.jsCalled; },
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always empty.
       buffer << U32LEB(0);
@@ -2233,10 +2231,8 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
                               this->readRemovableIfUnusedHints(payloadLen);
                             }});
   } else if (sectionName == Annotations::JSCalledHint) {
-    deferredAnnotationSections.push_back(
-      AnnotationSectionInfo{pos, [this, payloadLen]() {
-                              this->readJSCalledHints(payloadLen);
-                            }});
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readJSCalledHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {

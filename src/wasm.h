@@ -2260,7 +2260,8 @@ struct CodeAnnotation {
 
   bool operator==(const CodeAnnotation& other) const {
     return branchLikely == other.branchLikely && inline_ == other.inline_ &&
-           removableIfUnused == other.removableIfUnused && jsCalled == other.jsCalled;
+           removableIfUnused == other.removableIfUnused &&
+           jsCalled == other.jsCalled;
   }
 };
 
