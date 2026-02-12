@@ -4,16 +4,37 @@
 
 (module
   (@binaryen.js.called)
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (elem declare func $js.called.referred)
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $js.called.referred (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $js.called.referred
     ;; This is jsCalled, and referred below, so it is kept.
     (drop (i32.const 10))
   )
 
+  ;; CHECK:      (func $export (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $js.called.referred)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $export (export "export")
     (drop (ref.func $js.called.referred))
   )
 
   (@binaryen.js.called)
+  ;; CHECK:      (func $js.called.unreferred (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $js.called.unreferred
     ;; This is jsCalled, and not referred anywhere. The annotation does not
     ;; stop the function from being removed entirely.
