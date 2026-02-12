@@ -551,6 +551,9 @@ void PassRegistry::registerPasses() {
   registerPass("strip-target-features",
                "strip the wasm target features section",
                createStripTargetFeaturesPass);
+  registerPass("strip-toolchain-annotations",
+               "strip all toolchain-specific code annotations",
+               createStripToolchainAnnotationsPass);
   registerPass("translate-to-new-eh",
                "deprecated; same as translate-to-exnref",
                createTranslateToExnrefPass);
