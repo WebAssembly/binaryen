@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 WebAssembly Community Group participants
+ * Copyright 2026 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
 // Replaces relaxed SIMD instructions with traps.
 //
 
+#include <memory>
+
 #include "ir/localize.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
-#include <memory>
 
 namespace wasm {
 
