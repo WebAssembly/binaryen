@@ -854,7 +854,7 @@ fuzztest::Domain<ContPlan> ContDef(TypeBuilderPlan plan) {
   bool shared = plan.kinds[plan.curr].shared;
   auto matches =
     AvailableMatchingIndices(std::move(plan), [&](auto kind, bool otherShared) {
-      return kind == FuncKind && (!shared || otherShared);
+      return kind == FuncKind && shared == otherShared;
     });
   if (matches.empty()) {
     return fuzztest::NullOpt<size_t>();
