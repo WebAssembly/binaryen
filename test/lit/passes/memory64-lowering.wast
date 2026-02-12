@@ -228,72 +228,72 @@
   (drop (memory.atomic.notify (i64.const 1) (i32.const 2)))
  )
 
-   ;; CHECK:      (func $other
-   ;; CHECK-NEXT:  (local $0 i64)
-   ;; CHECK-NEXT:  (local $1 i32)
-   ;; CHECK-NEXT:  (local.set $0
-   ;; CHECK-NEXT:   (i64.extend_i32_u
-   ;; CHECK-NEXT:    (memory.size)
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:  )
-   ;; CHECK-NEXT:  (local.set $0
-   ;; CHECK-NEXT:   (if (result i64)
-   ;; CHECK-NEXT:    (i32.eq
-   ;; CHECK-NEXT:     (i32.const -1)
-   ;; CHECK-NEXT:     (local.tee $1
-   ;; CHECK-NEXT:      (memory.grow
-   ;; CHECK-NEXT:       (i32.wrap_i64
-   ;; CHECK-NEXT:        (i64.const 1)
-   ;; CHECK-NEXT:       )
-   ;; CHECK-NEXT:      )
-   ;; CHECK-NEXT:     )
-   ;; CHECK-NEXT:    )
-   ;; CHECK-NEXT:    (then
-   ;; CHECK-NEXT:     (i64.const -1)
-   ;; CHECK-NEXT:    )
-   ;; CHECK-NEXT:    (else
-   ;; CHECK-NEXT:     (i64.extend_i32_u
-   ;; CHECK-NEXT:      (local.get $1)
-   ;; CHECK-NEXT:     )
-   ;; CHECK-NEXT:    )
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:  )
-   ;; CHECK-NEXT:  (memory.init $0
-   ;; CHECK-NEXT:   (i32.wrap_i64
-   ;; CHECK-NEXT:    (i64.const 1)
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:   (i32.const 2)
-   ;; CHECK-NEXT:   (i32.const 3)
-   ;; CHECK-NEXT:  )
-   ;; CHECK-NEXT:  (memory.fill
-   ;; CHECK-NEXT:   (i32.wrap_i64
-   ;; CHECK-NEXT:    (i64.const 1)
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:   (i32.const 2)
-   ;; CHECK-NEXT:   (i32.wrap_i64
-   ;; CHECK-NEXT:    (i64.const 3)
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:  )
-   ;; CHECK-NEXT:  (memory.copy
-   ;; CHECK-NEXT:   (i32.wrap_i64
-   ;; CHECK-NEXT:    (i64.const 1)
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:   (i32.wrap_i64
-   ;; CHECK-NEXT:    (i64.const 2)
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:   (i32.wrap_i64
-   ;; CHECK-NEXT:    (i64.const 3)
-   ;; CHECK-NEXT:   )
-   ;; CHECK-NEXT:  )
-   ;; CHECK-NEXT: )
-   (func $other
-   (local i64)
-   (local.set 0 (memory.size))
-   (local.set 0 (memory.grow (i64.const 1)))
-   (memory.init 0 (i64.const 1) (i32.const 2) (i32.const 3))
-   (memory.fill (i64.const 1) (i32.const 2) (i64.const 3))
-   (memory.copy (i64.const 1) (i64.const 2) (i64.const 3))
-  )
+ ;; CHECK:      (func $other
+ ;; CHECK-NEXT:  (local $0 i64)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (i64.extend_i32_u
+ ;; CHECK-NEXT:    (memory.size)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (if (result i64)
+ ;; CHECK-NEXT:    (i32.eq
+ ;; CHECK-NEXT:     (i32.const -1)
+ ;; CHECK-NEXT:     (local.tee $1
+ ;; CHECK-NEXT:      (memory.grow
+ ;; CHECK-NEXT:       (i32.wrap_i64
+ ;; CHECK-NEXT:        (i64.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i64.const -1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i64.extend_i32_u
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.init $0
+ ;; CHECK-NEXT:   (i32.wrap_i64
+ ;; CHECK-NEXT:    (i64.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.fill
+ ;; CHECK-NEXT:   (i32.wrap_i64
+ ;; CHECK-NEXT:    (i64.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (i32.wrap_i64
+ ;; CHECK-NEXT:    (i64.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.copy
+ ;; CHECK-NEXT:   (i32.wrap_i64
+ ;; CHECK-NEXT:    (i64.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.wrap_i64
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.wrap_i64
+ ;; CHECK-NEXT:    (i64.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $other
+  (local i64)
+  (local.set 0 (memory.size))
+  (local.set 0 (memory.grow (i64.const 1)))
+  (memory.init 0 (i64.const 1) (i32.const 2) (i32.const 3))
+  (memory.fill (i64.const 1) (i32.const 2) (i64.const 3))
+  (memory.copy (i64.const 1) (i64.const 2) (i64.const 3))
+ )
 
   ;; CHECK:      (func $simd (param $ptr i64) (param $val v128)
   ;; CHECK-NEXT:  (v128.store
