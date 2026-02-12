@@ -1447,6 +1447,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Continuation has invalid function type";
     case TypeBuilder::ErrorReason::InvalidSharedType:
       return os << "Shared types require shared-everything";
+    case TypeBuilder::ErrorReason::InvalidStringType:
+      return os << "String types require strings feature";
     case TypeBuilder::ErrorReason::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
     case TypeBuilder::ErrorReason::NonStructDescribes:
@@ -2434,6 +2436,9 @@ validateType(Type type, FeatureSet feats, bool isShared) {
     }
     if (heapType.isShared() && !feats.hasSharedEverything()) {
       return TypeBuilder::ErrorReason::InvalidSharedType;
+    }
+    if (heapType.isString() && !feats.hasStrings()) {
+      return TypeBuilder::ErrorReason::InvalidStringType;
     }
   }
   return std::nullopt;
