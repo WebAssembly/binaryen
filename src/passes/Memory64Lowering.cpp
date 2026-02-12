@@ -237,7 +237,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   void visitTableCopy(TableCopy* curr) {
     wrapTableAddress64(curr->dest, curr->destTable);
     wrapTableAddress64(curr->source, curr->sourceTable);
-    wrapTableAddress64(curr->size, curr->destTable);
+    // The size type is i64 only when both tables are 64-bit.
+    auto& module = *getModule();
+    if (module.getTable(curr->destTable)->is64() &&
+        module.getTable(curr->sourceTable)->is64()) {
+      wrapAddress64(curr->size, curr->destTable, true);
+    }
   }
 
   void visitTableInit(TableInit* curr) {
