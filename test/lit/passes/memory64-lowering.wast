@@ -470,7 +470,9 @@
 
   ;; CHECK:      (func $test_simd_load_large_offset (param $ptr i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test_simd_load_large_offset (param $ptr i64)
@@ -479,7 +481,9 @@
 
   ;; CHECK:      (func $test_simd_load_lane_large_offset (param $ptr i64) (param $val v128)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test_simd_load_lane_large_offset (param $ptr i64) (param $val v128)
@@ -491,5 +495,52 @@
   ;; CHECK-NEXT: )
   (func $test_simd_store_lane_large_offset (param $ptr i64) (param $val v128)
     (v128.store8_lane offset=4294967296 0 (local.get $ptr) (local.get $val))
+  )
+)
+(module
+  (memory $0 i64 1 1)
+
+  ;; CHECK:      (func $test_atomic_rmw_large_offset (param $ptr i64) (param $val i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_rmw_large_offset (param $ptr i64) (param $val i32)
+    (drop (i32.atomic.rmw.add offset=4294967296 (local.get $ptr) (local.get $val)))
+  )
+
+  ;; CHECK:      (func $test_atomic_cmpxchg_large_offset (param $ptr i64) (param $exp i32) (param $new i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_cmpxchg_large_offset (param $ptr i64) (param $exp i32) (param $new i32)
+    (drop (i32.atomic.rmw.cmpxchg offset=4294967296 (local.get $ptr) (local.get $exp) (local.get $new)))
+  )
+
+  ;; CHECK:      (func $test_atomic_wait_large_offset (param $ptr i64) (param $exp i32) (param $timeout i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_wait_large_offset (param $ptr i64) (param $exp i32) (param $timeout i64)
+    (drop (memory.atomic.wait32 offset=4294967296 (local.get $ptr) (local.get $exp) (local.get $timeout)))
+  )
+
+  ;; CHECK:      (func $test_atomic_notify_large_offset (param $ptr i64) (param $count i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_notify_large_offset (param $ptr i64) (param $count i32)
+    (drop (memory.atomic.notify offset=4294967296 (local.get $ptr) (local.get $count)))
   )
 )
