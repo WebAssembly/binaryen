@@ -139,6 +139,9 @@ static std::set<Name> findCalledFunctions(Module* module, Name startFunc) {
       auto next = toVisit.back();
       toVisit.pop_back();
       auto* func = module->getFunction(next);
+      if (func->imported()) {
+        continue;
+      }
       for (auto* call : FindAll<Call>(func->body).list) {
         addFunction(call->target);
       }
