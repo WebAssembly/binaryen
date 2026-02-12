@@ -440,3 +440,56 @@
     (table.init $t64 $elem64 (i64.const 0) (i32.const 5) (i32.const 10))
   )
 )
+
+(module
+  (memory i64 1 1)
+
+  ;; CHECK:      (type $0 (func (param i64 v128)))
+
+  ;; CHECK:      (type $1 (func (param i64) (result i32)))
+
+  ;; CHECK:      (type $2 (func (param i64 i32)))
+
+  ;; CHECK:      (type $3 (func (param i64)))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $test_large_offsets (param $ptr i64) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_large_offsets (param $ptr i64) (result i32)
+   (i32.load offset=4294967297 (local.get $ptr))
+ )
+
+ ;; CHECK:      (func $test_store_large_offset (param $ptr i64) (param $val i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $test_store_large_offset (param $ptr i64) (param $val i32)
+   (i32.store offset=4294967296 (local.get $ptr) (local.get $val))
+  )
+
+  ;; CHECK:      (func $test_simd_load_large_offset (param $ptr i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_simd_load_large_offset (param $ptr i64)
+    (drop (v128.load offset=4294967296 (local.get $ptr)))
+  )
+
+  ;; CHECK:      (func $test_simd_load_lane_large_offset (param $ptr i64) (param $val v128)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_simd_load_lane_large_offset (param $ptr i64) (param $val v128)
+    (drop (v128.load8_lane offset=4294967296 0 (local.get $ptr) (local.get $val)))
+  )
+
+  ;; CHECK:      (func $test_simd_store_lane_large_offset (param $ptr i64) (param $val v128)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_simd_store_lane_large_offset (param $ptr i64) (param $val v128)
+    (v128.store8_lane offset=4294967296 0 (local.get $ptr) (local.get $val))
+  )
+)

@@ -34,6 +34,8 @@ static Name MEMORY_BASE32("__memory_base32");
 static Name TABLE_BASE("__table_base");
 static Name TABLE_BASE32("__table_base32");
 
+static const Address k32GLimit(1ULL << 32);
+
 struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
   void wrapAddress64(Expression*& ptr,
@@ -83,14 +85,32 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     return extendAddress64(ptr, tableName, true);
   }
 
-  void visitLoad(Load* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitLoad(Load* curr) {
+    if (curr->offset < k32GLimit) {
+      return wrapAddress64(curr->ptr, curr->memory);
+    }
+    replaceCurrent(Builder(*getModule()).makeUnreachable());
+  }
 
-  void visitStore(Store* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitStore(Store* curr) {
+    if (curr->offset < k32GLimit) {
+      return wrapAddress64(curr->ptr, curr->memory);
+    }
+    replaceCurrent(Builder(*getModule()).makeUnreachable());
+  }
 
-  void visitSIMDLoad(SIMDLoad* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitSIMDLoad(SIMDLoad* curr) {
+    if (curr->offset < k32GLimit) {
+      return wrapAddress64(curr->ptr, curr->memory);
+    }
+    replaceCurrent(Builder(*getModule()).makeUnreachable());
+  }
 
   void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
+    if (curr->offset < k32GLimit) {
+      return wrapAddress64(curr->ptr, curr->memory);
+    }
+    replaceCurrent(Builder(*getModule()).makeUnreachable());
   }
 
   void visitMemorySize(MemorySize* curr) {
