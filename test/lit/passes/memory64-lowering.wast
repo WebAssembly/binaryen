@@ -458,14 +458,14 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $test_large_offsets (param $ptr i64) (result i32)
-   (i32.load offset=4294967297 (local.get $ptr))
- )
+    (i32.load offset=4294967297 (local.get $ptr))
+  )
 
- ;; CHECK:      (func $test_store_large_offset (param $ptr i64) (param $val i32)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
- (func $test_store_large_offset (param $ptr i64) (param $val i32)
-   (i32.store offset=4294967296 (local.get $ptr) (local.get $val))
+  ;; CHECK:      (func $test_store_large_offset (param $ptr i64) (param $val i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_store_large_offset (param $ptr i64) (param $val i32)
+    (i32.store offset=4294967296 (local.get $ptr) (local.get $val))
   )
 
   ;; CHECK:      (func $test_simd_load_large_offset (param $ptr i64)
@@ -497,7 +497,17 @@
     (v128.store8_lane offset=4294967296 0 (local.get $ptr) (local.get $val))
   )
 )
+
 (module
+  ;; CHECK:      (type $0 (func (param i64 i32)))
+
+  ;; CHECK:      (type $1 (func (param i64 i32 i32)))
+
+  ;; CHECK:      (type $2 (func (param i64 i32 i64)))
+
+  ;; CHECK:      (type $3 (func (param i64) (result i32)))
+
+  ;; CHECK:      (memory $0 1 1)
   (memory $0 i64 1 1)
 
   ;; CHECK:      (func $test_atomic_rmw_large_offset (param $ptr i64) (param $val i32)
@@ -542,5 +552,25 @@
   ;; CHECK-NEXT: )
   (func $test_atomic_notify_large_offset (param $ptr i64) (param $count i32)
     (drop (memory.atomic.notify offset=4294967296 (local.get $ptr) (local.get $count)))
+  )
+
+  ;; CHECK:      (func $test_large_offsets_effect (param $ptr i64) (result i32)
+  ;; CHECK-NEXT:  (local $1 i64)
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (i64.div_s
+  ;; CHECK-NEXT:    (i64.const 1337)
+  ;; CHECK-NEXT:    (local.get $ptr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_large_offsets_effect (param $ptr i64) (result i32)
+    (i32.load offset=4294967297
+      ;; This might trap, and must be kept around.
+      (i64.div_s
+        (i64.const 1337)
+        (local.get $ptr)
+      )
+    )
   )
 )
