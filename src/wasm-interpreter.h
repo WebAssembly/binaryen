@@ -2752,6 +2752,10 @@ protected:
         memcpy(&i, p, sizeof(i));
         return truncateForPacking(Literal(int32_t(i)), field);
       }
+      case Field::WaitQueue: {
+        WASM_UNREACHABLE("waitqueue not implemented");
+        break;
+      }
     }
     WASM_UNREACHABLE("unexpected type");
   }

@@ -1996,6 +1996,8 @@ void WasmBinaryWriter::writeField(const Field& field) {
       o << S32LEB(BinaryConsts::EncodedType::i8);
     } else if (field.packedType == Field::i16) {
       o << S32LEB(BinaryConsts::EncodedType::i16);
+    } else if (field.packedType == Field::WaitQueue) {
+      o << S32LEB(BinaryConsts::EncodedType::waitQueue);
     } else {
       WASM_UNREACHABLE("invalid packed type");
     }
@@ -2716,6 +2718,10 @@ void WasmBinaryReader::readTypes() {
     if (typeCode == BinaryConsts::EncodedType::i16) {
       auto mutable_ = readMutability();
       return Field(Field::i16, mutable_);
+    }
+    if (typeCode == BinaryConsts::EncodedType::waitQueue) {
+      auto mutable_ = readMutability();
+      return Field(Field::WaitQueue, mutable_);
     }
     // It's a regular wasm value.
     auto type = makeType(typeCode);
