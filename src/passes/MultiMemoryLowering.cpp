@@ -68,9 +68,11 @@ struct MultiMemoryLowering : public Pass {
   // properties will be set
   Name module;
   Name base;
-  // The initial page size of the combined memory
+  // The page size of the combined memory
+  uint8_t pageSizeLog2;
+  // The initial page count of the combined memory
   Address totalInitialPages;
-  // The max page size of the combined memory
+  // The max page count of the combined memory
   Address totalMaxPages;
   // There is no offset for the first memory, so offsetGlobalNames will always
   // have a size that is one less than the count of memories at the time this
@@ -435,6 +437,7 @@ struct MultiMemoryLowering : public Pass {
                                           : Builder::MemoryInfo::Memory64;
     isShared = getFirstMemory().shared;
     isImported = getFirstMemory().imported();
+    pageSizeLog2 = Memory::kDefaultPageSizeLog2;
     for (auto& memory : wasm->memories) {
       // We are assuming that each memory is configured the same as the first
       // and assert if any of the memories does not match this configuration
@@ -446,18 +449,25 @@ struct MultiMemoryLowering : public Pass {
         Fatal() << "MultiMemoryLowering: only the first memory can be imported";
       }
 
+      // Calculating the page size of the combined memory.
+      // This corresponds to the smaller granularity among combined memories
+      pageSizeLog2 = std::min(pageSizeLog2, memory->pageSizeLog2);
+
       // Calculating the total initial and max page size for the combined memory
       // by totaling the initial and max page sizes for the memories in the
       // module
-      totalInitialPages = totalInitialPages + memory->initial;
+      totalInitialPages =
+        totalInitialPages +
+        (memory->initial << (memory->pageSizeLog2 - pageSizeLog2));
       if (memory->hasMax()) {
-        totalMaxPages = totalMaxPages + memory->max;
+        totalMaxPages = totalMaxPages +
+                        (memory->max << (memory->pageSizeLog2 - pageSizeLog2));
       }
     }
     // Ensuring valid initial and max page sizes that do not exceed the number
     // of pages addressable by the pointerType
-    Address maxSize =
-      pointerType == Type::i32 ? Memory::kMaxSize32 : Memory::kMaxSize64;
+    Address maxSize = pointerType == Type::i32 ? 1ull << (32 - pageSizeLog2)
+                                               : 1ull << (64 - pageSizeLog2);
     if (totalMaxPages > maxSize || totalMaxPages == 0) {
       totalMaxPages = Memory::kUnlimitedSize;
     }
@@ -504,9 +514,10 @@ struct MultiMemoryLowering : public Pass {
         Name name = Names::getValidGlobalName(
           *wasm, memory->name.toString() + "_byte_offset");
         offsetGlobalNames.push_back(std::move(name));
-        addGlobal(name, offsetRunningTotal * Memory::kPageSize);
+        addGlobal(name, offsetRunningTotal << pageSizeLog2);
       }
-      offsetRunningTotal += memory->initial;
+      offsetRunningTotal += memory->initial
+                            << (memory->pageSizeLog2 - pageSizeLog2);
     }
   }
 
@@ -553,13 +564,18 @@ struct MultiMemoryLowering : public Pass {
     auto function = Builder::makeFunction(
       functionName, Signature(pointerType, pointerType), {});
     function->setLocalName(0, "page_delta");
+    auto currPageSizeLog2 = wasm->memories[memIdx]->pageSizeLog2;
     auto pageSizeConst = [&]() {
-      return builder.makeConst(Literal(Memory::kPageSize));
+      return builder.makeConst(Literal(currPageSizeLog2));
     };
     auto getOffsetDelta = [&]() {
-      return builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Mul),
-                                builder.makeLocalGet(0, pointerType),
-                                pageSizeConst());
+      if (currPageSizeLog2 == 0) {
+        return static_cast<Expression*>(builder.makeLocalGet(0, pointerType));
+      }
+      return static_cast<Expression*>(
+        builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Shl),
+                           builder.makeLocalGet(0, pointerType),
+                           pageSizeConst()));
     };
     auto getMoveSource = [&](Name global) {
       return builder.makeGlobalGet(global, pointerType);
@@ -588,7 +604,14 @@ struct MultiMemoryLowering : public Pass {
         builder.makeBinary(
           EqInt32,
           builder.makeMemoryGrow(
-            builder.makeLocalGet(0, pointerType), combinedMemory, memoryInfo),
+            currPageSizeLog2 - pageSizeLog2 == 0
+              ? static_cast<Expression*>(builder.makeLocalGet(0, pointerType))
+              : static_cast<Expression*>(builder.makeBinary(
+                  Abstract::getBinary(pointerType, Abstract::Shl),
+                  builder.makeLocalGet(0, pointerType),
+                  builder.makeConst(Literal(currPageSizeLog2 - pageSizeLog2)))),
+            combinedMemory,
+            memoryInfo),
           builder.makeConst(-1)),
         builder.makeReturn(builder.makeConst(-1))));
 
@@ -609,9 +632,13 @@ struct MultiMemoryLowering : public Pass {
           // size
           builder.makeBinary(
             Abstract::getBinary(pointerType, Abstract::Sub),
-            builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Mul),
-                               builder.makeLocalGet(sizeLocal, pointerType),
-                               pageSizeConst()),
+            currPageSizeLog2 == 0
+              ? static_cast<Expression*>(
+                  builder.makeLocalGet(sizeLocal, pointerType))
+              : static_cast<Expression*>(builder.makeBinary(
+                  Abstract::getBinary(pointerType, Abstract::Shl),
+                  builder.makeLocalGet(sizeLocal, pointerType),
+                  pageSizeConst())),
             getMoveSource(offsetGlobalName)),
           combinedMemory,
           combinedMemory));
@@ -646,11 +673,11 @@ struct MultiMemoryLowering : public Pass {
       functionName, Signature(Type::none, pointerType), {});
     Expression* functionBody;
     auto pageSizeConst = [&]() {
-      return builder.makeConst(Literal(Memory::kPageSize));
+      return builder.makeConst(Literal(pageSizeLog2));
     };
     auto getOffsetInPageUnits = [&](Name global) {
       return builder.makeBinary(
-        Abstract::getBinary(pointerType, Abstract::DivU),
+        Abstract::getBinary(pointerType, Abstract::ShrU),
         builder.makeGlobalGet(global, pointerType),
         pageSizeConst());
     };
@@ -697,6 +724,7 @@ struct MultiMemoryLowering : public Pass {
       memory->base = base;
       memory->module = module;
     }
+    memory->pageSizeLog2 = pageSizeLog2;
     wasm->addMemory(std::move(memory));
   }
 

@@ -839,9 +839,10 @@ void TranslateToFuzzReader::finalizeMemory() {
     // annoying in the fuzzer).
     Address ONE_GB = 1024 * 1024 * 1024;
     if (maxOffset <= ONE_GB) {
-      memory->initial = std::max(
-        memory->initial,
-        Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
+      memory->initial =
+        std::max(memory->initial,
+                 Address((maxOffset + (1 << memory->pageSizeLog2) - 1) /
+                         (1 << memory->pageSizeLog2)));
     }
   }
   memory->initial = std::max(memory->initial, fuzzParams->USABLE_MEMORY);
@@ -855,7 +856,7 @@ void TranslateToFuzzReader::finalizeMemory() {
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
     memory->max =
-      std::min(Address(memory->initial + 1), Address(Memory::kMaxSize32));
+      std::min(Address(memory->initial + 1), Address(memory->maxSize32()));
   }
 
   if (!preserveImportsAndExports) {

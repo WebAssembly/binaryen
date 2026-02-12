@@ -3468,6 +3468,11 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   if (curr->shared) {
     printMedium(o, " shared");
   }
+  if (curr->pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+    o << " (";
+    printMedium(o, "pagesize") << ' ' << (1 << (curr->pageSizeLog2));
+    o << ')';
+  }
   o << ")";
 }
 

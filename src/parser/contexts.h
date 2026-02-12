@@ -49,6 +49,7 @@ struct Limits {
 struct MemType {
   Type addressType;
   Limits limits;
+  uint8_t pageSizeLog2;
   bool shared;
 };
 
@@ -353,7 +354,9 @@ template<typename Ctx> struct TypeParserCtx {
   Result<LimitsT> makeLimits(uint64_t, std::optional<uint64_t>) { return Ok{}; }
   LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
 
-  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
+  MemTypeT makeMemType(Type, LimitsT, bool, std::optional<uint8_t>) {
+    return Ok{};
+  }
 
   HeapType getBlockTypeFromResult(const std::vector<Type> results) {
     assert(results.size() == 1);
@@ -1072,13 +1075,20 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     data.insert(data.end(), str.begin(), str.end());
   }
 
-  Limits getLimitsFromData(const std::vector<char>& data) {
-    uint64_t size = (data.size() + Memory::kPageSize - 1) / Memory::kPageSize;
+  Limits getLimitsFromData(const std::vector<char>& data,
+                           std::optional<uint8_t> pageSizeLog2) {
+    uint8_t _pageSizeLog2 = pageSizeLog2.value_or(16);
+    uint64_t size =
+      (data.size() + (1 << _pageSizeLog2) - 1) / (1 << _pageSizeLog2);
     return {size, size};
   }
 
-  MemType makeMemType(Type addressType, Limits limits, bool shared) {
-    return {addressType, limits, shared};
+  MemType makeMemType(Type addressType,
+                      Limits limits,
+                      bool shared,
+                      std::optional<uint8_t> pageSize) {
+    uint8_t pageSizeLog2 = pageSize.value_or(16);
+    return {addressType, limits, pageSizeLog2, shared};
   }
 
   Result<TypeUseT>
@@ -1447,8 +1457,12 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   Type makeTableType(Type addressType, LimitsT, Type type) { return type; }
 
-  LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
-  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
+  LimitsT getLimitsFromData(DataStringT, std::optional<uint8_t>) {
+    return Ok{};
+  }
+  MemTypeT makeMemType(Type, LimitsT, bool, std::optional<uint8_t>) {
+    return Ok{};
+  }
 
   Result<> addFunc(Name name,
                    const std::vector<Name>&,

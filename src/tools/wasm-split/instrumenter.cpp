@@ -81,7 +81,10 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
   secondaryMemory =
     Names::getValidMemoryName(*wasm, config.secondaryMemoryName);
   // Create a memory with enough pages to write into
-  size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
+  // The memory uses the default page size to avoid issues in case custom page
+  // sizes are not supported
+  size_t pages =
+    (numFuncs + Memory::kDefaultPageSize - 1) / Memory::kDefaultPageSize;
   auto mem = Builder::makeMemory(secondaryMemory, pages, pages, true);
   mem->module = config.importNamespace;
   mem->base = config.secondaryMemoryName;
@@ -184,15 +187,20 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
   const size_t profileSize = 8 + 4 * numFuncs;
 
   // Make sure there is a memory with enough pages to write into
-  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
   if (wasm->memories.empty()) {
+    size_t pages =
+      (profileSize + Memory::kDefaultPageSize - 1) / Memory::kDefaultPageSize;
     wasm->addMemory(Builder::makeMemory("0"));
     wasm->memories[0]->initial = pages;
     wasm->memories[0]->max = pages;
-  } else if (wasm->memories[0]->initial < pages) {
-    wasm->memories[0]->initial = pages;
-    if (wasm->memories[0]->max < pages) {
-      wasm->memories[0]->max = pages;
+  } else {
+    size_t pages = (profileSize + (1 << wasm->memories[0]->pageSizeLog2) - 1) /
+                   (1 << wasm->memories[0]->pageSizeLog2);
+    if (wasm->memories[0]->initial < pages) {
+      wasm->memories[0]->initial = pages;
+      if (wasm->memories[0]->max < pages) {
+        wasm->memories[0]->max = pages;
+      }
     }
   }
 

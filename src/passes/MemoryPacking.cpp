@@ -315,7 +315,7 @@ void MemoryPacking::calculateRanges(Module* module,
     // Check if we can rule out a trap by it being in bounds.
     if (auto* c = segment->offset->dynCast<Const>()) {
       auto* memory = module->getMemory(segment->memory);
-      auto memorySize = memory->initial * Memory::kPageSize;
+      auto memorySize = memory->initial << memory->pageSizeLog2;
       Index start = c->value.getUnsigned();
       Index size = segment->data.size();
       Index end;
