@@ -355,15 +355,17 @@ struct Shell {
     if (auto* v = std::get_if<Literal>(&expected)) {
       if (val != *v) {
         err << "expected " << *v << ", got " << val;
-        return AlternativeErr {}
-        return Err{err.str()};
+        err << *v;
+        return AlternativeErr{err.str()};
+        // return Err{err.str()};
       }
     } else if (auto* ref = std::get_if<RefResult>(&expected)) {
       if (!val.type.isRef() ||
           !HeapType::isSubType(val.type.getHeapType(), ref->type)) {
-        err << "expected " << ref->type << " reference, got " << val
-            << atIndex();
-        return Err{err.str()};
+        // err << "expected " << ref->type << " reference, got " << val
+        //     << atIndex();
+        err << ref->type;
+        return AlternativeErr{err.str()};
       }
     } else if ([[maybe_unused]] auto* nullRef =
                  std::get_if<NullRefResult>(&expected)) {
@@ -374,8 +376,8 @@ struct Shell {
     } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
       auto check = checkNaN(val, *nan);
       if (auto* e = check.getErr()) {
-        err << e->msg << atIndex();
-        return Err{err.str()};
+        err << e->msg;
+        return AlternativeErr{err.str()};
       }
     } else if (auto* lanes = std::get_if<LaneResults>(&expected)) {
       switch (lanes->size()) {
@@ -384,8 +386,9 @@ struct Shell {
           for (Index i = 0; i < 4; ++i) {
             auto check = checkLane(vals[i], (*lanes)[i], i);
             if (auto* e = check.getErr()) {
-              err << e->msg << atIndex();
-              return Err{err.str()};
+              // todo
+              err << e->msg;
+              return AlternativeErr{err.str()};
             }
           }
           break;
@@ -396,7 +399,7 @@ struct Shell {
             auto check = checkLane(vals[i], (*lanes)[i], i);
             if (auto* e = check.getErr()) {
               err << e->msg << atIndex();
-              return Err{err.str()};
+              return AlternativeErr{err.str()};
             }
           }
           break;
