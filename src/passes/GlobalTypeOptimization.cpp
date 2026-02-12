@@ -624,6 +624,29 @@ struct GlobalTypeOptimization : public Pass {
         curr->index = newIndex;
       }
 
+      void visitStructRMW(StructRMW* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        // RMW ops are both reads and writes, so the field cannot be removed.
+        assert(newIndex != RemovedField);
+        curr->index = newIndex;
+      }
+
+      void visitStructCmpxchg(StructCmpxchg* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        // Cmpxchg ops are both reads and writes, so the field cannot be
+        // removed.
+        assert(newIndex != RemovedField);
+        curr->index = newIndex;
+      }
+
       void visitFunction(Function* curr) {
         if (needEHFixups) {
           EHUtils::handleBlockNestedPops(curr, *getModule());
