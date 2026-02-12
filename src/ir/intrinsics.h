@@ -149,6 +149,9 @@ public:
       if (!ret.removableIfUnused) {
         ret.removableIfUnused = funcAnnotations.removableIfUnused;
       }
+      if (!ret.jsCalled) {
+        ret.jsCalled = funcAnnotations.jsCalled;
+      }
     }
 
     return ret;
