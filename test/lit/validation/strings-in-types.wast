@@ -1,4 +1,4 @@
-;; Test that shared basic heap types require shared-everything threads
+;; Test that string heap types require strings to be enabled.
 
 ;; RUN: not wasm-opt %s 2>&1 | filecheck %s --check-prefix NO-STRINGS
 ;; RUN: wasm-opt %s --enable-reference-types --enable-strings -o - -S | filecheck %s --check-prefix STRINGS
