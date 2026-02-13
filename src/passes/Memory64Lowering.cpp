@@ -247,8 +247,6 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
         builder.makeIf(isMinusOne,
                        builder.makeConst(int64_t(-1)),
                        builder.makeUnary(UnaryOp::ExtendUInt32, newSize));
-      // The table.grow node is reused as a child of local.tee which stores
-      // to an i32 local, so its type must be i32 to match the lowered table.
       curr->type = Type::i32;
       replaceCurrent(ifExp);
     }
