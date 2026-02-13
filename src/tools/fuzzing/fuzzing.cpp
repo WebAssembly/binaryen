@@ -2184,7 +2184,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       }
       // These imports take a funcref as the first param.
       assert(!curr->operands.empty());
-      curr->operands[0] = parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
+      curr->operands[0] =
+        parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
     }
 
     void visitRethrow(Rethrow* curr) {
