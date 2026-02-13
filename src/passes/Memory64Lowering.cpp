@@ -23,6 +23,7 @@
 #include "ir/bits.h"
 #include "ir/import-utils.h"
 #include "ir/localize.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -38,6 +39,8 @@ static Name TABLE_BASE32("__table_base32");
 static const Address k32GLimit(1ULL << 32);
 
 struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
+
+  bool refinalize = false;
 
   void wrapAddress64(Expression*& ptr,
                      Name memoryOrTableName,
@@ -96,6 +99,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     b->list.push_back(Builder(*getModule()).makeUnreachable());
     b->type = Type::unreachable;
     replaceCurrent(b);
+    refinalize = true;
   }
 
   void visitLoad(Load* curr) { visitMemoryAccess(curr); }
@@ -176,6 +180,13 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   void visitAtomicWait(AtomicWait* curr) { visitMemoryAccess(curr); }
 
   void visitAtomicNotify(AtomicNotify* curr) { visitMemoryAccess(curr); }
+
+  void visitFunction(Function* func) {
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      refinalize = false;
+    }
+  }
 
   void visitDataSegment(DataSegment* segment) {
     auto& module = *getModule();
