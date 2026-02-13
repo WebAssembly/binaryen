@@ -308,13 +308,15 @@ struct Shell {
     switch (nan.kind) {
       case NaNKind::Canonical:
         if (val.type != nan.type || !val.isCanonicalNaN()) {
-          err << "expected canonical " << nan.type << " NaN, got " << val;
+          err << "canonical " << nan.type;
+          // err << "expected canonical " << nan.type << " NaN, got " << val;
           return Err{err.str()};
         }
         break;
       case NaNKind::Arithmetic:
         if (val.type != nan.type || !val.isArithmeticNaN()) {
-          err << "expected arithmetic " << nan.type << " NaN, got " << val;
+          err << "arithmetic " << nan.type;
+          // err << "expected arithmetic " << nan.type << " NaN, got " << val;
           return Err{err.str()};
         }
         break;
@@ -326,7 +328,8 @@ struct Shell {
     std::stringstream err;
     if (auto* e = std::get_if<Literal>(&expected)) {
       if (*e != val) {
-        err << "expected " << *e << ", got " << val << " at lane " << index;
+        err << *e;
+        // err << "expected " << *e << ", got " << val << " at lane " << index;
         return Err{err.str()};
       }
     } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
@@ -354,7 +357,7 @@ struct Shell {
 
     if (auto* v = std::get_if<Literal>(&expected)) {
       if (val != *v) {
-        err << "expected " << *v << ", got " << val;
+        // err << "expected " << *v << ", got " << val;
         err << *v;
         return AlternativeErr{err.str()};
         // return Err{err.str()};
@@ -370,8 +373,9 @@ struct Shell {
     } else if ([[maybe_unused]] auto* nullRef =
                  std::get_if<NullRefResult>(&expected)) {
       if (!val.isNull()) {
-        err << "expected ref.null, got " << val << atIndex();
-        return Err{err.str()};
+        // err << "expected ref.null, got " << val << atIndex();
+        err << "ref.null";
+        return AlternativeErr{err.str()};
       }
     } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
       auto check = checkNaN(val, *nan);
@@ -440,18 +444,24 @@ struct Shell {
 
       // non-either case
       if (assn.expected[i].size() == 1) {
-        return matchAlternative(
+        auto result = matchAlternative(
           (*values)[i], assn.expected[i][0], /*isAlternative=*/false);
+        if (result.getErr()) {
+          err << "Expected " << result.getErr()->expected << ", but got "
+              << (*values)[i];
+          return Err{err.str()};
+        }
+        return *result;
       }
 
       // either case
       bool success = false;
-      std::vector<std::string> errs;
+      std::vector<std::string> expecteds;
       for (const auto& alternative : assn.expected[i]) {
         auto result =
           matchAlternative((*values)[i], alternative, /*isAlternative=*/true);
         if (result.getErr()) {
-          errs.push_back("\t" + result.getErr()->msg);
+          expecteds.push_back(result.getErr()->expected);
         } else {
           success = true;
           break;
@@ -461,8 +471,9 @@ struct Shell {
         continue;
       }
       std::stringstream ss;
-      ss << "No alternatives matched in (either ...) matcher. Errors:\n";
-      ss << String::join(errs, "\n or ");
+      ss << "Expected one of (" << String::join(expecteds, "\n\t| ") << ")";
+      // ss << "No alternatives matched in (either ...) matcher. Errors:\n";
+      // ss << String::join(errs, "\n or ");
 
       ss << atIndex();
 
