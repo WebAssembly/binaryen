@@ -120,8 +120,12 @@ public:
           value = val.and_(Literal(uint32_t(0xffff)));
         }
         break;
+      case Field::WaitQueue:
+        WASM_UNREACHABLE("not implemented");
+        break;
       case Field::not_packed:
         WASM_UNREACHABLE("unexpected packed type");
+        break;
     }
   }
 
