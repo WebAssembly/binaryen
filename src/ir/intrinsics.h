@@ -130,7 +130,9 @@ public:
     return getAnnotations(nullptr, func);
   }
 
-  void setAnnotations(Function* func, Expression* curr, const CodeAnnotation& value) {
+  void setAnnotations(Function* func,
+                      Expression* curr,
+                      const CodeAnnotation& value) {
     func->codeAnnotations[curr] = value;
   }
 

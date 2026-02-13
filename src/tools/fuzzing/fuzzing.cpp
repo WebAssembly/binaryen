@@ -1344,8 +1344,6 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   // fixup to ensure we validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 
-
-
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
@@ -1448,7 +1446,7 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
       // Open world, or closed world in the rare case we just do anything.
       if (!funcref) {
         // In open world, we can pick any funcref. Most of the time use a non-
-        //nullable funcref there, to reduce errors.
+        // nullable funcref there, to reduce errors.
         auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
         funcref = make(refType);
       }
