@@ -423,6 +423,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test_table_grow (result i64)
+    ;; table.grow returns -1 on failure. The lowering must check for -1 and
+    ;; return i64(-1) instead of i64.extend_i32_u(i32(-1)) which would be
+    ;; 4294967295.
     (table.grow $t64 (ref.null func) (i64.const 10))
   )
 
