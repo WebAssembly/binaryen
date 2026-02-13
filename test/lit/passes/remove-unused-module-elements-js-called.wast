@@ -3,18 +3,19 @@
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --closed-world -all -S -o - | filecheck %s
 
 (module
-  (@binaryen.js.called)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (elem declare func $js.called.referred)
 
   ;; CHECK:      (export "export" (func $export))
 
-  ;; CHECK:      (func $js.called.referred (type $0)
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $js.called.referred (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  (@binaryen.js.called)
   (func $js.called.referred
     ;; This is jsCalled, and referred below, so it is kept.
     (drop (i32.const 10))
