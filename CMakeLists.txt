@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 125)
+project(binaryen LANGUAGES C CXX VERSION 126)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
