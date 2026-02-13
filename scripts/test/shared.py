@@ -388,9 +388,6 @@ SPEC_TESTS_TO_SKIP = [
 
     # Unlinkable module accepted
     'linking.wast',
-    # TODO: failure
-    'memory_max.wast',
-    'memory_max_i64.wast',
 
     # Invalid module accepted
     'unreached-invalid.wast',
@@ -399,7 +396,6 @@ SPEC_TESTS_TO_SKIP = [
     'elem.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
-    'custom-page-sizes',
     'wide-arithmetic',
 ]
 

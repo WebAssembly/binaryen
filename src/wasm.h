@@ -27,9 +27,12 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <limits>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -2488,7 +2491,12 @@ public:
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return addressType == Type::i64; }
   Address::address64_t maxSize32() const { return 1ull << (32 - pageSizeLog2); }
-  Address::address64_t maxSize64() const { return 1ull << (64 - pageSizeLog2); }
+  Address::address64_t maxSize64() const {
+    if (pageSizeLog2 == 0) {
+      return std::numeric_limits<uint64_t>::max();
+    }
+    return 1ull << (64 - pageSizeLog2);
+  }
   Address::address64_t pageSize() const {
     return 1ull << static_cast<Address::address64_t>(pageSizeLog2);
   }

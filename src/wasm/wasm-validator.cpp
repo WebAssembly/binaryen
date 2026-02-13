@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <iostream>
 #include <mutex>
 #include <set>
 #include <sstream>
@@ -4605,6 +4606,15 @@ static void validateMemories(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(module.features.hasMemory64(),
                         "memory",
                         "64-bit memories require memory64 [--enable-memory64]");
+      // TODO: The custom pages sizes proposals do not mention a verification
+      // method when the memory64 proposal is active simultaneously; the current
+      // implementation is based on spectest.
+      info.shouldBeTrue(memory->initial <= memory->maxSize64(),
+                        "memory",
+                        "initial memory must be <= 16EB");
+      info.shouldBeTrue(!memory->hasMax() || memory->max <= memory->maxSize64(),
+                        "memory",
+                        "max memory must be <= 16EB, or unlimited");
     } else {
       info.shouldBeTrue(memory->initial <= memory->maxSize32(),
                         "memory",
