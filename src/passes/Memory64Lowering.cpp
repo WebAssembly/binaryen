@@ -22,6 +22,8 @@
 
 #include "ir/bits.h"
 #include "ir/import-utils.h"
+#include "ir/localize.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -34,7 +36,11 @@ static Name MEMORY_BASE32("__memory_base32");
 static Name TABLE_BASE("__table_base");
 static Name TABLE_BASE32("__table_base32");
 
+static const Address k32GLimit(1ULL << 32);
+
 struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
+
+  bool refinalize = false;
 
   void wrapAddress64(Expression*& ptr,
                      Name memoryOrTableName,
@@ -83,14 +89,27 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     return extendAddress64(ptr, tableName, true);
   }
 
-  void visitLoad(Load* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  template<typename T> void visitMemoryAccess(T* curr) {
+    if (curr->offset < k32GLimit) {
+      return wrapAddress64(curr->ptr, curr->memory);
+    }
+    Block* b =
+      ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+        .getChildrenReplacement();
+    b->list.push_back(Builder(*getModule()).makeUnreachable());
+    b->type = Type::unreachable;
+    replaceCurrent(b);
+    refinalize = true;
+  }
 
-  void visitStore(Store* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitLoad(Load* curr) { visitMemoryAccess(curr); }
 
-  void visitSIMDLoad(SIMDLoad* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitStore(Store* curr) { visitMemoryAccess(curr); }
+
+  void visitSIMDLoad(SIMDLoad* curr) { visitMemoryAccess(curr); }
 
   void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
+    visitMemoryAccess(curr);
   }
 
   void visitMemorySize(MemorySize* curr) {
@@ -154,20 +173,19 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     wrapAddress64(curr->size, curr->destMemory);
   }
 
-  void visitAtomicRMW(AtomicRMW* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
-  }
+  void visitAtomicRMW(AtomicRMW* curr) { visitMemoryAccess(curr); }
 
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
-  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { visitMemoryAccess(curr); }
 
-  void visitAtomicWait(AtomicWait* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
-  }
+  void visitAtomicWait(AtomicWait* curr) { visitMemoryAccess(curr); }
 
-  void visitAtomicNotify(AtomicNotify* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
+  void visitAtomicNotify(AtomicNotify* curr) { visitMemoryAccess(curr); }
+
+  void visitFunction(Function* func) {
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      refinalize = false;
+    }
   }
 
   void visitDataSegment(DataSegment* segment) {
