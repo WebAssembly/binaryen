@@ -19,8 +19,9 @@ v126
 ----
 
  - New intrinsic: `@binaryen.removable.if.unused`. (#8268)
- - Add a pass to remove toolchain annotations, `--strip-toolchain-annotations`
-   (#8301)
+ - New intrinsic: `@binaryen.js.called`. (#8324)
+ - Add a pass to remove toolchain annotations, `--strip-toolchain-annotations`,
+   for the above two intrinsics and future ones. (#8301)
  - Add a pass to remove relaxed SIMD instructions, `--remove-relaxed-simd`
    (#8300)
  - JS API: Throw useful exceptions on parse errors in binaryen.js, rather than
