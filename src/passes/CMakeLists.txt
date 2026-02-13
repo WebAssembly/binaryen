@@ -59,6 +59,7 @@ set(passes_SOURCES
   J2CLOpts.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
+  LLVMOpt.cpp
   LLVMMemoryCopyFillLowering.cpp
   LocalCSE.cpp
   LocalSubtyping.cpp
@@ -148,5 +149,10 @@ if(EMSCRIPTEN)
   list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker-impl.h)
   list(REMOVE_ITEM passes_SOURCES "hash-stringify-walker.cpp")
   list(REMOVE_ITEM passes_SOURCES "Outlining.cpp")
+endif()
+if(USE_SYSTEM_LLVM)
+  target_link_libraries(binaryen
+    LLVMCore
+  )
 endif()
 target_sources(binaryen PRIVATE ${passes_SOURCES})
