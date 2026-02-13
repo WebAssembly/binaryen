@@ -2254,8 +2254,8 @@ struct CodeAnnotation {
 
   // This should be assumed to be called from JS, even in closed world. Being
   // called from JS means that the call happens in a non-typed way, with only
-  // the signature mattering ("signature-called"; in particular, rec group type
-  // identity does not matter.
+  // the signature mattering ("signature-called"). In particular, rec group type
+  // identity does not matter for such functions.
   bool jsCalled = false;
 
   bool operator==(const CodeAnnotation& other) const {
