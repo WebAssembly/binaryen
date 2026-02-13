@@ -1442,6 +1442,7 @@ public:
   std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
   std::optional<BufferWithRandomAccess> getInlineHintsBuffer();
   std::optional<BufferWithRandomAccess> getRemovableIfUnusedHintsBuffer();
+  std::optional<BufferWithRandomAccess> getJSCalledHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1734,7 +1735,8 @@ public:
 
   void readBranchHints(size_t payloadLen);
   void readInlineHints(size_t payloadLen);
-  void readremovableIfUnusedHints(size_t payloadLen);
+  void readRemovableIfUnusedHints(size_t payloadLen);
+  void readJSCalledHints(size_t payloadLen);
 
   std::tuple<Address, Address, Index, MemoryOrder>
   readMemoryAccess(bool isAtomic, bool isRMW);
