@@ -986,25 +986,6 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     return;
   }
 
-  if (wasm.features.hasReferenceTypes() && closedWorld) {
-    // In closed world mode we must *remove* the call-ref* imports, if they
-    // exist in the initial content. These are not valid to call in closed-world
-    // mode as they call function references. (Another solution here would be to
-    // make closed-world issue validation errors on these imports, but that
-    // would require changes to the general-purpose validator.)
-    for (auto& func : wasm.functions) {
-      if (func->imported() && func->module == "fuzzing-support" &&
-          func->base.startsWith("call-ref")) {
-        // Make it non-imported, and with a simple body.
-        func->module = func->base = Name();
-        func->type = func->type.with(Exact);
-        auto results = func->getResults();
-        func->body =
-          results.isConcrete() ? makeConst(results) : makeNop(Type::none);
-      }
-    }
-  }
-
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
   // its own exports, and to care about the indexes of the exports).
@@ -1044,9 +1025,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     wasm.addFunction(std::move(func));
   }
 
-  // If the wasm will be used for closed-world testing, we cannot use the
-  // call-ref variants, as mentioned before.
-  if (wasm.features.hasReferenceTypes() && !closedWorld) {
+  if (wasm.features.hasReferenceTypes()) {
     if (choice & 4) {
       // Given an funcref, call it from JS.
       callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
