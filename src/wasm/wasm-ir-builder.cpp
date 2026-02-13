@@ -2664,15 +2664,18 @@ void IRBuilder::applyAnnotations(Expression* expr,
   }
 
   if (annotation.inline_) {
-    // Only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].inline_ = annotation.inline_;
   }
 
   if (annotation.removableIfUnused) {
-    // Only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].removableIfUnused = true;
+  }
+
+  if (annotation.jsCalled) {
+    assert(func);
+    func->codeAnnotations[expr].jsCalled = true;
   }
 }
 

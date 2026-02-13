@@ -2797,6 +2797,12 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
       restoreNormalColor(o);
       doIndent(o, indent);
     }
+    if (annotation.jsCalled) {
+      Colors::grey(o);
+      o << "(@" << Annotations::JSCalledHint << ")\n";
+      restoreNormalColor(o);
+      doIndent(o, indent);
+    }
   }
 }
 

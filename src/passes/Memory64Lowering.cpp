@@ -242,8 +242,31 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     if (table->is64()) {
       wrapTableAddress64(curr->delta, curr->table);
       auto* size = static_cast<Expression*>(curr);
-      extendTableAddress64(size, curr->table);
-      replaceCurrent(size);
+      // TableGrow returns -1 in case of failure. We cannot just use
+      // extend_32_u in this case so we handle it the same way as MemoryGrow:
+      //
+      // (if (result i64)
+      //  (i32.eq (i32.const -1) (local.tee $tmp (table.grow X)))
+      //  (then
+      //   (i64.const -1)
+      //  )
+      //  (else
+      //   (i64.extend_i32_u (local.get $tmp))
+      //  )
+      // )
+      Builder builder(module);
+      auto tmp = builder.addVar(getFunction(), Type::i32);
+      Expression* isMinusOne =
+        builder.makeBinary(EqInt32,
+                           builder.makeConst(int32_t(-1)),
+                           builder.makeLocalTee(tmp, size, Type::i32));
+      auto* newSize = builder.makeLocalGet(tmp, Type::i32);
+      Expression* ifExp =
+        builder.makeIf(isMinusOne,
+                       builder.makeConst(int64_t(-1)),
+                       builder.makeUnary(UnaryOp::ExtendUInt32, newSize));
+      curr->type = Type::i32;
+      replaceCurrent(ifExp);
     }
   }
 
