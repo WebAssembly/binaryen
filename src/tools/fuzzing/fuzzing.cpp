@@ -33,7 +33,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
-    random(std::move(input), wasm.features),
+    random(std::move(input), wasm.features), intrinsics(wasm),
     publicTypeValidator(wasm.features) {
 
   atomicMemoryOrders = wasm.features.hasRelaxedAtomics()
@@ -1344,6 +1344,8 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   // fixup to ensure we validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 
+
+
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
@@ -1426,9 +1428,31 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     // catching ones, we just get a result of 1, but when not caught it halts
     // execution).
     if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
-      // Most of the time make a non-nullable funcref, to avoid errors.
-      auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
-      std::vector<Expression*> args = {make(refType)};
+      Expression* funcref = nullptr;
+      if (closedWorld && !oneIn(20)) {
+        // Only jsCalled functions are allowed to be called in closed world.
+        // Almost anything we pick randomly here will trap, so almost all the
+        // time pick something manually that does not, by finding all jsCalled
+        // functions and picking one.
+        std::vector<Name> jsCalled;
+        for (auto& func : wasm.functions) {
+          if (intrinsics.getAnnotations(func.get()).jsCalled) {
+            jsCalled.push_back(func->name);
+          }
+        }
+        if (jsCalled.empty()) {
+          return makeTrivial(type);
+        }
+        funcref = builder.makeRefFunc(pick(jsCalled));
+      }
+      // Open world, or closed world in the rare case we just do anything.
+      if (!funcref) {
+        // In open world, we can pick any funcref. Most of the time use a non-
+        //nullable funcref there, to reduce errors.
+        auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+        funcref = make(refType);
+      }
+      std::vector<Expression*> args = {funcref};
       if (!catching) {
         // Only the first bit matters here, so we can send anything (this is
         // future-proof for later bits, and has no downside now).
@@ -1706,6 +1730,14 @@ void TranslateToFuzzReader::modFunction(Function* func) {
   recombine(func);
   mutate(func);
   fixAfterChanges(func);
+
+  // Mark some functions as jsCalled. This allows them to be called by
+  // reference even in open world, using the callRef* imports.
+  if (oneIn(4)) {
+    auto annotations = intrinsics.getAnnotations(func);
+    annotations.jsCalled = true;
+    intrinsics.setAnnotations(func, annotations);
+  }
 }
 
 void TranslateToFuzzReader::addHangLimitChecks(Function* func) {

@@ -130,6 +130,14 @@ public:
     return getAnnotations(nullptr, func);
   }
 
+  void setAnnotations(Function* func, Expression* curr, const CodeAnnotation& value) {
+    func->codeAnnotations[curr] = value;
+  }
+
+  void setAnnotations(Function* func, const CodeAnnotation& value) {
+    setAnnotations(func, nullptr, value);
+  }
+
   // Given a call in a function, return all the annotations for it. The call may
   // be annotated itself (which takes precedence), or the function it calls be
   // annotated.

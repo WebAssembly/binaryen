@@ -143,6 +143,7 @@ private:
   bool closedWorld;
   Builder builder;
   Random random;
+  Intrinsics intrinsics;
 
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
