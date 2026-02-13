@@ -219,6 +219,9 @@ private:
   // All tags that are valid as exception tags (which cannot have results).
   std::vector<Tag*> exceptionTags;
 
+  // All functions marked jsCalled.
+  std::vector<Name> jsCalled;
+
   Index numAddedFunctions = 0;
 
   // The name of an empty tag.

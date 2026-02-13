@@ -1426,31 +1426,9 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     // catching ones, we just get a result of 1, but when not caught it halts
     // execution).
     if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
-      Expression* funcref = nullptr;
-      if (closedWorld && !oneIn(20)) {
-        // Only jsCalled functions are allowed to be called in closed world.
-        // Almost anything we pick randomly here will trap, so almost all the
-        // time pick something manually that does not, by finding all jsCalled
-        // functions and picking one.
-        std::vector<Name> jsCalled;
-        for (auto& func : wasm.functions) {
-          if (intrinsics.getAnnotations(func.get()).jsCalled) {
-            jsCalled.push_back(func->name);
-          }
-        }
-        if (jsCalled.empty()) {
-          return makeTrivial(type);
-        }
-        funcref = builder.makeRefFunc(pick(jsCalled));
-      }
-      // Open world, or closed world in the rare case we just do anything.
-      if (!funcref) {
-        // In open world, we can pick any funcref. Most of the time use a non-
-        // nullable funcref there, to reduce errors.
-        auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
-        funcref = make(refType);
-      }
-      std::vector<Expression*> args = {funcref};
+      // Most of the time make a non-nullable funcref, to avoid errors.
+      auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+      std::vector<Expression*> args = {make(refType)};
       if (!catching) {
         // Only the first bit matters here, so we can send anything (this is
         // future-proof for later bits, and has no downside now).
@@ -1735,6 +1713,7 @@ void TranslateToFuzzReader::modFunction(Function* func) {
     auto annotations = intrinsics.getAnnotations(func);
     annotations.jsCalled = true;
     intrinsics.setAnnotations(func, annotations);
+    jsCalled.push_back(func->name);
   }
 }
 
@@ -2183,6 +2162,29 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         }
         i--;
       }
+    }
+
+    void visitCall(Call* curr) {
+      // In closed world, the callRef* imports can cause misoptimization later:
+      // they send a funcref to JS to call, and in closed world we assume such
+      // calls do not happen unless the function is annotated as jsCalled. We
+      // must therefore ensure that calls to these imports only send a jsCalled
+      // method and nothing else.
+      if (!parent.closedWorld) {
+        return;
+      }
+      if (curr->target != callRefImportName &&
+          curr->target != callRefCatchImportName) {
+        return;
+      }
+      if (parent.jsCalled.empty()) {
+        // There is nothing valid to call at all.
+        replace();
+        return;
+      }
+      // These imports take a funcref as the first param.
+      assert(!curr->operands.empty());
+      curr->operands[0] = parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
     }
 
     void visitRethrow(Rethrow* curr) {
