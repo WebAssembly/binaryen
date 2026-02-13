@@ -2173,8 +2173,8 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       if (!parent.closedWorld) {
         return;
       }
-      if (curr->target != callRefImportName &&
-          curr->target != callRefCatchImportName) {
+      if (curr->target != parent.callRefImportName &&
+          curr->target != parent.callRefCatchImportName) {
         return;
       }
       if (parent.jsCalled.empty()) {
