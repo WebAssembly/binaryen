@@ -59,7 +59,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features),
-    loggableTypes(getLoggableTypes(wasm.features.hasSIMD())),
+    loggableTypes(getLoggableTypes(wasm.features)),
     atomicMemoryOrders(wasm.features.hasRelaxedAtomics()
                          ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
                          : std::vector{MemoryOrder::SeqCst}),
