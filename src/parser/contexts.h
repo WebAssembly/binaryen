@@ -174,8 +174,6 @@ struct NullTypeParserCtx {
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
 
-  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
-
   BlockTypeT getBlockTypeFromResult(size_t results) { return Ok{}; }
 
   Result<> getBlockTypeFromTypeUse(Index, TypeUseT) { return Ok{}; }
@@ -352,11 +350,8 @@ template<typename Ctx> struct TypeParserCtx {
   void appendDataString(DataStringT&, std::string_view) {}
 
   Result<LimitsT> makeLimits(uint64_t, std::optional<uint64_t>) { return Ok{}; }
-  LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
 
-  MemTypeT makeMemType(Type, LimitsT, bool, std::optional<uint8_t>) {
-    return Ok{};
-  }
+  MemTypeT makeMemType(Type, LimitsT, bool, uint8_t) { return Ok{}; }
 
   HeapType getBlockTypeFromResult(const std::vector<Type> results) {
     assert(results.size() == 1);
@@ -1076,18 +1071,16 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   }
 
   Limits getLimitsFromData(const std::vector<char>& data,
-                           std::optional<uint8_t> pageSizeLog2) {
-    uint8_t _pageSizeLog2 = pageSizeLog2.value_or(16);
+                           uint8_t pageSizeLog2) {
     uint64_t size =
-      (data.size() + (1 << _pageSizeLog2) - 1) / (1 << _pageSizeLog2);
+      (data.size() + (1 << pageSizeLog2) - 1) / (1 << pageSizeLog2);
     return {size, size};
   }
 
   MemType makeMemType(Type addressType,
                       Limits limits,
                       bool shared,
-                      std::optional<uint8_t> pageSize) {
-    uint8_t pageSizeLog2 = pageSize.value_or(16);
+                      uint8_t pageSizeLog2) {
     return {addressType, limits, pageSizeLog2, shared};
   }
 
@@ -1457,12 +1450,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   Type makeTableType(Type addressType, LimitsT, Type type) { return type; }
 
-  LimitsT getLimitsFromData(DataStringT, std::optional<uint8_t>) {
-    return Ok{};
-  }
-  MemTypeT makeMemType(Type, LimitsT, bool, std::optional<uint8_t>) {
-    return Ok{};
-  }
+  LimitsT getLimitsFromData(DataStringT, uint8_t) { return Ok{}; }
+  MemTypeT makeMemType(Type, LimitsT, bool, uint8_t) { return Ok{}; }
 
   Result<> addFunc(Name name,
                    const std::vector<Name>&,

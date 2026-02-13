@@ -20,6 +20,7 @@
 #include "common.h"
 #include "contexts.h"
 #include "lexer.h"
+#include "wasm.h"
 #include "wat-parser-internal.h"
 
 namespace wasm::WATParser {
@@ -826,9 +827,9 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
 }
 
 // mempagesize? ::= ('(' 'pagesize' u64 ')') ?
-template<typename Ctx> Result<std::optional<uint8_t>> mempagesize(Ctx& ctx) {
+template<typename Ctx> MaybeResult<uint8_t> mempagesize(Ctx& ctx) {
   if (!ctx.in.takeSExprStart("pagesize"sv)) {
-    return std::nullopt; // No pagesize specified
+    return {}; // No pagesize specified
   }
   auto pageSize = ctx.in.takeU64();
   if (!pageSize) {
@@ -849,7 +850,7 @@ template<typename Ctx> Result<std::optional<uint8_t>> mempagesize(Ctx& ctx) {
     return ctx.in.err("memory page size can only be 1 or 64 KiB");
   }
 
-  return std::make_optional<uint8_t>(pageSizeLog2);
+  return pageSizeLog2;
 }
 
 // memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared? mempagesize?
@@ -874,9 +875,11 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
   if (ctx.in.takeKeyword("shared"sv)) {
     shared = true;
   }
-  auto pageSize = mempagesize(ctx);
-  CHECK_ERR(pageSize);
-  return ctx.makeMemType(addressType, *limits, shared, *pageSize);
+  MaybeResult<uint8_t> mempageSize = mempagesize(ctx);
+  CHECK_ERR(mempageSize);
+  const uint8_t pageSizeLog2 =
+    mempageSize ? *mempageSize : Memory::kDefaultPageSizeLog2;
+  return ctx.makeMemType(addressType, *limits, shared, pageSizeLog2);
 }
 
 // memorder ::= 'seqcst' | 'acqrel'
@@ -3587,7 +3590,7 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
 
   std::optional<typename Ctx::MemTypeT> mtype;
   std::optional<typename Ctx::DataStringT> data;
-  auto mempageSize = mempagesize(ctx);
+  MaybeResult<uint8_t> mempageSize = mempagesize(ctx);
   CHECK_ERR(mempageSize);
   if (ctx.in.takeSExprStart("data"sv)) {
     if (import) {
@@ -3598,12 +3601,14 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline data");
     }
+    const uint8_t pageSizeLog2 =
+      mempageSize.getPtr() ? *mempageSize : Memory::kDefaultPageSizeLog2;
     mtype = ctx.makeMemType(addressType,
-                            ctx.getLimitsFromData(*datastr, *mempageSize),
+                            ctx.getLimitsFromData(*datastr, pageSizeLog2),
                             false,
-                            *mempageSize);
+                            pageSizeLog2);
     data = *datastr;
-  } else if ((*mempageSize).has_value()) {
+  } else if (mempageSize) {
     // If we have a memory page size not within a memtype expression, we expect
     // a memory abbreviation.
     return ctx.in.err("expected data segment in memory abbreviation");

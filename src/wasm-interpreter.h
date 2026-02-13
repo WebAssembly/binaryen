@@ -3648,12 +3648,7 @@ private:
   }
 
   Address::address64_t getMemoryPageSize(Name memory) {
-    Memory* mem = wasm.getMemoryOrNull(memory);
-    if (!mem) {
-      externalInterface->trap(
-        "getMemoryPageSize called on non-existing memory");
-    }
-    return mem->pageSize();
+    return wasm.getMemory(memory)->pageSize();
   }
 
 public:

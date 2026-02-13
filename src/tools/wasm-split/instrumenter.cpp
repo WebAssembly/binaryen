@@ -82,7 +82,7 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
     Names::getValidMemoryName(*wasm, config.secondaryMemoryName);
   // Create a memory with enough pages to write into
   // The memory uses the default page size to avoid issues in case custom page
-  // sizes are not supported
+  // sizes are not supported.
   size_t pages =
     (numFuncs + Memory::kDefaultPageSize - 1) / Memory::kDefaultPageSize;
   auto mem = Builder::makeMemory(secondaryMemory, pages, pages, true);
