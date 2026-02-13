@@ -177,6 +177,8 @@ struct SignaturePruning : public Pass {
     }
 
     // Signature-called functions must also not be modified.
+    // TODO: Explore whether removing parameters from the end could be
+    //       beneficial (check if it does not regress call performance with JS).
     for (auto func : Intrinsics(*module).getJSCalledFunctions()) {
       allInfo[module->getFunction(func)->type.getHeapType()].optimizable =
         false;
