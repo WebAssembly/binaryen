@@ -3218,12 +3218,12 @@ public:
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
   void instantiate(bool validateImports_ = false) {
-    // initialize the rest of the external interface
-    externalInterface->init(wasm, *self());
-
     if (validateImports_) {
       validateImports();
     }
+
+    // initialize the rest of the external interface
+    externalInterface->init(wasm, *self());
 
     initializeGlobals();
     initializeTables();
