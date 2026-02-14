@@ -62,6 +62,7 @@ const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
 const char* RelaxedAtomicsFeature = "relaxed-atomics";
+const char* CustomPageSizesFeature = "custom-page-sizes";
 
 } // namespace BinaryConsts::CustomSections
 
