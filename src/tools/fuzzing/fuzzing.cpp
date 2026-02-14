@@ -29,34 +29,44 @@
 
 namespace wasm {
 
+namespace {
+
+std::vector<Type> getLoggableTypes(const FeatureSet& features) {
+  std::vector<Type> loggableTypes = {
+    Type::i32, Type::i64, Type::f32, Type::f64};
+  if (features.hasSIMD()) {
+    loggableTypes.push_back(Type::v128);
+  }
+  if (features.hasReferenceTypes()) {
+    if (features.hasGC()) {
+      loggableTypes.push_back(Type(HeapType::any, Nullable));
+      loggableTypes.push_back(Type(HeapType::func, Nullable));
+      loggableTypes.push_back(Type(HeapType::ext, Nullable));
+    }
+    if (features.hasStackSwitching()) {
+      loggableTypes.push_back(Type(HeapType::cont, Nullable));
+    }
+    // Note: exnref traps on the JS boundary, so we cannot try to log it.
+  }
+
+  return loggableTypes;
+}
+
+} // namespace
+
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features),
+    loggableTypes(getLoggableTypes(wasm.features)),
+    atomicMemoryOrders(wasm.features.hasRelaxedAtomics()
+                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
+                         : std::vector{MemoryOrder::SeqCst}),
+
     publicTypeValidator(wasm.features) {
 
-  atomicMemoryOrders = wasm.features.hasRelaxedAtomics()
-                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
-                         : std::vector{MemoryOrder::SeqCst};
-
   haveInitialFunctions = !wasm.functions.empty();
-
-  loggableTypes = {Type::i32, Type::i64, Type::f32, Type::f64};
-  if (wasm.features.hasSIMD()) {
-    loggableTypes.push_back(Type::v128);
-  }
-  if (wasm.features.hasReferenceTypes()) {
-    if (wasm.features.hasGC()) {
-      loggableTypes.push_back(Type(HeapType::any, Nullable));
-      loggableTypes.push_back(Type(HeapType::func, Nullable));
-      loggableTypes.push_back(Type(HeapType::ext, Nullable));
-    }
-    if (wasm.features.hasStackSwitching()) {
-      loggableTypes.push_back(Type(HeapType::cont, Nullable));
-    }
-    // Note: exnref traps on the JS boundary, so we cannot try to log it.
-  }
 
   // Setup params. Start with the defaults.
   globalParams = std::make_unique<FuzzParamsContext>(*this);
