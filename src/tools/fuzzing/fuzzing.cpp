@@ -1713,7 +1713,13 @@ void TranslateToFuzzReader::modFunction(Function* func) {
     auto annotations = intrinsics.getAnnotations(func);
     annotations.jsCalled = true;
     intrinsics.setAnnotations(func, annotations);
-    jsCalled.push_back(func->name);
+
+    // We cannot actually use this as jsCalled if it does not have a type
+    // compatible with the callRef* imports. They send a funcref, so we must
+    // only send non-shared functions.
+    if (!func->type.isShared()) {
+      jsCalled.push_back(func->name);
+    }
   }
 }
 
