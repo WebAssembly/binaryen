@@ -1717,7 +1717,7 @@ void TranslateToFuzzReader::modFunction(Function* func) {
     // We cannot actually use this as jsCalled if it does not have a type
     // compatible with the callRef* imports. They send a funcref, so we must
     // only send non-shared functions.
-    if (!func->type.isShared()) {
+    if (!func->type.getHeapType().isShared()) {
       jsCalled.push_back(func->name);
     }
   }
