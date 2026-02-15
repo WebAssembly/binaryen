@@ -395,9 +395,9 @@ def run_unittest():
 def run_lit():
     def run():
         lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
-        lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
+        lit_tests = shared.get_tests(shared.get_test_dir('lit'), extensions=support.LIT_TEST_SUFFIXES, recursive=True)
         # lit expects to be run as its own executable
-        cmd = [sys.executable, lit_script, lit_tests, '-vv']
+        cmd = [sys.executable, lit_script, '-vv'] + lit_tests
         result = subprocess.run(cmd)
         if result.returncode != 0:
             shared.num_failures += 1
