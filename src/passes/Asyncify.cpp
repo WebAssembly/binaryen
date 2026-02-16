@@ -665,6 +665,14 @@ public:
             }
             // TODO optimize the other case, at least by type
           }
+          void visitCallRef(CallRef* curr) {
+            if (curr->isReturn) {
+              Fatal() << "tail calls not yet supported in asyncify";
+            }
+            if (canIndirectChangeState) {
+              info.canChangeState = true;
+            }
+          }
         };
         Walker walker(info, module, canIndirectChangeState);
         walker.walk(func->body);
@@ -834,6 +842,7 @@ public:
         }
       }
       void visitCallIndirect(CallIndirect* curr) { hasIndirectCall = true; }
+      void visitCallRef(CallRef* curr) { hasIndirectCall = true; }
       Module* module;
       ModuleAnalyzer* analyzer;
       Map* map;
@@ -863,16 +872,16 @@ public:
   bool verbose;
 };
 
-// Checks if something performs a call: either a direct or indirect call,
-// and perhaps it is dropped or assigned to a local. This captures all the
-// cases of a call in flat IR.
+// Checks if something performs a call: a direct call, indirect call, or
+// call_ref, and perhaps it is dropped or assigned to a local. This captures
+// all the cases of a call in flat IR.
 static bool doesCall(Expression* curr) {
   if (auto* set = curr->dynCast<LocalSet>()) {
     curr = set->value;
   } else if (auto* drop = curr->dynCast<Drop>()) {
     curr = drop->value;
   }
-  return curr->is<Call>() || curr->is<CallIndirect>();
+  return curr->is<Call>() || curr->is<CallIndirect>() || curr->is<CallRef>();
 }
 
 class AsyncifyBuilder : public Builder {
