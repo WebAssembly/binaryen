@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/drop.h"
 #include "ir/gc-type-utils.h"
 #include "ir/glbs.h"
 #include "ir/iteration.h"
@@ -2150,13 +2151,22 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       }
 
       if (parent.jsCalled.empty()) {
-        // There is nothing valid to call at all.
-        replaceCurrent(parent.makeTrivial(curr->type));
+        // There is nothing valid to call at all. Keep the children (we may
+        // need them to validate), but remove the call.
+        auto* rep = getDroppedChildrenAndAppend(curr,
+                            parent.wasm,
+                            PassOptions::getWithoutOptimization(),
+                            parent.makeTrivial(curr->type),
+                            DropMode::IgnoreParentEffects);
+        replaceCurrent(rep);
         return;
       }
 
-      curr->operands[0] =
-        parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
+      // Set something valid. As above, we must keep the old child for
+      // validation reasons.
+      auto old = parent.builder.makeDrop(curr->operands[0]);
+      auto new_ = parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
+      curr->operands[0] = parent.builder.makeSequence(old, new_);
     }
   } fixer(*this);
   fixer.walk(func->body);
