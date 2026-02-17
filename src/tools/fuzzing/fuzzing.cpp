@@ -1670,8 +1670,8 @@ Function* TranslateToFuzzReader::addFunction() {
     func->body = make(bodyType);
   }
 
-  // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(std::move(allocation));
+
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Avoid non-
   // nullable params, as those cannot be constructed by the fuzzer on the
@@ -1688,7 +1688,8 @@ Function* TranslateToFuzzReader::addFunction() {
     wasm.addExport(
       Builder::makeExport(func->name, func->name, ExternalKind::Function));
   }
-  // add some to an elem segment TODO we could do this for imported funcs too
+
+  // Add some to an elem segment TODO we could do this for imported funcs too
   while (oneIn(3) && !random.finished()) {
     auto type = func->type;
     std::vector<ElementSegment*> compatibleSegments;
@@ -1700,6 +1701,26 @@ Function* TranslateToFuzzReader::addFunction() {
     auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
     randomElem->data.push_back(builder.makeRefFunc(func->name));
   }
+
+  // Mark some functions as jsCalled. This allows them to be called by
+  // reference even in open world, using the callRef* imports.
+  // TODO: We could do this, and exporting above, to initial content too.
+  if (oneIn(4)) {
+    auto annotations = intrinsics.getAnnotations(func);
+    annotations.jsCalled = true;
+    intrinsics.setAnnotations(func, annotations);
+
+    // We cannot actually use this as jsCalled if it does not have a type
+    // compatible with the callRef* imports. They send a funcref, so we must
+    // only send non-shared functions.
+    if (!func->type.getHeapType().isShared()) {
+      jsCalled.push_back(func->name);
+      // TODO: do not put callRef* in the table - cannot indirectly call them
+      // with random stuffs
+      // TODO: merge-funcs must respect jscalled etc-  semantics!
+    }
+  }
+
   numAddedFunctions++;
   return func;
 }
@@ -1716,24 +1737,6 @@ void TranslateToFuzzReader::modFunction(Function* func) {
   recombine(func);
   mutate(func);
   fixAfterChanges(func);
-
-  // Mark some functions as jsCalled. This allows them to be called by
-  // reference even in open world, using the callRef* imports.
-  if (oneIn(4)) {
-    auto annotations = intrinsics.getAnnotations(func);
-    annotations.jsCalled = true;
-    intrinsics.setAnnotations(func, annotations);
-
-    // We cannot actually use this as jsCalled if it does not have a type
-    // compatible with the callRef* imports. They send a funcref, so we must
-    // only send non-shared functions.
-    if (!func->type.getHeapType().isShared()) {
-      jsCalled.push_back(func->name);
-      // TODO: do not put callRef* in the table - cannot indirectly call them
-      // with random stuffs
-      // TODO: merge-funcs must respect jscalled etc-  semantics!
-    }
-  }
 }
 
 void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
@@ -2139,7 +2142,7 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       }
       if (parent.jsCalled.empty()) {
         // There is nothing valid to call at all.
-        replaceCurrent(parent.makeTrivial(call->type));
+        replaceCurrent(parent.makeTrivial(curr->type));
         return;
       }
       // These imports take a funcref as the first param.
