@@ -2740,7 +2740,7 @@ protected:
 
   Literal makeFromMemory(void* p, Field field) {
     switch (field.packedType) {
-      case Field::not_packed:
+      case Field::NotPacked:
         return Literal::makeFromMemory(p, field.type);
       case Field::i8: {
         int8_t i;
