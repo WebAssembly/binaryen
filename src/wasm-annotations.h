@@ -28,6 +28,7 @@ namespace wasm::Annotations {
 extern const Name BranchHint;
 extern const Name InlineHint;
 extern const Name RemovableIfUnusedHint;
+extern const Name JSCalledHint;
 
 } // namespace wasm::Annotations
 

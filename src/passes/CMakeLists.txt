@@ -100,6 +100,7 @@ set(passes_SOURCES
   StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
+  StripToolchainAnnotations.cpp
   TraceCalls.cpp
   RandomizeBranchHints.cpp
   RedundantSetElimination.cpp

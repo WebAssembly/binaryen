@@ -211,38 +211,6 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     (type $struct (descriptor $desc) (struct))
-    ;; Strings cannot be prototypes. If the prototype field holds a string, it
-    ;; will appear as a null prototype. That is the default prototype value, so
-    ;; we can optimize out prototype fields if we know they will be strings.
-    ;; CHECK:       (type $desc (describes $struct) (struct))
-    (type $desc (describes $struct) (struct (field stringref)))
-  )
-
-  ;; CHECK:       (type $2 (func))
-
-  ;; CHECK:      (func $externalize (type $2)
-  ;; CHECK-NEXT:  (local $struct (ref null $struct))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (extern.convert_any
-  ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $externalize
-    (local $struct (ref null $struct))
-    (drop
-      (extern.convert_any
-        (local.get $struct)
-      )
-    )
-  )
-)
-
-(module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
-    (type $struct (descriptor $desc) (struct))
     ;; Mutable fields cannot hold exposed prototypes, so they can be optimized
     ;; normally.
     ;; CHECK:       (type $desc (describes $struct) (struct))

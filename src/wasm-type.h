@@ -907,6 +907,8 @@ struct TypeBuilder {
     InvalidFuncType,
     // A shared type with shared-everything disabled.
     InvalidSharedType,
+    // A string type with strings disabled.
+    InvalidStringType,
     // A non-shared field of a shared heap type.
     InvalidUnsharedField,
     // A describes clause on a non-struct type.

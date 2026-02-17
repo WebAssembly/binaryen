@@ -1628,6 +1628,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   append(getBranchHintsBuffer());
   append(getInlineHintsBuffer());
   append(getRemovableIfUnusedHintsBuffer());
+  append(getJSCalledHintsBuffer());
   return ret;
 }
 
@@ -1777,6 +1778,17 @@ WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
     [](const CodeAnnotation& annotation) {
       return annotation.removableIfUnused;
     },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
+      // Hint size, always empty.
+      buffer << U32LEB(0);
+    });
+}
+
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getJSCalledHintsBuffer() {
+  return writeExpressionHints(
+    Annotations::JSCalledHint,
+    [](const CodeAnnotation& annotation) { return annotation.jsCalled; },
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always empty.
       buffer << U32LEB(0);
@@ -2057,7 +2069,8 @@ void WasmBinaryReader::preScan() {
 
       if (sectionName == Annotations::BranchHint ||
           sectionName == Annotations::InlineHint ||
-          sectionName == Annotations::RemovableIfUnusedHint) {
+          sectionName == Annotations::RemovableIfUnusedHint ||
+          sectionName == Annotations::JSCalledHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2217,8 +2230,11 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::RemovableIfUnusedHint) {
     deferredAnnotationSections.push_back(
       AnnotationSectionInfo{pos, [this, payloadLen]() {
-                              this->readremovableIfUnusedHints(payloadLen);
+                              this->readRemovableIfUnusedHints(payloadLen);
                             }});
+  } else if (sectionName == Annotations::JSCalledHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readJSCalledHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5533,7 +5549,7 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
     });
 }
 
-void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
+void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) {
   readExpressionHints(Annotations::RemovableIfUnusedHint,
                       payloadLen,
                       [&](CodeAnnotation& annotation) {
@@ -5544,6 +5560,18 @@ void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
 
                         annotation.removableIfUnused = true;
                       });
+}
+
+void WasmBinaryReader::readJSCalledHints(size_t payloadLen) {
+  readExpressionHints(
+    Annotations::JSCalledHint, payloadLen, [&](CodeAnnotation& annotation) {
+      auto size = getU32LEB();
+      if (size != 0) {
+        throwError("bad jsCalledHint size");
+      }
+
+      annotation.jsCalled = true;
+    });
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>

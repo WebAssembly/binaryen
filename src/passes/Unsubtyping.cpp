@@ -612,7 +612,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       return;
     }
     Type anyref(HeapType::any, Nullable);
-    for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+    for (auto func : Intrinsics(wasm).getJSCalledFunctions()) {
       // Parameter types flow into Wasm and are implicitly cast from any.
       for (auto type : wasm.getFunction(func)->getParams()) {
         if (Type::isSubType(type, anyref)) {
