@@ -2140,13 +2140,21 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
           curr->target != parent.callRefCatchImportName) {
         return;
       }
+
+      // These imports take a funcref as the first param.
+      assert(!curr->operands.empty());
+      if (curr->operands[0]->type == Type::unreachable) {
+        // This call is not executed anyhow, and we shouldn't replace it, as
+        // that could change the type.
+        return;
+      }
+
       if (parent.jsCalled.empty()) {
         // There is nothing valid to call at all.
         replaceCurrent(parent.makeTrivial(curr->type));
         return;
       }
-      // These imports take a funcref as the first param.
-      assert(!curr->operands.empty());
+
       curr->operands[0] =
         parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
     }
