@@ -397,7 +397,9 @@ private:
   }
   void recombine(Function* func);
   void mutate(Function* func);
-  // Fix up the IR after recombination and mutation.
+  // Fix up the IR for closed world.
+  void fixClosedWorld(Function* func);
+  // Fix up the IR after recombination and mutation (which may break the IR).
   void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
 

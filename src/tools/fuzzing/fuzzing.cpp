@@ -1603,6 +1603,16 @@ void TranslateToFuzzReader::processFunctions() {
       }
     }
   }
+
+  // Also fix up closed world, if we need to. We must do this at the end, so
+  // nothing can break the closed world assumptions after.
+  if (closedWorld) {
+    for (auto& func : wasm.functions) {
+      if (!func->imported()) {
+        fixClosedWorld(func.get());
+      }
+    }
+  }
 }
 
 // TODO: return std::unique_ptr<Function>
@@ -1719,6 +1729,9 @@ void TranslateToFuzzReader::modFunction(Function* func) {
     // only send non-shared functions.
     if (!func->type.getHeapType().isShared()) {
       jsCalled.push_back(func->name);
+      // TODO: do not put callRef* in the table - cannot indirectly call them
+      // with random stuffs
+      // TODO: merge-funcs must respect jscalled etc-  semantics!
     }
   }
 }
@@ -2105,6 +2118,39 @@ void TranslateToFuzzReader::mutate(Function* func) {
   modder.walkFunctionInModule(func, &wasm);
 }
 
+void TranslateToFuzzReader::fixClosedWorld(Function* func) {
+  assert(closedWorld);
+
+  struct Fixer
+    : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
+    TranslateToFuzzReader& parent;
+
+    Fixer(TranslateToFuzzReader& parent) : parent(parent) {}
+
+    void visitCall(Call* curr) {
+      // In closed world, the callRef* imports can cause misoptimization later:
+      // they send a funcref to JS to call, and in closed world we assume such
+      // calls do not happen unless the function is annotated as jsCalled. We
+      // must therefore ensure that calls to these imports only send a jsCalled
+      // method and nothing else.
+      if (curr->target != parent.callRefImportName &&
+          curr->target != parent.callRefCatchImportName) {
+        return;
+      }
+      if (parent.jsCalled.empty()) {
+        // There is nothing valid to call at all.
+        replaceCurrent(parent.makeTrivial(call->type));
+        return;
+      }
+      // These imports take a funcref as the first param.
+      assert(!curr->operands.empty());
+      curr->operands[0] =
+        parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
+    }
+  } fixer(*this);
+  fixer.walk(func->body);
+}
+
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
   struct Fixer
     : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
@@ -2168,30 +2214,6 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         }
         i--;
       }
-    }
-
-    void visitCall(Call* curr) {
-      // In closed world, the callRef* imports can cause misoptimization later:
-      // they send a funcref to JS to call, and in closed world we assume such
-      // calls do not happen unless the function is annotated as jsCalled. We
-      // must therefore ensure that calls to these imports only send a jsCalled
-      // method and nothing else.
-      if (!parent.closedWorld) {
-        return;
-      }
-      if (curr->target != parent.callRefImportName &&
-          curr->target != parent.callRefCatchImportName) {
-        return;
-      }
-      if (parent.jsCalled.empty()) {
-        // There is nothing valid to call at all.
-        replace();
-        return;
-      }
-      // These imports take a funcref as the first param.
-      assert(!curr->operands.empty());
-      curr->operands[0] =
-        parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
     }
 
     void visitRethrow(Rethrow* curr) {
