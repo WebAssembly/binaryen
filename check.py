@@ -14,18 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
 import glob
 import io
 import os
 import subprocess
 import sys
 import unittest
-from collections import OrderedDict
 from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 from scripts.test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
+
+assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 
 def get_changelog_version():
@@ -77,11 +79,9 @@ def run_wasm_dis_tests():
         shared.fail_if_not_identical_to_file(actual, t + '.fromBinary')
 
         # also verify there are no validation errors
-        def check():
+        with shared.with_pass_debug():
             cmd = shared.WASM_OPT + [t, '-all', '-q']
             support.run_command(cmd)
-
-        shared.with_pass_debug(check)
 
 
 def run_crash_tests():
@@ -388,66 +388,68 @@ def run_unittest():
     suite = unittest.defaultTestLoader.discover(os.path.dirname(shared.options.binaryen_test))
     result = unittest.TextTestRunner(verbosity=2, failfast=shared.options.abort_on_first_failure).run(suite)
     shared.num_failures += len(result.errors) + len(result.failures)
-    if shared.options.abort_on_first_failure and shared.num_failures:
-        raise Exception("unittest failed")
 
 
+@shared.with_pass_debug()
 def run_lit():
-    def run():
-        lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
-        lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
-        # lit expects to be run as its own executable
-        cmd = [sys.executable, lit_script, lit_tests, '-vv']
-        result = subprocess.run(cmd)
+    lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
+    lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
+    # lit expects to be run as its own executable
+    cmd = [sys.executable, lit_script, lit_tests, '-vv']
+    result = subprocess.run(cmd)
+    if result.returncode != 0:
+        shared.num_failures += 1
+
+
+@shared.with_pass_debug()
+def run_gtest():
+    gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
+    if not os.path.isfile(gtest):
+        shared.warn('gtest binary not found - skipping tests')
+    else:
+        result = subprocess.run(gtest)
         if result.returncode != 0:
             shared.num_failures += 1
+
+
+def test_suite(name, func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        assert not (shared.options.abort_on_first_failure and shared.num_failures)
+        result = func(*args, **kwargs)
         if shared.options.abort_on_first_failure and shared.num_failures:
-            raise Exception("lit test failed")
-
-    shared.with_pass_debug(run)
-
-
-def run_gtest():
-    def run():
-        gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
-        if not os.path.isfile(gtest):
-            shared.warn('gtest binary not found - skipping tests')
-        else:
-            result = subprocess.run(gtest)
-            if result.returncode != 0:
-                shared.num_failures += 1
-            if shared.options.abort_on_first_failure and shared.num_failures:
-                raise Exception("gtest test failed")
-
-    shared.with_pass_debug(run)
+            raise Exception(f'test suite failed: {name}')
+        return result
+    return wrapper
 
 
-TEST_SUITES = OrderedDict([
-    ('version', run_version_tests),
-    ('wasm-opt', wasm_opt.test_wasm_opt),
-    ('wasm-dis', run_wasm_dis_tests),
-    ('crash', run_crash_tests),
-    ('dylink', run_dylink_tests),
-    ('ctor-eval', run_ctor_eval_tests),
-    ('wasm-metadce', run_wasm_metadce_tests),
-    ('wasm-reduce', run_wasm_reduce_tests),
-    ('spec', run_spec_tests),
-    ('lld', lld.test_wasm_emscripten_finalize),
-    ('wasm2js', wasm2js.test_wasm2js),
-    ('validator', run_validator_tests),
-    ('example', run_example_tests),
-    ('unit', run_unittest),
-    ('binaryenjs', binaryenjs.test_binaryen_js),
-    ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
-    ('lit', run_lit),
-    ('gtest', run_gtest),
-])
+TEST_SUITES = {
+    'version': run_version_tests,
+    'wasm-opt': wasm_opt.test_wasm_opt,
+    'wasm-dis': run_wasm_dis_tests,
+    'crash': run_crash_tests,
+    'dylink': run_dylink_tests,
+    'ctor-eval': run_ctor_eval_tests,
+    'wasm-metadce': run_wasm_metadce_tests,
+    'wasm-reduce': run_wasm_reduce_tests,
+    'spec': run_spec_tests,
+    'lld': lld.test_wasm_emscripten_finalize,
+    'wasm2js': wasm2js.test_wasm2js,
+    'validator': run_validator_tests,
+    'example': run_example_tests,
+    'unit': run_unittest,
+    'binaryenjs': binaryenjs.test_binaryen_js,
+    'lit': run_lit,
+    'gtest': run_gtest,
+}
+
+TEST_SUITES = {name: test_suite(name, func) for name, func in TEST_SUITES.items()}
 
 
 # Run all the tests
 def main():
     all_suites = TEST_SUITES.keys()
-    skip_by_default = ['binaryenjs', 'binaryenjs_wasm']
+    skip_by_default = ['binaryenjs']
 
     if shared.options.list_suites:
         for suite in all_suites:

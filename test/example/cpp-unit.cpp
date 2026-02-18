@@ -660,8 +660,7 @@ void test_field() {
   // Packed types
   assert_equal(Field(Field::PackedType::i8, Immutable).getByteSize(), 1);
   assert_equal(Field(Field::PackedType::i16, Immutable).getByteSize(), 2);
-  assert_equal(Field(Field::PackedType::not_packed, Immutable).getByteSize(),
-               4);
+  assert_equal(Field(Field::PackedType::NotPacked, Immutable).getByteSize(), 4);
 }
 
 void test_queue() {

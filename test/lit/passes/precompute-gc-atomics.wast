@@ -5,8 +5,12 @@
 (module
   ;; CHECK:      (type $shared (shared (struct (field i32))))
   (type $shared (shared (struct (field i32))))
+  ;; CHECK:      (type $shared-array (shared (array i32)))
+
   ;; CHECK:      (type $unshared (struct (field i32)))
   (type $unshared (struct (field i32)))
+
+  ;; CHECK:      (type $unshared-array (array i32))
 
   ;; CHECK:      (func $get-unordered-unshared (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
@@ -67,6 +71,101 @@
   (func $get-acqrel-shared (result i32)
     (struct.atomic.get acqrel $shared 0
       (struct.new_default $shared)
+    )
+  )
+
+  ;; Array versions of the same tests. These should behave the same as the
+  ;; struct versions above.
+
+  (type $shared-array (shared (array i32)))
+  (type $unshared-array (array i32))
+
+  ;; CHECK:      (func $array-get-unordered-unshared (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $array-get-unordered-unshared (result i32)
+    (array.get $unshared-array
+      (array.new_default $unshared-array
+        (i32.const 1)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-get-unordered-shared (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $array-get-unordered-shared (result i32)
+    (array.get $shared-array
+      (array.new_default $shared-array
+        (i32.const 1)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-get-seqcst-unshared (type $0) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.get $unshared-array
+  ;; CHECK-NEXT:   (array.new_default $unshared-array
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-get-seqcst-unshared (result i32)
+    (array.atomic.get seqcst $unshared-array
+      (array.new_default $unshared-array
+        (i32.const 1)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-get-seqcst-shared (type $0) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.get $shared-array
+  ;; CHECK-NEXT:   (array.new_default $shared-array
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-get-seqcst-shared (result i32)
+    (array.atomic.get seqcst $shared-array
+      (array.new_default $shared-array
+        (i32.const 1)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-get-acqrel-unshared (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $array-get-acqrel-unshared (result i32)
+    ;; We can optimize this because acquire-release on unshared data does not
+    ;; synchronize with anything.
+    (array.atomic.get acqrel $unshared-array
+      (array.new_default $unshared-array
+        (i32.const 1)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-get-acqrel-shared (type $0) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.get acqrel $shared-array
+  ;; CHECK-NEXT:   (array.new_default $shared-array
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-get-acqrel-shared (result i32)
+    (array.atomic.get acqrel $shared-array
+      (array.new_default $shared-array
+        (i32.const 1)
+      )
+      (i32.const 0)
     )
   )
 )

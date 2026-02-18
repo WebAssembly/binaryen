@@ -311,7 +311,7 @@ template<typename Ctx> struct TypeParserCtx {
   StorageT makeStorageType(TypeT type) { return Field(type, Immutable); }
 
   FieldT makeFieldType(FieldT field, Mutability mutability) {
-    if (field.packedType == Field::not_packed) {
+    if (field.packedType == Field::NotPacked) {
       return Field(field.type, mutability);
     }
     return Field(field.packedType, mutability);
@@ -1317,6 +1317,8 @@ struct AnnotationParserCtx {
         inlineHint = &a;
       } else if (a.kind == Annotations::RemovableIfUnusedHint) {
         ret.removableIfUnused = true;
+      } else if (a.kind == Annotations::JSCalledHint) {
+        ret.jsCalled = true;
       }
     }
 

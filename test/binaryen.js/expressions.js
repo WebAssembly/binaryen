@@ -832,17 +832,14 @@ console.log("# Const");
   assert(info.type === theConst.type);
   assert(info.value === theConst.valueI32);
 
-  theConst.valueI64Low = 3;
-  assert(theConst.valueI64Low === 3);
-  theConst.valueI64High = 4;
-  assert(theConst.valueI64High === 4);
+  theConst.valueI64 = 3;
+  assert(theConst.valueI64 === 3n);
   theConst.finalize();
   assert(theConst.type == binaryen.i64);
 
   info = binaryen.getExpressionInfo(theConst);
   assert(info.type === theConst.type);
-  assert(info.value.low === theConst.valueI64Low);
-  assert(info.value.high === theConst.valueI64High);
+  assert(info.value === theConst.valueI64);
 
   theConst.valueF32 = 5;
   assert(theConst.valueF32 === 5);

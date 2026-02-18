@@ -399,16 +399,33 @@
   )
 
   ;; CHECK:      (func $test_table_grow (result i64)
-  ;; CHECK-NEXT:  (i64.extend_i32_u
-  ;; CHECK-NEXT:   (table.grow $t64
-  ;; CHECK-NEXT:    (ref.null nofunc)
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const 10)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (if (result i64)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (local.tee $0
+  ;; CHECK-NEXT:     (table.grow $t64
+  ;; CHECK-NEXT:      (ref.null nofunc)
+  ;; CHECK-NEXT:      (i32.wrap_i64
+  ;; CHECK-NEXT:       (i64.const 10)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test_table_grow (result i64)
+    ;; table.grow returns -1 on failure. The lowering must check for -1 and
+    ;; return i64(-1) instead of i64.extend_i32_u(i32(-1)) which would be
+    ;; 4294967295.
     (table.grow $t64 (ref.null func) (i64.const 10))
   )
 
@@ -438,5 +455,139 @@
   ;; CHECK-NEXT: )
   (func $test_table_init
     (table.init $t64 $elem64 (i64.const 0) (i32.const 5) (i32.const 10))
+  )
+)
+
+(module
+  (memory i64 1 1)
+
+  ;; CHECK:      (type $0 (func (param i64 v128)))
+
+  ;; CHECK:      (type $1 (func (param i64) (result i32)))
+
+  ;; CHECK:      (type $2 (func (param i64 i32)))
+
+  ;; CHECK:      (type $3 (func (param i64)))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $test_large_offsets (param $ptr i64) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_large_offsets (param $ptr i64) (result i32)
+    (i32.load offset=4294967297 (local.get $ptr))
+  )
+
+  ;; CHECK:      (func $test_store_large_offset (param $ptr i64) (param $val i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_store_large_offset (param $ptr i64) (param $val i32)
+    (i32.store offset=4294967296 (local.get $ptr) (local.get $val))
+  )
+
+  ;; CHECK:      (func $test_simd_load_large_offset (param $ptr i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_simd_load_large_offset (param $ptr i64)
+    (drop (v128.load offset=4294967296 (local.get $ptr)))
+  )
+
+  ;; CHECK:      (func $test_simd_load_lane_large_offset (param $ptr i64) (param $val v128)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_simd_load_lane_large_offset (param $ptr i64) (param $val v128)
+    (drop (v128.load8_lane offset=4294967296 0 (local.get $ptr) (local.get $val)))
+  )
+
+  ;; CHECK:      (func $test_simd_store_lane_large_offset (param $ptr i64) (param $val v128)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_simd_store_lane_large_offset (param $ptr i64) (param $val v128)
+    (v128.store8_lane offset=4294967296 0 (local.get $ptr) (local.get $val))
+  )
+)
+
+(module
+  ;; CHECK:      (type $0 (func (param i64 i32)))
+
+  ;; CHECK:      (type $1 (func (param i64 i32 i32)))
+
+  ;; CHECK:      (type $2 (func (param i64 i32 i64)))
+
+  ;; CHECK:      (type $3 (func (param i64) (result i32)))
+
+  ;; CHECK:      (memory $0 1 1)
+  (memory $0 i64 1 1)
+
+  ;; CHECK:      (func $test_atomic_rmw_large_offset (param $ptr i64) (param $val i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_rmw_large_offset (param $ptr i64) (param $val i32)
+    (drop (i32.atomic.rmw.add offset=4294967296 (local.get $ptr) (local.get $val)))
+  )
+
+  ;; CHECK:      (func $test_atomic_cmpxchg_large_offset (param $ptr i64) (param $exp i32) (param $new i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_cmpxchg_large_offset (param $ptr i64) (param $exp i32) (param $new i32)
+    (drop (i32.atomic.rmw.cmpxchg offset=4294967296 (local.get $ptr) (local.get $exp) (local.get $new)))
+  )
+
+  ;; CHECK:      (func $test_atomic_wait_large_offset (param $ptr i64) (param $exp i32) (param $timeout i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_wait_large_offset (param $ptr i64) (param $exp i32) (param $timeout i64)
+    (drop (memory.atomic.wait32 offset=4294967296 (local.get $ptr) (local.get $exp) (local.get $timeout)))
+  )
+
+  ;; CHECK:      (func $test_atomic_notify_large_offset (param $ptr i64) (param $count i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_atomic_notify_large_offset (param $ptr i64) (param $count i32)
+    (drop (memory.atomic.notify offset=4294967296 (local.get $ptr) (local.get $count)))
+  )
+
+  ;; CHECK:      (func $test_large_offsets_effect (param $ptr i64) (result i32)
+  ;; CHECK-NEXT:  (local $1 i64)
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (i64.div_s
+  ;; CHECK-NEXT:    (i64.const 1337)
+  ;; CHECK-NEXT:    (local.get $ptr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test_large_offsets_effect (param $ptr i64) (result i32)
+    (i32.load offset=4294967297
+      ;; This might trap, and must be kept around.
+      (i64.div_s
+        (i64.const 1337)
+        (local.get $ptr)
+      )
+    )
   )
 )

@@ -2351,7 +2351,7 @@ struct PrintExpressionContents
     if (curr->order != MemoryOrder::Unordered) {
       printMedium(o, ".atomic");
     }
-    if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+    if (field.type == Type::i32 && field.packedType != Field::NotPacked) {
       if (curr->signed_) {
         printMedium(o, ".get_s");
       } else {
@@ -2439,7 +2439,7 @@ struct PrintExpressionContents
     if (curr->order != MemoryOrder::Unordered) {
       printMedium(o, ".atomic");
     }
-    if (element.type == Type::i32 && element.packedType != Field::not_packed) {
+    if (element.type == Type::i32 && element.packedType != Field::NotPacked) {
       if (curr->signed_) {
         printMedium(o, ".get_s");
       } else {
@@ -2794,6 +2794,12 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
     if (annotation.removableIfUnused) {
       Colors::grey(o);
       o << "(@" << Annotations::RemovableIfUnusedHint << ")\n";
+      restoreNormalColor(o);
+      doIndent(o, indent);
+    }
+    if (annotation.jsCalled) {
+      Colors::grey(o);
+      o << "(@" << Annotations::JSCalledHint << ")\n";
       restoreNormalColor(o);
       doIndent(o, indent);
     }

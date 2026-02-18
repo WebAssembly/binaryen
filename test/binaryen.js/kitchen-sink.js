@@ -24,8 +24,8 @@ function makeFloat32(x) {
   return module.f32.const(x);
 }
 
-function makeInt64(l, h) {
-  return module.i64.const(l, h);
+function makeInt64(x) {
+  return module.i64.const(x);
 }
 
 function makeFloat64(x) {
@@ -215,7 +215,7 @@ function test_core() {
       constF32 = module.f32.const(3.14),
       constF64 = module.f64.const(2.1828),
       constF32Bits = module.f32.const_bits(0xffff1234),
-      constF64Bits = module.f64.const_bits(0x5678abcd, 0xffff1234);
+      constF64Bits = module.f64.const_bits(0xffff1234_5678abcdn);
 
   var iIfF = binaryen.createType([binaryen.i32, binaryen.i64, binaryen.f32, binaryen.f64])
 
@@ -234,7 +234,7 @@ function test_core() {
   var valueList = [
     // Unary
     module.i32.clz(module.i32.const(-10)),
-    module.i64.ctz(module.i64.const(-22, -1)),
+    module.i64.ctz(module.i64.const(-23)),
     module.i32.popcnt(module.i32.const(-10)),
     module.f32.neg(module.f32.const(-33.612)),
     module.f64.abs(module.f64.const(-9005.841)),
@@ -246,7 +246,7 @@ function test_core() {
     module.i32.eqz(module.i32.const(-10)),
     module.i64.extend_s(module.i32.const(-10)),
     module.i64.extend_u(module.i32.const(-10)),
-    module.i32.wrap(module.i64.const(-22, -1)),
+    module.i32.wrap(module.i64.const(-23)),
     module.i32.trunc_s.f32(module.f32.const(-33.612)),
     module.i64.trunc_s.f32(module.f32.const(-33.612)),
     module.i32.trunc_u.f32(module.f32.const(-33.612)),
@@ -269,18 +269,18 @@ function test_core() {
     module.f64.convert_s.i32(module.i32.const(-10)),
     module.f32.convert_u.i32(module.i32.const(-10)),
     module.f64.convert_u.i32(module.i32.const(-10)),
-    module.f32.convert_s.i64(module.i64.const(-22, -1)),
-    module.f64.convert_s.i64(module.i64.const(-22, -1)),
-    module.f32.convert_u.i64(module.i64.const(-22, -1)),
-    module.f64.convert_u.i64(module.i64.const(-22, -1)),
+    module.f32.convert_s.i64(module.i64.const(-23)),
+    module.f64.convert_s.i64(module.i64.const(-23)),
+    module.f32.convert_u.i64(module.i64.const(-23)),
+    module.f64.convert_u.i64(module.i64.const(-23)),
     module.f64.promote(module.f32.const(-33.612)),
     module.f32.demote(module.f64.const(-9005.841)),
     module.f32.reinterpret(module.i32.const(-10)),
-    module.f64.reinterpret(module.i64.const(-22, -1)),
+    module.f64.reinterpret(module.i64.const(-23)),
     module.i8x16.splat(module.i32.const(42)),
     module.i16x8.splat(module.i32.const(42)),
     module.i32x4.splat(module.i32.const(42)),
-    module.i64x2.splat(module.i64.const(123, 456)),
+    module.i64x2.splat(module.i64.const(1_000_000_000_123n)),
     module.f32x4.splat(module.f32.const(42.0)),
     module.f64x2.splat(module.f64.const(42.0)),
     module.v128.not(module.v128.const(v128_bytes)),
@@ -338,17 +338,17 @@ function test_core() {
     module.i32.add(module.i32.const(-10), module.i32.const(-11)),
     module.f64.sub(module.f64.const(-9005.841), module.f64.const(-9007.333)),
     module.i32.div_s(module.i32.const(-10), module.i32.const(-11)),
-    module.i64.div_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
-    module.i64.rem_s(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.div_u(module.i64.const(-22), module.i64.const(-23)),
+    module.i64.rem_s(module.i64.const(-22), module.i64.const(-23)),
     module.i32.rem_u(module.i32.const(-10), module.i32.const(-11)),
     module.i32.and(module.i32.const(-10), module.i32.const(-11)),
-    module.i64.or(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.or(module.i64.const(-22), module.i64.const(-23)),
     module.i32.xor(module.i32.const(-10), module.i32.const(-11)),
-    module.i64.shl(module.i64.const(-22, 0), module.i64.const(-23, 0)),
-    module.i64.shr_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.shl(module.i64.const(-22), module.i64.const(-23)),
+    module.i64.shr_u(module.i64.const(-22), module.i64.const(-23)),
     module.i32.shr_s(module.i32.const(-10), module.i32.const(-11)),
     module.i32.rotl(module.i32.const(-10), module.i32.const(-11)),
-    module.i64.rotr(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.rotr(module.i64.const(-22), module.i64.const(-23)),
     module.f32.div(module.f32.const(-33.612), module.f32.const(-62.5)),
     module.f64.copysign(module.f64.const(-9005.841), module.f64.const(-9007.333)),
     module.f32.min(module.f32.const(-33.612), module.f32.const(-62.5)),
@@ -356,13 +356,13 @@ function test_core() {
     module.i32.eq(module.i32.const(-10), module.i32.const(-11)),
     module.f32.ne(module.f32.const(-33.612), module.f32.const(-62.5)),
     module.i32.lt_s(module.i32.const(-10), module.i32.const(-11)),
-    module.i64.lt_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
-    module.i64.le_s(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.lt_u(module.i64.const(-22), module.i64.const(-23)),
+    module.i64.le_s(module.i64.const(-22), module.i64.const(-23)),
     module.i32.le_u(module.i32.const(-10), module.i32.const(-11)),
-    module.i64.gt_s(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.gt_s(module.i64.const(-23), module.i64.const(-23)),
     module.i32.gt_u(module.i32.const(-10), module.i32.const(-11)),
     module.i32.ge_s(module.i32.const(-10), module.i32.const(-11)),
-    module.i64.ge_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.ge_u(module.i64.const(-22), module.i64.const(-23)),
     module.f32.lt(module.f32.const(-33.612), module.f32.const(-62.5)),
     module.f64.le(module.f64.const(-9005.841), module.f64.const(-9007.333)),
     module.f64.gt(module.f64.const(-9005.841), module.f64.const(-9007.333)),
@@ -507,7 +507,7 @@ function test_core() {
     module.i16x8.replace_lane(module.v128.const(v128_bytes), 1, module.i32.const(42)),
     module.i8x16.replace_lane(module.v128.const(v128_bytes), 1, module.i32.const(42)),
     module.i32x4.replace_lane(module.v128.const(v128_bytes), 1, module.i32.const(42)),
-    module.i64x2.replace_lane(module.v128.const(v128_bytes), 1, module.i64.const(42, 43)),
+    module.i64x2.replace_lane(module.v128.const(v128_bytes), 1, module.i64.const(42)),
     module.f32x4.replace_lane(module.v128.const(v128_bytes), 1, module.f32.const(42)),
     module.f64x2.replace_lane(module.v128.const(v128_bytes), 1, module.f64.const(42)),
     // SIMD shift
@@ -710,15 +710,24 @@ function test_core() {
     }
   }
 
-  console.log("getExpressionInfo(i32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i32.const(5))));
-  console.log("getExpressionInfo(i64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i64.const(6, 7))));
-  console.log("getExpressionInfo(f32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f32.const(8.5))));
-  console.log("getExpressionInfo(f64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f64.const(9.5))));
+  function infoToString(info) {
+    // BigInt values cannot be passed through JSON.stringify so convert
+    // them to strings first.
+    if (typeof info.value === 'bigint') {
+      info.value = info.value.toString();
+    }
+    return JSON.stringify(info);
+  }
+
+  console.log("getExpressionInfo(i32.const)=" + infoToString(binaryen.getExpressionInfo(module.i32.const(5))));
+  console.log("getExpressionInfo(i64.const)=" + infoToString(binaryen.getExpressionInfo(module.i64.const(6))));
+  console.log("getExpressionInfo(f32.const)=" + infoToString(binaryen.getExpressionInfo(module.f32.const(8.5))));
+  console.log("getExpressionInfo(f64.const)=" + infoToString(binaryen.getExpressionInfo(module.f64.const(9.5))));
   var elements = binaryen.getExpressionInfo(
     module.tuple.make([ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ])
   ).operands;
   for (var i = 0; i < elements.length; i++) {
-    console.log("getExpressionInfo(tuple[" + i + "])=" + JSON.stringify(binaryen.getExpressionInfo(elements[i])));
+    console.log("getExpressionInfo(tuple[" + i + "])=" + infoToString(binaryen.getExpressionInfo(elements[i])));
   }
 
   // Make the main body of the function. and one block with a return value, one without

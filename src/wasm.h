@@ -2245,15 +2245,23 @@ struct CodeAnnotation {
   static const uint8_t AlwaysInline = 127;
   std::optional<uint8_t> inline_;
 
-  // Toolchain hint: If this expression's result is unused, then the entire
-  // thing can be considered dead and removable. See
-  //
+  // Toolchain hints, see
   // https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook#intrinsics
+
+  // If this expression's result is unused, then the entire thing can be
+  // considered dead and removable.
   bool removableIfUnused = false;
+
+  // This should be assumed to be called from JS, even in closed world. Being
+  // called from JS means that the call happens in a non-typed way, with only
+  // the signature mattering ("signature-called"). In particular, rec group type
+  // identity does not matter for such functions.
+  bool jsCalled = false;
 
   bool operator==(const CodeAnnotation& other) const {
     return branchLikely == other.branchLikely && inline_ == other.inline_ &&
-           removableIfUnused == other.removableIfUnused;
+           removableIfUnused == other.removableIfUnused &&
+           jsCalled == other.jsCalled;
   }
 };
 
