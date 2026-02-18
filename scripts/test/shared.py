@@ -114,6 +114,10 @@ def warn(text):
     print('warning:', text, file=sys.stderr)
 
 
+def print_heading(msg):
+    print(f'[ {msg} ]')
+
+
 # setup
 
 # Locate Binaryen build artifacts directory (bin/ by default)

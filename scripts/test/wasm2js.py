@@ -16,6 +16,7 @@ import os
 import subprocess
 
 from . import shared, support
+from .shared import print_heading
 
 basic_tests = shared.get_tests(os.path.join(shared.options.binaryen_test, 'lit', 'basic'))
 # memory64 is not supported in wasm2js yet (but may be with BigInt eventually).
@@ -159,7 +160,7 @@ def test_asserts_output():
 
 
 def test_wasm2js():
-    print('\n[ checking wasm2js testcases... ]\n')
+    print_heading('checking wasm2js testcases...')
     check_for_stale_files()
     if shared.skip_if_on_windows('wasm2js'):
         return
@@ -168,7 +169,7 @@ def test_wasm2js():
 
 
 def update_wasm2js_tests():
-    print('\n[ checking wasm2js ]\n')
+    print_heading('checking wasm2js')
 
     for opt in (0, 1):
         for wasm in basic_tests + spec_tests + wasm2js_tests:

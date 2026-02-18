@@ -18,11 +18,13 @@ import os
 import subprocess
 import sys
 
+from test.shared import print_heading
+
 from test import binaryenjs, finalize, shared, support, wasm2js, wasm_opt
 
 
 def update_example_tests():
-    print('\n[ checking example testcases... ]\n')
+    print_heading('checking example testcases...')
     for src in shared.get_tests(shared.get_test_dir('example')):
         basename = os.path.basename(src)
         output_file = os.path.join(shared.options.binaryen_bin, 'example')
@@ -64,7 +66,7 @@ def update_example_tests():
 
 
 def update_wasm_dis_tests():
-    print('\n[ checking wasm-dis on provided binaries... ]\n')
+    print_heading('checking wasm-dis on provided binaries...')
     for t in shared.get_tests(shared.options.binaryen_test, ['.wasm']):
         print('..', os.path.basename(t))
         cmd = shared.WASM_DIS + [t]
@@ -76,7 +78,7 @@ def update_wasm_dis_tests():
 
 
 def update_ctor_eval_tests():
-    print('\n[ checking wasm-ctor-eval... ]\n')
+    print_heading('checking wasm-ctor-eval...')
     for t in shared.get_tests(shared.get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
@@ -93,7 +95,7 @@ def update_ctor_eval_tests():
 
 
 def update_metadce_tests():
-    print('\n[ checking wasm-metadce... ]\n')
+    print_heading('checking wasm-metadce...')
     for t in shared.get_tests(shared.get_test_dir('metadce'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         graph = t + '.graph.txt'
@@ -108,7 +110,7 @@ def update_metadce_tests():
 
 
 def update_reduce_tests():
-    print('\n[ checking wasm-reduce ]\n')
+    print_heading('checking wasm-reduce')
     for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))
         # convert to wasm
@@ -120,7 +122,7 @@ def update_reduce_tests():
 
 
 def update_spec_tests():
-    print('\n[ updating wasm-shell spec testcases... ]\n')
+    print_heading('updating wasm-shell spec testcases...')
 
     for t in shared.options.spec_tests:
         print('..', os.path.basename(t))
@@ -138,7 +140,7 @@ def update_spec_tests():
 
 
 def update_lit_tests():
-    print('\n[ updating lit testcases... ]\n')
+    print_heading('updating lit testcases...')
     script = os.path.join(shared.options.binaryen_root,
                           'scripts',
                           'update_lit_checks.py')
@@ -187,8 +189,9 @@ def main():
 
     for test in shared.requested:
         TEST_SUITES[test]()
+        print()
 
-    print('\n[ success! ]')
+    print_heading('success!')
 
 
 if __name__ == '__main__':
