@@ -2167,7 +2167,7 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       // validation reasons.
       auto old = parent.builder.makeDrop(curr->operands[0]);
       auto target = parent.pick(parent.jsCalled);
-      assert(isValidRefFuncTarget(target));
+      assert(parent.isValidRefFuncTarget(target));
       auto new_ = parent.builder.makeRefFunc(target);
       curr->operands[0] = parent.builder.makeSequence(old, new_);
     }
