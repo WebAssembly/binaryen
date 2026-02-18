@@ -1485,6 +1485,9 @@ unsigned Field::getByteSize() const {
       return 2;
     case Field::PackedType::NotPacked:
       return 4;
+    case Field::PackedType::WaitQueue:
+      WASM_UNREACHABLE("waitqueue not implemented");
+      break;
   }
   WASM_UNREACHABLE("impossible packed type");
 }
@@ -1876,6 +1879,8 @@ std::ostream& TypePrinter::print(const Field& field) {
       os << "i8";
     } else if (packedType == Field::PackedType::i16) {
       os << "i16";
+    } else if (packedType == Field::PackedType::WaitQueue) {
+      os << "waitqueue";
     } else {
       WASM_UNREACHABLE("unexpected packed type");
     }

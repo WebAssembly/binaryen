@@ -149,6 +149,7 @@ struct NullTypeParserCtx {
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
+  StorageT makeWaitQueue() { return Ok{}; }
   StorageT makeStorageType(TypeT) { return Ok{}; }
 
   FieldT makeFieldType(StorageT, Mutability) { return Ok{}; }
@@ -308,6 +309,7 @@ template<typename Ctx> struct TypeParserCtx {
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }
+  StorageT makeWaitQueue() { return Field(Field::WaitQueue, Immutable); }
   StorageT makeStorageType(TypeT type) { return Field(type, Immutable); }
 
   FieldT makeFieldType(FieldT field, Mutability mutability) {

@@ -701,6 +701,7 @@ struct Field {
     NotPacked,
     i8,
     i16,
+    WaitQueue,
   } packedType; // applicable iff type=i32
   Mutability mutable_;
 
