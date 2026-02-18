@@ -1483,7 +1483,7 @@ unsigned Field::getByteSize() const {
       return 1;
     case Field::PackedType::i16:
       return 2;
-    case Field::PackedType::not_packed:
+    case Field::PackedType::NotPacked:
       return 4;
     case Field::PackedType::WaitQueue:
       WASM_UNREACHABLE("waitqueue not implemented");

@@ -2003,7 +2003,7 @@ void WasmBinaryWriter::writeIndexedHeapType(HeapType type) {
 }
 
 void WasmBinaryWriter::writeField(const Field& field) {
-  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+  if (field.type == Type::i32 && field.packedType != Field::NotPacked) {
     if (field.packedType == Field::i8) {
       o << S32LEB(BinaryConsts::EncodedType::i8);
     } else if (field.packedType == Field::i16) {

@@ -3306,7 +3306,7 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   auto field = fields[curr->index];
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
-  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+  if (field.type != Type::i32 || field.packedType == Field::NotPacked) {
     shouldBeFalse(curr->signed_, curr, "non-packed get cannot be signed");
   }
   if (curr->ref->type == Type::unreachable) {
@@ -3626,7 +3626,7 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
   const auto& element = heapType.getArray().element;
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
-  if (element.type != Type::i32 || element.packedType == Field::not_packed) {
+  if (element.type != Type::i32 || element.packedType == Field::NotPacked) {
     shouldBeFalse(curr->signed_, curr, "non-packed get cannot be signed");
   }
   shouldBeEqual(

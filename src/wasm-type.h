@@ -698,7 +698,7 @@ struct Continuation {
 struct Field {
   Type type;
   enum PackedType {
-    not_packed,
+    NotPacked,
     i8,
     i16,
     WaitQueue,
@@ -707,14 +707,14 @@ struct Field {
 
   // Arbitrary defaults for convenience.
   constexpr Field()
-    : type(Type::i32), packedType(not_packed), mutable_(Mutable) {}
+    : type(Type::i32), packedType(NotPacked), mutable_(Mutable) {}
   constexpr Field(Type type, Mutability mutable_)
-    : type(type), packedType(not_packed), mutable_(mutable_) {}
+    : type(type), packedType(NotPacked), mutable_(mutable_) {}
   constexpr Field(PackedType packedType, Mutability mutable_)
     : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
 
   constexpr bool isPacked() const {
-    if (packedType != not_packed) {
+    if (packedType != NotPacked) {
       assert(type == Type::i32 && "unexpected type");
       return true;
     }
