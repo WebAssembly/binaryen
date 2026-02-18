@@ -162,9 +162,8 @@ struct SignatureRefining : public Pass {
       }
     }
 
-    // configureAll functions are signature-called, which means their params
-    // must not be refined.
-    for (auto func : Intrinsics(*module).getConfigureAllFunctions()) {
+    // Signature-called functions must not have params refined.
+    for (auto func : Intrinsics(*module).getJSCalledFunctions()) {
       allInfo[module->getFunction(func)->type.getHeapType()].canModifyParams =
         false;
     }

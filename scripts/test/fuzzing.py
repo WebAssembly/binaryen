@@ -109,6 +109,13 @@ unfuzzable = [
     # Contains a name with "__fuzz_split", indicating it is emitted by
     # wasm-split, confusing the fuzzer because it is in the initial content.
     'fuzz_shell_second.wast',
+    # We cannot fuzz semantics-altering intrinsics, as when we optimize the
+    # behavior changes.
+    'removable-if-unused.wast',
+    'removable-if-unused-func.wast',
+    'vacuum-removable-if-unused.wast',
+    'vacuum-removable-if-unused-func.wast',
+    'strip-toolchain-annotations-func.wast',
 ]
 
 

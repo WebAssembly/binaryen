@@ -9,6 +9,7 @@ set(unittest_SOURCES
   arena.cpp
   cast-check.cpp
   cfg.cpp
+  dataflow.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
   glbs.cpp

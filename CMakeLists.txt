@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 125)
+project(binaryen LANGUAGES C CXX VERSION 126)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -580,6 +580,11 @@ if(EMSCRIPTEN)
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
   target_link_libraries(binaryen_wasm PRIVATE "-sNODEJS_CATCH_EXIT=0")
+  # Don't exit the process on a fatal error, instead throw, so that JS can
+  # catch.
+  add_compile_flag("-DTHROW_ON_FATAL")
+  # Add support for printing C++ exceptions from JS.
+  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_EXCEPTION_HANDLING_HELPERS")
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
@@ -632,6 +637,8 @@ if(EMSCRIPTEN)
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
   target_link_libraries(binaryen_js PRIVATE "-sNODEJS_CATCH_EXIT=0")
+  add_compile_flag("-DTHROW_ON_FATAL")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORT_EXCEPTION_HANDLING_HELPERS")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 

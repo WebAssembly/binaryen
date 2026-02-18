@@ -185,12 +185,29 @@ public:
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
-    if (curr->ref->type != Type::unreachable && !curr->ref->type.isNull()) {
-      // See above with struct.get
-      auto element = curr->ref->type.getHeapType().getArray().element;
-      if (element.mutable_ == Immutable) {
-        return Super::visitArrayGet(curr);
-      }
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    switch (curr->order) {
+      case MemoryOrder::Unordered:
+        // This can always be precomputed.
+        break;
+      case MemoryOrder::SeqCst:
+        // This can never be precomputed away because it synchronizes with other
+        // threads.
+        return Flow(NONCONSTANT_FLOW);
+      case MemoryOrder::AcqRel:
+        // This synchronizes only with writes to the same data, so it can still
+        // be precomputed if the data is not shared with other threads.
+        if (curr->ref->type.getHeapType().isShared()) {
+          return Flow(NONCONSTANT_FLOW);
+        }
+        break;
+    }
+    // See above with struct.get
+    auto element = curr->ref->type.getHeapType().getArray().element;
+    if (element.mutable_ == Immutable) {
+      return Super::visitArrayGet(curr);
     }
 
     // Otherwise, we've failed to precompute.

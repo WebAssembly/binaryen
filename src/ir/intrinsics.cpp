@@ -101,29 +101,29 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
   return ret;
 }
 
-std::vector<Name> Intrinsics::getConfigureAllFunctions() {
-  // ConfigureAll in a start function makes its functions callable.
+std::vector<Name> Intrinsics::getJSCalledFunctions() {
+  std::vector<Name> ret;
+  for (auto& func : module.functions) {
+    if (getAnnotations(func.get()).jsCalled) {
+      ret.push_back(func->name);
+    }
+  }
+
+  // ConfigureAlls in a start function make their functions callable.
   if (module.start) {
     auto* start = module.getFunction(module.start);
     if (!start->imported()) {
       FindAll<Call> calls(start->body);
-      // Look for the (single) configureAll.
-      Call* configureAll = nullptr;
       for (auto* call : calls.list) {
         if (isConfigureAll(call)) {
-          if (configureAll) {
-            Fatal() << "Multiple configureAlls";
-          } else {
-            configureAll = call;
+          for (auto name : getConfigureAllFunctions(call)) {
+            ret.push_back(name);
           }
         }
       }
-      if (configureAll) {
-        return getConfigureAllFunctions(configureAll);
-      }
     }
   }
-  return {};
+  return ret;
 }
 
 } // namespace wasm

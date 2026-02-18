@@ -293,6 +293,9 @@ Result<> Interpreter::addInstance(std::shared_ptr<Module> wasm) {
 
 Result<> Interpreter::instantiate(Instance& instance) {
   for (auto& global : instance.wasm->globals) {
+    if (global->imported()) {
+      continue;
+    }
     store.callStack.emplace_back(instance, ExpressionIterator(global->init));
     auto results = run();
     assert(results.size() == 1);
