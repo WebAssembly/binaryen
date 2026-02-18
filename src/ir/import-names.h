@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_import_name_h
-#define wasm_ir_import_name_h
+#ifndef wasm_ir_import_names_h
+#define wasm_ir_import_names_h
 
 #include <ostream>
 
@@ -47,4 +47,4 @@ template<> struct hash<wasm::ImportNames> {
 
 } // namespace std
 
-#endif // wasm_ir_import_name_h
+#endif // wasm_ir_import_names_h

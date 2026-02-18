@@ -68,40 +68,6 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-class EvallingImportResolver : public ImportResolver {
-public:
-  EvallingImportResolver() : stubLiteral({Literal(0)}) {};
-
-  // Return an unused stub value. We throw FailToEvalException on reading any
-  // imported globals. We ignore the type and return an i32 literal since some
-  // types can't be created anyway (e.g. ref none).
-  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
-    return &stubLiteral;
-  }
-
-  RuntimeTable* getTableOrNull(ImportNames name,
-                               const Table& type) const override {
-    throw FailToEvalException{"Imported table access."};
-  }
-
-  // We assume that each tag import is distinct. This is wrong if the same tag
-  // instantiation is imported twice with different import names.
-  Tag* getTagOrNull(ImportNames name,
-                    const Signature& signature) const override {
-    auto [it, inserted] = importedTags.try_emplace(name, Tag{});
-    if (inserted) {
-      auto& tag = it->second;
-      tag.type = HeapType(signature);
-    }
-
-    return &it->second;
-  }
-
-private:
-  mutable Literals stubLiteral;
-  mutable std::unordered_map<ImportNames, Tag> importedTags;
-};
-
 class EvallingRuntimeTable : public RuntimeTable {
 public:
   // TODO: putting EvallingModuleRunner into its own header would allow us to
@@ -180,6 +146,53 @@ private:
   const std::function<Literal(Name, Type)> makeFuncData;
 };
 
+class EvallingImportResolver : public ImportResolver {
+public:
+  EvallingImportResolver(const bool& instanceInitialized,
+                         const Module& wasm,
+                         std::function<Literal(Name, Type)> makeFuncData)
+    : stubLiteral({Literal(0)}), instanceInitialized(instanceInitialized),
+      wasm(wasm), makeFuncData(makeFuncData) {};
+
+  // Return an unused stub value. We throw FailToEvalException on reading any
+  // imported globals. We ignore the type and return an i32 literal since some
+  // types can't be created anyway (e.g. ref none).
+  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
+    return &stubLiteral;
+  }
+
+  RuntimeTable* getTableOrNull(ImportNames name,
+                               const Table& type) const override {
+    auto [it, inserted] =
+      tables.emplace(name,
+                     std::make_unique<EvallingRuntimeTable>(
+                       type, instanceInitialized, wasm, makeFuncData));
+    return it->second.get();
+  }
+
+  // We assume that each tag import is distinct. This is wrong if the same tag
+  // instantiation is imported twice with different import names.
+  Tag* getTagOrNull(ImportNames name,
+                    const Signature& signature) const override {
+    auto [it, inserted] = importedTags.try_emplace(name, Tag{});
+    if (inserted) {
+      auto& tag = it->second;
+      tag.type = HeapType(signature);
+    }
+
+    return &it->second;
+  }
+
+private:
+  mutable Literals stubLiteral;
+  mutable std::unordered_map<ImportNames, std::unique_ptr<EvallingRuntimeTable>>
+    tables;
+  const bool& instanceInitialized;
+  const Module& wasm;
+  const std::function<Literal(Name, Type)> makeFuncData;
+  mutable std::unordered_map<ImportNames, Tag> importedTags;
+};
+
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
 public:
   EvallingModuleRunner(
@@ -190,17 +203,11 @@ public:
     : ModuleRunnerBase(
         wasm,
         externalInterface,
-        std::make_shared<EvallingImportResolver>(),
-        linkedInstances_,
-        // TODO: Only use EvallingRuntimeTable for table imports. We can use
-        // RealRuntimeTable for non-imported tables.
-        [this, &instanceInitialized](Literal initial, Table table) {
-          return std::make_unique<EvallingRuntimeTable>(
-            table,
-            instanceInitialized,
-            this->wasm,
-            [this](Name name, Type type) { return makeFuncData(name, type); });
-        }) {}
+        std::make_shared<EvallingImportResolver>(
+          instanceInitialized,
+          wasm,
+          [this](Name name, Type type) { return makeFuncData(name, type); }),
+        linkedInstances_) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
     // Error on reads of imported globals.
@@ -1164,6 +1171,11 @@ start_eval:
       } catch (NonconstantException& fail) {
         if (!quiet) {
           std::cout << "  ...stopping due to non-constant func\n";
+        }
+        break;
+      } catch (TrapException& trap) {
+        if (!quiet) {
+          std::cout << "  ...stopping due to trap\n";
         }
         break;
       }
