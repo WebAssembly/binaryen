@@ -3706,7 +3706,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     Index i = start;
     do {
       auto& func = wasm.functions[i];
-      if (Type::isSubType(func->type, type) && isValidRefFuncTarget(func->name)) {
+      if (Type::isSubType(func->type, type) &&
+          isValidRefFuncTarget(func->name)) {
         return builder.makeRefFunc(func->name);
       }
       i = (i + 1) % wasm.functions.size();
