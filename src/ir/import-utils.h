@@ -17,7 +17,7 @@
 #ifndef wasm_ir_import_h
 #define wasm_ir_import_h
 
-#include "ir/import-name.h"
+#include "ir/import-names.h"
 #include "ir/runtime-table.h"
 #include "literal.h"
 #include "wasm.h"
