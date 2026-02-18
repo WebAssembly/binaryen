@@ -760,6 +760,7 @@ public:
     ResumeThrowId,
     // Id for the stack switching `switch`
     StackSwitchId,
+    WaitQueueWaitId,
     NumExpressionIds
   };
   Id _id;
@@ -2152,6 +2153,18 @@ public:
   Expression* cont;
 
   // We need access to the module to obtain the signature of the tag.
+  void finalize();
+};
+
+class WaitQueueWait : public SpecificExpression<Expression::WaitQueueWaitId> {
+public:
+  WaitQueueWait() = default;
+  WaitQueueWait(MixedArena& allocator) : WaitQueueWait() {}
+
+  Expression* waitqueue = nullptr;
+  Expression* value = nullptr;
+  Expression* timeout = nullptr;
+
   void finalize();
 };
 

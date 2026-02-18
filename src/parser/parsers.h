@@ -2840,6 +2840,13 @@ Result<> makeStackSwitch(Ctx& ctx,
   return ctx.makeStackSwitch(pos, annotations, *type, *tag);
 }
 
+template<typename Ctx>
+Result<> makeWaitQueueWait(Ctx& ctx,
+                           Index pos,
+                           const std::vector<Annotation>& annotations) {
+  return ctx.makeWaitQueueWait(pos, annotations);
+}
+
 // =======
 // Modules
 // =======

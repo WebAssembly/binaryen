@@ -662,6 +662,12 @@ public:
     ConstraintCollector{builder, children}.visitStackSwitch(curr, ct);
     return popConstrainedChildren(children);
   }
+
+  Result<> visitWaitQueueWait(WaitQueueWait* curr) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitWaitQueueWait(curr);
+    return popConstrainedChildren(children);
+  }
 };
 
 Result<> IRBuilder::visit(Expression* curr) {
@@ -2652,6 +2658,13 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   CHECK_ERR(validateTypeAnnotation(ct, curr.cont));
 
   push(builder.makeStackSwitch(tag, std::move(curr.operands), curr.cont));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeWaitQueueWait() {
+  WaitQueueWait curr(wasm.allocator);
+  CHECK_ERR(ChildPopper{*this}.visitWaitQueueWait(&curr));
+  push(builder.makeWaitQueueWait(curr.waitqueue, curr.value, curr.timeout));
   return Ok{};
 }
 

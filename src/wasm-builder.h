@@ -1363,6 +1363,17 @@ public:
     return ret;
   }
 
+  WaitQueueWait* makeWaitQueueWait(Expression* waitqueue,
+                                   Expression* value,
+                                   Expression* timeout) {
+    auto* ret = wasm.allocator.alloc<WaitQueueWait>();
+    ret->waitqueue = waitqueue;
+    ret->value = value;
+    ret->timeout = timeout;
+    ret->finalize();
+    return ret;
+  }
+
   // Additional helpers
 
   Drop* makeDrop(Expression* value) {

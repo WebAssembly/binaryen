@@ -2932,6 +2932,9 @@ public:
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitWaitQueueWait(WaitQueueWait* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
 
   void trap(std::string_view why) override { throw NonconstantException(); }
 
@@ -4918,6 +4921,9 @@ public:
   Flow visitResume(Resume* curr) { return doResume(curr); }
   Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitWaitQueueWait(WaitQueueWait* curr) {
+    WASM_UNREACHABLE("waitqueue not implemented");
+  }
 
   void trap(std::string_view why) override {
     // Traps break all current continuations - they will never be resumable.

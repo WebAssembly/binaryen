@@ -1159,6 +1159,19 @@ private:
         parent.throws_ = true;
       }
     }
+
+    void visitWaitQueueWait(WaitQueueWait* curr) {
+      parent.isAtomic = true;
+      parent.mayNotReturn = true;
+
+      // field 0 must exist and be a packed waitqueue if this is valid Wasm.
+      if (curr->waitqueue->type.getHeapType()
+            .getStruct()
+            .fields.at(0)
+            .mutable_ == Mutable) {
+        parent.readsMutableStruct = true;
+      }
+    }
   };
 
 public:
