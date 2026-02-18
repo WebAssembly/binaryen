@@ -545,99 +545,45 @@ endif()
 # binaryen.js
 #
 # Note that we can't emit binaryen.js directly, as there is libbinaryen already
-# declared earlier, so we create binaryen_wasm/js.js, which must then be copied.
+# declared earlier, so we create binaryen_js.js, which must then be copied.
 if(EMSCRIPTEN)
-  # binaryen.js WebAssembly variant
-  add_executable(binaryen_wasm ${binaryen_HEADERS})
+  add_executable(binaryen_js ${binaryen_HEADERS})
   # For the emscripten build we link against libbinaryen wih `--whole-archive`.
   # Without this, the EMSCRIPTEN_KEEPALIVE symbols within the library would
   # be ignored.
-  target_link_libraries(binaryen_wasm PRIVATE binaryen)
-  target_link_libraries(binaryen_wasm PRIVATE "-sFILESYSTEM")
-  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_NAME=Binaryen")
-  target_link_libraries(binaryen_wasm PRIVATE "-sNODERAWFS=0")
-  # Do not error on the repeated NODERAWFS argument
-  target_link_libraries(binaryen_wasm PRIVATE "-Wno-unused-command-line-argument")
-  # Emit a single file for convenience of people using binaryen.js as a library,
-  # so they only need to distribute a single file.
-  if(EMSCRIPTEN_ENABLE_SINGLE_FILE)
-    target_link_libraries(binaryen_wasm PRIVATE "-sSINGLE_FILE")
-  endif()
-  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_ES6")
-  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
-  # Explictly export _i32_load to ensure the binaryen-c.cpp is linked in.
-  # This is the file that contains all the EMSCRIPTEN_KEEPALIVE symbols which
-  # we want to exports, but enless we explictly reference a symbol from it
-  # the linker will ignore the whole library.
-  # TODO(sbc): Replace with `LINK_LIBRARY:WHOLE_ARCHIVE` once we bump the min
-  # cmake version 3.24.
-  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
-  target_link_libraries(binaryen_wasm PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-  target_link_libraries(binaryen_wasm PRIVATE optimized "--closure=1")
-  # TODO: Fix closure warnings! (#5062)
-  target_link_libraries(binaryen_wasm PRIVATE optimized "-Wno-error=closure")
-  target_link_libraries(binaryen_wasm PRIVATE debug "--profiling")
-  # Avoid catching exit as that can confuse error reporting in Node,
-  # see https://github.com/emscripten-core/emscripten/issues/17228
-  target_link_libraries(binaryen_wasm PRIVATE "-sNODEJS_CATCH_EXIT=0")
-  # Don't exit the process on a fatal error, instead throw, so that JS can
-  # catch.
-  add_compile_flag("-DTHROW_ON_FATAL")
-  # Add support for printing C++ exceptions from JS.
-  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_EXCEPTION_HANDLING_HELPERS")
-  install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-  # binaryen.js JavaScript variant
-  add_executable(binaryen_js ${binaryen_HEADERS})
   target_link_libraries(binaryen_js PRIVATE binaryen)
-  target_link_libraries(binaryen_js PRIVATE "-sWASM=0")
-  target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
-
-  if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
-    # only valid with fastcomp and WASM=0
-    target_link_libraries(binaryen_js PRIVATE "-sELIMINATE_DUPLICATE_FUNCTIONS")
-  endif()
-  # Disabling filesystem and setting web environment for js_of_ocaml
-  # so it doesn't try to detect the "node" environment
-  if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js PRIVATE "-sFILESYSTEM=0")
-    target_link_libraries(binaryen_js PRIVATE "-sENVIRONMENT=web,worker")
-  else()
-    target_link_libraries(binaryen_js PRIVATE "-sFILESYSTEM=1")
-  endif()
+  target_link_libraries(binaryen_js PRIVATE "-sFILESYSTEM")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_js PRIVATE "-sNODERAWFS=0")
   # Do not error on the repeated NODERAWFS argument
   target_link_libraries(binaryen_js PRIVATE "-Wno-unused-command-line-argument")
+  # Emit a single file for convenience of people using binaryen.js as a library,
+  # so they only need to distribute a single file.
   if(EMSCRIPTEN_ENABLE_SINGLE_FILE)
     target_link_libraries(binaryen_js PRIVATE "-sSINGLE_FILE")
   endif()
-  target_link_libraries(binaryen_js PRIVATE "-sEXPORT_NAME=Binaryen")
-  # Currently, js_of_ocaml can only process ES5 code
   if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6=0")
+    # js_of_ocaml needs a specified variable with special comment to provide the library to consumer
+    target_link_libraries(binaryen_js PRIVATE "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
+    # Currently, js_of_ocaml can only process ES5 code
+    target_link_libraries(binaryen_js PRIVATE optimized "--closure-args=\"--language_out=ECMASCRIPT5\"")
   else()
-    target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6=1")
+    target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6")
   endif()
   target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
   target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_js PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-  # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
-  if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js PRIVATE "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
-  endif()
   target_link_libraries(binaryen_js PRIVATE optimized "--closure=1")
-  # Currently, js_of_ocaml can only process ES5 code
-  if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js PRIVATE optimized "--closure-args=\"--language_out=ECMASCRIPT5\"")
-  endif()
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_js PRIVATE optimized "-Wno-error=closure")
   target_link_libraries(binaryen_js PRIVATE debug "--profiling")
-  target_link_libraries(binaryen_js PRIVATE debug "-sASSERTIONS")
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
   target_link_libraries(binaryen_js PRIVATE "-sNODEJS_CATCH_EXIT=0")
+  # Don't exit the process on a fatal error, instead throw, so that JS can
+  # catch.
   add_compile_flag("-DTHROW_ON_FATAL")
+  # Add support for printing C++ exceptions from JS.
   target_link_libraries(binaryen_js PRIVATE "-sEXPORT_EXCEPTION_HANDLING_HELPERS")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

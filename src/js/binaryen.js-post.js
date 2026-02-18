@@ -3262,13 +3262,17 @@ function handleFatalError(func) {
   try {
     return func();
   } catch (e) {
-    // C++ exceptions are thrown as pointers (numbers).
+    // Fatal errors begin with that prefix. Strip it out, and the newline.
+    // C++ exceptions are thrown as pointers (numbers) in release builds
+    // but CppException JS class in debug builds.
     if (typeof e === 'number') {
-      // Fatal errors begin with that prefix. Strip it out, and the newline.
       var [_, message] = getExceptionMessage(e);
       if (message?.startsWith('Fatal: ')) {
         throw new Error(message.substr(7).trim());
       }
+    } else  {
+      e.message = e.message.replace('Fatal:', '');
+      e.message = e.message.trim();
     }
     // Rethrow anything else.
     throw e;
