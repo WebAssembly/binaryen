@@ -16,6 +16,7 @@ import filecmp
 import io
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -224,13 +225,17 @@ def run_command(cmd, expected_status=0, stdout=None, stderr=None,
     out, err, code = _subprocess_run(cmd, stdout=subprocess.PIPE, stderr=stderr, encoding='UTF-8')
 
     if expected_status is not None and code != expected_status:
-        raise Exception(f"run_command `{' '.join(cmd)}` failed ({code}) {err or ''}")
+        if out:
+            print(out)
+        if err:
+            print(out, file=sys.stderr)
+        raise subprocess.CalledProcessError(f"run_command `{shlex.join(cmd)}` failed ({code})")
     if expected_err is not None:
         if err_ignore is not None:
             err = "\n".join([line for line in err.split('\n') if err_ignore not in line])
         err_correct = expected_err in err if err_contains else expected_err == err
         if not err_correct:
-            raise Exception(f"run_command unexpected stderr. Expected '{expected_err}', actual '{err}'")
+            raise subprocess.CalledProcessError(f"run_command unexpected stderr. Expected '{expected_err}', actual '{err}'")
     return out
 
 

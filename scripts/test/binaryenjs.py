@@ -28,8 +28,8 @@ var binaryen = await Binaryen()
 // avoid stdout/stderr ordering issues in some js shells - use just stdout
 console.warn = console.error = console.log;
 
-function assert(x) {{
-    if (!x) throw Error('Test assertion failed');
+function assert(cond, msg='') {{
+    if (!cond) throw Error('Test assertion failed: ' + msg);
 }}
 '''
 
