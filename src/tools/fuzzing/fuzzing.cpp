@@ -15,7 +15,6 @@
  */
 
 #include "tools/fuzzing.h"
-#include "ir/drop.h"
 #include "ir/gc-type-utils.h"
 #include "ir/glbs.h"
 #include "ir/iteration.h"
@@ -2153,12 +2152,12 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       if (parent.jsCalled.empty()) {
         // There is nothing valid to call at all. Keep the children (we may
         // need them to validate), but remove the call.
-        auto* rep = getDroppedChildrenAndAppend(curr,
-                            parent.wasm,
-                            PassOptions::getWithoutOptimization(),
-                            parent.makeTrivial(curr->type),
-                            DropMode::IgnoreParentEffects);
-        replaceCurrent(rep);
+        std::vector<Expression*> list;
+        for (auto* child : curr->operands) {
+          list.push_back(parent.builder.makeDrop(child));
+        }
+        list.push_back(parent.makeTrivial(curr->type));
+        replaceCurrent(parent.builder.makeBlock(list));
         return;
       }
 
