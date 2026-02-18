@@ -1,3 +1,5 @@
+#preprocess
+
 // export friendly API methods
 function preserveStack(func) {
   try {
@@ -1101,10 +1103,17 @@ function wrapModule(module, self = {}) {
     'store32'(offset, align, ptr, value, name) {
       return preserveStack(() => Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64'], strToStack(name)));
     },
-    'const'(x, y) {
+    'const'(x, y = undefined) {
       return preserveStack(() => {
         const tempLiteral = stackAlloc(sizeOfLiteral);
+#if WASM_BIGINT
+        assert(typeof y == 'undefined', 'i64.const now takes a single argument (which can be a bigint)');
+        // We insert a cast to BigInt here in an attempt to be backwards
+        // compatible with callers who passed a single `number` here.
+        Module['_BinaryenLiteralInt64'](tempLiteral, BigInt(x));
+#else
         Module['_BinaryenLiteralInt64'](tempLiteral, x, y);
+#endif
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
@@ -1518,10 +1527,15 @@ function wrapModule(module, self = {}) {
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'const_bits'(x, y) {
+    'const_bits'(x, y = undefined) {
       return preserveStack(() => {
         const tempLiteral = stackAlloc(sizeOfLiteral);
+#if WASM_BIGINT
+        assert(typeof y == 'undefined', 'f64.const_bits now takes a single argument (which can be a bigint)');
+        Module['_BinaryenLiteralFloat64Bits'](tempLiteral, BigInt(x));
+#else
         Module['_BinaryenLiteralFloat64Bits'](tempLiteral, x, y);
+#endif
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
@@ -3099,10 +3113,7 @@ Module['getExpressionInfo'] = function(expr) {
     case Module['ConstId']:
       switch (type) {
         case Module['i32']: info.value = Module['_BinaryenConstGetValueI32'](expr); break;
-        case Module['i64']: info.value = {
-          'low':  Module['_BinaryenConstGetValueI64Low'](expr),
-          'high': Module['_BinaryenConstGetValueI64High'](expr)
-        }; break;
+        case Module['i64']: info.value = Module['_BinaryenConstGetValueI64'](expr); break;
         case Module['f32']: info.value = Module['_BinaryenConstGetValueF32'](expr); break;
         case Module['f64']: info.value = Module['_BinaryenConstGetValueF64'](expr); break;
         case Module['v128']: {
@@ -4059,17 +4070,11 @@ Module['Const'] = makeExpressionWrapper(Module['_BinaryenConstId'](), {
   'setValueI32'(expr, value) {
     Module['_BinaryenConstSetValueI32'](expr, value);
   },
-  'getValueI64Low'(expr) {
-    return Module['_BinaryenConstGetValueI64Low'](expr);
+  'getValueI64'(expr) {
+    return Module['_BinaryenConstGetValueI64'](expr);
   },
-  'setValueI64Low'(expr, value) {
-    Module['_BinaryenConstSetValueI64Low'](expr, value);
-  },
-  'getValueI64High'(expr) {
-    return Module['_BinaryenConstGetValueI64High'](expr);
-  },
-  'setValueI64High'(expr, value) {
-    Module['_BinaryenConstSetValueI64High'](expr, value);
+  'setValueI64'(expr, value) {
+    Module['_BinaryenConstSetValueI64'](expr, BigInt(value));
   },
   'getValueF32'(expr) {
     return Module['_BinaryenConstGetValueF32'](expr);
