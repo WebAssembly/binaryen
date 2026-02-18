@@ -120,7 +120,7 @@ public:
           value = val.and_(Literal(uint32_t(0xffff)));
         }
         break;
-      case Field::not_packed:
+      case Field::NotPacked:
         WASM_UNREACHABLE("unexpected packed type");
     }
   }
