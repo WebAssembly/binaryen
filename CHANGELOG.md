@@ -15,10 +15,15 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
  - The emscripten build of binaryen no longer targets pure JS (via wasm2js) by
-   default.  In the long run this will allow us to enable WASM_BIGINT and other
-   features that wasm2js does not support.  There is now just a single
-   binaryen_js target.  It should still be possible to inject `-sWASM=0` as a
-   linker flag but this is not officially supported. (#7995)
+   default.  This allows us to enable WASM_BIGINT and other features that
+   wasm2js does not support.  There is now just a single binaryen_js target.  It
+   should still be possible to inject `-sWASM=0` as a linker flag but this is
+   not officially supported. (#7995)
+ - As part of enabling the `WASM_BIGINT` in the emscripten build the JS API for
+   manipulating 64-bit values was changed.  These APIs, such as `i64.const`
+   and `setValueI64`, previously took a hi/low pair but now take a single value
+   which can be bigint or a number. Passing two values to these APIs will now
+   trigger an assertion. (#7984)
 
 v126
 ----
