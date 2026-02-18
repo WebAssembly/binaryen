@@ -2168,6 +2168,8 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       curr->operands[0] = parent.builder.makeSequence(old, new_);
     }
   } fixer(*this);
+
+  FunctionCreationContext context(*this, func);
   fixer.walk(func->body);
 }
 
