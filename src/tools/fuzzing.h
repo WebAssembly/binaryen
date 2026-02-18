@@ -574,6 +574,9 @@ private:
   Name getTargetName(Expression* target);
   Type getTargetType(Expression* target);
 
+  // Checks if a function is valid to take a ref.func of.
+  bool isValidRefFuncTarget(Name func);
+
   // statistical distributions
 
   // 0 to the limit, logarithmic scale

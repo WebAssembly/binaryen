@@ -1689,7 +1689,9 @@ Function* TranslateToFuzzReader::addFunction() {
       Builder::makeExport(func->name, func->name, ExternalKind::Function));
   }
 
-  // Add some to an elem segment TODO we could do this for imported funcs too
+  // Add some to an elem segment TODO we could do this for imported funcs too,
+  // but in closed world must be careful of callRef*, see the jsCalled logic
+  // and isValidRefFuncTarget.
   while (oneIn(3) && !random.finished()) {
     auto type = func->type;
     std::vector<ElementSegment*> compatibleSegments;
@@ -2164,7 +2166,9 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       // Set something valid. As above, we must keep the old child for
       // validation reasons.
       auto old = parent.builder.makeDrop(curr->operands[0]);
-      auto new_ = parent.builder.makeRefFunc(parent.pick(parent.jsCalled));
+      auto target = parent.pick(parent.jsCalled);
+      assert(isValidRefFuncTarget(target));
+      auto new_ = parent.builder.makeRefFunc(target);
       curr->operands[0] = parent.builder.makeSequence(old, new_);
     }
   } fixer(*this);
@@ -3050,6 +3054,10 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
     target = wasm.functions[upTo(wasm.functions.size())].get();
     isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
                funcContext->func->getResults() == target->getResults();
+    if (!isValidRefFuncTarget(target->name)) {
+      i++;
+      continue;
+    }
     if (target->getResults() == type || isReturn) {
       break;
     }
@@ -3686,7 +3694,9 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
         funcContext->func->type.getHeapType().getShared() == share &&
         !oneIn(4)) {
       auto* target = funcContext->func;
-      return builder.makeRefFunc(target->name, target->type);
+      if (isValidRefFuncTarget(target->name)) {
+        return builder.makeRefFunc(target->name, target->type);
+      }
     }
   }
   // Look for a proper function starting from a random location, and loop from
@@ -3696,7 +3706,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     Index i = start;
     do {
       auto& func = wasm.functions[i];
-      if (Type::isSubType(func->type, type)) {
+      if (Type::isSubType(func->type, type) && isValidRefFuncTarget(func->name)) {
         return builder.makeRefFunc(func->name);
       }
       i = (i + 1) % wasm.functions.size();
@@ -3736,6 +3746,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
                          Type(heapType, NonNullable, Exact),
                          {},
                          body));
+  assert(isValidRefFuncTarget(func->name));
   return builder.makeRefFunc(func->name);
 }
 
@@ -6074,6 +6085,18 @@ Type TranslateToFuzzReader::getTargetType(Expression* target) {
     return Type::none;
   }
   WASM_UNREACHABLE("unexpected expr type");
+}
+
+bool TranslateToFuzzReader::isValidRefFuncTarget(Name func) {
+  // In closed world, we must not take callRef* by reference: if we do, then we
+  // might end up calling them indirectly, and with any possible function
+  // reference, but in that mode we must only pass in jsCalled functions. We
+  // handle direct calls in fixClosedWorld, but cannot handle indirect ones
+  // easily, so just disallow taking references of those functions.
+  if (!closedWorld) {
+    return true;
+  }
+  return func != callRefImportName && func != callRefCatchImportName;
 }
 
 } // namespace wasm
