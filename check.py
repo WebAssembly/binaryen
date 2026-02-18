@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
 import glob
 import io
 import os
@@ -387,8 +388,6 @@ def run_unittest():
     suite = unittest.defaultTestLoader.discover(os.path.dirname(shared.options.binaryen_test))
     result = unittest.TextTestRunner(verbosity=2, failfast=shared.options.abort_on_first_failure).run(suite)
     shared.num_failures += len(result.errors) + len(result.failures)
-    if shared.options.abort_on_first_failure and shared.num_failures:
-        raise Exception("unittest failed")
 
 
 @shared.with_pass_debug()
@@ -400,8 +399,6 @@ def run_lit():
     result = subprocess.run(cmd)
     if result.returncode != 0:
         shared.num_failures += 1
-    if shared.options.abort_on_first_failure and shared.num_failures:
-        raise Exception("lit test failed")
 
 
 @shared.with_pass_debug()
@@ -413,8 +410,17 @@ def run_gtest():
         result = subprocess.run(gtest)
         if result.returncode != 0:
             shared.num_failures += 1
+
+
+def test_suite(name, func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        assert not (shared.options.abort_on_first_failure and shared.num_failures)
+        result = func(*args, **kwargs)
         if shared.options.abort_on_first_failure and shared.num_failures:
-            raise Exception("gtest test failed")
+            raise Exception(f'test suite failed: {name}')
+        return result
+    return wrapper
 
 
 TEST_SUITES = {
@@ -436,6 +442,8 @@ TEST_SUITES = {
     'lit': run_lit,
     'gtest': run_gtest,
 }
+
+TEST_SUITES = {name: test_suite(name, func) for name, func in TEST_SUITES.items()}
 
 
 # Run all the tests
