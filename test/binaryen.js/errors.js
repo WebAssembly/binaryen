@@ -11,7 +11,7 @@ try {
   assert(e.message === '3:16: error: unrecognized instruction');
   caughtAsExpected = true;
 }
-assert(caughtAsExpected);
+assert(caughtAsExpected, 'no exception caught');
 
 console.log('success.');
 
