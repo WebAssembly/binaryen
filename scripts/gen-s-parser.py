@@ -16,10 +16,7 @@
 
 import sys
 
-if sys.version_info < (3, 10):  # noqa: UP036
-    print("python 3.10 required")
-    sys.exit(1)
-
+assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 instructions = [
     ("unreachable",    "makeUnreachable()"),

@@ -20,12 +20,13 @@ import os
 import subprocess
 import sys
 import unittest
-from collections import OrderedDict
 from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 from scripts.test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
+
+assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 
 def get_changelog_version():
@@ -416,25 +417,25 @@ def run_gtest():
             raise Exception("gtest test failed")
 
 
-TEST_SUITES = OrderedDict([
-    ('version', run_version_tests),
-    ('wasm-opt', wasm_opt.test_wasm_opt),
-    ('wasm-dis', run_wasm_dis_tests),
-    ('crash', run_crash_tests),
-    ('dylink', run_dylink_tests),
-    ('ctor-eval', run_ctor_eval_tests),
-    ('wasm-metadce', run_wasm_metadce_tests),
-    ('wasm-reduce', run_wasm_reduce_tests),
-    ('spec', run_spec_tests),
-    ('lld', lld.test_wasm_emscripten_finalize),
-    ('wasm2js', wasm2js.test_wasm2js),
-    ('validator', run_validator_tests),
-    ('example', run_example_tests),
-    ('unit', run_unittest),
-    ('binaryenjs', binaryenjs.test_binaryen_js),
-    ('lit', run_lit),
-    ('gtest', run_gtest),
-])
+TEST_SUITES = {
+    'version': run_version_tests,
+    'wasm-opt': wasm_opt.test_wasm_opt,
+    'wasm-dis': run_wasm_dis_tests,
+    'crash': run_crash_tests,
+    'dylink': run_dylink_tests,
+    'ctor-eval': run_ctor_eval_tests,
+    'wasm-metadce': run_wasm_metadce_tests,
+    'wasm-reduce': run_wasm_reduce_tests,
+    'spec': run_spec_tests,
+    'lld': lld.test_wasm_emscripten_finalize,
+    'wasm2js': wasm2js.test_wasm2js,
+    'validator': run_validator_tests,
+    'example': run_example_tests,
+    'unit': run_unittest,
+    'binaryenjs': binaryenjs.test_binaryen_js,
+    'lit': run_lit,
+    'gtest': run_gtest,
+}
 
 
 # Run all the tests

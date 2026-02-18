@@ -17,7 +17,6 @@
 import os
 import subprocess
 import sys
-from collections import OrderedDict
 
 from test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
 
@@ -159,19 +158,19 @@ def update_lit_tests():
                              '--binaryen-bin=' + shared.options.binaryen_bin])
 
 
-TEST_SUITES = OrderedDict([
-    ('wasm-opt', wasm_opt.update_wasm_opt_tests),
-    ('wasm-dis', update_wasm_dis_tests),
-    ('example', update_example_tests),
-    ('ctor-eval', update_ctor_eval_tests),
-    ('wasm-metadce', update_metadce_tests),
-    ('wasm-reduce', update_reduce_tests),
-    ('spec', update_spec_tests),
-    ('lld', lld.update_lld_tests),
-    ('wasm2js', wasm2js.update_wasm2js_tests),
-    ('binaryenjs', binaryenjs.update_binaryen_js_tests),
-    ('lit', update_lit_tests),
-])
+TEST_SUITES = {
+    'wasm-opt': wasm_opt.update_wasm_opt_tests,
+    'wasm-dis': update_wasm_dis_tests,
+    'example': update_example_tests,
+    'ctor-eval': update_ctor_eval_tests,
+    'wasm-metadce': update_metadce_tests,
+    'wasm-reduce': update_reduce_tests,
+    'spec': update_spec_tests,
+    'lld': lld.update_lld_tests,
+    'wasm2js': wasm2js.update_wasm2js_tests,
+    'binaryenjs': binaryenjs.update_binaryen_js_tests,
+    'lit': update_lit_tests,
+}
 
 
 def main():
