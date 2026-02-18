@@ -215,11 +215,11 @@ def wabt_main():
         print('* Something went wrong :(')
 
 
-TOOLS = collections.OrderedDict([
-    ('mozjs', mozjs_main),
-    ('v8', v8_main),
-    ('wabt', wabt_main),
-])
+TOOLS = {
+    'mozjs': mozjs_main,
+    'v8': v8_main,
+    'wabt': wabt_main,
+}
 
 if __name__ == '__main__':
     if len(sys.argv) < 2 or sys.argv[1] == '--help':

@@ -1650,20 +1650,6 @@ BINARYEN_API int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
 // Sets the 64-bit integer value of an `i64.const` expression.
 BINARYEN_API void BinaryenConstSetValueI64(BinaryenExpressionRef expr,
                                            int64_t value);
-// Gets the low 32-bits of the 64-bit integer value of an `i64.const`
-// expression.
-BINARYEN_API int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
-// Sets the low 32-bits of the 64-bit integer value of an `i64.const`
-// expression.
-BINARYEN_API void BinaryenConstSetValueI64Low(BinaryenExpressionRef expr,
-                                              int32_t valueLow);
-// Gets the high 32-bits of the 64-bit integer value of an `i64.const`
-// expression.
-BINARYEN_API int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
-// Sets the high 32-bits of the 64-bit integer value of an `i64.const`
-// expression.
-BINARYEN_API void BinaryenConstSetValueI64High(BinaryenExpressionRef expr,
-                                               int32_t valueHigh);
 // Gets the 32-bit float value of a `f32.const` expression.
 BINARYEN_API float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
 // Sets the 32-bit float value of a `f32.const` expression.
