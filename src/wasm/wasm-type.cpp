@@ -38,48 +38,6 @@ namespace {
 
 using RecGroupInfo = std::vector<HeapType>;
 
-struct HeapTypeInfo {
-  using type_t = HeapType;
-  // Used in assertions to ensure that temporary types don't leak into the
-  // global store.
-  bool isTemp = false;
-  bool isOpen = false;
-  Shareability share = Unshared;
-  // The supertype of this HeapType, if it exists.
-  HeapTypeInfo* supertype = nullptr;
-  // The descriptor of this HeapType, if it exists.
-  HeapTypeInfo* descriptor = nullptr;
-  // The HeapType described by this one, if it exists.
-  HeapTypeInfo* described = nullptr;
-  // The recursion group of this type or null if the recursion group is trivial
-  // (i.e. contains only this type).
-  RecGroupInfo* recGroup = nullptr;
-  size_t recGroupIndex = 0;
-  HeapTypeKind kind;
-  union {
-    Signature signature;
-    Continuation continuation;
-    Struct struct_;
-    Array array;
-  };
-
-  HeapTypeInfo(Signature sig) : kind(HeapTypeKind::Func), signature(sig) {}
-  HeapTypeInfo(Continuation continuation)
-    : kind(HeapTypeKind::Cont), continuation(continuation) {}
-  HeapTypeInfo(const Struct& struct_)
-    : kind(HeapTypeKind::Struct), struct_(struct_) {}
-  HeapTypeInfo(Struct&& struct_)
-    : kind(HeapTypeKind::Struct), struct_(std::move(struct_)) {}
-  HeapTypeInfo(Array array) : kind(HeapTypeKind::Array), array(array) {}
-  ~HeapTypeInfo();
-
-  constexpr bool isSignature() const { return kind == HeapTypeKind::Func; }
-  constexpr bool isContinuation() const { return kind == HeapTypeKind::Cont; }
-  constexpr bool isStruct() const { return kind == HeapTypeKind::Struct; }
-  constexpr bool isArray() const { return kind == HeapTypeKind::Array; }
-  constexpr bool isData() const { return isStruct() || isArray(); }
-};
-
 // Helper for coinductively checking whether a pair of Types or HeapTypes are in
 // a subtype relation.
 struct SubTyper {
@@ -223,7 +181,7 @@ namespace {
 
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   assert(!ht.isBasic());
-  return (HeapTypeInfo*)ht.getID();
+  return reinterpret_cast<HeapTypeInfo*>(ht.getID());
 }
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
@@ -242,95 +200,6 @@ bool isTemp(HeapType type) {
 // from reference types to the referenced heap types are not walked, so
 // subclasses should handle referenced heap types when their reference types are
 // visited.
-template<typename Self> struct TypeGraphWalkerBase {
-  void walkRoot(Type* type) {
-    assert(taskList.empty());
-    taskList.push_back(Task::scan(type));
-    doWalk();
-  }
-
-  void walkRoot(HeapType* ht) {
-    assert(taskList.empty());
-    taskList.push_back(Task::scan(ht));
-    doWalk();
-  }
-
-protected:
-  Self& self() { return *static_cast<Self*>(this); }
-
-  void scanType(Type* type) {
-    if (type->isTuple()) {
-      auto& types = const_cast<Tuple&>(type->getTuple());
-      for (auto it = types.rbegin(); it != types.rend(); ++it) {
-        taskList.push_back(Task::scan(&*it));
-      }
-    }
-  }
-
-  void scanHeapType(HeapType* ht) {
-    if (ht->isBasic()) {
-      return;
-    }
-    auto* info = getHeapTypeInfo(*ht);
-    switch (info->kind) {
-      case HeapTypeKind::Func:
-        taskList.push_back(Task::scan(&info->signature.results));
-        taskList.push_back(Task::scan(&info->signature.params));
-        break;
-      case HeapTypeKind::Cont:
-        taskList.push_back(Task::scan(&info->continuation.type));
-        break;
-      case HeapTypeKind::Struct: {
-        auto& fields = info->struct_.fields;
-        for (auto field = fields.rbegin(); field != fields.rend(); ++field) {
-          taskList.push_back(Task::scan(&field->type));
-        }
-        break;
-      }
-      case HeapTypeKind::Array:
-        taskList.push_back(Task::scan(&info->array.element.type));
-        break;
-      case HeapTypeKind::Basic:
-        WASM_UNREACHABLE("unexpected kind");
-    }
-  }
-
-private:
-  struct Task {
-    enum Kind {
-      ScanType,
-      ScanHeapType,
-    } kind;
-    union {
-      Type* type;
-      HeapType* heapType;
-    };
-    static Task scan(Type* type) { return Task(type, ScanType); }
-    static Task scan(HeapType* ht) { return Task(ht, ScanHeapType); }
-
-  private:
-    Task(Type* type, Kind kind) : kind(kind), type(type) {}
-    Task(HeapType* ht, Kind kind) : kind(kind), heapType(ht) {}
-  };
-
-  std::vector<Task> taskList;
-
-  void doWalk() {
-    while (!taskList.empty()) {
-      auto curr = taskList.back();
-      taskList.pop_back();
-      switch (curr.kind) {
-        case Task::ScanType:
-          self().scanType(curr.type);
-          break;
-        case Task::ScanHeapType:
-          self().scanHeapType(curr.heapType);
-          break;
-      }
-    }
-  }
-};
-
 // A type graph walker that scans each each direct HeapType child of the root.
 template<typename Self> struct HeapTypeChildWalker : TypeGraphWalkerBase<Self> {
   void scanType(Type* type) {
