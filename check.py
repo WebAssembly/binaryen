@@ -77,11 +77,9 @@ def run_wasm_dis_tests():
         shared.fail_if_not_identical_to_file(actual, t + '.fromBinary')
 
         # also verify there are no validation errors
-        def check():
+        with shared.with_pass_debug():
             cmd = shared.WASM_OPT + [t, '-all', '-q']
             support.run_command(cmd)
-
-        shared.with_pass_debug(check)
 
 
 def run_crash_tests():
@@ -392,34 +390,30 @@ def run_unittest():
         raise Exception("unittest failed")
 
 
+@shared.with_pass_debug()
 def run_lit():
-    def run():
-        lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
-        lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
-        # lit expects to be run as its own executable
-        cmd = [sys.executable, lit_script, lit_tests, '-vv']
-        result = subprocess.run(cmd)
+    lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
+    lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
+    # lit expects to be run as its own executable
+    cmd = [sys.executable, lit_script, lit_tests, '-vv']
+    result = subprocess.run(cmd)
+    if result.returncode != 0:
+        shared.num_failures += 1
+    if shared.options.abort_on_first_failure and shared.num_failures:
+        raise Exception("lit test failed")
+
+
+@shared.with_pass_debug()
+def run_gtest():
+    gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
+    if not os.path.isfile(gtest):
+        shared.warn('gtest binary not found - skipping tests')
+    else:
+        result = subprocess.run(gtest)
         if result.returncode != 0:
             shared.num_failures += 1
         if shared.options.abort_on_first_failure and shared.num_failures:
-            raise Exception("lit test failed")
-
-    shared.with_pass_debug(run)
-
-
-def run_gtest():
-    def run():
-        gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
-        if not os.path.isfile(gtest):
-            shared.warn('gtest binary not found - skipping tests')
-        else:
-            result = subprocess.run(gtest)
-            if result.returncode != 0:
-                shared.num_failures += 1
-            if shared.options.abort_on_first_failure and shared.num_failures:
-                raise Exception("gtest test failed")
-
-    shared.with_pass_debug(run)
+            raise Exception("gtest test failed")
 
 
 TEST_SUITES = OrderedDict([

@@ -72,11 +72,10 @@ def test_wasm_opt():
             shared.fail_if_not_contained(actual, debugged)
 
             # also check pass-debug mode
-            def check():
+            with shared.with_pass_debug():
                 # ignore stderr, as the pass-debug output is very verbose in CI
                 pass_debug = support.run_command(cmd, stderr=subprocess.PIPE)
                 shared.fail_if_not_identical(curr, pass_debug)
-            shared.with_pass_debug(check)
 
         expected_file = os.path.join(shared.get_test_dir('passes'), base + ('.bin' if binary else '') + '.txt')
         shared.fail_if_not_identical_to_file(actual, expected_file)

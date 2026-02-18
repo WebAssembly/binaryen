@@ -22,6 +22,7 @@ import shutil
 import stat
 import subprocess
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 # The C++ standard whose features are required to build Binaryen.
@@ -515,12 +516,12 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     return disassembled_file
 
 
-# run a check with BINARYEN_PASS_DEBUG set, to do full validation
-def with_pass_debug(check):
+@contextmanager
+def with_pass_debug():
     old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
+    os.environ['BINARYEN_PASS_DEBUG'] = '1'
     try:
-        os.environ['BINARYEN_PASS_DEBUG'] = '1'
-        check()
+        yield
     finally:
         if old_pass_debug is not None:
             os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
