@@ -1717,9 +1717,6 @@ Function* TranslateToFuzzReader::addFunction() {
     // only send non-shared functions.
     if (!func->type.getHeapType().isShared()) {
       jsCalled.push_back(func->name);
-      // TODO: do not put callRef* in the table - cannot indirectly call them
-      // with random stuffs
-      // TODO: merge-funcs must respect jscalled etc-  semantics!
     }
   }
 
