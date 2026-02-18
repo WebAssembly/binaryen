@@ -47,7 +47,7 @@ inline bool equal(Function* left, Function* right) {
   // things like jsCalled).
   auto leftAnnotations = Intrinsics::getAnnotations(left);
   auto rightAnnotations = Intrinsics::getAnnotations(right);
-  if (leftAnnotations.jsCalled != rightAnnotations(right).jsCalled ||
+  if (leftAnnotations.jsCalled != rightAnnotations.jsCalled ||
       leftAnnotations.removableIfUnused != rightAnnotations.removableIfUnused) {
     return false;
   }
