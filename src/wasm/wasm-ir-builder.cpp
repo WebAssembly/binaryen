@@ -1491,23 +1491,32 @@ Result<> IRBuilder::makeStore(
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicLoad(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicLoad(unsigned bytes,
+                                   Address offset,
+                                   unsigned align,
+                                   Type type,
+                                   Name mem,
+                                   MemoryOrder order) {
   Load curr;
   curr.memory = mem;
   CHECK_ERR(visitLoad(&curr));
-  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem, order));
+  push(
+    builder.makeAtomicLoad(bytes, offset, align, curr.ptr, type, mem, order));
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicStore(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicStore(unsigned bytes,
+                                    Address offset,
+                                    unsigned align,
+                                    Type type,
+                                    Name mem,
+                                    MemoryOrder order) {
   Store curr;
   curr.memory = mem;
   curr.valueType = type;
   CHECK_ERR(visitStore(&curr));
   push(builder.makeAtomicStore(
-    bytes, offset, curr.ptr, curr.value, type, mem, order));
+    bytes, offset, align, curr.ptr, curr.value, type, mem, order));
   return Ok{};
 }
 
