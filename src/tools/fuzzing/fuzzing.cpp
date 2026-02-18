@@ -52,6 +52,12 @@ std::vector<Type> getLoggableTypes(const FeatureSet& features) {
   return loggableTypes;
 }
 
+std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
+  return features.hasRelaxedAtomics()
+           ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
+           : std::vector{MemoryOrder::SeqCst};
+}
+
 } // namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
@@ -60,9 +66,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features),
     loggableTypes(getLoggableTypes(wasm.features)),
-    atomicMemoryOrders(wasm.features.hasRelaxedAtomics()
-                         ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
-                         : std::vector{MemoryOrder::SeqCst}),
+    atomicMemoryOrders(getMemoryOrders(wasm.features)),
 
     publicTypeValidator(wasm.features) {
 
