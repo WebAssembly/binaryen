@@ -2138,8 +2138,7 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       // calls do not happen unless the function is annotated as jsCalled. We
       // must therefore ensure that calls to these imports only send a jsCalled
       // method and nothing else.
-      if (curr->target != parent.callRefImportName &&
-          curr->target != parent.callRefCatchImportName) {
+      if (!isCallRefImport(curr->target)) {
         return;
       }
 
@@ -2170,6 +2169,12 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       assert(parent.isValidRefFuncTarget(target));
       auto new_ = parent.builder.makeRefFunc(target);
       curr->operands[0] = parent.builder.makeSequence(old, new_);
+    }
+
+    bool isCallRefImport(Name target) {
+      auto* func = parent.wasm.getFunction(target);
+      return func->imported() && func->module == "fuzzing-support" &&
+             func->base.startsWith("call-ref");
     }
   } fixer(*this);
 
