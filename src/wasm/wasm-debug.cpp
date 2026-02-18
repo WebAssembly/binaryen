@@ -454,7 +454,8 @@ private:
            const BinaryLocations::DelimiterLocations& delimiter) {
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
-        [[maybe_unused]] auto [_, inserted] = delimiterMap.emplace(delimiter[i], DelimiterInfo{expr, i});
+        [[maybe_unused]] auto [_, inserted] =
+          delimiterMap.emplace(delimiter[i], DelimiterInfo{expr, i});
         assert(inserted);
       }
     }
