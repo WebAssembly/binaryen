@@ -868,8 +868,9 @@ struct Optimizer
 
     // If there is a replacement type, install it now. Otherwise we know the
     // global type rewriting will do the right thing with the original type,
-    // so restore it. Only do this if we are optimizing indirect calls because
-    // otherwise there will not be a global type rewriting step.
+    // so restore it for now to let that rewriting happen. Only do this if we
+    // are optimizing indirect calls because otherwise there will not be a
+    // global type rewriting step.
     if (funcInfo->replacementType) {
       func->type = Type(*funcInfo->replacementType, NonNullable, Exact);
     } else if (parent.optimizeReferencedFuncs) {
