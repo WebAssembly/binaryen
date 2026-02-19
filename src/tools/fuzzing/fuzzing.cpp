@@ -2181,12 +2181,6 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
       auto new_ = parent.builder.makeRefFunc(target);
       curr->operands[0] = parent.builder.makeSequence(old, new_);
     }
-
-    bool isCallRefImport(Name target) {
-      auto* func = parent.wasm.getFunction(target);
-      return func->imported() && func->module == "fuzzing-support" &&
-             func->base.startsWith("call-ref");
-    }
   } fixer(*this);
 
   FunctionCreationContext context(*this, func);
@@ -6113,7 +6107,17 @@ bool TranslateToFuzzReader::isValidRefFuncTarget(Name func) {
   if (!closedWorld) {
     return true;
   }
-  return func != callRefImportName && func != callRefCatchImportName;
+  return !isCallRefImport(name);
+}
+
+bool TranslateToFuzzReader::isCallRefImport(Name target) {
+  // Check the import module and base. Note we do not just compare to
+  // callRefImportName / callRefCatchImportName because those are the names of
+  // the methods we added, but the initial content may import those methods
+  // under other internal names.
+  auto* func = parent.wasm.getFunction(target);
+  return func->imported() && func->module == "fuzzing-support" &&
+         func->base.startsWith("call-ref");
 }
 
 } // namespace wasm

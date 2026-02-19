@@ -577,6 +577,9 @@ private:
   // Checks if a function is valid to take a ref.func of.
   bool isValidRefFuncTarget(Name func);
 
+  // Checks if a function is a callRef* import (call-ref or call-ref-catch).
+  bool isCallRefImport(Name func);
+
   // statistical distributions
 
   // 0 to the limit, logarithmic scale
