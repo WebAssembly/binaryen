@@ -1777,7 +1777,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
 #define WRITE_BOOLEAN_HINT(code, field)                                        \
   return writeExpressionHints(                                                 \
     code,                                                                      \
-    [](const CodeAnnotation& annotation) { return annotation.#field; },        \
+    [](const CodeAnnotation& annotation) { return annotation.##field; },       \
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {     \
       buffer << U32LEB(0);                                                     \
     });
@@ -5563,9 +5563,9 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
                       [&](CodeAnnotation& annotation) { \
                         auto size = getU32LEB(); \
                         if (size != 0) { \
-                          throwError("bad " ##field " hint size"); \
+                          throwError("bad " #field " hint size"); \
                         } \
-                        annotation.#field = true; \
+                        annotation.##field = true; \
                       });
 
 void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) { 
@@ -5573,7 +5573,7 @@ void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) {
 }
 
 void WasmBinaryReader::readJSCalledHints(size_t payloadLen) {
-  READ_BOOLEAN_HINT(Annotations::RemovableIfUnusedHint, removableIfUnused);
+  READ_BOOLEAN_HINT(Annotations::JSCalledHint, jsCalled);
 }
 
 void WasmBinaryReader::readIdempotentHints(size_t payloadLen) {
