@@ -914,7 +914,10 @@ struct Optimizer
   // non-concrete type because its value will have been removed.
   Expression* getReplacement(Expression* curr);
 
-  void removeOperands(Expression* curr,
+  // Remove operands from any kind of call (i.e. Call, CallIndirect, or
+  // CallRef), given the call's list of operands and analysis results for those
+  // operands.
+  void removeOperands(Expression* call,
                       ExpressionList& operands,
                       const Params& usages) {
     if (operands.empty()) {
@@ -967,7 +970,7 @@ struct Optimizer
     if (hasUnreachableRemovedOperand) {
       block = builder.blockify(block, builder.makeUnreachable());
     } else {
-      block = builder.blockify(block, curr);
+      block = builder.blockify(block, call);
     }
     replaceCurrent(block);
   }
