@@ -2455,6 +2455,10 @@ validateStruct(const Struct& struct_, FeatureSet feats, bool isShared) {
     if (auto err = validateType(field.type, feats, isShared)) {
       return err;
     }
+    if (field.packedType == Field::PackedType::WaitQueue &&
+        !feats.hasSharedEverything()) {
+      return TypeBuilder::ErrorReason::InvalidSharedType;
+    }
   }
   return std::nullopt;
 }

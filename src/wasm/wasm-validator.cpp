@@ -269,32 +269,6 @@ void validateExactReferences(Module& module, ValidationInfo& info) {
   }
 }
 
-void validateWaitQueue(Module& module, ValidationInfo& info) {
-  if (module.features.hasSharedEverything()) {
-    return;
-  }
-
-  auto types = ModuleUtils::collectHeapTypeInfo(
-    module,
-    ModuleUtils::TypeInclusion::AllTypes,
-    ModuleUtils::VisibilityHandling::NoVisibility);
-
-  for (auto& [type, _] : types) {
-    if (!type.isStruct()) {
-      continue;
-    }
-
-    for (const auto& field : type.getStruct().fields) {
-      if (field.packedType == Field::PackedType::WaitQueue) {
-        info.fail(
-          "Waitqueues require shared-everything [--enable-shared-everything]",
-          type,
-          nullptr);
-      }
-    }
-  }
-}
-
 std::string getMissingFeaturesList(Module& wasm, FeatureSet feats) {
   std::stringstream ss;
   bool first = true;
@@ -4458,8 +4432,8 @@ void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 // Main validator class
 
 void validateTypes(Module& module, ValidationInfo& info) {
+  // Most validations belong in `validateTypeInfo` in wasm-type.cpp.
   validateExactReferences(module, info);
-  validateWaitQueue(module, info);
 }
 
 void validateImports(Module& module, ValidationInfo& info) {
