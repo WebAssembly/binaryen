@@ -889,4 +889,53 @@
       (i32.const 1)
     )
   )
+
+  ;; CHECK:      (func $array-rmw-oob (type $1) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $array-rmw-oob (result i32)
+    ;; An out-of-bounds index on a zero-size array. The access will always
+    ;; trap, so we emit drops for operands and an unreachable.
+    (array.atomic.rmw.add $arr
+      (array.new_default $arr
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg-oob (type $1) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-oob (result i32)
+    ;; As above, but for cmpxchg with an out-of-bounds index.
+    (array.atomic.rmw.cmpxchg $arr
+      (array.new_default $arr
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 10)
+      (i32.const 20)
+    )
+  )
 )
