@@ -104,7 +104,7 @@ using Used = analysis::Bool;
 using Params = std::vector<Used::Element>;
 
 // Function index and parameter index.
-using ParamLoc = std::pair<Index, Index>;
+using FuncParamLoc = std::pair<Index, Index>;
 
 // Function type and parameter index.
 using TypeParamLoc = std::pair<HeapType, Index>;
@@ -132,7 +132,7 @@ struct FunctionInfo {
   // For each parameter of this function, the list of parameters in direct
   // callers that will become used if the parameter in this function turns out
   // to be used. Computed by reversing the directForwardedParams graph.
-  std::vector<std::vector<ParamLoc>> callerParams;
+  std::vector<std::vector<FuncParamLoc>> callerParams;
 
   // The gets that may read from parameters. These are the gets that might be
   // optimized out if their results are unused or forwarded to another function
@@ -179,7 +179,7 @@ struct RootFuncTypeInfo {
   // indirect callers that become used when the parameter in this function type
   // becomes used. Computed by reversing indirectForwardedParams from the
   // function infos.
-  std::vector<std::vector<ParamLoc>> callerParams;
+  std::vector<std::vector<FuncParamLoc>> callerParams;
 
   RootFuncTypeInfo(Used& used, HeapType type)
     : paramUsages(type.getSignature().params.size(), used.getBottom()),
@@ -270,7 +270,7 @@ struct DAE2 : public Pass {
     std::fill(usages.begin(), usages.end(), used.getTop());
   }
 
-  bool join(ParamLoc loc, const Used::Element& other) {
+  bool join(FuncParamLoc loc, const Used::Element& other) {
     auto& elem = funcInfos[loc.first].paramUsages[loc.second];
     return used.join(elem, other);
   }
@@ -616,7 +616,7 @@ void DAE2::prepareReverseGraph() {
 // one of the arguments starts out as used or there is some source of usage
 // outside the cycle.
 void DAE2::computeFixedPoint() {
-  using Item = std::variant<ParamLoc, TypeParamLoc>;
+  using Item = std::variant<FuncParamLoc, TypeParamLoc>;
 
   // List of params, either of functions or root function types, from which we
   // may need to propagate usage information. Initialized with all params we
@@ -625,7 +625,7 @@ void DAE2::computeFixedPoint() {
   for (Index i = 0; i < funcInfos.size(); ++i) {
     for (Index j = 0; j < funcInfos[i].paramUsages.size(); ++j) {
       if (funcInfos[i].paramUsages[j]) {
-        work.push_back(ParamLoc{i, j});
+        work.push_back(FuncParamLoc{i, j});
       }
     }
   }
@@ -655,7 +655,7 @@ void DAE2::computeFixedPoint() {
       // Propagate usage to referenced functions with types in the same type
       // tree to ensure their types can all be updated uniformly.
       for (auto funcIndex : typeTreeInfo.referencedFuncs) {
-        ParamLoc param = {funcIndex, calleeParamIndex};
+        FuncParamLoc param = {funcIndex, calleeParamIndex};
         if (join(param, elem)) {
           work.push_back(param);
         }
@@ -663,7 +663,7 @@ void DAE2::computeFixedPoint() {
       continue;
     }
 
-    if (auto* loc = std::get_if<ParamLoc>(&item)) {
+    if (auto* loc = std::get_if<FuncParamLoc>(&item)) {
       auto [calleeIndex, calleeParamIndex] = *loc;
       auto& calleeInfo = funcInfos[calleeIndex];
       const auto& elem = calleeInfo.paramUsages[calleeParamIndex];
