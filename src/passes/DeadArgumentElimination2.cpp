@@ -17,10 +17,13 @@
 // Perform dead argument elimination based on a smallest fixed point analysis of
 // used parameters. Traverse the module once to collect call graph information,
 // used parameters, and "forwarded" parameters that are only used by being
-// forwarded on to other function calls. These forwarded parameters can still be
-// optimized out as long as they are unused in the callees they are forwarded
-// to. Since we perform a fixed point analysis, cycles of forwarded parameters
-// can still be removed.
+// forwarded on to other function calls. Parameters are forwarded if their
+// local.gets are consumed as parameters to function calls or if they are
+// consumed by other side-effect-free instructions that are transitively
+// forwarded to function calls. These forwarded parameters (and their
+// intermediate users) can still be optimized out as long as they are unused in
+// the callees they are forwarded to. Since we perform a fixed point analysis,
+// cycles of forwarded parameters can still be removed.
 //
 // After finding used parameters, traverse the module once more to remove
 // unused parameters and arguments. Finally, if we are able to optimize indirect
