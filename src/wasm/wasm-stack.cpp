@@ -2441,7 +2441,7 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
   const auto& field = heapType.getStruct().fields[curr->index];
   bool atomic = curr->order != MemoryOrder::Unordered;
   int8_t op;
-  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+  if (field.type != Type::i32 || field.packedType == Field::NotPacked) {
     op = atomic ? BinaryConsts::StructAtomicGet : BinaryConsts::StructGet;
   } else if (curr->signed_) {
     op = atomic ? BinaryConsts::StructAtomicGetS : BinaryConsts::StructGetS;
@@ -2556,7 +2556,7 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
   const auto& field = heapType.getArray().element;
   bool atomic = curr->order != MemoryOrder::Unordered;
   int8_t op;
-  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+  if (field.type != Type::i32 || field.packedType == Field::NotPacked) {
     op = atomic ? BinaryConsts::ArrayAtomicGet : BinaryConsts::ArrayGet;
   } else if (curr->signed_) {
     op = atomic ? BinaryConsts::ArrayAtomicGetS : BinaryConsts::ArrayGetS;

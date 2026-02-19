@@ -252,7 +252,7 @@ WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 // Packed types
 
 BinaryenPackedType BinaryenPackedTypeNotPacked(void) {
-  return Field::PackedType::not_packed;
+  return Field::PackedType::NotPacked;
 }
 BinaryenPackedType BinaryenPackedTypeInt8(void) {
   return Field::PackedType::i8;
@@ -2843,34 +2843,6 @@ void BinaryenConstSetValueI64(BinaryenExpressionRef expr, int64_t value) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
   static_cast<Const*>(expression)->value = Literal(value);
-}
-int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return (int32_t)(static_cast<Const*>(expression)->value.geti64() &
-                   0xffffffff);
-}
-void BinaryenConstSetValueI64Low(BinaryenExpressionRef expr, int32_t valueLow) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  auto& value = static_cast<Const*>(expression)->value;
-  int64_t valueI64 = value.type == Type::i64 ? value.geti64() : 0;
-  static_cast<Const*>(expression)->value =
-    Literal((valueI64 & ~0xffffffff) | (int64_t(valueLow) & 0xffffffff));
-}
-int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return (int32_t)(static_cast<Const*>(expression)->value.geti64() >> 32);
-}
-void BinaryenConstSetValueI64High(BinaryenExpressionRef expr,
-                                  int32_t valueHigh) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  auto& value = static_cast<Const*>(expression)->value;
-  int64_t valueI64 = value.type == Type::i64 ? value.geti64() : 0;
-  static_cast<Const*>(expression)->value =
-    Literal((int64_t(valueHigh) << 32) | (valueI64 & 0xffffffff));
 }
 float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -6609,7 +6581,7 @@ void TypeBuilderSetStructType(TypeBuilderRef builder,
     if (field.type == Type::i32) {
       field.packedType = Field::PackedType(fieldPackedTypes[cur]);
     } else {
-      assert(fieldPackedTypes[cur] == Field::PackedType::not_packed);
+      assert(fieldPackedTypes[cur] == Field::PackedType::NotPacked);
     }
     fields.push_back(field);
   }
@@ -6626,7 +6598,7 @@ void TypeBuilderSetArrayType(TypeBuilderRef builder,
   if (element.type == Type::i32) {
     element.packedType = Field::PackedType(elementPackedType);
   } else {
-    assert(elementPackedType == Field::PackedType::not_packed);
+    assert(elementPackedType == Field::PackedType::NotPacked);
   }
   B->setHeapType(index, Array(element));
 }

@@ -195,7 +195,7 @@ private:
   std::unordered_map<Type, std::vector<Name>> immutableGlobalsByType;
   std::unordered_map<Type, std::vector<Name>> importedImmutableGlobalsByType;
 
-  std::vector<Type> loggableTypes;
+  const std::vector<Type> loggableTypes;
 
   // The heap types we can pick from to generate instructions.
   std::vector<HeapType> interestingHeapTypes;
@@ -280,7 +280,7 @@ private:
   // overridden using another context in an RAII manner).
   std::unique_ptr<FuzzParamsContext> globalParams;
 
-  std::vector<MemoryOrder> atomicMemoryOrders;
+  const std::vector<MemoryOrder> atomicMemoryOrders;
 
 public:
   int nesting = 0;

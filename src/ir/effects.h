@@ -1027,9 +1027,8 @@ private:
       }
       parent.readsArray = true;
       parent.writesArray = true;
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
@@ -1040,9 +1039,8 @@ private:
       }
       parent.readsArray = true;
       parent.writesArray = true;
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
