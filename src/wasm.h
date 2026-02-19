@@ -2258,10 +2258,15 @@ struct CodeAnnotation {
   // identity does not matter for such functions.
   bool jsCalled = false;
 
+  // A function that may do something on the first call, but all subsequent
+  // calls can be assumed to have no effects. If a value is returned, it will be
+  // the same value as returned earlier.
+  bool idempotent = false;
+
   bool operator==(const CodeAnnotation& other) const {
     return branchLikely == other.branchLikely && inline_ == other.inline_ &&
            removableIfUnused == other.removableIfUnused &&
-           jsCalled == other.jsCalled;
+           jsCalled == other.jsCalled && idempotent == other.idempotent;
   }
 };
 

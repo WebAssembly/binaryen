@@ -2677,6 +2677,11 @@ void IRBuilder::applyAnnotations(Expression* expr,
     assert(func);
     func->codeAnnotations[expr].jsCalled = true;
   }
+
+  if (annotation.idempotent) {
+    assert(func);
+    func->codeAnnotations[expr].idempotent = true;
+  }
 }
 
 } // namespace wasm
