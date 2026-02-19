@@ -1629,6 +1629,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   append(getInlineHintsBuffer());
   append(getRemovableIfUnusedHintsBuffer());
   append(getJSCalledHintsBuffer());
+  append(getIdempotentHintsBuffer());
   return ret;
 }
 
@@ -1771,28 +1772,29 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
     });
 }
 
+#define WRITE_BOOLEAN_HINT(code, field) \
+  return writeExpressionHints( \
+    code, \
+    [](const CodeAnnotation& annotation) { \
+      return annotation.#field; \
+    }, \
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) { \
+      buffer << U32LEB(0); \
+    });
+
 std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
-  return writeExpressionHints(
-    Annotations::RemovableIfUnusedHint,
-    [](const CodeAnnotation& annotation) {
-      return annotation.removableIfUnused;
-    },
-    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
-      // Hint size, always empty.
-      buffer << U32LEB(0);
-    });
+  WRITE_BOOLEAN_HINT(Annotations::RemovableIfUnusedHint, removableIfUnused);
 }
 
 std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getJSCalledHintsBuffer() {
-  return writeExpressionHints(
-    Annotations::JSCalledHint,
-    [](const CodeAnnotation& annotation) { return annotation.jsCalled; },
-    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
-      // Hint size, always empty.
-      buffer << U32LEB(0);
-    });
+  WRITE_BOOLEAN_HINT(Annotations::JSCalledHint, jsCalled);
+}
+
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getIdempotentHintsBuffer() {
+  WRITE_BOOLEAN_HINT(Annotations::IdempotentHint, idempotent);
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
