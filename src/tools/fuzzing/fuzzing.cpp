@@ -1719,7 +1719,7 @@ Function* TranslateToFuzzReader::addFunction() {
   }
 
   // Mark some functions as jsCalled. This allows them to be called by
-  // reference even in open world, using the callRef* imports.
+  // reference even in closed world, using the callRef* imports.
   // TODO: We could do this, and exporting above, to initial content too.
   if (oneIn(4)) {
     auto annotations = intrinsics.getAnnotations(func);
