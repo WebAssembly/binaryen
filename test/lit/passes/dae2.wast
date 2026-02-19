@@ -3407,19 +3407,19 @@
 
   ;; CHECK:      (type $2 (func (param (ref null $f))))
 
-  ;; CHECK:      (func $test (type $2) (param $f (ref null $f))
+  ;; CHECK:      (func $test (type $2) (param $used (ref null $f))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $f
-  ;; CHECK-NEXT:   (local.get $f)
+  ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $f (ref null $f))
+  (func $test (param $used (ref null $f))
     ;; We should not get confused when a parameter is the target of a call_ref.
     (call_ref $f
       (i32.const 0)
-      (local.get $f)
+      (local.get $used)
     )
   )
 )
@@ -3439,19 +3439,19 @@
   ;; CHECK:      (table $t 0 funcref)
   (table $t 0 funcref)
 
-  ;; CHECK:      (func $test (type $0) (param $i i32)
+  ;; CHECK:      (func $test (type $0) (param $used i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_indirect $t (type $f)
-  ;; CHECK-NEXT:   (local.get $i)
+  ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $i i32)
+  (func $test (param $used i32)
     ;; Same with a call_indirect.
     (call_indirect (type $f)
       (i64.const 0)
-      (local.get $i)
+      (local.get $used)
     )
   )
 )
