@@ -2163,7 +2163,8 @@ void TranslateToFuzzReader::fixClosedWorld(Function* func) {
 
       if (parent.jsCalled.empty()) {
         // There is nothing valid to call at all. Keep the children (we may
-        // need them to validate, e.g. if there is a `pop`), but remove the call.
+        // need them to validate, e.g. if there is a `pop`), but remove the
+        // call.
         std::vector<Expression*> list;
         for (auto* child : curr->operands) {
           list.push_back(parent.builder.makeDrop(child));
