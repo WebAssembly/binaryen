@@ -5142,8 +5142,8 @@ Name WasmBinaryReader::escape(Name name) {
     }
     // replace non-idchar with `\xx` escape
     escaped.push_back('\\');
-    escaped.push_back(formatNibble(c >> 4));
-    escaped.push_back(formatNibble(c & 15));
+    escaped.push_back(formatNibble((unsigned char)c >> 4));
+    escaped.push_back(formatNibble((unsigned char)c & 15));
   }
   return escaped;
 }
