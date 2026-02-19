@@ -2072,7 +2072,8 @@ void WasmBinaryReader::preScan() {
       if (sectionName == Annotations::BranchHint ||
           sectionName == Annotations::InlineHint ||
           sectionName == Annotations::RemovableIfUnusedHint ||
-          sectionName == Annotations::JSCalledHint) {
+          sectionName == Annotations::JSCalledHint ||
+          sectionName == Annotations::IdempotentHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2237,6 +2238,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::JSCalledHint) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readJSCalledHints(payloadLen); }});
+  } else if (sectionName == Annotations::IdempotentHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readIdempotentHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5551,29 +5555,29 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
     });
 }
 
-void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) {
-  readExpressionHints(Annotations::RemovableIfUnusedHint,
-                      payloadLen,
-                      [&](CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 0) {
-                          throwError("bad removableIfUnusedHint size");
-                        }
-
-                        annotation.removableIfUnused = true;
+// Reads a simple boolean hint of size 0. Receives the code and the field name
+// on the annotation object.
+#define READ_BOOLEAN_HINT(code, field) \
+  readExpressionHints(code, \
+                      payloadLen, \
+                      [&](CodeAnnotation& annotation) { \
+                        auto size = getU32LEB(); \
+                        if (size != 0) { \
+                          throwError("bad " ##field " hint size"); \
+                        } \
+                        annotation.#field = true; \
                       });
+
+void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) { 
+  READ_BOOLEAN_HINT(Annotations::RemovableIfUnusedHint, removableIfUnused);
 }
 
 void WasmBinaryReader::readJSCalledHints(size_t payloadLen) {
-  readExpressionHints(
-    Annotations::JSCalledHint, payloadLen, [&](CodeAnnotation& annotation) {
-      auto size = getU32LEB();
-      if (size != 0) {
-        throwError("bad jsCalledHint size");
-      }
+  READ_BOOLEAN_HINT(Annotations::RemovableIfUnusedHint, removableIfUnused);
+}
 
-      annotation.jsCalled = true;
-    });
+void WasmBinaryReader::readIdempotentHints(size_t payloadLen) {
+  READ_BOOLEAN_HINT(Annotations::IdempotentHint, idempotent);
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>
