@@ -1033,11 +1033,7 @@ struct Optimizer
       return;
     }
     // There are no kept children.
-    if (curr->type == Type::unreachable) {
-      ExpressionManipulator::unreachable(curr);
-    } else {
-      ExpressionManipulator::nop(curr);
-    }
+    builder.replaceWithIdenticalType(curr);
   }
 };
 
