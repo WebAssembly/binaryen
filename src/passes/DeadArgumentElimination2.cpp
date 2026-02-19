@@ -1173,6 +1173,9 @@ Expression* Optimizer::getReplacement(Expression* curr) {
       } else {
         Super::scan(self, currp);
       }
+      // N.B. No need to handle TryTable because it either has no handlers and
+      // can be removed or has the branchesOut effect and would not be removed
+      // in the first place.
     }
 
     static void doEndIfFalse(Collector* self, Expression** currp) {
