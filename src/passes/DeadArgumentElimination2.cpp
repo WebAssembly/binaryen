@@ -391,8 +391,7 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (curr->index >= getFunction()->getNumParams()) {
-      // Not a parameter.
+    if (!getFunction()->isParam(curr->index)) {
       return;
     }
 
