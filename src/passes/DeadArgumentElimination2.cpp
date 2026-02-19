@@ -899,8 +899,9 @@ struct Optimizer
           // This expression, and therefore its relevant parents, have already
           // been marked, so we do not need to continue.
           break;
-        };
+        }
         if (!expr->type.isConcrete()) {
+          // The value does not flow further, so stop removing.
           break;
         }
       }
