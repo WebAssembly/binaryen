@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/intrinsics.h"
 #include "ir/properties.h"
 #include "wasm-traversal.h"
 
@@ -25,7 +26,13 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   bool generative = false;
 
   void visitCall(Call* curr) {
-    // TODO: We could in principle look at the called function to see if it is
+    // If the called function is idempotent, then it does not generate new
+    // values on each call.
+    auto* target = getModule()->getFunction(curr->target);
+    if (Intrinsics::getAnnotations(target).idempotent) {
+      return;
+    }
+    // TODO: We could look at the called function's contents to see if it is
     //       generative. To do that we'd need to compute generativity like we
     //       compute global effects (we can't just peek from here, as the
     //       other function might be modified in parallel).
@@ -43,15 +50,17 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
 
 } // anonymous namespace
 
-bool isGenerative(Expression* curr) {
+bool isGenerative(Expression* curr, Module& wasm) {
   GenerativityScanner scanner;
+  scanner.setModule(&wasm);
   scanner.walk(curr);
   return scanner.generative;
 }
 
 // As above, but only checks |curr| and not children.
-bool isShallowlyGenerative(Expression* curr) {
+bool isShallowlyGenerative(Expression* curr, Module& wasm) {
   GenerativityScanner scanner;
+  scanner.setModule(&wasm);
   scanner.visit(curr);
   return scanner.generative;
 }
