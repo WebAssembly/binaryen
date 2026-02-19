@@ -34,7 +34,8 @@
   )
 )
 
-;; CHECK:      (func $second (type $0)
+;; CHECK:      (@binaryen.js.called)
+;; CHECK-NEXT: (func $second (type $0)
 ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.const 0)
