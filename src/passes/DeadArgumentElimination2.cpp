@@ -747,7 +747,9 @@ struct Optimizer
   const FunctionInfo* funcInfo = nullptr;
 
   // Map old local indices to new local indices for the function we are
-  // currently optimizing.
+  // currently optimizing. Kept parameters and locals may need to have their
+  // indices shifted down to account for removed parameters, and removed
+  // parameters will need to be mapped to their new replacement locals.
   std::vector<Index> newIndices;
 
   // It is not enough to simply replace removed parameters with locals. Removed
@@ -794,7 +796,9 @@ struct Optimizer
 
     bool hasNewNonNullableLocal = false;
     if (hasRemoved) {
-      // Remove the parameters and replace them with scratch locals.
+      // Remove the parameters and replace them with scratch locals. Map the
+      // indices of removed params to their types and names so we can create
+      // properly typed and named scratch locals later.
       std::vector<std::pair<Type, Name>> removedParams;
       std::vector<Type> keptParams;
       std::unordered_map<Index, Name> newLocalNames;
