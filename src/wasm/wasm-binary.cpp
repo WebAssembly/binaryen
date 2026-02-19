@@ -1772,14 +1772,12 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
     });
 }
 
-#define WRITE_BOOLEAN_HINT(code, field) \
-  return writeExpressionHints( \
-    code, \
-    [](const CodeAnnotation& annotation) { \
-      return annotation.#field; \
-    }, \
-    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) { \
-      buffer << U32LEB(0); \
+#define WRITE_BOOLEAN_HINT(code, field)                                        \
+  return writeExpressionHints(                                                 \
+    code,                                                                      \
+    [](const CodeAnnotation& annotation) { return annotation.#field; },        \
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {     \
+      buffer << U32LEB(0);                                                     \
     });
 
 std::optional<BufferWithRandomAccess>
