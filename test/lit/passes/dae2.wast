@@ -1540,7 +1540,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $referenced1 (type $sub1) (param i32 i64 f32)
-    ;; Use parameter 0. Only parameter 1 will be removed..
+    ;; Use parameter 0. Only parameter 1 will be removed.
     (global.set $g1
       (local.get 0)
     )
