@@ -6115,7 +6115,12 @@ bool TranslateToFuzzReader::isCallRefImport(Name target) {
   // callRefImportName / callRefCatchImportName because those are the names of
   // the methods we added, but the initial content may import those methods
   // under other internal names.
-  auto* func = wasm.getFunction(target);
+  auto* func = wasm.getFunctionOrNull(target);
+  if (!func) {
+    // We are called while a function is still being constructed. Such a new
+    // defined function can never be an import.
+    return false;
+  }
   return func->imported() && func->module == "fuzzing-support" &&
          func->base.startsWith("call-ref");
 }
