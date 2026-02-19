@@ -6107,7 +6107,7 @@ bool TranslateToFuzzReader::isValidRefFuncTarget(Name func) {
   if (!closedWorld) {
     return true;
   }
-  return !isCallRefImport(name);
+  return !isCallRefImport(func);
 }
 
 bool TranslateToFuzzReader::isCallRefImport(Name target) {
