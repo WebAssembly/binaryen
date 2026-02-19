@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/intrinsics.h"
 #include "ir/properties.h"
+#include "ir/intrinsics.h"
 #include "wasm-traversal.h"
 
 namespace wasm::Properties {

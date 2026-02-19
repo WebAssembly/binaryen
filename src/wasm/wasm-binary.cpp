@@ -1777,7 +1777,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
 #define WRITE_BOOLEAN_HINT(code, field)                                        \
   return writeExpressionHints(                                                 \
     code,                                                                      \
-    [](const CodeAnnotation& annotation) { return annotation.field; },       \
+    [](const CodeAnnotation& annotation) { return annotation.field; },         \
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {     \
       buffer << U32LEB(0);                                                     \
     });
@@ -5557,18 +5557,16 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
 
 // Reads a simple boolean hint of size 0. Receives the code and the field name
 // on the annotation object.
-#define READ_BOOLEAN_HINT(code, field) \
-  readExpressionHints(code, \
-                      payloadLen, \
-                      [&](CodeAnnotation& annotation) { \
-                        auto size = getU32LEB(); \
-                        if (size != 0) { \
-                          throwError("bad " #field " hint size"); \
-                        } \
-                        annotation.field = true; \
-                      });
+#define READ_BOOLEAN_HINT(code, field)                                         \
+  readExpressionHints(code, payloadLen, [&](CodeAnnotation& annotation) {      \
+    auto size = getU32LEB();                                                   \
+    if (size != 0) {                                                           \
+      throwError("bad " #field " hint size");                                  \
+    }                                                                          \
+    annotation.field = true;                                                   \
+  });
 
-void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) { 
+void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) {
   READ_BOOLEAN_HINT(Annotations::RemovableIfUnusedHint, removableIfUnused);
 }
 
