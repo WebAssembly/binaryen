@@ -1772,6 +1772,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
     });
 }
 
+// Writes a simple boolean hint of size 0. Receives the code and the field name
+// on the annotation object.
 #define WRITE_BOOLEAN_HINT(code, field)                                        \
   return writeExpressionHints(                                                 \
     code,                                                                      \
