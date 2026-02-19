@@ -2958,6 +2958,8 @@
           (call $effect)
         )
         (drop
+          ;; The br_if counts as a use because it branches out.
+          ;; TODO: A control flow aware analysis could still optimize this.
           (br_if $l
             (i32.const 0)
             (local.get $used)
