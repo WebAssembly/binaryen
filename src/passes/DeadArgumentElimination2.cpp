@@ -726,6 +726,7 @@ struct DAETypeUpdater : GlobalTypeRewriter {
   }
 };
 
+// Optimize functions in parallel using the DAE2 analysis results.
 struct Optimizer
   : public WalkerPass<
       ExpressionStackWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
