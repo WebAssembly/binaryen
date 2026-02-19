@@ -175,10 +175,10 @@ struct RootFuncTypeInfo {
   // and vice versa.
   std::vector<Index> referencedFuncs;
 
-  // For each parameter in this function type, the list of parameters of
-  // indirect callers that become used when the parameter in this function type
-  // becomes used. Computed by reversing indirectForwardedParams from the
-  // function infos.
+  // For each parameter in this root function type, the list of parameters of
+  // indirect callers (of any function type in this tree) that become used when
+  // the parameter in this root function type becomes used. Computed by
+  // reversing indirectForwardedParams from the function infos.
   std::vector<std::vector<FuncParamLoc>> callerParams;
 
   RootFuncTypeInfo(Used& used, HeapType type)
