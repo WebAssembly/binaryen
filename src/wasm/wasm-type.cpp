@@ -1447,6 +1447,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Continuation has invalid function type";
     case TypeBuilder::ErrorReason::InvalidSharedType:
       return os << "Shared types require shared-everything";
+    case TypeBuilder::ErrorReason::WaitQueueDisabled:
+      return os << "Waitqueues require shared-everything";
     case TypeBuilder::ErrorReason::InvalidStringType:
       return os << "String types require strings feature";
     case TypeBuilder::ErrorReason::InvalidUnsharedField:
@@ -2457,7 +2459,7 @@ validateStruct(const Struct& struct_, FeatureSet feats, bool isShared) {
     }
     if (field.packedType == Field::PackedType::WaitQueue &&
         !feats.hasSharedEverything()) {
-      return TypeBuilder::ErrorReason::InvalidSharedType;
+      return TypeBuilder::ErrorReason::WaitQueueDisabled;
     }
   }
   return std::nullopt;
