@@ -18,7 +18,6 @@
     (type $k-unused (cont $f-unused))
 
   )
-  ;; TODO: switch
 
   ;; CHECK:      (elem declare func $f)
 
