@@ -2531,6 +2531,8 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC | FeatureSet::Multibyte,
+         &Self::makeArrayStore)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
@@ -5461,6 +5463,46 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   auto* set = builder.makeArraySet(
     check.getRef, check.getIndex, value, MemoryOrder::Unordered);
   return builder.makeIf(check.condition, set);
+}
+
+Expression* TranslateToFuzzReader::makeArrayStore(Type type) {
+  assert(type == Type::none);
+  std::vector<HeapType> i8Arrays;
+  for (auto array : mutableArrays) {
+    if (array.getArray().element.packedType == Field::i8) {
+      i8Arrays.push_back(array);
+    }
+  }
+  if (i8Arrays.empty()) {
+    return makeTrivial(type);
+  }
+  auto arrayType = pick(i8Arrays);
+  auto* ref = makeTrappingRefUse(arrayType);
+  auto* index = make(Type::i32);
+  auto field = arrayType.getArray().element;
+  // TODO: non-default lanes
+  uint8_t lanes = 1;
+  auto bytes = field.type.getByteSize() * lanes;
+  if (!bytes) {
+    return makeTrivial(Type::none);
+  }
+  auto valueType = field.type;
+  if (valueType.isRef()) {
+    // ArrayStore only works for non-ref types.
+    return makeTrivial(Type::none);
+  }
+  // We can only store things that fit in the field.
+  // We also don't want to store a value that is too large for the field, to
+  // avoid truncation.
+  // For now, just use the same type as the field.
+  auto* value = make(valueType);
+  if (allowOOB && oneIn(10)) {
+    return builder.makeArrayStore(bytes, valueType, ref, index, value);
+  }
+  auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
+  auto* store = builder.makeArrayStore(
+    bytes, valueType, check.getRef, check.getIndex, value);
+  return builder.makeIf(check.condition, store, builder.makeNop());
 }
 
 Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
