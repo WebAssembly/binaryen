@@ -908,7 +908,7 @@ struct TypeBuilder {
     // A shared type with shared-everything disabled.
     InvalidSharedType,
     // WaitQueue was used with shared-everything disabled.
-    WaitQueueDisabled,
+    InvalidWaitQueue,
     // A string type with strings disabled.
     InvalidStringType,
     // A non-shared field of a shared heap type.
