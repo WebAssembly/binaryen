@@ -1128,7 +1128,6 @@
   ;; CHECK:      (global $use-uninhabited (ref null $uninhabited) (ref.null nofunc))
   (global $use-uninhabited (ref null $uninhabited) (ref.null nofunc))
 
-
   ;; CHECK:      (elem declare func $referenced)
 
   ;; CHECK:      (func $referenced (type $optimized) (param $used i64)
