@@ -85,7 +85,7 @@ namespace {
 #define TIME(...)
 #endif // TIME_DAE
 
-// Find the root of the subtyping hierarchy for a given HeapType.
+// Find the non-basic root of the subtyping hierarchy for a given HeapType.
 HeapType getRootType(HeapType type) {
   while (true) {
     if (auto super = type.getDeclaredSuperType()) {
