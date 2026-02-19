@@ -935,7 +935,9 @@ struct Optimizer
     // In general we cannot change the order of the operands, including the kept
     // parts of removed operands, because they may have side effects. Use
     // scratch locals to move the kept operand values past any subsequent kept
-    // parts of removed operands.
+    // parts of removed operands. (N.B. We could use ChildLocalizer here, but
+    // that would make it hard to find the expression to replace because it
+    // might or might not end up in a new local.set.)
     Builder builder(*getModule());
     Expression* block = nullptr;
     Index next = 0;
