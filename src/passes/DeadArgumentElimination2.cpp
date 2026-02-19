@@ -283,6 +283,9 @@ struct DAE2 : public Pass {
 };
 
 struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
+  bool isFunctionParallel() override { return true; }
+  bool modifiesBinaryenIR() override { return false; }
+
   // Analysis lattice.
   const Used& used;
 
@@ -311,9 +314,6 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
                bool optimizeReferencedFuncs)
     : used(used), funcIndices(funcIndices), funcInfos(funcInfos),
       optimizeReferencedFuncs(optimizeReferencedFuncs) {}
-
-  bool isFunctionParallel() override { return true; }
-  bool modifiesBinaryenIR() override { return false; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<GraphBuilder>(
@@ -733,6 +733,14 @@ struct Optimizer
   using Super = WalkerPass<
     ExpressionStackWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>>;
 
+  bool isFunctionParallel() override { return true; }
+
+  // We handle non-nullable local fixups in the pass itself. If we ran the
+  // fixups after the pass, they could get confused and produce invalid code
+  // because this pass updates local indices but does not always update function
+  // types to match. Function types are updated after this pass runs.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   const DAE2& parent;
 
   // The info for the function we are running on.
@@ -755,14 +763,6 @@ struct Optimizer
   std::optional<LabelUtils::LabelManager> labels;
 
   Optimizer(const DAE2& parent) : parent(parent) {}
-
-  bool isFunctionParallel() override { return true; }
-
-  // We handle non-nullable local fixups in the pass itself. If we ran the
-  // fixups after the pass, they could get confused and produce invalid code
-  // because this pass updates local indices but does not always update function
-  // types to match. Function types are updated after this pass runs.
-  bool requiresNonNullableLocalFixups() override { return false; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<Optimizer>(parent);
