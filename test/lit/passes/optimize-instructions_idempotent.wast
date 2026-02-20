@@ -52,6 +52,20 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.abs
   ;; CHECK-NEXT:    (f32.mul
+  ;; CHECK-NEXT:     (@binaryen.idempotent)
+  ;; CHECK-NEXT:     (call $potent
+  ;; CHECK-NEXT:      (f32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (@binaryen.idempotent)
+  ;; CHECK-NEXT:     (call $potent
+  ;; CHECK-NEXT:      (f32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.mul
   ;; CHECK-NEXT:     (call $idempotent
   ;; CHECK-NEXT:      (f32.const 10)
   ;; CHECK-NEXT:     )
@@ -90,6 +104,21 @@
         )
       )
     )
+    ;; Here we succeed, as the calls are marked idempotent.
+    (drop
+      (f32.abs
+        (f32.mul
+          (@binaryen.idempotent)
+          (call $potent
+            (f32.const 10)
+          )
+          (@binaryen.idempotent)
+          (call $potent
+            (f32.const 10)
+          )
+        )
+      )
+    )
     ;; Here we fail as well, as while we have idempotency, the params differ.
     (drop
       (f32.abs
@@ -111,7 +140,7 @@
   ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $2) (result eqref)))
+  ;; CHECK:      (import "a" "b" (func $import (type $3) (result eqref)))
   (import "a" "b" (func $import (result eqref)))
 
   ;; CHECK:      (global $g1 (ref $struct) (struct.new_default $struct))
@@ -141,7 +170,7 @@
     (call $import)
   )
 
-  ;; CHECK:      (func $test-ref.eq (type $3)
+  ;; CHECK:      (func $test-ref.eq (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -178,18 +207,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $idempotent
-  ;; CHECK-NEXT:      (global.get $g-mut)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $g-mut)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $idempotent
-  ;; CHECK-NEXT:      (global.get $g-mut)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $g-mut)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -241,5 +265,66 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $test-ref.eq-nested-calls (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (call $get-struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (call $get-struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (@binaryen.idempotent)
+  ;; CHECK-NEXT:     (call $get-struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (@binaryen.idempotent)
+  ;; CHECK-NEXT:     (call $get-struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-ref.eq-nested-calls
+    ;; We cannot optimize here - we have idempotency, but the children
+    ;; have effects themselves so we can't tell if they are equal.
+    (drop
+      (ref.eq
+        (call $idempotent
+          (call $get-struct)
+        )
+        (call $idempotent
+          (call $get-struct)
+        )
+      )
+    )
+    ;; Marking those children as idempotent should help, but we do not handle
+    ;; that yet. TODO
+    (drop
+      (ref.eq
+        (call $idempotent
+          (@binaryen.idempotent)
+          (call $get-struct)
+        )
+        (call $idempotent
+          (@binaryen.idempotent)
+          (call $get-struct)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-struct (type $4) (result (ref null $struct))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $get-struct (result (ref null $struct))
+    ;; Helper for above
+    (unreachable)
   )
 )

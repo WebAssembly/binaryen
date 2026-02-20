@@ -2869,6 +2869,33 @@ private:
       if (Intrinsics(*getModule())
             .getCallAnnotations(call, getFunction())
             .idempotent) {
+        // We must still check for effects in the parameters. Imagine that we
+        // have
+        //
+        //  (call $idempotent (global.get $g))
+        //  (call $idempotent (global.get $g))
+        //
+        // Then the first call has effects, and those might alter $g if the
+        // global is mutable. That is, all that idempotency tells us is that
+        // the second call has no effects, but its parameters can still have
+        // read effects that interact. Also, the parameter might have write
+        // effects,
+        //
+        //  (call $idempotent (call $other))
+        //
+        // We must check that as well.
+        EffectAnalyzer childEffects(getPassOptions(), *getModule());
+        for (auto* child : call->operands) {
+          childEffects.walk(child);
+        }
+        if (childEffects.hasUnremovableSideEffects()) {
+          return false;
+        }
+        ShallowEffectAnalyzer parentEffects(getPassOptions(), *getModule(), call);
+        if (parentEffects.invalidates(childEffects)) {
+          return false;
+        }
+        // No effects are possible.
         rightMightHaveEffects = false;
       }
     }
