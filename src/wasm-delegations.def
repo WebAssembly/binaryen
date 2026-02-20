@@ -115,5 +115,6 @@ DELEGATE(Suspend);
 DELEGATE(Resume);
 DELEGATE(ResumeThrow);
 DELEGATE(StackSwitch);
+DELEGATE(StructWait);
 
 #undef DELEGATE

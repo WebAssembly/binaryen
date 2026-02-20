@@ -569,6 +569,7 @@ public:
   void visitResume(Resume* curr);
   void visitResumeThrow(ResumeThrow* curr);
   void visitStackSwitch(StackSwitch* curr);
+  void visitStructWait(StructWait* curr);
 
   void visitFunction(Function* curr);
 
@@ -4258,6 +4259,44 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
       curr->type == Type::unreachable,
     curr,
     "switch must be annotated with a continuation type");
+}
+
+void FunctionValidator::visitStructWait(StructWait* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "struct.wait requires shared-everything [--enable-shared-everything]");
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  shouldBeTrue(
+    curr->ref->type.isRef(), curr, "struct.wait ref must be a reference");
+  shouldBeSubType(
+    curr->ref->type,
+    Type(curr->structType, Nullable),
+    curr,
+    "struct.wait ref must be a subtype of the specified struct type");
+  shouldBeTrue(curr->structType.isStruct(),
+               curr,
+               "struct.wait must be parameterized by a struct type");
+  if (curr->structType.isStruct() &&
+      curr->index < curr->structType.getStruct().fields.size()) {
+    shouldBeTrue(curr->structType.getStruct().fields[curr->index].packedType ==
+                   Field::WaitQueue,
+                 curr,
+                 "struct.wait struct field must be a waitqueue");
+  } else if (curr->structType.isStruct()) {
+    shouldBeTrue(false, curr, "struct.wait struct field index out of bounds");
+  }
+
+  shouldBeEqual(curr->expected->type,
+                Type(Type::BasicType::i32),
+                curr,
+                "struct.wait expected must be an i32");
+  shouldBeEqual(curr->timeout->type,
+                Type(Type::BasicType::i64),
+                curr,
+                "struct.wait timeout must be an i64");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

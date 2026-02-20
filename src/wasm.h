@@ -760,6 +760,7 @@ public:
     ResumeThrowId,
     // Id for the stack switching `switch`
     StackSwitchId,
+    StructWaitId,
     NumExpressionIds
   };
   Id _id;
@@ -2152,6 +2153,20 @@ public:
   Expression* cont;
 
   // We need access to the module to obtain the signature of the tag.
+  void finalize();
+};
+
+class StructWait : public SpecificExpression<Expression::StructWaitId> {
+public:
+  StructWait() = default;
+  StructWait(MixedArena& allocator) : StructWait() {}
+
+  Expression* ref = nullptr;
+  Expression* expected = nullptr;
+  Expression* timeout = nullptr;
+  HeapType structType;
+  Index index;
+
   void finalize();
 };
 

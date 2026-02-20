@@ -2840,6 +2840,17 @@ Result<> makeStackSwitch(Ctx& ctx,
   return ctx.makeStackSwitch(pos, annotations, *type, *tag);
 }
 
+template<typename Ctx>
+Result<> makeStructWait(Ctx& ctx,
+                        Index pos,
+                        const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructWait(pos, annotations, *type, *field);
+}
+
 // =======
 // Modules
 // =======

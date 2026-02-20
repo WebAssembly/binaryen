@@ -598,6 +598,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                     .type.getSignature();
     self()->noteSubtype(currResult, retSig.results);
   }
+  void visitStructWait(StructWait* curr) {
+    // todo?
+  }
 };
 
 } // namespace wasm

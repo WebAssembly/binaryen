@@ -376,6 +376,11 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
+  void visitStructWait(StructWait* curr) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
+  }
 
   // Module-level visitors
   void handleSignature(Function* curr, bool printImplicitNames = false);
@@ -2657,6 +2662,14 @@ struct PrintExpressionContents
     printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
     curr->tag.print(o);
+  }
+
+  void visitStructWait(StructWait* curr) {
+    printMedium(o, "struct.wait");
+    o << ' ';
+    printHeapTypeName(curr->structType);
+    o << ' ';
+    o << curr->index;
   }
 };
 

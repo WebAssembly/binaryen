@@ -446,6 +446,12 @@ struct CodeScanner : PostWalker<CodeScanner> {
     info.note(curr->cont->type);
     info.note(curr->type);
   }
+  void visitStructWait(StructWait* curr) {
+    info.note(curr->structType);
+    if (curr->ref && curr->ref->type != Type::unreachable) {
+      info.note(curr->ref->type);
+    }
+  }
   void visitBlock(Block* curr) {
     info.noteControlFlow(Signature(Type::none, curr->type));
   }
