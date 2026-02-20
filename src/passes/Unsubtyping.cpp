@@ -769,6 +769,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       }
       void visitRefAs(RefAs* curr) {
         Super::visitRefAs(curr);
+        // extern.convert_any makes its operand type visible to JS, which may
+        // require us to keep descriptors that configure prototypes.
         if (curr->op == ExternConvertAny && curr->value->type.isRef()) {
           info.exposedToJS.insert(curr->value->type.getHeapType());
         }

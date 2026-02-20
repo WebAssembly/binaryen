@@ -499,7 +499,7 @@
   )
 
   ;; Since we assume with a closed world that the environment does not do
-  ;; anything to observe differences bewteen private subtypes and their public
+  ;; anything to observe differences between private subtypes and their public
   ;; supertypes, we remain free to optimize out descriptors on private subtypes
   ;; as long as the public supertypes do not have them, even if those
   ;; descriptors might configure prototypes.
