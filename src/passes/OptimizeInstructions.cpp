@@ -2833,11 +2833,9 @@ private:
     // First, check for side effects. If there are any, then we can't even
     // assume things like local.get's of the same index being identical. (It is
     // also ok to have removable side effects here, see the function
-    // description.)
-    auto& passOptions = getPassOptions();
-    if (EffectAnalyzer(passOptions, *getModule(), left)
-          .hasUnremovableSideEffects() ||
-        EffectAnalyzer(passOptions, *getModule(), right)
+    // description.) We only check one side as we are going to check for
+    // equality below anyhow.
+    if (EffectAnalyzer(getPassOptions(), *getModule(), left)
           .hasUnremovableSideEffects()) {
       return false;
     }
