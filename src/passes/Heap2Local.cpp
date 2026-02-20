@@ -462,12 +462,18 @@ struct EscapeAnalyzer {
         fullyConsumes = true;
       }
       void visitArrayRMW(ArrayRMW* curr) {
+        if (!curr->index->is<Const>()) {
+          return;
+        }
         if (curr->ref == child) {
           escapes = false;
           fullyConsumes = true;
         }
       }
       void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+        if (!curr->index->is<Const>()) {
+          return;
+        }
         if (curr->ref == child || curr->expected == child) {
           escapes = false;
           fullyConsumes = true;
@@ -1351,6 +1357,45 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // TODO: Handle atomic array accesses.
     replaceCurrent(builder.makeStructGet(
       index, curr->ref, MemoryOrder::Unordered, curr->type, curr->signed_));
+  }
+
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->value),
+                                        builder.makeUnreachable()}));
+      refinalize = true;
+      return;
+    }
+
+    // Convert the ArrayRMW into a StructRMW.
+    replaceCurrent(builder.makeStructRMW(
+      curr->op, index, curr->ref, curr->value, curr->order));
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->expected),
+                                        builder.makeDrop(curr->replacement),
+                                        builder.makeUnreachable()}));
+      refinalize = true;
+      return;
+    }
+
+    // Convert the ArrayCmpxchg into a StructCmpxchg.
+    replaceCurrent(builder.makeStructCmpxchg(
+      index, curr->ref, curr->expected, curr->replacement, curr->order));
   }
 
   // Some additional operations need special handling
