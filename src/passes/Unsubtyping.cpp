@@ -171,6 +171,9 @@ struct TypeTree {
     // The index of the described and descriptor types, if they are necessary.
     std::optional<Index> described;
     std::optional<Index> descriptor;
+    // Whether this type might flow out to JS from a JS-called function or via
+    // extern.convert_any.
+    bool exposedToJS = false;
 
     Node(HeapType type, Index index) : type(type), parent(index) {}
   };
@@ -246,6 +249,19 @@ struct TypeTree {
       return nodes[*descIndex].type;
     }
     return std::nullopt;
+  }
+
+  void setExposedToJS(HeapType type) {
+    auto index = getIndex(type);
+    nodes[index].exposedToJS = true;
+  }
+
+  bool isExposedToJS(HeapType type) const {
+    auto index = maybeGetIndex(type);
+    if (!index) {
+      return false;
+    }
+    return nodes[*index].exposedToJS;
   }
 
   struct SupertypeIterator {
@@ -403,6 +419,9 @@ struct TypeTree {
       std::cerr << ", children:";
       for (auto child : node.children) {
         std::cerr << " " << ModuleHeapType(wasm, nodes[child].type);
+      }
+      if (node.exposedToJS) {
+        std::cerr << ", exposed to JS";
       }
       std::cerr << '\n';
     }
@@ -595,6 +614,15 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     work.push_back({Kind::Descriptor, described, descriptor});
   }
 
+  void noteExposedToJS(HeapType type) {
+    types.setExposedToJS(type);
+    // Keep any descriptor that may configure a prototype.
+    if (auto desc = type.getDescriptorType();
+        desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+      noteDescriptor(type, *desc);
+    }
+  }
+
   void analyzePublicTypes(Module& wasm) {
     // We cannot change supertypes for anything public.
     for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
@@ -625,10 +653,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         if (Type::isSubType(type, anyref)) {
           auto heapType = type.getHeapType();
           noteSubtype(heapType, HeapType::any);
-          if (auto desc = heapType.getDescriptorType();
-              desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
-            noteDescriptor(heapType, *desc);
-          }
+          noteExposedToJS(heapType);
         }
       }
     }
@@ -644,6 +669,9 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
 
       // Observed (described, descriptor) requirements.
       Set<std::pair<HeapType, HeapType>> descriptors;
+
+      // Observed externalized types.
+      Set<HeapType> exposedToJS;
     };
 
     struct Collector
@@ -739,6 +767,14 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         // expression is removed.
         noteDescribed(curr->type.getHeapType());
       }
+      void visitRefAs(RefAs* curr) {
+        Super::visitRefAs(curr);
+        // extern.convert_any makes its operand type visible to JS, which may
+        // require us to keep descriptors that configure prototypes.
+        if (curr->op == ExternConvertAny && curr->value->type.isRef()) {
+          info.exposedToJS.insert(curr->value->type.getHeapType());
+        }
+      }
     };
 
     bool trapsNeverHappen = getPassOptions().trapsNeverHappen;
@@ -758,6 +794,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
                                       info.subtypings.end());
       collectedInfo.descriptors.insert(info.descriptors.begin(),
                                        info.descriptors.end());
+      collectedInfo.exposedToJS.insert(info.exposedToJS.begin(),
+                                       info.exposedToJS.end());
     }
 
     // Collect constraints from module-level code as well.
@@ -772,6 +810,9 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
 
     // Prepare the collected information for the upcoming processing loop.
+    for (auto type : collectedInfo.exposedToJS) {
+      noteExposedToJS(type);
+    }
     for (auto& [sub, super] : collectedInfo.subtypings) {
       noteSubtype(sub, super);
     }
@@ -819,6 +860,11 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
 
     types.setSupertype(sub, super);
+
+    // If the supertype is exposed to JS, the subtype potentially is as well.
+    if (types.isExposedToJS(super)) {
+      noteExposedToJS(sub);
+    }
 
     // Complete the descriptor squares to the left and right of the new
     // subtyping edge if those squares can possibly exist based on the original
@@ -948,11 +994,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     // Add all the edges. Don't worry about duplicating existing edges because
     // checking whether they're necessary now would be about as expensive as
     // discarding them later.
-    // TODO: We will be able to assume this once we update the descriptor
-    // validation rules.
-    if (HeapType::isSubType(*sub, *super)) {
-      noteSubtype(*sub, *super);
-    }
+    noteSubtype(*sub, *super);
     noteSubtype(*subDesc, *superDesc);
     noteDescriptor(*super, *superDesc);
     noteDescriptor(*sub, *subDesc);
