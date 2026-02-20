@@ -4266,17 +4266,33 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     !getModule() || getModule()->features.hasSharedEverything(),
     curr,
     "struct.wait requires shared-everything [--enable-shared-everything]");
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  shouldBeTrue(
+    curr->ref->type.isRef(), curr, "struct.wait ref must be a reference");
   shouldBeSubType(
-    curr->waitqueue->type,
-    Type(HeapType(
-           Struct(std::vector{Field(Field::PackedType::WaitQueue, Immutable)})),
-         NonNullable),
+    curr->ref->type,
+    Type(curr->structType, Nullable),
     curr,
-    "struct.wait waitqueue must be a subtype of (struct (field waitqueue))");
-  shouldBeEqual(curr->value->type,
+    "struct.wait ref must be a subtype of the specified struct type");
+  shouldBeTrue(curr->structType.isStruct(),
+               curr,
+               "struct.wait must be parameterized by a struct type");
+  if (curr->structType.isStruct() &&
+      curr->index < curr->structType.getStruct().fields.size()) {
+    shouldBeTrue(curr->structType.getStruct().fields[curr->index].packedType ==
+                   Field::WaitQueue,
+                 curr,
+                 "struct.wait struct field must be a waitqueue");
+  } else if (curr->structType.isStruct()) {
+    shouldBeTrue(false, curr, "struct.wait struct field index out of bounds");
+  }
+
+  shouldBeEqual(curr->expected->type,
                 Type(Type::BasicType::i32),
                 curr,
-                "struct.wait value must be an i32");
+                "struct.wait expected must be an i32");
   shouldBeEqual(curr->timeout->type,
                 Type(Type::BasicType::i64),
                 curr,

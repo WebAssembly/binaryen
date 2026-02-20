@@ -2664,7 +2664,13 @@ struct PrintExpressionContents
     curr->tag.print(o);
   }
 
-  void visitStructWait(StructWait* curr) { printMedium(o, "struct.wait"); }
+  void visitStructWait(StructWait* curr) {
+    printMedium(o, "struct.wait");
+    o << ' ';
+    printHeapTypeName(curr->structType);
+    o << ' ';
+    o << curr->index;
+  }
 };
 
 void PrintSExpression::setModule(Module* module) {
