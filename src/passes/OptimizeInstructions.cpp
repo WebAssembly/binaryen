@@ -2823,7 +2823,7 @@ private:
 
     // To be equal, they must also be known to return the same result
     // deterministically.
-    return !Properties::isGenerative(left);
+    return !Properties::isGenerative(left, *getModule());
   }
 
   // Similar to areConsecutiveInputsEqual() but also checks if we can remove
