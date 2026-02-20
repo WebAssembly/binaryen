@@ -16141,17 +16141,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (call $send-i32
-  ;; CHECK-NEXT:      (i32.const 1337)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (local.get $param)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (call $send-i32
+  ;; CHECK-NEXT:     (i32.const 1337)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -16179,7 +16175,9 @@
         )
       )
     )
-    ;; Side effect on the ifTrue - same outcome, we cannot optimize yet.
+    ;; Side effect on the ifTrue - we handle this case, as we can easily see
+    ;; that those effects are not a problem. We keep those effects around, of
+    ;; course.
     (drop
       (select
         (block (result i32)
