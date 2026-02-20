@@ -173,6 +173,7 @@
   (func $test-ref.eq
     ;; These calls are identical, since the second returns the same. This
     ;; results in 1.
+    ;; XXX wrong - first call might modify global
     (drop
       (ref.eq
         (call $idempotent
