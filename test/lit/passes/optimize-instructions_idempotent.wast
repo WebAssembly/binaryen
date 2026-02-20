@@ -14,7 +14,7 @@
   ;; CHECK-NEXT: )
   (@binaryen.idempotent)
   (func $idempotent (param $x f32) (result f32)
-    ;; This function is idempotent: same inputs, same outputs. TODO: document that part
+    ;; This function is idempotent: same inputs, same outputs.
     (local.get $x)
   )
 
@@ -156,7 +156,7 @@
   ;; CHECK-NEXT: )
   (@binaryen.idempotent)
   (func $idempotent (param $x eqref) (result eqref)
-    ;; This function is idempotent: same inputs, same outputs. TODO: document that part
+    ;; This function is idempotent: same inputs, same outputs.
     (local.get $x)
   )
 

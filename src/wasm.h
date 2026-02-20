@@ -2259,8 +2259,9 @@ struct CodeAnnotation {
   bool jsCalled = false;
 
   // A function that may do something on the first call, but all subsequent
-  // calls can be assumed to have no effects. If a value is returned, it will be
-  // the same value as returned earlier.
+  // calls with the same parameters can be assumed to have no effects. If a
+  // value is returned, it will be the same value as returned earlier (for the
+  // same parameters).
   bool idempotent = false;
 
   bool operator==(const CodeAnnotation& other) const {
