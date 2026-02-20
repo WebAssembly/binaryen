@@ -515,13 +515,11 @@ void DAE2::analyzeModule() {
     }
   }
 
-  // Functions passed to configureAll will be called externally. Mark their
-  // parameters as used. configureAll is only available when custom
-  // descriptors is enabled.
-  if (wasm->features.hasCustomDescriptors()) {
-    for (auto name : Intrinsics(*wasm).getConfigureAllFunctions()) {
-      markParamsUsed(name);
-    }
+  // JS-called functions will be called externally, so we cannot optimize out
+  // their parameters.
+  // TODO: Consider optimizing out a suffix of their parameters.
+  for (auto name : Intrinsics(*wasm).getJSCalledFunctions()) {
+    markParamsUsed(name);
   }
 
   // If we're not optimizing referenced functions, mark all their parameters as
