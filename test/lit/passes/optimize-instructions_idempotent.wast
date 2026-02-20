@@ -4,34 +4,103 @@
 
 ;; Idempotent-marked functions can be assumed to always return the same value.
 
-;; RUN: wasm-opt %s --optimize-instructions -all -S -o - | filecheck %s --check-prefix=NO_FO
-
 (module
+  ;; CHECK:      (import "a" "b" (func $import (type $1) (result f32)))
+  (import "a" "b" (func $import (result f32)))
+
+  ;; CHECK:      (@binaryen.idempotent)
+  ;; CHECK-NEXT: (func $idempotent (type $0) (param $x f32) (result f32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
   (@binaryen.idempotent)
   (func $idempotent (param $x f32) (result f32)
-    ;; This function is idempotent.
-    (f32.const 13.37)
-  )
-
-  (func $potent (param $x f32) (result f32)
-    ;; This function is not idempotent
+    ;; This function is idempotent: same inputs, same outputs. TODO: document that part
     (local.get $x)
   )
 
+  ;; CHECK:      (func $potent (type $0) (param $x f32) (result f32)
+  ;; CHECK-NEXT:  (call $import)
+  ;; CHECK-NEXT: )
+  (func $potent (param $x f32) (result f32)
+    ;; This function is not idempotent - anything might happen here.
+    (call $import)
+  )
+
+  ;; CHECK:      (func $test-abs (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (f32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (f32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.mul
+  ;; CHECK-NEXT:     (call $potent
+  ;; CHECK-NEXT:      (f32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $potent
+  ;; CHECK-NEXT:      (f32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.mul
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (f32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (f32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test-abs
     ;; These calls are identical, since the second returns the same. We can
     ;; remove the abs, as multiplying a value by itself is non-negative anyhow.
     (drop
       (f32.abs
-        (call $idempotent)
-        (call $idempotent)
+        (f32.mul
+          (call $idempotent
+            (f32.const 10)
+          )
+          (call $idempotent
+            (f32.const 10)
+          )
+        )
       )
     )
-    ;; But here we can do nothing
+    ;; But here we can do nothing, as we lack idempotency.
     (drop
       (f32.abs
-        (call $potent)
-        (call $potent)
+        (f32.mul
+          (call $potent
+            (f32.const 10)
+          )
+          (call $potent
+            (f32.const 10)
+          )
+        )
+      )
+    )
+    ;; Here we fail as well, as while we have idempotency, the params differ.
+    (drop
+      (f32.abs
+        (f32.mul
+          (call $idempotent
+            (f32.const 10)
+          )
+          (call $idempotent
+            (f32.const 20)
+          )
+        )
       )
     )
   )
