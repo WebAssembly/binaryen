@@ -2847,6 +2847,13 @@ Result<> makeWaitQueueWait(Ctx& ctx,
   return ctx.makeWaitQueueWait(pos, annotations);
 }
 
+template<typename Ctx>
+Result<> makeWaitQueueNotify(Ctx& ctx,
+                             Index pos,
+                             const std::vector<Annotation>& annotations) {
+  return ctx.makeWaitQueueNotify(pos, annotations);
+}
+
 // =======
 // Modules
 // =======

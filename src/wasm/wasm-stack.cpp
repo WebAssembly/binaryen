@@ -2916,6 +2916,11 @@ void BinaryInstWriter::visitWaitQueueWait(WaitQueueWait* curr) {
     << static_cast<int8_t>(BinaryConsts::WaitQueueWait);
 }
 
+void BinaryInstWriter::visitWaitQueueNotify(WaitQueueNotify* curr) {
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << static_cast<int8_t>(BinaryConsts::WaitQueueNotify);
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

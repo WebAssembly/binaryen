@@ -449,6 +449,9 @@ struct CodeScanner : PostWalker<CodeScanner> {
   void visitWaitQueueWait(WaitQueueWait* curr) {
     info.note(curr->waitqueue->type);
   }
+  void visitWaitQueueNotify(WaitQueueNotify* curr) {
+    info.note(curr->waitqueue->type);
+  }
   void visitBlock(Block* curr) {
     info.noteControlFlow(Signature(Type::none, curr->type));
   }

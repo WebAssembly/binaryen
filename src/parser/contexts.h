@@ -960,6 +960,9 @@ struct NullInstrParserCtx {
   Result<> makeWaitQueueWait(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
+  Result<> makeWaitQueueNotify(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
 };
 
 struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
@@ -2955,6 +2958,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   Result<> makeWaitQueueWait(Index pos,
                              const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeWaitQueueWait());
+  }
+
+  Result<> makeWaitQueueNotify(Index pos,
+                               const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeWaitQueueNotify());
   }
 };
 

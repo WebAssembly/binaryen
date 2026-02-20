@@ -2019,4 +2019,6 @@ void Module::clearDebugInfo() {
 
 void WaitQueueWait::finalize() { type = Type::i32; }
 
+void WaitQueueNotify::finalize() { type = Type::i32; }
+
 } // namespace wasm

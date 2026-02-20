@@ -570,6 +570,7 @@ public:
   void visitResumeThrow(ResumeThrow* curr);
   void visitStackSwitch(StackSwitch* curr);
   void visitWaitQueueWait(WaitQueueWait* curr);
+  void visitWaitQueueNotify(WaitQueueNotify* curr);
 
   void visitFunction(Function* curr);
 
@@ -4281,6 +4282,24 @@ void FunctionValidator::visitWaitQueueWait(WaitQueueWait* curr) {
                 Type(Type::BasicType::i64),
                 curr,
                 "waitqueue.wait timeout must be an i64");
+}
+
+void FunctionValidator::visitWaitQueueNotify(WaitQueueNotify* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "waitqueue.notify requires shared-everything [--enable-shared-everything]");
+  shouldBeSubType(curr->waitqueue->type,
+                  Type(HeapType(Struct(std::vector{
+                         Field(Field::PackedType::WaitQueue, Immutable)})),
+                       NonNullable),
+                  curr,
+                  "waitqueue.notify waitqueue must be a subtype of (struct "
+                  "(field waitqueue))");
+  shouldBeEqual(curr->count->type,
+                Type(Type::BasicType::i32),
+                curr,
+                "waitqueue.notify count must be an i32");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

@@ -761,6 +761,7 @@ public:
     // Id for the stack switching `switch`
     StackSwitchId,
     WaitQueueWaitId,
+    WaitQueueNotifyId,
     NumExpressionIds
   };
   Id _id;
@@ -2164,6 +2165,18 @@ public:
   Expression* waitqueue = nullptr;
   Expression* value = nullptr;
   Expression* timeout = nullptr;
+
+  void finalize();
+};
+
+class WaitQueueNotify
+  : public SpecificExpression<Expression::WaitQueueNotifyId> {
+public:
+  WaitQueueNotify() = default;
+  WaitQueueNotify(MixedArena& allocator) : WaitQueueNotify() {}
+
+  Expression* waitqueue = nullptr;
+  Expression* count = nullptr;
 
   void finalize();
 };

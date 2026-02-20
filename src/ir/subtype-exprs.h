@@ -604,6 +604,12 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                                Field::PackedType::WaitQueue, Immutable)})),
                              NonNullable));
   }
+  void visitWaitQueueNotify(WaitQueueNotify* curr) {
+    self()->noteSubtype(curr->waitqueue,
+                        Type(HeapType(Struct(std::vector{Field(
+                               Field::PackedType::WaitQueue, Immutable)})),
+                             NonNullable));
+  }
 };
 
 } // namespace wasm

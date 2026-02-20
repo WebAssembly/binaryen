@@ -2935,6 +2935,9 @@ public:
   Flow visitWaitQueueWait(WaitQueueWait* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitWaitQueueNotify(WaitQueueNotify* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
 
   void trap(std::string_view why) override { throw NonconstantException(); }
 
@@ -4922,6 +4925,9 @@ public:
   Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitWaitQueueWait(WaitQueueWait* curr) {
+    WASM_UNREACHABLE("waitqueue not implemented");
+  }
+  Flow visitWaitQueueNotify(WaitQueueNotify* curr) {
     WASM_UNREACHABLE("waitqueue not implemented");
   }
 

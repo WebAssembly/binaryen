@@ -1172,6 +1172,18 @@ private:
         parent.readsMutableStruct = true;
       }
     }
+
+    void visitWaitQueueNotify(WaitQueueNotify* curr) {
+      parent.isAtomic = true;
+
+      // field 0 must exist and be a packed waitqueue if this is valid Wasm.
+      if (curr->waitqueue->type.getHeapType()
+            .getStruct()
+            .fields.at(0)
+            .mutable_ == Mutable) {
+        parent.readsMutableStruct = true;
+      }
+    }
   };
 
 public:

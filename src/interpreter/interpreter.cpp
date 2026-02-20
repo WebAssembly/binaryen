@@ -284,6 +284,7 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitResumeThrow(ResumeThrow* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitStackSwitch(StackSwitch* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitWaitQueueWait(WaitQueueWait* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitWaitQueueNotify(WaitQueueNotify* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 } // anonymous namespace

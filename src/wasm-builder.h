@@ -1374,6 +1374,15 @@ public:
     return ret;
   }
 
+  WaitQueueNotify* makeWaitQueueNotify(Expression* waitqueue,
+                                       Expression* count) {
+    auto* ret = wasm.allocator.alloc<WaitQueueNotify>();
+    ret->waitqueue = waitqueue;
+    ret->count = count;
+    ret->finalize();
+    return ret;
+  }
+
   // Additional helpers
 
   Drop* makeDrop(Expression* value) {

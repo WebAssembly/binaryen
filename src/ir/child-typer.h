@@ -1366,6 +1366,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->value, Type(Type::BasicType::i32));
     note(&curr->timeout, Type(Type::BasicType::i64));
   }
+
+  void visitWaitQueueNotify(WaitQueueNotify* curr) {
+    note(&curr->waitqueue,
+         Type(HeapType(Struct(std::vector{
+                Field(Field::PackedType::WaitQueue, Mutability::Immutable)})),
+              NonNullable));
+    note(&curr->count, Type(Type::BasicType::i32));
+  }
 };
 
 } // namespace wasm

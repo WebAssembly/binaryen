@@ -668,6 +668,12 @@ public:
     ConstraintCollector{builder, children}.visitWaitQueueWait(curr);
     return popConstrainedChildren(children);
   }
+
+  Result<> visitWaitQueueNotify(WaitQueueNotify* curr) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitWaitQueueNotify(curr);
+    return popConstrainedChildren(children);
+  }
 };
 
 Result<> IRBuilder::visit(Expression* curr) {
@@ -2665,6 +2671,13 @@ Result<> IRBuilder::makeWaitQueueWait() {
   WaitQueueWait curr(wasm.allocator);
   CHECK_ERR(ChildPopper{*this}.visitWaitQueueWait(&curr));
   push(builder.makeWaitQueueWait(curr.waitqueue, curr.value, curr.timeout));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeWaitQueueNotify() {
+  WaitQueueNotify curr(wasm.allocator);
+  CHECK_ERR(ChildPopper{*this}.visitWaitQueueNotify(&curr));
+  push(builder.makeWaitQueueNotify(curr.waitqueue, curr.count));
   return Ok{};
 }
 
