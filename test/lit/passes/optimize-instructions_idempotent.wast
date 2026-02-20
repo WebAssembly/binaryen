@@ -143,13 +143,18 @@
 
   ;; CHECK:      (func $test-ref.eq (type $3)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (call $idempotent
-  ;; CHECK-NEXT:     (global.get $g1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (global.get $g1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $idempotent
-  ;; CHECK-NEXT:     (global.get $g1)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (global.get $g1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -173,13 +178,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (call $idempotent
-  ;; CHECK-NEXT:     (global.get $g-mut)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (global.get $g-mut)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $idempotent
-  ;; CHECK-NEXT:     (global.get $g-mut)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (global.get $g-mut)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
