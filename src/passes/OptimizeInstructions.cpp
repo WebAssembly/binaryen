@@ -2866,7 +2866,9 @@ private:
       // If these are a pair of idempotent calls, then the second has no
       // effects. (We didn't check if left is a call, but the equality check
       // below does that.)
-      if (Intrinsics(*getModule()).getCallAnnotations(call, getFunction()).idempotent) {
+      if (Intrinsics(*getModule())
+            .getCallAnnotations(call, getFunction())
+            .idempotent) {
         rightMightHaveEffects = false;
       }
     }
