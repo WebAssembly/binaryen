@@ -503,6 +503,11 @@
   ;; supertypes, we remain free to optimize out descriptors on private subtypes
   ;; as long as the public supertypes do not have them, even if those
   ;; descriptors might configure prototypes.
+  ;;
+  ;; We might reasonably have chosen to consider public types and all their
+  ;; subtypes JS-exposed instead, like we do for types returned by JS-called
+  ;; functions. This test documents that we have not chosen this policy.
+
   ;; CHECK:      (global $public (ref null $public-super) (ref.null none))
   (global $public (ref null $public-super) (ref.null none))
 
