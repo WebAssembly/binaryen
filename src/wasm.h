@@ -2447,12 +2447,14 @@ public:
 class Table : public Importable {
 public:
   static const Address::address32_t kPageSize = 1;
-  static const Index kUnlimitedSize = Index(-1);
-  // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
-  static const Index kMaxSize = Index(-1);
+  static const Address::address64_t kUnlimitedSize = Address::address64_t(-1);
+
+  // The maximum table size is limited by a 32/64 bit index
+  static const Address::address32_t kMaxSize32 = Address::address32_t(-1);
+  static const Address::address64_t kMaxSize64 = Address::address64_t(-1);
 
   Address initial = 0;
-  Address max = kMaxSize;
+  Address max = kUnlimitedSize;
   Type addressType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
 
@@ -2461,7 +2463,7 @@ public:
   void clear() {
     name = "";
     initial = 0;
-    max = kMaxSize;
+    max = kUnlimitedSize;
   }
 };
 
