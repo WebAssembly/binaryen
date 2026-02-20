@@ -285,7 +285,7 @@ public:
     return makeResumeThrow(ct, Name(), tags, labels);
   }
   Result<> makeStackSwitch(HeapType ct, Name tag);
-  Result<> makeWaitQueueWait();
+  Result<> makeStructWait(HeapType type, Index index);
 
   // Private functions that must be public for technical reasons.
   Result<> visitExpression(Expression*);

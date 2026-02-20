@@ -118,9 +118,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return AtomicCost + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->timeout);
   }
-  CostType visitWaitQueueWait(WaitQueueWait* curr) {
-    return AtomicCost + visit(curr->waitqueue) + visit(curr->value) +
-           visit(curr->timeout);
+  CostType visitStructWait(StructWait* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->expected) + visit(curr->timeout);
   }
   CostType visitAtomicNotify(AtomicNotify* curr) {
     return AtomicCost + visit(curr->ptr) + visit(curr->notifyCount);

@@ -598,11 +598,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                     .type.getSignature();
     self()->noteSubtype(currResult, retSig.results);
   }
-  void visitWaitQueueWait(WaitQueueWait* curr) {
-    self()->noteSubtype(curr->waitqueue,
-                        Type(HeapType(Struct(std::vector{Field(
-                               Field::PackedType::WaitQueue, Immutable)})),
-                             NonNullable));
+  void visitStructWait(StructWait* curr) {
+    // todo?
   }
 };
 

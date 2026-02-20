@@ -1401,7 +1401,7 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitWaitQueueWait(WaitQueueWait* curr) { addRoot(curr); }
+  void visitStructWait(StructWait* curr) { addRoot(curr); }
 
   void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.

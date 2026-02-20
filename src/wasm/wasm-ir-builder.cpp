@@ -663,9 +663,9 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<> visitWaitQueueWait(WaitQueueWait* curr) {
+  Result<> visitStructWait(StructWait* curr) {
     std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitWaitQueueWait(curr);
+    ConstraintCollector{builder, children}.visitStructWait(curr);
     return popConstrainedChildren(children);
   }
 };
@@ -2661,10 +2661,13 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeWaitQueueWait() {
-  WaitQueueWait curr(wasm.allocator);
-  CHECK_ERR(ChildPopper{*this}.visitWaitQueueWait(&curr));
-  push(builder.makeWaitQueueWait(curr.waitqueue, curr.value, curr.timeout));
+Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
+  StructWait curr(wasm.allocator);
+  curr.structType = type;
+  curr.index = index;
+  CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr));
+  push(builder.makeStructWait(
+    curr.structType, curr.index, curr.ref, curr.expected, curr.timeout));
   return Ok{};
 }
 

@@ -2841,10 +2841,14 @@ Result<> makeStackSwitch(Ctx& ctx,
 }
 
 template<typename Ctx>
-Result<> makeWaitQueueWait(Ctx& ctx,
-                           Index pos,
-                           const std::vector<Annotation>& annotations) {
-  return ctx.makeWaitQueueWait(pos, annotations);
+Result<> makeStructWait(Ctx& ctx,
+                        Index pos,
+                        const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructWait(pos, annotations, *type, *field);
 }
 
 // =======

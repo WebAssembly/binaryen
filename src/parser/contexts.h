@@ -957,7 +957,9 @@ struct NullInstrParserCtx {
     return Ok{};
   }
 
-  Result<> makeWaitQueueWait(Index, const std::vector<Annotation>&) {
+  template<typename HeapTypeT>
+  Result<>
+  makeStructWait(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
     return Ok{};
   }
 };
@@ -2952,9 +2954,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return withLoc(pos, irBuilder.makeStackSwitch(type, tag));
   }
 
-  Result<> makeWaitQueueWait(Index pos,
-                             const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeWaitQueueWait());
+  Result<> makeStructWait(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          HeapType type,
+                          Index field) {
+    return withLoc(pos, irBuilder.makeStructWait(type, field));
   }
 };
 

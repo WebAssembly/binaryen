@@ -1363,12 +1363,16 @@ public:
     return ret;
   }
 
-  WaitQueueWait* makeWaitQueueWait(Expression* waitqueue,
-                                   Expression* value,
-                                   Expression* timeout) {
-    auto* ret = wasm.allocator.alloc<WaitQueueWait>();
-    ret->waitqueue = waitqueue;
-    ret->value = value;
+  StructWait* makeStructWait(HeapType structType,
+                             Index index,
+                             Expression* ref,
+                             Expression* expected,
+                             Expression* timeout) {
+    auto* ret = wasm.allocator.alloc<StructWait>();
+    ret->structType = structType;
+    ret->index = index;
+    ret->ref = ref;
+    ret->expected = expected;
     ret->timeout = timeout;
     ret->finalize();
     return ret;

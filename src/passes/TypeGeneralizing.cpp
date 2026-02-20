@@ -899,7 +899,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
   void visitResumeThrow(ResumeThrow* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStackSwitch(StackSwitch* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitWaitQueueWait(WaitQueueWait* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {

@@ -10,13 +10,13 @@
   (global $g (ref $t) (struct.new $t (i32.const 0)))
 
   ;; RTRIP:      (func $f (type $1) (result i32)
-  ;; RTRIP-NEXT:  (waitqueue.wait
+  ;; RTRIP-NEXT:  (struct.wait $t 0
   ;; RTRIP-NEXT:   (global.get $g)
   ;; RTRIP-NEXT:   (i32.const 0)
   ;; RTRIP-NEXT:   (i64.const 0)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   (func $f (result i32)
-    (waitqueue.wait (global.get $g) (i32.const 0) (i64.const 0))
+    (struct.wait $t 0 (global.get $g) (i32.const 0) (i64.const 0))
   )
 )

@@ -376,7 +376,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
-  void visitWaitQueueWait(WaitQueueWait* curr) {
+  void visitStructWait(StructWait* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
@@ -2664,9 +2664,7 @@ struct PrintExpressionContents
     curr->tag.print(o);
   }
 
-  void visitWaitQueueWait(WaitQueueWait* curr) {
-    printMedium(o, "waitqueue.wait");
-  }
+  void visitStructWait(StructWait* curr) { printMedium(o, "struct.wait"); }
 };
 
 void PrintSExpression::setModule(Module* module) {

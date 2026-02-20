@@ -2464,7 +2464,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitWaitQueueWait(WaitQueueWait* curr) {
+    Ref visitStructWait(StructWait* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

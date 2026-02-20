@@ -569,7 +569,7 @@ public:
   void visitResume(Resume* curr);
   void visitResumeThrow(ResumeThrow* curr);
   void visitStackSwitch(StackSwitch* curr);
-  void visitWaitQueueWait(WaitQueueWait* curr);
+  void visitStructWait(StructWait* curr);
 
   void visitFunction(Function* curr);
 
@@ -4261,26 +4261,26 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
     "switch must be annotated with a continuation type");
 }
 
-void FunctionValidator::visitWaitQueueWait(WaitQueueWait* curr) {
+void FunctionValidator::visitStructWait(StructWait* curr) {
   shouldBeTrue(
     !getModule() || getModule()->features.hasSharedEverything(),
     curr,
-    "waitqueue.wait requires shared-everything [--enable-shared-everything]");
+    "struct.wait requires shared-everything [--enable-shared-everything]");
   shouldBeSubType(
     curr->waitqueue->type,
     Type(HeapType(
            Struct(std::vector{Field(Field::PackedType::WaitQueue, Immutable)})),
          NonNullable),
     curr,
-    "waitqueue.wait waitqueue must be a subtype of (struct (field waitqueue))");
+    "struct.wait waitqueue must be a subtype of (struct (field waitqueue))");
   shouldBeEqual(curr->value->type,
                 Type(Type::BasicType::i32),
                 curr,
-                "waitqueue.wait value must be an i32");
+                "struct.wait value must be an i32");
   shouldBeEqual(curr->timeout->type,
                 Type(Type::BasicType::i64),
                 curr,
-                "waitqueue.wait timeout must be an i64");
+                "struct.wait timeout must be an i64");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

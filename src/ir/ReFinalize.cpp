@@ -202,7 +202,7 @@ void ReFinalize::visitResumeThrow(ResumeThrow* curr) {
   }
 }
 void ReFinalize::visitStackSwitch(StackSwitch* curr) { curr->finalize(); }
-void ReFinalize::visitWaitQueueWait(WaitQueueWait* curr) { curr->finalize(); }
+void ReFinalize::visitStructWait(StructWait* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }

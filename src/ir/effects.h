@@ -1160,15 +1160,18 @@ private:
       }
     }
 
-    void visitWaitQueueWait(WaitQueueWait* curr) {
+    void visitStructWait(StructWait* curr) {
       parent.isAtomic = true;
       parent.mayNotReturn = true;
+      parent.implicitTrap = true;
 
-      // field 0 must exist and be a packed waitqueue if this is valid Wasm.
-      if (curr->waitqueue->type.getHeapType()
-            .getStruct()
-            .fields.at(0)
-            .mutable_ == Mutable) {
+      // field must exist and be a packed waitqueue if this is valid Wasm.
+      if (curr->type.isStruct() &&
+          curr->index < curr->type.getHeapType().getStruct().fields.size() &&
+          curr->type.getHeapType()
+              .getStruct()
+              .fields.at(curr->index)
+              .mutable_ == Mutable) {
         parent.readsMutableStruct = true;
       }
     }

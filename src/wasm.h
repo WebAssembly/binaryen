@@ -760,7 +760,7 @@ public:
     ResumeThrowId,
     // Id for the stack switching `switch`
     StackSwitchId,
-    WaitQueueWaitId,
+    StructWaitId,
     NumExpressionIds
   };
   Id _id;
@@ -2156,14 +2156,16 @@ public:
   void finalize();
 };
 
-class WaitQueueWait : public SpecificExpression<Expression::WaitQueueWaitId> {
+class StructWait : public SpecificExpression<Expression::StructWaitId> {
 public:
-  WaitQueueWait() = default;
-  WaitQueueWait(MixedArena& allocator) : WaitQueueWait() {}
+  StructWait() = default;
+  StructWait(MixedArena& allocator) : StructWait() {}
 
-  Expression* waitqueue = nullptr;
-  Expression* value = nullptr;
+  Expression* ref = nullptr;
+  Expression* expected = nullptr;
   Expression* timeout = nullptr;
+  HeapType structType;
+  Index index;
 
   void finalize();
 };

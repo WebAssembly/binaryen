@@ -2911,9 +2911,11 @@ void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
   o << U32LEB(parent.getTagIndex(curr->tag));
 }
 
-void BinaryInstWriter::visitWaitQueueWait(WaitQueueWait* curr) {
+void BinaryInstWriter::visitStructWait(StructWait* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << static_cast<int8_t>(BinaryConsts::WaitQueueWait);
+    << U32LEB(BinaryConsts::StructWait);
+  parent.writeIndexedHeapType(curr->structType);
+  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {

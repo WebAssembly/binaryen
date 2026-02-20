@@ -1,9 +1,10 @@
 (assert_invalid
   (module
+    (type $t (struct (field i32)))
     (func (param $expected i32) (param $timeout i64) (result i32)
-      (waitqueue.wait (i32.const 0) (local.get $expected) (local.get $timeout))
+      (struct.wait $t 0 (ref.null $t) (local.get $expected) (local.get $timeout))
     )
-  ) "waitqueue.wait waitqueue must be a subtype of (struct (field waitqueue))"
+  ) "struct.wait struct field must be a waitqueue"
 )
 
 (assert_invalid
@@ -11,9 +12,9 @@
     (type $t (struct (field waitqueue)))
     (global $g (ref $t) (struct.new $t (i32.const 0)))
     (func (param $expected i32) (param $timeout i64) (result i32)
-      (waitqueue.wait (global.get $g) (i64.const 0) (local.get $timeout))
+      (struct.wait $t 0 (global.get $g) (i64.const 0) (local.get $timeout))
     )
-  ) "waitqueue.wait value must be an i32"
+  ) "struct.wait expected must be an i32"
 )
 
 (assert_invalid
@@ -21,9 +22,9 @@
     (type $t (struct (field waitqueue)))
     (global $g (ref $t) (struct.new $t (i32.const 0)))
     (func (param $expected i32) (param $timeout i64) (result i32)
-      (waitqueue.wait (global.get $g) (local.get $expected) (i32.const 0))
+      (struct.wait $t 0 (global.get $g) (local.get $expected) (i32.const 0))
     )
-  ) "waitqueue.wait timeout must be an i64"
+  ) "struct.wait timeout must be an i64"
 )
 
 (module
@@ -32,6 +33,6 @@
   (global $g (ref $t) (struct.new $t (i32.const 0)))
 
   (func (export "waitqueue.wait") (param $expected i32) (param $timeout i64) (result i32)
-    (waitqueue.wait (global.get $g) (local.get $expected) (local.get $timeout))
+    (struct.wait $t 0 (global.get $g) (local.get $expected) (local.get $timeout))
   )
 )

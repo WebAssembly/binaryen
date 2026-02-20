@@ -1358,12 +1358,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->cont, Type(*ct, Nullable));
   }
 
-  void visitWaitQueueWait(WaitQueueWait* curr) {
-    note(&curr->waitqueue,
-         Type(HeapType(Struct(std::vector{
-                Field(Field::PackedType::WaitQueue, Mutability::Immutable)})),
-              NonNullable));
-    note(&curr->value, Type(Type::BasicType::i32));
+  void visitStructWait(StructWait* curr,
+                       std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      if (!curr->type.isRef()) {
+        self().noteUnknown();
+        return;
+      }
+      ht = curr->type.getHeapType();
+    }
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->expected, Type(Type::BasicType::i32));
     note(&curr->timeout, Type(Type::BasicType::i64));
   }
 };
