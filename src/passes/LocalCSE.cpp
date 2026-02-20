@@ -398,7 +398,7 @@ struct Scanner
     // We also cannot optimize away something that is intrinsically
     // nondeterministic: even if it has no side effects, if it may return a
     // different result each time, and then we cannot optimize away repeats.
-    if (Properties::isShallowlyGenerative(curr, *getModule())) {
+    if (Properties::isShallowlyGenerative(curr, getFunction(), *getModule())) {
       return false;
     }
 

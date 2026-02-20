@@ -28,10 +28,7 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitCall(Call* curr) {
     // If the called function is idempotent, then it does not generate new
     // values on each call.
-    // TODO: We could also check for an annotation on the call instruction
-    //       itself, if we passed the function to isGenerative*
-    auto* target = getModule()->getFunction(curr->target);
-    if (Intrinsics::getAnnotations(target).idempotent) {
+    if (Intrinsics(*getModule()).getCallAnnotations(curr, getFunction()).idempotent) {
       return;
     }
     // TODO: We could look at the called function's contents to see if it is
@@ -52,16 +49,18 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
 
 } // anonymous namespace
 
-bool isGenerative(Expression* curr, Module& wasm) {
+bool isGenerative(Expression* curr, Function* func, Module& wasm) {
   GenerativityScanner scanner;
+  scanner.setFunction(func);
   scanner.setModule(&wasm);
   scanner.walk(curr);
   return scanner.generative;
 }
 
 // As above, but only checks |curr| and not children.
-bool isShallowlyGenerative(Expression* curr, Module& wasm) {
+bool isShallowlyGenerative(Expression* curr, Function* func, Module& wasm) {
   GenerativityScanner scanner;
+  scanner.setFunction(func);
   scanner.setModule(&wasm);
   scanner.visit(curr);
   return scanner.generative;

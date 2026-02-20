@@ -116,7 +116,8 @@ unfuzzable = [
     'vacuum-removable-if-unused.wast',
     'vacuum-removable-if-unused-func.wast',
     'strip-toolchain-annotations-func.wast',
-    XXX
+    'idempotent.wast',
+    'optimize-instructions_idempotent.wast',
     # Not fully implemented.
     'waitqueue.wast',
 ]
