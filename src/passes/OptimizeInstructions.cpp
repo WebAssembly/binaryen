@@ -2850,7 +2850,7 @@ private:
   // always fold them). This is similar to areConsecutiveInputsEqualAndRemovable
   // but also identifies reads from the same local variable when the first of
   // them is a "tee" operation and the second is a get (in which case, it is
-  // fine to remove the get, but not the tee).
+  // fine to remove the get, but not the tee), and similar things.
   //
   // The inputs here must be consecutive, but it is also ok to have code with no
   // side effects at all in the middle. For example, a Const in between is ok.
@@ -2861,6 +2861,8 @@ private:
     if (areMatchingTeeAndGet(left, right)) {
       return true;
     }
+
+    // TODO
 
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
