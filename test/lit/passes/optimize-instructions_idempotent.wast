@@ -50,16 +50,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.abs
-  ;; CHECK-NEXT:    (f32.mul
-  ;; CHECK-NEXT:     (@binaryen.idempotent)
-  ;; CHECK-NEXT:     (call $potent
-  ;; CHECK-NEXT:      (f32.const 10)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (@binaryen.idempotent)
-  ;; CHECK-NEXT:     (call $potent
-  ;; CHECK-NEXT:      (f32.const 10)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (@binaryen.idempotent)
+  ;; CHECK-NEXT:    (call $potent
+  ;; CHECK-NEXT:     (f32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (@binaryen.idempotent)
+  ;; CHECK-NEXT:    (call $potent
+  ;; CHECK-NEXT:     (f32.const 10)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
