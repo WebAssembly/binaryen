@@ -2891,7 +2891,8 @@ private:
         if (childEffects.hasUnremovableSideEffects()) {
           return false;
         }
-        ShallowEffectAnalyzer parentEffects(getPassOptions(), *getModule(), call);
+        ShallowEffectAnalyzer parentEffects(
+          getPassOptions(), *getModule(), call);
         if (parentEffects.invalidates(childEffects)) {
           return false;
         }

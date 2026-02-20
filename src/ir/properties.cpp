@@ -28,7 +28,9 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitCall(Call* curr) {
     // If the called function is idempotent, then it does not generate new
     // values on each call.
-    if (Intrinsics(*getModule()).getCallAnnotations(curr, getFunction()).idempotent) {
+    if (Intrinsics(*getModule())
+          .getCallAnnotations(curr, getFunction())
+          .idempotent) {
       return;
     }
     // TODO: We could look at the called function's contents to see if it is
