@@ -2826,31 +2826,9 @@ private:
     return !Properties::isGenerative(left);
   }
 
-  // Similar to areConsecutiveInputsEqual() but also checks if we can remove
-  // them (but we do not assume the caller will always remove them).
-  bool areConsecutiveInputsEqualAndRemovable(Expression* left,
-                                             Expression* right) {
-    // First, check for side effects. If there are any, then we can't even
-    // assume things like local.get's of the same index being identical. (It is
-    // also ok to have removable side effects here, see the function
-    // description.)
-    auto& passOptions = getPassOptions();
-    if (EffectAnalyzer(passOptions, *getModule(), left)
-          .hasUnremovableSideEffects() ||
-        EffectAnalyzer(passOptions, *getModule(), right)
-          .hasUnremovableSideEffects()) {
-      return false;
-    }
-
-    return areConsecutiveInputsEqual(left, right);
-  }
-
   // Check if two consecutive inputs to an instruction are equal and can also be
   // folded into the first of the two (but we do not assume the caller will
-  // always fold them). This is similar to areConsecutiveInputsEqualAndRemovable
-  // but also identifies reads from the same local variable when the first of
-  // them is a "tee" operation and the second is a get (in which case, it is
-  // fine to remove the get, but not the tee).
+  // always fold them).
   //
   // The inputs here must be consecutive, but it is also ok to have code with no
   // side effects at all in the middle. For example, a Const in between is ok.
@@ -2862,9 +2840,13 @@ private:
       return true;
     }
 
-    // stronger property than we need - we can not only fold
-    // them but remove them entirely.
-    return areConsecutiveInputsEqualAndRemovable(left, right);
+    // To fold the right side into the left, it must have no effects.
+    if (EffectAnalyzer(getPassOptions(), *getModule(), right)
+          .hasUnremovableSideEffects()) {
+      return false;
+    }
+
+    return areConsecutiveInputsEqual(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
