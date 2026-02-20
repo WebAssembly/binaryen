@@ -64,7 +64,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
-    random(std::move(input), wasm.features),
+    random(std::move(input), wasm.features), intrinsics(wasm),
     loggableTypes(getLoggableTypes(wasm.features)),
     atomicMemoryOrders(getMemoryOrders(wasm.features)),
 
@@ -1000,25 +1000,6 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     return;
   }
 
-  if (wasm.features.hasReferenceTypes() && closedWorld) {
-    // In closed world mode we must *remove* the call-ref* imports, if they
-    // exist in the initial content. These are not valid to call in closed-world
-    // mode as they call function references. (Another solution here would be to
-    // make closed-world issue validation errors on these imports, but that
-    // would require changes to the general-purpose validator.)
-    for (auto& func : wasm.functions) {
-      if (func->imported() && func->module == "fuzzing-support" &&
-          func->base.startsWith("call-ref")) {
-        // Make it non-imported, and with a simple body.
-        func->module = func->base = Name();
-        func->type = func->type.with(Exact);
-        auto results = func->getResults();
-        func->body =
-          results.isConcrete() ? makeConst(results) : makeNop(Type::none);
-      }
-    }
-  }
-
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
   // its own exports, and to care about the indexes of the exports).
@@ -1058,9 +1039,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     wasm.addFunction(std::move(func));
   }
 
-  // If the wasm will be used for closed-world testing, we cannot use the
-  // call-ref variants, as mentioned before.
-  if (wasm.features.hasReferenceTypes() && !closedWorld) {
+  if (wasm.features.hasReferenceTypes()) {
     if (choice & 4) {
       // Given an funcref, call it from JS.
       callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
@@ -1638,6 +1617,16 @@ void TranslateToFuzzReader::processFunctions() {
       }
     }
   }
+
+  // Also fix up closed world, if we need to. We must do this at the end, so
+  // nothing can break the closed world assumptions after.
+  if (closedWorld) {
+    for (auto& func : wasm.functions) {
+      if (!func->imported()) {
+        fixClosedWorld(func.get());
+      }
+    }
+  }
 }
 
 // TODO: return std::unique_ptr<Function>
@@ -1695,8 +1684,8 @@ Function* TranslateToFuzzReader::addFunction() {
     func->body = make(bodyType);
   }
 
-  // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(std::move(allocation));
+
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Avoid non-
   // nullable params, as those cannot be constructed by the fuzzer on the
@@ -1713,7 +1702,10 @@ Function* TranslateToFuzzReader::addFunction() {
     wasm.addExport(
       Builder::makeExport(func->name, func->name, ExternalKind::Function));
   }
-  // add some to an elem segment TODO we could do this for imported funcs too
+
+  // Add some to an elem segment TODO we could do this for imported funcs too,
+  // but in closed world must be careful of callRef*, see the jsCalled logic
+  // and isValidRefFuncTarget.
   while (oneIn(3) && !random.finished()) {
     auto type = func->type;
     std::vector<ElementSegment*> compatibleSegments;
@@ -1725,6 +1717,23 @@ Function* TranslateToFuzzReader::addFunction() {
     auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
     randomElem->data.push_back(builder.makeRefFunc(func->name));
   }
+
+  // Mark some functions as jsCalled. This allows them to be called by
+  // reference even in closed world, using the callRef* imports.
+  // TODO: We could do this, and exporting above, to initial content too.
+  if (oneIn(4)) {
+    auto annotations = intrinsics.getAnnotations(func);
+    annotations.jsCalled = true;
+    intrinsics.setAnnotations(func, annotations);
+
+    // We cannot actually use this as jsCalled if it does not have a type
+    // compatible with the callRef* imports. They send a funcref, so we must
+    // only send non-shared functions.
+    if (!func->type.getHeapType().isShared()) {
+      jsCalled.push_back(func->name);
+    }
+  }
+
   numAddedFunctions++;
   return func;
 }
@@ -2123,6 +2132,60 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
   Modder modder(*this, percentChance, finder);
   modder.walkFunctionInModule(func, &wasm);
+}
+
+void TranslateToFuzzReader::fixClosedWorld(Function* func) {
+  assert(closedWorld);
+
+  struct Fixer
+    : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
+    TranslateToFuzzReader& parent;
+
+    Fixer(TranslateToFuzzReader& parent) : parent(parent) {}
+
+    void visitCall(Call* curr) {
+      // In closed world, the callRef* imports can cause misoptimization later:
+      // they send a funcref to JS to call, and in closed world we assume such
+      // calls do not happen unless the function is annotated as jsCalled. We
+      // must therefore ensure that calls to these imports only send a jsCalled
+      // method and nothing else.
+      if (!parent.isCallRefImport(curr->target)) {
+        return;
+      }
+
+      // These imports take a funcref as the first param.
+      assert(!curr->operands.empty());
+      if (curr->operands[0]->type == Type::unreachable) {
+        // This call is not executed anyhow, and we shouldn't replace it, as
+        // that could change the type.
+        return;
+      }
+
+      if (parent.jsCalled.empty()) {
+        // There is nothing valid to call at all. Keep the children (we may
+        // need them to validate, e.g. if there is a `pop`), but remove the
+        // call.
+        std::vector<Expression*> list;
+        for (auto* child : curr->operands) {
+          list.push_back(parent.builder.makeDrop(child));
+        }
+        list.push_back(parent.makeTrivial(curr->type));
+        replaceCurrent(parent.builder.makeBlock(list));
+        return;
+      }
+
+      // Set something valid. As above, we must keep the old child for
+      // validation reasons.
+      auto old = parent.builder.makeDrop(curr->operands[0]);
+      auto target = parent.pick(parent.jsCalled);
+      assert(parent.isValidRefFuncTarget(target));
+      auto new_ = parent.builder.makeRefFunc(target);
+      curr->operands[0] = parent.builder.makeSequence(old, new_);
+    }
+  } fixer(*this);
+
+  FunctionCreationContext context(*this, func);
+  fixer.walk(func->body);
 }
 
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
@@ -3002,6 +3065,10 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
     target = wasm.functions[upTo(wasm.functions.size())].get();
     isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
                funcContext->func->getResults() == target->getResults();
+    if (!isValidRefFuncTarget(target->name)) {
+      i++;
+      continue;
+    }
     if (target->getResults() == type || isReturn) {
       break;
     }
@@ -3638,7 +3705,9 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
         funcContext->func->type.getHeapType().getShared() == share &&
         !oneIn(4)) {
       auto* target = funcContext->func;
-      return builder.makeRefFunc(target->name, target->type);
+      if (isValidRefFuncTarget(target->name)) {
+        return builder.makeRefFunc(target->name, target->type);
+      }
     }
   }
   // Look for a proper function starting from a random location, and loop from
@@ -3648,7 +3717,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     Index i = start;
     do {
       auto& func = wasm.functions[i];
-      if (Type::isSubType(func->type, type)) {
+      if (Type::isSubType(func->type, type) &&
+          isValidRefFuncTarget(func->name)) {
         return builder.makeRefFunc(func->name);
       }
       i = (i + 1) % wasm.functions.size();
@@ -3688,6 +3758,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
                          Type(heapType, NonNullable, Exact),
                          {},
                          body));
+  assert(isValidRefFuncTarget(func->name));
   return builder.makeRefFunc(func->name);
 }
 
@@ -6026,6 +6097,33 @@ Type TranslateToFuzzReader::getTargetType(Expression* target) {
     return Type::none;
   }
   WASM_UNREACHABLE("unexpected expr type");
+}
+
+bool TranslateToFuzzReader::isValidRefFuncTarget(Name func) {
+  // In closed world, we must not take callRef* by reference: if we do, then we
+  // might end up calling them indirectly, and with any possible function
+  // reference, but in that mode we must only pass in jsCalled functions. We
+  // handle direct calls in fixClosedWorld, but cannot handle indirect ones
+  // easily, so just disallow taking references of those functions.
+  if (!closedWorld) {
+    return true;
+  }
+  return !isCallRefImport(func);
+}
+
+bool TranslateToFuzzReader::isCallRefImport(Name target) {
+  // Check the import module and base. Note we do not just compare to
+  // callRefImportName / callRefCatchImportName because those are the names of
+  // the methods we added, but the initial content may import those methods
+  // under other internal names.
+  auto* func = wasm.getFunctionOrNull(target);
+  if (!func) {
+    // We are called while a function is still being constructed. Such a new
+    // defined function can never be an import.
+    return false;
+  }
+  return func->imported() && func->module == "fuzzing-support" &&
+         func->base.startsWith("call-ref");
 }
 
 } // namespace wasm
