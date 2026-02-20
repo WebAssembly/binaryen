@@ -2862,11 +2862,26 @@ private:
       return true;
     }
 
-    // TODO
+    // To fold the right side into the left, it must have no effects.
+    auto rightMightHaveEffects = true;
+    if (auto* call = right->dynCast<Call>()) {
+      // If these are a pair of idempotent calls, then the second has no
+      // effects. (We didn't check if left is a call, but the equality check
+      // below does that.)
+      if (Intrinsics(*getModule()).getCallAnnotations(call, getFunction()).idempotent) {
+        rightMightHaveEffects = false;
+      }
+    }
+    if (rightMightHaveEffects) {
+      // So far it looks like right has effects, so check fully.
+      auto& passOptions = getPassOptions();
+      if (EffectAnalyzer(passOptions, *getModule(), right)
+            .hasUnremovableSideEffects()) {
+        return false;
+      }
+    }
 
-    // stronger property than we need - we can not only fold
-    // them but remove them entirely.
-    return areConsecutiveInputsEqualAndRemovable(left, right);
+    return areConsecutiveInputsEqual(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us

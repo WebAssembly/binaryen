@@ -28,6 +28,8 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitCall(Call* curr) {
     // If the called function is idempotent, then it does not generate new
     // values on each call.
+    // TODO: We could also check for an annotation on the call instruction
+    //       itself, if we passed the function to isGenerative*
     auto* target = getModule()->getFunction(curr->target);
     if (Intrinsics::getAnnotations(target).idempotent) {
       return;
