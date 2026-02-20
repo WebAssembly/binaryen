@@ -5009,7 +5009,7 @@ void WasmBinaryReader::readTableDeclarations() {
 
 void WasmBinaryReader::readElementSegments() {
   auto num = getU32LEB();
-  if (num >= Table::kMaxSize) {
+  if (num >= Table::kMaxSize32) {
     throwError("Too many segments");
   }
   std::unordered_set<Name> usedNames;

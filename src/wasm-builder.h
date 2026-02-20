@@ -106,7 +106,7 @@ public:
                                           Type type = Type(HeapType::func,
                                                            Nullable),
                                           Address initial = 0,
-                                          Address max = Table::kMaxSize,
+                                          Address max = Table::kUnlimitedSize,
                                           Type addressType = Type::i32) {
     auto table = std::make_unique<Table>();
     table->name = name;
