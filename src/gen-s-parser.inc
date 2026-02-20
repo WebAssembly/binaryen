@@ -5784,6 +5784,23 @@ switch (buf[0]) {
       default: goto parse_error;
     }
   }
+  case 'w': {
+    switch (buf[10]) {
+      case 'n':
+        if (op == "waitqueue.notify"sv) {
+          CHECK_ERR(makeWaitQueueNotify(ctx, pos, annotations));
+          return Ok{};
+        }
+        goto parse_error;
+      case 'w':
+        if (op == "waitqueue.wait"sv) {
+          CHECK_ERR(makeWaitQueueWait(ctx, pos, annotations));
+          return Ok{};
+        }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   default: goto parse_error;
 }
 parse_error:

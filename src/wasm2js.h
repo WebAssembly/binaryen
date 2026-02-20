@@ -2464,6 +2464,14 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitWaitQueueWait(WaitQueueWait* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitWaitQueueNotify(WaitQueueNotify* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
 
   private:
     Ref makePointer(Expression* ptr, Address offset) {

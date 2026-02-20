@@ -2017,4 +2017,8 @@ void Module::clearDebugInfo() {
   debugInfoSymbolNames.clear();
 }
 
+void WaitQueueWait::finalize() { type = Type::i32; }
+
+void WaitQueueNotify::finalize() { type = Type::i32; }
+
 } // namespace wasm

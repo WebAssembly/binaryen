@@ -956,6 +956,13 @@ struct NullInstrParserCtx {
   makeStackSwitch(Index, const std::vector<Annotation>&, HeapTypeT, TagIdxT) {
     return Ok{};
   }
+
+  Result<> makeWaitQueueWait(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeWaitQueueNotify(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
 };
 
 struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
@@ -2946,6 +2953,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                            HeapType type,
                            Name tag) {
     return withLoc(pos, irBuilder.makeStackSwitch(type, tag));
+  }
+
+  Result<> makeWaitQueueWait(Index pos,
+                             const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeWaitQueueWait());
+  }
+
+  Result<> makeWaitQueueNotify(Index pos,
+                               const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeWaitQueueNotify());
   }
 };
 
