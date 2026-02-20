@@ -14,7 +14,34 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
- - The C api now has separate functions for `CallRef` and `ReturnCallRef`
+ - The emscripten build of binaryen no longer targets pure JS (via wasm2js) by
+   default.  This allows us to enable WASM_BIGINT and other features that
+   wasm2js does not support.  There is now just a single binaryen_js target.  It
+   should still be possible to inject `-sWASM=0` as a linker flag but this is
+   not officially supported. (#7995)
+ - As part of enabling the `WASM_BIGINT` in the emscripten build the JS API for
+   manipulating 64-bit values was changed.  These APIs, such as `i64.const`
+   and `setValueI64`, previously took a hi/low pair but now take a single value
+   which can be bigint or a number. Passing two values to these APIs will now
+   trigger an assertion. (#7984)
+
+v126
+----
+
+ - New intrinsic: `@binaryen.removable.if.unused`. (#8268)
+ - New intrinsic: `@binaryen.js.called`. (#8324)
+ - Add a pass to remove toolchain annotations, `--strip-toolchain-annotations`,
+   for the above two intrinsics and future ones. (#8301)
+ - Add a pass to remove relaxed SIMD instructions, `--remove-relaxed-simd`
+   (#8300)
+ - JS API: Throw useful exceptions on parse errors in binaryen.js, rather than
+   fatally error and shut down the entire process. (#8264)
+ - Implement function-level inlining hints (previously we only supported this
+   annotation on calls, not functions themselves). (#8265)
+ - Update C and JS libraries with relaxed atomics support (#8248)
+ - wasm-split: Export/Import only necessary elements, avoiding bloat. (#8221)
+ - Use `std::quick_exit` in `wasm-opt` etc. tools, to skip cleanup. (#8212)
+ - The C API now has separate functions for `CallRef` and `ReturnCallRef`
    matching the semantics of `Call` and `ReturnCall` (#8121).
  - Breaking changes to the C and JS APIs related to atomic operations, in order
    to support the relaxed atomics proposal (currently a part of the [shared

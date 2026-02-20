@@ -37,6 +37,8 @@
 
 namespace wasm {
 
+namespace {
+
 // Print anything that can be streamed to an ostream
 template<typename T,
          typename std::enable_if<!std::is_base_of<
@@ -238,6 +240,34 @@ struct ValidationInfo {
     return shouldBeSubType(left, matchedRight, curr, text, func);
   }
 };
+
+// Check that public types do not contain any exact references if custom
+// descriptors is not enabled. If they did, we would erase the exactness
+// during binary writing and change the public type identities.
+void validateExactReferences(Module& module, ValidationInfo& info) {
+  if (module.features.hasCustomDescriptors()) {
+    return;
+  }
+
+  for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
+    for (auto child : type.getTypeChildren()) {
+      if (child.isExact()) {
+        std::string typeName;
+        if (auto it = module.typeNames.find(type);
+            it != module.typeNames.end()) {
+          typeName = '$' + it->second.name.toString();
+        } else {
+          typeName = type.toString();
+        }
+        info.fail("Exact reference in public type not allowed without custom "
+                  "descriptors [--enable-custom-descriptors]",
+                  typeName,
+                  nullptr);
+        break;
+      }
+    }
+  }
+}
 
 std::string getMissingFeaturesList(Module& wasm, FeatureSet feats) {
   std::stringstream ss;
@@ -3306,7 +3336,7 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   auto field = fields[curr->index];
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
-  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+  if (field.type != Type::i32 || field.packedType == Field::NotPacked) {
     shouldBeFalse(curr->signed_, curr, "non-packed get cannot be signed");
   }
   if (curr->ref->type == Type::unreachable) {
@@ -3626,7 +3656,7 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
   const auto& element = heapType.getArray().element;
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
-  if (element.type != Type::i32 || element.packedType == Field::not_packed) {
+  if (element.type != Type::i32 || element.packedType == Field::NotPacked) {
     shouldBeFalse(curr->signed_, curr, "non-packed get cannot be signed");
   }
   shouldBeEqual(
@@ -4358,7 +4388,7 @@ void FunctionValidator::validateAlignment(
   }
 }
 
-static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
+void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
   struct BinaryenIRValidator
     : public PostWalker<BinaryenIRValidator,
                         UnifiedExpressionVisitor<BinaryenIRValidator>> {
@@ -4401,35 +4431,12 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 // Main validator class
 
-static void validateTypes(Module& module, ValidationInfo& info) {
-  // Check that public types do not contain any exact references if custom
-  // descriptors is not enabled. If they did, we would erase the exactness
-  // during binary writing and change the public type identities.
-  if (module.features.hasCustomDescriptors()) {
-    return;
-  }
-
-  for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
-    for (auto child : type.getTypeChildren()) {
-      if (child.isExact()) {
-        std::string typeName;
-        if (auto it = module.typeNames.find(type);
-            it != module.typeNames.end()) {
-          typeName = '$' + it->second.name.toString();
-        } else {
-          typeName = type.toString();
-        }
-        info.fail("Exact reference in public type not allowed without custom "
-                  "descriptors [--enable-custom-descriptors]",
-                  typeName,
-                  nullptr);
-        break;
-      }
-    }
-  }
+void validateTypes(Module& module, ValidationInfo& info) {
+  // Most validations belong in `validateTypeInfo` in wasm-type.cpp.
+  validateExactReferences(module, info);
 }
 
-static void validateImports(Module& module, ValidationInfo& info) {
+void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
     if (curr->getResults().isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
@@ -4474,7 +4481,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
   });
 }
 
-static void validateExports(Module& module, ValidationInfo& info) {
+void validateExports(Module& module, ValidationInfo& info) {
   for (auto& curr : module.exports) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
@@ -4543,7 +4550,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateGlobals(Module& module, ValidationInfo& info) {
+void validateGlobals(Module& module, ValidationInfo& info) {
   std::unordered_set<Global*> seen;
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
     info.shouldBeTrue(curr->type.getFeatures() <= module.features,
@@ -4589,7 +4596,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateMemories(Module& module, ValidationInfo& info) {
+void validateMemories(Module& module, ValidationInfo& info) {
   if (module.memories.size() > 1) {
     info.shouldBeTrue(
       module.features.hasMultiMemory(),
@@ -4624,7 +4631,7 @@ static void validateMemories(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateDataSegments(Module& module, ValidationInfo& info) {
+void validateDataSegments(Module& module, ValidationInfo& info) {
   for (auto& segment : module.dataSegments) {
     if (segment->isPassive) {
       info.shouldBeTrue(
@@ -4655,7 +4662,7 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateTables(Module& module, ValidationInfo& info) {
+void validateTables(Module& module, ValidationInfo& info) {
   FunctionValidator validator(module, &info);
 
   if (!module.features.hasReferenceTypes()) {
@@ -4764,7 +4771,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateTags(Module& module, ValidationInfo& info) {
+void validateTags(Module& module, ValidationInfo& info) {
   if (!module.tags.empty()) {
     info.shouldBeTrue(
       module.features.hasExceptionHandling(),
@@ -4797,7 +4804,7 @@ static void validateTags(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateStart(Module& module, ValidationInfo& info) {
+void validateStart(Module& module, ValidationInfo& info) {
   // start
   if (module.start.is()) {
     auto func = module.getFunctionOrNull(module.start);
@@ -4813,7 +4820,6 @@ static void validateStart(Module& module, ValidationInfo& info) {
   }
 }
 
-namespace {
 template<typename T, typename U>
 void validateModuleMap(Module& module,
                        ValidationInfo& info,
@@ -4839,9 +4845,8 @@ void validateModuleMap(Module& module,
   // TODO: Also check there is nothing extraneous in the map, but that would
   //       require inspecting private fields of Module.
 }
-} // anonymous namespace
 
-static void validateModuleMaps(Module& module, ValidationInfo& info) {
+void validateModuleMaps(Module& module, ValidationInfo& info) {
   // Module maps should be up to date.
   validateModuleMap(
     module, info, module.exports, &Module::getExportOrNull, "Export");
@@ -4866,13 +4871,15 @@ static void validateModuleMaps(Module& module, ValidationInfo& info) {
     module, info, module.tables, &Module::getTableOrNull, "Table");
 }
 
-static void validateFeatures(Module& module, ValidationInfo& info) {
+void validateFeatures(Module& module, ValidationInfo& info) {
   if (module.features.hasGC()) {
     info.shouldBeTrue(module.features.hasReferenceTypes(),
                       module.features,
                       "--enable-gc requires --enable-reference-types");
   }
 }
+
+} // namespace
 
 // TODO: If we want the validator to be part of libwasm rather than libpasses,
 // then Using PassRunner::getPassDebug causes a circular dependence. We should

@@ -1628,6 +1628,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   append(getBranchHintsBuffer());
   append(getInlineHintsBuffer());
   append(getRemovableIfUnusedHintsBuffer());
+  append(getJSCalledHintsBuffer());
   return ret;
 }
 
@@ -1777,6 +1778,17 @@ WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
     [](const CodeAnnotation& annotation) {
       return annotation.removableIfUnused;
     },
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
+      // Hint size, always empty.
+      buffer << U32LEB(0);
+    });
+}
+
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getJSCalledHintsBuffer() {
+  return writeExpressionHints(
+    Annotations::JSCalledHint,
+    [](const CodeAnnotation& annotation) { return annotation.jsCalled; },
     [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always empty.
       buffer << U32LEB(0);
@@ -1991,11 +2003,13 @@ void WasmBinaryWriter::writeIndexedHeapType(HeapType type) {
 }
 
 void WasmBinaryWriter::writeField(const Field& field) {
-  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+  if (field.type == Type::i32 && field.packedType != Field::NotPacked) {
     if (field.packedType == Field::i8) {
       o << S32LEB(BinaryConsts::EncodedType::i8);
     } else if (field.packedType == Field::i16) {
       o << S32LEB(BinaryConsts::EncodedType::i16);
+    } else if (field.packedType == Field::WaitQueue) {
+      o << S32LEB(BinaryConsts::EncodedType::waitQueue);
     } else {
       WASM_UNREACHABLE("invalid packed type");
     }
@@ -2055,7 +2069,8 @@ void WasmBinaryReader::preScan() {
 
       if (sectionName == Annotations::BranchHint ||
           sectionName == Annotations::InlineHint ||
-          sectionName == Annotations::RemovableIfUnusedHint) {
+          sectionName == Annotations::RemovableIfUnusedHint ||
+          sectionName == Annotations::JSCalledHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2215,8 +2230,11 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::RemovableIfUnusedHint) {
     deferredAnnotationSections.push_back(
       AnnotationSectionInfo{pos, [this, payloadLen]() {
-                              this->readremovableIfUnusedHints(payloadLen);
+                              this->readRemovableIfUnusedHints(payloadLen);
                             }});
+  } else if (sectionName == Annotations::JSCalledHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readJSCalledHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -2716,6 +2734,10 @@ void WasmBinaryReader::readTypes() {
     if (typeCode == BinaryConsts::EncodedType::i16) {
       auto mutable_ = readMutability();
       return Field(Field::i16, mutable_);
+    }
+    if (typeCode == BinaryConsts::EncodedType::waitQueue) {
+      auto mutable_ = readMutability();
+      return Field(Field::WaitQueue, mutable_);
     }
     // It's a regular wasm value.
     auto type = makeType(typeCode);
@@ -5120,8 +5142,8 @@ Name WasmBinaryReader::escape(Name name) {
     }
     // replace non-idchar with `\xx` escape
     escaped.push_back('\\');
-    escaped.push_back(formatNibble(c >> 4));
-    escaped.push_back(formatNibble(c & 15));
+    escaped.push_back(formatNibble((unsigned char)c >> 4));
+    escaped.push_back(formatNibble((unsigned char)c & 15));
   }
   return escaped;
 }
@@ -5527,7 +5549,7 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
     });
 }
 
-void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
+void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) {
   readExpressionHints(Annotations::RemovableIfUnusedHint,
                       payloadLen,
                       [&](CodeAnnotation& annotation) {
@@ -5538,6 +5560,18 @@ void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
 
                         annotation.removableIfUnused = true;
                       });
+}
+
+void WasmBinaryReader::readJSCalledHints(size_t payloadLen) {
+  readExpressionHints(
+    Annotations::JSCalledHint, payloadLen, [&](CodeAnnotation& annotation) {
+      auto size = getU32LEB();
+      if (size != 0) {
+        throwError("bad jsCalledHint size");
+      }
+
+      annotation.jsCalled = true;
+    });
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>
