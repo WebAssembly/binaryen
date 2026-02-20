@@ -35,6 +35,7 @@ Pass* createConstantFieldPropagationPass();
 Pass* createConstantFieldPropagationRefTestPass();
 Pass* createDAEPass();
 Pass* createDAEOptimizingPass();
+Pass* createDAE2Pass();
 Pass* createDataFlowOptsPass();
 Pass* createDeadCodeEliminationPass();
 Pass* createDeInstrumentBranchHintsPass();
