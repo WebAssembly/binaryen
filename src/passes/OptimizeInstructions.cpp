@@ -2874,8 +2874,7 @@ private:
     }
     if (rightMightHaveEffects) {
       // So far it looks like right has effects, so check fully.
-      auto& passOptions = getPassOptions();
-      if (EffectAnalyzer(passOptions, *getModule(), right)
+      if (EffectAnalyzer(getPassOptions(), *getModule(), right)
             .hasUnremovableSideEffects()) {
         return false;
       }
