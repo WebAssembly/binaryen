@@ -173,7 +173,7 @@
   (func $test-ref.eq
     ;; These calls are identical, since the second returns the same. This
     ;; results in 1.
-    ;; XXX wrong - first call might modify global
+    ;; XXX wrong - first call might modify global. chak effects of params of right to all of left.
     (drop
       (ref.eq
         (call $idempotent
