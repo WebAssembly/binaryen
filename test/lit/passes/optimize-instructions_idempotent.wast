@@ -120,6 +120,9 @@
   ;; CHECK:      (global $g2 (ref $struct) (struct.new_default $struct))
   (global $g2 (ref $struct) (struct.new $struct))
 
+  ;; CHECK:      (global $g-mut (mut (ref $struct)) (struct.new_default $struct))
+  (global $g-mut (mut (ref $struct)) (struct.new $struct))
+
   ;; CHECK:      (@binaryen.idempotent)
   ;; CHECK-NEXT: (func $idempotent (type $1) (param $x eqref) (result eqref)
   ;; CHECK-NEXT:  (local.get $x)
@@ -169,6 +172,16 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $g-mut)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $g-mut)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-ref.eq
     ;; These calls are identical, since the second returns the same. This
@@ -203,6 +216,19 @@
         )
         (call $idempotent
           (global.get $g2)
+        )
+      )
+    )
+    ;; We cannot optimize here either - we have idempotency, but the global
+    ;; read is mutable, so the first call might modify it, making it different
+    ;; the second time it is read.
+    (drop
+      (ref.eq
+        (call $idempotent
+          (global.get $g-mut)
+        )
+        (call $idempotent
+          (global.get $g-mut)
         )
       )
     )
