@@ -5,7 +5,7 @@
 ;; Idempotent-marked functions can be assumed to always return the same value.
 
 (module
-  ;; CHECK:      (import "a" "b" (func $import (type $1) (result f32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $2) (result f32)))
   (import "a" "b" (func $import (result f32)))
 
   ;; CHECK:      (@binaryen.idempotent)
@@ -26,7 +26,7 @@
     (call $import)
   )
 
-  ;; CHECK:      (func $test-abs (type $2)
+  ;; CHECK:      (func $test-abs (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.mul
   ;; CHECK-NEXT:    (call $idempotent
@@ -46,18 +46,6 @@
   ;; CHECK-NEXT:     (call $potent
   ;; CHECK-NEXT:      (f32.const 10)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.mul
-  ;; CHECK-NEXT:    (@binaryen.idempotent)
-  ;; CHECK-NEXT:    (call $potent
-  ;; CHECK-NEXT:     (f32.const 10)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (@binaryen.idempotent)
-  ;; CHECK-NEXT:    (call $potent
-  ;; CHECK-NEXT:     (f32.const 10)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -102,7 +90,62 @@
         )
       )
     )
-    ;; Here we succeed, as the calls are marked idempotent.
+    ;; Here we fail as well, as while we have idempotency, the params differ.
+    (drop
+      (f32.abs
+        (f32.mul
+          (call $idempotent
+            (f32.const 10)
+          )
+          (call $idempotent
+            (f32.const 20)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-abs-calls (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (@binaryen.idempotent)
+  ;; CHECK-NEXT:    (call $potent
+  ;; CHECK-NEXT:     (f32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (@binaryen.idempotent)
+  ;; CHECK-NEXT:    (call $potent
+  ;; CHECK-NEXT:     (f32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.mul
+  ;; CHECK-NEXT:     (@binaryen.idempotent)
+  ;; CHECK-NEXT:     (call $potent
+  ;; CHECK-NEXT:      (f32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $potent
+  ;; CHECK-NEXT:      (f32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (call $potent
+  ;; CHECK-NEXT:     (f32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (@binaryen.idempotent)
+  ;; CHECK-NEXT:    (call $potent
+  ;; CHECK-NEXT:     (f32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-abs-calls
+    ;; Here we succeed, as the calls (as opposed to the functions) are marked
+    ;; idempotent.
     (drop
       (f32.abs
         (f32.mul
@@ -117,15 +160,30 @@
         )
       )
     )
-    ;; Here we fail as well, as while we have idempotency, the params differ.
+    ;; Only one is marked. Marking the first is not enough for us to optimize.
     (drop
       (f32.abs
         (f32.mul
-          (call $idempotent
+          (@binaryen.idempotent)
+          (call $potent
             (f32.const 10)
           )
-          (call $idempotent
-            (f32.const 20)
+          (call $potent
+            (f32.const 10)
+          )
+        )
+      )
+    )
+    ;; Marking the second *is* enough for us to optimize.
+    (drop
+      (f32.abs
+        (f32.mul
+          (call $potent
+            (f32.const 10)
+          )
+          (@binaryen.idempotent)
+          (call $potent
+            (f32.const 10)
           )
         )
       )

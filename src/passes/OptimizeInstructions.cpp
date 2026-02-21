@@ -2822,8 +2822,12 @@ private:
     }
 
     // To be equal, they must also be known to return the same result
-    // deterministically.
-    return !Properties::isGenerative(left, getFunction(), *getModule());
+    // deterministically. We check the right side, as if the right is marked
+    // idempotent, that is enough (that tells us it does not generate a new
+    // value; logically, of course, as left is equal to right, they are calling
+    // the same thing, so it is odd to only annotate one, but this is consistent
+    // and easy to check).
+    return !Properties::isGenerative(right, getFunction(), *getModule());
   }
 
   // Check if two consecutive inputs to an instruction are equal and can also be
