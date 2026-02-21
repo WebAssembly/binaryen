@@ -410,9 +410,9 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Fail to parse data segment offset abbreviation
     'elem.wast',    # Requires modeling empty declarative segments
-    'f32.wast',     # Adding -0 and -nan should give a canonical NaN
-    'f64.wast',     # Adding -0 and -nan should give a canonical NaN
-    'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
+    'f32.wast',     # Platform-dependent NaN propagation produces sNaN from arithmetic
+    'f64.wast',     # Platform-dependent NaN propagation produces sNaN from arithmetic
+    'float_exprs.wast',  # Platform-dependent NaN propagation produces sNaN from arithmetic
     'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
     'global.wast',  # Fail to parse table
