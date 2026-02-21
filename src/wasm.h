@@ -2258,10 +2258,16 @@ struct CodeAnnotation {
   // identity does not matter for such functions.
   bool jsCalled = false;
 
+  // A function that may do something on the first call, but all subsequent
+  // calls with the same parameters can be assumed to have no effects. If a
+  // value is returned, it will be the same value as returned earlier (for the
+  // same parameters).
+  bool idempotent = false;
+
   bool operator==(const CodeAnnotation& other) const {
     return branchLikely == other.branchLikely && inline_ == other.inline_ &&
            removableIfUnused == other.removableIfUnused &&
-           jsCalled == other.jsCalled;
+           jsCalled == other.jsCalled && idempotent == other.idempotent;
   }
 };
 
@@ -2322,6 +2328,13 @@ public:
   // the 0 byte offset in the spec. As with debug info, we do not store these on
   // Expressions as we assume most instances are unannotated, and do not want to
   // add constant memory overhead.
+  // XXX As an unordered map, if this is modified by one thread, another should
+  //     not be reading it. That should not happen atm - all annotations are
+  //     set up in dedicated passes or in the binary reader - but if one pass
+  //     could add an expression annotation, another should not at the same time
+  //     read the function-level annotations, even though that is natural to do.
+  //     We may want to move the function-level annotations to a dedicated
+  //     field outside the map.
   std::unordered_map<Expression*, CodeAnnotation> codeAnnotations;
 
   // The effects for this function, if they have been computed. We use a shared

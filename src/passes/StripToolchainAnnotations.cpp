@@ -44,6 +44,7 @@ struct StripToolchainAnnotations
       auto& annotation = iter->second;
       annotation.removableIfUnused = false;
       annotation.jsCalled = false;
+      annotation.idempotent = false;
 
       // If nothing remains, remove the entire annotation.
       if (annotation == CodeAnnotation()) {

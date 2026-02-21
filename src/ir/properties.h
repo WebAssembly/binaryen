@@ -597,10 +597,10 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
 //    the latter because calls are already handled best in other manners (using
 //    EffectAnalyzer).
 //
-bool isGenerative(Expression* curr);
+bool isGenerative(Expression* curr, Function* func, Module& wasm);
 
 // As above, but only checks |curr| and not children.
-bool isShallowlyGenerative(Expression* curr);
+bool isShallowlyGenerative(Expression* curr, Function* func, Module& wasm);
 
 // Whether this expression is valid in a context where WebAssembly requires a
 // constant expression, such as a global initializer.
