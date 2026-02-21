@@ -4597,7 +4597,8 @@ public:
       // of references in the table! ArrayNew suffers the same problem.
       // Fixing it will require changing how we represent segments, at least
       // in the interpreter.
-      data->values[indexVal + i] = self()->visit(seg->data[i]).getSingleValue();
+      data->values[indexVal + i] =
+        self()->visit(seg->data[offsetVal + i]).getSingleValue();
     }
     return {};
   }
