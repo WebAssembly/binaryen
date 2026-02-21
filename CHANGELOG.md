@@ -59,6 +59,8 @@ v126
      `BinaryenMemoryOrder` param. The functions formerly implicitly used
      `BinaryenMemoryOrderSeqCst()`. In JS this param is optional and thus not
      breaking.
+  - Add `BinaryenHasMemorySegment(<module>, <name>)` to the C API and
+    `module.hasMemorySegment(name)` to the JS API. Allowing users to check if a segment exists.
 
 v125
 ----
