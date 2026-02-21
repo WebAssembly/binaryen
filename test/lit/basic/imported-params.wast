@@ -7,7 +7,7 @@
 (module
  (import "" "" (func (param i32 i64) (param $x i32) (param $y i64) (param f32 f64)))
  (import "" "" (func (param $x i32) (param f32 f64) (param $y i64)))
- (import "" "" (func (param $"" i32)))
+ (import "" "" (func (param $"\tfoo" i32)))
 )
 ;; CHECK:      (type $0 (func (param i32 i64 i32 i64 f32 f64)))
 
@@ -19,4 +19,4 @@
 
 ;; CHECK:      (import "" "" (func $fimport$1 (param $x i32) (param f32 f64) (param $y i64)))
 
-;; CHECK:      (import "" "" (func $fimport$2 (param $"" i32)))
+;; CHECK:      (import "" "" (func $fimport$2 (param $"\tfoo" i32)))

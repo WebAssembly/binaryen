@@ -866,10 +866,17 @@ std::optional<LexIdResult> ident(std::string_view in) {
   if (!ctx.takePrefix("$"sv)) {
     return {};
   }
+  // Quoted identifier e.g. $"foo"
   if (auto s = str(ctx.next())) {
     if (!String::isUTF8(s->getStr())) {
       return {};
     }
+
+    // empty names, including $"" are not allowed.
+    if (s->span == "\"\"") {
+      return {};
+    }
+
     ctx.isStr = true;
     ctx.str = s->str;
     ctx.take(*s);

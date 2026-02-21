@@ -422,7 +422,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'linking.wast',  # Missing function type validation on instantiation
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
-    'id.wast',       # Empty IDs should be disallowed
     'instance.wast',  # Requires support for table default elements
     'table64.wast',   # Requires validations for table size
     'tag.wast',      # Non-empty tag results allowed by stack switching

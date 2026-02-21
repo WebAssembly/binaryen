@@ -888,7 +888,7 @@ TEST(LexerTest, LexIdent) {
   EXPECT_FALSE(Lexer("$"sv).takeID());
 
   // String IDs
-  EXPECT_EQ(Lexer("$\"\""sv).takeID(), wasm::Name(""sv));
+  EXPECT_EQ(Lexer("$\"\""sv).takeID(), std::nullopt);
   EXPECT_EQ(Lexer("$\"hello\""sv).takeID(), wasm::Name("hello"sv));
   // _$_£_€_𐍈_
   EXPECT_EQ(Lexer("$\"_\\u{24}_\\u{00a3}_\\u{20AC}_\\u{10348}_\""sv).takeID(),
