@@ -128,6 +128,7 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
   for (Index i = 0; i < types.size(); ++i) {
     typeIndices[types[i]] = i;
   }
+  assert(typeIndices.size() == types.size());
 
   if (typeIndices.size() == 0) {
     return {};
@@ -326,34 +327,47 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
 }
 
 void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
-  // Update type names to avoid duplicates.
-  std::unordered_set<Name> typeNames;
+  // Track all the existing names to avoid creating duplicates.
+  std::unordered_set<Name> seenTypeNames;
   for (auto& [type, info] : wasm.typeNames) {
-    typeNames.insert(info.name);
+    seenTypeNames.insert(info.name);
   }
+  // Collect new and updated type names and indices. Do not mutate the module's
+  // names and indices until the end to avoid iteration order affecting the
+  // results in the case where oldToNewTypes maps old types to different old
+  // types.
+  std::unordered_map<HeapType, TypeNames> newTypeNames;
+  std::unordered_map<HeapType, Index> newTypeIndices;
   for (auto& [old, new_] : oldToNewTypes) {
     if (old == new_) {
       // The type is being mapped to itself; no need to rename anything.
       continue;
     }
-
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
-      auto& oldNames = it->second;
-      wasm.typeNames[new_] = oldNames;
+      auto& names = it->second;
+      newTypeNames[new_] = names;
       // Use the existing name in the new type, as usually it completely
       // replaces the old. Rename the old name in a unique way to avoid
       // confusion in the case that it remains used.
       auto deduped = Names::getValidName(
-        oldNames.name, [&](Name test) { return !typeNames.count(test); });
-      oldNames.name = deduped;
-      typeNames.insert(deduped);
+        names.name, [&](Name test) { return !seenTypeNames.count(test); });
+      names.name = deduped;
+      // Do not overwrite the entry for the old type if it has already appeared
+      // as a new type.
+      if (newTypeNames.insert({old, names}).second) {
+        seenTypeNames.insert(names.name);
+      }
     }
     if (auto it = wasm.typeIndices.find(old); it != wasm.typeIndices.end()) {
       // It's ok if we end up with duplicate indices. Ties will be resolved in
       // some arbitrary manner.
-      wasm.typeIndices[new_] = it->second;
+      newTypeIndices[new_] = it->second;
     }
   }
+  newTypeNames.merge(wasm.typeNames);
+  wasm.typeNames = std::move(newTypeNames);
+  newTypeIndices.merge(wasm.typeIndices);
+  wasm.typeIndices = std::move(newTypeIndices);
 }
 
 Type GlobalTypeRewriter::getTempType(Type type) {
