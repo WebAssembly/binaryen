@@ -5151,7 +5151,8 @@ protected:
   Address
   getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySize) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
-    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.type == Type::i32 ? (uint64_t)(uint32_t)ptr.geti32()
+                                          : (uint64_t)ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
@@ -5167,7 +5168,8 @@ protected:
 
   Address
   getFinalAddressWithoutOffset(Literal ptr, Index bytes, Address memorySize) {
-    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.type == Type::i32 ? (uint64_t)(uint32_t)ptr.geti32()
+                                          : (uint64_t)ptr.geti64();
     checkLoadAddress(addr, bytes, memorySize);
     return addr;
   }
