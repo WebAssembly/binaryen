@@ -528,16 +528,16 @@ bool Literal::isCanonicalNaN() {
   if (!isNaN()) {
     return false;
   }
-  return (type == Type::f32 && NaNPayload(getf32()) == (1u << 23) - 1) ||
-         (type == Type::f64 && NaNPayload(getf64()) == (1ull << 52) - 1);
+  return (type == Type::f32 && NaNPayload(getf32()) == (1u << 22)) ||
+         (type == Type::f64 && NaNPayload(getf64()) == (1ull << 51));
 }
 
 bool Literal::isArithmeticNaN() {
   if (!isNaN()) {
     return false;
   }
-  return (type == Type::f32 && NaNPayload(getf32()) > (1u << 23) - 1) ||
-         (type == Type::f64 && NaNPayload(getf64()) > (1ull << 52) - 1);
+  return (type == Type::f32 && (NaNPayload(getf32()) & (1u << 22))) ||
+         (type == Type::f64 && (NaNPayload(getf64()) & (1ull << 51)));
 }
 
 uint32_t Literal::NaNPayload(float f) {
