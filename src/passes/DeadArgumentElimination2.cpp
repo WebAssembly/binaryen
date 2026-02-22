@@ -48,7 +48,6 @@
 #include "ir/intrinsics.h"
 #include "ir/label-utils.h"
 #include "ir/local-graph.h"
-#include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
