@@ -148,6 +148,7 @@ void Instrumenter::instrumentFuncs() {
         func->body = builder.makeSequence(
           builder.makeAtomicStore(1,
                                   funcIdx,
+                                  /*align=*/1,
                                   builder.makeConstPtr(0, Type::i32),
                                   builder.makeConst(uint32_t(1)),
                                   Type::i32,
@@ -290,6 +291,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
                 builder.makeAtomicLoad(1,
                                        0,
+                                       /*align=*/1,
                                        getFuncIdx(),
                                        Type::i32,
                                        loadMemoryName,

@@ -386,6 +386,7 @@ public:
   }
   Load* makeAtomicLoad(unsigned bytes,
                        Address offset,
+                       unsigned align,
                        Expression* ptr,
                        Type type,
                        Name memory,
@@ -393,7 +394,8 @@ public:
     assert(order != MemoryOrder::Unordered &&
            "Atomic loads can't be unordered");
 
-    Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
+    // this part is wrong
+    Load* load = makeLoad(bytes, false, offset, align, ptr, type, memory);
     load->order = order;
     return load;
   }
@@ -448,6 +450,7 @@ public:
   }
   Store* makeAtomicStore(unsigned bytes,
                          Address offset,
+                         unsigned align,
                          Expression* ptr,
                          Expression* value,
                          Type type,
@@ -456,7 +459,7 @@ public:
     assert(order != MemoryOrder::Unordered &&
            "Atomic stores can't be unordered");
 
-    Store* store = makeStore(bytes, offset, bytes, ptr, value, type, memory);
+    Store* store = makeStore(bytes, offset, align, ptr, value, type, memory);
     store->order = order;
     return store;
   }
