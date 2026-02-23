@@ -4287,8 +4287,7 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
       curr,
       "struct.wait struct field must be a waitqueue");
   } else {
-    shouldBeTrue(false, curr, "struct.wait struct field index out of
-    bounds");
+    shouldBeTrue(false, curr, "struct.wait struct field index out of bounds");
   }
 
   shouldBeSubType(
