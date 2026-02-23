@@ -4271,19 +4271,25 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
   // if (curr->ref->type == Type::unreachable) {
   //   return;
   // }
-  // shouldBeTrue(curr->structType.isStruct(),
-  //              curr,
-  //              "struct.wait must be parameterized by a struct type");
-  // if (curr->index < curr->structType.getStruct().fields.size()) {
-  //   shouldBeTrue(curr->structType.getStruct().fields.at(curr->index).packedType
-  //   ==
-  //                  Field::WaitQueue,
-  //                curr,
-  //                "struct.wait struct field must be a waitqueue");
-  // } else {
-  //   shouldBeTrue(false, curr, "struct.wait struct field index out of
-  //   bounds");
-  // }
+
+  shouldBeTrue(curr->index < curr->structType.getStruct().fields.size(),
+               curr,
+               "struct.wait index immediate should be less than the field "
+               "count of the struct");
+
+  shouldBeTrue(curr->structType.isStruct(),
+               curr,
+               "struct.wait must be parameterized by a struct type");
+  if (curr->index < curr->structType.getStruct().fields.size()) {
+    shouldBeTrue(
+      curr->structType.getStruct().fields.at(curr->index).packedType ==
+        Field::WaitQueue,
+      curr,
+      "struct.wait struct field must be a waitqueue");
+  } else {
+    shouldBeTrue(false, curr, "struct.wait struct field index out of
+    bounds");
+  }
 
   shouldBeSubType(
     curr->ref->type,
