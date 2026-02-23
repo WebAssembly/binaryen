@@ -2415,6 +2415,9 @@ public:
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
+    if (indexVal >= data->values.size()) {
+      trap("array oob");
+    }
     auto& field = data->values[indexVal];
     auto oldVal = field;
     auto newVal = value.getSingleValue();
@@ -2451,6 +2454,9 @@ public:
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
+    if (indexVal >= data->values.size()) {
+      trap("array oob");
+    }
     auto& field = data->values[indexVal];
     auto oldVal = field;
     if (field == expected.getSingleValue()) {
