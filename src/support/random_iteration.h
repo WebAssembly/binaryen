@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-// Provide RandomIterations and RandomConstIteration templates, which wrap an
+// Provide RandomIteration and RandomConstIteration templates, which wrap an
 // arbitrary collection with an associated `iterator` or `const_iterator` type,
 // respectively, and provide a randomized iteration order over it.
 //
