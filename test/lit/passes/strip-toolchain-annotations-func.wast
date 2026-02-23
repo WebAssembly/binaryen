@@ -35,6 +35,13 @@
   (func $test-func-d
     ;; Reverse order of above, and also includes js.called which is removed.
   )
+
+  ;; CHECK:      (func $idempotent (type $0)
+  ;; CHECK-NEXT: )
+  (@binaryen.idempotent)
+  (func $idempotent
+    ;; This hint should be removed too.
+  )
 )
 
 

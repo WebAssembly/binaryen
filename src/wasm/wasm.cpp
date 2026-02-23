@@ -71,6 +71,7 @@ const Name BranchHint = "metadata.code.branch_hint";
 const Name InlineHint = "metadata.code.inline";
 const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 const Name JSCalledHint = "binaryen.js.called";
+const Name IdempotentHint = "binaryen.idempotent";
 
 } // namespace Annotations
 

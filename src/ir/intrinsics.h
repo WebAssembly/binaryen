@@ -116,7 +116,7 @@ public:
   std::vector<Name> getJSCalledFunctions();
 
   // Get the code annotations for an expression in a function.
-  CodeAnnotation getAnnotations(Expression* curr, Function* func) {
+  static CodeAnnotation getAnnotations(Expression* curr, Function* func) {
     auto& annotations = func->codeAnnotations;
     auto iter = annotations.find(curr);
     if (iter != annotations.end()) {
@@ -126,7 +126,7 @@ public:
   }
 
   // Get the code annotations for a function itself.
-  CodeAnnotation getAnnotations(Function* func) {
+  static CodeAnnotation getAnnotations(Function* func) {
     return getAnnotations(nullptr, func);
   }
 
@@ -164,6 +164,9 @@ public:
       }
       if (!ret.jsCalled) {
         ret.jsCalled = funcAnnotations.jsCalled;
+      }
+      if (!ret.idempotent) {
+        ret.idempotent = funcAnnotations.idempotent;
       }
     }
 
