@@ -1165,10 +1165,16 @@ private:
       parent.mayNotReturn = true;
       parent.implicitTrap = true;
 
-      // field must exist and be a packed waitqueue if this is valid Wasm.
-      if (curr->type.isStruct() &&
-          curr->index < curr->type.getHeapType().getStruct().fields.size() &&
-          curr->type.getHeapType()
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+
+      // If the ref isn't `unreachable`, then the field must exist and be a
+      // packed waitqueue due to validation.
+      if (curr->ref->type.isStruct() &&
+          curr->index <
+            curr->ref->type.getHeapType().getStruct().fields.size() &&
+          curr->ref->type.getHeapType()
               .getStruct()
               .fields.at(curr->index)
               .mutable_ == Mutable) {

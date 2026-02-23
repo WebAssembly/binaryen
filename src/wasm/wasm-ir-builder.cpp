@@ -663,9 +663,10 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<> visitStructWait(StructWait* curr) {
+  Result<> visitStructWait(StructWait* curr,
+                           std::optional<HeapType> structType = std::nullopt) {
     std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitStructWait(curr);
+    ConstraintCollector{builder, children}.visitStructWait(curr, structType);
     return popConstrainedChildren(children);
   }
 };
@@ -2665,7 +2666,7 @@ Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
   StructWait curr(wasm.allocator);
   curr.structType = type;
   curr.index = index;
-  CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr));
+  CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
   push(builder.makeStructWait(
     curr.structType, curr.index, curr.ref, curr.expected, curr.timeout));
   return Ok{};

@@ -2165,7 +2165,7 @@ public:
   Expression* expected = nullptr;
   Expression* timeout = nullptr;
   HeapType structType;
-  Index index;
+  Index index = -1;
 
   void finalize();
 };

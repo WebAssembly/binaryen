@@ -1,10 +1,19 @@
 (assert_invalid
   (module
-    (type $t (struct (field i32)))
+    (type $t (struct (field i32) (field waitqueue)))
     (func (param $expected i32) (param $timeout i64) (result i32)
       (struct.wait $t 0 (ref.null $t) (local.get $expected) (local.get $timeout))
     )
   ) "struct.wait struct field must be a waitqueue"
+)
+
+(assert_invalid
+  (module
+    (type $t (struct (field i32) (field waitqueue)))
+    (func (param $expected i32) (param $timeout i64) (result i32)
+      (struct.wait $t 2 (ref.null $t) (local.get $expected) (local.get $timeout))
+    )
+  ) "struct index out of bounds"
 )
 
 (assert_invalid
@@ -27,10 +36,18 @@
   ) "struct.wait timeout must be an i64"
 )
 
+;; unreachable is allowed
+(module
+  (type $t (struct (field i32)))
+  (func (param $expected i32) (param $timeout i64) (result i32)
+    (struct.wait $t 0 (unreachable) (local.get $expected) (local.get $timeout))
+  )
+)
+
 (module
   (type $t (struct (field waitqueue)))
 
-  (global $g (ref $t) (struct.new $t (i32.const 0)))
+  (global $g (ref null $t) (struct.new $t (i32.const 0)))
 
   (func (export "waitqueue.wait") (param $expected i32) (param $timeout i64) (result i32)
     (struct.wait $t 0 (global.get $g) (local.get $expected) (local.get $timeout))

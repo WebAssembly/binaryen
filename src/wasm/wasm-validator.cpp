@@ -4266,28 +4266,12 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     !getModule() || getModule()->features.hasSharedEverything(),
     curr,
     "struct.wait requires shared-everything [--enable-shared-everything]");
-  if (curr->ref->type == Type::unreachable) {
-    return;
-  }
-  shouldBeTrue(
-    curr->ref->type.isRef(), curr, "struct.wait ref must be a reference");
+
   shouldBeSubType(
     curr->ref->type,
     Type(curr->structType, Nullable),
     curr,
     "struct.wait ref must be a subtype of the specified struct type");
-  shouldBeTrue(curr->structType.isStruct(),
-               curr,
-               "struct.wait must be parameterized by a struct type");
-  if (curr->structType.isStruct() &&
-      curr->index < curr->structType.getStruct().fields.size()) {
-    shouldBeTrue(curr->structType.getStruct().fields[curr->index].packedType ==
-                   Field::WaitQueue,
-                 curr,
-                 "struct.wait struct field must be a waitqueue");
-  } else if (curr->structType.isStruct()) {
-    shouldBeTrue(false, curr, "struct.wait struct field index out of bounds");
-  }
 
   shouldBeEqual(curr->expected->type,
                 Type(Type::BasicType::i32),
@@ -4297,6 +4281,25 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
                 Type(Type::BasicType::i64),
                 curr,
                 "struct.wait timeout must be an i64");
+
+  shouldBeTrue(curr->structType.isStruct(),
+               curr,
+               "struct.wait must be parameterized by a struct type");
+
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+
+  // In practice this likely fails during parsing instead.
+  shouldBeTrue(curr->index < curr->structType.getStruct().fields.size(),
+               curr,
+               "struct.wait index immediate should be less than the field "
+               "count of the struct");
+
+  shouldBeTrue(curr->structType.getStruct().fields.at(curr->index).packedType ==
+                 Field::WaitQueue,
+               curr,
+               "struct.wait struct field must be a waitqueue");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
