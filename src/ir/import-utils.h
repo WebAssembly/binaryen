@@ -20,6 +20,7 @@
 #include "ir/import-names.h"
 #include "ir/runtime-table.h"
 #include "literal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -131,7 +132,8 @@ public:
 
   // Returns null if the `name` wasn't found. The returned Literals* lives as
   // long as the ImportResolver instance.
-  virtual Literals* getGlobalOrNull(ImportNames name, Type type) const = 0;
+  virtual Literals*
+  getGlobalOrNull(ImportNames name, Type type, bool mut) const = 0;
 
   // Returns null if the `name` wasn't found. The returned RuntimeTable* lives
   // as long as the ImportResolver instance.
@@ -149,7 +151,8 @@ public:
     std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances)
     : linkedInstances(std::move(linkedInstances)) {}
 
-  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
+  Literals*
+  getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
     auto it = linkedInstances.find(name.module);
     if (it == linkedInstances.end()) {
       return nullptr;
