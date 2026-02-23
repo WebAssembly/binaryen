@@ -4724,10 +4724,8 @@ public:
     if (funcValue.isNull()) {
       trap("null ref");
     }
-    auto funcName = funcValue.getFunc();
-    auto* func = self()->getModule()->getFunction(funcName);
     return Literal(std::make_shared<ContData>(
-      self()->makeFuncData(funcName, func->type), curr->type.getHeapType()));
+      funcValue, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
