@@ -2,7 +2,8 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec-before --fuzz-exec-second=%s.second -q -o /dev/null 2>&1 | filecheck %s
 
 ;; Export a function reference from the first module to the second. The second
-;; can create a continuation with out without erroring.
+;; can create a continuation without erroring, even though it uses a funcref
+;; from another module.
 
 (module
  (type $func (func))
