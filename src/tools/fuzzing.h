@@ -143,6 +143,7 @@ private:
   bool closedWorld;
   Builder builder;
   Random random;
+  Intrinsics intrinsics;
 
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
@@ -217,6 +218,9 @@ private:
 
   // All tags that are valid as exception tags (which cannot have results).
   std::vector<Tag*> exceptionTags;
+
+  // All functions marked jsCalled.
+  std::vector<Name> jsCalled;
 
   Index numAddedFunctions = 0;
 
@@ -393,7 +397,9 @@ private:
   }
   void recombine(Function* func);
   void mutate(Function* func);
-  // Fix up the IR after recombination and mutation.
+  // Fix up the IR for closed world.
+  void fixClosedWorld(Function* func);
+  // Fix up the IR after recombination and mutation (which may break the IR).
   void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
 
@@ -567,6 +573,12 @@ private:
   // Utilities
   Name getTargetName(Expression* target);
   Type getTargetType(Expression* target);
+
+  // Checks if a function is valid to take a ref.func of.
+  bool isValidRefFuncTarget(Name func);
+
+  // Checks if a function is a callRef* import (call-ref or call-ref-catch).
+  bool isCallRefImport(Name func);
 
   // statistical distributions
 

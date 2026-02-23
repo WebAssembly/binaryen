@@ -1,0 +1,13 @@
+(module
+  (@binaryen.js.called)
+  (func $second (export "second")
+    (@metadata.code.branch_hint "\01")
+    (if
+      (i32.const 0)
+      (then
+        (return)
+      )
+    )
+  )
+)
+
