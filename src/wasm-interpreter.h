@@ -4724,8 +4724,8 @@ public:
     if (funcValue.isNull()) {
       trap("null ref");
     }
-    return Literal(std::make_shared<ContData>(
-      funcValue, curr->type.getHeapType()));
+    return Literal(
+      std::make_shared<ContData>(funcValue, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
