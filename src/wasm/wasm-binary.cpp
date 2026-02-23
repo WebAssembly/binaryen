@@ -1457,6 +1457,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::CustomDescriptorsFeature;
       case FeatureSet::RelaxedAtomics:
         return BinaryConsts::CustomSections::RelaxedAtomicsFeature;
+      case FeatureSet::CompactImports:
+        return BinaryConsts::CustomSections::CompactImportsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -2950,124 +2952,217 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
   }
 }
 
+void WasmBinaryReader::addImport(uint32_t kind,
+                                 std::unique_ptr<Importable> details) {
+  switch (kind) {
+    case ExternalKind::Function:
+    case ExternalKind::Function | BinaryConsts::ExactImport: {
+      std::unique_ptr<Function> func(static_cast<Function*>(details.release()));
+      auto [name, isExplicit] =
+        getOrMakeName(functionNames,
+                      wasm.functions.size(),
+                      makeName("fimport$", wasm.functions.size()),
+                      usedFunctionNames);
+      func->name = name;
+      func->hasExplicitName = isExplicit;
+      functionTypes.push_back(func->type.getHeapType());
+      wasm.addFunction(std::move(func));
+      break;
+    }
+    case ExternalKind::Table: {
+      std::unique_ptr<Table> table(static_cast<Table*>(details.release()));
+      auto [name, isExplicit] =
+        getOrMakeName(tableNames,
+                      wasm.tables.size(),
+                      makeName("timport$", wasm.tables.size()),
+                      usedTableNames);
+      table->name = name;
+      table->hasExplicitName = isExplicit;
+      wasm.addTable(std::move(table));
+      break;
+    }
+    case ExternalKind::Memory: {
+      std::unique_ptr<Memory> memory(static_cast<Memory*>(details.release()));
+      auto [name, isExplicit] =
+        getOrMakeName(memoryNames,
+                      wasm.memories.size(),
+                      makeName("mimport$", wasm.memories.size()),
+                      usedMemoryNames);
+      memory->name = name;
+      memory->hasExplicitName = isExplicit;
+      wasm.addMemory(std::move(memory));
+      break;
+    }
+    case ExternalKind::Global: {
+      std::unique_ptr<Global> global(static_cast<Global*>(details.release()));
+      auto [name, isExplicit] =
+        getOrMakeName(globalNames,
+                      wasm.globals.size(),
+                      makeName("gimport$", wasm.globals.size()),
+                      usedGlobalNames);
+      global->name = name;
+      global->hasExplicitName = isExplicit;
+      wasm.addGlobal(std::move(global));
+      break;
+    }
+    case ExternalKind::Tag: {
+      std::unique_ptr<Tag> tag(static_cast<Tag*>(details.release()));
+      auto [name, isExplicit] =
+        getOrMakeName(tagNames,
+                      wasm.tags.size(),
+                      makeName("eimport$", wasm.tags.size()),
+                      usedTagNames);
+      tag->name = name;
+      tag->hasExplicitName = isExplicit;
+      wasm.addTag(std::move(tag));
+      break;
+    }
+    default:
+      WASM_UNREACHABLE("unexpected kind");
+  }
+}
+
+std::unique_ptr<Importable>
+WasmBinaryReader::copyImportable(uint32_t kind, Importable& details) {
+  switch (kind) {
+    case ExternalKind::Function:
+    case ExternalKind::Function | BinaryConsts::ExactImport: {
+      auto func = std::make_unique<Function>();
+      *func = static_cast<Function&>(details);
+      return func;
+    }
+    case ExternalKind::Table: {
+      auto table = std::make_unique<Table>();
+      *table = static_cast<Table&>(details);
+      return table;
+    }
+    case ExternalKind::Memory: {
+      auto memory = std::make_unique<Memory>();
+      *memory = static_cast<Memory&>(details);
+      return memory;
+    }
+    case ExternalKind::Global: {
+      auto global = std::make_unique<Global>();
+      *global = static_cast<Global&>(details);
+      return global;
+    }
+    case ExternalKind::Tag: {
+      auto tag = std::make_unique<Tag>();
+      *tag = static_cast<Tag&>(details);
+      return tag;
+    }
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+std::unique_ptr<Importable>
+WasmBinaryReader::readImportDetails(Name module, Name base, uint32_t kind) {
+  Builder builder(wasm);
+  // We set a unique prefix for the name based on the kind. This ensures no
+  // collisions between them, which can't occur here (due to the index i) but
+  // could occur later due to the names section.
+  switch (kind) {
+    case ExternalKind::Function:
+    case ExternalKind::Function | BinaryConsts::ExactImport: {
+      auto index = getU32LEB();
+      auto type = getTypeByIndex(index);
+      if (!type.isSignature()) {
+        throwError(std::string("Imported function ") + module.toString() + '.' +
+                   base.toString() +
+                   "'s type must be a signature. Given: " + type.toString());
+      }
+      auto exact = (kind & BinaryConsts::ExactImport) ? Exact : Inexact;
+      auto curr = builder.makeFunction("", Type(type, NonNullable, exact), {});
+      curr->module = module;
+      curr->base = base;
+      setLocalNames(*curr, wasm.functions.size());
+      return curr;
+    }
+    case ExternalKind::Table: {
+      auto table = builder.makeTable("");
+      table->module = module;
+      table->base = base;
+      table->type = getType();
+
+      bool is_shared;
+      getResizableLimits(table->initial,
+                         table->max,
+                         is_shared,
+                         table->addressType,
+                         Table::kUnlimitedSize);
+      if (is_shared) {
+        throwError("Tables may not be shared");
+      }
+      return table;
+    }
+    case ExternalKind::Memory: {
+      auto memory = builder.makeMemory("");
+      memory->module = module;
+      memory->base = base;
+      getResizableLimits(memory->initial,
+                         memory->max,
+                         memory->shared,
+                         memory->addressType,
+                         Memory::kUnlimitedSize);
+      return memory;
+    }
+    case ExternalKind::Global: {
+      auto type = getConcreteType();
+      auto mutable_ = getU32LEB();
+      if (mutable_ & ~1) {
+        throwError("Global mutability must be 0 or 1");
+      }
+      auto curr = builder.makeGlobal(
+        "", type, nullptr, mutable_ ? Builder::Mutable : Builder::Immutable);
+      curr->module = module;
+      curr->base = base;
+      return curr;
+    }
+    case ExternalKind::Tag: {
+      getInt8(); // Reserved 'attribute' field
+      auto index = getU32LEB();
+      auto curr = builder.makeTag("", getSignatureByTypeIndex(index));
+      curr->module = module;
+      curr->base = base;
+      return curr;
+    }
+    default: {
+      throwError("bad import kind");
+    }
+  }
+}
+
 void WasmBinaryReader::readImports() {
   size_t num = getU32LEB();
-  Builder builder(wasm);
   for (size_t i = 0; i < num; i++) {
     auto module = getInlineString();
     auto base = getInlineString();
-    auto kind = getU32LEB();
-    // We set a unique prefix for the name based on the kind. This ensures no
-    // collisions between them, which can't occur here (due to the index i) but
-    // could occur later due to the names section.
-    switch (kind) {
-      case ExternalKind::Function:
-      case ExternalKind::Function | BinaryConsts::ExactImport: {
-        auto [name, isExplicit] =
-          getOrMakeName(functionNames,
-                        wasm.functions.size(),
-                        makeName("fimport$", wasm.functions.size()),
-                        usedFunctionNames);
-        auto index = getU32LEB();
-        functionTypes.push_back(getTypeByIndex(index));
-        auto type = getTypeByIndex(index);
-        if (!type.isSignature()) {
-          throwError(std::string("Imported function ") + module.toString() +
-                     '.' + base.toString() +
-                     "'s type must be a signature. Given: " + type.toString());
+    auto kind = getInt8();
+    if (base == "" && (kind == 0x7F || kind == 0x7E)) {
+      if (!wasm.features.hasCompactImports()) {
+        throwError("compact imports not supported");
+      }
+      if (kind == 0x7F) {
+        size_t numCompactImports = getU32LEB();
+        while (numCompactImports--) {
+          base = getInlineString();
+          kind = getInt8();
+          auto details = readImportDetails(module, base, kind);
+          addImport(kind, std::move(details));
         }
-        auto exact = (kind & BinaryConsts::ExactImport) ? Exact : Inexact;
-        auto curr =
-          builder.makeFunction(name, Type(type, NonNullable, exact), {});
-        curr->hasExplicitName = isExplicit;
-        curr->module = module;
-        curr->base = base;
-        setLocalNames(*curr, wasm.functions.size());
-        wasm.addFunction(std::move(curr));
-        break;
-      }
-      case ExternalKind::Table: {
-        auto [name, isExplicit] =
-          getOrMakeName(tableNames,
-                        wasm.tables.size(),
-                        makeName("timport$", wasm.tables.size()),
-                        usedTableNames);
-        auto table = builder.makeTable(name);
-        table->hasExplicitName = isExplicit;
-        table->module = module;
-        table->base = base;
-        table->type = getType();
-
-        bool is_shared;
-        getResizableLimits(table->initial,
-                           table->max,
-                           is_shared,
-                           table->addressType,
-                           Table::kUnlimitedSize);
-        if (is_shared) {
-          throwError("Tables may not be shared");
+      } else {
+        kind = getU32LEB();
+        auto base_details = readImportDetails(module, base, kind);
+        size_t numCompactImports = getU32LEB();
+        while (numCompactImports--) {
+          auto details = copyImportable(kind, *base_details);
+          details->base = getInlineString();
+          addImport(kind, std::move(details));
         }
-        wasm.addTable(std::move(table));
-        break;
       }
-      case ExternalKind::Memory: {
-        auto [name, isExplicit] =
-          getOrMakeName(memoryNames,
-                        wasm.memories.size(),
-                        makeName("mimport$", wasm.memories.size()),
-                        usedMemoryNames);
-        auto memory = builder.makeMemory(name);
-        memory->hasExplicitName = isExplicit;
-        memory->module = module;
-        memory->base = base;
-        getResizableLimits(memory->initial,
-                           memory->max,
-                           memory->shared,
-                           memory->addressType,
-                           Memory::kUnlimitedSize);
-        wasm.addMemory(std::move(memory));
-        break;
-      }
-      case ExternalKind::Global: {
-        auto [name, isExplicit] =
-          getOrMakeName(globalNames,
-                        wasm.globals.size(),
-                        makeName("gimport$", wasm.globals.size()),
-                        usedGlobalNames);
-        auto type = getConcreteType();
-        auto mutable_ = getU32LEB();
-        if (mutable_ & ~1) {
-          throwError("Global mutability must be 0 or 1");
-        }
-        auto curr =
-          builder.makeGlobal(name,
-                             type,
-                             nullptr,
-                             mutable_ ? Builder::Mutable : Builder::Immutable);
-        curr->hasExplicitName = isExplicit;
-        curr->module = module;
-        curr->base = base;
-        wasm.addGlobal(std::move(curr));
-        break;
-      }
-      case ExternalKind::Tag: {
-        auto [name, isExplicit] =
-          getOrMakeName(tagNames,
-                        wasm.tags.size(),
-                        makeName("eimport$", wasm.tags.size()),
-                        usedTagNames);
-        getInt8(); // Reserved 'attribute' field
-        auto index = getU32LEB();
-        auto curr = builder.makeTag(name, getSignatureByTypeIndex(index));
-        curr->hasExplicitName = isExplicit;
-        curr->module = module;
-        curr->base = base;
-        wasm.addTag(std::move(curr));
-        break;
-      }
-      default: {
-        throwError("bad import kind");
-      }
+    } else {
+      auto details = readImportDetails(module, base, kind);
+      addImport(kind, std::move(details));
     }
   }
   numFuncImports = wasm.functions.size();
