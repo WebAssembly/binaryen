@@ -325,7 +325,7 @@
 
  ;; CHECK:      (export "b" (func $b))
 
- ;; CHECK:      (@binaryen.js.called)
+ ;; CHECK:      (@binaryen.idempotent)
  ;; CHECK-NEXT: (func $a (type $0) (param $x i32)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
