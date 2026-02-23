@@ -59,15 +59,23 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
+#ifndef TIME_DAE
 #define TIME_DAE 0
+#endif
 
-#if TIME_DAE
+#ifndef DAE_STATS
+#define DAE_STATS 0
+#endif
+
+#if TIME_DAE || DAE_STATS
 
 #include <iostream>
 
+#include "support/insert_ordered.h"
+#include "support/strongly_connected_components.h"
 #include "support/timing.h"
 
-#endif // TIME_DAE
+#endif // TIME_DAE || DAE_STATS
 
 // TODO: Treat call_indirects more precisely than call_refs by taking the target
 // table into account.
@@ -242,6 +250,14 @@ struct DAE2 : public Pass {
 
     TIME(std::cerr << "fixed point: " << timer.lastElapsed() << "\n");
 
+#if DAE_STATS
+
+    collectStats();
+
+    TIME(std::cerr << "stats: " << timer.lastElapsed() << "\n");
+
+#endif // DAE_STATS
+
     optimize();
 
     TIME(auto [last, total] = timer.elapsed());
@@ -253,6 +269,10 @@ struct DAE2 : public Pass {
   void prepareReverseGraph();
   void computeFixedPoint();
   void optimize();
+
+#if DAE_STATS
+  void collectStats();
+#endif // DAE_STATS
 
   void makeUnreferencedFunctionTypes(const std::vector<HeapType>& oldTypes,
                                      const TypeMap& newTypes);
@@ -1410,6 +1430,140 @@ void DAE2::makeUnreferencedFunctionTypes(const std::vector<HeapType>& oldTypes,
     funcInfos[i].replacementType = it->second;
   }
 }
+
+#if DAE_STATS
+void DAE2::collectStats() {
+  // Count the number of removed parameters of unreferenced functions and
+  // function types as well as the number of removed parameters that are part of
+  // a parameter forwarding cycle.
+  Index removedUnreferenced = 0, removedType = 0, removedTotal = 0;
+  Index removedCycle = 0, largestCycle = 0, deepestChain = 0;
+
+  // Collect a graph of optimized parameters and forwarding edges so we can find
+  // optimized cycles.
+  using Node = std::variant<FuncParamLoc, TypeParamLoc>;
+  using Nodes = InsertOrderedSet<Node>;
+  Nodes optimizedNodes;
+
+  // Collect unreferenced function parameters and the total removed parameters.
+  for (Index i = 0; i < funcInfos.size(); ++i) {
+    for (Index j = 0; j < funcInfos[i].paramUsages.size(); ++j) {
+      if (!funcInfos[i].paramUsages[j]) {
+        ++removedTotal;
+        if (!funcInfos[i].referenced) {
+          ++removedUnreferenced;
+          optimizedNodes.insert(FuncParamLoc{i, j});
+        }
+      }
+    }
+  }
+
+  // Collect function type parameters.
+  for (auto& [type, info] : typeTreeInfos) {
+    for (Index i = 0; i < info.paramUsages.size(); ++i) {
+      assert(getRootType(type) == type);
+      if (!info.paramUsages[i]) {
+        optimizedNodes.insert(TypeParamLoc{type, i});
+        ++removedType;
+      }
+    }
+  }
+
+  // Find the strongly-connected components to find cycles. Consider only nodes
+  // that have been optimized out when computing the graph.
+  struct ParamSCCs : SCCs<typename Nodes::iterator, ParamSCCs> {
+    DAE2& parent;
+    Nodes& optimizedNodes;
+    ParamSCCs(DAE2& parent, Nodes& optimizedNodes)
+      : SCCs(optimizedNodes.begin(), optimizedNodes.end()), parent(parent),
+        optimizedNodes(optimizedNodes) {}
+    void pushChildren(Node& node) {
+      if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
+        auto [funcIndex, paramIndex] = *loc;
+        for (auto loc : parent.funcInfos[funcIndex].callerParams[paramIndex]) {
+          if (optimizedNodes.count(loc)) {
+            push(loc);
+          }
+        }
+      } else if (auto* loc = std::get_if<TypeParamLoc>(&node)) {
+        auto [funcType, paramIndex] = *loc;
+        if (auto it = parent.typeTreeInfos.find(funcType);
+            it != parent.typeTreeInfos.end()) {
+          for (auto loc : it->second.callerParams[paramIndex]) {
+            if (optimizedNodes.count(loc)) {
+              push(loc);
+            }
+          }
+        }
+      } else {
+        WASM_UNREACHABLE("unexpected node");
+      }
+    }
+  };
+
+  // Track depths for each parameter to find the longest chain.
+  std::unordered_map<Node, Index> depths;
+  auto getDepth = [&](Node node) -> Index {
+    if (auto it = depths.find(node); it != depths.end()) {
+      return it->second;
+    }
+    return 0;
+  };
+  for (auto scc : ParamSCCs(*this, optimizedNodes)) {
+    std::vector<Node> sccNodes(scc.begin(), scc.end());
+    if (sccNodes.size() > 1) {
+      removedCycle += sccNodes.size();
+    }
+    // Normally we can just take the SCC size as the cycle size, but SCCs of
+    // size one are not necessarily cycles at all. Look for self-references to
+    // determine whether we have a size-1 cycle.
+    bool isCycle = sccNodes.size() > 1;
+    // Find the depth of this SCC,
+    // which one more than the max depth of its children.
+    Index maxChildDepth = 0;
+    for (auto& node : sccNodes) {
+      if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
+        auto [funcIndex, paramIndex] = *loc;
+        for (auto loc : funcInfos[funcIndex].callerParams[paramIndex]) {
+          maxChildDepth = std::max(maxChildDepth, getDepth(loc));
+          if (Node(loc) == node) {
+            isCycle = true;
+          }
+        }
+      } else if (auto* loc = std::get_if<TypeParamLoc>(&node)) {
+        auto [funcType, paramIndex] = *loc;
+        if (auto it = typeTreeInfos.find(funcType); it != typeTreeInfos.end()) {
+          for (auto loc : it->second.callerParams[paramIndex]) {
+            maxChildDepth = std::max(maxChildDepth, getDepth(loc));
+            if (Node(loc) == node) {
+              isCycle = true;
+            }
+          }
+        }
+      } else {
+        WASM_UNREACHABLE("unexpected node");
+      }
+    }
+    Index depth = maxChildDepth + 1;
+    for (auto& node : sccNodes) {
+      depths[node] = depth;
+    }
+    deepestChain = std::max(deepestChain, depth);
+    if (isCycle) {
+      largestCycle = std::max(largestCycle, Index(sccNodes.size()));
+    }
+  }
+
+  std::cout << "Total removed parameters: " << removedTotal << "\n";
+  std::cout << "Parameters removed from unreferenced functions: "
+            << removedUnreferenced << "\n";
+  std::cout << "Parameters removed from inhabited function types: "
+            << removedType << "\n";
+  std::cout << "Parameters in forwarding cycles: " << removedCycle << "\n";
+  std::cout << "Largest forwarding cycle: " << largestCycle << "\n";
+  std::cout << "Deepest forwarding chain: " << deepestChain << "\n";
+}
+#endif // DAE_STATS
 
 } // anonymous namespace
 
