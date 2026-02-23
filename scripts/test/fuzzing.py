@@ -109,15 +109,17 @@ unfuzzable = [
     # Contains a name with "__fuzz_split", indicating it is emitted by
     # wasm-split, confusing the fuzzer because it is in the initial content.
     'fuzz_shell_second.wast',
-    # We cannot fuzz semantics-altering intrinsics, as when we optimize the
-    # behavior changes.
-    'removable-if-unused.wast',
-    'removable-if-unused-func.wast',
-    'vacuum-removable-if-unused.wast',
-    'vacuum-removable-if-unused-func.wast',
+    # We cannot fuzz js.called files, as they may contain invalid code, where
+    # the closed-world assumption fails. That is, @binaryen.js.called must be
+    # added to make a module valid for optimization, and our fuzzer does that
+    # very carefully when it creates content, but we cannot trust existing
+    # testcases.
+    'remove-unused-module-elements-js-called.wast',
     'strip-toolchain-annotations-func.wast',
-    'idempotent.wast',
-    'optimize-instructions_idempotent.wast',
+    'unsubtyping-jsinterop.wast',
+    'annotations.wat',
+    'annotations.wat.second',
+    'js-called.wast',
     # Not fully implemented.
     'waitqueue.wast',
 ]
