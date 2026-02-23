@@ -352,8 +352,8 @@ void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
       auto deduped = Names::getValidName(
         names.name, [&](Name test) { return !seenTypeNames.count(test); });
       names.name = deduped;
-      // Do not overwrite the entry for the old type if it has already appeared
-      // as a new type.
+      // Use `insert` to avoid overwriting the entry for the old type if it has
+      // already appeared as a new type.
       if (newTypeNames.insert({old, names}).second) {
         seenTypeNames.insert(names.name);
       }
