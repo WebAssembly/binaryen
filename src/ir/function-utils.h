@@ -44,12 +44,11 @@ inline bool equal(Function* left, Function* right) {
   // only in metadata (following LLVM's example). If we have a non-optimization
   // reason for comparing metadata here then we could add a flag for it. We do,
   // however, compare metadata that changes semantics (not debug info, but
-  // things like jsCalled).
+  // things like jsCalled). We do that check conservatively, erasing the non-
+  // semantic-altering ones and then comparing (so that new annotations
   auto leftAnnotations = Intrinsics::getAnnotations(left);
   auto rightAnnotations = Intrinsics::getAnnotations(right);
-  if (leftAnnotations.jsCalled != rightAnnotations.jsCalled ||
-      leftAnnotations.removableIfUnused != rightAnnotations.removableIfUnused ||
-      leftAnnotations.idempotent != rightAnnotations.idempotent) {
+  if (!leftAnnotations.equalOnSemanticsAltering(rightAnnotations)) {
     return false;
   }
 

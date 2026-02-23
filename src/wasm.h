@@ -2259,9 +2259,19 @@ struct CodeAnnotation {
   bool jsCalled = false;
 
   bool operator==(const CodeAnnotation& other) const {
-    return branchLikely == other.branchLikely && inline_ == other.inline_ &&
-           removableIfUnused == other.removableIfUnused &&
-           jsCalled == other.jsCalled;
+    return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);
+  }
+
+  // Compares only true hints, that preserve semantics and do not change
+  // behavior in the optimizer.
+  bool equalOnSemanticsPreserving(const CodeAnnotation& other) {
+    return branchLikely == other.branchLikely && inline_ == other.inline_;
+  }
+
+  // Compares annotations that *do* alter semantics.
+  bool equalOnSemanticsAltering(const CodeAnnotation& other) {
+    return removableIfUnused == other.removableIfUnused &&
+           jsCalled == other.jsCalled && idempotent == other.idempotent;
   }
 };
 
