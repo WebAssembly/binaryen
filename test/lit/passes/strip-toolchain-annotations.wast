@@ -19,6 +19,9 @@
   ;; CHECK-NEXT:  (call $test
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $test
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param i32)
     ;; Inlining hints are not removed, as they are for the VM too.
@@ -37,5 +40,9 @@
     (@metadata.code.inline "\00")
     (@binaryen.removable.if.unused)
     (call $test (i32.const 3))
+
+    ;; This should be removed too.
+    (@binaryen.idempotent)
+    (call $test (i32.const 4))
   )
 )

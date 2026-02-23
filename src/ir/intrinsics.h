@@ -165,6 +165,9 @@ public:
       if (!ret.jsCalled) {
         ret.jsCalled = funcAnnotations.jsCalled;
       }
+      if (!ret.idempotent) {
+        ret.idempotent = funcAnnotations.idempotent;
+      }
     }
 
     return ret;
