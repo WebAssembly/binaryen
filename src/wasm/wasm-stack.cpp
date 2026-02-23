@@ -2913,7 +2913,7 @@ void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
 
 void BinaryInstWriter::visitStructWait(StructWait* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << U32LEB(BinaryConsts::StructWait);
+    << static_cast<int8_t>(BinaryConsts::StructWait);
   parent.writeIndexedHeapType(curr->structType);
   o << U32LEB(curr->index);
 }

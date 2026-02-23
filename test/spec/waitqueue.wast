@@ -9,6 +9,15 @@
 
 (assert_invalid
   (module
+    (type $t (struct (field i32)))
+    (func (param $expected i32) (param $timeout i64) (result i32)
+      (struct.wait $t 0 (ref.null $t) (local.get $expected) (local.get $timeout))
+    )
+  ) "struct.wait struct field must be a waitqueue"
+)
+
+(assert_invalid
+  (module
     (type $t (struct (field waitqueue)))
     (global $g (ref $t) (struct.new $t (i32.const 0)))
     (func (param $expected i32) (param $timeout i64) (result i32)

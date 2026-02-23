@@ -599,7 +599,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(currResult, retSig.results);
   }
   void visitStructWait(StructWait* curr) {
-    // todo?
+    self()->noteSubtype(curr->ref->type, curr->structType);
   }
 };
 
