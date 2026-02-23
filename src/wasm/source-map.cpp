@@ -196,6 +196,9 @@ int32_t SourceMapReader::readBase64VLQ() {
       ch > '9' ? ch - 'g' : (ch >= '0' ? ch - '0' + 20 : (ch == '+' ? 30 : 31));
     value |= digit << shift;
     shift += 5;
+    if (shift >= 32) {
+      throw MapParseException("VLQ value too large");
+    }
   }
   return value & 1 ? -int32_t(value >> 1) : int32_t(value >> 1);
 }
