@@ -31,6 +31,8 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include <pass.h>
+#include <set>
+#include <unordered_map>
 #include <wasm-builder.h>
 #include <wasm.h>
 
@@ -39,6 +41,8 @@ namespace wasm {
 Name LOGGER("log_execution");
 
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
+  std::unordered_map<Function*, Index> functionOrdinals;
+  std::set<Index> usedFunctionOrdinals;
   // The module name the logger function is imported from.
   IString loggerModule;
 
@@ -50,23 +54,47 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     Super::run(module);
   }
 
-  void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body); }
+  Index nextFreeIndex = 0;
 
-  void visitReturn(Return* curr) { replaceCurrent(makeLogCall(curr)); }
+  // Tries to convert a string (containing a number) to a function index.
+  // Returns (Index)-1 on failure.
+  Index stringToIndex(const char* s) {
+    for (const char* q = s; *q; ++q) {
+      if (!isdigit(*q)) {
+        return (Index)-1;
+      }
+    }
+    return std::stoi(s);
+  }
+
+  void visitLoop(Loop* curr) {
+    curr->body = makeLogCall(curr->body, nextFreeIndex++);
+  }
+
+  void visitReturn(Return* curr) {
+    replaceCurrent(makeLogCall(curr, nextFreeIndex++));
+  }
 
   void visitFunction(Function* curr) {
     if (curr->imported()) {
       return;
     }
+
     if (auto* block = curr->body->dynCast<Block>()) {
       if (!block->list.empty()) {
-        block->list.back() = makeLogCall(block->list.back());
+        block->list.back() = makeLogCall(block->list.back(), nextFreeIndex++);
       }
     }
-    curr->body = makeLogCall(curr->body);
+
+    if (functionOrdinals.find(curr) == functionOrdinals.end()) {
+      Fatal() << "LogExecution: Internal mismatch in mapping functions to "
+                 "their ordinals for logging execution!";
+    }
+
+    curr->body = makeLogCall(curr->body, functionOrdinals.find(curr)->second);
   }
 
-  void visitModule(Module* curr) {
+  void doWalkModule(Module* curr) {
     // Add the import
     auto import = Builder::makeFunction(
       LOGGER, Type(Signature(Type::i32, Type::none), NonNullable, Inexact), {});
@@ -101,14 +129,68 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
     import->base = LOGGER;
     curr->addFunction(std::move(import));
+
+    // Assigning logged function IDs to each WebAssembly function could be done
+    // arbitrarily e.g. by assign any which random unique integer to each
+    // function, but to provide general purpose to users of the LogExecution
+    // pass, strive to assign each function the same log ID that the function
+    // ordinal is.
+
+    // As convention, imports have function ordinals [0, numImports[,
+    // so skip using those numbers as IDs.
+    Index numImports = 0;
+    for (auto& func : curr->functions) {
+      if (func->imported()) {
+        ++numImports;
+      }
+    }
+
+    // First assign function indices to all functions that do not have a name,
+    // but are identified only with ordinals.
+    for (auto& func : curr->functions) {
+      if (func->imported()) {
+        continue;
+      }
+
+      Index currentFunctionIndex =
+        (Index)stringToIndex(func->name.toString().c_str());
+
+      if (currentFunctionIndex != (Index)-1) {
+        functionOrdinals[func.get()] = currentFunctionIndex;
+        usedFunctionOrdinals.insert(currentFunctionIndex);
+      }
+    }
+
+    // Last, assign function indices to all remaining named functions.
+    nextFreeIndex = numImports;
+    for (auto& func : curr->functions) {
+      if (func->imported()) {
+        continue;
+      }
+
+      // Was this function already assigned a name in previous pass?
+      if (functionOrdinals.find(func.get()) != functionOrdinals.end()) {
+        continue;
+      }
+
+      // Skip over index numbers that were used in the previous pass.
+      while (usedFunctionOrdinals.find(nextFreeIndex) !=
+             usedFunctionOrdinals.end()) {
+        ++nextFreeIndex;
+      }
+
+      usedFunctionOrdinals.insert(nextFreeIndex);
+      functionOrdinals[func.get()] = nextFreeIndex++;
+    }
+
+    PostWalker<LogExecution>::doWalkModule(curr);
   }
 
 private:
-  Expression* makeLogCall(Expression* curr) {
-    static Index id = 0;
+  Expression* makeLogCall(Expression* curr, Index index) {
     Builder builder(*getModule());
     return builder.makeSequence(
-      builder.makeCall(LOGGER, {builder.makeConst(int32_t(id++))}, Type::none),
+      builder.makeCall(LOGGER, {builder.makeConst(int32_t(index))}, Type::none),
       curr);
   }
 };
