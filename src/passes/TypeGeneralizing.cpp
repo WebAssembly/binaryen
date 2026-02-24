@@ -15,7 +15,6 @@
  */
 
 #include "analysis/cfg.h"
-#include "analysis/lattice.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/shared.h"
 #include "analysis/lattices/stack.h"
@@ -28,7 +27,9 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
+#ifndef TYPE_GENERALIZING_DEBUG
 #define TYPE_GENERALIZING_DEBUG 0
+#endif
 
 #if TYPE_GENERALIZING_DEBUG
 #define DBG(statement) statement

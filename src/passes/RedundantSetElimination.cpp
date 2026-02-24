@@ -44,6 +44,10 @@
 #include <wasm-builder.h>
 #include <wasm.h>
 
+#ifndef RSE_DEBUG
+#define RSE_DEBUG 0
+#endif
+
 namespace wasm {
 
 // Map each local index to its current value number (which is computed in
@@ -128,7 +132,7 @@ struct RedundantSetElimination
 
   Index getUniqueValue() {
     auto value = valueNumbering.getUniqueValue();
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
     std::cout << "new unique value " << value << '\n';
 #endif
     return value;
@@ -136,7 +140,7 @@ struct RedundantSetElimination
 
   Index getValue(Literals lit) {
     auto value = valueNumbering.getValue(lit);
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
     std::cout << "lit value " << value << '\n';
 #endif
     return value;
@@ -148,7 +152,7 @@ struct RedundantSetElimination
     if (iter != mergeValues.end()) {
       return iter->second;
     }
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
     std::cout << "new block-merge value for " << block << " : " << index
               << '\n';
 #endif
@@ -174,7 +178,7 @@ struct RedundantSetElimination
       return currValues[get->index];
     }
     auto value = valueNumbering.getValue(expr);
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
     std::cout << "expr value " << value << '\n';
 #endif
     return value;
@@ -191,12 +195,12 @@ struct RedundantSetElimination
         for (Index i = 0; i < numLocals; i++) {
           auto type = func->getLocalType(i);
           if (func->isParam(i)) {
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
             std::cout << "new param value for " << i << '\n';
 #endif
             start[i] = getUniqueValue();
           } else if (!LiteralUtils::canMakeZero(type)) {
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
             std::cout << "new unique value for non-zeroable " << i << '\n';
 #endif
             start[i] = getUniqueValue();
@@ -225,7 +229,7 @@ struct RedundantSetElimination
     work.push(entry);
     while (!work.empty()) {
       auto* curr = work.pop();
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
       std::cout << "flow block " << curr << '\n';
 #endif
       // process a block: first, update its start based on those reaching it
@@ -300,7 +304,7 @@ struct RedundantSetElimination
           }
         }
       }
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
       dump("start", curr->contents.start);
 #endif
       // flow values through it, then add those we can reach if they need an
@@ -330,7 +334,7 @@ struct RedundantSetElimination
       }
 #endif
       curr->contents.end.swap(currValues);
-#ifdef RSE_DEBUG
+#if RSE_DEBUG
       dump("end  ", curr->contents.end);
 #endif
       for (auto* next : curr->out) {

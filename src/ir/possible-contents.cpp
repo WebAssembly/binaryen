@@ -27,7 +27,12 @@
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "support/insert_ordered.h"
-#ifdef POSSIBLE_CONTENTS_DEBUG
+
+#ifndef POSSIBLE_CONTENTS_DEBUG
+#define POSSIBLE_CONTENTS_DEBUG 0
+#endif
+
+#if POSSIBLE_CONTENTS_DEBUG
 #include "support/timing.h"
 #endif
 #include "wasm-type.h"
@@ -2275,17 +2280,17 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   //
   // Atm this oracle only helps on GC content, so disable it without GC.
   if (options.trapsNeverHappen && wasm.features.hasGC()) {
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
     std::cout << "tnh phase\n";
     Timer timer;
 #endif
     tnhOracle = std::make_unique<TNHOracle>(wasm, options);
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
     std::cout << "... " << timer.lastElapsed() << "\n";
 #endif
   }
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "subtypes phase\n";
   Timer timer;
 #endif
@@ -2293,7 +2298,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   subTypes = std::make_unique<SubTypes>(wasm);
   maxDepths = subTypes->getMaxDepths();
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "parallel phase\n";
 #endif
@@ -2332,7 +2337,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       finder.walkFunctionInModule(func, &wasm);
     });
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "single phase\n";
 #endif
@@ -2343,7 +2348,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   InfoCollector finder(shared, globalInfo, options);
   finder.walkModuleCode(&wasm);
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "global init phase\n";
 #endif
@@ -2368,7 +2373,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // the entire program all at once, indexing and deduplicating everything as we
   // go.
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "merging+indexing phase\n";
 #endif
@@ -2413,7 +2418,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // We no longer need the function-level info.
   analysis.map.clear();
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "external phase\n";
 #endif
@@ -2511,7 +2516,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     }
   }
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "function subtyping phase\n";
 #endif
@@ -2537,7 +2542,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     }
   }
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "Link-targets phase\n";
 #endif
@@ -2556,7 +2561,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 #endif
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "roots phase\n";
 #endif
@@ -2574,7 +2579,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     updateContents(location, value);
   }
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
   std::cout << "flow phase\n";
   size_t iters = 0;
@@ -2582,7 +2587,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
   // Flow the data while there is still stuff flowing.
   while (!workQueue.empty()) {
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
     iters++;
     if ((iters & 255) == 0) {
       std::cout << iters++ << " iters, work left: " << workQueue.size() << '\n';
@@ -2596,7 +2601,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     flowAfterUpdate(locationIndex);
   }
 
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
 #endif
 
