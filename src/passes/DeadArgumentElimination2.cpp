@@ -251,11 +251,9 @@ struct DAE2 : public Pass {
     TIME(std::cerr << "fixed point: " << timer.lastElapsed() << "\n");
 
 #if DAE_STATS
-
     collectStats();
 
     TIME(std::cerr << "stats: " << timer.lastElapsed() << "\n");
-
 #endif // DAE_STATS
 
     optimize();
@@ -1518,8 +1516,8 @@ void DAE2::collectStats() {
     // size one are not necessarily cycles at all. Look for self-references to
     // determine whether we have a size-1 cycle.
     bool isCycle = sccNodes.size() > 1;
-    // Find the depth of this SCC,
-    // which one more than the max depth of its children.
+    // Find the depth of this SCC, which one more than the max depth of its
+    // children.
     Index maxChildDepth = 0;
     for (auto& node : sccNodes) {
       if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
