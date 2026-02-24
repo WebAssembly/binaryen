@@ -127,7 +127,7 @@ public:
 
   // Get the code annotations for a function itself.
   static CodeAnnotation getAnnotations(Function* func) {
-    return getAnnotations(nullptr, func);
+    return func->funcAnnotations;
   }
 
   void setAnnotations(Function* func,
@@ -137,7 +137,7 @@ public:
   }
 
   void setAnnotations(Function* func, const CodeAnnotation& value) {
-    setAnnotations(func, nullptr, value);
+    func->funcAnnotations = value;
   }
 
   // Given a call in a function, return all the annotations for it. The call may
