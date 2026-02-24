@@ -5495,7 +5495,8 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
       // it is for the entire function, with expr==null.
       auto relativeOffset = getU32LEB();
       if (relativeOffset == 0) {
-        // Function-level annotations have the offset of the start of the function.
+        // Function-level annotations have the offset of the start of the
+        // function.
         read(func->funcAnnotations);
         continue;
       }
