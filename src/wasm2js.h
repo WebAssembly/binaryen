@@ -2531,17 +2531,25 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
       JsType::JS_INT));
 
   Ref block = ValueBuilder::makeBlock();
-  memoryGrowFunc[3]->push_back(ValueBuilder::makeIf(
-    ValueBuilder::makeBinary(
-      ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")),
-                               LT,
-                               ValueBuilder::makeName(IString("newPages"))),
+  Ref condition = ValueBuilder::makeBinary(
+    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")),
+                             LT,
+                             ValueBuilder::makeName(IString("newPages"))),
+    IString("&&"),
+    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newPages")),
+                             LT,
+                             ValueBuilder::makeInt(Memory::kMaxSize32)));
+  // Also enforce the module's declared memory maximum, if one exists.
+  if (!wasm->memories.empty() && wasm->memories[0]->hasMax()) {
+    condition = ValueBuilder::makeBinary(
+      condition,
       IString("&&"),
       ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newPages")),
-                               LT,
-                               ValueBuilder::makeInt(Memory::kMaxSize32))),
-    block,
-    NULL));
+                               LE,
+                               ValueBuilder::makeInt(static_cast<uint32_t>(
+                                 wasm->memories[0]->max.addr))));
+  }
+  memoryGrowFunc[3]->push_back(ValueBuilder::makeIf(condition, block, NULL));
 
   Ref newBuffer = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newBuffer);

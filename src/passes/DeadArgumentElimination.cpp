@@ -38,11 +38,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "ir/effects.h"
-#include "ir/element-utils.h"
-#include "ir/find_all.h"
 #include "ir/lubs.h"
-#include "ir/module-utils.h"
 #include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -52,6 +48,20 @@
 #include "support/sorted_vector.h"
 #include "wasm-builder.h"
 #include "wasm.h"
+
+#ifndef DAE_DEBUG
+#define DAE_DEBUG 0
+#endif
+
+#ifndef DAE_STATS
+#define DAE_STATS 0
+#endif
+
+#if DAE_STATS
+
+#include <iostream>
+
+#endif // DAE_STATS
 
 namespace wasm {
 
@@ -196,6 +206,13 @@ struct DAE : public Pass {
   std::unordered_map<Name, Index> indexes;
 
   void run(Module* module) override {
+#if DAE_STATS
+    Index startParams = 0;
+    for (auto& func : module->functions) {
+      startParams += func->getNumParams();
+    }
+#endif // DAE_STATS
+
     DAEFunctionInfoMap infoMap;
     // Ensure all entries exist so the parallel threads don't modify the data
     // structure.
@@ -217,6 +234,14 @@ struct DAE : public Pass {
         break;
       }
     }
+
+#if DAE_STATS
+    Index endParams = 0;
+    for (auto& func : module->functions) {
+      endParams += func->getNumParams();
+    }
+    std::cout << "Removed parameters: " << (startParams - endParams) << "\n";
+#endif // DAE_STATS
   }
 
   // For each function, the set of callers. This is used to propagate changes,

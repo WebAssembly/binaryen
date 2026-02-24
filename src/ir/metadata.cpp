@@ -76,10 +76,7 @@ void copyBetweenFunctions(Expression* origin,
   }
 
   // Also copy function-level annotations, if any.
-  auto iter = originAnnotations.find(nullptr);
-  if (iter != originAnnotations.end()) {
-    copyAnnotations[nullptr] = iter->second;
-  }
+  copyFunc->funcAnnotations = originFunc->funcAnnotations;
 }
 
 #pragma GCC diagnostic push
