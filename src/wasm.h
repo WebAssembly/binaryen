@@ -2281,9 +2281,7 @@ struct CodeAnnotation {
   }
 
   // Checks if no annotation is actually set.
-  bool empty() {
-    return *this == CodeAnnotation();
-  }
+  bool empty() { return *this == CodeAnnotation(); }
 };
 
 class Function : public Importable {
