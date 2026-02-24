@@ -35,7 +35,11 @@
 #define DEBUG_TYPE "threads"
 
 // BINARYEN_THREAD_DEBUG is a build-time setting for detailed thread tracing
-#ifdef BINARYEN_THREAD_DEBUG
+#ifndef BINARYEN_THREAD_DEBUG
+#define BINARYEN_THREAD_DEBUG 0
+#endif
+
+#if BINARYEN_THREAD_DEBUG
 static std::mutex debug;
 #define DEBUG_THREAD(x)                                                        \
   {                                                                            \

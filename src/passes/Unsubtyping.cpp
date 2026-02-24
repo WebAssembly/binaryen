@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-#define UNSUBTYPING_DEBUG 0
-
 #include <cstddef>
 #include <iterator>
 #include <memory>
-
-#if !UNSUBTYPING_DEBUG
-#include <unordered_map>
-#include <unordered_set>
-#endif
 
 #include "ir/effects.h"
 #include "ir/localize.h"
@@ -39,8 +32,15 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
+#ifndef UNSUBTYPING_DEBUG
+#define UNSUBTYPING_DEBUG 0
+#endif
+
 #if UNSUBTYPING_DEBUG
 #include "support/insert_ordered.h"
+#else
+#include <unordered_map>
+#include <unordered_set>
 #endif
 
 #if UNSUBTYPING_DEBUG
