@@ -118,6 +118,7 @@ unfuzzable = [
     'strip-toolchain-annotations-func.wast',
     'idempotent.wast',
     'optimize-instructions_idempotent.wast',
+    'duplicate-function-elimination_annotations.wast',
     'once-reduction_idempotent.wast',
     # Not fully implemented.
     'waitqueue.wast',
