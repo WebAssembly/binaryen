@@ -1683,7 +1683,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
       }
     }
 
-    auto funcAnnotations = func->funcAnnotations;
+    auto& funcAnnotations = func->funcAnnotations;
     if (has(funcAnnotations)) {
       funcHints.exprHints.push_back(ExprHint{nullptr, 0, &funcAnnotations});
     }
