@@ -29,7 +29,6 @@
 
 #include "ir/find_all.h"
 #include "ir/intrinsics.h"
-#include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -40,12 +39,28 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
+#ifndef DAE_STATS
+#define DAE_STATS 0
+#else
+#endif
+
+#if DAE_STATS
+#include <iostream>
+#endif
+
 namespace wasm {
 
 namespace {
 
 struct SignaturePruning : public Pass {
   void run(Module* module) override {
+#if DAE_STATS
+    Index startParams = 0;
+    for (auto& func : module->functions) {
+      startParams += func->getNumParams();
+    }
+#endif // DAE_STATS
+
     if (!module->features.hasGC()) {
       return;
     }
@@ -68,6 +83,14 @@ struct SignaturePruning : public Pass {
     if (iteration(module)) {
       iteration(module);
     }
+
+#if DAE_STATS
+    Index endParams = 0;
+    for (auto& func : module->functions) {
+      endParams += func->getNumParams();
+    }
+    std::cout << "Removed parameters: " << (startParams - endParams) << "\n";
+#endif // DAE_STATS
   }
 
   // Returns true if more work is possible.
