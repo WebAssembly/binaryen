@@ -118,6 +118,7 @@
 
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/linear-execution.h>
 #include <ir/properties.h>
@@ -206,6 +207,15 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
     }
   }
 };
+
+bool isIdempotent(Expression* curr, Module& wasm) {
+  if (auto* call = curr->dynCast<Call>()) {
+    if (Intrinsics::getAnnotations(wasm.getFunction(call->target)).idempotent) {
+      return true;
+    }
+  }
+  return false;
+}
 
 struct Scanner
   : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
@@ -368,6 +378,13 @@ struct Scanner
   // total size big enough - while isPossible checks conditions that prevent
   // using an expression at all.
   bool isPossible(Expression* curr) {
+    // A call to an idempotent function is optimizable: it may have effects the
+    // first time, but those do not invalidate the second appearance, and also
+    // it will return the same value.
+    if (isIdempotent(curr, *getModule())) {
+      return true;
+    }
+
     // We will fully compute effects later, but consider shallow effects at this
     // early time to ignore things that cannot be optimized later, because we
     // use a greedy algorithm. Specifically, imagine we see this:
@@ -441,44 +458,46 @@ struct Checker
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
-      EffectAnalyzer effects(options, *getModule());
-      // We can ignore traps here:
-      //
-      //  (ORIGINAL)
-      //  (curr)
-      //  (COPY)
-      //
-      // We are some code in between an original and a copy of it, and we are
-      // trying to turn COPY into a local.get of a value that we stash at the
-      // original. If |curr| traps then we simply don't reach the copy anyhow.
-      effects.trap = false;
-      // We only need to visit this node itself, as we have already visited its
-      // children by the time we get here.
-      effects.visit(curr);
+      if (!isIdempotent(curr, *getModule())) { // XXX
+        EffectAnalyzer effects(options, *getModule());
+        // We can ignore traps here:
+        //
+        //  (ORIGINAL)
+        //  (curr)
+        //  (COPY)
+        //
+        // We are some code in between an original and a copy of it, and we are
+        // trying to turn COPY into a local.get of a value that we stash at the
+        // original. If |curr| traps then we simply don't reach the copy anyhow.
+        effects.trap = false;
+        // We only need to visit this node itself, as we have already visited its
+        // children by the time we get here.
+        effects.visit(curr);
 
-      std::vector<Expression*> invalidated;
-      for (auto& kv : activeOriginals) {
-        auto* original = kv.first;
-        auto& originalInfo = kv.second;
-        if (effects.invalidates(originalInfo.effects)) {
-          invalidated.push_back(original);
-        }
-      }
-
-      for (auto* original : invalidated) {
-        // Remove all requests after this expression, as we cannot optimize to
-        // them.
-        requestInfos[original].requests -=
-          activeOriginals.at(original).requestsLeft;
-
-        // If no requests remain at all (that is, there were no requests we
-        // could provide before we ran into this invalidation) then we do not
-        // need this original at all.
-        if (requestInfos[original].requests == 0) {
-          requestInfos.erase(original);
+        std::vector<Expression*> invalidated;
+        for (auto& kv : activeOriginals) {
+          auto* original = kv.first;
+          auto& originalInfo = kv.second;
+          if (effects.invalidates(originalInfo.effects)) {
+            invalidated.push_back(original);
+          }
         }
 
-        activeOriginals.erase(original);
+        for (auto* original : invalidated) {
+          // Remove all requests after this expression, as we cannot optimize to
+          // them.
+          requestInfos[original].requests -=
+            activeOriginals.at(original).requestsLeft;
+
+          // If no requests remain at all (that is, there were no requests we
+          // could provide before we ran into this invalidation) then we do not
+          // need this original at all.
+          if (requestInfos[original].requests == 0) {
+            requestInfos.erase(original);
+          }
+
+          activeOriginals.erase(original);
+        }
       }
     }
 

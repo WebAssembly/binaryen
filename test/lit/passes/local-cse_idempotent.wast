@@ -11,6 +11,12 @@
   ;; CHECK:      (import "a" "b" (func $import (type $0)))
   (import "a" "b" (func $import))
 
+  ;; CHECK:      (global $mutable (mut i32) (i32.const 42))
+  (global $mutable (mut i32) (i32.const 42))
+
+  ;; CHECK:      (global $immutable i32 (i32.const 1337))
+  (global $immutable i32 (i32.const 1337))
+
   ;; CHECK:      (@binaryen.idempotent)
   ;; CHECK-NEXT: (func $idempotent (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $import)
@@ -34,15 +40,16 @@
   )
 
   ;; CHECK:      (func $yes (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $idempotent
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $idempotent
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $yes
@@ -107,6 +114,60 @@
     (drop
       (call $idempotent
         (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $idem-effects (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $idem-effects
+    ;; An idempotent function still has effects on the first call. Those effects
+    ;; can invalidate the global.get here.
+    (drop
+      (call $idempotent
+        (global.get $mutable)
+      )
+    )
+    (drop
+      (call $idempotent
+        (global.get $mutable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $idem-effects-immutable (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $immutable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $idem-effects-immutable
+    ;; But here we read an immutable value, so we can optimize.
+    (drop
+      (call $idempotent
+        (global.get $immutable)
+      )
+    )
+    (drop
+      (call $idempotent
+        (global.get $immutable)
       )
     )
   )
