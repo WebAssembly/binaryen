@@ -4,76 +4,110 @@
 ;; RUN: foreach %s %t wasm-opt --local-cse -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $func (func))
- (type $func (func))
- ;; CHECK:      (type $cont (cont $func))
- (type $cont (cont $func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $func-i32 (func (param i32)))
-  (type $func-i32 (func (param i32)))
-  ;; CHECK:      (type $cont-i32 (cont $func-i32))
-  (type $cont-i32 (cont $func-i32))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
- ;; CHECK:      (type $4 (func (param (ref $cont-i32))))
+  ;; CHECK:      (import "a" "b" (func $import (type $0)))
+  (import "a" "b" (func $import))
 
- ;; CHECK:      (elem declare func $cont.new)
-
- ;; CHECK:      (func $cont.new (type $func)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (cont.new $cont
- ;; CHECK-NEXT:    (ref.func $cont.new)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (cont.new $cont
- ;; CHECK-NEXT:    (ref.func $cont.new)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $cont.new (type $func)
-  ;; We cannot CSE here, as each of these emits a unique continuation.
-  (drop
-   (cont.new $cont
-    (ref.func $cont.new)
-   )
-  )
-  (drop
-   (cont.new $cont
-    (ref.func $cont.new)
-   )
-  )
- )
-
- ;; CHECK:      (func $cont.bind (type $4) (param $cont-i32 (ref $cont-i32))
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (cont.bind $cont-i32 $cont
- ;; CHECK-NEXT:    (i32.const 42)
- ;; CHECK-NEXT:    (local.get $cont-i32)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (cont.bind $cont-i32 $cont
- ;; CHECK-NEXT:    (i32.const 42)
- ;; CHECK-NEXT:    (local.get $cont-i32)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $cont.bind (param $cont-i32 (ref $cont-i32))
-  ;; We cannot optimize here: Each of these has a side effect of modifying the
-  ;; continuation they were given, as it will trap if resumed, and in fact the
-  ;; second cont.bind here should trap, which we should not remove.
-  (drop
-   (cont.bind $cont-i32 $cont
+  ;; CHECK:      (@binaryen.idempotent)
+  ;; CHECK-NEXT: (func $idempotent (type $1) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (call $import)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (@binaryen.idempotent)
+  (func $idempotent (param i32) (result i32)
+    ;; This function has side effects, but is marked idempotent.
+    (call $import)
     (i32.const 42)
-    (local.get $cont-i32)
-   )
   )
-  (drop
-   (cont.bind $cont-i32 $cont
-    (i32.const 42)
-    (local.get $cont-i32)
-   )
+
+  ;; CHECK:      (func $potent (type $1) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (call $import)
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: )
+  (func $potent (param i32) (result i32)
+    ;; As above, but not marked as idempotent.
+    (call $import)
+    (i32.const 1337)
   )
- )
+
+  ;; CHECK:      (func $yes (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $yes
+    ;; We can optimize here.
+    (drop
+      (call $idempotent
+        (i32.const 10)
+      )
+    )
+    (drop
+      (call $idempotent
+        (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $no (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $potent
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $potent
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no
+    ;; Without idempotency we cannot optimize.
+    (drop
+      (call $potent
+        (i32.const 10)
+      )
+    )
+    (drop
+      (call $potent
+        (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $different-input (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $different-input
+    ;; We cannot optimize here.
+    (drop
+      (call $idempotent
+        (i32.const 10)
+      )
+    )
+    (drop
+      (call $idempotent
+        (i32.const 20)
+      )
+    )
+  )
 )
-
