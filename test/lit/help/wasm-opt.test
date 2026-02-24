@@ -285,6 +285,9 @@
 ;; CHECK-NEXT:   --local-subtyping                             apply more specific subtypes to
 ;; CHECK-NEXT:                                                 locals where possible
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --localize-children                           move children with effects to
+;; CHECK-NEXT:                                                 locals
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --log-execution                               instrument the build with
 ;; CHECK-NEXT:                                                 logging of where execution goes
 ;; CHECK-NEXT:
