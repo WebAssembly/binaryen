@@ -409,12 +409,20 @@ struct OnceReduction : public Pass {
     // Use idempotency. If a function is marked idempotent, we can give it a
     // fake global id so that we can optimize it.
     for (auto& func : module->functions) {
+      if (func->getNumParams()) {
+        // We do not yet look at parameters. We would need to make sure they are
+        // equal, to optimize, so we'd need to track more than which functions
+        // we've already seen, in the analysis above.
+        continue;
+      }
+
       auto& globalForFunc = optInfo.onceFuncs[func->name];
       if (globalForFunc) {
         // This is already known to be "once", and we know a global for it, so
         // we can do no better.
         continue;
       }
+
       if (Intrinsics::getAnnotations(func.get()).idempotent) {
         globalForFunc = Names::getValidGlobalName(*module, func->name);
       }
