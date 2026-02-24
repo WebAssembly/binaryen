@@ -38,7 +38,7 @@ http://doi.acm.org/10.1145/2048147.2048224
 #include "wasm-builder.h"
 #include "wasm.h"
 
-#ifndef RELOOPER_DEBGUG
+#ifndef RELOOPER_DEBUG
 #define RELOOPER_DEBUG 0
 #endif
 
