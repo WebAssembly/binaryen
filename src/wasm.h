@@ -2279,6 +2279,11 @@ struct CodeAnnotation {
     return removableIfUnused == other.removableIfUnused &&
            jsCalled == other.jsCalled && idempotent == other.idempotent;
   }
+
+  // Checks if no annotation is actually set.
+  bool empty() {
+    return *this == CodeAnnotation();
+  }
 };
 
 class Function : public Importable {

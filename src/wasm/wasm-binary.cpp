@@ -460,7 +460,7 @@ void WasmBinaryWriter::writeFunctions() {
     // of expressions inside it, or, if it has code annotations (the function
     // itself may be annotated, even if nothing inside it is).
     if (!binaryLocationTrackedExpressionsForFunc.empty() ||
-        !func->codeAnnotations.empty()) {
+        !func->codeAnnotations.empty() || !func->funcAnnotations.empty()) {
       binaryLocations.functions[func] = BinaryLocations::FunctionLocations{
         BinaryLocation(sizePos),
         BinaryLocation(start - adjustmentForLEBShrinking),
