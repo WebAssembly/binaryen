@@ -17,6 +17,7 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
+#include "ir/intrinsics.h"
 #include "ir/utils.h"
 #include "wasm.h"
 
@@ -37,16 +38,28 @@ inline bool equal(Function* left, Function* right) {
       return false;
     }
   }
+
   // We could in principle compare metadata here, but intentionally do not, as
   // for optimization purposes we do want to e.g. merge functions that differ
   // only in metadata (following LLVM's example). If we have a non-optimization
-  // reason for comparing metadata here then we could add a flag for it.
+  // reason for comparing metadata here then we could add a flag for it. We do,
+  // however, compare metadata that changes semantics (not debug info, but
+  // things like jsCalled). We do that check conservatively, erasing the non-
+  // semantic-altering ones and then comparing (so that new annotations
+  auto leftAnnotations = Intrinsics::getAnnotations(left);
+  auto rightAnnotations = Intrinsics::getAnnotations(right);
+  if (!leftAnnotations.equalOnSemanticsAltering(rightAnnotations)) {
+    return false;
+  }
+
   if (left->imported() && right->imported()) {
     return true;
   }
   if (left->imported() || right->imported()) {
     return false;
   }
+  // TODO: Compare expression-level annotations like removableIfUnused, not just
+  //       function-level.
   return ExpressionAnalyzer::equal(left->body, right->body);
 }
 
