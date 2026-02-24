@@ -4268,15 +4268,6 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     curr,
     "struct.wait requires shared-everything [--enable-shared-everything]");
 
-  // if (curr->ref->type == Type::unreachable) {
-  //   return;
-  // }
-
-  // auto validateWaitQueueArg = [&]() {
-  //   if (curr->ref->type == Type::unreachable)
-  // }
-  // validateWaitQueueArg();
-
   shouldBeSubType(
     curr->ref->type,
     Type(curr->structType, Nullable),
@@ -4300,6 +4291,7 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     return;
   }
 
+  // In practice this likely fails during parsing instead.
   shouldBeTrue(curr->index < curr->structType.getStruct().fields.size(),
                curr,
                "struct.wait index immediate should be less than the field "
