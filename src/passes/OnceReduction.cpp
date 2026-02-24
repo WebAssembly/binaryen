@@ -410,9 +410,14 @@ struct OnceReduction : public Pass {
     // fake global id so that we can optimize it.
     for (auto& func : module->functions) {
       if (func->getNumParams()) {
-        // We do not yet look at parameters. We would need to make sure they are
+        // We do not yet handle parameters. We would need to make sure they are
         // equal, to optimize, so we'd need to track more than which functions
-        // we've already seen, in the analysis above.
+        // we've already seen, in the analysis above. TODO
+        continue;
+      }
+      if (func->getResults().size()) {
+        // We do not yet handle results. We can't just nop such a caller, and
+        // instead should save the result from earlier, and reuse it.
         continue;
       }
 
@@ -424,7 +429,11 @@ struct OnceReduction : public Pass {
       }
 
       if (Intrinsics::getAnnotations(func.get()).idempotent) {
+        // Pick a name for the fake global to track this function, and write it
+        // into onceFuncs.
         globalForFunc = Names::getValidGlobalName(*module, func->name);
+        // Also write into onceGlobals, to mark the (fake) global as once.
+        optInfo.onceGlobals[globalForFunc] = true;
       }
     }
 
@@ -495,8 +504,11 @@ struct OnceReduction : public Pass {
     // Iterate deterministically on functions, as the order matters (since we
     // make decisions based on previous actions; see below).
     for (auto& func : module->functions) {
-      if (!optInfo.onceFuncs.at(func->name).is()) {
-        // This is not a "once" function.
+      auto global = optInfo.onceFuncs.at(func->name);
+      if (!global || !module->getGlobalOrNull(global)) {
+        // This is not a "once" function, or it is but it has no corresponding
+        // global (which means this is a fake global name, and this is "once"
+        // only because of idempotency).
         continue;
       }
 
