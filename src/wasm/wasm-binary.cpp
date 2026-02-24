@@ -1661,33 +1661,31 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
 
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (has(annotation)) {
-        BinaryLocation offset;
-        if (expr == nullptr) {
-          // Function-level annotations have expr==0 and an offset of the start
-          // of the function.
-          offset = 0;
-        } else {
-          auto exprIter = binaryLocations.expressions.find(expr);
-          if (exprIter == binaryLocations.expressions.end()) {
-            // No expression exists for this annotation - perhaps optimizations
-            // removed it.
-            continue;
-          }
-          auto exprOffset = exprIter->second.start;
-
-          if (!funcDeclarationsOffset) {
-            auto funcIter = binaryLocations.functions.find(func.get());
-            assert(funcIter != binaryLocations.functions.end());
-            funcDeclarationsOffset = funcIter->second.declarations;
-          }
-
-          // Compute the offset: it should be relative to the start of the
-          // function locals (i.e. the function declarations).
-          offset = exprOffset - funcDeclarationsOffset;
+        auto exprIter = binaryLocations.expressions.find(expr);
+        if (exprIter == binaryLocations.expressions.end()) {
+          // No expression exists for this annotation - perhaps optimizations
+          // removed it.
+          continue;
         }
+        auto exprOffset = exprIter->second.start;
+
+        if (!funcDeclarationsOffset) {
+          auto funcIter = binaryLocations.functions.find(func.get());
+          assert(funcIter != binaryLocations.functions.end());
+          funcDeclarationsOffset = funcIter->second.declarations;
+        }
+
+        // Compute the offset: it should be relative to the start of the
+        // function locals (i.e. the function declarations).
+        auto offset = exprOffset - funcDeclarationsOffset;
 
         funcHints.exprHints.push_back(ExprHint{expr, offset, &annotation});
       }
+    }
+
+    auto funcAnnotations = func->funcAnnotations;
+    if (has(funcAnnotations)) {
+      funcHints.exprHints.push_back(ExprHint{nullptr, 0, &funcAnnotations});
     }
 
     if (funcHints.exprHints.empty()) {
@@ -5495,23 +5493,20 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
     for (Index hint = 0; hint < numHints; hint++) {
       // Find the expression this hint is for. If the relative offset is 0, then
       // it is for the entire function, with expr==null.
-      Expression* expr;
       auto relativeOffset = getU32LEB();
       if (relativeOffset == 0) {
-        // Function-level annotations have expr==0 and an offset of the start
-        // of the function.
-        expr = nullptr;
-      } else {
-        // To get the absolute offset, add the function's offset.
-        auto absoluteOffset = funcLocalsOffset + relativeOffset;
-
-        auto iter = locationsMap.find(absoluteOffset);
-        if (iter == locationsMap.end()) {
-          throwError("bad offset in " + sectionName.toString());
-        }
-        expr = iter->second;
+        // Function-level annotations have the offset of the start of the function.
+        read(func->funcAnnotations);
+        continue;
       }
+      // To get the absolute offset, add the function's offset.
+      auto absoluteOffset = funcLocalsOffset + relativeOffset;
 
+      auto iter = locationsMap.find(absoluteOffset);
+      if (iter == locationsMap.end()) {
+        throwError("bad offset in " + sectionName.toString());
+      }
+      auto* expr = iter->second;
       read(func->codeAnnotations[expr]);
     }
   }
