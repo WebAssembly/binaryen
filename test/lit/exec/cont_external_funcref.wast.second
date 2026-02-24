@@ -1,0 +1,15 @@
+(module
+ (type $func (func))
+ (type $cont (cont $func))
+ (import "primary" "global$func" (global $gimport (ref $func)))
+
+ (func $export (export "export") (result i32)
+  (drop
+   (cont.new $cont
+    (global.get $gimport)
+   )
+  )
+  (i32.const 42)
+ )
+)
+
