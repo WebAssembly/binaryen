@@ -33,15 +33,15 @@ public:
   RuntimeTable(Table table) : tableDefinition(table) {}
   virtual ~RuntimeTable() = default;
 
-  virtual void set(std::size_t i, Literal l) = 0;
+  virtual void set(Address i, Literal l) = 0;
 
-  virtual Literal get(std::size_t i) const = 0;
+  virtual Literal get(Address i) const = 0;
 
   // Returns nullopt if the table grew beyond the max possible size.
-  [[nodiscard]] virtual std::optional<std::size_t> grow(std::size_t delta,
-                                                        Literal fill) = 0;
+  [[nodiscard]] virtual std::optional<Address> grow(Address delta,
+                                                    Literal fill) = 0;
 
-  virtual std::size_t size() const = 0;
+  virtual Address size() const = 0;
 
   // True iff this is a subtype of the definition `other`. i.e. This table can
   // be imported with the definition of `other`
@@ -66,13 +66,13 @@ public:
   RealRuntimeTable(const RealRuntimeTable&) = delete;
   RealRuntimeTable& operator=(const RealRuntimeTable&) = delete;
 
-  void set(std::size_t i, Literal l) override;
+  void set(Address i, Literal l) override;
 
-  Literal get(std::size_t i) const override;
+  Literal get(Address i) const override;
 
-  std::optional<std::size_t> grow(std::size_t delta, Literal fill) override;
+  std::optional<Address> grow(Address delta, Literal fill) override;
 
-  std::size_t size() const override { return table.size(); }
+  Address size() const override { return table.size(); }
 
 private:
   std::vector<Literal> table;
