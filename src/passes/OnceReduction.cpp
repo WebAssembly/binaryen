@@ -40,10 +40,21 @@
 // TODO: "Once" globals are effectively boolean in that all non-zero values are
 //       indistinguishable, and so we could rewrite them all to be 1.
 //
+// In addition, functions marked with @binaryen.idempotent are also "once", just
+// without an explicit global that guards them. That is, when we find such a
+// global, as mentioned above, we effectively prove that they are idempotent,
+// but can also just use the annotation when we find it.
+//
+// TODO: We could mark "once" functions with a global as idempotent, but that
+//       then requires the user to strip the annotations later, so we do not do
+//       this for now.
+//
 
 #include <atomic>
 
 #include "cfg/domtree.h"
+#include "ir/intrinsics.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -70,6 +81,13 @@ struct OptInfo {
 
   // Maps functions to whether they are "once", by indicating the global that
   // they use for that purpose. An empty name means they are not "once".
+  //
+  // When we see an idempotent-marked function, which as mentioned above is
+  // effectively "once" but does not have an explicit global controlling it, we
+  // create a fake global name for it to use here. That gives each function we
+  // can optimize a unique global name for our optimizer to track. That is, the
+  // global name is a real global for ones we found a global for, and for
+  // idempotent functions, it is a unique name that is not an actual global.
   std::unordered_map<Name, Name> onceFuncs;
 
   // For each function, the "once" globals that are definitely set after calling
@@ -385,6 +403,20 @@ struct OnceReduction : public Pass {
     for (auto& [_, onceGlobal] : optInfo.onceFuncs) {
       if (onceGlobal.is() && !optInfo.onceGlobals[onceGlobal]) {
         onceGlobal = Name();
+      }
+    }
+
+    // Use idempotency. If a function is marked idempotent, we can give it a
+    // fake global id so that we can optimize it.
+    for (auto& func : module->functions) {
+      auto& globalForFunc = optInfo.onceFuncs[func->name];
+      if (globalForFunc) {
+        // This is already known to be "once", and we know a global for it, so
+        // we can do no better.
+        continue;
+      }
+      if (Intrinsics::getAnnotations(func.get()).idempotent) {
+        globalForFunc = Names::getValidGlobalName(*module, func->name);
       }
     }
 
