@@ -417,7 +417,7 @@ struct OnceReduction : public Pass {
       }
       if (func->getResults().size()) {
         // We do not yet handle results. We can't just nop such a caller, and
-        // instead should save the result from earlier, and reuse it.
+        // instead should save the result from earlier, and reuse it. TODO
         continue;
       }
 
