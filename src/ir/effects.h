@@ -1165,11 +1165,13 @@ private:
       parent.mayNotReturn = true;
       parent.implicitTrap = true;
 
+      // if (curr->)
+
       // field must exist and be a packed waitqueue if this is valid Wasm.
-      if (curr->type.getHeapType()
-            .getStruct()
-            .fields.at(curr->index)
-            .mutable_ == Mutable) {
+      if (curr->structType.isStruct() &&
+          curr->index < curr->structType.getStruct().fields.size() &&
+          curr->structType.getStruct().fields.at(curr->index).mutable_ ==
+            Mutable) {
         parent.readsMutableStruct = true;
       }
     }
