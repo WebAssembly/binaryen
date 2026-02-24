@@ -1361,8 +1361,13 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStructWait(StructWait* curr,
                        std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
+      if (!curr->structType.isStruct()) {
+        self().noteUnknown();
+        return;
+      }
       ht = curr->structType;
     }
+
     note(&curr->ref, Type(*ht, Nullable));
     note(&curr->expected, Type(Type::BasicType::i32));
     note(&curr->timeout, Type(Type::BasicType::i64));
