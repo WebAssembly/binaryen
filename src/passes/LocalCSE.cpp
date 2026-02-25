@@ -441,7 +441,9 @@ struct Checker
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
-      EffectAnalyzer effects(options, *getModule());
+      // We only need to visit this node itself, as we have already visited its
+      // children by the time we get here.
+      ShallowEffectAnalyzer effects(options, *getModule(), curr);
       // We can ignore traps here:
       //
       //  (ORIGINAL)
@@ -451,10 +453,13 @@ struct Checker
       // We are some code in between an original and a copy of it, and we are
       // trying to turn COPY into a local.get of a value that we stash at the
       // original. If |curr| traps then we simply don't reach the copy anyhow.
+      //
+      // Note, however, that this is really for future use, as atm this does not
+      // help: the only effect a trap can interact with is a set of global state
+      // (the trap could prevent that writing, which would be noticeable) - but
+      // LocalCSE does not deduplicate expressions with such effects, as they
+      // must happen twice.
       effects.trap = false;
-      // We only need to visit this node itself, as we have already visited its
-      // children by the time we get here.
-      effects.visit(curr);
 
       std::vector<Expression*> invalidated;
       for (auto& kv : activeOriginals) {
