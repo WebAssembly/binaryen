@@ -19,7 +19,7 @@
   (type $struct (struct (field (mut i32))))
 
   ;; YESTNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
   ;; NO_TNH-NEXT:  (drop
@@ -180,14 +180,15 @@
   )
 
   ;; YESTNH:      (func $toplevel (type $0)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $toplevel (type $0)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $toplevel
     ;; A removable side effect at the top level of a function. We can turn this
-    ;; into a nop.
+    ;; into a nop, but leave it as unreachable even in TNH, so that it can
+    ;; propagate to callers.
     (unreachable)
   )
 
