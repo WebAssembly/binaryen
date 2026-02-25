@@ -45,7 +45,7 @@
 )
 
 (module
-  (type $t (struct (field waitqueue)))
+  (type $t (struct (field (mut waitqueue))))
 
   (global $g (ref null $t) (struct.new $t (i32.const 0)))
 
@@ -54,6 +54,10 @@
   )
 
   (func (export "struct.set") (param $count i32)
-    (struct.set)
+    (struct.set $t 0 (global.get $g) (i32.const 1))
+  )
+
+  (func (export "struct.get") (param $count i32) (result i32)
+    (struct.get $t 0 (global.get $g))
   )
 )
