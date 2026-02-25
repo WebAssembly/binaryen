@@ -447,6 +447,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                         type.isRef() ? Type(HeapType::eq, Nullable) : type);
     self()->noteSubtype(curr->replacement, type);
   }
+  void visitStructWait(StructWait* curr) {}
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
       case RefAsNonNull:
@@ -597,13 +598,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                     .getContinuation()
                     .type.getSignature();
     self()->noteSubtype(currResult, retSig.results);
-  }
-  void visitStructWait(StructWait* curr) {
-    if (!curr->ref->type.isRef()) {
-      return;
-    }
-
-    self()->noteSubtype(curr->ref->type.getHeapType(), curr->structType);
   }
 };
 

@@ -554,6 +554,7 @@ public:
   void visitArrayInitElem(ArrayInitElem* curr);
   void visitArrayRMW(ArrayRMW* curr);
   void visitArrayCmpxchg(ArrayCmpxchg* curr);
+  void visitStructWait(StructWait* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -569,8 +570,6 @@ public:
   void visitResume(Resume* curr);
   void visitResumeThrow(ResumeThrow* curr);
   void visitStackSwitch(StackSwitch* curr);
-  void visitStructWait(StructWait* curr);
-
   void visitFunction(Function* curr);
 
   // helpers

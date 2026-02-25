@@ -182,6 +182,10 @@ struct Analyzer
 
       // We don't mind if we cannot compute a constraint due to unreachability.
       void noteUnknown() {}
+
+      void visitStructWait(StructWait* curr) {
+        // Nothing exact here.
+      }
     } typer(*this);
     typer.visit(curr);
   }

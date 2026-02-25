@@ -336,6 +336,20 @@ struct IRBuilder::ChildPopper
     void noteUnknown() {
       WASM_UNREACHABLE("unexpected insufficient type information");
     }
+
+    void visitStructWait(StructWait* curr,
+                         std::optional<HeapType> structType = std::nullopt) {
+      if (!structType) {
+        if (!curr->structType.isStruct()) {
+          noteUnknown();
+          return;
+        }
+        structType = curr->structType;
+      }
+      note(&curr->ref, {Type(*structType, Nullable)});
+      note(&curr->expected, {Type::i32});
+      note(&curr->timeout, {Type::i64});
+    }
   };
 
   IRBuilder& builder;
@@ -536,6 +550,13 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitStructWait(StructWait* curr,
+                           std::optional<HeapType> structType = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitStructWait(curr, structType);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayGet(ArrayGet* curr,
                          std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -660,13 +681,6 @@ public:
                             std::optional<HeapType> ct = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitStackSwitch(curr, ct);
-    return popConstrainedChildren(children);
-  }
-
-  Result<> visitStructWait(StructWait* curr,
-                           std::optional<HeapType> structType = std::nullopt) {
-    std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitStructWait(curr, structType);
     return popConstrainedChildren(children);
   }
 };
