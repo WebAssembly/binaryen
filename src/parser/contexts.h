@@ -150,6 +150,7 @@ struct NullTypeParserCtx {
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
+  StorageT makeWaitQueue() { return Ok{}; }
   StorageT makeStorageType(TypeT) { return Ok{}; }
 
   FieldT makeFieldType(StorageT, Mutability) { return Ok{}; }
@@ -307,10 +308,11 @@ template<typename Ctx> struct TypeParserCtx {
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }
+  StorageT makeWaitQueue() { return Field(Field::WaitQueue, Immutable); }
   StorageT makeStorageType(TypeT type) { return Field(type, Immutable); }
 
   FieldT makeFieldType(FieldT field, Mutability mutability) {
-    if (field.packedType == Field::not_packed) {
+    if (field.packedType == Field::NotPacked) {
       return Field(field.type, mutability);
     }
     return Field(field.packedType, mutability);
@@ -1320,6 +1322,10 @@ struct AnnotationParserCtx {
         inlineHint = &a;
       } else if (a.kind == Annotations::RemovableIfUnusedHint) {
         ret.removableIfUnused = true;
+      } else if (a.kind == Annotations::JSCalledHint) {
+        ret.jsCalled = true;
+      } else if (a.kind == Annotations::IdempotentHint) {
+        ret.idempotent = true;
       }
     }
 
@@ -1479,10 +1485,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
         Builder::addVar(f.get(), l.name, l.type);
       }
     }
-    // Function-level annotations are stored using the nullptr key, as they are
-    // not tied to a particular instruction.
     if (!annotations.empty()) {
-      f->codeAnnotations[nullptr] = parseAnnotations(annotations);
+      f->funcAnnotations = parseAnnotations(annotations);
     }
     return Ok{};
   }

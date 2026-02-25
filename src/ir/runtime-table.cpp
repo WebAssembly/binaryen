@@ -31,7 +31,7 @@ namespace {
 
 } // namespace
 
-void RealRuntimeTable::set(std::size_t i, Literal l) {
+void RealRuntimeTable::set(Address i, Literal l) {
   if (i >= table.size()) {
     trap("RuntimeTable::set out of bounds");
     WASM_UNREACHABLE("trapped");
@@ -40,7 +40,7 @@ void RealRuntimeTable::set(std::size_t i, Literal l) {
   table[i] = std::move(l);
 }
 
-Literal RealRuntimeTable::get(std::size_t i) const {
+Literal RealRuntimeTable::get(Address i) const {
   if (i >= table.size()) {
     trap("out of bounds table access");
     WASM_UNREACHABLE("trapped");
@@ -49,10 +49,10 @@ Literal RealRuntimeTable::get(std::size_t i) const {
   return table[i];
 }
 
-std::optional<std::size_t> RealRuntimeTable::grow(std::size_t delta,
-                                                  Literal fill) {
-  std::size_t newSize;
-  if (std::ckd_add(&newSize, table.size(), delta)) {
+std::optional<Address> RealRuntimeTable::grow(Address delta, Literal fill) {
+  Address newSize;
+  if (std::ckd_add(
+        &newSize.addr, static_cast<Address>(table.size()).addr, delta.addr)) {
     return std::nullopt;
   }
 
@@ -60,7 +60,7 @@ std::optional<std::size_t> RealRuntimeTable::grow(std::size_t delta,
     return std::nullopt;
   }
 
-  std::size_t oldSize = table.size();
+  Address oldSize = table.size();
   table.resize(newSize, fill);
   return oldSize;
 }

@@ -129,6 +129,18 @@ TEST_F(SourceMapTest, BadSourceMaps) {
   // Mapping strings are parsed incrementally, so errors don't show up until a
   // sufficiently far-advanced location is requested to reach the problem.
   EXPECT_THROW(reader->readDebugLocationAt(1), MapParseException);
+
+  // VLQ with too many continuation digits. 7 continuation characters ('g')
+  // push the shift to 35, exceeding the uint32_t width. This is a malformed
+  // VLQ that should be rejected rather than causing undefined behavior.
+  sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["foo.c"],
+      "mappings": "gggggggA"
+    }
+  )";
+  ExpectParseError(sourceMap, "VLQ value too large");
 }
 
 TEST_F(SourceMapTest, SourcesAndNames) {

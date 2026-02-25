@@ -36,7 +36,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ir/import-name.h"
+#include "ir/import-names.h"
 #include "literal.h"
 #include "support/index.h"
 #include "support/mixed_arena.h"
@@ -2248,15 +2248,39 @@ struct CodeAnnotation {
   static const uint8_t AlwaysInline = 127;
   std::optional<uint8_t> inline_;
 
-  // Toolchain hint: If this expression's result is unused, then the entire
-  // thing can be considered dead and removable. See
-  //
+  // Toolchain hints, see
   // https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook#intrinsics
+
+  // If this expression's result is unused, then the entire thing can be
+  // considered dead and removable.
   bool removableIfUnused = false;
 
+  // This should be assumed to be called from JS, even in closed world. Being
+  // called from JS means that the call happens in a non-typed way, with only
+  // the signature mattering ("signature-called"). In particular, rec group type
+  // identity does not matter for such functions.
+  bool jsCalled = false;
+
+  // A function that may do something on the first call, but all subsequent
+  // calls with the same parameters can be assumed to have no effects. If a
+  // value is returned, it will be the same value as returned earlier (for the
+  // same parameters).
+  bool idempotent = false;
+
   bool operator==(const CodeAnnotation& other) const {
-    return branchLikely == other.branchLikely && inline_ == other.inline_ &&
-           removableIfUnused == other.removableIfUnused;
+    return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);
+  }
+
+  // Compares only true hints, that preserve semantics and do not change
+  // behavior in the optimizer.
+  bool equalOnSemanticsPreserving(const CodeAnnotation& other) const {
+    return branchLikely == other.branchLikely && inline_ == other.inline_;
+  }
+
+  // Compares annotations that *do* alter semantics.
+  bool equalOnSemanticsAltering(const CodeAnnotation& other) const {
+    return removableIfUnused == other.removableIfUnused &&
+           jsCalled == other.jsCalled && idempotent == other.idempotent;
   }
 };
 
@@ -2313,11 +2337,17 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
-  // Function-level annotations are implemented with a key of nullptr, matching
-  // the 0 byte offset in the spec. As with debug info, we do not store these on
+  // Annotations on expressions. As with debug info, we do not store these on
   // Expressions as we assume most instances are unannotated, and do not want to
   // add constant memory overhead.
   std::unordered_map<Expression*, CodeAnnotation> codeAnnotations;
+  // Annotations on the function itself. These could be stored in the above map
+  // with a key of nullptr (matching the binary format), but it is safer to
+  // keep them separate: in theory a parallel pass could modify code annotations
+  // by, say, duplicating code and adding new ones, which modifies the map,
+  // while another thread might query that function, for whom it has a call,
+  // about the function-level annotations.
+  CodeAnnotation funcAnnotations;
 
   // The effects for this function, if they have been computed. We use a shared
   // ptr here to avoid compilation errors with the forward-declared

@@ -119,11 +119,11 @@ getExpressionInfo={"id":15,"type":4,"op":6}
 )
 
 getExpressionInfo(i32.const)={"id":14,"type":2,"value":5}
-getExpressionInfo(i64.const)={"id":14,"type":3,"value":{"low":6,"high":7}}
+getExpressionInfo(i64.const)={"id":14,"type":3,"value":"6"}
 getExpressionInfo(f32.const)={"id":14,"type":4,"value":8.5}
 getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
 getExpressionInfo(tuple[0])={"id":14,"type":2,"value":13}
-getExpressionInfo(tuple[1])={"id":14,"type":3,"value":{"low":37,"high":0}}
+getExpressionInfo(tuple[1])={"id":14,"type":3,"value":"37"}
 getExpressionInfo(tuple[2])={"id":14,"type":4,"value":1.2999999523162842}
 getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
 (module
@@ -164,7 +164,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.ctz
-        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -224,7 +224,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i32.wrap_i64
-        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -339,22 +339,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (f32.convert_i64_s
-        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
        (f64.convert_i64_s
-        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
        (f32.convert_i64_u
-        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
        (f64.convert_i64_u
-        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -374,7 +374,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (f64.reinterpret_i64
-        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -394,7 +394,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64x2.splat
-        (i64.const 1958505087099)
+        (i64.const 1000000000123)
        )
       )
       (drop
@@ -682,14 +682,14 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.div_u
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
        (i64.rem_s
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -706,8 +706,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.or
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -718,14 +718,14 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.shl
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
        (i64.shr_u
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -742,8 +742,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.rotr
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -790,14 +790,14 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.lt_u
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
        (i64.le_s
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -808,8 +808,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.gt_s
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -23)
+        (i64.const -23)
        )
       )
       (drop
@@ -826,8 +826,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64.ge_u
-        (i64.const 4294967274)
-        (i64.const 4294967273)
+        (i64.const -22)
+        (i64.const -23)
        )
       )
       (drop
@@ -1675,7 +1675,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (i64x2.replace_lane 1
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (i64.const 184683593770)
+        (i64.const 42)
        )
       )
       (drop

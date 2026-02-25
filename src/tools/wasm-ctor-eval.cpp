@@ -113,13 +113,13 @@ public:
     : RuntimeTable(table), instanceInitialized(instanceInitialized), wasm(wasm),
       makeFuncData(std::move(makeFuncData)) {}
 
-  void set(std::size_t i, Literal l) override {
+  void set(Address i, Literal l) override {
     if (instanceInitialized) {
       throw FailToEvalException("tableStore after init: TODO");
     }
   }
 
-  Literal get(std::size_t index) const override {
+  Literal get(Address index) const override {
     // Look through the segments and find the value. Segments can overlap,
     // so we want the last one.
     Expression* value = nullptr;
@@ -164,12 +164,12 @@ public:
     return Properties::getLiteral(value);
   }
 
-  [[nodiscard]] virtual std::optional<std::size_t> grow(std::size_t delta,
-                                                        Literal fill) override {
+  [[nodiscard]] virtual std::optional<Address> grow(Address delta,
+                                                    Literal fill) override {
     throw FailToEvalException("grow table");
   }
 
-  std::size_t size() const override {
+  Address size() const override {
     // See set() above, we assume the table is not modified FIXME
     return tableDefinition.initial;
   }

@@ -2415,6 +2415,9 @@ public:
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
+    if (indexVal >= data->values.size()) {
+      trap("array oob");
+    }
     auto& field = data->values[indexVal];
     auto oldVal = field;
     auto newVal = value.getSingleValue();
@@ -2451,6 +2454,9 @@ public:
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
+    if (indexVal >= data->values.size()) {
+      trap("array oob");
+    }
     auto& field = data->values[indexVal];
     auto oldVal = field;
     if (field == expected.getSingleValue()) {
@@ -2740,7 +2746,7 @@ protected:
 
   Literal makeFromMemory(void* p, Field field) {
     switch (field.packedType) {
-      case Field::not_packed:
+      case Field::NotPacked:
         return Literal::makeFromMemory(p, field.type);
       case Field::i8: {
         int8_t i;
@@ -2751,6 +2757,10 @@ protected:
         int16_t i;
         memcpy(&i, p, sizeof(i));
         return truncateForPacking(Literal(int32_t(i)), field);
+      }
+      case Field::WaitQueue: {
+        WASM_UNREACHABLE("waitqueue not implemented");
+        break;
       }
     }
     WASM_UNREACHABLE("unexpected type");
@@ -4757,10 +4767,8 @@ public:
     if (funcValue.isNull()) {
       trap("null ref");
     }
-    auto funcName = funcValue.getFunc();
-    auto* func = self()->getModule()->getFunction(funcName);
-    return Literal(std::make_shared<ContData>(
-      self()->makeFuncData(funcName, func->type), curr->type.getHeapType()));
+    return Literal(
+      std::make_shared<ContData>(funcValue, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;

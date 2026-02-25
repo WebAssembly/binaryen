@@ -22,6 +22,8 @@
 
 #include "ir/bits.h"
 #include "ir/import-utils.h"
+#include "ir/localize.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -34,7 +36,11 @@ static Name MEMORY_BASE32("__memory_base32");
 static Name TABLE_BASE("__table_base");
 static Name TABLE_BASE32("__table_base32");
 
+static const Address k32GLimit(1ULL << 32);
+
 struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
+
+  bool refinalize = false;
 
   void wrapAddress64(Expression*& ptr,
                      Name memoryOrTableName,
@@ -83,9 +89,28 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     return extendAddress64(ptr, tableName, true);
   }
 
-  void visitLoad(Load* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  template<typename T> void visitMemoryAccess(T* curr) {
+    if (curr->offset < k32GLimit) {
+      return wrapAddress64(curr->ptr, curr->memory);
+    }
+    Block* b =
+      ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+        .getChildrenReplacement();
+    b->list.push_back(Builder(*getModule()).makeUnreachable());
+    b->type = Type::unreachable;
+    replaceCurrent(b);
+    refinalize = true;
+  }
 
-  void visitStore(Store* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitLoad(Load* curr) { visitMemoryAccess(curr); }
+
+  void visitStore(Store* curr) { visitMemoryAccess(curr); }
+
+  void visitSIMDLoad(SIMDLoad* curr) { visitMemoryAccess(curr); }
+
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    visitMemoryAccess(curr);
+  }
 
   void visitMemorySize(MemorySize* curr) {
     auto& module = *getModule();
@@ -148,20 +173,19 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     wrapAddress64(curr->size, curr->destMemory);
   }
 
-  void visitAtomicRMW(AtomicRMW* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
-  }
+  void visitAtomicRMW(AtomicRMW* curr) { visitMemoryAccess(curr); }
 
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
-  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { visitMemoryAccess(curr); }
 
-  void visitAtomicWait(AtomicWait* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
-  }
+  void visitAtomicWait(AtomicWait* curr) { visitMemoryAccess(curr); }
 
-  void visitAtomicNotify(AtomicNotify* curr) {
-    wrapAddress64(curr->ptr, curr->memory);
+  void visitAtomicNotify(AtomicNotify* curr) { visitMemoryAccess(curr); }
+
+  void visitFunction(Function* func) {
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      refinalize = false;
+    }
   }
 
   void visitDataSegment(DataSegment* segment) {
@@ -218,8 +242,31 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     if (table->is64()) {
       wrapTableAddress64(curr->delta, curr->table);
       auto* size = static_cast<Expression*>(curr);
-      extendTableAddress64(size, curr->table);
-      replaceCurrent(size);
+      // TableGrow returns -1 in case of failure. We cannot just use
+      // extend_32_u in this case so we handle it the same way as MemoryGrow:
+      //
+      // (if (result i64)
+      //  (i32.eq (i32.const -1) (local.tee $tmp (table.grow X)))
+      //  (then
+      //   (i64.const -1)
+      //  )
+      //  (else
+      //   (i64.extend_i32_u (local.get $tmp))
+      //  )
+      // )
+      Builder builder(module);
+      auto tmp = builder.addVar(getFunction(), Type::i32);
+      Expression* isMinusOne =
+        builder.makeBinary(EqInt32,
+                           builder.makeConst(int32_t(-1)),
+                           builder.makeLocalTee(tmp, size, Type::i32));
+      auto* newSize = builder.makeLocalGet(tmp, Type::i32);
+      Expression* ifExp =
+        builder.makeIf(isMinusOne,
+                       builder.makeConst(int64_t(-1)),
+                       builder.makeUnary(UnaryOp::ExtendUInt32, newSize));
+      curr->type = Type::i32;
+      replaceCurrent(ifExp);
     }
   }
 
@@ -231,7 +278,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   void visitTableCopy(TableCopy* curr) {
     wrapTableAddress64(curr->dest, curr->destTable);
     wrapTableAddress64(curr->source, curr->sourceTable);
-    wrapTableAddress64(curr->size, curr->destTable);
+    // The size type is i64 only when both tables are 64-bit.
+    auto& module = *getModule();
+    if (module.getTable(curr->destTable)->is64() &&
+        module.getTable(curr->sourceTable)->is64()) {
+      wrapAddress64(curr->size, curr->destTable, true);
+    }
   }
 
   void visitTableInit(TableInit* curr) {

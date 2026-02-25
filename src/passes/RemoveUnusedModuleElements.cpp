@@ -184,7 +184,16 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
     noteCallRef(curr->target->type.getHeapType());
   }
 
-  void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
+  void visitRefFunc(RefFunc* curr) {
+    // If the target is js-called then a reference is as strong as a use.
+    auto target = curr->func;
+    Intrinsics intrinsics(*getModule());
+    if (intrinsics.getAnnotations(getModule()->getFunction(target)).jsCalled) {
+      use({ModuleElementKind::Function, target});
+    } else {
+      noteRefFunc(target);
+    }
+  }
 
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {

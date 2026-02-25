@@ -420,7 +420,7 @@ struct GlobalTypeOptimization : public Pass {
     if (!wasm.features.hasCustomDescriptors()) {
       return;
     }
-    for (auto func : Intrinsics(wasm).getConfigureAllFunctions()) {
+    for (auto func : Intrinsics(wasm).getJSCalledFunctions()) {
       // Look at the result types being returned to JS and make sure we preserve
       // any configured prototypes they might expose.
       for (auto type : wasm.getFunction(func)->getResults()) {

@@ -109,11 +109,14 @@ public:
   //
   // where the segment $seg is of size N.
   std::vector<Name> getConfigureAllFunctions(Call* call);
-  // As above, but looks through the module to find the configureAll.
-  std::vector<Name> getConfigureAllFunctions();
+
+  // Returns the names of all functions that are JS-called. That includes ones
+  // in configureAll (which we look through the module for), and also those
+  // annotated with @binaryen.js.called.
+  std::vector<Name> getJSCalledFunctions();
 
   // Get the code annotations for an expression in a function.
-  CodeAnnotation getAnnotations(Expression* curr, Function* func) {
+  static CodeAnnotation getAnnotations(Expression* curr, Function* func) {
     auto& annotations = func->codeAnnotations;
     auto iter = annotations.find(curr);
     if (iter != annotations.end()) {
@@ -123,8 +126,18 @@ public:
   }
 
   // Get the code annotations for a function itself.
-  CodeAnnotation getAnnotations(Function* func) {
-    return getAnnotations(nullptr, func);
+  static CodeAnnotation getAnnotations(Function* func) {
+    return func->funcAnnotations;
+  }
+
+  void setAnnotations(Function* func,
+                      Expression* curr,
+                      const CodeAnnotation& value) {
+    func->codeAnnotations[curr] = value;
+  }
+
+  void setAnnotations(Function* func, const CodeAnnotation& value) {
+    func->funcAnnotations = value;
   }
 
   // Given a call in a function, return all the annotations for it. The call may
@@ -148,6 +161,12 @@ public:
       }
       if (!ret.removableIfUnused) {
         ret.removableIfUnused = funcAnnotations.removableIfUnused;
+      }
+      if (!ret.jsCalled) {
+        ret.jsCalled = funcAnnotations.jsCalled;
+      }
+      if (!ret.idempotent) {
+        ret.idempotent = funcAnnotations.idempotent;
       }
     }
 

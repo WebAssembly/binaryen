@@ -875,16 +875,20 @@ Non-lit tests can also be automatically updated in most cases. See
 
 ### Setting up dependencies
 
+The Binaryen test suite is written in Python and requires Python >= 3.10.
+
+Additional dependencies (such as the `lit` test runner) are specifed in
+`requirements-dev.txt`.  Run `pip3 install -r requirements-dev.txt` to install
+these. Note that you need to have the location `pip` installs to in your `$PATH`
+(on linux, `~/.local/bin`).
+
 ```bash
 ./third_party/setup.py [mozjs|v8|wabt|all]
 ```
 
-(or `python third_party/setup.py`) installs required dependencies like the SpiderMonkey JS shell, the V8 JS shell
-and WABT in `third_party/`. Other scripts automatically pick these up when installed.
-
-Run `pip3 install -r requirements-dev.txt` to get the requirements for the `lit`
-tests. Note that you need to have the location `pip` installs to in your `$PATH`
-(on linux, `~/.local/bin`).
+(or `python third_party/setup.py`) installs required dependencies like the
+SpiderMonkey JS shell, the V8 JS shell and WABT in `third_party/`. Other scripts
+automatically pick these up when installed.
 
 ### Fuzzing
 

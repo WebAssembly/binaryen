@@ -31,6 +31,10 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
+#ifndef RERELOOP_DEBUG
+#define RERELOOP_DEBUG 0
+#endif
+
 namespace wasm {
 
 struct ReReloop final : public Pass {
@@ -323,7 +327,7 @@ struct ReReloop final : public Pass {
         block->finalize();
       }
     }
-#ifdef RERELOOP_DEBUG
+#if RERELOOP_DEBUG
     std::cout << "rerelooping " << function->name << '\n';
     for (auto* block : relooper->Blocks) {
       std::cout << block << " block:\n" << block->Code << '\n';

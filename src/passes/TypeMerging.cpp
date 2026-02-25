@@ -49,7 +49,9 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
+#ifndef TYPE_MERGING_DEBUG
 #define TYPE_MERGING_DEBUG 0
+#endif
 
 #if TYPE_MERGING_DEBUG
 #include "wasm-type-printing.h"

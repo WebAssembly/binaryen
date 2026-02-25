@@ -14,18 +14,27 @@
  * limitations under the License.
  */
 
-#include "Relooper.h"
-
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
 #include <list>
-#include <stack>
 #include <string>
 
+#include "Relooper.h"
 #include "ir/branch-utils.h"
 #include "ir/utils.h"
 #include "parsing.h"
+
+#ifndef RELOOPER_OPTIMIZER_DEBUG
+#define RELOOPER_OPTIMIZER_DEBUG 0
+#endif
+
+#if RELOOPER_DEBUG
+static void PrintDebug(const char* Format, ...);
+#define DebugDump(x, ...) Debugging::Dump(x, __VA_ARGS__)
+#else
+#define PrintDebug(x, ...)
+#define DebugDump(x, ...)
+#endif
 
 namespace CFG {
 
@@ -33,14 +42,6 @@ template<class T, class U>
 static bool contains(const T& container, const U& contained) {
   return !!container.count(contained);
 }
-
-#ifdef RELOOPER_DEBUG
-static void PrintDebug(const char* Format, ...);
-#define DebugDump(x, ...) Debugging::Dump(x, __VA_ARGS__)
-#else
-#define PrintDebug(x, ...)
-#define DebugDump(x, ...)
-#endif
 
 // Rendering utilities
 
@@ -1372,7 +1373,7 @@ void Relooper::Calculate(Block* Entry) {
         }
       }
 
-#ifdef RELOOPER_DEBUG
+#if RELOOPER_DEBUG
       PrintDebug("Investigated independent groups:\n");
       for (auto& iter : IndependentGroups) {
         DebugDump(iter.second, " group: ");
@@ -1597,7 +1598,7 @@ void Relooper::Calculate(Block* Entry) {
   BlockSet AllBlocks;
   for (auto* Curr : Live.Live) {
     AllBlocks.insert(Curr);
-#ifdef RELOOPER_DEBUG
+#if RELOOPER_DEBUG
     PrintDebug("Adding block %d (%s)\n", Curr->Id, Curr->Code);
 #endif
   }
@@ -1616,7 +1617,7 @@ wasm::Expression* Relooper::Render(RelooperBuilder& Builder) {
   return ret;
 }
 
-#ifdef RELOOPER_DEBUG
+#if RELOOPER_DEBUG
 // Debugging
 
 void Debugging::Dump(Block* Curr, const char* prefix) {

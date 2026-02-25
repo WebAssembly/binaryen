@@ -26,7 +26,9 @@
 #include "wasm-type-shape.h"
 #include "wasm-type.h"
 
+#ifndef TRACE_CANONICALIZATION
 #define TRACE_CANONICALIZATION 0
+#endif
 
 #if TRACE_CANONICALIZATION
 #include <iostream>
@@ -1447,6 +1449,10 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Continuation has invalid function type";
     case TypeBuilder::ErrorReason::InvalidSharedType:
       return os << "Shared types require shared-everything";
+    case TypeBuilder::ErrorReason::InvalidWaitQueue:
+      return os << "Waitqueues require shared-everything";
+    case TypeBuilder::ErrorReason::InvalidStringType:
+      return os << "String types require strings feature";
     case TypeBuilder::ErrorReason::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
     case TypeBuilder::ErrorReason::NonStructDescribes:
@@ -1481,8 +1487,11 @@ unsigned Field::getByteSize() const {
       return 1;
     case Field::PackedType::i16:
       return 2;
-    case Field::PackedType::not_packed:
+    case Field::PackedType::NotPacked:
       return 4;
+    case Field::PackedType::WaitQueue:
+      WASM_UNREACHABLE("waitqueue not implemented");
+      break;
   }
   WASM_UNREACHABLE("impossible packed type");
 }
@@ -1874,6 +1883,8 @@ std::ostream& TypePrinter::print(const Field& field) {
       os << "i8";
     } else if (packedType == Field::PackedType::i16) {
       os << "i16";
+    } else if (packedType == Field::PackedType::WaitQueue) {
+      os << "waitqueue";
     } else {
       WASM_UNREACHABLE("unexpected packed type");
     }
@@ -2435,6 +2446,9 @@ validateType(Type type, FeatureSet feats, bool isShared) {
     if (heapType.isShared() && !feats.hasSharedEverything()) {
       return TypeBuilder::ErrorReason::InvalidSharedType;
     }
+    if (heapType.isString() && !feats.hasStrings()) {
+      return TypeBuilder::ErrorReason::InvalidStringType;
+    }
   }
   return std::nullopt;
 }
@@ -2444,6 +2458,10 @@ validateStruct(const Struct& struct_, FeatureSet feats, bool isShared) {
   for (auto& field : struct_.fields) {
     if (auto err = validateType(field.type, feats, isShared)) {
       return err;
+    }
+    if (field.packedType == Field::PackedType::WaitQueue &&
+        !feats.hasSharedEverything()) {
+      return TypeBuilder::ErrorReason::InvalidWaitQueue;
     }
   }
   return std::nullopt;

@@ -44,18 +44,18 @@ def make_js_test(input_js_file, binaryen_js):
     return outname
 
 
-def do_test_binaryen_js_with(which):
+def test_binaryen_js():
     if not (shared.MOZJS or shared.NODEJS):
         shared.fail_with_error('no vm to run binaryen.js tests')
 
     node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
-    if not os.path.exists(which):
-        shared.fail_with_error('no ' + which + ' build to test')
+    if not os.path.exists(shared.BINARYEN_JS):
+        shared.fail_with_error('no ' + shared.BINARYEN_JS + ' build to test')
 
-    print('\n[ checking binaryen.js testcases (' + which + ')... ]\n')
+    print('\n[ checking binaryen.js testcases (' + shared.BINARYEN_JS + ')... ]\n')
 
     for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
-        outname = make_js_test(s, which)
+        outname = make_js_test(s, shared.BINARYEN_JS)
 
         def test(cmd):
             if 'fatal' not in s:
@@ -109,11 +109,3 @@ def update_binaryen_js_tests():
             update([shared.NODEJS, outname])
         else:
             print('Skipping ' + s + ' because WebAssembly might not be supported')
-
-
-def test_binaryen_js():
-    do_test_binaryen_js_with(shared.BINARYEN_JS)
-
-
-def test_binaryen_wasm():
-    do_test_binaryen_js_with(shared.BINARYEN_WASM)

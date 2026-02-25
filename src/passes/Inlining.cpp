@@ -51,6 +51,10 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
+#ifndef INLINING_DEBUG
+#define INLINING_DEBUG 0
+#endif
+
 namespace wasm {
 
 namespace {
@@ -1311,7 +1315,7 @@ struct Inlining : public Pass {
     const size_t MaxIterationsForFunc = 5;
 
     while (iterationNumber <= numOriginalFunctions) {
-#ifdef INLINING_DEBUG
+#if INLINING_DEBUG
       std::cout << "inlining loop iter " << iterationNumber
                 << " (numFunctions: " << module->functions.size() << ")\n";
 #endif
@@ -1326,7 +1330,7 @@ struct Inlining : public Pass {
         return;
       }
 
-#ifdef INLINING_DEBUG
+#if INLINING_DEBUG
       std::cout << "  inlined into " << inlinedInto.size() << " funcs.\n";
 #endif
 
@@ -1441,7 +1445,7 @@ struct Inlining : public Pass {
         }
 
         // Success - we can inline.
-#ifdef INLINING_DEBUG
+#if INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
 

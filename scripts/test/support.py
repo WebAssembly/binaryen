@@ -12,82 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import filecmp
 import io
-import os
 import re
-import shutil
 import subprocess
-import sys
-import tempfile
-
-
-def _open_archive(tarfile, tmp_dir):
-    with tempfile.TemporaryFile(mode='w+') as f:
-        try:
-            subprocess.check_call(['tar', '-xvf', tarfile], cwd=tmp_dir, stdout=f)
-        except Exception:
-            f.seek(0)
-            sys.stderr.write(f.read())
-            raise
-    return os.listdir(tmp_dir)
-
-
-def _files_same(dir1, dir2, basenames):
-    diff = filecmp.cmpfiles(dir1, dir2, basenames)
-    return 0 == len(diff[1] + diff[2])
-
-
-def _dirs_same(dir1, dir2, basenames):
-    for d in basenames:
-        left = os.path.join(dir1, d)
-        right = os.path.join(dir2, d)
-        if not (os.path.isdir(left) and os.path.isdir(right)):
-            return False
-        diff = filecmp.dircmp(right, right)
-        if 0 != len(diff.left_only + diff.right_only + diff.diff_files +
-                    diff.common_funny + diff.funny_files):
-            return False
-    return True
-
-
-def _move_files(dirfrom, dirto, basenames):
-    for f in basenames:
-        from_file = os.path.join(dirfrom, f)
-        to_file = os.path.join(dirto, f)
-        if os.path.isfile(to_file):
-            os.path.remove(to_file)
-        shutil.move(from_file, to_file)
-
-
-def _move_dirs(dirfrom, dirto, basenames):
-    for d in basenames:
-        from_dir = os.path.join(dirfrom, d)
-        to_dir = os.path.join(dirto, d)
-        if os.path.isdir(to_dir):
-            shutil.rmtree(to_dir)
-        shutil.move(from_dir, to_dir)
-
-
-def untar(tarfile, outdir):
-    """Returns True if untar content differs from pre-existing outdir content."""
-    tmpdir = tempfile.mkdtemp()
-    try:
-        untared = _open_archive(tarfile, tmpdir)
-        files = [f for f in untared if os.path.isfile(os.path.join(tmpdir, f))]
-        dirs = [d for d in untared if os.path.isdir(os.path.join(tmpdir, d))]
-        assert len(files) + len(dirs) == len(untared), 'Only files and directories'
-        if _files_same(tmpdir, outdir, files) and _dirs_same(tmpdir, outdir, dirs):
-            # Nothing new or different in the tarfile.
-            return False
-        # Some or all of the files / directories are new.
-        _move_files(tmpdir, outdir, files)
-        _move_dirs(tmpdir, outdir, dirs)
-        return True
-    finally:
-        if os.path.isdir(tmpdir):
-            shutil.rmtree(tmpdir)
-
 
 QUOTED = re.compile(r'\(module\s*(\$\S*)?\s+(quote|binary)')
 

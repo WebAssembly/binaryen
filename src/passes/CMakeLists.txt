@@ -28,6 +28,7 @@ set(passes_SOURCES
   ConstHoisting.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
+  DeadArgumentElimination2.cpp
   DeadCodeElimination.cpp
   DeAlign.cpp
   DebugLocationPropagation.cpp
@@ -100,6 +101,7 @@ set(passes_SOURCES
   StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
+  StripToolchainAnnotations.cpp
   TraceCalls.cpp
   RandomizeBranchHints.cpp
   RedundantSetElimination.cpp

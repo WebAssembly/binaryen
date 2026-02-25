@@ -21,6 +21,10 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
+#ifndef BRANCH_UTILS_DEBUG
+#define BRANCH_UTILS_DEBUG 0
+#endif
+
 namespace wasm::BranchUtils {
 
 // Some branches are obviously not actually reachable (e.g. (br $out
@@ -415,7 +419,7 @@ public:
 
   bool hasBranch(Expression* curr, Name target) {
     bool result = getBranches(curr).count(target);
-#ifdef BRANCH_UTILS_DEBUG
+#if BRANCH_UTILS_DEBUG
     assert(bresult == BranchSeeker::has(curr, target));
 #endif
     return result;

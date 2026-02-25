@@ -24,7 +24,9 @@
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
 
+#ifndef IR_BUILDER_DEBUG
 #define IR_BUILDER_DEBUG 0
+#endif
 
 #if IR_BUILDER_DEBUG
 #define DBG(statement) statement
@@ -2664,15 +2666,23 @@ void IRBuilder::applyAnnotations(Expression* expr,
   }
 
   if (annotation.inline_) {
-    // Only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].inline_ = annotation.inline_;
   }
 
   if (annotation.removableIfUnused) {
-    // Only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].removableIfUnused = true;
+  }
+
+  if (annotation.jsCalled) {
+    assert(func);
+    func->codeAnnotations[expr].jsCalled = true;
+  }
+
+  if (annotation.idempotent) {
+    assert(func);
+    func->codeAnnotations[expr].idempotent = true;
   }
 }
 

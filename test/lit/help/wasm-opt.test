@@ -148,6 +148,9 @@
 ;; CHECK-NEXT:                                                 lto-like manner, and optimizes
 ;; CHECK-NEXT:                                                 where we removed
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --dae2                                        Experimental reimplementation of
+;; CHECK-NEXT:                                                 DAE
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --dce                                         removes unreachable code
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --dealign                                     forces all loads and stores to
@@ -553,6 +556,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features
 ;; CHECK-NEXT:                                                 section
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-toolchain-annotations                 strip all toolchain-specific
+;; CHECK-NEXT:                                                 code annotations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --stub-unsupported-js                         stub out unsupported JS
 ;; CHECK-NEXT:                                                 operations

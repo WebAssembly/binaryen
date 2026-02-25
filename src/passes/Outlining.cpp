@@ -24,7 +24,9 @@
 #include "wasm-ir-builder.h"
 #include "wasm.h"
 
+#ifndef OUTLINING_DEBUG
 #define OUTLINING_DEBUG 0
+#endif
 
 #if OUTLINING_DEBUG
 #define ODBG(statement) statement

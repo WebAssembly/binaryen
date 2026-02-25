@@ -462,12 +462,18 @@ struct EscapeAnalyzer {
         fullyConsumes = true;
       }
       void visitArrayRMW(ArrayRMW* curr) {
+        if (!curr->index->is<Const>()) {
+          return;
+        }
         if (curr->ref == child) {
           escapes = false;
           fullyConsumes = true;
         }
       }
       void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+        if (!curr->index->is<Const>()) {
+          return;
+        }
         if (curr->ref == child || curr->expected == child) {
           escapes = false;
           fullyConsumes = true;
@@ -1038,6 +1044,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // As with RefGetDesc and StructGet, above.
+      return;
+    }
+
     [[maybe_unused]] auto& field = fields[curr->index];
     auto type = curr->type;
     assert(type == field.type);
@@ -1105,6 +1116,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // anything because we would still be performing the cmpxchg on a real
       // struct. We only need to replace the cmpxchg if the ref is being
       // replaced with locals.
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // As with RefGetDesc and StructGet, above.
       return;
     }
 
@@ -1341,6 +1357,45 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // TODO: Handle atomic array accesses.
     replaceCurrent(builder.makeStructGet(
       index, curr->ref, MemoryOrder::Unordered, curr->type, curr->signed_));
+  }
+
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->value),
+                                        builder.makeUnreachable()}));
+      refinalize = true;
+      return;
+    }
+
+    // Convert the ArrayRMW into a StructRMW.
+    replaceCurrent(builder.makeStructRMW(
+      curr->op, index, curr->ref, curr->value, curr->order));
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->expected),
+                                        builder.makeDrop(curr->replacement),
+                                        builder.makeUnreachable()}));
+      refinalize = true;
+      return;
+    }
+
+    // Convert the ArrayCmpxchg into a StructCmpxchg.
+    replaceCurrent(builder.makeStructCmpxchg(
+      index, curr->ref, curr->expected, curr->replacement, curr->order));
   }
 
   // Some additional operations need special handling

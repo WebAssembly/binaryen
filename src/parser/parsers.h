@@ -718,6 +718,10 @@ template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx& ctx) {
   if (ctx.in.takeKeyword("i16"sv)) {
     return ctx.makeI16();
   }
+  if (ctx.in.takeKeyword("waitqueue"sv)) {
+    return ctx.makeWaitQueue();
+  }
+
   auto type = valtype(ctx);
   CHECK_ERR(type);
   return ctx.makeStorageType(*type);

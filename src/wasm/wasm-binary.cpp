@@ -1662,6 +1662,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   append(getBranchHintsBuffer());
   append(getInlineHintsBuffer());
   append(getRemovableIfUnusedHintsBuffer());
+  append(getJSCalledHintsBuffer());
+  append(getIdempotentHintsBuffer());
   return ret;
 }
 
@@ -1693,33 +1695,31 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
 
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (has(annotation)) {
-        BinaryLocation offset;
-        if (expr == nullptr) {
-          // Function-level annotations have expr==0 and an offset of the start
-          // of the function.
-          offset = 0;
-        } else {
-          auto exprIter = binaryLocations.expressions.find(expr);
-          if (exprIter == binaryLocations.expressions.end()) {
-            // No expression exists for this annotation - perhaps optimizations
-            // removed it.
-            continue;
-          }
-          auto exprOffset = exprIter->second.start;
-
-          if (!funcDeclarationsOffset) {
-            auto funcIter = binaryLocations.functions.find(func.get());
-            assert(funcIter != binaryLocations.functions.end());
-            funcDeclarationsOffset = funcIter->second.declarations;
-          }
-
-          // Compute the offset: it should be relative to the start of the
-          // function locals (i.e. the function declarations).
-          offset = exprOffset - funcDeclarationsOffset;
+        auto exprIter = binaryLocations.expressions.find(expr);
+        if (exprIter == binaryLocations.expressions.end()) {
+          // No expression exists for this annotation - perhaps optimizations
+          // removed it.
+          continue;
         }
+        auto exprOffset = exprIter->second.start;
+
+        if (!funcDeclarationsOffset) {
+          auto funcIter = binaryLocations.functions.find(func.get());
+          assert(funcIter != binaryLocations.functions.end());
+          funcDeclarationsOffset = funcIter->second.declarations;
+        }
+
+        // Compute the offset: it should be relative to the start of the
+        // function locals (i.e. the function declarations).
+        auto offset = exprOffset - funcDeclarationsOffset;
 
         funcHints.exprHints.push_back(ExprHint{expr, offset, &annotation});
       }
+    }
+
+    auto& funcAnnotations = func->funcAnnotations;
+    if (has(funcAnnotations)) {
+      funcHints.exprHints.push_back(ExprHint{nullptr, 0, &funcAnnotations});
     }
 
     if (funcHints.exprHints.empty()) {
@@ -1804,17 +1804,29 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
     });
 }
 
+// Writes a simple boolean hint of size 0. Receives the code and the field name
+// on the annotation object.
+#define WRITE_BOOLEAN_HINT(code, field)                                        \
+  return writeExpressionHints(                                                 \
+    code,                                                                      \
+    [](const CodeAnnotation& annotation) { return annotation.field; },         \
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {     \
+      buffer << U32LEB(0);                                                     \
+    });
+
 std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getRemovableIfUnusedHintsBuffer() {
-  return writeExpressionHints(
-    Annotations::RemovableIfUnusedHint,
-    [](const CodeAnnotation& annotation) {
-      return annotation.removableIfUnused;
-    },
-    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
-      // Hint size, always empty.
-      buffer << U32LEB(0);
-    });
+  WRITE_BOOLEAN_HINT(Annotations::RemovableIfUnusedHint, removableIfUnused);
+}
+
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getJSCalledHintsBuffer() {
+  WRITE_BOOLEAN_HINT(Annotations::JSCalledHint, jsCalled);
+}
+
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getIdempotentHintsBuffer() {
+  WRITE_BOOLEAN_HINT(Annotations::IdempotentHint, idempotent);
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
@@ -2025,11 +2037,13 @@ void WasmBinaryWriter::writeIndexedHeapType(HeapType type) {
 }
 
 void WasmBinaryWriter::writeField(const Field& field) {
-  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+  if (field.type == Type::i32 && field.packedType != Field::NotPacked) {
     if (field.packedType == Field::i8) {
       o << S32LEB(BinaryConsts::EncodedType::i8);
     } else if (field.packedType == Field::i16) {
       o << S32LEB(BinaryConsts::EncodedType::i16);
+    } else if (field.packedType == Field::WaitQueue) {
+      o << S32LEB(BinaryConsts::EncodedType::waitQueue);
     } else {
       WASM_UNREACHABLE("invalid packed type");
     }
@@ -2089,7 +2103,9 @@ void WasmBinaryReader::preScan() {
 
       if (sectionName == Annotations::BranchHint ||
           sectionName == Annotations::InlineHint ||
-          sectionName == Annotations::RemovableIfUnusedHint) {
+          sectionName == Annotations::RemovableIfUnusedHint ||
+          sectionName == Annotations::JSCalledHint ||
+          sectionName == Annotations::IdempotentHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2249,8 +2265,14 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::RemovableIfUnusedHint) {
     deferredAnnotationSections.push_back(
       AnnotationSectionInfo{pos, [this, payloadLen]() {
-                              this->readremovableIfUnusedHints(payloadLen);
+                              this->readRemovableIfUnusedHints(payloadLen);
                             }});
+  } else if (sectionName == Annotations::JSCalledHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readJSCalledHints(payloadLen); }});
+  } else if (sectionName == Annotations::IdempotentHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readIdempotentHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -2751,6 +2773,10 @@ void WasmBinaryReader::readTypes() {
     if (typeCode == BinaryConsts::EncodedType::i16) {
       auto mutable_ = readMutability();
       return Field(Field::i16, mutable_);
+    }
+    if (typeCode == BinaryConsts::EncodedType::waitQueue) {
+      auto mutable_ = readMutability();
+      return Field(Field::WaitQueue, mutable_);
     }
     // It's a regular wasm value.
     auto type = makeType(typeCode);
@@ -5175,8 +5201,8 @@ Name WasmBinaryReader::escape(Name name) {
     }
     // replace non-idchar with `\xx` escape
     escaped.push_back('\\');
-    escaped.push_back(formatNibble(c >> 4));
-    escaped.push_back(formatNibble(c & 15));
+    escaped.push_back(formatNibble((unsigned char)c >> 4));
+    escaped.push_back(formatNibble((unsigned char)c & 15));
   }
   return escaped;
 }
@@ -5524,23 +5550,21 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
     for (Index hint = 0; hint < numHints; hint++) {
       // Find the expression this hint is for. If the relative offset is 0, then
       // it is for the entire function, with expr==null.
-      Expression* expr;
       auto relativeOffset = getU32LEB();
       if (relativeOffset == 0) {
-        // Function-level annotations have expr==0 and an offset of the start
-        // of the function.
-        expr = nullptr;
-      } else {
-        // To get the absolute offset, add the function's offset.
-        auto absoluteOffset = funcLocalsOffset + relativeOffset;
-
-        auto iter = locationsMap.find(absoluteOffset);
-        if (iter == locationsMap.end()) {
-          throwError("bad offset in " + sectionName.toString());
-        }
-        expr = iter->second;
+        // Function-level annotations have the offset of the start of the
+        // function.
+        read(func->funcAnnotations);
+        continue;
       }
+      // To get the absolute offset, add the function's offset.
+      auto absoluteOffset = funcLocalsOffset + relativeOffset;
 
+      auto iter = locationsMap.find(absoluteOffset);
+      if (iter == locationsMap.end()) {
+        throwError("bad offset in " + sectionName.toString());
+      }
+      auto* expr = iter->second;
       read(func->codeAnnotations[expr]);
     }
   }
@@ -5584,17 +5608,27 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
     });
 }
 
-void WasmBinaryReader::readremovableIfUnusedHints(size_t payloadLen) {
-  readExpressionHints(Annotations::RemovableIfUnusedHint,
-                      payloadLen,
-                      [&](CodeAnnotation& annotation) {
-                        auto size = getU32LEB();
-                        if (size != 0) {
-                          throwError("bad removableIfUnusedHint size");
-                        }
+// Reads a simple boolean hint of size 0. Receives the code and the field name
+// on the annotation object.
+#define READ_BOOLEAN_HINT(code, field)                                         \
+  readExpressionHints(code, payloadLen, [&](CodeAnnotation& annotation) {      \
+    auto size = getU32LEB();                                                   \
+    if (size != 0) {                                                           \
+      throwError("bad " #field " hint size");                                  \
+    }                                                                          \
+    annotation.field = true;                                                   \
+  });
 
-                        annotation.removableIfUnused = true;
-                      });
+void WasmBinaryReader::readRemovableIfUnusedHints(size_t payloadLen) {
+  READ_BOOLEAN_HINT(Annotations::RemovableIfUnusedHint, removableIfUnused);
+}
+
+void WasmBinaryReader::readJSCalledHints(size_t payloadLen) {
+  READ_BOOLEAN_HINT(Annotations::JSCalledHint, jsCalled);
+}
+
+void WasmBinaryReader::readIdempotentHints(size_t payloadLen) {
+  READ_BOOLEAN_HINT(Annotations::IdempotentHint, idempotent);
 }
 
 std::tuple<Address, Address, Index, MemoryOrder>

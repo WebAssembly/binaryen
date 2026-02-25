@@ -2404,6 +2404,7 @@ opt_choices = [
     ("--const-hoisting",),
     ("--dae",),
     ("--dae-optimizing",),
+    ("--dae2",),
     ("--dce",),
     ("--directize",),
     ("--discard-global-effects",),
