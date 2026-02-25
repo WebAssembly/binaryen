@@ -208,6 +208,13 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
   }
 };
 
+// Check if a call is to an idempotent function. Note that we do not check for
+// an annotation on the call itself - optimizing that would require us to verify
+// idempotency on the later one specifically, but that is complicated in this
+// pass (we'd end up tracking the first one unnecessarily, hoping the second is
+// idempotent). Instead, we look on the called function, which is identical for
+// all callers.
+// TODO if users want the call annotation, handle that too.
 bool isIdempotent(Expression* curr, Module& wasm) {
   if (auto* call = curr->dynCast<Call>()) {
     if (Intrinsics::getAnnotations(wasm.getFunction(call->target)).idempotent) {
