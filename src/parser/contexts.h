@@ -1533,11 +1533,18 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   Result<> addDeclareElem(Name, ElemListT&&, Index) { return Ok{}; }
 
-  Result<>
-  addTag(Name, const std::vector<Name>&, ImportNames*, TypeUse use, Index pos) {
+  Result<> addTag(Name name,
+                  const std::vector<Name>& exports,
+                  ImportNames* import,
+                  TypeUse use,
+                  Index pos) {
     auto& t = wasm.tags[index];
     if (!use.type.isSignature()) {
       return in.err(pos, "tag type must be a signature");
+    }
+    if (use.type.getSignature().results != Type::none &&
+        !wasm.features.hasStackSwitching()) {
+      return in.err(pos, "non-empty tag result type");
     }
     t->type = use.type;
     return Ok{};
