@@ -626,6 +626,9 @@ private:
       parent.writesMemory = true;
       parent.isAtomic = true;
       parent.implicitTrap = true;
+
+      // If the timeout is negative and no-one wakes us.
+      parent.mayNotReturn = true;
     }
     void visitAtomicNotify(AtomicNotify* curr) {
       // AtomicNotify doesn't strictly write memory, but it does modify the
