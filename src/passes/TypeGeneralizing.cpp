@@ -697,6 +697,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitStructCmpxchg(StructCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
 
+  void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitArrayNew(ArrayNew* curr) {
     // We cannot yet generalize allocations. Push a requirement for the
     // reference type needed to initialize the array, if any.
@@ -899,7 +901,6 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
   void visitResumeThrow(ResumeThrow* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStackSwitch(StackSwitch* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {

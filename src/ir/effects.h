@@ -949,6 +949,27 @@ private:
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
+    void visitStructWait(StructWait* curr) {
+      parent.isAtomic = true;
+      parent.mayNotReturn = true;
+      parent.implicitTrap = true;
+
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+
+      // If the ref isn't `unreachable`, then the field must exist and be a
+      // packed waitqueue due to validation.
+      if (curr->ref->type.isStruct() &&
+          curr->index <
+            curr->ref->type.getHeapType().getStruct().fields.size() &&
+          curr->ref->type.getHeapType()
+              .getStruct()
+              .fields.at(curr->index)
+              .mutable_ == Mutable) {
+        parent.readsMutableStruct = true;
+      }
+    }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped
@@ -1043,27 +1064,6 @@ private:
       parent.implicitTrap = true;
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
-    }
-    void visitStructWait(StructWait* curr) {
-      parent.isAtomic = true;
-      parent.mayNotReturn = true;
-      parent.implicitTrap = true;
-
-      if (curr->ref->type == Type::unreachable) {
-        return;
-      }
-
-      // If the ref isn't `unreachable`, then the field must exist and be a
-      // packed waitqueue due to validation.
-      if (curr->ref->type.isStruct() &&
-          curr->index <
-            curr->ref->type.getHeapType().getStruct().fields.size() &&
-          curr->ref->type.getHeapType()
-              .getStruct()
-              .fields.at(curr->index)
-              .mutable_ == Mutable) {
-        parent.readsMutableStruct = true;
-      }
     }
     void visitRefAs(RefAs* curr) {
       if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {

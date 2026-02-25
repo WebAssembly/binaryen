@@ -336,20 +336,6 @@ struct IRBuilder::ChildPopper
     void noteUnknown() {
       WASM_UNREACHABLE("unexpected insufficient type information");
     }
-
-    void visitStructWait(StructWait* curr,
-                         std::optional<HeapType> structType = std::nullopt) {
-      if (!structType) {
-        if (!curr->structType.isStruct()) {
-          noteUnknown();
-          return;
-        }
-        structType = curr->structType;
-      }
-      note(&curr->ref, {Type(*structType, Nullable)});
-      note(&curr->expected, {Type::i32});
-      note(&curr->timeout, {Type::i64});
-    }
   };
 
   IRBuilder& builder;

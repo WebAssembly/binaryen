@@ -372,6 +372,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                         type.isRef() ? Type(HeapType::eq, Nullable) : type);
     self()->noteSubtype(curr->replacement, type);
   }
+  void visitStructWait(StructWait* curr) {}
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;
@@ -447,7 +448,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                         type.isRef() ? Type(HeapType::eq, Nullable) : type);
     self()->noteSubtype(curr->replacement, type);
   }
-  void visitStructWait(StructWait* curr) {}
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
       case RefAsNonNull:

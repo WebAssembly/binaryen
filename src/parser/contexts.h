@@ -804,6 +804,11 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<>
+  makeStructWait(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<> makeArrayNew(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
@@ -954,12 +959,6 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT>
   Result<>
   makeStackSwitch(Index, const std::vector<Annotation>&, HeapTypeT, TagIdxT) {
-    return Ok{};
-  }
-
-  template<typename HeapTypeT>
-  Result<>
-  makeStructWait(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
     return Ok{};
   }
 };
@@ -2718,6 +2717,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return withLoc(pos, irBuilder.makeStructCmpxchg(type, field, order));
   }
 
+  Result<> makeStructWait(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          HeapType type,
+                          Index field) {
+    return withLoc(pos, irBuilder.makeStructWait(type, field));
+  }
+
   Result<> makeArrayNew(Index pos,
                         const std::vector<Annotation>& annotations,
                         HeapType type) {
@@ -2952,13 +2958,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                            HeapType type,
                            Name tag) {
     return withLoc(pos, irBuilder.makeStackSwitch(type, tag));
-  }
-
-  Result<> makeStructWait(Index pos,
-                          const std::vector<Annotation>& annotations,
-                          HeapType type,
-                          Index field) {
-    return withLoc(pos, irBuilder.makeStructWait(type, field));
   }
 };
 
