@@ -702,6 +702,8 @@ enum ASTNodes {
   I64AtomicWait = 0x02,
   AtomicFence = 0x03,
   Pause = 0x04,
+  WaitQueueWait = 0x05,
+  WaitQueueNotify = 0x06,
 
   I32AtomicLoad = 0x10,
   I64AtomicLoad = 0x11,
@@ -1252,9 +1254,10 @@ enum ASTNodes {
   Resume = 0xe3,
   ResumeThrow = 0xe4,
   ResumeThrowRef = 0xe5,
-  Switch = 0xe6,  // NOTE(dhil): the internal class is known as
-                  // StackSwitch to avoid conflict with the existing
-                  // 'switch table'.
+  Switch = 0xe6, // NOTE(dhil): the internal class is known as
+                 // StackSwitch to avoid conflict with the existing
+                 // 'switch table'.
+
   OnLabel = 0x00, // (on $tag $label)
   OnSwitch = 0x01 // (on $tag switch)
 };

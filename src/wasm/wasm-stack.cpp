@@ -3095,6 +3095,16 @@ void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
   o << U32LEB(parent.getTagIndex(curr->tag));
 }
 
+void BinaryInstWriter::visitWaitQueueWait(WaitQueueWait* curr) {
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << static_cast<int8_t>(BinaryConsts::WaitQueueWait);
+}
+
+void BinaryInstWriter::visitWaitQueueNotify(WaitQueueNotify* curr) {
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << static_cast<int8_t>(BinaryConsts::WaitQueueNotify);
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
