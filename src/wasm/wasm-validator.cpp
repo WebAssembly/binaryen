@@ -570,6 +570,7 @@ public:
   void visitResume(Resume* curr);
   void visitResumeThrow(ResumeThrow* curr);
   void visitStackSwitch(StackSwitch* curr);
+
   void visitFunction(Function* curr);
 
   // helpers
