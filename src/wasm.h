@@ -2161,11 +2161,10 @@ public:
   StructWait() = default;
   StructWait(MixedArena& allocator) : StructWait() {}
 
-  Expression* ref = nullptr;
-  Expression* expected = nullptr;
-  Expression* timeout = nullptr;
-  HeapType structType;
-  Index index = -1;
+  Expression* ref;
+  Expression* expected;
+  Expression* timeout;
+  Index index;
 
   void finalize();
 };

@@ -101,7 +101,7 @@ class HeapType {
   // stack, `HeapType` is used to describe the structures that reference types
   // refer to. HeapTypes are canonicalized and interned exactly like Types and
   // should also be passed by value.
-  uintptr_t id = 0;
+  uintptr_t id;
 
   static constexpr int TypeBits = 2;
   static constexpr int UsedBits = TypeBits + 1;

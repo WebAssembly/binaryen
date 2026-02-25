@@ -331,11 +331,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
-  void visitStructWait(StructWait* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
   void visitArrayNew(ArrayNew* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
@@ -2411,7 +2406,7 @@ struct PrintExpressionContents
   void visitStructWait(StructWait* curr) {
     printMedium(o, "struct.wait");
     o << ' ';
-    printHeapTypeName(curr->structType);
+    printHeapTypeName(curr->ref->type.getHeapType());
     o << ' ';
     o << curr->index;
   }

@@ -427,10 +427,7 @@ struct CodeScanner : PostWalker<CodeScanner> {
   }
   void visitStructGet(StructGet* curr) { info.note(curr->ref->type); }
   void visitStructSet(StructSet* curr) { info.note(curr->ref->type); }
-  void visitStructWait(StructWait* curr) {
-    info.note(curr->ref->type);
-    info.note(curr->structType);
-  }
+  void visitStructWait(StructWait* curr) { info.note(curr->ref->type); }
   void visitArrayGet(ArrayGet* curr) { info.note(curr->ref->type); }
   void visitArraySet(ArraySet* curr) { info.note(curr->ref->type); }
   void visitContBind(ContBind* curr) {

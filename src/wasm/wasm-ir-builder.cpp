@@ -2244,6 +2244,19 @@ IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.wait"};
+  }
+  StructWait curr(wasm.allocator);
+  curr.index = index;
+  CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(
+    builder.makeStructWait(curr.index, curr.ref, curr.expected, curr.timeout));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeArrayNew(HeapType type) {
   if (!type.isArray()) {
     return Err{"expected array type annotation on array.new"};
@@ -2659,16 +2672,6 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   CHECK_ERR(validateTypeAnnotation(ct, curr.cont));
 
   push(builder.makeStackSwitch(tag, std::move(curr.operands), curr.cont));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
-  StructWait curr(wasm.allocator);
-  curr.structType = type;
-  curr.index = index;
-  CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
-  push(builder.makeStructWait(
-    curr.structType, curr.index, curr.ref, curr.expected, curr.timeout));
   return Ok{};
 }
 

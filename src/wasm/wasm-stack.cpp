@@ -2516,6 +2516,17 @@ void BinaryInstWriter::visitStructCmpxchg(StructCmpxchg* curr) {
   o << U32LEB(curr->index);
 }
 
+void BinaryInstWriter::visitStructWait(StructWait* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::StructWait);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
+}
+
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->isWithDefault()) {
@@ -2909,13 +2920,6 @@ void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
   o << int8_t(BinaryConsts::Switch);
   parent.writeIndexedHeapType(curr->cont->type.getHeapType());
   o << U32LEB(parent.getTagIndex(curr->tag));
-}
-
-void BinaryInstWriter::visitStructWait(StructWait* curr) {
-  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << static_cast<int8_t>(BinaryConsts::StructWait);
-  parent.writeIndexedHeapType(curr->structType);
-  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {

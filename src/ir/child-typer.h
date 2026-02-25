@@ -1014,7 +1014,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
         self().noteUnknown();
         return;
       }
-      ht = curr->structType;
+      ht = curr->ref->type.getHeapType();
     }
 
     note(&curr->ref, Type(*ht, Nullable));

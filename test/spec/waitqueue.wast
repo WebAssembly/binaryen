@@ -49,7 +49,11 @@
 
   (global $g (ref null $t) (struct.new $t (i32.const 0)))
 
-  (func (export "waitqueue.wait") (param $expected i32) (param $timeout i64) (result i32)
+  (func (export "struct.wait") (param $expected i32) (param $timeout i64) (result i32)
     (struct.wait $t 0 (global.get $g) (local.get $expected) (local.get $timeout))
+  )
+
+  (func (export "struct.set") (param $count i32)
+    (struct.set)
   )
 )

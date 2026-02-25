@@ -9,14 +9,33 @@
   ;; RTRIP-NEXT: ))
   (global $g (ref $t) (struct.new $t (i32.const 0)))
 
-  ;; RTRIP:      (func $f (type $1) (result i32)
-  ;; RTRIP-NEXT:  (struct.wait $t 0
-  ;; RTRIP-NEXT:   (global.get $g)
+  ;; RTRIP:      (func $f (type $1)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (struct.wait $t 0
+  ;; RTRIP-NEXT:    (global.get $g)
+  ;; RTRIP-NEXT:    (i32.const 0)
+  ;; RTRIP-NEXT:    (i64.const 0)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (i32.const 0)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (i64.const 0)
   ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  (func $f (result i32)
-    (struct.wait $t 0 (global.get $g) (i32.const 0) (i64.const 0))
+  (func $f
+    (drop (struct.wait $t 0 (global.get $g) (i32.const 0) (i64.const 0)))
+    (drop (struct.wait $t 0 (unreachable) (i32.const 0) (i64.const 0)))
+    (drop (struct.wait $t 0 (ref.null none) (i32.const 0) (i64.const 0)))
   )
 )
