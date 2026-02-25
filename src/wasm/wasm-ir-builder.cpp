@@ -24,7 +24,9 @@
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
 
+#ifndef IR_BUILDER_DEBUG
 #define IR_BUILDER_DEBUG 0
+#endif
 
 #if IR_BUILDER_DEBUG
 #define DBG(statement) statement

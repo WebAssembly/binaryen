@@ -26,7 +26,9 @@
 #include "wasm-type-shape.h"
 #include "wasm-type.h"
 
+#ifndef TRACE_CANONICALIZATION
 #define TRACE_CANONICALIZATION 0
+#endif
 
 #if TRACE_CANONICALIZATION
 #include <iostream>

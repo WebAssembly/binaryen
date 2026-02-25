@@ -26,20 +26,21 @@ USA, 301-312. DOI=10.1145/2048147.2048224
 http://doi.acm.org/10.1145/2048147.2048224
 */
 
-#include <assert.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <cassert>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
 #include <deque>
-#include <list>
 #include <map>
 #include <memory>
-#include <set>
 
 #include "support/insert_ordered.h"
 #include "wasm-builder.h"
 #include "wasm.h"
+
+#ifndef RELOOPER_DEBUG
+#define RELOOPER_DEBUG 0
+#endif
 
 namespace CFG {
 
@@ -315,7 +316,7 @@ struct Relooper {
 
 using BlockBlockSetMap = wasm::InsertOrderedMap<Block*, BlockSet>;
 
-#ifdef RELOOPER_DEBUG
+#if RELOOPER_DEBUG
 struct Debugging {
   static void Dump(Block* Curr, const char* prefix = NULL);
   static void Dump(BlockSet& Blocks, const char* prefix = NULL);

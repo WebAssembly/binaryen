@@ -25,6 +25,10 @@
 #include "wasm-stack.h"
 #include "wasm.h"
 
+#ifndef STACK_OPT_DEBUG
+#define STACK_OPT_DEBUG 0
+#endif
+
 namespace wasm {
 
 StackIROptimizer::StackIROptimizer(Function* func,
@@ -154,7 +158,7 @@ void StackIROptimizer::local2Stack() {
   // We also maintain a stack of values vectors for control flow,
   // saving the stack as we enter and restoring it when we exit.
   std::vector<std::vector<Index>> savedValues;
-#ifdef STACK_OPT_DEBUG
+#if STACK_OPT_DEBUG
   std::cout << "func: " << func->name << '\n' << insts << '\n';
 #endif
   for (Index instIndex = 0; instIndex < insts.size(); instIndex++) {
@@ -164,7 +168,7 @@ void StackIROptimizer::local2Stack() {
     }
     // First, consume values from the stack as required.
     auto consumed = getNumConsumedValues(inst);
-#ifdef STACK_OPT_DEBUG
+#if STACK_OPT_DEBUG
     std::cout << "  " << instIndex << " : " << *inst << ", " << values.size()
               << " on stack, will consume " << consumed << "\n    ";
     for (auto s : values)
@@ -235,7 +239,7 @@ void StackIROptimizer::local2Stack() {
                   assert(*setInfluences.begin() == get);
                   // Do it! The set and the get can go away, the proper
                   // value is on the stack.
-#ifdef STACK_OPT_DEBUG
+#if STACK_OPT_DEBUG
                   std::cout << "  stackify the get\n";
 #endif
                   insts[setIndex] = nullptr;

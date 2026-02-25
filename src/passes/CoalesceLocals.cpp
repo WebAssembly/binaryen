@@ -37,7 +37,16 @@
 #include "support/permutations.h"
 #include "support/sparse_square_matrix.h"
 #include "wasm.h"
-#ifdef CFG_PROFILE
+
+#ifndef CFG_PROFILE
+#define CFG_PROFILE 0
+#endif
+
+#ifndef CFG_LEARN_DEBUG
+#define CFG_LEARN_DEBUG 0
+#endif
+
+#if CFG_PROFILE
 #include "support/timing.h"
 #endif
 
@@ -676,7 +685,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
                      noise);
       }
       calculateFitness(ret);
-#ifdef CFG_LEARN_DEBUG
+#if CFG_LEARN_DEBUG
       order->dump("new rando");
 #endif
       return ret;
@@ -707,7 +716,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
         }
       }
       calculateFitness(ret);
-#ifdef CFG_LEARN_DEBUG
+#if CFG_LEARN_DEBUG
       ret->dump("new mixture");
 #endif
       return ret;
@@ -719,7 +728,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
     bool first = true;
   };
 
-#ifdef CFG_LEARN_DEBUG
+#if CFG_LEARN_DEBUG
   std::cout << "[learning for " << getFunction()->name << "]\n";
 #endif
   auto numVars = this->getFunction()->getNumVars();
@@ -727,7 +736,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
     std::min(Index(numVars * (numVars - 1)), Index(20));
   Generator generator(this);
   GeneticLearner<Order, double, Generator> learner(generator, GENERATION_SIZE);
-#ifdef CFG_LEARN_DEBUG
+#if CFG_LEARN_DEBUG
   learner.getBest()->dump("first best");
 #endif
   // keep working while we see improvement
@@ -739,11 +748,11 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
       break; // unlikely we can improve
     }
     oldBest = newBest;
-#ifdef CFG_LEARN_DEBUG
+#if CFG_LEARN_DEBUG
     learner.getBest()->dump("current best");
 #endif
   }
-#ifdef CFG_LEARN_DEBUG
+#if CFG_LEARN_DEBUG
   learner.getBest()->dump("the best");
 #endif
   // TODO: cache indices in Orders, at the cost of more memory?

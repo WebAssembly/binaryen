@@ -279,6 +279,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Print code annotations for an expression. If the expression is nullptr,
   // prints for the current function.
   void printCodeAnnotations(Expression* curr);
+  void printCodeAnnotations(const CodeAnnotation& annotation);
 
   void printExpressionContents(Expression* curr);
 
@@ -2772,43 +2773,46 @@ void PrintSExpression::printDebugDelimiterLocation(Expression* curr, Index i) {
 void PrintSExpression::printCodeAnnotations(Expression* curr) {
   if (auto iter = currFunction->codeAnnotations.find(curr);
       iter != currFunction->codeAnnotations.end()) {
-    auto& annotation = iter->second;
-    if (annotation.branchLikely) {
-      Colors::grey(o);
-      o << "(@" << Annotations::BranchHint << " \"\\0"
-        << (*annotation.branchLikely ? "1" : "0") << "\")\n";
-      restoreNormalColor(o);
-      doIndent(o, indent);
-    }
-    if (annotation.inline_) {
-      Colors::grey(o);
-      std::ofstream saved;
-      saved.copyfmt(o);
-      o << "(@" << Annotations::InlineHint << " \"\\" << std::hex
-        << std::setfill('0') << std::setw(2) << int(*annotation.inline_)
-        << "\")\n";
-      o.copyfmt(saved);
-      restoreNormalColor(o);
-      doIndent(o, indent);
-    }
-    if (annotation.removableIfUnused) {
-      Colors::grey(o);
-      o << "(@" << Annotations::RemovableIfUnusedHint << ")\n";
-      restoreNormalColor(o);
-      doIndent(o, indent);
-    }
-    if (annotation.jsCalled) {
-      Colors::grey(o);
-      o << "(@" << Annotations::JSCalledHint << ")\n";
-      restoreNormalColor(o);
-      doIndent(o, indent);
-    }
-    if (annotation.idempotent) {
-      Colors::grey(o);
-      o << "(@" << Annotations::IdempotentHint << ")\n";
-      restoreNormalColor(o);
-      doIndent(o, indent);
-    }
+    printCodeAnnotations(iter->second);
+  }
+}
+
+void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
+  if (annotation.branchLikely) {
+    Colors::grey(o);
+    o << "(@" << Annotations::BranchHint << " \"\\0"
+      << (*annotation.branchLikely ? "1" : "0") << "\")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
+  if (annotation.inline_) {
+    Colors::grey(o);
+    std::ofstream saved;
+    saved.copyfmt(o);
+    o << "(@" << Annotations::InlineHint << " \"\\" << std::hex
+      << std::setfill('0') << std::setw(2) << int(*annotation.inline_)
+      << "\")\n";
+    o.copyfmt(saved);
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
+  if (annotation.removableIfUnused) {
+    Colors::grey(o);
+    o << "(@" << Annotations::RemovableIfUnusedHint << ")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
+  if (annotation.jsCalled) {
+    Colors::grey(o);
+    o << "(@" << Annotations::JSCalledHint << ")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
+  if (annotation.idempotent) {
+    Colors::grey(o);
+    o << "(@" << Annotations::IdempotentHint << ")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
   }
 }
 
@@ -3266,7 +3270,7 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
   lastPrintedLocation = std::nullopt;
   o << '(';
   emitImportHeader(curr);
-  printCodeAnnotations(nullptr);
+  printCodeAnnotations(curr->funcAnnotations);
   handleSignature(curr);
   o << "))";
   o << maybeNewLine;
@@ -3280,7 +3284,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   if (currFunction->prologLocation) {
     printDebugLocation(*currFunction->prologLocation);
   }
-  printCodeAnnotations(nullptr);
+  printCodeAnnotations(curr->funcAnnotations);
   handleSignature(curr, true);
   incIndent();
   for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {

@@ -37,14 +37,13 @@ struct StripToolchainAnnotations
   }
 
   void doWalkFunction(Function* func) {
+    remove(func->funcAnnotations);
+
     auto& annotations = func->codeAnnotations;
     auto iter = annotations.begin();
     while (iter != annotations.end()) {
-      // Remove the toolchain-specific annotations.
       auto& annotation = iter->second;
-      annotation.removableIfUnused = false;
-      annotation.jsCalled = false;
-      annotation.idempotent = false;
+      remove(annotation);
 
       // If nothing remains, remove the entire annotation.
       if (annotation == CodeAnnotation()) {
@@ -53,6 +52,13 @@ struct StripToolchainAnnotations
         ++iter;
       }
     }
+  }
+
+  // Remove all toolchain-specific annotations.
+  void remove(CodeAnnotation& annotation) {
+    annotation.removableIfUnused = false;
+    annotation.jsCalled = false;
+    annotation.idempotent = false;
   }
 };
 

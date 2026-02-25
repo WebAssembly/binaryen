@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include <iterator>
-
 #include "cfg/cfg-traversal.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
 #include "support/unique_deferring_queue.h"
-#include "wasm-builder.h"
+
+#ifndef LOCAL_GRAPH_DEBUG
+#define LOCAL_GRAPH_DEBUG 0
+#endif
 
 namespace wasm {
 
@@ -185,7 +186,7 @@ struct LocalGraphFlower
     auto numLocals = func->getNumLocals();
 
     for (auto& block : flowBlocks) {
-#ifdef LOCAL_GRAPH_DEBUG
+#if LOCAL_GRAPH_DEBUG
       std::cout << "basic block " << &block << " :\n";
       for (auto& action : block.actions) {
         std::cout << "  action: " << *action << '\n';
@@ -531,7 +532,7 @@ LocalGraph::LocalGraph(Function* func, Module* module)
   LocalGraphFlower flower(getSetsMap, locations, func, module);
   flower.flow();
 
-#ifdef LOCAL_GRAPH_DEBUG
+#if LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
   for (auto& [get, sets] : getSetsMap) {
     std::cout << "GET\n" << get << " is influenced by\n";
@@ -650,7 +651,7 @@ void LazyLocalGraph::makeFlower() const {
 
   flower->prepareLaziness();
 
-#ifdef LOCAL_GRAPH_DEBUG
+#if LOCAL_GRAPH_DEBUG
   std::cout << "LazyLocalGraph::dump\n";
   for (auto& [get, sets] : getSetsMap) {
     std::cout << "GET\n" << get << " is influenced by\n";

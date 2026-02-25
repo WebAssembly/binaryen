@@ -1482,10 +1482,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
         Builder::addVar(f.get(), l.name, l.type);
       }
     }
-    // Function-level annotations are stored using the nullptr key, as they are
-    // not tied to a particular instruction.
     if (!annotations.empty()) {
-      f->codeAnnotations[nullptr] = parseAnnotations(annotations);
+      f->funcAnnotations = parseAnnotations(annotations);
     }
     return Ok{};
   }
