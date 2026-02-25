@@ -20,5 +20,14 @@
       (i32.const 0)
     )
   )
+
+  ;; CHECK:      (func $call (type $0)
+  ;; CHECK-NEXT:  (@binaryen.idempotent)
+  ;; CHECK-NEXT:  (call $call)
+  ;; CHECK-NEXT: )
+  (func $call
+    (@binaryen.idempotent)
+    (call $call)
+  )
 )
 
