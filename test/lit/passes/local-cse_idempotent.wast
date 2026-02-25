@@ -222,4 +222,58 @@
       )
     )
   )
+
+  ;; CHECK:      (func $idem-effects-interact-2 (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (global.get $immutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (global.get $immutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $idem-effects-interact-2
+    ;; As above, but interleaved differently. The first i32.eq is now between
+    ;; the two idempotent calls. Here we could optimize, but do not atm, as the
+    ;; mutable reads invalidate the first call (only the reverse is true, but
+    ;; our check is symmetrical atm), and the second call - which we fail to
+    ;; optimize out - invalidates the later mutable reads. TODO
+    (drop
+      (call $idempotent
+        (global.get $immutable)
+      )
+    )
+    (drop
+      (i32.eq
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+    (drop
+      (call $idempotent
+        (global.get $immutable)
+      )
+    )
+    (drop
+      (i32.eq
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+  )
 )
