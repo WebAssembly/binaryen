@@ -402,7 +402,6 @@ SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
 
 # Paths are relative to the test/spec/testsuite directory
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
-    'array_new_elem.wast',  # Failure to parse element segment item abbreviation
     'binary.wast',   # Missing data count section validation
     'call_indirect64.wast',  # Failure to parse element segment abbreviation
     'comments.wast',  # Issue with carriage returns being treated as newlines

@@ -3704,20 +3704,16 @@ MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx& ctx) {
   MaybeResult<typename Ctx::ExprT> result;
   if (ctx.in.takeSExprStart("item"sv)) {
     result = expr(ctx);
-  } else if (ctx.in.takeLParen()) {
-    // TODO: `instr` should included both folded and unfolded instrs.
-    if (auto inst = instr(ctx)) {
-      CHECK_ERR(inst);
-    } else {
-      return ctx.in.err("expected instruction");
+    CHECK_ERR(result);
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of element expression");
     }
+  } else if (auto exp = foldedinstr(ctx)) {
+    CHECK_ERR(exp);
     result = ctx.makeExpr();
+    CHECK_ERR(result);
   } else {
     return {};
-  }
-  CHECK_ERR(result);
-  if (!ctx.in.takeRParen()) {
-    return ctx.in.err("expected end of element expression");
   }
   return result;
 }
@@ -3777,16 +3773,14 @@ template<typename Ctx> MaybeResult<> elem(Ctx& ctx) {
       // This may be an abbreviated offset instruction or it may be the
       // beginning of the elemlist.
       auto beforeLParen = ctx.in.getPos();
-      if (ctx.in.takeLParen()) {
-        if (auto inst = instr(ctx)) {
-          CHECK_ERR(inst);
-          auto off = ctx.makeExpr();
-          CHECK_ERR(off);
-          offset = *off;
-        } else {
-          // This must be the beginning of the elemlist instead.
-          ctx.in.setPos(beforeLParen);
-        }
+      if (auto inst = foldedinstr(ctx)) {
+        CHECK_ERR(inst);
+        auto off = ctx.makeExpr();
+        CHECK_ERR(off);
+        offset = *off;
+      } else {
+        // This must be the beginning of the elemlist instead.
+        ctx.in.setPos(beforeLParen);
       }
     }
     if (offset && !ctx.in.takeRParen()) {
@@ -3848,14 +3842,11 @@ template<typename Ctx> MaybeResult<> data(Ctx& ctx) {
       return ctx.in.err("expected end of offset expression");
     }
     offset = *e;
-  } else if (ctx.in.takeLParen()) {
-    CHECK_ERR(instr(ctx));
+  } else if (auto inst = foldedinstr(ctx)) {
+    CHECK_ERR(inst);
     auto offsetExpr = ctx.makeExpr();
     CHECK_ERR(offsetExpr);
     offset = *offsetExpr;
-    if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of offset instruction");
-    }
   }
 
   if (mem && !offset) {
