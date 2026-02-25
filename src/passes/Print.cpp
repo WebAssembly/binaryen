@@ -376,6 +376,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
+
   // Module-level visitors
   void handleSignature(Function* curr, bool printImplicitNames = false);
   void visitExport(Export* curr);

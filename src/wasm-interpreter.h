@@ -2243,6 +2243,11 @@ public:
     return oldVal;
   }
 
+  Flow visitStructWait(StructWait* curr) {
+    WASM_UNREACHABLE("struct.wait not implemented");
+    return Flow();
+  }
+
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
   // vector that takes around 1-2GB of memory then we are likely to hit memory
   // limits on 32-bit machines, and in particular on wasm32 VMs that do not
@@ -2899,6 +2904,7 @@ public:
   }
   Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructWait(StructWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
@@ -2932,7 +2938,6 @@ public:
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStructWait(StructWait* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(std::string_view why) override { throw NonconstantException(); }
 
@@ -4919,11 +4924,6 @@ public:
   Flow visitResume(Resume* curr) { return doResume(curr); }
   Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStructWait(StructWait* curr) {
-    WASM_UNREACHABLE("struct.wait not implemented");
-    return Flow();
-  }
-
   void trap(std::string_view why) override {
     // Traps break all current continuations - they will never be resumable.
     self()->clearContinuationStore();

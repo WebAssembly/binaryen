@@ -1275,6 +1275,8 @@ void StructCmpxchg::finalize() {
   }
 }
 
+void StructWait::finalize() { type = Type::i32; }
+
 void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
@@ -2016,7 +2018,5 @@ void Module::clearDebugInfo() {
   debugInfoFileNames.clear();
   debugInfoSymbolNames.clear();
 }
-
-void StructWait::finalize() { type = Type::i32; }
 
 } // namespace wasm

@@ -1759,6 +1759,19 @@ public:
   void finalize();
 };
 
+class StructWait : public SpecificExpression<Expression::StructWaitId> {
+public:
+  StructWait() = default;
+  StructWait(MixedArena& allocator) : StructWait() {}
+
+  Expression* ref;
+  Expression* expected;
+  Expression* timeout;
+  Index index;
+
+  void finalize();
+};
+
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew() = default;
@@ -2153,19 +2166,6 @@ public:
   Expression* cont;
 
   // We need access to the module to obtain the signature of the tag.
-  void finalize();
-};
-
-class StructWait : public SpecificExpression<Expression::StructWaitId> {
-public:
-  StructWait() = default;
-  StructWait(MixedArena& allocator) : StructWait() {}
-
-  Expression* ref;
-  Expression* expected;
-  Expression* timeout;
-  Index index;
-
   void finalize();
 };
 
