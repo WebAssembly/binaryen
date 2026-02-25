@@ -458,7 +458,9 @@ struct Checker
       // help: the only effect a trap can interact with is a set of global state
       // (the trap could prevent that writing, which would be noticeable) - but
       // LocalCSE does not deduplicate expressions with such effects, as they
-      // must happen twice.
+      // must happen twice. That is, removing trapping from (curr) in the
+      // example above has no effect as (ORIGINAL) never has global write
+      // effects.
       effects.trap = false;
 
       std::vector<Expression*> invalidated;
