@@ -18,7 +18,6 @@
 #include <cmath>
 
 #include "emscripten-optimizer/simple_ast.h"
-#include "fp16.h"
 #include "ir/bits.h"
 #include "literal.h"
 #include "pretty_printing.h"
@@ -64,6 +63,12 @@ Literal::Literal(Type type) : type(type) {
     return;
   }
 
+  if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
+    assert(type.isNonNullable());
+    i32 = 1;
+    return;
+  }
+
   WASM_UNREACHABLE("Unexpected literal type");
 }
 
@@ -90,14 +95,14 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type,
                          gcData ? NonNullable : Nullable,
                          gcData && !type.isBasic() ? Exact : Inexact) {
-  // The type must be a proper type for GC data: either a struct, array, or
-  // string; or an externalized version of the same; or a null; or an
-  // internalized string (which appears as an anyref).
+  // The type must be a proper type for GC data: either a struct, array, or i31
+  // or an externalized version of the same; or a null; or a string or extern,
+  // or an internalized version of the same.
   assert((isData() && gcData) ||
          (type.isMaybeShared(HeapType::ext) && gcData) ||
-         (type.isBottom() && !gcData) ||
-         (type.isMaybeShared(HeapType::any) && gcData &&
-          gcData->type.isMaybeShared(HeapType::string)));
+         (type.isMaybeShared(HeapType::string) && gcData) ||
+         (type.isMaybeShared(HeapType::any) && gcData) ||
+         (type.isBottom() && !gcData));
 }
 
 Literal::Literal(std::shared_ptr<ExnData> exnData)
@@ -119,7 +124,7 @@ Literal::Literal(std::string_view string)
     int32_t u = uint8_t(string[i]) | (uint8_t(string[i + 1]) << 8);
     contents.push_back(Literal(u));
   }
-  gcData = std::make_shared<GCData>(HeapType::string, std::move(contents));
+  gcData = std::make_shared<GCData>(std::move(contents));
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -150,7 +155,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
   assert(!type.isNullable());
 
   auto heapType = type.getHeapType();
-  if (other.isData() || heapType.isMaybeShared(HeapType::ext)) {
+  if (other.isData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }
@@ -169,20 +174,25 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::exn:
       new (&exnData) std::shared_ptr<ExnData>(other.exnData);
       return;
-    case HeapType::ext:
-      WASM_UNREACHABLE("handled above with isData()");
+    case HeapType::ext: {
+      if (other.hasPayload()) {
+        i32 = other.i32;
+      } else {
+        // Externalized internal reference.
+        new (&gcData) std::shared_ptr<GCData>(other.gcData);
+      }
+      return;
+    }
+    case HeapType::any:
+      // Internalized external reference.
+      new (&gcData) std::shared_ptr<GCData>(other.gcData);
+      return;
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::noexn:
     case HeapType::nocont:
       WASM_UNREACHABLE("null literals should already have been handled");
-    case HeapType::any:
-      // This must be an anyref literal, which is an internalized string.
-      assert(other.gcData &&
-             other.gcData->type.isMaybeShared(HeapType::string));
-      new (&gcData) std::shared_ptr<GCData>(other.gcData);
-      return;
     case HeapType::eq:
     case HeapType::func:
     case HeapType::cont:
@@ -199,8 +209,12 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext) ||
-      type.getHeapType().isMaybeShared(HeapType::any)) {
+  if (type.getHeapType().isMaybeShared(HeapType::ext) && !hasPayload()) {
+    // Externalized internal reference.
+    gcData.~shared_ptr();
+    return;
+  }
+  if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::any)) {
     gcData.~shared_ptr();
   } else if (isFunction()) {
     funcData.~shared_ptr();
@@ -363,7 +377,8 @@ std::shared_ptr<FuncData> Literal::getFuncData() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isNull() || isData());
+  assert(isNull() || isData() ||
+         (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)));
   return gcData;
 }
 
@@ -700,9 +715,22 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::nocont:
           o << "nullcontref";
           break;
-        case HeapType::ext:
-          o << "externref";
+        case HeapType::any: {
+          auto data = literal.getGCData();
+          assert(data->values.size() == 1);
+          o << "internalized " << literal.getGCData()->values[0];
           break;
+        }
+        case HeapType::ext: {
+          if (literal.hasPayload()) {
+            // Externref payload
+            o << "externref(" << literal.getPayload() << ")";
+          } else {
+            // Externalized internal reference.
+            o << "externalized " << literal.internalize();
+          }
+          break;
+        }
         case HeapType::exn:
           o << "exnref";
           break;
@@ -712,8 +740,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
-        case HeapType::any:
-          // Anyref literals contain strings.
         case HeapType::string: {
           auto data = literal.getGCData();
           if (!data) {
@@ -756,7 +782,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isData());
       auto data = literal.getGCData();
       assert(data);
-      o << "[ref " << data->type << ' ' << data->values << ']';
+      o << "[ref " << literal.type.getHeapType() << ' ' << data->values << ']';
     }
   }
   restoreNormalColor(o);
@@ -2952,41 +2978,37 @@ Literal Literal::relaxedNmaddF64x2(const Literal& left,
 Literal Literal::externalize() const {
   assert(type.isRef() && type.getHeapType().getUnsharedTop() == HeapType::any &&
          "can only externalize internal references");
-  auto share = type.getHeapType().getShared();
-  if (isNull()) {
-    return Literal(std::shared_ptr<GCData>{}, HeapTypes::noext.getBasic(share));
-  }
   auto heapType = type.getHeapType();
-  auto extType = HeapTypes::ext.getBasic(share);
-  if (heapType.isMaybeShared(HeapType::i31)) {
-    return Literal(std::make_shared<GCData>(heapType, Literals{*this}),
-                   extType);
+  if (isNull()) {
+    auto noext = HeapTypes::noext.getBasic(heapType.getShared());
+    return Literal(nullptr, noext);
   }
   if (heapType.isMaybeShared(HeapType::any)) {
-    // Anyref literals turn into strings (if we add any other anyref literals,
-    // we will need to be more careful here).
-    return Literal(gcData, HeapTypes::string.getBasic(share));
+    // This is an internalized externref; just unwrap it.
+    assert(gcData->values.size() == 1);
+    return gcData->values[0];
   }
-  return Literal(gcData, extType);
+  // This is an internal reference. Wrap it.
+  auto ext = HeapTypes::ext.getBasic(heapType.getShared());
+  return Literal(std::make_shared<GCData>(Literals{*this}), ext);
 }
 
 Literal Literal::internalize() const {
-  auto share = type.getHeapType().getShared();
-  assert(
-    Type::isSubType(type, Type(HeapTypes::ext.getBasic(share), Nullable)) &&
-    "can only internalize external references");
+  assert(type.isRef() && type.getHeapType().getUnsharedTop() == HeapType::ext &&
+         "can only internalize external references");
+  auto heapType = type.getHeapType();
   if (isNull()) {
-    return Literal(std::shared_ptr<GCData>{}, HeapTypes::none.getBasic(share));
+    auto none = HeapTypes::none.getBasic(heapType.getShared());
+    return Literal(nullptr, none);
   }
-  if (gcData->type.isMaybeShared(HeapType::i31)) {
-    assert(gcData->values[0].type.getHeapType().isMaybeShared(HeapType::i31));
-    return gcData->values[0];
+  if (isString() || hasPayload()) {
+    // This is an external reference. Wrap it.
+    auto any = HeapTypes::any.getBasic(heapType.getShared());
+    return Literal(std::make_shared<GCData>(Literals{*this}), any);
   }
-  if (gcData->type.isMaybeShared(HeapType::string)) {
-    // Strings turn into anyref literals.
-    return Literal(gcData, HeapTypes::any.getBasic(share));
-  }
-  return Literal(gcData, gcData->type);
+  // This is an externalized internal reference; just unwrap it.
+  assert(gcData->values.size() == 1);
+  return gcData->values[0];
 }
 
 } // namespace wasm

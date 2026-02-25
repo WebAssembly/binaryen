@@ -19,9 +19,7 @@
 
 #include <array>
 #include <iostream>
-#include <variant>
 
-#include "compiler-support.h"
 #include "support/hash.h"
 #include "support/name.h"
 #include "support/small_vector.h"
@@ -44,6 +42,10 @@ class Literal {
     // Note: i31 is stored in the |i32| field, with the lower 31 bits containing
     // the value if there is one, and the highest bit containing whether there
     // is a value. Thus, a null is |i32 === 0|.
+    //
+    // Externref payloads are also stored here, with their low bit set to
+    // differentiate an externref with a payload from an externalized internal
+    // reference, which uses the gcData field instead.
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
@@ -54,14 +56,9 @@ class Literal {
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type. We
     // also use this to store String data, as it is similarly stored on the
-    // heap. For externrefs, the gcData is the same as for the corresponding
-    // internal references and the values are only differentiated by the type.
-    // Externalized i31 references have a gcData containing the internal i31
-    // reference as its sole value even though internal i31 references do not
-    // have a gcData.
-    //
-    // Note that strings can be internalized, in which case they keep the same
-    // gcData, but their type becomes anyref.
+    // heap. For externalized or internalized references (including strings),
+    // gcData holds a single value, which is the wrapped internal or external
+    // reference.
     std::shared_ptr<GCData> gcData;
     // A reference to Exn data.
     std::shared_ptr<ExnData> exnData;
@@ -263,6 +260,11 @@ public:
     lit.i32 = value | 0x80000000;
     return lit;
   }
+  static Literal makeExtern(int32_t payload, Shareability share) {
+    auto lit = Literal(Type(HeapTypes::ext.getBasic(share), NonNullable));
+    lit.i32 = (payload << 1) | 1;
+    return lit;
+  }
   // Wasm has nondeterministic rules for NaN propagation in some operations. For
   // example. f32.neg is deterministic and just flips the sign, even of a NaN,
   // but f32.add is nondeterministic, and if one or more of the inputs is a NaN,
@@ -299,6 +301,14 @@ public:
     assert(type.getHeapType().isMaybeShared(HeapType::i31));
     // Cast to unsigned for the left shift to avoid undefined behavior.
     return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
+  }
+  bool hasPayload() const {
+    assert(type.getHeapType().isMaybeShared(HeapType::ext));
+    return (i32 & 1) == 1;
+  }
+  int32_t getPayload() const {
+    assert(hasPayload());
+    return int32_t(uint32_t(i32) >> 1);
   }
   int64_t geti64() const {
     assert(type == Type::i64);
@@ -775,19 +785,15 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // A GC Struct, Array, or String is a set of values with a type saying how it
 // should be interpreted.
 struct GCData {
-  // The type of this struct, array, or string.
-  HeapType type;
-
   // The element or field values.
   Literals values;
 
   // The descriptor, if it exists, or null.
   Literal desc;
 
-  GCData(HeapType type,
-         Literals&& values,
+  GCData(Literals&& values,
          const Literal& desc = Literal::makeNull(HeapType::none))
-    : type(type), values(std::move(values)), desc(desc) {}
+    : values(std::move(values)), desc(desc) {}
 };
 
 } // namespace wasm
@@ -834,7 +840,7 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       if (type.isMaybeShared(wasm::HeapType::any)) {
-        // This may be an extern string that was internalized to |any|. Undo
+        // This may be an extern string that was 9d to |any|. Undo
         // that to get the actual value. (Rehash here with the existing digest,
         // which contains the |any| type, so that the final hash takes into
         // account the fact that it was internalized.)
