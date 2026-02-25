@@ -458,46 +458,51 @@ struct Checker
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
-      if (!isIdempotent(curr, *getModule())) { // XXX
-        EffectAnalyzer effects(options, *getModule());
-        // We can ignore traps here:
-        //
-        //  (ORIGINAL)
-        //  (curr)
-        //  (COPY)
-        //
-        // We are some code in between an original and a copy of it, and we are
-        // trying to turn COPY into a local.get of a value that we stash at the
-        // original. If |curr| traps then we simply don't reach the copy anyhow.
-        effects.trap = false;
-        // We only need to visit this node itself, as we have already visited its
-        // children by the time we get here.
-        effects.visit(curr);
+      EffectAnalyzer effects(options, *getModule());
+      // We can ignore traps here:
+      //
+      //  (ORIGINAL)
+      //  (curr)
+      //  (COPY)
+      //
+      // We are some code in between an original and a copy of it, and we are
+      // trying to turn COPY into a local.get of a value that we stash at the
+      // original. If |curr| traps then we simply don't reach the copy anyhow.
+      effects.trap = false;
+      // We only need to visit this node itself, as we have already visited its
+      // children by the time we get here.
+      effects.visit(curr);
 
-        std::vector<Expression*> invalidated;
-        for (auto& kv : activeOriginals) {
-          auto* original = kv.first;
-          auto& originalInfo = kv.second;
-          if (effects.invalidates(originalInfo.effects)) {
-            invalidated.push_back(original);
-          }
+      auto idempotent = isIdempotent(curr, *getModule());
+
+      std::vector<Expression*> invalidated;
+      for (auto& kv : activeOriginals) {
+        auto* original = kv.first;
+        if (idempotent && ExpressionAnalyzer::shallowEqual(curr, original)) {
+          // |curr| is idempotent, so it does not invalidate later appearances
+          // of itself.
+          continue;
+        }
+        auto& originalInfo = kv.second;
+        if (effects.invalidates(originalInfo.effects)) {
+          invalidated.push_back(original);
+        }
+      }
+
+      for (auto* original : invalidated) {
+        // Remove all requests after this expression, as we cannot optimize to
+        // them.
+        requestInfos[original].requests -=
+          activeOriginals.at(original).requestsLeft;
+
+        // If no requests remain at all (that is, there were no requests we
+        // could provide before we ran into this invalidation) then we do not
+        // need this original at all.
+        if (requestInfos[original].requests == 0) {
+          requestInfos.erase(original);
         }
 
-        for (auto* original : invalidated) {
-          // Remove all requests after this expression, as we cannot optimize to
-          // them.
-          requestInfos[original].requests -=
-            activeOriginals.at(original).requestsLeft;
-
-          // If no requests remain at all (that is, there were no requests we
-          // could provide before we ran into this invalidation) then we do not
-          // need this original at all.
-          if (requestInfos[original].requests == 0) {
-            requestInfos.erase(original);
-          }
-
-          activeOriginals.erase(original);
-        }
+        activeOriginals.erase(original);
       }
     }
 

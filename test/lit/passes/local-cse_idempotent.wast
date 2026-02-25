@@ -171,4 +171,55 @@
       )
     )
   )
+
+  ;; CHECK:      (func $idem-effects-interact (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (global.get $immutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (global.get $immutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $idem-effects-interact
+    ;; An idempotent function still has effects on the first call. That
+    ;; prevents optimizing the i32.eq, as the first call might alter $mutable.
+    (drop
+      (i32.eq
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+    (drop
+      (call $idempotent
+        (global.get $immutable)
+      )
+    )
+    (drop
+      (i32.eq
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+    (drop
+      (call $idempotent
+        (global.get $immutable)
+      )
+    )
+  )
 )
