@@ -206,6 +206,9 @@ public:
     return mutableGlobalsRead.size() || readsMemory || readsTable ||
            readsMutableStruct || readsArray || isAtomic || calls;
   }
+  bool accessesGlobalState() const {
+    return readsMutableGlobalState() || writesGlobalState();
+  }
 
   bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
@@ -292,10 +295,10 @@ public:
         (danglingPop || other.danglingPop)) {
       return true;
     }
-    // All atomics are sequentially consistent for now, and ordered wrt other
-    // memory references.
-    if ((isAtomic && other.accessesMemory()) ||
-        (other.isAtomic && accessesMemory())) {
+    // We model all atomics as sequentially consistent for now. They are ordered
+    // wrt other loads and stores from anything, not just memories.
+    if ((isAtomic && other.accessesGlobalState()) ||
+        (other.isAtomic && accessesGlobalState())) {
       return true;
     }
     for (auto local : localsWritten) {
