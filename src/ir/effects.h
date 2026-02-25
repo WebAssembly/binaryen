@@ -951,8 +951,12 @@ private:
     }
     void visitStructWait(StructWait* curr) {
       parent.isAtomic = true;
-      parent.mayNotReturn = true;
+
+      // If the ref is null.
       parent.implicitTrap = true;
+
+      // If the timeout is negative and no-one wakes us.
+      parent.mayNotReturn = true;
 
       // struct.wait mutates an opaque waiter queue which isn't visible in user
       // code. Model this as a struct write which prevents reorderings (since
