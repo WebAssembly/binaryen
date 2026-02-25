@@ -68,7 +68,7 @@
 [fuzz-exec] calling wrap_cmpxchg
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling oob_notify
-[trap final > memory: 18446744073709551512 > 65514]
+[trap final > memory: 4294967192 > 65514]
 (module
  (type $0 (func (result i32)))
  (type $1 (func (param i32)))
@@ -137,7 +137,7 @@
 [fuzz-exec] calling wrap_cmpxchg
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling oob_notify
-[trap final > memory: 18446744073709551512 > 65514]
+[trap final > memory: 4294967192 > 65514]
 [fuzz-exec] comparing aligned_for_size
 [fuzz-exec] comparing oob_notify
 [fuzz-exec] comparing unaligned_load

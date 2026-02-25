@@ -3218,12 +3218,12 @@ public:
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
   void instantiate(bool validateImports_ = false) {
-    // initialize the rest of the external interface
-    externalInterface->init(wasm, *self());
-
     if (validateImports_) {
       validateImports();
     }
+
+    // initialize the rest of the external interface
+    externalInterface->init(wasm, *self());
 
     initializeGlobals();
     initializeTables();
@@ -5155,7 +5155,7 @@ protected:
   Address
   getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySize) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
-    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.getUnsigned();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
@@ -5171,7 +5171,7 @@ protected:
 
   Address
   getFinalAddressWithoutOffset(Literal ptr, Index bytes, Address memorySize) {
-    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.getUnsigned();
     checkLoadAddress(addr, bytes, memorySize);
     return addr;
   }

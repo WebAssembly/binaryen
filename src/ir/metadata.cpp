@@ -44,7 +44,8 @@ void copyBetweenFunctions(Expression* origin,
                           Function* originFunc,
                           Function* copyFunc) {
   if (originFunc->debugLocations.empty() &&
-      originFunc->codeAnnotations.empty()) {
+      originFunc->codeAnnotations.empty() &&
+      originFunc->funcAnnotations.empty()) {
     // Nothing to copy.
     return;
   }
@@ -75,7 +76,7 @@ void copyBetweenFunctions(Expression* origin,
     }
   }
 
-  // Also copy function-level annotations, if any.
+  // Also copy function-level annotations.
   copyFunc->funcAnnotations = originFunc->funcAnnotations;
 }
 
