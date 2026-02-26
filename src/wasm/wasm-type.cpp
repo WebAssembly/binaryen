@@ -2418,6 +2418,12 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
     if (!super.described || sub.described->supertype != super.described) {
       return false;
     }
+  } else {
+    // A supertype of a type without a describes clause must also not have a
+    // describes clause.
+    if (super.described) {
+      return false;
+    }
   }
   SubTyper typer;
   switch (sub.kind) {
