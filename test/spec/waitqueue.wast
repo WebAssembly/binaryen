@@ -42,7 +42,7 @@
     (func (param $count i32) (result i32)
       (struct.notify $t 0 (ref.null $t) (local.get $count))
     )
-  ) "struct.notify struct field must be a waitqueue"
+  ) "struct.notify struct field index must contain a waitqueue"
 )
 
 (assert_invalid

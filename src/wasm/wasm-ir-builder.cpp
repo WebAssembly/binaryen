@@ -2281,6 +2281,16 @@ Result<> IRBuilder::makeStructNotify(HeapType type, Index index) {
   if (!type.isStruct()) {
     return Err{"expected struct type annotation on struct.notify"};
   }
+  // This is likely checked in the caller by the `fieldidx` parser.
+  if (index >= type.getStruct().fields.size()) {
+    return Err{"struct.notify field index out of bounds"};
+  }
+
+  if (type.getStruct().fields.at(index).packedType !=
+      Field::PackedType::WaitQueue) {
+    return Err{"struct.notify field index must contain a `waitqueue`"};
+  }
+
   StructNotify curr(wasm.allocator);
   curr.index = index;
   CHECK_ERR(ChildPopper{*this}.visitStructNotify(&curr, type));

@@ -3537,25 +3537,12 @@ void FunctionValidator::visitStructNotify(StructNotify* curr) {
                 curr,
                 "struct.notify count must be an i32");
 
-  if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
-    return;
-  }
-
-  // In practice this likely fails during parsing instead.
-  if (!shouldBeTrue(
-        curr->index < curr->ref->type.getHeapType().getStruct().fields.size(),
-        curr,
-        "struct.notify index immediate should be less than the field "
-        "count of the struct")) {
-    return;
-  }
-
-  shouldBeTrue(curr->ref->type.getHeapType()
-                   .getStruct()
-                   .fields.at(curr->index)
-                   .packedType == Field::WaitQueue,
-               curr,
-               "struct.notify struct field must be a waitqueue");
+  // Checks to the ref argument's type are done in IRBuilder where we have the
+  // type annotation immediate available. We check that
+  // * The reference arg is a subtype of the type immediate
+  // * The index immediate is a valid field index of the type immediate (and
+  // thus valid for the reference's type too)
+  // * The index points to a packed waitqueue field
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
