@@ -2690,6 +2690,17 @@ void BinaryInstWriter::visitStructCmpxchg(StructCmpxchg* curr) {
   o << U32LEB(curr->index);
 }
 
+void BinaryInstWriter::visitStructWait(StructWait* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::StructWait);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
+}
+
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   o << static_cast<int8_t>(BinaryConsts::GCPrefix);
   if (curr->isWithDefault()) {
