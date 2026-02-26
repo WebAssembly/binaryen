@@ -455,15 +455,15 @@ void MemoryPacking::optimizeSegmentOps(Module* module) {
       bool mustTrap = false;
       auto* offset = curr->offset->dynCast<Const>();
       auto* size = curr->size->dynCast<Const>();
-      if (offset && uint32_t(offset->value.geti32()) > maxRuntimeSize) {
+      if (offset && offset->value.getUnsigned() > maxRuntimeSize) {
         mustTrap = true;
       }
-      if (size && uint32_t(size->value.geti32()) > maxRuntimeSize) {
+      if (size && size->value.getUnsigned() > maxRuntimeSize) {
         mustTrap = true;
       }
       if (offset && size) {
-        uint64_t offsetVal(offset->value.geti32());
-        uint64_t sizeVal(size->value.geti32());
+        auto offsetVal = offset->value.getUnsigned();
+        auto sizeVal = size->value.getUnsigned();
         if (offsetVal + sizeVal > maxRuntimeSize) {
           mustTrap = true;
         } else if (offsetVal == 0 && sizeVal == 0) {
@@ -710,8 +710,8 @@ void MemoryPacking::createReplacements(Module* module,
     }
 
     // Nonconstant offsets or sizes will have inhibited splitting
-    size_t start = init->offset->cast<Const>()->value.geti32();
-    size_t end = start + init->size->cast<Const>()->value.geti32();
+    size_t start = init->offset->cast<Const>()->value.getUnsigned();
+    size_t end = start + init->size->cast<Const>()->value.getUnsigned();
 
     // Index in `segments` of the segment used in emitted memory.init
     // instructions
