@@ -1363,6 +1363,19 @@ public:
     return ret;
   }
 
+  StructWait* makeStructWait(Index index,
+                             Expression* ref,
+                             Expression* expected,
+                             Expression* timeout) {
+    auto* ret = wasm.allocator.alloc<StructWait>();
+    ret->index = index;
+    ret->ref = ref;
+    ret->expected = expected;
+    ret->timeout = timeout;
+    ret->finalize();
+    return ret;
+  }
+
   // Additional helpers
 
   Drop* makeDrop(Expression* value) {

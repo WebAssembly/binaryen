@@ -5400,6 +5400,12 @@ switch (buf[0]) {
                   return Ok{};
                 }
                 goto parse_error;
+              case 'w':
+                if (op == "struct.wait"sv) {
+                  CHECK_ERR(makeStructWait(ctx, pos, annotations));
+                  return Ok{};
+                }
+                goto parse_error;
               default: goto parse_error;
             }
           }

@@ -1,7 +1,7 @@
-(module
- (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
+(module $shared.wasm
+ (type $0 (func))
+ (type $1 (func (param i32) (result i32)))
+ (type $2 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 1))
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
@@ -14,10 +14,10 @@
  (global $global$1 i32 (i32.const 20))
  (data $.data (global.get $__memory_base) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
- (export "__wasm_apply_data_relocs" (func $__wasm_apply_data_relocs))
  (export "_Z13print_messagev" (func $print_message\28\29))
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
+ (export "__wasm_apply_data_relocs" (func $__wasm_apply_data_relocs))
  (func $__wasm_call_ctors
  )
  (func $__wasm_apply_data_relocs
@@ -54,7 +54,7 @@
  ;;   memoryalignment: 2
  ;;   tablesize: 0
  ;;   tablealignment: 0
- ;; custom section "producers", size 112
- ;; features section: mutable-globals
+ ;; custom section "producers", size 115
+ ;; features section: mutable-globals, nontrapping-float-to-int, bulk-memory, sign-ext, reference-types, multivalue, bulk-memory-opt, call-indirect-overlong
 )
 

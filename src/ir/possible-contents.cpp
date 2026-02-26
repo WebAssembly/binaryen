@@ -1085,6 +1085,7 @@ struct InfoCollector
     // the write.
     addRoot(curr);
   }
+  void visitStructWait(StructWait* curr) { addRoot(curr); }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
