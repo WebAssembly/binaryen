@@ -2,24 +2,27 @@
 ;; RUN: wasm-opt %s --remove-unused-brs -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $jump-to-trap (type $0) (param $x i32) (result i32)
+  ;; CHECK:      (import "a" "b" (func $import (type $0)))
+  (import "a" "b" (func $import))
+
+  ;; CHECK:      (func $jump-to-trap (type $1) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $trap
-  ;; CHECK-NEXT:   (call $func)
+  ;; CHECK-NEXT:   (call $import)
   ;; CHECK-NEXT:   (br_if $trap
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $func)
+  ;; CHECK-NEXT:   (call $import)
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (call $func)
+  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:     (return
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
-  ;; CHECK-NEXT:     (call $func)
-  ;; CHECK-NEXT:     (call $func)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -31,22 +34,21 @@
   ;; CHECK-NEXT: )
   (func $jump-to-trap (param $x i32) (result i32)
     (block $trap
-      (call $func) ;; add effects to avoid other opts
+      (call $import) ;; add effects to avoid other opts
       ;; This might go to the trap outside, but might not, so we do nothing.
       (br_if $trap
         (local.get $x)
       )
-      (call $func)
+      (call $import)
       (if
         (local.get $x)
         (then
-          (call $func)
+          (call $import)
           (return (i32.const 0))
         )
         (else
-          (call $func)
-          (call $func)
-          ;; This goes to a trap, and we can just turn it into a trap.
+          (call $import)
+          (call $import)
           (br $trap)
         )
       )
@@ -55,9 +57,35 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $func (type $1)
+  ;; CHECK:      (func $dispatch (type $2) (param $x i32)
+  ;; CHECK-NEXT:  (block $trap
+  ;; CHECK-NEXT:   (block $mid
+  ;; CHECK-NEXT:    (block $top
+  ;; CHECK-NEXT:     (br_table $top $mid $trap
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $func
-    ;; Helper for above.
+  (func $dispatch (export "a") (param $x i32)
+    ;; A realistic example with br_table (which also avoids other opts from
+    ;; getting in the way).
+    (block $trap
+      (block $mid
+        (block $top
+          (br_table $top $mid $trap (local.get $x))
+        )
+        (call $import) ;; add effects to avoid other opts
+        ;; This goes to a trap, and we can just turn it into a trap.
+        (br $trap)
+      )
+      (call $import)
+    )
+    (unreachable)
   )
 )

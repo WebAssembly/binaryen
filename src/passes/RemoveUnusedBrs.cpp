@@ -1247,7 +1247,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             if (child->name) {
               if (auto* jump = list[1]->dynCast<Break>()) {
                 if (ExpressionAnalyzer::isSimple(jump)) {
-                  // Jumps to the child can skip ahead to where the child jumps.
+                  // Unconditional jumps to the child can skip ahead to where
+                  // the child jumps.
                   redirectBranches(child, jump->name);
                 }
               } else if (list[1]->dynCast<Unreachable>()) {
