@@ -840,7 +840,7 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       if (type.isMaybeShared(wasm::HeapType::any)) {
-        // This may be an extern string that was 9d to |any|. Undo
+        // This may be an extern string that was internalized to |any|. Undo
         // that to get the actual value. (Rehash here with the existing digest,
         // which contains the |any| type, so that the final hash takes into
         // account the fact that it was internalized.)
