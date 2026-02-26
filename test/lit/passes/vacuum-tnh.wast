@@ -64,7 +64,9 @@
       )
     )
 
-    ;; Ignore unreachable code.
+    ;; Ignore unreachable code. Note that we leave this dropped unreachable in
+    ;; the final output - in TNH it is valid to turn it into a nop, but we do
+    ;; not remove unreachables, to let them propagate to callers.
     (drop
       (unreachable)
     )
@@ -196,11 +198,7 @@
 
   ;; YESTNH:      (func $toplevel-might-trap (type $0)
   ;; YESTNH-NEXT:  (local $0 i32)
-  ;; YESTNH-NEXT:  (local.set $0
-  ;; YESTNH-NEXT:   (i32.load
-  ;; YESTNH-NEXT:    (i32.const 0)
-  ;; YESTNH-NEXT:   )
-  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $toplevel-might-trap (type $0)
   ;; NO_TNH-NEXT:  (local $0 i32)
@@ -211,10 +209,9 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $toplevel-might-trap
-    ;; This might trap, and we cannot remove it. In TNH we can ignore that trap,
-    ;; but we cannot do anything with the knowledge - we still need to emit this
-    ;; code, as we do not remove local operations in this pass (other passes can
-    ;; handle it, of course).
+    ;; This might trap, but we can still remove it all in TNH mode: the implicit
+    ;; trap does not inhibit us from removing this code. (If we saw an explicit
+    ;; unreachable, we would not remove it, as tested above.)
     (local $0 i32)
     (local.set $0
       (i32.load
@@ -578,7 +575,9 @@
   )
 
   ;; YESTNH:      (func $block-unreachable-all (type $1) (param $p i32)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $block-unreachable-all (type $2) (param $p i32)
   ;; NO_TNH-NEXT:  (if
@@ -602,7 +601,13 @@
       (then
         (block
           ;; Both stores can be removed, and even the entire if arm and then the
-          ;; entire if.
+          ;; entire if. However, we do not manage to do it all in a single
+          ;; iteration, because of the unreachable below: TNH notices it during
+          ;; the scan, and is careful not to remove unreachables (as we want
+          ;; them to propagate). The unreachable vanishes after it is scanned,
+          ;; so if we re-scanned the body at the end, we could optimize here,
+          ;; but this rare situation doesn't seem to justify another pass over
+          ;; the entire function - we leave it to later iterations.
           (i32.store
             (i32.const 0)
             (i32.const 1)
