@@ -69,6 +69,10 @@ def generate_wat_files(llvm_bin, emscripten_sysroot):
         # were included.
         if 'longjmp' in src_file:
             link_cmd.append('--strip-debug')
+        if 'pthread' in src_file:
+            compile_cmd.append('-pthread')
+            link_cmd.append('--import-memory')
+            link_cmd.append('--shared-memory')
         if is_shared:
             compile_cmd.append('-fPIC')
             compile_cmd.append('-fvisibility=default')
