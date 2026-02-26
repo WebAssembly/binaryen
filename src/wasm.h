@@ -2265,6 +2265,14 @@ struct CodeAnnotation {
   // calls with the same parameters can be assumed to have no effects. If a
   // value is returned, it will be the same value as returned earlier (for the
   // same parameters).
+  //
+  // Note that this differs from related concepts in C,
+  // https://en.cppreference.com/w/c/language/attributes/reproducible.html#Idempotent
+  // There, idempotency is considered compared to the state of the program,
+  // which means that two idempotent calls with some effect in between cannot be
+  // optimized. Here, we do optimize such situations - the only state we care
+  // about is what is passed in via parameters. This allows us to better
+  // optimize things like Java class constructors.
   bool idempotent = false;
 
   bool operator==(const CodeAnnotation& other) const {
@@ -2282,6 +2290,9 @@ struct CodeAnnotation {
     return removableIfUnused == other.removableIfUnused &&
            jsCalled == other.jsCalled && idempotent == other.idempotent;
   }
+
+  // Checks if no annotation is actually set.
+  bool empty() { return *this == CodeAnnotation(); }
 };
 
 class Function : public Importable {

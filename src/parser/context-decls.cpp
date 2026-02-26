@@ -122,7 +122,7 @@ Result<> ParseDeclsCtx::addImplicitElems(TypeT, ElemListT&& elems) {
   auto& table = *wasm.tables.back();
   auto e = std::make_unique<ElementSegment>();
   e->table = table.name;
-  e->offset = Builder(wasm).makeConstPtr(0, Type::i32);
+  e->offset = Builder(wasm).makeConstPtr(0, table.addressType);
   e->name = Names::getValidElementSegmentName(wasm, "implicit-elem");
   wasm.addElementSegment(std::move(e));
 

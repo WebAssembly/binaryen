@@ -10,7 +10,7 @@
   (global $g (mut i32) (i32.const 0))
 
   ;; CHECK:      [fuzz-exec] calling oob
-  ;; CHECK-NEXT: [trap final > memory: 18446744073709551615 > 65536]
+  ;; CHECK-NEXT: [trap final > memory: 4294967295 > 65536]
   (func $oob (export "oob")
     (drop
       ;; This should trap, but not until after setting the global.
@@ -34,7 +34,7 @@
   )
 )
 ;; CHECK:      [fuzz-exec] calling oob
-;; CHECK-NEXT: [trap final > memory: 18446744073709551615 > 65536]
+;; CHECK-NEXT: [trap final > memory: 4294967295 > 65536]
 
 ;; CHECK:      [fuzz-exec] calling get
 ;; CHECK-NEXT: [fuzz-exec] note result: get => 1
