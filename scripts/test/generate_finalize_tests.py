@@ -33,20 +33,20 @@ def files_with_extensions(path, extensions):
 def generate_wat_files(llvm_bin, emscripten_sysroot):
     print('\n[ building wat files from C sources... ]\n')
 
-    lld_path = os.path.join(shared.options.binaryen_test, 'lld')
-    for src_file, ext in files_with_extensions(lld_path, ['.c', '.cpp', '.s']):
+    test_path = os.path.join(shared.options.binaryen_test, 'finalize')
+    for src_file, ext in files_with_extensions(test_path, ['.c', '.cpp', '.s']):
         print('..', src_file)
         obj_file = src_file.replace(ext, '.o')
 
-        src_path = os.path.join(lld_path, src_file)
-        obj_path = os.path.join(lld_path, obj_file)
+        src_path = os.path.join(test_path, src_file)
+        obj_path = os.path.join(test_path, obj_file)
 
         wasm_file = src_file.replace(ext, '.wasm')
         wat_file = src_file.replace(ext, '.wat')
 
-        obj_path = os.path.join(lld_path, obj_file)
-        wasm_path = os.path.join(lld_path, wasm_file)
-        wat_path = os.path.join(lld_path, wat_file)
+        obj_path = os.path.join(test_path, obj_file)
+        wasm_path = os.path.join(test_path, wasm_file)
+        wat_path = os.path.join(test_path, wat_file)
         is_shared = 'shared' in src_file
         is_64 = '64' in src_file
 
@@ -104,6 +104,6 @@ def generate_wat_files(llvm_bin, emscripten_sysroot):
 
 if __name__ == '__main__':
     if len(shared.options.positional_args) != 2:
-        print('Usage: generate_lld_tests.py [llvm/bin/dir] [path/to/emscripten]')
+        print('Usage: generate_finalize_tests.py [llvm/bin/dir] [path/to/emscripten]')
         sys.exit(1)
     generate_wat_files(*shared.options.positional_args)
