@@ -1686,9 +1686,10 @@ BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
                                         BinaryenExpressionRef delta) {
   if (value == nullptr) {
     auto* table = (*(Module*)module).getTableOrNull(name);
-    if (table) {
-      value = BinaryenRefNull(module, (BinaryenType)table->type.getID());
+    if (!table) {
+      Fatal() << "invalid table '" << name << "'.";
     }
+    value = BinaryenRefNull(module, (BinaryenType)table->type.getID());
   }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
