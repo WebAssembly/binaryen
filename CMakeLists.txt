@@ -52,6 +52,9 @@ if(EMSCRIPTEN)
   set(BUILD_LLVM_DWARF OFF)
 endif()
 
+# Add a new option to use system LLVM
+option(USE_SYSTEM_LLVM "Use system LLVM instead of third_party LLVM" ON)
+
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
 if(MSVC)
   # We don't have dllexport declarations set up for Windows yet.
@@ -191,8 +194,23 @@ endfunction()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
-if(BUILD_LLVM_DWARF)
-  include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
+if(USE_SYSTEM_LLVM)
+  # Set LLVM_DIR to the installed LLVM's CMake directory
+  # set(LLVM_DIR "/usr/lib/llvm-18/cmake" CACHE PATH "Path to LLVM CMake modules")
+
+  # Find the required LLVM components
+  find_package(LLVM REQUIRED CONFIG)
+
+  # Include system LLVM headers
+  include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+
+  # Optional: Print LLVM version for debugging
+  message(STATUS "Using LLVM ${LLVM_PACKAGE_VERSION}")
+else()
+  # Legacy setup: Use third_party LLVM for DWARF
+  if(BUILD_LLVM_DWARF)
+    include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
+  endif()
 endif()
 
 # Add output directory to include path so config.h can be found
