@@ -478,7 +478,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       if (!effects.hasUnremovableSideEffects()) {
         // We can remove these contents. Emit a nop, but not if it might trap -
         // even in trapsNeverHappen mode, we don't want to turn an unreachable
-        // into a nop (as the unreachable can be propagated onwards).
+        // into a nop (as the unreachable can be propagated onwards). (We would
+        // also need to know that the code *must* trap, not just that it might.)
         if (!effects.trap) {
           ExpressionManipulator::nop(curr->body);
         }
