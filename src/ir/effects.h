@@ -614,13 +614,13 @@ private:
     void visitAtomicRMW(AtomicRMW* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = parent.module.getMemory(curr->memory)->shared;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = parent.module.getMemory(curr->memory)->shared;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicWait(AtomicWait* curr) {
@@ -747,7 +747,7 @@ private:
       parent.readsMemory = true;
       // Synchronizes when memory.grow on other threads, but only when operating
       // on shared memories.
-      parent.isAtomic = parent.module.getMemory(curr->memory)->shared;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitMemoryGrow(MemoryGrow* curr) {
       // TODO: find out if calls is necessary here
@@ -759,7 +759,7 @@ private:
       parent.writesMemory = true;
       // Synchronizes with memory.size on other threads, but only when operating
       // on shared memories.
-      parent.isAtomic = parent.module.getMemory(curr->memory)->shared;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitRefNull(RefNull* curr) {}
     void visitRefIsNull(RefIsNull* curr) {}
