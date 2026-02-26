@@ -17,7 +17,7 @@
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (memory.size $shared)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $shared-struct 0
+  ;; CHECK-NEXT:  (struct.atomic.set $shared-struct 0
   ;; CHECK-NEXT:   (local.get $shared)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -30,16 +30,16 @@
     (local.set $x
       (memory.size $shared)
     )
-    (struct.set $shared-struct 0 (local.get $shared) (i32.const 0))
+    (struct.atomic.set $shared-struct 0 (local.get $shared) (i32.const 0))
     (local.get $x)
   )
 
   ;; CHECK:      (func $memory.size-unshared-shared (type $2) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (memory.size $shared)
+  ;; CHECK-NEXT:   (memory.size $unshared)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $shared-struct 0
+  ;; CHECK-NEXT:  (struct.atomic.set $shared-struct 0
   ;; CHECK-NEXT:   (local.get $shared)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -51,9 +51,9 @@
     ;; other thread could observe the reordering, but we do not distinguish
     ;; between accesses to shared and unshared state. TODO.
     (local.set $x
-      (memory.size $shared)
+      (memory.size $unshared)
     )
-    (struct.set $shared-struct 0 (local.get $shared) (i32.const 0))
+    (struct.atomic.set $shared-struct 0 (local.get $shared) (i32.const 0))
     (local.get $x)
   )
 
@@ -62,7 +62,7 @@
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (memory.size $shared)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $unshared-struct 0
+  ;; CHECK-NEXT:  (struct.atomic.set $unshared-struct 0
   ;; CHECK-NEXT:   (local.get $unshared)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -75,14 +75,14 @@
     (local.set $x
       (memory.size $shared)
     )
-    (struct.set $unshared-struct 0 (local.get $unshared) (i32.const 0))
+    (struct.atomic.set $unshared-struct 0 (local.get $unshared) (i32.const 0))
     (local.get $x)
   )
 
   ;; CHECK:      (func $memory.size-unshared-unshared (type $3) (param $unshared (ref null $unshared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (struct.set $unshared-struct 0
+  ;; CHECK-NEXT:  (struct.atomic.set $unshared-struct 0
   ;; CHECK-NEXT:   (local.get $unshared)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -95,7 +95,7 @@
     (local.set $x
       (memory.size $unshared)
     )
-    (struct.set $unshared-struct 0 (local.get $unshared) (i32.const 0))
+    (struct.atomic.set $unshared-struct 0 (local.get $unshared) (i32.const 0))
     (local.get $x)
   )
 )
