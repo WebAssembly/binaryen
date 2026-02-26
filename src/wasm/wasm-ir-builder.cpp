@@ -2269,11 +2269,9 @@ Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
   }
 
   StructWait curr(wasm.allocator);
-  curr.index = index;
   CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(
-    builder.makeStructWait(curr.index, curr.ref, curr.expected, curr.timeout));
+  push(builder.makeStructWait(index, curr.ref, curr.expected, curr.timeout));
   return Ok{};
 }
 
@@ -2292,10 +2290,9 @@ Result<> IRBuilder::makeStructNotify(HeapType type, Index index) {
   }
 
   StructNotify curr(wasm.allocator);
-  curr.index = index;
   CHECK_ERR(ChildPopper{*this}.visitStructNotify(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(builder.makeStructNotify(curr.index, curr.ref, curr.count));
+  push(builder.makeStructNotify(index, curr.ref, curr.count));
   return Ok{};
 }
 
