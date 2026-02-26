@@ -1214,6 +1214,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         for (auto target : relevantTargets) {
           labelToBranches[target].push_back(curr);
         }
+        // TODO: If all but one target trap, in TNH we can unconditionally jump
+        //       there.
       }
 
       void visitBlock(Block* curr) {
@@ -1231,14 +1233,37 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
           }
         } else if (list.size() == 2) {
-          // if this block has two children, a child-block and a simple jump,
-          // then jumps to child-block can be replaced with jumps to the new
-          // target
-          auto* child = list[0]->dynCast<Block>();
-          auto* jump = list[1]->dynCast<Break>();
-          if (child && child->name.is() && jump &&
-              ExpressionAnalyzer::isSimple(jump)) {
-            redirectBranches(child, jump->name);
+          // With two items, we look for this form:
+          //
+          //  (block ;; curr
+          //    (block $child ;; child
+          //    )
+          //    after
+          //  )
+          //
+          // Anything branching to the child will end up in that second
+          // instruction |after|.
+          if (auto* child = list[0]->dynCast<Block>()) {
+            if (child->name) {
+              if (auto* jump = list[1]->dynCast<Break>()) {
+                if (ExpressionAnalyzer::isSimple(jump)) {
+                  // Jumps to the child can skip ahead to where the child jumps.
+                  redirectBranches(child, jump->name);
+                }
+              } else if (list[1]->dynCast<Unreachable>()) {
+                // Unconditional jumps to a trap can just trap.
+                for (auto* branch : labelToBranches[child->name]) {
+                  if (auto* br = branch->dynCast<Break>()) {
+                    if (ExpressionAnalyzer::isSimple(br)) {
+                      // It is safe to just modify the br in-place because it is
+                      // only jumping here, so this the last place that will
+                      // read it.
+                      ExpressionManipulator::unreachable(br);
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
