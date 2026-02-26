@@ -107,7 +107,7 @@ jobs:
           ${{ steps.archive-arm64.outputs.TARBALL }}
           ${{ steps.archive-arm64.outputs.SHASUM }}
 
-  # Build with gcc and run tests on Alpine Linux (inside docker container).
+  # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
   build-alpine:
     name: alpine
@@ -128,7 +128,7 @@ jobs:
         if [[ "${{ matrix.docker_platform }}" == "ubuntu-24.04-arm" ]]; then
           platform="--platform=linux/arm64"
         fi
-        docker run -w /src -dit $platform --name alpine -v $PWD:/src alpine:3.23.3
+        docker run -w /src -dit $platform --name alpine -v $PWD:/src node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
 
