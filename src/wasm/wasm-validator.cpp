@@ -3521,8 +3521,6 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     return;
   }
 
-  std::cout << "type: " << curr->ref->type << "\n";
-
   // In practice this likely fails during parsing instead.
   if (!shouldBeTrue(curr->index <
                       curr->ref->type.getHeapType().getStruct().fields.size(),

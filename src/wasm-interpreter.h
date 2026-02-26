@@ -4924,6 +4924,7 @@ public:
   Flow visitResume(Resume* curr) { return doResume(curr); }
   Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
+
   void trap(std::string_view why) override {
     // Traps break all current continuations - they will never be resumable.
     self()->clearContinuationStore();
