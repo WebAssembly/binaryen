@@ -1,8 +1,8 @@
-(module
- (type $none_=>_none (func))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+(module $em_asm_shared.wasm
+ (type $0 (func (param i32 i32 i32) (result i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 1))
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__stack_pointer" (global $__stack_pointer (mut i32)))
@@ -19,7 +19,6 @@
  (global $global$4 i32 (i32.const 90))
  (data $.data (global.get $__memory_base) "\00ii\00i\00{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
- (export "__wasm_apply_data_relocs" (func $__wasm_apply_data_relocs))
  (export "__original_main" (func $__original_main))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $global$0))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $global$1))
@@ -28,8 +27,6 @@
  (export "__start_em_asm" (global $global$3))
  (export "__stop_em_asm" (global $global$4))
  (func $__wasm_call_ctors
- )
- (func $__wasm_apply_data_relocs
  )
  (func $__original_main (result i32)
   (local $0 i32)
@@ -98,7 +95,7 @@
  ;;   memoryalignment: 0
  ;;   tablesize: 0
  ;;   tablealignment: 0
- ;; custom section "producers", size 112
- ;; features section: mutable-globals
+ ;; custom section "producers", size 115
+ ;; features section: mutable-globals, nontrapping-float-to-int, bulk-memory, sign-ext, reference-types, multivalue, bulk-memory-opt, call-indirect-overlong
 )
 
