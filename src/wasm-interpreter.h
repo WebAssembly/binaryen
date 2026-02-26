@@ -2248,6 +2248,11 @@ public:
     return Flow();
   }
 
+  Flow visitStructNotify(StructNotify* curr) {
+    WASM_UNREACHABLE("struct.notify not implemented");
+    return Flow();
+  }
+
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
   // vector that takes around 1-2GB of memory then we are likely to hit memory
   // limits on 32-bit machines, and in particular on wasm32 VMs that do not
@@ -2911,6 +2916,7 @@ public:
   Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructWait(StructWait* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructNotify(StructNotify* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }

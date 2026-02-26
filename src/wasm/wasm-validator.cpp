@@ -555,6 +555,7 @@ public:
   void visitArrayRMW(ArrayRMW* curr);
   void visitArrayCmpxchg(ArrayCmpxchg* curr);
   void visitStructWait(StructWait* curr);
+  void visitStructNotify(StructNotify* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -3523,6 +3524,38 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
   // * The index immediate is a valid field index of the type immediate (and
   // thus valid for the reference's type too)
   // * The index points to a packed waitqueue field
+}
+
+void FunctionValidator::visitStructNotify(StructNotify* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "struct.notify requires shared-everything [--enable-shared-everything]");
+
+  shouldBeEqual(curr->count->type,
+                Type(Type::BasicType::i32),
+                curr,
+                "struct.notify count must be an i32");
+
+  if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+    return;
+  }
+
+  // In practice this likely fails during parsing instead.
+  if (!shouldBeTrue(
+        curr->index < curr->ref->type.getHeapType().getStruct().fields.size(),
+        curr,
+        "struct.notify index immediate should be less than the field "
+        "count of the struct")) {
+    return;
+  }
+
+  shouldBeTrue(curr->ref->type.getHeapType()
+                   .getStruct()
+                   .fields.at(curr->index)
+                   .packedType == Field::WaitQueue,
+               curr,
+               "struct.notify struct field must be a waitqueue");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {

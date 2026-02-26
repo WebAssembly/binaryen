@@ -50,6 +50,34 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.notify $t 0
+  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNotify we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNotify we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $t 0
   ;; CHECK-NEXT:   (global.get $g)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -83,6 +111,24 @@
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (unreachable)
   ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (struct.notify $t 0
+  ;; RTRIP-NEXT:    (global.get $g)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (struct.set $t 0
   ;; RTRIP-NEXT:   (global.get $g)
   ;; RTRIP-NEXT:   (i32.const 1)
@@ -97,6 +143,9 @@
     (drop (struct.wait $t 0 (global.get $g) (i32.const 0) (i64.const 0)))
     (drop (struct.wait $t 0 (unreachable) (i32.const 0) (i64.const 0)))
     (drop (struct.wait $t 0 (ref.null none) (i32.const 0) (i64.const 0)))
+    (drop (struct.notify $t 0 (global.get $g) (i32.const 1)))
+    (drop (struct.notify $t 0 (unreachable) (i32.const 1)))
+    (drop (struct.notify $t 0 (ref.null none) (i32.const 1)))
     (struct.set $t 0 (global.get $g) (i32.const 1))
     (drop (struct.get $t 0 (global.get $g)))
   )
