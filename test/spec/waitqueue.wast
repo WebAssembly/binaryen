@@ -4,7 +4,7 @@
     (func (param $expected i32) (param $timeout i64) (result i32)
       (struct.wait $t 0 (ref.null $t) (local.get $expected) (local.get $timeout))
     )
-  ) "struct.wait struct field must be a waitqueue"
+  ) "struct.wait struct field index must contain a `waitqueue`"
 )
 
 (assert_invalid
@@ -38,7 +38,7 @@
 
 ;; unreachable is allowed
 (module
-  (type $t (struct (field i32)))
+  (type $t (struct (field waitqueue)))
   (func (param $expected i32) (param $timeout i64) (result i32)
     (struct.wait $t 0 (unreachable) (local.get $expected) (local.get $timeout))
   )
