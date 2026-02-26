@@ -2340,6 +2340,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitStructWait(StructWait* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitArrayNew(ArrayNew* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2461,10 +2465,6 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitStackSwitch(StackSwitch* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitStructWait(StructWait* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

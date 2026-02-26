@@ -730,6 +730,7 @@ public:
     StructSetId,
     StructRMWId,
     StructCmpxchgId,
+    StructWaitId,
     ArrayNewId,
     ArrayNewDataId,
     ArrayNewElemId,
@@ -760,7 +761,6 @@ public:
     ResumeThrowId,
     // Id for the stack switching `switch`
     StackSwitchId,
-    StructWaitId,
     NumExpressionIds
   };
   Id _id;

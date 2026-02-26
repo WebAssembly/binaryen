@@ -242,6 +242,7 @@ public:
   Result<>
   makeStructRMW(AtomicRMWOp op, HeapType type, Index field, MemoryOrder order);
   Result<> makeStructCmpxchg(HeapType type, Index field, MemoryOrder order);
+  Result<> makeStructWait(HeapType type, Index index);
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);
@@ -285,7 +286,6 @@ public:
     return makeResumeThrow(ct, Name(), tags, labels);
   }
   Result<> makeStackSwitch(HeapType ct, Name tag);
-  Result<> makeStructWait(HeapType type, Index index);
 
   // Private functions that must be public for technical reasons.
   Result<> visitExpression(Expression*);
