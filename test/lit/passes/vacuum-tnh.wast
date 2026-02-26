@@ -19,7 +19,9 @@
   (type $struct (struct (field (mut i32))))
 
   ;; YESTNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
-  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (unreachable)
+  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
   ;; NO_TNH-NEXT:  (drop
@@ -191,6 +193,36 @@
     ;; propagate to callers.
     (unreachable)
   )
+
+  ;; YESTNH:      (func $toplevel-might-trap (type $0)
+  ;; YESTNH-NEXT:  (local $0 i32)
+  ;; YESTNH-NEXT:  (local.set $0
+  ;; YESTNH-NEXT:   (i32.load
+  ;; YESTNH-NEXT:    (i32.const 0)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $toplevel-might-trap (type $0)
+  ;; NO_TNH-NEXT:  (local $0 i32)
+  ;; NO_TNH-NEXT:  (local.set $0
+  ;; NO_TNH-NEXT:   (i32.load
+  ;; NO_TNH-NEXT:    (i32.const 0)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $toplevel-might-trap
+    ;; This might trap, and we cannot remove it. In TNH we can ignore that trap,
+    ;; but we cannot do anything with the knowledge - we still need to emit this
+    ;; code, as we do not remove local operations in this pass (other passes can
+    ;; handle it, of course).
+    (local $0 i32)
+    (local.set $0
+      (i32.load
+        (i32.const 0)
+      )
+    )
+  )
+
 
   ;; YESTNH:      (func $drop-loop (type $0)
   ;; YESTNH-NEXT:  (drop

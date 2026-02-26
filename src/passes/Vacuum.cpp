@@ -476,12 +476,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     if (curr->getResults() == Type::none) {
       EffectAnalyzer effects(getPassOptions(), *getModule(), curr);
       if (!effects.hasUnremovableSideEffects()) {
-        // We can remove these contents. Emit a nop, or an unreachable if it
-        // might trap (even in trapsNeverHappen mode, we don't want to turn an
-        // unreachable into a nop - the unreachable can be propagated onwards).
-        if (effects.trap) {
-          ExpressionManipulator::unreachable(curr->body);
-        } else {
+        // We can remove these contents. Emit a nop, but not if it might trap -
+        // even in trapsNeverHappen mode, we don't want to turn an unreachable
+        // into a nop (as the unreachable can be propagated onwards).
+        if (!effects.trap) {
           ExpressionManipulator::nop(curr->body);
         }
       }
