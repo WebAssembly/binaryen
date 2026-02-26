@@ -5218,10 +5218,12 @@ protected:
     return getFinalAddress(curr, ptr, curr->bytes, memorySize, memoryPageSize);
   }
 
-  Address
-  getFinalAddressWithoutOffset(Literal ptr, Index bytes, Address memorySize) {
+  Address getFinalAddressWithoutOffset(Literal ptr,
+                                       Index bytes,
+                                       Address memorySize,
+                                       Address::address64_t memoryPageSize) {
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
-    checkLoadAddress(addr, bytes, memorySize);
+    checkLoadAddress(addr, bytes, memorySize, memoryPageSize);
     return addr;
   }
 
