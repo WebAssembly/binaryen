@@ -1,7 +1,7 @@
-(module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+(module $init.wasm
+ (type $0 (func))
+ (type $1 (func (result i32)))
+ (type $2 (func (param i32 i32) (result i32)))
  (global $__stack_pointer (mut i32) (i32.const 66112))
  (memory $0 2)
  (table $0 1 1 funcref)
@@ -37,6 +37,7 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- ;; custom section "producers", size 112
+ ;; custom section "producers", size 115
+ ;; features section: mutable-globals, nontrapping-float-to-int, bulk-memory, sign-ext, reference-types, multivalue, bulk-memory-opt, call-indirect-overlong
 )
 

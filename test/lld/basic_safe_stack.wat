@@ -1,7 +1,7 @@
-(module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+(module $basic_safe_stack.wasm
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32) (result i32)))
  (global $__stack_pointer (mut i32) (i32.const 66112))
  (memory $0 2)
  (export "memory" (memory $0))
