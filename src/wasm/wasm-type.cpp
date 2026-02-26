@@ -1490,8 +1490,7 @@ unsigned Field::getByteSize() const {
     case Field::PackedType::NotPacked:
       return 4;
     case Field::PackedType::WaitQueue:
-      WASM_UNREACHABLE("waitqueue not implemented");
-      break;
+      return 4;
   }
   WASM_UNREACHABLE("impossible packed type");
 }
@@ -2417,6 +2416,12 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   // $y) clause where $y is the declared supertype of $x.
   if (sub.described) {
     if (!super.described || sub.described->supertype != super.described) {
+      return false;
+    }
+  } else {
+    // A supertype of a type without a describes clause must also not have a
+    // describes clause.
+    if (super.described) {
       return false;
     }
   }

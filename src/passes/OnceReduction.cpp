@@ -40,10 +40,21 @@
 // TODO: "Once" globals are effectively boolean in that all non-zero values are
 //       indistinguishable, and so we could rewrite them all to be 1.
 //
+// In addition, functions marked with @binaryen.idempotent are also "once", just
+// without an explicit global that guards them. That is, when we find such a
+// global, as mentioned above, we effectively prove that they are idempotent,
+// but can also just use the annotation when we find it.
+//
+// TODO: We could mark "once" functions with a global as idempotent, but that
+//       then requires the user to strip the annotations later, so we do not do
+//       this for now.
+//
 
 #include <atomic>
 
 #include "cfg/domtree.h"
+#include "ir/intrinsics.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -70,7 +81,14 @@ struct OptInfo {
 
   // Maps functions to whether they are "once", by indicating the global that
   // they use for that purpose. An empty name means they are not "once".
-  std::unordered_map<Name, Name> onceFuncs;
+  //
+  // When we see an idempotent-marked function, which as mentioned above is
+  // effectively "once" but does not have an explicit global controlling it, we
+  // create a fake global name for it to use here. That gives each function we
+  // can optimize a unique global name for our optimizer to track. That is, the
+  // global name is a real global for ones we found a global for, and for
+  // idempotent functions, it is a unique name that is not an actual global.
+  std::unordered_map<Name, Name> onceFuncGlobals;
 
   // For each function, the "once" globals that are definitely set after calling
   // it. If the function is "once" itself, that is included, but it also
@@ -126,7 +144,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
         // This is a "once" function, as best we can tell for now. Further
         // information may cause a problem, say, if the global is used in a bad
         // way in another function, so we may undo this.
-        optInfo.onceFuncs.at(curr->name) = global;
+        optInfo.onceFuncGlobals.at(curr->name) = global;
 
         // We can ignore the get in the "once" pattern at the top of the
         // function.
@@ -314,10 +332,10 @@ struct Optimizer
           }
         } else if (auto* call = expr->dynCast<Call>()) {
           auto target = call->target;
-          if (optInfo.onceFuncs.at(target).is()) {
+          if (optInfo.onceFuncGlobals.at(target).is()) {
             // The global used by the "once" func is written.
             assert(call->operands.empty());
-            optimizeOnce(optInfo.onceFuncs.at(target));
+            optimizeOnce(optInfo.onceFuncGlobals.at(target));
             continue;
           }
 
@@ -365,7 +383,7 @@ struct OnceReduction : public Pass {
     }
     for (auto& func : module->functions) {
       // Fill in the map so that it can be operated on in parallel.
-      optInfo.onceFuncs[func->name] = Name();
+      optInfo.onceFuncGlobals[func->name] = Name();
     }
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Global) {
@@ -382,9 +400,40 @@ struct OnceReduction : public Pass {
     // Combine the information. We found which globals appear to be "once", but
     // other information may have proven they are not so, in fact. Specifically,
     // for a function to be "once" we need its global to also be such.
-    for (auto& [_, onceGlobal] : optInfo.onceFuncs) {
+    for (auto& [_, onceGlobal] : optInfo.onceFuncGlobals) {
       if (onceGlobal.is() && !optInfo.onceGlobals[onceGlobal]) {
         onceGlobal = Name();
+      }
+    }
+
+    // Use idempotency. If a function is marked idempotent, we can give it a
+    // fake global id so that we can optimize it.
+    for (auto& func : module->functions) {
+      if (func->getNumParams()) {
+        // We do not yet handle parameters. We would need to make sure they are
+        // equal, to optimize, so we'd need to track more than which functions
+        // we've already seen, in the analysis above. TODO
+        continue;
+      }
+      if (func->getResults().size()) {
+        // We do not yet handle results. We can't just nop such a caller, and
+        // instead should save the result from earlier, and reuse it. TODO
+        continue;
+      }
+
+      auto& globalForFunc = optInfo.onceFuncGlobals[func->name];
+      if (globalForFunc) {
+        // This is already known to be "once", and we know a global for it, so
+        // we can do no better.
+        continue;
+      }
+
+      if (Intrinsics::getAnnotations(func.get()).idempotent) {
+        // Pick a name for the fake global to track this function, and write it
+        // into onceFuncGlobals.
+        globalForFunc = Names::getValidGlobalName(*module, func->name);
+        // Also write into onceGlobals, to mark the (fake) global as once.
+        optInfo.onceGlobals[globalForFunc] = true;
       }
     }
 
@@ -403,7 +452,7 @@ struct OnceReduction : public Pass {
       // Either way, at least fill the data structure for parallel operation.
       auto& set = optInfo.onceGlobalsSetInFuncs[func->name];
 
-      auto global = optInfo.onceFuncs[func->name];
+      auto global = optInfo.onceFuncGlobals[func->name];
       if (global.is()) {
         set.insert(global);
         foundOnce = true;
@@ -455,8 +504,11 @@ struct OnceReduction : public Pass {
     // Iterate deterministically on functions, as the order matters (since we
     // make decisions based on previous actions; see below).
     for (auto& func : module->functions) {
-      if (!optInfo.onceFuncs.at(func->name).is()) {
-        // This is not a "once" function.
+      auto global = optInfo.onceFuncGlobals.at(func->name);
+      if (!global || !module->getGlobalOrNull(global)) {
+        // This is not a "once" function, or it is but it has no corresponding
+        // global (which means this is a fake global name, and this is "once"
+        // only because of idempotency).
         continue;
       }
 
@@ -492,7 +544,7 @@ struct OnceReduction : public Pass {
       }
       auto* payload = list[2];
       if (auto* call = payload->dynCast<Call>()) {
-        if (optInfo.onceFuncs.at(call->target).is()) {
+        if (optInfo.onceFuncGlobals.at(call->target).is()) {
           // All this "once" function does is call another. We do not need the
           // early-exit logic in this one, then, because of the following
           // reasoning. We are comparing these forms:

@@ -698,6 +698,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitStructCmpxchg(StructCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
 
+  void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitArrayNew(ArrayNew* curr) {
     // We cannot yet generalize allocations. Push a requirement for the
     // reference type needed to initialize the array, if any.

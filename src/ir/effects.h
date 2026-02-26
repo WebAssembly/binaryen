@@ -945,6 +945,39 @@ private:
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
+    void visitStructWait(StructWait* curr) {
+      parent.isAtomic = true;
+
+      // If the ref is null.
+      parent.implicitTrap = true;
+
+      // If the timeout is negative and no-one wakes us.
+      parent.mayNotReturn = true;
+
+      // struct.wait mutates an opaque waiter queue which isn't visible in user
+      // code. Model this as a struct write which prevents reorderings (since
+      // isAtomic == true).
+      parent.writesStruct = true;
+
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+
+      // If the ref isn't `unreachable`, then the field must exist and be a
+      // packed waitqueue due to validation.
+      assert(curr->ref->type.isStruct());
+      assert(curr->index <
+             curr->ref->type.getHeapType().getStruct().fields.size());
+      assert(curr->ref->type.getHeapType()
+               .getStruct()
+               .fields.at(curr->index)
+               .packedType == Field::PackedType::WaitQueue);
+
+      parent.readsMutableStruct |= curr->ref->type.getHeapType()
+                                     .getStruct()
+                                     .fields.at(curr->index)
+                                     .mutable_ == Mutable;
+    }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped
