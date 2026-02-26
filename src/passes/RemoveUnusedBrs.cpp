@@ -1215,7 +1215,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           labelToBranches[target].push_back(curr);
         }
         // TODO: If all but one target trap, in TNH we can unconditionally jump
-        //       there.
+        //       to the non-trapping place.
       }
 
       void visitBlock(Block* curr) {
