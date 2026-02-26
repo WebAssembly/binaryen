@@ -133,7 +133,7 @@ struct ChildLocalizer {
         // TODO: Avoid quadratic time here by accumulating effects and checking
         //       vs the accumulation.
         for (Index j = 0; j < num; j++) {
-          if (j != i && effects[i].invalidates(effects[j])) {
+          if (j != i && effects[i].observedBy(effects[j])) {
             needLocal = true;
             break;
           }

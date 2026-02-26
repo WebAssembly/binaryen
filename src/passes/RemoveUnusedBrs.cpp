@@ -83,7 +83,7 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   if (value.hasSideEffects()) {
     return false;
   }
-  return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
+  return !EffectAnalyzer(options, wasm, ifCondition).observedBy(value);
 }
 
 // This leads to similar choices as LLVM does in some cases, by balancing the
@@ -1421,7 +1421,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               if (!valueEffects.hasUnremovableSideEffects()) {
                 auto conditionEffects =
                   EffectAnalyzer(passOptions, *getModule(), br->condition);
-                if (!conditionEffects.invalidates(valueEffects)) {
+                if (!conditionEffects.observedBy(valueEffects)) {
                   // All conditions met, perform the update.
                   drop->value = br->condition;
                 }
@@ -1621,7 +1621,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         EffectAnalyzer condition(passOptions, *getModule(), iff->condition);
-        if (condition.invalidates(ifTrue) || condition.invalidates(ifFalse)) {
+        if (condition.observedBy(ifTrue) || condition.observedBy(ifFalse)) {
           return nullptr;
         }
         auto* select = Builder(*getModule())

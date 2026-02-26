@@ -235,13 +235,13 @@ struct EarlyCastFinder
     // if a cast can be moved past it.
     ShallowEffectAnalyzer currAnalyzer(options, *getModule(), curr);
 
-    if (testRefCast.invalidates(currAnalyzer)) {
+    if (testRefCast.observedBy(currAnalyzer)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefCastResult(i, *getModule());
       }
     }
 
-    if (testRefAs.invalidates(currAnalyzer)) {
+    if (testRefAs.observedBy(currAnalyzer)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefAsResult(i, *getModule());
       }

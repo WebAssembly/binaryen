@@ -245,8 +245,8 @@ public:
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
-  // Checks if these effects would invalidate another set of effects (e.g., if
-  // we write, we invalidate someone that reads).
+  // Checks if these effects would be observed by another set of effects (e.g.,
+  // if we write, we are observed by someone that reads).
   //
   // This assumes the things whose effects we are comparing will both execute,
   // at least if neither of them transfers control flow away. That is, we assume
@@ -278,7 +278,7 @@ public:
   // example we can't reorder A and B if B traps, but in the first example we
   // can reorder them even if B traps (even if A has a global effect like a
   // global.set, since we assume B does not trap in traps-never-happen).
-  bool invalidates(const EffectAnalyzer& other) {
+  bool observedBy(const EffectAnalyzer& other) {
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
@@ -1164,14 +1164,14 @@ private:
 public:
   // Helpers
 
-  // See comment on invalidate() for the assumptions on the inputs here.
+  // See comment on observedBy() for the assumptions on the inputs here.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
                          Expression* a,
                          Expression* b) {
     EffectAnalyzer aEffects(passOptions, module, a);
     EffectAnalyzer bEffects(passOptions, module, b);
-    return !aEffects.invalidates(bEffects);
+    return !aEffects.observedBy(bEffects);
   }
 
   // C-API

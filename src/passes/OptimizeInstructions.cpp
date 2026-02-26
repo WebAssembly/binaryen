@@ -1585,7 +1585,7 @@ struct OptimizeInstructions
             // trap we want to move. (We use a shallow effect analyzer since we
             // will only move the ref.as_non_null itself.)
             ShallowEffectAnalyzer movingEffects(options, *getModule(), input);
-            if (crossedEffects.invalidates(movingEffects)) {
+            if (crossedEffects.observedBy(movingEffects)) {
               return;
             }
 
@@ -2563,7 +2563,7 @@ struct OptimizeInstructions
         auto& options = getPassRunner()->options;
         EffectAnalyzer descEffects(options, *getModule(), curr->desc);
         ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
-        if (descEffects.invalidates(movingEffects)) {
+        if (descEffects.observedBy(movingEffects)) {
           return;
         }
       }
@@ -2816,7 +2816,7 @@ private:
       //       originalRightEffects.
       auto originalRightEffects = effects(originalRight);
       auto rightEffects = effects(right);
-      if (originalRightEffects.invalidates(rightEffects)) {
+      if (originalRightEffects.observedBy(rightEffects)) {
         return false;
       }
     }
@@ -2877,7 +2877,7 @@ private:
         }
         ShallowEffectAnalyzer parentEffects(
           getPassOptions(), *getModule(), call);
-        if (parentEffects.invalidates(childEffects)) {
+        if (parentEffects.observedBy(childEffects)) {
           return false;
         }
         // No effects are possible.
@@ -3341,7 +3341,7 @@ private:
             // The condition is last, so we need a new local, and it may be a
             // bad idea to use a block like we do for an if. Do it only if we
             // can reorder
-            if (!condition.invalidates(value)) {
+            if (!condition.observedBy(value)) {
               return builder.makeSequence(builder.makeDrop(c), ifTrue);
             }
           }
@@ -3659,7 +3659,7 @@ private:
       if (CostAnalyzer(left).cost < MIN_COST) {
         return nullptr; // avoidable code is too cheap
       }
-      if (leftEffects.invalidates(rightEffects)) {
+      if (leftEffects.observedBy(rightEffects)) {
         return nullptr; // cannot reorder
       }
       std::swap(left, right);

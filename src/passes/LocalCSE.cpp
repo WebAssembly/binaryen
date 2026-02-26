@@ -460,7 +460,7 @@ struct Checker
       for (auto& kv : activeOriginals) {
         auto* original = kv.first;
         auto& originalInfo = kv.second;
-        if (effects.invalidates(originalInfo.effects)) {
+        if (effects.observedBy(originalInfo.effects)) {
           invalidated.push_back(original);
         }
       }

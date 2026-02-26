@@ -512,12 +512,12 @@ struct MergeBlocks
       EffectAnalyzer childEffects(getPassOptions(), *getModule(), child);
       if (dependency1 && *dependency1 &&
           EffectAnalyzer(getPassOptions(), *getModule(), *dependency1)
-            .invalidates(childEffects)) {
+            .observedBy(childEffects)) {
         return outer;
       }
       if (dependency2 && *dependency2 &&
           EffectAnalyzer(getPassOptions(), *getModule(), *dependency2)
-            .invalidates(childEffects)) {
+            .observedBy(childEffects)) {
         return outer;
       }
     }
@@ -665,7 +665,7 @@ struct MergeBlocks
         EffectAnalyzer blockChildEffects(
           getPassOptions(), *getModule(), blockChild);
         for (auto& effects : childEffects) {
-          if (blockChildEffects.invalidates(effects)) {
+          if (blockChildEffects.observedBy(effects)) {
             fail = true;
             break;
           }

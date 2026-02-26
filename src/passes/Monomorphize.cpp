@@ -386,7 +386,7 @@ struct CallContext {
         // (as described before, we want to move this past immovable code) and
         // reasons intrinsic to the expression itself that might prevent moving.
         ShallowEffectAnalyzer currEffects(options, wasm, curr);
-        if (currEffects.invalidates(nonMovingEffects) ||
+        if (currEffects.observedBy(nonMovingEffects) ||
             !canBeMovedIntoContext(curr, currEffects)) {
           immovable.insert(curr);
           currImmovable = true;
