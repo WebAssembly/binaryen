@@ -2250,7 +2250,7 @@ Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
   if (!type.isStruct()) {
     return Err{"expected struct type annotation on struct.wait"};
   }
-  // This is likely checked during parsing.
+  // This is likely checked in the caller by the `fieldidx` parser.
   if (index >= type.getStruct().fields.size()) {
     return Err{"struct.wait field index out of bounds"};
   }
