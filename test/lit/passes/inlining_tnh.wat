@@ -7,17 +7,68 @@
 ;; functions. That propagates the unreachability for other passes.
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $call-trap
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (block $__inlined_func$trap
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (block $__inlined_func$trap$1
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $call-trap
-    (call $trap)
+    ;; Call twice to avoid the single-caller rules, which always inline.
+    (if
+      (i32.const 42)
+      (then
+        (call $trap)
+      )
+      (else
+        (call $trap)
+      )
+    )
   )
 
   (func $trap
     (unreachable)
   )
 
+  ;; CHECK:      (func $call-trap-value
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (block $__inlined_func$trap-value$2
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (block $__inlined_func$trap-value$3
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $call-trap-value
     (drop
-      (call $trap-value)
+      (if (result i32)
+        (i32.const 42)
+        (then
+          (call $trap-value)
+        )
+        (else
+          (call $trap-value)
+        )
+      )
     )
   )
 
