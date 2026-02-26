@@ -758,8 +758,8 @@ public:
     SuspendId,
     ResumeId,
     ResumeThrowId,
-    // Id for the stack switching `switch`
     StackSwitchId,
+    StructWaitId,
     NumExpressionIds
   };
   Id _id;
@@ -1754,6 +1754,19 @@ public:
   Expression* expected;
   Expression* replacement;
   MemoryOrder order;
+
+  void finalize();
+};
+
+class StructWait : public SpecificExpression<Expression::StructWaitId> {
+public:
+  StructWait() = default;
+  StructWait(MixedArena& allocator) : StructWait() {}
+
+  Expression* ref;
+  Expression* expected;
+  Expression* timeout;
+  Index index;
 
   void finalize();
 };

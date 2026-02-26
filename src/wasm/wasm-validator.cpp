@@ -554,6 +554,7 @@ public:
   void visitArrayInitElem(ArrayInitElem* curr);
   void visitArrayRMW(ArrayRMW* curr);
   void visitArrayCmpxchg(ArrayCmpxchg* curr);
+  void visitStructWait(StructWait* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -3499,6 +3500,42 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
     field.type,
     curr,
     "struct.atomic.rmw.cmpxchg replacement value must have the proper type");
+}
+
+void FunctionValidator::visitStructWait(StructWait* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "struct.wait requires shared-everything [--enable-shared-everything]");
+
+  shouldBeEqual(curr->expected->type,
+                Type(Type::BasicType::i32),
+                curr,
+                "struct.wait expected must be an i32");
+  shouldBeEqual(curr->timeout->type,
+                Type(Type::BasicType::i64),
+                curr,
+                "struct.wait timeout must be an i64");
+
+  if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+    return;
+  }
+
+  // In practice this likely fails during parsing instead.
+  if (!shouldBeTrue(curr->index <
+                      curr->ref->type.getHeapType().getStruct().fields.size(),
+                    curr,
+                    "struct.wait index immediate should be less than the field "
+                    "count of the struct")) {
+    return;
+  }
+
+  shouldBeTrue(curr->ref->type.getHeapType()
+                   .getStruct()
+                   .fields.at(curr->index)
+                   .packedType == Field::WaitQueue,
+               curr,
+               "struct.wait struct field must be a waitqueue");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {

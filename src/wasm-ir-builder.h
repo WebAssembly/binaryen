@@ -242,6 +242,7 @@ public:
   Result<>
   makeStructRMW(AtomicRMWOp op, HeapType type, Index field, MemoryOrder order);
   Result<> makeStructCmpxchg(HeapType type, Index field, MemoryOrder order);
+  Result<> makeStructWait(HeapType type, Index index);
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);

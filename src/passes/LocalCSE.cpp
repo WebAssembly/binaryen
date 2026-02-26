@@ -118,6 +118,7 @@
 
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/linear-execution.h>
 #include <ir/properties.h>
@@ -206,6 +207,22 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
     }
   }
 };
+
+// Check if a call is to an idempotent function. Note that we do not check for
+// an annotation on the call itself - optimizing that would require us to verify
+// idempotency on the later one specifically, but that is complicated in this
+// pass (we'd end up tracking the first one unnecessarily, hoping the second is
+// idempotent). Instead, we look on the called function, which is identical for
+// all callers.
+// TODO if users want the call annotation, handle that too.
+bool isIdempotent(Expression* curr, Module& wasm) {
+  if (auto* call = curr->dynCast<Call>()) {
+    if (Intrinsics::getAnnotations(wasm.getFunction(call->target)).idempotent) {
+      return true;
+    }
+  }
+  return false;
+}
 
 struct Scanner
   : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
@@ -368,6 +385,13 @@ struct Scanner
   // total size big enough - while isPossible checks conditions that prevent
   // using an expression at all.
   bool isPossible(Expression* curr) {
+    // A call to an idempotent function is optimizable: it may have effects the
+    // first time, but those do not invalidate the second appearance, and also
+    // it will return the same value.
+    if (isIdempotent(curr, *getModule())) {
+      return true;
+    }
+
     // We will fully compute effects later, but consider shallow effects at this
     // early time to ignore things that cannot be optimized later, because we
     // use a greedy algorithm. Specifically, imagine we see this:
@@ -441,7 +465,9 @@ struct Checker
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
-      EffectAnalyzer effects(options, *getModule());
+      // We only need to visit this node itself, as we have already visited its
+      // children by the time we get here.
+      ShallowEffectAnalyzer effects(options, *getModule(), curr);
       // We can ignore traps here:
       //
       //  (ORIGINAL)
@@ -451,14 +477,26 @@ struct Checker
       // We are some code in between an original and a copy of it, and we are
       // trying to turn COPY into a local.get of a value that we stash at the
       // original. If |curr| traps then we simply don't reach the copy anyhow.
+      //
+      // Note, however, that this is really for future use, as atm this does not
+      // help: the only effect a trap can interact with is a set of global state
+      // (the trap could prevent that writing, which would be noticeable) - but
+      // LocalCSE does not deduplicate expressions with such effects, as they
+      // must happen twice. That is, removing trapping from (curr) in the
+      // example above has no effect as (ORIGINAL) never has global write
+      // effects.
       effects.trap = false;
-      // We only need to visit this node itself, as we have already visited its
-      // children by the time we get here.
-      effects.visit(curr);
+
+      auto idempotent = isIdempotent(curr, *getModule());
 
       std::vector<Expression*> invalidated;
       for (auto& kv : activeOriginals) {
         auto* original = kv.first;
+        if (idempotent && ExpressionAnalyzer::shallowEqual(curr, original)) {
+          // |curr| is idempotent, so it does not invalidate later appearances
+          // of itself.
+          continue;
+        }
         auto& originalInfo = kv.second;
         if (effects.invalidates(originalInfo.effects)) {
           invalidated.push_back(original);
