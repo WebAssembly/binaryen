@@ -49,6 +49,7 @@
         (else
           (call $import)
           (call $import)
+          ;; This goes to a trap, and we can just turn it into a trap.
           (br $trap)
         )
       )
