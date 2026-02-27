@@ -308,6 +308,124 @@ struct Flatten
           }
         }
 
+      } else if (auto* br = curr->dynCast<BrOn>()) {
+        if (auto sent = br->getSentType(); sent != Type::none) {
+          // We are sending a value here, so we need to use a local instead.
+          assert(br->type != Type::unreachable); // TODO handle
+          switch (br->op) {
+            case BrOnNull: {
+              // BrOnNull does not send a value.
+              assert(false);
+              break;
+            }
+            case BrOnNonNull: {
+              // Sends the non-null value, if it is non-null.
+              //
+              //   (br_on_non_null $target (X))
+              // =>
+              //   temp = (X)
+              //   (if (temp != null)
+              //     $target's storage = temp;
+              //     br $target
+              //   )
+              //
+              auto type = br->ref->type;
+              auto temp = builder.addVar(getFunction(), type);
+              ourPreludes.push_back(builder.makeLocalSet(temp, br->ref));
+
+              // If condition.
+              auto* get = builder.makeLocalGet(temp, type);
+              auto* isNull = builder.makeRefIsNull(get);
+              auto* isNotNull = builder.makeUnary(EqZInt32, isNull);
+
+              // If body.
+              Type blockType = findBreakTarget(br->name)->type;
+              Index blockTemp = getTempForBreakTarget(br->name, blockType);
+              auto* get2 = builder.makeLocalGet(temp, type);
+              auto* set = builder.makeLocalSet(blockTemp, get2);
+              auto* br2 = builder.makeBreak(br->name);
+              auto* body = builder.makeBlock({set, br2});
+
+              // If.
+              auto* iff = builder.makeIf(isNotNull, body);
+              replaceCurrent(iff);
+              break;
+            }
+            case BrOnCast: {
+              assert(false);
+              break;
+            }
+            case BrOnCastFail: {
+              assert(false);
+              break;
+            }
+            case BrOnCastDescEq: {
+              assert(false);
+              break;
+            }
+            case BrOnCastDescEqFail: {
+              assert(false);
+              break;
+            }
+          }
+        }
+        
+        /*
+        if (br->value) {
+          auto type = br->value->type;
+          if (type.isConcrete()) {
+            // we are sending a value. use a local instead
+            Type blockType = findBreakTarget(br->name)->type;
+            Index temp = getTempForBreakTarget(br->name, blockType);
+            ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
+
+            // br_if leaves a value on the stack if not taken, which later can
+            // be the last element of the enclosing innermost block and flow
+            // out. The local we created using 'getTempForBreakTarget' returns
+            // the return type of the block this branch is targetting, which may
+            // not be the same with the innermost block's return type. For
+            // example,
+            // (block $any (result anyref)
+            //   (block (result funcref)
+            //     (local.tee $0
+            //       (br_if $any
+            //         (ref.null func)
+            //         (i32.const 0)
+            //       )
+            //     )
+            //   )
+            // )
+            // In this case we need two locals to store (ref.null); one with
+            // funcref type that's for the target block ($label0) and one more
+            // with anyref type in case for flowing out. Here we create the
+            // second 'flowing out' local in case two block's types are
+            // different.
+            if (type != blockType) {
+              temp = builder.addVar(getFunction(), type);
+              ourPreludes.push_back(builder.makeLocalSet(
+                temp, ExpressionManipulator::copy(br->value, *getModule())));
+            }
+
+            if (br->condition) {
+              // the value must also flow out
+              ourPreludes.push_back(br);
+              if (br->type.isConcrete()) {
+                replaceCurrent(builder.makeLocalGet(temp, type));
+              } else {
+                assert(br->type == Type::unreachable);
+                replaceCurrent(builder.makeUnreachable());
+              }
+            }
+            br->value = nullptr;
+            br->finalize();
+          } else {
+            assert(type == Type::unreachable);
+            // we don't need the br at all
+            replaceCurrent(br->value);
+          }
+        }
+        */
+
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
@@ -333,7 +451,7 @@ struct Flatten
       }
     }
 
-    if (curr->is<BrOn>() || curr->is<TryTable>()) {
+    if (curr->is<TryTable>()) {
       Fatal() << "Unsupported instruction for Flatten: "
               << getExpressionName(curr);
     }
