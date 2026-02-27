@@ -330,18 +330,18 @@ struct Flatten
               //   )
               //
               auto refType = br->ref->type;
-              auto temp = builder.addVar(getFunction(), refType);
-              ourPreludes.push_back(builder.makeLocalSet(temp, br->ref));
+              auto refTemp = builder.addVar(getFunction(), refType);
+              ourPreludes.push_back(builder.makeLocalSet(refTemp, br->ref));
 
               // If condition.
-              auto* get = builder.makeLocalGet(temp, refType);
+              auto* get = builder.makeLocalGet(refTemp, refType);
               auto* isNull = builder.makeRefIsNull(get);
               auto* isNotNull = builder.makeUnary(EqZInt32, isNull);
 
               // If body.
               Type blockType = findBreakTarget(br->name)->type;
               Index blockTemp = getTempForBreakTarget(br->name, blockType);
-              auto* get2 = builder.makeLocalGet(temp, refType);
+              auto* get2 = builder.makeLocalGet(refTemp, refType);
               auto* set = builder.makeLocalSet(blockTemp, get2);
               auto* br2 = builder.makeBreak(br->name);
               auto* body = builder.makeBlock({set, br2});
