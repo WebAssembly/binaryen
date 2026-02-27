@@ -760,6 +760,7 @@ public:
     ResumeThrowId,
     StackSwitchId,
     StructWaitId,
+    StructNotifyId,
     NumExpressionIds
   };
   Id _id;
@@ -1770,6 +1771,18 @@ public:
   Expression* ref;
   Expression* expected;
   Expression* timeout;
+  Index index;
+
+  void finalize();
+};
+
+class StructNotify : public SpecificExpression<Expression::StructNotifyId> {
+public:
+  StructNotify() = default;
+  StructNotify(MixedArena& allocator) : StructNotify() {}
+
+  Expression* ref;
+  Expression* count;
   Index index;
 
   void finalize();
