@@ -2521,15 +2521,8 @@ def get_random_opts():
             if has_flatten:
                 print('avoiding multiple --flatten in a single command, due to exponential overhead')
                 continue
-            if '--enable-multivalue' in FEATURE_OPTS and '--enable-reference-types' in FEATURE_OPTS:
-                print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
-                print('TODO: Resolving https://github.com/WebAssembly/binaryen/issues/4824 may fix this')
-                continue
             if '--enable-exception-handling' in FEATURE_OPTS:
                 print('avoiding --flatten due to exception-handling not supporting it (requires blocks with results)')
-                continue
-            if '--gc' not in FEATURE_OPTS:
-                print('avoiding --flatten due to GC not supporting it (spilling of non-nullable locals)')
                 continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
                 print('avoiding --flatten due using a large amount of initial contents, which may blow up')

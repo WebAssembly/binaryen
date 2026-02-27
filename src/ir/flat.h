@@ -39,7 +39,7 @@
 //    (i32.const 1)
 //  )
 //
-// Formally, this pass flattens in the precise sense of
+// Formally, the Flatten pass flattens in the precise sense of
 // making the AST have these properties:
 //
 //  1. Aside from a local.set, the operands of an instruction must be a
@@ -54,9 +54,8 @@
 //     values is prohibited already, but e.g. a block ending in unreachable,
 //     which can normally be nested, is also disallowed).
 //
-// Note: ref.as_non_null must be allowed in a nested position because we cannot
-// spill it to a local - the result is non-null, which is not allowable in a
-// local.
+// This header defines the concept of flatness, and utilities for verifying it,
+// which each pass that assumes flat form should use.
 //
 
 #ifndef wasm_ir_flat_h
