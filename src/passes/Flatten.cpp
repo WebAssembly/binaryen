@@ -312,6 +312,17 @@ struct Flatten
         if (auto sent = br->getSentType(); sent != Type::none) {
           // We are sending a value here, so we need to use a local instead.
           assert(br->type != Type::unreachable); // TODO handle
+
+          // All patterns need the input ref in a temp local.
+          auto refType = br->ref->type;
+          auto refTemp = builder.addVar(getFunction(), refType);
+          ourPreludes.push_back(builder.makeLocalSet(refTemp, br->ref));
+
+          // All patterns need to know the block type and temp storage for
+          // values sent there.
+          Type blockType = findBreakTarget(br->name)->type;
+          Index blockTemp = getTempForBreakTarget(br->name, blockType);
+
           switch (br->op) {
             case BrOnNull: {
               // BrOnNull does not send a value.
@@ -329,9 +340,6 @@ struct Flatten
               //     br $target
               //   )
               //
-              auto refType = br->ref->type;
-              auto refTemp = builder.addVar(getFunction(), refType);
-              ourPreludes.push_back(builder.makeLocalSet(refTemp, br->ref));
 
               // If condition.
               auto* get = builder.makeLocalGet(refTemp, refType);
@@ -339,8 +347,6 @@ struct Flatten
               auto* isNotNull = builder.makeUnary(EqZInt32, isNull);
 
               // If body.
-              Type blockType = findBreakTarget(br->name)->type;
-              Index blockTemp = getTempForBreakTarget(br->name, blockType);
               auto* get2 = builder.makeLocalGet(refTemp, refType);
               auto* set = builder.makeLocalSet(blockTemp, get2);
               auto* br2 = builder.makeBreak(br->name);
