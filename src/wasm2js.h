@@ -1337,7 +1337,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       EffectAnalyzer targetEffects(parent->options, *module, curr->target);
       if (targetEffects.hasAnything()) {
         for (auto* operand : curr->operands) {
-          if (targetEffects.invalidates(
+          if (targetEffects.orderedBefore(
                 EffectAnalyzer(parent->options, *module, operand))) {
             mustReorder = true;
             break;
@@ -1969,8 +1969,8 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
         parent->options, *module, curr->condition);
       EffectAnalyzer ifTrueEffects(parent->options, *module, curr->ifTrue);
       EffectAnalyzer ifFalseEffects(parent->options, *module, curr->ifFalse);
-      if (conditionEffects.invalidates(ifTrueEffects) ||
-          conditionEffects.invalidates(ifFalseEffects) ||
+      if (conditionEffects.orderedBefore(ifTrueEffects) ||
+          conditionEffects.orderedBefore(ifFalseEffects) ||
           ifTrueEffects.hasSideEffects() || ifFalseEffects.hasSideEffects()) {
         useLocals = true;
       }

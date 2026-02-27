@@ -142,8 +142,8 @@ struct EarlyCastFinder
   std::vector<RefAsInfo> currRefAsMove;
 
   // Used to analyze expressions to see if casts can be moved past them.
-  EffectAnalyzer testRefCast;
-  EffectAnalyzer testRefAs;
+  EffectAnalyzer refCastEffects;
+  EffectAnalyzer refAsEffects;
 
   // Maps LocalGets to the most refined RefCast to move to it, to be used by the
   // EarlyCastApplier. If the most refined RefCast is already at the desired
@@ -162,8 +162,8 @@ struct EarlyCastFinder
   EarlyCastFinder(PassOptions options, Module* module, Function* func)
     : options(options), numLocals(func->getNumLocals()),
       currRefCastMove(func->getNumLocals()),
-      currRefAsMove(func->getNumLocals()), testRefCast(options, *module),
-      testRefAs(options, *module) {
+      currRefAsMove(func->getNumLocals()), refCastEffects(options, *module),
+      refAsEffects(options, *module) {
 
     // TODO: generalize this when we handle more than RefAsNonNull.
     RefCast dummyRefCast(module->allocator);
@@ -171,8 +171,8 @@ struct EarlyCastFinder
     RefAs dummyRefAs(module->allocator);
     dummyRefAs.op = RefAsNonNull;
 
-    testRefCast.visit(&dummyRefCast);
-    testRefAs.visit(&dummyRefAs);
+    refCastEffects.visit(&dummyRefCast);
+    refAsEffects.visit(&dummyRefAs);
   }
 
   // We track information as we go, looking for the best cast to move backwards,
@@ -231,17 +231,17 @@ struct EarlyCastFinder
   void visitFunction(Function* curr) { flushAll(); }
 
   void visitExpression(Expression* curr) {
-    // A new one is instantiated for each expression to determine
-    // if a cast can be moved past it.
-    ShallowEffectAnalyzer currAnalyzer(options, *getModule(), curr);
+    // Determine wheher a later cast could be moved before the current
+    // expression.
+    ShallowEffectAnalyzer currEffects(options, *getModule(), curr);
 
-    if (testRefCast.invalidates(currAnalyzer)) {
+    if (refCastEffects.orderedAfter(currEffects)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefCastResult(i, *getModule());
       }
     }
 
-    if (testRefAs.invalidates(currAnalyzer)) {
+    if (refAsEffects.orderedAfter(currEffects)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefAsResult(i, *getModule());
       }

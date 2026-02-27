@@ -303,7 +303,7 @@ struct SimplifyLocals
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
     for (auto& [index, info] : sinkables) {
-      if (effects.invalidates(info.effects)) {
+      if (effects.orderedBefore(info.effects)) {
         invalidated.push_back(index);
       }
     }
@@ -573,7 +573,7 @@ struct SimplifyLocals
             EffectAnalyzer value(
               this->getPassOptions(), *this->getModule(), set);
             *breakLocalSetPointer = set;
-            if (condition.invalidates(value)) {
+            if (condition.orderedBefore(value)) {
               // indeed, we can't do this, stop
               return;
             }

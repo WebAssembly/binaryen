@@ -45,6 +45,12 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.writesMemory) {
     o << "writesMemory\n";
   }
+  if (effects.readsSharedMemory) {
+    o << "readsSharedMemory\n";
+  }
+  if (effects.writesSharedMemory) {
+    o << "writesSharedMemory\n";
+  }
   if (effects.readsTable) {
     o << "readsTable\n";
   }
@@ -57,11 +63,23 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.writesStruct) {
     o << "writesStruct\n";
   }
-  if (effects.readsArray) {
+  if (effects.readsSharedMutableStruct) {
+    o << "readsSharedMutableStruct\n";
+  }
+  if (effects.writesSharedStruct) {
+    o << "writesSharedStruct\n";
+  }
+  if (effects.readsMutableArray) {
     o << "readsArray\n";
   }
   if (effects.writesArray) {
     o << "writesArray\n";
+  }
+  if (effects.readsSharedMutableArray) {
+    o << "readsSharedMutableArray\n";
+  }
+  if (effects.writesSharedArray) {
+    o << "writesSharedArray\n";
   }
   if (effects.trap) {
     o << "trap\n";
@@ -69,8 +87,11 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.implicitTrap) {
     o << "implicitTrap\n";
   }
-  if (effects.isAtomic) {
-    o << "isAtomic\n";
+  if (effects.readOrder != wasm::MemoryOrder::Unordered) {
+    o << "readOrder " << effects.readOrder << "\n";
+  }
+  if (effects.writeOrder != wasm::MemoryOrder::Unordered) {
+    o << "writeOrder " << effects.writeOrder << "\n";
   }
   if (effects.throws_) {
     o << "throws_\n";
@@ -135,7 +156,6 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.hasExternalBreakTargets()) {
     o << "hasExternalBreakTargets\n";
   }
-  o << "}";
   return o;
 }
 

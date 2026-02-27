@@ -20,6 +20,7 @@
 #include "ir/intrinsics.h"
 #include "pass.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -107,14 +108,21 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
+  bool readsSharedMemory = false;
+  bool writesSharedMemory = false;
   bool readsTable = false;
   bool writesTable = false;
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
   bool readsMutableStruct = false;
   bool writesStruct = false;
-  bool readsArray = false;
+  bool readsSharedMutableStruct = false;
+  bool writesSharedStruct = false;
+  bool readsMutableArray = false;
   bool writesArray = false;
+  bool readsSharedMutableArray = false;
+  bool writesSharedArray = false;
+
   // A trap, either from an unreachable instruction, or from an implicit trap
   // that we do not ignore (see below).
   //
@@ -136,9 +144,7 @@ public:
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
   bool implicitTrap = false;
-  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
-  // wrt atomics (e.g. memory.grow)
-  bool isAtomic = false;
+  // Whether an exception may be thrown.
   bool throws_ = false;
   // The nested depth of try-catch_all. If an instruction that may throw is
   // inside an inner try-catch_all, we don't mark it as 'throws_', because it
@@ -171,6 +177,11 @@ public:
   // more here.)
   bool hasReturnCallThrow = false;
 
+  // The strongest memory orders used to read and write to any shared location
+  // (e.g. shared memories, shared GC structs, etc), if any.
+  MemoryOrder readOrder = MemoryOrder::Unordered;
+  MemoryOrder writeOrder = MemoryOrder::Unordered;
+
   // Helper functions to check for various effect types
 
   bool accessesLocal() const {
@@ -180,11 +191,22 @@ public:
     return globalsWritten.size() + mutableGlobalsRead.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
+  bool accessesSharedMemory() const {
+    return calls || readsSharedMemory || writesSharedMemory;
+  }
   bool accessesTable() const { return calls || readsTable || writesTable; }
   bool accessesMutableStruct() const {
     return calls || readsMutableStruct || writesStruct;
   }
-  bool accessesArray() const { return calls || readsArray || writesArray; }
+  bool accessesSharedMutableStruct() const {
+    return calls || readsSharedMutableStruct || writesSharedStruct;
+  }
+  bool accessesArray() const {
+    return calls || readsMutableArray || writesArray;
+  }
+  bool accessesSharedArray() const {
+    return calls || readsSharedMutableArray || writesSharedArray;
+  }
   bool throws() const { return throws_ || !delegateTargets.empty(); }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
@@ -199,17 +221,30 @@ public:
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() || writesMemory || writesTable ||
-           writesStruct || writesArray || isAtomic || calls;
+    return globalsWritten.size() || writesMemory || writesSharedMemory ||
+           writesTable || writesStruct || writesSharedStruct || writesArray ||
+           writesSharedArray || calls;
   }
   bool readsMutableGlobalState() const {
-    return mutableGlobalsRead.size() || readsMemory || readsTable ||
-           readsMutableStruct || readsArray || isAtomic || calls;
+    return mutableGlobalsRead.size() || readsMemory || readsSharedMemory ||
+           readsTable || readsMutableStruct || readsSharedMutableStruct ||
+           readsMutableArray || readsSharedMutableArray || calls;
+  }
+  bool accessesSharedGlobalState() const {
+    return readsSharedMemory || writesSharedMemory ||
+           readsSharedMutableStruct || writesSharedStruct ||
+           readsSharedMutableArray || writesSharedArray || calls;
+  }
+
+  bool hasSynchronization() const {
+    return readOrder != MemoryOrder::Unordered ||
+           writeOrder != MemoryOrder::Unordered;
   }
 
   bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
-           throws() || transfersControlFlow() || mayNotReturn;
+           throws() || transfersControlFlow() || hasSynchronization() ||
+           mayNotReturn;
   }
 
   bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
@@ -245,8 +280,8 @@ public:
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
-  // Checks if these effects would invalidate another set of effects (e.g., if
-  // we write, we invalidate someone that reads).
+  // Checks if these effects must remain ordered before another set of effects
+  // (e.g., if we write, we must remain ordered before someone that reads).
   //
   // This assumes the things whose effects we are comparing will both execute,
   // at least if neither of them transfers control flow away. That is, we assume
@@ -278,26 +313,59 @@ public:
   // example we can't reorder A and B if B traps, but in the first example we
   // can reorder them even if B traps (even if A has a global effect like a
   // global.set, since we assume B does not trap in traps-never-happen).
-  bool invalidates(const EffectAnalyzer& other) {
+  bool orderedBefore(const EffectAnalyzer& other) const {
+    // Cannot reorder control flow and side effects.
     if ((transfersControlFlow() && other.hasSideEffects()) ||
-        (other.transfersControlFlow() && hasSideEffects()) ||
-        ((writesMemory || calls) && other.accessesMemory()) ||
+        (other.transfersControlFlow() && hasSideEffects())) {
+      return true;
+    }
+    // write-write, write-read, and read-write conflicts on possibly aliasing
+    // locations prevent reordering. Calls may access these locations.
+    if (((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
+        ((writesSharedMemory || calls) && other.accessesSharedMemory()) ||
+        ((other.writesSharedMemory || other.calls) && accessesSharedMemory()) ||
         ((writesTable || calls) && other.accessesTable()) ||
         ((other.writesTable || other.calls) && accessesTable()) ||
         ((writesStruct || calls) && other.accessesMutableStruct()) ||
         ((other.writesStruct || other.calls) && accessesMutableStruct()) ||
+        ((writesSharedStruct || calls) &&
+         other.accessesSharedMutableStruct()) ||
+        ((other.writesSharedStruct || other.calls) &&
+         accessesSharedMutableStruct()) ||
         ((writesArray || calls) && other.accessesArray()) ||
         ((other.writesArray || other.calls) && accessesArray()) ||
-        (danglingPop || other.danglingPop)) {
+        ((writesSharedArray || calls) && other.accessesSharedArray()) ||
+        ((other.writesSharedArray || other.calls) && accessesSharedArray())) {
       return true;
     }
-    // All atomics are sequentially consistent for now, and ordered wrt other
-    // memory references.
-    if ((isAtomic && other.accessesMemory()) ||
-        (other.isAtomic && accessesMemory())) {
+    // Cannot reorder anything before dangling pops.
+    if (danglingPop) {
       return true;
     }
+    // Shared location accesses cannot be reordered after (but may be able to be
+    // reordered before) release stores.
+    if (other.writeOrder >= MemoryOrder::AcqRel &&
+        accessesSharedGlobalState()) {
+      return true;
+    }
+    // Shared location accesses cannot be reordered before (but may be able to
+    // be reordered after) acquire loads.
+    if (readOrder >= MemoryOrder::AcqRel && other.accessesSharedGlobalState()) {
+      return true;
+    }
+    // No shared location accesses may be reordered in either direction around a
+    // seqcst operation.
+    if (((readOrder == MemoryOrder::SeqCst ||
+          writeOrder == MemoryOrder::SeqCst) &&
+         other.accessesSharedGlobalState()) ||
+        ((other.readOrder == MemoryOrder::SeqCst ||
+          other.writeOrder == MemoryOrder::SeqCst) &&
+         accessesSharedGlobalState())) {
+      return true;
+    }
+    // write-write, write-read, and read-write conflicts on a local prevent
+    // reordering.
     for (auto local : localsWritten) {
       if (other.localsRead.count(local) || other.localsWritten.count(local)) {
         return true;
@@ -308,6 +376,8 @@ public:
         return true;
       }
     }
+    // write-write, write-read, and read-write conflicts on globals prevent
+    // reordering. Unlike for locals, calls can access globals.
     if ((other.calls && accessesMutableGlobal()) ||
         (calls && other.accessesMutableGlobal())) {
       return true;
@@ -345,24 +415,39 @@ public:
     return false;
   }
 
+  bool orderedAfter(const EffectAnalyzer& other) {
+    return other.orderedBefore(*this);
+  }
+
   void mergeIn(const EffectAnalyzer& other) {
     branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
+    readsSharedMemory = readsSharedMemory || other.readsSharedMemory;
+    writesSharedMemory = writesSharedMemory || other.writesSharedMemory;
     readsTable = readsTable || other.readsTable;
     writesTable = writesTable || other.writesTable;
     readsMutableStruct = readsMutableStruct || other.readsMutableStruct;
     writesStruct = writesStruct || other.writesStruct;
-    readsArray = readsArray || other.readsArray;
+    readsSharedMutableStruct =
+      readsSharedMutableStruct || other.readsSharedMutableStruct;
+    writesSharedStruct = writesSharedStruct || other.writesSharedStruct;
+    readsMutableArray = readsMutableArray || other.readsMutableArray;
     writesArray = writesArray || other.writesArray;
+    readsSharedMutableArray =
+      readsSharedMutableArray || other.readsSharedMutableArray;
+    writesSharedArray = writesSharedArray || other.writesSharedArray;
     trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
     trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
-    isAtomic = isAtomic || other.isAtomic;
     throws_ = throws_ || other.throws_;
     danglingPop = danglingPop || other.danglingPop;
     mayNotReturn = mayNotReturn || other.mayNotReturn;
+    hasReturnCallThrow = hasReturnCallThrow || other.hasReturnCallThrow;
+    readOrder = std::max(readOrder, other.readOrder);
+    writeOrder = std::max(writeOrder, other.writeOrder);
+
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -597,56 +682,88 @@ private:
       parent.globalsWritten.insert(curr->name);
     }
     void visitLoad(Load* curr) {
-      parent.readsMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.readsSharedMemory = true;
+        parent.readOrder = std::max(parent.readOrder, curr->order);
+      } else {
+        parent.readsMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitStore(Store* curr) {
-      parent.writesMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.writesSharedMemory = true;
+        parent.writeOrder = std::max(parent.writeOrder, curr->order);
+      } else {
+        parent.writesMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitAtomicRMW(AtomicRMW* curr) {
-      parent.readsMemory = true;
-      parent.writesMemory = true;
-      parent.isAtomic = true;
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.readsSharedMemory = true;
+        parent.writesSharedMemory = true;
+        parent.readOrder = std::max(parent.readOrder, curr->order);
+        parent.writeOrder = std::max(parent.writeOrder, curr->order);
+      } else {
+        parent.readsMemory = true;
+        parent.writesMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      parent.readsMemory = true;
-      parent.writesMemory = true;
-      parent.isAtomic = true;
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.readsSharedMemory = true;
+        parent.writesSharedMemory = true;
+        parent.readOrder = std::max(parent.readOrder, curr->order);
+        parent.writeOrder = std::max(parent.writeOrder, curr->order);
+      } else {
+        parent.readsMemory = true;
+        parent.writesMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitAtomicWait(AtomicWait* curr) {
-      parent.readsMemory = true;
+      // Waits on unshared memories trap.
+      if (!parent.module.getMemory(curr->memory)->shared) {
+        parent.trap = true;
+        return;
+      }
       // AtomicWait doesn't strictly write memory, but it does modify the
       // waiters list associated with the specified address, which we can think
       // of as a write.
-      parent.writesMemory = true;
-      parent.isAtomic = true;
+      parent.readsSharedMemory = true;
+      parent.writesSharedMemory = true;
+      parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
+      // Traps on unaligned accesses.
       parent.implicitTrap = true;
     }
     void visitAtomicNotify(AtomicNotify* curr) {
-      // AtomicNotify doesn't strictly write memory, but it does modify the
-      // waiters list associated with the specified address, which we can think
-      // of as a write.
-      parent.readsMemory = true;
-      parent.writesMemory = true;
-      parent.isAtomic = true;
+      // Notifies on unshared memories just return 0 or trap on unaligned
+      // accesses.
       parent.implicitTrap = true;
+      if (!parent.module.getMemory(curr->memory)->shared) {
+        return;
+      }
+      // AtomicNotify doesn't strictly write memory, but it does
+      // modify the waiters list associated with the specified address, which we
+      // can think of as a write.
+      parent.readsSharedMemory = true;
+      parent.writesSharedMemory = true;
+      parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
     }
     void visitAtomicFence(AtomicFence* curr) {
-      // AtomicFence should not be reordered with any memory operations, so we
-      // set these to true.
-      parent.readsMemory = true;
-      parent.writesMemory = true;
-      parent.isAtomic = true;
+      // AtomicFence should not be reordered with any shared location accesses,
+      // so we set these to true.
+      parent.readsSharedMemory = true;
+      parent.writesSharedMemory = true;
+      parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
     }
     void visitPause(Pause* curr) {
-      // It's not much of a problem if pause gets reordered with anything, but
-      // we don't want it to be removed entirely.
-      parent.isAtomic = true;
+      // We don't want this to be moved out of loops, but it doesn't otherwises
+      // matter much how it gets reordered. Say we transfer control as a coarse
+      // approximation of this.
+      parent.branchesOut = true;
     }
     void visitSIMDExtract(SIMDExtract* curr) {}
     void visitSIMDReplace(SIMDReplace* curr) {}
@@ -654,19 +771,35 @@ private:
     void visitSIMDTernary(SIMDTernary* curr) {}
     void visitSIMDShift(SIMDShift* curr) {}
     void visitSIMDLoad(SIMDLoad* curr) {
-      parent.readsMemory = true;
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.readsSharedMemory = true;
+      } else {
+        parent.readsMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-      if (curr->isLoad()) {
-        parent.readsMemory = true;
+      if (parent.module.getMemory(curr->memory)->shared) {
+        if (curr->isLoad()) {
+          parent.readsSharedMemory = true;
+        } else {
+          parent.writesSharedMemory = true;
+        }
       } else {
-        parent.writesMemory = true;
+        if (curr->isLoad()) {
+          parent.readsMemory = true;
+        } else {
+          parent.writesMemory = true;
+        }
       }
       parent.implicitTrap = true;
     }
     void visitMemoryInit(MemoryInit* curr) {
-      parent.writesMemory = true;
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.writesSharedMemory = true;
+      } else {
+        parent.writesMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitDataDrop(DataDrop* curr) {
@@ -677,12 +810,24 @@ private:
       parent.implicitTrap = true;
     }
     void visitMemoryCopy(MemoryCopy* curr) {
-      parent.readsMemory = true;
-      parent.writesMemory = true;
+      if (parent.module.getMemory(curr->sourceMemory)->shared) {
+        parent.readsSharedMemory = true;
+      } else {
+        parent.readsMemory = true;
+      }
+      if (parent.module.getMemory(curr->destMemory)->shared) {
+        parent.writesSharedMemory = true;
+      } else {
+        parent.writesMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitMemoryFill(MemoryFill* curr) {
-      parent.writesMemory = true;
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.writesSharedMemory = true;
+      } else {
+        parent.writesMemory = true;
+      }
       parent.implicitTrap = true;
     }
     void visitConst(Const* curr) {}
@@ -738,21 +883,29 @@ private:
     void visitReturn(Return* curr) { parent.branchesOut = true; }
     void visitMemorySize(MemorySize* curr) {
       // memory.size accesses the size of the memory, and thus can be modeled as
-      // reading memory
-      parent.readsMemory = true;
-      // Atomics are sequentially consistent with memory.size.
-      parent.isAtomic = true;
+      // reading memory. When the memory is shared, this synchronizes with
+      // memory.grow on other threads.
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.readsSharedMemory = true;
+        parent.readOrder = MemoryOrder::SeqCst;
+      } else {
+        parent.readsMemory = true;
+      }
     }
     void visitMemoryGrow(MemoryGrow* curr) {
-      // TODO: find out if calls is necessary here
-      parent.calls = true;
       // memory.grow technically does a read-modify-write operation on the
       // memory size in the successful case, modifying the set of valid
-      // addresses, and just a read operation in the failure case
-      parent.readsMemory = true;
-      parent.writesMemory = true;
-      // Atomics are also sequentially consistent with memory.grow.
-      parent.isAtomic = true;
+      // addresses, and just a read operation in the failure case. It
+      // synchronizes with memory.size on other threads, but only when operating
+      // on shared memories.
+      if (parent.module.getMemory(curr->memory)->shared) {
+        parent.readsSharedMemory = true;
+        parent.writesSharedMemory = true;
+        parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
+      } else {
+        parent.readsMemory = true;
+        parent.writesMemory = true;
+      }
     }
     void visitRefNull(RefNull* curr) {}
     void visitRefIsNull(RefIsNull* curr) {}
@@ -886,112 +1039,104 @@ private:
         parent.trap = true;
         return;
       }
-      if (curr->ref->type.getHeapType()
-            .getStruct()
-            .fields[curr->index]
-            .mutable_ == Mutable) {
-        parent.readsMutableStruct = true;
-      }
-      // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      switch (curr->order) {
-        case MemoryOrder::Unordered:
-          break;
-        case MemoryOrder::SeqCst:
-          // Synchronizes with other threads.
-          parent.isAtomic = true;
-          break;
-        case MemoryOrder::AcqRel:
-          // Only synchronizes if other threads can read the field.
-          parent.isAtomic = curr->ref->type.getHeapType().isShared();
-          break;
+      auto heapType = curr->ref->type.getHeapType();
+      if (heapType.getStruct().fields[curr->index].mutable_ == Mutable) {
+        if (heapType.isShared()) {
+          parent.readsSharedMutableStruct = true;
+          parent.readOrder = std::max(parent.readOrder, curr->order);
+        } else {
+          parent.readsMutableStruct = true;
+        }
       }
     }
     void visitStructSet(StructSet* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
-        return;
-      }
-      parent.writesStruct = true;
-      // traps when the arg is null
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
-      if (curr->order != MemoryOrder::Unordered) {
-        parent.isAtomic = true;
-      }
-    }
-    void visitStructRMW(StructRMW* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
-        return;
-      }
-      parent.readsMutableStruct = true;
-      parent.writesStruct = true;
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
-      assert(curr->order != MemoryOrder::Unordered);
-      parent.isAtomic = true;
-    }
-    void visitStructCmpxchg(StructCmpxchg* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
-        return;
-      }
-      parent.readsMutableStruct = true;
-      parent.writesStruct = true;
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
-      assert(curr->order != MemoryOrder::Unordered);
-      parent.isAtomic = true;
-    }
-    void visitStructWait(StructWait* curr) {
-      parent.isAtomic = true;
-
-      // If the ref is null.
-      parent.implicitTrap = true;
-
-      // If the timeout is negative and no-one wakes us.
-      parent.mayNotReturn = true;
-
-      // struct.wait mutates an opaque waiter queue which isn't visible in user
-      // code. Model this as a struct write which prevents reorderings (since
-      // isAtomic == true).
-      parent.writesStruct = true;
-
       if (curr->ref->type == Type::unreachable) {
         return;
       }
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      if (curr->ref->type.getHeapType().isShared()) {
+        parent.writesSharedStruct = true;
+        parent.writeOrder = std::max(parent.writeOrder, curr->order);
+      } else {
+        parent.writesStruct = true;
+      }
+    }
+    template<typename StructRMWExpr>
+    void visitStructRMWExpr(StructRMWExpr* curr) {
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      if (curr->ref->type.getHeapType().isShared()) {
+        parent.readsSharedMutableStruct = true;
+        parent.writesSharedStruct = true;
+        parent.readOrder = std::max(parent.readOrder, curr->order);
+        parent.writeOrder = std::max(parent.writeOrder, curr->order);
+      } else {
+        parent.readsMutableStruct = true;
+        parent.writesStruct = true;
+      }
+    }
+    void visitStructRMW(StructRMW* curr) { visitStructRMWExpr(curr); }
+    void visitStructCmpxchg(StructCmpxchg* curr) { visitStructRMWExpr(curr); }
+    void visitStructWait(StructWait* curr) {
+      // StructWait doesn't strictly write a struct, but it does modify the
+      // waiters list associated with the waitqueue field, which we can think
+      // of as a write.
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+      if (curr->ref->type.isNull() ||
+          !curr->ref->type.getHeapType().isShared()) {
+        parent.trap = true;
+        return;
+      }
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      parent.readsSharedMutableStruct = true;
+      parent.writesSharedStruct = true;
+      parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
 
-      // If the ref isn't `unreachable`, then the field must exist and be a
-      // packed waitqueue due to validation.
-      assert(curr->ref->type.isStruct());
-      assert(curr->index <
-             curr->ref->type.getHeapType().getStruct().fields.size());
-      assert(curr->ref->type.getHeapType()
-               .getStruct()
-               .fields.at(curr->index)
-               .packedType == Field::PackedType::WaitQueue);
-
-      parent.readsMutableStruct |= curr->ref->type.getHeapType()
-                                     .getStruct()
-                                     .fields.at(curr->index)
-                                     .mutable_ == Mutable;
+      // If the timeout is negative and no-one wakes us.
+      parent.mayNotReturn = true;
     }
     void visitStructNotify(StructNotify* curr) {
-      parent.isAtomic = true;
-
-      // If the ref is null.
-      parent.implicitTrap = true;
-
-      // struct.notify mutates an opaque waiter queue which isn't visible in
-      // user code. Model this as a struct write which prevents reorderings
-      // (since isAtomic == true).
-      parent.writesStruct = true;
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      // Non-shared notifies just return 0.
+      if (curr->ref->type.getHeapType().isShared()) {
+        return;
+      }
+      // AtomicNotify doesn't strictly write the struct, but it does
+      // modify the waiters list associated with the waitqueue field, which we
+      // can think of as a write.
+      parent.readsSharedMutableStruct = true;
+      parent.writesSharedStruct = true;
+      parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
@@ -1006,88 +1151,136 @@ private:
     }
     void visitArrayNewFixed(ArrayNewFixed* curr) {}
     void visitArrayGet(ArrayGet* curr) {
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
       if (curr->ref->type.isNull()) {
         parent.trap = true;
         return;
       }
-      parent.readsArray = true;
-      // traps when the arg is null or the index out of bounds
+      // Null refs and OOB access.
       parent.implicitTrap = true;
+      auto heapType = curr->ref->type.getHeapType();
+      if (heapType.getArray().element.mutable_ == Mutable) {
+        if (heapType.isShared()) {
+          parent.readsSharedMutableArray = true;
+          parent.readOrder = std::max(parent.readOrder, curr->order);
+        } else {
+          parent.readsMutableArray = true;
+        }
+      }
     }
     void visitArraySet(ArraySet* curr) {
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
       if (curr->ref->type.isNull()) {
         parent.trap = true;
         return;
       }
-      parent.writesArray = true;
-      // traps when the arg is null or the index out of bounds
+      // Null refs and OOB access.
       parent.implicitTrap = true;
+      auto heapType = curr->ref->type.getHeapType();
+      if (heapType.isShared()) {
+        parent.writesSharedStruct = true;
+        parent.writeOrder = std::max(parent.readOrder, curr->order);
+      } else {
+        parent.writesStruct = true;
+      }
     }
     void visitArrayLen(ArrayLen* curr) {
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
       if (curr->ref->type.isNull()) {
         parent.trap = true;
         return;
       }
-      // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
+      if (curr->destRef->type == Type::unreachable ||
+          curr->srcRef->type == Type::unreachable) {
+        return;
+      }
       if (curr->destRef->type.isNull() || curr->srcRef->type.isNull()) {
         parent.trap = true;
         return;
       }
-      parent.readsArray = true;
-      parent.writesArray = true;
-      // traps when a ref is null, or when out of bounds.
+      // Null refs and OOB access.
       parent.implicitTrap = true;
+      auto srcHeapType = curr->srcRef->type.getHeapType();
+      if (srcHeapType.getArray().element.mutable_ == Mutable) {
+        if (srcHeapType.isShared()) {
+          parent.readsSharedMutableArray = true;
+        } else {
+          parent.readsMutableArray = true;
+        }
+      }
+      if (curr->destRef->type.getHeapType().isShared()) {
+        parent.writesSharedArray = true;
+      } else {
+        parent.writesArray = true;
+      }
     }
     void visitArrayFill(ArrayFill* curr) {
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
       if (curr->ref->type.isNull()) {
         parent.trap = true;
         return;
       }
-      parent.writesArray = true;
-      // Traps when the destination is null or when out of bounds.
+      // Null refs and OOB access.
       parent.implicitTrap = true;
+      if (curr->ref->type.getHeapType().isShared()) {
+        parent.writesSharedArray = true;
+      } else {
+        parent.writesArray = true;
+      }
     }
     template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
       if (curr->ref->type.isNull()) {
         parent.trap = true;
         return;
       }
-      parent.writesArray = true;
-      // Traps when the destination is null, when out of bounds in source or
-      // destination, or when the source segment has been dropped.
+      // Null refs and OOB access.
       parent.implicitTrap = true;
+      if (curr->ref->type.getHeapType().isShared()) {
+        parent.writesSharedArray = true;
+      } else {
+        parent.writesArray = true;
+      }
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
-    void visitArrayRMW(ArrayRMW* curr) {
+    template<typename ArrayRMWExpr> void visitArrayRMWExpr(ArrayRMWExpr* curr) {
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
       if (curr->ref->type.isNull()) {
         parent.trap = true;
         return;
       }
-      parent.readsArray = true;
-      parent.writesArray = true;
-      // traps when the arg is null or the index out of bounds
+      // Null refs and OOB access.
       parent.implicitTrap = true;
-      assert(curr->order != MemoryOrder::Unordered);
-      parent.isAtomic = true;
-    }
-    void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
-        return;
+      if (curr->ref->type.getHeapType().isShared()) {
+        parent.readsSharedMutableArray = true;
+        parent.writesSharedArray = true;
+        parent.readOrder = std::max(parent.readOrder, curr->order);
+        parent.writeOrder = std::max(parent.writeOrder, curr->order);
+      } else {
+        parent.readsMutableArray = true;
+        parent.writesArray = true;
       }
-      parent.readsArray = true;
-      parent.writesArray = true;
-      // traps when the arg is null or the index out of bounds
-      parent.implicitTrap = true;
-      assert(curr->order != MemoryOrder::Unordered);
-      parent.isAtomic = true;
     }
+    void visitArrayRMW(ArrayRMW* curr) { visitArrayRMWExpr(curr); }
+    void visitArrayCmpxchg(ArrayCmpxchg* curr) { visitArrayRMWExpr(curr); }
     void visitRefAs(RefAs* curr) {
       if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
         // These conversions are infallible.
@@ -1108,7 +1301,7 @@ private:
       // traps when ref is null
       parent.implicitTrap = true;
       if (curr->op != StringNewFromCodePoint) {
-        parent.readsArray = true;
+        parent.readsMutableArray = true;
       }
     }
     void visitStringConst(StringConst* curr) {}
@@ -1208,14 +1401,14 @@ private:
 public:
   // Helpers
 
-  // See comment on invalidate() for the assumptions on the inputs here.
+  // See comment on orderedBefore() for the assumptions on the inputs here.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
                          Expression* a,
                          Expression* b) {
     EffectAnalyzer aEffects(passOptions, module, a);
     EffectAnalyzer bEffects(passOptions, module, b);
-    return !aEffects.invalidates(bEffects);
+    return !aEffects.orderedBefore(bEffects);
   }
 
   // C-API
@@ -1259,10 +1452,11 @@ public:
     if (globalsWritten.size() > 0) {
       effects |= SideEffects::WritesGlobal;
     }
-    if (readsMemory) {
+    // TODO: Expand the C API to handle shared locations, structs, and arrays.
+    if (readsMemory || readsSharedMemory) {
       effects |= SideEffects::ReadsMemory;
     }
-    if (writesMemory) {
+    if (writesMemory || writesSharedMemory) {
       effects |= SideEffects::WritesMemory;
     }
     if (readsTable) {
@@ -1277,7 +1471,9 @@ public:
     if (trapsNeverHappen) {
       effects |= SideEffects::TrapsNeverHappen;
     }
-    if (isAtomic) {
+    // TODO: Expand the C API to handle memory orders.
+    if (readOrder != MemoryOrder::Unordered ||
+        writeOrder != MemoryOrder::Unordered) {
       effects |= SideEffects::IsAtomic;
     }
     if (throws_) {
