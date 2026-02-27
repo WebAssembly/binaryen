@@ -182,7 +182,8 @@ public:
           if (arguments[0].geti32() == 0) {
             throwJSException();
           } else {
-            auto payload = std::make_shared<ExnData>(&wasmTag, arguments);
+            auto payload =
+              std::make_shared<ExnData>(RuntimeTag(&wasmTag), arguments);
             throwException(WasmException{Literal(payload)});
           }
         } else if (import->base == "table-get") {
@@ -275,7 +276,7 @@ public:
     auto empty = HeapType(Struct{});
     auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
     Literals arguments = {inner.externalize()};
-    auto payload = std::make_shared<ExnData>(&jsTag, arguments);
+    auto payload = std::make_shared<ExnData>(RuntimeTag(&jsTag), arguments);
     throwException(WasmException{Literal(payload)});
   }
 
@@ -357,10 +358,10 @@ class FuzzerImportResolver
                           const Signature& type) const override {
     if (name.module == "fuzzing-support") {
       if (name.name == "wasmtag") {
-        return &wasmTag;
+        return RuntimeTag(&wasmTag);
       }
       if (name.name == "jstag") {
-        return &jsTag;
+        return RuntimeTag(&jsTag);
       }
     }
 

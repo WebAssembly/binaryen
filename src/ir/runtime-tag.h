@@ -25,7 +25,11 @@ struct RuntimeTag {
   const Tag* tag = nullptr;
 
   RuntimeTag() = default;
-  RuntimeTag(const Tag* tag) : tag(tag) {}
+  // RuntimeTag(const RuntimeTag&) = default;
+  // RuntimeTag& operator=(const RuntimeTag&) = default;
+
+  RuntimeTag(std::nullptr_t tag) : tag(tag) {}
+  explicit RuntimeTag(const Tag* tag) : tag(tag) {}
 
   bool operator==(const RuntimeTag& other) const { return tag == other.tag; }
   bool operator!=(const RuntimeTag& other) const { return tag != other.tag; }

@@ -94,7 +94,7 @@ public:
       tag.type = HeapType(signature);
     }
 
-    return &it->second;
+    return RuntimeTag(&it->second);
   }
 
 private:
