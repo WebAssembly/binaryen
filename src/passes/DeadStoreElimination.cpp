@@ -495,7 +495,7 @@ struct MemoryLogic : public ComparingLogic {
       // behavior - they trap on unaligned addresses. For simplicity, only
       // consider the case where atomicity is identical.
       // TODO: use ignoreImplicitTraps
-      if (store->isAtomic != load->isAtomic) {
+      if (store->isAtomic() != load->isAtomic()) {
         return false;
       }
 
@@ -516,7 +516,7 @@ struct MemoryLogic : public ComparingLogic {
       auto* store = store_->cast<Store>();
 
       // As in isLoadFrom, atomic stores are dangerous.
-      if (store->isAtomic != otherStore->isAtomic) {
+      if (store->isAtomic() != otherStore->isAtomic()) {
         return false;
       }
 
@@ -655,7 +655,9 @@ struct LocalDeadStoreElimination
   : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
   bool isFunctionParallel() { return true; }
 
-  Pass* create() { return new LocalDeadStoreElimination; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<LocalDeadStoreElimination>();
+  }
 
   void doWalkFunction(Function* func) {
     // Optimize globals.
