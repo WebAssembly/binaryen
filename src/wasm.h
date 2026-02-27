@@ -1715,6 +1715,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1727,6 +1729,8 @@ public:
   Expression* ref;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
@@ -1844,6 +1848,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1856,6 +1862,8 @@ public:
   Expression* index;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };

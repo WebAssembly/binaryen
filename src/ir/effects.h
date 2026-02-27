@@ -206,6 +206,9 @@ public:
     return mutableGlobalsRead.size() || readsMemory || readsTable ||
            readsMutableStruct || readsArray || isAtomic || calls;
   }
+  bool accessesGlobalState() const {
+    return readsMutableGlobalState() || writesGlobalState();
+  }
 
   bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
@@ -292,10 +295,10 @@ public:
         (danglingPop || other.danglingPop)) {
       return true;
     }
-    // All atomics are sequentially consistent for now, and ordered wrt other
-    // memory references.
-    if ((isAtomic && other.accessesMemory()) ||
-        (other.isAtomic && accessesMemory())) {
+    // We model all atomics as sequentially consistent for now. They are ordered
+    // wrt other loads and stores from anything, not just memories.
+    if ((isAtomic && other.accessesGlobalState()) ||
+        (other.isAtomic && accessesGlobalState())) {
       return true;
     }
     for (auto local : localsWritten) {
@@ -598,24 +601,26 @@ private:
     }
     void visitLoad(Load* curr) {
       parent.readsMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      parent.isAtomic |=
+        curr->isAtomic() && parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitStore(Store* curr) {
       parent.writesMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      parent.isAtomic |=
+        curr->isAtomic() && parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicRMW(AtomicRMW* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = true;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = true;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicWait(AtomicWait* curr) {
@@ -740,8 +745,9 @@ private:
       // memory.size accesses the size of the memory, and thus can be modeled as
       // reading memory
       parent.readsMemory = true;
-      // Atomics are sequentially consistent with memory.size.
-      parent.isAtomic = true;
+      // Synchronizes when memory.grow on other threads, but only when operating
+      // on shared memories.
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitMemoryGrow(MemoryGrow* curr) {
       // TODO: find out if calls is necessary here
@@ -751,8 +757,9 @@ private:
       // addresses, and just a read operation in the failure case
       parent.readsMemory = true;
       parent.writesMemory = true;
-      // Atomics are also sequentially consistent with memory.grow.
-      parent.isAtomic = true;
+      // Synchronizes with memory.size on other threads, but only when operating
+      // on shared memories.
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitRefNull(RefNull* curr) {}
     void visitRefIsNull(RefIsNull* curr) {}
@@ -896,18 +903,8 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      switch (curr->order) {
-        case MemoryOrder::Unordered:
-          break;
-        case MemoryOrder::SeqCst:
-          // Synchronizes with other threads.
-          parent.isAtomic = true;
-          break;
-        case MemoryOrder::AcqRel:
-          // Only synchronizes if other threads can read the field.
-          parent.isAtomic = curr->ref->type.getHeapType().isShared();
-          break;
-      }
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructSet(StructSet* curr) {
       if (curr->ref->type.isNull()) {
@@ -919,9 +916,8 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      if (curr->order != MemoryOrder::Unordered) {
-        parent.isAtomic = true;
-      }
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructRMW(StructRMW* curr) {
       if (curr->ref->type.isNull()) {
@@ -1013,6 +1009,8 @@ private:
       parent.readsArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArraySet(ArraySet* curr) {
       if (curr->ref->type.isNull()) {
@@ -1022,6 +1020,8 @@ private:
       parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArrayLen(ArrayLen* curr) {
       if (curr->ref->type.isNull()) {
