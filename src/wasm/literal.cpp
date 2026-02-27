@@ -175,7 +175,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
       new (&exnData) std::shared_ptr<ExnData>(other.exnData);
       return;
     case HeapType::ext: {
-      if (other.hasPayload()) {
+      if (other.hasExternPayload()) {
         i32 = other.i32;
       } else {
         // Externalized internal reference.
@@ -209,7 +209,7 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (type.getHeapType().isMaybeShared(HeapType::ext) && !hasPayload()) {
+  if (type.getHeapType().isMaybeShared(HeapType::ext) && !hasExternPayload()) {
     // Externalized internal reference.
     gcData.~shared_ptr();
     return;
@@ -722,9 +722,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           break;
         }
         case HeapType::ext: {
-          if (literal.hasPayload()) {
+          if (literal.hasExternPayload()) {
             // Externref payload
-            o << "externref(" << literal.getPayload() << ")";
+            o << "externref(" << literal.getExternPayload() << ")";
           } else {
             // Externalized internal reference.
             o << "externalized " << literal.internalize();
@@ -3001,7 +3001,7 @@ Literal Literal::internalize() const {
     auto none = HeapTypes::none.getBasic(heapType.getShared());
     return Literal(nullptr, none);
   }
-  if (isString() || hasPayload()) {
+  if (isString() || hasExternPayload()) {
     // This is an external reference. Wrap it.
     auto any = HeapTypes::any.getBasic(heapType.getShared());
     return Literal(std::make_shared<GCData>(Literals{*this}), any);

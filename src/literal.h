@@ -307,12 +307,12 @@ public:
     // Cast to unsigned for the left shift to avoid undefined behavior.
     return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }
-  bool hasPayload() const {
+  bool hasExternPayload() const {
     assert(type.getHeapType().isMaybeShared(HeapType::ext));
     return (i32 & 1) == 1;
   }
-  int32_t getPayload() const {
-    assert(hasPayload());
+  int32_t getExternPayload() const {
+    assert(hasExternPayload());
     return int32_t(uint32_t(i32) >> 1);
   }
   int64_t geti64() const {
