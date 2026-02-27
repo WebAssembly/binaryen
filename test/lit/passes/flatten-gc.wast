@@ -3,14 +3,15 @@
 ;; RUN: wasm-opt %s --flatten -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct))
-  (type $struct (struct))
+  ;; CHECK:      (type $A (sub (struct)))
+  (type $A (sub (struct)))
 
-  ;; CHECK:      (func $br_on_non_null (type $1) (param $x (ref null $struct)) (result (ref $struct))
-  ;; CHECK-NEXT:  (local $1 (ref null $struct))
-  ;; CHECK-NEXT:  (local $2 (ref null $struct))
-  ;; CHECK-NEXT:  (local $3 (ref null $struct))
-  ;; CHECK-NEXT:  (local $4 (ref $struct))
+
+  ;; CHECK:      (func $br_on_non_null (type $1) (param $x (ref null $A)) (result (ref $A))
+  ;; CHECK-NEXT:  (local $1 (ref null $A))
+  ;; CHECK-NEXT:  (local $2 (ref null $A))
+  ;; CHECK-NEXT:  (local $3 (ref null $A))
+  ;; CHECK-NEXT:  (local $4 (ref $A))
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (local.get $x)
@@ -43,8 +44,54 @@
   ;; CHECK-NEXT:   (local.get $4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_non_null (param $x (ref null $struct)) (result (ref $struct))
-    (block $block (result (ref $struct))
+  (func $br_on_non_null (param $x (ref null $A)) (result (ref $A))
+    (block $block (result (ref $A))
+      (br_on_non_null $block
+        (local.get $x)
+      )
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $br_on_cast (type $1) (param $x (ref null $A)) (result (ref $A))
+  ;; CHECK-NEXT:  (local $1 (ref null $A))
+  ;; CHECK-NEXT:  (local $2 (ref null $A))
+  ;; CHECK-NEXT:  (local $3 (ref null $A))
+  ;; CHECK-NEXT:  (local $4 (ref $A))
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (ref.is_null
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $block)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast (param $x (ref null $A)) (result (ref $A))
+    (block $block (result (ref $A))
       (br_on_non_null $block
         (local.get $x)
       )

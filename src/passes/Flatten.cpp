@@ -327,6 +327,8 @@ struct Flatten
           // arm.
           Expression* condition = nullptr; // avoid compiler warnings
           Expression* ifTrue = nullptr;
+          // If set, this appears after the if.
+          Expression* after = nullptr;
 
           switch (br->op) {
             case BrOnNull: {
@@ -353,31 +355,61 @@ struct Flatten
 
               // If body.
               auto* get2 = builder.makeLocalGet(refTemp, refType);
-              auto* set = builder.makeLocalSet(blockTemp, get2);
+              auto* set = builder.makeLocalSet(blockTemp, get2); // XXX don't we need RefAsNonNull?
               auto* br2 = builder.makeBreak(br->name);
               ifTrue = builder.makeBlock({set, br2});
               break;
             }
             case BrOnCast: {
+              // Sends the cast value, if it is a subtype.
+              //
+              //   (br_on_cast $target type (X))
+              // =>
+              //   temp = (X)
+              //   (if (ref.test type temp)
+              //     $target's storage = (ref.cast type temp);
+              //     br $target
+              //   )
+              //
+
+              // If condition.
+              auto* get = builder.makeLocalGet(refTemp, refType);
+              condition = builder.makeRefTest(get, br->castType);
+
+              // If body.
+              auto* get2 = builder.makeLocalGet(refTemp, refType);
+              auto* cast = builder.makeRefCast(get2, br->castType);
+              auto* set = builder.makeLocalSet(blockTemp, cast);
+              auto* br2 = builder.makeBreak(br->name);
+              ifTrue = builder.makeBlock({set, br2});
+
+              // Flow out the original, if the cast failed.
+              after = builder.makeLocalGet(refTemp, refType);
               break;
             }
             case BrOnCastFail: {
-              assert(false);
+              assert(false); // yes
               break;
             }
             case BrOnCastDescEq: {
-              assert(false);
+              assert(false); // TODO
               break;
             }
             case BrOnCastDescEqFail: {
-              assert(false);
+              assert(false); // TODO
               break;
             }
           }
 
           // Build the replacement If.
           auto* iff = builder.makeIf(condition, ifTrue);
-          replaceCurrent(iff);
+          if (!after) {
+            replaceCurrent(iff);
+          } else {
+            // Add the If as a prelude, and replace ourselves with |after|.
+            ourPreludes.push_back(iff);
+            replaceCurrent(after);
+          }
         }
         
         /*
