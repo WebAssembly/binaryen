@@ -555,6 +555,7 @@ public:
   void visitArrayRMW(ArrayRMW* curr);
   void visitArrayCmpxchg(ArrayCmpxchg* curr);
   void visitStructWait(StructWait* curr);
+  void visitStructNotify(StructNotify* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -3517,25 +3518,31 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
                 curr,
                 "struct.wait timeout must be an i64");
 
-  if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
-    return;
-  }
+  // Checks to the ref argument's type are done in IRBuilder where we have the
+  // type annotation immediate available. We check that
+  // * The reference arg is a subtype of the type immediate
+  // * The index immediate is a valid field index of the type immediate (and
+  // thus valid for the reference's type too)
+  // * The index points to a packed waitqueue field
+}
 
-  // In practice this likely fails during parsing instead.
-  if (!shouldBeTrue(curr->index <
-                      curr->ref->type.getHeapType().getStruct().fields.size(),
-                    curr,
-                    "struct.wait index immediate should be less than the field "
-                    "count of the struct")) {
-    return;
-  }
+void FunctionValidator::visitStructNotify(StructNotify* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "struct.notify requires shared-everything [--enable-shared-everything]");
 
-  shouldBeTrue(curr->ref->type.getHeapType()
-                   .getStruct()
-                   .fields.at(curr->index)
-                   .packedType == Field::WaitQueue,
-               curr,
-               "struct.wait struct field must be a waitqueue");
+  shouldBeEqual(curr->count->type,
+                Type(Type::BasicType::i32),
+                curr,
+                "struct.notify count must be an i32");
+
+  // Checks to the ref argument's type are done in IRBuilder where we have the
+  // type annotation immediate available. We check that
+  // * The reference arg is a subtype of the type immediate
+  // * The index immediate is a valid field index of the type immediate (and
+  // thus valid for the reference's type too)
+  // * The index points to a packed waitqueue field
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {

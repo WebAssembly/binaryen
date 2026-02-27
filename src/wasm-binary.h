@@ -703,6 +703,7 @@ enum ASTNodes {
   AtomicFence = 0x03,
   Pause = 0x04,
   StructWait = 0x05,
+  StructNotify = 0x06,
 
   I32AtomicLoad = 0x10,
   I64AtomicLoad = 0x11,

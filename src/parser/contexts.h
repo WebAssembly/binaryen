@@ -809,6 +809,13 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<> makeStructNotify(Index,
+                            const std::vector<Annotation>&,
+                            HeapTypeT,
+                            FieldIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<> makeArrayNew(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
@@ -2722,6 +2729,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                           HeapType type,
                           Index field) {
     return withLoc(pos, irBuilder.makeStructWait(type, field));
+  }
+
+  Result<> makeStructNotify(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            HeapType type,
+                            Index field) {
+    return withLoc(pos, irBuilder.makeStructNotify(type, field));
   }
 
   Result<> makeArrayNew(Index pos,

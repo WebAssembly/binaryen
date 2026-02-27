@@ -982,6 +982,17 @@ private:
                                      .fields.at(curr->index)
                                      .mutable_ == Mutable;
     }
+    void visitStructNotify(StructNotify* curr) {
+      parent.isAtomic = true;
+
+      // If the ref is null.
+      parent.implicitTrap = true;
+
+      // struct.notify mutates an opaque waiter queue which isn't visible in
+      // user code. Model this as a struct write which prevents reorderings
+      // (since isAtomic == true).
+      parent.writesStruct = true;
+    }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped
