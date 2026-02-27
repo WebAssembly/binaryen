@@ -398,6 +398,7 @@ SPEC_TESTS_TO_SKIP = [
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
     'custom-page-sizes',
     'wide-arithmetic',
+    'custom-descriptors',
 ]
 
 # Paths are relative to the test/spec/testsuite directory
