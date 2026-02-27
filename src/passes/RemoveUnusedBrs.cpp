@@ -1242,7 +1242,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           //  )
           //
           // Anything branching to the child will end up in that second
-          // instruction |after|.
+          // instruction |after|. That lets us optimize the cases where |after|
+          // is a br or an unreachable.
           if (auto* child = list[0]->dynCast<Block>()) {
             if (child->name) {
               if (auto* jump = list[1]->dynCast<Break>()) {
