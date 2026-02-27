@@ -1575,7 +1575,22 @@
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (array.get $null
+  ;; CHECK-NEXT:        (array.new_default $null
+  ;; CHECK-NEXT:         (i32.const 10)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.set $something
   ;; CHECK-NEXT:   (array.new_default $something
@@ -5607,15 +5622,16 @@
 
 ;; Packed fields with signed gets.
 (module
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $array (array (mut i8)))
+
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $struct (struct (field i16)))
   (type $struct (struct (field i16)))
 
-  ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
-  ;; CHECK:      (func $test-struct (type $0)
+  ;; CHECK:      (func $test-struct (type $1)
   ;; CHECK-NEXT:  (local $x (ref $struct))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (struct.new $struct
@@ -5650,7 +5666,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-array (type $0)
+  ;; CHECK:      (func $test-array (type $1)
   ;; CHECK-NEXT:  (local $x (ref $array))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (array.new_fixed $array 1
@@ -5658,10 +5674,26 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const -1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get_s $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 255)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get_u $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-array
