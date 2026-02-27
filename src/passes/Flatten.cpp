@@ -323,6 +323,11 @@ struct Flatten
           Type blockType = findBreakTarget(br->name)->type;
           Index blockTemp = getTempForBreakTarget(br->name, blockType);
 
+          // Each pattern fills in the condition for an if, and the if's ifTrue
+          // arm.
+          Expression* condition = nullptr; // avoid compiler warnings
+          Expression* ifTrue = nullptr;
+
           switch (br->op) {
             case BrOnNull: {
               // BrOnNull does not send a value.
@@ -344,17 +349,13 @@ struct Flatten
               // If condition.
               auto* get = builder.makeLocalGet(refTemp, refType);
               auto* isNull = builder.makeRefIsNull(get);
-              auto* isNotNull = builder.makeUnary(EqZInt32, isNull);
+              condition = builder.makeUnary(EqZInt32, isNull);
 
               // If body.
               auto* get2 = builder.makeLocalGet(refTemp, refType);
               auto* set = builder.makeLocalSet(blockTemp, get2);
               auto* br2 = builder.makeBreak(br->name);
-              auto* body = builder.makeBlock({set, br2});
-
-              // If.
-              auto* iff = builder.makeIf(isNotNull, body);
-              replaceCurrent(iff);
+              ifTrue = builder.makeBlock({set, br2});
               break;
             }
             case BrOnCast: {
@@ -373,6 +374,10 @@ struct Flatten
               break;
             }
           }
+
+          // Build the replacement If.
+          auto* iff = builder.makeIf(condition, ifTrue);
+          replaceCurrent(iff);
         }
         
         /*
