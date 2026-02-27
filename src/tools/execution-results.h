@@ -268,13 +268,8 @@ public:
   }
 
   void throwJSException() {
-    // JS exceptions contain an externref. Use the same type of value as a JS
-    // exception would have, which is a reference to an object, and which will
-    // print out "object" in the logging from JS. A trivial struct is enough for
-    // us to log the same thing here.
-    auto empty = HeapType(Struct{});
-    auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
-    Literals arguments = {inner.externalize()};
+    // JS exceptions contain an externref.
+    Literals arguments = {Literal::makeExtern(0, Unshared)};
     auto payload = std::make_shared<ExnData>(&jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }

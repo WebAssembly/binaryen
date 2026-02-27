@@ -362,8 +362,7 @@ protected:
   Literal makeGCData(Literals&& data,
                      Type type,
                      Literal desc = Literal::makeNull(HeapType::none)) {
-    auto allocation =
-      std::make_shared<GCData>(type.getHeapType(), std::move(data), desc);
+    auto allocation = std::make_shared<GCData>(std::move(data), desc);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     // GC data with cycles will leak, since shared_ptrs do not handle cycles.
     // Binaryen is generally not used in long-running programs so we just ignore
