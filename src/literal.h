@@ -43,9 +43,14 @@ class Literal {
     // the value if there is one, and the highest bit containing whether there
     // is a value. Thus, a null is |i32 === 0|.
     //
-    // Externref payloads are also stored here, with their low bit set to
-    // differentiate an externref with a payload from an externalized internal
-    // reference, which uses the gcData field instead.
+    // Externref payloads, which serve to differentiate different external
+    // references but are otherwise meaningless, are also stored in the i32
+    // field, with their low bit set to differentiate an externref with a
+    // payload from an externalized internal reference, which uses the gcData
+    // field instead. This scheme supports 31 bits of payload for externrefs,
+    // which should be sufficient for spec test and fuzzing purposes, but if we
+    // need more bits we can use the i64 field instead. This scheme also depends
+    // on the low bit of a shared_ptr not being used.
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
