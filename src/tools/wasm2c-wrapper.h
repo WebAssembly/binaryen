@@ -61,6 +61,7 @@ inline std::string wasm2cMangle(Name name, Signature sig) {
         return 'd';
       default:
         Fatal() << "unhandled wasm2c wrapper signature type: " << type;
+        abort();
     }
   };
 

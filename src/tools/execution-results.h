@@ -353,7 +353,8 @@ public:
 class FuzzerImportResolver
   : public LinkedInstancesImportResolver<ModuleRunner> {
   using LinkedInstancesImportResolver::LinkedInstancesImportResolver;
-  Tag* getTagOrNull(ImportNames name, const Signature& type) const override {
+  RuntimeTag getTagOrNull(ImportNames name,
+                          const Signature& type) const override {
     if (name.module == "fuzzing-support") {
       if (name.name == "wasmtag") {
         return &wasmTag;

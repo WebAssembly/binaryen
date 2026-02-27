@@ -85,15 +85,15 @@ public:
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
   Flow(Name breakTo, Literals&& values)
     : values(std::move(values)), breakTo(breakTo) {}
-  Flow(Name breakTo, Tag* suspendTag, Literals&& values)
+  Flow(Name breakTo, RuntimeTag suspendTag, Literals&& values)
     : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
     assert(breakTo == SUSPEND_FLOW);
   }
 
   Literals values;
-  Name breakTo;              // if non-null, a break is going on
-  Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
-                             // this is the tag being suspended
+  Name breakTo;                    // if non-null, a break is going on
+  RuntimeTag suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW,
+                                   // and this is the tag being suspended
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
@@ -128,7 +128,7 @@ public:
       o << flow.values[i];
     }
     if (flow.suspendTag) {
-      o << " [suspend:" << flow.suspendTag->name << ']';
+      o << " [suspend:" << flow.suspendTag.tag->name << ']';
     }
     o << "})";
     return o;
@@ -167,10 +167,10 @@ struct FuncData {
 
 // The data of a (ref exn) literal.
 struct ExnData {
-  const Tag* tag;
+  RuntimeTag tag;
   Literals payload;
 
-  ExnData(const Tag* tag, Literals payload) : tag(tag), payload(payload) {}
+  ExnData(RuntimeTag tag, Literals payload) : tag(tag), payload(payload) {}
 };
 
 // Suspend/resume support.
@@ -275,7 +275,7 @@ struct ContData {
 
   // If set, this is the tag for an exception to be thrown at the resume point
   // (from resume_throw).
-  Tag* exceptionTag = nullptr;
+  RuntimeTag exceptionTag = nullptr;
 
   // If set, this is the exception ref to be thrown at the resume point (from
   // resume_throw_ref).
@@ -375,7 +375,7 @@ protected:
   }
 
   // Same as makeGCData but for ExnData.
-  Literal makeExnData(Tag* tag, const Literals& payload) {
+  Literal makeExnData(RuntimeTag tag, const Literals& payload) {
     auto allocation = std::make_shared<ExnData>(tag, payload);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
@@ -3175,7 +3175,7 @@ public:
   // Like `allGlobals`. Keyed by internal name. All tables including imports.
   std::unordered_map<Name, RuntimeTable*> allTables;
 
-  std::unordered_map<Name, Tag*> allTags;
+  std::unordered_map<Name, RuntimeTag> allTags;
 
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
 
@@ -3301,7 +3301,7 @@ public:
     return *global;
   }
 
-  Tag* getExportedTagOrNull(Name name) {
+  RuntimeTag getExportedTagOrNull(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Tag) {
       return nullptr;
@@ -3314,15 +3314,15 @@ public:
     return it->second;
   }
 
-  Tag& getExportedTagOrTrap(Name name) {
-    auto* tag = getExportedTagOrNull(name);
+  RuntimeTag getExportedTagOrTrap(Name name) {
+    auto tag = getExportedTagOrNull(name);
     if (!tag) {
       externalInterface->trap((std::stringstream() << "getExportedTag: export "
                                                    << name << " not found.")
                                 .str());
     }
 
-    return *tag;
+    return tag;
   }
 
   std::string printFunctionStack() {
@@ -3500,7 +3500,7 @@ private:
         auto& definedTag = definedTags.emplace_back(*tag);
 
         [[maybe_unused]] auto [_, inserted] =
-          allTags.try_emplace(tag->name, &definedTag);
+          allTags.try_emplace(tag->name, RuntimeTag(&definedTag));
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated tag name");
       }
@@ -4641,7 +4641,7 @@ public:
 
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        auto* tag = allTags[curr->catchTags[i]];
+        auto tag = allTags[curr->catchTags[i]];
         if (tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
@@ -4747,7 +4747,7 @@ public:
 
   void maybeThrowAfterResuming(std::shared_ptr<ContData>& currContinuation) {
     // We may throw by creating a tag, or an exnref.
-    auto* tag = currContinuation->exceptionTag;
+    auto tag = currContinuation->exceptionTag;
     auto exnref = currContinuation->exception.type != Type::none;
     assert(!(tag && exnref));
     if (tag) {
@@ -4792,7 +4792,7 @@ public:
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
     auto old = self()->getCurrContinuationOrNull();
-    auto* tag = allTags[curr->tag];
+    auto tag = allTags[curr->tag];
     if (!old) {
       return Flow(SUSPEND_FLOW, tag, std::move(arguments));
     }
@@ -4877,7 +4877,7 @@ public:
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-        auto* handlerTag = allTags[curr->handlerTags[i]];
+        auto handlerTag = allTags[curr->handlerTags[i]];
         if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching.
           ret.suspendTag = nullptr;

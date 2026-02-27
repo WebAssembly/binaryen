@@ -1608,8 +1608,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           return ValueBuilder::makeUnary(
             PLUS, ValueBuilder::makeDouble(curr->value.getf64()));
         }
-        default:
+        default: {
           Fatal() << "unknown const type";
+          WASM_UNREACHABLE("fatal");
+        }
       }
     }
 
@@ -1786,6 +1788,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
         }
         default: {
           Fatal() << "Unhandled type in unary: " << *curr;
+          WASM_UNREACHABLE("fatal");
         }
       }
     }
@@ -2904,6 +2907,7 @@ void Wasm2JSGlue::emitMemory() {
                "']['" + importedGlobal->base.toString() + "']";
       }
       Fatal() << "non-constant offsets aren't supported yet\n";
+      WASM_UNREACHABLE("fatal");
     };
 
     out << "function initActiveSegments(imports) {\n";

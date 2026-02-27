@@ -86,8 +86,8 @@ public:
 
   // We assume that each tag import is distinct. This is wrong if the same tag
   // instantiation is imported twice with different import names.
-  Tag* getTagOrNull(ImportNames name,
-                    const Signature& signature) const override {
+  RuntimeTag getTagOrNull(ImportNames name,
+                          const Signature& signature) const override {
     auto [it, inserted] = importedTags.try_emplace(name, Tag{});
     if (inserted) {
       auto& tag = it->second;

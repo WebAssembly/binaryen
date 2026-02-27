@@ -5432,6 +5432,7 @@ const char* BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
     return get->func.str.data();
   } else {
     Fatal() << "invalid expression in segment data.";
+    abort();
   }
 }
 
