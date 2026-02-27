@@ -575,9 +575,7 @@
   )
 
   ;; YESTNH:      (func $block-unreachable-all (type $1) (param $p i32)
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (local.get $p)
-  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $block-unreachable-all (type $2) (param $p i32)
   ;; NO_TNH-NEXT:  (if
@@ -601,13 +599,7 @@
       (then
         (block
           ;; Both stores can be removed, and even the entire if arm and then the
-          ;; entire if. However, we do not manage to do it all in a single
-          ;; iteration, because of the unreachable below: TNH notices it during
-          ;; the scan, and is careful not to remove unreachables (as we want
-          ;; them to propagate). The unreachable vanishes after it is scanned,
-          ;; so if we re-scanned the body at the end, we could optimize here,
-          ;; but this rare situation doesn't seem to justify another pass over
-          ;; the entire function - we leave it to later iterations.
+          ;; entire if.
           (i32.store
             (i32.const 0)
             (i32.const 1)

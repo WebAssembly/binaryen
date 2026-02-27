@@ -22,6 +22,7 @@
 #include <ir/branch-hints.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
+#include <ir/find_all.h>
 #include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
@@ -465,11 +466,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
   }
 
-  // We track if an Unreachable exists, see visitFunction.
-  bool hasUnreachable = false;
-
-  void visitUnreachable(Unreachable* curr) { hasUnreachable = true; }
-
   void visitFunction(Function* curr) {
     auto* optimized =
       optimize(curr->body, curr->getResults() != Type::none, true);
@@ -498,13 +494,19 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         // emit 0 / 0 for a logical trap, rather than an Unreachable. We would
         // remove that 0 / 0 if we saw it, and the trap would not propagate.
         // (But other passes would handle it, if they saw it first.)
-        if (!hasUnreachable) {
-          // Either trapsNeverHappen and there is no Unreachable (so we are
-          // only removing implicit traps, which is fine), or traps may happen
-          // in terms of the flag, but not in this actual code. Either way, we
-          // can remove all of this.
-          ExpressionManipulator::nop(curr->body);
+        if (effects.trap) {
+          // The code is removable, so the trap is the only effect it has, and
+          // we are considering removing it because TNH is enabled.
+          assert(getPassOptions().trapsNeverHappen);
+          if (!FindAll<Unreachable>(curr->body).list.empty()) {
+            return;
+          }
         }
+        // Either trapsNeverHappen and there is no Unreachable (so we are only
+        // removing implicit traps, which is fine), or traps may happen in terms
+        // of the flag, but not in this actual code. Either way, we can remove
+        // all of this.
+        ExpressionManipulator::nop(curr->body);
       }
     }
   }
