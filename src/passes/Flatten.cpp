@@ -360,7 +360,8 @@ struct Flatten
               ifTrue = builder.makeBlock({set, br2});
               break;
             }
-            case BrOnCast: {
+            case BrOnCast:
+            case BrOnCastFail: {
               // Sends the cast value, if it is a subtype.
               //
               //   (br_on_cast $target type (X))
@@ -375,20 +376,24 @@ struct Flatten
               // If condition.
               auto* get = builder.makeLocalGet(refTemp, refType);
               condition = builder.makeRefTest(get, br->castType);
+              if (br->op == BrOnCastFail) {
+                condition = builder.makeUnary(EqZInt32, condition);
+              }
 
               // If body.
-              auto* get2 = builder.makeLocalGet(refTemp, refType);
-              auto* cast = builder.makeRefCast(get2, br->castType);
-              auto* set = builder.makeLocalSet(blockTemp, cast);
+              Expression* sent = builder.makeLocalGet(refTemp, refType);
+              if (br->op == BrOnCast) {
+                sent = builder.makeRefCast(sent, br->castType);
+              }
+              auto* set = builder.makeLocalSet(blockTemp, sent);
               auto* br2 = builder.makeBreak(br->name);
               ifTrue = builder.makeBlock({set, br2});
 
-              // Flow out the original, if the cast failed.
+              // Flow out the proper value otherwise.
               after = builder.makeLocalGet(refTemp, refType);
-              break;
-            }
-            case BrOnCastFail: {
-              assert(false); // yes
+              if (br->op == BrOnCastFail) {
+                after = builder.makeRefCast(after, br->castType);
+              }
               break;
             }
             case BrOnCastDescEq: {

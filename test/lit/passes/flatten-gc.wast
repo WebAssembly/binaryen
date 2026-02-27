@@ -107,4 +107,73 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $br_on_cast_fail (type $4) (param $x (ref $A)) (result (ref null $B))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (local $3 anyref)
+  ;; CHECK-NEXT:  (local $4 (ref $B))
+  ;; CHECK-NEXT:  (local $5 anyref)
+  ;; CHECK-NEXT:  (local $6 (ref null $B))
+  ;; CHECK-NEXT:  (local $7 (ref null $B))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (ref.test (ref $B)
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $block)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (ref.cast (ref $B)
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $7
+  ;; CHECK-NEXT:   (local.get $6)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (local.get $7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_fail (param $x (ref $A)) (result (ref null $B))
+    (block $block (result anyref)
+      (return
+        (br_on_cast_fail $block (ref $A) (ref $B)
+          (local.get $x)
+        )
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
 )
