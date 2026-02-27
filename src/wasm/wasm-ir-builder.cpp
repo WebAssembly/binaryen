@@ -545,6 +545,14 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<>
+  visitStructNotify(StructNotify* curr,
+                    std::optional<HeapType> structType = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitStructNotify(curr, structType);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayGet(ArrayGet* curr,
                          std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -2261,11 +2269,30 @@ Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
   }
 
   StructWait curr(wasm.allocator);
-  curr.index = index;
   CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(
-    builder.makeStructWait(curr.index, curr.ref, curr.expected, curr.timeout));
+  push(builder.makeStructWait(index, curr.ref, curr.expected, curr.timeout));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeStructNotify(HeapType type, Index index) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.notify"};
+  }
+  // This is likely checked in the caller by the `fieldidx` parser.
+  if (index >= type.getStruct().fields.size()) {
+    return Err{"struct.notify field index out of bounds"};
+  }
+
+  if (type.getStruct().fields.at(index).packedType !=
+      Field::PackedType::WaitQueue) {
+    return Err{"struct.notify field index must contain a `waitqueue`"};
+  }
+
+  StructNotify curr(wasm.allocator);
+  CHECK_ERR(ChildPopper{*this}.visitStructNotify(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeStructNotify(index, curr.ref, curr.count));
   return Ok{};
 }
 
