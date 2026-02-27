@@ -19,7 +19,9 @@
   (type $struct (struct (field (mut i32))))
 
   ;; YESTNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (unreachable)
+  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
   ;; NO_TNH-NEXT:  (drop
@@ -62,7 +64,9 @@
       )
     )
 
-    ;; Ignore unreachable code.
+    ;; Ignore unreachable code. Note that we leave this dropped unreachable in
+    ;; the final output - in TNH it is valid to turn it into a nop, but we do
+    ;; not remove unreachables, to let them propagate to callers.
     (drop
       (unreachable)
     )
@@ -180,16 +184,42 @@
   )
 
   ;; YESTNH:      (func $toplevel (type $0)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $toplevel (type $0)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $toplevel
     ;; A removable side effect at the top level of a function. We can turn this
-    ;; into a nop.
+    ;; into a nop, but leave it as unreachable even in TNH, so that it can
+    ;; propagate to callers.
     (unreachable)
   )
+
+  ;; YESTNH:      (func $toplevel-might-trap (type $0)
+  ;; YESTNH-NEXT:  (local $0 i32)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $toplevel-might-trap (type $0)
+  ;; NO_TNH-NEXT:  (local $0 i32)
+  ;; NO_TNH-NEXT:  (local.set $0
+  ;; NO_TNH-NEXT:   (i32.load
+  ;; NO_TNH-NEXT:    (i32.const 0)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $toplevel-might-trap
+    ;; This might trap, but we can still remove it all in TNH mode: the implicit
+    ;; trap does not inhibit us from removing this code. (If we saw an explicit
+    ;; unreachable, we would not remove it, as tested above.)
+    (local $0 i32)
+    (local.set $0
+      (i32.load
+        (i32.const 0)
+      )
+    )
+  )
+
 
   ;; YESTNH:      (func $drop-loop (type $0)
   ;; YESTNH-NEXT:  (drop
