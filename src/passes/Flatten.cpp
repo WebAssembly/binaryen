@@ -329,19 +329,19 @@ struct Flatten
               //     br $target
               //   )
               //
-              auto type = br->ref->type;
-              auto temp = builder.addVar(getFunction(), type);
+              auto refType = br->ref->type;
+              auto temp = builder.addVar(getFunction(), refType);
               ourPreludes.push_back(builder.makeLocalSet(temp, br->ref));
 
               // If condition.
-              auto* get = builder.makeLocalGet(temp, type);
+              auto* get = builder.makeLocalGet(temp, refType);
               auto* isNull = builder.makeRefIsNull(get);
               auto* isNotNull = builder.makeUnary(EqZInt32, isNull);
 
               // If body.
               Type blockType = findBreakTarget(br->name)->type;
               Index blockTemp = getTempForBreakTarget(br->name, blockType);
-              auto* get2 = builder.makeLocalGet(temp, type);
+              auto* get2 = builder.makeLocalGet(temp, refType);
               auto* set = builder.makeLocalSet(blockTemp, get2);
               auto* br2 = builder.makeBreak(br->name);
               auto* body = builder.makeBlock({set, br2});
@@ -352,7 +352,6 @@ struct Flatten
               break;
             }
             case BrOnCast: {
-              assert(false);
               break;
             }
             case BrOnCastFail: {
