@@ -6,8 +6,10 @@
   ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
+  ;; CHECK:      (type $B (sub $A (struct)))
+  (type $B (sub $A (struct)))
 
-  ;; CHECK:      (func $br_on_non_null (type $1) (param $x (ref null $A)) (result (ref $A))
+  ;; CHECK:      (func $br_on_non_null (type $2) (param $x (ref null $A)) (result (ref $A))
   ;; CHECK-NEXT:  (local $1 (ref null $A))
   ;; CHECK-NEXT:  (local $2 (ref null $A))
   ;; CHECK-NEXT:  (local $3 (ref null $A))
@@ -53,11 +55,12 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_cast (type $1) (param $x (ref null $A)) (result (ref $A))
-  ;; CHECK-NEXT:  (local $1 (ref null $A))
-  ;; CHECK-NEXT:  (local $2 (ref null $A))
-  ;; CHECK-NEXT:  (local $3 (ref null $A))
+  ;; CHECK:      (func $br_on_cast (type $3) (param $x (ref $A)) (result (ref $B))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (local $3 (ref null $B))
   ;; CHECK-NEXT:  (local $4 (ref $A))
+  ;; CHECK-NEXT:  (local $5 (ref $B))
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (local.get $x)
@@ -66,33 +69,39 @@
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (ref.is_null
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (ref.test (ref $B)
+  ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (local.set $3
-  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:      (ref.cast (ref $B)
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (br $block)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:  (local.set $5
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:   (local.get $5)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_cast (param $x (ref null $A)) (result (ref $A))
-    (block $block (result (ref $A))
-      (br_on_non_null $block
+  (func $br_on_cast (param $x (ref $A)) (result (ref $B))
+    (block $block (result (ref $B))
+      (br_on_cast $block (ref $A) (ref $B)
         (local.get $x)
       )
       (unreachable)
