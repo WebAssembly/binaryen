@@ -116,7 +116,7 @@ Literal::Literal(std::shared_ptr<ContData> contData)
 
 Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
-  // TODO: we could in theory internalize strings
+  // TODO: we could in theory intern strings
   // Extract individual WTF-16LE code units.
   Literals contents;
   assert(string.size() % 2 == 0);
@@ -184,7 +184,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
       return;
     }
     case HeapType::any:
-      // Internalized external reference.
+      // Internalized external reference or string.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
     case HeapType::none:
@@ -2984,7 +2984,7 @@ Literal Literal::externalize() const {
     return Literal(nullptr, noext);
   }
   if (heapType.isMaybeShared(HeapType::any)) {
-    // This is an internalized externref; just unwrap it.
+    // This is an internalized externref or string; just unwrap it.
     assert(gcData->values.size() == 1);
     return gcData->values[0];
   }
