@@ -1482,7 +1482,7 @@ struct OptimizeInstructions
   // To avoid such risks we should keep in mind the following:
   //
   //  * Before removing a cast we should use its type information in the best
-  //    way we can. Only after doing so should a cast be removed. In the exmaple
+  //    way we can. Only after doing so should a cast be removed. In the example
   //    above, that means first seeing that the ref.test must return 1, and only
   //    then possibly removing the ref.cast.
   //  * Do not remove a cast if removing it might remove useful information for
@@ -1585,7 +1585,7 @@ struct OptimizeInstructions
             // trap we want to move. (We use a shallow effect analyzer since we
             // will only move the ref.as_non_null itself.)
             ShallowEffectAnalyzer movingEffects(options, *getModule(), input);
-            if (crossedEffects.invalidates(movingEffects)) {
+            if (movingEffects.orderedBefore(crossedEffects)) {
               return;
             }
 
@@ -2563,7 +2563,7 @@ struct OptimizeInstructions
         auto& options = getPassRunner()->options;
         EffectAnalyzer descEffects(options, *getModule(), curr->desc);
         ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
-        if (descEffects.invalidates(movingEffects)) {
+        if (movingEffects.orderedBefore(descEffects)) {
           return;
         }
       }
@@ -2772,7 +2772,7 @@ private:
   }
 
   // Check if two consecutive inputs to an instruction are equal. As they are
-  // consecutive, no code can execeute in between them, which simplies the
+  // consecutive, no code can execute in between them, which simplies the
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
@@ -2816,7 +2816,7 @@ private:
       //       originalRightEffects.
       auto originalRightEffects = effects(originalRight);
       auto rightEffects = effects(right);
-      if (originalRightEffects.invalidates(rightEffects)) {
+      if (originalRightEffects.orderedBefore(rightEffects)) {
         return false;
       }
     }
@@ -2877,7 +2877,7 @@ private:
         }
         ShallowEffectAnalyzer parentEffects(
           getPassOptions(), *getModule(), call);
-        if (parentEffects.invalidates(childEffects)) {
+        if (parentEffects.orderedAfter(childEffects)) {
           return false;
         }
         // No effects are possible.
@@ -3341,7 +3341,7 @@ private:
             // The condition is last, so we need a new local, and it may be a
             // bad idea to use a block like we do for an if. Do it only if we
             // can reorder
-            if (!condition.invalidates(value)) {
+            if (!condition.orderedAfter(value)) {
               return builder.makeSequence(builder.makeDrop(c), ifTrue);
             }
           }
@@ -3659,7 +3659,7 @@ private:
       if (CostAnalyzer(left).cost < MIN_COST) {
         return nullptr; // avoidable code is too cheap
       }
-      if (leftEffects.invalidates(rightEffects)) {
+      if (leftEffects.orderedBefore(rightEffects)) {
         return nullptr; // cannot reorder
       }
       std::swap(left, right);

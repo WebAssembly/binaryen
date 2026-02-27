@@ -462,8 +462,9 @@ struct Checker
     // This is the first time we encounter this expression.
     assert(!activeOriginals.count(curr));
 
-    // Given the current expression, see what it invalidates of the currently-
-    // hashed expressions, if there are any.
+    // Given the current expression, see which effects of the currently-hashed
+    // expressions it would have to remain ordered before, preventing removal of
+    // a later copy of the hashed expression.
     if (!activeOriginals.empty()) {
       // We only need to visit this node itself, as we have already visited its
       // children by the time we get here.
@@ -474,7 +475,7 @@ struct Checker
       //  (curr)
       //  (COPY)
       //
-      // We are some code in between an original and a copy of it, and we are
+      // We are some code in between an original and its copy, and we are
       // trying to turn COPY into a local.get of a value that we stash at the
       // original. If |curr| traps then we simply don't reach the copy anyhow.
       //
@@ -490,15 +491,13 @@ struct Checker
       auto idempotent = isIdempotent(curr, *getModule());
 
       std::vector<Expression*> invalidated;
-      for (auto& kv : activeOriginals) {
-        auto* original = kv.first;
+      for (auto& [original, originalInfo] : activeOriginals) {
         if (idempotent && ExpressionAnalyzer::shallowEqual(curr, original)) {
           // |curr| is idempotent, so it does not invalidate later appearances
           // of itself.
           continue;
         }
-        auto& originalInfo = kv.second;
-        if (effects.invalidates(originalInfo.effects)) {
+        if (effects.orderedBefore(originalInfo.effects)) {
           invalidated.push_back(original);
         }
       }
