@@ -1158,9 +1158,8 @@ private:
         parent.trap = true;
         return;
       }
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
       auto heapType = curr->ref->type.getHeapType();
       if (heapType.getArray().element.mutable_ == Mutable) {
         if (heapType.isShared()) {
@@ -1179,9 +1178,8 @@ private:
         parent.trap = true;
         return;
       }
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
       auto heapType = curr->ref->type.getHeapType();
       if (heapType.isShared()) {
         parent.writesSharedStruct = true;
@@ -1211,9 +1209,8 @@ private:
         parent.trap = true;
         return;
       }
-      if (curr->destRef->type.isNullable() || curr->srcRef->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
       auto srcHeapType = curr->srcRef->type.getHeapType();
       if (srcHeapType.getArray().element.mutable_ == Mutable) {
         if (srcHeapType.isShared()) {
@@ -1236,9 +1233,8 @@ private:
         parent.trap = true;
         return;
       }
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
       if (curr->ref->type.getHeapType().isShared()) {
         parent.writesSharedArray = true;
       } else {
@@ -1253,9 +1249,8 @@ private:
         parent.trap = true;
         return;
       }
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
       if (curr->ref->type.getHeapType().isShared()) {
         parent.writesSharedArray = true;
       } else {
@@ -1272,9 +1267,8 @@ private:
         parent.trap = true;
         return;
       }
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
       if (curr->ref->type.getHeapType().isShared()) {
         parent.readsSharedMutableArray = true;
         parent.writesSharedArray = true;
