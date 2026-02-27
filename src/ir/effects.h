@@ -644,9 +644,10 @@ private:
       parent.isAtomic = true;
     }
     void visitPause(Pause* curr) {
-      // It's not much of a problem if pause gets reordered with anything, but
-      // we don't want it to be removed entirely.
-      parent.isAtomic = true;
+      // We don't want this to be moved out of loops, but it doesn't otherwises
+      // matter much how it gets reordered. Say we transfer control as a coarse
+      // approximation of this.
+      parent.branchesOut = true;
     }
     void visitSIMDExtract(SIMDExtract* curr) {}
     void visitSIMDReplace(SIMDReplace* curr) {}
