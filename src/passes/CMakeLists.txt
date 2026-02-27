@@ -30,6 +30,7 @@ set(passes_SOURCES
   DeadArgumentElimination.cpp
   DeadArgumentElimination2.cpp
   DeadCodeElimination.cpp
+  DeadStoreElimination.cpp
   DeAlign.cpp
   DebugLocationPropagation.cpp
   DeNaN.cpp

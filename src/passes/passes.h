@@ -86,6 +86,7 @@ Pass* createInstrumentBranchHintsPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
 Pass* createLLVMMemoryCopyFillLoweringPass();
+Pass* createLocalDeadStoreEliminationPass();
 Pass* createLoopInvariantCodeMotionPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
