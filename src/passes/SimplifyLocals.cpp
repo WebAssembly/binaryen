@@ -452,7 +452,7 @@ struct SimplifyLocals
     FeatureSet features = this->getModule()->features;
     if (features.hasExceptionHandling() &&
         EffectAnalyzer(this->getPassOptions(), *this->getModule(), set->value)
-          .danglingPop) {
+          .get(EffectAnalyzer::Bits::DanglingPop)) {
       return false;
     }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1

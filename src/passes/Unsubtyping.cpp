@@ -1081,7 +1081,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
           // nested inside it. In that case we need to preserve the trap by
           // moving this descriptor to a new global.
           if (curr->desc->is<StructNew>() &&
-              EffectAnalyzer(getPassOptions(), *getModule(), curr->desc).trap) {
+              EffectAnalyzer(getPassOptions(), *getModule(), curr->desc)
+                .traps()) {
             removedTrappingInits.push_back(curr->desc);
           }
         }

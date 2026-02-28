@@ -567,8 +567,8 @@ struct GlobalTypeOptimization : public Pass {
             operands[newIndex] = old[i];
           } else {
             ++removed;
-            if (!func &&
-                EffectAnalyzer(getPassOptions(), *getModule(), old[i]).trap) {
+            if (!func && EffectAnalyzer(getPassOptions(), *getModule(), old[i])
+                           .traps()) {
               removedTrappingInits.push_back(old[i]);
             }
           }

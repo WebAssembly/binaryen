@@ -485,7 +485,7 @@ struct Checker
       // must happen twice. That is, removing trapping from (curr) in the
       // example above has no effect as (ORIGINAL) never has global write
       // effects.
-      effects.trap = false;
+      effects.set(EffectAnalyzer::Bits::Trap, false);
 
       auto idempotent = isIdempotent(curr, *getModule());
 
@@ -539,7 +539,7 @@ struct Checker
       // anyhow. (The other checks we perform here, including invalidation and
       // determinism, will ensure that either all of the appearances trap, or
       // none of them.)
-      effects.trap = false;
+      effects.set(EffectAnalyzer::Bits::Trap, false);
 
       // Note that we've already checked above that this has no side effects or
       // generativity: if we got here, then it is good to go from the

@@ -53,16 +53,16 @@ struct GenerateGlobalEffects : public Pass {
         // Gather the effects.
         funcInfo.effects.emplace(getPassOptions(), *module, func);
 
-        if (funcInfo.effects->calls) {
+        if (funcInfo.effects->get(EffectAnalyzer::Bits::Calls)) {
           // There are calls in this function, which we will analyze in detail.
           // Clear the |calls| field first, and we'll handle calls of all sorts
           // below.
-          funcInfo.effects->calls = false;
+          funcInfo.effects->set(EffectAnalyzer::Bits::Calls, false);
 
           // Clear throws as well, as we are "forgetting" calls right now, and
           // want to forget their throwing effect as well. If we see something
           // else that throws, below, then we'll note that there.
-          funcInfo.effects->throws_ = false;
+          funcInfo.effects->set(EffectAnalyzer::Bits::Throws, false);
 
           struct CallScanner
             : public PostWalker<CallScanner,
@@ -79,7 +79,7 @@ struct GenerateGlobalEffects : public Pass {
               if (auto* call = curr->dynCast<Call>()) {
                 // Note the direct call.
                 funcInfo.calledFunctions.insert(call->target);
-              } else if (effects.calls) {
+              } else if (effects.get(EffectAnalyzer::Bits::Calls)) {
                 // This is an indirect call of some sort, so we must assume the
                 // worst. To do so, clear the effects, which indicates nothing
                 // is known (so anything is possible).
@@ -89,8 +89,9 @@ struct GenerateGlobalEffects : public Pass {
                 // No call here, but update throwing if we see it. (Only do so,
                 // however, if we have effects; if we cleared it - see before -
                 // then we assume the worst anyhow, and have nothing to update.)
-                if (effects.throws_ && funcInfo.effects) {
-                  funcInfo.effects->throws_ = true;
+                if (effects.get(EffectAnalyzer::Bits::Throws) &&
+                    funcInfo.effects) {
+                  funcInfo.effects->set(EffectAnalyzer::Bits::Throws);
                 }
               }
             }
@@ -153,7 +154,7 @@ struct GenerateGlobalEffects : public Pass {
     for (auto& [func, info] : analysis.map) {
       if (callers[func->name].count(func->name)) {
         if (info.effects) {
-          info.effects->trap = true;
+          info.effects->set(EffectAnalyzer::Bits::Trap);
         }
       }
     }
