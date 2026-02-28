@@ -108,6 +108,7 @@ Result<> ParseDeclsCtx::addTable(Name name,
                                  const std::vector<Name>& exports,
                                  ImportNames* import,
                                  TableType type,
+                                 std::optional<ExprT>,
                                  Index pos) {
   CHECK_ERR(checkImport(pos, import));
   auto t = addTableDecl(pos, name, import, type);

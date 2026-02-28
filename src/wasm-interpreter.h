@@ -3541,12 +3541,15 @@ private:
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated table name");
       } else {
-        assert(table->type.isNullable() &&
-               "We only support nullable tables today");
-
-        auto null = Literal::makeNull(table->type.getHeapType());
+        Literal initVal;
+        if (table->type.isNullable()) {
+          initVal = Literal::makeNull(table->type.getHeapType());
+        } else {
+          assert(table->hasInit() && "Non-nullable table must have an init expressions");
+          initVal = ExpressionRunner<SubType>::visit(table->init).getSingleValue();
+        }
         auto& runtimeTable =
-          definedTables.emplace_back(createTable(null, *table));
+          definedTables.emplace_back(createTable(initVal, *table));
         [[maybe_unused]] auto [_, inserted] =
           allTables.try_emplace(table->name, runtimeTable.get());
         assert(inserted && "Unexpected repeated table name");
