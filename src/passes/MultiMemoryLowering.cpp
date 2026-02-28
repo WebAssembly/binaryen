@@ -436,7 +436,7 @@ struct MultiMemoryLowering : public Pass {
                                           : Builder::MemoryInfo::Memory64;
     isShared = getFirstMemory().shared;
     isImported = getFirstMemory().imported();
-    uint8_t const pageSizeLog2 = getFirstMemory().pageSizeLog2;
+    const uint8_t pageSizeLog2 = getFirstMemory().pageSizeLog2;
     for (auto& memory : wasm->memories) {
       // We are assuming that each memory is configured the same as the first
       // and assert if any of the memories does not match this configuration

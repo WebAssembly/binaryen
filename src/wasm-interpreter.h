@@ -5222,7 +5222,7 @@ protected:
                                        Index bytes,
                                        Address memorySize,
                                        Address::address64_t memoryPageSize) {
-    uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
+    uint64_t addr = ptr.getUnsigned();
     checkLoadAddress(addr, bytes, memorySize, memoryPageSize);
     return addr;
   }
