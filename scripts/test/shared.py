@@ -396,7 +396,6 @@ SPEC_TESTS_TO_SKIP = [
     'elem.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
-    'custom-page-sizes',
     'wide-arithmetic',
 ]
 

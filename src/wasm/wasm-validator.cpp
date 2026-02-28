@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <iostream>
 #include <mutex>
 #include <set>
 #include <sstream>
@@ -4656,11 +4657,20 @@ void validateMemories(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(module.features.hasMemory64(),
                         "memory",
                         "64-bit memories require memory64 [--enable-memory64]");
+      // TODO: The custom pages sizes proposals do not mention a verification
+      // method when the memory64 proposal is active simultaneously; the current
+      // implementation is based on spectest.
+      info.shouldBeTrue(memory->initial <= memory->maxSize64(),
+                        "memory",
+                        "initial memory must be <= 16EB");
+      info.shouldBeTrue(!memory->hasMax() || memory->max <= memory->maxSize64(),
+                        "memory",
+                        "max memory must be <= 16EB, or unlimited");
     } else {
-      info.shouldBeTrue(memory->initial <= Memory::kMaxSize32,
+      info.shouldBeTrue(memory->initial <= memory->maxSize32(),
                         "memory",
                         "initial memory must be <= 4GB");
-      info.shouldBeTrue(!memory->hasMax() || memory->max <= Memory::kMaxSize32,
+      info.shouldBeTrue(!memory->hasMax() || memory->max <= memory->maxSize32(),
                         "memory",
                         "max memory must be <= 4GB, or unlimited");
     }
@@ -4671,6 +4681,18 @@ void validateMemories(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(module.features.hasAtomics(),
                         "memory",
                         "shared memory requires threads [--enable-threads]");
+    }
+
+    if (memory->pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+      info.shouldBeTrue(
+        module.features.hasCustomPageSizes(),
+        "memory",
+        "custom page sizes not enabled [--enable-custom-page-sizes]");
+      info.shouldBeEqual(
+        Address(memory->pageSizeLog2),
+        Address(0),
+        "memory",
+        "custom page size must be 1 Byte or 65536 Bytes (64KiB)");
     }
   }
 }

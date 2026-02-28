@@ -111,7 +111,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   void init(Module& wasm, ModuleRunner& instance) override {
     ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
       auto shellMemory = Memory();
-      shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
+      shellMemory.resize(memory->initial << memory->pageSizeLog2);
       memories[memory->name] = shellMemory;
     });
   }

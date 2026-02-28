@@ -173,6 +173,7 @@ Memory* copyMemory(const Memory* memory, Module& out) {
   ret->hasExplicitName = memory->hasExplicitName;
   ret->initial = memory->initial;
   ret->max = memory->max;
+  ret->pageSizeLog2 = memory->pageSizeLog2;
   ret->shared = memory->shared;
   ret->addressType = memory->addressType;
   ret->module = memory->module;

@@ -144,6 +144,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
   m->initial = type.limits.initial;
   m->max = type.limits.max ? *type.limits.max : Memory::kUnlimitedSize;
   m->shared = type.shared;
+  m->pageSizeLog2 = type.pageSizeLog2;
   if (name) {
     // TODO: if the existing memory is not explicitly named, fix its name
     // and continue.
