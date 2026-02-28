@@ -13,7 +13,8 @@
   ;; CHECK-NEXT:  (local $1 (ref null $A))
   ;; CHECK-NEXT:  (local $2 (ref null $A))
   ;; CHECK-NEXT:  (local $3 (ref null $A))
-  ;; CHECK-NEXT:  (local $4 (ref $A))
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 (ref $A))
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (local.get $x)
@@ -21,11 +22,14 @@
   ;; CHECK-NEXT:   (local.set $2
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (ref.is_null
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (local.set $3
@@ -37,13 +41,13 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:  (local.set $5
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:   (local.get $5)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $br_on_non_null (param $x (ref null $A)) (result (ref $A))
