@@ -1122,9 +1122,9 @@ Literal Literal::nearbyint() const {
 Literal Literal::sqrt() const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(std::sqrt(getf32()));
+      return standardizeNaN(Literal(std::sqrt(getf32())));
     case Type::f64:
-      return Literal(std::sqrt(getf64()));
+      return standardizeNaN(Literal(std::sqrt(getf64())));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
