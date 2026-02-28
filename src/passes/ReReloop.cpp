@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "cfg/Relooper.h"
+#include "ir/find_all.h"
 #include "ir/flat.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -298,6 +299,11 @@ struct ReReloop final : public Pass {
   }
 
   void runOnFunction(Module* module, Function* function) override {
+    if (FindAll<Try>(function->body).list.size()) {
+      std::cout << "skip " << function->name << '\n';
+      return;
+    }
+
     Flat::verifyFlatness(function);
 
     // since control flow is flattened, this is pretty simple

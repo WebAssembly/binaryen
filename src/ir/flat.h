@@ -75,12 +75,12 @@ inline void verifyFlatness(Function* func) {
     void visitExpression(Expression* curr) {
       if (Properties::isControlFlowStructure(curr)) {
         verify(!curr->type.isConcrete(),
-               "control flow structures must not flow values");
+               "control flow structures must not flow values", curr);
       } else if (auto* set = curr->dynCast<LocalSet>()) {
         verify(!set->isTee() || set->type == Type::unreachable,
-               "tees are not allowed, only sets");
+               "tees are not allowed, only sets", set);
         verify(!Properties::isControlFlowStructure(set->value),
-               "set values cannot be control flow");
+               "set values cannot be control flow", set);
       } else {
         for (auto* child : ChildIterator(curr)) {
           bool isRefAsNonNull =
@@ -89,15 +89,15 @@ inline void verifyFlatness(Function* func) {
                    child->is<LocalGet>() || child->is<Unreachable>() ||
                    isRefAsNonNull,
                  "instructions must only have constant expressions, local.get, "
-                 "or unreachable as children");
+                 "or unreachable as children", curr);
         }
       }
     }
 
-    void verify(bool condition, const char* message) {
+    void verify(bool condition, const char* message, Expression* expr) {
       if (!condition) {
         Fatal() << "IR must be flat: run --flatten beforehand (" << message
-                << ", in " << getFunction()->name << ')';
+                << ", in " << getFunction()->name << ") " << *expr;
       }
     }
   };
@@ -106,7 +106,8 @@ inline void verifyFlatness(Function* func) {
   verifier.walkFunction(func);
   verifier.setFunction(func);
   verifier.verify(!func->body->type.isConcrete(),
-                  "function bodies must not flow values");
+                  "function bodies must not flow values",
+                  nullptr);
 }
 
 inline void verifyFlatness(Module* module) {

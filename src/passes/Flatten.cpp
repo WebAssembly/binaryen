@@ -35,7 +35,8 @@
 //
 // The tuple has a non-nullable type, and so it cannot currently be set to a
 // local, but in principle there's no reason it couldn't be. For now, error on
-// this.
+// this. Note: running TupleOptimization can work around this, by removing such
+// tuples.
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
@@ -330,6 +331,7 @@ struct Flatten
           // If set, this appears after the if.
           Expression* after = nullptr;
 
+          // TODO: restructure each of these in OptimizeInstructions/RUBrs
           switch (br->op) {
             case BrOnNull: {
               // BrOnNull does not send a value.
