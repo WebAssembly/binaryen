@@ -40,7 +40,7 @@ Expression* getDroppedChildrenAndAppend(Expression* parent,
     ShallowEffectAnalyzer effects(options, wasm, parent);
     // Ignore a trap, as the unreachable replacement would trap too.
     if (last->is<Unreachable>()) {
-      effects.trap = false;
+      effects.set(EffectAnalyzer::Bits::Trap, false);
     }
     keepParent = effects.hasUnremovableSideEffects();
   }

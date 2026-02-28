@@ -397,7 +397,7 @@ struct ConstantGlobalApplier
     // forget everything, but in some cases we can do better, if we have a call
     // and have computed function effects for it.
     ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
-    if (effects.calls) {
+    if (effects.get(EffectAnalyzer::Bits::Calls)) {
       // Forget everything.
       currConstantGlobals.clear();
     } else {

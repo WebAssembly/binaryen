@@ -324,7 +324,7 @@ private:
         // simulate its behavior. We cannot move expressions containing pops if
         // they are not enclosed in a 'catch' body, because a pop instruction
         // should follow right after 'catch'.
-        if (effects.danglingPop) {
+        if (effects.get(EffectAnalyzer::Bits::DanglingPop)) {
           return false;
         }
         // When an expression can throw and it is within a try/try_table scope,

@@ -187,8 +187,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         // We also cannot remove a pop as it is necessary for structural
         // reasons.
         EffectAnalyzer effects(getPassOptions(), *getModule(), list[i]);
-        if (effects.transfersControlFlow() || effects.calls ||
-            effects.mayNotReturn || effects.danglingPop) {
+        if (effects.transfersControlFlow() ||
+            effects.get(EffectAnalyzer::Bits::Calls) ||
+            effects.get(EffectAnalyzer::Bits::MayNotReturn) ||
+            effects.get(EffectAnalyzer::Bits::DanglingPop)) {
           headingToTrap = false;
           continue;
         }
@@ -494,7 +496,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         // emit 0 / 0 for a logical trap, rather than an Unreachable. We would
         // remove that 0 / 0 if we saw it, and the trap would not propagate.
         // (But other passes would handle it, if they saw it first.)
-        if (effects.trap) {
+        if (effects.traps()) {
           // The code is removable, so the trap is the only effect it has, and
           // we are considering removing it because TNH is enabled.
           assert(getPassOptions().trapsNeverHappen);
