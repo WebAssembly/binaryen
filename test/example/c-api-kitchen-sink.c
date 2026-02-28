@@ -2004,7 +2004,8 @@ void test_for_each() {
                       BinaryenTypeInt32(),
                       0,
                       makeInt32(module, expected_offsets[1]));
-
+    assert(BinaryenHasMemorySegment(module, segmentNames[0]));
+    assert(!BinaryenHasMemorySegment(module, "NonExistantSegment"));
     for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
       char out[15] = {};
       assert(BinaryenGetMemorySegmentByteOffset(module, segmentNames[i]) ==
