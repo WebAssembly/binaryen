@@ -25,7 +25,7 @@ from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
-from scripts.test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
+from scripts.test import binaryenjs, finalize, shared, support, wasm2js, wasm_opt
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
@@ -433,7 +433,7 @@ TEST_SUITES = {
     'wasm-metadce': run_wasm_metadce_tests,
     'wasm-reduce': run_wasm_reduce_tests,
     'spec': run_spec_tests,
-    'lld': lld.test_wasm_emscripten_finalize,
+    'finalize': finalize.test_wasm_emscripten_finalize,
     'wasm2js': wasm2js.test_wasm2js,
     'validator': run_validator_tests,
     'example': run_example_tests,
