@@ -353,7 +353,10 @@ struct Flatten
               // If condition.
               auto* get = builder.makeLocalGet(refTemp, refType);
               auto* isNull = builder.makeRefIsNull(get);
-              condition = builder.makeUnary(EqZInt32, isNull);
+              auto isNullTemp = builder.addVar(getFunction(), Type::i32);
+              ourPreludes.push_back(builder.makeLocalSet(isNullTemp, isNull));
+              auto* getIsNull = builder.makeLocalGet(isNullTemp, Type::i32);
+              condition = builder.makeUnary(EqZInt32, getIsNull);
 
               // If body.
               auto* get2 = builder.makeLocalGet(refTemp, refType);
