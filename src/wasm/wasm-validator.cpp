@@ -31,6 +31,7 @@
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
+#include "wasm-features.h"
 #include "wasm-type.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -1500,9 +1501,31 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
 }
 
 void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
-  shouldBeTrue(getModule()->features.hasSIMD(),
-               curr,
-               "SIMD operations require SIMD [--enable-simd]");
+  FeatureSet required = FeatureSet::None;
+  switch (curr->op) {
+    case RelaxedMaddVecF16x8:
+    case RelaxedNmaddVecF16x8:
+      required |= FeatureSet::FP16;
+      [[fallthrough]];
+    case LaneselectI8x16:
+    case LaneselectI16x8:
+    case LaneselectI32x4:
+    case LaneselectI64x2:
+    case RelaxedMaddVecF32x4:
+    case RelaxedNmaddVecF32x4:
+    case RelaxedMaddVecF64x2:
+    case RelaxedNmaddVecF64x2:
+    case DotI8x16I7x16AddSToVecI32x4:
+      required |= FeatureSet::RelaxedSIMD;
+      [[fallthrough]];
+    case Bitselect:
+      required |= FeatureSet::SIMD;
+  }
+  if (!shouldBeTrue(required <= getModule()->features,
+                    curr,
+                    "SIMD ternary operation requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), required) << '\n';
+  }
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "SIMD ternary must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
