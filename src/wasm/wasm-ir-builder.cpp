@@ -567,6 +567,13 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitArrayStore(ArrayStore* curr,
+                           std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayStore(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayCopy(ArrayCopy* curr,
                           std::optional<HeapType> dest = std::nullopt,
                           std::optional<HeapType> src = std::nullopt) {
@@ -2364,6 +2371,16 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   CHECK_ERR(ChildPopper{*this}.visitArraySet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArraySet(curr.ref, curr.index, curr.value, order));
+  return Ok{};
+}
+
+Result<>
+IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+  ArrayStore curr;
+  curr.valueType = type;
+  CHECK_ERR(
+    ChildPopper{*this}.visitArrayStore(&curr, HeapTypes::getMutI8Array()));
+  push(builder.makeArrayStore(bytes, type, curr.ref, curr.index, curr.value));
   return Ok{};
 }
 
