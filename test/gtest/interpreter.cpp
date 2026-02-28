@@ -685,6 +685,22 @@ TEST(InterpreterTest, SqrtF32) {
   EXPECT_EQ(results, expected);
 }
 
+TEST(InterpreterTest, SqrtF32Neg) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(-5.0))).getErr());
+  ASSERT_FALSE(builder.makeUnary(SqrtFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.runTest(*expr);
+  std::vector<Literal> expected{Literal(std::nanf("0x400000"))};
+
+  EXPECT_EQ(results, expected);
+}
+
 TEST(InterpreterTest, CeilF32) {
   Module wasm;
   IRBuilder builder(wasm);
@@ -848,6 +864,22 @@ TEST(InterpreterTest, SqrtF64) {
 
   auto results = Interpreter{}.runTest(*expr);
   std::vector<Literal> expected{Literal(double(2.23606797749979))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, SqrtF64Neg) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(double(-5.0))).getErr());
+  ASSERT_FALSE(builder.makeUnary(SqrtFloat64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.runTest(*expr);
+  std::vector<Literal> expected{Literal(std::nan("0x8000000000000"))};
 
   EXPECT_EQ(results, expected);
 }
