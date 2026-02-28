@@ -110,34 +110,18 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
 }
 
 void WasmBinaryWriter::writeResizableLimits(
-  Address initial, Address maximum, bool hasMaximum, bool shared, bool is64) {
-  uint32_t flags = (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
-                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
-                   (is64 ? (uint32_t)BinaryConsts::Is64 : 0U);
-  o << U32LEB(flags);
-  if (is64) {
-    o << U64LEB(initial);
-    if (hasMaximum) {
-      o << U64LEB(maximum);
-    }
-  } else {
-    o << U32LEB(initial);
-    if (hasMaximum) {
-      o << U32LEB(maximum);
-    }
-  }
-}
-
-void WasmBinaryWriter::writeMemoryResizableLimits(Address initial,
-                                                  Address maximum,
-                                                  bool hasMaximum,
-                                                  bool shared,
-                                                  bool is64,
-                                                  uint8_t pageSizeLog2) {
+  Address initial,
+  Address maximum,
+  bool hasMaximum,
+  bool shared,
+  bool is64,
+  std::optional<uint8_t> pageSizeLog2) {
+  uint8_t actualPageSizeLog2 =
+    pageSizeLog2 ? *pageSizeLog2 : Memory::kDefaultPageSizeLog2;
   uint32_t flags = (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
                    (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
                    (is64 ? (uint32_t)BinaryConsts::Is64 : 0U) |
-                   (pageSizeLog2 != Memory::kDefaultPageSizeLog2
+                   (actualPageSizeLog2 != Memory::kDefaultPageSizeLog2
                       ? (uint32_t)BinaryConsts::HasCustomPageSize
                       : 0U);
   o << U32LEB(flags);
@@ -152,8 +136,8 @@ void WasmBinaryWriter::writeMemoryResizableLimits(Address initial,
       o << U32LEB(maximum);
     }
   }
-  if (pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
-    o << U32LEB(pageSizeLog2);
+  if (actualPageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+    o << U32LEB(actualPageSizeLog2);
   }
 }
 
@@ -235,12 +219,12 @@ void WasmBinaryWriter::writeMemories() {
   auto num = importInfo->getNumDefinedMemories();
   o << U32LEB(num);
   ModuleUtils::iterDefinedMemories(*wasm, [&](Memory* memory) {
-    writeMemoryResizableLimits(memory->initial,
-                               memory->max,
-                               memory->hasMax(),
-                               memory->shared,
-                               memory->is64(),
-                               memory->pageSizeLog2);
+    writeResizableLimits(memory->initial,
+                         memory->max,
+                         memory->hasMax(),
+                         memory->shared,
+                         memory->is64(),
+                         std::optional<uint8_t>(memory->pageSizeLog2));
   });
   finishSection(start);
 }
@@ -381,12 +365,12 @@ void WasmBinaryWriter::writeImports() {
   ModuleUtils::iterImportedMemories(*wasm, [&](Memory* memory) {
     writeImportHeader(memory);
     o << U32LEB(int32_t(ExternalKind::Memory));
-    writeMemoryResizableLimits(memory->initial,
-                               memory->max,
-                               memory->hasMax(),
-                               memory->shared,
-                               memory->is64(),
-                               memory->pageSizeLog2);
+    writeResizableLimits(memory->initial,
+                         memory->max,
+                         memory->hasMax(),
+                         memory->shared,
+                         memory->is64(),
+                         std::optional<uint8_t>(memory->pageSizeLog2));
   });
   ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
     writeImportHeader(table);

@@ -1386,14 +1386,13 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(
-    Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
-  void writeMemoryResizableLimits(Address initial,
-                                  Address maximum,
-                                  bool hasMaximum,
-                                  bool shared,
-                                  bool is64,
-                                  uint8_t pageSizeLog2);
+  // pageSizeLog2 is only used for memory.
+  void writeResizableLimits(Address initial,
+                            Address maximum,
+                            bool hasMaximum,
+                            bool shared,
+                            bool is64,
+                            std::optional<uint8_t> pageSizeLog2 = std::nullopt);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::CustomSections::Subsection code);
