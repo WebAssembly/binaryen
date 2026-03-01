@@ -179,6 +179,7 @@ struct Walker : public VisitorType {
   }
 
   void walkTable(Table* table) {
+    walk(table->init);
     static_cast<SubType*>(this)->visitTable(table);
   }
 

@@ -62,6 +62,18 @@ Result<> ParseDefsCtx::addGlobal(Name,
   return Ok{};
 }
 
+Result<> ParseDefsCtx::addTable(Name,
+                                const std::vector<Name>&,
+                                ImportNames*,
+                                TableTypeT,
+                                std::optional<ExprT> init,
+                                Index) {
+  if (init) {
+    wasm.tables[index]->init = *init;
+  }
+  return Ok{};
+}
+
 Result<> ParseDefsCtx::addImplicitElems(Type,
                                         std::vector<Expression*>&& elems) {
   auto& e = wasm.elementSegments[implicitElemIndices.at(index)];

@@ -538,14 +538,19 @@ struct Analyzer {
               }
             });
           break;
-        case ModuleElementKind::Table:
+        case ModuleElementKind::Table: {
           ModuleUtils::iterTableSegments(
             *module, value, [&](ElementSegment* segment) {
               if (!segment->data.empty()) {
                 use({ModuleElementKind::ElementSegment, segment->name});
               }
             });
+          auto* table = module->getTable(value);
+          if (table->hasInit()) {
+            use(table->init);
+          }
           break;
+        }
         case ModuleElementKind::DataSegment: {
           auto* segment = module->getDataSegment(value);
           if (segment->offset) {
