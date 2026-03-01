@@ -3542,11 +3542,11 @@ private:
         assert(inserted && "Unexpected repeated table name");
       } else {
         Literal initVal;
-        if (table->type.isNullable()) {
-          initVal = Literal::makeNull(table->type.getHeapType());
-        } else {
-          assert(table->hasInit() && "Non-nullable table must have an init expressions");
+        if (table->hasInit()) {
           initVal = ExpressionRunner<SubType>::visit(table->init).getSingleValue();
+        } else {
+          assert(table->type.isNullable() && "Non-nullable table must have an init expressions");
+          initVal = Literal::makeNull(table->type.getHeapType());
         }
         auto& runtimeTable =
           definedTables.emplace_back(createTable(initVal, *table));

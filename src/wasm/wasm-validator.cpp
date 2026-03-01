@@ -4746,18 +4746,18 @@ void validateTables(Module& module, ValidationInfo& info) {
         table->init != nullptr,
         "table",
         "tables with non-nullable types require an initializer expression");
-      if (table->init != nullptr) {
-        info.shouldBeSubType(
-          table->init->type,
-          table->type,
-          table->init,
-          "init expression must be a subtype of the table type");
-        info.shouldBeTrue(
-          Properties::isValidConstantExpression(module, table->init),
-          "table",
-          "table initializer value must be constant");
-        validator.validate(table->init);
-      }
+    }
+    if (table->init != nullptr) {
+      info.shouldBeSubType(
+        table->init->type,
+        table->type,
+        table->init,
+        "init expression must be a subtype of the table type");
+      info.shouldBeTrue(
+        Properties::isValidConstantExpression(module, table->init),
+        "table",
+        "table initializer value must be constant");
+      validator.validate(table->init);
     }
     if (!module.features.hasGC()) {
       info.shouldBeFalse(table->hasInit(),
