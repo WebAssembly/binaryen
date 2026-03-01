@@ -139,17 +139,18 @@ void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
       DWARFYAML::Loc loc;
       loc.Start = entry.Begin;
       loc.End = entry.End;
+      loc.Location.reserve(entry.Loc.size());
       for (auto x : entry.Loc) {
         loc.Location.push_back(x);
       }
       loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
-      Y.Locs.push_back(loc);
+      Y.Locs.push_back(std::move(loc));
     }
     DWARFYAML::Loc loc;
     loc.Start = 0;
     loc.End = 0;
     loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
-    Y.Locs.push_back(loc);
+    Y.Locs.push_back(std::move(loc));
   }
 }
 
