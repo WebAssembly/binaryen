@@ -99,6 +99,9 @@ void PassRegistry::registerPasses() {
   registerPass("avoid-reinterprets",
                "Tries to avoid reinterpret operations via more loads",
                createAvoidReinterpretsPass);
+  registerPass("branch-hint-analysis",
+               "Infers branch hints and emits branch hinting section",
+               createBranchHintAnalysisPass);
   registerPass(
     "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
   registerPass("dae-optimizing",
