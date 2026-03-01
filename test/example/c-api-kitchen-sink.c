@@ -383,8 +383,8 @@ void test_read_with_feature() {
   BinaryenModuleRef module = BinaryenModuleCreate();
   // Having multiple tables makes this module inherently not MVP compatible
   // and requires the externref feature enabled to parse successfully.
-  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
-  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref(), NULL);
+  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref(), NULL);
 
   BinaryenFeatures features =
     BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
@@ -489,7 +489,7 @@ void test_core() {
   // Tags
   BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
 
-  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref(), NULL);
 
   // Exception handling
 
@@ -1369,7 +1369,7 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = {BinaryenFunctionGetName(sinker)};
-  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref(), NULL);
   BinaryenAddActiveElementSegment(
     module,
     "0",
@@ -2021,7 +2021,7 @@ void test_for_each() {
                                BinaryenFunctionGetName(fns[2])};
     BinaryenExpressionRef constExprRef =
       BinaryenConst(module, BinaryenLiteralInt32(0));
-    BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
+    BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref(), NULL);
     BinaryenAddActiveElementSegment(
       module, "0", "0", funcNames, 3, constExprRef);
     assert(1 == BinaryenGetNumElementSegments(module));

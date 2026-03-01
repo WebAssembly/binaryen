@@ -31,7 +31,7 @@ int main() {
       BinaryenAddFunction(module, "adder", params, results, NULL, 0, add);
 
     const char* funcNames[] = {"adder"};
-    BinaryenAddTable(module, "tab", 1, 1, BinaryenTypeFuncref());
+    BinaryenAddTable(module, "tab", 1, 1, BinaryenTypeFuncref(), NULL);
     assert(BinaryenGetTable(module, "tab") != NULL);
     BinaryenAddActiveElementSegment(
       module,
@@ -41,7 +41,7 @@ int main() {
       1,
       BinaryenConst(module, BinaryenLiteralInt32(0)));
 
-    BinaryenAddTable(module, "t2", 1, 1, BinaryenTypeFuncref());
+    BinaryenAddTable(module, "t2", 1, 1, BinaryenTypeFuncref(), NULL);
     BinaryenAddActiveElementSegment(
       module,
       "t2",
