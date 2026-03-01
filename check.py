@@ -200,7 +200,9 @@ def check_expected(actual, expected, stdout=None):
 
 UNSPLITTABLE_TESTS = [Path(x) for x in [
     "spec/testsuite/instance.wast",
-    "spec/instance.wast"]]
+    "spec/instance.wast",
+    "spec/testsuite/tag.wast",
+    "spec/tag.wast"]]
 
 
 def is_splittable(wast: Path):
@@ -377,7 +379,6 @@ def run_example_tests():
         subprocess.check_call(cmd)
         print('run...', output_file)
         actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
-        os.remove(output_file)
         shared.fail_if_not_identical_to_file(actual, expected)
 
 

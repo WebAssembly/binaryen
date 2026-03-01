@@ -423,7 +423,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'annotations.wast',  # String annotations IDs should be allowed
     'instance.wast',  # Requires support for table default elements
     'table64.wast',   # Requires validations for table size
-    'tag.wast',      # Non-empty tag results allowed by stack switching
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
     'ref_is_null.wast',  # Requires support for non-nullable reference types in tables

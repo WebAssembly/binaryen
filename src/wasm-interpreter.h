@@ -3496,8 +3496,7 @@ private:
     for (auto& tag : wasm.tags) {
       if (tag->imported()) {
         auto importNames = tag->importNames();
-        auto importedTag =
-          importResolver->getTagOrNull(importNames, tag->type.getSignature());
+        auto importedTag = importResolver->getTagOrNull(importNames, tag->type);
         if (!importedTag) {
           externalInterface->trap((std::stringstream()
                                    << "Imported tag " << importNames
