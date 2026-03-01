@@ -4784,10 +4784,6 @@ void validateTables(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(segment->type.isRef(),
                       "elem",
                       "element segment type must be of reference type.");
-    info.shouldBeTrue(
-      segment->type.isNullable(),
-      "elem",
-      "Non-nullable reference types are not yet supported for tables");
     auto typeFeats = segment->type.getFeatures();
     if (!info.shouldBeTrue(
           segment->type == funcref || typeFeats <= module.features,
