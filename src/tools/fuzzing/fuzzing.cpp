@@ -912,13 +912,13 @@ void TranslateToFuzzReader::finalizeTable() {
     // reasonable limit for the maximum table size.
     //
     // This also avoids an issue that arises from table->initial being an
-    // Address (64 bits) but Table::kMaxSize being an Index (32 bits), as a
-    // result of which we need to clamp to Table::kMaxSize as well in order for
+    // Address (64 bits) but Table::kMaxSize32 being an Index (32 bits), as a
+    // result of which we need to clamp to Table::kMaxSize32 as well in order for
     // the module to validate (but since we are clamping to a smaller value,
     // there is no need).
     const Address ReasonableMaxTableSize = 10000;
     table->initial = std::min(table->initial, ReasonableMaxTableSize);
-    assert(ReasonableMaxTableSize <= Table::kMaxSize);
+    assert(ReasonableMaxTableSize <= Table::kMaxSize32);
 
     table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
 

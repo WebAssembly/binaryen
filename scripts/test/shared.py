@@ -422,7 +422,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'instance.wast',  # Requires support for table default elements
-    'table64.wast',   # Requires validations for table size
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
