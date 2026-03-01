@@ -3540,9 +3540,11 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     auto tabtype = tabletypeContinued(ctx, addressType);
     CHECK_ERR(tabtype);
     ttype = *tabtype;
-    auto e = expr(ctx);
-    CHECK_ERR(e);
-    init = *e;
+    if (ctx.in.peekLParen()) {
+      auto e = expr(ctx);
+      CHECK_ERR(e);
+      init = *e;
+    }
   }
 
   if (!ctx.in.takeRParen()) {
