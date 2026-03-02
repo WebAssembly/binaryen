@@ -12,7 +12,7 @@
  (type $B (struct (field (mut f64))))
  (type $C (struct (field (mut i32)) (field (mut i32))))
 
- (memory shared 10)
+ (memory 10 shared)
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 0))
  (global $global$0 (mut i32) (i32.const 0))
@@ -157,9 +157,8 @@
    (struct.set $A 0
     ;; the reference can be seen to fall through this, proving the store is
     ;; dead (due to the one after it).
-    (br_on_cast $func
+    (br_on_cast $func (ref null $A) (ref $A)
      (local.get $x)
-     (rtt.canon $A)
     )
     (i32.const 20)
    )
@@ -264,9 +263,9 @@
   ;; the reference may change here
   (if
    (local.get $i)
-   (local.set $x
+   (then (local.set $x
     (call $get-ref)
-   )
+   ))
   )
   (struct.set $A 0
    (local.get $x)
@@ -600,8 +599,8 @@
   ;; the analysis is not confused by branching and merging; the first store is
   ;; dead
   (if (i32.const 1)
-   (nop)
-   (nop)
+   (then (nop)
+   (nop))
   )
   (struct.set $A 0
    (local.get $x)
