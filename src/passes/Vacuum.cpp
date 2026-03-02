@@ -188,9 +188,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         // reasons.
         EffectAnalyzer effects(getPassOptions(), *getModule(), list[i]);
         if (effects.transfersControlFlow() ||
-            effects.get(EffectAnalyzer::Bits::Calls) ||
-            effects.get(EffectAnalyzer::Bits::MayNotReturn) ||
-            effects.get(EffectAnalyzer::Bits::DanglingPop)) {
+            effects.getAny(EffectAnalyzer::Bits::Calls |
+                           EffectAnalyzer::Bits::MayNotReturn |
+                           EffectAnalyzer::Bits::DanglingPop)) {
           headingToTrap = false;
           continue;
         }

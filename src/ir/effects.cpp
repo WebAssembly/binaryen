@@ -21,10 +21,10 @@ namespace std {
 
 std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   o << "EffectAnalyzer {\n";
-  if (effects.get(wasm::EffectAnalyzer::Bits::BranchesOut)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::BranchesOut)) {
     o << "branchesOut\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::Calls)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::Calls)) {
     o << "calls\n";
   }
   if (effects.localsRead.size()) {
@@ -39,40 +39,40 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.globalsWritten.size()) {
     o << "globalsWritten\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::ReadsMemory)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::ReadsMemory)) {
     o << "readsMemory\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::WritesMemory)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::WritesMemory)) {
     o << "writesMemory\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::ReadsTable)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::ReadsTable)) {
     o << "readsTable\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::WritesTable)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::WritesTable)) {
     o << "writesTable\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::ReadsMutableStruct)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::ReadsMutableStruct)) {
     o << "readsMutableStruct\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::WritesStruct)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::WritesStruct)) {
     o << "writesStruct\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::ReadsArray)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::ReadsArray)) {
     o << "readsArray\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::WritesArray)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::WritesArray)) {
     o << "writesArray\n";
   }
   if (effects.traps()) {
     o << "trap\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::ImplicitTrap)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::ImplicitTrap)) {
     o << "implicitTrap\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::IsAtomic)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::IsAtomic)) {
     o << "isAtomic\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::Throws)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::Throws)) {
     o << "throws_\n";
   }
   if (effects.tryDepth) {
@@ -81,10 +81,10 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.catchDepth) {
     o << "catchDepth\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::DanglingPop)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::DanglingPop)) {
     o << "danglingPop\n";
   }
-  if (effects.get(wasm::EffectAnalyzer::Bits::MayNotReturn)) {
+  if (effects.getAny(wasm::EffectAnalyzer::Bits::MayNotReturn)) {
     o << "mayNotReturn\n";
   }
   if (effects.hasReturnCallThrow) {

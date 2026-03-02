@@ -189,7 +189,7 @@ public:
     }
   }
 
-  bool get(uint32_t bits) const { return (effectBits & bits) != 0; }
+  bool getAny(uint32_t bits) const { return (effectBits & bits) != 0; }
 
   // Since return calls return out of the body of the function before performing
   // their call, they are indistinguishable from normal returns from the
@@ -216,19 +216,21 @@ public:
     return globalsWritten.size() + mutableGlobalsRead.size() > 0;
   }
   bool accessesMemory() const {
-    return get(Bits::Calls | Bits::ReadsMemory | Bits::WritesMemory);
+    return getAny(Bits::Calls | Bits::ReadsMemory | Bits::WritesMemory);
   }
   bool accessesTable() const {
-    return get(Bits::Calls | Bits::ReadsTable | Bits::WritesTable);
+    return getAny(Bits::Calls | Bits::ReadsTable | Bits::WritesTable);
   }
   bool accessesMutableStruct() const {
-    return get(Bits::Calls | Bits::ReadsMutableStruct | Bits::WritesStruct);
+    return getAny(Bits::Calls | Bits::ReadsMutableStruct | Bits::WritesStruct);
   }
   bool accessesArray() const {
-    return get(Bits::Calls | Bits::ReadsArray | Bits::WritesArray);
+    return getAny(Bits::Calls | Bits::ReadsArray | Bits::WritesArray);
   }
-  bool throws() const { return get(Bits::Throws) || !delegateTargets.empty(); }
-  bool traps() const { return get(Bits::Trap); }
+  bool throws() const {
+    return getAny(Bits::Throws) || !delegateTargets.empty();
+  }
+  bool traps() const { return getAny(Bits::Trap); }
 
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
@@ -238,24 +240,26 @@ public:
   // caught in the function at all, which would mean control flow cannot be
   // transferred inside the function, but this expression does not know that).
   bool transfersControlFlow() const {
-    return get(Bits::BranchesOut) || throws() || hasExternalBreakTargets();
+    return getAny(Bits::BranchesOut) || throws() || hasExternalBreakTargets();
   }
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return get(Bits::WritesMemory | Bits::WritesTable | Bits::WritesStruct |
-               Bits::WritesArray | Bits::IsAtomic | Bits::Calls) ||
+    return getAny(Bits::WritesMemory | Bits::WritesTable | Bits::WritesStruct |
+                  Bits::WritesArray | Bits::IsAtomic | Bits::Calls) ||
            globalsWritten.size();
   }
   bool readsMutableGlobalState() const {
-    return get(Bits::ReadsMemory | Bits::ReadsTable | Bits::ReadsMutableStruct |
-               Bits::ReadsArray | Bits::IsAtomic | Bits::Calls) ||
+    return getAny(Bits::ReadsMemory | Bits::ReadsTable |
+                  Bits::ReadsMutableStruct | Bits::ReadsArray | Bits::IsAtomic |
+                  Bits::Calls) ||
            mutableGlobalsRead.size();
   }
 
   bool hasNonTrapSideEffects() const {
-    return get(Bits::DanglingPop | Bits::MayNotReturn) || writesGlobalState() ||
-           throws() || transfersControlFlow() || localsWritten.size() > 0;
+    return getAny(Bits::DanglingPop | Bits::MayNotReturn) ||
+           writesGlobalState() || throws() || transfersControlFlow() ||
+           localsWritten.size() > 0;
   }
 
   bool hasSideEffects() const { return hasNonTrapSideEffects() || traps(); }
@@ -327,23 +331,23 @@ public:
   bool invalidates(const EffectAnalyzer& other) {
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
-        (get(Bits::WritesMemory | Bits::Calls) && other.accessesMemory()) ||
-        (other.get(Bits::WritesMemory | Bits::Calls) && accessesMemory()) ||
-        (get(Bits::WritesTable | Bits::Calls) && other.accessesTable()) ||
-        (other.get(Bits::WritesTable | Bits::Calls) && accessesTable()) ||
-        (get(Bits::WritesStruct | Bits::Calls) &&
+        (getAny(Bits::WritesMemory | Bits::Calls) && other.accessesMemory()) ||
+        (other.getAny(Bits::WritesMemory | Bits::Calls) && accessesMemory()) ||
+        (getAny(Bits::WritesTable | Bits::Calls) && other.accessesTable()) ||
+        (other.getAny(Bits::WritesTable | Bits::Calls) && accessesTable()) ||
+        (getAny(Bits::WritesStruct | Bits::Calls) &&
          other.accessesMutableStruct()) ||
-        (other.get(Bits::WritesStruct | Bits::Calls) &&
+        (other.getAny(Bits::WritesStruct | Bits::Calls) &&
          accessesMutableStruct()) ||
-        (get(Bits::WritesArray | Bits::Calls) && other.accessesArray()) ||
-        (other.get(Bits::WritesArray | Bits::Calls) && accessesArray()) ||
-        get(Bits::DanglingPop) || other.get(Bits::DanglingPop)) {
+        (getAny(Bits::WritesArray | Bits::Calls) && other.accessesArray()) ||
+        (other.getAny(Bits::WritesArray | Bits::Calls) && accessesArray()) ||
+        getAny(Bits::DanglingPop) || other.getAny(Bits::DanglingPop)) {
       return true;
     }
     // All atomics are sequentially consistent for now, and ordered wrt other
     // memory references.
-    if ((get(Bits::IsAtomic) && other.accessesMemory()) ||
-        (other.get(Bits::IsAtomic) && accessesMemory())) {
+    if ((getAny(Bits::IsAtomic) && other.accessesMemory()) ||
+        (other.getAny(Bits::IsAtomic) && accessesMemory())) {
       return true;
     }
     for (auto local : localsWritten) {
@@ -356,8 +360,8 @@ public:
         return true;
       }
     }
-    if ((other.get(Bits::Calls) && accessesMutableGlobal()) ||
-        (get(Bits::Calls) && other.accessesMutableGlobal())) {
+    if ((other.getAny(Bits::Calls) && accessesMutableGlobal()) ||
+        (getAny(Bits::Calls) && other.accessesMutableGlobal())) {
       return true;
     }
     for (auto global : globalsWritten) {
@@ -585,7 +589,7 @@ private:
         // captured by `BranchesOut`, which models the return, and
         // `hasReturnCallThrow`, which models the throw that will happen after
         // the return.
-        if (targetEffects->get(Bits::Throws) &&
+        if (targetEffects->getAny(Bits::Throws) &&
             (parent.tryDepth > 0 || curr->isReturn)) {
           auto filteredEffects = *targetEffects;
           filteredEffects.set(Bits::Throws, false);
@@ -1226,10 +1230,10 @@ public:
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
-    if (get(Bits::BranchesOut) || hasExternalBreakTargets()) {
+    if (getAny(Bits::BranchesOut) || hasExternalBreakTargets()) {
       effects |= SideEffects::Branches;
     }
-    if (get(Bits::Calls)) {
+    if (getAny(Bits::Calls)) {
       effects |= SideEffects::Calls;
     }
     if (localsRead.size() > 0) {
@@ -1244,31 +1248,31 @@ public:
     if (globalsWritten.size() > 0) {
       effects |= SideEffects::WritesGlobal;
     }
-    if (get(Bits::ReadsMemory)) {
+    if (getAny(Bits::ReadsMemory)) {
       effects |= SideEffects::ReadsMemory;
     }
-    if (get(Bits::WritesMemory)) {
+    if (getAny(Bits::WritesMemory)) {
       effects |= SideEffects::WritesMemory;
     }
-    if (get(Bits::ReadsTable)) {
+    if (getAny(Bits::ReadsTable)) {
       effects |= SideEffects::ReadsTable;
     }
-    if (get(Bits::WritesTable)) {
+    if (getAny(Bits::WritesTable)) {
       effects |= SideEffects::WritesTable;
     }
-    if (get(Bits::ImplicitTrap)) {
+    if (getAny(Bits::ImplicitTrap)) {
       effects |= SideEffects::ImplicitTrap;
     }
     if (trapsNeverHappen) {
       effects |= SideEffects::TrapsNeverHappen;
     }
-    if (get(Bits::IsAtomic)) {
+    if (getAny(Bits::IsAtomic)) {
       effects |= SideEffects::IsAtomic;
     }
-    if (get(Bits::Throws)) {
+    if (getAny(Bits::Throws)) {
       effects |= SideEffects::Throws;
     }
-    if (get(Bits::DanglingPop)) {
+    if (getAny(Bits::DanglingPop)) {
       effects |= SideEffects::DanglingPop;
     }
     return effects;
@@ -1294,7 +1298,7 @@ private:
 
     if (ignoreImplicitTraps) {
       set(Bits::ImplicitTrap, false);
-    } else if (get(Bits::ImplicitTrap)) {
+    } else if (getAny(Bits::ImplicitTrap)) {
       set(Bits::Trap);
     }
   }

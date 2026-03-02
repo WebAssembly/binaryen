@@ -53,7 +53,7 @@ struct GenerateGlobalEffects : public Pass {
         // Gather the effects.
         funcInfo.effects.emplace(getPassOptions(), *module, func);
 
-        if (funcInfo.effects->get(EffectAnalyzer::Bits::Calls)) {
+        if (funcInfo.effects->getAny(EffectAnalyzer::Bits::Calls)) {
           // There are calls in this function, which we will analyze in detail.
           // Clear the |calls| field first, and we'll handle calls of all sorts
           // below.
@@ -79,7 +79,7 @@ struct GenerateGlobalEffects : public Pass {
               if (auto* call = curr->dynCast<Call>()) {
                 // Note the direct call.
                 funcInfo.calledFunctions.insert(call->target);
-              } else if (effects.get(EffectAnalyzer::Bits::Calls)) {
+              } else if (effects.getAny(EffectAnalyzer::Bits::Calls)) {
                 // This is an indirect call of some sort, so we must assume the
                 // worst. To do so, clear the effects, which indicates nothing
                 // is known (so anything is possible).
@@ -89,7 +89,7 @@ struct GenerateGlobalEffects : public Pass {
                 // No call here, but update throwing if we see it. (Only do so,
                 // however, if we have effects; if we cleared it - see before -
                 // then we assume the worst anyhow, and have nothing to update.)
-                if (effects.get(EffectAnalyzer::Bits::Throws) &&
+                if (effects.getAny(EffectAnalyzer::Bits::Throws) &&
                     funcInfo.effects) {
                   funcInfo.effects->set(EffectAnalyzer::Bits::Throws);
                 }

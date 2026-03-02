@@ -461,7 +461,7 @@ struct CallContext {
     // Pretty much everything can be moved into the context if we can copy it
     // between functions, such as constants, globals, etc. The things we cannot
     // copy are now checked for.
-    if (effects.get(EffectAnalyzer::Bits::BranchesOut) ||
+    if (effects.getAny(EffectAnalyzer::Bits::BranchesOut) ||
         effects.hasExternalBreakTargets()) {
       // This branches or returns. We can't move control flow between functions.
       return false;
@@ -470,7 +470,7 @@ struct CallContext {
       // Reads/writes to local state cannot be moved around.
       return false;
     }
-    if (effects.get(EffectAnalyzer::Bits::Calls)) {
+    if (effects.getAny(EffectAnalyzer::Bits::Calls)) {
       // We can in principle move calls, but for simplicity we avoid such
       // situations (which might involve recursion etc.).
       return false;
