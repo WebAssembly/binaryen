@@ -951,10 +951,15 @@ private:
       parent.isAtomic = true;
     }
     void visitStructWait(StructWait* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.isAtomic = true;
 
-      // If the ref is null.
-      parent.implicitTrap = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
 
       // If the timeout is negative and no-one wakes us.
       parent.mayNotReturn = true;
@@ -984,10 +989,15 @@ private:
                                      .mutable_ == Mutable;
     }
     void visitStructNotify(StructNotify* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.isAtomic = true;
 
-      // If the ref is null.
-      parent.implicitTrap = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
 
       // struct.notify mutates an opaque waiter queue which isn't visible in
       // user code. Model this as a struct write which prevents reorderings
