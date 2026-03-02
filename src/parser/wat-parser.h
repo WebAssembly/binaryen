@@ -41,9 +41,6 @@ Result<> parseModuleBody(Module& wasm, Lexer& lexer);
 
 Result<Literal> parseConst(Lexer& lexer);
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
 struct InvokeAction {
   std::optional<Name> base;
   Name name;
