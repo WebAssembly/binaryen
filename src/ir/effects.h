@@ -968,12 +968,18 @@ private:
       }
     }
     void visitStructWait(StructWait* curr) {
+      if (curr->ref->type.isNull()) {
+        set(Bits::Trap);
+        return;
+      }
+      if (curr->ref->type.isNullable()) {
+        set(Bits::ImplicitTrap);
+      }
+
       // struct.wait mutates an opaque waiter queue which isn't visible in user
       // code. Model this as a struct write which prevents reorderings (since
       // isAtomic == true).
-      // TODO: Implicit trap only if ref is nullable.
-      set(Bits::IsAtomic | Bits::ImplicitTrap | Bits::MayNotReturn |
-          Bits::WritesStruct);
+      set(Bits::IsAtomic | Bits::MayNotReturn | Bits::WritesStruct);
 
       if (curr->ref->type == Type::unreachable) {
         return;
@@ -997,11 +1003,19 @@ private:
       }
     }
     void visitStructNotify(StructNotify* curr) {
+      if (curr->ref->type.isNull()) {
+        set(Bits::Trap);
+        return;
+      }
+
+      if (curr->ref->type.isNullable()) {
+        set(Bits::ImplicitTrap);
+      }
+
       // struct.notify mutates an opaque waiter queue which isn't visible in
       // user code. Model this as a struct write which prevents reorderings
       // (since isAtomic == true).
-      // TODO: Implicit trap only if ref is nullable.
-      set(Bits::IsAtomic | Bits::ImplicitTrap | Bits::WritesStruct);
+      set(Bits::IsAtomic | Bits::WritesStruct);
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
