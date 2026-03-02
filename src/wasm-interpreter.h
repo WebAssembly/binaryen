@@ -3543,9 +3543,11 @@ private:
       } else {
         Literal initVal;
         if (table->hasInit()) {
-          initVal = ExpressionRunner<SubType>::visit(table->init).getSingleValue();
+          initVal =
+            ExpressionRunner<SubType>::visit(table->init).getSingleValue();
         } else {
-          assert(table->type.isNullable() && "Non-nullable table must have an init expressions");
+          assert(table->type.isNullable() &&
+                 "Non-nullable table must have an init expressions");
           initVal = Literal::makeNull(table->type.getHeapType());
         }
         auto& runtimeTable =

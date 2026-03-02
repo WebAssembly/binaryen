@@ -1117,8 +1117,12 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                               Name name,
                               ImportNames* importNames,
                               TableType limits);
-  Result<>
-  addTable(Name, const std::vector<Name>&, ImportNames*, TableType, std::optional<ExprT>, Index);
+  Result<> addTable(Name,
+                    const std::vector<Name>&,
+                    ImportNames*,
+                    TableType,
+                    std::optional<ExprT>,
+                    Index);
 
   // TODO: Record index of implicit elem for use when parsing types and instrs.
   Result<> addImplicitElems(TypeT, ElemListT&& elems);
@@ -1500,8 +1504,12 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return Ok{};
   }
 
-  Result<> addTable(
-    Name, const std::vector<Name>&, ImportNames*, Type ttype, std::optional<ExprT> init, Index pos) {
+  Result<> addTable(Name,
+                    const std::vector<Name>&,
+                    ImportNames*,
+                    Type ttype,
+                    std::optional<ExprT> init,
+                    Index pos) {
     auto& t = wasm.tables[index];
     if (!ttype.isRef()) {
       return in.err(pos, "expected reference type");
@@ -1865,8 +1873,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return Ok{};
   }
 
-  Result<>
-  addTable(Name, const std::vector<Name>&, ImportNames*, TableTypeT, std::optional<ExprT>, Index);
+  Result<> addTable(Name,
+                    const std::vector<Name>&,
+                    ImportNames*,
+                    TableTypeT,
+                    std::optional<ExprT>,
+                    Index);
 
   Result<>
   addMemory(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {

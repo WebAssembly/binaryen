@@ -3379,7 +3379,8 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTable(name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+    CHECK_ERR(ctx.addTable(
+      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
   } else if (ctx.in.takeSExprStart("memory"sv)) {
     auto name = ctx.in.takeID();
     auto type = memtype(ctx);
@@ -3472,7 +3473,8 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
 }
 
 // table ::= '(' 'table' id? ('(' 'export' name ')')*
-//               '(' 'import' mod:name nm:name ')'? index_type? tabletype expr? ')'
+//               '(' 'import' mod:name nm:name ')'? index_type? tabletype expr?
+//               ')'
 //         | '(' 'table' id? ('(' 'export' name ')')* index_type?
 //               reftype '(' 'elem' (elemexpr* | funcidx*) ')' ')'
 template<typename Ctx> MaybeResult<> table(Ctx& ctx) {

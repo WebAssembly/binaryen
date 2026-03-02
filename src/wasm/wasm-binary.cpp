@@ -5008,8 +5008,8 @@ void WasmBinaryReader::readTableDeclarations() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] =
-      getOrMakeName(tableNames, numImports + i, makeName("", i), usedTableNames);
+    auto [name, isExplicit] = getOrMakeName(
+      tableNames, numImports + i, makeName("", i), usedTableNames);
     auto type_code = getS32LEB();
     bool has_init = false;
     if (type_code == BinaryConsts::EncodedType::Empty) {
