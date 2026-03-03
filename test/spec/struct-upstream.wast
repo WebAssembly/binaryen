@@ -1,4 +1,4 @@
-;; Copy of test/spec/testsuite/struct.wast with failing parts changed
+;; Copy of test/spec/testsuite/struct.wast with failing parts commented.
 ;; TODO: Fix the remaining issues, re-enable the upstream test and delete this.
 
 ;; Type syntax
