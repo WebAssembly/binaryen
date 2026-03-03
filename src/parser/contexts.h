@@ -1041,7 +1041,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   void addFuncType(SignatureT) {}
   void addContType(ContinuationT) {}
-  void addStructType(StructT) {}
+  Result<> addStructType(StructT) { return Ok{}; }
   void addArrayType(ArrayT) {}
   void setOpen() {}
   void setShared() {}
@@ -1204,14 +1204,23 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   void addFuncType(SignatureT& type) { builder[index] = type; }
   void addContType(ContinuationT& type) { builder[index] = type; }
 
-  void addStructType(StructT& type) {
+  Result<> addStructType(StructT& type) {
     auto& [fieldNames, str] = type;
+    std::unordered_set<Name> usedFieldNames;
     builder[index] = str;
     for (Index i = 0; i < fieldNames.size(); ++i) {
-      if (auto name = fieldNames[i]; name.is()) {
-        names[index].fieldNames[i] = name;
+      const auto& name = fieldNames[i];
+      if (!name.is()) {
+        continue;
       }
+
+      if (auto [_, inserted] = usedFieldNames.insert(name); !inserted) {
+        return in.err("duplicate field name");
+      }
+
+      names[index].fieldNames[i] = name;
     }
+    return Ok{};
   }
 
   void addArrayType(ArrayT& type) { builder[index] = type; }

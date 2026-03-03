@@ -751,25 +751,18 @@ template<typename Ctx> Result<typename Ctx::FieldT> fieldtype(Ctx& ctx) {
 //         | fieldtype
 template<typename Ctx> Result<typename Ctx::FieldsT> fields(Ctx& ctx) {
   auto res = ctx.makeFields();
-  std::unordered_set<Name> fieldNames;
   while (true) {
     if (ctx.in.empty() || ctx.in.peekRParen()) {
       return res;
     }
     if (ctx.in.takeSExprStart("field")) {
-      if (auto fieldName = ctx.in.takeID()) {
-        if (auto found = fieldNames.find(*fieldName);
-            found != fieldNames.end()) {
-          return ctx.in.err("duplicate field name");
-        }
-        fieldNames.insert(*fieldName);
-
+      if (auto id = ctx.in.takeID()) {
         auto field = fieldtype(ctx);
         CHECK_ERR(field);
         if (!ctx.in.takeRParen()) {
           return ctx.in.err("expected end of field");
         }
-        ctx.appendField(res, *fieldName, *field);
+        ctx.appendField(res, *id, *field);
       } else {
         while (!ctx.in.takeRParen()) {
           auto field = fieldtype(ctx);
@@ -3183,7 +3176,7 @@ template<typename Ctx> Result<> comptype(Ctx& ctx) {
   }
   if (auto type = structtype(ctx)) {
     CHECK_ERR(type);
-    ctx.addStructType(*type);
+    CHECK_ERR(ctx.addStructType(*type));
     return Ok{};
   }
   if (auto type = arraytype(ctx)) {
