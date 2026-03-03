@@ -1376,6 +1376,16 @@ public:
     return ret;
   }
 
+  StructNotify*
+  makeStructNotify(Index index, Expression* ref, Expression* count) {
+    auto* ret = wasm.allocator.alloc<StructNotify>();
+    ret->index = index;
+    ret->ref = ref;
+    ret->count = count;
+    ret->finalize();
+    return ret;
+  }
+
   // Additional helpers
 
   Drop* makeDrop(Expression* value) {

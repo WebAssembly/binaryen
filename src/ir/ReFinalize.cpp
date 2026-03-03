@@ -164,6 +164,7 @@ void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
 void ReFinalize::visitStructRMW(StructRMW* curr) { curr->finalize(); }
 void ReFinalize::visitStructCmpxchg(StructCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitStructWait(StructWait* curr) { curr->finalize(); }
+void ReFinalize::visitStructNotify(StructNotify* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }

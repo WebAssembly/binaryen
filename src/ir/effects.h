@@ -644,9 +644,10 @@ private:
       parent.isAtomic = true;
     }
     void visitPause(Pause* curr) {
-      // It's not much of a problem if pause gets reordered with anything, but
-      // we don't want it to be removed entirely.
-      parent.isAtomic = true;
+      // We don't want this to be moved out of loops, but it doesn't otherwises
+      // matter much how it gets reordered. Say we transfer control as a coarse
+      // approximation of this.
+      parent.branchesOut = true;
     }
     void visitSIMDExtract(SIMDExtract* curr) {}
     void visitSIMDReplace(SIMDReplace* curr) {}
@@ -950,10 +951,15 @@ private:
       parent.isAtomic = true;
     }
     void visitStructWait(StructWait* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.isAtomic = true;
 
-      // If the ref is null.
-      parent.implicitTrap = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
 
       // If the timeout is negative and no-one wakes us.
       parent.mayNotReturn = true;
@@ -981,6 +987,22 @@ private:
                                      .getStruct()
                                      .fields.at(curr->index)
                                      .mutable_ == Mutable;
+    }
+    void visitStructNotify(StructNotify* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.isAtomic = true;
+
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+
+      // struct.notify mutates an opaque waiter queue which isn't visible in
+      // user code. Model this as a struct write which prevents reorderings
+      // (since isAtomic == true).
+      parent.writesStruct = true;
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {

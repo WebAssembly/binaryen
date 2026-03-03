@@ -2494,6 +2494,17 @@ Result<> makeStructWait(Ctx& ctx,
 }
 
 template<typename Ctx>
+Result<> makeStructNotify(Ctx& ctx,
+                          Index pos,
+                          const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructNotify(pos, annotations, *type, *field);
+}
+
+template<typename Ctx>
 Result<> makeArrayNew(Ctx& ctx,
                       Index pos,
                       const std::vector<Annotation>& annotations,
