@@ -774,8 +774,8 @@ void WasmBinaryWriter::writeTableDeclarations() {
   o << U32LEB(num);
   ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
     if (table->hasInit()) {
-      o << uint8_t(0x40);
-      o << uint8_t(0x00);
+      o << uint8_t(BinaryConsts::HasTableInitializer);
+      o << uint8_t(BinaryConsts::TableReservedByte);
     }
     writeType(table->type);
     writeResizableLimits(table->initial,
@@ -5012,9 +5012,9 @@ void WasmBinaryReader::readTableDeclarations() {
       tableNames, numImports + i, makeName("", i), usedTableNames);
     auto type_code = getS32LEB();
     bool has_init = false;
-    if (type_code == BinaryConsts::EncodedType::Empty) {
+    if (type_code == BinaryConsts::HasTableInitializer) {
       auto nextInt = getInt8();
-      if (nextInt != 0x00) {
+      if (nextInt != BinaryConsts::TableReservedByte) {
         throwError("Malformed table");
       }
       has_init = true;

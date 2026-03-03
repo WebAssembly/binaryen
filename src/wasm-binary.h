@@ -361,6 +361,9 @@ constexpr uint32_t ExactImport = 1 << 5;
 constexpr uint32_t HasMemoryOrderMask = 1 << 5;
 constexpr uint32_t HasMemoryIndexMask = 1 << 6;
 
+constexpr uint32_t HasTableInitializer = 0x40;
+constexpr uint32_t TableReservedByte = 0x00;
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f
