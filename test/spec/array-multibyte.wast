@@ -95,6 +95,14 @@
     (i64.or)
   )
 
+  (func $get_array_4_byte (export "get_array_4_byte") (param $idx i32) (result i32)
+    (array.get_u $i8_array (global.get $arr_4) (local.get $idx))
+  )
+
+  (func $get_array_8_byte (export "get_array_8_byte") (param $idx i32) (result i32)
+    (array.get_u $i8_array (global.get $arr_8) (local.get $idx))
+  )
+
   (func $i32_set_i8 (export "i32_set_i8") (param $index i32) (param $value i32)
     (i32.store8 (type $i8_array)
       (global.get $arr_4)
@@ -167,8 +175,9 @@
     )
   )
 
-  ;; ??? Do we even want to spec out this instruction since array.store is the
-  ;; same thing?
+  ;; TODO: Do we even want to spec out this instruction since array.set is the
+  ;; same thing? See
+  ;; https://github.com/WebAssembly/multibyte-array-access/issues/2
   (func $i32_set_and_get_i8 (export "i32_set_and_get_i8") (param $value i32) (result i32)
     (i32.store8 (type $i8_array)
       (global.get $arr_4)
@@ -288,6 +297,8 @@
 (assert_return (invoke "set_and_get_f32" (f32.const 3.3)) (f32.const 3.3))
 (assert_return (invoke "set_and_get_f32" (f32.const -2.000000238418579)) (f32.const -2.000000238418579))
 (assert_return (invoke "set_and_get_f32" (f32.const nan)) (f32.const nan))
+(assert_return (invoke "set_and_get_f32" (f32.const nan:0x123456)) (f32.const nan:0x123456))
+(assert_return (invoke "set_and_get_f32" (f32.const -nan:0x654321)) (f32.const -nan:0x654321))
 
 ;;
 ;; 64 bit round trip tests
@@ -319,10 +330,59 @@
 (assert_return (invoke "set_and_get_f64" (f64.const 3.3)) (f64.const 3.3))
 (assert_return (invoke "set_and_get_f64" (f64.const -2.00000000000000044409)) (f64.const -2.00000000000000044409))
 (assert_return (invoke "set_and_get_f64" (f64.const nan)) (f64.const nan))
+(assert_return (invoke "set_and_get_f64" (f64.const nan:0x123456789abcd)) (f64.const nan:0x123456789abcd))
+(assert_return (invoke "set_and_get_f64" (f64.const -nan:0xedcba98765432)) (f64.const -nan:0xedcba98765432))
+
+;;
+;; Byte-wise store and unaligned store tests (32 bit)
+;;
+
+(invoke "i32_set_i32" (i32.const 0) (i32.const 0x00000000)) ;; clear
+(invoke "i32_set_i16" (i32.const 0) (i32.const 0x1234))
+(assert_return (invoke "get_array_4_byte" (i32.const 0)) (i32.const 0x34))
+(assert_return (invoke "get_array_4_byte" (i32.const 1)) (i32.const 0x12))
+
+(invoke "i32_set_i32" (i32.const 0) (i32.const 0x12345678))
+(assert_return (invoke "get_array_4_byte" (i32.const 0)) (i32.const 0x78))
+(assert_return (invoke "get_array_4_byte" (i32.const 1)) (i32.const 0x56))
+(assert_return (invoke "get_array_4_byte" (i32.const 2)) (i32.const 0x34))
+(assert_return (invoke "get_array_4_byte" (i32.const 3)) (i32.const 0x12))
+
+(invoke "i32_set_i16" (i32.const 1) (i32.const 0xABCD))
+(assert_return (invoke "get_array_4_byte" (i32.const 0)) (i32.const 0x78))
+(assert_return (invoke "get_array_4_byte" (i32.const 1)) (i32.const 0xCD))
+(assert_return (invoke "get_array_4_byte" (i32.const 2)) (i32.const 0xAB))
+(assert_return (invoke "get_array_4_byte" (i32.const 3)) (i32.const 0x12))
+
+;;
+;; Byte-wise store and unaligned store tests (64 bit)
+;;
+
+(invoke "i64_set_i64" (i32.const 0) (i64.const 0x123456789ABCDEF0))
+(assert_return (invoke "get_array_8_byte" (i32.const 0)) (i32.const 0xF0))
+(assert_return (invoke "get_array_8_byte" (i32.const 1)) (i32.const 0xDE))
+(assert_return (invoke "get_array_8_byte" (i32.const 2)) (i32.const 0xBC))
+(assert_return (invoke "get_array_8_byte" (i32.const 3)) (i32.const 0x9A))
+(assert_return (invoke "get_array_8_byte" (i32.const 4)) (i32.const 0x78))
+(assert_return (invoke "get_array_8_byte" (i32.const 5)) (i32.const 0x56))
+(assert_return (invoke "get_array_8_byte" (i32.const 6)) (i32.const 0x34))
+(assert_return (invoke "get_array_8_byte" (i32.const 7)) (i32.const 0x12))
+
+(invoke "i64_set_i32" (i32.const 3) (i64.const 0x11223344))
+(assert_return (invoke "get_array_8_byte" (i32.const 0)) (i32.const 0xF0))
+(assert_return (invoke "get_array_8_byte" (i32.const 1)) (i32.const 0xDE))
+(assert_return (invoke "get_array_8_byte" (i32.const 2)) (i32.const 0xBC))
+(assert_return (invoke "get_array_8_byte" (i32.const 3)) (i32.const 0x44))
+(assert_return (invoke "get_array_8_byte" (i32.const 4)) (i32.const 0x33))
+(assert_return (invoke "get_array_8_byte" (i32.const 5)) (i32.const 0x22))
+(assert_return (invoke "get_array_8_byte" (i32.const 6)) (i32.const 0x11))
+(assert_return (invoke "get_array_8_byte" (i32.const 7)) (i32.const 0x12))
 
 ;;
 ;; Bounds checks (32 bit with a 4-byte array)
 ;;
+
+(invoke "i32_set_i32" (i32.const 0) (i32.const 0))
 
 ;; i32_set_i8: Writes 1 byte
 ;; Valid range: [0, 3]
@@ -331,7 +391,7 @@
 (assert_return (invoke "i32_set_i8" (i32.const 1) (i32.const 0)))
 (assert_return (invoke "i32_set_i8" (i32.const 2) (i32.const 0)))
 (assert_return (invoke "i32_set_i8" (i32.const 3) (i32.const 0)))
-(assert_trap (invoke "i32_set_i8" (i32.const 4) (i32.const 0)) "out of bounds")
+(assert_trap (invoke "i32_set_i8" (i32.const 4) (i32.const 0xFFFF)) "out of bounds")
 
 ;; i32_set_i16: Writes 2 bytes
 ;; Valid range: offset + 2 <= 4 -> Max offset 2
@@ -339,23 +399,28 @@
 (assert_return (invoke "i32_set_i16" (i32.const 0) (i32.const 0)))
 (assert_return (invoke "i32_set_i16" (i32.const 1) (i32.const 0)))
 (assert_return (invoke "i32_set_i16" (i32.const 2) (i32.const 0)))
-(assert_trap (invoke "i32_set_i16" (i32.const 3) (i32.const 0)) "out of bounds")
+(assert_trap (invoke "i32_set_i16" (i32.const 3) (i32.const 0xFFFF)) "out of bounds")
+(assert_return (invoke "get_array_4_byte" (i32.const 3)) (i32.const 0))
 
 ;; i32_set_i32: Writes 4 bytes
 ;; Valid range: offset + 4 <= 4 -> Max offset 0
 (assert_trap (invoke "i32_set_i32" (i32.const -1) (i32.const 0)) "out of bounds")
 (assert_return (invoke "i32_set_i32" (i32.const 0) (i32.const 0)))
-(assert_trap (invoke "i32_set_i32" (i32.const 1) (i32.const 0)) "out of bounds")
+(assert_trap (invoke "i32_set_i32" (i32.const 1) (i32.const 0xFFFFFFFF)) "out of bounds")
+(assert_return (invoke "get_array_4_byte" (i32.const 1)) (i32.const 0))
 
 ;; f32_set: Writes 4 bytes
 ;; Valid range: offset + 4 <= 4 -> Max offset 0
 (assert_trap (invoke "f32_set" (i32.const -1) (f32.const 0)) "out of bounds")
 (assert_return (invoke "f32_set" (i32.const 0) (f32.const 0)))
-(assert_trap (invoke "f32_set" (i32.const 1) (f32.const 0)) "out of bounds")
+(assert_trap (invoke "f32_set" (i32.const 1) (f32.const 1.0)) "out of bounds")
+(assert_return (invoke "get_array_4_byte" (i32.const 1)) (i32.const 0))
 
 ;;
 ;; Bounds checks (64 bit with an 8-byte array)
 ;;
+
+(invoke "i64_set_i64" (i32.const 0) (i64.const 0))
 
 ;; i64_set_i8: Writes 1 byte
 ;; Valid range: [0, 7]
@@ -364,7 +429,7 @@
 (assert_return (invoke "i64_set_i8" (i32.const 1) (i64.const 0)))
 (assert_return (invoke "i64_set_i8" (i32.const 6) (i64.const 0)))
 (assert_return (invoke "i64_set_i8" (i32.const 7) (i64.const 0)))
-(assert_trap (invoke "i64_set_i8" (i32.const 8) (i64.const 0)) "out of bounds")
+(assert_trap (invoke "i64_set_i8" (i32.const 8) (i64.const 0xFFFF)) "out of bounds")
 
 ;; i64_set_i16: Writes 2 bytes
 ;; Valid range: offset + 2 <= 8 -> Max offset 6
@@ -373,7 +438,8 @@
 (assert_return (invoke "i64_set_i16" (i32.const 1) (i64.const 0)))
 (assert_return (invoke "i64_set_i16" (i32.const 5) (i64.const 0)))
 (assert_return (invoke "i64_set_i16" (i32.const 6) (i64.const 0)))
-(assert_trap (invoke "i64_set_i16" (i32.const 7) (i64.const 0)) "out of bounds")
+(assert_trap (invoke "i64_set_i16" (i32.const 7) (i64.const 0xFFFF)) "out of bounds")
+(assert_return (invoke "get_array_8_byte" (i32.const 7)) (i32.const 0))
 
 ;; i64_set_i32: Writes 4 bytes
 ;; Valid range: offset + 4 <= 8 -> Max offset 4
@@ -382,19 +448,22 @@
 (assert_return (invoke "i64_set_i32" (i32.const 1) (i64.const 0)))
 (assert_return (invoke "i64_set_i32" (i32.const 3) (i64.const 0)))
 (assert_return (invoke "i64_set_i32" (i32.const 4) (i64.const 0)))
-(assert_trap (invoke "i64_set_i32" (i32.const 5) (i64.const 0)) "out of bounds")
+(assert_trap (invoke "i64_set_i32" (i32.const 5) (i64.const 0xFFFFFFFF)) "out of bounds")
+(assert_return (invoke "get_array_8_byte" (i32.const 5)) (i32.const 0))
 
 ;; i64_set_i64: Writes 8 bytes
 ;; Valid range: offset + 8 <= 8 -> Max offset 0
 (assert_trap (invoke "i64_set_i64" (i32.const -1) (i64.const 0)) "out of bounds")
 (assert_return (invoke "i64_set_i64" (i32.const 0) (i64.const 0)))
-(assert_trap (invoke "i64_set_i64" (i32.const 1) (i64.const 0)) "out of bounds")
+(assert_trap (invoke "i64_set_i64" (i32.const 1) (i64.const 0xFFFFFFFFFFFFFFFF)) "out of bounds")
+(assert_return (invoke "get_array_8_byte" (i32.const 1)) (i32.const 0))
 
 ;; f64_set: Writes 8 bytes
 ;; Valid range: offset + 8 <= 8 -> Max offset 0
 (assert_trap (invoke "f64_set" (i32.const -1) (f64.const 0)) "out of bounds")
 (assert_return (invoke "f64_set" (i32.const 0) (f64.const 0)))
-(assert_trap (invoke "f64_set" (i32.const 1) (f64.const 0)) "out of bounds")
+(assert_trap (invoke "f64_set" (i32.const 1) (f64.const 1.0)) "out of bounds")
+(assert_return (invoke "get_array_8_byte" (i32.const 1)) (i32.const 0))
 
 
 (assert_invalid
