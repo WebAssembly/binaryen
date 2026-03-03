@@ -400,7 +400,7 @@ SPEC_TESTS_TO_SKIP = [
     'threads/thread.wast',
 
     # Requires better support for multi-threaded tests
-    'threads/wait_notify.wast',
+    # 'threads/wait_notify.wast',
 
     # Non-natural alignment is invalid for atomic operations
     'threads/atomic.wast',
