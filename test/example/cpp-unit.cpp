@@ -632,10 +632,11 @@ void test_effects() {
     EffectAnalyzer effects(options, module);
     effects.visit(&arrayCopy);
     assert_equal(effects.traps(), true);
-    assert_equal(effects.get(EffectAnalyzer::Bits::ReadsArray), true);
-    assert_equal(effects.get(EffectAnalyzer::Bits::WritesArray), true);
-    assert_equal(effects.get(EffectAnalyzer::Bits::ReadsMutableStruct), false);
-    assert_equal(effects.get(EffectAnalyzer::Bits::WritesStruct), false);
+    assert_equal(effects.getAny(EffectAnalyzer::Bits::ReadsArray), true);
+    assert_equal(effects.getAny(EffectAnalyzer::Bits::WritesArray), true);
+    assert_equal(effects.getAny(EffectAnalyzer::Bits::ReadsMutableStruct),
+                 false);
+    assert_equal(effects.getAny(EffectAnalyzer::Bits::WritesStruct), false);
   }
 
   {
