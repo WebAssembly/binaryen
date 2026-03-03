@@ -394,6 +394,15 @@ SPEC_TESTS_TO_SKIP = [
 
     # Test invalid
     'elem.wast',
+
+    # Requires wast `either` support
+    'threads/thread.wast',
+
+    # Requires better support for multi-threaded tests
+    'threads/wait_notify.wast',
+
+    # Non-natural alignment is invalid for atomic operations
+    'threads/atomic.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
     'custom-page-sizes',

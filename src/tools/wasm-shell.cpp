@@ -93,9 +93,23 @@ struct Shell {
     } else if (auto* instantiateModule =
                  std::get_if<ModuleInstantiation>(&cmd)) {
       return doInstantiate(*instantiateModule);
+    } else if (auto* thread = std::get_if<ThreadBlock>(&cmd)) {
+      return doThread(*thread);
+    } else if (auto* wait = std::get_if<Wait>(&cmd)) {
+      return doWait(*wait);
     } else {
       WASM_UNREACHABLE("unexpected command");
     }
+  }
+
+  // Run threads in a blocking manner for now.
+  // TODO: yield on blocking instructions e.g. memory.atomic.wait32.
+  Result<> doThread(ThreadBlock& thread) {
+    return run(thread.commands);
+  }
+
+  Result<> doWait(Wait& wait) {
+    return Ok{};
   }
 
   Result<std::shared_ptr<Module>> makeModule(WASTModule& mod) {

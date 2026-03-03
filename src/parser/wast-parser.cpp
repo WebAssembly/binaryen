@@ -25,6 +25,8 @@ using namespace std::string_view_literals;
 
 namespace {
 
+Result<WASTCommand> command(Lexer& in);
+
 Result<Literal> const_(Lexer& in) {
   if (in.takeSExprStart("ref.extern"sv)) {
     auto n = in.takeI32();
@@ -496,9 +498,76 @@ MaybeResult<ModuleInstantiation> instantiation(Lexer& in) {
   return ModuleInstantiation{moduleId, instanceId};
 }
 
+// (thread name (shared (module name))? command*)
+MaybeResult<ThreadBlock> thread_(Lexer& in) {
+  if (!in.takeSExprStart("thread"sv)) {
+    return {};
+  }
+
+  auto name = in.takeID();
+  if (!name) {
+    return in.err("expected thread name");
+  }
+
+  std::optional<Name> sharedModule;
+  if (in.takeSExprStart("shared"sv)) {
+    if (!in.takeSExprStart("module"sv)) {
+      return in.err("expected module keyword in (shared ...) block");
+    }
+
+    auto modName = in.takeID();
+    if (!modName) {
+      return in.err("expected module name after (shared (module ...))");
+    }
+    sharedModule = *modName;
+
+    if (!in.takeRParen()) {
+      return in.err("expected end of shared module");
+    }
+    if (!in.takeRParen()) {
+      return in.err("expected end of (shared ...) expression");
+    }
+  }
+
+  std::vector<ScriptEntry> commands;
+  while (!in.peekRParen() && !in.empty()) {
+    size_t line = in.position().line;
+    auto cmd = command(in);
+    CHECK_ERR(cmd);
+    commands.push_back({std::move(*cmd), line});
+  }
+  if (!in.takeRParen()) {
+    return in.err("expected end of thread");
+  }
+  return ThreadBlock{*name, sharedModule, std::move(commands)};
+}
+
+// (wait name)
+MaybeResult<Wait> wait_(Lexer& in) {
+  if (!in.takeSExprStart("wait"sv)) {
+    return {};
+  }
+  auto name = in.takeID();
+  if (!name) {
+    return in.err("expected thread name in wait");
+  }
+  if (!in.takeRParen()) {
+    return in.err("expected end of wait");
+  }
+  return Wait{*name};
+}
+
 // instantiate | module | register | action | assertion
 Result<WASTCommand> command(Lexer& in) {
   if (auto cmd = register_(in)) {
+    CHECK_ERR(cmd);
+    return *cmd;
+  }
+  if (auto cmd = thread_(in)) {
+    CHECK_ERR(cmd);
+    return *cmd;
+  }
+  if (auto cmd = wait_(in)) {
     CHECK_ERR(cmd);
     return *cmd;
   }
