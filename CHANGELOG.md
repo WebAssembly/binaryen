@@ -24,6 +24,11 @@ Current Trunk
    and `setValueI64`, previously took a hi/low pair but now take a single value
    which can be bigint or a number. Passing two values to these APIs will now
    trigger an assertion. (#7984)
+ - Add support for non-nullable table types and initialisation expressions for
+   tables. This comes with a breaking change to the C and JS APIs:
+   `BinaryenAddTable` takes an additional `BinaryenExpressionRef` parameter to
+   provide an initialisation expression. This can be null for tables without an
+   initialiser. In JS this parameter is optional and so is not breaking. (#8405)
 
 v126
 ----
