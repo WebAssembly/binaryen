@@ -2792,7 +2792,7 @@ void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
     emitUnreachable();
     return;
   }
-  emitStoreOpcode(curr->bytes, curr->valueType);
+  emitStoreOpcode(curr->bytes, curr->value->type);
   uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());

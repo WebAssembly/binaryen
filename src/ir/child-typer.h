@@ -1107,7 +1107,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     note(&curr->ref, Type(*ht, Nullable));
     note(&curr->index, Type::i32);
-    note(&curr->value, curr->valueType);
+    note(&curr->value, curr->value->type);
   }
 
   void visitArrayLen(ArrayLen* curr) {

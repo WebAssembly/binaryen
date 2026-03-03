@@ -1875,7 +1875,6 @@ public:
   Expression* ref;
   Expression* index;
   Expression* value;
-  Type valueType;
 
   void finalize();
 };

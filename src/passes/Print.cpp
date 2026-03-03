@@ -2483,9 +2483,9 @@ struct PrintExpressionContents
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayStore(ArrayStore* curr) {
-    prepareColor(o) << forceConcrete(curr->valueType);
+    prepareColor(o) << forceConcrete(curr->value->type);
     o << ".store";
-    printStorePostfix(curr->bytes, curr->valueType);
+    printStorePostfix(curr->bytes, curr->value->type);
     o << " ";
     restoreNormalColor(o);
 

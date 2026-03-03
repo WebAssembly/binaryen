@@ -2376,7 +2376,7 @@ public:
     if (i >= size || curr->bytes > (size - i)) {
       trap("array oob");
     }
-    switch (curr->valueType.getBasic()) {
+    switch (curr->value->type.getBasic()) {
       case Type::i32:
         writeBytes(
           value.getSingleValue().geti32(), curr->bytes, i, data->values);
