@@ -2376,10 +2376,13 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
 
 Result<>
 IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+  if (!arrayType.isArray()) {
+    return Err{"expected array type annotation on array store"};
+  }
   ArrayStore curr;
   curr.valueType = type;
-  CHECK_ERR(
-    ChildPopper{*this}.visitArrayStore(&curr, HeapTypes::getMutI8Array()));
+  CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType));
+  CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
   push(builder.makeArrayStore(bytes, type, curr.ref, curr.index, curr.value));
   return Ok{};
 }

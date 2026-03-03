@@ -56,7 +56,7 @@ void BinaryInstWriter::emitIfElse(If* curr) {
   o << static_cast<int8_t>(BinaryConsts::Else);
 }
 
-void BinaryInstWriter::emitStore(uint8_t bytes, Type valueType) {
+void BinaryInstWriter::emitStoreOpcode(uint8_t bytes, Type valueType) {
   switch (valueType.getBasic()) {
     case Type::i32: {
       switch (bytes) {
@@ -444,7 +444,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
 
 void BinaryInstWriter::visitStore(Store* curr) {
   if (!curr->isAtomic()) {
-    emitStore(curr->bytes, curr->valueType);
+    emitStoreOpcode(curr->bytes, curr->valueType);
   } else {
     o << static_cast<int8_t>(BinaryConsts::AtomicPrefix);
     switch (curr->valueType.getBasic()) {
@@ -2792,7 +2792,7 @@ void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
     emitUnreachable();
     return;
   }
-  emitStore(curr->bytes, curr->valueType);
+  emitStoreOpcode(curr->bytes, curr->valueType);
   uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());

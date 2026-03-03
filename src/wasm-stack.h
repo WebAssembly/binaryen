@@ -133,7 +133,7 @@ private:
                         MemoryOrder order,
                         bool isRMW,
                         BackingType backing = BackingType::Memory);
-  void emitStore(uint8_t bytes, Type ValueType);
+  void emitStoreOpcode(uint8_t bytes, Type valueType);
   int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;
