@@ -71,7 +71,8 @@ struct NonconstantException {};
 
 // Utilities
 
-extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW, SUSPEND_FLOW;
+extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW, SUSPEND_FLOW,
+  THREAD_SUSPEND_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -87,13 +88,15 @@ public:
     : values(std::move(values)), breakTo(breakTo) {}
   Flow(Name breakTo, Tag* suspendTag, Literals&& values)
     : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
-    assert(breakTo == SUSPEND_FLOW);
+    assert(breakTo == SUSPEND_FLOW || breakTo == THREAD_SUSPEND_FLOW);
   }
 
   Literals values;
   Name breakTo;              // if non-null, a break is going on
   Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
-                             // this is the tag being suspended
+                             // this is the tag being suspended. If breakTo is
+                             // THREAD_SUSPEND_FLOW, this represents the thread
+                             // suspending and this field is not used.
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
@@ -281,6 +284,10 @@ struct ContData {
   // resume_throw_ref).
   Literal exception;
 
+  // If set, this continuation was suspended into a wait queue by a thread
+  // and has not yet been woken up.
+  bool isWaiting = false;
+
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
   bool executed = false;
@@ -303,6 +310,13 @@ struct ContinuationStore {
 
   // Set when we are resuming execution, that is, re-winding the stack.
   bool resuming = false;
+
+  // The wait queue for threads waiting on addresses (represented by GCData and
+  // field index).
+  std::unordered_map<
+    std::shared_ptr<GCData>,
+    std::unordered_map<Index, std::vector<std::shared_ptr<ContData>>>>
+    waitQueues;
 };
 
 // Execute an expression
@@ -2244,13 +2258,90 @@ public:
   }
 
   Flow visitStructWait(StructWait* curr) {
-    WASM_UNREACHABLE("struct.wait not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(expected, curr->expected)
+    VISIT(timeout,
+          curr->timeout) // We ignore timeout in the simulation for simplicity
+
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+
+    auto& field = data->values[curr->index];
+    if (field != expected.getSingleValue()) {
+      return Literal(int32_t(1)); // not-equal, don't wait
+    }
+
+    if (self()->isResuming()) {
+      // We have been notified and resumed.
+      // Clear the resume state and continue.
+      auto currContinuation = self()->getCurrContinuation();
+      assert(curr == currContinuation->resumeExpr);
+      self()->continuationStore->resuming = false;
+      assert(currContinuation->resumeInfo.empty());
+      assert(self()->restoredValuesMap.empty());
+      return Literal(int32_t(0)); // ok, woken up
+    }
+
+    // We need to wait. Create a continuation and suspend the thread.
+    auto old = self()->getCurrContinuationOrNull();
+    if (!old) {
+      // Not executing within a continuation, cannot suspend.
+      // For wasm-shell simulation, we assume threads are started with
+      // ContNew/ContBind.
+      return Flow(THREAD_SUSPEND_FLOW); // This will cause a trap up the stack
+                                        // natively if not caught.
+    }
+    assert(old->executed);
+
+    auto new_ = std::make_shared<ContData>();
+    self()->popCurrContinuation();
+    self()->pushCurrContinuation(new_);
+    new_->resumeExpr = curr;
+    new_->isWaiting = true;
+
+    self()->continuationStore->waitQueues[data][curr->index].push_back(new_);
+
+    return Flow(THREAD_SUSPEND_FLOW);
   }
 
   Flow visitStructNotify(StructNotify* curr) {
-    WASM_UNREACHABLE("struct.notify not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(count, curr->count)
+
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+
+    int32_t countVal = count.getSingleValue().geti32();
+    int32_t woken = 0;
+
+    auto& store = self()->continuationStore;
+    auto it1 = store->waitQueues.find(data);
+    if (it1 != store->waitQueues.end()) {
+      auto& fieldQueues = it1->second;
+      auto it2 = fieldQueues.find(curr->index);
+      if (it2 != fieldQueues.end()) {
+        auto& queue = it2->second;
+        while (!queue.empty() && woken < countVal) {
+          // The waking thread will be executed by the wasm-shell scheduler.
+          // In the reference interpreter, awake continuations should be
+          // tracked. Since wasm-shell handles interleaved threads, we don't
+          // automatically execute them here. Wait! wasm-shell scheduler needs
+          // to know which threads are ready. Our ContinuationStore wait queues
+          // structure just pops them. The scheduler wrapper will need a way to
+          // track all active threads.
+          auto wokeCont = queue.front();
+          wokeCont->isWaiting = false;
+          queue.erase(queue.begin());
+          woken++;
+        }
+      }
+    }
+
+    return Literal(woken);
   }
 
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
@@ -2713,6 +2804,10 @@ public:
   virtual void trap(std::string_view why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void hostLimit(std::string_view why) { WASM_UNREACHABLE("unimp"); }
+
+  virtual void invokeMain(const std::string& startName) {
+    WASM_UNREACHABLE("unimp");
+  }
 
   virtual void throwException(const WasmException& exn) {
     WASM_UNREACHABLE("unimp");
@@ -3256,6 +3351,42 @@ public:
   }
 
   Flow callExport(Name name) { return callExport(name, Literals()); }
+
+  std::shared_ptr<ContData> getSuspendedContinuation() {
+    return this->getCurrContinuationOrNull();
+  }
+
+  Flow resumeContinuation(std::shared_ptr<ContData> contData,
+                          Literals arguments = {}) {
+    if (contData->executed) {
+      this->trap("continuation already executed");
+    }
+    contData->executed = true;
+
+    if (contData->resumeArguments.empty()) {
+      contData->resumeArguments = arguments;
+    }
+
+    this->pushCurrContinuation(contData);
+    this->continuationStore->resuming = true;
+#if WASM_INTERPRETER_DEBUG
+    std::cout << this->indent() << "resuming func " << contData->func.getFunc()
+              << '\n';
+#endif
+
+    Flow ret = contData->func.getFuncData()->doCall(arguments);
+
+    if (this->isResuming()) {
+      // if we didn't suspend again natively, clear resuming flag
+      this->continuationStore->resuming = false;
+    }
+
+    if (ret.breakTo != THREAD_SUSPEND_FLOW && !ret.suspendTag) {
+      // The coroutine finished normally.
+      this->popCurrContinuation();
+    }
+    return ret;
+  }
 
   Literal getExportedFunction(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
