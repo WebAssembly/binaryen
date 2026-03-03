@@ -4748,6 +4748,10 @@ void validateTables(Module& module, ValidationInfo& info) {
         "tables with non-nullable types require an initializer expression");
     }
     if (table->init != nullptr) {
+      info.shouldBeTrue(module.features.hasGC(),
+                        "table",
+                        "tables cannot have an initializer expression in MVP "
+                        "(requires --enable-gc).");
       info.shouldBeSubType(
         table->init->type,
         table->type,
@@ -4758,12 +4762,6 @@ void validateTables(Module& module, ValidationInfo& info) {
         "table",
         "table initializer value must be constant");
       validator.validate(table->init);
-    }
-    if (!module.features.hasGC()) {
-      info.shouldBeFalse(table->hasInit(),
-                         "table",
-                         "tables cannot have an initializer expression in MVP "
-                         "(requires --enable-gc).");
     }
     auto typeFeats = table->type.getFeatures();
     if (!info.shouldBeTrue(table->type == funcref ||
