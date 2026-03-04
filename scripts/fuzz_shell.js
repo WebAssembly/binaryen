@@ -452,13 +452,16 @@ if (secondBinary) {
   });
 }
 
-// Reflect on the imports globals to add appropriate imported externref globals.
 function makeImports(module) {
+  // Reflect on the imports to add necessary externref globals.
   if (WebAssembly.Module.imports === undefined) {
     // We must be running with wasm2js, in which case reference types must not
     // be enabled and there are no externref globals.
     return baseImports;
   }
+  // Add missing imported immutable externref globals.
+  // TODO: Support more kinds of imported globals, but this would require being
+  // able to reflect more precisely on the global externtypes.
   for (var {module, name, kind} of WebAssembly.Module.imports(module)) {
     if (kind == 'global') {
       if (!baseImports[module]) {
