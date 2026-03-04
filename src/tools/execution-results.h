@@ -18,12 +18,14 @@
 // Shared execution result checking code
 //
 
+#include <deque>
+#include <memory>
+
 #include "ir/import-utils.h"
 #include "shell-interface.h"
 #include "support/utilities.h"
 #include "wasm-type.h"
 #include "wasm.h"
-#include <memory>
 
 namespace wasm {
 
@@ -353,8 +355,9 @@ class FuzzerImportResolver
   : public LinkedInstancesImportResolver<ModuleRunner> {
   using LinkedInstancesImportResolver::LinkedInstancesImportResolver;
 
-  // We can synthesize imported externref globals.
-  mutable std::vector<std::unique_ptr<Literals>> synthesizedGlobals;
+  // We can synthesize imported externref globals. Use a deque for stable
+  // addresses.
+  mutable std::deque<Literals> synthesizedGlobals;
 
   Tag* getTagOrNull(ImportNames name, const Signature& type) const override {
     if (name.module == "fuzzing-support") {
@@ -385,9 +388,8 @@ class FuzzerImportResolver
       return nullptr;
     }
     // TODO: Generate a distinct payload for each global.
-    synthesizedGlobals.emplace_back(
-      std::make_unique<Literals>(Literals{Literal::makeExtern(0, Unshared)}));
-    return synthesizedGlobals.back().get();
+    synthesizedGlobals.emplace_back(Literals{Literal::makeExtern(0, Unshared)});
+    return &synthesizedGlobals.back();
   }
 
 private:
