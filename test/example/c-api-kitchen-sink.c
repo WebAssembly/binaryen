@@ -1390,7 +1390,8 @@ void test_core() {
     1,
     1,
     i32StructNonNull,
-    BinaryenStructNew(module, NULL, 0, BinaryenTypeGetHeapType(i32StructNonNull)));
+    BinaryenStructNew(
+      module, NULL, 0, BinaryenTypeGetHeapType(i32StructNonNull)));
 
   BinaryenExpressionRef funcrefExpr1 =
     BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType);
