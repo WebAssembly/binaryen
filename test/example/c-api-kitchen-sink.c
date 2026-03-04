@@ -522,6 +522,7 @@ void test_core() {
   BinaryenType i16Array;
   BinaryenType funcArray;
   BinaryenType i32Struct;
+  BinaryenType i32StructNonNull;
   {
     TypeBuilderRef tb = TypeBuilderCreate(4);
     TypeBuilderSetArrayType(
@@ -543,6 +544,7 @@ void test_core() {
     i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
     funcArray = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
     i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[3], true);
+    i32StructNonNull = BinaryenTypeFromHeapType(builtHeapTypes[3], false);
   }
 
   // Memory. Add it before creating any memory-using instructions.
@@ -1380,6 +1382,15 @@ void test_core() {
   BinaryenAddPassiveElementSegment(module, "passive", funcNames, 1);
   BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
   BinaryenRemoveElementSegment(module, "p2");
+
+  // Non-nullable table
+  BinaryenAddTable(
+    module,
+    "1",
+    1,
+    1,
+    i32StructNonNull,
+    BinaryenStructNew(module, NULL, 0, BinaryenTypeGetHeapType(i32StructNonNull)));
 
   BinaryenExpressionRef funcrefExpr1 =
     BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType);
