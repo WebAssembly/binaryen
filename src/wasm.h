@@ -585,8 +585,6 @@ enum SIMDTernaryOp {
   Bitselect,
 
   // Relaxed SIMD
-  RelaxedMaddVecF16x8,
-  RelaxedNmaddVecF16x8,
   RelaxedMaddVecF32x4,
   RelaxedNmaddVecF32x4,
   RelaxedMaddVecF64x2,
@@ -596,6 +594,9 @@ enum SIMDTernaryOp {
   LaneselectI32x4,
   LaneselectI64x2,
   DotI8x16I7x16AddSToVecI32x4,
+  // FP16
+  MaddVecF16x8,
+  NmaddVecF16x8,
 };
 
 enum RefAsOp {

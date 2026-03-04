@@ -727,11 +727,11 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
     case LaneselectI64x2:
       o << U32LEB(BinaryConsts::I64x2Laneselect);
       break;
-    case RelaxedMaddVecF16x8:
-      o << U32LEB(BinaryConsts::F16x8RelaxedMadd);
+    case MaddVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8Madd);
       break;
-    case RelaxedNmaddVecF16x8:
-      o << U32LEB(BinaryConsts::F16x8RelaxedNmadd);
+    case NmaddVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8Nmadd);
       break;
     case RelaxedMaddVecF32x4:
       o << U32LEB(BinaryConsts::F32x4RelaxedMadd);

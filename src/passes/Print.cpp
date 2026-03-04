@@ -790,11 +790,11 @@ struct PrintExpressionContents
       case LaneselectI64x2:
         o << "i64x2.laneselect";
         break;
-      case RelaxedMaddVecF16x8:
-        o << "f16x8.relaxed_madd";
+      case MaddVecF16x8:
+        o << "f16x8.madd";
         break;
-      case RelaxedNmaddVecF16x8:
-        o << "f16x8.relaxed_nmadd";
+      case NmaddVecF16x8:
+        o << "f16x8.nmadd";
         break;
       case RelaxedMaddVecF32x4:
         o << "f32x4.relaxed_madd";
