@@ -1097,7 +1097,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitArrayStore(ArrayStore* curr,
-                       std::optional<HeapType> ht = std::nullopt) {
+                       std::optional<HeapType> ht = std::nullopt,
+                       std::optional<Type> valueType = std::nullopt) {
     if (!ht) {
       if (!curr->ref->type.isRef()) {
         self().noteUnknown();
@@ -1107,7 +1108,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     note(&curr->ref, Type(*ht, Nullable));
     note(&curr->index, Type::i32);
-    note(&curr->value, curr->value->type);
+    note(&curr->value, valueType ? *valueType : curr->value->type);
   }
 
   void visitArrayLen(ArrayLen* curr) {

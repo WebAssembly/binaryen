@@ -567,14 +567,11 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<>
-  visitArrayStoreWithType(ArrayStore* curr, HeapType arrayType, Type type) {
+  Result<> visitArrayStore(ArrayStore* curr,
+                           std::optional<HeapType> ht = std::nullopt,
+                           std::optional<Type> valueType = std::nullopt) {
     std::vector<Child> children;
-    // Push in Wasm stack order (ref, index, value).
-    // popConstrainedChildren processes them in reverse order.
-    children.push_back({&curr->ref, {Type(arrayType, Nullable)}});
-    children.push_back({&curr->index, {Type::i32}});
-    children.push_back({&curr->value, {type}});
+    ConstraintCollector{builder, children}.visitArrayStore(curr, ht, valueType);
     return popConstrainedChildren(children);
   }
 
@@ -2385,7 +2382,7 @@ IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
   }
 
   ArrayStore curr;
-  CHECK_ERR(ChildPopper{*this}.visitArrayStoreWithType(&curr, arrayType, type));
+  CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType, type));
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
   push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
