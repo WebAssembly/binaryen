@@ -708,10 +708,10 @@ void TranslateToFuzzReader::setupGlobals() {
         global->init = makeConst(global->type);
       }
     } else {
-      // If the initialization referred to an imported global, it no longer can
-      // point to the same global after we make it a non-imported global unless
-      // GC is enabled, since before GC, Wasm only made imported globals
-      // available in constant expressions.
+      // If the initialization used an imported global that we made
+      // non-imported, it can no longer use the same global unless GC is
+      // enabled, since before GC Wasm only made imported globals available in
+      // constant expressions.
       if (!wasm.features.hasGC()) {
         auto gets = FindAll<GlobalGet>(global->init);
         for (auto& get : gets.list) {
@@ -741,8 +741,8 @@ void TranslateToFuzzReader::setupGlobals() {
 
   // Create new random globals.
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
-    // Prefer immutable global as they can be used in global.gets in other
-    // globals, for more interesting patterns.
+    // Prefer immutable globals as they can be used in global.gets in other
+    // globals for more interesting patterns.
     auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable;
     auto name = Names::getValidGlobalName(wasm, "global$");
     auto global =
@@ -848,6 +848,8 @@ void TranslateToFuzzReader::finalizeMemory() {
         // unless GC is enabled. This can occur due to us adding a local
         // definition to what used to be an imported global in initial contents.
         // To fix that, replace such invalid offsets with a constant.
+        // TODO: It would be better to avoid segment overlap so that
+        // MemoryPacking can run.
         for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
           if (!wasm.getGlobal(get->name)->imported()) {
             segment->offset =
