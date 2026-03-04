@@ -5,22 +5,23 @@
 ;; the ctors.
 
 (module
+ ;; CHECK:      (type $0 (func (result externref)))
+
+ ;; CHECK:      (import "" "" (global $extern (ref extern)))
  (import "" "" (global $extern (ref extern)))
+ ;; CHECK:      (export "keep" (func $use-global))
+
+ ;; CHECK:      (export "extern" (global $extern))
+ (export "extern" (global $extern))
 
  (func $ctor (export "ctor")
   (nop)
  )
 
- ;; CHECK:      (type $0 (func))
-
- ;; CHECK:      (export "keep" (func $use-global))
-
- ;; CHECK:      (func $use-global (type $0)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK:      (func $use-global (type $0) (result externref)
+ ;; CHECK-NEXT:  (global.get $extern)
  ;; CHECK-NEXT: )
- (func $use-global (export "keep")
-  (drop
-   (global.get $extern)
-  )
+ (func $use-global (export "keep") (result externref)
+  (global.get $extern)
  )
 )
