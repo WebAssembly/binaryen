@@ -14,7 +14,7 @@
   ;; NO_TNH:      (tag $tag (type $2) (param i32))
   (tag $tag (param i32))
 
-  (memory 1 1)
+  (memory 1 1 shared)
 
   (type $struct (struct (field (mut i32))))
 
