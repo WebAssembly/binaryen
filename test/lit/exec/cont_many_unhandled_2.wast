@@ -35,7 +35,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling call-suspend
- ;; CHECK-NEXT: [exception thrown: unhandled suspend]
+ ;; CHECK-NEXT: [trap suspend through JS]
  (func $call-suspend (export "call-suspend")
   (drop
    (call $call-export-catch
