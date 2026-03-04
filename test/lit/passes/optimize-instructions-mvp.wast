@@ -16470,10 +16470,10 @@
     (drop
       ;; The tee's value, and the select's condition, are equal. If we just
       ;; look at them, we could think they are equal, and simplify this.
-      ;; However, the tee modifies $x, so we cannot fold the those two
+      ;; However, the tee modifies $x, so we cannot fold those two
       ;; expressions together while removing the select. (We can, though,
       ;; remove the select and the const, and use an and, but we do remain with
-      ;; two copies of the eq.)
+      ;; two copies of the eq, as those interact.)
       (select
         (local.tee $x
           (i32.eqz
