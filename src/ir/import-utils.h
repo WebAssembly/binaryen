@@ -131,7 +131,9 @@ public:
   virtual ~ImportResolver() = default;
 
   // Returns null if the `name` wasn't found. The returned Literals* lives as
-  // long as the ImportResolver instance.
+  // long as the ImportResolver instance. Takes type, and mut as parameters
+  // because these are parts of the global's externtype that the environment is
+  // allowed to reflect on when providing imports.
   virtual Literals*
   getGlobalOrNull(ImportNames name, Type type, bool mut) const = 0;
 
