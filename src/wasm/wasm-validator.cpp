@@ -1503,10 +1503,10 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
 void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
   FeatureSet required = FeatureSet::None;
   switch (curr->op) {
-    case RelaxedMaddVecF16x8:
-    case RelaxedNmaddVecF16x8:
+    case MaddVecF16x8:
+    case NmaddVecF16x8:
       required |= FeatureSet::FP16;
-      [[fallthrough]];
+      break;
     case LaneselectI8x16:
     case LaneselectI16x8:
     case LaneselectI32x4:
