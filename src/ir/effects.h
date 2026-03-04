@@ -19,8 +19,11 @@
 
 #include "ir/intrinsics.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
+#include <cassert>
 
 namespace wasm {
 
@@ -599,6 +602,68 @@ private:
       }
     }
 
+    void readsMemory(Name memory, MemoryOrder order) {
+      if (parent.module.getMemory(memory)->shared) {
+        parent.readsSharedMemory = true;
+        parent.readOrder = std::max(parent.readOrder, order);
+      } else {
+        parent.readsMemory = true;
+      }
+    }
+
+    void writesMemory(Name memory, MemoryOrder order) {
+      if (parent.module.getMemory(memory)->shared) {
+        parent.writesSharedMemory = true;
+        parent.writeOrder = std::max(parent.writeOrder, order);
+      } else {
+        parent.writesMemory = true;
+      }
+    }
+
+    void readsStruct(HeapType type, Index index, MemoryOrder order) {
+      assert(type.isStruct());
+      if (type.getStruct().fields[index].mutable_ == Mutable) {
+        if (type.isShared()) {
+          parent.readsSharedMutableStruct = true;
+          parent.readOrder = std::max(parent.readOrder, order);
+        } else {
+          parent.readsMutableStruct = true;
+        }
+      }
+    }
+
+    void writesStruct(HeapType type, Index index, MemoryOrder order) {
+      assert(type.isStruct());
+      if (type.isShared()) {
+        parent.writesSharedStruct = true;
+        parent.writeOrder = std::max(parent.writeOrder, order);
+      } else {
+        parent.writesStruct = true;
+      }
+    }
+
+    void readsArray(HeapType type, MemoryOrder order) {
+      assert(type.isArray());
+      if (type.getArray().element.mutable_ == Mutable) {
+        if (type.isShared()) {
+          parent.readsSharedMutableArray = true;
+          parent.readOrder = std::max(parent.readOrder, order);
+        } else {
+          parent.readsMutableArray = true;
+        }
+      }
+    }
+
+    void writesArray(HeapType type, MemoryOrder order) {
+      assert(type.isArray());
+      if (type.isShared()) {
+        parent.writesSharedArray = true;
+        parent.writeOrder = std::max(parent.writeOrder, order);
+      } else {
+        parent.writesArray = true;
+      }
+    }
+
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
         parent.breakTargets.erase(curr->name); // these were internal breaks
@@ -700,45 +765,21 @@ private:
       parent.globalsWritten.insert(curr->name);
     }
     void visitLoad(Load* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.readsSharedMemory = true;
-        parent.readOrder = std::max(parent.readOrder, curr->order);
-      } else {
-        parent.readsMemory = true;
-      }
+      readsMemory(curr->memory, curr->order);
       parent.implicitTrap = true;
     }
     void visitStore(Store* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.writesSharedMemory = true;
-        parent.writeOrder = std::max(parent.writeOrder, curr->order);
-      } else {
-        parent.writesMemory = true;
-      }
+      writesMemory(curr->memory, curr->order);
       parent.implicitTrap = true;
     }
     void visitAtomicRMW(AtomicRMW* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.readsSharedMemory = true;
-        parent.writesSharedMemory = true;
-        parent.readOrder = std::max(parent.readOrder, curr->order);
-        parent.writeOrder = std::max(parent.writeOrder, curr->order);
-      } else {
-        parent.readsMemory = true;
-        parent.writesMemory = true;
-      }
+      readsMemory(curr->memory, curr->order);
+      writesMemory(curr->memory, curr->order);
       parent.implicitTrap = true;
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.readsSharedMemory = true;
-        parent.writesSharedMemory = true;
-        parent.readOrder = std::max(parent.readOrder, curr->order);
-        parent.writeOrder = std::max(parent.writeOrder, curr->order);
-      } else {
-        parent.readsMemory = true;
-        parent.writesMemory = true;
-      }
+      readsMemory(curr->memory, curr->order);
+      writesMemory(curr->memory, curr->order);
       parent.implicitTrap = true;
     }
     void visitAtomicWait(AtomicWait* curr) {
@@ -789,35 +830,19 @@ private:
     void visitSIMDTernary(SIMDTernary* curr) {}
     void visitSIMDShift(SIMDShift* curr) {}
     void visitSIMDLoad(SIMDLoad* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.readsSharedMemory = true;
-      } else {
-        parent.readsMemory = true;
-      }
+      readsMemory(curr->memory, MemoryOrder::Unordered);
       parent.implicitTrap = true;
     }
     void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        if (curr->isLoad()) {
-          parent.readsSharedMemory = true;
-        } else {
-          parent.writesSharedMemory = true;
-        }
+      if (curr->isLoad()) {
+        readsMemory(curr->memory, MemoryOrder::Unordered);
       } else {
-        if (curr->isLoad()) {
-          parent.readsMemory = true;
-        } else {
-          parent.writesMemory = true;
-        }
+        writesMemory(curr->memory, MemoryOrder::Unordered);
       }
       parent.implicitTrap = true;
     }
     void visitMemoryInit(MemoryInit* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.writesSharedMemory = true;
-      } else {
-        parent.writesMemory = true;
-      }
+      writesMemory(curr->memory, MemoryOrder::Unordered);
       parent.implicitTrap = true;
     }
     void visitDataDrop(DataDrop* curr) {
@@ -828,24 +853,12 @@ private:
       parent.implicitTrap = true;
     }
     void visitMemoryCopy(MemoryCopy* curr) {
-      if (parent.module.getMemory(curr->sourceMemory)->shared) {
-        parent.readsSharedMemory = true;
-      } else {
-        parent.readsMemory = true;
-      }
-      if (parent.module.getMemory(curr->destMemory)->shared) {
-        parent.writesSharedMemory = true;
-      } else {
-        parent.writesMemory = true;
-      }
+      readsMemory(curr->sourceMemory, MemoryOrder::Unordered);
+      writesMemory(curr->destMemory, MemoryOrder::Unordered);
       parent.implicitTrap = true;
     }
     void visitMemoryFill(MemoryFill* curr) {
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.writesSharedMemory = true;
-      } else {
-        parent.writesMemory = true;
-      }
+      writesMemory(curr->memory, MemoryOrder::Unordered);
       parent.implicitTrap = true;
     }
     void visitConst(Const* curr) {}
@@ -903,12 +916,7 @@ private:
       // memory.size accesses the size of the memory, and thus can be modeled as
       // reading memory. When the memory is shared, this synchronizes with
       // memory.grow on other threads.
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.readsSharedMemory = true;
-        parent.readOrder = MemoryOrder::SeqCst;
-      } else {
-        parent.readsMemory = true;
-      }
+      readsMemory(curr->memory, MemoryOrder::SeqCst);
     }
     void visitMemoryGrow(MemoryGrow* curr) {
       // memory.grow technically does a read-modify-write operation on the
@@ -916,14 +924,8 @@ private:
       // addresses, and just a read operation in the failure case. It
       // synchronizes with memory.size on other threads, but only when operating
       // on shared memories.
-      if (parent.module.getMemory(curr->memory)->shared) {
-        parent.readsSharedMemory = true;
-        parent.writesSharedMemory = true;
-        parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
-      } else {
-        parent.readsMemory = true;
-        parent.writesMemory = true;
-      }
+      readsMemory(curr->memory, MemoryOrder::SeqCst);
+      writesMemory(curr->memory, MemoryOrder::SeqCst);
     }
     void visitRefNull(RefNull* curr) {}
     void visitRefIsNull(RefIsNull* curr) {}
@@ -1060,15 +1062,7 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      auto heapType = curr->ref->type.getHeapType();
-      if (heapType.getStruct().fields[curr->index].mutable_ == Mutable) {
-        if (heapType.isShared()) {
-          parent.readsSharedMutableStruct = true;
-          parent.readOrder = std::max(parent.readOrder, curr->order);
-        } else {
-          parent.readsMutableStruct = true;
-        }
-      }
+      readsStruct(curr->ref->type.getHeapType(), curr->index, curr->order);
     }
     void visitStructSet(StructSet* curr) {
       if (curr->ref->type == Type::unreachable) {
@@ -1081,12 +1075,7 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      if (curr->ref->type.getHeapType().isShared()) {
-        parent.writesSharedStruct = true;
-        parent.writeOrder = std::max(parent.writeOrder, curr->order);
-      } else {
-        parent.writesStruct = true;
-      }
+      writesStruct(curr->ref->type.getHeapType(), curr->index, curr->order);
     }
     template<typename StructRMWExpr>
     void visitStructRMWExpr(StructRMWExpr* curr) {
@@ -1100,15 +1089,9 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      if (curr->ref->type.getHeapType().isShared()) {
-        parent.readsSharedMutableStruct = true;
-        parent.writesSharedStruct = true;
-        parent.readOrder = std::max(parent.readOrder, curr->order);
-        parent.writeOrder = std::max(parent.writeOrder, curr->order);
-      } else {
-        parent.readsMutableStruct = true;
-        parent.writesStruct = true;
-      }
+      auto heapType = curr->ref->type.getHeapType();
+      readsStruct(heapType, curr->index, curr->order);
+      writesStruct(heapType, curr->index, curr->order);
     }
     void visitStructRMW(StructRMW* curr) { visitStructRMWExpr(curr); }
     void visitStructCmpxchg(StructCmpxchg* curr) { visitStructRMWExpr(curr); }
@@ -1178,15 +1161,7 @@ private:
       }
       // Null refs and OOB access.
       parent.implicitTrap = true;
-      auto heapType = curr->ref->type.getHeapType();
-      if (heapType.getArray().element.mutable_ == Mutable) {
-        if (heapType.isShared()) {
-          parent.readsSharedMutableArray = true;
-          parent.readOrder = std::max(parent.readOrder, curr->order);
-        } else {
-          parent.readsMutableArray = true;
-        }
-      }
+      readsArray(curr->ref->type.getHeapType(), curr->order);
     }
     void visitArraySet(ArraySet* curr) {
       if (curr->ref->type == Type::unreachable) {
@@ -1198,13 +1173,7 @@ private:
       }
       // Null refs and OOB access.
       parent.implicitTrap = true;
-      auto heapType = curr->ref->type.getHeapType();
-      if (heapType.isShared()) {
-        parent.writesSharedStruct = true;
-        parent.writeOrder = std::max(parent.readOrder, curr->order);
-      } else {
-        parent.writesStruct = true;
-      }
+      writesArray(curr->ref->type.getHeapType(), curr->order);
     }
     void visitArrayLen(ArrayLen* curr) {
       if (curr->ref->type == Type::unreachable) {
@@ -1217,6 +1186,8 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
+      // No need to model this as reading the array since the length cannot be
+      // written, so there can be no conflicts.
     }
     void visitArrayCopy(ArrayCopy* curr) {
       if (curr->destRef->type == Type::unreachable ||
@@ -1229,19 +1200,8 @@ private:
       }
       // Null refs and OOB access.
       parent.implicitTrap = true;
-      auto srcHeapType = curr->srcRef->type.getHeapType();
-      if (srcHeapType.getArray().element.mutable_ == Mutable) {
-        if (srcHeapType.isShared()) {
-          parent.readsSharedMutableArray = true;
-        } else {
-          parent.readsMutableArray = true;
-        }
-      }
-      if (curr->destRef->type.getHeapType().isShared()) {
-        parent.writesSharedArray = true;
-      } else {
-        parent.writesArray = true;
-      }
+      readsArray(curr->srcRef->type.getHeapType(), MemoryOrder::Unordered);
+      writesArray(curr->destRef->type.getHeapType(), MemoryOrder::Unordered);
     }
     void visitArrayFill(ArrayFill* curr) {
       if (curr->ref->type == Type::unreachable) {
@@ -1253,11 +1213,7 @@ private:
       }
       // Null refs and OOB access.
       parent.implicitTrap = true;
-      if (curr->ref->type.getHeapType().isShared()) {
-        parent.writesSharedArray = true;
-      } else {
-        parent.writesArray = true;
-      }
+      writesArray(curr->ref->type.getHeapType(), MemoryOrder::Unordered);
     }
     template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
       if (curr->ref->type == Type::unreachable) {
@@ -1269,11 +1225,7 @@ private:
       }
       // Null refs and OOB access.
       parent.implicitTrap = true;
-      if (curr->ref->type.getHeapType().isShared()) {
-        parent.writesSharedArray = true;
-      } else {
-        parent.writesArray = true;
-      }
+      writesArray(curr->ref->type.getHeapType(), MemoryOrder::Unordered);
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
@@ -1287,15 +1239,9 @@ private:
       }
       // Null refs and OOB access.
       parent.implicitTrap = true;
-      if (curr->ref->type.getHeapType().isShared()) {
-        parent.readsSharedMutableArray = true;
-        parent.writesSharedArray = true;
-        parent.readOrder = std::max(parent.readOrder, curr->order);
-        parent.writeOrder = std::max(parent.writeOrder, curr->order);
-      } else {
-        parent.readsMutableArray = true;
-        parent.writesArray = true;
-      }
+      auto heapType = curr->ref->type.getHeapType();
+      readsArray(heapType, curr->order);
+      writesArray(heapType, curr->order);
     }
     void visitArrayRMW(ArrayRMW* curr) { visitArrayRMWExpr(curr); }
     void visitArrayCmpxchg(ArrayCmpxchg* curr) { visitArrayRMWExpr(curr); }
