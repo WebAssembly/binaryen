@@ -139,8 +139,10 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (data $x0 (i32.const 10) "hello, world")
  (data $y1 "I am passive")
  (table $t0 1 funcref)
- (table $t2 1 i31ref (ref.i32 1))
- (elem $e0 (i32.const 0) $"kitchen()sinker")
+ (table $t2 1 1 i31ref (ref.i31
+  (i32.const 1)
+ ))
+ (elem $e0 (table $t0) (i32.const 0) func $"kitchen()sinker")
  (elem declare func $foobar)
  (tag $a-tag (type $1) (param i32))
  (export "mem" (memory $0))
