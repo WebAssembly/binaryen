@@ -29,8 +29,12 @@ class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
-      features(module.features) {}
+      trapsNeverHappen(passOptions.trapsNeverHappen), branchesOut(false),
+      calls(false), readsMemory(false), writesMemory(false), readsTable(false),
+      writesTable(false), readsMutableStruct(false), writesStruct(false),
+      readsArray(false), writesArray(false), trap(false), implicitTrap(false),
+      isAtomic(false), throws_(false), danglingPop(false), mayNotReturn(false),
+      hasReturnCallThrow(false), module(module), features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
                  Module& module,
@@ -44,10 +48,99 @@ public:
     walk(func);
   }
 
-  bool ignoreImplicitTraps;
-  bool trapsNeverHappen;
+  bool ignoreImplicitTraps : 1;
+  bool trapsNeverHappen : 1;
+
+  // Definitely branches out of this expression, or does a return, etc.
+  // breakTargets tracks individual targets, which we may eventually see are
+  // internal, while this is set when we see something that will definitely
+  // not be internal, or is otherwise special like an infinite loop (which
+  // does not technically branch "out", but it does break the normal assumption
+  // of control flow proceeding normally).
+  bool branchesOut : 1;
+
+  bool calls : 1;
+  bool readsMemory : 1;
+  bool writesMemory : 1;
+  bool readsTable : 1;
+  bool writesTable : 1;
+
+  // TODO: More specific type-based alias analysis, and not just at the
+  //       struct/array level.
+  bool readsMutableStruct : 1;
+  bool writesStruct : 1;
+  bool readsArray : 1;
+  bool writesArray : 1;
+
+  // A trap, either from an unreachable instruction, or from an implicit trap
+  // that we do not ignore (see below).
+  //
+  // Note that we ignore trap differences, so it is ok to reorder traps with
+  // each other, but it is not ok to remove them or reorder them with other
+  // effects in a noticeable way.
+  //
+  // Note also that we ignore *optional* runtime-specific traps: we only
+  // consider as trapping something that will trap in *all* VMs, and *all* the
+  // time. For example, a single allocation might trap in a VM in a particular
+  // execution, if it happens to run out of memory just there, but that is not
+  // enough for us to mark it as having a trap effect. (Note that not marking
+  // each allocation as possibly trapping has the nice benefit of making it
+  // possible to eliminate an allocation whose result is not captured.) OTOH, we
+  // *do* mark a potentially infinite number of allocations as trapping, as all
+  // VMs would trap eventually, and the same for potentially infinite recursion,
+  // etc.
+  bool trap : 1;
+
+  // A trap from an instruction like a load or div/rem, which may trap on corner
+  // cases. If we do not ignore implicit traps then these are counted as a trap.
+  bool implicitTrap : 1;
+
+  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
+  // wrt atomics (e.g. memory.grow)
+  bool isAtomic : 1;
+
+  bool throws_ : 1;
+
+  // If this expression contains 'pop's that are not enclosed in 'catch' body.
+  // For example, (drop (pop i32)) should set this to true.
+  bool danglingPop : 1;
+
+  // Whether this code may "hang" and not eventually complete. An infinite loop,
+  // or a continuation that is never continued, are examples of that.
+  bool mayNotReturn : 1;
+
+  // Since return calls return out of the body of the function before performing
+  // their call, they are indistinguishable from normal returns from the
+  // perspective of their surrounding code, and the return-callee's effects only
+  // become visible when considering the effects of the whole function
+  // containing the return call. To model this correctly, stash the callee's
+  // effects on the side and only merge them in after walking a full function
+  // body.
+  //
+  // We currently do this stashing only for the throw effect, but in principle
+  // we could do it for all effects if it made a difference. (Only throw is
+  // noticeable now because the only thing that can change between doing the
+  // call here and doing it outside at the function exit is the scoping of
+  // try-catch blocks. If future wasm scoping additions are added, we may need
+  // more here.)
+  bool hasReturnCallThrow : 1;
+
   Module& module;
   FeatureSet features;
+
+  std::set<Index> localsRead;
+  std::set<Index> localsWritten;
+  std::set<Name> mutableGlobalsRead;
+  std::set<Name> globalsWritten;
+
+  // The nested depth of try-catch_all. If an instruction that may throw is
+  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
+  // will be caught by an inner catch_all. We only count 'try's with a
+  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
+  // still throw outside of the try.
+  size_t tryDepth = 0;
+  // The nested depth of catch. This is necessary to track danglng pops.
+  size_t catchDepth = 0;
 
   // Walk an expression and all its children.
   void walk(Expression* ast) {
@@ -90,86 +183,6 @@ public:
     localsWritten.clear();
     localsRead.clear();
   }
-
-  // Core effect tracking
-
-  // Definitely branches out of this expression, or does a return, etc.
-  // breakTargets tracks individual targets, which we may eventually see are
-  // internal, while this is set when we see something that will definitely
-  // not be internal, or is otherwise special like an infinite loop (which
-  // does not technically branch "out", but it does break the normal assumption
-  // of control flow proceeding normally).
-  bool branchesOut = false;
-  bool calls = false;
-  std::set<Index> localsRead;
-  std::set<Index> localsWritten;
-  std::set<Name> mutableGlobalsRead;
-  std::set<Name> globalsWritten;
-  bool readsMemory = false;
-  bool writesMemory = false;
-  bool readsTable = false;
-  bool writesTable = false;
-  // TODO: More specific type-based alias analysis, and not just at the
-  //       struct/array level.
-  bool readsMutableStruct = false;
-  bool writesStruct = false;
-  bool readsArray = false;
-  bool writesArray = false;
-  // A trap, either from an unreachable instruction, or from an implicit trap
-  // that we do not ignore (see below).
-  //
-  // Note that we ignore trap differences, so it is ok to reorder traps with
-  // each other, but it is not ok to remove them or reorder them with other
-  // effects in a noticeable way.
-  //
-  // Note also that we ignore *optional* runtime-specific traps: we only
-  // consider as trapping something that will trap in *all* VMs, and *all* the
-  // time. For example, a single allocation might trap in a VM in a particular
-  // execution, if it happens to run out of memory just there, but that is not
-  // enough for us to mark it as having a trap effect. (Note that not marking
-  // each allocation as possibly trapping has the nice benefit of making it
-  // possible to eliminate an allocation whose result is not captured.) OTOH, we
-  // *do* mark a potentially infinite number of allocations as trapping, as all
-  // VMs would trap eventually, and the same for potentially infinite recursion,
-  // etc.
-  bool trap = false;
-  // A trap from an instruction like a load or div/rem, which may trap on corner
-  // cases. If we do not ignore implicit traps then these are counted as a trap.
-  bool implicitTrap = false;
-  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
-  // wrt atomics (e.g. memory.grow)
-  bool isAtomic = false;
-  bool throws_ = false;
-  // The nested depth of try-catch_all. If an instruction that may throw is
-  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
-  // will be caught by an inner catch_all. We only count 'try's with a
-  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
-  // still throw outside of the try.
-  size_t tryDepth = 0;
-  // The nested depth of catch. This is necessary to track danglng pops.
-  size_t catchDepth = 0;
-  // If this expression contains 'pop's that are not enclosed in 'catch' body.
-  // For example, (drop (pop i32)) should set this to true.
-  bool danglingPop = false;
-  // Whether this code may "hang" and not eventually complete. An infinite loop,
-  // or a continuation that is never continued, are examples of that.
-  bool mayNotReturn = false;
-
-  // Since return calls return out of the body of the function before performing
-  // their call, they are indistinguishable from normal returns from the
-  // perspective of their surrounding code, and the return-callee's effects only
-  // become visible when considering the effects of the whole function
-  // containing the return call. To model this correctly, stash the callee's
-  // effects on the side and only merge them in after walking a full function
-  // body.
-  //
-  // We currently do this stashing only for the throw effect, but in principle
-  // we could do it for all effects if it made a difference. (Only throw is
-  // noticeable now because the only thing that can change between doing the
-  // call here and doing it outside at the function exit is the scoping of
-  // try-catch blocks. If future wasm scoping additions are added, we may need
-  // more here.)
-  bool hasReturnCallThrow = false;
 
   // Helper functions to check for various effect types
 
