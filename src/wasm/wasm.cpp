@@ -28,6 +28,7 @@ Name RETURN_FLOW("*return:)*");
 Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 Name SUSPEND_FLOW("*suspend:)*");
+Name THREAD_SUSPEND_FLOW("*thread_suspend:)*");
 
 namespace BinaryConsts::CustomSections {
 

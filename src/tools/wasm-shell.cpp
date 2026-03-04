@@ -53,6 +53,17 @@ struct Shell {
 
   Options& options;
 
+  struct ThreadState {
+    Name name;
+    std::vector<WATParser::ScriptEntry> commands;
+    size_t pc = 0;
+    bool isSuspended = false;
+    std::shared_ptr<ModuleRunner> instance = nullptr;
+    std::shared_ptr<ContData> suspendedCont = nullptr;
+    bool done = false;
+  };
+  std::vector<ThreadState> activeThreads;
+
   Shell(Options& options) : options(options) { buildSpectestModule(); }
 
   Result<> run(WASTScript& script) {
@@ -105,10 +116,119 @@ struct Shell {
   // Run threads in a blocking manner for now.
   // TODO: yield on blocking instructions e.g. memory.atomic.wait32.
   Result<> doThread(ThreadBlock& thread) {
-    return run(thread.commands);
+    ThreadState state;
+    state.name = thread.name;
+    state.commands = thread.commands;
+    activeThreads.push_back(std::move(state));
+    return Ok{};
   }
 
   Result<> doWait(Wait& wait) {
+    bool found = false;
+    for (auto& t : activeThreads) {
+      if (t.name == wait.thread) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return Err{"wait called for unknown thread"};
+    }
+
+    // Round-robin execution
+    while (true) {
+      bool anyProgress = false;
+      bool targetDone = false;
+
+      for (auto& t : activeThreads) {
+        if (t.done) {
+          if (t.name == wait.thread)
+            targetDone = true;
+          continue;
+        }
+
+        if (t.isSuspended) {
+          // Check if it's still waiting. WaitQueue sets `isWaiting` to false
+          // when notified.
+          bool stillWaiting = t.suspendedCont && t.suspendedCont->isWaiting;
+
+          if (!stillWaiting) {
+            // It was woken up! We need to resume it.
+            t.isSuspended = false;
+            Flow flow;
+            try {
+              flow = t.instance->resumeContinuation(t.suspendedCont);
+            } catch (TrapException&) {
+              std::cerr << "Thread " << t.name << " trapped upon resume\n";
+              t.done = true;
+              anyProgress = true;
+              continue;
+            } catch (...) {
+              WASM_UNREACHABLE("unexpected error during resume");
+            }
+            t.suspendedCont = nullptr;
+
+            if (flow.breakTo == THREAD_SUSPEND_FLOW) {
+              // Suspended again
+              t.isSuspended = true;
+              t.suspendedCont = t.instance->getSuspendedContinuation();
+              anyProgress = true;
+            } else if (flow.suspendTag) {
+              t.instance->clearContinuationStore();
+              t.done = true; // unhandled suspension
+              anyProgress = true;
+            } else {
+              t.pc++; // Completed the command that originally suspended!
+              anyProgress = true;
+            }
+          }
+        } else {
+          // Normal execution of the next command.
+          if (t.pc < t.commands.size()) {
+            auto& cmd = t.commands[t.pc].cmd;
+            if (auto* act = std::get_if<Action>(&cmd)) {
+              auto result = doAction(*act);
+              if (std::get_if<ThreadSuspendResult>(&result)) {
+                t.isSuspended = true;
+                if (auto* invoke = std::get_if<InvokeAction>(act)) {
+                  t.instance =
+                    instances[invoke->base ? *invoke->base : lastInstance];
+                  t.suspendedCont = t.instance->getSuspendedContinuation();
+                }
+                anyProgress = true;
+              } else {
+                t.pc++;
+                anyProgress = true;
+              }
+            } else {
+              // Not an action, just run it (e.g. module instantiation or
+              // assertions inside thread)
+              auto res = runCommand(cmd);
+              if (res.getErr()) {
+                std::cerr << "Thread " << t.name
+                          << " error: " << res.getErr()->msg << "\n";
+                t.done = true;
+              } else {
+                t.pc++;
+                anyProgress = true;
+              }
+            }
+          } else {
+            t.done = true;
+            anyProgress = true; // finishing counts as progress
+          }
+        }
+      }
+
+      if (targetDone) {
+        break;
+      }
+
+      if (!anyProgress) {
+        // Find if target is still suspended
+        return Err{"deadlock! no threads can make progress"};
+      }
+    }
     return Ok{};
   }
 
@@ -237,11 +357,13 @@ struct Shell {
   struct HostLimitResult {};
   struct ExceptionResult {};
   struct SuspensionResult {};
+  struct ThreadSuspendResult {};
   using ActionResult = std::variant<Literals,
                                     TrapResult,
                                     HostLimitResult,
                                     ExceptionResult,
-                                    SuspensionResult>;
+                                    SuspensionResult,
+                                    ThreadSuspendResult>;
 
   std::string resultToString(ActionResult& result) {
     if (std::get_if<TrapResult>(&result)) {
@@ -252,6 +374,8 @@ struct Shell {
       return "exception";
     } else if (std::get_if<SuspensionResult>(&result)) {
       return "suspension";
+    } else if (std::get_if<ThreadSuspendResult>(&result)) {
+      return "thread_suspend";
     } else if (auto* vals = std::get_if<Literals>(&result)) {
       std::stringstream ss;
       ss << *vals;
@@ -280,6 +404,9 @@ struct Shell {
         return ExceptionResult{};
       } catch (...) {
         WASM_UNREACHABLE("unexpected error");
+      }
+      if (flow.breakTo == THREAD_SUSPEND_FLOW) {
+        return ThreadSuspendResult{};
       }
       if (flow.suspendTag) {
         // This is an unhandled suspension. Handle it here - clear the
