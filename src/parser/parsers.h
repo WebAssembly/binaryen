@@ -3187,7 +3187,7 @@ template<typename Ctx> Result<> comptype(Ctx& ctx) {
   }
   if (auto type = structtype(ctx)) {
     CHECK_ERR(type);
-    ctx.addStructType(*type);
+    CHECK_ERR(ctx.addStructType(*type));
     return Ok{};
   }
   if (auto type = arraytype(ctx)) {
