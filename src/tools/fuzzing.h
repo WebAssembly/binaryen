@@ -332,6 +332,7 @@ private:
   void setupMemory();
   void setupHeapTypes();
   void setupTables();
+  bool isImportableGlobalType(Type type);
   bool isImportableGlobal(Global* global);
   void setupGlobals();
   void setupTags();

@@ -688,11 +688,16 @@ void TranslateToFuzzReader::useGlobalLater(Global* global) {
   }
 }
 
+bool TranslateToFuzzReader::isImportableGlobalType(Type type) {
+  // TODO: Support more types, but this would require being able to reflect on
+  // them from JS.
+  return type.isRef() && type.getHeapType() == HeapType::ext;
+}
+
 bool TranslateToFuzzReader::isImportableGlobal(Global* global) {
-  // TODO: Support more types and mutable globals, but this would require
-  // parsing the binary from JS to reflect on import types.
-  return global->mutable_ == Immutable && global->type.isRef() &&
-         global->type.getHeapType() == HeapType::ext;
+  // TODO: Support mutable globals, but this would require being able to reflect
+  // on them from JS.
+  return global->mutable_ == false && isImportableGlobalType(global->type);
 }
 
 void TranslateToFuzzReader::setupGlobals() {
@@ -3818,25 +3823,35 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         // Shared strings not yet supported.
         return makeConst(Type(HeapType::string, NonNullable));
       }
-      // If we can, prefer using an imported global over a null, especially if
-      // we are trying to make a non-nullable reference (and always if we are
-      // making a non-nullable reference outside a function context, where
-      // casting a null is not an option).
-      if (!preserveImportsAndExports && heapType == HeapType::ext &&
-          ((type.isNonNullable() && (!funcContext || !oneIn(16))) ||
-           !oneIn(4))) {
-        auto [it, inserted] = importedImmutableGlobalsByType.insert({type, {}});
-        if (inserted) {
-          auto name = Names::getValidGlobalName(wasm, "extern$");
-          auto global =
-            builder.makeGlobal(name, type, nullptr, Builder::Immutable);
-          global->module = importedGlobalModuleName;
-          global->base = name;
-          useGlobalLater(wasm.addGlobal(std::move(global)));
+      // If we can, prefer using an imported global over a null.
+      bool canImport =
+        !preserveImportsAndExports && isImportableGlobalType(type);
+      if (canImport) {
+        bool shouldImport;
+        if (type.isNonNullable()) {
+          // If we are not in a function context, casting a null is not an
+          // option, so always use a global. Otherwise very rarely cast a null.
+          shouldImport = !funcContext || !oneIn(16);
+        } else {
+          // Still prefer a global over a null, but allow nulls more since they
+          // will not need immediate casts.
+          shouldImport = !oneIn(4);
         }
-        assert(!it->second.empty());
-        auto global = pick(it->second);
-        return builder.makeGlobalGet(global, type);
+        if (shouldImport) {
+          auto [it, inserted] =
+            importedImmutableGlobalsByType.insert({type, {}});
+          if (inserted) {
+            auto name = Names::getValidGlobalName(wasm, "extern$");
+            auto global =
+              builder.makeGlobal(name, type, nullptr, Builder::Immutable);
+            global->module = importedGlobalModuleName;
+            global->base = name;
+            useGlobalLater(wasm.addGlobal(std::move(global)));
+          }
+          assert(!it->second.empty());
+          auto global = pick(it->second);
+          return builder.makeGlobalGet(global, type);
+        }
       }
       // Use a null value, making it non-null if necessary.
       auto null = builder.makeRefNull(HeapTypes::ext.getBasic(share));
