@@ -1029,26 +1029,17 @@ void ModuleSplitter::shareImportableItems() {
         assert(primary.features.hasMutableGlobals() &&
                "TODO: add wrapper functions for disallowed mutable globals");
       }
-      auto secondaryGlobal = std::make_unique<Global>();
-      secondaryGlobal->type = global->type;
-      secondaryGlobal->mutable_ = global->mutable_;
-      secondaryGlobal->init =
-        global->init == nullptr
-          ? nullptr
-          : ExpressionManipulator::copy(global->init, secondary);
+      auto* secondaryGlobal = ModuleUtils::copyGlobal(global.get(), secondary);
       makeImportExport(
         *global, *secondaryGlobal, "global", ExternalKind::Global);
-      secondary.addGlobal(std::move(secondaryGlobal));
     }
 
     for (auto& tag : primary.tags) {
       if (!used.tags.count(tag->name)) {
         continue;
       }
-      auto secondaryTag = std::make_unique<Tag>();
-      secondaryTag->type = tag->type;
+      auto* secondaryTag = ModuleUtils::copyTag(tag.get(), secondary);
       makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
-      secondary.addTag(std::move(secondaryTag));
     }
   }
 }
