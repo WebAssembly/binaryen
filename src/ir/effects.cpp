@@ -156,6 +156,7 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.hasExternalBreakTargets()) {
     o << "hasExternalBreakTargets\n";
   }
+  o << "}";
   return o;
 }
 
