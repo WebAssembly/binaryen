@@ -550,19 +550,27 @@ function build(binary, isSecond) {
   let tasks = [];
   for (let e of relevantExports) {
     let name, value;
-    if (typeof e === 'string') { // XXX
+    if (typeof e === 'string') {
       // We are given a string name to call. Look it up in the global namespace.
       name = e;
       value = exports[e];
     } else {
-      // We are given an object form exportList, which has both a name and a
+      // We are given an object from exportList, which has both a name and a
       // value.
       name = e.name;
       value = e.value;
     }
 
     if (typeof value !== 'function') {
-      continue; // XXX can at least log the export, logRef or logValue
+      // This is not a function, but we can still do some operations on this
+      // export, possibly finding interesting behavior in the VM.
+      if (typeof value === 'object') {
+        // An object allows more operations than an arbitrary value.
+        logRef(value);
+      } else {
+        logValue(value);
+      }
+      continue;
     }
 
     // A task is a name + a function to call. For an export, the function is
