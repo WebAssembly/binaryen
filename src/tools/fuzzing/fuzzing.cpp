@@ -706,6 +706,10 @@ void TranslateToFuzzReader::setupGlobals() {
   // can't satisfy into declared globals.
   for (auto& global : wasm.globals) {
     if (global->imported()) {
+      // TODO: Once we support more importable global types, sometimes choose to
+      // make the global non-imported even if we don't have to. (Right now that
+      // isn't very interesting because there's no way to materialize an
+      // externref except via another imported global.)
       if (!preserveImportsAndExports && !isImportableGlobal(global.get())) {
         // Remove import info from imported globals, and give them a simple
         // initializer.
