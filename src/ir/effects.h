@@ -1090,6 +1090,8 @@ private:
           if (handleNullChecked(curr->ref)) {
             return;
           }
+          // OOB acces to array.
+          parent.implicitTrap = true;
           parent.readsArray = true;
           return;
         case StringNewFromCodePoint:
