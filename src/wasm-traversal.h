@@ -252,6 +252,11 @@ struct Walker : public VisitorType {
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
     for (auto& curr : module->globals) {
+      if (curr->init) {
+        self->walk(curr->init);
+      }
+    }
+    for (auto& curr : module->globals) {
       if (!curr->imported()) {
         self->walk(curr->init);
       }
