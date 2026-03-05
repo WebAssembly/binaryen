@@ -405,7 +405,6 @@ SPEC_TESTS_TO_SKIP = [
     'threads/atomic.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
-    'custom-page-sizes',
     'wide-arithmetic',
 ]
 

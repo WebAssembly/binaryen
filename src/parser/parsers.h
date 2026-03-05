@@ -20,6 +20,7 @@
 #include "common.h"
 #include "contexts.h"
 #include "lexer.h"
+#include "wasm.h"
 #include "wat-parser-internal.h"
 
 namespace wasm::WATParser {
@@ -829,7 +830,34 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
   return ctx.makeLimits(uint64_t(*n), m);
 }
 
-// memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared?
+// mempagesize? ::= ('(' 'pagesize' u64 ')') ?
+template<typename Ctx> MaybeResult<uint8_t> mempagesize(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("pagesize"sv)) {
+    return {}; // No pagesize specified
+  }
+  auto pageSize = ctx.in.takeU64();
+  if (!pageSize) {
+    return ctx.in.err("expected page size");
+  }
+
+  if (!Bits::isPowerOf2(*pageSize)) {
+    return ctx.in.err("page size must be a power of two");
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of mempagesize");
+  }
+
+  uint8_t pageSizeLog2 = (uint8_t)Bits::ceilLog2(*pageSize);
+
+  if (pageSizeLog2 != 0 && pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+    return ctx.in.err("memory page size can only be 1 or 64 KiB");
+  }
+
+  return pageSizeLog2;
+}
+
+// memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared? mempagesize?
 //  note: the index type 'i32' or 'i64' is already parsed to simplify parsing of
 //  memory abbreviations.
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx& ctx) {
@@ -851,7 +879,11 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
   if (ctx.in.takeKeyword("shared"sv)) {
     shared = true;
   }
-  return ctx.makeMemType(addressType, *limits, shared);
+  MaybeResult<uint8_t> mempageSize = mempagesize(ctx);
+  CHECK_ERR(mempageSize);
+  const uint8_t pageSizeLog2 =
+    mempageSize ? *mempageSize : Memory::kDefaultPageSizeLog2;
+  return ctx.makeMemType(addressType, *limits, shared, pageSizeLog2);
 }
 
 // memorder ::= 'seqcst' | 'acqrel'
@@ -3584,6 +3616,8 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
 
   std::optional<typename Ctx::MemTypeT> mtype;
   std::optional<typename Ctx::DataStringT> data;
+  MaybeResult<uint8_t> mempageSize = mempagesize(ctx);
+  CHECK_ERR(mempageSize);
   if (ctx.in.takeSExprStart("data"sv)) {
     if (import) {
       return ctx.in.err("imported memories cannot have inline data");
@@ -3593,9 +3627,17 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline data");
     }
-    mtype =
-      ctx.makeMemType(addressType, ctx.getLimitsFromData(*datastr), false);
+    const uint8_t pageSizeLog2 =
+      mempageSize.getPtr() ? *mempageSize : Memory::kDefaultPageSizeLog2;
+    mtype = ctx.makeMemType(addressType,
+                            ctx.getLimitsFromData(*datastr, pageSizeLog2),
+                            false,
+                            pageSizeLog2);
     data = *datastr;
+  } else if (mempageSize) {
+    // If we have a memory page size not within a memtype expression, we expect
+    // a memory abbreviation.
+    return ctx.in.err("expected data segment in memory abbreviation");
   } else {
     auto type = memtypeContinued(ctx, addressType);
     CHECK_ERR(type);
