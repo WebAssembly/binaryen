@@ -2518,7 +2518,6 @@ public:
 
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return addressType == Type::i64; }
-  bool hasInit() { return init != nullptr; }
   void clear() {
     name = "";
     initial = 0;

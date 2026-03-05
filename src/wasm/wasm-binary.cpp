@@ -773,7 +773,7 @@ void WasmBinaryWriter::writeTableDeclarations() {
   auto num = importInfo->getNumDefinedTables();
   o << U32LEB(num);
   ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
-    if (table->hasInit()) {
+    if (table->init) {
       o << uint8_t(BinaryConsts::HasTableInitializer);
       o << uint8_t(BinaryConsts::TableReservedByte);
     }
@@ -783,7 +783,7 @@ void WasmBinaryWriter::writeTableDeclarations() {
                          table->hasMax(),
                          /*shared=*/false,
                          table->is64());
-    if (table->hasInit()) {
+    if (table->init) {
       writeExpression(table->init);
       o << uint8_t(BinaryConsts::End);
     }

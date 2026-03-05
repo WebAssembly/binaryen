@@ -4743,11 +4743,11 @@ void validateTables(Module& module, ValidationInfo& info) {
                       "size minimum must not be greater than maximum");
     if (!table->type.isNullable()) {
       info.shouldBeTrue(
-        table->init != nullptr,
+        table->init,
         "table",
         "tables with non-nullable types require an initializer expression");
     }
-    if (table->init != nullptr) {
+    if (table->init) {
       info.shouldBeTrue(module.features.hasGC(),
                         "table",
                         "tables cannot have an initializer expression in MVP "

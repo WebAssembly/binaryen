@@ -546,7 +546,7 @@ struct Analyzer {
               }
             });
           auto* table = module->getTable(value);
-          if (table->hasInit()) {
+          if (table->init) {
             use(table->init);
           }
           break;

@@ -3542,7 +3542,7 @@ private:
         assert(inserted && "Unexpected repeated table name");
       } else {
         Literal initVal;
-        if (table->hasInit()) {
+        if (table->init) {
           initVal =
             ExpressionRunner<SubType>::visit(table->init).getSingleValue();
         } else {

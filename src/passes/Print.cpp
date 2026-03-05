@@ -3410,7 +3410,7 @@ void PrintSExpression::printTableHeader(Table* curr) {
   }
   o << ' ';
   printType(curr->type);
-  if (curr->hasInit()) {
+  if (curr->init) {
     o << ' ';
     visit(curr->init);
   }
