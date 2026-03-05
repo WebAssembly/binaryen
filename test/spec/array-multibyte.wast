@@ -341,6 +341,8 @@
 (invoke "i32_set_i16" (i32.const 0) (i32.const 0x1234))
 (assert_return (invoke "get_array_4_byte" (i32.const 0)) (i32.const 0x34))
 (assert_return (invoke "get_array_4_byte" (i32.const 1)) (i32.const 0x12))
+(assert_return (invoke "get_array_4_byte" (i32.const 2)) (i32.const 0x00))
+(assert_return (invoke "get_array_4_byte" (i32.const 3)) (i32.const 0x00))
 
 (invoke "i32_set_i32" (i32.const 0) (i32.const 0x12345678))
 (assert_return (invoke "get_array_4_byte" (i32.const 0)) (i32.const 0x78))
