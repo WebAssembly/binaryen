@@ -3462,8 +3462,8 @@ private:
     for (auto& global : wasm.globals) {
       if (global->imported()) {
         auto importNames = global->importNames();
-        auto importedGlobal =
-          importResolver->getGlobalOrNull(importNames, global->type);
+        auto importedGlobal = importResolver->getGlobalOrNull(
+          importNames, global->type, global->mutable_);
         if (!importedGlobal) {
           externalInterface->trap((std::stringstream()
                                    << "Imported global " << importNames

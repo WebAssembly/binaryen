@@ -18,7 +18,13 @@
 // Shared execution result checking code
 //
 
+#include <deque>
+#include <memory>
+
+#include "ir/import-utils.h"
 #include "shell-interface.h"
+#include "support/utilities.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -348,6 +354,11 @@ public:
 class FuzzerImportResolver
   : public LinkedInstancesImportResolver<ModuleRunner> {
   using LinkedInstancesImportResolver::LinkedInstancesImportResolver;
+
+  // We can synthesize imported externref globals. Use a deque for stable
+  // addresses.
+  mutable std::deque<Literals> synthesizedGlobals;
+
   Tag* getTagOrNull(ImportNames name, const Signature& type) const override {
     if (name.module == "fuzzing-support") {
       if (name.name == "wasmtag") {
@@ -359,6 +370,26 @@ class FuzzerImportResolver
     }
 
     return LinkedInstancesImportResolver::getTagOrNull(name, type);
+  }
+
+  virtual Literals*
+  getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
+    // First look for globals available from linked instances.
+    if (auto* global =
+          LinkedInstancesImportResolver<ModuleRunner>::getGlobalOrNull(
+            name, type, mut)) {
+      return global;
+    }
+    // This is not a known global, but the fuzzer supports synthesizing
+    // immutable externref global imports.
+    // TODO: Figure out how to share this logic with TranslateToFuzzReader.
+    // TODO: Support other types.
+    if (mut || !type.isRef() || type.getHeapType() != HeapType::ext) {
+      return nullptr;
+    }
+    // TODO: Generate a distinct payload for each global.
+    synthesizedGlobals.emplace_back(Literals{Literal::makeExtern(0, Unshared)});
+    return &synthesizedGlobals.back();
   }
 
 private:
