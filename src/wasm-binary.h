@@ -43,6 +43,11 @@ enum {
   MaxLEB32Bytes = 5,
 };
 
+enum class BackingType {
+  Memory,
+  Array,
+};
+
 template<typename T, typename MiniT> struct LEB {
   static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
 

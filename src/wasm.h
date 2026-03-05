@@ -72,11 +72,6 @@ enum class MemoryOrder : uint8_t {
   AcqRel,
 };
 
-enum class BackingType {
-  Memory,
-  Array,
-};
-
 enum class IRProfile { Normal, Poppy };
 
 // Operators
