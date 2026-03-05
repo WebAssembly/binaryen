@@ -3951,6 +3951,16 @@ Result<> WasmBinaryReader::readInst() {
           auto type = getIndexedHeapType();
           return builder.makeArrayCmpxchg(type, order);
         }
+        case BinaryConsts::StructWait: {
+          auto structType = getIndexedHeapType();
+          auto index = getU32LEB();
+          return builder.makeStructWait(structType, index);
+        }
+        case BinaryConsts::StructNotify: {
+          auto structType = getIndexedHeapType();
+          auto index = getU32LEB();
+          return builder.makeStructNotify(structType, index);
+        }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
     }

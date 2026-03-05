@@ -1,6 +1,6 @@
 // Build with
 //
-// emcc a.cpp -pthread -s WASM_BIGINT
+// emcc a.cpp -pthread
 //
 
 #include <emscripten.h>

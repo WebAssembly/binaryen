@@ -102,6 +102,7 @@ struct Shell {
     std::shared_ptr<Module> wasm;
     if (auto* quoted = std::get_if<QuotedModule>(&mod.module)) {
       wasm = std::make_shared<Module>();
+      wasm->features = FeatureSet::All;
       switch (quoted->type) {
         case QuotedModuleType::Text: {
           CHECK_ERR(parseModule(*wasm, quoted->module));

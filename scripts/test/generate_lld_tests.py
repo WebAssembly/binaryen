@@ -51,13 +51,9 @@ def generate_wat_files(llvm_bin, emscripten_sysroot):
         is_64 = '64' in src_file
 
         compile_cmd = [
-            os.path.join(llvm_bin, 'clang'), src_path, '-o', obj_path,
+            os.path.join(llvm_bin, 'clang'), '-c', src_path, '-o', obj_path,
             '-mllvm', '-enable-emscripten-sjlj',
-            '-c',
-            '-nostdinc',
-            '-Xclang', '-nobuiltininc',
-            '-Xclang', '-nostdsysteminc',
-            '-Xclang', f'-I{emscripten_sysroot}/include'
+            '--sysroot', emscripten_sysroot,
             '-O1',
         ]
 
@@ -68,21 +64,27 @@ def generate_wat_files(llvm_bin, emscripten_sysroot):
             '--export', '__wasm_call_ctors',
             '--export', '__start_em_asm',
             '--export', '__stop_em_asm',
-            '--global-base=568',
         ]
         # We had a regression where this test only worked if debug names
         # were included.
         if 'longjmp' in src_file:
             link_cmd.append('--strip-debug')
+        if 'pthread' in src_file:
+            compile_cmd.append('-pthread')
+            link_cmd.append('--import-memory')
+            link_cmd.append('--shared-memory')
         if is_shared:
             compile_cmd.append('-fPIC')
             compile_cmd.append('-fvisibility=default')
             link_cmd.append('-shared')
             link_cmd.append('--experimental-pic')
-        elif 'reserved_func_ptr' in src_file:
-            link_cmd.append('--entry=__main_argc_argv')
         else:
-            link_cmd.append('--entry=main')
+            link_cmd.append('--global-base=568')
+            link_cmd.append('--no-stack-first')
+            if 'reserved_func_ptr' in src_file:
+                link_cmd.append('--entry=__main_argc_argv')
+            else:
+                link_cmd.append('--entry=main')
 
         if is_64:
             compile_cmd.append('--target=wasm64-emscripten')

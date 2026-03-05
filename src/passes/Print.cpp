@@ -2405,6 +2405,20 @@ struct PrintExpressionContents
     o << ' ';
     printFieldName(heapType, curr->index);
   }
+  void visitStructWait(StructWait* curr) {
+    printMedium(o, "struct.wait");
+    o << ' ';
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ' ';
+    o << curr->index;
+  }
+  void visitStructNotify(StructNotify* curr) {
+    printMedium(o, "struct.notify");
+    o << ' ';
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ' ';
+    o << curr->index;
+  }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new");
     if (curr->isWithDefault()) {

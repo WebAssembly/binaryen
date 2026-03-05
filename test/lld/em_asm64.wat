@@ -1,8 +1,8 @@
-(module
- (type $i64_i64_i64_=>_i32 (func (param i64 i64 i64) (result i32)))
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_i64_=>_i32 (func (param i32 i64) (result i32)))
+(module $em_asm64.wasm
+ (type $0 (func (param i64 i64 i64) (result i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32 i64) (result i32)))
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i64 i64 i64) (result i32)))
  (global $__stack_pointer (mut i64) (i64.const 66208))
  (global $global$1 i64 (i64.const 574))
@@ -10,7 +10,7 @@
  (memory $0 i64 2)
  (data $.rodata (i64.const 568) "\00ii\00i\00")
  (data $em_asm (i64.const 574) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
- (table $0 1 1 funcref)
+ (table $0 i64 1 1 funcref)
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
@@ -68,7 +68,7 @@
  (func $main (param $0 i32) (param $1 i64) (result i32)
   (call $__original_main)
  )
- ;; custom section "producers", size 112
- ;; features section: memory64
+ ;; custom section "producers", size 115
+ ;; features section: mutable-globals, nontrapping-float-to-int, bulk-memory, sign-ext, reference-types, multivalue, memory64, bulk-memory-opt, call-indirect-overlong
 )
 

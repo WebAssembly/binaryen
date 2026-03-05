@@ -29,8 +29,12 @@ class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
-      features(module.features) {}
+      trapsNeverHappen(passOptions.trapsNeverHappen), branchesOut(false),
+      calls(false), readsMemory(false), writesMemory(false), readsTable(false),
+      writesTable(false), readsMutableStruct(false), writesStruct(false),
+      readsArray(false), writesArray(false), trap(false), implicitTrap(false),
+      isAtomic(false), throws_(false), danglingPop(false), mayNotReturn(false),
+      hasReturnCallThrow(false), module(module), features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
                  Module& module,
@@ -44,10 +48,99 @@ public:
     walk(func);
   }
 
-  bool ignoreImplicitTraps;
-  bool trapsNeverHappen;
+  bool ignoreImplicitTraps : 1;
+  bool trapsNeverHappen : 1;
+
+  // Definitely branches out of this expression, or does a return, etc.
+  // breakTargets tracks individual targets, which we may eventually see are
+  // internal, while this is set when we see something that will definitely
+  // not be internal, or is otherwise special like an infinite loop (which
+  // does not technically branch "out", but it does break the normal assumption
+  // of control flow proceeding normally).
+  bool branchesOut : 1;
+
+  bool calls : 1;
+  bool readsMemory : 1;
+  bool writesMemory : 1;
+  bool readsTable : 1;
+  bool writesTable : 1;
+
+  // TODO: More specific type-based alias analysis, and not just at the
+  //       struct/array level.
+  bool readsMutableStruct : 1;
+  bool writesStruct : 1;
+  bool readsArray : 1;
+  bool writesArray : 1;
+
+  // A trap, either from an unreachable instruction, or from an implicit trap
+  // that we do not ignore (see below).
+  //
+  // Note that we ignore trap differences, so it is ok to reorder traps with
+  // each other, but it is not ok to remove them or reorder them with other
+  // effects in a noticeable way.
+  //
+  // Note also that we ignore *optional* runtime-specific traps: we only
+  // consider as trapping something that will trap in *all* VMs, and *all* the
+  // time. For example, a single allocation might trap in a VM in a particular
+  // execution, if it happens to run out of memory just there, but that is not
+  // enough for us to mark it as having a trap effect. (Note that not marking
+  // each allocation as possibly trapping has the nice benefit of making it
+  // possible to eliminate an allocation whose result is not captured.) OTOH, we
+  // *do* mark a potentially infinite number of allocations as trapping, as all
+  // VMs would trap eventually, and the same for potentially infinite recursion,
+  // etc.
+  bool trap : 1;
+
+  // A trap from an instruction like a load or div/rem, which may trap on corner
+  // cases. If we do not ignore implicit traps then these are counted as a trap.
+  bool implicitTrap : 1;
+
+  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
+  // wrt atomics (e.g. memory.grow)
+  bool isAtomic : 1;
+
+  bool throws_ : 1;
+
+  // If this expression contains 'pop's that are not enclosed in 'catch' body.
+  // For example, (drop (pop i32)) should set this to true.
+  bool danglingPop : 1;
+
+  // Whether this code may "hang" and not eventually complete. An infinite loop,
+  // or a continuation that is never continued, are examples of that.
+  bool mayNotReturn : 1;
+
+  // Since return calls return out of the body of the function before performing
+  // their call, they are indistinguishable from normal returns from the
+  // perspective of their surrounding code, and the return-callee's effects only
+  // become visible when considering the effects of the whole function
+  // containing the return call. To model this correctly, stash the callee's
+  // effects on the side and only merge them in after walking a full function
+  // body.
+  //
+  // We currently do this stashing only for the throw effect, but in principle
+  // we could do it for all effects if it made a difference. (Only throw is
+  // noticeable now because the only thing that can change between doing the
+  // call here and doing it outside at the function exit is the scoping of
+  // try-catch blocks. If future wasm scoping additions are added, we may need
+  // more here.)
+  bool hasReturnCallThrow : 1;
+
   Module& module;
   FeatureSet features;
+
+  std::set<Index> localsRead;
+  std::set<Index> localsWritten;
+  std::set<Name> mutableGlobalsRead;
+  std::set<Name> globalsWritten;
+
+  // The nested depth of try-catch_all. If an instruction that may throw is
+  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
+  // will be caught by an inner catch_all. We only count 'try's with a
+  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
+  // still throw outside of the try.
+  size_t tryDepth = 0;
+  // The nested depth of catch. This is necessary to track danglng pops.
+  size_t catchDepth = 0;
 
   // Walk an expression and all its children.
   void walk(Expression* ast) {
@@ -91,86 +184,6 @@ public:
     localsRead.clear();
   }
 
-  // Core effect tracking
-
-  // Definitely branches out of this expression, or does a return, etc.
-  // breakTargets tracks individual targets, which we may eventually see are
-  // internal, while this is set when we see something that will definitely
-  // not be internal, or is otherwise special like an infinite loop (which
-  // does not technically branch "out", but it does break the normal assumption
-  // of control flow proceeding normally).
-  bool branchesOut = false;
-  bool calls = false;
-  std::set<Index> localsRead;
-  std::set<Index> localsWritten;
-  std::set<Name> mutableGlobalsRead;
-  std::set<Name> globalsWritten;
-  bool readsMemory = false;
-  bool writesMemory = false;
-  bool readsTable = false;
-  bool writesTable = false;
-  // TODO: More specific type-based alias analysis, and not just at the
-  //       struct/array level.
-  bool readsMutableStruct = false;
-  bool writesStruct = false;
-  bool readsArray = false;
-  bool writesArray = false;
-  // A trap, either from an unreachable instruction, or from an implicit trap
-  // that we do not ignore (see below).
-  //
-  // Note that we ignore trap differences, so it is ok to reorder traps with
-  // each other, but it is not ok to remove them or reorder them with other
-  // effects in a noticeable way.
-  //
-  // Note also that we ignore *optional* runtime-specific traps: we only
-  // consider as trapping something that will trap in *all* VMs, and *all* the
-  // time. For example, a single allocation might trap in a VM in a particular
-  // execution, if it happens to run out of memory just there, but that is not
-  // enough for us to mark it as having a trap effect. (Note that not marking
-  // each allocation as possibly trapping has the nice benefit of making it
-  // possible to eliminate an allocation whose result is not captured.) OTOH, we
-  // *do* mark a potentially infinite number of allocations as trapping, as all
-  // VMs would trap eventually, and the same for potentially infinite recursion,
-  // etc.
-  bool trap = false;
-  // A trap from an instruction like a load or div/rem, which may trap on corner
-  // cases. If we do not ignore implicit traps then these are counted as a trap.
-  bool implicitTrap = false;
-  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
-  // wrt atomics (e.g. memory.grow)
-  bool isAtomic = false;
-  bool throws_ = false;
-  // The nested depth of try-catch_all. If an instruction that may throw is
-  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
-  // will be caught by an inner catch_all. We only count 'try's with a
-  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
-  // still throw outside of the try.
-  size_t tryDepth = 0;
-  // The nested depth of catch. This is necessary to track danglng pops.
-  size_t catchDepth = 0;
-  // If this expression contains 'pop's that are not enclosed in 'catch' body.
-  // For example, (drop (pop i32)) should set this to true.
-  bool danglingPop = false;
-  // Whether this code may "hang" and not eventually complete. An infinite loop,
-  // or a continuation that is never continued, are examples of that.
-  bool mayNotReturn = false;
-
-  // Since return calls return out of the body of the function before performing
-  // their call, they are indistinguishable from normal returns from the
-  // perspective of their surrounding code, and the return-callee's effects only
-  // become visible when considering the effects of the whole function
-  // containing the return call. To model this correctly, stash the callee's
-  // effects on the side and only merge them in after walking a full function
-  // body.
-  //
-  // We currently do this stashing only for the throw effect, but in principle
-  // we could do it for all effects if it made a difference. (Only throw is
-  // noticeable now because the only thing that can change between doing the
-  // call here and doing it outside at the function exit is the scoping of
-  // try-catch blocks. If future wasm scoping additions are added, we may need
-  // more here.)
-  bool hasReturnCallThrow = false;
-
   // Helper functions to check for various effect types
 
   bool accessesLocal() const {
@@ -205,6 +218,9 @@ public:
   bool readsMutableGlobalState() const {
     return mutableGlobalsRead.size() || readsMemory || readsTable ||
            readsMutableStruct || readsArray || isAtomic || calls;
+  }
+  bool accessesGlobalState() const {
+    return readsMutableGlobalState() || writesGlobalState();
   }
 
   bool hasNonTrapSideEffects() const {
@@ -292,10 +308,10 @@ public:
         (danglingPop || other.danglingPop)) {
       return true;
     }
-    // All atomics are sequentially consistent for now, and ordered wrt other
-    // memory references.
-    if ((isAtomic && other.accessesMemory()) ||
-        (other.isAtomic && accessesMemory())) {
+    // We model all atomics as sequentially consistent for now. They are ordered
+    // wrt other loads and stores from anything, not just memories.
+    if ((isAtomic && other.accessesGlobalState()) ||
+        (other.isAtomic && accessesGlobalState())) {
       return true;
     }
     for (auto local : localsWritten) {
@@ -598,24 +614,26 @@ private:
     }
     void visitLoad(Load* curr) {
       parent.readsMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      parent.isAtomic |=
+        curr->isAtomic() && parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitStore(Store* curr) {
       parent.writesMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      parent.isAtomic |=
+        curr->isAtomic() && parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicRMW(AtomicRMW* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = true;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = true;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicWait(AtomicWait* curr) {
@@ -644,9 +662,10 @@ private:
       parent.isAtomic = true;
     }
     void visitPause(Pause* curr) {
-      // It's not much of a problem if pause gets reordered with anything, but
-      // we don't want it to be removed entirely.
-      parent.isAtomic = true;
+      // We don't want this to be moved out of loops, but it doesn't otherwises
+      // matter much how it gets reordered. Say we transfer control as a coarse
+      // approximation of this.
+      parent.branchesOut = true;
     }
     void visitSIMDExtract(SIMDExtract* curr) {}
     void visitSIMDReplace(SIMDReplace* curr) {}
@@ -740,8 +759,9 @@ private:
       // memory.size accesses the size of the memory, and thus can be modeled as
       // reading memory
       parent.readsMemory = true;
-      // Atomics are sequentially consistent with memory.size.
-      parent.isAtomic = true;
+      // Synchronizes when memory.grow on other threads, but only when operating
+      // on shared memories.
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitMemoryGrow(MemoryGrow* curr) {
       // TODO: find out if calls is necessary here
@@ -751,8 +771,9 @@ private:
       // addresses, and just a read operation in the failure case
       parent.readsMemory = true;
       parent.writesMemory = true;
-      // Atomics are also sequentially consistent with memory.grow.
-      parent.isAtomic = true;
+      // Synchronizes with memory.size on other threads, but only when operating
+      // on shared memories.
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitRefNull(RefNull* curr) {}
     void visitRefIsNull(RefIsNull* curr) {}
@@ -896,18 +917,8 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      switch (curr->order) {
-        case MemoryOrder::Unordered:
-          break;
-        case MemoryOrder::SeqCst:
-          // Synchronizes with other threads.
-          parent.isAtomic = true;
-          break;
-        case MemoryOrder::AcqRel:
-          // Only synchronizes if other threads can read the field.
-          parent.isAtomic = curr->ref->type.getHeapType().isShared();
-          break;
-      }
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructSet(StructSet* curr) {
       if (curr->ref->type.isNull()) {
@@ -919,9 +930,8 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      if (curr->order != MemoryOrder::Unordered) {
-        parent.isAtomic = true;
-      }
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructRMW(StructRMW* curr) {
       if (curr->ref->type.isNull()) {
@@ -949,6 +959,60 @@ private:
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
+    void visitStructWait(StructWait* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.isAtomic = true;
+
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+
+      // If the timeout is negative and no-one wakes us.
+      parent.mayNotReturn = true;
+
+      // struct.wait mutates an opaque waiter queue which isn't visible in user
+      // code. Model this as a struct write which prevents reorderings (since
+      // isAtomic == true).
+      parent.writesStruct = true;
+
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+
+      // If the ref isn't `unreachable`, then the field must exist and be a
+      // packed waitqueue due to validation.
+      assert(curr->ref->type.isStruct());
+      assert(curr->index <
+             curr->ref->type.getHeapType().getStruct().fields.size());
+      assert(curr->ref->type.getHeapType()
+               .getStruct()
+               .fields.at(curr->index)
+               .packedType == Field::PackedType::WaitQueue);
+
+      parent.readsMutableStruct |= curr->ref->type.getHeapType()
+                                     .getStruct()
+                                     .fields.at(curr->index)
+                                     .mutable_ == Mutable;
+    }
+    void visitStructNotify(StructNotify* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.isAtomic = true;
+
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+
+      // struct.notify mutates an opaque waiter queue which isn't visible in
+      // user code. Model this as a struct write which prevents reorderings
+      // (since isAtomic == true).
+      parent.writesStruct = true;
+    }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped
@@ -969,6 +1033,8 @@ private:
       parent.readsArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArraySet(ArraySet* curr) {
       if (curr->ref->type.isNull()) {
@@ -978,6 +1044,8 @@ private:
       parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArrayLen(ArrayLen* curr) {
       if (curr->ref->type.isNull()) {

@@ -219,7 +219,7 @@ jobs:
     - name: test
       run: python check.py --binaryen-bin=out/bin
 
-  # Build with gcc and run tests on Alpine Linux (inside docker container).
+  # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
   # Keep in sync with build_release.yml
   build-alpine:
@@ -231,7 +231,7 @@ jobs:
         submodules: true
     - name: start docker
       run: |
-        docker run -w /src -dit --platform=linux/arm64 --name alpine -v $PWD:/src alpine:3.23.3
+        docker run -w /src -dit --platform=linux/arm64 --name alpine -v $PWD:/src node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
 

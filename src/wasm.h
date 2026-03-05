@@ -760,8 +760,9 @@ public:
     SuspendId,
     ResumeId,
     ResumeThrowId,
-    // Id for the stack switching `switch`
     StackSwitchId,
+    StructWaitId,
+    StructNotifyId,
     NumExpressionIds
   };
   Id _id;
@@ -1716,6 +1717,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1728,6 +1731,8 @@ public:
   Expression* ref;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
@@ -1756,6 +1761,31 @@ public:
   Expression* expected;
   Expression* replacement;
   MemoryOrder order;
+
+  void finalize();
+};
+
+class StructWait : public SpecificExpression<Expression::StructWaitId> {
+public:
+  StructWait() = default;
+  StructWait(MixedArena& allocator) : StructWait() {}
+
+  Expression* ref;
+  Expression* expected;
+  Expression* timeout;
+  Index index;
+
+  void finalize();
+};
+
+class StructNotify : public SpecificExpression<Expression::StructNotifyId> {
+public:
+  StructNotify() = default;
+  StructNotify(MixedArena& allocator) : StructNotify() {}
+
+  Expression* ref;
+  Expression* count;
+  Index index;
 
   void finalize();
 };
@@ -1820,6 +1850,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1832,6 +1864,8 @@ public:
   Expression* index;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
