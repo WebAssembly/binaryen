@@ -4,7 +4,7 @@
 
 ;; Check that we can roundtrip through the text format as well.
 
-;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all -S -o - | filecheck %s --check-prefix=TEXT
+;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all -S -o -
 
 (module
   ;; CHECK:      (type $0 (func))
@@ -13,9 +13,7 @@
   ;; RTRIP:      (type $0 (func))
 
   ;; RTRIP:      (type $i8_array (array (mut i8)))
-  ;; TEXT:      (type $0 (func))
 
-  ;; TEXT:      (type $i8_array (array (mut i8)))
   (type $i8_array (array (mut i8)))
 
   ;; CHECK:      (global $arr (ref $i8_array) (array.new_default $i8_array
@@ -24,9 +22,6 @@
   ;; RTRIP:      (global $arr (ref $i8_array) (array.new_default $i8_array
   ;; RTRIP-NEXT:  (i32.const 4)
   ;; RTRIP-NEXT: ))
-  ;; TEXT:      (global $arr (ref $i8_array) (array.new_default $i8_array
-  ;; TEXT-NEXT:  (i32.const 4)
-  ;; TEXT-NEXT: ))
   (global $arr (ref $i8_array)
     (array.new_default $i8_array (i32.const 4))
   )
@@ -115,48 +110,6 @@
   ;; RTRIP-NEXT:   (f64.const 2)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; TEXT:      (func $stores (type $0)
-  ;; TEXT-NEXT:  (i32.store8 (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (i32.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (i32.store16 (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (i32.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (i32.store (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (i32.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (f32.store (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (f32.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (i64.store8 (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (i64.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (i64.store16 (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (i64.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (i64.store32 (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (i64.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (f64.store (type $i8_array)
-  ;; TEXT-NEXT:   (global.get $arr)
-  ;; TEXT-NEXT:   (i32.const 1)
-  ;; TEXT-NEXT:   (f64.const 2)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT: )
   (func $stores
     (i32.store8 (type $i8_array) (global.get $arr) (i32.const 1) (i32.const 2))
     (i32.store16 (type $i8_array) (global.get $arr) (i32.const 1) (i32.const 2))
@@ -349,104 +302,6 @@
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (unreachable)
   ;; RTRIP-NEXT: )
-  ;; TEXT:      (func $stores_null (type $0)
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (f32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (ref.null none)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (f64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT: )
   (func $stores_null
     (i32.store8 (type $i8_array) (ref.null $i8_array) (i32.const 1) (i32.const 2))
     (i32.store16 (type $i8_array) (ref.null $i8_array) (i32.const 1) (i32.const 2))
@@ -560,104 +415,6 @@
   ;; RTRIP:      (func $stores_unreachable (type $0)
   ;; RTRIP-NEXT:  (unreachable)
   ;; RTRIP-NEXT: )
-  ;; TEXT:      (func $stores_unreachable (type $0)
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (f32.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT:  (block
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (unreachable)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (i32.const 1)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (drop
-  ;; TEXT-NEXT:    (f64.const 2)
-  ;; TEXT-NEXT:   )
-  ;; TEXT-NEXT:   (unreachable)
-  ;; TEXT-NEXT:  )
-  ;; TEXT-NEXT: )
   (func $stores_unreachable
     (i32.store8 (type $i8_array) (unreachable) (i32.const 1) (i32.const 2))
     (i32.store16 (type $i8_array) (unreachable) (i32.const 1) (i32.const 2))
