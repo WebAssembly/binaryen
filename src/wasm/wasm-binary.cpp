@@ -773,12 +773,20 @@ void WasmBinaryWriter::writeTableDeclarations() {
   auto num = importInfo->getNumDefinedTables();
   o << U32LEB(num);
   ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
+    if (table->init) {
+      o << uint8_t(BinaryConsts::HasTableInitializer);
+      o << uint8_t(BinaryConsts::TableReservedByte);
+    }
     writeType(table->type);
     writeResizableLimits(table->initial,
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
                          table->is64());
+    if (table->init) {
+      writeExpression(table->init);
+      o << uint8_t(BinaryConsts::End);
+    }
   });
   finishSection(start);
 }
@@ -5002,6 +5010,18 @@ void WasmBinaryReader::readTableDeclarations() {
   for (size_t i = 0; i < num; i++) {
     auto [name, isExplicit] = getOrMakeName(
       tableNames, numImports + i, makeName("", i), usedTableNames);
+    auto peekInt = getInt8();
+    bool hasInit = false;
+    if (peekInt == BinaryConsts::HasTableInitializer) {
+      auto reservedByte = getInt8();
+      if (reservedByte != BinaryConsts::TableReservedByte) {
+        // byte reserved for future extension, must be zero for now
+        throwError("Malformed table");
+      }
+      hasInit = true;
+    } else {
+      pos--;
+    }
     auto elemType = getType();
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
@@ -5016,6 +5036,10 @@ void WasmBinaryReader::readTableDeclarations() {
                        Table::kUnlimitedSize);
     if (is_shared) {
       throwError("Tables may not be shared");
+    }
+    if (hasInit) {
+      auto* init = readExpression();
+      table->init = init;
     }
     wasm.addTable(std::move(table));
   }

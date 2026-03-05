@@ -2522,6 +2522,7 @@ public:
   Address max = kMaxSize;
   Type addressType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
+  Expression* init = nullptr;
 
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return addressType == Type::i64; }

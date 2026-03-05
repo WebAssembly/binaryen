@@ -5333,8 +5333,10 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenIndex initial,
                                   BinaryenIndex maximum,
-                                  BinaryenType tableType) {
+                                  BinaryenType tableType,
+                                  BinaryenExpressionRef init) {
   auto table = Builder::makeTable(name, Type(tableType), initial, maximum);
+  table->init = init;
   table->hasExplicitName = true;
   return ((Module*)module)->addTable(std::move(table));
 }
