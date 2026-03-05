@@ -5022,8 +5022,7 @@ void WasmBinaryReader::readTableDeclarations() {
     } else {
       pos--;
     }
-    auto type_code = getS32LEB();
-    auto elemType = getType(type_code);
+    auto elemType = getType();
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
     }
