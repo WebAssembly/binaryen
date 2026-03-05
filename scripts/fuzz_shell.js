@@ -550,7 +550,7 @@ function build(binary, isSecond) {
   let tasks = [];
   for (let e of relevantExports) {
     let name, value;
-    if (typeof e === 'string') {
+    if (typeof e === 'string') { // XXX
       // We are given a string name to call. Look it up in the global namespace.
       name = e;
       value = exports[e];
@@ -562,7 +562,7 @@ function build(binary, isSecond) {
     }
 
     if (typeof value !== 'function') {
-      continue;
+      continue; // XXX can at least log the export, logRef or logValue
     }
 
     // A task is a name + a function to call. For an export, the function is
