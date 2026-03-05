@@ -515,7 +515,7 @@ private:
 
     // Handle effects due to an explicit null check of the operands in `exprs`.
     // Returns true iff there is no need to consider further effects.
-    bool handleNullChecked(std::initializer_list<Expression*> exprs) {
+    bool trapOnNull(std::initializer_list<Expression*> exprs) {
       for (auto* expr : exprs) {
         if (expr && expr->type == Type::unreachable) {
           return true;
@@ -537,9 +537,7 @@ private:
       return false;
     }
 
-    bool handleNullChecked(Expression* expr) {
-      return handleNullChecked({expr});
-    }
+    bool trapOnNull(Expression* expr) { return trapOnNull({expr}); }
 
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
@@ -859,7 +857,7 @@ private:
       }
     }
     void visitThrowRef(ThrowRef* curr) {
-      if (handleNullChecked(curr->exnref)) {
+      if (trapOnNull(curr->exnref)) {
         return;
       }
       if (parent.tryDepth == 0) {
@@ -876,9 +874,9 @@ private:
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {}
     void visitRefI31(RefI31* curr) {}
-    void visitI31Get(I31Get* curr) { handleNullChecked(curr->i31); }
+    void visitI31Get(I31Get* curr) { trapOnNull(curr->i31); }
     void visitCallRef(CallRef* curr) {
-      if (handleNullChecked(curr->target)) {
+      if (trapOnNull(curr->target)) {
         return;
       }
       if (curr->isReturn) {
@@ -896,22 +894,22 @@ private:
     void visitRefTest(RefTest* curr) {}
 
     void visitRefCast(RefCast* curr) {
-      if (handleNullChecked(curr->desc)) {
+      if (trapOnNull(curr->desc)) {
         return;
       }
       // Traps if the cast fails.
       parent.implicitTrap = true;
     }
-    void visitRefGetDesc(RefGetDesc* curr) { handleNullChecked(curr->ref); }
+    void visitRefGetDesc(RefGetDesc* curr) { trapOnNull(curr->ref); }
     void visitBrOn(BrOn* curr) {
-      if (handleNullChecked(curr->desc)) {
+      if (trapOnNull(curr->desc)) {
         return;
       }
       parent.breakTargets.insert(curr->name);
     }
-    void visitStructNew(StructNew* curr) { handleNullChecked(curr->desc); }
+    void visitStructNew(StructNew* curr) { trapOnNull(curr->desc); }
     void visitStructGet(StructGet* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       if (curr->ref->type.getHeapType()
@@ -924,7 +922,7 @@ private:
         curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructSet(StructSet* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesStruct = true;
@@ -932,7 +930,7 @@ private:
         curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructRMW(StructRMW* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsMutableStruct = true;
@@ -941,7 +939,7 @@ private:
       parent.isAtomic = true;
     }
     void visitStructCmpxchg(StructCmpxchg* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsMutableStruct = true;
@@ -950,7 +948,7 @@ private:
       parent.isAtomic = true;
     }
     void visitStructWait(StructWait* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.isAtomic = true;
@@ -979,7 +977,7 @@ private:
                                      .mutable_ == Mutable;
     }
     void visitStructNotify(StructNotify* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.isAtomic = true;
@@ -1002,7 +1000,7 @@ private:
     }
     void visitArrayNewFixed(ArrayNewFixed* curr) {}
     void visitArrayGet(ArrayGet* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsArray = true;
@@ -1012,7 +1010,7 @@ private:
         curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArraySet(ArraySet* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesArray = true;
@@ -1022,12 +1020,12 @@ private:
         curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArrayLen(ArrayLen* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
-      if (handleNullChecked({curr->srcRef, curr->destRef})) {
+      if (trapOnNull({curr->srcRef, curr->destRef})) {
         return;
       }
       parent.readsArray = true;
@@ -1036,7 +1034,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitArrayFill(ArrayFill* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesArray = true;
@@ -1044,7 +1042,7 @@ private:
       parent.implicitTrap = true;
     }
     template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesArray = true;
@@ -1054,7 +1052,7 @@ private:
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
     void visitArrayRMW(ArrayRMW* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsArray = true;
@@ -1065,7 +1063,7 @@ private:
       parent.isAtomic = true;
     }
     void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsArray = true;
@@ -1081,13 +1079,13 @@ private:
         return;
       }
       assert(curr->op == RefAsNonNull);
-      handleNullChecked(curr->value);
+      trapOnNull(curr->value);
     }
     void visitStringNew(StringNew* curr) {
       switch (curr->op) {
         case StringNewLossyUTF8Array:
         case StringNewWTF16Array:
-          if (handleNullChecked(curr->ref)) {
+          if (trapOnNull(curr->ref)) {
             return;
           }
           // OOB acces to array.
@@ -1099,11 +1097,9 @@ private:
       }
     }
     void visitStringConst(StringConst* curr) {}
-    void visitStringMeasure(StringMeasure* curr) {
-      handleNullChecked(curr->ref);
-    }
+    void visitStringMeasure(StringMeasure* curr) { trapOnNull(curr->ref); }
     void visitStringEncode(StringEncode* curr) {
-      if (handleNullChecked({curr->str, curr->array})) {
+      if (trapOnNull({curr->str, curr->array})) {
         return;
       }
       // OOB array access.
@@ -1111,7 +1107,7 @@ private:
       parent.writesArray = true;
     }
     void visitStringConcat(StringConcat* curr) {
-      handleNullChecked({curr->left, curr->right});
+      trapOnNull({curr->left, curr->right});
     }
     void visitStringEq(StringEq* curr) {
       switch (curr->op) {
@@ -1119,28 +1115,28 @@ private:
           // Nulls are ok.
           return;
         case StringEqCompare:
-          handleNullChecked({curr->left, curr->right});
+          trapOnNull({curr->left, curr->right});
           return;
       }
     }
     void visitStringTest(StringTest* curr) {}
     void visitStringWTF16Get(StringWTF16Get* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       // OOB string access.
       parent.implicitTrap = true;
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
-      if (handleNullChecked(curr->ref)) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       // OOB string access.
       parent.implicitTrap = true;
     }
-    void visitContNew(ContNew* curr) { handleNullChecked(curr->func); }
+    void visitContNew(ContNew* curr) { trapOnNull(curr->func); }
     void visitContBind(ContBind* curr) {
-      if (handleNullChecked(curr->cont)) {
+      if (trapOnNull(curr->cont)) {
         return;
       }
       // The input continuation is modified, as it will trap if resumed. This is
@@ -1161,7 +1157,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitResume(Resume* curr) {
-      if (handleNullChecked(curr->cont)) {
+      if (trapOnNull(curr->cont)) {
         return;
       }
       // This acts as a kitchen sink effect.
@@ -1172,7 +1168,7 @@ private:
       }
     }
     void visitResumeThrow(ResumeThrow* curr) {
-      if (handleNullChecked(curr->cont)) {
+      if (trapOnNull(curr->cont)) {
         return;
       }
 
@@ -1184,7 +1180,7 @@ private:
       }
     }
     void visitStackSwitch(StackSwitch* curr) {
-      if (handleNullChecked(curr->cont)) {
+      if (trapOnNull(curr->cont)) {
         return;
       }
 
