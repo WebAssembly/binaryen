@@ -3657,7 +3657,7 @@ private:
     iter->second = size;
   }
 
-  Address getMemorySizeByte(Name memory) {
+  Address getMemorySizeBytes(Name memory) {
     return getMemorySize(memory) * wasm.getMemory(memory)->pageSize();
   }
 
@@ -4030,7 +4030,7 @@ public:
   Flow visitLoad(Load* curr) {
     VISIT(flow, curr->ptr)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, flow.getSingleValue(), memorySizeBytes);
     if (curr->isAtomic()) {
@@ -4043,7 +4043,7 @@ public:
     VISIT(ptr, curr->ptr)
     VISIT(value, curr->value)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), memorySizeBytes);
     if (curr->isAtomic()) {
@@ -4057,7 +4057,7 @@ public:
     VISIT(ptr, curr->ptr)
     VISIT(value, curr->value)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), memorySizeBytes);
     auto loaded = info.instance->doAtomicLoad(
@@ -4091,7 +4091,7 @@ public:
     VISIT(expected, curr->expected)
     VISIT(replacement, curr->replacement)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), memorySizeBytes);
     expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
@@ -4112,7 +4112,7 @@ public:
     VISIT(timeout, curr->timeout)
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), bytes, memorySizeBytes);
     auto loaded = info.instance->doAtomicLoad(addr,
@@ -4138,7 +4138,7 @@ public:
     VISIT(ptr, curr->ptr)
     VISIT(count, curr->notifyCount)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), 4, memorySizeBytes);
     // Just check TODO actual threads support
@@ -4223,7 +4223,7 @@ public:
       }
       WASM_UNREACHABLE("invalid op");
     };
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addressType = curr->ptr->type;
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
@@ -4259,7 +4259,7 @@ public:
   Flow visitSIMDLoadZero(SIMDLoad* curr) {
     VISIT(flow, curr->ptr)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     Address src = info.instance->getFinalAddress(
       curr, flow.getSingleValue(), curr->getMemBytes(), memorySizeBytes);
     auto zero =
@@ -4276,7 +4276,7 @@ public:
     VISIT(ptrFlow, curr->ptr)
     VISIT(vecFlow, curr->vec)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     Address addr = info.instance->getFinalAddress(
       curr, ptrFlow.getSingleValue(), curr->getMemBytes(), memorySizeBytes);
     Literal vec = vecFlow.getSingleValue();
@@ -4395,7 +4395,7 @@ public:
       trap("out of bounds segment access in memory.init");
     }
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     if (destVal + sizeVal > memorySizeBytes) {
       trap("out of bounds memory access in memory.init");
     }
@@ -4423,9 +4423,9 @@ public:
     auto destInfo = getMemoryInstanceInfo(curr->destMemory);
     auto sourceInfo = getMemoryInstanceInfo(curr->sourceMemory);
     auto sourceMemorySizeBytes =
-      sourceInfo.instance->getMemorySizeByte(sourceInfo.name);
+      sourceInfo.instance->getMemorySizeBytes(sourceInfo.name);
     auto destMemorySizeBytes =
-      destInfo.instance->getMemorySizeByte(destInfo.name);
+      destInfo.instance->getMemorySizeBytes(destInfo.name);
     if (sourceVal + sizeVal > sourceMemorySizeBytes ||
         destVal + sizeVal > destMemorySizeBytes ||
         // FIXME: better/cheaper way to detect wrapping?
@@ -4463,7 +4463,7 @@ public:
     Address sizeVal(size.getSingleValue().getUnsigned());
 
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeByte(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     // FIXME: cheaper wrapping detection?
     if (destVal > memorySizeBytes || sizeVal > memorySizeBytes ||
         destVal + sizeVal > memorySizeBytes) {

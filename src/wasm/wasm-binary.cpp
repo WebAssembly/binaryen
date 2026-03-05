@@ -224,7 +224,7 @@ void WasmBinaryWriter::writeMemories() {
                          memory->hasMax(),
                          memory->shared,
                          memory->is64(),
-                         std::optional<uint8_t>(memory->pageSizeLog2));
+                         memory->pageSizeLog2);
   });
   finishSection(start);
 }
@@ -370,7 +370,7 @@ void WasmBinaryWriter::writeImports() {
                          memory->hasMax(),
                          memory->shared,
                          memory->is64(),
-                         std::optional<uint8_t>(memory->pageSizeLog2));
+                         memory->pageSizeLog2);
   });
   ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
     writeImportHeader(table);
