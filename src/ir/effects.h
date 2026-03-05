@@ -1123,10 +1123,18 @@ private:
     }
     void visitStringTest(StringTest* curr) {}
     void visitStringWTF16Get(StringWTF16Get* curr) {
-      handleNullChecked(curr->ref);
+      if (handleNullChecked(curr->ref)) {
+        return;
+      }
+      // OOB string access.
+      parent.implicitTrap = true;
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
-      handleNullChecked(curr->ref);
+      if (handleNullChecked(curr->ref)) {
+        return;
+      }
+      // OOB string access.
+      parent.implicitTrap = true;
     }
     void visitContNew(ContNew* curr) { handleNullChecked(curr->func); }
     void visitContBind(ContBind* curr) {
