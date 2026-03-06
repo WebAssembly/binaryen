@@ -23,6 +23,12 @@ var WebAssembly = {
     return ret;
   },
 
+  Global: function(opts) {
+    return {
+      value: null
+    };
+  },
+
   Module: function(binary) {
     // TODO: use the binary and info somehow - right now the wasm2js output is embedded in
     // the main JS
