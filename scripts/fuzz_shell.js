@@ -198,6 +198,11 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
+// wasm2js does not define RuntimeError, so use that to check for it. wasm2js
+// overrides the entire WebAssembly object with a polyfill, so we know exactly
+// what it contains, and we need to handle some things differently below.
+var wasm2js = !WebAssembly.RuntimeError;
+
 // Calls a given function in a try-catch. Return 1 if an exception was thrown.
 // If |rethrow| is set, and an exception is thrown, it is caught and rethrown.
 // Wasm traps are not swallowed (see details below).
@@ -213,11 +218,7 @@ function callFunc(func) {
 
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
-    // check for that first (wasm2js does not define RuntimeError, so use
-    // that for the check - when wasm2js is run, we override the entire
-    // WebAssembly object with a polyfill, so we know exactly what it
-    // contains).
-    var wasm2js = !WebAssembly.RuntimeError;
+    // check for that first.
     if (!wasm2js) {
       // When running native wasm, we can detect wasm traps.
       if (e instanceof WebAssembly.RuntimeError) {
@@ -561,7 +562,12 @@ function build(binary, isSecond) {
       value = e.value;
     }
 
-    if (value instanceof WebAssembly.Global) {
+    // Check for a global. Note we must be careful in wasm2js mode, where we
+    // can't do instanceof here (the wasm polyfill there doesn't have such
+    // things). But in wasm2js any non-function is a global, so things are
+    // simple there.
+    if ((wasm2js && typeof value !== 'function') ||
+        (!wasm2js && (value instanceof WebAssembly.Global))) {
       // We can log a global value and do other operations to check for bugs.
       // First, do some operations on the Global wrapper itself.
       JSON.stringify(value);
