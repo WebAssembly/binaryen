@@ -1373,6 +1373,9 @@ struct InfoCollector
   void visitSuspend(Suspend* curr) {
     // TODO: optimize when possible
     addRoot(curr);
+
+    // The given values are written to the tag, just the same as a throw.
+    handleThrow(curr);
   }
 
   template<typename T> void handleResume(T* curr) {

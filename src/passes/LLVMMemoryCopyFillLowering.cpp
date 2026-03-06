@@ -117,14 +117,17 @@ struct LLVMMemoryCopyFillLowering
   void createMemoryCopyFunc(Module* module) {
     Builder b(*module);
     Index dst = 0, src = 1, size = 2, start = 3, end = 4, step = 5, i = 6;
-    Name memory = module->memories.front()->name;
+    Name memoryName = module->memories.front()->name;
+    Address::address32_t pageSizeLog2 = module->memories.front()->pageSizeLog2;
     Block* body = b.makeBlock();
     // end = memory size in bytes
-    body->list.push_back(
-      b.makeLocalSet(end,
-                     b.makeBinary(BinaryOp::MulInt32,
-                                  b.makeMemorySize(memory),
-                                  b.makeConst(Memory::kPageSize))));
+    body->list.push_back(b.makeLocalSet(
+      end,
+      pageSizeLog2 == 0
+        ? static_cast<Expression*>(b.makeMemorySize(memoryName))
+        : static_cast<Expression*>(b.makeBinary(BinaryOp::ShlInt32,
+                                                b.makeMemorySize(memoryName),
+                                                b.makeConst(pageSizeLog2)))));
     // if dst + size > memsize or src + size > memsize, then trap.
     body->list.push_back(b.makeIf(
       b.makeBinary(BinaryOp::OrInt32,
@@ -187,9 +190,9 @@ struct LLVMMemoryCopyFillLowering
                                                b.makeLocalGet(src, Type::i32),
                                                b.makeLocalGet(i, Type::i32)),
                                   Type::i32,
-                                  memory),
+                                  memoryName),
                        Type::i32,
-                       memory),
+                       memoryName),
            // i += step
            b.makeLocalSet(i,
                           b.makeBinary(BinaryOp::AddInt32,
@@ -203,19 +206,23 @@ struct LLVMMemoryCopyFillLowering
   void createMemoryFillFunc(Module* module) {
     Builder b(*module);
     Index dst = 0, val = 1, size = 2;
-    Name memory = module->memories.front()->name;
+    Name memoryName = module->memories.front()->name;
+    Address::address32_t pageSizeLog2 = module->memories.front()->pageSizeLog2;
     Block* body = b.makeBlock();
 
     // if dst + size > memsize in bytes, then trap.
-    body->list.push_back(
-      b.makeIf(b.makeBinary(BinaryOp::GtUInt32,
-                            b.makeBinary(BinaryOp::AddInt32,
-                                         b.makeLocalGet(dst, Type::i32),
-                                         b.makeLocalGet(size, Type::i32)),
-                            b.makeBinary(BinaryOp::MulInt32,
-                                         b.makeMemorySize(memory),
-                                         b.makeConst(Memory::kPageSize))),
-               b.makeUnreachable()));
+    body->list.push_back(b.makeIf(
+      b.makeBinary(
+        BinaryOp::GtUInt32,
+        b.makeBinary(BinaryOp::AddInt32,
+                     b.makeLocalGet(dst, Type::i32),
+                     b.makeLocalGet(size, Type::i32)),
+        pageSizeLog2 == 0
+          ? static_cast<Expression*>(b.makeMemorySize(memoryName))
+          : static_cast<Expression*>(b.makeBinary(BinaryOp::ShlInt32,
+                                                  b.makeMemorySize(memoryName),
+                                                  b.makeConst(pageSizeLog2)))),
+      b.makeUnreachable()));
 
     body->list.push_back(b.makeBlock(
       "out",
@@ -241,7 +248,7 @@ struct LLVMMemoryCopyFillLowering
                                     b.makeLocalGet(size, Type::i32)),
                        b.makeLocalGet(val, Type::i32),
                        Type::i32,
-                       memory),
+                       memoryName),
            b.makeBreak("copy", nullptr)}))));
     module->getFunction(memFillFuncName)->body = body;
   }

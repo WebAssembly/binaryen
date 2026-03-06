@@ -111,6 +111,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Multibyte, "multibyte array loads and stores")
       .addFeature(FeatureSet::RelaxedAtomics,
                   "acquire/release atomic memory operations")
+      .addFeature(FeatureSet::CustomPageSizes, "custom page sizes")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",

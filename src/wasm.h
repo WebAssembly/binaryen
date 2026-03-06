@@ -27,7 +27,9 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <limits>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -1716,6 +1718,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1728,6 +1732,8 @@ public:
   Expression* ref;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
@@ -1845,6 +1851,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1857,6 +1865,8 @@ public:
   Expression* index;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
@@ -2548,28 +2558,35 @@ public:
 
 class Memory : public Importable {
 public:
-  static const Address::address32_t kPageSize = 64 * 1024;
   static const Address::address64_t kUnlimitedSize = Address::address64_t(-1);
-  // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
-  static const Address::address32_t kMaxSize32 =
-    (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
-  // in wasm64, the maximum number of pages
-  static const Address::address64_t kMaxSize64 = 1ull << (64 - 16);
+
+  static const uint8_t kDefaultPageSizeLog2 = 16;
+
+  static const Address::address32_t kDefaultPageSize = 1
+                                                       << kDefaultPageSizeLog2;
+
+  static const Address::address32_t kDefaultMaxSize32 =
+    1 << (32 - kDefaultPageSizeLog2);
 
   Address initial = 0; // sizes are in pages
-  Address max = kMaxSize32;
+  Address max = kDefaultMaxSize32;
+
+  uint8_t pageSizeLog2 = kDefaultPageSizeLog2;
 
   bool shared = false;
   Type addressType = Type::i32;
 
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return addressType == Type::i64; }
-  void clear() {
-    name = "";
-    initial = 0;
-    max = kMaxSize32;
-    shared = false;
-    addressType = Type::i32;
+  Address::address64_t maxSize32() const { return 1ull << (32 - pageSizeLog2); }
+  Address::address64_t maxSize64() const {
+    if (pageSizeLog2 == 0) {
+      return std::numeric_limits<uint64_t>::max();
+    }
+    return 1ull << (64 - pageSizeLog2);
+  }
+  Address::address64_t pageSize() const {
+    return 1ull << static_cast<Address::address64_t>(pageSizeLog2);
   }
 };
 

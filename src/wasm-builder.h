@@ -130,15 +130,18 @@ public:
     return seg;
   }
 
-  static std::unique_ptr<Memory> makeMemory(Name name,
-                                            Address initial = 0,
-                                            Address max = Memory::kMaxSize32,
-                                            bool shared = false,
-                                            Type addressType = Type::i32) {
+  static std::unique_ptr<Memory>
+  makeMemory(Name name,
+             Address initial = 0,
+             Address max = Memory::kDefaultMaxSize32,
+             bool shared = false,
+             uint8_t pageSizeLog2 = Memory::kDefaultPageSizeLog2,
+             Type addressType = Type::i32) {
     auto memory = std::make_unique<Memory>();
     memory->name = name;
     memory->initial = initial;
     memory->max = max;
+    memory->pageSizeLog2 = pageSizeLog2;
     memory->shared = shared;
     memory->addressType = addressType;
     return memory;

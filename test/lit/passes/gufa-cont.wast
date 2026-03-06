@@ -281,3 +281,109 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $func (func))
+ ;; OPEN_WORLD:      (type $func (func))
+ (type $func (func))
+
+ ;; CHECK:      (type $cont (cont $func))
+ (type $cont (cont $func))
+
+ ;; CHECK:      (type $func-i32 (func (param i32)))
+ ;; OPEN_WORLD:      (type $cont (cont $func))
+
+ ;; OPEN_WORLD:      (type $func-i32 (func (param i32)))
+ (type $func-i32 (func (param i32)))
+
+
+
+ ;; CHECK:      (type $3 (func (result i32)))
+
+ ;; CHECK:      (type $4 (func (result i32 (ref $cont))))
+
+ ;; CHECK:      (elem declare func $cont)
+
+ ;; CHECK:      (tag $tag (type $func))
+ ;; OPEN_WORLD:      (type $3 (func (result i32)))
+
+ ;; OPEN_WORLD:      (type $4 (func (result i32 (ref $cont))))
+
+ ;; OPEN_WORLD:      (elem declare func $cont)
+
+ ;; OPEN_WORLD:      (tag $tag (type $func))
+ (tag $tag (type $func))
+
+ ;; CHECK:      (tag $tag-i32 (type $func-i32) (param i32))
+ ;; OPEN_WORLD:      (tag $tag-i32 (type $func-i32) (param i32))
+ (tag $tag-i32 (type $func-i32))
+
+ ;; CHECK:      (export "resume" (func $resume))
+
+ ;; CHECK:      (func $cont (type $func)
+ ;; CHECK-NEXT:  (suspend $tag-i32
+ ;; CHECK-NEXT:   (i32.const 1337)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; OPEN_WORLD:      (export "resume" (func $resume))
+
+ ;; OPEN_WORLD:      (func $cont (type $func)
+ ;; OPEN_WORLD-NEXT:  (suspend $tag-i32
+ ;; OPEN_WORLD-NEXT:   (i32.const 1337)
+ ;; OPEN_WORLD-NEXT:  )
+ ;; OPEN_WORLD-NEXT: )
+ (func $cont
+  ;; Helper for below.
+  (suspend $tag-i32
+   (i32.const 1337)
+  )
+ )
+
+ ;; CHECK:      (func $resume (type $3) (result i32)
+ ;; CHECK-NEXT:  (tuple.drop 2
+ ;; CHECK-NEXT:   (block $block (type $4) (result i32 (ref $cont))
+ ;; CHECK-NEXT:    (resume $cont (on $tag-i32 $block)
+ ;; CHECK-NEXT:     (cont.new $cont
+ ;; CHECK-NEXT:      (ref.func $cont)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (i32.const 42)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 1337)
+ ;; CHECK-NEXT: )
+ ;; OPEN_WORLD:      (func $resume (type $3) (result i32)
+ ;; OPEN_WORLD-NEXT:  (tuple.drop 2
+ ;; OPEN_WORLD-NEXT:   (block $block (type $4) (result i32 (ref $cont))
+ ;; OPEN_WORLD-NEXT:    (resume $cont (on $tag-i32 $block)
+ ;; OPEN_WORLD-NEXT:     (cont.new $cont
+ ;; OPEN_WORLD-NEXT:      (ref.func $cont)
+ ;; OPEN_WORLD-NEXT:     )
+ ;; OPEN_WORLD-NEXT:    )
+ ;; OPEN_WORLD-NEXT:    (return
+ ;; OPEN_WORLD-NEXT:     (i32.const 42)
+ ;; OPEN_WORLD-NEXT:    )
+ ;; OPEN_WORLD-NEXT:   )
+ ;; OPEN_WORLD-NEXT:  )
+ ;; OPEN_WORLD-NEXT:  (i32.const 1337)
+ ;; OPEN_WORLD-NEXT: )
+ (func $resume (export "resume") (result i32)
+  ;; A continuation is created, it suspends, and we handle that. We can even
+  ;; infer the suspended value, 1337.
+  (tuple.extract 2 0
+   (block $block (result i32 (ref $cont))
+    (resume $cont (on $tag-i32 $block)
+     (cont.new $cont
+      (ref.func $cont)
+     )
+    )
+    (return
+     (i32.const 42)
+    )
+   )
+  )
+ )
+)
+

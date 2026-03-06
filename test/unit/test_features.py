@@ -456,4 +456,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-call-indirect-overlong',
             '--enable-custom-descriptors',
             '--enable-relaxed-atomics',
+            '--enable-custom-page-sizes',
         ], p2.stdout.splitlines())

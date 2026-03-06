@@ -8,7 +8,6 @@
 (module
   ;; CHECK:      (type $shared (shared (struct (field i32))))
   (type $shared (shared (struct (field i32))))
-  ;; CHECK:      (type $unshared (struct (field i32)))
   (type $unshared (struct (field i32)))
 
   ;; CHECK:      (func $get-unordered-unshared (type $0)
@@ -34,11 +33,7 @@
   )
 
   ;; CHECK:      (func $get-seqcst-unshared (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.get $unshared 0
-  ;; CHECK-NEXT:    (struct.new_default $unshared)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $get-seqcst-unshared
     (drop
