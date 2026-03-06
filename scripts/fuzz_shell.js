@@ -573,7 +573,17 @@ function build(binary, isSecond) {
             continue;
           }
           // Look at the exported value itself, not the global wrapper.
-          value = value.value;
+          try {
+            value = value.value;
+          } catch (e) {
+            if (e.message.startsWith('get WebAssembly.Global.value')) {
+              // Just log a null instead of a value we cannot access from JS,
+              // like an exnref.
+              value = null;
+            } else {
+              throw e;
+            }
+          }
         }
       }
       console.log(`[fuzz-exec] logging ${name}`);
