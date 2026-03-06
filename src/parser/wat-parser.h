@@ -74,7 +74,11 @@ struct NaNResult {
 
 using LaneResult = std::variant<Literal, NaNResult>;
 
-using LaneResults = std::vector<LaneResult>;
+struct LaneResults {
+  std::vector<LaneResult> lanes;
+  bool isFloat = false;
+};
+// using LaneResults = std::vector<LaneResult>;
 
 using ExpectedResult =
   std::variant<Literal, NullRefResult, RefResult, NaNResult, LaneResults>;

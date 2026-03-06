@@ -364,17 +364,6 @@ struct Shell {
 
     if (auto* v = std::get_if<Literal>(&expected)) {
       if (val != *v) {
-        if (val.type.isVector() && v->type.isVector() && isAlternative) {
-          auto valLanes = val.getLanesI32x4();
-          auto expLanes = v->getLanesI32x4();
-          for (int i = 0; i < 4; ++i) {
-            if (valLanes[i] != expLanes[i]) {
-              err << "0x" << std::setfill('0') << std::setw(8) << std::hex
-                  << expLanes[i] << std::dec;
-              return AlternativeErr{err.str(), i};
-            }
-          }
-        }
         err << *v;
         return AlternativeErr{err.str()};
       }
@@ -396,10 +385,34 @@ struct Shell {
         err << e->msg;
         return AlternativeErr{err.str()};
       }
-    } else if (auto* lanes = std::get_if<LaneResults>(&expected)) {
+    } else if (auto* l = std::get_if<LaneResults>(&expected)) {
+      auto* lanes = &l->lanes;
       switch (lanes->size()) {
+        case 16: {
+          auto vals = val.getLanesUI8x16();
+          for (int i = 0; i < 16; ++i) {
+            auto check = checkLane(vals[i], (*lanes)[i]);
+            if (auto* e = check.getErr()) {
+              err << e->msg;
+              return AlternativeErr{err.str(), i};
+            }
+          }
+          break;
+        }
+        case 8: {
+          auto vals = val.getLanesUI16x8();
+          for (int i = 0; i < 8; ++i) {
+            auto check = checkLane(vals[i], (*lanes)[i]);
+            if (auto* e = check.getErr()) {
+              err << e->msg;
+              return AlternativeErr{err.str(), i};
+            }
+          }
+          break;
+        }
         case 4: {
-          auto vals = val.getLanesF32x4();
+          auto vals = l->isFloat ? val.getLanesF32x4() : val.getLanesUI32x4();
+          // auto vals = val.getLanesUI32x4();
           for (int i = 0; i < 4; ++i) {
             auto check = checkLane(vals[i], (*lanes)[i]);
             if (auto* e = check.getErr()) {
@@ -410,7 +423,7 @@ struct Shell {
           break;
         }
         case 2: {
-          auto vals = val.getLanesF64x2();
+          auto vals = l->isFloat ? val.getLanesF64x2() : val.getLanesI64x2();
           for (int i = 0; i < 2; ++i) {
             auto check = checkLane(vals[i], (*lanes)[i]);
             if (auto* e = check.getErr()) {

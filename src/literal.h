@@ -477,6 +477,7 @@ public:
   std::array<Literal, 16> getLanesUI8x16() const;
   std::array<Literal, 8> getLanesSI16x8() const;
   std::array<Literal, 8> getLanesUI16x8() const;
+  std::array<Literal, 4> getLanesUI32x4() const;
   std::array<Literal, 4> getLanesI32x4() const;
   std::array<Literal, 2> getLanesI64x2() const;
   std::array<Literal, 8> getLanesF16x8() const;

@@ -1868,6 +1868,9 @@ LaneArray<8> Literal::getLanesSI16x8() const {
 LaneArray<8> Literal::getLanesUI16x8() const {
   return getLanes<uint16_t, 8>(*this);
 }
+LaneArray<4> Literal::getLanesUI32x4() const {
+  return getLanes<uint32_t, 4>(*this);
+}
 LaneArray<4> Literal::getLanesI32x4() const {
   return getLanes<int32_t, 4>(*this);
 }
