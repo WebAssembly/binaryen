@@ -133,9 +133,7 @@ struct ChildLocalizer {
         // TODO: Avoid quadratic time here by accumulating effects and checking
         //       vs the accumulation.
         for (Index j = 0; j < num; j++) {
-          auto before = std::min(i, j);
-          auto after = std::max(i, j);
-          if (j != i && effects[before].orderedBefore(effects[after])) {
+          if (j != i && effects[i].invalidates(effects[j])) {
             needLocal = true;
             break;
           }
