@@ -442,13 +442,6 @@ struct ExecutionResults {
         instantiate(*secondInstance, *secondInterface);
       }
 
-      // Log non-function exports.
-      logExports(wasm, *instance);
-      if (second) {
-        std::cout << "[fuzz-exec] logging second module\n";
-        logExports(*second, *secondInstance);
-      }
-
       // Run.
       callExports(wasm, *instance);
       if (second) {
@@ -474,56 +467,36 @@ struct ExecutionResults {
     interface.setModuleRunner(&instance);
   }
 
-  // Log all non-function exports.
-  void logExports(Module& wasm, ModuleRunner& instance) {
-    for (auto& exp : wasm.exports) {
-      Literals* value = nullptr;
-      switch (exp->kind) {
-        case ExternalKind::Function: {
-          continue;
-        }
-        case ExternalKind::Global: {
-          value = instance.getExportedGlobalOrNull(exp->name);
-          break;
-        }
-        case ExternalKind::Table: {
-          // TODO: Perhaps we could print something here?
-          continue;
-        }
-        default: {
-          Fatal() << "bad exported kind " << exp->kind << " : " << exp->name << '\n';
-        }
-      }
-      std::cout << "[fuzz-exec] logging " << exp->name << "\n";
-      assert(value);
-      assert(value->size() == 1);
-      std::cout << "[LoggingExternalInterface logging ";
-      printValue((*value)[0]);
-      std::cout << "]\n";
-    }
-  }
-
   void callExports(Module& wasm, ModuleRunner& instance) {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {
-      if (exp->kind != ExternalKind::Function) {
-        continue;
-      }
-      std::cout << "[fuzz-exec] calling " << exp->name << "\n";
-      auto* func = wasm.getFunction(*exp->getInternalName());
-      FunctionResult ret = run(func, wasm, instance);
-      results[exp->name] = ret;
-      if (auto* values = std::get_if<Literals>(&ret)) {
-        // ignore the result if we hit an unreachable and returned no value
-        if (values->size() > 0) {
-          std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-          for (auto value : *values) {
-            printValue(value);
-            std::cout << '\n';
+      if (exp->kind == ExternalKind::Function) {
+        std::cout << "[fuzz-exec] calling " << exp->name << "\n";
+        auto* func = wasm.getFunction(*exp->getInternalName());
+        FunctionResult ret = run(func, wasm, instance);
+        results[exp->name] = ret;
+        if (auto* values = std::get_if<Literals>(&ret)) {
+          // ignore the result if we hit an unreachable and returned no value
+          if (values->size() > 0) {
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
+            for (auto value : *values) {
+              printValue(value);
+              std::cout << '\n';
+            }
           }
         }
+      } else if (exp->kind == ExternalKind::Global) {
+        // Log the global's value.
+        std::cout << "[fuzz-exec] logging " << exp->name << "\n";
+        Literals* value = instance.getExportedGlobalOrNull(exp->name);
+        assert(value);
+        assert(value->size() == 1);
+        std::cout << "[LoggingExternalInterface logging ";
+        printValue((*value)[0]);
+        std::cout << "]\n";
       }
+      // Ignore other exports for now. TODO
     }
   }
 

@@ -561,38 +561,39 @@ function build(binary, isSecond) {
       value = e.value;
     }
 
-    if (typeof value !== 'function') {
-      // This is not a function, but we can still log it and do other stuff.
-      if (typeof value === 'object') {
-        // As in logRef, try some interesting operations to look for VM issues.
-        JSON.stringify(value);
-        if (value) {
-          value.foobar;
-          if (value instanceof WebAssembly.Table) {
-            // No value to log here. TODO: Perhaps log something?
-            continue;
-          }
-          // Look at the exported value itself, not the global wrapper.
-          try {
-            value = value.value;
-          } catch (e) {
-            if (e.message.startsWith('get WebAssembly.Global.value')) {
-              // Just log a null instead of a value we cannot access from JS,
-              // like an exnref.
-              value = null;
-            } else {
-              throw e;
-            }
-          }
+    if (value instanceof WebAssembly.Global) {
+      // We can log a global value and do other operations to check for bugs.
+      // First, do some operations on the Global wrapper itself.
+      JSON.stringify(value);
+      value.foobar;
+      // Look at the exported value itself, not the global wrapper.
+      let actualValue;
+      try {
+        actualValue = value.value;
+      } catch (e) {
+        if (e.message.startsWith('get WebAssembly.Global.value')) {
+          // Just log a null instead of a value we cannot access from JS,
+          // like an exnref.
+          actualValue = null;
+        } else {
+          throw e;
         }
       }
-      console.log(`[fuzz-exec] logging ${name}`);
-      if (typeof value === 'object') {
-        // logRef can do a little more than logValue, so use it when possible.
-        logRef(value);
-      } else {
-        logValue(value);
-      }
+      // Log the actual value, by building a lambda to be called along the
+      // functions.
+      value = () => {
+        console.log(`[fuzz-exec] logging ${name}`);
+        if (typeof actualValue === 'object') {
+          // logRef can do a little more than logValue, so use it when possible.
+          logRef(actualValue);
+        } else {
+          logValue(actualValue);
+        }
+      };
+    }
+
+    if (typeof value !== 'function') {
+      // Nothing we can call.
       continue;
     }
 
