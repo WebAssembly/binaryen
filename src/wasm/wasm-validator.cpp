@@ -4766,10 +4766,10 @@ void validateTables(Module& module, ValidationInfo& info) {
       for (auto* get : FindAll<GlobalGet>(table->init).list) {
         auto* global = module.getGlobalOrNull(get->name);
         if (global) {
-        info.shouldBeTrue(
-          global->imported(),
-          table->init,
-          "table initializer may not refer to module-defined globals");
+          info.shouldBeTrue(
+            global->imported(),
+            table->init,
+            "table initializer may not refer to module-defined globals");
         }
       }
     }
