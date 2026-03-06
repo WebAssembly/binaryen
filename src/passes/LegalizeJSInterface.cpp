@@ -414,7 +414,19 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
     ReFinalize().run(getPassRunner(), module);
     ReFinalize().runOnModuleCode(getPassRunner(), module);
 
-    // TODO: globals etc.
+    // Globals.
+    std::vector<Name> illegalExports;
+    for (auto& exp : module->exports) {
+      if (exp->kind == ExternalKind::Global) {
+        auto name = *exp->getInternalName();
+        if (isIllegal(module->getGlobal(name)->type)) {
+          illegalExports.push_back(exp->name);
+        }
+      }
+    }
+    for (auto name : illegalExports) {
+      module->removeExport(name);
+    }
   }
 
   bool isIllegal(Type type) {
