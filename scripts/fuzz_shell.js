@@ -575,7 +575,7 @@ function build(binary, isSecond) {
       }
       if (typeof value === 'object') {
         // logRef can do a little more than logValue, so use it when possible.
-        logRef(value.value);
+        logRef(value);
       } else {
         logValue(value);
       }
