@@ -288,12 +288,30 @@ Result<ExpectedResult> result(Lexer& in) {
   return in.err("unrecognized result");
 }
 
+Result<ResultAlternatives> eitherResult(Lexer& in) {
+  if (in.takeSExprStart("either"sv)) {
+    ResultAlternatives alternatives;
+    do {
+      auto r = result(in);
+      CHECK_ERR(r);
+
+      alternatives.push_back(*std::move(r));
+    } while (!in.takeRParen());
+
+    return alternatives;
+  }
+
+  auto r = result(in);
+  CHECK_ERR(r);
+  return ResultAlternatives{*std::move(r)};
+}
+
 Result<ExpectedResults> results(Lexer& in) {
   ExpectedResults res;
   while (!in.peekRParen()) {
-    auto r = result(in);
+    auto r = eitherResult(in);
     CHECK_ERR(r);
-    res.emplace_back(std::move(*r));
+    res.emplace_back(*std::move(r));
   }
   return res;
 }
@@ -612,7 +630,7 @@ Result<WASTScript> wast(Lexer& in) {
       return cmds;
     }
     CHECK_ERR(cmd);
-    cmds.push_back(ScriptEntry{std::move(*cmd), line});
+    cmds.push_back(ScriptEntry{*std::move(cmd), line});
   }
   return cmds;
 }

@@ -395,7 +395,7 @@ SPEC_TESTS_TO_SKIP = [
     # Test invalid
     'elem.wast',
 
-    # Requires wast `either` support
+    # Requires scoping of `register` statements within `thread` blocks
     'threads/thread.wast',
 
     # Requires better support for multi-threaded tests
@@ -452,12 +452,9 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'memory64.wast',        # Requires validations on the max memory size
     'imports3.wast',  # Requires better checking of exports from the special "spectest" module
-    'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
-    'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
-    'relaxed_dot_product.wast',   # Requires wast `either` support
-    'relaxed_laneselect.wast',    # Requires wast `either` support
-    'relaxed_madd_nmadd.wast',    # Requires wast `either` support
-    'relaxed_min_max.wast',       # Requires wast `either` support
+    'relaxed_dot_product.wast',   # i16x8.relaxed_dot_i8x16_i7x16_s instruction not supported
+    'relaxed_laneselect.wast',    # i8x16.relaxed_laneselect instruction not supported
+    'relaxed_min_max.wast',       # Non-canonical NaN from f32x4.relaxed_min
     'simd_const.wast',            # Hex float constant not recognized as out of range
     'simd_conversions.wast',      # Promoted NaN should be canonical
     'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
