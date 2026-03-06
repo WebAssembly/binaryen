@@ -835,13 +835,8 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
             object, IString("value"), setterParam, block);
         }
 
-        // Call WebAssembly.makeGlobal to make it a WebAssembly.Global instance.
-        Ref call = ValueBuilder::makeCall(ValueBuilder::makeDot(
-          ValueBuilder::makeName("WebAssembly"), ValueBuilder::makeName("makeGlobal")));
-        call[2]->push_back(object);
-
         ValueBuilder::appendToObjectWithQuotes(
-          exports, fromName(export_->name, NameScope::Export), call);
+          exports, fromName(export_->name, NameScope::Export), object);
 
         break;
       }
