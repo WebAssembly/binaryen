@@ -1088,11 +1088,13 @@ private:
           if (trapOnNull(curr->ref)) {
             return;
           }
-          // OOB acces to array.
+          // OOB access to array.
           parent.implicitTrap = true;
           parent.readsArray = true;
           return;
         case StringNewFromCodePoint:
+          // Invalid code points.
+          parent.implicitTrap = true;
           return;
       }
     }
