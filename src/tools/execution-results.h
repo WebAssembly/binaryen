@@ -21,6 +21,7 @@
 #include <deque>
 #include <memory>
 
+#include "ir/import-names.h"
 #include "ir/import-utils.h"
 #include "shell-interface.h"
 #include "support/utilities.h"
@@ -58,20 +59,9 @@ Tag& getJsTag() {
   return tag;
 }
 
+constexpr Index jsErrorPayload = 0xbad;
+
 void printValue(Literal value) {
-  // Unwrap an externalized GC value to get the actual value, but not strings,
-  // which are normally a subtype of ext.
-  if (Type::isSubType(value.type, Type(HeapType::ext, Nullable)) &&
-      !value.type.isString()) {
-    value = value.internalize();
-  }
-
-  // An anyref literal is a string.
-  if (value.type.isRef() &&
-      value.type.getHeapType().isMaybeShared(HeapType::any)) {
-    value = value.externalize();
-  }
-
   // Don't print most reference values, as e.g. funcref(N) contains an index,
   // which is not guaranteed to remain identical after optimizations. Do not
   // print the type in detail (as even that may change due to closed-world
@@ -81,22 +71,32 @@ void printValue(Literal value) {
   //
   // The only references we print in full are strings and i31s, which have
   // simple and stable internal structures that optimizations will not alter.
-  auto type = value.type;
-  if (type.isRef()) {
-    if (type.isString() || type.getHeapType().isMaybeShared(HeapType::i31)) {
-      std::cout << value;
-    } else if (value.isNull()) {
-      std::cout << "null";
-    } else if (type.isFunction()) {
-      std::cout << "function";
-    } else {
-      std::cout << "object";
-    }
+  //
+  // Non-references can be printed in full.
+  if (!value.type.isRef()) {
+    std::cout << value;
     return;
   }
-
-  // Non-references can be printed in full.
-  std::cout << value;
+  value = value.unwrap();
+  auto heapType = value.type.getHeapType();
+  if (heapType.isMaybeShared(HeapType::ext) &&
+      value.getExternPayload() == jsErrorPayload) {
+    std::cout << "jserror";
+    return;
+  }
+  if (heapType.isString() || heapType.isMaybeShared(HeapType::ext) ||
+      heapType.isMaybeShared(HeapType::i31)) {
+    std::cout << value;
+  } else if (value.isNull()) {
+    std::cout << "null";
+  } else if (heapType.isFunction()) {
+    std::cout << "function";
+  } else {
+    // Print 'object' and its JS-visible prototype, which may be null.
+    std::cout << "object(";
+    printValue(value.getJSPrototype());
+    std::cout << ')';
+  }
 }
 
 } // namespace
@@ -275,7 +275,7 @@ public:
 
   void throwJSException() {
     // JS exceptions contain an externref.
-    Literals arguments = {Literal::makeExtern(0, Unshared)};
+    Literals arguments = {Literal::makeExtern(jsErrorPayload, Unshared)};
     auto payload = std::make_shared<ExnData>(&jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
@@ -403,8 +403,18 @@ class FuzzerImportResolver
     if (mut || !type.isRef() || type.getHeapType() != HeapType::ext) {
       return nullptr;
     }
-    // TODO: Generate a distinct payload for each global.
-    synthesizedGlobals.emplace_back(Literals{Literal::makeExtern(0, Unshared)});
+    // Optimizations may reorder or remove imports, so we need a distinct
+    // payload that is independent of the import order. Just compute a simple
+    // payload integer from the import names. This must be kept in sync with
+    // fuzz_shell.js.
+    Index payload = 0;
+    for (auto name : {name.module, name.name}) {
+      for (auto c : name.str) {
+        payload = (payload + static_cast<Index>(c)) % 251;
+      }
+    }
+    synthesizedGlobals.emplace_back(
+      Literals{Literal::makeExtern(payload, Unshared)});
     return &synthesizedGlobals.back();
   }
 
@@ -528,28 +538,56 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
-    // Don't compare references. There are several issues here that we can't
-    // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
-    // but the core issue is that since we optimize assuming a closed world, the
-    // types and structure of GC data can arbitrarily change after
-    // optimizations, even in ways that are externally visible from outside
-    // the module.
+    // Only compare some references. In general the optimizer may change
+    // identities and structures of functions, types, and GC values in ways that
+    // are not externally observable. We must therefore limit ourselves to
+    // comparing information that _is_ externally observable.
     //
-    // We can, however, compare strings as they refer to simple data that has a
-    // consistent representation (the same reasons as why we can print them in
-    // printValue(), above).
-    //
-    // TODO: Once we support optimizing under some form of open-world
-    // assumption, we should be able to check that the types and/or structure of
-    // GC data passed out of the module does not change.
-    if (a.type.isRef() && !a.type.isString() &&
-        !a.type.getHeapType().isMaybeShared(HeapType::i31)) {
-      return true;
+    // TODO: We could compare more information when we know it will be
+    // externally visible, for example when the type of the value is public.
+    if (!a.type.isRef() || !b.type.isRef()) {
+      return a == b;
     }
-    if (a != b) {
-      std::cout << "values not identical! " << a << " != " << b << '\n';
+    // The environment always sees externalized references and is able to
+    // observe the difference between external references and externalized
+    // internal references. Make sure this is accounted for below by unrapping
+    // the references.
+    a = a.unwrap();
+    b = b.unwrap();
+    auto htA = a.type.getHeapType();
+    auto htB = b.type.getHeapType();
+    // What type hierarchy a heap type is in is generally observable.
+    if (htA.getTop() != htB.getTop()) {
       return false;
     }
+    // Null values are observable.
+    if (htA.isBottom() || htB.isBottom()) {
+      return a == b;
+    }
+    // String values are observable.
+    if (htA.isString() || htB.isString()) {
+      return a == b;
+    }
+    // i31 values are observable.
+    if (htA.isMaybeShared(HeapType::i31) || htB.isMaybeShared(HeapType::i31)) {
+      return a == b;
+    }
+    // External references are observable. (These cannot be externalized
+    // internal references because they've already been unwrapped.)
+    if (htA.isMaybeShared(HeapType::ext) || htB.isMaybeShared(HeapType::ext)) {
+      return a == b;
+    }
+    // Configured prototypes are observable. Even if they are also opaque Wasm
+    // references, their having different pointer identities is observable.
+    // However, we have no way of comparing pointer identities across
+    // executions, so just recursively look for externally observable
+    // differences in the prototypes.
+    if (!areEqual(a.getJSPrototype(), b.getJSPrototype())) {
+      return false;
+    }
+
+    // Other differences are not observable, so conservatively consider the
+    // values equal.
     return true;
   }
 
@@ -560,6 +598,7 @@ struct ExecutionResults {
     }
     for (Index i = 0; i < a.size(); i++) {
       if (!areEqual(a[i], b[i])) {
+        std::cout << "values not identical! " << a[i] << " != " << b[i] << '\n';
         return false;
       }
     }
@@ -629,7 +668,13 @@ struct ExecutionResults {
     } catch (const TrapException&) {
       return Trap{};
     } catch (const WasmException& e) {
-      std::cout << "[exception thrown: " << e << "]" << std::endl;
+      auto& exn = *e.exn.getExnData();
+      std::cout << "[exception thrown: " << exn.tag->name;
+      for (auto val : exn.payload) {
+        std::cout << ' ';
+        printValue(val);
+      }
+      std::cout << "]" << std::endl;
       return Exception{};
     } catch (const HostLimitException&) {
       // This should be ignored and not compared with, as optimizations can
