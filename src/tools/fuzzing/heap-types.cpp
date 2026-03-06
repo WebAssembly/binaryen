@@ -19,7 +19,6 @@
 
 #include "ir/gc-type-utils.h"
 #include "ir/subtypes.h"
-#include "support/insert_ordered.h"
 #include "tools/fuzzing.h"
 #include "tools/fuzzing/heap-types.h"
 
@@ -275,12 +274,13 @@ struct HeapTypeGeneratorImpl {
       builder[index].setOpen(subtypeIndices[index].size() > 1 || rand.oneIn(2));
       auto kind = typeKinds[index];
       auto share = HeapType(builder[index]).getShared();
+      bool isDesc = describedIndices[index].has_value();
       if (!supertypeIndices[index]) {
         // No nontrivial supertype, so create a root type.
         if (std::get_if<SignatureKind>(&kind)) {
           builder[index] = generateSignature();
         } else if (std::get_if<StructKind>(&kind)) {
-          builder[index] = generateStruct(share);
+          builder[index] = generateStruct(share, isDesc);
         } else if (std::get_if<ArrayKind>(&kind)) {
           builder[index] = generateArray(share);
         } else {
@@ -415,7 +415,13 @@ struct HeapTypeGeneratorImpl {
     return {params, generateReturnType()};
   }
 
-  Field generateField(Shareability share) {
+  Field generateField(Shareability share, bool isPrototypeField = false) {
+    // If this field could configure a prototype, then we want to give it a type
+    // that lets it do so a significant portion of the time.
+    if (isPrototypeField && share == Unshared && rand.oneIn(2)) {
+      auto nullability = rand.oneIn(2) ? NonNullable : Nullable;
+      return {Type(HeapType::ext, nullability), Immutable};
+    }
     auto mutability = rand.oneIn(2) ? Mutable : Immutable;
     if (rand.oneIn(6)) {
       return {rand.oneIn(2) ? Field::i8 : Field::i16, mutability};
@@ -424,10 +430,13 @@ struct HeapTypeGeneratorImpl {
     }
   }
 
-  Struct generateStruct(Shareability share) {
+  Struct generateStruct(Shareability share, bool isDesc) {
     std::vector<Field> fields(rand.upTo(params.MAX_STRUCT_SIZE + 1));
+    // Prototypes are configured on the first field of descriptors types.
+    bool isPrototypeField = isDesc;
     for (auto& field : fields) {
-      field = generateField(share);
+      field = generateField(share, isPrototypeField);
+      isPrototypeField = false;
     }
     return {fields};
   }
