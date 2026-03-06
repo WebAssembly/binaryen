@@ -175,7 +175,7 @@
 ;; CHECK-NEXT:   --disable-relaxed-atomics            Disable acquire/release atomic memory
 ;; CHECK-NEXT:                                        operations
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-custom-page-sizes           Enable custom page sizes           
+;; CHECK-NEXT:   --enable-custom-page-sizes           Enable custom page sizes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-page-sizes          Disable custom page sizes
 ;; CHECK-NEXT:
