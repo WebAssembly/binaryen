@@ -582,7 +582,6 @@ function build(binary, isSecond) {
       // Log the actual value, by building a lambda to be called along the
       // functions.
       value = () => {
-        console.log(`[fuzz-exec] logging ${name}`);
         if (typeof actualValue === 'object') {
           // logRef can do a little more than logValue, so use it when possible.
           logRef(actualValue);
