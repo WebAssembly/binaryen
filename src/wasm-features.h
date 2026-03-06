@@ -56,11 +56,12 @@ struct FeatureSet {
     CallIndirectOverlong = 1 << 20,
     CustomDescriptors = 1 << 21,
     RelaxedAtomics = 1 << 22,
+    CustomPageSizes = 1 << 23,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 23) - 1,
+    All = (1 << 24) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -111,6 +112,8 @@ struct FeatureSet {
         return "custom-descriptors";
       case RelaxedAtomics:
         return "relaxed-atomics";
+      case CustomPageSizes:
+        return "custom-page-sizes";
       case MVP:
       case Default:
       case All:
@@ -172,6 +175,7 @@ struct FeatureSet {
     return (features & CustomDescriptors) != 0;
   }
   bool hasRelaxedAtomics() const { return (features & RelaxedAtomics) != 0; }
+  bool hasCustomPageSizes() const { return (features & CustomPageSizes) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {

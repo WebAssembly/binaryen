@@ -16451,6 +16451,43 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ternary-tee-with-identical-values (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-tee-with-identical-values (param $x i32)
+    (drop
+      ;; The tee's value, and the select's condition, are equal. If we just
+      ;; look at them, we could think they are equal, and simplify this.
+      ;; However, the tee modifies $x, so we cannot fold those two
+      ;; expressions together while removing the select. (We can, though,
+      ;; remove the select and the const, and use an and, but we do remain with
+      ;; two copies of the eq, as those interact.)
+      (select
+        (local.tee $x
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+        (i32.const 0)
+        (i32.eqz
+          (local.get $x)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $send-i32 (param $0 i32)
   ;; CHECK-NEXT: )
   (func $send-i32 (param i32))

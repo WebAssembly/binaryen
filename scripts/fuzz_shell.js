@@ -291,7 +291,7 @@ function oneIn(n) {
 
 // Set up the imports.
 var tempRet0;
-var imports = {
+var baseImports = {
   'fuzzing-support': {
     // Logging.
     'log-i32': logValue,
@@ -400,15 +400,15 @@ var imports = {
 // If Tags are available, add some.
 if (typeof WebAssembly.Tag !== 'undefined') {
   // A tag for general use in the fuzzer.
-  var wasmTag = imports['fuzzing-support']['wasmtag'] = new WebAssembly.Tag({
+  var wasmTag = baseImports['fuzzing-support']['wasmtag'] = new WebAssembly.Tag({
     'parameters': ['i32']
   });
 
   // The JSTag that represents a JS tag.
-  imports['fuzzing-support']['jstag'] = WebAssembly.JSTag;
+  baseImports['fuzzing-support']['jstag'] = WebAssembly.JSTag;
 
   // This allows j2wasm content to run in the fuzzer.
-  imports['imports'] = {
+  baseImports['imports'] = {
     'j2wasm.ExceptionUtils.tag': new WebAssembly.Tag({
       'parameters': ['externref']
     }),
@@ -419,8 +419,8 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 if (JSPI) {
   for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref',
                     'call-ref-catch']) {
-    imports['fuzzing-support'][name] =
-      new WebAssembly.Suspending(imports['fuzzing-support'][name]);
+    baseImports['fuzzing-support'][name] =
+      new WebAssembly.Suspending(baseImports['fuzzing-support'][name]);
   }
 }
 
@@ -438,7 +438,7 @@ function wrapExportForJSPI(value) {
 // will be provided by the secondary module, and must be called using an
 // indirection.
 if (secondBinary) {
-  imports['placeholder.deferred'] = new Proxy({}, {
+  baseImports['placeholder.deferred'] = new Proxy({}, {
     get(target, prop, receiver) {
       // Return a function that throws. We could do an indirect call using the
       // exported table, but as we immediately link in the secondary module,
@@ -452,16 +452,42 @@ if (secondBinary) {
   });
 }
 
+function makeImports(module) {
+  // Reflect on the imports to add necessary externref globals.
+  if (WebAssembly.Module.imports === undefined) {
+    // We must be running with wasm2js, in which case reference types must not
+    // be enabled and there are no externref globals.
+    return baseImports;
+  }
+  // Add missing imported immutable externref globals.
+  // TODO: Support more kinds of imported globals, but this would require being
+  // able to reflect more precisely on the global externtypes.
+  for (var {module, name, kind} of WebAssembly.Module.imports(module)) {
+    if (kind == 'global') {
+      if (!baseImports[module]) {
+        baseImports[module] = {};
+      }
+      if (!baseImports[module][name]) {
+        // TODO: Use different payloads for different imports.
+        baseImports[module][name] = {};
+      }
+    }
+  }
+  return baseImports;
+}
+
 // Compile and instantiate a wasm file. Receives the binary to build, and
 // whether it is the second one.
 function build(binary, isSecond) {
+  var module = new WebAssembly.Module(binary);
+
+  var imports = makeImports(module);
+
   if (isSecond) {
     assert(secondBinary);
     // Provide the primary module's exports to the secondary.
     imports['primary'] = exports;
   }
-
-  var module = new WebAssembly.Module(binary);
 
   var instance;
   try {

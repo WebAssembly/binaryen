@@ -168,8 +168,13 @@ struct EarlyCastFinder
     // TODO: generalize this when we handle more than RefAsNonNull.
     RefCast dummyRefCast(module->allocator);
     dummyRefCast.desc = nullptr;
+    // Use an arbitrary nullable reference operand to get conservative
+    // ref.as_non_null effects.
+    LocalGet dummyRefAsOperand(module->allocator);
+    dummyRefAsOperand.type = Type(HeapType::any, Nullable);
     RefAs dummyRefAs(module->allocator);
     dummyRefAs.op = RefAsNonNull;
+    dummyRefAs.value = &dummyRefAsOperand;
 
     refCastEffects.visit(&dummyRefCast);
     refAsEffects.visit(&dummyRefAs);

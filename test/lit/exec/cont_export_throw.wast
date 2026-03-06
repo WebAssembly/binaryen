@@ -22,7 +22,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling handled
- ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
+ ;; CHECK-NEXT: [trap suspend through JS]
  (func $handled (export "handled")
   (drop
    (block $block (result (ref $cont))
