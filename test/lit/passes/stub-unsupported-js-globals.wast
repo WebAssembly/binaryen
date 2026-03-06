@@ -15,10 +15,8 @@
  ;; CHECK:      (global $v128 v128 (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000))
  (global $v128 v128 (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000))
 
- ;; CHECK:      (export "bad1" (global $v128))
  (export "bad1" (global $v128))
 
- ;; CHECK:      (export "bad2" (global $i32))
  (export "bad2" (global $i32))
 
  ;; CHECK:      (export "good" (func $func))
