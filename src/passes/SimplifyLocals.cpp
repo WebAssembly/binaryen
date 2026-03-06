@@ -303,7 +303,7 @@ struct SimplifyLocals
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
     for (auto& [index, info] : sinkables) {
-      if (effects.orderedBefore(info.effects)) {
+      if (effects.orderedAfter(info.effects)) {
         invalidated.push_back(index);
       }
     }

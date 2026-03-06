@@ -22,6 +22,8 @@
 // out expressions may allow moving at least part of a larger whole).
 //
 
+#include <unordered_map>
+
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
@@ -120,10 +122,8 @@ struct LoopInvariantCodeMotion
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
-        // TODO: Simplify this to effectsSoFar.orderedBefore(effects) ||
-        // effects.orderedBefore(loopEffects).
         bool unsafeToMove = effects.writesGlobalState() ||
-                            effectsSoFar.orderedBefore(effects) ||
+                            effectsSoFar.invalidates(effects) ||
                             (effects.readsMutableGlobalState() &&
                              loopEffects.writesGlobalState());
         // TODO: look into optimizing this with exceptions. for now, disallow

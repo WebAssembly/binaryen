@@ -507,17 +507,17 @@ struct MergeBlocks
       return outer;
     }
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
-      // There are dependencies, i.e. things we must be reordered before. Make
-      // sure there are no problems.
+      // there are dependencies, things we must be reordered through. make sure
+      // no problems there
       EffectAnalyzer childEffects(getPassOptions(), *getModule(), child);
       if (dependency1 && *dependency1 &&
           EffectAnalyzer(getPassOptions(), *getModule(), *dependency1)
-            .orderedBefore(childEffects)) {
+            .invalidates(childEffects)) {
         return outer;
       }
       if (dependency2 && *dependency2 &&
           EffectAnalyzer(getPassOptions(), *getModule(), *dependency2)
-            .orderedBefore(childEffects)) {
+            .invalidates(childEffects)) {
         return outer;
       }
     }
@@ -650,7 +650,7 @@ struct MergeBlocks
 
       // The block seems to have the shape we want. Check for effects: we want
       // to move all the items out but the last one, so they must all cross over
-      // anything we need to move before.
+      // anything we need to move past.
       //
       // In principle we could also handle the case where we can move out only
       // some of the block items. However, that would be more complex (we'd need
@@ -665,7 +665,7 @@ struct MergeBlocks
         EffectAnalyzer blockChildEffects(
           getPassOptions(), *getModule(), blockChild);
         for (auto& effects : childEffects) {
-          if (blockChildEffects.orderedAfter(effects)) {
+          if (blockChildEffects.invalidates(effects)) {
             fail = true;
             break;
           }

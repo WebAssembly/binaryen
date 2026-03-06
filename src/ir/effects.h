@@ -41,7 +41,7 @@ public:
       readsSharedMutableStruct(false), writesSharedStruct(false),
       readsMutableArray(false), writesArray(false),
       readsSharedMutableArray(false), writesSharedArray(false), trap(false),
-      implicitTrap(false), isAtomic(false), throws_(false), danglingPop(false),
+      implicitTrap(false), throws_(false), danglingPop(false),
       mayNotReturn(false), hasReturnCallThrow(false), module(module),
       features(module.features) {}
 
@@ -109,10 +109,6 @@ public:
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
   bool implicitTrap : 1;
-
-  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
-  // wrt atomics (e.g. memory.grow)
-  bool isAtomic : 1;
 
   bool throws_ : 1;
 
@@ -261,9 +257,6 @@ public:
   bool hasSynchronization() const {
     return readOrder != MemoryOrder::Unordered ||
            writeOrder != MemoryOrder::Unordered;
-  }
-  bool accessesGlobalState() const {
-    return readsMutableGlobalState() || writesGlobalState();
   }
 
   bool hasNonTrapSideEffects() const {
@@ -442,6 +435,13 @@ public:
 
   bool orderedAfter(const EffectAnalyzer& other) {
     return other.orderedBefore(*this);
+  }
+
+  // Whether these effects are prevented from moving past the other effects in
+  // either direction.
+  // TODO: Update users to check order more precisely and remove this.
+  bool invalidates(const EffectAnalyzer& other) {
+    return orderedBefore(other) || orderedAfter(other);
   }
 
   void mergeIn(const EffectAnalyzer& other) {
@@ -1315,13 +1315,15 @@ public:
   // Helpers
 
   // See comment on orderedBefore() for the assumptions on the inputs here.
+  // TODO: Update users so we can check just one direction here.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
                          Expression* a,
                          Expression* b) {
     EffectAnalyzer aEffects(passOptions, module, a);
     EffectAnalyzer bEffects(passOptions, module, b);
-    return !aEffects.orderedBefore(bEffects);
+    return !aEffects.orderedBefore(bEffects) &&
+           !bEffects.orderedBefore(aEffects);
   }
 
   // C-API

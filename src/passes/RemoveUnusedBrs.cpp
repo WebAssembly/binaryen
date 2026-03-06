@@ -65,9 +65,9 @@ stealSlice(Builder& builder, Block* input, Index from, Index to) {
   return ret;
 }
 
-// to turn an if into a br-if, we must be able to reorder the condition after
-// the possible value, and the possible value must not have side effects (as
-// they would run unconditionally)
+// to turn an if into a br-if, we must be able to reorder the
+// condition and possible value, and the possible value must
+// not have side effects (as they would run unconditionally)
 static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
                               PassOptions& options,
@@ -83,7 +83,7 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   if (value.hasSideEffects()) {
     return false;
   }
-  return !EffectAnalyzer(options, wasm, ifCondition).orderedBefore(value);
+  return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
 }
 
 // This leads to similar choices as LLVM does in some cases, by balancing the
@@ -1448,7 +1448,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               if (!valueEffects.hasUnremovableSideEffects()) {
                 auto conditionEffects =
                   EffectAnalyzer(passOptions, *getModule(), br->condition);
-                if (!valueEffects.orderedBefore(conditionEffects)) {
+                if (!conditionEffects.invalidates(valueEffects)) {
                   // All conditions met, perform the update.
                   drop->value = br->condition;
                 }
@@ -1648,8 +1648,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         EffectAnalyzer condition(passOptions, *getModule(), iff->condition);
-        if (condition.orderedBefore(ifTrue) ||
-            condition.orderedBefore(ifFalse)) {
+        if (condition.invalidates(ifTrue) || condition.invalidates(ifFalse)) {
           return nullptr;
         }
         auto* select = Builder(*getModule())

@@ -204,7 +204,7 @@ private:
       auto* pushable = isPushable(list[i]);
       if (pushable) {
         const auto& effects = getPushableEffects(pushable);
-        if (cumulativeEffects.orderedAfter(effects)) {
+        if (cumulativeEffects.invalidates(effects)) {
           // we can't push this, so further pushables must pass it
           cumulativeEffects.mergeIn(effects);
         } else {
@@ -354,7 +354,7 @@ private:
 
       const auto& effects = getPushableEffects(pushable);
 
-      if (cumulativeEffects.orderedAfter(effects)) {
+      if (cumulativeEffects.invalidates(effects)) {
         // This can't be moved forward. Add it to the things that are not
         // moving.
         cumulativeEffects.walk(list[i]);
