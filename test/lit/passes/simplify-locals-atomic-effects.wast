@@ -674,4 +674,125 @@
     )
     (local.get $x)
   )
+
+  ;; CHECK:      (func $br-on-read-acquire (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block $l (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $l
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:        (local.get $shared)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.get $shared-struct 0
+  ;; CHECK-NEXT:        (local.get $shared)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-on-read-acquire (param $shared (ref null $shared-struct)) (result i32)
+    (local $x i32)
+    (block $l
+      (br_if $l
+        (block (result i32)
+          ;; We will remove the local.set below by moving the value,
+          ;; including the acquire read, back past this normal read.
+          (drop
+            (struct.get $shared-struct 0
+              (local.get $shared)
+            )
+          )
+          (local.set $x
+            (block (result i32)
+              (drop
+                (struct.atomic.get acqrel $shared-struct 0
+                  (local.get $shared)
+                )
+              )
+              (i32.const 42)
+            )
+          )
+          (i32.const 1)
+        )
+      )
+      (local.set $x
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $br-on-acquire-read (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $l
+  ;; CHECK-NEXT:   (br_if $l
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:       (local.get $shared)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (struct.get $shared-struct 0
+  ;; CHECK-NEXT:         (local.get $shared)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $br-on-acquire-read (param $shared (ref null $shared-struct)) (result i32)
+    (local $x i32)
+    (block $l
+      (br_if $l
+        (block (result i32)
+          ;; Now the acquire read comes first, so we cannot reorder.
+          (drop
+            (struct.atomic.get acqrel $shared-struct 0
+              (local.get $shared)
+            )
+          )
+          (local.set $x
+            (block (result i32)
+              (drop
+                (struct.get $shared-struct 0
+                  (local.get $shared)
+                )
+              )
+              (i32.const 42)
+            )
+          )
+          (i32.const 1)
+        )
+      )
+      (local.set $x
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
 )
