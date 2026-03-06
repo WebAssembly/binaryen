@@ -23,10 +23,12 @@ var WebAssembly = {
     return ret;
   },
 
-  Global: function(opts) {
-    return {
-      value: null
-    };
+  // Allow objects to become WebAssembly.Global instances. This is important in
+  // the fuzzer, which logs globals and functions but not other things.
+  Global: class Global {},
+  function makeGlobal(obj) {
+    Object.setPrototypeOf(obj, WebAssembly.Global.prototype);
+    return obj;
   },
 
   Module: function(binary) {
