@@ -476,13 +476,13 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     } else {
       Ref theVar = ValueBuilder::makeVar();
       asmFunc[3]->push_back(theVar);
-      ValueBuilder::appendToVar(
-        theVar,
-        BUFFER,
-        ValueBuilder::makeNew(ValueBuilder::makeCall(
-          ValueBuilder::makeName("ArrayBuffer"),
-          ValueBuilder::makeInt(Address::address32_t(
-            wasm->memories[0]->initial.addr * Memory::kPageSize)))));
+      ValueBuilder::appendToVar(theVar,
+                                BUFFER,
+                                ValueBuilder::makeNew(ValueBuilder::makeCall(
+                                  ValueBuilder::makeName("ArrayBuffer"),
+                                  ValueBuilder::makeInt(Address::address32_t(
+                                    wasm->memories[0]->initial.addr
+                                    << wasm->memories[0]->pageSizeLog2)))));
     }
   }
 
@@ -2494,13 +2494,12 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
 
 void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
   Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
-  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
-    makeJsCoercion(ValueBuilder::makeBinary(
-                     ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
-                                           IString("byteLength")),
-                     DIV,
-                     ValueBuilder::makeInt(Memory::kPageSize)),
-                   JsType::JS_INT)));
+  memorySizeFunc[3]->push_back(
+    ValueBuilder::makeReturn(ValueBuilder::makeBinary(
+      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
+                            IString("byteLength")),
+      RSHIFT,
+      ValueBuilder::makeInt(wasm->memories[0]->pageSizeLog2))));
   ast->push_back(memorySizeFunc);
 
   if (!wasm->memories.empty() &&
@@ -2544,9 +2543,10 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
                              LT,
                              ValueBuilder::makeName(IString("newPages"))),
     IString("&&"),
-    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newPages")),
-                             LT,
-                             ValueBuilder::makeInt(Memory::kMaxSize32)));
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeName(IString("newPages")),
+      LT,
+      ValueBuilder::makeNum(wasm->memories[0]->maxSize32())));
   // Also enforce the module's declared memory maximum, if one exists.
   if (!wasm->memories.empty() && wasm->memories[0]->hasMax()) {
     condition = ValueBuilder::makeBinary(
@@ -2566,9 +2566,10 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
     IString("newBuffer"),
     ValueBuilder::makeNew(ValueBuilder::makeCall(
       ARRAY_BUFFER,
-      ValueBuilder::makeCall(MATH_IMUL,
-                             ValueBuilder::makeName(IString("newPages")),
-                             ValueBuilder::makeInt(Memory::kPageSize)))));
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("newPages")),
+        LSHIFT,
+        ValueBuilder::makeInt(wasm->memories[0]->pageSizeLog2)))));
 
   Ref newHEAP8 = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newHEAP8);
@@ -2760,7 +2761,8 @@ void Wasm2JSGlue::emitPostES6() {
   // can be used for conversions, so make sure there's at least one page.
   if (!wasm.memories.empty() && wasm.memories[0]->imported()) {
     out << "var mem" << moduleName.str << " = new ArrayBuffer("
-        << wasm.memories[0]->initial.addr * Memory::kPageSize << ");\n";
+        << (wasm.memories[0]->initial.addr << wasm.memories[0]->pageSizeLog2)
+        << ");\n";
   }
 
   // Actually invoke the `asmFunc` generated function, passing in all global

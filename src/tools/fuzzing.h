@@ -189,6 +189,7 @@ private:
   Name callRefImportName;
   Name callRefCatchImportName;
   Name sleepImportName;
+  Name importedGlobalModuleName = "__fuzz_import";
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -331,6 +332,8 @@ private:
   void setupMemory();
   void setupHeapTypes();
   void setupTables();
+  bool isImportableGlobalType(Type type);
+  bool isImportableGlobal(Global* global);
   void setupGlobals();
   void setupTags();
   void addTag();

@@ -20,12 +20,14 @@
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/subtype-exprs.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "support/string.h"
 #include "tools/fuzzing/heap-types.h"
 #include "wasm-io.h"
+#include "wasm-type.h"
 
 namespace wasm {
 
@@ -686,28 +688,47 @@ void TranslateToFuzzReader::useGlobalLater(Global* global) {
   }
 }
 
+bool TranslateToFuzzReader::isImportableGlobalType(Type type) {
+  // TODO: Support more types, but this would require being able to reflect on
+  // them from JS.
+  return type.isRef() && type.getHeapType() == HeapType::ext;
+}
+
+bool TranslateToFuzzReader::isImportableGlobal(Global* global) {
+  // TODO: Support mutable globals, but this would require being able to reflect
+  // on them from JS.
+  return global->mutable_ == false && isImportableGlobalType(global->type);
+}
+
 void TranslateToFuzzReader::setupGlobals() {
-  // If there were initial wasm contents, there may be imported globals. That
-  // would be a problem in the fuzzer harness as we'd error if we do not
-  // provide them (and provide the proper type, etc.).
-  // Avoid that, so that all the standard fuzzing infrastructure can always
-  // run the wasm.
+  // If there were initial wasm contents, there may be imported globals. The
+  // fuzzer harness cannot provide all types of imports, so make any imports it
+  // can't satisfy into declared globals.
   for (auto& global : wasm.globals) {
     if (global->imported()) {
-      if (!preserveImportsAndExports) {
+      // TODO: Once we support more importable global types, sometimes choose to
+      // make the global non-imported even if we don't have to. (Right now that
+      // isn't very interesting because there's no way to materialize an
+      // externref except via another imported global.)
+      if (!preserveImportsAndExports && !isImportableGlobal(global.get())) {
         // Remove import info from imported globals, and give them a simple
         // initializer.
         global->module = global->base = Name();
         global->init = makeConst(global->type);
       }
     } else {
-      // If the initialization referred to an imported global, it no longer can
-      // point to the same global after we make it a non-imported global unless
-      // GC is enabled, since before GC, Wasm only made imported globals
-      // available in constant expressions.
-      if (!wasm.features.hasGC() &&
-          !FindAll<GlobalGet>(global->init).list.empty()) {
-        global->init = makeConst(global->type);
+      // If the initialization used an imported global that we made
+      // non-imported, it can no longer use the same global unless GC is
+      // enabled, since before GC Wasm only made imported globals available in
+      // constant expressions.
+      if (!wasm.features.hasGC()) {
+        auto gets = FindAll<GlobalGet>(global->init);
+        for (auto& get : gets.list) {
+          if (!wasm.getGlobal(get->name)->imported()) {
+            global->init = makeConst(global->type);
+            break;
+          }
+        }
       }
     }
   }
@@ -729,53 +750,58 @@ void TranslateToFuzzReader::setupGlobals() {
 
   // Create new random globals.
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
-    auto type = getConcreteType();
-
-    // Prefer immutable ones as they can be used in global.gets in other
-    // globals, for more interesting patterns.
+    // Prefer immutable globals as they can be used in global.gets in other
+    // globals for more interesting patterns.
     auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable;
-
-    // We can only make something trivial (like a constant) in a global
-    // initializer.
-    auto* init = makeTrivial(type);
-
-    if (type.isTuple() && !init->is<TupleMake>()) {
-      // For now we disallow anything but tuple.make at the top level of tuple
-      // globals (see details in wasm-binary.cpp). In the future we may allow
-      // global.get or other things here.
-      init = makeConst(type);
-      assert(init->is<TupleMake>());
-    }
-    if (!FindAll<RefAs>(init).list.empty() ||
-        !FindAll<ContNew>(init).list.empty()) {
-      // When creating this initial value we ended up emitting a RefAs, which
-      // means we had to stop in the middle of an overly-nested struct or array,
-      // which we can break out of using ref.as_non_null of a nullable ref. That
-      // traps in normal code, which is bad enough, but it does not even
-      // validate in a global. Switch to something safe instead.
-      //
-      // Likewise, if we see cont.new, we must switch as well. That can happen
-      // if a nested struct we create has a continuation field, for example.
-      type = getMVPType();
-      init = makeConst(type);
-    }
     auto name = Names::getValidGlobalName(wasm, "global$");
-    auto global = builder.makeGlobal(name, type, init, mutability);
-    useGlobalLater(wasm.addGlobal(std::move(global)));
+    auto global =
+      builder.makeGlobal(name, getConcreteType(), nullptr, mutability);
+
+    // Sometimes make a new imported global if we can import the type and it is
+    // valid to do so.
+    if (!preserveImportsAndExports && isImportableGlobal(global.get()) &&
+        oneIn(2)) {
+      global->module = importedGlobalModuleName;
+      global->base = name;
+    } else {
+      // We can only make something trivial (like a constant) in a global
+      // initializer.
+      global->init = makeTrivial(global->type);
+
+      if (global->type.isTuple() && !global->init->is<TupleMake>()) {
+        // For now we disallow anything but tuple.make at the top level of tuple
+        // globals (see details in wasm-binary.cpp). In the future we may allow
+        // global.get or other things here.
+        global->init = makeConst(global->type);
+        assert(global->init->is<TupleMake>());
+      }
+      if (!FindAll<RefAs>(global->init).list.empty() ||
+          !FindAll<ContNew>(global->init).list.empty()) {
+        // When creating this initial value we ended up emitting a RefAs, which
+        // means we had to stop in the middle of an overly-nested struct or
+        // array, which we can break out of using ref.as_non_null of a nullable
+        // ref. That traps in normal code, which is bad enough, but it does not
+        // even validate in a global. Switch to something safe instead.
+        //
+        // Likewise, if we see cont.new, we must switch as well. That can happen
+        // if a nested struct we create has a continuation field, for example.
+        global->type = getMVPType();
+        global->init = makeConst(global->type);
+      }
+    }
 
     // Export some globals, where we can.
-    if (preserveImportsAndExports || type.isTuple() ||
-        !isValidPublicType(type)) {
-      continue;
-    }
-    if (mutability == Builder::Mutable && !wasm.features.hasMutableGlobals()) {
-      continue;
-    }
-    if (oneIn(2)) {
+    if (!preserveImportsAndExports && !global->type.isTuple() &&
+        isValidPublicType(global->type) &&
+        (mutability == Builder::Immutable ||
+         wasm.features.hasMutableGlobals()) &&
+        oneIn(2)) {
       auto exportName = Names::getValidExportName(wasm, name);
       wasm.addExport(
         Builder::makeExport(exportName, name, ExternalKind::Global));
     }
+
+    useGlobalLater(wasm.addGlobal(std::move(global)));
   }
 }
 
@@ -831,14 +857,14 @@ void TranslateToFuzzReader::finalizeMemory() {
         // unless GC is enabled. This can occur due to us adding a local
         // definition to what used to be an imported global in initial contents.
         // To fix that, replace such invalid offsets with a constant.
-        for ([[maybe_unused]] auto* get :
-             FindAll<GlobalGet>(segment->offset).list) {
-          // No imported globals should remain.
-          assert(!wasm.getGlobal(get->name)->imported());
-          // TODO: It would be better to avoid segment overlap so that
-          //       MemoryPacking can run.
-          segment->offset =
-            builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
+        // TODO: It would be better to avoid segment overlap so that
+        // MemoryPacking can run.
+        for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
+          if (!wasm.getGlobal(get->name)->imported()) {
+            segment->offset =
+              builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
+            break;
+          }
         }
       }
       if (auto* offset = segment->offset->dynCast<Const>()) {
@@ -853,9 +879,10 @@ void TranslateToFuzzReader::finalizeMemory() {
     // annoying in the fuzzer).
     Address ONE_GB = 1024 * 1024 * 1024;
     if (maxOffset <= ONE_GB) {
-      memory->initial = std::max(
-        memory->initial,
-        Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
+      memory->initial =
+        std::max(memory->initial,
+                 Address((maxOffset + (1 << memory->pageSizeLog2) - 1) /
+                         (1 << memory->pageSizeLog2)));
     }
   }
   memory->initial = std::max(memory->initial, fuzzParams->USABLE_MEMORY);
@@ -869,7 +896,7 @@ void TranslateToFuzzReader::finalizeMemory() {
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
     memory->max =
-      std::min(Address(memory->initial + 1), Address(Memory::kMaxSize32));
+      std::min(Address(memory->initial + 1), Address(memory->maxSize32()));
   }
 
   if (!preserveImportsAndExports) {
@@ -3801,9 +3828,38 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         // Shared strings not yet supported.
         return makeConst(Type(HeapType::string, NonNullable));
       }
+      // If we can, prefer using an imported global over a null.
+      bool canImport =
+        !preserveImportsAndExports && isImportableGlobalType(type);
+      if (canImport) {
+        bool shouldImport;
+        if (type.isNonNullable()) {
+          // If we are not in a function context, casting a null is not an
+          // option, so always use a global. Otherwise very rarely cast a null.
+          shouldImport = !funcContext || !oneIn(16);
+        } else {
+          // Still prefer a global over a null, but allow nulls more since they
+          // will not need immediate casts.
+          shouldImport = !oneIn(4);
+        }
+        if (shouldImport) {
+          auto [it, inserted] =
+            importedImmutableGlobalsByType.insert({type, {}});
+          if (inserted) {
+            auto name = Names::getValidGlobalName(wasm, "extern$");
+            auto global =
+              builder.makeGlobal(name, type, nullptr, Builder::Immutable);
+            global->module = importedGlobalModuleName;
+            global->base = name;
+            useGlobalLater(wasm.addGlobal(std::move(global)));
+          }
+          assert(!it->second.empty());
+          auto global = pick(it->second);
+          return builder.makeGlobalGet(global, type);
+        }
+      }
+      // Use a null value, making it non-null if necessary.
       auto null = builder.makeRefNull(HeapTypes::ext.getBasic(share));
-      // TODO: support actual non-nullable externrefs via imported globals or
-      // similar.
       if (!type.isNullable()) {
         return builder.makeRefAs(RefAsNonNull, null);
       }

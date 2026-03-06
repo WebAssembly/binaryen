@@ -395,9 +395,17 @@ SPEC_TESTS_TO_SKIP = [
 
     # Test invalid
     'elem.wast',
+
+    # Requires wast `either` support
+    'threads/thread.wast',
+
+    # Requires better support for multi-threaded tests
+    'threads/wait_notify.wast',
+
+    # Non-natural alignment is invalid for atomic operations
+    'threads/atomic.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
-    'custom-page-sizes',
     'wide-arithmetic',
 ]
 
@@ -440,7 +448,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'i31.wast',       # Requires support for table default elements
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
     'ref_test.wast',  # Requires host references to not be externalized i31refs
-    'struct.wast',    # Duplicate field names not properly rejected
+    'struct.wast',    # Fails to roundtrip unnamed types e.g. `(ref 0)`
     'type-rec.wast',  # Missing function type validation on instantiation
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'memory64.wast',        # Requires validations on the max memory size

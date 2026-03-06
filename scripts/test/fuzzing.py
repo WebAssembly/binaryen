@@ -51,6 +51,7 @@ unfuzzable = [
     'dwarf_with_exceptions.wasm',
     'strip-dwarf.wasm',
     'ignore_missing_func_dwarf.wasm',
+    'epilogue_begin_dwarf.wasm',
     'print.wasm',
     # ignore linking section as it causes us to warn about it not being fully
     # supported

@@ -20,6 +20,7 @@
 #include "ir/intrinsics.h"
 #include "pass.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -29,8 +30,12 @@ class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
-      features(module.features) {}
+      trapsNeverHappen(passOptions.trapsNeverHappen), branchesOut(false),
+      calls(false), readsMemory(false), writesMemory(false), readsTable(false),
+      writesTable(false), readsMutableStruct(false), writesStruct(false),
+      readsArray(false), writesArray(false), trap(false), implicitTrap(false),
+      isAtomic(false), throws_(false), danglingPop(false), mayNotReturn(false),
+      hasReturnCallThrow(false), module(module), features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
                  Module& module,
@@ -44,10 +49,99 @@ public:
     walk(func);
   }
 
-  bool ignoreImplicitTraps;
-  bool trapsNeverHappen;
+  bool ignoreImplicitTraps : 1;
+  bool trapsNeverHappen : 1;
+
+  // Definitely branches out of this expression, or does a return, etc.
+  // breakTargets tracks individual targets, which we may eventually see are
+  // internal, while this is set when we see something that will definitely
+  // not be internal, or is otherwise special like an infinite loop (which
+  // does not technically branch "out", but it does break the normal assumption
+  // of control flow proceeding normally).
+  bool branchesOut : 1;
+
+  bool calls : 1;
+  bool readsMemory : 1;
+  bool writesMemory : 1;
+  bool readsTable : 1;
+  bool writesTable : 1;
+
+  // TODO: More specific type-based alias analysis, and not just at the
+  //       struct/array level.
+  bool readsMutableStruct : 1;
+  bool writesStruct : 1;
+  bool readsArray : 1;
+  bool writesArray : 1;
+
+  // A trap, either from an unreachable instruction, or from an implicit trap
+  // that we do not ignore (see below).
+  //
+  // Note that we ignore trap differences, so it is ok to reorder traps with
+  // each other, but it is not ok to remove them or reorder them with other
+  // effects in a noticeable way.
+  //
+  // Note also that we ignore *optional* runtime-specific traps: we only
+  // consider as trapping something that will trap in *all* VMs, and *all* the
+  // time. For example, a single allocation might trap in a VM in a particular
+  // execution, if it happens to run out of memory just there, but that is not
+  // enough for us to mark it as having a trap effect. (Note that not marking
+  // each allocation as possibly trapping has the nice benefit of making it
+  // possible to eliminate an allocation whose result is not captured.) OTOH, we
+  // *do* mark a potentially infinite number of allocations as trapping, as all
+  // VMs would trap eventually, and the same for potentially infinite recursion,
+  // etc.
+  bool trap : 1;
+
+  // A trap from an instruction like a load or div/rem, which may trap on corner
+  // cases. If we do not ignore implicit traps then these are counted as a trap.
+  bool implicitTrap : 1;
+
+  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
+  // wrt atomics (e.g. memory.grow)
+  bool isAtomic : 1;
+
+  bool throws_ : 1;
+
+  // If this expression contains 'pop's that are not enclosed in 'catch' body.
+  // For example, (drop (pop i32)) should set this to true.
+  bool danglingPop : 1;
+
+  // Whether this code may "hang" and not eventually complete. An infinite loop,
+  // or a continuation that is never continued, are examples of that.
+  bool mayNotReturn : 1;
+
+  // Since return calls return out of the body of the function before performing
+  // their call, they are indistinguishable from normal returns from the
+  // perspective of their surrounding code, and the return-callee's effects only
+  // become visible when considering the effects of the whole function
+  // containing the return call. To model this correctly, stash the callee's
+  // effects on the side and only merge them in after walking a full function
+  // body.
+  //
+  // We currently do this stashing only for the throw effect, but in principle
+  // we could do it for all effects if it made a difference. (Only throw is
+  // noticeable now because the only thing that can change between doing the
+  // call here and doing it outside at the function exit is the scoping of
+  // try-catch blocks. If future wasm scoping additions are added, we may need
+  // more here.)
+  bool hasReturnCallThrow : 1;
+
   Module& module;
   FeatureSet features;
+
+  std::set<Index> localsRead;
+  std::set<Index> localsWritten;
+  std::set<Name> mutableGlobalsRead;
+  std::set<Name> globalsWritten;
+
+  // The nested depth of try-catch_all. If an instruction that may throw is
+  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
+  // will be caught by an inner catch_all. We only count 'try's with a
+  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
+  // still throw outside of the try.
+  size_t tryDepth = 0;
+  // The nested depth of catch. This is necessary to track danglng pops.
+  size_t catchDepth = 0;
 
   // Walk an expression and all its children.
   void walk(Expression* ast) {
@@ -91,86 +185,6 @@ public:
     localsRead.clear();
   }
 
-  // Core effect tracking
-
-  // Definitely branches out of this expression, or does a return, etc.
-  // breakTargets tracks individual targets, which we may eventually see are
-  // internal, while this is set when we see something that will definitely
-  // not be internal, or is otherwise special like an infinite loop (which
-  // does not technically branch "out", but it does break the normal assumption
-  // of control flow proceeding normally).
-  bool branchesOut = false;
-  bool calls = false;
-  std::set<Index> localsRead;
-  std::set<Index> localsWritten;
-  std::set<Name> mutableGlobalsRead;
-  std::set<Name> globalsWritten;
-  bool readsMemory = false;
-  bool writesMemory = false;
-  bool readsTable = false;
-  bool writesTable = false;
-  // TODO: More specific type-based alias analysis, and not just at the
-  //       struct/array level.
-  bool readsMutableStruct = false;
-  bool writesStruct = false;
-  bool readsArray = false;
-  bool writesArray = false;
-  // A trap, either from an unreachable instruction, or from an implicit trap
-  // that we do not ignore (see below).
-  //
-  // Note that we ignore trap differences, so it is ok to reorder traps with
-  // each other, but it is not ok to remove them or reorder them with other
-  // effects in a noticeable way.
-  //
-  // Note also that we ignore *optional* runtime-specific traps: we only
-  // consider as trapping something that will trap in *all* VMs, and *all* the
-  // time. For example, a single allocation might trap in a VM in a particular
-  // execution, if it happens to run out of memory just there, but that is not
-  // enough for us to mark it as having a trap effect. (Note that not marking
-  // each allocation as possibly trapping has the nice benefit of making it
-  // possible to eliminate an allocation whose result is not captured.) OTOH, we
-  // *do* mark a potentially infinite number of allocations as trapping, as all
-  // VMs would trap eventually, and the same for potentially infinite recursion,
-  // etc.
-  bool trap = false;
-  // A trap from an instruction like a load or div/rem, which may trap on corner
-  // cases. If we do not ignore implicit traps then these are counted as a trap.
-  bool implicitTrap = false;
-  // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
-  // wrt atomics (e.g. memory.grow)
-  bool isAtomic = false;
-  bool throws_ = false;
-  // The nested depth of try-catch_all. If an instruction that may throw is
-  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
-  // will be caught by an inner catch_all. We only count 'try's with a
-  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
-  // still throw outside of the try.
-  size_t tryDepth = 0;
-  // The nested depth of catch. This is necessary to track danglng pops.
-  size_t catchDepth = 0;
-  // If this expression contains 'pop's that are not enclosed in 'catch' body.
-  // For example, (drop (pop i32)) should set this to true.
-  bool danglingPop = false;
-  // Whether this code may "hang" and not eventually complete. An infinite loop,
-  // or a continuation that is never continued, are examples of that.
-  bool mayNotReturn = false;
-
-  // Since return calls return out of the body of the function before performing
-  // their call, they are indistinguishable from normal returns from the
-  // perspective of their surrounding code, and the return-callee's effects only
-  // become visible when considering the effects of the whole function
-  // containing the return call. To model this correctly, stash the callee's
-  // effects on the side and only merge them in after walking a full function
-  // body.
-  //
-  // We currently do this stashing only for the throw effect, but in principle
-  // we could do it for all effects if it made a difference. (Only throw is
-  // noticeable now because the only thing that can change between doing the
-  // call here and doing it outside at the function exit is the scoping of
-  // try-catch blocks. If future wasm scoping additions are added, we may need
-  // more here.)
-  bool hasReturnCallThrow = false;
-
   // Helper functions to check for various effect types
 
   bool accessesLocal() const {
@@ -205,6 +219,9 @@ public:
   bool readsMutableGlobalState() const {
     return mutableGlobalsRead.size() || readsMemory || readsTable ||
            readsMutableStruct || readsArray || isAtomic || calls;
+  }
+  bool accessesGlobalState() const {
+    return readsMutableGlobalState() || writesGlobalState();
   }
 
   bool hasNonTrapSideEffects() const {
@@ -292,10 +309,10 @@ public:
         (danglingPop || other.danglingPop)) {
       return true;
     }
-    // All atomics are sequentially consistent for now, and ordered wrt other
-    // memory references.
-    if ((isAtomic && other.accessesMemory()) ||
-        (other.isAtomic && accessesMemory())) {
+    // We model all atomics as sequentially consistent for now. They are ordered
+    // wrt other loads and stores from anything, not just memories.
+    if ((isAtomic && other.accessesGlobalState()) ||
+        (other.isAtomic && accessesGlobalState())) {
       return true;
     }
     for (auto local : localsWritten) {
@@ -496,6 +513,32 @@ private:
       }
     }
 
+    // Handle effects due to an explicit null check of the operands in `exprs`.
+    // Returns true iff there is no need to consider further effects.
+    bool trapOnNull(std::initializer_list<Expression*> exprs) {
+      for (auto* expr : exprs) {
+        if (expr && expr->type == Type::unreachable) {
+          return true;
+        }
+      }
+      for (auto* expr : exprs) {
+        assert(!expr || expr->type.isRef());
+        if (expr && expr->type.isNull()) {
+          parent.trap = true;
+          return true;
+        }
+      }
+      for (auto* expr : exprs) {
+        if (expr && expr->type.isNullable()) {
+          parent.implicitTrap = true;
+          break;
+        }
+      }
+      return false;
+    }
+
+    bool trapOnNull(Expression* expr) { return trapOnNull({expr}); }
+
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
         parent.breakTargets.erase(curr->name); // these were internal breaks
@@ -598,24 +641,26 @@ private:
     }
     void visitLoad(Load* curr) {
       parent.readsMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      parent.isAtomic |=
+        curr->isAtomic() && parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitStore(Store* curr) {
       parent.writesMemory = true;
-      parent.isAtomic |= curr->isAtomic();
+      parent.isAtomic |=
+        curr->isAtomic() && parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicRMW(AtomicRMW* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = true;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.isAtomic = true;
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
       parent.implicitTrap = true;
     }
     void visitAtomicWait(AtomicWait* curr) {
@@ -741,8 +786,9 @@ private:
       // memory.size accesses the size of the memory, and thus can be modeled as
       // reading memory
       parent.readsMemory = true;
-      // Atomics are sequentially consistent with memory.size.
-      parent.isAtomic = true;
+      // Synchronizes when memory.grow on other threads, but only when operating
+      // on shared memories.
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitMemoryGrow(MemoryGrow* curr) {
       // TODO: find out if calls is necessary here
@@ -752,8 +798,9 @@ private:
       // addresses, and just a read operation in the failure case
       parent.readsMemory = true;
       parent.writesMemory = true;
-      // Atomics are also sequentially consistent with memory.grow.
-      parent.isAtomic = true;
+      // Synchronizes with memory.size on other threads, but only when operating
+      // on shared memories.
+      parent.isAtomic |= parent.module.getMemory(curr->memory)->shared;
     }
     void visitRefNull(RefNull* curr) {}
     void visitRefIsNull(RefIsNull* curr) {}
@@ -810,11 +857,12 @@ private:
       }
     }
     void visitThrowRef(ThrowRef* curr) {
+      if (trapOnNull(curr->exnref)) {
+        return;
+      }
       if (parent.tryDepth == 0) {
         parent.throws_ = true;
       }
-      // traps when the arg is null
-      parent.implicitTrap = true;
     }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) { parent.trap = true; }
@@ -826,28 +874,17 @@ private:
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {}
     void visitRefI31(RefI31* curr) {}
-    void visitI31Get(I31Get* curr) {
-      // traps when the ref is null
-      if (curr->i31->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
-    }
+    void visitI31Get(I31Get* curr) { trapOnNull(curr->i31); }
     void visitCallRef(CallRef* curr) {
+      if (trapOnNull(curr->target)) {
+        return;
+      }
       if (curr->isReturn) {
         parent.branchesOut = true;
         if (parent.features.hasExceptionHandling()) {
           parent.hasReturnCallThrow = true;
         }
       }
-      if (curr->target->type.isNull()) {
-        parent.trap = true;
-        return;
-      }
-      // traps when the call target is null
-      if (curr->target->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
-
       parent.calls = true;
       if (parent.features.hasExceptionHandling() &&
           (parent.tryDepth == 0 && !curr->isReturn)) {
@@ -855,36 +892,24 @@ private:
       }
     }
     void visitRefTest(RefTest* curr) {}
-    void maybeHandleDescriptor(Expression* desc) {
-      if (desc) {
-        // Traps when the descriptor is null.
-        if (desc->type.isNull()) {
-          parent.trap = true;
-        } else if (desc->type.isNullable()) {
-          parent.implicitTrap = true;
-        }
-      }
-    }
+
     void visitRefCast(RefCast* curr) {
-      // Traps if the cast fails.
-      parent.implicitTrap = true;
-      maybeHandleDescriptor(curr->desc);
-    }
-    void visitRefGetDesc(RefGetDesc* curr) {
-      // Traps if the ref is null.
-      parent.implicitTrap = true;
-    }
-    void visitBrOn(BrOn* curr) {
-      parent.breakTargets.insert(curr->name);
-      maybeHandleDescriptor(curr->desc);
-    }
-    void visitStructNew(StructNew* curr) { maybeHandleDescriptor(curr->desc); }
-    void visitStructGet(StructGet* curr) {
-      if (curr->ref->type == Type::unreachable) {
+      if (trapOnNull(curr->desc)) {
         return;
       }
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      // Traps if the cast fails.
+      parent.implicitTrap = true;
+    }
+    void visitRefGetDesc(RefGetDesc* curr) { trapOnNull(curr->ref); }
+    void visitBrOn(BrOn* curr) {
+      if (trapOnNull(curr->desc)) {
+        return;
+      }
+      parent.breakTargets.insert(curr->name);
+    }
+    void visitStructNew(StructNew* curr) { trapOnNull(curr->desc); }
+    void visitStructGet(StructGet* curr) {
+      if (trapOnNull(curr->ref)) {
         return;
       }
       if (curr->ref->type.getHeapType()
@@ -893,68 +918,40 @@ private:
             .mutable_ == Mutable) {
         parent.readsMutableStruct = true;
       }
-      // traps when the arg is null
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
-      switch (curr->order) {
-        case MemoryOrder::Unordered:
-          break;
-        case MemoryOrder::SeqCst:
-          // Synchronizes with other threads.
-          parent.isAtomic = true;
-          break;
-        case MemoryOrder::AcqRel:
-          // Only synchronizes if other threads can read the field.
-          parent.isAtomic = curr->ref->type.getHeapType().isShared();
-          break;
-      }
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructSet(StructSet* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesStruct = true;
-      // traps when the arg is null
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
-      if (curr->order != MemoryOrder::Unordered) {
-        parent.isAtomic = true;
-      }
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitStructRMW(StructRMW* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsMutableStruct = true;
       parent.writesStruct = true;
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
     void visitStructCmpxchg(StructCmpxchg* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsMutableStruct = true;
       parent.writesStruct = true;
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
     void visitStructWait(StructWait* curr) {
+      if (trapOnNull(curr->ref)) {
+        return;
+      }
       parent.isAtomic = true;
-
-      // If the ref is null.
-      parent.implicitTrap = true;
 
       // If the timeout is negative and no-one wakes us.
       parent.mayNotReturn = true;
@@ -963,10 +960,6 @@ private:
       // code. Model this as a struct write which prevents reorderings (since
       // isAtomic == true).
       parent.writesStruct = true;
-
-      if (curr->ref->type == Type::unreachable) {
-        return;
-      }
 
       // If the ref isn't `unreachable`, then the field must exist and be a
       // packed waitqueue due to validation.
@@ -984,10 +977,10 @@ private:
                                      .mutable_ == Mutable;
     }
     void visitStructNotify(StructNotify* curr) {
+      if (trapOnNull(curr->ref)) {
+        return;
+      }
       parent.isAtomic = true;
-
-      // If the ref is null.
-      parent.implicitTrap = true;
 
       // struct.notify mutates an opaque waiter queue which isn't visible in
       // user code. Model this as a struct write which prevents reorderings
@@ -1007,36 +1000,32 @@ private:
     }
     void visitArrayNewFixed(ArrayNewFixed* curr) {}
     void visitArrayGet(ArrayGet* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArraySet(ArraySet* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
+      parent.isAtomic |=
+        curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
     void visitArrayLen(ArrayLen* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
-      }
-      // traps when the arg is null
-      if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
-      if (curr->destRef->type.isNull() || curr->srcRef->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull({curr->srcRef, curr->destRef})) {
         return;
       }
       parent.readsArray = true;
@@ -1045,8 +1034,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitArrayFill(ArrayFill* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesArray = true;
@@ -1054,37 +1042,33 @@ private:
       parent.implicitTrap = true;
     }
     template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.writesArray = true;
-      // Traps when the destination is null, when out of bounds in source or
-      // destination, or when the source segment has been dropped.
+      // OOB access to array or element segment.
       parent.implicitTrap = true;
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
     void visitArrayRMW(ArrayRMW* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsArray = true;
       parent.writesArray = true;
-      // traps when the arg is null or the index out of bounds
+      // OOB access to array.
       parent.implicitTrap = true;
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
     }
     void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-      if (curr->ref->type.isNull()) {
-        parent.trap = true;
+      if (trapOnNull(curr->ref)) {
         return;
       }
       parent.readsArray = true;
       parent.writesArray = true;
-      // traps when the arg is null or the index out of bounds
+      // OOB access to array.
       parent.implicitTrap = true;
       assert(curr->order != MemoryOrder::Unordered);
       parent.isAtomic = true;
@@ -1094,63 +1078,69 @@ private:
         // These conversions are infallible.
         return;
       }
-      // traps when the arg is not valid
-      parent.implicitTrap = true;
-      // Note: We could be more precise here and report the lack of a possible
-      // trap if the input is non-nullable (and also of the right kind for
-      // RefAsFunc etc.). However, we have optimization passes that will
-      // remove a RefAs in such a case (in OptimizeInstructions, and also
-      // Vacuum in trapsNeverHappen mode), so duplicating that code here would
-      // only help until the next time those optimizations run. As a tradeoff,
-      // we keep the code here simpler, but it does mean another optimization
-      // cycle may be needed in some cases.
+      assert(curr->op == RefAsNonNull);
+      trapOnNull(curr->value);
     }
     void visitStringNew(StringNew* curr) {
-      // traps when ref is null
-      parent.implicitTrap = true;
-      if (curr->op != StringNewFromCodePoint) {
-        parent.readsArray = true;
+      switch (curr->op) {
+        case StringNewLossyUTF8Array:
+        case StringNewWTF16Array:
+          if (trapOnNull(curr->ref)) {
+            return;
+          }
+          // OOB access to array.
+          parent.implicitTrap = true;
+          parent.readsArray = true;
+          return;
+        case StringNewFromCodePoint:
+          // Invalid code points.
+          parent.implicitTrap = true;
+          return;
       }
     }
     void visitStringConst(StringConst* curr) {}
-    void visitStringMeasure(StringMeasure* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
+    void visitStringMeasure(StringMeasure* curr) { trapOnNull(curr->ref); }
     void visitStringEncode(StringEncode* curr) {
-      // traps when ref is null or we write out of bounds.
+      if (trapOnNull({curr->str, curr->array})) {
+        return;
+      }
+      // OOB array access.
       parent.implicitTrap = true;
       parent.writesArray = true;
     }
     void visitStringConcat(StringConcat* curr) {
-      // traps when an input is null.
-      parent.implicitTrap = true;
+      trapOnNull({curr->left, curr->right});
     }
     void visitStringEq(StringEq* curr) {
-      if (curr->op == StringEqCompare) {
-        // traps when either input is null.
-        if (curr->left->type.isNullable() || curr->right->type.isNullable()) {
-          parent.implicitTrap = true;
-        }
+      switch (curr->op) {
+        case StringEqEqual:
+          // Nulls are ok.
+          return;
+        case StringEqCompare:
+          trapOnNull({curr->left, curr->right});
+          return;
       }
     }
     void visitStringTest(StringTest* curr) {}
     void visitStringWTF16Get(StringWTF16Get* curr) {
-      // traps when ref is null.
+      if (trapOnNull(curr->ref)) {
+        return;
+      }
+      // OOB string access.
       parent.implicitTrap = true;
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
-      // traps when ref is null.
+      if (trapOnNull(curr->ref)) {
+        return;
+      }
+      // OOB string access.
       parent.implicitTrap = true;
     }
-    void visitContNew(ContNew* curr) {
-      // traps when curr->func is null ref.
-      parent.implicitTrap = true;
-    }
+    void visitContNew(ContNew* curr) { trapOnNull(curr->func); }
     void visitContBind(ContBind* curr) {
-      // traps when curr->cont is null ref.
-      parent.implicitTrap = true;
-
+      if (trapOnNull(curr->cont)) {
+        return;
+      }
       // The input continuation is modified, as it will trap if resumed. This is
       // a globally-noticeable effect, which we model as a call for now, but we
       // could in theory use something more refined here (|modifiesContinuation|
@@ -1169,36 +1159,35 @@ private:
       parent.implicitTrap = true;
     }
     void visitResume(Resume* curr) {
+      if (trapOnNull(curr->cont)) {
+        return;
+      }
       // This acts as a kitchen sink effect.
       parent.calls = true;
-
-      // resume instructions accept nullable continuation references and trap
-      // on null.
-      parent.implicitTrap = true;
 
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
       }
     }
     void visitResumeThrow(ResumeThrow* curr) {
+      if (trapOnNull(curr->cont)) {
+        return;
+      }
+
       // This acts as a kitchen sink effect.
       parent.calls = true;
-
-      // resume_throw instructions accept nullable continuation
-      // references and trap on null.
-      parent.implicitTrap = true;
 
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
       }
     }
     void visitStackSwitch(StackSwitch* curr) {
+      if (trapOnNull(curr->cont)) {
+        return;
+      }
+
       // This acts as a kitchen sink effect.
       parent.calls = true;
-
-      // switch instructions accept nullable continuation references
-      // and trap on null.
-      parent.implicitTrap = true;
 
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;

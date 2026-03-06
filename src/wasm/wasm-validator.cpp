@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <iostream>
 #include <mutex>
 #include <set>
 #include <sstream>
@@ -31,6 +32,7 @@
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
+#include "wasm-features.h"
 #include "wasm-type.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -1500,9 +1502,31 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
 }
 
 void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
-  shouldBeTrue(getModule()->features.hasSIMD(),
-               curr,
-               "SIMD operations require SIMD [--enable-simd]");
+  FeatureSet required = FeatureSet::None;
+  switch (curr->op) {
+    case RelaxedMaddVecF16x8:
+    case RelaxedNmaddVecF16x8:
+      required |= FeatureSet::FP16;
+      [[fallthrough]];
+    case LaneselectI8x16:
+    case LaneselectI16x8:
+    case LaneselectI32x4:
+    case LaneselectI64x2:
+    case RelaxedMaddVecF32x4:
+    case RelaxedNmaddVecF32x4:
+    case RelaxedMaddVecF64x2:
+    case RelaxedNmaddVecF64x2:
+    case DotI8x16I7x16AddSToVecI32x4:
+      required |= FeatureSet::RelaxedSIMD;
+      [[fallthrough]];
+    case Bitselect:
+      required |= FeatureSet::SIMD;
+  }
+  if (!shouldBeTrue(required <= getModule()->features,
+                    curr,
+                    "SIMD ternary operation requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), required) << '\n';
+  }
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "SIMD ternary must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
@@ -4656,11 +4680,20 @@ void validateMemories(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(module.features.hasMemory64(),
                         "memory",
                         "64-bit memories require memory64 [--enable-memory64]");
+      // TODO: The custom pages sizes proposals do not mention a verification
+      // method when the memory64 proposal is active simultaneously; the current
+      // implementation is based on spectest.
+      info.shouldBeTrue(memory->initial <= memory->maxSize64(),
+                        "memory",
+                        "initial memory must be <= 16EB");
+      info.shouldBeTrue(!memory->hasMax() || memory->max <= memory->maxSize64(),
+                        "memory",
+                        "max memory must be <= 16EB, or unlimited");
     } else {
-      info.shouldBeTrue(memory->initial <= Memory::kMaxSize32,
+      info.shouldBeTrue(memory->initial <= memory->maxSize32(),
                         "memory",
                         "initial memory must be <= 4GB");
-      info.shouldBeTrue(!memory->hasMax() || memory->max <= Memory::kMaxSize32,
+      info.shouldBeTrue(!memory->hasMax() || memory->max <= memory->maxSize32(),
                         "memory",
                         "max memory must be <= 4GB, or unlimited");
     }
@@ -4671,6 +4704,18 @@ void validateMemories(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(module.features.hasAtomics(),
                         "memory",
                         "shared memory requires threads [--enable-threads]");
+    }
+
+    if (memory->pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+      info.shouldBeTrue(
+        module.features.hasCustomPageSizes(),
+        "memory",
+        "custom page sizes not enabled [--enable-custom-page-sizes]");
+      info.shouldBeEqual(
+        Address(memory->pageSizeLog2),
+        Address(0),
+        "memory",
+        "custom page size must be 1 Byte or 65536 Bytes (64KiB)");
     }
   }
 }

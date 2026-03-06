@@ -200,7 +200,10 @@ def check_expected(actual, expected, stdout=None):
 
 UNSPLITTABLE_TESTS = [Path(x) for x in [
     "spec/testsuite/instance.wast",
-    "spec/instance.wast"]]
+    "spec/instance.wast",
+
+    # TODO: support module splitting for (thread ...) blocks
+    "spec/threads/*"]]
 
 
 def is_splittable(wast: Path):

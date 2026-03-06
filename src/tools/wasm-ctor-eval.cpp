@@ -27,17 +27,14 @@
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
 #include "ir/gc-type-utils.h"
-#include "ir/global-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/names.h"
 #include "pass.h"
-#include "shell-interface.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
-#include "support/small_set.h"
 #include "support/string.h"
 #include "support/topological_sort.h"
 #include "tool-options.h"
@@ -75,7 +72,8 @@ public:
   // Return an unused stub value. We throw FailToEvalException on reading any
   // imported globals. We ignore the type and return an i32 literal since some
   // types can't be created anyway (e.g. ref none).
-  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
+  Literals*
+  getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
     return &stubLiteral;
   }
 
@@ -585,6 +583,7 @@ private:
 
     for (auto& oldGlobal : oldGlobals) {
       if (oldGlobal->imported()) {
+        wasm->addGlobal(std::move(oldGlobal));
         continue;
       }
       // Serialize the global's value. While doing so, pass in the name of this
