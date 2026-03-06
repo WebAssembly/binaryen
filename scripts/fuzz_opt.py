@@ -426,6 +426,9 @@ HOST_LIMIT_PREFIX = '[host limit '
 # --fuzz-exec reports calls as [fuzz-exec] calling foo
 FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
+# --fuzz-exec logs globals etc. as [fuzz-exec] logging foo
+FUZZ_EXEC_LOG_PREFIX = '[fuzz-exec] logging'
+
 # --fuzz-exec reports a stack limit using this notation
 STACK_LIMIT = '[trap stack limit]'
 
@@ -1995,6 +1998,10 @@ class Two(TestCaseHandler):
                 #   [fuzz-exec] calling foo/bar
                 # for different foo/bar. Just copy the original.
                 assert b.startswith(FUZZ_EXEC_CALL_PREFIX)
+                merged_output_lines[i] = output_lines[i]
+            elif a.startswith(FUZZ_EXEC_LOG_PREFIX):
+                # As above, but for logging.
+                assert b.startswith(FUZZ_EXEC_LOG_PREFIX)
                 merged_output_lines[i] = output_lines[i]
             elif a.startswith(FUZZ_EXEC_NOTE_RESULT):
                 # Fix up
