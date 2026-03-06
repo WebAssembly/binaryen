@@ -737,6 +737,14 @@ public:
   Literal externalize() const;
   Literal internalize() const;
 
+  // Internalize an externalized value or externalize an internalized value,
+  // otherwise return the literal unmodified.
+  Literal unwrap() const;
+
+  // Get the JS prototype configured via this struct's descriptor, if it exists,
+  // or null. Assumes this is a reference value.
+  Literal getJSPrototype() const;
+
 private:
   Literal addSatSI8(const Literal& other) const;
   Literal addSatUI8(const Literal& other) const;
