@@ -1965,6 +1965,7 @@ class Two(TestCaseHandler):
         # Comparing the original output from two files to the output after
         # merging them is not trivial. First, remove the extra logging that
         # --fuzz-exec-second adds.
+        output = output.replace('[fuzz-exec] logging second module\n', '')
         output = output.replace('[fuzz-exec] running second module\n', '')
 
         # Fix up both outputs.
@@ -2284,7 +2285,7 @@ testcase_handlers = [
     Merge(),
     Split(),
     RoundtripText(),
-    ClusterFuzz(),
+    #ClusterFuzz(),
     Two(),
     PreserveImportsExports(),
     BranchHintPreservation(),

@@ -562,11 +562,20 @@ function build(binary, isSecond) {
     }
 
     if (typeof value !== 'function') {
-      // This is not a function, but we can still do some operations on this
-      // export, possibly finding interesting behavior in the VM.
+      // This is not a function, but we can still log it and do other stuff.
+      console.log(`[fuzz-exec] logging ${name}`);
       if (typeof value === 'object') {
-        // An object allows more operations than an arbitrary value.
-        logRef(value);
+        // As in logRef, try some interesting operations to look for VM issues.
+        JSON.stringify(value);
+        if (value) {
+          value.foobar;
+          // Look at the exported value itself, not the global wrapper.
+          value = value.value;
+        }
+      }
+      if (typeof value === 'object') {
+        // logRef can do a little more than logValue, so use it when possible.
+        logRef(value.value);
       } else {
         logValue(value);
       }

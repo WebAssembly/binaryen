@@ -442,6 +442,13 @@ struct ExecutionResults {
         instantiate(*secondInstance, *secondInterface);
       }
 
+      // Log non-function exports.
+      logExports(wasm, *instance);
+      if (second) {
+        std::cout << "[fuzz-exec] logging second module\n";
+        logExports(*second, *secondInstance);
+      }
+
       // Run.
       callExports(wasm, *instance);
       if (second) {
@@ -465,6 +472,31 @@ struct ExecutionResults {
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
     instance.instantiate();
     interface.setModuleRunner(&instance);
+  }
+
+  // Log all non-function exports.
+  void logExports(Module& wasm, ModuleRunner& instance) {
+    for (auto& exp : wasm.exports) {
+      Literals* value = nullptr;
+      switch (exp->kind) {
+        case ExternalKind::Function: {
+          continue;
+        }
+        case ExternalKind::Global: {
+          value = instance.getExportedGlobalOrNull(exp->name);
+          break;
+        }
+        default: {
+          Fatal() << "bad exported kind " << exp->kind << " : " << exp->name << '\n';
+        }
+      }
+      std::cout << "[fuzz-exec] logging " << exp->name << "\n";
+      assert(value);
+      assert(value->size() == 1);
+      std::cout << "[LoggingExternalInterface logging ";
+      printValue((*value)[0]);
+      std::cout << "]\n";
+    }
   }
 
   void callExports(Module& wasm, ModuleRunner& instance) {
