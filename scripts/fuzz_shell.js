@@ -564,10 +564,9 @@ function build(binary, isSecond) {
 
     // Check for a global. Note we must be careful in wasm2js mode, where we
     // can't do instanceof here (the wasm polyfill there doesn't have such
-    // things). But in wasm2js any non-function is a global, so things are
-    // simple there.
-    if ((wasm2js && typeof value !== 'function') ||
-        (!wasm2js && (value instanceof WebAssembly.Global))) {
+    // things). In wasm2js we strip global exports to avoid needing to handle
+    // them here (using stub-unsupported-js).
+    if (!wasm2js && (value instanceof WebAssembly.Global)) {
       // We can log a global value and do other operations to check for bugs.
       // First, do some operations on the Global wrapper itself.
       JSON.stringify(value);
