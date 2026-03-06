@@ -486,6 +486,10 @@ struct ExecutionResults {
           value = instance.getExportedGlobalOrNull(exp->name);
           break;
         }
+        case ExternalKind::Table: {
+          // TODO: Perhaps we could print something here?
+          continue;
+        }
         default: {
           Fatal() << "bad exported kind " << exp->kind << " : " << exp->name << '\n';
         }
