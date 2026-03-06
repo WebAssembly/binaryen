@@ -1047,6 +1047,15 @@ private:
       parent.isAtomic |=
         curr->isAtomic() && curr->ref->type.getHeapType().isShared();
     }
+    void visitArrayStore(ArrayStore* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.writesArray = true;
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
+    }
     void visitArrayLen(ArrayLen* curr) {
       if (curr->ref->type.isNull()) {
         parent.trap = true;

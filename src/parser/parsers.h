@@ -1818,6 +1818,16 @@ Result<> makeStore(Ctx& ctx,
                    Type type,
                    int bytes,
                    bool isAtomic) {
+  if (ctx.in.takeSExprStart("type"sv)) {
+    auto arrayType = typeidx(ctx);
+    CHECK_ERR(arrayType);
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
+    }
+
+    return ctx.makeArrayStore(pos, annotations, type, bytes, *arrayType);
+  }
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
 

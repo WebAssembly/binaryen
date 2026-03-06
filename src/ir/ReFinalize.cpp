@@ -171,6 +171,7 @@ void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewFixed(ArrayNewFixed* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
+void ReFinalize::visitArrayStore(ArrayStore* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
 void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitArrayFill(ArrayFill* curr) { curr->finalize(); }

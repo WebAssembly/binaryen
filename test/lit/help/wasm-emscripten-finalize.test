@@ -169,6 +169,10 @@
 ;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
 ;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multibyte                   Enable multibyte array loads and stores
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multibyte                  Disable multibyte array loads and stores
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-relaxed-atomics             Enable acquire/release atomic memory
 ;; CHECK-NEXT:                                        operations
 ;; CHECK-NEXT:
