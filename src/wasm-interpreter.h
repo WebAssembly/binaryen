@@ -1710,16 +1710,10 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
-      case RelaxedMaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedMaddF16x8(b, c);
-      case RelaxedNmaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedNmaddF16x8(b, c);
+      case MaddVecF16x8:
+        return a.maddF16x8(b, c);
+      case NmaddVecF16x8:
+        return a.nmaddF16x8(b, c);
       case RelaxedMaddVecF32x4:
         if (relaxedBehavior == RelaxedBehavior::NonConstant) {
           return NONCONSTANT_FLOW;

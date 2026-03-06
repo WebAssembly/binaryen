@@ -2939,14 +2939,12 @@ static Literal ternary(const Literal& a, const Literal& b, const Literal& c) {
 }
 } // namespace
 
-Literal Literal::relaxedMaddF16x8(const Literal& left,
-                                  const Literal& right) const {
+Literal Literal::maddF16x8(const Literal& left, const Literal& right) const {
   return ternary<8, &Literal::getLanesF16x8, &Literal::madd, &toFP16>(
     *this, left, right);
 }
 
-Literal Literal::relaxedNmaddF16x8(const Literal& left,
-                                   const Literal& right) const {
+Literal Literal::nmaddF16x8(const Literal& left, const Literal& right) const {
   return ternary<8, &Literal::getLanesF16x8, &Literal::nmadd, &toFP16>(
     *this, left, right);
 }
