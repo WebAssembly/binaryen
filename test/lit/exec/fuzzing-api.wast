@@ -5,6 +5,8 @@
 ;; Test the fuzzing-support module imports.
 
 (module
+ (type $struct (struct))
+
  (import "fuzzing-support" "log-i32" (func $log-i32 (param i32)))
  (import "fuzzing-support" "log-f64" (func $log-f64 (param f64)))
  (import "fuzzing-support" "log-anyref" (func $log-anyref (param anyref)))
@@ -32,9 +34,16 @@
 
  (table $table 10 20 funcref)
 
+ (global $global (mut i32) (i32.const 42))
+
+ (global $global-immref anyref (struct.new $struct))
+
  ;; Note that the exported table appears first here, but in the binary and in
  ;; the IR it is actually last, as we always add function exports first.
  (export "table" (table $table))
+
+ (export "global" (global $global))
+ (export "global-immref" (global $global-immref))
 
  ;; CHECK:      [fuzz-exec] calling logging
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -450,6 +459,10 @@
 
  ;; CHECK:      [fuzz-exec] calling return-externref-exception
  ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
+ ;; CHECK-NEXT: [fuzz-exec] logging global
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [fuzz-exec] logging global-immref
+ ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $return-externref-exception (export "return-externref-exception") (result externref)
   ;; Call JS table.set in a way that throws (on out of bounds). The JS exception
@@ -582,6 +595,10 @@
 
 ;; CHECK:      [fuzz-exec] calling return-externref-exception
 ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
+;; CHECK-NEXT: [fuzz-exec] logging global
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [fuzz-exec] logging global-immref
+;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [fuzz-exec] comparing catch-js-tag
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
