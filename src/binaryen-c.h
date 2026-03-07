@@ -3003,17 +3003,22 @@ BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
 
 // Memory segments. Query utilities.
 
+BINARYEN_REF(DataSegment);
+
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
-BINARYEN_API bool BinaryenHasMemorySegment(BinaryenModuleRef module,
-                                           const char* segmentName);
+BINARYEN_API BinaryenDataSegmentRef
+BinaryenGetMemorySegment(BinaryenModuleRef module, const char* segmentName);
+BINARYEN_API BinaryenDataSegmentRef
+BinaryenGetMemorySegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
+BINARYEN_API const char*
+BinaryenGetMemorySegmentName(BinaryenDataSegmentRef segment);
 BINARYEN_API uint32_t BinaryenGetMemorySegmentByteOffset(
-  BinaryenModuleRef module, const char* segmentName);
-BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
-                                                       const char* segmentName);
-BINARYEN_API bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                                  const char* segmentName);
-BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
-                                                const char* segmentName,
+  BinaryenModuleRef module, BinaryenDataSegmentRef segment);
+BINARYEN_API size_t
+BinaryenGetMemorySegmentByteLength(BinaryenDataSegmentRef segment);
+BINARYEN_API bool
+BinaryenGetMemorySegmentPassive(BinaryenDataSegmentRef segment);
+BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenDataSegmentRef segment,
                                                 char* buffer);
 BINARYEN_API void BinaryenAddDataSegment(BinaryenModuleRef module,
                                          const char* segmentName,

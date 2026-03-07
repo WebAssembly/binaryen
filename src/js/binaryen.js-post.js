@@ -2773,34 +2773,60 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
   /**
-   * Determines wether a memory segment with the given name exists within the given module.
-   * @param {string} name - The name of the memory segment to check exists.
-   * @returns `true` if the memory segment exists, `false` otherwise
+   * Gets the memory segment with the given name.
+   * 
+   * @param {string} name - The name of the memory segment to get.
+   * @returns {number} A MemorySegmentRef referring to the memory segment with the given name, or `null` if no such segment exists.
    */
-  self['hasMemorySegment'] = function(name) {
-    return preserveStack(() => Boolean(Module['_BinaryenHasMemorySegment'](module, strToStack(name))));
-  };
-  self['getMemorySegmentInfo'] = function(name) {
+  self['getMemorySegment'] = function(name) {
     return preserveStack(() => {
-      const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
-      let offset = null;
-      if (!passive) {
-        offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, strToStack(name));
-      }
-      return {
-        'offset': offset,
-        'data': (function(){
-          const size = Module['_BinaryenGetMemorySegmentByteLength'](module, strToStack(name));
-          const ptr = _malloc(size);
-          Module['_BinaryenCopyMemorySegmentData'](module, strToStack(name), ptr);
-          const res = new Uint8Array(size);
-          res.set(HEAP8.subarray(ptr, ptr + size));
-          _free(ptr);
-          return res.buffer;
-        })(),
-        'passive': passive
-      };
+      const segment = Module['_BinaryenGetMemorySegment'](module, strToStack(name));
+      return segment === 0 ? null : segment;
     });
+  };
+  /**
+   * Gets the memory segment at the given index.
+   * 
+   * @param {number} index - The index of the memory segment to get.
+   * @returns {number} A MemorySegmentRef referring to the memory segment at the given index.
+   * 
+   * @throws If no memory segment exists at the given index.
+   */
+  self['getMemorySegmentByIndex'] = function(index) {
+    return Module['_BinaryenGetMemorySegmentByIndex'](module, index);
+  };
+  /**
+   * Queries information about a memory segment.
+   * 
+   * @param {number} segment  - A MemorySegmentRef referring to the memory segment to get information about.
+   * @returns {Object} An object containing the following fields:
+   *   - `name`: The name of the segment.
+   *   - `offset`: If the segment is active, the offset expression of the segment. Otherwise, `null`.
+   *   - `data`: A buffer containing the data of the segment.
+   *   - `passive`: A boolean indicating whether the segment is passive.
+    * 
+    * @throws If the given segment reference is invalid.
+   */
+  self['getMemorySegmentInfo'] = function(segment) {
+    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](segment));
+    let offset = null;
+    if (!passive) {
+      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, segment);
+    }
+    return {
+      'name': UTF8ToString(Module['_BinaryenGetMemorySegmentName'](segment)),
+      'offset': offset,
+      'data': (function(){
+        const size = Module['_BinaryenGetMemorySegmentByteLength'](segment);
+        const ptr = _malloc(size);
+        Module['_BinaryenCopyMemorySegmentData'](segment, ptr);
+        const res = new Uint8Array(size);
+        res.set(HEAP8.subarray(ptr, ptr + size));
+        _free(ptr);
+        return res.buffer;
+      })(),
+      'passive': passive
+    };
   };
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
