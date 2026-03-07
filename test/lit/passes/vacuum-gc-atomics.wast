@@ -6,9 +6,10 @@
 ;; RUN: wasm-opt %s -all --vacuum -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $shared (shared (struct (field i32))))
-  (type $shared (shared (struct (field i32))))
-  (type $unshared (struct (field i32)))
+  ;; CHECK:      (type $shared (shared (struct (field (mut i32)))))
+  (type $shared (shared (struct (field (mut i32)))))
+  (type $unshared (struct (field (mut i32))))
+  (type $shared-immutable (shared (struct (field i32))))
 
   ;; CHECK:      (func $get-unordered-unshared (type $0)
   ;; CHECK-NEXT:  (nop)
@@ -28,6 +29,17 @@
     (drop
       (struct.get $shared 0
         (struct.new_default $shared)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-unordered-shared-immutable (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $get-unordered-shared-immutable
+    (drop
+      (struct.get $shared-immutable 0
+        (struct.new_default $shared-immutable)
       )
     )
   )
@@ -58,6 +70,18 @@
     )
   )
 
+  ;; CHECK:      (func $get-seqcst-shared-immutable (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $get-seqcst-shared-immutable
+    (drop
+      (struct.atomic.get seqcst $shared-immutable 0
+        (struct.new_default $shared-immutable)
+      )
+    )
+  )
+
+
   ;; CHECK:      (func $get-acqrel-unshared (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -80,6 +104,17 @@
     (drop
       (struct.atomic.get acqrel $shared 0
         (struct.new_default $shared)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-acqrel-shared-immutable (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $get-acqrel-shared-immutable
+    (drop
+      (struct.atomic.get acqrel $shared-immutable 0
+        (struct.new_default $shared-immutable)
       )
     )
   )
