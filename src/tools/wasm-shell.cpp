@@ -400,28 +400,43 @@ struct Shell {
           err << e->msg << atIndex();
           return Err{err.str()};
         }
-      } else if (auto* lanes = std::get_if<LaneResults>(&expected)) {
-        switch (lanes->size()) {
-          case 4: {
-            auto vals = val.getLanesF32x4();
-            for (Index i = 0; i < 4; ++i) {
-              auto check = checkLane(vals[i], (*lanes)[i], i);
-              if (auto* e = check.getErr()) {
-                err << e->msg << atIndex();
-                return Err{err.str()};
-              }
+      } else if (auto* l = std::get_if<LaneResults>(&expected)) {
+        auto* lanes = &l->lanes;
+
+        auto check = [&](int size, const auto& vals) -> Result<> {
+          for (int i = 0; i < size; ++i) {
+            auto check = checkLane(vals[i], (*lanes)[i], i);
+            if (auto* e = check.getErr()) {
+              err << e->msg << atIndex();
+              return Err{err.str()};
             }
+          }
+          return Ok{};
+        };
+
+        bool isFloat = l->type == WATParser::LaneResults::LaneType::Float;
+        switch (lanes->size()) {
+          // Use unsigned values for the smaller types here to avoid sign
+          // extension when storing 8/16-bit values in 32-bit ints. This isn't
+          // needed for i32 and i64.
+          case 16: {
+            // There is no f8.
+            CHECK_ERR(check(16, val.getLanesUI8x16()));
+            break;
+          }
+          case 8: {
+            CHECK_ERR(
+              check(8, isFloat ? val.getLanesF16x8() : val.getLanesUI16x8()));
+            break;
+          }
+          case 4: {
+            CHECK_ERR(
+              check(4, isFloat ? val.getLanesF32x4() : val.getLanesI32x4()));
             break;
           }
           case 2: {
-            auto vals = val.getLanesF64x2();
-            for (Index i = 0; i < 2; ++i) {
-              auto check = checkLane(vals[i], (*lanes)[i], i);
-              if (auto* e = check.getErr()) {
-                err << e->msg << atIndex();
-                return Err{err.str()};
-              }
-            }
+            CHECK_ERR(
+              check(2, isFloat ? val.getLanesF64x2() : val.getLanesI64x2()));
             break;
           }
           default:

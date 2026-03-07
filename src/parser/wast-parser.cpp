@@ -169,6 +169,73 @@ Result<NaNKind> nan(Lexer& in) {
 }
 
 Result<ExpectedResult> result(Lexer& in) {
+  if (in.takeSExprStart("v128.const"sv)) {
+    LaneResults results;
+    auto& lanes = results.lanes;
+    results.type = in.buffer[in.getPos()] == 'f' ? LaneResults::LaneType::Float
+                                                 : LaneResults::LaneType::Int;
+
+    if (in.takeKeyword("i8x16"sv)) {
+      for (int i = 0; i < 16; ++i) {
+        auto int_ = in.takeI8();
+        if (!int_) {
+          return in.err("expected i8 immediate");
+        }
+        lanes.push_back(Literal(static_cast<uint32_t>(*int_)));
+      }
+    } else if (in.takeKeyword("i16x8"sv)) {
+      for (int i = 0; i < 8; ++i) {
+        auto int_ = in.takeI16();
+        if (!int_) {
+          return in.err("expected i16 immediate");
+        }
+        lanes.push_back(Literal(static_cast<uint32_t>(*int_)));
+      }
+    } else if (in.takeKeyword("i32x4"sv)) {
+      for (int i = 0; i < 4; ++i) {
+        auto int_ = in.takeI32();
+        if (!int_) {
+          return in.err("expected i32 immediate");
+        }
+        lanes.push_back(Literal(static_cast<uint32_t>(*int_)));
+      }
+    } else if (in.takeKeyword("i64x2"sv)) {
+      for (int i = 0; i < 2; ++i) {
+        auto int_ = in.takeI64();
+        if (!int_) {
+          return in.err("expected i64 immediate");
+        }
+        lanes.push_back(Literal(*int_));
+      }
+    } else if (in.takeKeyword("f32x4"sv)) {
+      for (int i = 0; i < 4; ++i) {
+        if (auto f = in.takeF32()) {
+          lanes.push_back(Literal(*f));
+        } else {
+          auto kind = nan(in);
+          CHECK_ERR(kind);
+          lanes.push_back(NaNResult{*kind, Type::f32});
+        }
+      }
+    } else if (in.takeKeyword("f64x2"sv)) {
+      for (int i = 0; i < 2; ++i) {
+        if (auto f = in.takeF64()) {
+          lanes.push_back(Literal(*f));
+        } else {
+          auto kind = nan(in);
+          CHECK_ERR(kind);
+          lanes.push_back(NaNResult{*kind, Type::f64});
+        }
+      }
+    } else {
+      return in.err("unexpected vector shape");
+    }
+    if (!in.takeRParen()) {
+      return in.err("expected end of v128.const");
+    }
+    return results;
+  }
+
   Lexer constLexer = in;
   auto c = const_(constLexer);
   // TODO: Generating and discarding errors like this can lead to quadratic
@@ -196,37 +263,6 @@ Result<ExpectedResult> result(Lexer& in) {
       return in.err("expected end of f64.const");
     }
     return NaNResult{*kind, Type::f64};
-  }
-
-  if (in.takeSExprStart("v128.const"sv)) {
-    LaneResults lanes;
-    if (in.takeKeyword("f32x4"sv)) {
-      for (int i = 0; i < 4; ++i) {
-        if (auto f = in.takeF32()) {
-          lanes.push_back(Literal(*f));
-        } else {
-          auto kind = nan(in);
-          CHECK_ERR(kind);
-          lanes.push_back(NaNResult{*kind, Type::f32});
-        }
-      }
-    } else if (in.takeKeyword("f64x2"sv)) {
-      for (int i = 0; i < 2; ++i) {
-        if (auto f = in.takeF64()) {
-          lanes.push_back(Literal(*f));
-        } else {
-          auto kind = nan(in);
-          CHECK_ERR(kind);
-          lanes.push_back(NaNResult{*kind, Type::f64});
-        }
-      }
-    } else {
-      return in.err("unexpected vector shape");
-    }
-    if (!in.takeRParen()) {
-      return in.err("expected end of v128.const");
-    }
-    return lanes;
   }
 
   if (in.takeSExprStart("ref.null")) {
