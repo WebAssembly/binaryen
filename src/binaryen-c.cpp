@@ -5492,17 +5492,24 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   return ((Module*)module)->dataSegments.size();
 }
-bool BinaryenHasMemorySegment(BinaryenModuleRef module,
-                              const char* segmentName) {
-  return (Module*)module->getDataSegmentOrNull(Name(segmentName)) != NULL;
+BinaryenDataSegmentRef BinaryenGetMemorySegment(BinaryenModuleRef module,
+                                                const char* segmentName) {
+  return ((Module*)module)->getDataSegmentOrNull(Name(segmentName));
+}
+BinaryenDataSegmentRef BinaryenGetMemorySegmentByIndex(BinaryenModuleRef module,
+                                                       BinaryenIndex index) {
+  const auto& dataSegments = ((Module*)module)->dataSegments;
+  if (dataSegments.size() <= index) {
+    Fatal() << "invalid memory segment index.";
+  }
+  return dataSegments[index].get();
+}
+const char* BinaryenGetMemorySegmentName(BinaryenDataSegmentRef segment) {
+  return ((DataSegment*)segment)->name.str.data();
 }
 uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
-                                            const char* segmentName) {
+                                            BinaryenDataSegmentRef segment) {
   auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
-  }
 
   auto globalOffset = [&](const Expression* const& expr,
                           int64_t& result) -> bool {
@@ -5514,10 +5521,10 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   };
 
   int64_t ret;
-  if (globalOffset(segment->offset, ret)) {
+  if (globalOffset(((DataSegment*)segment)->offset, ret)) {
     return ret;
   }
-  if (auto* get = segment->offset->dynCast<GlobalGet>()) {
+  if (auto* get = ((DataSegment*)segment)->offset->dynCast<GlobalGet>()) {
     Global* global = wasm->getGlobal(get->name);
     if (globalOffset(global->init, ret)) {
       return ret;
@@ -5618,33 +5625,17 @@ bool BinaryenMemoryIs64(BinaryenModuleRef module, const char* name) {
   }
   return memory->is64();
 }
-size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
-                                          const char* segmentName) {
-  auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
-  }
-  return segment->data.size();
+size_t BinaryenGetMemorySegmentByteLength(BinaryenDataSegmentRef segment) {
+  return ((DataSegment*)segment)->data.size();
 }
-bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                     const char* segmentName) {
-  auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
-  }
-  return segment->isPassive;
+bool BinaryenGetMemorySegmentPassive(BinaryenDataSegmentRef segment) {
+  return ((DataSegment*)segment)->isPassive;
 }
-void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
-                                   const char* segmentName,
+void BinaryenCopyMemorySegmentData(BinaryenDataSegmentRef segment,
                                    char* buffer) {
-  auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
-  }
-  std::copy(segment->data.cbegin(), segment->data.cend(), buffer);
+  std::copy(((DataSegment*)segment)->data.cbegin(),
+            ((DataSegment*)segment)->data.cend(),
+            buffer);
 }
 void BinaryenAddDataSegment(BinaryenModuleRef module,
                             const char* segmentName,

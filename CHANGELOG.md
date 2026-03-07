@@ -14,6 +14,12 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+ - Add a `BinaryenDataSegmentRef` type to the C API. (#8286)
+   - Add `BinaryenGetMemorySegment` and `BinaryenGetMemorySegmentByIndex` to the C API, which allow looking up a memory segment by name or index.
+   - Add `BinaryenGetMemorySegmentName` to the C API, which allows looking up a memory segment's name.
+   - Convert `BinaryenGetMemorySegmentByteOffset`, `BinaryenGetMemorySegmentByteLength`, `BinaryenGetMemorySegmentPassive` and `BinaryenCopyMemorySegmentData` to take a `BinaryenDataSegmentRef` instead of a name.
+   - Add `module.getMemorySegment`, `module.getMemorySegmentByIndex` to the JS API, which allows looking up a memory segment by name or index.
+   - Convert `module.getMemorySegmentInfo` to take a memory segment reference instead of a name, and return the name as part of the info.
 
 - Add support for non-nullable table types and initialization expressions for
    tables. This comes with a breaking change to C API: `BinaryenAddTable` takes
@@ -77,8 +83,6 @@ v126
      `BinaryenMemoryOrder` param. The functions formerly implicitly used
      `BinaryenMemoryOrderSeqCst()`. In JS this param is optional and thus not
      breaking.
-  - Add `BinaryenHasMemorySegment(<module>, <name>)` to the C API and
-    `module.hasMemorySegment(name)` to the JS API. Allowing users to check if a segment exists.
 
 v125
 ----
