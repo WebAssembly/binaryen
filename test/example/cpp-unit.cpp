@@ -632,7 +632,7 @@ void test_effects() {
     EffectAnalyzer effects(options, module);
     effects.visit(&arrayCopy);
     assert_equal(effects.trap, true);
-    assert_equal(effects.readsArray, true);
+    assert_equal(effects.readsMutableArray, true);
     assert_equal(effects.writesArray, true);
     assert_equal(effects.readsMutableStruct, false);
     assert_equal(effects.writesStruct, false);

@@ -48,7 +48,8 @@ BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
 BinaryenFeatureRelaxedAtomics: 4194304
-BinaryenFeatureAll: 8388607
+BinaryenFeatureCustomPageSizes: 8388608
+BinaryenFeatureAll: 16777215
 (f32.neg
  (f32.const -33.61199951171875)
 )

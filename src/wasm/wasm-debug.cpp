@@ -195,6 +195,10 @@ struct LineState {
         prologueEnd = true;
         break;
       }
+      case llvm::dwarf::DW_LNS_set_epilogue_begin: {
+        epilogueBegin = true;
+        break;
+      }
       case llvm::dwarf::DW_LNS_copy: {
         return true;
       }
@@ -331,8 +335,8 @@ struct LineState {
     if (prologueEnd) {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_prologue_end));
     }
-    if (epilogueBegin != old.epilogueBegin) {
-      Fatal() << "eb";
+    if (epilogueBegin) {
+      newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_epilogue_begin));
     }
     if (useSpecial) {
       // Emit a special, which emits a line automatically.
@@ -349,7 +353,10 @@ struct LineState {
   }
 
   // Some flags are automatically reset after each debug line.
-  void resetAfterLine() { prologueEnd = false; }
+  void resetAfterLine() {
+    prologueEnd = false;
+    epilogueBegin = false;
+  }
 
 private:
   llvm::DWARFYAML::LineTableOpcode

@@ -376,6 +376,8 @@ void test_features() {
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
   printf("BinaryenFeatureRelaxedAtomics: %d\n",
          BinaryenFeatureRelaxedAtomics());
+  printf("BinaryenFeatureCustomPageSizes: %d\n",
+         BinaryenFeatureCustomPageSizes());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 

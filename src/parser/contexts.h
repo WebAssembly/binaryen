@@ -49,6 +49,7 @@ struct Limits {
 struct MemType {
   Type addressType;
   Limits limits;
+  uint8_t pageSizeLog2;
   bool shared;
 };
 
@@ -173,8 +174,6 @@ struct NullTypeParserCtx {
 
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
-
-  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
 
   BlockTypeT getBlockTypeFromResult(size_t results) { return Ok{}; }
 
@@ -353,9 +352,8 @@ template<typename Ctx> struct TypeParserCtx {
   void appendDataString(DataStringT&, std::string_view) {}
 
   Result<LimitsT> makeLimits(uint64_t, std::optional<uint64_t>) { return Ok{}; }
-  LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
 
-  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
+  MemTypeT makeMemType(Type, LimitsT, bool, uint8_t) { return Ok{}; }
 
   HeapType getBlockTypeFromResult(const std::vector<Type> results) {
     assert(results.size() == 1);
@@ -1048,7 +1046,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   void addFuncType(SignatureT) {}
   void addContType(ContinuationT) {}
-  void addStructType(StructT) {}
+  Result<> addStructType(StructT) { return Ok{}; }
   void addArrayType(ArrayT) {}
   void setOpen() {}
   void setShared() {}
@@ -1086,13 +1084,18 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     data.insert(data.end(), str.begin(), str.end());
   }
 
-  Limits getLimitsFromData(const std::vector<char>& data) {
-    uint64_t size = (data.size() + Memory::kPageSize - 1) / Memory::kPageSize;
+  Limits getLimitsFromData(const std::vector<char>& data,
+                           uint8_t pageSizeLog2) {
+    uint64_t size =
+      (data.size() + (1 << pageSizeLog2) - 1) / (1 << pageSizeLog2);
     return {size, size};
   }
 
-  MemType makeMemType(Type addressType, Limits limits, bool shared) {
-    return {addressType, limits, shared};
+  MemType makeMemType(Type addressType,
+                      Limits limits,
+                      bool shared,
+                      uint8_t pageSizeLog2) {
+    return {addressType, limits, pageSizeLog2, shared};
   }
 
   Result<TypeUseT>
@@ -1215,14 +1218,23 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   void addFuncType(SignatureT& type) { builder[index] = type; }
   void addContType(ContinuationT& type) { builder[index] = type; }
 
-  void addStructType(StructT& type) {
+  Result<> addStructType(StructT& type) {
     auto& [fieldNames, str] = type;
+    std::unordered_set<Name> usedFieldNames;
     builder[index] = str;
     for (Index i = 0; i < fieldNames.size(); ++i) {
-      if (auto name = fieldNames[i]; name.is()) {
-        names[index].fieldNames[i] = name;
+      const auto& name = fieldNames[i];
+      if (!name.is()) {
+        continue;
       }
+
+      if (auto [_, inserted] = usedFieldNames.insert(name); !inserted) {
+        return in.err("duplicate field name");
+      }
+
+      names[index].fieldNames[i] = name;
     }
+    return Ok{};
   }
 
   void addArrayType(ArrayT& type) { builder[index] = type; }
@@ -1469,8 +1481,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   Type makeTableType(Type addressType, LimitsT, Type type) { return type; }
 
-  LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
-  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
+  LimitsT getLimitsFromData(DataStringT, uint8_t) { return Ok{}; }
+  MemTypeT makeMemType(Type, LimitsT, bool, uint8_t) { return Ok{}; }
 
   Result<> addFunc(Name name,
                    const std::vector<Name>&,

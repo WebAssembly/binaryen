@@ -2793,6 +2793,7 @@ private:
 
     // Ignore extraneous things and compare them syntactically. We can also
     // look at the full fallthrough for both sides now.
+    auto* originalLeft = left;
     left = getFallthrough(left);
     auto* originalRight = right;
     right = getFallthrough(right);
@@ -2817,6 +2818,26 @@ private:
       auto originalRightEffects = effects(originalRight);
       auto rightEffects = effects(right);
       if (originalRightEffects.invalidates(rightEffects)) {
+        return false;
+      }
+    }
+
+    // The same, with left, as we can have this situation:
+    //
+    //  (local.tee $x ..)
+    //    (something using $x)
+    //  )
+    //  (something using $x)
+    //
+    // The fallthroughs are identical, but the tee may cause us to read a
+    // different value.
+    if (originalLeft != left) {
+      auto originalLeftEffects = effects(originalLeft);
+      // |left == right| here (we would have exited early, otherwise, above), so
+      // we could compute either. Compute |left| as it might have better cache
+      // locality.
+      auto leftEffects = effects(left);
+      if (originalLeftEffects.invalidates(leftEffects)) {
         return false;
       }
     }
