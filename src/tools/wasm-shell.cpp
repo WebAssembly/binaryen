@@ -403,8 +403,8 @@ struct Shell {
       } else if (auto* l = std::get_if<LaneResults>(&expected)) {
         auto* lanes = &l->lanes;
 
-        auto check = [&](int size, const auto& vals) -> Result<> {
-          for (int i = 0; i < size; ++i) {
+        auto check = [&](const auto& vals) -> Result<> {
+          for (size_t i = 0; i < vals.size(); ++i) {
             auto check = checkLane(vals[i], (*lanes)[i], i);
             if (auto* e = check.getErr()) {
               err << e->msg << atIndex();
@@ -421,22 +421,22 @@ struct Shell {
           // needed for i32 and i64.
           case 16: {
             // There is no f8.
-            CHECK_ERR(check(16, val.getLanesUI8x16()));
+            CHECK_ERR(check(val.getLanesUI8x16()));
             break;
           }
           case 8: {
             CHECK_ERR(
-              check(8, isFloat ? val.getLanesF16x8() : val.getLanesUI16x8()));
+              check(isFloat ? val.getLanesF16x8() : val.getLanesUI16x8()));
             break;
           }
           case 4: {
             CHECK_ERR(
-              check(4, isFloat ? val.getLanesF32x4() : val.getLanesI32x4()));
+              check(isFloat ? val.getLanesF32x4() : val.getLanesI32x4()));
             break;
           }
           case 2: {
             CHECK_ERR(
-              check(2, isFloat ? val.getLanesF64x2() : val.getLanesI64x2()));
+              check(isFloat ? val.getLanesF64x2() : val.getLanesI64x2()));
             break;
           }
           default:

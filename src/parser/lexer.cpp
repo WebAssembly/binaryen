@@ -935,6 +935,15 @@ void Lexer::skipSpace() {
   }
 }
 
+std::optional<char> Lexer::peekChar() const {
+  auto n = next();
+  if (n.empty()) {
+    return std::nullopt;
+  }
+
+  return n[0];
+}
+
 bool Lexer::takeLParen() {
   if (LexCtx(next()).startsWith("("sv)) {
     ++pos;

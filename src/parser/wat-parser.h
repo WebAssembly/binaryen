@@ -76,12 +76,14 @@ using LaneResult = std::variant<Literal, NaNResult>;
 
 struct LaneResults {
   enum class LaneType {
-    Unknown,
     Int,
     Float,
   };
+  LaneResults(LaneType type, std::vector<LaneResult> lanes = {})
+    : type(type), lanes(std::move(lanes)) {}
+
+  LaneType type;
   std::vector<LaneResult> lanes;
-  LaneType type = LaneType::Unknown;
 };
 
 using ExpectedResult =

@@ -78,6 +78,8 @@ public:
     advance();
   }
 
+  std::optional<char> peekChar() const;
+
   bool takeLParen();
 
   bool peekLParen() { return Lexer(*this).takeLParen(); }

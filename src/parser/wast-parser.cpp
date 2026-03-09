@@ -170,10 +170,9 @@ Result<NaNKind> nan(Lexer& in) {
 
 Result<ExpectedResult> result(Lexer& in) {
   if (in.takeSExprStart("v128.const"sv)) {
-    LaneResults results;
+    LaneResults results(in.peekChar() == 'f' ? LaneResults::LaneType::Float
+                                             : LaneResults::LaneType::Int);
     auto& lanes = results.lanes;
-    results.type = in.buffer[in.getPos()] == 'f' ? LaneResults::LaneType::Float
-                                                 : LaneResults::LaneType::Int;
 
     if (in.takeKeyword("i8x16"sv)) {
       for (int i = 0; i < 16; ++i) {
