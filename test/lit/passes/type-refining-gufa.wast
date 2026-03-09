@@ -524,8 +524,6 @@
  ;; GUFA:      (export "a" (func $a))
  ;; O3O3:      (type $3 (func (result (ref $cont))))
 
- ;; O3O3:      (elem declare func $ref)
-
  ;; O3O3:      (export "a" (func $a))
  (export "a" (func $a))
  ;; NRML:      (export "b" (func $b))
@@ -556,15 +554,10 @@
  ;; GUFA-NEXT:  )
  ;; GUFA-NEXT: )
  ;; O3O3:      (func $a (type $func)
- ;; O3O3-NEXT:  (drop
- ;; O3O3-NEXT:   (cont.new $cont
- ;; O3O3-NEXT:    (ref.func $ref)
- ;; O3O3-NEXT:   )
- ;; O3O3-NEXT:  )
+ ;; O3O3-NEXT:  (nop)
  ;; O3O3-NEXT: )
  (func $a
-  ;; GUFA cannot improve things here (-O3 can remove the struct operations,
-  ;; though).
+  ;; GUFA cannot improve things here (-O3 can remove everything, though).
   (drop
    (struct.get $wrap-cont 0
     (struct.new $wrap-cont
@@ -607,9 +600,6 @@
  ;; GUFA-NEXT:   )
  ;; GUFA-NEXT:  )
  ;; GUFA-NEXT: )
- ;; O3O3:      (func $ref (type $func)
- ;; O3O3-NEXT:  (nop)
- ;; O3O3-NEXT: )
  (func $ref (type $func)
   (drop
    (struct.new $wrap-array
