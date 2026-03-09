@@ -153,6 +153,9 @@
 ;; CHECK-NEXT:                                        names section in wasm binary (or full
 ;; CHECK-NEXT:                                        debuginfo in wast)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-debug                        [split, multi-split, instrument] Strip
+;; CHECK-NEXT:                                        debug info (including the names section)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles, multi-split]
 ;; CHECK-NEXT:                                        Output file.
 ;; CHECK-NEXT:

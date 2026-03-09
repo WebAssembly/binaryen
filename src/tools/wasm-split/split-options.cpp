@@ -359,6 +359,13 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
          })
+    .add("--strip-debug",
+         "",
+         "Strip debug info (including the names section)",
+         WasmSplitOption,
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { stripDebug = true; })
     .add("--output",
          "-o",
          "Output file.",
