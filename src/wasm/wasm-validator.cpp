@@ -1512,14 +1512,15 @@ void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
     case RelaxedMaddVecF64x2:
     case RelaxedNmaddVecF64x2:
     case DotI8x16I7x16AddSToVecI32x4:
-      required |= FeatureSet::RelaxedSIMD;
-      [[fallthrough]];
+      required |= FeatureSet::RelaxedSIMD | FeatureSet::SIMD;
+      break;
     case MaddVecF16x8:
     case NmaddVecF16x8:
-      required |= FeatureSet::FP16;
-      [[fallthrough]];
+      required |= FeatureSet::FP16 | FeatureSet::SIMD;
+      break;
     case Bitselect:
       required |= FeatureSet::SIMD;
+      break;
   }
   if (!shouldBeTrue(required <= getModule()->features,
                     curr,
