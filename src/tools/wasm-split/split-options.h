@@ -51,6 +51,7 @@ struct WasmSplitOptions : ToolOptions {
   bool symbolMap = false;
   bool placeholderMap = false;
   bool jspi = false;
+  bool stripDebug = false;
 
   // TODO: Remove this. See the comment in wasm-binary.h.
   bool emitModuleNames = false;
