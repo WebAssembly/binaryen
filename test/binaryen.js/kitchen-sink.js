@@ -1142,13 +1142,17 @@ function test_for_each() {
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
+  assert(module.getMemorySegment(expected_names[0]) !== null);
+  assert(module.getMemorySegment("NonExistantSegment") === null);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
-    var segment = module.getMemorySegmentInfo(expected_names[i]);
-    assert(expected_offsets[i] === segment.offset);
-    var data8 = new Uint8Array(segment.data);
+    var segment = module.getMemorySegmentByIndex(i);
+    var info = module.getMemorySegmentInfo(segment);
+    assert(expected_names[i] === info.name);
+    assert(expected_offsets[i] === info.offset);
+    var data8 = new Uint8Array(info.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);
-    assert(expected_passive[i] === segment.passive);
+    assert(expected_passive[i] === info.passive);
   }
 
   module.addTable("t0", 1, 0xffffffff);
