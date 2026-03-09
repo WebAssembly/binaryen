@@ -89,3 +89,257 @@
   )
  )
 )
+
+;; We do not optimize here, as while we have a read-only-to-write global and
+;; function, there is another get and set. This setup will be used below to
+;; test for effects in calls to those other functions. Note that it is clear we
+;; do not optimize by the fact that the global remains mutable and the gets and
+;; sets are not modified.
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (result i32)))
+
+ ;; CHECK:      (global $global (mut i32) (i32.const 0))
+ (global $global (mut i32) (i32.const 0))
+
+ ;; CHECK:      (export "read-only-to-write" (func $read-only-to-write))
+
+ ;; CHECK:      (export "set" (func $set))
+
+ ;; CHECK:      (export "get" (func $get))
+
+ ;; CHECK:      (func $read-only-to-write
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (global.get $global)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (global.set $global
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $read-only-to-write (export "read-only-to-write")
+  (if
+   (i32.eqz
+    (global.get $global)
+   )
+   (then
+    (global.set $global
+     (i32.const 1)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $set
+ ;; CHECK-NEXT:  (global.set $global
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $set (export "set")
+  (global.set $global
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $get (result i32)
+ ;; CHECK-NEXT:  (global.get $global)
+ ;; CHECK-NEXT: )
+ (func $get (export "get") (result i32)
+  (global.get $global)
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (result i32)))
+
+ ;; CHECK:      (global $global i32 (i32.const 0))
+ (global $global (mut i32) (i32.const 0))
+
+ ;; CHECK:      (export "read-only-to-write" (func $read-only-to-write))
+
+ ;; CHECK:      (export "set" (func $set))
+
+ ;; CHECK:      (export "get" (func $get))
+
+ ;; CHECK:      (func $read-only-to-write
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $get)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $read-only-to-write (export "read-only-to-write")
+  ;; This looks like it reads the global only to write it: we read the global
+  ;; through a call, then write it. However, that call is not an actual
+  ;; global.get, so we must not miscount here. There is only one global.get in
+  ;; the program, but it is *not* here, rather it is in a place it could be
+  ;; read from, separately (indeed, it is an export), so we *cannot* optimize
+  ;; the global as a read-only-to-write global: it has a read we do not
+  ;; control, which will in fact contain 1 after the "set" global is called, so
+  ;; we should not turn it into a constant 0 (and the global should remain
+  ;; mutable).
+  (if
+   (block (result i32)
+    (drop
+     (call $get)
+    )
+    (i32.const 1)
+   )
+   (then
+    (global.set $global
+     (i32.const 0)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $set
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $set (export "set")
+  (global.set $global
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $get (result i32)
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $get (export "get") (result i32)
+  (global.get $global)
+ )
+)
+
+;; As above, but now we call out to set the global, rather than get. Again, we
+;; do not optimize.
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (result i32)))
+
+ ;; CHECK:      (global $global (mut i32) (i32.const 0))
+ (global $global (mut i32) (i32.const 0))
+
+ ;; CHECK:      (export "read-only-to-write" (func $read-only-to-write))
+
+ ;; CHECK:      (export "set" (func $set))
+
+ ;; CHECK:      (export "get" (func $get))
+
+ ;; CHECK:      (func $read-only-to-write
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (global.get $global)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (call $set)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $read-only-to-write (export "read-only-to-write")
+  (if
+   (i32.eqz
+    (global.get $global)
+   )
+   (then
+    (call $set)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $set
+ ;; CHECK-NEXT:  (global.set $global
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $set (export "set")
+  (global.set $global
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $get (result i32)
+ ;; CHECK-NEXT:  (global.get $global)
+ ;; CHECK-NEXT: )
+ (func $get (export "get") (result i32)
+  (global.get $global)
+ )
+)
+
+;; As above, but now we call out to set and get. Again, we do not optimize.
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (result i32)))
+
+ ;; CHECK:      (global $global i32 (i32.const 0))
+ (global $global (mut i32) (i32.const 0))
+
+ ;; CHECK:      (export "read-only-to-write" (func $read-only-to-write))
+
+ ;; CHECK:      (export "set" (func $set))
+
+ ;; CHECK:      (export "get" (func $get))
+
+ ;; CHECK:      (func $read-only-to-write
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $get)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (call $set)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $read-only-to-write (export "read-only-to-write")
+  (if
+   (block (result i32)
+    (drop
+     (call $get)
+    )
+    (i32.const 1)
+   )
+   (then
+    (call $set)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $set
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $set (export "set")
+  (global.set $global
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $get (result i32)
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $get (export "get") (result i32)
+  (global.get $global)
+ )
+)
+

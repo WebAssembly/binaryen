@@ -170,17 +170,30 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     if (codeEffects.hasAnything()) {
       return Name();
     }
+    // Verify that we actually have a global.set here. We could also have a
+    // call to a function for whom we have computed function effects, but that
+    // is not what we want: such a function can be called from other places too.
+    // This read-only-to-write pattern must contain an actual global.set, so we
+    // can count the sets in the entire program to confirm that no dangerous
+    // ones exist.
+    if (FindAll<GlobalSet>(code).list.empty()) {
+      return;
+    }
 
     // See if we read that global in the condition expression.
     EffectAnalyzer conditionEffects(getPassOptions(), *getModule(), condition);
     if (!conditionEffects.mutableGlobalsRead.count(writtenGlobal)) {
       return Name();
     }
-
     // If the condition has no other (non-removable) effects other than reading
     // that global then we have found what we looked for.
     if (!conditionEffects.hasUnremovableSideEffects()) {
       return writtenGlobal;
+    }
+    // As above, confirm we see an actual global.get, and not a call to one with
+    // computed effects.
+    if (FindAll<GlobalGet>(condition).list.empty()) {
+      return;
     }
 
     // There are unremovable side effects of some form. However, they may not
@@ -578,6 +591,8 @@ struct SimplifyGlobals : public Pass {
 
       if (!info.read || !info.nonInitWritten || onlyReadOnlyToWrite) {
         globalsNotNeedingSets.insert(global->name);
+std::cout << "no need " << global->name << " because read=" << info.read << " : " << info.nonInitWritten << " : " << onlyReadOnlyToWrite << '\n';
+std::cout << "  info.readOnlyToWrite=" << info.readOnlyToWrite << '\n';
 
         // We can now mark this global as immutable, and un-written, since we
         // are about to remove all the sets on it.
