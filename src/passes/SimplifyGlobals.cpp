@@ -177,7 +177,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     // can count the sets in the entire program to confirm that no dangerous
     // ones exist.
     if (FindAll<GlobalSet>(code).list.empty()) {
-      return;
+      return Name();
     }
 
     // See if we read that global in the condition expression.
@@ -193,7 +193,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     // As above, confirm we see an actual global.get, and not a call to one with
     // computed effects.
     if (FindAll<GlobalGet>(condition).list.empty()) {
-      return;
+      return Name();
     }
 
     // There are unremovable side effects of some form. However, they may not
