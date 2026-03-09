@@ -158,7 +158,7 @@
 
  ;; CHECK:      (type $1 (func (result i32)))
 
- ;; CHECK:      (global $global i32 (i32.const 0))
+ ;; CHECK:      (global $global (mut i32) (i32.const 0))
  (global $global (mut i32) (i32.const 0))
 
  ;; CHECK:      (export "read-only-to-write" (func $read-only-to-write))
@@ -176,7 +176,7 @@
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:    (global.set $global
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -208,7 +208,7 @@
  )
 
  ;; CHECK:      (func $set
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (global.set $global
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -219,7 +219,7 @@
  )
 
  ;; CHECK:      (func $get (result i32)
- ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (global.get $global)
  ;; CHECK-NEXT: )
  (func $get (export "get") (result i32)
   (global.get $global)
