@@ -1187,24 +1187,25 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // tag names
-  if (!wasm->tags.empty()) {
-    Index count = 0;
-    for (auto& tag : wasm->tags) {
-      if (tag->hasExplicitName) {
-        count++;
+  {
+    std::vector<std::pair<Index, Tag*>> tagsWithNames;
+    Index checked = 0;
+    auto check = [&](Tag* curr) {
+      if (curr->hasExplicitName) {
+        tagsWithNames.push_back({checked, curr});
       }
-    }
-
-    if (count) {
+      checked++;
+    };
+    ModuleUtils::iterImportedTags(*wasm, check);
+    ModuleUtils::iterDefinedTags(*wasm, check);
+    assert(checked == indexes.tagIndexes.size());
+    if (tagsWithNames.size() > 0) {
       auto substart =
         startSubsection(BinaryConsts::CustomSections::Subsection::NameTag);
-      o << U32LEB(count);
-      for (Index i = 0; i < wasm->tags.size(); i++) {
-        auto& tag = wasm->tags[i];
-        if (tag->hasExplicitName) {
-          o << U32LEB(i);
-          writeEscapedName(tag->name.str);
-        }
+      o << U32LEB(tagsWithNames.size());
+      for (auto& [index, tag] : tagsWithNames) {
+        o << U32LEB(index);
+        writeEscapedName(tag->name.str);
       }
       finishSubsection(substart);
     }
