@@ -594,8 +594,6 @@ struct SimplifyGlobals : public Pass {
 
       if (!info.read || !info.nonInitWritten || onlyReadOnlyToWrite) {
         globalsNotNeedingSets.insert(global->name);
-std::cout << "no need " << global->name << " because read=" << info.read << " : " << info.nonInitWritten << " : " << onlyReadOnlyToWrite << '\n';
-std::cout << "  info.readOnlyToWrite=" << info.readOnlyToWrite << '\n';
 
         // We can now mark this global as immutable, and un-written, since we
         // are about to remove all the sets on it.
