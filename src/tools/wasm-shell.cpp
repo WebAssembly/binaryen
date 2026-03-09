@@ -364,17 +364,6 @@ struct Shell {
 
     if (auto* v = std::get_if<Literal>(&expected)) {
       if (val != *v) {
-        if (val.type.isVector() && v->type.isVector() && isAlternative) {
-          auto valLanes = val.getLanesI32x4();
-          auto expLanes = v->getLanesI32x4();
-          for (int i = 0; i < 4; ++i) {
-            if (valLanes[i] != expLanes[i]) {
-              err << "0x" << std::setfill('0') << std::setw(8) << std::hex
-                  << expLanes[i] << std::dec;
-              return AlternativeErr{err.str(), i};
-            }
-          }
-        }
         err << *v;
         return AlternativeErr{err.str()};
       }
@@ -397,47 +386,48 @@ struct Shell {
         return AlternativeErr{err.str()};
       }
     } else if (auto* l = std::get_if<LaneResults>(&expected)) {
-        auto* lanes = &l->lanes;
+      auto* lanes = &l->lanes;
 
-        auto check = [&](int size, const auto& vals) -> Result<> {
-          for (int i = 0; i < size; ++i) {
-            auto check = checkLane(vals[i], (*lanes)[i], i);
-            if (auto* e = check.getErr()) {
-              err << e->msg << atIndex();
-              return Err{err.str()};
-            }
+      auto check = [&](int size,
+                       const auto& vals) -> Result<Ok, AlternativeErr> {
+        for (int i = 0; i < size; ++i) {
+          auto check = checkLane(vals[i], (*lanes)[i]);
+          if (auto* e = check.getErr()) {
+            err << e->msg;
+            return AlternativeErr{err.str(), i};
           }
-          return Ok{};
-        };
+        }
+        return Ok{};
+      };
 
-        bool isFloat = l->type == WATParser::LaneResults::LaneType::Float;
-         switch (lanes->size()) {
-          // Use unsigned values for the smaller types here to avoid sign
-          // extension when storing 8/16-bit values in 32-bit ints. This isn't
-          // needed for i32 and i64.
-          case 16: {
-            // There is no f8.
-            CHECK_ERR(check(16, val.getLanesUI8x16()));
-            break;
-          }
-          case 8: {
-            CHECK_ERR(
-              check(8, isFloat ? val.getLanesF16x8() : val.getLanesUI16x8()));
-            break;
-          }
-           case 4: {
-            CHECK_ERR(
-              check(4, isFloat ? val.getLanesF32x4() : val.getLanesI32x4()));
-             break;
-           }
-           case 2: {
-            CHECK_ERR(
-              check(2, isFloat ? val.getLanesF64x2() : val.getLanesI64x2()));
-             break;
-           }
-           default:
-             WASM_UNREACHABLE("unexpected number of lanes");
-         }
+      bool isFloat = l->type == WATParser::LaneResults::LaneType::Float;
+      switch (lanes->size()) {
+        // Use unsigned values for the smaller types here to avoid sign
+        // extension when storing 8/16-bit values in 32-bit ints. This isn't
+        // needed for i32 and i64.
+        case 16: {
+          // There is no f8.
+          CHECK_ERR(check(16, val.getLanesUI8x16()));
+          break;
+        }
+        case 8: {
+          CHECK_ERR(
+            check(8, isFloat ? val.getLanesF16x8() : val.getLanesUI16x8()));
+          break;
+        }
+        case 4: {
+          CHECK_ERR(
+            check(4, isFloat ? val.getLanesF32x4() : val.getLanesI32x4()));
+          break;
+        }
+        case 2: {
+          CHECK_ERR(
+            check(2, isFloat ? val.getLanesF64x2() : val.getLanesI64x2()));
+          break;
+        }
+        default:
+          WASM_UNREACHABLE("unexpected number of lanes");
+      }
 
     } else {
       WASM_UNREACHABLE("unexpected expectation");
@@ -458,15 +448,6 @@ struct Shell {
       return Err{err.str()};
     }
     for (Index i = 0; i < values->size(); ++i) {
-      auto atIndex = [&]() {
-        if (values->size() <= 1) {
-          return std::string{};
-        }
-        std::stringstream ss;
-        ss << " at index " << i;
-        return ss.str();
-      };
-
       // non-either case
       if (assn.expected[i].size() == 1) {
         auto result = matchAlternative(
@@ -477,7 +458,6 @@ struct Shell {
           if (e->lane != -1) {
             ss << " at lane " << e->lane;
           }
-          ss << atIndex();
           return Err{ss.str()};
         }
         continue;
@@ -511,7 +491,9 @@ struct Shell {
       }
       ss << " but got " << (*values)[i];
 
-      ss << atIndex();
+      if (values->size() > 1) {
+        ss << " at index " << i;
+      }
 
       return Err{ss.str()};
     }
