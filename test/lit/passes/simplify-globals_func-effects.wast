@@ -343,3 +343,74 @@
  )
 )
 
+;; As above, but with a second global.
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (result i32)))
+
+ ;; CHECK:      (global $global (mut i32) (i32.const 0))
+ (global $global (mut i32) (i32.const 0))
+
+ ;; CHECK:      (global $other i32 (i32.const 0))
+ (global $other (mut i32) (i32.const 0))
+
+ ;; CHECK:      (export "read-only-to-write" (func $read-only-to-write))
+
+ ;; CHECK:      (export "set" (func $set))
+
+ ;; CHECK:      (export "get" (func $get))
+
+ ;; CHECK:      (func $read-only-to-write
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $get)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (global.set $global
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $read-only-to-write (export "read-only-to-write")
+  ;; We *do* have a global.get here, but it is of the wrong global, $other, so
+  ;; we should not optimize $global (we can optimize $other to be immutable,
+  ;; though, and apply its value of 0 here).
+  (if
+   (block (result i32)
+    (drop
+     (call $get)
+    )
+    (global.get $other)
+   )
+   (then
+    (global.set $global
+     (i32.const 0)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $set
+ ;; CHECK-NEXT:  (global.set $global
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $set (export "set")
+  (global.set $global
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $get (result i32)
+ ;; CHECK-NEXT:  (global.get $global)
+ ;; CHECK-NEXT: )
+ (func $get (export "get") (result i32)
+  (global.get $global)
+ )
+)
+

@@ -178,7 +178,14 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     // ones exist. (In other words, we cannot take the shortcut of assuming that
     // the effect "writes global $foo" means we actually have a global.set $foo
     // here.)
-    if (FindAll<GlobalSet>(code).list.empty()) {
+    auto found = false;
+    for (auto* set : FindAll<GlobalSet>(code).list) {
+      if (set->name == writtenGlobal) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
       return Name();
     }
 
@@ -189,7 +196,14 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     }
     // As above, confirm we see an actual global.get, and not a call to one with
     // computed effects.
-    if (FindAll<GlobalGet>(condition).list.empty()) {
+    found = false;
+    for (auto* get : FindAll<GlobalGet>(condition).list) {
+      if (get->name == writtenGlobal) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
       return Name();
     }
 
