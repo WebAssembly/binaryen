@@ -571,29 +571,34 @@ function build(binary, isSecond) {
       // First, do some operations on the Global wrapper itself.
       JSON.stringify(value);
       value.foobar;
-      // Look at the exported value itself, not the global wrapper.
-      let actualValue;
-      try {
-        actualValue = value.value;
-      } catch (e) {
-        if (e.message.startsWith('get WebAssembly.Global.value')) {
-          // Just log a null instead of a value we cannot access from JS,
-          // like an exnref.
-          actualValue = null;
-        } else {
-          throw e;
-        }
-      }
-      // Log the actual value, by building a lambda to be called along the
-      // functions.
-      value = () => {
-        if (typeof actualValue === 'object') {
-          // logRef can do a little more than logValue, so use it when possible.
-          logRef(actualValue);
-        } else {
-          logValue(actualValue);
-        }
-      };
+
+      // Log it at the right time later using a lambda. Note that we can't just
+      // capture |value| for the lambda, as the loop modifies it.
+      (() => {
+        var global = value;
+        value = () => {
+          // Time to log. Look at the exported value itself, not the global
+          // wrapper.
+          let actualValue;
+          try {
+            actualValue = global.value;
+          } catch (e) {
+            if (e.message.startsWith('get WebAssembly.Global.value')) {
+              // Just log a null instead of a value we cannot access from JS,
+              // like an exnref.
+              actualValue = null;
+            } else {
+              throw e;
+            }
+          }
+          if (typeof actualValue === 'object') {
+            // logRef can do a little more than logValue, so use it when possible.
+            logRef(actualValue);
+          } else {
+            logValue(actualValue);
+          }
+        };
+      })();
     }
 
     if (typeof value !== 'function') {
