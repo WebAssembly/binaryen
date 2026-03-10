@@ -488,7 +488,8 @@ struct ExecutionResults {
           }
         }
       } else if (exp->kind == ExternalKind::Global) {
-        // Log the global's value.
+        // Log the global's value. (We use "calling" here to match the output
+        // for calls, which simplifies the fuzzer.)
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         Literals* value = instance.getExportedGlobalOrNull(exp->name);
         assert(value);
