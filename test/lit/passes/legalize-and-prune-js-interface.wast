@@ -245,8 +245,23 @@
   ;; and also prune the export, so it remains neither an import nor an export.
   (export "imported-v128" (func $imported-v128))
 )
+
 ;; CHECK:      (type $0 (func (result v128)))
 
 ;; CHECK:      (func $imported-v128 (type $0) (result v128)
 ;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
 ;; CHECK-NEXT: )
+(module
+ ;; CHECK:      (global $i32 i32 (i32.const 42))
+ (global $i32 i32 (i32.const 42))
+
+ ;; CHECK:      (global $v128 v128 (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000))
+ (global $v128 v128 (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000))
+
+ ;; The illegal export will vanish, but not the legal one.
+
+ (export "illegal" (global $v128))
+ ;; CHECK:      (export "legal" (global $i32))
+ (export "legal" (global $i32))
+)
+
