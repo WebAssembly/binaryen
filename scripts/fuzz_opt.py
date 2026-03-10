@@ -1871,7 +1871,8 @@ class Two(TestCaseHandler):
 
         # Make sure that we actually executed all exports from both
         # wasm files.
-        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        exports = get_exports(wasm, ['func', 'global'])
+        exports += get_exports(second_wasm, ['func', 'global'])
         calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
         if calls_in_output == 0:
             print(f'warning: no calls in output. output:\n{output}')
