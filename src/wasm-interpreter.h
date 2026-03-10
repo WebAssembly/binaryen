@@ -4106,7 +4106,6 @@ public:
   }
 
   Flow visitLoad(Load* curr) {
-    WASM_UNREACHABLE("??");
     VISIT(flow, curr->ptr)
     auto* memory = allMemories[curr->memory];
     return memory->load(static_cast<uint32_t>(flow.getSingleValue().geti32()),

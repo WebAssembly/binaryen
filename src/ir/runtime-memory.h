@@ -74,8 +74,7 @@ public:
   // Do we care about the order here?
   // todo: address types? Address::address32_t is strange
   // todo: type of offset?
-  virtual Literal
-  load(uint32_t addr, uint64_t offset, MemoryOrder order) const {
+  virtual Literal load(Address addr, Address offset, MemoryOrder order) const {
     Address address = getFinalAddress(offset, Literal(addr), 4, 1);
     return {};
   }
