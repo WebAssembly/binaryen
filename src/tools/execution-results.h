@@ -337,7 +337,7 @@ public:
     // Error on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
     for (const auto& result : sig.results) {
-      // An i64 result is fine: a BigInt will be provided. But v128 and exnref
+      // An i64 result is fine: a BigInt will be provided. But v128 and [null]exnref
       // still error.
       if (result == Type::v128 ||
           (result.isRef() && HeapType(result.getHeapType().getTop())
