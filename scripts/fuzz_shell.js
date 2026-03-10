@@ -143,7 +143,7 @@ function printed(x, y) {
   } else if (typeof x === 'bigint') {
     // Print bigints in legalized form, which is two 32-bit numbers of the low
     // and high bits.
-    return (Number(x) | 0) + ' ' + (Number(x >> 32n) | 0)
+    return (Number(x & 0xffffffffn) | 0) + ' ' + (Number(x >> 32n) | 0)
   } else if (typeof x !== 'number') {
     // Something that is not a number or string, like a reference. We can't
     // print a reference because it could look different after opts - imagine
