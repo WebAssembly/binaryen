@@ -61,7 +61,7 @@
 
  ;; SECONDARY:      (import "primary" "prime" (func $prime (exact (type $0))))
 
- ;; SECONDARY:      (elem $0 (i32.const 0) $second $second-in-table)
+ ;; SECONDARY:      (elem $0 (i32.const 0) $second-in-table $second)
 
  ;; SECONDARY:      (elem declare func $prime)
 
@@ -97,13 +97,13 @@
   ;; (but we will get a placeholder, as all split-out functions do).
  )
 )
-;; PRIMARY:      (func $trampoline_second (type $0)
+;; PRIMARY:      (func $trampoline_second-in-table (type $0)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; PRIMARY:      (func $trampoline_second-in-table (type $0)
+;; PRIMARY:      (func $trampoline_second (type $0)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 1)
 ;; PRIMARY-NEXT:  )
