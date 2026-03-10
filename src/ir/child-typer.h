@@ -1106,13 +1106,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       }
       ht = curr->ref->type.getHeapType();
     }
-    if (curr->value->type == Type::unreachable) {
+    auto actualValueType = valueType ? *valueType : curr->value->type;
+    if (actualValueType == Type::unreachable) {
       self().noteUnknown();
       return;
     }
     note(&curr->ref, Type(*ht, Nullable));
     note(&curr->index, Type::i32);
-    note(&curr->value, valueType ? *valueType : curr->value->type);
+    note(&curr->value, actualValueType);
   }
 
   void visitArrayLen(ArrayLen* curr) {
