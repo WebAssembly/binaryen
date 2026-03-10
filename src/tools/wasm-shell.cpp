@@ -368,7 +368,8 @@ struct Shell {
       }
     } else if (auto* ref = std::get_if<RefResult>(&expected)) {
       if (!val.type.isRef() ||
-          !HeapType::isSubType(val.type.getHeapType(), ref->type)) {
+          !HeapType::isSubType(val.type.getHeapType(), ref->type) ||
+          val.isNull()) {
         err << ref->type;
         return AlternativeErr{err.str()};
       }
