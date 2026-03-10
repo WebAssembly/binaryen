@@ -411,8 +411,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-nullexnref-result
- ;; CHECK-NEXT: [LoggingExternalInterface logging 912]
- ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal-nullexnref-result (export "ref.calling.illegal-nullexnref-result")
   ;; As above, the nullexnref cannot be converted to a JS value.
   (call $log-i32
@@ -615,8 +614,7 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-nullexnref-result
-;; CHECK-NEXT: [LoggingExternalInterface logging 912]
-;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
 ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
