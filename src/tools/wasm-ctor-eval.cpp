@@ -206,7 +206,8 @@ public:
           instanceInitialized,
           wasm,
           [this](Name name, Type type) { return makeFuncData(name, type); }),
-        linkedInstances_) {}
+        linkedInstances_),
+      instanceInitialized(instanceInitialized) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
     // Error on reads of imported globals.
@@ -230,6 +231,14 @@ public:
     throw FailToEvalException("TODO: table.set");
   }
 
+  Flow visitTableInit(TableInit* curr) {
+    if (instanceInitialized) {
+      throw FailToEvalException("TODO: table.init");
+    }
+
+    return ModuleRunnerBase<EvallingModuleRunner>::visitTableInit(curr);
+  }
+
   bool allowContNew = true;
 
   Flow visitContNew(ContNew* curr) {
@@ -250,6 +259,9 @@ public:
 #endif
     return Literal(allocation, type);
   }
+
+private:
+  const bool& instanceInitialized;
 };
 
 // Build an artificial `env` module based on a module's imports, so that the
