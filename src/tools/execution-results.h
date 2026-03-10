@@ -319,8 +319,13 @@ public:
     Literals arguments;
     for (const auto& param : sig.params) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
-      // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
-      if (param == Type::i64 || param == Type::v128 || param.isExn()) {
+      // on attempts to convert it to BigInt. v128 is disallowed.
+      if (param == Type::i64 || param == Type::v128) {
+        throwJSException();
+      }
+      // Exnref and nullexnref are also disallowed.
+      if (param.isRef() &&
+          HeapType(param.getHeapType().getTop()).isMaybeShared(HeapType::exn)) {
         throwJSException();
       }
       if (!param.isDefaultable()) {

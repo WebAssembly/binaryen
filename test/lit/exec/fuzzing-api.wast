@@ -357,7 +357,7 @@
   )
  )
 
- (func $illegal-result (result v128)
+ (func $illegal-v128-result (result v128)
   ;; Helper for the function below. The result is illegal for JS.
   (call $log-i32
    (i32.const 910)
@@ -365,15 +365,59 @@
   (v128.const i32x4 1 2 3 4)
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128-result
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- (func $ref.calling.illegal-result (export "ref.calling.illegal-result")
+ (func $ref.calling.illegal-v128-result (export "ref.calling.illegal-v128-result")
   ;; The v128 result causes an error here, so we will log 1 as an exception. The JS
   ;; semantics determine that we do that check *before* the call, so the logging
   ;; of 910 does not go through.
   (call $log-i32
    (call $call.ref.catch
-    (ref.func $illegal-result)
+    (ref.func $illegal-v128-result)
+   )
+  )
+ )
+
+ (func $illegal-exnref-result (result exnref)
+  ;; Helper for the function below. The result is illegal for JS.
+  (call $log-i32
+   (i32.const 911)
+  )
+  (block $l (result exnref)
+    (try_table (catch_all_ref $l)
+      (call $throwing)
+    )
+    (unreachable)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-exnref-result
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ (func $ref.calling.illegal-exnref-result (export "ref.calling.illegal-exnref-result")
+  ;; As above with the v128, the exnref cannot be converted to a JS value.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $illegal-exnref-result)
+   )
+  )
+ )
+
+ (func $illegal-nullexnref-result (result nullexnref)
+  ;; Helper for the function below. The result is illegal for JS.
+  (call $log-i32
+   (i32.const 912)
+  )
+  (ref.null noexn)
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-nullexnref-result
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 912]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+ (func $ref.calling.illegal-nullexnref-result (export "ref.calling.illegal-nullexnref-result")
+  ;; As above, the nullexnref cannot be converted to a JS value.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $illegal-nullexnref-result)
    )
   )
  )
@@ -564,8 +608,15 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-exnref
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128-result
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal-exnref-result
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal-nullexnref-result
+;; CHECK-NEXT: [LoggingExternalInterface logging 912]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
 ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
@@ -592,8 +643,10 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-exnref
-;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-exnref-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-nullexnref-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.rethrow
