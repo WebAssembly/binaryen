@@ -583,6 +583,25 @@ Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
   return builder.makeSequence(loadSecondary, callIndirect);
 }
 
+// Helper to walk expressions in segments but NOT in globals.
+template<typename Walker>
+static void walkSegments(Walker& walker, Module* module) {
+  walker.setModule(module);
+  for (auto& curr : module->elementSegments) {
+    if (curr->offset) {
+      walker.walk(curr->offset);
+    }
+    for (auto* item : curr->data) {
+      walker.walk(item);
+    }
+  }
+  for (auto& curr : module->dataSegments) {
+    if (curr->offset) {
+      walker.walk(curr->offset);
+    }
+  }
+}
+
 void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   // Turn references to secondary functions into references to thunks that
   // perform a direct call to the original referent. The direct calls in the
@@ -977,7 +996,19 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     NameCollector collector(used);
-    collector.walkModuleCode(&module);
+    // We shouldn't use collector.walkModuleCode here, because we don't want to
+    // walk on global initializers. At this point, all globals are still in the
+    // primary module, so if we walk on global initializers here, globals appear
+    // in their initialalizers will be all marked as used in the primary module,
+    // which is not true.
+    //
+    // For example, we have (global $a i32 (global.get $b)). Because $a is at
+    // this point still in the primary module, $b will be marked as "used" in
+    // the primary module. But $a can be moved to a secondary module later if it
+    // is used exclusively by that module. Then $b can be also moved, in case it
+    // doesn't have other uses. But if it is marked as "used" in the primary
+    // module, it can't.
+    walkSegments(collector, &module);
     for (auto& segment : module.dataSegments) {
       if (segment->memory.is()) {
         used.memories.insert(segment->memory);
@@ -1009,25 +1040,33 @@ void ModuleSplitter::shareImportableItems() {
     secondaryUsed.push_back(getUsedNames(*secondaryPtr));
   }
 
-  // Compute globals referenced in other globals' initializers. Since globals
-  // can reference other globals, we must ensure that if a global is used in a
-  // module, all its dependencies are also marked as used.
-  auto computeDependentItems = [&](UsedNames& used) {
+  // Compute transitive closure of globals referenced in other globals'
+  // initializers. Since globals can reference other globals, we must ensure
+  // that if a global is used in a module, all its dependencies are also marked
+  // as used.
+  auto computeTransitiveGlobals = [&](UsedNames& used) {
     std::vector<Name> worklist(used.globals.begin(), used.globals.end());
-    for (auto name : worklist) {
+    std::unordered_set<Name> visited(used.globals.begin(), used.globals.end());
+    while (!worklist.empty()) {
+      Name currName = worklist.back();
+      worklist.pop_back();
       // At this point all globals are still in the primary module, so this
       // exists
-      auto* global = primary.getGlobal(name);
+      auto* global = primary.getGlobal(currName);
       if (!global->imported() && global->init) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          used.globals.insert(get->name);
+          if (visited.insert(get->name).second) {
+            worklist.push_back(get->name);
+            used.globals.insert(get->name);
+          }
         }
       }
     }
   };
 
+  computeTransitiveGlobals(primaryUsed);
   for (auto& used : secondaryUsed) {
-    computeDependentItems(used);
+    computeTransitiveGlobals(used);
   }
 
   // Given a name and module item kind, returns the list of secondary modules
