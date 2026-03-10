@@ -1175,6 +1175,7 @@ void ModuleSplitter::shareImportableItems() {
       getUsingSecondaries(global->name, &UsedNames::globals);
     bool inPrimary = primaryUsed.globals.count(global->name);
     if (!inPrimary && usingSecondaries.size() == 1) {
+      // We are moving this global to this secondary module
       auto* secondary = usingSecondaries[0];
       auto* secondaryGlobal = ModuleUtils::copyGlobal(global.get(), *secondary);
       globalsToRemove.push_back(global->name);
@@ -1182,25 +1183,28 @@ void ModuleSplitter::shareImportableItems() {
       if (secondaryGlobal->init) {
         // When a global's initializer contains ref.func
         for (auto* ref : FindAll<RefFunc>(secondaryGlobal->init).list) {
-          // If we are moving this global and its dependent function is in a
-          // different secondary module, we create a trampoline here.
+          // If ref.func's function is in a different secondary module, we
+          // create a trampoline here.
           if (allSecondaryFuncs.count(ref->func)) {
             Index targetIndex = funcToSecondaryIndex.at(ref->func);
             if (secondaries[targetIndex].get() != secondary) {
               ref->func = getTrampoline(ref->func);
             }
           }
-          // If we are moving this global and its dependent function is in the
-          // primary module, we export it from there.
+          // 1. If ref.func's function is in the primary module, we export it
+          //    here.
+          // 2. If ref.func's function is in a different secondary module and we
+          //    just created a trampoline for it in the primary module, we
+          //    export the trampoline here.
           if (primary.getFunctionOrNull(ref->func)) {
             exportImportFunction(ref->func, {secondary});
           }
-          // If we are moving this global and its dependent function is in the
-          // same secondary module, we don't need to do anything. The ref.func
-          // can directly reference the function.
+          // If ref.func's function is in the same secondary module, we don't
+          // need to do anything. The ref.func can directly reference the
+          // function.
         }
       }
-    } else { // We export / import the global
+    } else { // We are NOT moving this global to the secondary module
       if (global->init) {
         for (auto* ref : FindAll<RefFunc>(global->init).list) {
           // If we are exporting this global from the primary module, we should
