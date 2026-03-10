@@ -339,7 +339,9 @@ public:
     for (const auto& result : sig.results) {
       // An i64 result is fine: a BigInt will be provided. But v128 and exnref
       // still error.
-      if (result == Type::v128 || result.isExn()) {
+      if (result == Type::v128 ||
+          (result.isRef() && HeapType(result.getHeapType().getTop())
+                               .isMaybeShared(HeapType::exn))) {
         throwJSException();
       }
     }
