@@ -1370,6 +1370,15 @@ class CtorEval(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
+        if get_exports(second_wasm, ['global']:
+            # The fuzzer reads exports in the order they are given, so if there
+            # are global exports it may read them before the ctors are run - but
+            # the ctors are meant to run before anything else, and can modify
+            # those global values. Rather than reorder how the fuzzer handles
+            # exports, ignore this case in this less-important fuzzer mode.
+            note_ignored_vm_run('ctor-eval with global exports')
+            return
+
         # get the expected execution results.
         wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
