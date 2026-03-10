@@ -8,7 +8,7 @@
   (func $medium (export "medium") (result i64)
     ;; A number big enough to hit the JS 2^53 precision limit. We must print it
     ;; carefully.
-    (i64.const 1152921504606846977)
+    (i64.const 0x1000000000000001)
   )
 )
 
