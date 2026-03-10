@@ -288,11 +288,10 @@
  (type $func (func))
 
  ;; CHECK:      (type $cont (cont $func))
+ ;; OPEN_WORLD:      (type $cont (cont $func))
  (type $cont (cont $func))
 
  ;; CHECK:      (type $func-i32 (func (param i32)))
- ;; OPEN_WORLD:      (type $cont (cont $func))
-
  ;; OPEN_WORLD:      (type $func-i32 (func (param i32)))
  (type $func-i32 (func (param i32)))
 
