@@ -4527,10 +4527,10 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeSIMDTernary(LaneselectI32x4);
         case BinaryConsts::I64x2Laneselect:
           return builder.makeSIMDTernary(LaneselectI64x2);
-        case BinaryConsts::F16x8RelaxedMadd:
-          return builder.makeSIMDTernary(RelaxedMaddVecF16x8);
-        case BinaryConsts::F16x8RelaxedNmadd:
-          return builder.makeSIMDTernary(RelaxedNmaddVecF16x8);
+        case BinaryConsts::F16x8Madd:
+          return builder.makeSIMDTernary(MaddVecF16x8);
+        case BinaryConsts::F16x8Nmadd:
+          return builder.makeSIMDTernary(NmaddVecF16x8);
         case BinaryConsts::F32x4RelaxedMadd:
           return builder.makeSIMDTernary(RelaxedMaddVecF32x4);
         case BinaryConsts::F32x4RelaxedNmadd:

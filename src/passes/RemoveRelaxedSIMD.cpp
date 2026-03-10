@@ -74,8 +74,6 @@ struct RemoveRelaxedSIMD : WalkerPass<PostWalker<RemoveRelaxedSIMD>> {
 
   void visitSIMDTernary(SIMDTernary* curr) {
     switch (curr->op) {
-      case RelaxedMaddVecF16x8:
-      case RelaxedNmaddVecF16x8:
       case RelaxedMaddVecF32x4:
       case RelaxedNmaddVecF32x4:
       case RelaxedMaddVecF64x2:

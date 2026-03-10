@@ -319,8 +319,13 @@ public:
     Literals arguments;
     for (const auto& param : sig.params) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
-      // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
-      if (param == Type::i64 || param == Type::v128 || param.isExn()) {
+      // on attempts to convert it to BigInt. v128 is disallowed.
+      if (param == Type::i64 || param == Type::v128) {
+        throwJSException();
+      }
+      // Exnref and nullexnref are also disallowed.
+      if (param.isRef() &&
+          HeapType(param.getHeapType().getTop()).isMaybeShared(HeapType::exn)) {
         throwJSException();
       }
       if (!param.isDefaultable()) {
@@ -332,9 +337,11 @@ public:
     // Error on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
     for (const auto& result : sig.results) {
-      // An i64 result is fine: a BigInt will be provided. But v128 and exnref
-      // still error.
-      if (result == Type::v128 || result.isExn()) {
+      // An i64 result is fine: a BigInt will be provided. But v128 and
+      // [null]exnref still error.
+      if (result == Type::v128 ||
+          (result.isRef() && HeapType(result.getHeapType().getTop())
+                               .isMaybeShared(HeapType::exn))) {
         throwJSException();
       }
     }
