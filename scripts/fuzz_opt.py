@@ -1370,7 +1370,7 @@ class CtorEval(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
-        if get_exports(second_wasm, ['global']:
+        if get_exports(second_wasm, ['global']):
             # The fuzzer reads exports in the order they are given, so if there
             # are global exports it may read them before the ctors are run - but
             # the ctors are meant to run before anything else, and can modify
