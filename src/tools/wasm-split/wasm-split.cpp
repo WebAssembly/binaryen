@@ -95,9 +95,14 @@ void adjustTableSize(Module& wasm, int initialSize, bool secondary = false) {
 void writeModule(Module& wasm,
                  std::string filename,
                  const WasmSplitOptions& options) {
+  if (options.stripDebug) {
+    PassRunner runner(&wasm, options.passOptions);
+    runner.add("strip-debug");
+    runner.run();
+  }
   ModuleWriter writer(options.passOptions);
   writer.setBinary(options.emitBinary);
-  writer.setDebugInfo(options.passOptions.debugInfo);
+  writer.setDebugInfo(options.passOptions.debugInfo && !options.stripDebug);
   if (options.emitModuleNames) {
     writer.setEmitModuleName(true);
   }

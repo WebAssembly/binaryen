@@ -34,7 +34,8 @@ Features.ExtendedConst: 8192
 Features.Strings: 16384
 Features.MultiMemory: 32768
 Features.RelaxedAtomics: 4194304
-Features.All: 8388607
+Features.CustomPageSizes: 8388608
+Features.All: 16777215
 InvalidId: 0
 BlockId: 1
 IfId: 2

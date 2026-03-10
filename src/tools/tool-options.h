@@ -110,6 +110,7 @@ struct ToolOptions : public Options {
                   "custom descriptors (RTTs) and exact references")
       .addFeature(FeatureSet::RelaxedAtomics,
                   "acquire/release atomic memory operations")
+      .addFeature(FeatureSet::CustomPageSizes, "custom page sizes")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",

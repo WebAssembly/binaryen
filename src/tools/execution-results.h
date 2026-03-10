@@ -341,9 +341,10 @@ public:
 
     // Call the function.
     auto flow = doCall(arguments);
-    // Suspending through JS is not valid.
+    // Suspending through JS is not valid. This traps - it does not throw a
+    // catchable JS exception.
     if (flow.suspendTag) {
-      throwJSException();
+      trap("suspend through JS");
     }
     return flow.values;
   }

@@ -128,15 +128,31 @@ struct ModuleInstantiation {
   std::optional<Name> instanceName;
 };
 
-using WASTCommand =
-  std::variant<WASTModule, Register, Action, Assertion, ModuleInstantiation>;
+struct ScriptEntry;
+using WASTScript = std::vector<ScriptEntry>;
+
+struct ThreadBlock {
+  Name name;
+  std::optional<Name> sharedModule;
+  WASTScript commands;
+};
+
+struct Wait {
+  Name thread;
+};
+
+using WASTCommand = std::variant<WASTModule,
+                                 Register,
+                                 Action,
+                                 Assertion,
+                                 ModuleInstantiation,
+                                 ThreadBlock,
+                                 Wait>;
 
 struct ScriptEntry {
   WASTCommand cmd;
   size_t line;
 };
-
-using WASTScript = std::vector<ScriptEntry>;
 
 Result<WASTScript> parseScript(std::string_view in);
 

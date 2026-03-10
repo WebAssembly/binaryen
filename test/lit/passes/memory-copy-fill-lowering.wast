@@ -37,9 +37,9 @@
 ;; CHECK-NEXT:  (local $step i32)
 ;; CHECK-NEXT:  (local $i i32)
 ;; CHECK-NEXT:  (local.set $end
-;; CHECK-NEXT:   (i32.mul
+;; CHECK-NEXT:   (i32.shl
 ;; CHECK-NEXT:    (memory.size)
-;; CHECK-NEXT:    (i32.const 65536)
+;; CHECK-NEXT:    (i32.const 16)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
@@ -135,9 +135,9 @@
 ;; CHECK-NEXT:     (local.get $dst)
 ;; CHECK-NEXT:     (local.get $size)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.mul
+;; CHECK-NEXT:    (i32.shl
 ;; CHECK-NEXT:     (memory.size)
-;; CHECK-NEXT:     (i32.const 65536)
+;; CHECK-NEXT:     (i32.const 16)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (then
