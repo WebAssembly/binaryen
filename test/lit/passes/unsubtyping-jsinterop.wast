@@ -514,3 +514,355 @@
   ;; CHECK:      (global $private (ref null $private-sub) (ref.null none))
   (global $private (ref null $private-sub) (ref.null none))
 )
+
+(module
+  ;; Exported function. Parameters flow in and results flow out.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
+    (type $desc (describes $sub) (struct (field externref)))
+  )
+  ;; CHECK:      (type $3 (func (param (ref $super)) (result anyref)))
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $3) (param $0 (ref $super)) (result anyref)
+  ;; CHECK-NEXT:  (local $sub (ref null $sub))
+  ;; CHECK-NEXT:  (local.get $sub)
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param (ref $super)) (result anyref)
+    (local $sub (ref null $sub))
+    ;; $super flowing in from JS means it is cast from any. Since $sub flows out
+    ;; via any, it could be flowing back in and must remain a subtype of $super.
+    (local.get $sub)
+  )
+)
+
+(module
+  ;; Imported function. Parameters flow out and results flow in.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
+    (type $desc (describes $sub) (struct (field externref)))
+  )
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param anyref) (result (ref $super))))
+
+  ;; CHECK:      (import "" "" (func $import (type $4) (param anyref) (result (ref $super))))
+  (import "" "" (func $import (param anyref) (result (ref $super))))
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (local $sub (ref null $sub))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $import
+  ;; CHECK-NEXT:    (local.get $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $sub (ref null $sub))
+    ;; Now $sub flows out via the parameter and $super flows back in via the
+    ;; result. Once again, $sub must maintain its descriptor and must remain a
+    ;; subtype of $super.
+    (drop
+      (call $import
+        (local.get $sub)
+      )
+    )
+  )
+)
+
+(module
+  ;; Exported immutable global flows out.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows out via the exported global and also flows back in because the
+  ;; global is immutable.
+  ;; CHECK:       (type $4 (func (result anyref)))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super))))
+
+  ;; CHECK:      (global $g (ref null $super) (ref.null none))
+  (global $g (export "g") (ref null $super) (ref.null none))
+
+  ;; CHECK:      (export "g" (global $g))
+
+  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of $any. If $super flows in from
+    ;; JS, the cast from any to $super will force $sub-in to remain a subtype of
+    ;; $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. If $super flows out
+    ;; to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
+
+(module
+  ;; Exported mutable global flows in and out.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows out via the exported global and also flows back in because the
+  ;; global is immutable.
+  ;; CHECK:       (type $4 (func (result anyref)))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super))))
+
+  ;; CHECK:      (global $g (mut (ref null $super)) (ref.null none))
+  (global $g (export "g") (mut (ref null $super)) (ref.null none))
+
+  ;; CHECK:      (export "g" (global $g))
+
+  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of $any. If $super flows in from
+    ;; JS, the cast from any to $super will force $sub-in to remain a subtype of
+    ;; $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. If $super flows out
+    ;; to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
+
+(module
+  ;; Imported immutable global flows in.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows out via the exported global and also flows back in because the
+  ;; global is immutable.
+  ;; CHECK:       (type $3 (func (result anyref)))
+
+  ;; CHECK:       (type $4 (func (result (ref null $super))))
+
+  ;; CHECK:      (import "" "" (global $g (ref null $super)))
+  (import "" "" (global $g (ref null $super)))
+
+  ;; CHECK:      (func $test-in (type $3) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of $any. If $super flows in from
+    ;; JS, the cast from any to $super will force $sub-in to remain a subtype of
+    ;; $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $4) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. If $super flows out
+    ;; to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
+
+(module
+  ;; Imported mutable global flows in and out.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows out via the exported global and also flows back in because the
+  ;; global is immutable.
+  ;; CHECK:       (type $4 (func (result anyref)))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super))))
+
+  ;; CHECK:      (import "" "" (global $g (mut (ref null $super))))
+  (import "" "" (global $g (mut (ref null $super))))
+
+  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of $any. If $super flows in from
+    ;; JS, the cast from any to $super will force $sub-in to remain a subtype of
+    ;; $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. If $super flows out
+    ;; to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
+
+(module
+  ;; Exported table flows in and out.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows out via the exported global and also flows back in because the
+  ;; global is immutable.
+  ;; CHECK:       (type $4 (func (result anyref)))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super))))
+
+  ;; CHECK:      (table $t 1 (ref null $super))
+  (table $t (export "t") 1 (ref null $super))
+
+  ;; CHECK:      (export "t" (table $t))
+
+  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of $any. If $super flows in from
+    ;; JS, the cast from any to $super will force $sub-in to remain a subtype of
+    ;; $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. If $super flows out
+    ;; to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
+
+(module
+  ;; Imported table flows in and out.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows out via the exported global and also flows back in because the
+  ;; global is immutable.
+  ;; CHECK:       (type $4 (func (result anyref)))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super))))
+
+  ;; CHECK:      (import "" "" (table $t 1 (ref null $super)))
+  (import "" "" (table $t 1 (ref null $super)))
+
+  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of $any. If $super flows in from
+    ;; JS, the cast from any to $super will force $sub-in to remain a subtype of
+    ;; $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. If $super flows out
+    ;; to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
