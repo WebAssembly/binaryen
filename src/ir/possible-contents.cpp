@@ -2837,6 +2837,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
+    } else if (auto* store = parent->dynCast<ArrayStore>()) {
+      assert(store->ref == child || store->value == child);
+      writeToData(store->ref, store->value, 0);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
       // Similar to struct.get.
       assert(get->ref == child);

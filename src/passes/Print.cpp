@@ -437,21 +437,29 @@ struct PrintExpressionContents
     return parent.printBlockType(sig);
   }
 
-  std::ostream& printStorePostfix(uint8_t bytes, Type valueType) {
-    if (bytes < 4 || (valueType == Type::i64 && bytes < 8)) {
-      if (bytes == 1) {
+  void printMemoryPostfix(uint8_t bytes, Type type) {
+    switch (bytes) {
+      case 1:
         o << '8';
-      } else if (bytes == 2) {
-        if (valueType == Type::f32) {
+        break;
+      case 2:
+        if (type == Type::f32) {
           o << "_f16";
         } else {
           o << "16";
         }
-      } else if (bytes == 4) {
+        break;
+      case 4:
         o << "32";
-      } else {
+        break;
+      default:
         abort();
-      }
+    }
+  }
+
+  std::ostream& printStorePostfix(uint8_t bytes, Type valueType) {
+    if (bytes < 4 || (valueType == Type::i64 && bytes < 8)) {
+      printMemoryPostfix(bytes, valueType);
     }
     return o;
   }
@@ -575,19 +583,7 @@ struct PrintExpressionContents
     o << ".load";
     if (curr->type != Type::unreachable &&
         curr->bytes < curr->type.getByteSize()) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->type == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
+      printMemoryPostfix(curr->bytes, curr->type);
       if (curr->type != Type::f32) {
         o << (curr->signed_ ? "_s" : "_u");
       }
