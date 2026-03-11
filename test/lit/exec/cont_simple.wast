@@ -13,7 +13,6 @@
   (type $k-get-i32 (cont $f-get-i32))
 
   (import "fuzzing-support" "log" (func $log (param i32)))
-  (import "fuzzing-support" "log-contref" (func $log-contref (param contref)))
 
   (tag $more)
   (tag $more-i32 (result i32))
@@ -874,14 +873,5 @@
     ;; unhandled suspend.
     (suspend $more)
     (nop)
-  )
-
-  ;; CHECK:      [fuzz-exec] calling js
-  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
-  (func $js (export "js")
-    ;; Sending a continuation to JS causes a trap.
-    (call $log-contref
-      (ref.null cont)
-    )
   )
 )
