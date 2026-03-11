@@ -204,7 +204,7 @@ struct LocalGraphFlower
       auto& actions = block.actions;
 
       // move towards the front, handling things as we go
-      for (int i = int(actions.size()) - 1; i >= 0; i--) {
+      for (int i = static_cast<int>(actions.size()) - 1; i >= 0; i--) {
         auto* action = actions[i];
         if (auto* get = action->dynCast<LocalGet>()) {
           allGets[get->index].push_back(get);

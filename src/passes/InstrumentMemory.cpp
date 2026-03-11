@@ -120,8 +120,8 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
     auto addressType = mem->addressType;
     auto offset = builder.makeConstPtr(curr->offset.addr, addressType);
     curr->ptr = builder.makeCall(load_ptr,
-                                 {builder.makeConst(int32_t(id)),
-                                  builder.makeConst(int32_t(curr->bytes)),
+                                 {builder.makeConst(static_cast<int32_t>(id)),
+                                  builder.makeConst(static_cast<int32_t>(curr->bytes)),
                                   offset,
                                   curr->ptr},
                                  addressType);
@@ -143,7 +143,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
         return; // TODO: other types, unreachable, etc.
     }
     replaceCurrent(builder.makeCall(
-      target, {builder.makeConst(int32_t(id)), curr}, curr->type));
+      target, {builder.makeConst(static_cast<int32_t>(id)), curr}, curr->type));
   }
 
   void visitStore(Store* curr) {
@@ -155,8 +155,8 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
     auto addressType = mem->addressType;
     auto offset = builder.makeConstPtr(curr->offset.addr, addressType);
     curr->ptr = builder.makeCall(store_ptr,
-                                 {builder.makeConst(int32_t(id)),
-                                  builder.makeConst(int32_t(curr->bytes)),
+                                 {builder.makeConst(static_cast<int32_t>(id)),
+                                  builder.makeConst(static_cast<int32_t>(curr->bytes)),
                                   offset,
                                   curr->ptr},
                                  addressType);
@@ -178,7 +178,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
         return; // TODO: other types, unreachable, etc.
     }
     curr->value = builder.makeCall(
-      target, {builder.makeConst(int32_t(id)), curr->value}, curr->value->type);
+      target, {builder.makeConst(static_cast<int32_t>(id)), curr->value}, curr->value->type);
   }
 
   void visitStructGet(StructGet* curr) {
@@ -198,7 +198,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
       return; // TODO: other types, unreachable, etc.
     }
     replaceCurrent(builder.makeCall(
-      target, {builder.makeConst(int32_t(id++)), curr}, curr->type));
+      target, {builder.makeConst(static_cast<int32_t>(id++)), curr}, curr->type));
   }
 
   void visitStructSet(StructSet* curr) {
@@ -219,7 +219,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
     }
     curr->value =
       builder.makeCall(target,
-                       {builder.makeConst(int32_t(id++)), curr->value},
+                       {builder.makeConst(static_cast<int32_t>(id++)), curr->value},
                        curr->value->type);
   }
 
@@ -229,7 +229,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
     Builder builder(*getModule());
     curr->index =
       builder.makeCall(array_get_index,
-                       {builder.makeConst(int32_t(id++)), curr->index},
+                       {builder.makeConst(static_cast<int32_t>(id++)), curr->index},
                        Type::i32);
     Name target;
     if (curr->type == Type::i32) {
@@ -244,7 +244,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
       return; // TODO: other types, unreachable, etc.
     }
     replaceCurrent(builder.makeCall(
-      target, {builder.makeConst(int32_t(id++)), curr}, curr->type));
+      target, {builder.makeConst(static_cast<int32_t>(id++)), curr}, curr->type));
   }
 
   void visitArraySet(ArraySet* curr) {
@@ -253,7 +253,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
     Builder builder(*getModule());
     curr->index =
       builder.makeCall(array_set_index,
-                       {builder.makeConst(int32_t(id++)), curr->index},
+                       {builder.makeConst(static_cast<int32_t>(id++)), curr->index},
                        Type::i32);
     Name target;
     if (curr->value->type == Type::i32) {
@@ -269,7 +269,7 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
     }
     curr->value =
       builder.makeCall(target,
-                       {builder.makeConst(int32_t(id++)), curr->value},
+                       {builder.makeConst(static_cast<int32_t>(id++)), curr->value},
                        curr->value->type);
   }
 
@@ -281,10 +281,10 @@ struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
     auto addressType = getModule()->getMemory(curr->memory)->addressType;
     curr->delta =
       builder.makeCall(memory_grow_pre,
-                       {builder.makeConst(int32_t(id)), curr->delta},
+                       {builder.makeConst(static_cast<int32_t>(id)), curr->delta},
                        addressType);
     replaceCurrent(builder.makeCall(
-      memory_grow_post, {builder.makeConst(int32_t(id)), curr}, addressType));
+      memory_grow_post, {builder.makeConst(static_cast<int32_t>(id)), curr}, addressType));
   }
 
   void visitModule(Module* curr) {

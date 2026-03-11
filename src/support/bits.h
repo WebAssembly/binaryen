@@ -38,10 +38,10 @@ int popCount(uint16_t);
 int popCount(uint32_t);
 int popCount(uint64_t);
 
-inline int popCount(int8_t v) { return popCount(uint8_t(v)); }
-inline int popCount(int16_t v) { return popCount(uint16_t(v)); }
-inline int popCount(int32_t v) { return popCount(uint32_t(v)); }
-inline int popCount(int64_t v) { return popCount(uint64_t(v)); }
+inline int popCount(int8_t v) { return popCount(static_cast<uint8_t>(v)); }
+inline int popCount(int16_t v) { return popCount(static_cast<uint16_t>(v)); }
+inline int popCount(int32_t v) { return popCount(static_cast<uint32_t>(v)); }
+inline int popCount(int64_t v) { return popCount(static_cast<uint64_t>(v)); }
 
 uint32_t bitReverse(uint32_t);
 
@@ -49,27 +49,27 @@ int countTrailingZeroes(uint32_t);
 int countTrailingZeroes(uint64_t);
 
 inline int countTrailingZeroes(int32_t v) {
-  return countTrailingZeroes(uint32_t(v));
+  return countTrailingZeroes(static_cast<uint32_t>(v));
 }
 inline int countTrailingZeroes(int64_t v) {
-  return countTrailingZeroes(uint64_t(v));
+  return countTrailingZeroes(static_cast<uint64_t>(v));
 }
 
 int countLeadingZeroes(uint32_t);
 int countLeadingZeroes(uint64_t);
 
 inline int countLeadingZeroes(int32_t v) {
-  return countLeadingZeroes(uint32_t(v));
+  return countLeadingZeroes(static_cast<uint32_t>(v));
 }
 inline int countLeadingZeroes(int64_t v) {
-  return countLeadingZeroes(uint64_t(v));
+  return countLeadingZeroes(static_cast<uint64_t>(v));
 }
 
 int ceilLog2(uint32_t);
 int ceilLog2(uint64_t);
 
-inline int ceilLog2(int32_t v) { return ceilLog2(uint32_t(v)); }
-inline int ceilLog2(int64_t v) { return ceilLog2(uint64_t(v)); }
+inline int ceilLog2(int32_t v) { return ceilLog2(static_cast<uint32_t>(v)); }
+inline int ceilLog2(int64_t v) { return ceilLog2(static_cast<uint64_t>(v)); }
 
 template<typename T> bool isPowerOf2(T v) {
   return v != 0 && (v & (v - 1)) == 0;

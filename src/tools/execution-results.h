@@ -166,9 +166,9 @@ public:
               // To avoid JS legalization changing logging results, treat a
               // logging of an i64 as two i32s (which is what legalization
               // would turn us into).
-              auto low = Literal(int32_t(argument.getInteger()));
+              auto low = Literal(static_cast<int32_t>(argument.getInteger()));
               auto high =
-                Literal(int32_t(argument.getInteger() >> int32_t(32)));
+                Literal(static_cast<int32_t>(argument.getInteger() >> static_cast<int32_t>(32)));
               std::cout << ' ' << low;
               loggings.push_back(low);
               std::cout << ' ' << high;
@@ -227,9 +227,9 @@ public:
         } else if (import->base == "call-export-catch") {
           try {
             callExportAsJS(arguments[0].geti32());
-            return {Literal(int32_t(0))};
+            return {Literal(static_cast<int32_t>(0))};
           } catch (const WasmException& e) {
-            return {Literal(int32_t(1))};
+            return {Literal(static_cast<int32_t>(1))};
           }
         } else if (import->base == "call-ref") {
           // Similar to call-export*, but with a ref.
@@ -238,9 +238,9 @@ public:
         } else if (import->base == "call-ref-catch") {
           try {
             callRefAsJS(arguments[0]);
-            return {Literal(int32_t(0))};
+            return {Literal(static_cast<int32_t>(0))};
           } catch (const WasmException& e) {
-            return {Literal(int32_t(1))};
+            return {Literal(static_cast<int32_t>(1))};
           }
         } else if (import->base == "sleep") {
           // Do not actually sleep, just return the id.

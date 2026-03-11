@@ -697,7 +697,7 @@ void MemoryPacking::createReplacements(Module* module,
       Names::getValidGlobalName(*module, "__mem_segment_drop_state");
     module->addGlobal(builder.makeGlobal(dropStateGlobal,
                                          Type::i32,
-                                         builder.makeConst(int32_t(0)),
+                                         builder.makeConst(static_cast<int32_t>(0)),
                                          Builder::Mutable));
     return dropStateGlobal;
   };
@@ -806,8 +806,8 @@ void MemoryPacking::createReplacements(Module* module,
         appendResult(builder.makeMemoryFill(dest, value, size, init->memory));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
-        Expression* offset = builder.makeConst(int32_t(offsetBytes));
-        Expression* size = builder.makeConst(int32_t(bytes));
+        Expression* offset = builder.makeConst(static_cast<int32_t>(offsetBytes));
+        Expression* size = builder.makeConst(static_cast<int32_t>(bytes));
         appendResult(builder.makeMemoryInit(
           segments[initIndex], dest, offset, size, init->memory));
         initIndex++;
@@ -845,7 +845,7 @@ void MemoryPacking::createReplacements(Module* module,
     // Track drop state in a global only if some memory.init required it
     if (dropStateGlobal != Name()) {
       appendResult(
-        builder.makeGlobalSet(dropStateGlobal, builder.makeConst(int32_t(1))));
+        builder.makeGlobalSet(dropStateGlobal, builder.makeConst(static_cast<int32_t>(1))));
     }
     size_t dropIndex = 0;
     for (auto range : ranges) {

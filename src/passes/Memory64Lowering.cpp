@@ -145,13 +145,13 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       auto tmp = builder.addVar(getFunction(), Type::i32);
       Expression* isMinusOne =
         builder.makeBinary(EqInt32,
-                           builder.makeConst(int32_t(-1)),
+                           builder.makeConst(static_cast<int32_t>(-1)),
                            builder.makeLocalTee(tmp, size, Type::i32));
       auto* newSize = builder.makeLocalGet(tmp, Type::i32);
       builder.makeUnary(UnaryOp::ExtendUInt32, newSize);
       Expression* ifExp =
         builder.makeIf(isMinusOne,
-                       builder.makeConst(int64_t(-1)),
+                       builder.makeConst(static_cast<int64_t>(-1)),
                        builder.makeUnary(UnaryOp::ExtendUInt32, newSize));
       curr->type = Type::i32;
       replaceCurrent(ifExp);
@@ -209,7 +209,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
           memoryBase32 = builder
                            .makeGlobal(MEMORY_BASE32,
                                        Type::i32,
-                                       builder.makeConst(int32_t(0)),
+                                       builder.makeConst(static_cast<int32_t>(0)),
                                        Builder::Immutable)
                            .release();
           memoryBase32->module = g->module;
@@ -258,12 +258,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       auto tmp = builder.addVar(getFunction(), Type::i32);
       Expression* isMinusOne =
         builder.makeBinary(EqInt32,
-                           builder.makeConst(int32_t(-1)),
+                           builder.makeConst(static_cast<int32_t>(-1)),
                            builder.makeLocalTee(tmp, size, Type::i32));
       auto* newSize = builder.makeLocalGet(tmp, Type::i32);
       Expression* ifExp =
         builder.makeIf(isMinusOne,
-                       builder.makeConst(int64_t(-1)),
+                       builder.makeConst(static_cast<int64_t>(-1)),
                        builder.makeUnary(UnaryOp::ExtendUInt32, newSize));
       curr->type = Type::i32;
       replaceCurrent(ifExp);
@@ -317,7 +317,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
           memoryBase32 = builder
                            .makeGlobal(TABLE_BASE32,
                                        Type::i32,
-                                       builder.makeConst(int32_t(0)),
+                                       builder.makeConst(static_cast<int32_t>(0)),
                                        Builder::Immutable)
                            .release();
           memoryBase32->module = g->module;

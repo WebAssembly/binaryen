@@ -55,11 +55,11 @@ public:
     return makeLocalGet(labelHelper, wasm::Type::i32);
   }
   wasm::LocalSet* makeSetLabel(wasm::Index value) {
-    return makeLocalSet(labelHelper, makeConst(wasm::Literal(int32_t(value))));
+    return makeLocalSet(labelHelper, makeConst(wasm::Literal(static_cast<int32_t>(value))));
   }
   wasm::Binary* makeCheckLabel(wasm::Index value) {
     return makeBinary(
-      wasm::EqInt32, makeGetLabel(), makeConst(wasm::Literal(int32_t(value))));
+      wasm::EqInt32, makeGetLabel(), makeConst(wasm::Literal(static_cast<int32_t>(value))));
   }
 
   // breaks are on blocks, as they can be specific, we make one wasm block per
@@ -225,13 +225,13 @@ struct Shape {
   virtual wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) = 0;
 
   static SimpleShape* IsSimple(Shape* It) {
-    return It && It->Type == Simple ? (SimpleShape*)It : NULL;
+    return It && It->Type == Simple ? reinterpret_cast<SimpleShape*>(It) : NULL;
   }
   static MultipleShape* IsMultiple(Shape* It) {
-    return It && It->Type == Multiple ? (MultipleShape*)It : NULL;
+    return It && It->Type == Multiple ? reinterpret_cast<MultipleShape*>(It) : NULL;
   }
   static LoopShape* IsLoop(Shape* It) {
-    return It && It->Type == Loop ? (LoopShape*)It : NULL;
+    return It && It->Type == Loop ? reinterpret_cast<LoopShape*>(It) : NULL;
   }
 };
 

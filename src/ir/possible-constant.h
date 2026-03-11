@@ -110,14 +110,14 @@ public:
         if (isSigned) {
           value = val.extendS8();
         } else {
-          value = val.and_(Literal(uint32_t(0xff)));
+          value = val.and_(Literal(static_cast<uint32_t>(0xff)));
         }
         break;
       case Field::i16:
         if (isSigned) {
           value = val.extendS16();
         } else {
-          value = val.and_(Literal(uint32_t(0xffff)));
+          value = val.and_(Literal(static_cast<uint32_t>(0xffff)));
         }
         break;
       case Field::WaitQueue:

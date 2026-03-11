@@ -236,7 +236,7 @@ struct GUFAOptimizer
       // no value is possible there, and the intersection is empty, so we will
       // get here and emit a 0. That 0 will never be reached as the None child
       // will be turned into an unreachable, so it does not cause any problem.
-      auto* result = Builder(*getModule()).makeConst(Literal(int32_t(0)));
+      auto* result = Builder(*getModule()).makeConst(Literal(static_cast<int32_t>(0)));
       replaceCurrent(getDroppedChildrenAndAppend(
         curr, *getModule(), getPassOptions(), result));
     }
@@ -257,7 +257,7 @@ struct GUFAOptimizer
       auto intendedContents = PossibleContents::coneType(curr->castType);
 
       auto optimize = [&](int32_t result) {
-        auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
+        auto* last = Builder(*getModule()).makeConst(Literal(static_cast<int32_t>(result)));
         replaceCurrent(getDroppedChildrenAndAppend(
           curr, *getModule(), getPassOptions(), last));
       };

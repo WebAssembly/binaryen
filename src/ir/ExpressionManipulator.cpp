@@ -65,7 +65,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 // Iterate in reverse order here so we visit children in normal order.
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   castCopy->field.resize(castOriginal->field.size());                          \
-  for (auto i = int64_t(castOriginal->field.size()) - 1; i >= 0; i--) {        \
+  for (auto i = static_cast<int64_t>(castOriginal->field.size()) - 1; i >= 0; i--) {        \
     tasks.push_back({castOriginal->field[i], &castCopy->field[i]});            \
   }
 

@@ -101,8 +101,8 @@ void WasmBinaryWriter::write() {
 }
 
 void WasmBinaryWriter::writeHeader() {
-  o << int32_t(BinaryConsts::Magic); // magic number \0asm
-  o << int32_t(BinaryConsts::Version);
+  o << static_cast<int32_t>(BinaryConsts::Magic); // magic number \0asm
+  o << static_cast<int32_t>(BinaryConsts::Version);
 }
 
 int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
@@ -118,11 +118,11 @@ void WasmBinaryWriter::writeResizableLimits(
   std::optional<uint8_t> pageSizeLog2) {
   uint8_t actualPageSizeLog2 =
     pageSizeLog2 ? *pageSizeLog2 : Memory::kDefaultPageSizeLog2;
-  uint32_t flags = (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
-                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
-                   (is64 ? (uint32_t)BinaryConsts::Is64 : 0U) |
+  uint32_t flags = (hasMaximum ? static_cast<uint32_t>(BinaryConsts::HasMaximum) : 0U) |
+                   (shared ? static_cast<uint32_t>(BinaryConsts::IsShared) : 0U) |
+                   (is64 ? static_cast<uint32_t>(BinaryConsts::Is64) : 0U) |
                    (actualPageSizeLog2 != Memory::kDefaultPageSizeLog2
-                      ? (uint32_t)BinaryConsts::HasCustomPageSize
+                      ? static_cast<uint32_t>(BinaryConsts::HasCustomPageSize)
                       : 0U);
   o << U32LEB(flags);
   if (is64) {
@@ -142,7 +142,7 @@ void WasmBinaryWriter::writeResizableLimits(
 }
 
 template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
-  o << uint8_t(code);
+  o << static_cast<uint8_t>(code);
   if (sourceMap) {
     sourceMapLocationsSizeAtSectionStart = sourceMapLocations.size();
   }
@@ -266,16 +266,16 @@ void WasmBinaryWriter::writeTypes() {
     // size 1 are implicit, so only emit a group header for larger groups.
     auto currGroup = type.getRecGroup();
     if (lastGroup != currGroup && currGroup.size() > 1) {
-      o << uint8_t(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
+      o << static_cast<uint8_t>(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
     }
     lastGroup = currGroup;
     // Emit the type definition.
     auto super = type.getDeclaredSuperType();
     if (super || type.isOpen()) {
       if (type.isOpen()) {
-        o << uint8_t(BinaryConsts::EncodedType::Sub);
+        o << static_cast<uint8_t>(BinaryConsts::EncodedType::Sub);
       } else {
-        o << uint8_t(BinaryConsts::EncodedType::SubFinal);
+        o << static_cast<uint8_t>(BinaryConsts::EncodedType::SubFinal);
       }
       if (super) {
         o << U32LEB(1);
@@ -285,19 +285,19 @@ void WasmBinaryWriter::writeTypes() {
       }
     }
     if (type.isShared()) {
-      o << uint8_t(BinaryConsts::EncodedType::Shared);
+      o << static_cast<uint8_t>(BinaryConsts::EncodedType::Shared);
     }
     if (auto desc = type.getDescribedType()) {
-      o << uint8_t(BinaryConsts::EncodedType::Describes);
+      o << static_cast<uint8_t>(BinaryConsts::EncodedType::Describes);
       writeHeapType(*desc, Inexact);
     }
     if (auto desc = type.getDescriptorType()) {
-      o << uint8_t(BinaryConsts::EncodedType::Descriptor);
+      o << static_cast<uint8_t>(BinaryConsts::EncodedType::Descriptor);
       writeHeapType(*desc, Inexact);
     }
     switch (type.getKind()) {
       case HeapTypeKind::Func: {
-        o << uint8_t(BinaryConsts::EncodedType::Func);
+        o << static_cast<uint8_t>(BinaryConsts::EncodedType::Func);
         auto sig = type.getSignature();
         for (auto& sigType : {sig.params, sig.results}) {
           o << U32LEB(sigType.size());
@@ -308,7 +308,7 @@ void WasmBinaryWriter::writeTypes() {
         break;
       }
       case HeapTypeKind::Struct: {
-        o << uint8_t(BinaryConsts::EncodedType::Struct);
+        o << static_cast<uint8_t>(BinaryConsts::EncodedType::Struct);
         auto fields = type.getStruct().fields;
         o << U32LEB(fields.size());
         for (const auto& field : fields) {
@@ -317,11 +317,11 @@ void WasmBinaryWriter::writeTypes() {
         break;
       }
       case HeapTypeKind::Array:
-        o << uint8_t(BinaryConsts::EncodedType::Array);
+        o << static_cast<uint8_t>(BinaryConsts::EncodedType::Array);
         writeField(type.getArray().element);
         break;
       case HeapTypeKind::Cont:
-        o << uint8_t(BinaryConsts::EncodedType::Cont);
+        o << static_cast<uint8_t>(BinaryConsts::EncodedType::Cont);
         writeHeapType(type.getContinuation().type, Inexact);
         break;
       case HeapTypeKind::Basic:
@@ -352,19 +352,19 @@ void WasmBinaryWriter::writeImports() {
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     writeImportHeader(global);
-    o << U32LEB(int32_t(ExternalKind::Global));
+    o << U32LEB(static_cast<int32_t>(ExternalKind::Global));
     writeType(global->type);
     o << U32LEB(global->mutable_);
   });
   ModuleUtils::iterImportedTags(*wasm, [&](Tag* tag) {
     writeImportHeader(tag);
-    o << U32LEB(int32_t(ExternalKind::Tag));
-    o << uint8_t(0); // Reserved 'attribute' field. Always 0.
+    o << U32LEB(static_cast<int32_t>(ExternalKind::Tag));
+    o << static_cast<uint8_t>(0); // Reserved 'attribute' field. Always 0.
     o << U32LEB(getTypeIndex(tag->type));
   });
   ModuleUtils::iterImportedMemories(*wasm, [&](Memory* memory) {
     writeImportHeader(memory);
-    o << U32LEB(int32_t(ExternalKind::Memory));
+    o << U32LEB(static_cast<int32_t>(ExternalKind::Memory));
     writeResizableLimits(memory->initial,
                          memory->max,
                          memory->hasMax(),
@@ -374,7 +374,7 @@ void WasmBinaryWriter::writeImports() {
   });
   ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
     writeImportHeader(table);
-    o << U32LEB(int32_t(ExternalKind::Table));
+    o << U32LEB(static_cast<int32_t>(ExternalKind::Table));
     writeType(table->type);
     writeResizableLimits(table->initial,
                          table->max,
@@ -617,7 +617,7 @@ void WasmBinaryWriter::writeGlobals() {
         // look something like this:
         //
         //   auto parentIndex = getGlobalIndex(get->name);
-        //   o << int8_t(BinaryConsts::GlobalGet) << U32LEB(parentIndex + i);
+        //   o << static_cast<int8_t>(BinaryConsts::GlobalGet) << U32LEB(parentIndex + i);
         //
         // That is, we must emit the instruction here, and not defer to
         // writeExpression, as writeExpression writes an entire expression at a
@@ -626,7 +626,7 @@ void WasmBinaryWriter::writeGlobals() {
         // one tuple global to another, we disallow this.
         WASM_UNREACHABLE("unsupported tuple global operation");
       }
-      o << int8_t(BinaryConsts::End);
+      o << static_cast<int8_t>(BinaryConsts::End);
       ++i;
     }
   });
@@ -641,7 +641,7 @@ void WasmBinaryWriter::writeExports() {
   o << U32LEB(wasm->exports.size());
   for (auto& curr : wasm->exports) {
     writeInlineString(curr->name.str);
-    o << U32LEB(int32_t(curr->kind));
+    o << U32LEB(static_cast<int32_t>(curr->kind));
     switch (curr->kind) {
       case ExternalKind::Function:
         o << U32LEB(getFunctionIndex(*curr->getInternalName()));
@@ -702,7 +702,7 @@ void WasmBinaryWriter::writeDataSegments() {
         o << U32LEB(memoryIndex);
       }
       writeExpression(segment->offset);
-      o << int8_t(BinaryConsts::End);
+      o << static_cast<int8_t>(BinaryConsts::End);
     }
     writeInlineBuffer(segment->data.data(), segment->data.size());
   }
@@ -847,7 +847,7 @@ void WasmBinaryWriter::writeElementSegments() {
         o << U32LEB(tableIdx);
       }
       writeExpression(segment->offset);
-      o << int8_t(BinaryConsts::End);
+      o << static_cast<int8_t>(BinaryConsts::End);
     }
 
     if (isPassive || hasTableIndex) {
@@ -863,7 +863,7 @@ void WasmBinaryWriter::writeElementSegments() {
     if (usesExpressions) {
       for (auto* item : segment->data) {
         writeExpression(item);
-        o << int8_t(BinaryConsts::End);
+        o << static_cast<int8_t>(BinaryConsts::End);
       }
     } else {
       for (auto& item : segment->data) {
@@ -894,7 +894,7 @@ void WasmBinaryWriter::writeTags() {
   auto num = importInfo->getNumDefinedTags();
   o << U32LEB(num);
   ModuleUtils::iterDefinedTags(*wasm, [&](Tag* tag) {
-    o << uint8_t(0); // Reserved 'attribute' field. Always 0.
+    o << static_cast<uint8_t>(0); // Reserved 'attribute' field. Always 0.
     o << U32LEB(getTypeIndex(tag->type));
   });
 
@@ -1347,12 +1347,12 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     value >>= 5;
     if (!value) {
       // last VLQ digit -- base64 codes 'A'..'Z', 'a'..'f'
-      out << char(digit < 26 ? 'A' + digit : 'a' + digit - 26);
+      out << static_cast<char>(digit < 26 ? 'A' + digit : 'a' + digit - 26);
       break;
     }
     // more VLG digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
-    out << char(digit < 20    ? 'g' + digit
+    out << static_cast<char>(digit < 20    ? 'g' + digit
                 : digit < 30  ? '0' + digit - 20
                 : digit == 30 ? '+'
                               : '/');
@@ -1370,21 +1370,21 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
     if (lastOffset > 0) {
       *sourceMap << ",";
     }
-    writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
+    writeBase64VLQ(*sourceMap, static_cast<int32_t>(offset - lastOffset));
     lastOffset = offset;
     if (loc) {
-      writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastFileIndex));
+      writeBase64VLQ(*sourceMap, static_cast<int32_t>(loc->fileIndex - lastFileIndex));
       lastFileIndex = loc->fileIndex;
 
-      writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLineNumber));
+      writeBase64VLQ(*sourceMap, static_cast<int32_t>(loc->lineNumber - lastLineNumber));
       lastLineNumber = loc->lineNumber;
 
-      writeBase64VLQ(*sourceMap, int32_t(loc->columnNumber - lastColumnNumber));
+      writeBase64VLQ(*sourceMap, static_cast<int32_t>(loc->columnNumber - lastColumnNumber));
       lastColumnNumber = loc->columnNumber;
 
       if (loc->symbolNameIndex) {
         writeBase64VLQ(*sourceMap,
-                       int32_t(*loc->symbolNameIndex - lastSymbolNameIndex));
+                       static_cast<int32_t>(*loc->symbolNameIndex - lastSymbolNameIndex));
         lastSymbolNameIndex = *loc->symbolNameIndex;
       }
     }
@@ -1414,7 +1414,7 @@ void WasmBinaryWriter::writeCustomSection(const CustomSection& section) {
   auto start = startSection(BinaryConsts::Custom);
   writeInlineString(section.name.c_str());
   for (size_t i = 0; i < section.data.size(); i++) {
-    o << uint8_t(section.data[i]);
+    o << static_cast<uint8_t>(section.data[i]);
   }
   finishSection(start);
 }
@@ -1492,7 +1492,7 @@ void WasmBinaryWriter::writeFeaturesSection() {
   writeInlineString(BinaryConsts::CustomSections::TargetFeatures);
   o << U32LEB(features.size());
   for (auto& f : features) {
-    o << uint8_t(BinaryConsts::FeatureUsed);
+    o << static_cast<uint8_t>(BinaryConsts::FeatureUsed);
     writeInlineString(f);
   }
   finishSection(start);
@@ -1730,7 +1730,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
   BufferWithRandomAccess buffer;
 
   // We found data: emit the section.
-  buffer << uint8_t(BinaryConsts::Custom);
+  buffer << static_cast<uint8_t>(BinaryConsts::Custom);
   auto lebPos = buffer.writeU32LEBPlaceholder();
   buffer.writeInlineString(sectionName.str);
 
@@ -1766,7 +1766,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
       assert(annotation.branchLikely);
 
       // Hint contents: likely or not.
-      buffer << U32LEB(int(*annotation.branchLikely));
+      buffer << U32LEB(static_cast<int>(*annotation.branchLikely));
     });
 }
 
@@ -1816,7 +1816,7 @@ WasmBinaryWriter::getIdempotentHintsBuffer() {
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
   for (size_t i = 0; i < size; i++) {
-    o << int8_t(data[i]);
+    o << static_cast<int8_t>(data[i]);
   }
 }
 
@@ -1849,7 +1849,7 @@ void WasmBinaryWriter::writeEscapedName(std::string_view name) {
       continue;
     }
     unescaped.push_back(
-      char((decodeHexNibble(name[i]) << 4) | decodeHexNibble(name[i + 1])));
+      static_cast<char>((decodeHexNibble(name[i]) << 4) | decodeHexNibble(name[i + 1])));
     i += 2;
   }
   writeInlineString({unescaped.data(), unescaped.size()});
@@ -1956,7 +1956,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
   }
   assert(!type.isBasic() || exactness == Inexact);
   if (exactness == Exact) {
-    o << uint8_t(BinaryConsts::EncodedType::Exact);
+    o << static_cast<uint8_t>(BinaryConsts::EncodedType::Exact);
   }
   if (!type.isBasic()) {
     o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
@@ -1965,7 +1965,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
 
   int ret = 0;
   if (type.isShared()) {
-    o << uint8_t(BinaryConsts::EncodedType::Shared);
+    o << static_cast<uint8_t>(BinaryConsts::EncodedType::Shared);
   }
   switch (type.getBasic(Unshared)) {
     case HeapType::ext:
@@ -2052,7 +2052,7 @@ void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
       break;
   }
   if (isRMW) {
-    o << uint8_t((code << 4) | code);
+    o << static_cast<uint8_t>((code << 4) | code);
   } else {
     o << code;
   }
@@ -2079,7 +2079,7 @@ void WasmBinaryReader::preScan() {
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
-    if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
+    if (static_cast<uint64_t>(pos) + static_cast<uint64_t>(payloadLen) > input.size()) {
       throwError("Section extends beyond end of input");
     }
     auto oldPos = pos;
@@ -2130,7 +2130,7 @@ void WasmBinaryReader::read() {
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
-    if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
+    if (static_cast<uint64_t>(pos) + static_cast<uint64_t>(payloadLen) > input.size()) {
       throwError("Section extends beyond end of input");
     }
 
@@ -2289,20 +2289,20 @@ uint8_t WasmBinaryReader::getInt8() {
 }
 
 uint16_t WasmBinaryReader::getInt16() {
-  auto ret = uint16_t(getInt8());
-  ret |= uint16_t(getInt8()) << 8;
+  auto ret = static_cast<uint16_t>(getInt8());
+  ret |= static_cast<uint16_t>(getInt8()) << 8;
   return ret;
 }
 
 uint32_t WasmBinaryReader::getInt32() {
-  auto ret = uint32_t(getInt16());
-  ret |= uint32_t(getInt16()) << 16;
+  auto ret = static_cast<uint32_t>(getInt16());
+  ret |= static_cast<uint32_t>(getInt16()) << 16;
   return ret;
 }
 
 uint64_t WasmBinaryReader::getInt64() {
-  auto ret = uint64_t(getInt32());
-  ret |= uint64_t(getInt32()) << 32;
+  auto ret = static_cast<uint64_t>(getInt32());
+  ret |= static_cast<uint64_t>(getInt32()) << 32;
   return ret;
 }
 
@@ -2349,13 +2349,13 @@ uint64_t WasmBinaryReader::getU64LEB() {
 
 int32_t WasmBinaryReader::getS32LEB() {
   S32LEB ret;
-  ret.read([&]() { return (int8_t)getInt8(); });
+  ret.read([&]() { return static_cast<int8_t>(getInt8()); });
   return ret.value;
 }
 
 int64_t WasmBinaryReader::getS64LEB() {
   S64LEB ret;
-  ret.read([&]() { return (int8_t)getInt8(); });
+  ret.read([&]() { return static_cast<int8_t>(getInt8()); });
   return ret.value;
 }
 
@@ -2518,7 +2518,7 @@ std::pair<HeapType, Exactness> WasmBinaryReader::getHeapType() {
   }
   // Single heap types are negative; heap type indices are non-negative
   if (type >= 0) {
-    if (size_t(type) >= types.size()) {
+    if (static_cast<size_t>(type) >= types.size()) {
       throwError("invalid type index: " + std::to_string(type));
     }
     return {types[type], exactness};
@@ -2664,10 +2664,10 @@ void WasmBinaryReader::readTypes() {
       htCode = getS64LEB(); // TODO: Actually s33
     }
     if (htCode >= 0) {
-      if (size_t(htCode) >= builder.size()) {
+      if (static_cast<size_t>(htCode) >= builder.size()) {
         throwError("invalid type index: " + std::to_string(htCode));
       }
-      return {builder.getTempHeapType(size_t(htCode)), exactness};
+      return {builder.getTempHeapType(static_cast<size_t>(htCode)), exactness};
     }
     if (exactness == Exact) {
       throwError("invalid type index: " + std::to_string(htCode));
@@ -2980,7 +2980,7 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
         readPageSizeLog2 != Memory::kDefaultPageSizeLog2) {
       throwError("Memory page size is only allowed to be 1 or 64 KiB");
     }
-    pageSizeLog2 = (uint8_t)readPageSizeLog2;
+    pageSizeLog2 = static_cast<uint8_t>(readPageSizeLog2);
   }
 }
 
@@ -5196,8 +5196,8 @@ Name WasmBinaryReader::escape(Name name) {
     }
     // replace non-idchar with `\xx` escape
     escaped.push_back('\\');
-    escaped.push_back(formatNibble((unsigned char)c >> 4));
-    escaped.push_back(formatNibble((unsigned char)c & 15));
+    escaped.push_back(formatNibble(static_cast<unsigned char>(c) >> 4));
+    escaped.push_back(formatNibble(static_cast<unsigned char>(c) & 15));
   }
   return escaped;
 }

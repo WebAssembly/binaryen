@@ -108,7 +108,7 @@ private:
     static Index id = 0;
     Builder builder(*getModule());
     return builder.makeSequence(
-      builder.makeCall(LOGGER, {builder.makeConst(int32_t(id++))}, Type::none),
+      builder.makeCall(LOGGER, {builder.makeConst(static_cast<int32_t>(id++))}, Type::none),
       curr);
   }
 };

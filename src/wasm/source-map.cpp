@@ -200,7 +200,7 @@ int32_t SourceMapReader::readBase64VLQ() {
       throw MapParseException("VLQ value too large");
     }
   }
-  return value & 1 ? -int32_t(value >> 1) : int32_t(value >> 1);
+  return value & 1 ? -static_cast<int32_t>(value >> 1) : static_cast<int32_t>(value >> 1);
 }
 
 } // namespace wasm

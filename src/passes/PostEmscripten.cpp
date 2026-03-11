@@ -72,7 +72,7 @@ struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
 
 static void calcSegmentOffsets(Module& wasm,
                                std::vector<Address>& segmentOffsets) {
-  const Address UNKNOWN_OFFSET(uint32_t(-1));
+  const Address UNKNOWN_OFFSET(static_cast<uint32_t>(-1));
 
   std::unordered_map<Name, Address> passiveOffsets;
   if (wasm.features.hasBulkMemory()) {

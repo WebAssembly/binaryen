@@ -536,7 +536,7 @@ struct TryDepthWalker : public PostWalker<SubType, VisitorType> {
     if (curr->is<Try>()) {
       self->pushTask(SubType::doVisitTry, currp);
       auto& catchBodies = curr->cast<Try>()->catchBodies;
-      for (int i = int(catchBodies.size()) - 1; i >= 0; i--) {
+      for (int i = static_cast<int>(catchBodies.size()) - 1; i >= 0; i--) {
         self->pushTask(SubType::scan, &catchBodies[i]);
       }
       self->pushTask(SubType::doLeaveTry, currp);

@@ -46,9 +46,9 @@ struct SetGlobals : public Pass {
       // Parse the input.
       Literal lit;
       if (glob->type == Type::i32) {
-        lit = Literal(int32_t(stoi(value)));
+        lit = Literal(static_cast<int32_t>(stoi(value)));
       } else if (glob->type == Type::i64) {
-        lit = Literal(int64_t(stoll(value)));
+        lit = Literal(static_cast<int64_t>(stoll(value)));
       } else {
         Fatal() << "global's type is not supported: " << name;
       }

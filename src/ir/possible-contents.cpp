@@ -1983,7 +1983,7 @@ void TNHOracle::optimizeCallCasts(Expression* call,
 
   // Operands must exist since there is a cast param, so a param exists.
   assert(operands.size() > 0);
-  for (int i = int(operands.size() - 1); i >= 0; i--) {
+  for (int i = static_cast<int>(operands.size() - 1); i >= 0; i--) {
     auto* operand = operands[i];
 
     if (blockIndexes.get(operand) != callBlockIndex) {
@@ -3011,7 +3011,7 @@ void Flower::filterDataContents(PossibleContents& contents,
     // We must handle packed fields carefully.
     if (contents.isLiteral()) {
       // This is a constant. We can truncate it and use that value.
-      auto mask = Literal(int32_t(Bits::lowBitMask(field->getByteSize() * 8)));
+      auto mask = Literal(static_cast<int32_t>(Bits::lowBitMask(field->getByteSize() * 8)));
       contents = PossibleContents::literal(contents.getLiteral().and_(mask));
     } else {
       // This is not a constant. We can't even handle a global here, as we'd
@@ -3083,7 +3083,7 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
 
   if (contents.isLiteral()) {
     // This is a constant. We can sign-extend it and use that value.
-    auto shifts = Literal(int32_t(32 - field->getByteSize() * 8));
+    auto shifts = Literal(static_cast<int32_t>(32 - field->getByteSize() * 8));
     auto lit = contents.getLiteral();
     lit = lit.shl(shifts);
     lit = lit.shrS(shifts);

@@ -112,7 +112,7 @@ struct SpillPointers
       // scan through the block, spilling around the calls
       // TODO: we can filter on pointerMap everywhere
       SetOfLocals live = liveness.end;
-      for (int i = int(actions.size()) - 1; i >= 0; i--) {
+      for (int i = static_cast<int>(actions.size()) - 1; i >= 0; i--) {
         auto& action = actions[i];
         if (action.isGet()) {
           live.insert(action.index);

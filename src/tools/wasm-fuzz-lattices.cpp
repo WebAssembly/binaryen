@@ -995,7 +995,7 @@ struct Fuzzer {
     // Fewer bytes are needed to generate three random lattices.
     std::vector<char> funcBytes(128);
     for (size_t i = 0; i < funcBytes.size(); i += sizeof(uint64_t)) {
-      *(uint64_t*)(funcBytes.data() + i) = getFuncRand();
+      *reinterpret_cast<uint64_t*>(funcBytes.data() + i) = getFuncRand();
     }
 
     Random rand(std::move(funcBytes));
@@ -1030,7 +1030,7 @@ struct Fuzzer {
     // 4kb of random bytes should be enough for anyone!
     std::vector<char> bytes(4096);
     for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
-      *(uint64_t*)(bytes.data() + i) = getRand();
+      *reinterpret_cast<uint64_t*>(bytes.data() + i) = getRand();
     }
 
     Module testModule;
@@ -1075,7 +1075,7 @@ int main(int argc, const char* argv[]) {
               WasmFuzzTypesOption,
               Options::Arguments::One,
               [&](Options*, const std::string& arg) {
-                seed = uint64_t(std::stoull(arg));
+                seed = static_cast<uint64_t>(std::stoull(arg));
               });
 
   std::optional<uint64_t> latticeElementSeed;
@@ -1085,7 +1085,7 @@ int main(int argc, const char* argv[]) {
               WasmFuzzTypesOption,
               Options::Arguments::One,
               [&](Options*, const std::string& arg) {
-                latticeElementSeed = uint64_t(std::stoull(arg));
+                latticeElementSeed = static_cast<uint64_t>(std::stoull(arg));
               });
 
   std::optional<std::string> functionName;

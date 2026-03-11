@@ -163,7 +163,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
               self->pushTask(Scanner::doEndScope, currp);
             }
             auto& list = block->list;
-            for (int i = int(list.size()) - 1; i >= 0; i--) {
+            for (int i = static_cast<int>(list.size()) - 1; i >= 0; i--) {
               self->pushTask(Scanner::scan, &list[i]);
             }
             if (block->name.is()) {
@@ -195,7 +195,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
           }
           case Expression::Id::TryId: {
             auto& list = curr->cast<Try>()->catchBodies;
-            for (int i = int(list.size()) - 1; i >= 0; i--) {
+            for (int i = static_cast<int>(list.size()) - 1; i >= 0; i--) {
               self->pushTask(Scanner::doEndScope, currp);
               self->pushTask(Scanner::scan, &list[i]);
               self->pushTask(Scanner::doBeginScope, currp);

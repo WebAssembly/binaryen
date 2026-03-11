@@ -115,7 +115,7 @@ namespace std {
 
 template<> struct hash<wasm::IString> {
   size_t operator()(const wasm::IString& str) const {
-    return std::hash<size_t>{}(uintptr_t(str.str.data()));
+    return std::hash<size_t>{}(reinterpret_cast<uintptr_t>(str.str.data()));
   }
 };
 

@@ -888,7 +888,7 @@ public:
   Expression* makeGetStackPos() {
     return makeLoad(pointerType.getByteSize(),
                     false,
-                    int(DataOffset::BStackPos),
+                    static_cast<int>(DataOffset::BStackPos),
                     pointerType.getByteSize(),
                     makeGlobalGet(ASYNCIFY_DATA, pointerType),
                     pointerType,
@@ -901,7 +901,7 @@ public:
     }
     auto literal = Literal::makeFromInt64(by, pointerType);
     return makeStore(pointerType.getByteSize(),
-                     int(DataOffset::BStackPos),
+                     static_cast<int>(DataOffset::BStackPos),
                      pointerType.getByteSize(),
                      makeGlobalGet(ASYNCIFY_DATA, pointerType),
                      makeBinary(Abstract::getBinary(pointerType, Abstract::Add),
@@ -914,7 +914,7 @@ public:
   Expression* makeStateCheck(State value) {
     return makeBinary(EqInt32,
                       makeGlobalGet(ASYNCIFY_STATE, Type::i32),
-                      makeConst(Literal(int32_t(value))));
+                      makeConst(Literal(static_cast<int32_t>(value))));
   }
 };
 
@@ -1238,7 +1238,7 @@ private:
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
       builder->makeCall(
-        ASYNCIFY_UNWIND, {builder->makeConst(int32_t(index))}, Type::none),
+        ASYNCIFY_UNWIND, {builder->makeConst(static_cast<int32_t>(index))}, Type::none),
       ifNotUnwinding);
   }
 
@@ -1246,7 +1246,7 @@ private:
     // Emit an intrinsic for this, as we store the index into a local, and
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_CHECK_CALL_INDEX,
-                             {builder->makeConst(int32_t(index))},
+                             {builder->makeConst(static_cast<int32_t>(index))},
                              Type::i32);
   }
 
@@ -1367,7 +1367,7 @@ struct AsyncifyUnwindWalker
     auto check = builder->makeIf(
       builder->makeBinary(NeInt32,
                           builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32),
-                          builder->makeConst(int32_t(State::Normal))),
+                          builder->makeConst(static_cast<int32_t>(State::Normal))),
       builder->makeUnreachable());
     if (call->type.isConcrete()) {
       auto temp = builder->addVar(function, call->type);
@@ -1930,7 +1930,7 @@ private:
 
     auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
                                             Type::i32,
-                                            builder.makeConst(int32_t(0)),
+                                            builder.makeConst(static_cast<int32_t>(0)),
                                             Builder::Mutable);
     if (imported) {
       asyncifyState->module = ENV;
@@ -1965,7 +1965,7 @@ private:
       }
       auto* body = builder.makeBlock();
       body->list.push_back(builder.makeGlobalSet(
-        ASYNCIFY_STATE, builder.makeConst(int32_t(state))));
+        ASYNCIFY_STATE, builder.makeConst(static_cast<int32_t>(state))));
       if (setData) {
         body->list.push_back(builder.makeGlobalSet(
           ASYNCIFY_DATA, builder.makeLocalGet(0, pointerType)));
@@ -1974,7 +1974,7 @@ private:
       auto* stackPos =
         builder.makeLoad(pointerType.getByteSize(),
                          false,
-                         int(DataOffset::BStackPos),
+                         static_cast<int>(DataOffset::BStackPos),
                          pointerType.getByteSize(),
                          builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
                          pointerType,
@@ -1982,7 +1982,7 @@ private:
       auto* stackEnd =
         builder.makeLoad(pointerType.getByteSize(),
                          false,
-                         int(pointerType == Type::i64 ? DataOffset::BStackEnd64
+                         static_cast<int>(pointerType == Type::i64 ? DataOffset::BStackEnd64
                                                       : DataOffset::BStackEnd),
                          pointerType.getByteSize(),
                          builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),

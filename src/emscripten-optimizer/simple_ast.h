@@ -258,7 +258,7 @@ struct Value {
   int32_t getInteger() { // convenience function to get a known integer
     assert(wasm::isInteger(getNumber()));
     int32_t ret = getNumber();
-    assert(double(ret) == getNumber()); // no loss in conversion
+    assert(static_cast<double>(ret) == getNumber()); // no loss in conversion
     return ret;
   }
 
@@ -576,15 +576,15 @@ struct JSPrinter {
     if (size >= used + safety) {
       return;
     }
-    size = std::max((size_t)1024, size * 2) + safety;
+    size = std::max(static_cast<size_t>(1024), size * 2) + safety;
     if (!buffer) {
-      buffer = (char*)malloc(size);
+      buffer = static_cast<char*>(malloc(size));
       if (!buffer) {
         errv("Out of memory allocating %zd bytes for output buffer!", size);
         abort();
       }
     } else {
-      char* buf = (char*)realloc(buffer, size);
+      char* buf = static_cast<char*>(realloc(buffer, size));
       if (!buf) {
         free(buffer);
         errv("Out of memory allocating %zd bytes for output buffer!", size);
@@ -985,7 +985,7 @@ struct JSPrinter {
           if (asHex) {
             unsigned long long tempULL;
             sscanf(buffer, "%llx", &tempULL);
-            temp = (double)tempULL;
+            temp = static_cast<double>(tempULL);
           } else {
             sscanf(buffer, "%lf", &temp);
           }
@@ -1610,8 +1610,8 @@ public:
   static Ref makeDouble(double num) {
     return &arena.alloc<Value>()->setNumber(num);
   }
-  static Ref makeInt(uint32_t num) { return makeDouble(double(num)); }
-  static Ref makeInt(int32_t num) { return makeDouble(double(num)); }
+  static Ref makeInt(uint32_t num) { return makeDouble(static_cast<double>(num)); }
+  static Ref makeInt(int32_t num) { return makeDouble(static_cast<double>(num)); }
   static Ref makeNum(double num) { return makeDouble(num); }
 
   static Ref makeUnary(IString op, Ref value) {

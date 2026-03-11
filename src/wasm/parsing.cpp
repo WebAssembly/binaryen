@@ -27,7 +27,7 @@ void ParseException::dump(std::ostream& o) const {
   o << "parse exception: ";
   Colors::green(o);
   o << text;
-  if (line != size_t(-1)) {
+  if (line != static_cast<size_t>(-1)) {
     Colors::normal(o);
     o << " (at " << line << ":" << col << ")";
   }

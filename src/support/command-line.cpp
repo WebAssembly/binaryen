@@ -107,7 +107,7 @@ Options::Options(const std::string& command, const std::string& description)
           optionWidth =
             std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
-        for (int i = int(categories.size()) - 1; i >= 0; i--) {
+        for (int i = static_cast<int>(categories.size()) - 1; i >= 0; i--) {
           auto& category = categories[i];
           std::cout << "\n\n" << category << ":\n";
           for (size_t i = 0; i < category.size() + 1; i++) {

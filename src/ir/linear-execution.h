@@ -102,7 +102,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
         auto& list = curr->cast<Block>()->list;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
+        for (int i = static_cast<int>(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
         }
         break;
@@ -164,7 +164,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitTry, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
         auto& list = curr->cast<Try>()->catchBodies;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
+        for (int i = static_cast<int>(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
@@ -181,7 +181,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitThrow, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
         auto& list = curr->cast<Throw>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
+        for (int i = static_cast<int>(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
         }
         break;

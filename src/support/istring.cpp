@@ -73,7 +73,7 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
     // We have a new string, but it doesn't have a stable address. Create a copy
     // of the data at a stable address we can use. Make sure it is null
     // terminated so legacy uses that get a C string still work.
-    char* data = (char*)arena.allocSpace(s.size() + 1, 1);
+    char* data = static_cast<char*>(arena.allocSpace(s.size() + 1, 1));
     std::copy(s.begin(), s.end(), data);
     data[s.size()] = '\0';
     s = std::string_view(data, s.size());

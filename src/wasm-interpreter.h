@@ -659,7 +659,7 @@ public:
               pushResumeEntry(values.back(), "child value");
               values.pop_back();
             }
-            pushResumeEntry({Literal(int32_t(num))}, "num executed children");
+            pushResumeEntry({Literal(static_cast<int32_t>(num))}, "num executed children");
           }
         }
       }
@@ -722,8 +722,8 @@ public:
       // To return to the same place when we resume, we add an entry with two
       // pieces of information: the index in the stack of blocks, and the index
       // in the block.
-      entry.push_back(Literal(uint32_t(stack.size())));
-      entry.push_back(Literal(uint32_t(blockIndex)));
+      entry.push_back(Literal(static_cast<uint32_t>(stack.size())));
+      entry.push_back(Literal(static_cast<uint32_t>(blockIndex)));
       pushResumeEntry(entry, "block");
     };
     Index blockIndex = 0;
@@ -773,7 +773,7 @@ public:
       //   0 - suspended in the condition
       //   1 - suspended in the ifTrue arm
       //   2 - suspended in the ifFalse arm
-      pushResumeEntry({Literal(int32_t(resumeIndex))}, "if");
+      pushResumeEntry({Literal(static_cast<int32_t>(resumeIndex))}, "if");
     };
     Index resumeIndex = -1;
     if (isResuming()) {
@@ -862,8 +862,8 @@ public:
     VISIT_REUSE(flow, curr->condition);
     int64_t index = flow.getSingleValue().getInteger();
     Name target = curr->default_;
-    if (index >= 0 && (size_t)index < curr->targets.size()) {
-      target = curr->targets[(size_t)index];
+    if (index >= 0 && static_cast<size_t>(index) < curr->targets.size()) {
+      target = curr->targets[static_cast<size_t>(index)];
     }
     flow.breakTo = target;
     flow.values = values;
@@ -1202,7 +1202,7 @@ public:
         }
         if (left.getInteger() == std::numeric_limits<int32_t>::min() &&
             right.getInteger() == -1) {
-          return Literal(int32_t(0));
+          return Literal(static_cast<int32_t>(0));
         }
         return left.remS(right);
       }
@@ -1232,7 +1232,7 @@ public:
           trap("i64.rem_s by 0");
         }
         if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) {
-          return Literal(int64_t(0));
+          return Literal(static_cast<int64_t>(0));
         }
         return left.remS(right);
       }
@@ -1814,7 +1814,7 @@ public:
           trap("i32.truncSFloat overflow");
         }
       }
-      return Literal(int32_t(val));
+      return Literal(static_cast<int32_t>(val));
     } else {
       if (value.type == Type::f32) {
         if (!isInRangeI64TruncS(value.reinterpreti32())) {
@@ -1825,7 +1825,7 @@ public:
           trap("i64.truncSFloat overflow");
         }
       }
-      return Literal(int64_t(val));
+      return Literal(static_cast<int64_t>(val));
     }
   }
 
@@ -1844,7 +1844,7 @@ public:
           trap("i32.truncUFloat overflow");
         }
       }
-      return Literal(uint32_t(val));
+      return Literal(static_cast<uint32_t>(val));
     } else {
       if (value.type == Type::f32) {
         if (!isInRangeI64TruncU(value.reinterpreti32())) {
@@ -1855,7 +1855,7 @@ public:
           trap("i64.truncUFloat overflow");
         }
       }
-      return Literal(uint64_t(val));
+      return Literal(static_cast<uint64_t>(val));
     }
   }
   Flow visitAtomicFence(AtomicFence* curr) {
@@ -1911,7 +1911,7 @@ public:
   Flow visitRefIsNull(RefIsNull* curr) {
     VISIT(flow, curr->value)
     const auto& value = flow.getSingleValue();
-    return Literal(int32_t(value.isNull()));
+    return Literal(static_cast<int32_t>(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
     // The type may differ from the type in the IR: An imported function may
@@ -1930,7 +1930,7 @@ public:
     auto left = flow.getSingleValue();
     VISIT_REUSE(flow, curr->right);
     auto right = flow.getSingleValue();
-    return Literal(int32_t(left == right));
+    return Literal(static_cast<int32_t>(left == right));
   }
   Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
@@ -2060,7 +2060,7 @@ public:
     if (auto* breaking = cast.getBreaking()) {
       return *breaking;
     } else {
-      return Literal(int32_t(bool(cast.getSuccess())));
+      return Literal(static_cast<int32_t>(bool(cast.getSuccess())));
     }
   }
   Flow visitRefCast(RefCast* curr) {
@@ -2346,7 +2346,7 @@ public:
     if (!data) {
       trap("null ref");
     }
-    return Literal(int32_t(data->values.size()));
+    return Literal(static_cast<int32_t>(data->values.size()));
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
     VISIT(destRef, curr->destRef)
@@ -2539,7 +2539,7 @@ public:
       trap("null ref");
     }
 
-    return Literal(int32_t(data->values.size()));
+    return Literal(static_cast<int32_t>(data->values.size()));
   }
   Flow visitStringConcat(StringConcat* curr) {
     VISIT(flow, curr->left)
@@ -2596,7 +2596,7 @@ public:
       arrayValues[startVal + i] = strValues[i];
     }
 
-    return Literal(int32_t(strData->values.size()));
+    return Literal(static_cast<int32_t>(strData->values.size()));
   }
   Flow visitStringEq(StringEq* curr) {
     VISIT(flow, curr->left)
@@ -2659,7 +2659,7 @@ public:
   Flow visitStringTest(StringTest* curr) {
     VISIT(flow, curr->ref)
     auto value = flow.getSingleValue();
-    return Literal((uint32_t)value.isString());
+    return Literal(value.isString());
   }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
     VISIT(ref, curr->ref)
@@ -2754,12 +2754,12 @@ protected:
       case Field::i8: {
         int8_t i;
         memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(static_cast<int32_t>(i)), field);
       }
       case Field::i16: {
         int16_t i;
         memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(static_cast<int32_t>(i)), field);
       }
       case Field::WaitQueue: {
         WASM_UNREACHABLE("waitqueue not implemented");
@@ -2995,13 +2995,13 @@ public:
         case Type::i32: {
           switch (load->bytes) {
             case 1:
-              return load->signed_ ? Literal((int32_t)load8s(addr, memory))
-                                   : Literal((int32_t)load8u(addr, memory));
+              return load->signed_ ? Literal(static_cast<int32_t>(load8s(addr, memory)))
+                                   : Literal(static_cast<int32_t>(load8u(addr, memory)));
             case 2:
-              return load->signed_ ? Literal((int32_t)load16s(addr, memory))
-                                   : Literal((int32_t)load16u(addr, memory));
+              return load->signed_ ? Literal(static_cast<int32_t>(load16s(addr, memory)))
+                                   : Literal(static_cast<int32_t>(load16u(addr, memory)));
             case 4:
-              return Literal((int32_t)load32s(addr, memory));
+              return Literal(static_cast<int32_t>(load32s(addr, memory)));
             default:
               WASM_UNREACHABLE("invalid size");
           }
@@ -3010,16 +3010,16 @@ public:
         case Type::i64: {
           switch (load->bytes) {
             case 1:
-              return load->signed_ ? Literal((int64_t)load8s(addr, memory))
-                                   : Literal((int64_t)load8u(addr, memory));
+              return load->signed_ ? Literal(static_cast<int64_t>(load8s(addr, memory)))
+                                   : Literal(static_cast<int64_t>(load8u(addr, memory)));
             case 2:
-              return load->signed_ ? Literal((int64_t)load16s(addr, memory))
-                                   : Literal((int64_t)load16u(addr, memory));
+              return load->signed_ ? Literal(static_cast<int64_t>(load16s(addr, memory)))
+                                   : Literal(static_cast<int64_t>(load16u(addr, memory)));
             case 4:
-              return load->signed_ ? Literal((int64_t)load32s(addr, memory))
-                                   : Literal((int64_t)load32u(addr, memory));
+              return load->signed_ ? Literal(static_cast<int64_t>(load32s(addr, memory)))
+                                   : Literal(static_cast<int64_t>(load32u(addr, memory)));
             case 8:
-              return Literal((int64_t)load64s(addr, memory));
+              return Literal(static_cast<int64_t>(load64s(addr, memory)));
             default:
               WASM_UNREACHABLE("invalid size");
           }
@@ -3332,7 +3332,7 @@ public:
 
   std::string printFunctionStack() {
     std::string ret = "/== (binaryen interpreter stack trace)\n";
-    for (int i = int(functionStack.size()) - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(functionStack.size()) - 1; i >= 0; i--) {
       ret += std::string("|: ") + functionStack[i].toString() + "\n";
     }
     ret += std::string("\\==\n");
@@ -3547,12 +3547,12 @@ private:
     }
 
     Const zero;
-    zero.value = Literal(uint32_t(0));
+    zero.value = Literal(static_cast<uint32_t>(0));
     zero.finalize();
 
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Const size;
-      size.value = Literal(uint32_t(segment->data.size()));
+      size.value = Literal(static_cast<uint32_t>(segment->data.size()));
       size.finalize();
 
       TableInit init;
@@ -3956,7 +3956,7 @@ public:
     int step = 1;
     // Reverse direction if source is below dest
     if (sourceVal < destVal) {
-      start = int64_t(sizeVal) - 1;
+      start = static_cast<int64_t>(sizeVal) - 1;
       end = -1;
       step = -1;
     }
@@ -3974,8 +3974,8 @@ public:
     auto* segment = wasm.getElementSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
-    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+    Address offsetVal(static_cast<uint32_t>(offset.getSingleValue().geti32()));
+    Address sizeVal(static_cast<uint32_t>(size.getSingleValue().geti32()));
 
     if (offsetVal + sizeVal > 0 &&
         droppedElementSegments.count(curr->segment)) {
@@ -4127,7 +4127,7 @@ public:
                                               memorySizeBytes,
                                               MemoryOrder::SeqCst);
     if (loaded != expected.getSingleValue()) {
-      return Literal(int32_t(1)); // not equal
+      return Literal(static_cast<int32_t>(1)); // not equal
     }
     // TODO: Add threads support. For now, report a host limit here, as there
     //       are no other threads that can wake us up. Without such threads,
@@ -4137,7 +4137,7 @@ public:
     if (timeout.getSingleValue().getInteger() != 0) {
       hostLimit("threads support");
     }
-    return Literal(int32_t(2)); // Timed out
+    return Literal(static_cast<int32_t>(2)); // Timed out
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     VISIT(ptr, curr->ptr)
@@ -4148,7 +4148,7 @@ public:
       curr, ptr.getSingleValue(), 4, memorySizeBytes);
     // Just check TODO actual threads support
     info.instance->checkAtomicAddress(addr, 4, memorySizeBytes);
-    return Literal(int32_t(0)); // none woken up
+    return Literal(static_cast<int32_t>(0)); // none woken up
   }
   Flow visitSIMDLoad(SIMDLoad* curr) {
     switch (curr->op) {
@@ -4212,17 +4212,17 @@ public:
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
         case Load8x8SVec128:
-          return Literal(int32_t(info.interface()->load8s(addr, info.name)));
+          return Literal(static_cast<int32_t>(info.interface()->load8s(addr, info.name)));
         case Load8x8UVec128:
-          return Literal(int32_t(info.interface()->load8u(addr, info.name)));
+          return Literal(static_cast<int32_t>(info.interface()->load8u(addr, info.name)));
         case Load16x4SVec128:
-          return Literal(int32_t(info.interface()->load16s(addr, info.name)));
+          return Literal(static_cast<int32_t>(info.interface()->load16s(addr, info.name)));
         case Load16x4UVec128:
-          return Literal(int32_t(info.interface()->load16u(addr, info.name)));
+          return Literal(static_cast<int32_t>(info.interface()->load16u(addr, info.name)));
         case Load32x2SVec128:
-          return Literal(int64_t(info.interface()->load32s(addr, info.name)));
+          return Literal(static_cast<int64_t>(info.interface()->load32s(addr, info.name)));
         case Load32x2UVec128:
-          return Literal(int64_t(info.interface()->load32u(addr, info.name)));
+          return Literal(static_cast<int64_t>(info.interface()->load32u(addr, info.name)));
         default:
           WASM_UNREACHABLE("unexpected op");
       }
@@ -4444,7 +4444,7 @@ public:
     int step = 1;
     // Reverse direction if source is below dest
     if (sourceVal < destVal) {
-      start = int64_t(sizeVal) - 1;
+      start = static_cast<int64_t>(sizeVal) - 1;
       end = -1;
       step = -1;
     }
@@ -4561,7 +4561,7 @@ public:
     size_t sizeVal = size.getSingleValue().getUnsigned();
 
     size_t arraySize = data->values.size();
-    if ((uint64_t)indexVal + sizeVal > arraySize) {
+    if (static_cast<uint64_t>(indexVal) + sizeVal > arraySize) {
       trap("out of bounds array access in array.init");
     }
 
@@ -4570,7 +4570,7 @@ public:
     auto* seg = wasm.getDataSegment(curr->segment);
     auto elem = curr->ref->type.getHeapType().getArray().element;
     size_t elemSize = elem.getByteSize();
-    uint64_t readSize = (uint64_t)sizeVal * elemSize;
+    uint64_t readSize = static_cast<uint64_t>(sizeVal) * elemSize;
     if (offsetVal + readSize > seg->data.size()) {
       trap("out of bounds segment access in array.init_data");
     }
@@ -4597,14 +4597,14 @@ public:
     size_t sizeVal = size.getSingleValue().getUnsigned();
 
     size_t arraySize = data->values.size();
-    if ((uint64_t)indexVal + sizeVal > arraySize) {
+    if (static_cast<uint64_t>(indexVal) + sizeVal > arraySize) {
       trap("out of bounds array access in array.init");
     }
 
     Module& wasm = *self()->getModule();
 
     auto* seg = wasm.getElementSegment(curr->segment);
-    auto max = (uint64_t)offsetVal + sizeVal;
+    auto max = static_cast<uint64_t>(offsetVal) + sizeVal;
     if (max > seg->data.size()) {
       trap("out of bounds segment access in array.init_elem");
     }
@@ -4956,10 +4956,10 @@ public:
     if (value.type == Type::i32) {
       switch (bytes) {
         case 1: {
-          return value.and_(Literal(uint32_t(0xff)));
+          return value.and_(Literal(static_cast<uint32_t>(0xff)));
         }
         case 2: {
-          return value.and_(Literal(uint32_t(0xffff)));
+          return value.and_(Literal(static_cast<uint32_t>(0xffff)));
         }
         case 4: {
           break;
@@ -4971,13 +4971,13 @@ public:
       assert(value.type == Type::i64);
       switch (bytes) {
         case 1: {
-          return value.and_(Literal(uint64_t(0xff)));
+          return value.and_(Literal(static_cast<uint64_t>(0xff)));
         }
         case 2: {
-          return value.and_(Literal(uint64_t(0xffff)));
+          return value.and_(Literal(static_cast<uint64_t>(0xffff)));
         }
         case 4: {
-          return value.and_(Literal(uint64_t(0xffffffffUL)));
+          return value.and_(Literal(static_cast<uint64_t>(0xffffffffUL)));
         }
         case 8: {
           break;
@@ -5214,7 +5214,7 @@ protected:
     }
     checkAtomicAddress(addr, bytes, memorySizeBytes);
     Const ptr;
-    ptr.value = Literal(int32_t(addr));
+    ptr.value = Literal(static_cast<int32_t>(addr));
     ptr.type = Type::i32;
     Load load;
     load.bytes = bytes;
@@ -5236,7 +5236,7 @@ protected:
                      Address memorySizeBytes) {
     checkAtomicAddress(addr, bytes, memorySizeBytes);
     Const ptr;
-    ptr.value = Literal(int32_t(addr));
+    ptr.value = Literal(static_cast<int32_t>(addr));
     ptr.type = Type::i32;
     Const value;
     value.value = toStore;

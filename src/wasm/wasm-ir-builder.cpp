@@ -73,7 +73,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
     // There is no value-producing or unreachable expression.
     return {};
   }
-  if (unsigned(index) == stack.size() - 1) {
+  if (static_cast<unsigned>(index) == stack.size() - 1) {
     // Value-producing expression already on top of the stack.
     return HoistedVal{Index(index), nullptr};
   }
@@ -2303,7 +2303,7 @@ Result<> IRBuilder::makeArrayNew(HeapType type) {
   ArrayNew curr;
   curr.type = Type(type, NonNullable, Exact);
   // Differentiate from array.new_default with dummy initializer.
-  curr.init = (Expression*)0x01;
+  curr.init = reinterpret_cast<Expression*>(0x01);
   CHECK_ERR(visitArrayNew(&curr));
   push(builder.makeArrayNew(type, curr.size, curr.init));
   return Ok{};

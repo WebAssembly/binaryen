@@ -123,15 +123,15 @@ template<typename T, typename MiniT> struct LEB {
         break;
       }
       shift += 7;
-      if (size_t(shift) >= sizeof(T) * 8) {
+      if (static_cast<size_t>(shift) >= sizeof(T) * 8) {
         throw ParseException("LEB overflow");
       }
     }
     // If signed LEB, then we might need to sign-extend.
     if constexpr (std::is_signed_v<T>) {
       shift += 7;
-      if ((byte & 64) && size_t(shift) < 8 * sizeof(T)) {
-        size_t sext_bits = 8 * sizeof(T) - size_t(shift);
+      if ((byte & 64) && static_cast<size_t>(shift) < 8 * sizeof(T)) {
+        size_t sext_bits = 8 * sizeof(T) - static_cast<size_t>(shift);
         value <<= sext_bits;
         value >>= sext_bits;
         if (value >= 0) {
@@ -212,10 +212,10 @@ public:
     return *this;
   }
 
-  BufferWithRandomAccess& operator<<(uint8_t x) { return *this << (int8_t)x; }
-  BufferWithRandomAccess& operator<<(uint16_t x) { return *this << (int16_t)x; }
-  BufferWithRandomAccess& operator<<(uint32_t x) { return *this << (int32_t)x; }
-  BufferWithRandomAccess& operator<<(uint64_t x) { return *this << (int64_t)x; }
+  BufferWithRandomAccess& operator<<(uint8_t x) { return *this << static_cast<int8_t>(x); }
+  BufferWithRandomAccess& operator<<(uint16_t x) { return *this << static_cast<int16_t>(x); }
+  BufferWithRandomAccess& operator<<(uint32_t x) { return *this << static_cast<int32_t>(x); }
+  BufferWithRandomAccess& operator<<(uint64_t x) { return *this << static_cast<int64_t>(x); }
 
   BufferWithRandomAccess& operator<<(float x) {
     return *this << Literal(x).reinterpreti32();
@@ -266,8 +266,8 @@ public:
   // later, when the size is known.
   BinaryLocation writeU32LEBPlaceholder() {
     BinaryLocation ret = size();
-    *this << int32_t(0);
-    *this << int8_t(0);
+    *this << static_cast<int32_t>(0);
+    *this << static_cast<int8_t>(0);
     return ret;
   }
 
@@ -303,7 +303,7 @@ public:
     auto data = name.data();
     *this << U32LEB(size);
     for (size_t i = 0; i < size; i++) {
-      *this << int8_t(data[i]);
+      *this << static_cast<int8_t>(data[i]);
     }
   }
 };

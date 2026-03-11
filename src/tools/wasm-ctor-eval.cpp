@@ -347,7 +347,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
             // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS
             // (0).
             store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
-            return {Literal(int32_t(0))};
+            return {Literal(static_cast<int32_t>(0))};
           }
 
           if (import->base == "environ_get") {
@@ -357,7 +357,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
             }
 
             // Just return __WASI_ERRNO_SUCCESS (0).
-            return {Literal(int32_t(0))};
+            return {Literal(static_cast<int32_t>(0))};
           }
 
           if (import->base == "args_sizes_get") {
@@ -369,7 +369,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
             // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS
             // (0).
             store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
-            return {Literal(int32_t(0))};
+            return {Literal(static_cast<int32_t>(0))};
           }
 
           if (import->base == "args_get") {
@@ -379,7 +379,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
             }
 
             // Just return __WASI_ERRNO_SUCCESS (0).
-            return {Literal(int32_t(0))};
+            return {Literal(static_cast<int32_t>(0))};
           }
 
           // Otherwise, we don't recognize this import; continue normally to
@@ -1006,7 +1006,7 @@ public:
         builder.makeStructSet(index, getGlobal, value, MemoryOrder::Unordered);
     } else {
       set = builder.makeArraySet(getGlobal,
-                                 builder.makeConst(int32_t(index)),
+                                 builder.makeConst(static_cast<int32_t>(index)),
                                  value,
                                  MemoryOrder::Unordered);
     }

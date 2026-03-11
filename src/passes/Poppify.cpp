@@ -332,7 +332,7 @@ void Poppifier::emitTupleExtract(TupleExtract* curr) {
   auto type = types[curr->index];
   Index scratch = getScratchLocal(type);
   instrs.push_back(builder.makeLocalSet(scratch, builder.makePop(type)));
-  for (size_t i = curr->index - 1; i != size_t(-1); --i) {
+  for (size_t i = curr->index - 1; i != static_cast<size_t>(-1); --i) {
     instrs.push_back(builder.makeDrop(builder.makePop(types[i])));
   }
   // Retrieve the saved value

@@ -364,9 +364,9 @@ static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
         } else if (node[1] == LSHIFT) {
           node->setNumber(left << (right & 31));
         } else if (node[1] == RSHIFT) {
-          node->setNumber(int32_t(left) >> int32_t(right & 31));
+          node->setNumber(static_cast<int32_t>(left) >> static_cast<int32_t>(right & 31));
         } else if (node[1] == TRSHIFT) {
-          node->setNumber(uint32_t(left) >> uint32_t(right & 31));
+          node->setNumber(static_cast<uint32_t>(left) >> static_cast<uint32_t>(right & 31));
         }
         return;
       }
@@ -615,7 +615,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(AssertReturn& assn,
   Builder builder(wasm);
   if (assn.expected.empty()) {
     if (actual->type == Type::none) {
-      body = builder.blockify(actual, builder.makeConst(uint32_t(1)));
+      body = builder.blockify(actual, builder.makeConst(static_cast<uint32_t>(1)));
     } else {
       body = actual;
     }

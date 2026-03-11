@@ -1013,12 +1013,12 @@ private:
   // for the blocks.
   size_t Hash(Block* Curr) {
     auto digest = wasm::ExpressionAnalyzer::hash(Curr->Code);
-    wasm::rehash(digest, uint8_t(1));
+    wasm::rehash(digest, static_cast<uint8_t>(1));
     if (Curr->SwitchCondition) {
       wasm::hash_combine(digest,
                          wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition));
     }
-    wasm::rehash(digest, uint8_t(2));
+    wasm::rehash(digest, static_cast<uint8_t>(2));
     for (auto& [CurrBlock, CurrBranch] : Curr->BranchesOut) {
       // Hash the Block* as a pointer TODO: full hash?
       wasm::rehash(digest, reinterpret_cast<size_t>(CurrBlock));
@@ -1042,7 +1042,7 @@ private:
                            wasm::ExpressionAnalyzer::hash(Curr->Condition));
       }
     }
-    wasm::rehash(digest, uint8_t(1));
+    wasm::rehash(digest, static_cast<uint8_t>(1));
     if (Curr->Code) {
       wasm::hash_combine(digest, wasm::ExpressionAnalyzer::hash(Curr->Code));
     }

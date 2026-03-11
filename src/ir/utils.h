@@ -179,7 +179,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
 
   // given a stack of nested expressions, update them all from child to parent
   static void updateStack(ExpressionStack& expressionStack) {
-    for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(expressionStack.size()) - 1; i >= 0; i--) {
       auto* curr = expressionStack[i];
       ReFinalizeNode().visit(curr);
     }
@@ -194,7 +194,7 @@ struct I64Utilities {
       builder.makeUnary(ExtendUInt32, low),
       builder.makeBinary(ShlInt64,
                          builder.makeUnary(ExtendUInt32, high),
-                         builder.makeConst(int64_t(32))));
+                         builder.makeConst(static_cast<int64_t>(32))));
   };
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
@@ -208,7 +208,7 @@ struct I64Utilities {
       WrapInt64,
       builder.makeBinary(ShrUInt64,
                          builder.makeLocalGet(index, Type::i64),
-                         builder.makeConst(int64_t(32))));
+                         builder.makeConst(static_cast<int64_t>(32))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {

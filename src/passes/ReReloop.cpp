@@ -134,7 +134,7 @@ struct ReReloop final : public Pass {
         parent.stack.push_back(task);
       }
       auto& list = curr->list;
-      for (int i = int(list.size()) - 1; i >= 0; i--) {
+      for (int i = static_cast<int>(list.size()) - 1; i >= 0; i--) {
         parent.stack.push_back(std::make_shared<TriageTask>(parent, list[i]));
       }
     }
@@ -322,8 +322,8 @@ struct ReReloop final : public Pass {
       auto* block = cfgBlock->Code->cast<Block>();
       if (cfgBlock->BranchesOut.empty() && block->type != Type::unreachable) {
         block->list.push_back(function->getResults() == Type::none
-                                ? (Expression*)builder->makeReturn()
-                                : (Expression*)builder->makeUnreachable());
+                                ? static_cast<Expression*>(builder->makeReturn())
+                                : static_cast<Expression*>(builder->makeUnreachable()));
         block->finalize();
       }
     }

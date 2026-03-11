@@ -210,7 +210,7 @@ struct Value {
   int32_t getInteger() { // convenience function to get a known integer
     assert(wasm::isInteger(getNumber()));
     int32_t ret = getNumber();
-    assert(double(ret) == getNumber()); // no loss in conversion
+    assert(static_cast<double>(ret) == getNumber()); // no loss in conversion
     return ret;
   }
 

@@ -66,7 +66,7 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
   }
   infile.seekg(0, std::ios::end);
   std::streampos insize = infile.tellg();
-  if (uint64_t(insize) >= std::numeric_limits<size_t>::max()) {
+  if (static_cast<uint64_t>(insize) >= std::numeric_limits<size_t>::max()) {
     // Building a 32-bit executable where size_t == 32 bits, we are not able to
     // create strings larger than 2^32 bytes in length, so must abort here.
     Fatal() << "Failed opening '" << filename
@@ -74,14 +74,14 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
             << " bytes. Try rebuilding in 64-bit mode.";
   }
   // Zero-initialize the string or vector with the expected size.
-  T input(size_t(insize), '\0');
-  if (size_t(insize) == 0) {
+  T input(static_cast<size_t>(insize), '\0');
+  if (static_cast<size_t>(insize) == 0) {
     return input;
   }
   infile.seekg(0);
   infile.read(&input[0], insize);
   if (binary == Flags::Text) {
-    size_t chars = size_t(infile.gcount());
+    size_t chars = static_cast<size_t>(infile.gcount());
     // Truncate size to the number of ASCII characters actually read in text
     // mode (which is generally less than the number of bytes on Windows, if
     // \r\n line endings are present)

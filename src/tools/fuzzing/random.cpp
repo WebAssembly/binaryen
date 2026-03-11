@@ -47,18 +47,18 @@ int8_t Random::get() {
 }
 
 int16_t Random::get16() {
-  auto temp = uint16_t(get()) << 8;
-  return temp | uint16_t(get());
+  auto temp = static_cast<uint16_t>(get()) << 8;
+  return temp | static_cast<uint16_t>(get());
 }
 
 int32_t Random::get32() {
-  auto temp = uint32_t(get16()) << 16;
-  return temp | uint32_t(get16());
+  auto temp = static_cast<uint32_t>(get16()) << 16;
+  return temp | static_cast<uint32_t>(get16());
 }
 
 int64_t Random::get64() {
-  auto temp = uint64_t(get32()) << 32;
-  return temp | uint64_t(get32());
+  auto temp = static_cast<uint64_t>(get32()) << 32;
+  return temp | static_cast<uint64_t>(get32());
 }
 
 float Random::getFloat() { return Literal(get32()).reinterpretf32(); }

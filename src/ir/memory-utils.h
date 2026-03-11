@@ -142,7 +142,7 @@ ensureLimitedSegments(Module& module,
     }
     // create the segment and add in all the data
     auto* c = module.allocator.alloc<Const>();
-    c->value = Literal(int32_t(start));
+    c->value = Literal(static_cast<int32_t>(start));
     c->type = Type::i32;
 
     auto combined = Builder::makeDataSegment();

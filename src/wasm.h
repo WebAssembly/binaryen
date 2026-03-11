@@ -787,32 +787,32 @@ public:
   template<class T> bool is() const {
     static_assert(std::is_base_of<Expression, T>::value,
                   "Expression is not a base of destination type T");
-    return int(_id) == int(T::SpecificId);
+    return static_cast<int>(_id) == static_cast<int>(T::SpecificId);
   }
 
   template<class T> T* dynCast() {
     static_assert(std::is_base_of<Expression, T>::value,
                   "Expression is not a base of destination type T");
-    return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
+    return static_cast<int>(_id) == static_cast<int>(T::SpecificId) ? static_cast<T*>(this) : nullptr;
   }
 
   template<class T> const T* dynCast() const {
     static_assert(std::is_base_of<Expression, T>::value,
                   "Expression is not a base of destination type T");
-    return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
+    return static_cast<int>(_id) == static_cast<int>(T::SpecificId) ? (const T*)this : nullptr;
   }
 
   template<class T> T* cast() {
     static_assert(std::is_base_of<Expression, T>::value,
                   "Expression is not a base of destination type T");
-    assert(int(_id) == int(T::SpecificId));
-    return (T*)this;
+    assert(static_cast<int>(_id) == static_cast<int>(T::SpecificId));
+    return static_cast<T*>(this);
   }
 
   template<class T> const T* cast() const {
     static_assert(std::is_base_of<Expression, T>::value,
                   "Expression is not a base of destination type T");
-    assert(int(_id) == int(T::SpecificId));
+    assert(static_cast<int>(_id) == static_cast<int>(T::SpecificId));
     return (const T*)this;
   }
 
@@ -2250,7 +2250,7 @@ struct BinaryLocations {
   // debug value, indicating the information is not present.
   using DelimiterLocations = ZeroInitSmallVector<BinaryLocation, 1>;
 
-  enum DelimiterId : size_t { Else = 0, Invalid = size_t(-1) };
+  enum DelimiterId : size_t { Else = 0, Invalid = static_cast<size_t>(-1) };
 
   std::unordered_map<Expression*, DelimiterLocations> delimiters;
 
@@ -2450,7 +2450,7 @@ enum Kind : uint32_t {
   Memory = 2,
   Global = 3,
   Tag = 4,
-  Invalid = uint32_t(-1)
+  Invalid = static_cast<uint32_t>(-1)
 };
 } // namespace ExternalKindImpl
 using ExternalKind = ExternalKindImpl::Kind;

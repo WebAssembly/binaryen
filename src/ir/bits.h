@@ -38,7 +38,7 @@ inline int32_t lowBitMask(int32_t bits) {
 // bit, and all zeros from there. returns the number of masked bits, or 0 if
 // this is not such a mask
 inline uint32_t getMaskedBits(uint32_t mask) {
-  if (mask == uint32_t(-1)) {
+  if (mask == static_cast<uint32_t>(-1)) {
     return 32; // all the bits
   }
   if (mask == 0) {
@@ -128,7 +128,7 @@ inline Expression* makePackedFieldGet(Expression* value,
 
   Builder builder(wasm);
   auto mask = Bits::lowBitMask(field.getByteSize() * 8);
-  return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
+  return builder.makeBinary(AndInt32, value, builder.makeConst(static_cast<int32_t>(mask)));
 }
 
 // getMaxBits() helper that has pessimistic results for the bits used in locals.

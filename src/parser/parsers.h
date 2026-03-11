@@ -817,7 +817,7 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits32(Ctx& ctx) {
     return ctx.in.err("expected initial size");
   }
   std::optional<uint64_t> m = ctx.in.takeU32();
-  return ctx.makeLimits(uint64_t(*n), m);
+  return ctx.makeLimits(static_cast<uint64_t>(*n), m);
 }
 
 // limits64 ::= n:u64 m:u64?
@@ -827,7 +827,7 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
     return ctx.in.err("expected initial size");
   }
   std::optional<uint64_t> m = ctx.in.takeU64();
-  return ctx.makeLimits(uint64_t(*n), m);
+  return ctx.makeLimits(static_cast<uint64_t>(*n), m);
 }
 
 // mempagesize? ::= ('(' 'pagesize' u64 ')') ?
@@ -848,7 +848,7 @@ template<typename Ctx> MaybeResult<uint8_t> mempagesize(Ctx& ctx) {
     return ctx.in.err("expected end of mempagesize");
   }
 
-  uint8_t pageSizeLog2 = (uint8_t)Bits::ceilLog2(*pageSize);
+  uint8_t pageSizeLog2 = Bits::ceilLog2(*pageSize);
 
   if (pageSizeLog2 != 0 && pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
     return ctx.in.err("memory page size can only be 1 or 64 KiB");

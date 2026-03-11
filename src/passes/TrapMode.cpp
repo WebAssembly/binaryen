@@ -117,11 +117,11 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
   UnaryOp eqZOp = isI64 ? EqZInt64 : EqZInt32;
   Literal minLit = isI64 ? Literal(std::numeric_limits<int64_t>::min())
                          : Literal(std::numeric_limits<int32_t>::min());
-  Literal zeroLit = isI64 ? Literal(int64_t(0)) : Literal(int32_t(0));
+  Literal zeroLit = isI64 ? Literal(static_cast<int64_t>(0)) : Literal(static_cast<int32_t>(0));
   if (op == divSIntOp) {
     // guard against signed division overflow
     BinaryOp eqOp = isI64 ? EqInt64 : EqInt32;
-    Literal negLit = isI64 ? Literal(int64_t(-1)) : Literal(int32_t(-1));
+    Literal negLit = isI64 ? Literal(static_cast<int64_t>(-1)) : Literal(static_cast<int32_t>(-1));
     result = builder.makeIf(
       builder.makeBinary(
         AndInt32,

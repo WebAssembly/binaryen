@@ -68,7 +68,7 @@ void Fuzzer::run(uint64_t seed) {
   // 4kb of random bytes should be enough for anyone!
   std::vector<char> bytes(4096);
   for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
-    *(uint64_t*)(bytes.data() + i) = getRand();
+    *reinterpret_cast<uint64_t*>(bytes.data() + i) = getRand();
   }
   rand = Random(std::move(bytes));
 
@@ -640,7 +640,7 @@ int main(int argc, const char* argv[]) {
               WasmFuzzTypesOption,
               Options::Arguments::One,
               [&](Options*, const std::string& arg) {
-                seed = uint64_t(std::stoull(arg));
+                seed = static_cast<uint64_t>(std::stoull(arg));
               });
 
   bool verbose = false;

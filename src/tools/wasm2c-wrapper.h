@@ -38,7 +38,7 @@ inline std::string wasm2cMangle(Name name, Signature sig) {
       // This must be escaped, as prefix + hex character code.
       mangled += escapePrefix;
       std::stringstream ss;
-      ss << std::hex << std::uppercase << unsigned(c);
+      ss << std::hex << std::uppercase << static_cast<unsigned>(c);
       mangled += ss.str();
     }
   }
@@ -61,6 +61,7 @@ inline std::string wasm2cMangle(Name name, Signature sig) {
         return 'd';
       default:
         Fatal() << "unhandled wasm2c wrapper signature type: " << type;
+        WASM_UNREACHABLE("unhandled type");
     }
   };
 
@@ -93,7 +94,7 @@ void _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi(u32 x) {
 void (*Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi)(u32) = _Z_fuzzingZ2DsupportZ_logZ2Di32Z_vi;
 
 void _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj(u64 x) {
-  printf("[LoggingExternalInterface logging %" PRId64 "]\n", (int64_t)x);
+  printf("[LoggingExternalInterface logging %" PRId64 "]\n", static_cast<int64_t>(x));
 }
 void (*Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj)(u64) = _Z_fuzzingZ2DsupportZ_logZ2Di64Z_vj;
 

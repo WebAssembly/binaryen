@@ -64,7 +64,7 @@ uint64_t hashFile(const std::string& filename) {
   for (char c : contents) {
     hash_combine(digest, c);
   }
-  return uint64_t(digest);
+  return static_cast<uint64_t>(digest);
 }
 
 void adjustTableSize(Module& wasm, int initialSize, bool secondary = false) {
@@ -81,11 +81,11 @@ void adjustTableSize(Module& wasm, int initialSize, bool secondary = false) {
 
   auto& table = wasm.tables.front();
 
-  if ((uint64_t)initialSize < table->initial) {
+  if (static_cast<uint64_t>(initialSize) < table->initial) {
     Fatal() << "Specified initial table size too small, should be at least "
             << table->initial;
   }
-  if ((uint64_t)initialSize > table->max) {
+  if (static_cast<uint64_t>(initialSize) > table->max) {
     Fatal() << "Specified initial table size larger than max table size "
             << table->max;
   }
@@ -153,15 +153,15 @@ ProfileData readProfile(const std::string& file) {
       Fatal() << "Unexpected end of profile data in " << file;
     }
     uint32_t i32 = 0;
-    i32 |= uint32_t(uint8_t(profileData[i++]));
-    i32 |= uint32_t(uint8_t(profileData[i++])) << 8;
-    i32 |= uint32_t(uint8_t(profileData[i++])) << 16;
-    i32 |= uint32_t(uint8_t(profileData[i++])) << 24;
+    i32 |= static_cast<uint32_t>(static_cast<uint8_t>(profileData[i++]));
+    i32 |= static_cast<uint32_t>(static_cast<uint8_t>(profileData[i++])) << 8;
+    i32 |= static_cast<uint32_t>(static_cast<uint8_t>(profileData[i++])) << 16;
+    i32 |= static_cast<uint32_t>(static_cast<uint8_t>(profileData[i++])) << 24;
     return i32;
   };
 
   uint64_t hash = readi32();
-  hash |= uint64_t(readi32()) << 32;
+  hash |= static_cast<uint64_t>(readi32()) << 32;
 
   std::vector<size_t> timestamps;
   while (i < profileData.size()) {
@@ -547,7 +547,7 @@ void mergeProfiles(const WasmSplitOptions& options) {
   BufferWithRandomAccess buffer;
   buffer << data.hash;
   for (size_t t = 0; t < data.timestamps.size(); ++t) {
-    buffer << uint32_t(data.timestamps[t]);
+    buffer << static_cast<uint32_t>(data.timestamps[t]);
   }
   Output out(options.output, Flags::Binary);
   buffer.writeTo(out.getStream());
@@ -560,7 +560,7 @@ std::string unescape(std::string input) {
         isxdigit(input[i + 1]) && isxdigit(input[i + 2])) {
       std::string byte = input.substr(i + 1, 2);
       i += 2;
-      char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
+      char chr = static_cast<char>(strtol(byte.c_str(), nullptr, 16));
       output.push_back(chr);
     } else {
       output.push_back(input[i]);

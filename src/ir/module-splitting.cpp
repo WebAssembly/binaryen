@@ -374,7 +374,7 @@ void ModuleSplitter::setupJSPI() {
   // Add a global to track whether the secondary module has been loaded yet.
   primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
                                        Type::i32,
-                                       builder.makeConst(int32_t(0)),
+                                       builder.makeConst(static_cast<int32_t>(0)),
                                        Builder::Mutable));
   primary.addExport(builder.makeExport(
     LOAD_SECONDARY_STATUS, LOAD_SECONDARY_STATUS, ExternalKind::Global));

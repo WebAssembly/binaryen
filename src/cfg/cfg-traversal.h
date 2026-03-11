@@ -114,7 +114,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   std::vector<Index> catchIndexStack;
 
   BasicBlock* startBasicBlock() {
-    currBasicBlock = ((SubType*)this)->makeBasicBlock();
+    currBasicBlock = (static_cast<SubType*>(this))->makeBasicBlock();
     basicBlocks.push_back(std::unique_ptr<BasicBlock>(currBasicBlock));
     return currBasicBlock;
   }

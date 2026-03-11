@@ -152,7 +152,7 @@ void Instrumenter::instrumentFuncs() {
           builder.makeAtomicStore(1,
                                   funcIdx,
                                   builder.makeConstPtr(0, Type::i32),
-                                  builder.makeConst(uint32_t(1)),
+                                  builder.makeConst(static_cast<uint32_t>(1)),
                                   Type::i32,
                                   memoryName,
                                   MemoryOrder::SeqCst),
@@ -221,9 +221,9 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
   Builder builder(*wasm);
   auto getAddr = [&]() { return builder.makeLocalGet(0, ptrType); };
   auto getSize = [&]() { return builder.makeLocalGet(1, Type::i32); };
-  auto hashConst = [&]() { return builder.makeConst(int64_t(moduleHash)); };
+  auto hashConst = [&]() { return builder.makeConst(static_cast<int64_t>(moduleHash)); };
   auto profileSizeConst = [&]() {
-    return builder.makeConst(int32_t(profileSize));
+    return builder.makeConst(static_cast<int32_t>(profileSize));
   };
 
   // Write the hash followed by all the time stamps
@@ -286,7 +286,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
                 nullptr,
                 builder.makeBinary(EqInt32,
                                    getFuncIdx(),
-                                   builder.makeConst(uint32_t(numFuncs)))),
+                                   builder.makeConst(static_cast<uint32_t>(numFuncs)))),
               builder.makeStore(
                 4,
                 offset,
@@ -295,7 +295,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
                   AddInt32,
                   getAddr(),
                   builder.makeBinary(
-                    MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
+                    MulInt32, getFuncIdx(), builder.makeConst(static_cast<uint32_t>(4)))),
                 builder.makeAtomicLoad(1,
                                        0,
                                        getFuncIdx(),
@@ -307,7 +307,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
               builder.makeLocalSet(
                 funcIdxVar,
                 builder.makeBinary(
-                  AddInt32, getFuncIdx(), builder.makeConst(uint32_t(1)))),
+                  AddInt32, getFuncIdx(), builder.makeConst(static_cast<uint32_t>(1)))),
               builder.makeBreak("l")))));
       break;
     }

@@ -397,7 +397,7 @@ template<class T> inline decltype(auto) Exact(T* binder, T data) {
 // match `Literal` of the expected `Type`
 struct BoolLK {
   static bool matchType(Literal lit) {
-    return lit.type == Type::i32 && (uint32_t)lit.geti32() <= 1U;
+    return lit.type == Type::i32 && static_cast<uint32_t>(lit.geti32()) <= 1U;
   }
   static int32_t getVal(Literal lit) { return lit.geti32(); }
 };
@@ -670,7 +670,7 @@ inline decltype(auto) i64(int64_t x) {
     nullptr, Internal::I64Lit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-inline decltype(auto) i64(int x) { return i64(int64_t(x)); }
+inline decltype(auto) i64(int x) { return i64(static_cast<int64_t>(x)); }
 inline decltype(auto) i64(int64_t* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::I64Lit(nullptr, Internal::Any(binder)));
@@ -693,7 +693,7 @@ inline decltype(auto) f32(float x) {
     nullptr, Internal::F32Lit(nullptr, Internal::Exact<float>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-inline decltype(auto) f32(int x) { return f32(float(x)); }
+inline decltype(auto) f32(int x) { return f32(static_cast<float>(x)); }
 inline decltype(auto) f32(float* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F32Lit(nullptr, Internal::Any(binder)));
@@ -716,7 +716,7 @@ inline decltype(auto) f64(double x) {
     nullptr, Internal::F64Lit(nullptr, Internal::Exact<double>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-inline decltype(auto) f64(int x) { return f64(double(x)); }
+inline decltype(auto) f64(int x) { return f64(static_cast<double>(x)); }
 inline decltype(auto) f64(double* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::F64Lit(nullptr, Internal::Any(binder)));
@@ -739,7 +739,7 @@ inline decltype(auto) ival(int64_t x) {
     nullptr, Internal::IntLit(nullptr, Internal::Exact<int64_t>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-inline decltype(auto) ival(int x) { return ival(int64_t(x)); }
+inline decltype(auto) ival(int x) { return ival(static_cast<int64_t>(x)); }
 inline decltype(auto) ival(int64_t* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::IntLit(nullptr, Internal::Any(binder)));
@@ -770,7 +770,7 @@ inline decltype(auto) fval(double x) {
     nullptr, Internal::FloatLit(nullptr, Internal::Exact<double>(nullptr, x)));
 }
 // Disambiguate literal 0, which could otherwise be interpreted as a pointer
-inline decltype(auto) fval(int x) { return fval(double(x)); }
+inline decltype(auto) fval(int x) { return fval(static_cast<double>(x)); }
 inline decltype(auto) fval(double* binder) {
   return Internal::ConstMatcher(
     nullptr, Internal::FloatLit(nullptr, Internal::Any(binder)));

@@ -580,7 +580,7 @@ struct OptimizeInstructions
         }
       }
       {
-        // unsigned(x) >= 0   =>   i32(1)
+        // static_cast<unsigned>(x) >= 0   =>   i32(1)
         Const* c;
         Expression* x;
         if (matches(curr, binary(GeU, any(&x), ival(&c))) &&
@@ -589,7 +589,7 @@ struct OptimizeInstructions
           c->type = Type::i32;
           return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
         }
-        // unsigned(x) < 0   =>   i32(0)
+        // static_cast<unsigned>(x) < 0   =>   i32(0)
         if (curr->op == Abstract::getBinary(curr->left->type, Abstract::LtU) &&
             (c = getFallthrough(curr->right)->dynCast<Const>()) &&
             c->value.isZero()) {
@@ -651,7 +651,7 @@ struct OptimizeInstructions
           uint32_t right = c->value.geti32();
           uint32_t numRelevantBits = 32 - bits + 1;
           uint32_t setRelevantBits =
-            Bits::popCount(right >> uint32_t(bits - 1));
+            Bits::popCount(right >> static_cast<uint32_t>(bits - 1));
           // If all the relevant bits on C are zero
           // then we can mask off the high bits instead of sign-extending x.
           // This is valid because if x is negative, then the comparison was
@@ -788,14 +788,14 @@ struct OptimizeInstructions
           curr->op = c == -1 ? EqInt32 : GeUInt32;
           return replaceCurrent(curr);
         }
-        if (Bits::isPowerOf2((uint32_t)c)) {
+        if (Bits::isPowerOf2(static_cast<uint32_t>(c))) {
           switch (curr->op) {
             case MulInt32:
-              return replaceCurrent(optimizePowerOf2Mul(curr, (uint32_t)c));
+              return replaceCurrent(optimizePowerOf2Mul(curr, static_cast<uint32_t>(c)));
             case RemUInt32:
-              return replaceCurrent(optimizePowerOf2URem(curr, (uint32_t)c));
+              return replaceCurrent(optimizePowerOf2URem(curr, static_cast<uint32_t>(c)));
             case DivUInt32:
-              return replaceCurrent(optimizePowerOf2UDiv(curr, (uint32_t)c));
+              return replaceCurrent(optimizePowerOf2UDiv(curr, static_cast<uint32_t>(c)));
             default:
               break;
           }
@@ -822,14 +822,14 @@ struct OptimizeInstructions
           return replaceCurrent(
             Builder(*getModule()).makeUnary(ExtendUInt32, curr));
         }
-        if (Bits::isPowerOf2((uint64_t)c)) {
+        if (Bits::isPowerOf2(static_cast<uint64_t>(c))) {
           switch (curr->op) {
             case MulInt64:
-              return replaceCurrent(optimizePowerOf2Mul(curr, (uint64_t)c));
+              return replaceCurrent(optimizePowerOf2Mul(curr, static_cast<uint64_t>(c)));
             case RemUInt64:
-              return replaceCurrent(optimizePowerOf2URem(curr, (uint64_t)c));
+              return replaceCurrent(optimizePowerOf2URem(curr, static_cast<uint64_t>(c)));
             case DivUInt64:
-              return replaceCurrent(optimizePowerOf2UDiv(curr, (uint64_t)c));
+              return replaceCurrent(optimizePowerOf2UDiv(curr, static_cast<uint64_t>(c)));
             default:
               break;
           }
@@ -1303,7 +1303,7 @@ struct OptimizeInstructions
     //    (i32|i64).store(8|16|32)(p, C & mask)
     if (auto* c = value->dynCast<Const>()) {
       if (value->type == Type::i64 && bytes == 4) {
-        c->value = c->value.and_(Literal(uint64_t(0xffffffff)));
+        c->value = c->value.and_(Literal(static_cast<uint64_t>(0xffffffff)));
       } else {
         c->value = c->value.and_(
           Literal::makeFromInt32(Bits::lowBitMask(bytes * 8), value->type));
@@ -2215,7 +2215,7 @@ struct OptimizeInstructions
         // They are all equal to the default. Drop the children and return an
         // array.new_with_default.
         auto* withDefault = builder.makeArrayNew(
-          curr->type.getHeapType(), builder.makeConst(int32_t(size)));
+          curr->type.getHeapType(), builder.makeConst(static_cast<int32_t>(size)));
         replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
         return;
       }
@@ -2249,7 +2249,7 @@ struct OptimizeInstructions
       curr, getFunction(), *getModule(), getPassOptions());
     auto* block = localizer.getChildrenReplacement();
     auto* arrayNew = builder.makeArrayNew(curr->type.getHeapType(),
-                                          builder.makeConst(int32_t(size)),
+                                          builder.makeConst(static_cast<int32_t>(size)),
                                           curr->values[0]);
     block->list.push_back(arrayNew);
     block->finalize();
@@ -2594,7 +2594,7 @@ struct OptimizeInstructions
         break;
       case GCTypeUtils::Success:
         replaceCurrent(builder.makeBlock(
-          {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
+          {builder.makeDrop(curr->ref), builder.makeConst(static_cast<int32_t>(1))}));
         return;
       case GCTypeUtils::Unreachable:
         // Make sure to emit a block with the same type as us, to avoid other
@@ -2606,7 +2606,7 @@ struct OptimizeInstructions
         return;
       case GCTypeUtils::Failure:
         replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                            builder.makeConst(int32_t(0))));
+                                            builder.makeConst(static_cast<int32_t>(0))));
         return;
       case GCTypeUtils::SuccessOnlyIfNull:
         replaceCurrent(builder.makeRefIsNull(curr->ref));
@@ -2976,14 +2976,14 @@ private:
         c->value = Literal::makeZero(c->type);
         return;
       }
-      // (unsigned)x < 1   ==>   x == 0
+      // static_cast<unsigned>(x) < 1   ==>   x == 0
       if (binary->op == Abstract::getBinary(c->type, Abstract::LtU) &&
           c->value.getInteger() == 1LL) {
         binary->op = Abstract::getBinary(c->type, Abstract::Eq);
         c->value = Literal::makeZero(c->type);
         return;
       }
-      // (unsigned)x >= 1   ==>   x != 0
+      // static_cast<unsigned>(x) >= 1   ==>   x != 0
       if (binary->op == Abstract::getBinary(c->type, Abstract::GeU) &&
           c->value.getInteger() == 1LL) {
         binary->op = Abstract::getBinary(c->type, Abstract::Ne);
@@ -3037,16 +3037,16 @@ private:
         return;
       }
       // Prefer compare to unsigned max (u_max) instead of u_max - 1.
-      // (unsigned)x <= u_max - 1   ==>   x != u_max
+      // static_cast<unsigned>(x) <= u_max - 1   ==>   x != u_max
       if (binary->op == Abstract::getBinary(c->type, Abstract::LeU) &&
-          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
+          c->value.getInteger() == static_cast<int64_t>(UINT64_MAX - 1)) {
         binary->op = Abstract::getBinary(c->type, Abstract::Ne);
         c->value = Literal::makeUnsignedMax(c->type);
         return;
       }
-      // (unsigned)x > u_max - 1   ==>   x == u_max
+      // static_cast<unsigned>(x) > u_max - 1   ==>   x == u_max
       if (binary->op == Abstract::getBinary(c->type, Abstract::GtU) &&
-          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
+          c->value.getInteger() == static_cast<int64_t>(UINT64_MAX - 1)) {
         binary->op = Abstract::getBinary(c->type, Abstract::Eq);
         c->value = Literal::makeUnsignedMax(c->type);
         return;
@@ -3425,11 +3425,11 @@ private:
                    Abstract::getBinary(binary->type, Abstract::Mul)) {
           if (auto* c = binary->left->dynCast<Const>()) {
             seekStack.emplace_back(binary->right,
-                                   mul * (uint64_t)c->value.getInteger());
+                                   mul * c->value.getInteger());
             continue;
           } else if (auto* c = binary->right->dynCast<Const>()) {
             seekStack.emplace_back(binary->left,
-                                   mul * (uint64_t)c->value.getInteger());
+                                   mul * c->value.getInteger());
             continue;
           }
         }
@@ -3539,8 +3539,8 @@ private:
   // being operated on behave the same with or without wrapping, then we don't
   // need to go to 64 bits at all, e.g.:
   //
-  //  int32_t(int64_t(x))               => x                 (extend, then wrap)
-  //  int32_t(int64_t(x) + int64_t(10)) => x + int32_t(10)            (also add)
+  //  static_cast<int32_t>(static_cast<int64_t>(x))               => x                 (extend, then wrap)
+  //  static_cast<int32_t>(static_cast<int64_t>(x) + static_cast<int64_t>(10)) => x + static_cast<int32_t>(10)            (also add)
   //
   Expression* optimizeWrappedResult(Unary* wrap) {
     assert(wrap->op == WrapInt64);
@@ -3569,7 +3569,7 @@ private:
         } else if (auto* c = curr->dynCast<Const>()) {
           // A i64 const can be handled by just turning it into an i32.
           if (mode == Optimize) {
-            c->value = Literal(int32_t(c->value.getInteger()));
+            c->value = Literal(static_cast<int32_t>(c->value.getInteger()));
             c->type = Type::i32;
           }
         } else if (auto* unary = curr->dynCast<Unary>()) {
@@ -3704,10 +3704,10 @@ private:
     Builder builder(*getModule());
     if (binary->op == OrInt32) {
       return builder.makeIf(
-        left, builder.makeConst(Literal(int32_t(1))), right);
+        left, builder.makeConst(Literal(static_cast<int32_t>(1))), right);
     } else { // &
       return builder.makeIf(
-        left, right, builder.makeConst(Literal(int32_t(0))));
+        left, right, builder.makeConst(Literal(static_cast<int32_t>(0))));
     }
   }
 
@@ -4017,16 +4017,16 @@ private:
         // Check for a 64-bit overflow.
         uint64_t sum;
         if (!std::ckd_add(&sum, value64, offset64)) {
-          last->value = Literal(int64_t(sum));
+          last->value = Literal(static_cast<int64_t>(sum));
           offset = 0;
         }
       } else {
         // don't do this if it would wrap the pointer
-        if (value64 <= uint64_t(std::numeric_limits<int32_t>::max()) &&
-            offset64 <= uint64_t(std::numeric_limits<int32_t>::max()) &&
+        if (value64 <= static_cast<uint64_t>(std::numeric_limits<int32_t>::max()) &&
+            offset64 <= static_cast<uint64_t>(std::numeric_limits<int32_t>::max()) &&
             value64 + offset64 <=
-              uint64_t(std::numeric_limits<int32_t>::max())) {
-          last->value = Literal(int32_t(value64 + offset64));
+              static_cast<uint64_t>(std::numeric_limits<int32_t>::max())) {
+          last->value = Literal(static_cast<int32_t>(value64 + offset64));
           offset = 0;
         }
       }
@@ -4094,7 +4094,7 @@ private:
     static_assert(std::is_same<T, float>::value ||
                     std::is_same<T, double>::value,
                   "type mismatch");
-    double invDivisor = 1.0 / (double)c;
+    double invDivisor = 1.0 / static_cast<double>(c);
     binary->op = std::is_same<T, float>::value ? MulFloat32 : MulFloat64;
     binary->right->cast<Const>()->value = Literal(static_cast<T>(invDivisor));
     return binary;
@@ -4281,48 +4281,48 @@ private:
       curr->type = Type::i32;
       return builder.makeUnary(ExtendUInt32, curr);
     }
-    // (unsigned)x < 0   ==>   i32(0)
+    // static_cast<unsigned>(x) < 0   ==>   i32(0)
     if (matches(curr, binary(LtU, pure(&left), ival(0)))) {
       right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
-    // (unsigned)x <= -1  ==>   i32(1)
+    // static_cast<unsigned>(x) <= -1  ==>   i32(1)
     if (matches(curr, binary(LeU, any(&left), ival(-1)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return getDroppedChildrenAndAppend(curr, right);
     }
-    // (unsigned)x > -1   ==>   i32(0)
+    // static_cast<unsigned>(x) > -1   ==>   i32(0)
     if (matches(curr, binary(GtU, any(&left), ival(-1)))) {
       right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return getDroppedChildrenAndAppend(curr, right);
     }
-    // (unsigned)x >= 0   ==>   i32(1)
+    // static_cast<unsigned>(x) >= 0   ==>   i32(1)
     if (matches(curr, binary(GeU, pure(&left), ival(0)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }
-    // (unsigned)x < -1   ==>   x != -1
+    // static_cast<unsigned>(x) < -1   ==>   x != -1
     // Friendlier to JS emitting as we don't need to write an unsigned -1 value
     // which is large.
     if (matches(curr, binary(LtU, any(), ival(-1)))) {
       curr->op = Abstract::getBinary(type, Ne);
       return curr;
     }
-    // (unsigned)x <= 0   ==>   x == 0
+    // static_cast<unsigned>(x) <= 0   ==>   x == 0
     if (matches(curr, binary(LeU, any(), ival(0)))) {
       curr->op = Abstract::getBinary(type, Eq);
       return curr;
     }
-    // (unsigned)x > 0   ==>   x != 0
+    // static_cast<unsigned>(x) > 0   ==>   x != 0
     if (matches(curr, binary(GtU, any(), ival(0)))) {
       curr->op = Abstract::getBinary(type, Ne);
       return curr;
     }
-    // (unsigned)x >= -1  ==>   x == -1
+    // static_cast<unsigned>(x) >= -1  ==>   x == -1
     if (matches(curr, binary(GeU, any(), ival(-1)))) {
       curr->op = Abstract::getBinary(type, Eq);
       return curr;
@@ -4794,11 +4794,11 @@ private:
       }
       // x - y == 0  =>  x == y
       // x - y != 0  =>  x != y
-      // unsigned(x - y) > 0    =>   x != y
-      // unsigned(x - y) <= 0   =>   x == y
+      // static_cast<unsigned>(x - y) > 0    =>   x != y
+      // static_cast<unsigned>(x - y) <= 0   =>   x == y
       {
         Binary* inner;
-        // unsigned(x - y) > 0    =>   x != y
+        // static_cast<unsigned>(x - y) > 0    =>   x != y
         if (matches(curr,
                     binary(GtU, binary(&inner, Sub, any(), any()), ival(0)))) {
           curr->op = Abstract::getBinary(type, Ne);
@@ -4806,7 +4806,7 @@ private:
           curr->left = inner->left;
           return curr;
         }
-        // unsigned(x - y) <= 0   =>   x == y
+        // static_cast<unsigned>(x - y) <= 0   =>   x == y
         if (matches(curr,
                     binary(LeU, binary(&inner, Sub, any(), any()), ival(0)))) {
           curr->op = Abstract::getBinary(type, Eq);
@@ -4930,7 +4930,7 @@ private:
       }
 
       // Comparisons can sometimes be simplified depending on the number of
-      // bits, e.g.  (unsigned)x > y  must be true if x has strictly more bits.
+      // bits, e.g.  static_cast<unsigned>(x) > y  must be true if x has strictly more bits.
       // A common case is a constant on the right, e.g. (x & 255) < 256 must be
       // true.
       // TODO: use getMinBits in more places, see ideas in
@@ -4948,8 +4948,8 @@ private:
             // There are not enough bits on the left for it to be equal to the
             // right, making various comparisons obviously false:
             //             x == y
-            //   (unsigned)x >  y
-            //   (unsigned)x >= y
+            //   static_cast<unsigned>(x) >  y
+            //   static_cast<unsigned>(x) >= y
             // and the same for signed, if y does not have the sign bit set
             // (in that case, the comparison is effectively unsigned).
             //
@@ -4968,8 +4968,8 @@ private:
 
             // And some are obviously true:
             //             x != y
-            //   (unsigned)x <  y
-            //   (unsigned)x <= y
+            //   static_cast<unsigned>(x) <  y
+            //   static_cast<unsigned>(x) <= y
             // and likewise for signed, as above.
             if (curr->op == Abstract::getBinary(type, Ne) ||
                 curr->op == Abstract::getBinary(type, LtU) ||
@@ -5041,10 +5041,10 @@ private:
       case NearestFloat32:
       case NearestFloat64: {
         // Rounding after integer to float conversion may be skipped
-        //   ceil(float(int(x)))     ==>  float(int(x))
-        //   floor(float(int(x)))    ==>  float(int(x))
-        //   trunc(float(int(x)))    ==>  float(int(x))
-        //   nearest(float(int(x)))  ==>  float(int(x))
+        //   ceil(static_cast<float>(static_cast<int>(x)))     ==>  static_cast<float>(static_cast<int>(x))
+        //   floor(static_cast<float>(static_cast<int>(x)))    ==>  static_cast<float>(static_cast<int>(x))
+        //   trunc(static_cast<float>(static_cast<int>(x)))    ==>  static_cast<float>(static_cast<int>(x))
+        //   nearest(static_cast<float>(static_cast<int>(x)))  ==>  static_cast<float>(static_cast<int>(x))
         Unary* inner;
         if (matches(curr->value, unary(&inner, any()))) {
           switch (inner->op) {
@@ -5388,7 +5388,7 @@ private:
           if (options.shrinkLevel == 0) {
             if (getModule()->features.hasSIMD()) {
               uint8_t values[16];
-              std::fill_n(values, 16, (uint8_t)value);
+              std::fill_n(values, 16, static_cast<uint8_t>(value));
               return builder.makeStore(16,
                                        offset,
                                        align,

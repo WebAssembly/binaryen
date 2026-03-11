@@ -59,7 +59,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
     added =
       builder.makeBinary(SubInt32,
                          builder.makeGlobalGet(stackPointer->name, pointerType),
-                         builder.makeConst(int32_t(size)));
+                         builder.makeConst(static_cast<int32_t>(size)));
   } else {
     WASM_UNREACHABLE("unhandled pointerType");
   }
@@ -70,7 +70,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
       stackPointer->name,
       builder.makeBinary(AddInt32,
                          builder.makeLocalGet(local, pointerType),
-                         builder.makeConst(int32_t(size))));
+                         builder.makeConst(static_cast<int32_t>(size))));
   };
   // add stack restores to the returns
   FindAllPointers<Return> finder(func->body);

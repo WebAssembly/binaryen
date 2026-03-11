@@ -36,7 +36,7 @@ int popCount(uint16_t v) {
 #if __has_builtin(__builtin_popcount) || defined(__GNUC__)
   return __builtin_popcount(v);
 #else
-  return popCount((uint8_t)(v & 0xFF)) + popCount((uint8_t)(v >> 8));
+  return popCount(static_cast<uint8_t>(v & 0xFF)) + popCount(static_cast<uint8_t>(v >> 8));
 #endif
 }
 
@@ -56,7 +56,7 @@ int popCount(uint64_t v) {
 #if __has_builtin(__builtin_popcount) || defined(__GNUC__)
   return __builtin_popcountll(v);
 #else
-  return popCount((uint32_t)v) + popCount((uint32_t)(v >> 32));
+  return popCount(static_cast<uint32_t>(v)) + popCount(static_cast<uint32_t>(v >> 32));
 #endif
 }
 
@@ -78,7 +78,7 @@ int countTrailingZeroes(uint32_t v) {
 #elif defined(_MSC_VER)
   unsigned long count;
   _BitScanForward(&count, v);
-  return (int)count;
+  return static_cast<int>(count);
 #else
   // See Stanford bithacks, count the consecutive zero bits (trailing) on the
   // right with multiply and lookup:
@@ -86,7 +86,7 @@ int countTrailingZeroes(uint32_t v) {
   static const uint8_t tbl[32] = {0,  1,  28, 2,  29, 14, 24, 3,  30, 22, 20,
                                   15, 25, 17, 4,  8,  31, 27, 13, 23, 21, 19,
                                   16, 7,  26, 12, 18, 6,  11, 5,  10, 9};
-  return (int)tbl[((uint32_t)((v & -v) * 0x077CB531U)) >> 27];
+  return tbl[(static_cast<uint32_t>((v & -v) * 0x077CB531U)) >> 27];
 #endif
 }
 
@@ -99,10 +99,10 @@ int countTrailingZeroes(uint64_t v) {
 #elif defined(_MSC_VER) && defined(_M_X64)
   unsigned long count;
   _BitScanForward64(&count, v);
-  return (int)count;
+  return static_cast<int>(count);
 #else
-  return (uint32_t)v ? countTrailingZeroes((uint32_t)v)
-                     : 32 + countTrailingZeroes((uint32_t)(v >> 32));
+  return static_cast<uint32_t>(v) ? countTrailingZeroes(static_cast<uint32_t>(v))
+                     : 32 + countTrailingZeroes(static_cast<uint32_t>(v >> 32));
 #endif
 }
 
@@ -118,7 +118,7 @@ int countLeadingZeroes(uint32_t v) {
   // BitScanReverse gives the bit position (0 for the LSB, then 1, etc.) of the
   // first bit that is 1, when looking from the MSB. To count leading zeros, we
   // need to adjust that.
-  return 31 - int(count);
+  return 31 - static_cast<int>(count);
 #else
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
@@ -131,7 +131,7 @@ int countLeadingZeroes(uint32_t v) {
   v = v | (v >> 4);
   v = v | (v >> 8);
   v = v | (v >> 16);
-  return (int)tbl[((uint32_t)(v * 0x07C4ACDDU)) >> 27];
+  return tbl[(static_cast<uint32_t>(v * 0x07C4ACDDU)) >> 27];
 #endif
 }
 
@@ -144,10 +144,10 @@ int countLeadingZeroes(uint64_t v) {
 #elif defined(_MSC_VER) && defined(_M_X64)
   unsigned long count;
   _BitScanReverse64(&count, v);
-  return 63 - int(count);
+  return 63 - static_cast<int>(count);
 #else
-  return v >> 32 ? countLeadingZeroes((uint32_t)(v >> 32))
-                 : 32 + countLeadingZeroes((uint32_t)v);
+  return v >> 32 ? countLeadingZeroes(static_cast<uint32_t>(v >> 32))
+                 : 32 + countLeadingZeroes(static_cast<uint32_t>(v));
 #endif
 }
 
@@ -178,7 +178,7 @@ bool isPowerOf2InvertibleFloat(float v) {
 }
 
 bool isPowerOf2InvertibleFloat(double v) {
-  // See isPowerOf2InvertibleFloat(float)
+  // See isPowerOf2InvertibleFloat(float v)
   const uint64_t MIN_POT = 0x001ULL << 52;  // 0x1p-1022
   const uint64_t MAX_POT = 0x7FDULL << 52;  // 0x1p+1022
   const uint64_t EXP_MASK = 0x7FFULL << 52; // mask only exponent

@@ -57,7 +57,7 @@ Global* getStackPointerGlobal(Module& wasm) {
   return nullptr;
 }
 
-const Address UNKNOWN_OFFSET(uint32_t(-1));
+const Address UNKNOWN_OFFSET(static_cast<uint32_t>(-1));
 
 std::string escape(std::string code) {
   // replace newlines quotes with escaped newlines

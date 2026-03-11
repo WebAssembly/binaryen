@@ -384,7 +384,7 @@ public:
       }
     } else if (isGlobal()) {
       auto info = getGlobal();
-      o << "GlobalInfo $" << info.name << " K: " << int(info.kind)
+      o << "GlobalInfo $" << info.name << " K: " << static_cast<int>(info.kind)
         << " T: " << getType();
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       auto t = coneType->type;
@@ -593,28 +593,28 @@ template<> struct hash<wasm::PossibleContents> {
 template<> struct hash<wasm::ExpressionLocation> {
   size_t operator()(const wasm::ExpressionLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
-      {size_t(loc.expr), loc.tupleIndex});
+      {reinterpret_cast<size_t>(loc.expr), loc.tupleIndex});
   }
 };
 
 template<> struct hash<wasm::ParamLocation> {
   size_t operator()(const wasm::ParamLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
-      {size_t(loc.func), loc.index});
+      {reinterpret_cast<size_t>(loc.func), loc.index});
   }
 };
 
 template<> struct hash<wasm::LocalLocation> {
   size_t operator()(const wasm::LocalLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
-      {size_t(loc.func), loc.index});
+      {reinterpret_cast<size_t>(loc.func), loc.index});
   }
 };
 
 template<> struct hash<wasm::ResultLocation> {
   size_t operator()(const wasm::ResultLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
-      {size_t(loc.func), loc.index});
+      {reinterpret_cast<size_t>(loc.func), loc.index});
   }
 };
 

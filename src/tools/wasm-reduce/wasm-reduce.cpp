@@ -150,7 +150,7 @@ struct ProgramResult {
     if (!GetExitCodeProcess(pi.hProcess, &dwordExitCode)) {
       Fatal() << "GetExitCodeProcess failed: " << GetLastErrorStdStr() << ".\n";
     }
-    code = (int)dwordExitCode;
+    code = static_cast<int>(dwordExitCode);
 
     // Close process and thread handles.
     CloseHandle(pi.hProcess);
@@ -838,7 +838,7 @@ struct Reducer
           std::cerr << "|      shrank segment from " << save.size() << " => "
                     << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
-          skip = std::min(size_t(factor), 2 * skip);
+          skip = std::min(static_cast<size_t>(factor), 2 * skip);
         } else {
           data = std::move(save);
           return false;
@@ -946,10 +946,10 @@ struct Reducer
         // Subtract 1 since the loop increments us anyhow by one: we want to
         // skip over the skipped functions, and not any more.
         x += skip - 1;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(static_cast<size_t>(factor), 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, static_cast<size_t>(1)); // or 1?
         x += factor / 100;
       }
     }
@@ -1000,12 +1000,12 @@ struct Reducer
         for (auto exp : currExports) {
           module->addExport(new Export(exp));
         }
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, static_cast<size_t>(1)); // or 1?
       } else {
         std::cerr << "|      removed " << currExports.size() << " exports\n";
         noteReduction(currExports.size());
         i += skip;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(static_cast<size_t>(factor), 2 * skip);
       }
     }
     // If we are left with a single function that is not exported or used in
@@ -1147,9 +1147,9 @@ struct Reducer
     if (condition->is<Const>()) {
       return;
     }
-    auto* c = builder->makeConst(int32_t(0));
+    auto* c = builder->makeConst(static_cast<int32_t>(0));
     if (!tryToReplaceChild(condition, c)) {
-      c->value = Literal(int32_t(1));
+      c->value = Literal(static_cast<int32_t>(1));
       tryToReplaceChild(condition, c);
     }
   }
@@ -1561,7 +1561,7 @@ More documentation can be found at
 
     // no point in a factor lorger than the size
     assert(newSize > 4); // wasm modules are >4 bytes anyhow
-    factor = std::min(factor, int(newSize) / 4);
+    factor = std::min(factor, static_cast<int>(newSize) / 4);
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce

@@ -29,7 +29,7 @@ namespace wasm {
 // For example, if the parent is a block and the node is before the last
 // position, it is not used.
 bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
-  for (int i = int(stack.size()) - 2; i >= 0; i--) {
+  for (int i = static_cast<int>(stack.size()) - 2; i >= 0; i--) {
     auto* curr = stack[i];
     auto* above = stack[i + 1];
     // only if and block can drop values (pre-drop expression was added) FIXME
@@ -65,7 +65,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
 
 // Checks if a value is dropped.
 bool ExpressionAnalyzer::isResultDropped(ExpressionStack& stack) {
-  for (int i = int(stack.size()) - 2; i >= 0; i--) {
+  for (int i = static_cast<int>(stack.size()) - 2; i >= 0; i--) {
     auto* curr = stack[i];
     auto* above = stack[i + 1];
     if (curr->is<Block>()) {

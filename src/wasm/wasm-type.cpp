@@ -225,11 +225,11 @@ namespace {
 
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   assert(!ht.isBasic());
-  return (HeapTypeInfo*)ht.getID();
+  return reinterpret_cast<HeapTypeInfo*>(ht.getID());
 }
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
-  return HeapType(uintptr_t(info.get()));
+  return HeapType(reinterpret_cast<uintptr_t>(info.get()));
 }
 
 bool isTemp(HeapType type) {
@@ -397,7 +397,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     return a;
   }
   // Canonicalize to have `a` be the lesser type.
-  if (unsigned(a) > unsigned(b)) {
+  if (static_cast<unsigned>(a) > static_cast<unsigned>(b)) {
     std::swap(a, b);
   }
   HeapType lubUnshared;
@@ -497,7 +497,7 @@ private:
 
     auto insertNew = [&]() {
       auto ptr = getPtr();
-      TypeID id = uintptr_t(ptr.get()) | 1;
+      TypeID id = reinterpret_cast<uintptr_t>(ptr.get()) | 1;
       assert(id > Type::_last_basic_type);
       typeIDs.insert({*ptr, id});
       constructedTuples.emplace_back(std::move(ptr));
@@ -549,7 +549,7 @@ struct RecGroupStore {
   }
 
   RecGroup insert(std::unique_ptr<RecGroupInfo>&& info) {
-    RecGroup group{uintptr_t(info.get())};
+    RecGroup group{reinterpret_cast<uintptr_t>(info.get())};
     auto canonical = insert(group);
     if (canonical == group) {
       builtGroups.emplace_back(std::move(info));
@@ -919,7 +919,7 @@ std::optional<HeapType> HeapType::getDeclaredSuperType() const {
   }
   HeapTypeInfo* super = getHeapTypeInfo(*this)->supertype;
   if (super != nullptr) {
-    return HeapType(uintptr_t(super));
+    return HeapType(reinterpret_cast<uintptr_t>(super));
   }
   return {};
 }
@@ -978,7 +978,7 @@ std::optional<HeapType> HeapType::getDescriptorType() const {
     return std::nullopt;
   }
   if (auto* desc = getHeapTypeInfo(*this)->descriptor) {
-    return HeapType(uintptr_t(desc));
+    return HeapType(reinterpret_cast<uintptr_t>(desc));
   }
   return std::nullopt;
 }
@@ -988,7 +988,7 @@ std::optional<HeapType> HeapType::getDescribedType() const {
     return std::nullopt;
   }
   if (auto* desc = getHeapTypeInfo(*this)->described) {
-    return HeapType(uintptr_t(desc));
+    return HeapType(reinterpret_cast<uintptr_t>(desc));
   }
   return std::nullopt;
 }
@@ -1028,7 +1028,7 @@ size_t HeapType::getDepth() const {
         case HeapType::noext:
         case HeapType::noexn:
           // Bottom types are infinitely deep.
-          depth = size_t(-1l);
+          depth = static_cast<size_t>(-1l);
       }
       break;
     case HeapTypeKind::Func:
@@ -1218,13 +1218,13 @@ std::optional<HeapType> HeapType::getLeastUpperBound(HeapType a, HeapType b) {
     }
     if (nextA) {
       if (!seen.insert(nextA).second) {
-        return HeapType(uintptr_t(nextA));
+        return HeapType(reinterpret_cast<uintptr_t>(nextA));
       }
       infoA = nextA;
     }
     if (nextB) {
       if (!seen.insert(nextB).second) {
-        return HeapType(uintptr_t(nextB));
+        return HeapType(reinterpret_cast<uintptr_t>(nextB));
       }
       infoB = nextB;
     }
@@ -1240,11 +1240,11 @@ static_assert(alignof(std::vector<HeapType>) > 1);
 RecGroup HeapType::getRecGroup() const {
   assert(!isBasic());
   if (auto* info = getHeapTypeInfo(*this)->recGroup) {
-    return RecGroup(uintptr_t(info));
+    return RecGroup(reinterpret_cast<uintptr_t>(info));
   } else {
     // Mark the low bit to signify that this is a trivial recursion group and
     // points to a heap type info rather than a vector of heap types.
-    return RecGroup(id | 1);
+    return RecGroup(getID() | 1);
   }
 }
 
@@ -1350,20 +1350,20 @@ FeatureSet HeapType::getFeatures() const {
 }
 
 HeapType RecGroup::Iterator::operator*() const {
-  if (parent->id & 1) {
+  if (parent->getID() & 1) {
     // This is a trivial recursion group. Mask off the low bit to recover the
     // single HeapType.
-    return {HeapType(parent->id & ~(uintptr_t)1)};
+    return HeapType(parent->getID() & ~static_cast<uintptr_t>(1));
   } else {
-    return (*(std::vector<HeapType>*)parent->id)[index];
+    return (*reinterpret_cast<std::vector<HeapType>*>(parent->getID()))[index];
   }
 }
 
 size_t RecGroup::size() const {
-  if (id & 1) {
+  if (getID() & 1) {
     return 1;
   } else {
-    return ((std::vector<HeapType>*)id)->size();
+    return reinterpret_cast<std::vector<HeapType>*>(getID())->size();
   }
 }
 
@@ -2004,15 +2004,15 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   size_t digest = wasm::hash(bool(info.supertype));
   wasm::rehash(digest, !!info.supertype);
   if (info.supertype) {
-    hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
+    hash_combine(digest, hash(HeapType(reinterpret_cast<uintptr_t>(info.supertype))));
   }
   wasm::rehash(digest, !!info.descriptor);
   if (info.descriptor) {
-    hash_combine(digest, hash(HeapType(uintptr_t(info.descriptor))));
+    hash_combine(digest, hash(HeapType(reinterpret_cast<uintptr_t>(info.descriptor))));
   }
   wasm::rehash(digest, !!info.described);
   if (info.described) {
-    hash_combine(digest, hash(HeapType(uintptr_t(info.described))));
+    hash_combine(digest, hash(HeapType(reinterpret_cast<uintptr_t>(info.described))));
   }
   wasm::rehash(digest, info.isOpen);
   wasm::rehash(digest, info.share);
@@ -2139,8 +2139,8 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     return false;
   }
   if (a.supertype) {
-    HeapType superA(uintptr_t(a.supertype));
-    HeapType superB(uintptr_t(b.supertype));
+    HeapType superA(reinterpret_cast<uintptr_t>(a.supertype));
+    HeapType superB(reinterpret_cast<uintptr_t>(b.supertype));
     if (!eq(superA, superB)) {
       return false;
     }
@@ -2149,8 +2149,8 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     return false;
   }
   if (a.descriptor) {
-    HeapType descA(uintptr_t(a.descriptor));
-    HeapType descB(uintptr_t(b.descriptor));
+    HeapType descA(reinterpret_cast<uintptr_t>(a.descriptor));
+    HeapType descB(reinterpret_cast<uintptr_t>(b.descriptor));
     if (!eq(descA, descB)) {
       return false;
     }
@@ -2159,8 +2159,8 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     return false;
   }
   if (a.described) {
-    HeapType descA(uintptr_t(a.described));
-    HeapType descB(uintptr_t(b.described));
+    HeapType descA(reinterpret_cast<uintptr_t>(a.described));
+    HeapType descB(reinterpret_cast<uintptr_t>(b.described));
     if (!eq(descA, descB)) {
       return false;
     }
@@ -2373,7 +2373,7 @@ void TypeBuilder::createRecGroup(size_t index, size_t length) {
     info->recGroupIndex = i;
   }
   impl->recGroups.insert(
-    {RecGroup(uintptr_t(groupInfo.get())), std::move(groupInfo)});
+    {RecGroup(reinterpret_cast<uintptr_t>(groupInfo.get())), std::move(groupInfo)});
 }
 
 void TypeBuilder::setOpen(size_t i, bool open) {
@@ -2512,7 +2512,7 @@ validateTypeInfo(HeapTypeInfo& info,
   if (auto* super = info.supertype) {
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
-    if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
+    if (super->isTemp && !seenTypes.count(HeapType(reinterpret_cast<uintptr_t>(super)))) {
       return TypeBuilder::ErrorReason::ForwardSupertypeReference;
     }
     // The supertype must have a valid structure.
@@ -2528,7 +2528,7 @@ validateTypeInfo(HeapTypeInfo& info,
       return TypeBuilder::ErrorReason::NonStructDescribes;
     }
     assert(desc->isTemp && "unexpected canonical described type");
-    if (!seenTypes.count(HeapType(uintptr_t(desc)))) {
+    if (!seenTypes.count(HeapType(reinterpret_cast<uintptr_t>(desc)))) {
       return TypeBuilder::ErrorReason::ForwardDescribesReference;
     }
     if (desc->descriptor != &info) {
@@ -2620,7 +2620,7 @@ void updateReferencedHeapTypes(
 
   // Update the supertype.
   if (info->supertype) {
-    HeapType super(uintptr_t(info->supertype));
+    HeapType super(reinterpret_cast<uintptr_t>(info->supertype));
     if (auto it = canonicalized.find(super); it != canonicalized.end()) {
       info->supertype = getHeapTypeInfo(it->second);
     }
@@ -2628,13 +2628,13 @@ void updateReferencedHeapTypes(
 
   // Update the descriptor and described types.
   if (info->descriptor) {
-    HeapType desc(uintptr_t(info->descriptor));
+    HeapType desc(reinterpret_cast<uintptr_t>(info->descriptor));
     if (auto it = canonicalized.find(desc); it != canonicalized.end()) {
       info->descriptor = getHeapTypeInfo(it->second);
     }
   }
   if (info->described) {
-    HeapType desc(uintptr_t(info->described));
+    HeapType desc(reinterpret_cast<uintptr_t>(info->described));
     if (auto it = canonicalized.find(desc); it != canonicalized.end()) {
       info->described = getHeapTypeInfo(it->second);
     }

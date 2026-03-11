@@ -421,7 +421,7 @@ struct SafeHeap : public Pass {
     }
     return builder.makeIf(
       builder.makeBinary(
-        AndInt32, ptrBits, builder.makeConst(int32_t(align - 1))),
+        AndInt32, ptrBits, builder.makeConst(static_cast<int32_t>(align - 1))),
       builder.makeCall(alignfault, {}, Type::none));
   }
 

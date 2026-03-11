@@ -124,11 +124,11 @@ private:
 void HashStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
   // Use a negative value to distinguish symbols for separators from symbols
   // for Expressions
-  assert((uint32_t)nextSeparatorVal >= nextVal);
+  assert(static_cast<uint32_t>(nextSeparatorVal) >= nextVal);
   if (auto funcStart = reason.getFuncStart()) {
     idxToFuncName.insert({hashString.size(), funcStart->func->name});
   }
-  hashString.push_back((uint32_t)nextSeparatorVal);
+  hashString.push_back(static_cast<uint32_t>(nextSeparatorVal));
   nextSeparatorVal--;
   exprs.push_back(nullptr);
 }

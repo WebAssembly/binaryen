@@ -50,19 +50,19 @@ struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
   void visitUnary(Unary* curr) {
     switch (curr->op) {
       case ExtendS8Int32:
-        lowerToShifts(curr->value, ShlInt32, ShrSInt32, int32_t(8));
+        lowerToShifts(curr->value, ShlInt32, ShrSInt32, static_cast<int32_t>(8));
         break;
       case ExtendS16Int32:
-        lowerToShifts(curr->value, ShlInt32, ShrSInt32, int32_t(16));
+        lowerToShifts(curr->value, ShlInt32, ShrSInt32, static_cast<int32_t>(16));
         break;
       case ExtendS8Int64:
-        lowerToShifts(curr->value, ShlInt64, ShrSInt64, int64_t(8));
+        lowerToShifts(curr->value, ShlInt64, ShrSInt64, static_cast<int64_t>(8));
         break;
       case ExtendS16Int64:
-        lowerToShifts(curr->value, ShlInt64, ShrSInt64, int64_t(16));
+        lowerToShifts(curr->value, ShlInt64, ShrSInt64, static_cast<int64_t>(16));
         break;
       case ExtendS32Int64:
-        lowerToShifts(curr->value, ShlInt64, ShrSInt64, int64_t(32));
+        lowerToShifts(curr->value, ShlInt64, ShrSInt64, static_cast<int64_t>(32));
         break;
       default: {
       }

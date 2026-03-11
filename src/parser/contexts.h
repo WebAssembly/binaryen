@@ -2233,7 +2233,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                           const std::array<uint8_t, 16>& vals) {
     std::array<Literal, 16> lanes;
     for (size_t i = 0; i < 16; ++i) {
-      lanes[i] = Literal(uint32_t(vals[i]));
+      lanes[i] = Literal(static_cast<uint32_t>(vals[i]));
     }
     return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
   }
@@ -2243,7 +2243,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                           const std::array<uint16_t, 8>& vals) {
     std::array<Literal, 8> lanes;
     for (size_t i = 0; i < 8; ++i) {
-      lanes[i] = Literal(uint32_t(vals[i]));
+      lanes[i] = Literal(static_cast<uint32_t>(vals[i]));
     }
     return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
   }

@@ -332,7 +332,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       curr->targets.resize(curr->targets.size() - removable);
       Builder builder(*getModule());
       curr->condition = builder.makeBinary(
-        SubInt32, curr->condition, builder.makeConst(int32_t(removable)));
+        SubInt32, curr->condition, builder.makeConst(static_cast<int32_t>(removable)));
     }
     // when there isn't a value, we can do some trivial optimizations without
     // worrying about the value being executed before the condition
@@ -387,7 +387,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                                           EqInt32,
                                           builder.makeLocalGet(temp, Type::i32),
                                           builder.makeConst(
-                                            int32_t(curr->targets.size() - 1))),
+                                            static_cast<int32_t>(curr->targets.size() - 1))),
                                         builder.makeBreak(curr->targets.back()),
                                         builder.makeBreak(curr->default_)),
                          builder.makeBreak(curr->targets.front())));
@@ -478,7 +478,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         Builder builder(*getModule());
         curr->condition = builder.makeSelect(
-          child->condition, curr->condition, builder.makeConst(int32_t(0)));
+          child->condition, curr->condition, builder.makeConst(static_cast<int32_t>(0)));
         BranchHints::applyAndTo(curr, child, curr, getFunction());
         curr->ifTrue = child->ifTrue;
       }
@@ -1891,7 +1891,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             return nullptr;
           }
           uint32_t value = c->value.geti32();
-          if (value >= uint32_t(std::numeric_limits<int32_t>::max())) {
+          if (value >= static_cast<uint32_t>(std::numeric_limits<int32_t>::max())) {
             return nullptr;
           }
           return br;
@@ -2016,7 +2016,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
               if (min != 0) {
                 newCondition = builder.makeBinary(
-                  SubInt32, newCondition, builder.makeConst(int32_t(min)));
+                  SubInt32, newCondition, builder.makeConst(static_cast<int32_t>(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,

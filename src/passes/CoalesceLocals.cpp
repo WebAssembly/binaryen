@@ -186,7 +186,7 @@ void CoalesceLocals::calculateInterferences() {
     auto& actions = curr->contents.actions;
     std::vector<bool> endsLiveRange(actions.size(), false);
     auto live = curr->contents.end;
-    for (int i = int(actions.size()) - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(actions.size()) - 1; i >= 0; i--) {
       auto& action = actions[i];
       auto index = action.index;
       if (action.isGet()) {
@@ -371,7 +371,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
       std::cerr << "  ";
     }
     for (Index j = i + 1; j < numLocals; j++) {
-      std::cerr << int(interferes(i, j)) << ' ';
+      std::cerr << static_cast<int>(interferes(i, j)) << ' ';
     }
     std::cerr << " : $" << i << '\n';
   }
@@ -381,7 +381,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
       std::cerr << "  ";
     }
     for (Index j = i + 1; j < numLocals; j++) {
-      std::cerr << int(getCopies(i, j)) << ' ';
+      std::cerr << static_cast<int>(getCopies(i, j)) << ' ';
     }
     std::cerr << " : $" << i << '\n';
   }

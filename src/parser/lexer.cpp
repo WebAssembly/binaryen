@@ -139,9 +139,9 @@ struct LexIntResult : LexResult {
   template<typename T> bool isSigned() {
     static_assert(std::is_integral_v<T> && std::is_signed_v<T>);
     if (sign == Neg) {
-      return uint64_t(std::numeric_limits<T>::min()) <= n || n == 0;
+      return static_cast<uint64_t>(std::numeric_limits<T>::min()) <= n || n == 0;
     }
-    return n <= uint64_t(std::numeric_limits<T>::max());
+    return n <= static_cast<uint64_t>(std::numeric_limits<T>::max());
   }
 };
 
@@ -845,7 +845,7 @@ std::optional<LexStrResult> str(std::string_view in) {
         }
         auto lexed = *ictx.lexed();
         ctx.take(lexed);
-        ctx.appendEscaped(char(lexed.n));
+        ctx.appendEscaped(static_cast<char>(lexed.n));
       }
     } else {
       // Normal characters
@@ -1110,9 +1110,9 @@ std::optional<double> Lexer::takeF64() {
       if (result->n == 0) {
         return -0.0;
       }
-      return double(int64_t(result->n));
+      return static_cast<double>(static_cast<int64_t>(result->n));
     }
-    return double(result->n);
+    return static_cast<double>(result->n);
   }
   return std::nullopt;
 }
@@ -1147,15 +1147,15 @@ std::optional<float> Lexer::takeF32() {
       if (result->n == 0) {
         return -0.0f;
       }
-      return float(int64_t(result->n));
+      return static_cast<float>(static_cast<int64_t>(result->n));
     }
-    return float(result->n);
+    return static_cast<float>(result->n);
   }
   return std::nullopt;
 }
 
 TextPos Lexer::position(const char* c) const {
-  assert(size_t(c - buffer.data()) <= buffer.size());
+  assert(static_cast<size_t>(c - buffer.data()) <= buffer.size());
   TextPos pos{1, 0};
   for (const char* p = buffer.data(); p != c; ++p) {
     if (*p == '\n') {

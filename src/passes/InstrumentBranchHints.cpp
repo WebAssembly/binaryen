@@ -168,8 +168,8 @@ struct InstrumentBranchHints
     // Instrument the condition.
     auto tempLocal = builder.addVar(getFunction(), Type::i32);
     auto* set = builder.makeLocalSet(tempLocal, curr->condition);
-    auto* idConst = builder.makeConst(Literal(int32_t(id)));
-    auto* guess = builder.makeConst(Literal(int32_t(*likely)));
+    auto* idConst = builder.makeConst(Literal(static_cast<int32_t>(id)));
+    auto* guess = builder.makeConst(Literal(static_cast<int32_t>(*likely)));
     auto* get1 = builder.makeLocalGet(tempLocal, Type::i32);
     auto* log = builder.makeCall(logBranch, {idConst, guess, get1}, Type::none);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);

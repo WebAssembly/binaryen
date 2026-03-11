@@ -373,7 +373,7 @@ struct CallContext {
     // moving.
     std::unordered_set<Expression*> immovable;
     EffectAnalyzer nonMovingEffects(options, wasm);
-    for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
+    for (auto i = static_cast<int64_t>(lister.list.size()) - 1; i >= 0; i--) {
       auto* curr = lister.list[i];
 
       // This may have been marked as immovable because of the parent. We do

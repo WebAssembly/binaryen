@@ -279,7 +279,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   void scanLivenessThroughActions(std::vector<LivenessAction>& actions,
                                   SetOfLocals& live) {
     // move towards the front
-    for (int i = int(actions.size()) - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(actions.size()) - 1; i >= 0; i--) {
       auto& action = actions[i];
       if (action.isGet()) {
         live.insert(action.index);
@@ -293,7 +293,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     if (j > i) {
       std::swap(i, j);
     }
-    copies.set(i, j, std::min(copies.get(i, j), uint8_t(254)) + 1);
+    copies.set(i, j, std::min(copies.get(i, j), static_cast<uint8_t>(254)) + 1);
     totalCopies[i]++;
     totalCopies[j]++;
   }

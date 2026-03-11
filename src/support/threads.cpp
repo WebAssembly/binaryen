@@ -230,7 +230,7 @@ void ThreadPool::work(
   DEBUG_POOL("work() is done\n");
 }
 
-size_t ThreadPool::size() { return std::max(size_t(1), threads.size()); }
+size_t ThreadPool::size() { return std::max(static_cast<size_t>(1), threads.size()); }
 
 bool ThreadPool::isRunning() {
   DEBUG_POOL("check if running\n");

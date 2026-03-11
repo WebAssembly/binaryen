@@ -49,8 +49,7 @@ std::string ArchiveMemberHeader::getName() const {
   if (!end) {
     end = fileName + sizeof(fileName);
   }
-  return std::string((char*)(fileName), end - fileName);
-}
+  return std::string(reinterpret_cast<const char*>(fileName), end - fileName);}
 
 uint32_t ArchiveMemberHeader::getSize() const {
   auto* end = static_cast<const char*>(memchr(size, ' ', sizeof(size)));
@@ -145,7 +144,7 @@ std::string Archive::Child::getRawName() const {
 Archive::Child Archive::Child::getNext(bool& error) const {
   // Members are aligned to even byte boundaries.
   uint32_t nextOffset = len + (len & 1);
-  if ((size_t)(data - (const uint8_t*)parent->data.data() + nextOffset) >=
+  if (static_cast<size_t>(data - (const uint8_t*)parent->data.data() + nextOffset) >=
       parent->data.size()) { // End of the archive.
     return Child();
   }
@@ -167,7 +166,7 @@ std::string Archive::Child::getName() const {
     int offset = std::stoi(name.substr(1), nullptr, 10);
 
     // Verify it.
-    if (offset < 0 || (unsigned)offset >= parent->stringTable.len) {
+    if (offset < 0 || static_cast<unsigned>(offset) >= parent->stringTable.len) {
       wasm::Fatal() << "Malformed archive: name parsing failed\n";
     }
 
@@ -210,8 +209,8 @@ struct Symbol {
   uint32_t stringIndex;
   void next(Archive::SubBuffer& symbolTable) {
     // Symbol table entries are NUL-terminated. Skip past the next NUL.
-    stringIndex = strchr((char*)symbolTable.data + stringIndex, '\0') -
-                  (char*)symbolTable.data + 1;
+    stringIndex = strchr(reinterpret_cast<const char*>(symbolTable.data) + stringIndex, '\0') -
+                  reinterpret_cast<const char*>(symbolTable.data) + 1;
     ++symbolIndex;
   }
 };

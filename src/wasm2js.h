@@ -247,15 +247,15 @@ public:
 
     // First up check our cached of mangled names to avoid doing extra work
     // below
-    auto& map = wasmNameToMangledName[(int)scope];
+    auto& map = wasmNameToMangledName[static_cast<int>(scope)];
     auto it = map.find(name.str.data());
     if (it != map.end()) {
       return it->second;
     }
     // The mangled names in our scope.
-    auto& scopeMangledNames = mangledNames[(int)scope];
+    auto& scopeMangledNames = mangledNames[static_cast<int>(scope)];
     // In some cases (see below) we need to also check the Top scope.
-    auto& topMangledNames = mangledNames[int(NameScope::Top)];
+    auto& topMangledNames = mangledNames[static_cast<int>(NameScope::Top)];
 
     // This is the first time we've seen the `name` and `scope` pair. Generate a
     // globally unique name based on `name` and then register that in our cache
@@ -311,9 +311,9 @@ private:
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
   std::unordered_map<const void*, IString>
-    wasmNameToMangledName[(int)NameScope::Max];
+    wasmNameToMangledName[static_cast<int>(NameScope::Max)];
   // Set of all mangled names in each scope.
-  std::unordered_set<IString> mangledNames[(int)NameScope::Max];
+  std::unordered_set<IString> mangledNames[static_cast<int>(NameScope::Max)];
   std::unordered_set<IString> seenModuleImports;
 
   // If a function is callable from outside, we'll need to cast the inputs
@@ -1582,8 +1582,8 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
         // functions, so we do a bit of a hack here to get our one `Ref` to look
         // like two function arguments.
         case Type::i64: {
-          auto lo = (unsigned)curr->value.geti64();
-          auto hi = (unsigned)(curr->value.geti64() >> 32);
+          auto lo = static_cast<uint32_t>(curr->value.geti64());
+          auto hi = static_cast<uint32_t>(curr->value.geti64() >> 32);
           std::ostringstream out;
           out << lo << "," << hi;
           std::string os = out.str();
@@ -1593,7 +1593,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
         case Type::f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
           Const fake;
-          fake.value = Literal(double(curr->value.getf32()));
+          fake.value = Literal(static_cast<double>(curr->value.getf32()));
           fake.type = Type::f64;
           ret[2]->push_back(visitConst(&fake));
           return ret;
@@ -1610,6 +1610,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
         }
         default:
           Fatal() << "unknown const type";
+          WASM_UNREACHABLE("unknown const type");
       }
     }
 
@@ -1786,6 +1787,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
         }
         default: {
           Fatal() << "Unhandled type in unary: " << *curr;
+          WASM_UNREACHABLE("unhandled type");
         }
       }
     }
@@ -2914,6 +2916,7 @@ void Wasm2JSGlue::emitMemory() {
                "']['" + importedGlobal->base.toString() + "']";
       }
       Fatal() << "non-constant offsets aren't supported yet\n";
+      WASM_UNREACHABLE("unsupported offset");
     };
 
     out << "function initActiveSegments(imports) {\n";

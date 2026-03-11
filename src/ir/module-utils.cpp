@@ -778,7 +778,7 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   // of its users.
   std::vector<double> weights(groups.size());
   for (size_t i = 0; i < groups.size(); ++i) {
-    weights[i] = double(groupCounts[i]) / groups[i].size();
+    weights[i] = static_cast<double>(groupCounts[i]) / groups[i].size();
   }
   auto sorted = TopologicalSort::sort(deps);
   for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {

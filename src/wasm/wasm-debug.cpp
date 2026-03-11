@@ -301,7 +301,7 @@ struct LineState {
       // In wasm32 we have 32-bit addresses, and the delta here might be
       // negative (note that SData is 64-bit, as LLVM supports 64-bit
       // addresses too).
-      item.SData = int32_t(line - old.line);
+      item.SData = static_cast<int32_t>(line - old.line);
       newOpcodes.push_back(item);
     }
     if (col != old.col) {
@@ -678,7 +678,7 @@ struct LocationUpdater {
 // on the DWARF section. For now, support them all, but TODO stop supporting 0,
 // as there are apparently some possible corner cases where 0 is a valid value.
 static bool isTombstone(uint32_t x) {
-  return x == 0 || x == uint32_t(-1) || x == uint32_t(-2);
+  return x == 0 || x == static_cast<uint32_t>(-1) || x == static_cast<uint32_t>(-2);
 }
 
 // Update debug lines, and update the locationUpdater with debug line offset
@@ -748,7 +748,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           sequenceId++;
           // We assume the number of sequences can fit in 32 bits, and -1 is
           // an invalid value.
-          assert(sequenceId != uint32_t(-1));
+          assert(sequenceId != static_cast<uint32_t>(-1));
           state = LineState(table, sequenceId);
         }
       }

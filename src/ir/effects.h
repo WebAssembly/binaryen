@@ -177,8 +177,8 @@ public:
   //
   // Unlike walking just the body, walking the function will also
   // include the effects of any return calls the function makes. For that
-  // reason, it is a bug if a user of this code calls walk(Expression*) and not
-  // walk(Function*) if their intention is to scan an entire function body.
+  // reason, it is a bug if a user of this code calls walkstatic_cast<Expression*>(and) not
+  // walkstatic_cast<Function*>(if) their intention is to scan an entire function body.
   // Putting it another way, a return_call is syntax sugar for a return and a
   // call, where the call executes at the function scope, so there is a
   // meaningful difference between scanning an expression and scanning
@@ -531,7 +531,7 @@ private:
         self->pushTask(doVisitTry, currp);
         self->pushTask(doEndCatch, currp);
         auto& catchBodies = curr->cast<Try>()->catchBodies;
-        for (int i = int(catchBodies.size()) - 1; i >= 0; i--) {
+        for (int i = static_cast<int>(catchBodies.size()) - 1; i >= 0; i--) {
           self->pushTask(scan, &catchBodies[i]);
         }
         self->pushTask(doStartCatch, currp);

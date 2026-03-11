@@ -1422,8 +1422,8 @@ public:
       for (auto c : value.getGCData()->values) {
         auto u = c.getInteger();
         assert(u < 0x10000);
-        wtf16 << uint8_t(u & 0xFF);
-        wtf16 << uint8_t(u >> 8);
+        wtf16 << static_cast<uint8_t>(u & 0xFF);
+        wtf16 << static_cast<uint8_t>(u >> 8);
       }
       // TODO: Use wtf16.view() once we have C++20.
       return makeStringConst(wtf16.str());
@@ -1582,16 +1582,16 @@ public:
     // TODO: reuse node conditionally when possible for literals
     switch (curr->type.getBasic()) {
       case Type::i32:
-        value = Literal(int32_t(0));
+        value = Literal(static_cast<int32_t>(0));
         break;
       case Type::i64:
-        value = Literal(int64_t(0));
+        value = Literal(static_cast<int64_t>(0));
         break;
       case Type::f32:
-        value = Literal(float(0));
+        value = Literal(static_cast<float>(0));
         break;
       case Type::f64:
-        value = Literal(double(0));
+        value = Literal(static_cast<double>(0));
         break;
       case Type::v128: {
         std::array<uint8_t, 16> bytes;

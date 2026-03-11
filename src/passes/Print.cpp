@@ -734,7 +734,7 @@ struct PrintExpressionContents
         break;
     }
     restoreNormalColor(o);
-    o << " " << int(curr->index);
+    o << " " << static_cast<int>(curr->index);
   }
   void visitSIMDReplace(SIMDReplace* curr) {
     prepareColor(o);
@@ -762,7 +762,7 @@ struct PrintExpressionContents
         break;
     }
     restoreNormalColor(o);
-    o << " " << int(curr->index);
+    o << " " << static_cast<int>(curr->index);
   }
   void visitSIMDShuffle(SIMDShuffle* curr) {
     prepareColor(o);
@@ -941,7 +941,7 @@ struct PrintExpressionContents
     if (curr->align != curr->getMemBytes()) {
       o << " align=" << curr->align;
     }
-    o << " " << int(curr->index);
+    o << " " << static_cast<int>(curr->index);
   }
   void visitMemoryInit(MemoryInit* curr) {
     prepareColor(o);
@@ -2205,7 +2205,7 @@ struct PrintExpressionContents
     // not a valid tuple size. The size we print mostly doesn't matter if the
     // tuple is unreachable, but it does have to be valid.
     o << std::max(
-           {curr->tuple->type.size(), size_t(2), size_t(curr->index + 1)})
+           {curr->tuple->type.size(), static_cast<size_t>(2), static_cast<size_t>(curr->index + 1)})
       << " ";
     o << curr->index;
   }
@@ -2804,7 +2804,7 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
     std::ofstream saved;
     saved.copyfmt(o);
     o << "(@" << Annotations::InlineHint << " \"\\" << std::hex
-      << std::setfill('0') << std::setw(2) << int(*annotation.inline_)
+      << std::setfill('0') << std::setw(2) << static_cast<int>(*annotation.inline_)
       << "\")\n";
     o.copyfmt(saved);
     restoreNormalColor(o);

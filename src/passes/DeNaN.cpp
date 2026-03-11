@@ -57,13 +57,13 @@ struct DeNaN : public WalkerPass<
     auto* c = expr->dynCast<Const>();
     if (expr->type == Type::f32) {
       if (c && c->value.isNaN()) {
-        replacement = builder.makeConst(float(0));
+        replacement = builder.makeConst(static_cast<float>(0));
       } else if (!c) {
         replacement = builder.makeCall(deNan32, {expr}, Type::f32);
       }
     } else if (expr->type == Type::f64) {
       if (c && c->value.isNaN()) {
-        replacement = builder.makeConst(double(0));
+        replacement = builder.makeConst(static_cast<double>(0));
       } else if (!c) {
         replacement = builder.makeCall(deNan64, {expr}, Type::f64);
       }
@@ -133,8 +133,8 @@ struct DeNaN : public WalkerPass<
       module);
 
     // Add helper functions after the walk, so they are not instrumented.
-    addFunc(module, deNan32, Type::f32, Literal(float(0)), EqFloat32);
-    addFunc(module, deNan64, Type::f64, Literal(double(0)), EqFloat64);
+    addFunc(module, deNan32, Type::f32, Literal(static_cast<float>(0)), EqFloat32);
+    addFunc(module, deNan64, Type::f64, Literal(static_cast<double>(0)), EqFloat64);
 
     if (module->features.hasSIMD()) {
       uint8_t zero128[16] = {};

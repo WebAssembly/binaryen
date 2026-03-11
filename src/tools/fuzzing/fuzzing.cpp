@@ -997,7 +997,7 @@ void TranslateToFuzzReader::addHangLimitSupport() {
   auto glob =
     builder.makeGlobal(HANG_LIMIT_GLOBAL,
                        Type::i32,
-                       builder.makeConst(int32_t(fuzzParams->HANG_LIMIT)),
+                       builder.makeConst(static_cast<int32_t>(fuzzParams->HANG_LIMIT)),
                        Builder::Mutable);
   wasm.addGlobal(std::move(glob));
 }
@@ -1214,7 +1214,7 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   // }
   std::vector<Expression*> contents;
   contents.push_back(
-    builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
+    builder.makeLocalSet(0, builder.makeConst(static_cast<uint32_t>(5381))));
   auto zero = Literal::makeFromInt32(0, wasm.memories[0]->addressType);
   for (Index i = 0; i < fuzzParams->USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
@@ -1225,7 +1225,7 @@ void TranslateToFuzzReader::addHashMemorySupport() {
           AddInt32,
           builder.makeBinary(ShlInt32,
                              builder.makeLocalGet(0, Type::i32),
-                             builder.makeConst(uint32_t(5))),
+                             builder.makeConst(static_cast<uint32_t>(5))),
           builder.makeLocalGet(0, Type::i32)),
         builder.makeLoad(1,
                          false,
@@ -1399,14 +1399,14 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
       builder.makeUnary(UnaryOp::EqZInt32,
                         builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32)),
       builder.makeSequence(builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
-                                                 builder.makeConst(int32_t(
+                                                 builder.makeConst(static_cast<int32_t>(
                                                    fuzzParams->HANG_LIMIT))),
                            builder.makeUnreachable())),
     builder.makeGlobalSet(
       HANG_LIMIT_GLOBAL,
       builder.makeBinary(BinaryOp::SubInt32,
                          builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32),
-                         builder.makeConst(int32_t(1)))));
+                         builder.makeConst(static_cast<int32_t>(1)))));
 }
 
 Expression* TranslateToFuzzReader::makeImportLogging() {
@@ -1425,7 +1425,7 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
   // a wasm tag. Emit 0 or non-zero with ~equal probability.
   Expression* arg;
   if (oneIn(2)) {
-    arg = builder.makeConst(int32_t(0));
+    arg = builder.makeConst(static_cast<int32_t>(0));
   } else {
     arg = makeConst(Type::i32);
   }
@@ -1501,7 +1501,7 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
   auto* index = make(Type::i32);
   if (!allowOOB || !oneIn(10)) {
     index = builder.makeBinary(
-      RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
+      RemUInt32, index, builder.makeConst(static_cast<int32_t>(maxIndex)));
   }
 
   // The non-catching variants send a flags argument, which says whether to
@@ -1668,7 +1668,7 @@ Function* TranslateToFuzzReader::addFunction() {
   auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
   if (!funcTypes.empty() && oneIn(2)) {
     auto type = pick(funcTypes);
-    if (type.getSignature().params.size() < (size_t)fuzzParams->MAX_PARAMS) {
+    if (type.getSignature().params.size() < static_cast<size_t>(fuzzParams->MAX_PARAMS)) {
       // This is suitable for us.
       funcType = type;
     }
@@ -1795,7 +1795,7 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
   for (auto* arrayNew : FindAll<ArrayNew>(func->body).list) {
     if (!oneIn(100)) {
       arrayNew->size = builder.makeBinary(
-        AndInt32, arrayNew->size, builder.makeConst(int32_t(1024 - 1)));
+        AndInt32, arrayNew->size, builder.makeConst(static_cast<int32_t>(1024 - 1)));
     }
   }
 }
@@ -3253,12 +3253,12 @@ Expression* TranslateToFuzzReader::makePointer() {
       ret = builder.makeBinary(
         AndInt64,
         ret,
-        builder.makeConst(int64_t(fuzzParams->USABLE_MEMORY - 1)));
+        builder.makeConst(static_cast<int64_t>(fuzzParams->USABLE_MEMORY - 1)));
     } else {
       ret = builder.makeBinary(
         AndInt32,
         ret,
-        builder.makeConst(int32_t(fuzzParams->USABLE_MEMORY - 1)));
+        builder.makeConst(static_cast<int32_t>(fuzzParams->USABLE_MEMORY - 1)));
     }
   }
   return ret;
@@ -3594,35 +3594,35 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
       int64_t small;
       switch (upTo(6)) {
         case 0:
-          small = int8_t(get());
+          small = static_cast<int8_t>(get());
           break;
         case 1:
-          small = uint8_t(get());
+          small = static_cast<uint8_t>(get());
           break;
         case 2:
-          small = int16_t(get16());
+          small = static_cast<int16_t>(get16());
           break;
         case 3:
-          small = uint16_t(get16());
+          small = static_cast<uint16_t>(get16());
           break;
         case 4:
-          small = int32_t(get32());
+          small = static_cast<int32_t>(get32());
           break;
         case 5:
-          small = uint32_t(get32());
+          small = static_cast<uint32_t>(get32());
           break;
         default:
           WASM_UNREACHABLE("invalid value");
       }
       switch (type.getBasic()) {
         case Type::i32:
-          return Literal(int32_t(small));
+          return Literal(static_cast<int32_t>(small));
         case Type::i64:
-          return Literal(int64_t(small));
+          return Literal(static_cast<int64_t>(small));
         case Type::f32:
-          return Literal(float(small));
+          return Literal(static_cast<float>(small));
         case Type::f64:
-          return Literal(double(small));
+          return Literal(static_cast<double>(small));
         case Type::v128:
         case Type::none:
         case Type::unreachable:
@@ -3699,16 +3699,16 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
       Literal value;
       switch (type.getBasic()) {
         case Type::i32:
-          value = Literal(int32_t(1) << upTo(32));
+          value = Literal(static_cast<int32_t>(1) << upTo(32));
           break;
         case Type::i64:
-          value = Literal(int64_t(1) << upTo(64));
+          value = Literal(static_cast<int64_t>(1) << upTo(64));
           break;
         case Type::f32:
-          value = Literal(float(int64_t(1) << upTo(64)));
+          value = Literal(static_cast<float>(static_cast<int64_t>(1) << upTo(64)));
           break;
         case Type::f64:
-          value = Literal(double(int64_t(1) << upTo(64)));
+          value = Literal(static_cast<double>(static_cast<int64_t>(1) << upTo(64)));
           break;
         case Type::v128:
         case Type::none:
@@ -3778,8 +3778,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     heapType = (*builder.build())[0];
   }
   auto* body = heapType.getSignature().results == Type::none
-                 ? (Expression*)builder.makeNop()
-                 : (Expression*)builder.makeUnreachable();
+                 ? static_cast<Expression*>(builder.makeNop())
+                 : static_cast<Expression*>(builder.makeUnreachable());
   auto* func = wasm.addFunction(
     builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
                          Type(heapType, NonNullable, Exact),
@@ -4111,7 +4111,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
         init = makeChild(element.type);
       }
       auto* count =
-        builder.makeConst(int32_t(upTo(fuzzParams->MAX_ARRAY_SIZE)));
+        builder.makeConst(static_cast<int32_t>(upTo(fuzzParams->MAX_ARRAY_SIZE)));
       return builder.makeArrayNew(type.getHeapType(), count, init);
     }
     case HeapTypeKind::Cont: {
@@ -5738,8 +5738,8 @@ Expression* TranslateToFuzzReader::makeMemoryInit() {
   size_t offsetVal = upTo(totalSize);
   size_t sizeVal = upTo(totalSize - offsetVal);
   Expression* dest = makePointer();
-  Expression* offset = builder.makeConst(int32_t(offsetVal));
-  Expression* size = builder.makeConst(int32_t(sizeVal));
+  Expression* offset = builder.makeConst(static_cast<int32_t>(offsetVal));
+  Expression* size = builder.makeConst(static_cast<int32_t>(sizeVal));
   return builder.makeMemoryInit(
     segment, dest, offset, size, wasm.memories[0]->name);
 }

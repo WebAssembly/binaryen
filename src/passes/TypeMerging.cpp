@@ -772,8 +772,8 @@ bool shapeEq(Field a, Field b) {
 }
 
 size_t shapeHash(Field a) {
-  auto digest = hash((int)a.packedType);
-  rehash(digest, (int)a.mutable_);
+  auto digest = hash(a.packedType);
+  rehash(digest, a.mutable_);
   hash_combine(digest, shapeHash(a.type));
   return digest;
 }
@@ -840,8 +840,8 @@ size_t shapeHash(Type a) {
     return digest;
   }
   rehash(digest, 4);
-  rehash(digest, (int)a.getNullability());
-  rehash(digest, (int)a.getExactness());
+  rehash(digest, a.getNullability());
+  rehash(digest, a.getExactness());
   rehash(digest, chainIndex(a.getHeapType()));
   return digest;
 }

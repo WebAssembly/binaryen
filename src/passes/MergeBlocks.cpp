@@ -356,7 +356,7 @@ static bool optimizeBlock(Block* curr,
       // For a loop, we may only be able to remove a tail
       if (loop) {
         auto childName = loop->name;
-        for (auto j = int(childSize - 1); j >= 0; j--) {
+        for (auto j = static_cast<int>(childSize - 1); j >= 0; j--) {
           auto* item = childList[j];
           if (BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.

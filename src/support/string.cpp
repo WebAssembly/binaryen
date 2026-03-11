@@ -267,7 +267,7 @@ std::optional<uint16_t> takeWTF16CodeUnit(std::string_view& str) {
   }
 
   // Use a little-endian encoding.
-  uint16_t u = uint8_t(str[0]) | (uint8_t(str[1]) << 8);
+  uint16_t u = static_cast<uint8_t>(str[0]) | (static_cast<uint8_t>(str[1]) << 8);
   str = str.substr(2);
   return u;
 }
@@ -302,8 +302,8 @@ std::optional<uint32_t> takeWTF16CodePoint(std::string_view& str,
 
 void writeWTF16CodeUnit(std::ostream& os, uint16_t u) {
   // Little-endian encoding.
-  os << uint8_t(u & 0xFF);
-  os << uint8_t(u >> 8);
+  os << static_cast<uint8_t>(u & 0xFF);
+  os << static_cast<uint8_t>(u >> 8);
 }
 
 constexpr uint32_t replacementCharacter = 0xFFFD;
@@ -331,22 +331,22 @@ std::ostream& writeWTF8CodePoint(std::ostream& os, uint32_t u) {
   assert(u < 0x110000);
   if (u < 0x80) {
     // 0xxxxxxx
-    os << uint8_t(u);
+    os << static_cast<uint8_t>(u);
   } else if (u < 0x800) {
     // 110xxxxx 10xxxxxx
-    os << uint8_t(0b11000000 | ((u >> 6) & 0b00011111));
-    os << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
+    os << static_cast<uint8_t>(0b11000000 | ((u >> 6) & 0b00011111));
+    os << static_cast<uint8_t>(0b10000000 | ((u >> 0) & 0b00111111));
   } else if (u < 0x10000) {
     // 1110xxxx 10xxxxxx 10xxxxxx
-    os << uint8_t(0b11100000 | ((u >> 12) & 0b00001111));
-    os << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
-    os << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
+    os << static_cast<uint8_t>(0b11100000 | ((u >> 12) & 0b00001111));
+    os << static_cast<uint8_t>(0b10000000 | ((u >> 6) & 0b00111111));
+    os << static_cast<uint8_t>(0b10000000 | ((u >> 0) & 0b00111111));
   } else {
     // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-    os << uint8_t(0b11110000 | ((u >> 18) & 0b00000111));
-    os << uint8_t(0b10000000 | ((u >> 12) & 0b00111111));
-    os << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
-    os << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
+    os << static_cast<uint8_t>(0b11110000 | ((u >> 18) & 0b00000111));
+    os << static_cast<uint8_t>(0b10000000 | ((u >> 12) & 0b00111111));
+    os << static_cast<uint8_t>(0b10000000 | ((u >> 6) & 0b00111111));
+    os << static_cast<uint8_t>(0b10000000 | ((u >> 0) & 0b00111111));
   }
   return os;
 }
@@ -442,7 +442,7 @@ std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {
     bool isNaivelyPrintable = 32 <= u && u < 127;
     if (isNaivelyPrintable) {
       assert(u < 0x80 && "need additional logic to emit valid UTF-8");
-      os << uint8_t(u);
+      os << static_cast<uint8_t>(u);
       continue;
     }
 

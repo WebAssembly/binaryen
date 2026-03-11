@@ -27,7 +27,7 @@ inline OutputType* convert(InputType* input) {
   static_assert(sizeof(OutputType) <= sizeof(InputType),
                 "Can only convert to a smaller size Expression node");
   input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
-  OutputType* output = (OutputType*)(input);
+  OutputType* output = reinterpret_cast<OutputType*>(input);
   new (output) OutputType;
   return output;
 }
@@ -58,7 +58,7 @@ template<typename InputType, typename OutputType>
 inline OutputType* convert(InputType* input, MixedArena& allocator) {
   assert(sizeof(OutputType) <= sizeof(InputType));
   input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
-  OutputType* output = (OutputType*)(input);
+  OutputType* output = reinterpret_cast<OutputType*>(input);
   new (output) OutputType(allocator);
   return output;
 }

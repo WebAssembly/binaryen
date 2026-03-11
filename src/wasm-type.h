@@ -301,7 +301,7 @@ class Type {
   // nullable and bit 2 set iff the reference type is exact.
   //
   // Since `Type` is really just a single integer, it should be passed by value.
-  // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
+  // This is a uintptr_t rather than a TypeID static_cast<uint64_t>(to) save memory on
   // 32-bit platforms.
   uintptr_t id;
 
@@ -393,7 +393,7 @@ public:
   bool isTuple() const { return !isBasic() && (id & TupleMask); }
   const Tuple& getTuple() const {
     assert(isTuple());
-    return *(Tuple*)(id & ~TupleMask);
+    return *reinterpret_cast<Tuple*>(id & ~TupleMask);
   }
 
   bool isRef() const { return !isBasic() && !(id & TupleMask); }
@@ -570,7 +570,7 @@ public:
   std::string toString() const;
 
   size_t size() const {
-    return isTuple() ? getTuple().size() : size_t(id != Type::none);
+    return isTuple() ? getTuple().size() : static_cast<size_t>(id != Type::none);
   }
 
   struct Iterator : ParentIndexIterator<const Type*, Iterator> {

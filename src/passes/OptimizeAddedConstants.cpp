@@ -161,8 +161,8 @@ private:
       } else {
         uint32_t base = c->value.geti32();
         uint32_t offset = curr->offset;
-        if (uint64_t(base) + uint64_t(offset) < (uint64_t(1) << 32)) {
-          c->value = c->value.add(Literal(uint32_t(curr->offset)));
+        if (static_cast<uint64_t>(base) + static_cast<uint64_t>(offset) < (static_cast<uint64_t>(1) << 32)) {
+          c->value = c->value.add(Literal(static_cast<uint32_t>(curr->offset)));
           curr->offset = 0;
         }
       }

@@ -170,9 +170,9 @@ public:
   bool isUnsignedMax() const {
     switch (type.getBasic()) {
       case Type::i32:
-        return uint32_t(i32) == std::numeric_limits<uint32_t>::max();
+        return static_cast<uint32_t>(i32) == std::numeric_limits<uint32_t>::max();
       case Type::i64:
-        return uint64_t(i64) == std::numeric_limits<uint64_t>::max();
+        return static_cast<uint64_t>(i64) == std::numeric_limits<uint64_t>::max();
       default:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -187,18 +187,18 @@ public:
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getBasic()) {
       case Type::i32:
-        return Literal(int32_t(x));
+        return Literal(static_cast<int32_t>(x));
       case Type::i64:
-        return Literal(int64_t(x));
+        return Literal(static_cast<int64_t>(x));
       case Type::f32:
-        return Literal(float(x));
+        return Literal(static_cast<float>(x));
       case Type::f64:
-        return Literal(double(x));
+        return Literal(static_cast<double>(x));
       case Type::v128:
         return Literal(std::array<Literal, 4>{{Literal(x),
-                                               Literal(int32_t(0)),
-                                               Literal(int32_t(0)),
-                                               Literal(int32_t(0))}});
+                                               Literal(static_cast<int32_t>(0)),
+                                               Literal(static_cast<int32_t>(0)),
+                                               Literal(static_cast<int32_t>(0))}});
       default:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -206,16 +206,16 @@ public:
   static Literal makeFromInt64(int64_t x, Type type) {
     switch (type.getBasic()) {
       case Type::i32:
-        return Literal(int32_t(x));
+        return Literal(static_cast<int32_t>(x));
       case Type::i64:
-        return Literal(int64_t(x));
+        return Literal(static_cast<int64_t>(x));
       case Type::f32:
-        return Literal(float(x));
+        return Literal(static_cast<float>(x));
       case Type::f64:
-        return Literal(double(x));
+        return Literal(static_cast<double>(x));
       case Type::v128:
         return Literal(
-          std::array<Literal, 2>{{Literal(x), Literal(int64_t(0))}});
+          std::array<Literal, 2>{{Literal(x), Literal(static_cast<int64_t>(0))}});
       default:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -305,7 +305,7 @@ public:
   int32_t geti31(bool signed_ = true) const {
     assert(type.getHeapType().isMaybeShared(HeapType::i31));
     // Cast to unsigned for the left shift to avoid undefined behavior.
-    return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
+    return signed_ ? static_cast<int32_t>((static_cast<uint32_t>(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }
   bool hasExternPayload() const {
     assert(type.getHeapType().isMaybeShared(HeapType::ext));
@@ -313,7 +313,7 @@ public:
   }
   int32_t getExternPayload() const {
     assert(hasExternPayload());
-    return int32_t(uint32_t(i32) >> 1);
+    return static_cast<int32_t>(static_cast<uint32_t>(i32) >> 1);
   }
   int64_t geti64() const {
     assert(type == Type::i64);

@@ -529,7 +529,7 @@ struct MultiMemoryLowering : public Pass {
       assert(offset && "TODO: handle non-const segment offsets");
       size_t originalOffset = offset->value.getUnsigned();
       auto memOffset = getInitialOffset(idx);
-      offset->value = Literal(int32_t(originalOffset + memOffset));
+      offset->value = Literal(static_cast<int32_t>(originalOffset + memOffset));
     });
   }
 

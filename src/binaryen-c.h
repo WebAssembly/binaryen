@@ -1656,9 +1656,9 @@ BINARYEN_API float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
 // Sets the 32-bit float value of a `f32.const` expression.
 BINARYEN_API void BinaryenConstSetValueF32(BinaryenExpressionRef expr,
                                            float value);
-// Gets the 64-bit float (double) value of a `f64.const` expression.
+// Gets the 64-bit float static_cast<double>(value) of a `f64.const` expression.
 BINARYEN_API double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
-// Sets the 64-bit float (double) value of a `f64.const` expression.
+// Sets the 64-bit float static_cast<double>(value) of a `f64.const` expression.
 BINARYEN_API void BinaryenConstSetValueF64(BinaryenExpressionRef expr,
                                            double value);
 // Reads the 128-bit vector value of a `v128.const` expression.

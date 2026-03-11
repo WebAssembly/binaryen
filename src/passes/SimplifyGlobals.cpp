@@ -246,7 +246,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
             // We found the get of the global. Check where its value flows to,
             // and how it is used there.
             assert(expressionStack.back() == get);
-            for (int i = int(expressionStack.size()) - 2; i >= 0; i--) {
+            for (int i = static_cast<int>(expressionStack.size()) - 2; i >= 0; i--) {
               // Consider one pair of parent->child, and check if the parent
               // causes any problems when the child's value reaches it.
               auto* parent = expressionStack[i];

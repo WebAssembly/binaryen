@@ -86,7 +86,7 @@ public:
   SmallVector<Expression**, 4> children;
 
   AbstractChildIterator(Expression* parent) {
-    auto* self = (Specific*)this;
+    auto* self = static_cast<Specific*>(this);
 
 #define DELEGATE_ID parent->_id
 

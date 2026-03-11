@@ -388,7 +388,7 @@ public:
     if (curr->is<Try>()) {
       self->pushTask(doVisitTry, currp);
       auto& list = curr->cast<Try>()->catchBodies;
-      for (int i = int(list.size()) - 1; i >= 0; i--) {
+      for (int i = static_cast<int>(list.size()) - 1; i >= 0; i--) {
         self->pushTask(scan, &list[i]);
       }
       self->pushTask(visitPreCatch, currp);
@@ -1762,11 +1762,11 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       break;
     case Type::f64:
       shouldBeEqual(
-        bytes, uint8_t(8), curr, "expected f64 operation to touch 8 bytes");
+        bytes, static_cast<uint8_t>(8), curr, "expected f64 operation to touch 8 bytes");
       break;
     case Type::v128:
       shouldBeEqual(
-        bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes");
+        bytes, static_cast<uint8_t>(16), curr, "expected v128 operation to touch 16 bytes");
       break;
     case Type::unreachable:
       break;
@@ -4282,7 +4282,7 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     // resume_throw_ref
     Type exnref = Type(HeapType::exn, Nullable);
     if (shouldBeEqual(curr->operands.size(),
-                      size_t(1),
+                      static_cast<size_t>(1),
                       curr,
                       "resume_throw_ref must have a single exnref operand")) {
       shouldBeSubType(curr->operands[0]->type,
@@ -4419,7 +4419,7 @@ void FunctionValidator::validateAlignment(
   size_t align, Type type, Index bytes, bool isAtomic, Expression* curr) {
   if (isAtomic) {
     shouldBeEqual(align,
-                  (size_t)bytes,
+                  static_cast<size_t>(bytes),
                   curr,
                   "atomic accesses must have natural alignment");
     return;
@@ -4729,7 +4729,7 @@ void validateDataSegments(Module& module, ValidationInfo& info) {
         segment->offset,
         "nonzero segment flags require bulk memory [--enable-bulk-memory]");
       info.shouldBeEqual(segment->offset,
-                         (Expression*)nullptr,
+                         static_cast<Expression*>(nullptr),
                          segment->offset,
                          "passive segment should not have an offset");
     } else {
