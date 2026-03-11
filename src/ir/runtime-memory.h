@@ -26,16 +26,12 @@ namespace {
 
 void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
   if (lhs > rhs) {
-    std::stringstream ss;
-    ss << msg << ": " << lhs << " > " << rhs;
+    // std::stringstream ss;
+    std::cerr << msg << ": " << lhs << " > " << rhs << "\n";
     // ss.str();
+    // std::cerr<<ss
     throw TrapException{};
   }
-}
-
-void checkLoadAddress(Address addr, Index bytes, Address memorySize) {
-  Address memorySizeBytes = memorySize * Memory::kPageSize;
-  trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
 }
 
 // void checkAtomicAddress(Address addr, Index bytes, Address memorySize) {
@@ -49,24 +45,47 @@ void checkLoadAddress(Address addr, Index bytes, Address memorySize) {
 //   }
 // }
 
-Address
-getFinalAddress(uint64_t offset, Literal ptr, Index bytes, Address memorySize) {
-  Address memorySizeBytes = memorySize * Memory::kPageSize;
-  uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
+Address getFinalAddress(Address addr,
+                        Address offset,
+                        Index bytes,
+                        Address memorySizeBytes) {
   trapIfGt(offset, memorySizeBytes, "offset > memory");
   trapIfGt(addr, memorySizeBytes - offset, "final > memory");
-  addr += offset;
+
+  // TODO: overflow here?
+  addr = size_t(addr) + offset;
   trapIfGt(bytes, memorySizeBytes, "bytes > memory");
-  checkLoadAddress(addr, bytes, memorySize);
+
+  // checkLoadAddress(addr, bytes, memorySizeBytes);
+  trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
   return addr;
 }
 
+template<typename T> static bool aligned(const uint8_t* address) {
+  static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
+  return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
+}
+
+template<typename T>
+T asdf(const std::vector<uint8_t>& memory, size_t address) {
+  if (aligned<T>(&memory[address])) {
+    return *reinterpret_cast<const T*>(&memory[address]);
+  } else {
+    T loaded;
+    std::memcpy(&loaded, &memory[address], sizeof(T));
+    return loaded;
+  }
+}
 } // namespace
 
 // TODO split into pure virtual class
 class RuntimeMemory {
 public:
-  RuntimeMemory(Memory memory) : memoryDefinition(memory) {}
+  // todo: might want a constructor that takes data segments
+  RuntimeMemory(Memory memory)
+    : memoryDefinition(std::move(memory)), memory(memory.initialByteSize(), 0) {
+    // this->memory.reserve(memory.initialByteSize());
+  }
 
   virtual ~RuntimeMemory() = default;
 
@@ -74,9 +93,18 @@ public:
   // Do we care about the order here?
   // todo: address types? Address::address32_t is strange
   // todo: type of offset?
-  virtual Literal load(Address addr, Address offset, MemoryOrder order) const {
-    Address address = getFinalAddress(offset, Literal(addr), 4, 1);
-    return {};
+  virtual Literal load(Address addr,
+                       Address offset,
+                       uint8_t byteCount,
+                       MemoryOrder order) const {
+    Address final = getFinalAddress(addr, offset, byteCount, memory.size());
+    (void) final;
+
+    // return memory.get()
+
+    return Literal(asdf<int32_t>(memory, (size_t) final));
+
+    // return Literal(1);
   }
   virtual Literal load(uint64_t addr) const { return {}; }
 
@@ -89,7 +117,10 @@ private:
   std::vector<uint8_t> memory;
 };
 
-class RealRuntimeMemory : public RuntimeMemory {};
+class RealRuntimeMemory : public RuntimeMemory {
+public:
+  using RuntimeMemory::RuntimeMemory;
+};
 
 } // namespace wasm
 

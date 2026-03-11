@@ -2572,9 +2572,9 @@ public:
     }
     return 1ull << (64 - pageSizeLog2);
   }
-  Address::address64_t pageSize() const {
-    return 1ull << static_cast<Address::address64_t>(pageSizeLog2);
-  }
+  Address::address64_t pageSize() const { return 1ull << pageSizeLog2; }
+
+  Address::address64_t initialByteSize() const { return 1ull << pageSizeLog2; }
 };
 
 class Global : public Importable {

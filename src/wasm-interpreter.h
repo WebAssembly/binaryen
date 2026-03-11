@@ -3262,7 +3262,9 @@ public:
     initializeTables();
     initializeTags();
 
-    initializeMemoryContents();
+    initializeMemories();
+    // TODO:
+    // initializeMemoryContents();
 
     // run start, if present
     if (wasm.start.is()) {
@@ -3634,7 +3636,7 @@ private:
         assert(inserted && "Unexpected repeated memory name");
       } else {
         auto& runtimeMemory = definedMemories.emplace_back(
-          std::make_unique<RealRuntimeMemory>(memory));
+          std::make_unique<RealRuntimeMemory>(*memory));
         [[maybe_unused]] auto [_, inserted] =
           allMemories.try_emplace(memory->name, runtimeMemory.get());
         assert(inserted && "Unexpected repeated memory name");
@@ -4110,6 +4112,7 @@ public:
     auto* memory = allMemories[curr->memory];
     return memory->load(static_cast<uint32_t>(flow.getSingleValue().geti32()),
                         curr->offset,
+                        curr->bytes,
                         curr->order);
     // auto info = getMemoryInstanceInfo(curr->memory);
     // auto memorySize = info.instance->getMemorySize(info.name);
