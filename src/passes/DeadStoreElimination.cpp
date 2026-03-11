@@ -653,7 +653,7 @@ struct GCLogic : public ComparingLogic {
 // TODO: the optimizations can perhaps share more things between them
 struct LocalDeadStoreElimination
   : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<LocalDeadStoreElimination>();
