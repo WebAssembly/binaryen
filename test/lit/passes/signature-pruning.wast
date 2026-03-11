@@ -1281,18 +1281,14 @@
 
     ;; CHECK:       (type $other (func))
 
-    ;; CHECK:       (type $sig (func))
+    ;; CHECK:       (type $sig (func (param anyref)))
     (type $sig (func (param anyref)))
     (type $other (func (param anyref)))
     (type $cont (cont $sig))
   )
   ;; CHECK:      (elem declare func $cont $not-cont $other)
 
-  ;; CHECK:      (func $cont (type $sig)
-  ;; CHECK-NEXT:  (local $0 anyref)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $cont (type $sig) (param $0 anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $cont (type $sig) (param anyref)
@@ -1301,17 +1297,13 @@
     (nop)
   )
 
-  ;; CHECK:      (func $not-cont (type $sig)
-  ;; CHECK-NEXT:  (local $0 anyref)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $not-cont (type $sig) (param $0 anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $not-cont (type $sig) (param anyref)
     ;; This function cannot be optimized even though it is not used in a
     ;; continuation. It is enough that it shares a type with a continuation
-    ;;function.
+    ;; function.
     (nop)
   )
 
@@ -1335,6 +1327,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $sig
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (ref.func $not-cont)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $other
