@@ -50,11 +50,15 @@ public:
 
   virtual Address size() const = 0;
 
-  virtual void
-  init(Address dest, Address src, Address byteCount, const DataSegment* data) = 0;
+  virtual void init(Address dest,
+                    Address src,
+                    Address byteCount,
+                    const DataSegment* data) = 0;
 
-  virtual void
-  copy(Address dest, Address src, Address byteCount, const RuntimeMemory* srcMemory) = 0;
+  virtual void copy(Address dest,
+                    Address src,
+                    Address byteCount,
+                    const RuntimeMemory* srcMemory) = 0;
 
   virtual void fill(Address dest, uint8_t value, Address byteCount) = 0;
 
@@ -92,11 +96,15 @@ public:
 
   Address size() const override;
 
-  void
-  init(Address dest, Address src, Address byteCount, const DataSegment* data) override;
+  void init(Address dest,
+            Address src,
+            Address byteCount,
+            const DataSegment* data) override;
 
-  void
-  copy(Address dest, Address src, Address byteCount, const RuntimeMemory* srcMemory) override;
+  void copy(Address dest,
+            Address src,
+            Address byteCount,
+            const RuntimeMemory* srcMemory) override;
 
   void fill(Address dest, uint8_t value, Address byteCount) override;
 

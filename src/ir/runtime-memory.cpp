@@ -20,7 +20,8 @@
 
 namespace wasm {
 
-RuntimeMemory::RuntimeMemory(Memory memory, ExternalInterface* externalInterface)
+RuntimeMemory::RuntimeMemory(Memory memory,
+                             ExternalInterface* externalInterface)
   : externalInterface(externalInterface), memoryDefinition(std::move(memory)) {}
 
 namespace {
@@ -212,9 +213,9 @@ void RealRuntimeMemory::store(Address addr,
     case Type::f32: {
       switch (byteCount) {
         case 2:
-          set<uint16_t>(final,
-                        fp16_ieee_from_fp32_value(
-                          bit_cast<float>(value.reinterpreti32())));
+          set<uint16_t>(
+            final,
+            fp16_ieee_from_fp32_value(bit_cast<float>(value.reinterpreti32())));
           break;
         case 4:
           set<int32_t>(final, value.reinterpreti32());
@@ -271,8 +272,8 @@ void RealRuntimeMemory::copy(Address dest,
                              Address byteCount,
                              const RuntimeMemory* srcMemory) {
   Address finalDest = getFinalAddress(*this, dest, 0, byteCount, size());
-  Address finalSrc = getFinalAddress(
-    *srcMemory, src, 0, byteCount, srcMemory->size());
+  Address finalSrc =
+    getFinalAddress(*srcMemory, src, 0, byteCount, srcMemory->size());
   const std::vector<uint8_t>* srcBuffer = srcMemory->getBuffer();
   if (!srcBuffer) {
     // If it's not a memory with a direct buffer, we might need another way to
@@ -299,7 +300,8 @@ void RealRuntimeMemory::resize(size_t newSize) {
   size_t newAllocatedSize = std::max(minSize, newSize);
   if (newAllocatedSize > oldAllocatedSize) {
     memory.resize(newAllocatedSize);
-    std::memset(&memory[oldAllocatedSize], 0, newAllocatedSize - oldAllocatedSize);
+    std::memset(
+      &memory[oldAllocatedSize], 0, newAllocatedSize - oldAllocatedSize);
   }
   if (newSize < oldAllocatedSize && newSize < minSize) {
     std::memset(&memory[newSize], 0, minSize - newSize);
@@ -345,6 +347,7 @@ template void RealRuntimeMemory::set<uint32_t>(size_t, uint32_t);
 template void RealRuntimeMemory::set<int64_t>(size_t, int64_t);
 template void RealRuntimeMemory::set<uint64_t>(size_t, uint64_t);
 template void
-RealRuntimeMemory::set<std::array<uint8_t, 16>>(size_t, std::array<uint8_t, 16>);
+RealRuntimeMemory::set<std::array<uint8_t, 16>>(size_t,
+                                                std::array<uint8_t, 16>);
 
 } // namespace wasm

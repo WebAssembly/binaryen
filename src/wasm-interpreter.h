@@ -3035,7 +3035,8 @@ public:
   std::unordered_map<Name, RuntimeMemory*> allMemories;
 
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
-  using CreateMemoryFunc = std::unique_ptr<RuntimeMemory>(Memory, ExternalInterface*);
+  using CreateMemoryFunc = std::unique_ptr<RuntimeMemory>(Memory,
+                                                          ExternalInterface*);
 
   ModuleRunnerBase(
     Module& wasm,
@@ -3055,13 +3056,13 @@ public:
               [](Literal initial, Table t) -> std::unique_ptr<RuntimeTable> {
                 return std::make_unique<RealRuntimeTable>(initial, t);
               })),
-      createMemory(
-        createMemory != nullptr
-          ? std::move(createMemory)
-          : static_cast<std::function<CreateMemoryFunc>>(
-              [externalInterface](Memory m, ExternalInterface* ei) -> std::unique_ptr<RuntimeMemory> {
-                return std::make_unique<RealRuntimeMemory>(m, ei);
-              })) {
+      createMemory(createMemory != nullptr
+                     ? std::move(createMemory)
+                     : static_cast<std::function<CreateMemoryFunc>>(
+                         [externalInterface](Memory m, ExternalInterface* ei)
+                           -> std::unique_ptr<RuntimeMemory> {
+                           return std::make_unique<RealRuntimeMemory>(m, ei);
+                         })) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3467,8 +3468,8 @@ private:
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated memory name");
       } else {
-        auto& runtimeMemory =
-          definedMemories.emplace_back(createMemory(*memory, externalInterface));
+        auto& runtimeMemory = definedMemories.emplace_back(
+          createMemory(*memory, externalInterface));
         [[maybe_unused]] auto [_, inserted] =
           allMemories.try_emplace(memory->name, runtimeMemory.get());
         assert(inserted && "Unexpected repeated memory name");

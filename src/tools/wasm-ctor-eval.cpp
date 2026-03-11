@@ -197,7 +197,8 @@ public:
                bool signed_) const override {
     const_cast<CtorEvalRuntimeMemory*>(this)->ensureCapacity(addr + offset +
                                                             byteCount);
-    return RealRuntimeMemory::load(addr, offset, byteCount, order, type, signed_);
+    return RealRuntimeMemory::load(
+      addr, offset, byteCount, order, type, signed_);
   }
 
   void store(Address addr,
@@ -242,7 +243,8 @@ public:
             [this](Name name, Type type) { return makeFuncData(name, type); });
         },
         [](Memory memory, ExternalInterface* externalInterface) {
-          return std::make_unique<CtorEvalRuntimeMemory>(memory, externalInterface);
+          return std::make_unique<CtorEvalRuntimeMemory>(memory,
+                                                         externalInterface);
         }) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
