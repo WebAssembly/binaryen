@@ -358,8 +358,7 @@ struct Shell {
   };
 
   Result<Ok, AlternativeErr> matchAlternative(const Literal& val,
-                                              const ExpectedResult& expected,
-                                              bool isAlternative) {
+                                              const ExpectedResult& expected) {
     std::stringstream err;
 
     if (auto* v = std::get_if<Literal>(&expected)) {
@@ -408,6 +407,7 @@ struct Shell {
         // needed for i32 and i64.
         case 16: {
           // There is no f8.
+          assert(!isFloat && "float8 does not exist");
           CHECK_ERR(check(val.getLanesUI8x16()));
           break;
         }
@@ -458,8 +458,7 @@ struct Shell {
 
       // non-either case
       if (assn.expected[i].size() == 1) {
-        auto result = matchAlternative(
-          (*values)[i], assn.expected[i][0], /*isAlternative=*/false);
+        auto result = matchAlternative((*values)[i], assn.expected[i][0]);
         if (auto* e = result.getErr()) {
           std::stringstream ss;
           ss << "expected " << e->expected << ", got " << (*values)[i];
@@ -477,8 +476,7 @@ struct Shell {
       std::vector<std::string> expecteds;
       int failedLane = -1;
       for (const auto& alternative : assn.expected[i]) {
-        auto result =
-          matchAlternative((*values)[i], alternative, /*isAlternative=*/true);
+        auto result = matchAlternative((*values)[i], alternative);
         if (!result.getErr()) {
           success = true;
           break;
