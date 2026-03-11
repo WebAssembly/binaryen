@@ -785,8 +785,9 @@
   ;; CHECK-NEXT: )
   (func $test-out (result (ref null $super))
     (local $sub-out (ref null $sub-out))
-    ;; This requires that $sub-out is a subtype of $super. Since $super flows
-    ;; out to JS, $sub-out will have to keep its descriptor.
+    ;; This requires that $sub-out is a subtype of $super. Since only exact
+    ;; $super flows out to JS, $sub-out does not flow out and does not need to
+    ;; keep its descriptor.
     (local.get $sub-out)
   )
 )
@@ -1020,8 +1021,9 @@
   ;; CHECK-NEXT: )
   (func $test-out (result (ref null $super))
     (local $sub-out (ref null $sub-out))
-    ;; This requires that $sub-out is a subtype of $super. Since $super flows
-    ;; out to JS, $sub-out will have to keep its descriptor.
+    ;; This requires that $sub-out is a subtype of $super. Since only exact
+    ;; $super flows out to JS, $sub-out does not flow out and does not need to
+    ;; keep its descriptor.
     (local.get $sub-out)
   )
 )
