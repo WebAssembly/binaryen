@@ -184,9 +184,9 @@ private:
   const std::function<Literal(Name, Type)> makeFuncData;
 };
 
-class CtorEvalRuntimeMemory : public RuntimeMemory {
+class CtorEvalRuntimeMemory : public RealRuntimeMemory {
 public:
-  using RuntimeMemory::RuntimeMemory;
+  using RealRuntimeMemory::RealRuntimeMemory;
 
   // override to grow on access
   Literal load(Address addr,
@@ -197,7 +197,7 @@ public:
                bool signed_) const override {
     const_cast<CtorEvalRuntimeMemory*>(this)->ensureCapacity(addr + offset +
                                                             byteCount);
-    return RuntimeMemory::load(addr, offset, byteCount, order, type, signed_);
+    return RealRuntimeMemory::load(addr, offset, byteCount, order, type, signed_);
   }
 
   void store(Address addr,
@@ -207,19 +207,17 @@ public:
              Literal value,
              Type type) override {
     ensureCapacity(addr + offset + byteCount);
-    RuntimeMemory::store(addr, offset, byteCount, order, value, type);
+    RealRuntimeMemory::store(addr, offset, byteCount, order, value, type);
   }
 
   void ensureCapacity(Address size) {
-    if (size > memory.size()) {
+    if (size > getBuffer().size()) {
       if (size > 100 * 1024 * 1024) { // MaximumMemory
         throw FailToEvalException("excessively high memory address accessed");
       }
       resize(size);
     }
   }
-
-  std::vector<uint8_t>& getBuffer() { return memory; }
 };
 
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
@@ -243,8 +241,8 @@ public:
             this->wasm,
             [this](Name name, Type type) { return makeFuncData(name, type); });
         },
-        [](Memory memory) {
-          return std::make_unique<CtorEvalRuntimeMemory>(memory);
+        [](Memory memory, ExternalInterface* externalInterface) {
+          return std::make_unique<CtorEvalRuntimeMemory>(memory, externalInterface);
         }) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {

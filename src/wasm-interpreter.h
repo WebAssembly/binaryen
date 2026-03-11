@@ -3003,7 +3003,7 @@ public:
   // ExternalInterface provides embedding-specific functionality like calling
   // an imported function or accessing memory.
   //
-  struct ExternalInterface {
+  struct ExternalInterface : RuntimeMemory::ExternalInterface {
     ExternalInterface(
       std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
@@ -3035,7 +3035,7 @@ public:
   std::unordered_map<Name, RuntimeMemory*> allMemories;
 
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
-  using CreateMemoryFunc = std::unique_ptr<RuntimeMemory>(Memory);
+  using CreateMemoryFunc = std::unique_ptr<RuntimeMemory>(Memory, ExternalInterface*);
 
   ModuleRunnerBase(
     Module& wasm,
@@ -3059,8 +3059,8 @@ public:
         createMemory != nullptr
           ? std::move(createMemory)
           : static_cast<std::function<CreateMemoryFunc>>(
-              [](Memory m) -> std::unique_ptr<RuntimeMemory> {
-                return std::make_unique<RealRuntimeMemory>(m);
+              [externalInterface](Memory m, ExternalInterface* ei) -> std::unique_ptr<RuntimeMemory> {
+                return std::make_unique<RealRuntimeMemory>(m, ei);
               })) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
@@ -3468,7 +3468,7 @@ private:
         assert(inserted && "Unexpected repeated memory name");
       } else {
         auto& runtimeMemory =
-          definedMemories.emplace_back(createMemory(*memory));
+          definedMemories.emplace_back(createMemory(*memory, externalInterface));
         [[maybe_unused]] auto [_, inserted] =
           allMemories.try_emplace(memory->name, runtimeMemory.get());
         assert(inserted && "Unexpected repeated memory name");
