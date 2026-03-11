@@ -2834,9 +2834,29 @@ HeapType getMutI8Array() {
   return i8Array;
 }
 
+HeapType getSharedMutI8Array() {
+  static HeapType sharedI8Array = []() {
+    TypeBuilder builder(1);
+    builder[0] = Array{Field(Field::i8, Mutable)};
+    builder[0].setShared(Shared);
+    return (*builder.build())[0];
+  }();
+  return sharedI8Array;
+}
+
 HeapType getMutI16Array() {
-  static HeapType i16Array = Array(Field(Field::i16, Mutable));
+  static HeapType i16Array = Array{Field(Field::i16, Mutable)};
   return i16Array;
+}
+
+HeapType getSharedMutI16Array() {
+  static HeapType sharedI16Array = []() {
+    TypeBuilder builder(1);
+    builder[0] = Array{Field(Field::i16, Mutable)};
+    builder[0].setShared(Shared);
+    return (*builder.build())[0];
+  }();
+  return sharedI16Array;
 }
 
 } // namespace wasm::HeapTypes

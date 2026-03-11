@@ -106,6 +106,8 @@ struct StringGathering : public Pass {
   std::unordered_map<Name, Name> stringToGlobalName;
 
   Type nnstringref = Type(HeapType::string, NonNullable);
+  Type nnsharedstringref =
+    Type(HeapType(HeapType::string).getBasic(Shared), NonNullable);
 
   // Existing globals already in the form we emit can be reused. That is, if
   // we see
@@ -208,6 +210,8 @@ struct StringLowering : public StringGathering {
     : useMagicImports(useMagicImports), assertUTF8(assertUTF8) {
     // If we are asserting valid UTF-8, we must be using magic imports.
     assert(!assertUTF8 || useMagicImports);
+
+    nullSharedArray16 = Type(HeapTypes::getSharedMutI16Array(), Nullable);
   }
 
   void run(Module* module) override {
@@ -287,6 +291,11 @@ struct StringLowering : public StringGathering {
   Type nullExt = Type(HeapType::ext, Nullable);
   Type nnExt = Type(HeapType::ext, NonNullable);
 
+  Type nullSharedArray16;
+  Type nullSharedExt = Type(HeapType(HeapType::ext).getBasic(Shared), Nullable);
+  Type nnSharedExt =
+    Type(HeapType(HeapType::ext).getBasic(Shared), NonNullable);
+
   void updateTypes(Module* module) {
     TypeMapper::TypeUpdates updates;
 
@@ -336,6 +345,8 @@ struct StringLowering : public StringGathering {
 
     // Strings turn into externref.
     updates[HeapType::string] = HeapType::ext;
+    updates[HeapType(HeapType::string).getBasic(Shared)] =
+      HeapType(HeapType::ext).getBasic(Shared);
 
     TypeMapper(*module, updates).map();
   }
@@ -351,6 +362,18 @@ struct StringLowering : public StringGathering {
   Name lengthImport;
   Name charCodeAtImport;
   Name substringImport;
+
+  // Shared imported string functions.
+  Name fromCharCodeArraySharedImport;
+  Name intoCharCodeArraySharedImport;
+  Name fromCodePointSharedImport;
+  Name concatSharedImport;
+  Name equalsSharedImport;
+  Name testSharedImport;
+  Name compareSharedImport;
+  Name lengthSharedImport;
+  Name charCodeAtSharedImport;
+  Name substringSharedImport;
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).
@@ -396,6 +419,30 @@ struct StringLowering : public StringGathering {
     substringImport =
       addImport(module, "substring", {nullExt, Type::i32, Type::i32}, nnExt);
 
+    // Shared imports
+
+    fromCharCodeArraySharedImport = addImport(
+      module, "fromCharCodeArray", {nullSharedArray16, Type::i32, Type::i32}, nnSharedExt);
+    fromCodePointSharedImport =
+      addImport(module, "fromCodePoint", Type::i32, nnSharedExt);
+    concatSharedImport =
+      addImport(module, "concat", {nullSharedExt, nullSharedExt}, nnSharedExt);
+    intoCharCodeArraySharedImport = addImport(module,
+                                              "intoCharCodeArray",
+                                              {nullSharedExt, nullSharedArray16, Type::i32},
+                                              Type::i32);
+    equalsSharedImport =
+      addImport(module, "equals", {nullSharedExt, nullSharedExt}, Type::i32);
+    testSharedImport = addImport(module, "test", {nullSharedExt}, Type::i32);
+    compareSharedImport =
+      addImport(module, "compare", {nullSharedExt, nullSharedExt}, Type::i32);
+    lengthSharedImport =
+      addImport(module, "length", nullSharedExt, Type::i32);
+    charCodeAtSharedImport =
+      addImport(module, "charCodeAt", {nullSharedExt, Type::i32}, Type::i32);
+    substringSharedImport = addImport(
+      module, "substring", {nullSharedExt, Type::i32, Type::i32}, nnSharedExt);
+
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
       bool isFunctionParallel() override { return true; }
@@ -410,15 +457,23 @@ struct StringLowering : public StringGathering {
 
       void visitStringNew(StringNew* curr) {
         Builder builder(*getModule());
+        bool shared = curr->type.getHeapType().isShared();
+        auto& fromCharCodeArrayImport =
+          shared ? lowering.fromCharCodeArraySharedImport
+                 : lowering.fromCharCodeArrayImport;
+        auto& fromCodePointImport =
+          shared ? lowering.fromCodePointSharedImport : lowering.fromCodePointImport;
+        auto nnExt = shared ? lowering.nnSharedExt : lowering.nnExt;
+
         switch (curr->op) {
           case StringNewWTF16Array:
-            replaceCurrent(builder.makeCall(lowering.fromCharCodeArrayImport,
+            replaceCurrent(builder.makeCall(fromCharCodeArrayImport,
                                             {curr->ref, curr->start, curr->end},
-                                            lowering.nnExt));
+                                            nnExt));
             return;
           case StringNewFromCodePoint:
-            replaceCurrent(builder.makeCall(
-              lowering.fromCodePointImport, {curr->ref}, lowering.nnExt));
+            replaceCurrent(
+              builder.makeCall(fromCodePointImport, {curr->ref}, nnExt));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");
@@ -427,18 +482,24 @@ struct StringLowering : public StringGathering {
 
       void visitStringConcat(StringConcat* curr) {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeCall(
-          lowering.concatImport, {curr->left, curr->right}, lowering.nnExt));
+        bool shared = curr->type.getHeapType().isShared();
+        auto& concatImport =
+          shared ? lowering.concatSharedImport : lowering.concatImport;
+        auto nnExt = shared ? lowering.nnSharedExt : lowering.nnExt;
+        replaceCurrent(
+          builder.makeCall(concatImport, {curr->left, curr->right}, nnExt));
       }
 
       void visitStringEncode(StringEncode* curr) {
         Builder builder(*getModule());
+        bool shared = curr->str->type.getHeapType().isShared();
+        auto& intoCharCodeArrayImport = shared ? lowering.intoCharCodeArraySharedImport
+                                               : lowering.intoCharCodeArrayImport;
         switch (curr->op) {
           case StringEncodeWTF16Array:
-            replaceCurrent(
-              builder.makeCall(lowering.intoCharCodeArrayImport,
-                               {curr->str, curr->array, curr->start},
-                               Type::i32));
+            replaceCurrent(builder.makeCall(intoCharCodeArrayImport,
+                                            {curr->str, curr->array, curr->start},
+                                            Type::i32));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.encode*");
@@ -447,14 +508,19 @@ struct StringLowering : public StringGathering {
 
       void visitStringEq(StringEq* curr) {
         Builder builder(*getModule());
+        bool shared = curr->left->type.getHeapType().isShared();
+        auto& equalsImport =
+          shared ? lowering.equalsSharedImport : lowering.equalsImport;
+        auto& compareImport =
+          shared ? lowering.compareSharedImport : lowering.compareImport;
         switch (curr->op) {
           case StringEqEqual:
             replaceCurrent(builder.makeCall(
-              lowering.equalsImport, {curr->left, curr->right}, Type::i32));
+              equalsImport, {curr->left, curr->right}, Type::i32));
             return;
           case StringEqCompare:
             replaceCurrent(builder.makeCall(
-              lowering.compareImport, {curr->left, curr->right}, Type::i32));
+              compareImport, {curr->left, curr->right}, Type::i32));
             return;
           default:
             WASM_UNREACHABLE("invalid string.eq*");
@@ -463,27 +529,39 @@ struct StringLowering : public StringGathering {
 
       void visitStringTest(StringTest* curr) {
         Builder builder(*getModule());
+        bool shared = curr->ref->type.getHeapType().isShared();
+        auto& testImport = shared ? lowering.testSharedImport : lowering.testImport;
         replaceCurrent(
-          builder.makeCall(lowering.testImport, {curr->ref}, Type::i32));
+          builder.makeCall(testImport, {curr->ref}, Type::i32));
       }
 
       void visitStringMeasure(StringMeasure* curr) {
         Builder builder(*getModule());
+        bool shared = curr->ref->type.getHeapType().isShared();
+        auto& lengthImport =
+          shared ? lowering.lengthSharedImport : lowering.lengthImport;
         replaceCurrent(
-          builder.makeCall(lowering.lengthImport, {curr->ref}, Type::i32));
+          builder.makeCall(lengthImport, {curr->ref}, Type::i32));
       }
 
       void visitStringWTF16Get(StringWTF16Get* curr) {
         Builder builder(*getModule());
+        bool shared = curr->ref->type.getHeapType().isShared();
+        auto& charCodeAtImport =
+          shared ? lowering.charCodeAtSharedImport : lowering.charCodeAtImport;
         replaceCurrent(builder.makeCall(
-          lowering.charCodeAtImport, {curr->ref, curr->pos}, Type::i32));
+          charCodeAtImport, {curr->ref, curr->pos}, Type::i32));
       }
 
       void visitStringSliceWTF(StringSliceWTF* curr) {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeCall(lowering.substringImport,
+        bool shared = curr->type.getHeapType().isShared();
+        auto& substringImport =
+          shared ? lowering.substringSharedImport : lowering.substringImport;
+        auto nnExt = shared ? lowering.nnSharedExt : lowering.nnExt;
+        replaceCurrent(builder.makeCall(substringImport,
                                         {curr->ref, curr->start, curr->end},
-                                        lowering.nnExt));
+                                        nnExt));
       }
     };
 

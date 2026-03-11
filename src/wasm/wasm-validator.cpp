@@ -4046,17 +4046,18 @@ void FunctionValidator::visitStringNew(StringNew* curr) {
             refType.isRef(), curr, "string.new input must have array type")) {
         return;
       }
+      auto ht = refType.getHeapType();
       if (curr->op == StringNewLossyUTF8Array) {
-        shouldBeSubType(
-          refType,
-          Type(HeapTypes::getMutI8Array(), Nullable),
+        shouldBeTrue(
+          HeapType::isSubType(ht, HeapTypes::getMutI8Array()) ||
+            HeapType::isSubType(ht, HeapTypes::getSharedMutI8Array()),
           curr,
           "string.new_lossy_utf8_array input must have proper i8 array type");
       } else {
         assert(curr->op == StringNewWTF16Array);
-        shouldBeSubType(
-          refType,
-          Type(HeapTypes::getMutI16Array(), Nullable),
+        shouldBeTrue(
+          HeapType::isSubType(ht, HeapTypes::getMutI16Array()) ||
+            HeapType::isSubType(ht, HeapTypes::getSharedMutI16Array()),
           curr,
           "string.new_wtf16_array input must have proper i16 array type");
       }
