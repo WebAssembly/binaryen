@@ -96,3 +96,50 @@
     (struct.get $t 0 (global.get $g))
   )
 )
+
+(module $Mem
+  (type $Wq (struct (field (mut waitqueue))))
+  (global $wq (export "wq") (mut (ref null $Wq)) (ref.null $Wq))
+
+  (func $init (export "init")
+    (global.set $wq (struct.new $Wq (i32.const 0)))
+  )
+)
+
+(register "mem")
+
+(invoke $Mem "init")
+
+(thread $T1 (shared (module $Mem))
+  (register "mem" $Mem)
+  (module
+    (type $Wq (struct (field (mut waitqueue))))
+    (global $wq (import "mem" "wq") (mut (ref null $Wq)))
+
+    (func (export "run_wait") (result i32)
+      ;; Wait on the waitqueue, expecting value 0, infinite timeout (-1)
+      (struct.wait $Wq 0 (global.get $wq) (i32.const 0) (i64.const -1))
+    )
+  )
+  ;; This thread will suspend on struct.wait
+  (invoke "run_wait")
+)
+
+(thread $T2 (shared (module $Mem))
+  (register "mem" $Mem)
+  (module
+    (type $Wq (struct (field (mut waitqueue))))
+    (global $wq (import "mem" "wq") (mut (ref null $Wq)))
+
+    (func (export "run_notify") (result i32)
+      ;; Notify 1 waiter on the waitqueue
+      (struct.notify $Wq 0 (global.get $wq) (i32.const 1))
+    )
+  )
+  ;; This thread will notify the waitqueue and wake 1 thread
+  (assert_return (invoke "run_notify") (i32.const 1))
+)
+
+;; Wait for threads to complete
+(wait $T1)
+(wait $T2)

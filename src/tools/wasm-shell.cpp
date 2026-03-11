@@ -51,9 +51,29 @@ struct Shell {
   Name lastInstance;
   std::optional<Name> lastModuleDefinition;
 
+  size_t anonymousModuleCounter = 0;
+
+  std::shared_ptr<SharedWaitState> sharedWaitState;
+
   Options& options;
 
-  Shell(Options& options) : options(options) { buildSpectestModule(); }
+  struct ThreadState {
+    Name name;
+    std::vector<WATParser::ScriptEntry> commands;
+    size_t pc = 0;
+    bool isSuspended = false;
+    std::shared_ptr<ModuleRunner> instance = nullptr;
+    std::shared_ptr<ContData> suspendedCont = nullptr;
+    bool done = false;
+    Name lastInstance;
+    std::optional<Name> lastModuleDefinition;
+  };
+  std::vector<ThreadState> activeThreads;
+
+  Shell(Options& options) : options(options) {
+    sharedWaitState = std::make_shared<SharedWaitState>();
+    buildSpectestModule();
+  }
 
   Result<> run(WASTScript& script) {
     size_t i = 0;
@@ -102,11 +122,210 @@ struct Shell {
     }
   }
 
-  // Run threads in a blocking manner for now.
-  // TODO: yield on blocking instructions e.g. memory.atomic.wait32.
-  Result<> doThread(ThreadBlock& thread) { return run(thread.commands); }
+  Result<> doThread(ThreadBlock& thread) {
+    ThreadState state;
+    state.name = thread.name;
+    state.commands = thread.commands;
+    state.lastInstance = lastInstance;
+    state.lastModuleDefinition = lastModuleDefinition;
+    activeThreads.push_back(std::move(state));
+    return Ok{};
+  }
 
-  Result<> doWait(Wait& wait) { return Ok{}; }
+  Result<> doWait(Wait& wait) {
+    bool found = false;
+    for (auto& t : activeThreads) {
+      if (t.name == wait.thread) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return Err{"wait called for unknown thread"};
+    }
+
+    // Round-robin execution
+    while (true) {
+      bool anyProgress = false;
+      bool targetDone = false;
+
+      size_t numThreads = activeThreads.size();
+      for (size_t i = 0; i < numThreads; ++i) {
+        if (activeThreads[i].done) {
+          if (activeThreads[i].name == wait.thread)
+            targetDone = true;
+          continue;
+        }
+
+        if (activeThreads[i].isSuspended) {
+          // Check if it's still waiting. WaitQueue sets `isWaiting` to false
+          // when notified.
+          bool stillWaiting = activeThreads[i].suspendedCont &&
+                              activeThreads[i].suspendedCont->isWaiting;
+
+          if (!stillWaiting) {
+            // It was woken up! We need to resume it.
+            activeThreads[i].isSuspended = false;
+            Flow flow;
+            try {
+              flow = activeThreads[i].instance->resumeContinuation(
+                activeThreads[i].suspendedCont);
+            } catch (TrapException&) {
+              std::cerr << "Thread " << activeThreads[i].name
+                        << " trapped upon resume\n";
+              activeThreads[i].done = true;
+              anyProgress = true;
+              continue;
+            } catch (...) {
+              WASM_UNREACHABLE("unexpected error during resume");
+            }
+            activeThreads[i].suspendedCont = nullptr;
+
+            if (flow.breakTo == THREAD_SUSPEND_FLOW) {
+              // Suspended again
+              activeThreads[i].isSuspended = true;
+              activeThreads[i].suspendedCont =
+                activeThreads[i].instance->getSuspendedContinuation();
+              anyProgress = true;
+            } else if (flow.suspendTag) {
+              activeThreads[i].instance->clearContinuationStore();
+              activeThreads[i].done = true; // unhandled suspension
+              anyProgress = true;
+            } else {
+              auto& cmd = activeThreads[i].commands[activeThreads[i].pc].cmd;
+              if (auto* assnVar = std::get_if<Assertion>(&cmd)) {
+                if (auto* assn = std::get_if<AssertReturn>(assnVar)) {
+                  auto assnRes =
+                    assertResult(ActionResult(flow.values), assn->expected);
+                  if (assnRes.getErr()) {
+                    std::cerr << "Thread " << activeThreads[i].name
+                              << " error: " << assnRes.getErr()->msg << "\n";
+                    activeThreads[i].done = true;
+                  } else {
+                    activeThreads[i].pc++;
+                  }
+                } else {
+                  activeThreads[i].pc++;
+                }
+              } else {
+                activeThreads[i]
+                  .pc++; // Completed the command that originally suspended!
+              }
+              anyProgress = true;
+            }
+          }
+        } else {
+          // Normal execution of the next command.
+          std::swap(lastInstance, activeThreads[i].lastInstance);
+          std::swap(lastModuleDefinition,
+                    activeThreads[i].lastModuleDefinition);
+
+          if (activeThreads[i].pc < activeThreads[i].commands.size()) {
+            auto& cmd = activeThreads[i].commands[activeThreads[i].pc].cmd;
+            Action* trackAction = nullptr;
+            if (auto* act = std::get_if<Action>(&cmd)) {
+              trackAction = act;
+            } else if (auto* assnVar = std::get_if<Assertion>(&cmd)) {
+              if (auto* assn = std::get_if<AssertReturn>(assnVar)) {
+                trackAction = &assn->action;
+              }
+            }
+
+            if (trackAction) {
+              auto result = doAction(*trackAction);
+              if (std::get_if<ThreadSuspendResult>(&result)) {
+                activeThreads[i].isSuspended = true;
+                if (auto* invoke = std::get_if<InvokeAction>(trackAction)) {
+                  activeThreads[i].instance =
+                    instances[invoke->base ? *invoke->base : lastInstance];
+                  activeThreads[i].suspendedCont =
+                    activeThreads[i].instance->getSuspendedContinuation();
+                  std::cerr
+                    << "THREAD " << i << " SUSPENDED. suspendedCont is "
+                    << (activeThreads[i].suspendedCont ? "VALID" : "NULL")
+                    << " instance addr=" << activeThreads[i].instance.get()
+                    << "\n";
+                } else {
+                  std::cerr
+                    << "THREAD " << i
+                    << " SUSPENDED but trackAction is NOT InvokeAction!\n";
+                }
+                anyProgress = true;
+              } else {
+                if (auto* assnVar = std::get_if<Assertion>(&cmd)) {
+                  if (auto* assn = std::get_if<AssertReturn>(assnVar)) {
+                    auto assnRes = assertResult(result, assn->expected);
+                    if (assnRes.getErr()) {
+                      std::cerr << "Thread " << activeThreads[i].name
+                                << " error: " << assnRes.getErr()->msg << "\n";
+                      activeThreads[i].done = true;
+                    } else {
+                      activeThreads[i].pc++;
+                    }
+                  } else {
+                    activeThreads[i].pc++;
+                  }
+                } else {
+                  activeThreads[i].pc++;
+                }
+                anyProgress = true;
+              }
+            } else if (auto* waitCmd = std::get_if<Wait>(&cmd)) {
+              bool waitFound = false;
+              bool waitDone = false;
+              // Avoid using an index loop here since activeThreads might be
+              // accessed
+              for (size_t j = 0; j < activeThreads.size(); ++j) {
+                if (activeThreads[j].name == waitCmd->thread) {
+                  waitFound = true;
+                  waitDone = activeThreads[j].done;
+                  break;
+                }
+              }
+              if (!waitFound) {
+                std::cerr << "Thread " << activeThreads[i].name
+                          << " error: wait called for unknown thread\n";
+                activeThreads[i].done = true;
+                anyProgress = true;
+              } else if (waitDone) {
+                activeThreads[i].pc++;
+                anyProgress = true;
+              }
+            } else {
+              // Not an action, wait, or assert_return, just run it
+              // (e.g. module instantiation or other assertions)
+              auto res = runCommand(cmd);
+              if (res.getErr()) {
+                std::cerr << "Thread " << activeThreads[i].name
+                          << " error: " << res.getErr()->msg << "\n";
+                activeThreads[i].done = true;
+              } else {
+                activeThreads[i].pc++;
+                anyProgress = true;
+              }
+            }
+          } else {
+            activeThreads[i].done = true;
+            anyProgress = true; // finishing counts as progress
+          }
+
+          std::swap(lastInstance, activeThreads[i].lastInstance);
+          std::swap(lastModuleDefinition,
+                    activeThreads[i].lastModuleDefinition);
+        }
+      }
+
+      if (targetDone) {
+        break;
+      }
+
+      if (!anyProgress) {
+        // Find if target is still suspended
+        return Err{"deadlock! no threads can make progress"};
+      }
+    }
+    return Ok{};
+  }
 
   Result<std::shared_ptr<Module>> makeModule(WASTModule& mod) {
     std::shared_ptr<Module> wasm;
@@ -173,6 +392,22 @@ struct Shell {
     auto instance =
       std::make_shared<ModuleRunner>(wasm, interface.get(), linkedInstances);
 
+    // In multithreaded WASM, instances within the same thread should share a
+    // stack. However, the `linkedInstances` might contain modules (like memory)
+    // shared across ALL threads. If we blindly inherit `continuationStore` from
+    // `linkedInstances`, all threads will share the same execution stack,
+    // causing segfaults. Therefore, we MUST give this instance a fresh
+    // ContinuationStore for its thread execution unless it is supposed to be
+    // part of an existing thread's execution. For now, in `wasm-shell`, we
+    // simplify by giving every top-level module a fresh store but sharing the
+    // WAIT state. (Called function execution across modules will temporarily
+    // push to their respective stores, which is not perfect natively but avoids
+    // stack data races). Actually, `activeThreads[i]` implies each thread has
+    // its own stack.
+    auto store = std::make_shared<ContinuationStore>();
+    store->sharedWaitState = sharedWaitState;
+    instance->setContinuationStore(store);
+
     lastInstance = instanceName;
 
     // Even if instantiation fails, the module may have partially instantiated
@@ -201,6 +436,10 @@ struct Shell {
     CHECK_ERR(module);
 
     auto wasm = *module;
+    if (!wasm->name.is()) {
+      wasm->name = Name(std::string("anonymous_") +
+                        std::to_string(anonymousModuleCounter++));
+    }
     CHECK_ERR(validateModule(*wasm));
 
     modules[wasm->name] = wasm;
@@ -233,13 +472,15 @@ struct Shell {
   struct HostLimitResult {};
   struct ExceptionResult {};
   struct SuspensionResult {};
+  struct ThreadSuspendResult {};
   using ActionResult = std::variant<Literals,
                                     TrapResult,
                                     HostLimitResult,
                                     ExceptionResult,
-                                    SuspensionResult>;
+                                    SuspensionResult,
+                                    ThreadSuspendResult>;
 
-  std::string resultToString(ActionResult& result) {
+  std::string resultToString(const ActionResult& result) {
     if (std::get_if<TrapResult>(&result)) {
       return "trap";
     } else if (std::get_if<HostLimitResult>(&result)) {
@@ -248,6 +489,8 @@ struct Shell {
       return "exception";
     } else if (std::get_if<SuspensionResult>(&result)) {
       return "suspension";
+    } else if (std::get_if<ThreadSuspendResult>(&result)) {
+      return "thread_suspend";
     } else if (auto* vals = std::get_if<Literals>(&result)) {
       std::stringstream ss;
       ss << *vals;
@@ -265,6 +508,8 @@ struct Shell {
         return TrapResult{};
       }
       auto& instance = it->second;
+      std::cerr << "doAction invoke name=" << invoke->name
+                << " instance addr=" << instance.get() << "\n";
       Flow flow;
       try {
         flow = instance->callExport(invoke->name, invoke->args);
@@ -276,6 +521,9 @@ struct Shell {
         return ExceptionResult{};
       } catch (...) {
         WASM_UNREACHABLE("unexpected error");
+      }
+      if (flow.breakTo == THREAD_SUSPEND_FLOW) {
+        return ThreadSuspendResult{};
       }
       if (flow.suspendTag) {
         // This is an unhandled suspension. Handle it here - clear the
@@ -352,15 +600,15 @@ struct Shell {
     return Ok{};
   }
 
-  Result<> assertReturn(AssertReturn& assn) {
+  Result<> assertResult(const ActionResult& result,
+                        const std::vector<ExpectedResult>& expected) {
     std::stringstream err;
-    auto result = doAction(assn.action);
     auto* values = std::get_if<Literals>(&result);
     if (!values) {
       return Err{std::string("expected return, got ") + resultToString(result)};
     }
-    if (values->size() != assn.expected.size()) {
-      err << "expected " << assn.expected.size() << " values, got "
+    if (values->size() != expected.size()) {
+      err << "expected " << expected.size() << " values, got "
           << resultToString(result);
       return Err{err.str()};
     }
@@ -375,13 +623,13 @@ struct Shell {
       };
 
       Literal val = (*values)[i];
-      auto& expected = assn.expected[i];
-      if (auto* v = std::get_if<Literal>(&expected)) {
+      auto& exp = expected[i];
+      if (auto* v = std::get_if<Literal>(&exp)) {
         if (val != *v) {
           err << "expected " << *v << ", got " << val << atIndex();
           return Err{err.str()};
         }
-      } else if (auto* ref = std::get_if<RefResult>(&expected)) {
+      } else if (auto* ref = std::get_if<RefResult>(&exp)) {
         if (!val.type.isRef() ||
             !HeapType::isSubType(val.type.getHeapType(), ref->type)) {
           err << "expected " << ref->type << " reference, got " << val
@@ -389,23 +637,23 @@ struct Shell {
           return Err{err.str()};
         }
       } else if ([[maybe_unused]] auto* nullRef =
-                   std::get_if<NullRefResult>(&expected)) {
+                   std::get_if<NullRefResult>(&exp)) {
         if (!val.isNull()) {
           err << "expected ref.null, got " << val << atIndex();
           return Err{err.str()};
         }
-      } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
+      } else if (auto* nan = std::get_if<NaNResult>(&exp)) {
         auto check = checkNaN(val, *nan);
         if (auto* e = check.getErr()) {
           err << e->msg << atIndex();
           return Err{err.str()};
         }
-      } else if (auto* lanes = std::get_if<LaneResults>(&expected)) {
+      } else if (auto* lanes = std::get_if<LaneResults>(&exp)) {
         switch (lanes->size()) {
           case 4: {
             auto vals = val.getLanesF32x4();
-            for (Index i = 0; i < 4; ++i) {
-              auto check = checkLane(vals[i], (*lanes)[i], i);
+            for (Index j = 0; j < 4; ++j) {
+              auto check = checkLane(vals[j], (*lanes)[j], j);
               if (auto* e = check.getErr()) {
                 err << e->msg << atIndex();
                 return Err{err.str()};
@@ -415,8 +663,8 @@ struct Shell {
           }
           case 2: {
             auto vals = val.getLanesF64x2();
-            for (Index i = 0; i < 2; ++i) {
-              auto check = checkLane(vals[i], (*lanes)[i], i);
+            for (Index j = 0; j < 2; ++j) {
+              auto check = checkLane(vals[j], (*lanes)[j], j);
               if (auto* e = check.getErr()) {
                 err << e->msg << atIndex();
                 return Err{err.str()};
@@ -428,10 +676,14 @@ struct Shell {
             WASM_UNREACHABLE("unexpected number of lanes");
         }
       } else {
-        WASM_UNREACHABLE("unexpected expectation");
+        WASM_UNREACHABLE("unexpected result expectation");
       }
     }
     return Ok{};
+  }
+
+  Result<> assertReturn(AssertReturn& assn) {
+    return assertResult(doAction(assn.action), assn.expected);
   }
 
   Result<> assertAction(AssertAction& assn) {

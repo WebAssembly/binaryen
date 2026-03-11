@@ -1,0 +1,42 @@
+import subprocess
+
+wast_content = """
+(module $Mem
+  (memory (export "shared") 1 1 shared)
+)
+(register "mem")
+
+(module $Check
+  (memory (import "mem" "shared") 1 1 shared)
+
+  (func (export "check") (result i32)
+    (local i32 i32)
+    ;; Manually store values to simulate L_0=0 and L_1=1
+    (i32.store (i32.const 24) (i32.const 0))
+    (i32.store (i32.const 32) (i32.const 1))
+
+    (i32.load (i32.const 24))
+    (local.set 0)
+    (i32.load (i32.const 32))
+    (local.set 1)
+
+    ;; allowed results: (L_0 = 1 && L_1 = 1) || (L_0 = 0 && L_1 = 1) || (L_0 = 1 && L_1 = 0)
+
+    (i32.and (i32.eq (local.get 0) (i32.const 1)) (i32.eq (local.get 1) (i32.const 1)))
+    (i32.and (i32.eq (local.get 0) (i32.const 0)) (i32.eq (local.get 1) (i32.const 1)))
+    (i32.and (i32.eq (local.get 0) (i32.const 1)) (i32.eq (local.get 1) (i32.const 0)))
+    (i32.or)
+    (i32.or)
+    (return)
+  )
+)
+
+(assert_return (invoke $Check "check") (i32.const 1))
+"""
+
+with open("test_check.wast", "w") as f:
+    f.write(wast_content)
+
+r = subprocess.run(["./bin/wasm-shell", "test_check.wast"], capture_output=True, text=True)
+print("STDOUT:", r.stdout)
+print("STDERR:", r.stderr)
