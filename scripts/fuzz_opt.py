@@ -147,16 +147,17 @@ def randomize_feature_opts():
                 FEATURE_OPTS.append(possible)
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
-    elif random.random() < 0.9:
-        # 90% of the remaining (2/3 * 0.9) use them all (0.54 probability). This is useful to maximize
+    else:
+        # Otherwise, use all the features. This is useful to maximize
         # coverage, as enabling more features enables more optimizations and
-        # code paths, and also allows all initial contents to run.
-
-        # Disable features not allowed in V8 to increase V8 fuzzing.
-        FEATURE_OPTS.extend(f'--disable-{feature}' for feature in DISALLOWED_FEATURES_IN_V8)
-        # Relaxed SIMD's nondeterminism disables much but not
-        # all of our V8 fuzzing, so avoid it.
-        FEATURE_OPTS.append('--disable-relaxed-simd')
+        # code paths, and also allows all initial contents to run. However,
+        # half the time disable the specific ones that are a problem in V8.
+        if random.random() < 0.5:
+            # Disable features not allowed in V8 to increase V8 fuzzing.
+            FEATURE_OPTS.extend(f'--disable-{feature}' for feature in DISALLOWED_FEATURES_IN_V8)
+            # Relaxed SIMD's nondeterminism disables much but not
+            # all of our V8 fuzzing, so avoid it.
+            FEATURE_OPTS.append('--disable-relaxed-simd')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
