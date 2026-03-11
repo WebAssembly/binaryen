@@ -482,9 +482,15 @@ private:
   }
 
   void applyMemoryToModule() {
+    if (wasm->memories.empty()) {
+      return;
+    }
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
     auto& memory = wasm->memories[0];
+    if (memory->imported()) {
+      return;
+    }
     if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
       auto curr = builder.makeDataSegment();
