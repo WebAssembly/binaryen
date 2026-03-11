@@ -12,14 +12,14 @@
  (type $B (struct (field (mut f64))))
  (type $C (struct (field (mut i32)) (field (mut i32))))
 
- (memory shared 10)
+ (memory 10 10 shared)
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 0))
  (global $global$0 (mut i32) (i32.const 0))
  ;; CHECK:      (global $global$1 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
 
- ;; CHECK:      (func $simple-param (param $x (ref $A))
+ ;; CHECK:      (func $simple-param (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -59,7 +59,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-local
+ ;; CHECK:      (func $simple-local (type $1)
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -100,7 +100,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-reaching-trap
+ ;; CHECK:      (func $simple-reaching-trap (type $1)
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -130,14 +130,13 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $fallthrough (result (ref $A))
+ ;; CHECK:      (func $fallthrough (type $5) (result (ref $A))
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block $func (result (ref $A))
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_cast $func
+ ;; CHECK-NEXT:     (br_on_cast $func (ref null $A) (ref $A)
  ;; CHECK-NEXT:      (local.get $x)
- ;; CHECK-NEXT:      (rtt.canon $A)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
@@ -157,9 +156,8 @@
    (struct.set $A 0
     ;; the reference can be seen to fall through this, proving the store is
     ;; dead (due to the one after it).
-    (br_on_cast $func
+    (br_on_cast $func (ref null $A) (ref $A)
      (local.get $x)
-     (rtt.canon $A)
     )
     (i32.const 20)
    )
@@ -171,7 +169,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-fallthrough (param $x (ref $A))
+ ;; CHECK:      (func $simple-fallthrough (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result (ref $A))
@@ -205,14 +203,14 @@
   )
  )
 
- ;; CHECK:      (func $get-ref (result (ref $A))
+ ;; CHECK:      (func $get-ref (type $5) (result (ref $A))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $get-ref (result (ref $A))
   (unreachable)
  )
 
- ;; CHECK:      (func $ref-changes (param $x (ref $A))
+ ;; CHECK:      (func $ref-changes (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -240,15 +238,17 @@
   )
  )
 
- ;; CHECK:      (func $ref-may-change (param $x (ref $A)) (param $i i32)
+ ;; CHECK:      (func $ref-may-change (type $9) (param $x (ref $A)) (param $i i32)
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $i)
- ;; CHECK-NEXT:   (local.set $x
- ;; CHECK-NEXT:    (call $get-ref)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $x
+ ;; CHECK-NEXT:     (call $get-ref)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $A 0
@@ -264,8 +264,10 @@
   ;; the reference may change here
   (if
    (local.get $i)
-   (local.set $x
-    (call $get-ref)
+   (then
+    (local.set $x
+     (call $get-ref)
+    )
    )
   )
   (struct.set $A 0
@@ -274,7 +276,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-use (param $x (ref $A))
+ ;; CHECK:      (func $simple-use (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -318,7 +320,7 @@
   )
  )
 
- ;; CHECK:      (func $incompatible-types (param $x (ref $A)) (param $y (ref $B))
+ ;; CHECK:      (func $incompatible-types (type $6) (param $x (ref $A)) (param $y (ref $B))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -354,7 +356,7 @@
   )
  )
 
- ;; CHECK:      (func $incompatible-types-get (param $x (ref $A)) (param $y (ref $B))
+ ;; CHECK:      (func $incompatible-types-get (type $6) (param $x (ref $A)) (param $y (ref $B))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -390,10 +392,14 @@
   )
  )
 
- ;; CHECK:      (func $compatible-types (param $x (ref $A)) (param $y (ref $C))
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK:      (func $compatible-types (type $7) (param $x (ref $A)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $C 0
  ;; CHECK-NEXT:   (local.get $y)
@@ -421,10 +427,14 @@
   )
  )
 
- ;; CHECK:      (func $compatible-types-get (param $x (ref $A)) (param $y (ref $C))
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK:      (func $compatible-types-get (type $7) (param $x (ref $A)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.get $C 0
@@ -452,10 +462,14 @@
   )
  )
 
- ;; CHECK:      (func $compatible-types-nullability-1 (param $x (ref $A)) (param $y (ref null $C))
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK:      (func $compatible-types-nullability-1 (type $10) (param $x (ref $A)) (param $y (ref null $C))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $C 0
  ;; CHECK-NEXT:   (local.get $y)
@@ -485,10 +499,14 @@
    (i32.const 30)
   )
  )
- ;; CHECK:      (func $compatible-types-nullability-2 (param $x (ref null $A)) (param $y (ref $C))
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK:      (func $compatible-types-nullability-2 (type $11) (param $x (ref null $A)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $C 0
  ;; CHECK-NEXT:   (local.get $y)
@@ -514,10 +532,14 @@
    (i32.const 30)
   )
  )
- ;; CHECK:      (func $compatible-types-nullability-3 (param $x (ref null $A)) (param $y (ref null $C))
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK:      (func $compatible-types-nullability-3 (type $12) (param $x (ref null $A)) (param $y (ref null $C))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $C 0
  ;; CHECK-NEXT:   (local.get $y)
@@ -544,12 +566,11 @@
   )
  )
 
- ;; CHECK:      (func $foo
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK:      (func $foo (type $1)
  ;; CHECK-NEXT: )
  (func $foo)
 
- ;; CHECK:      (func $call (param $x (ref $A))
+ ;; CHECK:      (func $call (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -573,7 +594,7 @@
   )
  )
 
- ;; CHECK:      (func $through-branches (param $x (ref $A))
+ ;; CHECK:      (func $through-branches (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -584,8 +605,12 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
@@ -600,8 +625,12 @@
   ;; the analysis is not confused by branching and merging; the first store is
   ;; dead
   (if (i32.const 1)
-   (nop)
-   (nop)
+   (then
+    (nop)
+   )
+   (else
+    (nop)
+   )
   )
   (struct.set $A 0
    (local.get $x)
@@ -609,18 +638,22 @@
   )
  )
 
- ;; CHECK:      (func $just-one-branch-trample (param $x (ref $A))
+ ;; CHECK:      (func $just-one-branch-trample (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (struct.set $A 0
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (struct.set $A 0
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $just-one-branch-trample (param $x (ref $A))
@@ -630,15 +663,19 @@
   )
   ;; a trample on just one branch is not enough
   (if (i32.const 1)
-   (struct.set $A 0
-    (local.get $x)
-    (i32.const 20)
+   (then
+    (struct.set $A 0
+     (local.get $x)
+     (i32.const 20)
+    )
    )
-   (nop)
+   (else
+    (nop)
+   )
   )
  )
 
- ;; CHECK:      (func $two-branch-trample (param $x (ref $A))
+ ;; CHECK:      (func $two-branch-trample (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -649,13 +686,17 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (struct.set $A 0
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (struct.set $A 0
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (struct.set $A 0
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (i32.const 30)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (struct.set $A 0
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (i32.const 30)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -666,26 +707,34 @@
   )
   ;; a trample on both branch is enough
   (if (i32.const 1)
-   (struct.set $A 0
-    (local.get $x)
-    (i32.const 20)
+   (then
+    (struct.set $A 0
+     (local.get $x)
+     (i32.const 20)
+    )
    )
-   (struct.set $A 0
-    (local.get $x)
-    (i32.const 30)
+   (else
+    (struct.set $A 0
+     (local.get $x)
+     (i32.const 30)
+    )
    )
   )
  )
 
- ;; CHECK:      (func $just-one-branch-bad (param $x (ref $A))
+ ;; CHECK:      (func $just-one-branch-bad (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (call $foo)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (call $foo)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
@@ -699,8 +748,12 @@
   )
   ;; an unknown interaction on one branch is enough to make us give up
   (if (i32.const 1)
-   (call $foo)
-   (nop)
+   (then
+    (call $foo)
+   )
+   (else
+    (nop)
+   )
   )
   (struct.set $A 0
    (local.get $x)
@@ -708,10 +761,10 @@
   )
  )
 
- ;; CHECK:      (func $simple-in-branches (param $x (ref $A))
+ ;; CHECK:      (func $simple-in-branches (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (local.get $x)
@@ -725,7 +778,10 @@
  ;; CHECK-NEXT:     (i32.const 20)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (local.get $x)
@@ -743,32 +799,38 @@
  ;; CHECK-NEXT: )
  (func $simple-in-branches (param $x (ref $A))
   (if (i32.const 1)
-   (block
-    (struct.set $A 0
-     (local.get $x)
-     (i32.const 10)
-    )
-    ;; a dead store in one if arm
-    (struct.set $A 0
-     (local.get $x)
-     (i32.const 20)
+   (then
+    (block
+     (struct.set $A 0
+      (local.get $x)
+      (i32.const 10)
+     )
+     ;; a dead store in one if arm
+     (struct.set $A 0
+      (local.get $x)
+      (i32.const 20)
+     )
     )
    )
-   (block
-    (struct.set $A 0
-     (local.get $x)
-     (i32.const 30)
-    )
-    ;; another dead store in another arm
-    (struct.set $A 0
-     (local.get $x)
-     (i32.const 40)
+  )
+  (if (i32.const 1)
+   (then
+    (block
+     (struct.set $A 0
+      (local.get $x)
+      (i32.const 30)
+     )
+     ;; another dead store in another arm
+     (struct.set $A 0
+      (local.get $x)
+      (i32.const 40)
+     )
     )
    )
   )
  )
 
- ;; CHECK:      (func $different-refs-same-type (param $x (ref $A)) (param $y (ref $A))
+ ;; CHECK:      (func $different-refs-same-type (type $13) (param $x (ref $A)) (param $y (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -798,7 +860,7 @@
   )
  )
 
- ;; CHECK:      (func $different-indexes (param $x (ref $C))
+ ;; CHECK:      (func $different-indexes (type $14) (param $x (ref $C))
  ;; CHECK-NEXT:  (struct.set $C 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -833,7 +895,7 @@
   )
  )
 
- ;; CHECK:      (func $different-pointers (param $x (ref $C)) (param $y (ref $C))
+ ;; CHECK:      (func $different-pointers (type $8) (param $x (ref $C)) (param $y (ref $C))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -870,7 +932,7 @@
   )
  )
 
- ;; CHECK:      (func $different-pointers-get (param $x (ref $C)) (param $y (ref $C))
+ ;; CHECK:      (func $different-pointers-get (type $8) (param $x (ref $C)) (param $y (ref $C))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -908,7 +970,7 @@
   )
  )
 
- ;; CHECK:      (func $no-basic-blocks
+ ;; CHECK:      (func $no-basic-blocks (type $1)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $no-basic-blocks
@@ -916,7 +978,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $global
+ ;; CHECK:      (func $global (type $1)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
@@ -942,13 +1004,15 @@
   )
  )
 
- ;; CHECK:      (func $global-trap
+ ;; CHECK:      (func $global-trap (type $1)
  ;; CHECK-NEXT:  (global.set $global$0
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (global.set $global$0
  ;; CHECK-NEXT:   (i32.const 20)
@@ -962,14 +1026,16 @@
   ;; observed if another export is called later after the trap.
   (if
    (i32.const 1)
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (global.set $global$0
    (i32.const 20)
   )
  )
 
- ;; CHECK:      (func $memory-const
+ ;; CHECK:      (func $memory-const (type $1)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 10)
@@ -995,7 +1061,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-param (param $x i32)
+ ;; CHECK:      (func $memory-param (type $15) (param $x i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -1021,7 +1087,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-different-const
+ ;; CHECK:      (func $memory-different-const (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1042,7 +1108,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-different-offset
+ ;; CHECK:      (func $memory-different-offset (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1063,7 +1129,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-different-size
+ ;; CHECK:      (func $memory-different-size (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1084,7 +1150,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-other-interference
+ ;; CHECK:      (func $memory-other-interference (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1115,7 +1181,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load
+ ;; CHECK:      (func $memory-load (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1146,7 +1212,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-different-offset
+ ;; CHECK:      (func $memory-load-different-offset (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1177,7 +1243,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-different-ptr
+ ;; CHECK:      (func $memory-load-different-ptr (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1210,7 +1276,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-different-bytes
+ ;; CHECK:      (func $memory-load-different-bytes (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1243,7 +1309,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-store-small
+ ;; CHECK:      (func $memory-store-small (type $1)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 10)
@@ -1269,7 +1335,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-store-align
+ ;; CHECK:      (func $memory-store-align (type $1)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 10)
@@ -1295,7 +1361,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-same-size-different-types
+ ;; CHECK:      (func $memory-same-size-different-types (type $1)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 10)
@@ -1322,7 +1388,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-same-size-different-types-b
+ ;; CHECK:      (func $memory-same-size-different-types-b (type $1)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 10)
@@ -1347,7 +1413,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-atomic1
+ ;; CHECK:      (func $memory-atomic1 (type $1)
  ;; CHECK-NEXT:  (i32.atomic.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -1370,7 +1436,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-atomic2
+ ;; CHECK:      (func $memory-atomic2 (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -1393,7 +1459,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-atomic3
+ ;; CHECK:      (func $memory-atomic3 (type $1)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 10)
@@ -1419,7 +1485,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-unreachable
+ ;; CHECK:      (func $memory-unreachable (type $1)
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -1449,7 +1515,7 @@
   )
  )
 
- ;; CHECK:      (func $gc-unreachable (param $x (ref $A))
+ ;; CHECK:      (func $gc-unreachable (type $3) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (loop $loop
