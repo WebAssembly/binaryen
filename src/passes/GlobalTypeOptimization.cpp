@@ -168,9 +168,11 @@ struct GlobalTypeOptimization : public Pass {
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
-    // Analyze functions called by JS to find fields holding configured
-    // prototypes that cannot be removed.
-    analyzeJSCalledFunctions(*module);
+    SubTypes subTypes(*module);
+
+    // Analyze the JS interface to find fields holding configured prototypes
+    // that cannot be removed.
+    analyzeJSInterface(*module, subTypes);
 
     // Propagate information to super and subtypes on set/get infos:
     //
@@ -198,7 +200,6 @@ struct GlobalTypeOptimization : public Pass {
     //    subtypes (as wasm only allows the type to differ if the fields are
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
-    SubTypes subTypes(*module);
     StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(subTypes);
     auto dataFromSubsAndSupersMap = combinedSetGetInfos;
     propagator.propagateToSuperAndSubTypes(dataFromSubsAndSupersMap);
@@ -278,7 +279,6 @@ struct GlobalTypeOptimization : public Pass {
         // remove the field. That is so even if there are writes (it would be a
         // pointless "write-only field").
         auto hasNoReadsAnywhere = !dataFromSubsAndSupers[i].hasRead;
-
         // Check for reads or writes in ourselves and our supers. If there are
         // none, then operations only happen in our strict subtypes, and those
         // subtypes can define the field there, and we don't need it here.
@@ -416,22 +416,107 @@ struct GlobalTypeOptimization : public Pass {
     }
   }
 
-  void analyzeJSCalledFunctions(Module& wasm) {
+  void analyzeJSInterface(Module& wasm, const SubTypes& subTypes) {
     if (!wasm.features.hasCustomDescriptors()) {
       return;
     }
-    for (auto func : Intrinsics(wasm).getJSCalledFunctions()) {
-      // Look at the result types being returned to JS and make sure we preserve
-      // any configured prototypes they might expose.
-      for (auto type : wasm.getFunction(func)->getResults()) {
-        if (!type.isRef()) {
-          continue;
+
+    std::unordered_set<HeapType> subtypesExposed;
+
+    // Mark the relevant prototype field as read and return true iff we newly
+    // know we have to propate the exposure to subtypes.
+    auto noteExposed = [&](HeapType type, Exactness exact = Inexact) -> bool {
+      if (auto desc = type.getDescriptorType();
+          desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+        // This field holds a JS-visible prototype. Do not remove it.
+        combinedSetGetInfos[std::make_pair(*desc, exact)][0].noteRead();
+      }
+      if (exact == Inexact) {
+        return subtypesExposed.insert(type).second;
+      }
+      return false;
+    };
+
+    // Values flowing out to JS might have their prototype field on their
+    // descriptor read by JS.
+    auto flowOut = [&](Type type) {
+      if (type.isRef()) {
+        noteExposed(type.getHeapType(), type.getExactness());
+      }
+    };
+
+    // @binaryen.js.called functions are called from JS. Their results flow back
+    // out to JS.
+    for (auto f : Intrinsics(wasm).getJSCalledFunctions()) {
+      auto* func = wasm.getFunction(f);
+      for (auto type : func->getResults()) {
+        flowOut(type);
+      }
+    }
+
+    for (auto& ex : wasm.exports) {
+      switch (ex->kind) {
+        case ExternalKindImpl::Function: {
+          auto* func = wasm.getFunction(*ex->getInternalName());
+          for (auto type : func->getResults()) {
+            flowOut(type);
+          }
+          break;
         }
-        if (auto desc = type.getHeapType().getDescriptorType();
-            desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
-          // This field holds a JS-visible prototype. Do not remove it.
-          auto exact = type.getExactness();
-          combinedSetGetInfos[std::make_pair(*desc, exact)][0].noteRead();
+        case ExternalKindImpl::Table: {
+          auto* table = wasm.getTable(*ex->getInternalName());
+          flowOut(table->type);
+          break;
+        }
+        case ExternalKindImpl::Global: {
+          auto* global = wasm.getGlobal(*ex->getInternalName());
+          flowOut(global->type);
+          break;
+        }
+        case ExternalKindImpl::Memory:
+        case ExternalKindImpl::Tag:
+        case ExternalKindImpl::Invalid:
+          break;
+      }
+    }
+
+    for (auto& func : wasm.functions) {
+      if (func->imported()) {
+        for (auto type : func->getParams()) {
+          flowOut(type);
+        }
+      }
+    }
+    for (auto& table : wasm.tables) {
+      if (table->imported()) {
+        flowOut(table->type);
+      }
+    }
+    for (auto& global : wasm.globals) {
+      if (global->imported() && global->mutable_) {
+        flowOut(global->type);
+      }
+    }
+
+    // Any type that is a subtype of an exposed type is also exposed. Propagate
+    // from supertypes to subtypes.
+    std::vector<HeapType> work(subtypesExposed.begin(), subtypesExposed.end());
+    while (!work.empty()) {
+      auto type = work.back();
+      work.pop_back();
+      if (type.isBasic()) {
+        // TODO: Unify this with the more incremental propagation below if
+        // SubTypes ever gets support for scanning basic types.
+        for (auto other : subTypes.types) {
+          if (HeapType::isSubType(other, type)) {
+            noteExposed(other);
+          }
+        }
+      } else {
+        for (auto sub : subTypes.getImmediateSubTypes(type)) {
+          if (noteExposed(sub)) {
+            work.push_back(sub);
+          }
         }
       }
     }
