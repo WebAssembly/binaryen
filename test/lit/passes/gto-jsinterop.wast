@@ -251,7 +251,8 @@
     (type $sub-desc (describes $sub) (struct (field externref i64)))
   )
 
-  ;; $super flows out, so $sub is exposed, so $sub-desc field is kept.
+  ;; $super flows out, so $sub is exposed, so $sub-desc's externref field is
+  ;; kept.
   ;; CHECK:       (type $3 (func))
 
   ;; CHECK:      (type $4 (func (param (ref null $super))))
@@ -269,7 +270,8 @@
 
 (module
   ;; Same, but now the type is exact on the boundary, so it does not propagate
-  ;; exposure to subtypes. We can optimize $sub-desc.
+  ;; exposure to subtypes. We can remove all of $sub-desc's fields, unlike
+  ;; before.
   ;; CHECK:      (type $super (sub (struct (field i32))))
   (type $super (sub (struct (field i32))))
 
@@ -298,7 +300,8 @@
 
 (module
   ;; Same, but now there is an abstract supertype on the boundary. We still
-  ;; propagate expose and keep the externref field in $sub-desc.
+  ;; propagate the fact that the type flows out and keep the externref field in
+  ;; $sub-desc.
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (struct)))
   (type $super (sub (struct (field i32))))
