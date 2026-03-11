@@ -150,7 +150,7 @@ public:
     auto f = [import, this](const Literals& arguments) -> Flow {
       if (import->module == "fuzzing-support") {
         if (import->base.startsWith("log")) {
-          // This is a logging function like log-i32 or log-f64
+          // This is a logging function like log-i32 or log-f64.
           std::cout << "[LoggingExternalInterface ";
           if (import->base == "log-branch") {
             // Report this as a special logging, so we can differentiate it

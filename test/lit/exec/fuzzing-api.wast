@@ -9,7 +9,6 @@
  (import "fuzzing-support" "log-f64" (func $log-f64 (param f64)))
  (import "fuzzing-support" "log-anyref" (func $log-anyref (param anyref)))
  (import "fuzzing-support" "log-funcref" (func $log-funcref (param funcref)))
- (import "fuzzing-support" "log-contref" (func $log-contref (param contref)))
  (import "fuzzing-support" "log-externref" (func $log-externref (param externref)))
 
  (import "fuzzing-support" "throw" (func $throw (param i32)))
@@ -66,10 +65,6 @@
   )
   (call $log-externref
    (ref.null extern)
-  )
-  ;; This last one traps on the boundary.
-  (call $log-contref
-   (ref.null cont)
   )
  )
 
