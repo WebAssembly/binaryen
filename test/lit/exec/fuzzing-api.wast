@@ -64,11 +64,12 @@
   (call $log-funcref
    (ref.func $logging)
   )
-  (call $log-contref
-   (ref.null cont)
-  )
   (call $log-externref
    (ref.null extern)
+  )
+  ;; This last one traps on the boundary.
+  (call $log-contref
+   (ref.null cont)
   )
  )
 
