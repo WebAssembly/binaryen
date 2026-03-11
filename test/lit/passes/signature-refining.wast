@@ -1212,7 +1212,7 @@
   (func $not-cont (type $sig) (param anyref)
     ;; This function cannot be optimized even though it is not used in a
     ;; continuation. It is enough that it shares a type with a continuation
-    ;;function.
+    ;; function.
     (nop)
   )
 
