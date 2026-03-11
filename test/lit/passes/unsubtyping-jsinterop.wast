@@ -543,6 +543,33 @@
 )
 
 (module
+  ;; Same, but now with an exact type flowing in.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub (descriptor $desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
+    (type $desc (describes $sub) (struct (field externref)))
+  )
+  ;; CHECK:      (type $3 (func (param (ref (exact $super))) (result anyref)))
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $3) (param $0 (ref (exact $super))) (result anyref)
+  ;; CHECK-NEXT:  (local $sub (ref null $sub))
+  ;; CHECK-NEXT:  (local.get $sub)
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param (ref (exact $super))) (result anyref)
+    (local $sub (ref null $sub))
+    ;; Now the cast when $super flows in from JS is exact, so we do not need to
+    ;; keep $sub a subtype of $super.
+    (local.get $sub)
+  )
+)
+
+(module
   ;; Imported function. Parameters flow out and results flow in.
   ;; CHECK:      (type $super (sub (struct)))
   (type $super (sub (struct)))
@@ -572,6 +599,44 @@
     ;; Now $sub flows out via the parameter and $super flows back in via the
     ;; result. Once again, $sub must maintain its descriptor and must remain a
     ;; subtype of $super.
+    (drop
+      (call $import
+        (local.get $sub)
+      )
+    )
+  )
+)
+
+(module
+  ;; Same, but now with an exact type flowing in.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub (descriptor $desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
+    (type $desc (describes $sub) (struct (field externref)))
+  )
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param anyref) (result (ref (exact $super)))))
+
+  ;; CHECK:      (import "" "" (func $import (type $4) (param anyref) (result (ref (exact $super)))))
+  (import "" "" (func $import (param anyref) (result (ref (exact $super)))))
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (local $sub (ref null $sub))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $import
+  ;; CHECK-NEXT:    (local.get $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $sub (ref null $sub))
+    ;; Now $sub flows out via the parameter and $super flows back in via the
+    ;; result. But because the cast on the way back in is exact, we do not need
+    ;; to keep $sub a subtype of $super.
     (drop
       (call $import
         (local.get $sub)
@@ -667,6 +732,54 @@
   )
 
   ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. Since $super flows
+    ;; out to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
+
+(module
+  ;; Same, but now with an exact global type.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows out via the exported global and also flows back in because the
+  ;; global is mutable.
+  ;; CHECK:       (type $3 (func (result anyref)))
+
+  ;; CHECK:       (type $4 (func (result (ref null $super))))
+
+  ;; CHECK:      (global $g (mut (ref null (exact $super))) (ref.null none))
+  (global $g (export "g") (mut (ref null (exact $super))) (ref.null none))
+
+  ;; CHECK:      (export "g" (global $g))
+
+  ;; CHECK:      (func $test-in (type $3) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of any. Since $super flows in
+    ;; from JS, it is cast from any to $super. But because that cast is exact,
+    ;; we do not need $sub-in to remain a subtype of $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $4) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -856,6 +969,52 @@
   )
 
   ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
+  ;; CHECK-NEXT:  (local.get $sub-out)
+  ;; CHECK-NEXT: )
+  (func $test-out (result (ref null $super))
+    (local $sub-out (ref null $sub-out))
+    ;; This requires that $sub-out is a subtype of $super. Since $super flows
+    ;; out to JS, $sub-out will have to keep its descriptor.
+    (local.get $sub-out)
+  )
+)
+
+(module
+  ;; Same, but with an exact table type.
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub (struct)))
+    (type $sub-in (sub $super (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
+    (type $desc (describes $sub-out) (struct (field externref)))
+  )
+
+  ;; $super flows in via the imported table and also flows back out because
+  ;; tables are mutable.
+  ;; CHECK:       (type $3 (func (result anyref)))
+
+  ;; CHECK:       (type $4 (func (result (ref null $super))))
+
+  ;; CHECK:      (import "" "" (table $t 1 (ref null (exact $super))))
+  (import "" "" (table $t 1 (ref null (exact $super))))
+
+  ;; CHECK:      (func $test-in (type $3) (result anyref)
+  ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
+  ;; CHECK-NEXT:  (local.get $sub-in)
+  ;; CHECK-NEXT: )
+  (func $test-in (result anyref)
+    (local $sub-in (ref null $sub-in))
+    ;; This requires that $sub-in is a subtype of any. Since $super flows in
+    ;; from JS, it is cast from any to $super. But because that cast is exact,
+    ;; we do not need $sub-in to remain a subtype of $super.
+    (local.get $sub-in)
+  )
+
+  ;; CHECK:      (func $test-out (type $4) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
