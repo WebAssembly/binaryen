@@ -451,6 +451,8 @@ private:
 // the final update of data structures is different. This CRTP utility
 // deduplicates the shared logic.
 template<typename Self> struct Noter {
+  DBG(Module* wasm = nullptr);
+
   Self& self() { return *static_cast<Self*>(this); }
 
   void noteSubtype(HeapType sub, HeapType super) {
@@ -559,8 +561,6 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
   // Map from cast source types to their destinations.
   Map<HeapType, std::vector<HeapType>> casts;
 
-  DBG(Module* wasm = nullptr);
-
   void run(Module* wasm) override {
     DBG(this->wasm = wasm);
     if (!wasm->features.hasGC()) {
@@ -574,7 +574,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     // Initialize the subtype relation based on what is immediately required to
     // keep the code and public types valid.
     analyzePublicTypes(*wasm);
-    analyzeJSCalledFunctions(*wasm);
+    analyzeJSInterface(*wasm);
     analyzeModule(*wasm);
 
     // Find further subtypings and iterate to a fixed point.
@@ -635,25 +635,105 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
   }
 
-  void analyzeJSCalledFunctions(Module& wasm) {
+  void analyzeJSInterface(Module& wasm) {
     if (!wasm.features.hasCustomDescriptors()) {
       return;
     }
     Type anyref(HeapType::any, Nullable);
-    for (auto func : Intrinsics(wasm).getJSCalledFunctions()) {
-      // Parameter types flow into Wasm and are implicitly cast from any.
-      for (auto type : wasm.getFunction(func)->getParams()) {
-        if (Type::isSubType(type, anyref)) {
-          noteCast(HeapType::any, type);
+
+    // Values flowing in from JS are implicitly cast from any.
+    auto flowIn = [&](Type type) {
+      if (Type::isSubType(type, anyref)) {
+        noteCast(HeapType::any, type);
+      }
+    };
+
+    // Values flowing out to JS are converted to extern and might come back in
+    // as anyrefs. Their descriptors may need to be kept to configure JS
+    // prototypes.
+    auto flowOut = [&](Type type) {
+      if (Type::isSubType(type, anyref)) {
+        auto heapType = type.getHeapType();
+        noteSubtype(heapType, HeapType::any);
+        noteExposedToJS(heapType);
+      }
+    };
+
+    // @binaryen.js.called functions are called from JS. Their parameters flow
+    // in from JS and their results flow back out.
+    for (auto f : Intrinsics(wasm).getJSCalledFunctions()) {
+      auto* func = wasm.getFunction(f);
+      for (auto type : func->getParams()) {
+        flowIn(type);
+      }
+      for (auto type : func->getResults()) {
+        flowOut(type);
+      }
+    }
+
+    for (auto& ex : wasm.exports) {
+      switch (ex->kind) {
+        case ExternalKindImpl::Function: {
+          // Exported functions are also called from JS. Their parameters flow
+          // in from JS and their result flow back out.
+          auto* func = wasm.getFunction(*ex->getInternalName());
+          for (auto type : func->getParams()) {
+            flowIn(type);
+          }
+          for (auto type : func->getResults()) {
+            flowOut(type);
+          }
+          break;
+        }
+        case ExternalKindImpl::Table: {
+          // Exported tables let values flow in and out.
+          auto* table = wasm.getTable(*ex->getInternalName());
+          flowOut(table->type);
+          flowIn(table->type);
+          break;
+        }
+        case ExternalKindImpl::Global: {
+          // Exported globals let values flow out. Iff they are mutable, they
+          // also let values flow back in.
+          auto* global = wasm.getGlobal(*ex->getInternalName());
+          flowOut(global->type);
+          if (global->mutable_) {
+            flowIn(global->type);
+          }
+          break;
+        }
+        case ExternalKindImpl::Memory:
+        case ExternalKindImpl::Tag:
+        case ExternalKindImpl::Invalid:
+          break;
+      }
+    }
+    for (auto& func : wasm.functions) {
+      // Imported functions are the opposite of exported functions. Their
+      // parameters flow out and their results flow in.
+      if (func->imported()) {
+        for (auto type : func->getParams()) {
+          flowOut(type);
+        }
+        for (auto type : func->getResults()) {
+          flowIn(type);
         }
       }
-      for (auto type : wasm.getFunction(func)->getResults()) {
-        // Result types flow into JS and are implicitly converted from any to
-        // extern. They may also expose configured prototypes that we must keep.
-        if (Type::isSubType(type, anyref)) {
-          auto heapType = type.getHeapType();
-          noteSubtype(heapType, HeapType::any);
-          noteExposedToJS(heapType);
+    }
+    for (auto& table : wasm.tables) {
+      // Imported tables, like exported tables, let values flow in and out.
+      if (table->imported()) {
+        flowOut(table->type);
+        flowIn(table->type);
+      }
+    }
+    for (auto& global : wasm.globals) {
+      // Imported mutable globals let values flow in and out. Imported immutable
+      // globals imply that values will flow in.
+      if (global->imported()) {
+        flowIn(global->type);
+        if (global->mutable_) {
+          flowOut(global->type);
         }
       }
     }
@@ -683,8 +763,10 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       Info& info;
       bool trapsNeverHappen;
 
-      Collector(Info& info, bool trapsNeverHappen)
-        : info(info), trapsNeverHappen(trapsNeverHappen) {}
+      Collector(Info& info, bool trapsNeverHappen, Module* wasm)
+        : info(info), trapsNeverHappen(trapsNeverHappen) {
+        DBG(this->wasm = wasm);
+      }
 
       void doNoteSubtype(HeapType sub, HeapType super) {
         info.subtypings.insert({sub, super});
@@ -783,7 +865,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       wasm, [&](Function* func, Info& info) {
         if (!func->imported()) {
-          Collector(info, trapsNeverHappen).walkFunctionInModule(func, &wasm);
+          Collector(info, trapsNeverHappen, &wasm)
+            .walkFunctionInModule(func, &wasm);
         }
       });
 
@@ -799,7 +882,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
 
     // Collect constraints from module-level code as well.
-    Collector collector(collectedInfo, trapsNeverHappen);
+    Collector collector(collectedInfo, trapsNeverHappen, &wasm);
     collector.walkModuleCode(&wasm);
     collector.setModule(&wasm);
     for (auto& global : wasm.globals) {
