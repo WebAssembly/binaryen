@@ -645,8 +645,13 @@ struct HeapTypeGeneratorImpl {
       // true, since oneIn(0) => true.
       assert(!candidates.empty());
       return rand.pick(candidates);
+    } else if (!type.isBasic()) {
+      // This is not basic, but also not an existing type. This can happen only
+      // when a continuation can't find a signature, and creates a trivial one.
+      // Return that type itself (though other subtypes may exist).
+      return type;
     } else {
-      // This is not a constructed type, so it must be a basic type.
+      // A basic type.
       assert(type.isBasic());
       if (rand.oneIn(8)) {
         return type.getBottom();
