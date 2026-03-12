@@ -235,9 +235,15 @@ struct HeapTypeGeneratorImpl {
       builder[i].setShared(HeapType(builder[*describedIndices[i]]).getShared());
     } else {
       // This is a root type with no supertype. Choose a kind for this type.
-      typeKinds.emplace_back(generateHeapTypeKind());
-      builder[i].setShared(
-        !features.hasSharedEverything() || rand.oneIn(2) ? Unshared : Shared);
+      auto kind = generateHeapTypeKind();
+      typeKinds.emplace_back(kind);
+      // Continuations cannot be shared.
+      auto shared = Unshared;
+      if (features.hasSharedEverything() &&
+          !std::get_if<ContinuationKind>(&kind) && rand.oneIn(2)) {
+        shared = Shared;
+      }
+      builder[i].setShared(shared);
     }
 
     // Plan this descriptor chain for this type if it is not already determined
@@ -320,7 +326,8 @@ struct HeapTypeGeneratorImpl {
     if (rand.oneIn(16)) {
       std::vector<HeapType> bottoms{
         HeapType::noext, HeapType::nofunc, HeapType::none};
-      if (features.hasStackSwitching()) {
+      // Continuations cannot be shared.
+      if (features.hasStackSwitching() && share == Unshared) {
         bottoms.push_back(HeapType::nocont);
       }
       return rand.pick(bottoms).getBasic(share);
@@ -333,7 +340,7 @@ struct HeapTypeGeneratorImpl {
                                   HeapType::i31,
                                   HeapType::struct_,
                                   HeapType::array};
-    if (features.hasStackSwitching()) {
+    if (features.hasStackSwitching() && share == Unshared) {
       options.push_back(HeapType::cont);
     }
     // Avoid shared exn, which we cannot generate.
@@ -1207,12 +1214,25 @@ std::vector<HeapType> Inhabitator::build() {
         continue;
       }
       case HeapTypeKind::Cont: {
+        /*
+@@ -1210,9 +1216,9 @@ std::vector<HeapType> Inhabitator::build() {
+         Continuation copy = type.getContinuation();
+         auto heapType = copy.type;
+         if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
+-          heapType = builder[it->second];
++          copy.type = builder.getTempHeapType(it->second);
+         }
+-        builder[i] = Continuation(heapType);
++        builder[i] = copy;
+         continue;
+       }
+        */
         Continuation copy = type.getContinuation();
         auto heapType = copy.type;
         if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
-          heapType = builder[it->second];
+          copy.type = builder.getTempHeapType(it->second);
         }
-        builder[i] = Continuation(heapType);
+        builder[i] = copy;
         continue;
       }
       case HeapTypeKind::Basic:
