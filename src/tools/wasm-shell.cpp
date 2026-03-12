@@ -421,6 +421,7 @@ struct Shell {
           // needed for i32 and i64.
           case 16: {
             // There is no f8.
+            assert(!isFloat && "float8 does not exist");
             CHECK_ERR(check(val.getLanesUI8x16()));
             break;
           }
