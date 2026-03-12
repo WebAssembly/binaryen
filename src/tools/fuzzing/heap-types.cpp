@@ -333,6 +333,12 @@ struct HeapTypeGeneratorImpl {
       return rand.pick(bottoms).getBasic(share);
     }
 
+    // Sometimes emit shared in place of unshared.
+    if (share == Unshared && features.hasSharedEverything() &&
+        rand.oneIn(4)) {
+      share = Shared;
+    }
+
     std::vector<HeapType> options{HeapType::func,
                                   HeapType::ext,
                                   HeapType::any,
@@ -348,10 +354,6 @@ struct HeapTypeGeneratorImpl {
       options.push_back(HeapType::exn);
     }
     auto ht = rand.pick(options);
-    if (share == Unshared && features.hasSharedEverything() &&
-        ht != HeapType::exn && rand.oneIn(2)) {
-      share = Shared;
-    }
     return ht.getBasic(share);
   }
 
