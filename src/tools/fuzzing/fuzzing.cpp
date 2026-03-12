@@ -2570,6 +2570,14 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefGetDesc);
     }
+    if (heapType.isContinuation()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::StackSwitching,
+                  &Self::makeContBind);
+      if (canMakeControlFlow) {
+        options.add(FeatureSet::ReferenceTypes | FeatureSet::StackSwitching,
+                    &Self::makeResume);
+      }
+    }
   }
   if (wasm.features.hasGC()) {
     if (typeStructFields.find(type) != typeStructFields.end()) {
@@ -4114,6 +4122,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     case HeapTypeKind::Cont: {
       auto funcType = heapType.getContinuation().type;
       return builder.makeContNew(heapType, makeTrappingRefUse(funcType));
+      // todo contbind, resume
     }
     case HeapTypeKind::Basic:
       break;
@@ -5336,6 +5345,146 @@ Expression* TranslateToFuzzReader::makeRefGetDesc(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeBrOn(Type type) {
+  if (funcContext->breakableStack.empty()) {
+    return makeTrivial(type);
+  }
+  // We need to find a proper target to break to; try a few times. Finding the
+  // target is harder than flowing out the proper type, so focus on the target,
+  // and fix up the flowing type later. That is, once we find a target to break
+  // to, we can then either drop ourselves or wrap ourselves in a block +
+  // another value, so that we return the proper thing here (which is done below
+  // in fixFlowingType).
+  int tries = fuzzParams->TRIES;
+  Name targetName;
+  Type targetType;
+  while (--tries >= 0) {
+    auto* target = pick(funcContext->breakableStack);
+    targetName = getTargetName(target);
+    targetType = getTargetType(target);
+    // We can send any reference type, or no value at all, but nothing else.
+    if (targetType.isRef() || targetType == Type::none) {
+      break;
+    }
+  }
+  if (tries < 0) {
+    return makeTrivial(type);
+  }
+
+  auto fixFlowingType = [&](Expression* brOn) -> Expression* {
+    if (Type::isSubType(brOn->type, type)) {
+      // Already of the proper type.
+      return brOn;
+    }
+    if (type == Type::none) {
+      // We just need to drop whatever it is.
+      return builder.makeDrop(brOn);
+    }
+    // We need to replace the type with something else. Drop the BrOn if we need
+    // to, and append a value with the proper type.
+    if (brOn->type != Type::none) {
+      brOn = builder.makeDrop(brOn);
+    }
+    return builder.makeSequence(brOn, make(type));
+  };
+
+  // We found something to break to. Figure out which BrOn variants we can
+  // send.
+  if (targetType == Type::none) {
+    // BrOnNull is the only variant that sends no value.
+    return fixFlowingType(
+      builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
+  }
+
+  // We are sending a reference type to the target. All other BrOn variants can
+  // do that.
+  assert(targetType.isRef());
+  // BrOnNonNull can handle sending any reference. The casts are more limited.
+  auto op = BrOnNonNull;
+  if (targetType.isCastable()) {
+    op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+  }
+  Type castType = Type::none;
+  Type refType;
+  switch (op) {
+    case BrOnNonNull: {
+      // The sent type is the non-nullable version of the reference, so any ref
+      // of that type is ok, nullable or not.
+      refType = targetType.with(getNullability());
+      break;
+    }
+    case BrOnCast: {
+      // The sent type is the heap type we cast to, with the input type's
+      // nullability, so the combination of the two must be a subtype of
+      // targetType.
+      castType = getSubType(targetType);
+      if (castType.isExact() && !wasm.features.hasCustomDescriptors()) {
+        // This exact cast is only valid if its input has the same type (or the
+        // only possible strict subtype, bottom).
+        refType = castType;
+      } else {
+        // The ref's type must be castable to castType, or we'd not validate.
+        // But it can also be a subtype, which will trivially also succeed (so
+        // do that more rarely). Pick subtypes rarely, as they make the cast
+        // trivial.
+        refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
+      }
+      if (targetType.isNonNullable()) {
+        // And it must have the right nullability for the target, as mentioned
+        // above: if the target type is non-nullable then either the ref or the
+        // cast types must be.
+        if (!refType.isNonNullable() && !castType.isNonNullable()) {
+          // Pick one to make non-nullable.
+          if (oneIn(2)) {
+            refType = Type(refType.getHeapType(), NonNullable);
+          } else {
+            castType = Type(castType.getHeapType(), NonNullable);
+          }
+        }
+      }
+      break;
+    }
+    case BrOnCastFail: {
+      // The sent type is the ref's type, with adjusted nullability (if the cast
+      // allows nulls then no null can fail the cast, and what is sent is non-
+      // nullable). First, pick a ref type that we can send to the target.
+      refType = getSubType(targetType);
+      // See above on BrOnCast, but flipped.
+      castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
+      castType = castType.withInexactIfNoCustomDescs(wasm.features);
+      // There is no nullability to adjust: if targetType is non-nullable then
+      // both refType and castType are as well, as subtypes of it. But we can
+      // also allow castType to be nullable (it is not sent to the target).
+      if (castType.isNonNullable() && oneIn(2)) {
+        castType = Type(castType.getHeapType(), Nullable);
+      }
+    } break;
+    default: {
+      WASM_UNREACHABLE("bad br_on op");
+    }
+  }
+  return fixFlowingType(
+    builder.makeBrOn(op, targetName, make(refType), castType));
+}
+
+Expression* TranslateToFuzzReader::makeContBind(Type type) {
+  auto sig = type.getHeapType().getContinuation().type.getSignature();
+  // Add a single param to be bound. TODO: Add multiple, and look in
+  // interestingHeapTypes.
+  std::vector<Type> newParams;
+  for (auto t : sig.params) {
+    newParams.push_back(t);
+  }
+  auto newParam = getConcreteType();
+  newParams.push_back(newParam);
+  auto newSig = Signature(Type(newParams), sig.results);
+  auto newCont = Continuation(newSig);
+  auto newType = Type(newCont, NonNullable, Exact);
+  std::vector<Expression*> newArgs{make(newParam)};
+  return builder.makeContBind(type.getHeapType(), newArgs, make(newType));
+}
+
+Expression* TranslateToFuzzReader::makeResume(Type type) {
+  // TODO
   if (funcContext->breakableStack.empty()) {
     return makeTrivial(type);
   }
