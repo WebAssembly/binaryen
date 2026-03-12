@@ -42,6 +42,7 @@
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
+#include "interpreter/exception.h"
 
 using namespace wasm;
 
@@ -242,9 +243,8 @@ public:
             this->wasm,
             [this](Name name, Type type) { return makeFuncData(name, type); });
         },
-        [](Memory memory, ExternalInterface* externalInterface) {
-          return std::make_unique<CtorEvalRuntimeMemory>(memory,
-                                                         externalInterface);
+        [](Memory memory) {
+          return std::make_unique<CtorEvalRuntimeMemory>(memory);
         }) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
@@ -1117,6 +1117,12 @@ start_eval:
       Flow flow;
       try {
         flow = instance.visit(curr);
+      } catch (TrapException&) {
+        throw FailToEvalException("trap");
+      } catch (WasmException& exn) {
+        std::stringstream ss;
+        ss << "exception thrown: " << exn;
+        throw FailToEvalException(ss.str());
       } catch (FailToEvalException& fail) {
         if (!quiet) {
           if (successes == 0) {
@@ -1353,7 +1359,15 @@ void evalCtors(Module& wasm,
     // create an instance for evalling
     EvallingModuleRunner instance(
       wasm, &interface, interface.instanceInitialized, linkedInstances);
-    instance.instantiate();
+    try {
+      instance.instantiate();
+    } catch (TrapException&) {
+      throw FailToEvalException("trap");
+    } catch (WasmException& exn) {
+      std::stringstream ss;
+      ss << "exception thrown: " << exn;
+      throw FailToEvalException(ss.str());
+    }
     interface.instanceInitialized = true;
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?

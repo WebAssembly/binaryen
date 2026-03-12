@@ -17,17 +17,18 @@
 #include "ir/runtime-memory.h"
 #include "fp16.h"
 #include "interpreter/exception.h"
+#include <iostream>
 
 namespace wasm {
 
-RuntimeMemory::RuntimeMemory(Memory memory,
-                             ExternalInterface* externalInterface)
-  : externalInterface(externalInterface), memoryDefinition(std::move(memory)) {}
-
 namespace {
 
-Address getFinalAddress(const RuntimeMemory& runtimeMemory,
-                        Address addr,
+[[noreturn]] void trap(std::string_view reason) {
+  std::cout << "[trap " << reason << "]\n";
+  throw TrapException{};
+}
+
+Address getFinalAddress(Address addr,
                         Address offset,
                         Index bytes,
                         Address memorySizeBytes) {
@@ -36,14 +37,14 @@ Address getFinalAddress(const RuntimeMemory& runtimeMemory,
     msg += std::to_string(uint64_t(offset));
     msg += " > ";
     msg += std::to_string(uint64_t(memorySizeBytes));
-    runtimeMemory.trap(msg);
+    trap(msg);
   }
   if (addr > memorySizeBytes - offset) {
     std::string msg = "final > memory: ";
     msg += std::to_string(uint64_t(addr));
     msg += " > ";
     msg += std::to_string(uint64_t(memorySizeBytes - offset));
-    runtimeMemory.trap(msg);
+    trap(msg);
   }
 
   addr = size_t(addr) + offset;
@@ -55,13 +56,12 @@ Address getFinalAddress(const RuntimeMemory& runtimeMemory,
     msg += std::to_string(uint64_t(bytes));
     msg += " > ";
     msg += std::to_string(uint64_t(memorySizeBytes));
-    runtimeMemory.trap(msg);
+    trap(msg);
   }
   return addr;
 }
 
-void checkLoadAddress(const RuntimeMemory& runtimeMemory,
-                      Address addr,
+void checkLoadAddress(Address addr,
                       Index bytes,
                       Address memorySizeBytes) {
   if (addr > memorySizeBytes || bytes > memorySizeBytes - addr) {
@@ -71,19 +71,18 @@ void checkLoadAddress(const RuntimeMemory& runtimeMemory,
     msg += std::to_string(uint64_t(bytes));
     msg += " > ";
     msg += std::to_string(uint64_t(memorySizeBytes));
-    runtimeMemory.trap(msg);
+    trap(msg);
   }
 }
 
-void checkAtomicAddress(const RuntimeMemory& runtimeMemory,
-                        Address addr,
+void checkAtomicAddress(Address addr,
                         Index bytes,
                         Address memorySizeBytes) {
-  checkLoadAddress(runtimeMemory, addr, bytes, memorySizeBytes);
+  checkLoadAddress(addr, bytes, memorySizeBytes);
   // Unaligned atomics trap.
   if (bytes > 1) {
     if (addr & (bytes - 1)) {
-      runtimeMemory.trap("unaligned atomic operation");
+      trap("unaligned atomic operation");
     }
   }
 }
@@ -95,9 +94,8 @@ template<typename T> bool aligned(const uint8_t* address) {
 
 } // namespace
 
-RealRuntimeMemory::RealRuntimeMemory(Memory memory,
-                                     ExternalInterface* externalInterface)
-  : RuntimeMemory(std::move(memory), externalInterface) {
+RealRuntimeMemory::RealRuntimeMemory(Memory memory)
+  : RuntimeMemory(std::move(memory)) {
   resize(memoryDefinition.initialByteSize());
 }
 
@@ -107,9 +105,9 @@ Literal RealRuntimeMemory::load(Address addr,
                                 MemoryOrder order,
                                 Type type,
                                 bool signed_) const {
-  Address final = getFinalAddress(*this, addr, offset, byteCount, size());
+  Address final = getFinalAddress(addr, offset, byteCount, size());
   if (order != MemoryOrder::Unordered) {
-    checkAtomicAddress(*this, final, byteCount, size());
+    checkAtomicAddress(final, byteCount, size());
   }
   switch (type.getBasic()) {
     case Type::i32: {
@@ -170,9 +168,9 @@ void RealRuntimeMemory::store(Address addr,
                               MemoryOrder order,
                               Literal value,
                               Type type) {
-  Address final = getFinalAddress(*this, addr, offset, byteCount, size());
+  Address final = getFinalAddress(addr, offset, byteCount, size());
   if (order != MemoryOrder::Unordered) {
-    checkAtomicAddress(*this, final, byteCount, size());
+    checkAtomicAddress(final, byteCount, size());
   }
   switch (type.getBasic()) {
     case Type::i32: {
@@ -213,9 +211,9 @@ void RealRuntimeMemory::store(Address addr,
     case Type::f32: {
       switch (byteCount) {
         case 2:
-          set<uint16_t>(
-            final,
-            fp16_ieee_from_fp32_value(bit_cast<float>(value.reinterpreti32())));
+          set<uint16_t>(final,
+                        fp16_ieee_from_fp32_value(
+                          bit_cast<float>(value.reinterpreti32())));
           break;
         case 4:
           set<int32_t>(final, value.reinterpreti32());
@@ -261,7 +259,7 @@ void RealRuntimeMemory::init(Address dest,
   if (src > data->data.size() || byteCount > data->data.size() - src) {
     trap("out of bounds segment access in memory.init");
   }
-  Address final = getFinalAddress(*this, dest, 0, byteCount, size());
+  Address final = getFinalAddress(dest, 0, byteCount, size());
   if (byteCount > 0) {
     std::memcpy(&memory[final], &data->data[src], byteCount);
   }
@@ -271,9 +269,8 @@ void RealRuntimeMemory::copy(Address dest,
                              Address src,
                              Address byteCount,
                              const RuntimeMemory* srcMemory) {
-  Address finalDest = getFinalAddress(*this, dest, 0, byteCount, size());
-  Address finalSrc =
-    getFinalAddress(*srcMemory, src, 0, byteCount, srcMemory->size());
+  Address finalDest = getFinalAddress(dest, 0, byteCount, size());
+  Address finalSrc = getFinalAddress(src, 0, byteCount, srcMemory->size());
   const std::vector<uint8_t>* srcBuffer = srcMemory->getBuffer();
   if (!srcBuffer) {
     // If it's not a memory with a direct buffer, we might need another way to
@@ -287,7 +284,7 @@ void RealRuntimeMemory::copy(Address dest,
 }
 
 void RealRuntimeMemory::fill(Address dest, uint8_t value, Address byteCount) {
-  Address final = getFinalAddress(*this, dest, 0, byteCount, size());
+  Address final = getFinalAddress(dest, 0, byteCount, size());
   if (byteCount > 0) {
     std::memset(&memory[final], value, byteCount);
   }
@@ -300,8 +297,7 @@ void RealRuntimeMemory::resize(size_t newSize) {
   size_t newAllocatedSize = std::max(minSize, newSize);
   if (newAllocatedSize > oldAllocatedSize) {
     memory.resize(newAllocatedSize);
-    std::memset(
-      &memory[oldAllocatedSize], 0, newAllocatedSize - oldAllocatedSize);
+    std::memset(&memory[oldAllocatedSize], 0, newAllocatedSize - oldAllocatedSize);
   }
   if (newSize < oldAllocatedSize && newSize < minSize) {
     std::memset(&memory[newSize], 0, minSize - newSize);
@@ -347,7 +343,6 @@ template void RealRuntimeMemory::set<uint32_t>(size_t, uint32_t);
 template void RealRuntimeMemory::set<int64_t>(size_t, int64_t);
 template void RealRuntimeMemory::set<uint64_t>(size_t, uint64_t);
 template void
-RealRuntimeMemory::set<std::array<uint8_t, 16>>(size_t,
-                                                std::array<uint8_t, 16>);
+RealRuntimeMemory::set<std::array<uint8_t, 16>>(size_t, std::array<uint8_t, 16>);
 
 } // namespace wasm

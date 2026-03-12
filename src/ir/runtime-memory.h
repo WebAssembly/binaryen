@@ -23,13 +23,7 @@ namespace wasm {
 
 class RuntimeMemory {
 public:
-  // Forward declare to avoid circular dependency
-  struct ExternalInterface {
-    virtual ~ExternalInterface() = default;
-    virtual void trap(std::string_view why) = 0;
-  };
-
-  RuntimeMemory(Memory memory, ExternalInterface* externalInterface);
+  RuntimeMemory(Memory memory) : memoryDefinition(std::move(memory)) {}
   virtual ~RuntimeMemory() = default;
 
   virtual Literal load(Address addr,
@@ -50,15 +44,11 @@ public:
 
   virtual Address size() const = 0;
 
-  virtual void init(Address dest,
-                    Address src,
-                    Address byteCount,
-                    const DataSegment* data) = 0;
+  virtual void
+  init(Address dest, Address src, Address byteCount, const DataSegment* data) = 0;
 
-  virtual void copy(Address dest,
-                    Address src,
-                    Address byteCount,
-                    const RuntimeMemory* srcMemory) = 0;
+  virtual void
+  copy(Address dest, Address src, Address byteCount, const RuntimeMemory* srcMemory) = 0;
 
   virtual void fill(Address dest, uint8_t value, Address byteCount) = 0;
 
@@ -66,16 +56,14 @@ public:
 
   virtual const std::vector<uint8_t>* getBuffer() const { return nullptr; }
 
-  void trap(std::string_view why) const { externalInterface->trap(why); }
-
 protected:
-  ExternalInterface* externalInterface;
   const Memory memoryDefinition;
 };
 
 class RealRuntimeMemory : public RuntimeMemory {
 public:
-  RealRuntimeMemory(Memory memory, ExternalInterface* externalInterface);
+  RealRuntimeMemory(Memory memory);
+
   virtual ~RealRuntimeMemory() = default;
 
   Literal load(Address addr,
