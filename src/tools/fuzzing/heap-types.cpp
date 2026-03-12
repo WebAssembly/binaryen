@@ -473,7 +473,12 @@ struct HeapTypeGeneratorImpl {
   }
 
   Continuation generateSubContinuation(Continuation super) {
-    return Continuation(pickSubHeapType(super.type));
+    auto subType = pickSubHeapType(super.type);
+    if (subType.isBasic()) {
+      // We cannot use a bottom type here.
+        subType = super.type;
+    }
+    return Continuation(subType);
   }
 
   template<typename Kind>
