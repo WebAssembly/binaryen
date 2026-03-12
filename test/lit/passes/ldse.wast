@@ -1213,9 +1213,13 @@
  )
 
  ;; CHECK:      (func $memory-load-different-offset (type $1)
- ;; CHECK-NEXT:  (i32.store
- ;; CHECK-NEXT:   (i32.const 10)
- ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load offset=1
@@ -1244,9 +1248,13 @@
  )
 
  ;; CHECK:      (func $memory-load-different-ptr (type $1)
- ;; CHECK-NEXT:  (i32.store
- ;; CHECK-NEXT:   (i32.const 10)
- ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load
@@ -1277,9 +1285,13 @@
  )
 
  ;; CHECK:      (func $memory-load-different-bytes (type $1)
- ;; CHECK-NEXT:  (i32.store
- ;; CHECK-NEXT:   (i32.const 10)
- ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load8_s
