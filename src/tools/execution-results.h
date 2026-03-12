@@ -150,7 +150,7 @@ public:
     auto f = [import, this](const Literals& arguments) -> Flow {
       if (import->module == "fuzzing-support") {
         if (import->base.startsWith("log")) {
-          // This is a logging function like log-i32 or log-f64
+          // This is a logging function like log-i32 or log-f64.
           std::cout << "[LoggingExternalInterface ";
           if (import->base == "log-branch") {
             // Report this as a special logging, so we can differentiate it
@@ -319,13 +319,8 @@ public:
     Literals arguments;
     for (const auto& param : sig.params) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
-      // on attempts to convert it to BigInt. v128 is disallowed.
-      if (param == Type::i64 || param == Type::v128) {
-        throwJSException();
-      }
-      // Exnref and nullexnref are also disallowed.
-      if (param.isRef() &&
-          HeapType(param.getHeapType().getTop()).isMaybeShared(HeapType::exn)) {
+      // on attempts to convert it to BigInt. Also trap on v128 etc.
+      if (param == Type::i64 || trapsOnJSBoundary(param)) {
         throwJSException();
       }
       if (!param.isDefaultable()) {
@@ -339,9 +334,7 @@ public:
     for (const auto& result : sig.results) {
       // An i64 result is fine: a BigInt will be provided. But v128 and
       // [null]exnref still error.
-      if (result == Type::v128 ||
-          (result.isRef() && HeapType(result.getHeapType().getTop())
-                               .isMaybeShared(HeapType::exn))) {
+      if (trapsOnJSBoundary(result)) {
         throwJSException();
       }
     }
@@ -354,6 +347,21 @@ public:
       trap("suspend through JS");
     }
     return flow.values;
+  }
+
+  bool trapsOnJSBoundary(Type type) {
+    if (type == Type::v128) {
+      return true;
+    }
+    if (type.isRef()) {
+      // Exnref and [null][exn|cont]ref trap.
+      HeapType top = type.getHeapType().getTop();
+      if (top.isMaybeShared(HeapType::exn) ||
+          top.isMaybeShared(HeapType::cont)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }

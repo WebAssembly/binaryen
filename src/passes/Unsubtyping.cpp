@@ -171,9 +171,9 @@ struct TypeTree {
     // The index of the described and descriptor types, if they are necessary.
     std::optional<Index> described;
     std::optional<Index> descriptor;
-    // Whether this type might flow out to JS from a JS-called function or via
-    // extern.convert_any.
-    bool exposedToJS = false;
+    // Whether subtypes of this type might flow out to JS from a JS-called
+    // function or via extern.convert_any.
+    bool subtypesExposedToJS = false;
 
     Node(HeapType type, Index index) : type(type), parent(index) {}
   };
@@ -251,17 +251,17 @@ struct TypeTree {
     return std::nullopt;
   }
 
-  void setExposedToJS(HeapType type) {
+  void setSubtypesExposedToJS(HeapType type) {
     auto index = getIndex(type);
-    nodes[index].exposedToJS = true;
+    nodes[index].subtypesExposedToJS = true;
   }
 
-  bool isExposedToJS(HeapType type) const {
+  bool areSubtypesExposedToJS(HeapType type) const {
     auto index = maybeGetIndex(type);
     if (!index) {
       return false;
     }
-    return nodes[*index].exposedToJS;
+    return nodes[*index].subtypesExposedToJS;
   }
 
   struct SupertypeIterator {
@@ -614,12 +614,21 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     work.push_back({Kind::Descriptor, described, descriptor});
   }
 
-  void noteExposedToJS(HeapType type) {
-    types.setExposedToJS(type);
+  void noteExposedToJS(Type type) {
+    if (!type.isRef()) {
+      return;
+    }
+    noteExposedToJS(type.getHeapType(), type.getExactness());
+  }
+
+  void noteExposedToJS(HeapType type, Exactness exact = Inexact) {
     // Keep any descriptor that may configure a prototype.
     if (auto desc = type.getDescriptorType();
         desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
       noteDescriptor(type, *desc);
+    }
+    if (exact == Inexact) {
+      types.setSubtypesExposedToJS(type);
     }
   }
 
@@ -653,9 +662,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     // prototypes.
     auto flowOut = [&](Type type) {
       if (Type::isSubType(type, anyref)) {
-        auto heapType = type.getHeapType();
-        noteSubtype(heapType, HeapType::any);
-        noteExposedToJS(heapType);
+        noteSubtype(type.getHeapType(), HeapType::any);
+        noteExposedToJS(type);
       }
     };
 
@@ -751,7 +759,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       Set<std::pair<HeapType, HeapType>> descriptors;
 
       // Observed externalized types.
-      Set<HeapType> exposedToJS;
+      Set<Type> exposedToJS;
     };
 
     struct Collector
@@ -854,7 +862,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         // extern.convert_any makes its operand type visible to JS, which may
         // require us to keep descriptors that configure prototypes.
         if (curr->op == ExternConvertAny && curr->value->type.isRef()) {
-          info.exposedToJS.insert(curr->value->type.getHeapType());
+          info.exposedToJS.insert(curr->value->type);
         }
       }
     };
@@ -945,7 +953,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     types.setSupertype(sub, super);
 
     // If the supertype is exposed to JS, the subtype potentially is as well.
-    if (types.isExposedToJS(super)) {
+    if (types.areSubtypesExposedToJS(super)) {
       noteExposedToJS(sub);
     }
 
