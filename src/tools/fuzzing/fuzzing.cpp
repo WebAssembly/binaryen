@@ -45,9 +45,6 @@ std::vector<Type> getLoggableTypes(const FeatureSet& features) {
       loggableTypes.push_back(Type(HeapType::func, Nullable));
       loggableTypes.push_back(Type(HeapType::ext, Nullable));
     }
-    if (features.hasStackSwitching()) {
-      loggableTypes.push_back(Type(HeapType::cont, Nullable));
-    }
     // Note: exnref traps on the JS boundary, so we cannot try to log it.
   }
 
