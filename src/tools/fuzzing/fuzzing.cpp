@@ -4120,7 +4120,6 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     case HeapTypeKind::Cont: {
       auto funcType = heapType.getContinuation().type;
       return builder.makeContNew(heapType, makeTrappingRefUse(funcType));
-      // todo contbind, resume
     }
     case HeapTypeKind::Basic:
       break;
@@ -5472,7 +5471,7 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
   for (auto t : sig.params) {
     newParams.push_back(t);
   }
-  auto newParam = getConcreteType();
+  auto newParam = getSingleConcreteType();
   newParams.push_back(newParam);
   auto newSig = Signature(Type(newParams), sig.results);
   auto newCont = Continuation(newSig);
