@@ -170,8 +170,27 @@ Result<NaNKind> nan(Lexer& in) {
 
 Result<ExpectedResult> result(Lexer& in) {
   if (in.takeSExprStart("v128.const"sv)) {
-    LaneResults results(in.peekChar() == 'f' ? LaneResults::LaneType::Float
-                                             : LaneResults::LaneType::Int);
+    auto laneTypeChar = in.peekChar();
+    if (!laneTypeChar) {
+      return in.err("expected vector shape");
+    }
+
+    LaneResults::LaneType laneType;
+    switch (*laneTypeChar) {
+      case 'f': {
+        laneType = LaneResults::LaneType::Float;
+        break;
+      }
+      case 'i': {
+        laneType = LaneResults::LaneType::Int;
+        break;
+      }
+      default: {
+        return in.err("expected vector shape");
+      }
+    }
+
+    LaneResults results(laneType);
     auto& lanes = results.lanes;
 
     if (in.takeKeyword("i8x16"sv)) {
