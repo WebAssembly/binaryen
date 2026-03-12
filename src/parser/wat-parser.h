@@ -74,7 +74,17 @@ struct NaNResult {
 
 using LaneResult = std::variant<Literal, NaNResult>;
 
-using LaneResults = std::vector<LaneResult>;
+struct LaneResults {
+  enum class LaneType {
+    Int,
+    Float,
+  };
+  LaneResults(LaneType type, std::vector<LaneResult> lanes = {})
+    : type(type), lanes(std::move(lanes)) {}
+
+  LaneType type;
+  std::vector<LaneResult> lanes;
+};
 
 using ExpectedResult =
   std::variant<Literal, NullRefResult, RefResult, NaNResult, LaneResults>;
