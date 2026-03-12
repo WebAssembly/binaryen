@@ -28,60 +28,12 @@ namespace {
   throw TrapException{};
 }
 
-Address getFinalAddress(Address addr,
-                        Address offset,
-                        Index bytes,
-                        Address memorySizeBytes) {
-  if (offset > memorySizeBytes) {
-    std::string msg = "offset > memory: ";
-    msg += std::to_string(uint64_t(offset));
-    msg += " > ";
-    msg += std::to_string(uint64_t(memorySizeBytes));
-    trap(msg);
-  }
-  if (addr > memorySizeBytes - offset) {
-    std::string msg = "final > memory: ";
-    msg += std::to_string(uint64_t(addr));
-    msg += " > ";
-    msg += std::to_string(uint64_t(memorySizeBytes - offset));
-    trap(msg);
-  }
-
-  addr = size_t(addr) + offset;
-
-  if (bytes > memorySizeBytes - addr) {
-    std::string msg = "highest > memory: ";
-    msg += std::to_string(uint64_t(addr));
-    msg += " + ";
-    msg += std::to_string(uint64_t(bytes));
-    msg += " > ";
-    msg += std::to_string(uint64_t(memorySizeBytes));
-    trap(msg);
-  }
-  return addr;
-}
-
-void checkLoadAddress(Address addr,
-                      Index bytes,
-                      Address memorySizeBytes) {
-  if (addr > memorySizeBytes || bytes > memorySizeBytes - addr) {
-    std::string msg = "highest > memory: ";
-    msg += std::to_string(uint64_t(addr));
-    msg += " + ";
-    msg += std::to_string(uint64_t(bytes));
-    msg += " > ";
-    msg += std::to_string(uint64_t(memorySizeBytes));
-    trap(msg);
-  }
-}
-
-void checkAtomicAddress(Address addr,
-                        Index bytes,
-                        Address memorySizeBytes) {
-  checkLoadAddress(addr, bytes, memorySizeBytes);
+void checkAtomicAddress(const RuntimeMemory& runtimeMemory,
+                        Address finalAddr,
+                        Index bytes) {
   // Unaligned atomics trap.
   if (bytes > 1) {
-    if (addr & (bytes - 1)) {
+    if (finalAddr & (bytes - 1)) {
       trap("unaligned atomic operation");
     }
   }
@@ -105,9 +57,9 @@ Literal RealRuntimeMemory::load(Address addr,
                                 MemoryOrder order,
                                 Type type,
                                 bool signed_) const {
-  Address final = getFinalAddress(addr, offset, byteCount, size());
+  Address final = validateAddress(addr, offset, byteCount);
   if (order != MemoryOrder::Unordered) {
-    checkAtomicAddress(final, byteCount, size());
+    checkAtomicAddress(*this, final, byteCount);
   }
   switch (type.getBasic()) {
     case Type::i32: {
@@ -168,9 +120,9 @@ void RealRuntimeMemory::store(Address addr,
                               MemoryOrder order,
                               Literal value,
                               Type type) {
-  Address final = getFinalAddress(addr, offset, byteCount, size());
+  Address final = validateAddress(addr, offset, byteCount);
   if (order != MemoryOrder::Unordered) {
-    checkAtomicAddress(final, byteCount, size());
+    checkAtomicAddress(*this, final, byteCount);
   }
   switch (type.getBasic()) {
     case Type::i32: {
@@ -259,7 +211,7 @@ void RealRuntimeMemory::init(Address dest,
   if (src > data->data.size() || byteCount > data->data.size() - src) {
     trap("out of bounds segment access in memory.init");
   }
-  Address final = getFinalAddress(dest, 0, byteCount, size());
+  Address final = validateAddress(dest, 0, byteCount);
   if (byteCount > 0) {
     std::memcpy(&memory[final], &data->data[src], byteCount);
   }
@@ -269,25 +221,41 @@ void RealRuntimeMemory::copy(Address dest,
                              Address src,
                              Address byteCount,
                              const RuntimeMemory* srcMemory) {
-  Address finalDest = getFinalAddress(dest, 0, byteCount, size());
-  Address finalSrc = getFinalAddress(src, 0, byteCount, srcMemory->size());
-  const std::vector<uint8_t>* srcBuffer = srcMemory->getBuffer();
-  if (!srcBuffer) {
-    // If it's not a memory with a direct buffer, we might need another way to
-    // access it, or we can just fail if this is the only implementation we
-    // support for now.
-    WASM_UNREACHABLE("unsupported srcMemory type in copy");
-  }
+  Address finalDest = validateAddress(dest, 0, byteCount);
   if (byteCount > 0) {
-    std::memmove(&memory[finalDest], &(*srcBuffer)[finalSrc], byteCount);
+    srcMemory->copyTo(&memory[finalDest], src, byteCount);
+  } else {
+    // still need to validate src even for 0-byte copy
+    srcMemory->validateAddress(src, 0, 0);
   }
 }
 
 void RealRuntimeMemory::fill(Address dest, uint8_t value, Address byteCount) {
-  Address final = getFinalAddress(dest, 0, byteCount, size());
+  Address final = validateAddress(dest, 0, byteCount);
   if (byteCount > 0) {
     std::memset(&memory[final], value, byteCount);
   }
+}
+
+void RealRuntimeMemory::copyTo(uint8_t* dest, Address src, Address byteCount) const {
+  Address finalSrc = validateAddress(src, 0, byteCount);
+  if (byteCount > 0 && dest) {
+    std::memcpy(dest, &memory[finalSrc], byteCount);
+  }
+}
+
+Address RealRuntimeMemory::validateAddress(Address addr, Address offset, Address byteCount) const {
+  Address memorySizeBytes = size();
+  if (offset > memorySizeBytes || addr > memorySizeBytes - offset) {
+    trap("out of bounds memory access");
+  }
+
+  addr = size_t(addr) + offset;
+
+  if (byteCount > memorySizeBytes - addr) {
+    trap("out of bounds memory access");
+  }
+  return addr;
 }
 
 void RealRuntimeMemory::resize(size_t newSize) {

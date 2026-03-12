@@ -213,7 +213,7 @@ public:
   }
 
   void ensureCapacity(Address size) {
-    if (size > getBuffer().size()) {
+    if (size > memory.size()) {
       if (size > 100 * 1024 * 1024) { // MaximumMemory
         throw FailToEvalException("excessively high memory address accessed");
       }
@@ -509,10 +509,8 @@ private:
     // memory.
     auto* runtimeMemory =
       static_cast<CtorEvalRuntimeMemory*>(instance->allMemories[memory->name]);
-    segment->data.resize(runtimeMemory->getBuffer().size());
-    std::memcpy(segment->data.data(),
-                runtimeMemory->getBuffer().data(),
-                runtimeMemory->getBuffer().size());
+    segment->data.resize(runtimeMemory->size());
+    runtimeMemory->copyTo((uint8_t*)segment->data.data(), 0, runtimeMemory->size());
   }
 
   // Serializing GC data requires more work than linear memory, because

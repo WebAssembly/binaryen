@@ -54,7 +54,9 @@ public:
 
   const Memory* getDefinition() const { return &memoryDefinition; }
 
-  virtual const std::vector<uint8_t>* getBuffer() const { return nullptr; }
+  virtual void copyTo(uint8_t* dest, Address src, Address byteCount) const = 0;
+
+  virtual Address validateAddress(Address addr, Address offset, Address byteCount) const = 0;
 
 protected:
   const Memory memoryDefinition;
@@ -96,17 +98,19 @@ public:
 
   void fill(Address dest, uint8_t value, Address byteCount) override;
 
+  void copyTo(uint8_t* dest, Address src, Address byteCount) const override;
+
+  Address validateAddress(Address addr, Address offset, Address byteCount) const override;
+
   void resize(size_t newSize);
-
-  template<typename T> T get(size_t address) const;
-  template<typename T> void set(size_t address, T value);
-
-  const std::vector<uint8_t>* getBuffer() const override { return &memory; }
-  std::vector<uint8_t>& getBuffer() { return memory; }
 
 protected:
   std::vector<uint8_t> memory;
   Address intendedSize = 0;
+
+private:
+  template<typename T> T get(size_t address) const;
+  template<typename T> void set(size_t address, T value);
 };
 
 } // namespace wasm
