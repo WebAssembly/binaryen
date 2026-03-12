@@ -1320,9 +1320,8 @@ public:
     return ret;
   }
   template<typename T>
-  ContBind* makeContBind(HeapType targetType,
-                         const T& operands,
-                         Expression* cont) {
+  ContBind*
+  makeContBind(HeapType targetType, const T& operands, Expression* cont) {
     auto* ret = wasm.allocator.alloc<ContBind>();
     ret->type = Type(targetType, NonNullable, Exact);
     ret->operands.set(operands);

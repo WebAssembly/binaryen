@@ -505,7 +505,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
       random, wasm.features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
-      std::cout << generator.builder.dump() << '\n';
+      generator.builder.dump();
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
               << err->index;
     }
