@@ -2469,7 +2469,7 @@ opt_choices = [
     ("--type-merging",),
     ("--type-ssa",),
     ("--type-unfinalizing",),
-    ("--unsubtyping",),
+    #("--unsubtyping",),
     ("--vacuum",),
 ]
 

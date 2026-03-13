@@ -1026,8 +1026,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         break;
       }
       case HeapTypeKind::Cont:
-        noteSubtype(sub.getContinuation().type, super.getContinuation().type);
-        break;
+        WASM_UNREACHABLE("TODO: cont");
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
