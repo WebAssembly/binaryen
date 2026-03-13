@@ -19,6 +19,7 @@
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "ir/bits.h"
+#include "ir/struct-utils.h"
 #include "literal.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
@@ -514,6 +515,12 @@ bool Literal::operator==(const Literal& other) const {
       return i32 == other.i32;
     }
     if (heapType.isMaybeShared(HeapType::ext)) {
+      if (hasExternPayload()) {
+        if (!other.hasExternPayload()) {
+          return false;
+        }
+        return getExternPayload() == other.getExternPayload();
+      }
       return internalize() == other.internalize();
     }
     if (heapType.isMaybeShared(HeapType::any)) {
@@ -782,7 +789,14 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isData());
       auto data = literal.getGCData();
       assert(data);
-      o << "[ref " << literal.type.getHeapType() << ' ' << data->values << ']';
+      o << "[ref " << literal.type.getHeapType() << ' ' << data->values;
+      if (!data->desc.isNull()) {
+        if (!data->values.empty()) {
+          o << ", ";
+        }
+        o << "desc=" << data->desc;
+      }
+      o << ']';
     }
   }
   restoreNormalColor(o);
@@ -3007,6 +3021,39 @@ Literal Literal::internalize() const {
   // This is an externalized internal reference; just unwrap it.
   assert(gcData->values.size() == 1);
   return gcData->values[0];
+}
+
+Literal Literal::unwrap() const {
+  if (!type.isRef()) {
+    return *this;
+  }
+  if (type.getHeapType().isMaybeShared(HeapType::any)) {
+    // An internalized external reference (possibly a string).
+    return externalize();
+  }
+  if (type.getHeapType().isMaybeShared(HeapType::ext) && !hasExternPayload()) {
+    // An externalized internal reference.
+    return internalize();
+  }
+  // Something other reference that is not wrapped.
+  return *this;
+}
+
+Literal Literal::getJSPrototype() const {
+  assert(type.isRef());
+  if (auto desc = type.getHeapType().getDescriptorType();
+      desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+    auto proto = gcData->desc.getGCData()->values[0].unwrap();
+    // Strings and numbers are not valid prototypes, so they appear as null.
+    // Externref nulls are also converted to nullref.
+    auto protoType = proto.type.getHeapType();
+    if (protoType.isMaybeShared(HeapType::i31) ||
+        protoType.isMaybeShared(HeapType::string) || protoType.isBottom()) {
+      return Literal::makeNull(HeapType::none);
+    }
+    return proto;
+  }
+  return Literal::makeNull(HeapType::none);
 }
 
 } // namespace wasm
