@@ -453,7 +453,9 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     auto handlerBlocks = BranchUtils::getUniqueTargets(*currp);
     // Add branches to the targets.
     for (auto target : handlerBlocks) {
-      self->branches[target].push_back(self->currBasicBlock);
+      if (target) {
+        self->branches[target].push_back(self->currBasicBlock);
+      }
     }
   }
 
