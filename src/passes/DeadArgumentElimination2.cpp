@@ -52,6 +52,7 @@
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "support/index.h"
+#include "support/mixed_arena.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -354,9 +355,25 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
     }
   }
 
-  void visitResume(Resume* curr) { noteContinuation(curr->cont->type); }
+  void visitResumeHandlers(const ArenaVector<Name>& labels) {
+    for (Index i = 0; i < labels.size(); ++i) {
+      if (labels[i]) {
+        auto* target = findBreakTarget(labels[i]);
+        assert(target->type.size() >= 1);
+        auto newContType = target->type[target->type.size() - 1];
+        assert(newContType.isContinuation());
+        noteContinuation(newContType);
+      }
+    }
+  }
+
+  void visitResume(Resume* curr) {
+    noteContinuation(curr->cont->type);
+    visitResumeHandlers(curr->handlerBlocks);
+  }
   void visitResumeThrow(ResumeThrow* curr) {
     noteContinuation(curr->cont->type);
+    visitResumeHandlers(curr->handlerBlocks);
   }
   void visitStackSwitch(StackSwitch* curr) {
     noteContinuation(curr->cont->type);
