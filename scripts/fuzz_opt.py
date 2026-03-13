@@ -1370,13 +1370,23 @@ class CtorEval(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
-        # get the expected execution results.
-        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
-
         # get the list of func exports, so we can tell ctor-eval what to eval.
-        ctors = ','.join(get_exports(wasm, ['func']))
+        func_exports = get_exports(wasm, ['func'])
+        ctors = ','.join(func_exports)
         if not ctors:
             return
+
+        # The fuzzer evaluates exports in the order they are given, so if there
+        # are global exports it may read them before the ctors are run - but
+        # the ctors are meant to run before anything else, and can modify
+        # those global values. Keep only function exports to avoid this
+        # confusion.
+        filtered = wasm + '.filtered.wasm'
+        filter_exports(wasm, filtered, func_exports)
+        wasm = filtered
+
+        # get the expected execution results.
+        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
         # Fix escaping of the names, as we will be passing them as commandline
         # parameters below (e.g. we want --ctors=foo\28bar and not
@@ -1871,7 +1881,8 @@ class Two(TestCaseHandler):
 
         # Make sure that we actually executed all exports from both
         # wasm files.
-        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        exports = get_exports(wasm, ['func', 'global'])
+        exports += get_exports(second_wasm, ['func', 'global'])
         calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
         if calls_in_output == 0:
             print(f'warning: no calls in output. output:\n{output}')
