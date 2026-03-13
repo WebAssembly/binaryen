@@ -35,8 +35,8 @@
    (cont.bind $C2 $C3
     (f64.const 3.14159)
     (cont.bind $C1 $C2
+     (i32.const 42)
      (cont.new $C1
-      (i32.const 42)
       (ref.func $f1)
      )
     )
