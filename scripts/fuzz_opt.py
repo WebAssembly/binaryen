@@ -1367,7 +1367,7 @@ class TrapsNeverHappen(TestCaseHandler):
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
-    frequency = 1
+    frequency = 0.1
 
     def handle(self, wasm):
         # get the expected execution results.
@@ -2286,8 +2286,19 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
     CtorEval(),
-    
+    Merge(),
+    Split(),
+    RoundtripText(),
+    ClusterFuzz(),
+    Two(),
+    PreserveImportsExports(),
+    BranchHintPreservation(),
 ]
 
 
