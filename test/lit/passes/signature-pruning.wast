@@ -1269,3 +1269,84 @@
     )
   )
 )
+
+(module
+  ;; If a signature is used in a continuation, we cannot refine its parameters,
+  ;; as we do not yet support updating continuation instructions with new types.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $cont (cont $sig))
+
+    ;; CHECK:       (type $1 (func))
+
+    ;; CHECK:       (type $other (func))
+
+    ;; CHECK:       (type $sig (func (param anyref)))
+    (type $sig (func (param anyref)))
+    (type $other (func (param anyref)))
+    (type $cont (cont $sig))
+  )
+  ;; CHECK:      (elem declare func $cont $not-cont $other)
+
+  ;; CHECK:      (func $cont (type $sig) (param $0 anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $cont (type $sig) (param anyref)
+    ;; The param is unused here, and in all functions below, so we want to
+    ;; remove it where possible.
+    (nop)
+  )
+
+  ;; CHECK:      (func $not-cont (type $sig) (param $0 anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $not-cont (type $sig) (param anyref)
+    ;; This function cannot be optimized even though it is not used in a
+    ;; continuation. It is enough that it shares a type with a continuation
+    ;; function.
+    (nop)
+  )
+
+  ;; CHECK:      (func $other (type $other)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $other (type $other) (param anyref)
+    ;; This function uses a different type, so it can be optimized.
+    (nop)
+  )
+
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (cont.new $cont
+  ;; CHECK-NEXT:    (ref.func $cont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $sig
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (ref.func $not-cont)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $other
+  ;; CHECK-NEXT:   (ref.func $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (cont.new $cont
+        (ref.func $cont)
+      )
+    )
+    (call_ref $sig
+      (ref.null none)
+      (ref.func $not-cont)
+    )
+    (call_ref $other
+      (ref.null none)
+      (ref.func $other)
+    )
+  )
+)
