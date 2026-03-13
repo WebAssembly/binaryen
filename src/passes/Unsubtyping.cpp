@@ -805,6 +805,9 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     for (auto& global : wasm.globals) {
       collector.visitGlobal(global.get());
     }
+    for (auto& table : wasm.tables) {
+      collector.visitTable(table.get());
+    }
     for (auto& segment : wasm.elementSegments) {
       collector.visitElementSegment(segment.get());
     }
