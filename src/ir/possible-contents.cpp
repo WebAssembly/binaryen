@@ -2247,7 +2247,7 @@ private:
                     Expression* read);
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
-  void writeToData(Expression* ref, Expression* value, Index fieldIndex);
+  void writeToData(Expression* ref, Expression* value, Index fieldIndex, bool multibyte = false);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -2584,7 +2584,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   for (const auto& [location, value] : roots) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  init root\n";
-    dump(location);
+    dump(getLocation(location));
     value.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
@@ -2839,7 +2839,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       writeToData(set->ref, set->value, 0);
     } else if (auto* store = parent->dynCast<ArrayStore>()) {
       assert(store->ref == child || store->value == child);
-      writeToData(store->ref, store->value, 0);
+      writeToData(store->ref, store->value, 0, /*multibyte*/ true);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
       // Similar to struct.get.
       assert(get->ref == child);
@@ -3199,7 +3199,7 @@ void Flower::readFromData(Type declaredType,
   connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
-void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
+void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex, bool multibyte) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
@@ -3247,6 +3247,12 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // As in readFromData, normalize to the proper cone.
   auto cone = refContents.getCone();
   auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
+  if (multibyte) {
+    // If I do this I get:
+    // Flower::updateContents(LocationIndex, PossibleContents): Assertion `!contents.isMany()' failed.
+    // valueContents = PossibleContents::fromType(value->type);
+    valueContents = PossibleContents::fromType(Type::i32);
+  }
 
   subTypes->iterSubTypes(
     cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
