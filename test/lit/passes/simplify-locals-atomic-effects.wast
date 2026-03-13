@@ -795,4 +795,45 @@
     )
     (local.get $x)
   )
+
+  ;; CHECK:      (func $fence-struct-mutable (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.get $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (atomic.fence)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $fence-struct-mutable (param $shared (ref null $shared-struct)) (result i32)
+    (local $x i32)
+    ;; A shared struct read cannot be moved past an atomic.fence.
+    (local.set $x
+      (struct.get $shared-struct 0 (local.get $shared))
+    )
+    (atomic.fence)
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $fence-array-mutable (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (array.get $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (atomic.fence)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $fence-array-mutable (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+    (local $x i32)
+    ;; A shared array read cannot be moved past an atomic.fence.
+    (local.set $x
+      (array.get $shared-array (local.get $shared-array) (i32.const 0))
+    )
+    (atomic.fence)
+    (local.get $x)
+  )
 )
