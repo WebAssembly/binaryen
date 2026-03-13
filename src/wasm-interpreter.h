@@ -41,6 +41,7 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/runtime-memory.h"
 #include "ir/runtime-table.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
@@ -3008,185 +3009,9 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual Literal getImportedFunction(Function* import) = 0;
-    virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual void trap(std::string_view why) = 0;
     virtual void hostLimit(std::string_view why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
-
-    // the default impls for load and store switch on the sizes. you can either
-    // customize load/store, or the sub-functions which they call
-    virtual Literal load(Load* load, Address addr, Name memory) {
-      switch (load->type.getBasic()) {
-        case Type::i32: {
-          switch (load->bytes) {
-            case 1:
-              return load->signed_ ? Literal((int32_t)load8s(addr, memory))
-                                   : Literal((int32_t)load8u(addr, memory));
-            case 2:
-              return load->signed_ ? Literal((int32_t)load16s(addr, memory))
-                                   : Literal((int32_t)load16u(addr, memory));
-            case 4:
-              return Literal((int32_t)load32s(addr, memory));
-            default:
-              WASM_UNREACHABLE("invalid size");
-          }
-          break;
-        }
-        case Type::i64: {
-          switch (load->bytes) {
-            case 1:
-              return load->signed_ ? Literal((int64_t)load8s(addr, memory))
-                                   : Literal((int64_t)load8u(addr, memory));
-            case 2:
-              return load->signed_ ? Literal((int64_t)load16s(addr, memory))
-                                   : Literal((int64_t)load16u(addr, memory));
-            case 4:
-              return load->signed_ ? Literal((int64_t)load32s(addr, memory))
-                                   : Literal((int64_t)load32u(addr, memory));
-            case 8:
-              return Literal((int64_t)load64s(addr, memory));
-            default:
-              WASM_UNREACHABLE("invalid size");
-          }
-          break;
-        }
-        case Type::f32: {
-          switch (load->bytes) {
-            case 2: {
-              // Convert the float16 to float32 and store the binary
-              // representation.
-              return Literal(bit_cast<int32_t>(
-                               fp16_ieee_to_fp32_value(load16u(addr, memory))))
-                .castToF32();
-            }
-            case 4:
-              return Literal(load32u(addr, memory)).castToF32();
-            default:
-              WASM_UNREACHABLE("invalid size");
-          }
-          break;
-        }
-        case Type::f64:
-          return Literal(load64u(addr, memory)).castToF64();
-        case Type::v128:
-          return Literal(load128(addr, load->memory).data());
-        case Type::none:
-        case Type::unreachable:
-          WASM_UNREACHABLE("unexpected type");
-      }
-      WASM_UNREACHABLE("invalid type");
-    }
-    virtual void store(Store* store, Address addr, Literal value, Name memory) {
-      switch (store->valueType.getBasic()) {
-        case Type::i32: {
-          switch (store->bytes) {
-            case 1:
-              store8(addr, value.geti32(), memory);
-              break;
-            case 2:
-              store16(addr, value.geti32(), memory);
-              break;
-            case 4:
-              store32(addr, value.geti32(), memory);
-              break;
-            default:
-              WASM_UNREACHABLE("invalid store size");
-          }
-          break;
-        }
-        case Type::i64: {
-          switch (store->bytes) {
-            case 1:
-              store8(addr, value.geti64(), memory);
-              break;
-            case 2:
-              store16(addr, value.geti64(), memory);
-              break;
-            case 4:
-              store32(addr, value.geti64(), memory);
-              break;
-            case 8:
-              store64(addr, value.geti64(), memory);
-              break;
-            default:
-              WASM_UNREACHABLE("invalid store size");
-          }
-          break;
-        }
-        // write floats carefully, ensuring all bits reach memory
-        case Type::f32: {
-          switch (store->bytes) {
-            case 2: {
-              float f32 = bit_cast<float>(value.reinterpreti32());
-              // Convert the float32 to float16 and store the binary
-              // representation.
-              store16(addr, fp16_ieee_from_fp32_value(f32), memory);
-              break;
-            }
-            case 4:
-              store32(addr, value.reinterpreti32(), memory);
-              break;
-            default:
-              WASM_UNREACHABLE("invalid store size");
-          }
-          break;
-        }
-        case Type::f64:
-          store64(addr, value.reinterpreti64(), memory);
-          break;
-        case Type::v128:
-          store128(addr, value.getv128(), memory);
-          break;
-        case Type::none:
-        case Type::unreachable:
-          WASM_UNREACHABLE("unexpected type");
-      }
-    }
-
-    virtual int8_t load8s(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual uint8_t load8u(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual int16_t load16s(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual uint16_t load16u(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual int32_t load32s(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual uint32_t load32u(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual int64_t load64s(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual uint64_t load64u(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual std::array<uint8_t, 16> load128(Address addr, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-
-    virtual void store8(Address addr, int8_t value, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual void store16(Address addr, int16_t value, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual void store32(Address addr, int32_t value, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual void store64(Address addr, int64_t value, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
-    virtual void
-    store128(Address addr, const std::array<uint8_t, 16>&, Name memoryName) {
-      WASM_UNREACHABLE("unimp");
-    }
   };
 
   SubType* self() { return static_cast<SubType*>(this); }
@@ -3207,14 +3032,18 @@ public:
 
   std::unordered_map<Name, Tag*> allTags;
 
+  std::unordered_map<Name, RuntimeMemory*> allMemories;
+
   using CreateTableFunc = std::unique_ptr<RuntimeTable>(Literal, Table);
+  using CreateMemoryFunc = std::unique_ptr<RuntimeMemory>(Memory);
 
   ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::shared_ptr<ImportResolver> importResolver,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {},
-    std::function<CreateTableFunc> createTable = {})
+    std::function<CreateTableFunc> createTable = {},
+    std::function<CreateMemoryFunc> createMemory = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
       externalInterface(externalInterface),
       linkedInstances(std::move(linkedInstances_)),
@@ -3225,7 +3054,15 @@ public:
           : static_cast<std::function<CreateTableFunc>>(
               [](Literal initial, Table t) -> std::unique_ptr<RuntimeTable> {
                 return std::make_unique<RealRuntimeTable>(initial, t);
+              })),
+      createMemory(
+        createMemory != nullptr
+          ? std::move(createMemory)
+          : static_cast<std::function<CreateMemoryFunc>>(
+              [](Memory m) -> std::unique_ptr<RuntimeMemory> {
+                return std::make_unique<RealRuntimeMemory>(m);
               })) {
+
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
     std::shared_ptr<ContinuationStore> shared;
@@ -3259,6 +3096,7 @@ public:
     initializeTables();
     initializeTags();
 
+    initializeMemories();
     initializeMemoryContents();
 
     // run start, if present
@@ -3320,6 +3158,19 @@ public:
     return iter->second;
   }
 
+  RuntimeMemory* getExportedMemoryOrNull(Name name) {
+    Export* export_ = wasm.getExportOrNull(name);
+    if (!export_ || export_->kind != ExternalKind::Memory) {
+      return nullptr;
+    }
+    Name internalName = *export_->getInternalName();
+    auto iter = allMemories.find(internalName);
+    if (iter == allMemories.end()) {
+      return nullptr;
+    }
+    return iter->second;
+  }
+
   Literals& getExportedGlobalOrTrap(Name name) {
     auto* global = getExportedGlobalOrNull(name);
     if (!global) {
@@ -3371,6 +3222,7 @@ private:
   std::vector<Literals> definedGlobals;
   std::vector<std::unique_ptr<RuntimeTable>> definedTables;
   std::vector<Tag> definedTags;
+  std::vector<std::unique_ptr<RuntimeMemory>> definedMemories;
 
   // Keep a record of call depth, to guard against excessive recursion.
   size_t callDepth = 0;
@@ -3594,6 +3446,37 @@ private:
     });
   }
 
+  void initializeMemories() {
+    int definedMemoryCount = 0;
+    ModuleUtils::iterDefinedMemories(
+      wasm, [&definedMemoryCount](auto&& _) { ++definedMemoryCount; });
+    definedMemories.reserve(definedMemoryCount);
+
+    for (auto& memory : wasm.memories) {
+      if (memory->imported()) {
+        auto importNames = memory->importNames();
+        auto* importedMemory =
+          importResolver->getMemoryOrNull(importNames, *memory);
+        if (!importedMemory) {
+          externalInterface->trap((std::stringstream()
+                                   << "Imported memory " << importNames
+                                   << " not found.")
+                                    .str());
+        }
+        [[maybe_unused]] auto [_, inserted] =
+          allMemories.try_emplace(memory->name, importedMemory);
+        // parsing/validation checked this already.
+        assert(inserted && "Unexpected repeated memory name");
+      } else {
+        auto& runtimeMemory =
+          definedMemories.emplace_back(createMemory(*memory));
+        [[maybe_unused]] auto [_, inserted] =
+          allMemories.try_emplace(memory->name, runtimeMemory.get());
+        assert(inserted && "Unexpected repeated memory name");
+      }
+    }
+  }
+
   struct MemoryInstanceInfo {
     // The ModuleRunner instance in which the memory is defined.
     SubType* instance;
@@ -3620,8 +3503,6 @@ private:
   }
 
   void initializeMemoryContents() {
-    initializeMemorySizes();
-
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
       auto& segment = wasm.dataSegments[i];
@@ -3658,37 +3539,14 @@ private:
   }
 
   // in pages, used to keep track of memorySize throughout the below memops
-  std::unordered_map<Name, Address> memorySizes;
-
-  void initializeMemorySizes() {
-    for (auto& memory : wasm.memories) {
-      memorySizes[memory->name] = memory->initial;
-    }
+  Address getMemorySize(Name memoryName) {
+    auto* memory = allMemories[memoryName];
+    return memory->size() / memory->getDefinition()->pageSize();
   }
 
-  Address getMemorySize(Name memory) {
-    auto info = getMemoryInstanceInfo(memory);
-    if (info.instance != self()) {
-      return info.instance->getMemorySize(info.name);
-    }
-
-    auto iter = memorySizes.find(memory);
-    if (iter == memorySizes.end()) {
-      externalInterface->trap("getMemorySize called on non-existing memory");
-    }
-    return iter->second;
-  }
-
-  void setMemorySize(Name memory, Address size) {
-    auto iter = memorySizes.find(memory);
-    if (iter == memorySizes.end()) {
-      externalInterface->trap("setMemorySize called on non-existing memory");
-    }
-    iter->second = size;
-  }
-
-  Address getMemorySizeBytes(Name memory) {
-    return getMemorySize(memory) * wasm.getMemory(memory)->pageSize();
+  Address getMemorySizeBytes(Name memoryName) {
+    auto* memory = allMemories[memoryName];
+    return memory->size();
   }
 
 public:
@@ -4059,39 +3917,36 @@ public:
 
   Flow visitLoad(Load* curr) {
     VISIT(flow, curr->ptr)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addr = info.instance->getFinalAddress(
-      curr, flow.getSingleValue(), memorySizeBytes);
-    if (curr->isAtomic()) {
-      info.instance->checkAtomicAddress(addr, curr->bytes, memorySizeBytes);
-    }
-    auto ret = info.interface()->load(curr, addr, info.name);
-    return ret;
+    auto* memory = allMemories[curr->memory];
+    return memory->load(flow.getSingleValue().getUnsigned(),
+                        curr->offset,
+                        curr->bytes,
+                        curr->order,
+                        curr->type,
+                        curr->signed_);
   }
+
   Flow visitStore(Store* curr) {
     VISIT(ptr, curr->ptr)
     VISIT(value, curr->value)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), memorySizeBytes);
-    if (curr->isAtomic()) {
-      info.instance->checkAtomicAddress(addr, curr->bytes, memorySizeBytes);
-    }
-    info.interface()->store(curr, addr, value.getSingleValue(), info.name);
+    auto* memory = allMemories[curr->memory];
+    memory->store(ptr.getSingleValue().getUnsigned(),
+                  curr->offset,
+                  curr->bytes,
+                  curr->order,
+                  value.getSingleValue(),
+                  curr->valueType);
     return Flow();
   }
+
 
   Flow visitAtomicRMW(AtomicRMW* curr) {
     VISIT(ptr, curr->ptr)
     VISIT(value, curr->value)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), memorySizeBytes);
-    auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySizeBytes, curr->order);
+    auto* memory = allMemories[curr->memory];
+    auto addr = ptr.getSingleValue().getUnsigned();
+    auto loaded = memory->load(
+      addr, curr->offset, curr->bytes, curr->order, curr->type, false);
     auto computed = value.getSingleValue();
     switch (curr->op) {
       case RMWAdd:
@@ -4112,27 +3967,27 @@ public:
       case RMWXchg:
         break;
     }
-    info.instance->doAtomicStore(
-      addr, curr->bytes, computed, info.name, memorySizeBytes);
+    memory->store(
+      addr, curr->offset, curr->bytes, curr->order, computed, curr->type);
     return loaded;
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     VISIT(ptr, curr->ptr)
     VISIT(expected, curr->expected)
     VISIT(replacement, curr->replacement)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), memorySizeBytes);
-    expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
-    auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySizeBytes, curr->order);
-    if (loaded == expected.getSingleValue()) {
-      info.instance->doAtomicStore(addr,
-                                   curr->bytes,
-                                   replacement.getSingleValue(),
-                                   info.name,
-                                   memorySizeBytes);
+    auto* memory = allMemories[curr->memory];
+    auto addr = ptr.getSingleValue().getUnsigned();
+    auto expectedVal =
+      Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
+    auto loaded = memory->load(
+      addr, curr->offset, curr->bytes, curr->order, curr->type, false);
+    if (loaded == expectedVal.getSingleValue()) {
+      memory->store(addr,
+                    curr->offset,
+                    curr->bytes,
+                    curr->order,
+                    replacement.getSingleValue(),
+                    curr->type);
     }
     return loaded;
   }
@@ -4141,16 +3996,10 @@ public:
     VISIT(expected, curr->expected)
     VISIT(timeout, curr->timeout)
     auto bytes = curr->expectedType.getByteSize();
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), bytes, memorySizeBytes);
-    auto loaded = info.instance->doAtomicLoad(addr,
-                                              bytes,
-                                              curr->expectedType,
-                                              info.name,
-                                              memorySizeBytes,
-                                              MemoryOrder::SeqCst);
+    auto* memory = allMemories[curr->memory];
+    auto addr = ptr.getSingleValue().getUnsigned();
+    auto loaded = memory->load(
+      addr, curr->offset, bytes, MemoryOrder::SeqCst, curr->expectedType, false);
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t{1}); // not equal
     }
@@ -4167,12 +4016,14 @@ public:
   Flow visitAtomicNotify(AtomicNotify* curr) {
     VISIT(ptr, curr->ptr)
     VISIT(count, curr->notifyCount)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), 4, memorySizeBytes);
+    auto* memory = allMemories[curr->memory];
     // Just check TODO actual threads support
-    info.instance->checkAtomicAddress(addr, 4, memorySizeBytes);
+    memory->load(ptr.getSingleValue().getUnsigned(),
+                 curr->offset,
+                 4,
+                 MemoryOrder::SeqCst,
+                 Type::i32,
+                 false);
     return Literal(int32_t{0}); // none woken up
   }
   Flow visitSIMDLoad(SIMDLoad* curr) {
@@ -4233,35 +4084,45 @@ public:
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
     VISIT(flow, curr->ptr)
     Address src(flow.getSingleValue().getUnsigned());
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto loadLane = [&](Address addr) {
+    auto* memory = allMemories[curr->memory];
+    auto loadLane = [&](Address addr, size_t laneBytes) {
+      Type type = Type::none;
+      bool signed_ = false;
       switch (curr->op) {
         case Load8x8SVec128:
-          return Literal(int32_t(info.interface()->load8s(addr, info.name)));
+          type = Type::i32;
+          signed_ = true;
+          break;
         case Load8x8UVec128:
-          return Literal(int32_t(info.interface()->load8u(addr, info.name)));
+          type = Type::i32;
+          signed_ = false;
+          break;
         case Load16x4SVec128:
-          return Literal(int32_t(info.interface()->load16s(addr, info.name)));
+          type = Type::i32;
+          signed_ = true;
+          break;
         case Load16x4UVec128:
-          return Literal(int32_t(info.interface()->load16u(addr, info.name)));
+          type = Type::i32;
+          signed_ = false;
+          break;
         case Load32x2SVec128:
-          return Literal(int64_t(info.interface()->load32s(addr, info.name)));
+          type = Type::i64;
+          signed_ = true;
+          break;
         case Load32x2UVec128:
-          return Literal(int64_t(info.interface()->load32u(addr, info.name)));
+          type = Type::i64;
+          signed_ = false;
+          break;
         default:
           WASM_UNREACHABLE("unexpected op");
       }
-      WASM_UNREACHABLE("invalid op");
+      return memory->load(
+        addr, curr->offset, laneBytes, MemoryOrder::Unordered, type, signed_);
     };
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    auto addressType = curr->ptr->type;
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
-        auto ptr = Literal::makeFromInt64(src, addressType);
-        lane = loadLane(info.instance->getFinalAddress(
-          curr, ptr, laneBytes, memorySizeBytes));
-        src =
-          ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
+        lane = loadLane(src, laneBytes);
+        src = src + laneBytes;
       }
       return Literal(lanes);
     };
@@ -4288,39 +4149,48 @@ public:
   }
   Flow visitSIMDLoadZero(SIMDLoad* curr) {
     VISIT(flow, curr->ptr)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    Address src = info.instance->getFinalAddress(
-      curr, flow.getSingleValue(), curr->getMemBytes(), memorySizeBytes);
+    auto* memory = allMemories[curr->memory];
     auto zero =
       Literal::makeZero(curr->op == Load32ZeroVec128 ? Type::i32 : Type::i64);
     if (curr->op == Load32ZeroVec128) {
-      auto val = Literal(info.interface()->load32u(src, info.name));
+      auto val = memory->load(flow.getSingleValue().getUnsigned(),
+                              curr->offset,
+                              4,
+                              MemoryOrder::Unordered,
+                              Type::i32,
+                              false);
       return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
     } else {
-      auto val = Literal(info.interface()->load64u(src, info.name));
+      auto val = memory->load(flow.getSingleValue().getUnsigned(),
+                              curr->offset,
+                              8,
+                              MemoryOrder::Unordered,
+                              Type::i64,
+                              false);
       return Literal(std::array<Literal, 2>{{val, zero}});
     }
   }
   Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     VISIT(ptrFlow, curr->ptr)
     VISIT(vecFlow, curr->vec)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    Address addr = info.instance->getFinalAddress(
-      curr, ptrFlow.getSingleValue(), curr->getMemBytes(), memorySizeBytes);
+    auto* memory = allMemories[curr->memory];
+    auto addr = ptrFlow.getSingleValue().getUnsigned();
     Literal vec = vecFlow.getSingleValue();
     switch (curr->op) {
       case Load8LaneVec128:
       case Store8LaneVec128: {
         std::array<Literal, 16> lanes = vec.getLanesUI8x16();
         if (curr->isLoad()) {
-          lanes[curr->index] =
-            Literal(info.interface()->load8u(addr, info.name));
+          lanes[curr->index] = memory->load(
+            addr, curr->offset, 1, MemoryOrder::Unordered, Type::i32, false);
           return Literal(lanes);
         } else {
-          info.interface()->store8(
-            addr, lanes[curr->index].geti32(), info.name);
+          memory->store(addr,
+                        curr->offset,
+                        1,
+                        MemoryOrder::Unordered,
+                        lanes[curr->index],
+                        Type::i32);
           return {};
         }
       }
@@ -4328,12 +4198,16 @@ public:
       case Store16LaneVec128: {
         std::array<Literal, 8> lanes = vec.getLanesUI16x8();
         if (curr->isLoad()) {
-          lanes[curr->index] =
-            Literal(info.interface()->load16u(addr, info.name));
+          lanes[curr->index] = memory->load(
+            addr, curr->offset, 2, MemoryOrder::Unordered, Type::i32, false);
           return Literal(lanes);
         } else {
-          info.interface()->store16(
-            addr, lanes[curr->index].geti32(), info.name);
+          memory->store(addr,
+                        curr->offset,
+                        2,
+                        MemoryOrder::Unordered,
+                        lanes[curr->index],
+                        Type::i32);
           return {};
         }
       }
@@ -4341,12 +4215,16 @@ public:
       case Store32LaneVec128: {
         std::array<Literal, 4> lanes = vec.getLanesI32x4();
         if (curr->isLoad()) {
-          lanes[curr->index] =
-            Literal(info.interface()->load32u(addr, info.name));
+          lanes[curr->index] = memory->load(
+            addr, curr->offset, 4, MemoryOrder::Unordered, Type::i32, false);
           return Literal(lanes);
         } else {
-          info.interface()->store32(
-            addr, lanes[curr->index].geti32(), info.name);
+          memory->store(addr,
+                        curr->offset,
+                        4,
+                        MemoryOrder::Unordered,
+                        lanes[curr->index],
+                        Type::i32);
           return {};
         }
       }
@@ -4354,12 +4232,16 @@ public:
       case Load64LaneVec128: {
         std::array<Literal, 2> lanes = vec.getLanesI64x2();
         if (curr->isLoad()) {
-          lanes[curr->index] =
-            Literal(info.interface()->load64u(addr, info.name));
+          lanes[curr->index] = memory->load(
+            addr, curr->offset, 8, MemoryOrder::Unordered, Type::i64, false);
           return Literal(lanes);
         } else {
-          info.interface()->store64(
-            addr, lanes[curr->index].geti64(), info.name);
+          memory->store(addr,
+                        curr->offset,
+                        8,
+                        MemoryOrder::Unordered,
+                        lanes[curr->index],
+                        Type::i64);
           return {};
         }
       }
@@ -4367,77 +4249,40 @@ public:
     WASM_UNREACHABLE("unexpected op");
   }
   Flow visitMemorySize(MemorySize* curr) {
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    auto* memory = info.instance->wasm.getMemory(info.name);
-    return Literal::makeFromInt64(memorySize, memory->addressType);
+    auto* memory = allMemories[curr->memory];
+    auto pageSize = memory->getDefinition()->pageSize();
+    return Literal::makeFromInt64(memory->size() / pageSize,
+                                  memory->getDefinition()->addressType);
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     VISIT(flow, curr->delta)
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    Memory* memory = info.instance->wasm.getMemory(info.name);
-    auto addressType = memory->addressType;
-    auto fail = Literal::makeFromInt64(-1, addressType);
-    Flow ret = Literal::makeFromInt64(memorySize, addressType);
-    uint64_t delta = flow.getSingleValue().getUnsigned();
-    uint64_t maxAddr = addressType == Type::i32
-                         ? std::numeric_limits<uint32_t>::max()
-                         : std::numeric_limits<uint64_t>::max();
-    Address::address64_t pageSizeLog2 = memory->pageSizeLog2;
-    if (delta > (maxAddr >> pageSizeLog2)) {
-      // Impossible to grow this much.
-      return fail;
+    auto* memory = allMemories[curr->memory];
+    auto addressType = memory->getDefinition()->addressType;
+    auto pageSize = memory->getDefinition()->pageSize();
+    auto oldPages = memory->size() / pageSize;
+    if (memory->grow(flow.getSingleValue().getUnsigned())) {
+      return Literal::makeFromInt64(oldPages, addressType);
+    } else {
+      return Literal::makeFromInt64(-1, addressType);
     }
-    if (memorySize >= maxAddr - delta) {
-      // Overflow.
-      return fail;
-    }
-    auto newSize = memorySize + delta;
-    if (newSize > memory->max) {
-      return fail;
-    }
-    if (!info.interface()->growMemory(
-          info.name, (memorySize << pageSizeLog2), (newSize << pageSizeLog2))) {
-      // We failed to grow the memory in practice, even though it was valid
-      // to try to do so.
-      return fail;
-    }
-    memorySize = newSize;
-    info.instance->setMemorySize(info.name, memorySize);
-    return ret;
   }
   Flow visitMemoryInit(MemoryInit* curr) {
     VISIT(dest, curr->dest)
     VISIT(offset, curr->offset)
     VISIT(size, curr->size)
+    auto destVal = dest.getSingleValue().getUnsigned();
+    auto offsetVal = offset.getSingleValue().getUnsigned();
+    auto sizeVal = size.getSingleValue().getUnsigned();
 
+    if (sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+      trap("out of bounds segment access in memory.init");
+    }
+    auto* memory = allMemories[curr->memory];
     auto* segment = wasm.getDataSegment(curr->segment);
-
-    Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(offset.getSingleValue().getUnsigned());
-    Address sizeVal(size.getSingleValue().getUnsigned());
-
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
-      trap("out of bounds segment access in memory.init");
-    }
-    if (offsetVal + sizeVal > segment->data.size()) {
-      trap("out of bounds segment access in memory.init");
-    }
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    if (destVal + sizeVal > memorySizeBytes) {
-      trap("out of bounds memory access in memory.init");
-    }
-    for (size_t i = 0; i < sizeVal; ++i) {
-      Literal addr(destVal + i);
-      info.interface()->store8(
-        info.instance->getFinalAddressWithoutOffset(addr, 1, memorySizeBytes),
-        segment->data[offsetVal + i],
-        info.name);
-    }
+    memory->init(destVal, offsetVal, sizeVal, segment);
     return {};
   }
+
   Flow visitDataDrop(DataDrop* curr) {
     droppedDataSegments.insert(curr->segment);
     return {};
@@ -4446,66 +4291,25 @@ public:
     VISIT(dest, curr->dest)
     VISIT(source, curr->source)
     VISIT(size, curr->size)
-    Address destVal(dest.getSingleValue().getUnsigned());
-    Address sourceVal(source.getSingleValue().getUnsigned());
-    Address sizeVal(size.getSingleValue().getUnsigned());
+    auto destVal = dest.getSingleValue().getUnsigned();
+    auto sourceVal = source.getSingleValue().getUnsigned();
+    auto sizeVal = size.getSingleValue().getUnsigned();
 
-    auto destInfo = getMemoryInstanceInfo(curr->destMemory);
-    auto sourceInfo = getMemoryInstanceInfo(curr->sourceMemory);
-    auto sourceMemorySizeBytes =
-      sourceInfo.instance->getMemorySizeBytes(sourceInfo.name);
-    auto destMemorySizeBytes =
-      destInfo.instance->getMemorySizeBytes(destInfo.name);
-    if (sourceVal + sizeVal > sourceMemorySizeBytes ||
-        destVal + sizeVal > destMemorySizeBytes ||
-        // FIXME: better/cheaper way to detect wrapping?
-        sourceVal + sizeVal < sourceVal || sourceVal + sizeVal < sizeVal ||
-        destVal + sizeVal < destVal || destVal + sizeVal < sizeVal) {
-      trap("out of bounds segment access in memory.copy");
-    }
-
-    int64_t start = 0;
-    int64_t end = sizeVal;
-    int step = 1;
-    // Reverse direction if source is below dest
-    if (sourceVal < destVal) {
-      start = int64_t(sizeVal) - 1;
-      end = -1;
-      step = -1;
-    }
-    for (int64_t i = start; i != end; i += step) {
-      destInfo.interface()->store8(
-        destInfo.instance->getFinalAddressWithoutOffset(
-          Literal(destVal + i), 1, destMemorySizeBytes),
-        sourceInfo.interface()->load8s(
-          sourceInfo.instance->getFinalAddressWithoutOffset(
-            Literal(sourceVal + i), 1, sourceMemorySizeBytes),
-          sourceInfo.name),
-        destInfo.name);
-    }
+    auto* destMemory = allMemories[curr->destMemory];
+    auto* sourceMemory = allMemories[curr->sourceMemory];
+    destMemory->copy(destVal, sourceVal, sizeVal, sourceMemory);
     return {};
   }
   Flow visitMemoryFill(MemoryFill* curr) {
     VISIT(dest, curr->dest)
     VISIT(value, curr->value)
     VISIT(size, curr->size)
-    Address destVal(dest.getSingleValue().getUnsigned());
-    Address sizeVal(size.getSingleValue().getUnsigned());
+    auto destVal = dest.getSingleValue().getUnsigned();
+    auto sizeVal = size.getSingleValue().getUnsigned();
+    uint8_t valueVal = value.getSingleValue().geti32();
 
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
-    // FIXME: cheaper wrapping detection?
-    if (destVal > memorySizeBytes || sizeVal > memorySizeBytes ||
-        destVal + sizeVal > memorySizeBytes) {
-      trap("out of bounds memory access in memory.fill");
-    }
-    uint8_t val(value.getSingleValue().geti32());
-    for (size_t i = 0; i < sizeVal; ++i) {
-      info.interface()->store8(info.instance->getFinalAddressWithoutOffset(
-                                 Literal(destVal + i), 1, memorySizeBytes),
-                               val,
-                               info.name);
-    }
+    auto* memory = allMemories[curr->memory];
+    memory->fill(destVal, valueVal, sizeVal);
     return {};
   }
   Flow visitRefFunc(RefFunc* curr) {
@@ -5181,53 +4985,6 @@ public:
   static const Index maxDepth = 200;
 
 protected:
-  void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
-    if (lhs > rhs) {
-      std::stringstream ss;
-      ss << msg << ": " << lhs << " > " << rhs;
-      externalInterface->trap(ss.str());
-    }
-  }
-
-  template<class LS>
-  Address
-  getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySizeBytes) {
-    uint64_t addr = ptr.getUnsigned();
-    trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
-    trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
-    addr += curr->offset;
-    trapIfGt(bytes, memorySizeBytes, "bytes > memory");
-    checkLoadAddress(addr, bytes, memorySizeBytes);
-    return addr;
-  }
-
-  template<class LS>
-  Address getFinalAddress(LS* curr, Literal ptr, Address memorySizeBytes) {
-    return getFinalAddress(curr, ptr, curr->bytes, memorySizeBytes);
-  }
-
-  Address getFinalAddressWithoutOffset(Literal ptr,
-                                       Index bytes,
-                                       Address memorySizeBytes) {
-    uint64_t addr = ptr.getUnsigned();
-    checkLoadAddress(addr, bytes, memorySizeBytes);
-    return addr;
-  }
-
-  void checkLoadAddress(Address addr, Index bytes, Address memorySizeBytes) {
-    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
-  }
-
-  void checkAtomicAddress(Address addr, Index bytes, Address memorySizeBytes) {
-    checkLoadAddress(addr, bytes, memorySizeBytes);
-    // Unaligned atomics trap.
-    if (bytes > 1) {
-      if (addr & (bytes - 1)) {
-        externalInterface->trap("unaligned atomic operation");
-      }
-    }
-  }
-
   Literal doAtomicLoad(Address addr,
                        Index bytes,
                        Type type,
@@ -5237,50 +4994,24 @@ protected:
     if (order == MemoryOrder::Unordered) {
       Fatal() << "Expected a non-unordered MemoryOrder in doAtomicLoad";
     }
-    checkAtomicAddress(addr, bytes, memorySizeBytes);
-    Const ptr;
-    ptr.value = Literal(int32_t(addr));
-    ptr.type = Type::i32;
-    Load load;
-    load.bytes = bytes;
-    // When an atomic loads a partial number of bytes for the type, it is
-    // always an unsigned extension.
-    load.signed_ = false;
-    load.align = bytes;
-    load.order = order;
-    load.ptr = &ptr;
-    load.type = type;
-    load.memory = memoryName;
-    return externalInterface->load(&load, addr, memoryName);
+    auto* memory = allMemories[memoryName];
+    return memory->load(addr, 0, bytes, order, type, false);
   }
 
   void doAtomicStore(Address addr,
                      Index bytes,
-                     Literal toStore,
+                     Literal value,
                      Name memoryName,
                      Address memorySizeBytes) {
-    checkAtomicAddress(addr, bytes, memorySizeBytes);
-    Const ptr;
-    ptr.value = Literal(int32_t(addr));
-    ptr.type = Type::i32;
-    Const value;
-    value.value = toStore;
-    value.type = toStore.type;
-    Store store;
-    store.bytes = bytes;
-    store.align = bytes;
-    store.order = MemoryOrder::SeqCst;
-    store.ptr = &ptr;
-    store.value = &value;
-    store.valueType = value.type;
-    store.memory = memoryName;
-    return externalInterface->store(&store, addr, toStore, memoryName);
+    auto* memory = allMemories[memoryName];
+    memory->store(addr, 0, bytes, MemoryOrder::SeqCst, value, value.type);
   }
 
   ExternalInterface* externalInterface;
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
   std::shared_ptr<ImportResolver> importResolver;
   std::function<CreateTableFunc> createTable;
+  std::function<CreateMemoryFunc> createMemory;
 };
 
 class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
@@ -5289,7 +5020,8 @@ public:
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {},
-    std::shared_ptr<ImportResolver> importResolver = nullptr)
+    std::shared_ptr<ImportResolver> importResolver = nullptr,
+    std::function<CreateMemoryFunc> createMemory = {})
     : ModuleRunnerBase(
         wasm,
         externalInterface,
@@ -5297,7 +5029,9 @@ public:
           ? importResolver
           : std::make_shared<LinkedInstancesImportResolver<ModuleRunner>>(
               linkedInstances),
-        linkedInstances) {}
+        linkedInstances,
+        {},
+        std::move(createMemory)) {}
 
   Literal makeFuncData(Name name, Type type) {
     // As the super's |makeFuncData|, but here we also provide a way to

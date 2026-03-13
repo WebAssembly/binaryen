@@ -18,6 +18,7 @@
 #define wasm_ir_import_h
 
 #include "ir/import-names.h"
+#include "ir/runtime-memory.h"
 #include "ir/runtime-table.h"
 #include "literal.h"
 #include "wasm-type.h"
@@ -137,12 +138,19 @@ public:
   virtual Literals*
   getGlobalOrNull(ImportNames name, Type type, bool mut) const = 0;
 
-  // Returns null if the imported table does not exist. The returned
-  // RuntimeTable* lives as long as the ImportResolver instance.
+  // Returns null if the `name` wasn't found. The returned RuntimeTable lives
+  // as long as the ImportResolver instance.
   virtual RuntimeTable* getTableOrNull(ImportNames name,
                                        const Table& type) const = 0;
 
+  // Returns null if the `name` wasn't found. The returned Tag lives
+  // as long as the ImportResolver instance.
   virtual Tag* getTagOrNull(ImportNames name, const Signature& type) const = 0;
+
+  // Returns null if the `name` wasn't found. The returned RuntimeMemory lives
+  // as long as the ImportResolver instance.
+  virtual RuntimeMemory* getMemoryOrNull(ImportNames name,
+                                         const Memory& type) const = 0;
 };
 
 // Looks up imports from the given `linkedInstances`.
@@ -183,6 +191,17 @@ public:
 
     ModuleRunnerType* instance = it->second.get();
     return instance->getExportedTagOrNull(name.name);
+  }
+
+  RuntimeMemory* getMemoryOrNull(ImportNames name,
+                                 const Memory& type) const override {
+    auto it = linkedInstances.find(name.module);
+    if (it == linkedInstances.end()) {
+      return nullptr;
+    }
+
+    ModuleRunnerType* instance = it->second.get();
+    return instance->getExportedMemoryOrNull(name.name);
   }
 
 private:

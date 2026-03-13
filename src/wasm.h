@@ -2526,8 +2526,8 @@ public:
   Type addressType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
 
-  bool hasMax() { return max != kUnlimitedSize; }
-  bool is64() { return addressType == Type::i64; }
+  bool hasMax() const { return max != kUnlimitedSize; }
+  bool is64() const { return addressType == Type::i64; }
   void clear() {
     name = "";
     initial = 0;
@@ -2563,8 +2563,8 @@ public:
   bool shared = false;
   Type addressType = Type::i32;
 
-  bool hasMax() { return max != kUnlimitedSize; }
-  bool is64() { return addressType == Type::i64; }
+  bool hasMax() const { return max != kUnlimitedSize; }
+  bool is64() const { return addressType == Type::i64; }
   Address::address64_t maxSize32() const { return 1ull << (32 - pageSizeLog2); }
   Address::address64_t maxSize64() const {
     if (pageSizeLog2 == 0) {
@@ -2572,8 +2572,10 @@ public:
     }
     return 1ull << (64 - pageSizeLog2);
   }
-  Address::address64_t pageSize() const {
-    return 1ull << static_cast<Address::address64_t>(pageSizeLog2);
+  Address::address64_t pageSize() const { return 1ull << pageSizeLog2; }
+
+  Address::address64_t initialByteSize() const {
+    return uint64_t(initial) << pageSizeLog2;
   }
 };
 
