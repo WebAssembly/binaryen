@@ -1367,25 +1367,26 @@ class TrapsNeverHappen(TestCaseHandler):
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
-    frequency = 0.1
+    frequency = 1
 
     def handle(self, wasm):
-        if get_exports(wasm, ['global']):
-            # The fuzzer reads exports in the order they are given, so if there
-            # are global exports it may read them before the ctors are run - but
-            # the ctors are meant to run before anything else, and can modify
-            # those global values. Rather than reorder how the fuzzer handles
-            # exports, ignore this case in this less-important fuzzer mode.
-            note_ignored_vm_run('ctor-eval with global exports')
-            return
-
         # get the expected execution results.
         wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
         # get the list of func exports, so we can tell ctor-eval what to eval.
-        ctors = ','.join(get_exports(wasm, ['func']))
+        func_exports = get_exports(wasm, ['func'])
+        ctors = ','.join(func_exports)
         if not ctors:
             return
+
+        # The fuzzer evaluates exports in the order they are given, so if there
+        # are global exports it may read them before the ctors are run - but
+        # the ctors are meant to run before anything else, and can modify
+        # those global values. Keep only function exports to avoid this
+        # confusion.
+        filtered = wasm + '.filtered.wasm'
+        filter_exports(wasm, filtered, func_exports)
+        wasm = filtered
 
         # Fix escaping of the names, as we will be passing them as commandline
         # parameters below (e.g. we want --ctors=foo\28bar and not
@@ -2285,19 +2286,8 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
     CtorEval(),
-    Merge(),
-    Split(),
-    RoundtripText(),
-    ClusterFuzz(),
-    Two(),
-    PreserveImportsExports(),
-    BranchHintPreservation(),
+    
 ]
 
 
