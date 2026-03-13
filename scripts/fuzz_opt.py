@@ -1370,9 +1370,6 @@ class CtorEval(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
-        # get the expected execution results.
-        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
-
         # get the list of func exports, so we can tell ctor-eval what to eval.
         func_exports = get_exports(wasm, ['func'])
         ctors = ','.join(func_exports)
@@ -1387,6 +1384,9 @@ class CtorEval(TestCaseHandler):
         filtered = wasm + '.filtered.wasm'
         filter_exports(wasm, filtered, func_exports)
         wasm = filtered
+
+        # get the expected execution results.
+        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
         # Fix escaping of the names, as we will be passing them as commandline
         # parameters below (e.g. we want --ctors=foo\28bar and not
