@@ -846,6 +846,10 @@ private:
       // so we set these to true.
       parent.readsSharedMemory = true;
       parent.writesSharedMemory = true;
+      parent.readsSharedMutableStruct = true;
+      parent.writesSharedStruct = true;
+      parent.readsSharedMutableArray = true;
+      parent.writesSharedArray = true;
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
     }
     void visitPause(Pause* curr) {
