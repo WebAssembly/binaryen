@@ -949,8 +949,10 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         noteSubtype(elem.type, super.getArray().element.type);
         break;
       }
-      case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Cont: {
+        noteSubtype(sub.getContinuation().type, super.getContinuation().type);
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
