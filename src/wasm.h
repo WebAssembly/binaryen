@@ -739,6 +739,7 @@ public:
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
+    ArrayStoreId,
     ArrayLenId,
     ArrayCopyId,
     ArrayFillId,
@@ -1867,6 +1868,19 @@ public:
   MemoryOrder order = MemoryOrder::Unordered;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
+  void finalize();
+};
+
+class ArrayStore : public SpecificExpression<Expression::ArrayStoreId> {
+public:
+  ArrayStore() = default;
+  ArrayStore(MixedArena& allocator) {}
+
+  uint8_t bytes;
+  Expression* ref;
+  Expression* index;
+  Expression* value;
 
   void finalize();
 };
