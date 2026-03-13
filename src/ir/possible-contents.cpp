@@ -2751,6 +2751,11 @@ bool Flower::updateContents(LocationIndex locationIndex,
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
     filtered = true;
+  } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    // Multibyte array stores with differing widths can merge to Many, so
+    // filter again afterwards to fall back to the declared type limit.
+    filterDataContents(contents, *dataLoc);
+    filtered = true;
   }
 
   // Check if anything changed after filtering, if we did so.
@@ -3017,6 +3022,11 @@ void Flower::filterDataContents(PossibleContents& contents,
     contents = PossibleContents::none();
     return;
   }
+  if (contents.isMany()) {
+    // An unknown state (e.g. from combining writes of different types like in
+    // multibyte array stores) translates into the most generic bounded type.
+    contents = PossibleContents::fromType(field->type);
+  }
 
   if (field->isPacked()) {
     // We must handle packed fields carefully.
@@ -3248,10 +3258,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex, b
   auto cone = refContents.getCone();
   auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
   if (multibyte) {
-    // If I do this I get:
-    // Flower::updateContents(LocationIndex, PossibleContents): Assertion `!contents.isMany()' failed.
-    // valueContents = PossibleContents::fromType(value->type);
-    valueContents = PossibleContents::fromType(Type::i32);
+    valueContents = PossibleContents::fromType(value->type);
   }
 
   subTypes->iterSubTypes(
