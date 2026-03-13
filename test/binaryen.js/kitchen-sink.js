@@ -772,6 +772,8 @@ function test_core() {
   assert(module.getNumTables() === 1);
   assert(module.getNumElementSegments() === 1);
 
+  module.addTable("t2", 1, 1, binaryen.i31ref, module.ref.i31(module.i32.const(1)));
+
   // Start function. One per module
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
   module.setStart(starter);

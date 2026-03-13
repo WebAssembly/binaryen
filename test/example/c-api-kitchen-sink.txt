@@ -96,6 +96,7 @@ BinaryenFeatureAll: 16777215
  (data $seg (i32.const 0) "data segment 3")
  (table $tab 0 100 funcref)
  (table $0 1 1 funcref)
+ (table $1 1 1 (ref $1) (struct.new_default $1))
  (elem $0 (table $0) (i32.const 0) func $"kitchen()sinker")
  (elem $passive func $"kitchen()sinker")
  (tag $a-tag (type $5) (param i32))

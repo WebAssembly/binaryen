@@ -108,6 +108,18 @@
 
 (module
  ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct)))
+ (type $sub (sub $super (struct)))
+
+ ;; A table initializer requires subtyping.
+ ;; CHECK:      (table $t 1 1 (ref null $super) (struct.new_default $sub))
+ (table $t 1 1 (ref null $super) (struct.new_default $sub))
+)
+
+(module
+ ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $X (sub (struct)))
  (type $X (sub (struct)))
  ;; CHECK:       (type $Y (sub $X (struct)))
