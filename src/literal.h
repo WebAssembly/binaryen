@@ -20,6 +20,7 @@
 #include <array>
 #include <iostream>
 
+#include "support/bits.h"
 #include "support/hash.h"
 #include "support/name.h"
 #include "support/small_vector.h"
@@ -823,7 +824,8 @@ template<> struct hash<wasm::Literal> {
           return digest;
         case wasm::Type::v128:
           uint64_t chunks[2];
-          memcpy(&chunks, a.getv128Ptr(), 16);
+          chunks[0] = wasm::Bits::readLE<uint64_t>(a.getv128Ptr());
+          chunks[1] = wasm::Bits::readLE<uint64_t>(&a.getv128Ptr()[8]);
           wasm::rehash(digest, chunks[0]);
           wasm::rehash(digest, chunks[1]);
           return digest;

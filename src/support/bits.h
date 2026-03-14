@@ -17,8 +17,10 @@
 #ifndef wasm_support_bits_h
 #define wasm_support_bits_h
 
+#include <array>
 #include <climits>
 #include <cstdint>
+#include <cstring>
 #include <type_traits>
 
 /*
@@ -93,6 +95,56 @@ template<typename T, typename U> inline static T rotateRight(T val, U count) {
 
 uint32_t log2(uint32_t v);
 uint32_t pow2(uint32_t v);
+
+template<
+  typename T,
+  typename std::enable_if<
+    std::is_same<T, typename std::array<uint8_t, std::tuple_size<T>::value>>::
+      value,
+    bool>::type = true>
+void writeLE(T val, void* ptr) {
+  memcpy(ptr, val.data(), sizeof(T));
+}
+
+template<typename T,
+         typename std::enable_if<std::is_integral<T>::value, bool>::type = true>
+void writeLE(T val, void* ptr) {
+  auto v = typename std::conditional<std::is_signed<T>::value,
+                                     typename std::make_unsigned<T>::type,
+                                     T>::type(val);
+  unsigned char* buf = reinterpret_cast<unsigned char*>(ptr);
+#pragma GCC unroll 10
+  for (size_t i = 0; i < sizeof(T); ++i) {
+    buf[i] = v >> (CHAR_BIT * i);
+  }
+}
+
+template<
+  typename T,
+  typename std::enable_if<
+    std::is_same<T, typename std::array<uint8_t, std::tuple_size<T>::value>>::
+      value,
+    bool>::type = true>
+T readLE(const void* ptr) {
+  T v;
+  memcpy(v.data(), ptr, sizeof(T));
+  return v;
+}
+
+template<typename T,
+         typename std::enable_if<std::is_integral<T>::value, bool>::type = true>
+T readLE(const void* ptr) {
+  using TU = typename std::conditional<std::is_signed<T>::value,
+                                       typename std::make_unsigned<T>::type,
+                                       T>::type;
+  TU v = 0;
+  const unsigned char* buf = reinterpret_cast<const unsigned char*>(ptr);
+#pragma GCC unroll 10
+  for (size_t i = 0; i < sizeof(T); ++i) {
+    v += (TU)buf[i] << (CHAR_BIT * i);
+  }
+  return v;
+}
 
 } // namespace wasm::Bits
 
