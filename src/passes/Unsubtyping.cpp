@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "ir/effects.h"
+#include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -624,7 +625,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
   void noteExposedToJS(HeapType type, Exactness exact = Inexact) {
     // Keep any descriptor that may configure a prototype.
     if (auto desc = type.getDescriptorType();
-        desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+        desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
       noteDescriptor(type, *desc);
     }
     if (exact == Inexact) {
@@ -667,84 +668,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       }
     };
 
-    // @binaryen.js.called functions are called from JS. Their parameters flow
-    // in from JS and their results flow back out.
-    for (auto f : Intrinsics(wasm).getJSCalledFunctions()) {
-      auto* func = wasm.getFunction(f);
-      for (auto type : func->getParams()) {
-        flowIn(type);
-      }
-      for (auto type : func->getResults()) {
-        flowOut(type);
-      }
-    }
-
-    for (auto& ex : wasm.exports) {
-      switch (ex->kind) {
-        case ExternalKindImpl::Function: {
-          // Exported functions are also called from JS. Their parameters flow
-          // in from JS and their result flow back out.
-          auto* func = wasm.getFunction(*ex->getInternalName());
-          for (auto type : func->getParams()) {
-            flowIn(type);
-          }
-          for (auto type : func->getResults()) {
-            flowOut(type);
-          }
-          break;
-        }
-        case ExternalKindImpl::Table: {
-          // Exported tables let values flow in and out.
-          auto* table = wasm.getTable(*ex->getInternalName());
-          flowOut(table->type);
-          flowIn(table->type);
-          break;
-        }
-        case ExternalKindImpl::Global: {
-          // Exported globals let values flow out. Iff they are mutable, they
-          // also let values flow back in.
-          auto* global = wasm.getGlobal(*ex->getInternalName());
-          flowOut(global->type);
-          if (global->mutable_) {
-            flowIn(global->type);
-          }
-          break;
-        }
-        case ExternalKindImpl::Memory:
-        case ExternalKindImpl::Tag:
-        case ExternalKindImpl::Invalid:
-          break;
-      }
-    }
-    for (auto& func : wasm.functions) {
-      // Imported functions are the opposite of exported functions. Their
-      // parameters flow out and their results flow in.
-      if (func->imported()) {
-        for (auto type : func->getParams()) {
-          flowOut(type);
-        }
-        for (auto type : func->getResults()) {
-          flowIn(type);
-        }
-      }
-    }
-    for (auto& table : wasm.tables) {
-      // Imported tables, like exported tables, let values flow in and out.
-      if (table->imported()) {
-        flowOut(table->type);
-        flowIn(table->type);
-      }
-    }
-    for (auto& global : wasm.globals) {
-      // Imported mutable globals let values flow in and out. Imported immutable
-      // globals imply that values will flow in.
-      if (global->imported()) {
-        flowIn(global->type);
-        if (global->mutable_) {
-          flowOut(global->type);
-        }
-      }
-    }
+    JSUtils::iterJSInterface(wasm, flowIn, flowOut);
   }
 
   void analyzeModule(Module& wasm) {
@@ -1025,8 +949,10 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         noteSubtype(elem.type, super.getArray().element.type);
         break;
       }
-      case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Cont: {
+        noteSubtype(sub.getContinuation().type, super.getContinuation().type);
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }

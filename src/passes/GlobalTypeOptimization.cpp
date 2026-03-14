@@ -23,7 +23,7 @@
 //
 
 #include "ir/eh-utils.h"
-#include "ir/intrinsics.h"
+#include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/names.h"
 #include "ir/ordering.h"
@@ -123,7 +123,7 @@ struct FieldInfoScanner
       return;
     }
     if (auto desc = curr->value->type.getHeapType().getDescriptorType();
-        desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+        desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
       auto exact = curr->value->type.getExactness();
       functionSetGetInfos[getFunction()][{*desc, exact}][0].noteRead();
     }
@@ -427,7 +427,7 @@ struct GlobalTypeOptimization : public Pass {
     // know we have to propate the exposure to subtypes.
     auto noteExposed = [&](HeapType type, Exactness exact = Inexact) -> bool {
       if (auto desc = type.getDescriptorType();
-          desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+          desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
         // This field holds a JS-visible prototype. Do not remove it.
         combinedSetGetInfos[std::make_pair(*desc, exact)][0].noteRead();
       }
@@ -445,58 +445,9 @@ struct GlobalTypeOptimization : public Pass {
       }
     };
 
-    // @binaryen.js.called functions are called from JS. Their results flow back
-    // out to JS.
-    for (auto f : Intrinsics(wasm).getJSCalledFunctions()) {
-      auto* func = wasm.getFunction(f);
-      for (auto type : func->getResults()) {
-        flowOut(type);
-      }
-    }
+    auto flowIn = [&](Type type) {};
 
-    for (auto& ex : wasm.exports) {
-      switch (ex->kind) {
-        case ExternalKindImpl::Function: {
-          auto* func = wasm.getFunction(*ex->getInternalName());
-          for (auto type : func->getResults()) {
-            flowOut(type);
-          }
-          break;
-        }
-        case ExternalKindImpl::Table: {
-          auto* table = wasm.getTable(*ex->getInternalName());
-          flowOut(table->type);
-          break;
-        }
-        case ExternalKindImpl::Global: {
-          auto* global = wasm.getGlobal(*ex->getInternalName());
-          flowOut(global->type);
-          break;
-        }
-        case ExternalKindImpl::Memory:
-        case ExternalKindImpl::Tag:
-        case ExternalKindImpl::Invalid:
-          break;
-      }
-    }
-
-    for (auto& func : wasm.functions) {
-      if (func->imported()) {
-        for (auto type : func->getParams()) {
-          flowOut(type);
-        }
-      }
-    }
-    for (auto& table : wasm.tables) {
-      if (table->imported()) {
-        flowOut(table->type);
-      }
-    }
-    for (auto& global : wasm.globals) {
-      if (global->imported() && global->mutable_) {
-        flowOut(global->type);
-      }
-    }
+    JSUtils::iterJSInterface(wasm, flowIn, flowOut);
 
     // Any type that is a subtype of an exposed type is also exposed. Propagate
     // from supertypes to subtypes.

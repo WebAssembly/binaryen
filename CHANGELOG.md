@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v128
+----
+
+ - (bugfix release)
+
 v127
 ----
 

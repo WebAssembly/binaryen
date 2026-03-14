@@ -4775,9 +4775,9 @@ public:
     auto old = cont.getSingleValue().getContData();
     auto newData = *old;
     newData.type = curr->type.getHeapType();
-    newData.resumeArguments = arguments;
-    // We handle only the simple case of applying all parameters, for now. TODO
-    assert(old->resumeArguments.empty());
+    for (auto arg : arguments) {
+      newData.resumeArguments.push_back(arg);
+    }
     // The old one is done.
     old->executed = true;
     return Literal(std::make_shared<ContData>(newData));
