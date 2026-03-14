@@ -368,8 +368,12 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     auto type = fields[curr->index].type;
-    self()->noteSubtype(curr->expected,
-                        type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    Type expectedType = type;
+    if (type.isRef()) {
+      expectedType =
+        Type(HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
+    }
+    self()->noteSubtype(curr->expected, expectedType);
     self()->noteSubtype(curr->replacement, type);
   }
   void visitStructWait(StructWait* curr) {}
@@ -445,8 +449,12 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     auto type = curr->ref->type.getHeapType().getArray().element.type;
-    self()->noteSubtype(curr->expected,
-                        type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    Type expectedType = type;
+    if (type.isRef()) {
+      expectedType =
+        Type(HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
+    }
+    self()->noteSubtype(curr->expected, expectedType);
     self()->noteSubtype(curr->replacement, type);
   }
   void visitRefAs(RefAs* curr) {
