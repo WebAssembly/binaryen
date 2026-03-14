@@ -823,7 +823,8 @@ template<> struct hash<wasm::Literal> {
           return digest;
         case wasm::Type::v128:
           uint64_t chunks[2];
-          memcpy(&chunks, a.getv128Ptr(), 16);
+          chunks[0] = wasm::readLE<uint64_t>(a.getv128Ptr());
+          chunks[1] = wasm::readLE<uint64_t>(&a.getv128Ptr()[8]);
           wasm::rehash(digest, chunks[0]);
           wasm::rehash(digest, chunks[1]);
           return digest;

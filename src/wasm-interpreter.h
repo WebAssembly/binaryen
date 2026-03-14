@@ -47,6 +47,7 @@
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-limits.h"
 #include "wasm-traversal.h"
@@ -2777,14 +2778,10 @@ protected:
       case Field::NotPacked:
         return Literal::makeFromMemory(p, field.type);
       case Field::i8: {
-        int8_t i;
-        memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(int32_t(readLE<int8_t>(p))), field);
       }
       case Field::i16: {
-        int16_t i;
-        memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(int32_t(readLE<int16_t>(p))), field);
       }
       case Field::WaitQueue: {
         WASM_UNREACHABLE("waitqueue not implemented");
