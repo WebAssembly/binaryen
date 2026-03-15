@@ -27,23 +27,41 @@
   ;; CHECK:      (global $global2 stringref (global.get $"string.const_\"bar\""))
   ;; LOWER:      (type $0 (array (mut i16)))
 
-  ;; LOWER:      (type $1 (func))
+  ;; LOWER:      (type $1 (shared (array (mut i16))))
 
-  ;; LOWER:      (type $2 (func (param externref externref) (result i32)))
+  ;; LOWER:      (type $2 (func))
 
-  ;; LOWER:      (type $3 (func (param externref) (result i32)))
+  ;; LOWER:      (type $3 (func (param externref externref) (result i32)))
 
-  ;; LOWER:      (type $4 (func (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $4 (func (param externref) (result i32)))
 
-  ;; LOWER:      (type $5 (func (param i32) (result (ref extern))))
+  ;; LOWER:      (type $5 (func (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $6 (func (param externref externref) (result (ref extern))))
+  ;; LOWER:      (type $6 (func (param (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $7 (func (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (type $7 (func (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (type $8 (func (param externref i32) (result i32)))
+  ;; LOWER:      (type $8 (func (param i32) (result (ref extern))))
 
-  ;; LOWER:      (type $9 (func (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $9 (func (param externref externref) (result (ref extern))))
+
+  ;; LOWER:      (type $10 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; LOWER:      (type $11 (func (param externref i32) (result i32)))
+
+  ;; LOWER:      (type $12 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (type $13 (func (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $14 (func (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $15 (func (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $16 (func (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (type $17 (func (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (type $18 (func (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (import "string.const" "0" (global $global (ref extern)))
 
@@ -51,25 +69,45 @@
 
   ;; LOWER:      (import "string.const" "2" (global $"string.const_\"other\"" (ref extern)))
 
-  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $4) (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $7) (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $5) (param i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $8) (param i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $6) (param externref externref) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $9) (param externref externref) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $7) (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $10) (param externref (ref null $0) i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $2) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $3) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $3) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $4) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $2) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $3) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $3) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $4) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $8) (param externref i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $11) (param externref i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $12) (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray_12 (type $13) (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_13 (type $14) (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat_14 (type $15) (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray_15 (type $16) (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals_16 (type $5) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test_17 (type $6) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare_18 (type $5) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length_19 (type $6) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt_20 (type $17) (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring_21 (type $18) (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (global $global2 externref (global.get $"string.const_\"bar\""))
   (global $global2 (ref null string) (string.const "bar"))
@@ -82,7 +120,7 @@
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; LOWER:      (func $a (type $1)
+  ;; LOWER:      (func $a (type $2)
   ;; LOWER-NEXT:  (drop
   ;; LOWER-NEXT:   (global.get $"string.const_\"bar\"")
   ;; LOWER-NEXT:  )
@@ -113,7 +151,7 @@
   ;; CHECK-NEXT:   (global.get $global2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; LOWER:      (func $b (type $1)
+  ;; LOWER:      (func $b (type $2)
   ;; LOWER-NEXT:  (drop
   ;; LOWER-NEXT:   (global.get $"string.const_\"bar\"")
   ;; LOWER-NEXT:  )
@@ -151,21 +189,39 @@
   ;; CHECK:      (import "a" "b" (global $import (ref string)))
   ;; LOWER:      (type $0 (array (mut i16)))
 
-  ;; LOWER:      (type $1 (func (param externref externref) (result i32)))
+  ;; LOWER:      (type $1 (shared (array (mut i16))))
 
-  ;; LOWER:      (type $2 (func (param externref) (result i32)))
+  ;; LOWER:      (type $2 (func (param externref externref) (result i32)))
 
-  ;; LOWER:      (type $3 (func (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $3 (func (param externref) (result i32)))
 
-  ;; LOWER:      (type $4 (func (param i32) (result (ref extern))))
+  ;; LOWER:      (type $4 (func (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $5 (func (param externref externref) (result (ref extern))))
+  ;; LOWER:      (type $5 (func (param (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $6 (func (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (type $6 (func (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (type $7 (func (param externref i32) (result i32)))
+  ;; LOWER:      (type $7 (func (param i32) (result (ref extern))))
 
-  ;; LOWER:      (type $8 (func (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $8 (func (param externref externref) (result (ref extern))))
+
+  ;; LOWER:      (type $9 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; LOWER:      (type $10 (func (param externref i32) (result i32)))
+
+  ;; LOWER:      (type $11 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (type $12 (func (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $13 (func (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $14 (func (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $15 (func (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (type $16 (func (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (type $17 (func (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (import "string.const" "0" (global $global1 (ref extern)))
 
@@ -180,25 +236,45 @@
   ;; CHECK:      (global $global4 (ref string) (string.const "bar"))
 
   ;; CHECK:      (global $global2 (ref string) (global.get $global1))
-  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $6) (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $4) (param i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $7) (param i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $5) (param externref externref) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $8) (param externref externref) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $6) (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $9) (param externref (ref null $0) i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $2) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $2) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $3) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $2) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $2) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $3) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $7) (param externref i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $10) (param externref i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $8) (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $11) (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray_10 (type $12) (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_11 (type $13) (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat_12 (type $14) (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray_13 (type $15) (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals_14 (type $4) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test_15 (type $5) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare_16 (type $4) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length_17 (type $5) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt_18 (type $16) (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring_19 (type $17) (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (global $global2 (ref extern) (global.get $global1))
   (global $global2 (ref string) (string.const "foo"))
@@ -227,45 +303,83 @@
   ;; CHECK:      (global $global (mut (ref string)) (global.get $"string.const_\"foo\""))
   ;; LOWER:      (type $0 (array (mut i16)))
 
-  ;; LOWER:      (type $1 (func (param externref externref) (result i32)))
+  ;; LOWER:      (type $1 (shared (array (mut i16))))
 
-  ;; LOWER:      (type $2 (func (param externref) (result i32)))
+  ;; LOWER:      (type $2 (func (param externref externref) (result i32)))
 
-  ;; LOWER:      (type $3 (func))
+  ;; LOWER:      (type $3 (func (param externref) (result i32)))
 
-  ;; LOWER:      (type $4 (func (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $4 (func (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $5 (func (param i32) (result (ref extern))))
+  ;; LOWER:      (type $5 (func (param (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $6 (func (param externref externref) (result (ref extern))))
+  ;; LOWER:      (type $6 (func))
 
-  ;; LOWER:      (type $7 (func (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (type $7 (func (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (type $8 (func (param externref i32) (result i32)))
+  ;; LOWER:      (type $8 (func (param i32) (result (ref extern))))
 
-  ;; LOWER:      (type $9 (func (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $9 (func (param externref externref) (result (ref extern))))
+
+  ;; LOWER:      (type $10 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; LOWER:      (type $11 (func (param externref i32) (result i32)))
+
+  ;; LOWER:      (type $12 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (type $13 (func (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $14 (func (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $15 (func (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $16 (func (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (type $17 (func (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (type $18 (func (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (import "string.const" "0" (global $"string.const_\"foo\"" (ref extern)))
 
-  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $4) (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $7) (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $5) (param i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $8) (param i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $6) (param externref externref) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $9) (param externref externref) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $7) (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $10) (param externref (ref null $0) i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $2) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $2) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $3) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $2) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $2) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $3) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $8) (param externref i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $11) (param externref i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $12) (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray_11 (type $13) (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_12 (type $14) (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat_13 (type $15) (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray_14 (type $16) (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals_15 (type $4) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test_16 (type $5) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare_17 (type $4) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length_18 (type $5) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt_19 (type $17) (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring_20 (type $18) (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (global $global (mut (ref extern)) (global.get $"string.const_\"foo\""))
   (global $global (mut (ref string)) (string.const "foo"))
@@ -275,7 +389,7 @@
   ;; CHECK-NEXT:   (global.get $"string.const_\"foo\"")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; LOWER:      (func $a (type $3)
+  ;; LOWER:      (func $a (type $6)
   ;; LOWER-NEXT:  (drop
   ;; LOWER-NEXT:   (global.get $"string.const_\"foo\"")
   ;; LOWER-NEXT:  )
@@ -296,6 +410,8 @@
   ;; CHECK:      (type $struct (struct (field stringref)))
   ;; LOWER:      (type $0 (array (mut i16)))
 
+  ;; LOWER:      (type $1 (shared (array (mut i16))))
+
   ;; LOWER:      (type $struct (struct (field externref)))
   (type $struct (struct (field stringref)))
 
@@ -304,43 +420,79 @@
   ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (global.get $string)
   ;; CHECK-NEXT: ))
-  ;; LOWER:      (type $2 (func (param externref externref) (result i32)))
+  ;; LOWER:      (type $3 (func (param externref externref) (result i32)))
 
-  ;; LOWER:      (type $3 (func (param externref) (result i32)))
+  ;; LOWER:      (type $4 (func (param externref) (result i32)))
 
-  ;; LOWER:      (type $4 (func (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $5 (func (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $5 (func (param i32) (result (ref extern))))
+  ;; LOWER:      (type $6 (func (param (ref null (shared extern))) (result i32)))
 
-  ;; LOWER:      (type $6 (func (param externref externref) (result (ref extern))))
+  ;; LOWER:      (type $7 (func (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (type $7 (func (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (type $8 (func (param i32) (result (ref extern))))
 
-  ;; LOWER:      (type $8 (func (param externref i32) (result i32)))
+  ;; LOWER:      (type $9 (func (param externref externref) (result (ref extern))))
 
-  ;; LOWER:      (type $9 (func (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (type $10 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; LOWER:      (type $11 (func (param externref i32) (result i32)))
+
+  ;; LOWER:      (type $12 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (type $13 (func (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $14 (func (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $15 (func (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (type $16 (func (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (type $17 (func (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (type $18 (func (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (import "string.const" "0" (global $string (ref extern)))
 
-  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $4) (param (ref null $0) i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $7) (param (ref null $0) i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $5) (param i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $8) (param i32) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $6) (param externref externref) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $9) (param externref externref) (result (ref extern))))
 
-  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $7) (param externref (ref null $0) i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $10) (param externref (ref null $0) i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $2) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $3) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $3) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test (type $4) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $2) (param externref externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $3) (param externref externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $3) (param externref) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $4) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $8) (param externref i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $11) (param externref i32) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $12) (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray_10 (type $13) (param (ref null $1) i32 i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_11 (type $14) (param i32) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat_12 (type $15) (param (ref null (shared extern)) (ref null (shared extern))) (result (ref (shared extern)))))
+
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray_13 (type $16) (param (ref null (shared extern)) (ref null $1) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals_14 (type $5) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "test" (func $test_15 (type $6) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare_16 (type $5) (param (ref null (shared extern)) (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length_17 (type $6) (param (ref null (shared extern))) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt_18 (type $17) (param (ref null (shared extern)) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring_19 (type $18) (param (ref null (shared extern)) i32 i32) (result (ref (shared extern)))))
 
   ;; LOWER:      (global $struct (ref $struct) (struct.new $struct
   ;; LOWER-NEXT:  (global.get $string)

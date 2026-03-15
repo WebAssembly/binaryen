@@ -50,6 +50,18 @@ struct StringLifting : public Pass {
   Name charCodeAtImport;
   Name substringImport;
 
+  // Shared imported string functions.
+  Name fromCharCodeArraySharedImport;
+  Name intoCharCodeArraySharedImport;
+  Name fromCodePointSharedImport;
+  Name concatSharedImport;
+  Name equalsSharedImport;
+  Name testSharedImport;
+  Name compareSharedImport;
+  Name lengthSharedImport;
+  Name charCodeAtSharedImport;
+  Name substringSharedImport;
+
   void run(Module* module) override {
     // Whether we found any work to do.
     bool found = false;
@@ -121,79 +133,137 @@ struct StringLifting : public Pass {
       module->customSections.erase(stringSectionIter);
     }
 
-    auto array16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+    auto array16 = Type(HeapTypes::getMutI16Array(), Nullable);
     auto refExtern = Type(HeapType::ext, NonNullable);
     auto externref = Type(HeapType::ext, Nullable);
     auto i32 = Type::i32;
+
+    auto sharedArray16 = Type(HeapTypes::getSharedMutI16Array(), Nullable);
+    auto refSharedExtern =
+      Type(HeapType(HeapType::ext).getBasic(Shared), NonNullable);
+    auto sharedExternref =
+      Type(HeapType(HeapType::ext).getBasic(Shared), Nullable);
 
     // Find imported string functions.
     for (auto& func : module->functions) {
       if (!func->imported() || func->module != WasmStringsModule) {
         continue;
       }
-      // TODO: Check exactness here too.
       auto type = func->type;
       if (func->base == "fromCharCodeArray") {
-        if (type.getHeapType() != Signature({array16, i32, i32}, refExtern)) {
+        if (type.getHeapType() == Signature(Type({array16, i32, i32}), refExtern)) {
+          fromCharCodeArrayImport = func->name;
+          found = true;
+        } else if (type.getHeapType() ==
+                   Signature(Type({sharedArray16, i32, i32}), refSharedExtern)) {
+          fromCharCodeArraySharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for fromCharCodeArray: " << type;
         }
-        fromCharCodeArrayImport = func->name;
-        found = true;
       } else if (func->base == "fromCodePoint") {
-        if (type.getHeapType() != Signature(i32, refExtern)) {
+        if (type.getHeapType() == Signature(i32, refExtern)) {
+          fromCodePointImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(i32, refSharedExtern)) {
+          fromCodePointSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for fromCodePoint: " << type;
         }
-        fromCodePointImport = func->name;
-        found = true;
       } else if (func->base == "concat") {
-        if (type.getHeapType() !=
-            Signature({externref, externref}, refExtern)) {
+        if (type.getHeapType() ==
+            Signature(Type({externref, externref}), refExtern)) {
+          concatImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref,
+                                                         sharedExternref}),
+                                                   refSharedExtern)) {
+          concatSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for concat: " << type;
         }
-        concatImport = func->name;
-        found = true;
       } else if (func->base == "intoCharCodeArray") {
-        if (type.getHeapType() != Signature({externref, array16, i32}, i32)) {
+        if (type.getHeapType() == Signature(Type({externref, array16, i32}), i32)) {
+          intoCharCodeArrayImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref,
+                                                         sharedArray16,
+                                                         i32}),
+                                                   i32)) {
+          intoCharCodeArraySharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for intoCharCodeArray: " << type;
         }
-        intoCharCodeArrayImport = func->name;
-        found = true;
       } else if (func->base == "equals") {
-        if (type.getHeapType() != Signature({externref, externref}, i32)) {
+        if (type.getHeapType() == Signature(Type({externref, externref}), i32)) {
+          equalsImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref,
+                                                         sharedExternref}),
+                                                   i32)) {
+          equalsSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for equals: " << type;
         }
-        equalsImport = func->name;
-        found = true;
       } else if (func->base == "test") {
-        if (type.getHeapType() != Signature({externref}, i32)) {
+        if (type.getHeapType() == Signature(Type({externref}), i32)) {
+          testImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref}), i32)) {
+          testSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for test: " << type;
         }
-        testImport = func->name;
-        found = true;
       } else if (func->base == "compare") {
-        if (type.getHeapType() != Signature({externref, externref}, i32)) {
+        if (type.getHeapType() == Signature(Type({externref, externref}), i32)) {
+          compareImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref,
+                                                         sharedExternref}),
+                                                   i32)) {
+          compareSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for compare: " << type;
         }
-        compareImport = func->name;
-        found = true;
       } else if (func->base == "length") {
-        if (type.getHeapType() != Signature({externref}, i32)) {
+        if (type.getHeapType() == Signature(Type({externref}), i32)) {
+          lengthImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref}), i32)) {
+          lengthSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for length: " << type;
         }
-        lengthImport = func->name;
-        found = true;
       } else if (func->base == "charCodeAt") {
-        if (type.getHeapType() != Signature({externref, i32}, i32)) {
+        if (type.getHeapType() == Signature(Type({externref, i32}), i32)) {
+          charCodeAtImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref, i32}), i32)) {
+          charCodeAtSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for charCodeAt: " << type;
         }
-        charCodeAtImport = func->name;
-        found = true;
       } else if (func->base == "substring") {
-        if (type.getHeapType() != Signature({externref, i32, i32}, refExtern)) {
+        if (type.getHeapType() == Signature(Type({externref, i32, i32}), refExtern)) {
+          substringImport = func->name;
+          found = true;
+        } else if (type.getHeapType() == Signature(Type({sharedExternref,
+                                                         i32,
+                                                         i32}),
+                                                   refSharedExtern)) {
+          substringSharedImport = func->name;
+          found = true;
+        } else {
           Fatal() << "StringLifting: bad type for substring: " << type;
         }
-        substringImport = func->name;
-        found = true;
       } else {
         std::cerr << "warning: unknown strings import: " << func->base << '\n';
       }
@@ -228,53 +298,54 @@ struct StringLifting : public Pass {
       }
 
       void visitCall(Call* curr) {
+        Builder builder(*getModule());
         // Replace calls of imported string methods with stringref operations.
-        if (curr->target == parent.fromCharCodeArrayImport) {
-          replaceCurrent(Builder(*getModule())
-                           .makeStringNew(StringNewWTF16Array,
-                                          curr->operands[0],
-                                          curr->operands[1],
-                                          curr->operands[2]));
-        } else if (curr->target == parent.fromCodePointImport) {
-          replaceCurrent(
-            Builder(*getModule())
-              .makeStringNew(StringNewFromCodePoint, curr->operands[0]));
-        } else if (curr->target == parent.concatImport) {
-          replaceCurrent(
-            Builder(*getModule())
-              .makeStringConcat(curr->operands[0], curr->operands[1]));
-        } else if (curr->target == parent.intoCharCodeArrayImport) {
-          replaceCurrent(Builder(*getModule())
-                           .makeStringEncode(StringEncodeWTF16Array,
-                                             curr->operands[0],
-                                             curr->operands[1],
-                                             curr->operands[2]));
-        } else if (curr->target == parent.equalsImport) {
-          replaceCurrent(Builder(*getModule())
-                           .makeStringEq(StringEqEqual,
-                                         curr->operands[0],
-                                         curr->operands[1]));
-        } else if (curr->target == parent.testImport) {
-          replaceCurrent(
-            Builder(*getModule()).makeStringTest(curr->operands[0]));
-        } else if (curr->target == parent.compareImport) {
-          replaceCurrent(Builder(*getModule())
-                           .makeStringEq(StringEqCompare,
-                                         curr->operands[0],
-                                         curr->operands[1]));
-        } else if (curr->target == parent.lengthImport) {
-          replaceCurrent(
-            Builder(*getModule())
-              .makeStringMeasure(StringMeasureWTF16, curr->operands[0]));
-        } else if (curr->target == parent.charCodeAtImport) {
-          replaceCurrent(
-            Builder(*getModule())
-              .makeStringWTF16Get(curr->operands[0], curr->operands[1]));
-        } else if (curr->target == parent.substringImport) {
-          replaceCurrent(Builder(*getModule())
-                           .makeStringSliceWTF(curr->operands[0],
+        if (curr->target == parent.fromCharCodeArrayImport ||
+            curr->target == parent.fromCharCodeArraySharedImport) {
+          replaceCurrent(builder.makeStringNew(StringNewWTF16Array,
+                                               curr->operands[0],
                                                curr->operands[1],
                                                curr->operands[2]));
+        } else if (curr->target == parent.fromCodePointImport ||
+                   curr->target == parent.fromCodePointSharedImport) {
+          replaceCurrent(builder.makeStringNew(StringNewFromCodePoint,
+                                               curr->operands[0]));
+        } else if (curr->target == parent.concatImport ||
+                   curr->target == parent.concatSharedImport) {
+          replaceCurrent(builder.makeStringConcat(curr->operands[0],
+                                                  curr->operands[1]));
+        } else if (curr->target == parent.intoCharCodeArrayImport ||
+                   curr->target == parent.intoCharCodeArraySharedImport) {
+          replaceCurrent(builder.makeStringEncode(StringEncodeWTF16Array,
+                                                  curr->operands[0],
+                                                  curr->operands[1],
+                                                  curr->operands[2]));
+        } else if (curr->target == parent.equalsImport ||
+                   curr->target == parent.equalsSharedImport) {
+          replaceCurrent(builder.makeStringEq(StringEqEqual,
+                                              curr->operands[0],
+                                              curr->operands[1]));
+        } else if (curr->target == parent.testImport ||
+                   curr->target == parent.testSharedImport) {
+          replaceCurrent(builder.makeStringTest(curr->operands[0]));
+        } else if (curr->target == parent.compareImport ||
+                   curr->target == parent.compareSharedImport) {
+          replaceCurrent(builder.makeStringEq(StringEqCompare,
+                                              curr->operands[0],
+                                              curr->operands[1]));
+        } else if (curr->target == parent.lengthImport ||
+                   curr->target == parent.lengthSharedImport) {
+          replaceCurrent(builder.makeStringMeasure(StringMeasureWTF16,
+                                                   curr->operands[0]));
+        } else if (curr->target == parent.charCodeAtImport ||
+                   curr->target == parent.charCodeAtSharedImport) {
+          replaceCurrent(builder.makeStringWTF16Get(curr->operands[0],
+                                                    curr->operands[1]));
+        } else if (curr->target == parent.substringImport ||
+                   curr->target == parent.substringSharedImport) {
+          replaceCurrent(builder.makeStringSliceWTF(curr->operands[0],
+                                                    curr->operands[1],
+                                                    curr->operands[2]));
         }
       }
 
