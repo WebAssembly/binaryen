@@ -37,6 +37,7 @@
 #include "support/insert_ordered.h"
 #include "support/string.h"
 #include "support/topological_sort.h"
+#include "support/utilities.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -497,15 +498,11 @@ private:
   }
 
   template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    memcpy(getMemory(address, memoryName, sizeof(T)), &value, sizeof(T));
+    writeLE<T>(value, getMemory(address, memoryName, sizeof(T)));
   }
 
   template<typename T> T doLoad(Address address, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    T ret;
-    memcpy(&ret, getMemory(address, memoryName, sizeof(T)), sizeof(T));
-    return ret;
+    return readLE<T>(getMemory(address, memoryName, sizeof(T)));
   }
 
   // Clear the state of the operation of applying the interpreter's runtime

@@ -20,6 +20,7 @@
 #include "compiler-support.h"
 
 #include <cassert>
+#include <climits>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -102,6 +103,43 @@ public:
 #else
 #define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
 #endif
+
+template<typename T, typename std::enable_if<std::is_same<T, typename std::array<uint8_t, std::tuple_size<T>::value>>::value, bool>::type = true>
+void writeLE(T val, void *ptr) {
+	memcpy(ptr, val.data(), sizeof(T));
+}
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value, bool>::type = true>
+void writeLE(T val, void *ptr) {
+  auto v = typename std::conditional<std::is_signed<T>::value, typename std::make_unsigned<T>::type, T>::type(val);
+  unsigned char *buf = reinterpret_cast<unsigned char *>(ptr);
+#pragma GCC unroll 10
+  for (size_t i = 0; i < sizeof(T); ++i) {
+    buf[i] = v;
+    v >>= CHAR_BIT * (sizeof(T) != 1);
+  }
+}
+
+template<typename T, typename std::enable_if<std::is_same<T, typename std::array<uint8_t, std::tuple_size<T>::value>>::value, bool>::type = true>
+T readLE(const void *ptr) {
+	T v;
+	memcpy(v.data(), ptr, sizeof(T));
+	return v;
+}
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value, bool>::type = true>
+T readLE(const void *ptr) {
+  auto v = typename std::conditional<std::is_signed<T>::value, typename std::make_unsigned<T>::type, T>::type(0);
+  const unsigned char *buf = reinterpret_cast<const unsigned char *>(ptr);
+  size_t i = sizeof(T);
+#pragma GCC unroll 10
+  do {
+    --i;
+    v <<= CHAR_BIT * (sizeof(T) != 1);
+    v += buf[i];
+  } while (i);
+  return v;
+}
 
 } // namespace wasm
 

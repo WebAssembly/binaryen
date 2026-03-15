@@ -21,6 +21,7 @@
 #include <variant>
 
 #include "support/command-line.h"
+#include "support/utilities.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/random.h"
 #include "wasm-type-printing.h"
@@ -68,7 +69,7 @@ void Fuzzer::run(uint64_t seed) {
   // 4kb of random bytes should be enough for anyone!
   std::vector<char> bytes(4096);
   for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
-    *(uint64_t*)(bytes.data() + i) = getRand();
+    writeLE<uint64_t>(getRand(), bytes.data() + i);
   }
   rand = Random(std::move(bytes));
 
