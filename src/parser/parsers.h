@@ -3505,7 +3505,10 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
 }
 
 // table ::= '(' 'table' id? ('(' 'export' name ')')*
-//               '(' 'import' mod:name nm:name ')'? index_type? tabletype expr?
+//               index_type? tabletype expr?
+//               ')'
+//         | '(' 'table' id? ('(' 'export' name ')')*
+//               '(' 'import' mod:name nm:name ')' index_type? tabletype
 //               ')'
 //         | '(' 'table' id? ('(' 'export' name ')')* index_type?
 //               reftype '(' 'elem' (elemexpr* | funcidx*) ')' ')'
@@ -3574,7 +3577,8 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     auto tabtype = tabletypeContinued(ctx, addressType);
     CHECK_ERR(tabtype);
     ttype = *tabtype;
-    if (ctx.in.peekLParen()) {
+    if (ctx.in.peekLParen() && !import) {
+      // imported tables cannot have initialization expression
       auto e = expr(ctx);
       CHECK_ERR(e);
       init = *e;

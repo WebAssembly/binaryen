@@ -25,3 +25,21 @@
  (func $0 (param $0 i32)
  )
 )
+
+;; imported table shouldn't have init expression
+;; CHECK: expected end of import description
+(module
+ (type $0 (func (param i32)))
+ (import "env" "table" (table 0 (ref $0) (ref.func $0)))
+ (func $0 (param $0 i32)
+ )
+)
+
+;; imported table shouldn't have init expression
+;; CHECK: expected end of table declaration
+(module
+ (type $0 (func (param i32)))
+ (table $0 (import "env" "table") 0 (ref $0) (ref.func $0))
+ (func $0 (param $0 i32)
+ )
+)

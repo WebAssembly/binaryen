@@ -4786,11 +4786,11 @@ void validateTables(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(table->initial <= table->max,
                       "table",
                       "size minimum must not be greater than maximum");
-    if (!table->type.isNullable()) {
-      info.shouldBeTrue(
-        table->init,
-        "table",
-        "tables with non-nullable types require an initializer expression");
+    if (!table->imported() && !table->type.isNullable()) {
+      info.shouldBeTrue(table->init,
+                        "table",
+                        "module-defined tables with non-nullable types require "
+                        "an initializer expression");
     }
     if (table->init) {
       info.shouldBeTrue(module.features.hasGC(),
