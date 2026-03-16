@@ -1055,7 +1055,7 @@
 
   ;; any exposed to JS.
   ;; CHECK:      (@binaryen.js.called)
-  ;; CHECK-NEXT: (func $expose-structref (type $3) (result anyref)
+  ;; CHECK-NEXT: (func $expose-anyref (type $3) (result anyref)
   ;; CHECK-NEXT:  (global.set $any
   ;; CHECK-NEXT:   (global.get $super)
   ;; CHECK-NEXT:  )
@@ -1065,7 +1065,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (@binaryen.js.called)
-  (func $expose-structref (result anyref)
+  (func $expose-anyref (result anyref)
     ;; $super <: aby
     (global.set $any
       (global.get $super)
