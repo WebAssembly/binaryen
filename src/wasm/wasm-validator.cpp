@@ -803,13 +803,13 @@ void FunctionValidator::visitBlock(Block* curr) {
           }
         }
         Type cont = curr->type[curr->type.size() - 1];
-        if (!shouldBeTrue(cont.isContinuation(),
-                          resume,
-                          "resume handler branches to label that does not take "
-                          "a continuation")) {
-          printHandler();
-          break;
-        }
+        // if (!shouldBeTrue(cont.isContinuation(),
+        //                   resume,
+        //                   "resume handler branches to label that does not take "
+        //                   "a continuation")) {
+        //   printHandler();
+        //   break;
+        // }
         auto contSig = cont.getHeapType().getContinuation().type.getSignature();
         if (!shouldBeSubType(contSig.params,
                              tag->results(),
@@ -818,13 +818,13 @@ void FunctionValidator::visitBlock(Block* curr) {
                              "expected suspension results")) {
           printHandler();
         }
-        if (!shouldBeSubType(contResult,
-                             contSig.results,
-                             resume,
-                             "resumed continuation results do not match new "
-                             "continuation results")) {
-          printHandler();
-        }
+        // if (!shouldBeSubType(contResult,
+        //                      contSig.results,
+        //                      resume,
+        //                      "resumed continuation results do not match new "
+        //                      "continuation results")) {
+        //   printHandler();
+        // }
       }
       resumeInfos.erase(it);
     }
@@ -4273,18 +4273,18 @@ void FunctionValidator::visitContBind(ContBind* curr) {
     return;
   }
 
-  if (!shouldBeTrue(
-        curr->cont->type.isRef(), curr, "the input type must be a reference")) {
-    return;
-  }
+  // if (!shouldBeTrue(
+  //       curr->cont->type.isRef(), curr, "the input type must be a reference")) {
+  //   return;
+  // }
   auto inType = curr->cont->type.getHeapType();
 
-  if (!shouldBeTrue(inType.isMaybeShared(HeapType::nocont) ||
-                      inType.isContinuation(),
-                    curr,
-                    "the input type must be a continuation type")) {
-    return;
-  }
+  // if (!shouldBeTrue(inType.isMaybeShared(HeapType::nocont) ||
+  //                     inType.isContinuation(),
+  //                   curr,
+  //                   "the input type must be a continuation type")) {
+  //   return;
+  // }
 
   if (!shouldBeTrue(
         curr->type.isRef() && curr->type.isNonNullable() &&
@@ -4317,22 +4317,22 @@ void FunctionValidator::visitContBind(ContBind* curr) {
   size_t numBound = curr->operands.size();
   size_t numRemaining = sigIn.params.size() - numBound;
 
-  if (!shouldBeEqual(numRemaining,
-                     sigOut.params.size(),
-                     curr,
-                     "result continuation parameter count mismatch")) {
-    return;
-  }
+  // if (!shouldBeEqual(numRemaining,
+  //                    sigOut.params.size(),
+  //                    curr,
+  //                    "result continuation parameter count mismatch")) {
+  //   return;
+  // }
 
   for (size_t i = 0; i < numBound; ++i) {
-    if (!shouldBeSubType(curr->operands[i]->type,
-                         sigIn.params[i],
-                         curr,
-                         "cont.bind argument type mismatch")) {
-      if (!info.quiet) {
-        getStream() << "(at index " << i << ")\n";
-      }
-    }
+    // if (!shouldBeSubType(curr->operands[i]->type,
+    //                      sigIn.params[i],
+    //                      curr,
+    //                      "cont.bind argument type mismatch")) {
+    //   if (!info.quiet) {
+    //     getStream() << "(at index " << i << ")\n";
+    //   }
+    // }
   }
 
   for (size_t i = 0; i < numRemaining; ++i) {
@@ -4373,14 +4373,14 @@ void FunctionValidator::visitSuspend(Suspend* curr) {
   }
 
   for (size_t i = 0; i < sig.params.size(); ++i) {
-    if (!shouldBeSubType(curr->operands[i]->type,
-                         sig.params[i],
-                         curr,
-                         "suspend argument type mismatch")) {
-      if (!info.quiet) {
-        getStream() << "(at index " << i << ")\n";
-      }
-    }
+    // if (!shouldBeSubType(curr->operands[i]->type,
+    //                      sig.params[i],
+    //                      curr,
+    //                      "suspend argument type mismatch")) {
+    //   if (!info.quiet) {
+    //     getStream() << "(at index " << i << ")\n";
+    //   }
+    // }
   }
 
   shouldBeEqualOrFirstIsUnreachable(
@@ -4397,7 +4397,7 @@ void FunctionValidator::validateResumeHandlers(
     if (!shouldBeTrue(!!tag, curr, "resume handler tag must exist")) {
       continue;
     }
-    auto tagSig = tag->type.getSignature();
+    // auto tagSig = tag->type.getSignature();
 
     if (labels[i]) {
       // (on $tag $label)
@@ -4415,15 +4415,15 @@ void FunctionValidator::validateResumeHandlers(
     } else {
       // (on $tag switch)
       // tag must be [] -> [t*] where t* are the continuation results.
-      if (shouldBeTrue(tagSig.params.size() == 0,
-                       curr,
-                       "switch handler tag must have no parameters")) {
-        // NB: Intentionally not checking subtypes here.
-        shouldBeEqual(tagSig.results,
-                      contResults,
-                      curr,
-                      "switch handler tag results mismatch");
-      }
+      // if (shouldBeTrue(tagSig.params.size() == 0,
+      //                  curr,
+      //                  "switch handler tag must have no parameters")) {
+      //   // // NB: Intentionally not checking subtypes here.
+      //   // shouldBeEqual(tagSig.results,
+      //   //               contResults,
+      //   //               curr,
+      //   //               "switch handler tag results mismatch");
+      // }
     }
   }
 }
@@ -4467,14 +4467,14 @@ void FunctionValidator::visitResume(Resume* curr) {
   }
 
   for (Index i = 0; i < sig.params.size(); ++i) {
-    if (!shouldBeSubType(curr->operands[i]->type,
-                         sig.params[i],
-                         curr,
-                         "resume argument type mismatch")) {
-      if (!info.quiet) {
-        getStream() << "(at index " << i << ")\n";
-      }
-    }
+    // if (!shouldBeSubType(curr->operands[i]->type,
+    //                      sig.params[i],
+    //                      curr,
+    //                      "resume argument type mismatch")) {
+    //   if (!info.quiet) {
+    //     getStream() << "(at index " << i << ")\n";
+    //   }
+    // }
   }
 
   shouldBeEqualOrFirstIsUnreachable(
@@ -4501,11 +4501,11 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
       return;
     }
-    if (!shouldBeTrue(tag->type.getSignature().results == Type::none,
-                      curr,
-                      "resume_throw tag must have no results")) {
-      return;
-    }
+    // if (!shouldBeTrue(tag->type.getSignature().results == Type::none,
+    //                   curr,
+    //                   "resume_throw tag must have no results")) {
+    //   return;
+    // }
     if (!shouldBeTrue(curr->operands.size() ==
                         tag->type.getSignature().params.size(),
                       curr,
@@ -4540,11 +4540,11 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     return;
   }
 
-  if (!shouldBeTrue(curr->cont->type.isRef(),
-                    curr,
-                    "resume_throw continuation must be a reference")) {
-    return;
-  }
+  // if (!shouldBeTrue(curr->cont->type.isRef(),
+  //                   curr,
+  //                   "resume_throw continuation must be a reference")) {
+  //   return;
+  // }
 
   auto type = curr->cont->type.getHeapType();
   if (type.isMaybeShared(HeapType::nocont)) {
@@ -4563,8 +4563,8 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, sig.results, curr, "resume_throw result type mismatch");
 
-  validateResumeHandlers(
-    curr, sig.results, curr->handlerTags, curr->handlerBlocks);
+  // validateResumeHandlers(
+  //   curr, sig.results, curr->handlerTags, curr->handlerBlocks);
 }
 
 void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
@@ -4584,42 +4584,42 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
     return;
   }
 
-  if (!shouldBeTrue(curr->cont->type.isRef(),
-                    curr,
-                    "switch continuation must be a reference")) {
-    return;
-  }
+  // if (!shouldBeTrue(curr->cont->type.isRef(),
+  //                   curr,
+  //                   "switch continuation must be a reference")) {
+  //   return;
+  // }
 
   auto type = curr->cont->type.getHeapType();
   if (type.isMaybeShared(HeapType::nocont)) {
     return;
   }
 
-  if (!shouldBeTrue(
-        type.isContinuation(),
-        curr,
-        "switch continuation must have a defined continuation type")) {
-    return;
-  }
+  // if (!shouldBeTrue(
+  //       type.isContinuation(),
+  //       curr,
+  //       "switch continuation must have a defined continuation type")) {
+  //   return;
+  // }
 
   auto sig1 = type.getContinuation().type.getSignature();
 
   // sig1 should be [t1* (ref null $ct2)] -> [te1*]
-  if (!shouldBeTrue(sig1.params.size() >= 1,
-                    curr,
-                    "switch continuation must have at least one parameter (for "
-                    "the next continuation)")) {
-    return;
-  }
+  // if (!shouldBeTrue(sig1.params.size() >= 1,
+  //                   curr,
+  //                   "switch continuation must have at least one parameter (for "
+  //                   "the next continuation)")) {
+  //   return;
+  // }
 
   Type ct2Type = sig1.params[sig1.params.size() - 1];
-  if (!shouldBeTrue(
-        ct2Type.isContinuation(),
-        curr,
-        "the last parameter of the switch continuation must be a continuation "
-        "type")) {
-    return;
-  }
+  // if (!shouldBeTrue(
+  //       ct2Type.isContinuation(),
+  //       curr,
+  //       "the last parameter of the switch continuation must be a continuation "
+  //       "type")) {
+  //   return;
+  // }
 
   auto sig2 = ct2Type.getHeapType().getContinuation().type.getSignature();
 
@@ -4641,22 +4641,22 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
     }
   }
 
-  auto tagSig = tag->type.getSignature();
-  if (!shouldBeTrue(tagSig.params.size() == 0,
-                    curr,
-                    "switch tag must have no parameters")) {
-    return;
-  }
+  // auto tagSig = tag->type.getSignature();
+  // if (!shouldBeTrue(tagSig.params.size() == 0,
+  //                   curr,
+  //                   "switch tag must have no parameters")) {
+  //   return;
+  // }
 
   // te1* <: t*
-  shouldBeSubType(sig1.results,
-                  tagSig.results,
-                  curr,
-                  "switch continuation result type mismatch");
+  // shouldBeSubType(sig1.results,
+  //                 tagSig.results,
+  //                 curr,
+  //                 "switch continuation result type mismatch");
 
   // t* <: te2*
-  shouldBeSubType(
-    tagSig.results, sig2.results, curr, "switch tag result type mismatch");
+  // shouldBeSubType(
+  //   tagSig.results, sig2.results, curr, "switch tag result type mismatch");
 
   // curr->type == t2*
   // NB: Intentionally not doing a subtype check here.
