@@ -993,20 +993,20 @@ void ModuleSplitter::shareImportableItems() {
     // don't have exports, so this only applies to the primary module.
     for (auto& ex : module.exports) {
       switch (ex->kind) {
-      case ExternalKind::Global:
-        used.globals.insert(*ex->getInternalName());
-        break;
-      case ExternalKind::Memory:
-        used.memories.insert(*ex->getInternalName());
-        break;
-      case ExternalKind::Table:
-        used.tables.insert(*ex->getInternalName());
-        break;
-      case ExternalKind::Tag:
-        used.tags.insert(*ex->getInternalName());
-        break;
-      default:
-        break;
+        case ExternalKind::Global:
+          used.globals.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Memory:
+          used.memories.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Table:
+          used.tables.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Tag:
+          used.tags.insert(*ex->getInternalName());
+          break;
+        default:
+          break;
       }
     }
 
