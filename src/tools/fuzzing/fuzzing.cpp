@@ -975,7 +975,8 @@ void TranslateToFuzzReader::finalizeTable() {
       table->module = table->base = Name();
       if (table->type.isNonNullable()) {
         // imported tables can have nullable types without an initializer,
-        // but this is not the case for module-defined tables, so make it nullable.
+        // but this is not the case for module-defined tables, so make it
+        // nullable.
         // TODO: use makeConst to provide an initializer of the correct type?
         table->type = table->type.with(Nullable);
       }
