@@ -1053,7 +1053,7 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& memory : primary.memories) {
     auto usingSecondaries =
       getUsingSecondaries(memory->name, &UsedNames::memories);
-    bool inPrimary = primaryUsed.memories.count(memory->name);
+    bool usedInPrimary = primaryUsed.memories.count(memory->name);
 
     if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
@@ -1091,7 +1091,7 @@ void ModuleSplitter::shareImportableItems() {
       for (auto* secondary : usingSecondaries) {
         // 1. In case we copied this table to this secondary module in
         //    setupTablePatching(), secondary.getTableOrNull(table->name) is not
-        //    null, and we need to export it.
+        //    null, and we need to import it.
         // 2. As in the case with other module elements, if the table is used in
         //    the secondary module's instructions, we need to export it.
         auto secondaryTable = secondary->getTableOrNull(table->name);
