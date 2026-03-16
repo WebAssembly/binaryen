@@ -988,7 +988,9 @@ void ModuleSplitter::shareImportableItems() {
         used.tables.insert(segment->table);
       }
     }
-    // If primary module has exports, they are "used" in it
+
+    // If primary module has exports, they are "used" in it. Secondary modules
+    // don't have exports, so this only applies to the primary module.
     for (auto& ex : module.exports) {
       if (ex->kind == ExternalKind::Global) {
         used.globals.insert(*ex->getInternalName());
