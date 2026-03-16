@@ -1065,7 +1065,7 @@ void ModuleSplitter::shareImportableItems() {
       getUsingSecondaries(memory->name, &UsedNames::memories);
     bool usedInPrimary = primaryUsed.memories.count(memory->name);
 
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyMemory(memory.get(), *secondary);
       memoriesToRemove.push_back(memory->name);
@@ -1086,12 +1086,12 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& table : primary.tables) {
     auto usingSecondaries =
       getUsingSecondaries(table->name, &UsedNames::tables);
-    bool inPrimary = primaryUsed.tables.count(table->name);
+    bool usedInPrimary = primaryUsed.tables.count(table->name);
 
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       //  In case we copied this table to this secondary module in
-      //  setupTablePatching(), !inPrimary can't be satisfied, because the
+      //  setupTablePatching(), !usedInPrimary can't be satisfied, because the
       //  primary module should have an element segment that refers to this
       //  table.
       assert(!secondary->getTableOrNull(table->name));
@@ -1125,8 +1125,8 @@ void ModuleSplitter::shareImportableItems() {
 
     auto usingSecondaries =
       getUsingSecondaries(global->name, &UsedNames::globals);
-    bool inPrimary = primaryUsed.globals.count(global->name);
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    bool usedInPrimary = primaryUsed.globals.count(global->name);
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyGlobal(global.get(), *secondary);
       globalsToRemove.push_back(global->name);
@@ -1156,9 +1156,9 @@ void ModuleSplitter::shareImportableItems() {
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
     auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
-    bool inPrimary = primaryUsed.tags.count(tag->name);
+    bool usedInPrimary = primaryUsed.tags.count(tag->name);
 
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyTag(tag.get(), *secondary);
       tagsToRemove.push_back(tag->name);
