@@ -1027,3 +1027,53 @@
     (local.get $sub-out)
   )
 )
+
+(module
+  ;; Regression test for a bug where we were not fully propagating exposure to
+  ;; JS, resulting missing prototype-configuring descriptors depending on the
+  ;; order in which subtypes were processed. In this example, if $struct <:
+  ;; $super was processed before $super <: any, then exposure to JS would not be
+  ;; propagated down to $struct, so its descriptor would be removed.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct)))
+    ;; CHECK:       (type $struct (sub $super (descriptor $desc) (struct)))
+    (type $struct (sub $super (descriptor $desc) (struct)))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field externref)))
+    (type $desc (describes $struct) (struct (field externref)))
+  )
+
+  ;; CHECK:       (type $3 (func (result anyref)))
+
+  ;; CHECK:      (global $any (mut anyref) (ref.null none))
+  (global $any (mut anyref) (ref.null none))
+  ;; CHECK:      (global $super (mut (ref null $super)) (ref.null none))
+  (global $super (mut (ref null $super)) (ref.null none))
+  ;; CHECK:      (global $struct (ref null $struct) (ref.null none))
+  (global $struct (ref null $struct) (ref.null none))
+
+  ;; any exposed to JS.
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $expose-anyref (type $3) (result anyref)
+  ;; CHECK-NEXT:  (global.set $any
+  ;; CHECK-NEXT:   (global.get $super)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $super
+  ;; CHECK-NEXT:   (global.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (@binaryen.js.called)
+  (func $expose-anyref (result anyref)
+    ;; $super <: aby
+    (global.set $any
+      (global.get $super)
+    )
+    ;; $struct <: $super
+    (global.set $super
+      (global.get $struct)
+    )
+    (unreachable)
+  )
+)
