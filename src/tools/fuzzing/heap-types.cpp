@@ -117,9 +117,9 @@ struct HeapTypeGeneratorImpl {
     return size;
   }
 
-  // Whether we ever added a signature. We can only emit continuations after
-  // that point, as they must refer to a signature.
-  bool addedSignature = false;
+  // We can only emit continuations after emitting a valid signature for them,
+  // as the signature must appear first.
+  bool canEmitContinuation = false;
 
   void planType(size_t i,
                 size_t numRoots,
@@ -240,15 +240,12 @@ struct HeapTypeGeneratorImpl {
     } else {
       // This is a root type with no supertype. Choose a kind for this type.
       auto kind = generateHeapTypeKind();
-      if (std::get_if<ContinuationKind>(&kind) && !addedSignature) {
+      if (std::get_if<ContinuationKind>(&kind) && !canEmitContinuation) {
         // No signature for a continuation. Emit a signature so we can emit one
         // later.
         kind = SignatureKind{};
       }
       typeKinds.emplace_back(kind);
-      if (std::get_if<SignatureKind>(&kind)) {
-        addedSignature = true;
-      }
       // Continuations cannot be shared, but other things can.
       auto shared = Unshared;
       if (features.hasSharedEverything() &&
@@ -256,6 +253,10 @@ struct HeapTypeGeneratorImpl {
         shared = Shared;
       }
       builder[i].setShared(shared);
+      // Once we emit a non-shared signature, continuations are possible.
+      if (std::get_if<SignatureKind>(&kind) && shared == Unshared) {
+        canEmitContinuation = true;
+      }
     }
 
     // Plan this descriptor chain for this type if it is not already determined
