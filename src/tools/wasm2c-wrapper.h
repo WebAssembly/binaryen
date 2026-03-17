@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
 
     auto* func = wasm.getFunction(*exp->getInternalName());
 
-    ret += std::string("          puts(\"[fuzz-exec] calling ") +
+    ret += std::string("          puts(\"[fuzz-exec] export ") +
            exp->name.toString() + "\");\n";
     auto result = func->getResults();
 
