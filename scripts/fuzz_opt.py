@@ -1437,10 +1437,10 @@ def traps_in_instantiation(output):
         trap_index = output.find('*exception*')
         if trap_index == -1:
             return False
-    call_index = output.find(FUZZ_EXEC_EXPORT_PREFIX)
-    if call_index == -1:
+    export_index = output.find(FUZZ_EXEC_EXPORT_PREFIX)
+    if export_index == -1:
         return True
-    return trap_index < call_index
+    return trap_index < export_index
 
 
 # Tests wasm-merge
