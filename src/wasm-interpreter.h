@@ -4770,9 +4770,14 @@ public:
     VISIT_ARGUMENTS(flow, curr->operands, arguments)
     VISIT(cont, curr->cont)
 
+    auto contValue = cont.getSingleValue();
+    if (contValue.isNull()) {
+      trap("null ref");
+    }
+
     // Create a new continuation, copying the old but with the new type +
     // arguments.
-    auto old = cont.getSingleValue().getContData();
+    auto old = contValue.getContData();
     auto newData = *old;
     newData.type = curr->type.getHeapType();
     for (auto arg : arguments) {
