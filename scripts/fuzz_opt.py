@@ -2276,6 +2276,18 @@ class BranchHintPreservation(TestCaseHandler):
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
+    CtorEval(),
+    Merge(),
+    Split(),
+    RoundtripText(),
+    ClusterFuzz(),
+    Two(),
+    PreserveImportsExports(),
+    BranchHintPreservation(),
 ]
 
 
@@ -2469,7 +2481,7 @@ opt_choices = [
     ("--type-merging",),
     ("--type-ssa",),
     ("--type-unfinalizing",),
-    #("--unsubtyping",),
+    ("--unsubtyping",),
     ("--vacuum",),
 ]
 
