@@ -585,7 +585,9 @@ function build(binary, isSecond) {
           } catch (e) {
             if (e.message.startsWith('get WebAssembly.Global.value')) {
               // Just log a string instead of a value we cannot access from JS,
-              // like an exnref.
+              // like an exnref. Note we don't need matching code on the C++
+              // side in execution-results.h because illegal exports are pruned
+              // anyhow if we are going to compare execution in JS to C++.
               actualValue = '<illegal value>';
             } else {
               throw e;
