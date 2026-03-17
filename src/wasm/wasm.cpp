@@ -1131,6 +1131,11 @@ void BrOn::finalize() {
     // cast behavior. This satisfies the constraint we had before Custom
     // Descriptors that the cast type is a subtype of the input type.
     castType = Type::getGreatestLowerBound(castType, ref->type);
+    if (castType == Type::unreachable) {
+      // This is not valid. Leave it for the validator to catch.
+      type = Type::unreachable;
+      return;
+    }
     assert(castType.isRef());
   } else if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
     if (desc->type.isNull()) {
