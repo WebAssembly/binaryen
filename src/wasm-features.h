@@ -217,12 +217,12 @@ struct FeatureSet {
     }
   }
 
-  bool operator<=(const FeatureSet& other) const {
+  bool isSubsetOf(const FeatureSet& other) const {
     return !(features & ~other.features);
   }
 
   bool operator==(const FeatureSet& other) const {
-    return *this <= other && other <= *this;
+    return isSubsetOf(other) && other.isSubsetOf(*this);
   }
 
   bool operator!=(const FeatureSet& other) const { return !(*this == other); }
