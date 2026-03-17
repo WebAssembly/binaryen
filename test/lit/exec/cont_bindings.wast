@@ -43,5 +43,16 @@
    )
   )
  )
+
+ ;; CHECK:      [fuzz-exec] calling null-binding
+ ;; CHECK-NEXT: [trap null ref]
+ (func $null-binding (export "null-binding")
+  (drop
+   (cont.bind $C1 $C2
+    (i32.const 42)
+    (ref.null $C1)
+   )
+  )
+ )
 )
 
