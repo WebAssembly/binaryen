@@ -659,13 +659,8 @@ struct HeapTypeGeneratorImpl {
       // true, since oneIn(0) => true.
       assert(!candidates.empty());
       return rand.pick(candidates);
-    } else if (!type.isBasic()) {
-      // This is not basic, but also not an existing type. This can happen only
-      // when a continuation can't find a signature, and creates a trivial one.
-      // Return that type itself (though other subtypes may exist).
-      return type;
     } else {
-      // A basic type.
+      // This is not a constructed type, so it must be a basic type.
       assert(type.isBasic());
       if (rand.oneIn(8)) {
         return type.getBottom();
@@ -1235,19 +1230,6 @@ std::vector<HeapType> Inhabitator::build() {
         continue;
       }
       case HeapTypeKind::Cont: {
-        /*
-@@ -1210,9 +1216,9 @@ std::vector<HeapType> Inhabitator::build() {
-         Continuation copy = type.getContinuation();
-         auto heapType = copy.type;
-         if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
--          heapType = builder[it->second];
-+          copy.type = builder.getTempHeapType(it->second);
-         }
--        builder[i] = Continuation(heapType);
-+        builder[i] = copy;
-         continue;
-       }
-        */
         Continuation copy = type.getContinuation();
         auto heapType = copy.type;
         if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
@@ -1263,10 +1245,8 @@ std::vector<HeapType> Inhabitator::build() {
   }
 
   // Establish rec groups.
-std::cout << "types size " << types.size() << '\n';
   for (size_t start = 0; start < types.size();) {
     size_t size = types[start].getRecGroup().size();
-std::cout << "  rec group at " << start << " of size " << size << '\n';
     builder.createRecGroup(start, size);
     start += size;
   }
@@ -1290,8 +1270,6 @@ std::cout << "  rec group at " << start << " of size " << size << '\n';
     builder[i].setShared(types[i].getShared());
   }
 
-std::cout << "damp\n";
-builder.dump();
   auto result = builder.build();
   if (auto* err = result.getError()) {
     Fatal() << "Failed to build heap types: " << err->reason << " at index "
