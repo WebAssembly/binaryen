@@ -14,6 +14,18 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+
+v128
+----
+
+ - (bugfix release)
+
+v127
+----
+
+ - Implement the Custom Page Sizes proposal. (#8307)
+ - New intrinsic: `@binaryen.idempotent`. (#8354)
+ - Add --strip-debug option to wasm-split (#8432)
  - The emscripten build of binaryen no longer targets pure JS (via wasm2js) by
    default.  This allows us to enable WASM_BIGINT and other features that
    wasm2js does not support.  There is now just a single binaryen_js target.  It

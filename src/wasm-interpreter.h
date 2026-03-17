@@ -1710,16 +1710,10 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
-      case RelaxedMaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedMaddF16x8(b, c);
-      case RelaxedNmaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedNmaddF16x8(b, c);
+      case MaddVecF16x8:
+        return a.maddF16x8(b, c);
+      case NmaddVecF16x8:
+        return a.nmaddF16x8(b, c);
       case RelaxedMaddVecF32x4:
         if (relaxedBehavior == RelaxedBehavior::NonConstant) {
           return NONCONSTANT_FLOW;
@@ -2243,13 +2237,38 @@ public:
   }
 
   Flow visitStructWait(StructWait* curr) {
-    WASM_UNREACHABLE("struct.wait not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(expected, curr->expected)
+    VISIT(timeout, curr->timeout)
+
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& field = data->values[curr->index];
+    if (field.geti32() != expected.getSingleValue().geti32()) {
+      return Literal(int32_t{1}); // not equal
+    }
+    // TODO: Add threads support. For now, report a host limit here, as there
+    //       are no other threads that can wake us up. Without such threads,
+    //       we'd hang if there is no timeout, and even if there is a timeout
+    //       then we can hang for a long time if it is in a loop. The only
+    //       timeout value we allow here for now is 0.
+    if (timeout.getSingleValue().geti64() != 0) {
+      hostLimit("threads support");
+      return Flow();
+    }
+    return Literal(int32_t{2}); // Timed out
   }
 
   Flow visitStructNotify(StructNotify* curr) {
-    WASM_UNREACHABLE("struct.notify not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(count, curr->count)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return Literal(int32_t{0}); // none woken up
   }
 
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
@@ -4138,7 +4157,7 @@ public:
                                               memorySizeBytes,
                                               MemoryOrder::SeqCst);
     if (loaded != expected.getSingleValue()) {
-      return Literal(int32_t(1)); // not equal
+      return Literal(int32_t{1}); // not equal
     }
     // TODO: Add threads support. For now, report a host limit here, as there
     //       are no other threads that can wake us up. Without such threads,
@@ -4148,7 +4167,7 @@ public:
     if (timeout.getSingleValue().getInteger() != 0) {
       hostLimit("threads support");
     }
-    return Literal(int32_t(2)); // Timed out
+    return Literal(int32_t{2}); // Timed out
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     VISIT(ptr, curr->ptr)
@@ -4159,7 +4178,7 @@ public:
       curr, ptr.getSingleValue(), 4, memorySizeBytes);
     // Just check TODO actual threads support
     info.instance->checkAtomicAddress(addr, 4, memorySizeBytes);
-    return Literal(int32_t(0)); // none woken up
+    return Literal(int32_t{0}); // none woken up
   }
   Flow visitSIMDLoad(SIMDLoad* curr) {
     switch (curr->op) {
@@ -4761,9 +4780,9 @@ public:
     auto old = cont.getSingleValue().getContData();
     auto newData = *old;
     newData.type = curr->type.getHeapType();
-    newData.resumeArguments = arguments;
-    // We handle only the simple case of applying all parameters, for now. TODO
-    assert(old->resumeArguments.empty());
+    for (auto arg : arguments) {
+      newData.resumeArguments.push_back(arg);
+    }
     // The old one is done.
     old->executed = true;
     return Literal(std::make_shared<ContData>(newData));

@@ -549,6 +549,8 @@ instructions = [
     ("i16x8.trunc_sat_f16x8_u",  "makeUnary(UnaryOp::TruncSatUVecF16x8ToVecI16x8)"),
     ("f16x8.convert_i16x8_s",    "makeUnary(UnaryOp::ConvertSVecI16x8ToVecF16x8)"),
     ("f16x8.convert_i16x8_u",    "makeUnary(UnaryOp::ConvertUVecI16x8ToVecF16x8)"),
+    ("f16x8.madd",               "makeSIMDTernary(SIMDTernaryOp::MaddVecF16x8)"),
+    ("f16x8.nmadd",              "makeSIMDTernary(SIMDTernaryOp::NmaddVecF16x8)"),
 
     # relaxed SIMD ops
     ("i8x16.relaxed_swizzle", "makeBinary(BinaryOp::RelaxedSwizzleVecI8x16)"),
@@ -556,8 +558,6 @@ instructions = [
     ("i32x4.relaxed_trunc_f32x4_u", "makeUnary(UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f64x2_s_zero", "makeUnary(UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f64x2_u_zero", "makeUnary(UnaryOp::RelaxedTruncZeroUVecF64x2ToVecI32x4)"),
-    ("f16x8.relaxed_madd", "makeSIMDTernary(SIMDTernaryOp::RelaxedMaddVecF16x8)"),
-    ("f16x8.relaxed_nmadd", "makeSIMDTernary(SIMDTernaryOp::RelaxedNmaddVecF16x8)"),
     ("f32x4.relaxed_madd", "makeSIMDTernary(SIMDTernaryOp::RelaxedMaddVecF32x4)"),
     ("f32x4.relaxed_nmadd", "makeSIMDTernary(SIMDTernaryOp::RelaxedNmaddVecF32x4)"),
     ("f64x2.relaxed_madd", "makeSIMDTernary(SIMDTernaryOp::RelaxedMaddVecF64x2)"),

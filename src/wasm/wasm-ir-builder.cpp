@@ -1974,6 +1974,9 @@ Result<> IRBuilder::makeRefTest(Type type) {
 }
 
 Result<> IRBuilder::makeRefCast(Type type, bool isDesc) {
+  if (!type.isCastable()) {
+    return Err{"ref.cast cannot cast to invalid type"};
+  }
   std::optional<HeapType> descriptor;
   if (isDesc) {
     assert(type.isRef());
@@ -2027,6 +2030,9 @@ Result<> IRBuilder::makeBrOn(Index label,
   curr.op = op;
   curr.castType = out;
   curr.desc = nullptr;
+  if (op != BrOnNull && op != BrOnNonNull && !out.isCastable()) {
+    return Err{"br_on cannot cast to invalid type"};
+  }
   CHECK_ERR(visitBrOn(&curr));
 
   // Validate type immediates before we forget them.
