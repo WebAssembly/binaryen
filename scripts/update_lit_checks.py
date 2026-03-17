@@ -55,7 +55,7 @@ ITEM_NAME = r'\$[^\s()]*|\$"[^"]*"|declare'
 ITEM_RE = re.compile(r'(?:^\s*\(rec\s*)?(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM_NAME + ').*$',
                      re.MULTILINE)
 
-FUZZ_EXEC_FUNC = re.compile(r'^\[fuzz-exec\] calling (?P<name>\S*)$')
+FUZZ_EXEC_FUNC = re.compile(r'^\[fuzz-exec\] export (?P<name>\S*)$')
 
 ANNOTATION_RE = re.compile(r'^\s*\(\@.*')
 

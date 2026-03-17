@@ -25,7 +25,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling bindings
+ ;; CHECK:      [fuzz-exec] export bindings
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  (func $bindings (export "bindings")
