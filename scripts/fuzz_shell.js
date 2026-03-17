@@ -584,9 +584,9 @@ function build(binary, isSecond) {
             actualValue = global.value;
           } catch (e) {
             if (e.message.startsWith('get WebAssembly.Global.value')) {
-              // Just log a null instead of a value we cannot access from JS,
+              // Just log a string instead of a value we cannot access from JS,
               // like an exnref.
-              actualValue = null;
+              actualValue = '<illegal value>';
             } else {
               throw e;
             }
