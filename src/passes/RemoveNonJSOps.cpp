@@ -385,7 +385,6 @@ struct StubUnsupportedJSOpsPass
   void visitModule(Module* module) {
     // We remove global exports, as wasm2js doesn't emit them in a fully
     // compatible form yet (they aren't instances of WebAssembly.Global).
-    // Globals.
     std::vector<Name> badExports;
     for (auto& exp : module->exports) {
       if (exp->kind == ExternalKind::Global) {

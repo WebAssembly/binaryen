@@ -487,23 +487,33 @@ struct ExecutionResults {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {
-      if (exp->kind != ExternalKind::Function) {
-        continue;
-      }
-      std::cout << "[fuzz-exec] calling " << exp->name << "\n";
-      auto* func = wasm.getFunction(*exp->getInternalName());
-      FunctionResult ret = run(func, wasm, instance);
-      results[exp->name] = ret;
-      if (auto* values = std::get_if<Literals>(&ret)) {
-        // ignore the result if we hit an unreachable and returned no value
-        if (values->size() > 0) {
-          std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-          for (auto value : *values) {
-            printValue(value);
-            std::cout << '\n';
+      if (exp->kind == ExternalKind::Function) {
+        std::cout << "[fuzz-exec] calling " << exp->name << "\n";
+        auto* func = wasm.getFunction(*exp->getInternalName());
+        FunctionResult ret = run(func, wasm, instance);
+        results[exp->name] = ret;
+        if (auto* values = std::get_if<Literals>(&ret)) {
+          // ignore the result if we hit an unreachable and returned no value
+          if (values->size() > 0) {
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
+            for (auto value : *values) {
+              printValue(value);
+              std::cout << '\n';
+            }
           }
         }
+      } else if (exp->kind == ExternalKind::Global) {
+        // Log the global's value. (We use "calling" here to match the output
+        // for calls, which simplifies the fuzzer.)
+        std::cout << "[fuzz-exec] calling " << exp->name << "\n";
+        Literals* value = instance.getExportedGlobalOrNull(exp->name);
+        assert(value);
+        assert(value->size() == 1);
+        std::cout << "[LoggingExternalInterface logging ";
+        printValue((*value)[0]);
+        std::cout << "]\n";
       }
+      // Ignore other exports for now. TODO
     }
   }
 
