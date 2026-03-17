@@ -1279,9 +1279,14 @@ std::vector<HeapType> Inhabitator::build() {
     builder[i].setShared(types[i].getShared());
   }
 
-  auto built = builder.build();
-  assert(!built.getError() && "unexpected build error");
-  return *built;
+std::cout << "damp\n";
+builder.dump();
+  auto result = builder.build();
+  if (auto* err = result.getError()) {
+    Fatal() << "Failed to build heap types: " << err->reason << " at index "
+            << err->index;
+  }
+  return *result;
 }
 
 } // anonymous namespace
