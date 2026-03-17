@@ -117,6 +117,10 @@ struct HeapTypeGeneratorImpl {
     return size;
   }
 
+  // Whether we ever added a signature. We can only emit continuations after
+  // that point, as they must refer to a signature.
+  bool addedSignature = false;
+
   void planType(size_t i,
                 size_t numRoots,
                 size_t remaining,
@@ -221,8 +225,6 @@ struct HeapTypeGeneratorImpl {
       }
     }
 
-    bool addedSignature = false;
-
     // Set up the builder entry and type kind for this type.
     if (super) {
       typeKinds.push_back(typeKinds[*super]);
@@ -238,9 +240,9 @@ struct HeapTypeGeneratorImpl {
     } else {
       // This is a root type with no supertype. Choose a kind for this type.
       auto kind = generateHeapTypeKind();
-      // Continuations must be after at least one signature, so we have a
-      // signature to pick from which appears before them.
       if (std::get_if<ContinuationKind>(&kind) && !addedSignature) {
+        // No signature for a continuation. Emit a signature so we can emit one
+        // later.
         kind = SignatureKind{};
       }
       typeKinds.emplace_back(kind);
@@ -866,15 +868,20 @@ struct HeapTypeGeneratorImpl {
   }
 
   HeapTypeKind generateHeapTypeKind() {
-    uint32_t numKinds = features.hasStackSwitching() ? 4 : 3;
+    // Emit continuations less frequently, as we need fewer of them to get
+    // interesting results.
+    uint32_t numKinds = features.hasStackSwitching() ? 7 : 6;
     switch (rand.upTo(numKinds)) {
       case 0:
-        return SignatureKind{};
       case 1:
-        return StructKind{};
+        return SignatureKind{};
       case 2:
-        return ArrayKind{};
       case 3:
+        return StructKind{};
+      case 4:
+      case 5:
+        return ArrayKind{};
+      case 6:
         return ContinuationKind{};
     }
     WASM_UNREACHABLE("unexpected index");
