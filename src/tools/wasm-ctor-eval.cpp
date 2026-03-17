@@ -67,14 +67,14 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver() : stubLiteral({Literal(0)}) {};
+  EvallingImportResolver() : stubGlobal({Global(), {Literal(0)}}) {}
 
   // Return an unused stub value. We throw FailToEvalException on reading any
   // imported globals. We ignore the type and return an i32 literal since some
   // types can't be created anyway (e.g. ref none).
-  Literals*
+  RuntimeGlobal*
   getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
-    return &stubLiteral;
+    return &stubGlobal;
   }
 
   RuntimeTable* getTableOrNull(ImportNames name,
@@ -96,7 +96,7 @@ public:
   }
 
 private:
-  mutable Literals stubLiteral;
+  mutable RuntimeGlobal stubGlobal;
   mutable std::unordered_map<ImportNames, Tag> importedTags;
 };
 
@@ -564,8 +564,8 @@ private:
   void applyGlobalsToModule() {
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
-      for (const auto& [name, values] : instance->allGlobals) {
-        wasm->getGlobal(name)->init = getSerialization(*values);
+      for (const auto& [name, global] : instance->allGlobals) {
+        wasm->getGlobal(name)->init = getSerialization(global->literals);
       }
       return;
     }
@@ -602,7 +602,7 @@ private:
       // value when we created it.)
       auto iter = instance->allGlobals.find(oldGlobal->name);
       if (iter != instance->allGlobals.end()) {
-        oldGlobal->init = getSerialization(*iter->second, name);
+        oldGlobal->init = getSerialization(iter->second->literals, name);
       }
 
       // Add the global back to the module.

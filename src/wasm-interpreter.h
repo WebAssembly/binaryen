@@ -41,6 +41,7 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/runtime-global.h"
 #include "ir/runtime-table.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
@@ -3260,7 +3261,7 @@ public:
   // Keyed by internal name. All globals in the module, including imports.
   // `definedGlobals` contains non-imported globals. Points to `definedGlobals`
   // of this instance and other instances.
-  std::unordered_map<Name, Literals*> allGlobals;
+  std::unordered_map<Name, RuntimeGlobal*> allGlobals;
 
   // Like `allGlobals`. Keyed by internal name. All tables including imports.
   std::unordered_map<Name, RuntimeTable*> allTables;
@@ -3354,7 +3355,7 @@ public:
                    func->type);
   }
 
-  Literals* getExportedGlobalOrNull(Name name) {
+  RuntimeGlobal* getExportedGlobalOrNull(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
       return nullptr;
@@ -3388,7 +3389,7 @@ public:
                                << " not found.")
                                 .str());
     }
-    return *global;
+    return global->literals;
   }
 
   Tag* getExportedTagOrNull(Name name) {
@@ -3428,7 +3429,7 @@ private:
   // Globals that were defined in this module and not from an import.
   // `allGlobals` contains these values + imported globals, keyed by their
   // internal name.
-  std::vector<Literals> definedGlobals;
+  std::vector<RuntimeGlobal> definedGlobals;
   std::vector<std::unique_ptr<RuntimeTable>> definedTables;
   std::vector<Tag> definedTags;
 
@@ -3538,9 +3539,22 @@ private:
                   << (*function)->type.getHeapType().getSignature().toString())
                    .str());
           }
+        } else if (auto** globalDecl = std::get_if<Global*>(&import)) {
+          auto* exportedGlobal =
+            importResolver->getGlobalOrNull(importable->importNames(),
+                                            (*globalDecl)->type,
+                                            (*globalDecl)->mutable_);
+          if (!exportedGlobal->isSubType(**globalDecl)) {
+            trap(
+              (std::stringstream()
+               << "Imported global " << importable->importNames()
+               << " with definition " << *exportedGlobal->getDefinition()
+               << " isn't compatible with import declaration: " << **globalDecl)
+                .str());
+          }
         }
 
-        // TODO: remaining cases e.g. globals and tags.
+        // TODO: remaining cases e.g. tags.
       });
   }
 
@@ -3567,7 +3581,8 @@ private:
         assert(inserted && "Unexpected repeated global name");
       } else {
         Literals init = self()->visit(global->init).values;
-        auto& definedGlobal = definedGlobals.emplace_back(std::move(init));
+        auto& definedGlobal =
+          definedGlobals.emplace_back(RuntimeGlobal{*global, std::move(init)});
 
         [[maybe_unused]] auto [_, inserted] =
           allGlobals.try_emplace(global->name, &definedGlobal);
@@ -4119,13 +4134,13 @@ public:
 
   Flow visitGlobalGet(GlobalGet* curr) {
     auto name = curr->name;
-    return *allGlobals.at(name);
+    return allGlobals.at(name)->literals;
   }
   Flow visitGlobalSet(GlobalSet* curr) {
     auto name = curr->name;
     VISIT(flow, curr->value)
 
-    *allGlobals.at(name) = flow.values;
+    allGlobals.at(name)->literals = flow.values;
     return Flow();
   }
 

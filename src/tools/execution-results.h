@@ -373,7 +373,7 @@ class FuzzerImportResolver
 
   // We can synthesize imported externref globals. Use a deque for stable
   // addresses.
-  mutable std::deque<Literals> synthesizedGlobals;
+  mutable std::deque<RuntimeGlobal> synthesizedGlobals;
 
   Tag* getTagOrNull(ImportNames name, const Signature& type) const override {
     if (name.module == "fuzzing-support") {
@@ -388,7 +388,7 @@ class FuzzerImportResolver
     return LinkedInstancesImportResolver::getTagOrNull(name, type);
   }
 
-  virtual Literals*
+  virtual RuntimeGlobal*
   getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
     // First look for globals available from linked instances.
     if (auto* global =
@@ -404,7 +404,11 @@ class FuzzerImportResolver
       return nullptr;
     }
     // TODO: Generate a distinct payload for each global.
-    synthesizedGlobals.emplace_back(Literals{Literal::makeExtern(0, Unshared)});
+    Global global;
+    global.type = type;
+    global.mutable_ = mut;
+    synthesizedGlobals.emplace_back(
+      RuntimeGlobal{global, Literals{Literal::makeExtern(0, Unshared)}});
     return &synthesizedGlobals.back();
   }
 
@@ -506,11 +510,12 @@ struct ExecutionResults {
         // Log the global's value. (We use "calling" here to match the output
         // for calls, which simplifies the fuzzer.)
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
-        Literals* value = instance.getExportedGlobalOrNull(exp->name);
-        assert(value);
-        assert(value->size() == 1);
+        RuntimeGlobal* runtimeGlobal =
+          instance.getExportedGlobalOrNull(exp->name);
+        assert(runtimeGlobal);
+        assert(runtimeGlobal->literals.size() == 1);
         std::cout << "[LoggingExternalInterface logging ";
-        printValue((*value)[0]);
+        printValue(runtimeGlobal->literals[0]);
         std::cout << "]\n";
       }
       // Ignore other exports for now. TODO
