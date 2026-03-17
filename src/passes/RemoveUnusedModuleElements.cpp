@@ -764,6 +764,13 @@ struct Analyzer {
       for (auto* item : segment->data) {
         addReferences(item);
       }
+    } else if (kind == ModuleElementKind::Table) {
+      auto* table = module->getTable(value);
+      if (table->init) {
+        // TODO: might be possible to remove the init expression if the type is
+        // nullable
+        addReferences(table->init);
+      }
     }
   }
 };
