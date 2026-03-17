@@ -221,6 +221,8 @@ struct HeapTypeGeneratorImpl {
       }
     }
 
+    bool addedSignature = false;
+
     // Set up the builder entry and type kind for this type.
     if (super) {
       typeKinds.push_back(typeKinds[*super]);
@@ -236,8 +238,16 @@ struct HeapTypeGeneratorImpl {
     } else {
       // This is a root type with no supertype. Choose a kind for this type.
       auto kind = generateHeapTypeKind();
+      // Continuations must be after at least one signature, so we have a
+      // signature to pick from which appears before them.
+      if (std::get_if<ContinuationKind>(&kind) && !addedSignature) {
+        kind = SignatureKind{};
+      }
       typeKinds.emplace_back(kind);
-      // Continuations cannot be shared.
+      if (std::get_if<SignatureKind>(&kind)) {
+        addedSignature = true;
+      }
+      // Continuations cannot be shared, but other things can.
       auto shared = Unshared;
       if (features.hasSharedEverything() &&
           !std::get_if<ContinuationKind>(&kind) && rand.oneIn(2)) {
@@ -465,18 +475,17 @@ struct HeapTypeGeneratorImpl {
   Array generateArray(Shareability share) { return {generateField(share)}; }
 
   Continuation generateContinuation(Shareability share) {
-    if (auto type = pickKind<SignatureKind>(share)) {
-      return Continuation(*type);
-    }
-    // We failed to find a type. Use a trivial one.
-    return Continuation(Signature(Type::none, Type::none));
+    auto type = pickKind<SignatureKind>(share);
+    // There must be signatures to pick from.
+    assert(type);
+    return Continuation(*type);
   }
 
   Continuation generateSubContinuation(Continuation super) {
     auto subType = pickSubHeapType(super.type);
     if (subType.isBasic()) {
       // We cannot use a bottom type here.
-        subType = super.type;
+      subType = super.type;
     }
     return Continuation(subType);
   }
@@ -1254,8 +1263,10 @@ std::vector<HeapType> Inhabitator::build() {
   }
 
   // Establish rec groups.
+std::cout << "types size " << types.size() << '\n';
   for (size_t start = 0; start < types.size();) {
     size_t size = types[start].getRecGroup().size();
+std::cout << "  rec group at " << start << " of size " << size << '\n';
     builder.createRecGroup(start, size);
     start += size;
   }
