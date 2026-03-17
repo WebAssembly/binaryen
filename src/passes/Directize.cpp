@@ -26,6 +26,14 @@
 // then the initial tables' contents are assumed to be immutable (see
 // TableUtils::TableInfo).
 //
+// If called with
+//
+//   --pass-arg=directize-skip-type-mismatch
+//
+// then type-mismatched call_indirect with constant table indices will be
+// left as Unknown (not turned into traps). This is useful when fpcast-emu
+// will run later and fix up those mismatches.
+//
 
 #include <unordered_map>
 
@@ -47,10 +55,12 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<FunctionDirectizer>(tables);
+    return std::make_unique<FunctionDirectizer>(tables, skipTypeMismatch);
   }
 
-  FunctionDirectizer(const TableUtils::TableInfoMap& tables) : tables(tables) {}
+  FunctionDirectizer(const TableUtils::TableInfoMap& tables,
+                     bool skipTypeMismatch = false)
+    : tables(tables), skipTypeMismatch(skipTypeMismatch) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     auto& table = tables.at(curr->table);
@@ -91,6 +101,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 private:
   const TableUtils::TableInfoMap& tables;
 
+  bool skipTypeMismatch = false;
+
   bool changedTypes = false;
 
   // Given an expression that we will use as the target of an indirect call,
@@ -129,6 +141,9 @@ private:
     }
     auto* func = getModule()->getFunction(name);
     if (!HeapType::isSubType(func->type.getHeapType(), original->heapType)) {
+      if (skipTypeMismatch) {
+        return CallUtils::Unknown{};
+      }
       return CallUtils::Trap{};
     }
     return CallUtils::Known{name};
@@ -201,8 +216,10 @@ struct Directize : public Pass {
       return;
     }
 
+    auto skipTypeMismatch = hasArgument("directize-skip-type-mismatch");
+
     // We can optimize!
-    FunctionDirectizer(tables).run(getPassRunner(), module);
+    FunctionDirectizer(tables, skipTypeMismatch).run(getPassRunner(), module);
   }
 };
 

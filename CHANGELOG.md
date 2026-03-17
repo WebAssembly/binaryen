@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add a new flag to Directize, `--pass-arg=directize-skip-type-mismatch`
+  which leaves type-mismatched indirect calls unchanged instead of turning them
+  into traps. This is useful when fpcast-emu will run later to fix up those
+  mismatches.
+
 v128
 ----
 

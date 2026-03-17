@@ -2,6 +2,7 @@
 ;; NOTE: This test was ported using port_passes_tests_to_lit.py and could be cleaned up.
 
 ;; RUN: foreach %s %t wasm-opt --directize -all -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --directize --pass-arg=directize-skip-type-mismatch -all -S -o - | filecheck %s --check-prefix=SKIPTM
 
 ;; Call a subtype with the supertype. This call should succeed.
 (module
@@ -10,15 +11,22 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (func)))
+  ;; SKIPTM:      (type $0 (func))
+
+  ;; SKIPTM:      (rec
+  ;; SKIPTM-NEXT:  (type $super (sub (func)))
   (type $super (sub (func)))
   ;; CHECK:       (type $sub (sub final $super (func)))
+  ;; SKIPTM:       (type $sub (sub final $super (func)))
   (type $sub (sub final $super (func)))
  )
 
  ;; CHECK:      (table $table 93 funcref)
+ ;; SKIPTM:      (table $table 93 funcref)
  (table $table 93 funcref)
 
  ;; CHECK:      (elem $elem (i32.const 0) $target)
+ ;; SKIPTM:      (elem $elem (i32.const 0) $target)
  (elem $elem (i32.const 0) $target)
 
  ;; CHECK:      (export "caller" (func $caller))
@@ -26,6 +34,11 @@
  ;; CHECK:      (func $caller (type $0)
  ;; CHECK-NEXT:  (call $target)
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (export "caller" (func $caller))
+
+ ;; SKIPTM:      (func $caller (type $0)
+ ;; SKIPTM-NEXT:  (call $target)
+ ;; SKIPTM-NEXT: )
  (func $caller (export "caller")
   ;; This turns into a direct call.
   (call_indirect (type $super)
@@ -35,6 +48,8 @@
 
  ;; CHECK:      (func $target (type $sub)
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (func $target (type $sub)
+ ;; SKIPTM-NEXT: )
  (func $target (type $sub)
  )
 )
@@ -46,15 +61,22 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (func)))
+  ;; SKIPTM:      (type $0 (func))
+
+  ;; SKIPTM:      (rec
+  ;; SKIPTM-NEXT:  (type $super (sub (func)))
   (type $super (sub (func)))
   ;; CHECK:       (type $other (sub (func)))
+  ;; SKIPTM:       (type $other (sub (func)))
   (type $other (sub (func)))
  )
 
  ;; CHECK:      (table $table 93 funcref)
+ ;; SKIPTM:      (table $table 93 funcref)
  (table $table 93 funcref)
 
  ;; CHECK:      (elem $elem (i32.const 0) $target)
+ ;; SKIPTM:      (elem $elem (i32.const 0) $target)
  (elem $elem (i32.const 0) $target)
 
  ;; CHECK:      (export "caller" (func $caller))
@@ -62,6 +84,13 @@
  ;; CHECK:      (func $caller (type $0)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (export "caller" (func $caller))
+
+ ;; SKIPTM:      (func $caller (type $0)
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $super)
+ ;; SKIPTM-NEXT:   (i32.const 0)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $caller (export "caller")
   ;; This turns into an unreachable.
   (call_indirect (type $super)
@@ -71,6 +100,8 @@
 
  ;; CHECK:      (func $target (type $other)
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (func $target (type $other)
+ ;; SKIPTM-NEXT: )
  (func $target (type $other)
  )
 )
@@ -83,15 +114,22 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (func)))
+  ;; SKIPTM:      (rec
+  ;; SKIPTM-NEXT:  (type $super (sub (func)))
   (type $super (sub (func)))
   ;; CHECK:       (type $sub (sub final $super (func)))
+  ;; SKIPTM:       (type $sub (sub final $super (func)))
   (type $sub (sub final $super (func)))
  )
 
  ;; CHECK:      (table $table 93 funcref)
+ ;; SKIPTM:      (type $2 (func))
+
+ ;; SKIPTM:      (table $table 93 funcref)
  (table $table 93 funcref)
 
  ;; CHECK:      (elem $elem (i32.const 0) $target)
+ ;; SKIPTM:      (elem $elem (i32.const 0) $target)
  (elem $elem (i32.const 0) $target)
 
  ;; CHECK:      (export "caller" (func $caller))
@@ -99,6 +137,13 @@
  ;; CHECK:      (func $caller (type $0)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (export "caller" (func $caller))
+
+ ;; SKIPTM:      (func $caller (type $2)
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $sub)
+ ;; SKIPTM-NEXT:   (i32.const 0)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $caller (export "caller")
   ;; This turns into a direct call.
   (call_indirect (type $sub)
@@ -108,6 +153,8 @@
 
  ;; CHECK:      (func $target (type $super)
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (func $target (type $super)
+ ;; SKIPTM-NEXT: )
  (func $target (type $super)
  )
 )
@@ -118,14 +165,19 @@
  (rec
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (func (result (ref any)))))
+  ;; SKIPTM:      (rec
+  ;; SKIPTM-NEXT:  (type $super (sub (func (result (ref any)))))
   (type $super (sub (func (result (ref any)))))
   ;; CHECK:       (type $sub (sub $super (func (result (ref none)))))
+  ;; SKIPTM:       (type $sub (sub $super (func (result (ref none)))))
   (type $sub (sub $super (func (result (ref none)))))
  )
 
  ;; CHECK:      (table $table 42 funcref)
+ ;; SKIPTM:      (table $table 42 funcref)
  (table $table 42 funcref)
  ;; CHECK:      (elem $elem (i32.const 0) $sub)
+ ;; SKIPTM:      (elem $elem (i32.const 0) $sub)
  (elem $elem (i32.const 0) $sub)
 
  ;; CHECK:      (func $super (type $super) (result (ref any))
@@ -133,6 +185,11 @@
  ;; CHECK-NEXT:   (call $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (func $super (type $super) (result (ref any))
+ ;; SKIPTM-NEXT:  (block $show-type (result (ref none))
+ ;; SKIPTM-NEXT:   (call $sub)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $super (type $super) (result (ref any))
   (block $show-type (result (ref any))
    (call_indirect $table (type $super)
@@ -144,6 +201,9 @@
  ;; CHECK:      (func $sub (type $sub) (result (ref none))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
+ ;; SKIPTM:      (func $sub (type $sub) (result (ref none))
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $sub (type $sub) (result (ref none))
   (unreachable)
  )

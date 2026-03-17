@@ -3,14 +3,17 @@
 
 ;; RUN: foreach %s %t wasm-opt --directize                                                 --all-features -S -o - | filecheck %s --check-prefix=CHECK
 ;; RUN: foreach %s %t wasm-opt --directize --pass-arg=directize-initial-contents-immutable --all-features -S -o - | filecheck %s --check-prefix=IMMUT
+;; RUN: foreach %s %t wasm-opt --directize --pass-arg=directize-skip-type-mismatch         --all-features -S -o - | filecheck %s --check-prefix=SKIPTM
 
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
 
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  ;; CHECK:      (table $t64 i64 5 5 funcref)
 
@@ -18,12 +21,16 @@
  ;; IMMUT:      (table $t64 i64 5 5 funcref)
 
  ;; IMMUT:      (elem $elem (table $0) (i32.const 1) func $foo)
+ ;; SKIPTM:      (table $t64 i64 5 5 funcref)
+
+ ;; SKIPTM:      (elem $elem (table $0) (i32.const 1) func $foo)
  (elem $elem (i32.const 1) $foo)
 
  (table $t64 i64 5 5 funcref)
 
  ;; CHECK:      (elem $elem64 (table $t64) (i64.const 1) func $foo)
  ;; IMMUT:      (elem $elem64 (table $t64) (i64.const 1) func $foo)
+ ;; SKIPTM:      (elem $elem64 (table $t64) (i64.const 1) func $foo)
  (elem $elem64 (table $t64) (i64.const 1) funcref (ref.func $foo))
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
@@ -32,6 +39,9 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   ;; helper function
   (unreachable)
@@ -49,6 +59,12 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call $foo
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -61,6 +77,7 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
@@ -68,9 +85,13 @@
  ;; IMMUT:      (type $1 (func (param i32) (result i32)))
 
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (type $1 (func (param i32) (result i32)))
+
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  ;; CHECK:      (table $1 5 5 funcref)
  ;; IMMUT:      (table $1 5 5 funcref)
+ ;; SKIPTM:      (table $1 5 5 funcref)
  (table $1 5 5 funcref)
  (elem (table $0) (i32.const 1) func $dummy)
  (elem (table $1) (i32.const 1) func $f)
@@ -88,6 +109,13 @@
  ;; IMMUT:      (func $dummy (type $1) (param $0 i32) (result i32)
  ;; IMMUT-NEXT:  (local.get $0)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (table $0) (i32.const 1) func $dummy)
+
+ ;; SKIPTM:      (elem $1 (table $1) (i32.const 1) func $f)
+
+ ;; SKIPTM:      (func $dummy (type $1) (param $0 i32) (result i32)
+ ;; SKIPTM-NEXT:  (local.get $0)
+ ;; SKIPTM-NEXT: )
  (func $dummy (param i32) (result i32)
   (local.get 0)
  )
@@ -97,6 +125,9 @@
  ;; IMMUT:      (func $f (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $f (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $f (param i32) (param i32)
   (unreachable)
  )
@@ -112,6 +143,12 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $g (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call $f
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $g (param $x i32) (param $y i32)
   (call_indirect $1 (type $ii)
    (local.get $x)
@@ -125,12 +162,15 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  ;; CHECK:      (table $1 5 5 funcref)
  ;; IMMUT:      (table $1 5 5 funcref)
+ ;; SKIPTM:      (table $1 5 5 funcref)
  (table $1 5 5 funcref)
  (elem (table $1) (i32.const 4) func $foo)
  ;; CHECK:      (elem $0 (table $1) (i32.const 4) func $foo)
@@ -143,6 +183,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (table $1) (i32.const 4) func $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -158,6 +203,12 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call $foo
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect $1 (type $ii)
    (local.get $x)
@@ -170,9 +221,11 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 0) $foo)
  ;; CHECK:      (elem $0 (i32.const 0) $foo)
@@ -185,6 +238,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 0) $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -200,6 +258,12 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call $foo
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -212,12 +276,15 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  ;; CHECK:      (table $1 5 5 funcref)
  ;; IMMUT:      (table $1 5 5 funcref)
+ ;; SKIPTM:      (table $1 5 5 funcref)
  (table $1 5 5 funcref)
  (elem (i32.const 0) $foo $foo $foo $foo $foo)
  (elem (table $1) (i32.const 0) func $foo $foo $foo $foo $foo)
@@ -235,6 +302,13 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (table $0) (i32.const 0) func $foo $foo $foo $foo $foo)
+
+ ;; SKIPTM:      (elem $1 (table $1) (i32.const 0) func $foo $foo $foo $foo $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -250,6 +324,12 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call $foo
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect $1 (type $ii)
    (local.get $x)
@@ -263,9 +343,11 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (import "env" "table" (table $table 5 5 funcref))
  ;; IMMUT:      (import "env" "table" (table $table 5 5 funcref))
+ ;; SKIPTM:      (import "env" "table" (table $table 5 5 funcref))
  (import "env" "table" (table $table 5 5 funcref))
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem $0 (i32.const 1) $foo)
@@ -278,6 +360,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -294,6 +381,13 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -316,6 +410,13 @@
  ;; IMMUT-NEXT:   (i32.const 999)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $out-of-bounds (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 999)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $out-of-bounds (param $x i32) (param $y i32)
   ;; The index here, 999, is out of bounds. We can't optimize that even in the
   ;; immutable case, since we only assume the initial contents in the table are
@@ -332,9 +433,11 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  ;; CHECK:      (elem $0 (i32.const 1) $foo)
 
@@ -342,6 +445,9 @@
  ;; IMMUT:      (elem $0 (i32.const 1) $foo)
 
  ;; IMMUT:      (export "tab" (table $0))
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo)
+
+ ;; SKIPTM:      (export "tab" (table $0))
  (export "tab" (table $0))
  (elem (i32.const 1) $foo)
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
@@ -350,6 +456,9 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -366,6 +475,13 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -379,6 +495,7 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  (global $g (import "env" "g") i32)
 
@@ -388,6 +505,9 @@
  ;; IMMUT:      (import "env" "g" (global $g i32))
 
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (import "env" "g" (global $g i32))
+
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
 
  (elem (global.get $g) $foo)
@@ -401,6 +521,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (global.get $g) $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -418,6 +543,13 @@
  ;; IMMUT-NEXT:   (i32.const 1)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -430,6 +562,7 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  (global $g (import "env" "g") i32)
 
@@ -439,9 +572,13 @@
  ;; IMMUT:      (import "env" "g" (global $g i32))
 
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (import "env" "g" (global $g i32))
+
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  ;; CHECK:      (table $1 5 5 funcref)
  ;; IMMUT:      (table $1 5 5 funcref)
+ ;; SKIPTM:      (table $1 5 5 funcref)
  (table $1 5 5 funcref)
 
  (elem (table $1) (global.get $g) func $foo)
@@ -455,6 +592,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (table $1) (global.get $g) func $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -472,6 +614,13 @@
  ;; IMMUT-NEXT:   (i32.const 1)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call_indirect $1 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect $1 (type $ii)
    (local.get $x)
@@ -485,6 +634,7 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (type $1 (func (param i32 i32 i32)))
 
@@ -492,6 +642,9 @@
  ;; IMMUT:      (type $1 (func (param i32 i32 i32)))
 
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (type $1 (func (param i32 i32 i32)))
+
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem $0 (i32.const 1) $foo)
@@ -504,6 +657,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -521,6 +679,13 @@
  ;; IMMUT-NEXT:   (local.get $z)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $1) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (local.get $z)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32) (param $z i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -534,9 +699,11 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem $0 (i32.const 1) $foo)
@@ -549,6 +716,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -568,6 +740,14 @@
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (drop
+ ;; SKIPTM-NEXT:   (local.tee $y
+ ;; SKIPTM-NEXT:    (local.get $y)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -584,9 +764,11 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem $0 (i32.const 1) $foo)
@@ -599,6 +781,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -608,6 +795,9 @@
  ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -625,9 +815,13 @@
  ;; IMMUT:      (type $0 (func (param i32)))
 
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (type $1 (func (param i32)))
+
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem $0 (i32.const 1) $foo)
@@ -640,6 +834,11 @@
  ;; IMMUT:      (func $foo (type $0) (param $0 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo)
+
+ ;; SKIPTM:      (func $foo (type $1) (param $0 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32)
   (unreachable)
  )
@@ -649,6 +848,13 @@
  ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
@@ -670,6 +876,11 @@
  ;; IMMUT:      (func $foo (type $0) (param $0 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (type $0 (func (param i32)))
+
+ ;; SKIPTM:      (func $foo (type $0) (param $0 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32)
   (unreachable)
  )
@@ -684,6 +895,9 @@
  ;; IMMUT:      (type $0 (func))
 
  ;; IMMUT:      (table $0 8 8 funcref)
+ ;; SKIPTM:      (type $0 (func))
+
+ ;; SKIPTM:      (table $0 8 8 funcref)
  (table $0 8 8 funcref)
  ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (nop)
@@ -693,6 +907,10 @@
  ;; IMMUT-NEXT:  (nop)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $0 (type $0)
+ ;; SKIPTM-NEXT:  (nop)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $0
   (block ;; the type of this block will change
    (nop)
@@ -706,9 +924,11 @@
 (module ;; indirect tail call
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem $0 (i32.const 1) $foo)
@@ -721,6 +941,11 @@
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo)
+
+ ;; SKIPTM:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
@@ -736,6 +961,12 @@
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (return_call $foo
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   (return_call_indirect (type $ii)
    (local.get $x)
@@ -752,8 +983,14 @@
  ;; IMMUT:      (type $0 (func (param i32 i32 i32)))
 
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $0 (func (param i32 i32 i32)))
+
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
 
+ ;; SKIPTM:      (type $2 (func (param i32)))
+
+ ;; SKIPTM:      (type $none (func))
  (type $none (func))
 
  ;; CHECK:      (type $2 (func (param i32)))
@@ -762,6 +999,7 @@
  ;; IMMUT:      (type $2 (func (param i32)))
 
  ;; IMMUT:      (table $0 5 5 funcref)
+ ;; SKIPTM:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo1 $foo2)
  ;; CHECK:      (elem $0 (i32.const 1) $foo1 $foo2)
@@ -774,6 +1012,11 @@
  ;; IMMUT:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo1 $foo2)
+
+ ;; SKIPTM:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo1 (param i32) (param i32)
   (unreachable)
  )
@@ -783,6 +1026,9 @@
  ;; IMMUT:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo2 (param i32) (param i32)
   (unreachable)
  )
@@ -836,6 +1082,31 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select (type $0) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (local $3 i32)
+ ;; SKIPTM-NEXT:  (local $4 i32)
+ ;; SKIPTM-NEXT:  (local.set $3
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (local.set $4
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (if
+ ;; SKIPTM-NEXT:   (local.get $z)
+ ;; SKIPTM-NEXT:   (then
+ ;; SKIPTM-NEXT:    (call $foo1
+ ;; SKIPTM-NEXT:     (local.get $3)
+ ;; SKIPTM-NEXT:     (local.get $4)
+ ;; SKIPTM-NEXT:    )
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:   (else
+ ;; SKIPTM-NEXT:    (call $foo2
+ ;; SKIPTM-NEXT:     (local.get $3)
+ ;; SKIPTM-NEXT:     (local.get $4)
+ ;; SKIPTM-NEXT:    )
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select (param $x i32) (param $y i32) (param $z i32)
   ;; Test we can optimize a call_indirect whose index is a select between two
   ;; constants. We can emit an if and two direct calls for that.
@@ -871,6 +1142,17 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-bad-1 (type $0) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (local.get $z)
+ ;; SKIPTM-NEXT:    (i32.const 2)
+ ;; SKIPTM-NEXT:    (local.get $z)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-bad-1 (param $x i32) (param $y i32) (param $z i32)
   ;; As above but one select arm is not constant.
   (call_indirect (type $ii)
@@ -905,6 +1187,17 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-bad-2 (type $0) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (i32.const 2)
+ ;; SKIPTM-NEXT:    (local.get $z)
+ ;; SKIPTM-NEXT:    (local.get $z)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-bad-2 (param $x i32) (param $y i32) (param $z i32)
   ;; As above but the other select arm is not constant.
   (call_indirect (type $ii)
@@ -961,6 +1254,28 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-out-of-range (type $0) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (local $3 i32)
+ ;; SKIPTM-NEXT:  (local $4 i32)
+ ;; SKIPTM-NEXT:  (local.set $3
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (local.set $4
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (if
+ ;; SKIPTM-NEXT:   (local.get $z)
+ ;; SKIPTM-NEXT:   (then
+ ;; SKIPTM-NEXT:    (unreachable)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:   (else
+ ;; SKIPTM-NEXT:    (call $foo2
+ ;; SKIPTM-NEXT:     (local.get $3)
+ ;; SKIPTM-NEXT:     (local.get $4)
+ ;; SKIPTM-NEXT:    )
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-out-of-range (param $x i32) (param $y i32) (param $z i32)
   ;; Both are constants, but one is out of range for the table, and there is no
   ;; valid function to call there; emit an unreachable.
@@ -1012,6 +1327,25 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-both-out-of-range (type $0) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (local $3 i32)
+ ;; SKIPTM-NEXT:  (local $4 i32)
+ ;; SKIPTM-NEXT:  (local.set $3
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (local.set $4
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (if
+ ;; SKIPTM-NEXT:   (local.get $z)
+ ;; SKIPTM-NEXT:   (then
+ ;; SKIPTM-NEXT:    (unreachable)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:   (else
+ ;; SKIPTM-NEXT:    (unreachable)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
   ;; Both are constants, and both are out of range for the table.
   (call_indirect (type $ii)
@@ -1046,6 +1380,17 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-unreachable-operand (type $0) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (unreachable)
+ ;; SKIPTM-NEXT:    (i32.const 2)
+ ;; SKIPTM-NEXT:    (local.get $z)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-unreachable-operand (param $x i32) (param $y i32) (param $z i32)
   ;; One operand is unreachable.
   (call_indirect (type $ii)
@@ -1080,6 +1425,17 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-unreachable-condition (type $0) (param $x i32) (param $y i32) (param $z i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (i32.const 1)
+ ;; SKIPTM-NEXT:    (i32.const 2)
+ ;; SKIPTM-NEXT:    (unreachable)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-unreachable-condition (param $x i32) (param $y i32) (param $z i32)
   ;; The condition is unreachable. We should not even create any vars here, and
   ;; just not do anything.
@@ -1115,6 +1471,15 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-bad-type (type $2) (param $z i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $none)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (i32.const 1)
+ ;; SKIPTM-NEXT:    (i32.const 2)
+ ;; SKIPTM-NEXT:    (local.get $z)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-bad-type (param $z i32)
   ;; The type here is $none, which does not match the functions at indexes 1 and
   ;; 2, so we know they will trap and can emit unreachables.
@@ -1143,6 +1508,13 @@
  ;; IMMUT:      (type $2 (func))
 
  ;; IMMUT:      (table $0 15 15 funcref)
+ ;; SKIPTM:      (type $F (func (param (ref func))))
+
+ ;; SKIPTM:      (type $1 (func (param i32)))
+
+ ;; SKIPTM:      (type $2 (func))
+
+ ;; SKIPTM:      (table $0 15 15 funcref)
  (table $0 15 15 funcref)
  (type $F (func (param (ref func))))
  (elem (i32.const 10) $foo-ref $foo-ref)
@@ -1161,6 +1533,13 @@
  ;; IMMUT:      (func $foo-ref (type $F) (param $0 (ref func))
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 10) $foo-ref $foo-ref)
+
+ ;; SKIPTM:      (elem declare func $select-non-nullable)
+
+ ;; SKIPTM:      (func $foo-ref (type $F) (param $0 (ref func))
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo-ref (param (ref func))
   ;; helper function
   (unreachable)
@@ -1204,6 +1583,25 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-non-nullable (type $1) (param $x i32)
+ ;; SKIPTM-NEXT:  (local $1 (ref (exact $1)))
+ ;; SKIPTM-NEXT:  (local.set $1
+ ;; SKIPTM-NEXT:   (ref.func $select-non-nullable)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (if
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (then
+ ;; SKIPTM-NEXT:    (call $foo-ref
+ ;; SKIPTM-NEXT:     (local.get $1)
+ ;; SKIPTM-NEXT:    )
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:   (else
+ ;; SKIPTM-NEXT:    (call $foo-ref
+ ;; SKIPTM-NEXT:     (local.get $1)
+ ;; SKIPTM-NEXT:    )
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-non-nullable (param $x i32)
   ;; Test we can handle a non-nullable value when optimizing a select, during
   ;; which we place values in locals. The local can remain non-nullable since it
@@ -1238,6 +1636,16 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-non-nullable-unreachable-condition (type $2)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $F)
+ ;; SKIPTM-NEXT:   (ref.func $select-non-nullable)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (i32.const 10)
+ ;; SKIPTM-NEXT:    (i32.const 11)
+ ;; SKIPTM-NEXT:    (unreachable)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-non-nullable-unreachable-condition
   ;; Test we ignore an unreachable condition and don't make any changes at all
   ;; to the code (in particular, we shouldn't add any vars).
@@ -1271,6 +1679,16 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-non-nullable-unreachable-arm (type $2)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $F)
+ ;; SKIPTM-NEXT:   (ref.func $select-non-nullable)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (f32.const 3.141590118408203)
+ ;; SKIPTM-NEXT:    (unreachable)
+ ;; SKIPTM-NEXT:    (i32.const 1)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-non-nullable-unreachable-arm
   ;; Test we ignore an unreachable arm and don't make any changes at all
   ;; to the code (in particular, we shouldn't add any vars).
@@ -1307,6 +1725,16 @@
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $select-non-nullable-unreachable-arg (type $1) (param $x i32)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $F)
+ ;; SKIPTM-NEXT:   (unreachable)
+ ;; SKIPTM-NEXT:   (select
+ ;; SKIPTM-NEXT:    (i32.const 10)
+ ;; SKIPTM-NEXT:    (i32.const 11)
+ ;; SKIPTM-NEXT:    (local.get $x)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $select-non-nullable-unreachable-arg (param $x i32)
   ;; Test we ignore an unreachable argument and don't make any changes at all
   ;; to the code (in particular, we shouldn't add any vars).
@@ -1325,22 +1753,27 @@
 (module
  ;; CHECK:      (type $v (func))
  ;; IMMUT:      (type $v (func))
+ ;; SKIPTM:      (type $v (func))
  (type $v (func))
 
  ;; CHECK:      (table $has-set 5 5 funcref)
  ;; IMMUT:      (table $has-set 5 5 funcref)
+ ;; SKIPTM:      (table $has-set 5 5 funcref)
  (table $has-set 5 5 funcref)
 
  ;; CHECK:      (table $no-set 5 5 funcref)
  ;; IMMUT:      (table $no-set 5 5 funcref)
+ ;; SKIPTM:      (table $no-set 5 5 funcref)
  (table $no-set 5 5 funcref)
 
  ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
  ;; IMMUT:      (elem $0 (table $has-set) (i32.const 1) func $foo)
+ ;; SKIPTM:      (elem $0 (table $has-set) (i32.const 1) func $foo)
  (elem $0 (table $has-set) (i32.const 1) func $foo)
 
  ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
  ;; IMMUT:      (elem $1 (table $no-set) (i32.const 1) func $foo)
+ ;; SKIPTM:      (elem $1 (table $no-set) (i32.const 1) func $foo)
  (elem $1 (table $no-set) (i32.const 1) func $foo)
 
  ;; CHECK:      (func $foo (type $v)
@@ -1355,6 +1788,12 @@
  ;; IMMUT-NEXT:   (ref.func $foo)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $foo (type $v)
+ ;; SKIPTM-NEXT:  (table.set $has-set
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:   (ref.func $foo)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $foo
   ;; Technically this set writes the same value as is already there, but the
   ;; analysis will give up on optimizing when it sees any set to a table.
@@ -1374,6 +1813,12 @@
  ;; IMMUT-NEXT:  (call $foo)
  ;; IMMUT-NEXT:  (call $foo)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $v)
+ ;; SKIPTM-NEXT:  (call_indirect $has-set (type $v)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (call $foo)
+ ;; SKIPTM-NEXT: )
  (func $bar
   ;; We can't optimize this one, but we can the one after it. (But we can
   ;; optimize both in the immutable case.)
@@ -1390,10 +1835,12 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
+ ;; SKIPTM:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
 
  ;; CHECK:      (import "env" "table" (table $table 5 5 funcref))
  ;; IMMUT:      (import "env" "table" (table $table 5 5 funcref))
+ ;; SKIPTM:      (import "env" "table" (table $table 5 5 funcref))
  (import "env" "table" (table $table 5 5 funcref))
  (elem (i32.const 1) $foo1)
  (elem (i32.const 3) $foo2)
@@ -1412,6 +1859,13 @@
  ;; IMMUT:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (elem $0 (i32.const 1) $foo1)
+
+ ;; SKIPTM:      (elem $1 (i32.const 3) $foo2)
+
+ ;; SKIPTM:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo1 (param i32) (param i32)
   (unreachable)
  )
@@ -1421,6 +1875,9 @@
  ;; IMMUT:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $foo2 (param i32) (param i32)
   (unreachable)
  )
@@ -1469,6 +1926,33 @@
  ;; IMMUT-NEXT:   (i32.const 4)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 0)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 2)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 3)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT:  (call_indirect $table (type $ii)
+ ;; SKIPTM-NEXT:   (local.get $x)
+ ;; SKIPTM-NEXT:   (local.get $y)
+ ;; SKIPTM-NEXT:   (i32.const 4)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   ;; When assuming the initial contents are immutable, we can optimize some
   ;; of these cases. 0 and 2 are offsets that are known to contain a null, so
@@ -1508,6 +1992,7 @@
 (module
  ;; CHECK:      (type $i32 (func (result i32)))
  ;; IMMUT:      (type $i32 (func (result i32)))
+ ;; SKIPTM:      (type $i32 (func (result i32)))
  (type $i32 (func (result i32)))
 
  ;; CHECK:      (type $1 (func))
@@ -1516,6 +2001,9 @@
  ;; IMMUT:      (type $1 (func))
 
  ;; IMMUT:      (table $table 111 funcref)
+ ;; SKIPTM:      (type $1 (func))
+
+ ;; SKIPTM:      (table $table 111 funcref)
  (table $table 111 funcref)
  (elem (i32.const 0) $func-A)
 
@@ -1529,9 +2017,15 @@
  ;; IMMUT:      (elem declare func $func-B)
 
  ;; IMMUT:      (export "a" (func $fill))
+ ;; SKIPTM:      (elem $0 (i32.const 0) $func-A)
+
+ ;; SKIPTM:      (elem declare func $func-B)
+
+ ;; SKIPTM:      (export "a" (func $fill))
  (export "a" (func $fill))
  ;; CHECK:      (export "b" (func $call))
  ;; IMMUT:      (export "b" (func $call))
+ ;; SKIPTM:      (export "b" (func $call))
  (export "b" (func $call))
 
  ;; CHECK:      (func $func-A (type $i32) (result i32)
@@ -1540,6 +2034,9 @@
  ;; IMMUT:      (func $func-A (type $i32) (result i32)
  ;; IMMUT-NEXT:  (i32.const 0)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $func-A (type $i32) (result i32)
+ ;; SKIPTM-NEXT:  (i32.const 0)
+ ;; SKIPTM-NEXT: )
  (func $func-A (result i32)
   (i32.const 0)
  )
@@ -1550,6 +2047,9 @@
  ;; IMMUT:      (func $func-B (type $i32) (result i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $func-B (type $i32) (result i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $func-B (result i32)
   (unreachable)
  )
@@ -1568,6 +2068,13 @@
  ;; IMMUT-NEXT:   (i32.const 1)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $fill (type $1)
+ ;; SKIPTM-NEXT:  (table.fill $table
+ ;; SKIPTM-NEXT:   (i32.const 0)
+ ;; SKIPTM-NEXT:   (ref.func $func-B)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $fill
   (table.fill $table
    (i32.const 0)
@@ -1588,6 +2095,13 @@
  ;; IMMUT-NEXT:   (call $func-A)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $call (type $1)
+ ;; SKIPTM-NEXT:  (drop
+ ;; SKIPTM-NEXT:   (call_indirect $table (type $i32)
+ ;; SKIPTM-NEXT:    (i32.const 0)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $call
   (drop
    ;; This cannot be turned into a direct call due to the table.fill, unless we
@@ -1603,6 +2117,7 @@
 (module
  ;; CHECK:      (type $i32 (func (result i32)))
  ;; IMMUT:      (type $i32 (func (result i32)))
+ ;; SKIPTM:      (type $i32 (func (result i32)))
  (type $i32 (func (result i32)))
 
  ;; CHECK:      (type $1 (func))
@@ -1611,6 +2126,9 @@
  ;; IMMUT:      (type $1 (func))
 
  ;; IMMUT:      (table $table 111 funcref)
+ ;; SKIPTM:      (type $1 (func))
+
+ ;; SKIPTM:      (table $table 111 funcref)
  (table $table 111 funcref)
  (elem (i32.const 0) $func-A)
 
@@ -1620,13 +2138,18 @@
  ;; IMMUT:      (elem $0 (i32.const 0) $func-A)
 
  ;; IMMUT:      (elem $elem func $func-B)
+ ;; SKIPTM:      (elem $0 (i32.const 0) $func-A)
+
+ ;; SKIPTM:      (elem $elem func $func-B)
  (elem $elem $func-B)
 
  ;; CHECK:      (export "a" (func $init))
  ;; IMMUT:      (export "a" (func $init))
+ ;; SKIPTM:      (export "a" (func $init))
  (export "a" (func $init))
  ;; CHECK:      (export "b" (func $call))
  ;; IMMUT:      (export "b" (func $call))
+ ;; SKIPTM:      (export "b" (func $call))
  (export "b" (func $call))
 
  ;; CHECK:      (func $func-A (type $i32) (result i32)
@@ -1635,6 +2158,9 @@
  ;; IMMUT:      (func $func-A (type $i32) (result i32)
  ;; IMMUT-NEXT:  (i32.const 0)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $func-A (type $i32) (result i32)
+ ;; SKIPTM-NEXT:  (i32.const 0)
+ ;; SKIPTM-NEXT: )
  (func $func-A (result i32)
   (i32.const 0)
  )
@@ -1645,6 +2171,9 @@
  ;; IMMUT:      (func $func-B (type $i32) (result i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $func-B (type $i32) (result i32)
+ ;; SKIPTM-NEXT:  (unreachable)
+ ;; SKIPTM-NEXT: )
  (func $func-B (result i32)
   (unreachable)
  )
@@ -1663,6 +2192,13 @@
  ;; IMMUT-NEXT:   (i32.const 1)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $init (type $1)
+ ;; SKIPTM-NEXT:  (table.init $table $elem
+ ;; SKIPTM-NEXT:   (i32.const 0)
+ ;; SKIPTM-NEXT:   (i32.const 0)
+ ;; SKIPTM-NEXT:   (i32.const 1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $init
   (table.init $table $elem
    (i32.const 0)
@@ -1683,6 +2219,13 @@
  ;; IMMUT-NEXT:   (call $func-A)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (func $call (type $1)
+ ;; SKIPTM-NEXT:  (drop
+ ;; SKIPTM-NEXT:   (call_indirect $table (type $i32)
+ ;; SKIPTM-NEXT:    (i32.const 0)
+ ;; SKIPTM-NEXT:   )
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $call
   (drop
    ;; This cannot be turned into a direct call due to the table.init, unless we
@@ -1699,6 +2242,7 @@
 (module
  ;; CHECK:      (type $v (func))
  ;; IMMUT:      (type $v (func))
+ ;; SKIPTM:      (type $v (func))
  (type $v (func))
 
  (table 10 10 funcref)
@@ -1723,6 +2267,15 @@
  ;; IMMUT-NEXT:   (i32.const -1)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (table $0 10 10 funcref)
+
+ ;; SKIPTM:      (elem $0 (i32.const -1) $0)
+
+ ;; SKIPTM:      (func $0 (type $v)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $v)
+ ;; SKIPTM-NEXT:   (i32.const -1)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $0
   (call_indirect (type $v)
    (i32.const -1)
@@ -1734,6 +2287,7 @@
 (module
  ;; CHECK:      (type $v (func))
  ;; IMMUT:      (type $v (func))
+ ;; SKIPTM:      (type $v (func))
  (type $v (func))
 
  (table 10 10 funcref)
@@ -1758,6 +2312,15 @@
  ;; IMMUT-NEXT:   (i32.const -2)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (table $0 10 10 funcref)
+
+ ;; SKIPTM:      (elem $0 (i32.const -2) $0)
+
+ ;; SKIPTM:      (func $0 (type $v)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $v)
+ ;; SKIPTM-NEXT:   (i32.const -2)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $0
   (call_indirect (type $v)
    (i32.const -2)
@@ -1769,6 +2332,7 @@
 (module
  ;; CHECK:      (type $v (func))
  ;; IMMUT:      (type $v (func))
+ ;; SKIPTM:      (type $v (func))
  (type $v (func))
 
  (table 10 10 funcref)
@@ -1793,6 +2357,15 @@
  ;; IMMUT-NEXT:   (i32.const 10)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (table $0 10 10 funcref)
+
+ ;; SKIPTM:      (elem $0 (i32.const 10) $0)
+
+ ;; SKIPTM:      (func $0 (type $v)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $v)
+ ;; SKIPTM-NEXT:   (i32.const 10)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $0
   (call_indirect (type $v)
    (i32.const 10)
@@ -1804,6 +2377,7 @@
 (module
  ;; CHECK:      (type $v (func))
  ;; IMMUT:      (type $v (func))
+ ;; SKIPTM:      (type $v (func))
  (type $v (func))
 
  (table 10 10 funcref)
@@ -1828,6 +2402,15 @@
  ;; IMMUT-NEXT:   (i32.const 9)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (table $0 10 10 funcref)
+
+ ;; SKIPTM:      (elem $0 (i32.const 9) $0 $0)
+
+ ;; SKIPTM:      (func $0 (type $v)
+ ;; SKIPTM-NEXT:  (call_indirect $0 (type $v)
+ ;; SKIPTM-NEXT:   (i32.const 9)
+ ;; SKIPTM-NEXT:  )
+ ;; SKIPTM-NEXT: )
  (func $0
   (call_indirect (type $v)
    ;; We could in theory optimize this, as the out of bounds part is after us,
@@ -1841,6 +2424,7 @@
 (module
  ;; CHECK:      (type $v (func))
  ;; IMMUT:      (type $v (func))
+ ;; SKIPTM:      (type $v (func))
  (type $v (func))
 
  (table 10 10 funcref)
@@ -1861,6 +2445,13 @@
  ;; IMMUT:      (func $0 (type $v)
  ;; IMMUT-NEXT:  (call $0)
  ;; IMMUT-NEXT: )
+ ;; SKIPTM:      (table $0 10 10 funcref)
+
+ ;; SKIPTM:      (elem $0 (i32.const 9) $0)
+
+ ;; SKIPTM:      (func $0 (type $v)
+ ;; SKIPTM-NEXT:  (call $0)
+ ;; SKIPTM-NEXT: )
  (func $0
   (call_indirect (type $v)
    (i32.const 9)
