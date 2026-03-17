@@ -5472,7 +5472,7 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     newParams.push_back(t);
   }
   auto newParam = getSingleConcreteType();
-  newParams.push_back(newParam);
+  newParams.insert(newParams.begin(), newParam);
   auto newSig = Signature(Type(newParams), sig.results);
   auto newCont = Continuation(newSig);
   auto newType = Type(newCont, NonNullable, Exact);
