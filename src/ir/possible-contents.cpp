@@ -2247,7 +2247,10 @@ private:
                     Expression* read);
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
-  void writeToData(Expression* ref, Expression* value, Index fieldIndex, bool multibyte = false);
+  void writeToData(Expression* ref,
+                   Expression* value,
+                   Index fieldIndex,
+                   bool multibyte = false);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -3209,7 +3212,10 @@ void Flower::readFromData(Type declaredType,
   connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
-void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex, bool multibyte) {
+void Flower::writeToData(Expression* ref,
+                         Expression* value,
+                         Index fieldIndex,
+                         bool multibyte) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
