@@ -1102,6 +1102,13 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
     addChildParentLink(curr->value, curr);
   }
+  void visitArrayStore(ArrayStore* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+  }
 
   void visitArrayLen(ArrayLen* curr) {
     // TODO: optimize when possible (perhaps we can infer a Literal for the
@@ -1742,6 +1749,7 @@ void TNHOracle::scan(Function* func,
     }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayStore(ArrayStore* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
     void visitArrayCopy(ArrayCopy* curr) {
       notePossibleTrap(curr->srcRef);
@@ -2239,7 +2247,10 @@ private:
                     Expression* read);
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
-  void writeToData(Expression* ref, Expression* value, Index fieldIndex);
+  void writeToData(Expression* ref,
+                   Expression* value,
+                   Index fieldIndex,
+                   bool multibyte = false);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -2576,7 +2587,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   for (const auto& [location, value] : roots) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  init root\n";
-    dump(location);
+    dump(getLocation(location));
     value.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
@@ -2743,6 +2754,11 @@ bool Flower::updateContents(LocationIndex locationIndex,
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
     filtered = true;
+  } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    // Multibyte array stores with differing widths can merge to Many, so
+    // filter again afterwards to fall back to the declared type limit.
+    filterDataContents(contents, *dataLoc);
+    filtered = true;
   }
 
   // Check if anything changed after filtering, if we did so.
@@ -2829,6 +2845,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
+    } else if (auto* store = parent->dynCast<ArrayStore>()) {
+      assert(store->ref == child || store->value == child);
+      writeToData(store->ref, store->value, 0, /*multibyte*/ true);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
       // Similar to struct.get.
       assert(get->ref == child);
@@ -3005,6 +3024,13 @@ void Flower::filterDataContents(PossibleContents& contents,
     assert(dataLoc.type.isBottom());
     contents = PossibleContents::none();
     return;
+  }
+  if (contents.isMany()) {
+    // An unknown state (e.g. from combining writes of different types like in
+    // multibyte array stores) translates into the most generic bounded type.
+    // TODO: We could optimize these, as e.g. a write of i16 0x1212 does not
+    // actually conflict with a write of i8 0x12.
+    contents = PossibleContents::fromType(field->type);
   }
 
   if (field->isPacked()) {
@@ -3188,7 +3214,10 @@ void Flower::readFromData(Type declaredType,
   connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
-void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
+void Flower::writeToData(Expression* ref,
+                         Expression* value,
+                         Index fieldIndex,
+                         bool multibyte) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
@@ -3236,6 +3265,9 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // As in readFromData, normalize to the proper cone.
   auto cone = refContents.getCone();
   auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
+  if (multibyte) {
+    valueContents = PossibleContents::fromType(value->type);
+  }
 
   subTypes->iterSubTypes(
     cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {

@@ -65,7 +65,7 @@ CLOSED_WORLD_FLAG = '--closed-world'
 # V8 does not support shared memories when running with
 # shared-everything enabled, so do not fuzz shared-everything
 # for now. The remaining features are not yet implemented in v8.
-DISALLOWED_FEATURES_IN_V8 = ['shared-everything', 'strings', 'stack-switching', 'relaxed-atomics']
+DISALLOWED_FEATURES_IN_V8 = ['shared-everything', 'strings', 'stack-switching', 'relaxed-atomics', 'multibyte']
 
 
 # utilities

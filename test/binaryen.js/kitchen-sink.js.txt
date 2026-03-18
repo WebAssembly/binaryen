@@ -35,7 +35,7 @@ Features.Strings: 16384
 Features.MultiMemory: 32768
 Features.RelaxedAtomics: 4194304
 Features.CustomPageSizes: 8388608
-Features.All: 16777215
+Features.All: 33554431
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -102,17 +102,17 @@ ArrayNewId: 73
 ArrayNewFixedId: 76
 ArrayGetId: 77
 ArraySetId: 78
-ArrayLenId: 79
-ArrayCopy: 80
-RefAs: 86
-StringNew: 87
-StringConst: 88
-StringMeasure: 89
-StringEncode: 90
-StringConcat: 91
-StringEq: 92
-StringWTF16Get: 94
-StringSliceWTF: 95
+ArrayLenId: 80
+ArrayCopy: 81
+RefAs: 87
+StringNew: 88
+StringConst: 89
+StringMeasure: 90
+StringEncode: 91
+StringConcat: 92
+StringEq: 93
+StringWTF16Get: 95
+StringSliceWTF: 96
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
