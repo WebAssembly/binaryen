@@ -346,7 +346,7 @@ struct HeapTypeGeneratorImpl {
       return rand.pick(bottoms).getBasic(share);
     }
 
-    // Sometimes emit shared in place of unshared.
+    // Sometimes emit shared in unshared contexts.
     if (share == Unshared && features.hasSharedEverything() && rand.oneIn(4)) {
       share = Shared;
     }
