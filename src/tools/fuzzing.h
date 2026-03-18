@@ -529,6 +529,8 @@ private:
   Expression* makeRefCast(Type type);
   Expression* makeRefGetDesc(Type type);
   Expression* makeBrOn(Type type);
+  Expression* makeContBind(Type type);
+  // TODO: Expression* makeResume(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
   // packed.
