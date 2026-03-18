@@ -468,7 +468,7 @@ void Fuzzer::checkCanonicalization() {
     }
 
     Continuation getContinuation(Continuation old) {
-      // No fields.
+      old.type = getChildHeapType(old.type).get();
       return old;
     }
   };
