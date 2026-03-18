@@ -3510,9 +3510,7 @@ private:
           if (!MemoryUtils::isSubType(exportedMemory, **memory)) {
             trap("Imported memory isn't compatible.");
           }
-        }
-
-        if (auto** tableDecl = std::get_if<Table*>(&import)) {
+        } else if (auto** tableDecl = std::get_if<Table*>(&import)) {
           auto* importedTable = importResolver->getTableOrNull(
             importable->importNames(), **tableDecl);
           if (!importedTable) {
@@ -3528,7 +3526,21 @@ private:
                << " isn't compatible with import declaration: " << **tableDecl)
                 .str());
           }
+        } else if (auto** function = std::get_if<Function*>(&import)) {
+          auto exportedFunc = getFunction((*function)->name);
+          if (!Type::isSubType(exportedFunc.type, (*function)->type)) {
+            trap((std::stringstream()
+                  << "Imported function " << importable->importNames()
+                  << " with type "
+                  << exportedFunc.type.getHeapType().getSignature().toString()
+                  << " isn't compatible with import declaration with type "
+                     "(modulo rec groups): "
+                  << (*function)->type.getHeapType().getSignature().toString())
+                   .str());
+          }
         }
+
+        // TODO: remaining cases e.g. globals and tags.
       });
   }
 
