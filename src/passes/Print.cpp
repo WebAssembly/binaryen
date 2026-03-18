@@ -37,14 +37,15 @@ namespace wasm {
 
 struct PrintSExpression;
 
-static std::ostream& printExpression(Expression* expression,
+static std::ostream& printExpression(const Expression* expression,
                                      std::ostream& o,
                                      bool minify = false,
                                      bool full = false,
-                                     Module* wasm = nullptr);
+                                     const Module* wasm = nullptr);
 
-static std::ostream&
-printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
+static std::ostream& printStackInst(const StackInst* inst,
+                                    std::ostream& o,
+                                    const Function* func = nullptr);
 
 static std::ostream& printStackIR(StackIR* ir, PrintSExpression&);
 
@@ -62,7 +63,7 @@ bool isFullForced() {
   return full;
 }
 
-std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
+std::ostream& printMemoryName(Name name, std::ostream& o, const Module* wasm) {
   if (!wasm || wasm->memories.size() > 1) {
     o << ' ';
     name.print(o);
@@ -70,7 +71,7 @@ std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
   return o;
 }
 
-std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
+std::ostream& printLocal(Index index, const Function* func, std::ostream& o) {
   Name name;
   if (func) {
     name = func->getLocalNameOrDefault(index);
@@ -83,11 +84,11 @@ std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 
 // Print a name from the type section, if available. Otherwise print the type
 // normally.
-void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
+void printTypeOrName(Type type, std::ostream& o, const Module* wasm) {
   struct Printer : TypeNameGeneratorBase<Printer> {
-    Module* wasm;
+    const Module* wasm;
     DefaultTypeNameGenerator fallback;
-    Printer(Module* wasm) : wasm(wasm) {}
+    Printer(const Module* wasm) : wasm(wasm) {}
     TypeNames getNames(HeapType type) {
       if (wasm) {
         if (auto it = wasm->typeNames.find(type); it != wasm->typeNames.end()) {
@@ -130,8 +131,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // If present, it contains StackIR that we will print.
   std::optional<ModuleStackIR> moduleStackIR;
 
-  Module* currModule = nullptr;
-  Function* currFunction = nullptr;
+  const Module* currModule = nullptr;
+  const Function* currFunction = nullptr;
   // Keep track of the last printed debug location to avoid printing
   // repeated debug locations for children. nullopt means that we have
   // not yet printed any debug location, or that we last printed an
@@ -230,7 +231,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
 
-  void setModule(Module* module);
+  void setModule(const Module* module);
 
   std::ostream& printType(Type type) { return o << typePrinter(type); }
 
@@ -297,7 +298,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void setFull(bool full_) { full = full_; }
 
   void generateStackIR(const PassOptions& options) {
-    moduleStackIR.emplace(*currModule, options);
+    moduleStackIR.emplace(const_cast<Module&>(*currModule), options);
   }
 
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
@@ -379,28 +380,28 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
 
   // Module-level visitors
-  void handleSignature(Function* curr, bool printImplicitNames = false);
-  void visitExport(Export* curr);
-  void emitImportHeader(Importable* curr);
-  void visitGlobal(Global* curr);
-  void emitGlobalType(Global* curr);
-  void visitImportedGlobal(Global* curr);
-  void visitDefinedGlobal(Global* curr);
-  void visitFunction(Function* curr);
-  void visitImportedFunction(Function* curr);
-  void visitDefinedFunction(Function* curr);
-  void visitTag(Tag* curr);
-  void visitImportedTag(Tag* curr);
-  void visitDefinedTag(Tag* curr);
+  void handleSignature(const Function* curr, bool printImplicitNames = false);
+  void visitExport(const Export* curr);
+  void emitImportHeader(const Importable* curr);
+  void visitGlobal(const Global* curr);
+  void emitGlobalType(const Global* curr);
+  void visitImportedGlobal(const Global* curr);
+  void visitDefinedGlobal(const Global* curr);
+  void visitFunction(const Function* curr);
+  void visitImportedFunction(const Function* curr);
+  void visitDefinedFunction(const Function* curr);
+  void visitTag(const Tag* curr);
+  void visitImportedTag(const Tag* curr);
+  void visitDefinedTag(const Tag* curr);
   void printTagType(HeapType type);
-  void printTableHeader(Table* curr);
-  void visitTable(Table* curr);
-  void visitElementSegment(ElementSegment* curr);
-  void printMemoryHeader(Memory* curr);
-  void visitMemory(Memory* curr);
-  void visitDataSegment(DataSegment* curr);
+  void printTableHeader(const Table* curr);
+  void visitTable(const Table* curr);
+  void visitElementSegment(const ElementSegment* curr);
+  void printMemoryHeader(const Memory* curr);
+  void visitMemory(const Memory* curr);
+  void visitDataSegment(const DataSegment* curr);
   void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection);
-  void visitModule(Module* curr);
+  void visitModule(const Module* curr);
 };
 
 // Prints the internal contents of an expression: everything but
@@ -408,8 +409,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 struct PrintExpressionContents
   : public OverriddenVisitor<PrintExpressionContents> {
   PrintSExpression& parent;
-  Module* wasm = nullptr;
-  Function* currFunction = nullptr;
+  const Module* wasm = nullptr;
+  const Function* currFunction = nullptr;
   std::ostream& o;
   FeatureSet features;
   bool full;
@@ -2688,10 +2689,12 @@ struct PrintExpressionContents
   }
 };
 
-void PrintSExpression::setModule(Module* module) {
+void PrintSExpression::setModule(const Module* module) {
   currModule = module;
   if (module) {
-    heapTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*module).types;
+    heapTypes =
+      ModuleUtils::getOptimizedIndexedHeapTypes(const_cast<Module&>(*module))
+        .types;
     for (auto type : heapTypes) {
       if (type.isSignature()) {
         signatureTypes.insert({type.getSignature(), type});
@@ -3143,7 +3146,7 @@ static bool requiresExplicitFuncType(HeapType type) {
   return type.isOpen() || type.isShared() || type.getRecGroup().size() > 1;
 }
 
-void PrintSExpression::handleSignature(Function* curr,
+void PrintSExpression::handleSignature(const Function* curr,
                                        bool printImplicitNames) {
   o << '(';
   printMajor(o, "func ");
@@ -3202,7 +3205,7 @@ void PrintSExpression::handleSignature(Function* curr,
   }
 }
 
-void PrintSExpression::visitExport(Export* curr) {
+void PrintSExpression::visitExport(const Export* curr) {
   o << '(';
   printMedium(o, "export ");
   std::stringstream escaped;
@@ -3229,10 +3232,10 @@ void PrintSExpression::visitExport(Export* curr) {
   }
   o << ' ';
   // TODO: specific case for type exports
-  curr->getInternalName()->print(o) << "))";
+  const_cast<Export*>(curr)->getInternalName()->print(o) << "))";
 }
 
-void PrintSExpression::emitImportHeader(Importable* curr) {
+void PrintSExpression::emitImportHeader(const Importable* curr) {
   printMedium(o, "import ");
   std::stringstream escapedModule, escapedBase;
   String::printEscaped(escapedModule, curr->module.str);
@@ -3241,7 +3244,7 @@ void PrintSExpression::emitImportHeader(Importable* curr) {
   printText(o, escapedBase.str(), false) << ' ';
 }
 
-void PrintSExpression::visitGlobal(Global* curr) {
+void PrintSExpression::visitGlobal(const Global* curr) {
   if (curr->imported()) {
     visitImportedGlobal(curr);
   } else {
@@ -3249,7 +3252,7 @@ void PrintSExpression::visitGlobal(Global* curr) {
   }
 }
 
-void PrintSExpression::emitGlobalType(Global* curr) {
+void PrintSExpression::emitGlobalType(const Global* curr) {
   if (curr->mutable_) {
     o << "(mut ";
     printType(curr->type) << ')';
@@ -3258,7 +3261,7 @@ void PrintSExpression::emitGlobalType(Global* curr) {
   }
 }
 
-void PrintSExpression::visitImportedGlobal(Global* curr) {
+void PrintSExpression::visitImportedGlobal(const Global* curr) {
   doIndent(o, indent);
   o << '(';
   emitImportHeader(curr);
@@ -3268,19 +3271,19 @@ void PrintSExpression::visitImportedGlobal(Global* curr) {
   o << "))" << maybeNewLine;
 }
 
-void PrintSExpression::visitDefinedGlobal(Global* curr) {
+void PrintSExpression::visitDefinedGlobal(const Global* curr) {
   doIndent(o, indent);
   o << '(';
   printMedium(o, "global ");
   curr->name.print(o) << ' ';
   emitGlobalType(curr);
   o << ' ';
-  visit(curr->init);
+  visit(const_cast<Expression*>(curr->init));
   o << ')';
   o << maybeNewLine;
 }
 
-void PrintSExpression::visitFunction(Function* curr) {
+void PrintSExpression::visitFunction(const Function* curr) {
   if (curr->imported()) {
     visitImportedFunction(curr);
   } else if (curr->body == nullptr) {
@@ -3291,7 +3294,7 @@ void PrintSExpression::visitFunction(Function* curr) {
   }
 }
 
-void PrintSExpression::visitImportedFunction(Function* curr) {
+void PrintSExpression::visitImportedFunction(const Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
   lastPrintedLocation = std::nullopt;
@@ -3303,7 +3306,7 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
   o << maybeNewLine;
 }
 
-void PrintSExpression::visitDefinedFunction(Function* curr) {
+void PrintSExpression::visitDefinedFunction(const Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
   lastPrintedLocation = std::nullopt;
@@ -3325,7 +3328,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   // Print the body.
   StackIR* stackIR = nullptr;
   if (moduleStackIR) {
-    stackIR = moduleStackIR->getStackIROrNull(curr);
+    stackIR = moduleStackIR->getStackIROrNull(const_cast<Function*>(curr));
   }
   if (stackIR) {
     printStackIR(stackIR, *this);
@@ -3359,7 +3362,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   o << maybeNewLine;
 }
 
-void PrintSExpression::visitTag(Tag* curr) {
+void PrintSExpression::visitTag(const Tag* curr) {
   if (curr->imported()) {
     visitImportedTag(curr);
   } else {
@@ -3367,7 +3370,7 @@ void PrintSExpression::visitTag(Tag* curr) {
   }
 }
 
-void PrintSExpression::visitImportedTag(Tag* curr) {
+void PrintSExpression::visitImportedTag(const Tag* curr) {
   doIndent(o, indent);
   o << '(';
   emitImportHeader(curr);
@@ -3378,7 +3381,7 @@ void PrintSExpression::visitImportedTag(Tag* curr) {
   o << "))" << maybeNewLine;
 }
 
-void PrintSExpression::visitDefinedTag(Tag* curr) {
+void PrintSExpression::visitDefinedTag(const Tag* curr) {
   doIndent(o, indent);
   o << '(';
   printMedium(o, "tag ");
@@ -3410,7 +3413,7 @@ void PrintSExpression::printTagType(HeapType type) {
   }
 }
 
-void PrintSExpression::printTableHeader(Table* curr) {
+void PrintSExpression::printTableHeader(const Table* curr) {
   o << '(';
   printMedium(o, "table") << ' ';
   curr->name.print(o) << ' ';
@@ -3425,7 +3428,7 @@ void PrintSExpression::printTableHeader(Table* curr) {
   printType(curr->type) << ')';
 }
 
-void PrintSExpression::visitTable(Table* curr) {
+void PrintSExpression::visitTable(const Table* curr) {
   if (curr->imported()) {
     doIndent(o, indent);
     o << '(';
@@ -3439,7 +3442,7 @@ void PrintSExpression::visitTable(Table* curr) {
   }
 }
 
-void PrintSExpression::visitElementSegment(ElementSegment* curr) {
+void PrintSExpression::visitElementSegment(const ElementSegment* curr) {
   bool usesExpressions = TableUtils::usesExpressions(curr, currModule);
   auto printElemType = [&]() {
     if (!usesExpressions) {
@@ -3467,7 +3470,7 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
     if (needExplicitOffset) {
       o << "(offset ";
     }
-    visit(curr->offset);
+    visit(const_cast<Expression*>(curr->offset));
     if (needExplicitOffset) {
       o << ')';
     }
@@ -3490,14 +3493,14 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
   } else {
     for (auto* entry : curr->data) {
       o << " (item ";
-      visit(entry);
+      visit(const_cast<Expression*>(entry));
       o << ')';
     }
   }
   o << ')' << maybeNewLine;
 }
 
-void PrintSExpression::printMemoryHeader(Memory* curr) {
+void PrintSExpression::printMemoryHeader(const Memory* curr) {
   o << '(';
   printMedium(o, "memory") << ' ';
   curr->name.print(o) << ' ';
@@ -3519,7 +3522,7 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   o << ")";
 }
 
-void PrintSExpression::visitMemory(Memory* curr) {
+void PrintSExpression::visitMemory(const Memory* curr) {
   if (curr->imported()) {
     doIndent(o, indent);
     o << '(';
@@ -3533,7 +3536,7 @@ void PrintSExpression::visitMemory(Memory* curr) {
   }
 }
 
-void PrintSExpression::visitDataSegment(DataSegment* curr) {
+void PrintSExpression::visitDataSegment(const DataSegment* curr) {
   if (!curr->isPassive && !curr->offset) {
     // This data segment must have been created from the datacount section but
     // not parsed yet. Skip it.
@@ -3555,7 +3558,7 @@ void PrintSExpression::visitDataSegment(DataSegment* curr) {
     if (needExplicitOffset) {
       o << "(offset ";
     }
-    visit(curr->offset);
+    visit(const_cast<Expression*>(curr->offset));
     if (needExplicitOffset) {
       o << ")";
     }
@@ -3584,7 +3587,7 @@ void PrintSExpression::printDylinkSection(
   }
 }
 
-void PrintSExpression::visitModule(Module* curr) {
+void PrintSExpression::visitModule(const Module* curr) {
   setModule(curr);
   o << '(';
   printMajor(o, "module");
@@ -3623,28 +3626,29 @@ void PrintSExpression::visitModule(Module* curr) {
   }
   finishGroup();
 
+  auto* unconst = const_cast<Module*>(curr);
   ModuleUtils::iterImportedMemories(
-    *curr, [&](Memory* memory) { visitMemory(memory); });
-  ModuleUtils::iterImportedTables(*curr,
+    *unconst, [&](Memory* memory) { visitMemory(memory); });
+  ModuleUtils::iterImportedTables(*unconst,
                                   [&](Table* table) { visitTable(table); });
   ModuleUtils::iterImportedGlobals(
-    *curr, [&](Global* global) { visitGlobal(global); });
+    *unconst, [&](Global* global) { visitGlobal(global); });
   ModuleUtils::iterImportedFunctions(
-    *curr, [&](Function* func) { visitFunction(func); });
-  ModuleUtils::iterImportedTags(*curr, [&](Tag* tag) { visitTag(tag); });
-  ModuleUtils::iterDefinedGlobals(*curr,
+    *unconst, [&](Function* func) { visitFunction(func); });
+  ModuleUtils::iterImportedTags(*unconst, [&](Tag* tag) { visitTag(tag); });
+  ModuleUtils::iterDefinedGlobals(*unconst,
                                   [&](Global* global) { visitGlobal(global); });
   ModuleUtils::iterDefinedMemories(
-    *curr, [&](Memory* memory) { visitMemory(memory); });
+    *unconst, [&](Memory* memory) { visitMemory(memory); });
   for (auto& segment : curr->dataSegments) {
     visitDataSegment(segment.get());
   }
-  ModuleUtils::iterDefinedTables(*curr,
+  ModuleUtils::iterDefinedTables(*unconst,
                                  [&](Table* table) { visitTable(table); });
   for (auto& segment : curr->elementSegments) {
     visitElementSegment(segment.get());
   }
-  auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*curr);
+  auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*unconst);
   if (!elemDeclareNames.empty()) {
     doIndent(o, indent);
     printMedium(o, "(elem");
@@ -3655,7 +3659,7 @@ void PrintSExpression::visitModule(Module* curr) {
     }
     o << ')' << maybeNewLine;
   }
-  ModuleUtils::iterDefinedTags(*curr, [&](Tag* tag) { visitTag(tag); });
+  ModuleUtils::iterDefinedTags(*unconst, [&](Tag* tag) { visitTag(tag); });
   for (auto& child : curr->exports) {
     doIndent(o, indent);
     visitExport(child.get());
@@ -3669,7 +3673,7 @@ void PrintSExpression::visitModule(Module* curr) {
     o << maybeNewLine;
   }
   ModuleUtils::iterDefinedFunctions(
-    *curr, [&](Function* func) { visitFunction(func); });
+    *unconst, [&](Function* func) { visitFunction(func); });
   if (curr->dylinkSection) {
     printDylinkSection(curr->dylinkSection);
   }
@@ -3778,11 +3782,11 @@ public:
   }
 };
 
-static std::ostream& printExpression(Expression* expression,
+static std::ostream& printExpression(const Expression* expression,
                                      std::ostream& o,
                                      bool minify,
                                      bool full,
-                                     Module* wasm) {
+                                     const Module* wasm) {
   if (!expression) {
     o << "(null expression)";
     return o;
@@ -3793,7 +3797,7 @@ static std::ostream& printExpression(Expression* expression,
   if (full || isFullForced()) {
     print.setFull(true);
   }
-  print.visit(expression);
+  print.visit(const_cast<Expression*>(expression));
   if (full || isFullForced()) {
     o << " (; ";
     printTypeOrName(expression->type, o, wasm);
@@ -3803,8 +3807,9 @@ static std::ostream& printExpression(Expression* expression,
 }
 
 static std::ostream&
-printStackInst(StackInst* inst, std::ostream& o, Function* func) {
+printStackInst(const StackInst* inst, std::ostream& o, const Function* func) {
   PrintSExpression printer(o);
+  printer.currFunction = func;
   switch (inst->op) {
     case StackInst::Basic:
     case StackInst::BlockBegin:
@@ -3944,38 +3949,39 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
   return o;
 }
 
-std::ostream&
-printStackIR(std::ostream& o, Module* module, const PassOptions& options) {
-  wasm::PassRunner runner(module, options);
+std::ostream& printStackIR(std::ostream& o,
+                           const Module* module,
+                           const PassOptions& options) {
+  wasm::PassRunner runner(const_cast<Module*>(module), options);
   runner.add(std::make_unique<PrintStackIR>(&o));
   runner.run();
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
-  wasm::PassRunner runner(&module);
+std::ostream& operator<<(std::ostream& o, const wasm::Module& module) {
+  wasm::PassRunner runner(const_cast<wasm::Module*>(&module));
   wasm::Printer printer(&o);
   // Do not use runner.run(), since that will cause an infinite recursion in
   // BINARYEN_PASS_DEBUG=3, which prints modules (using this function) as part
   // of running passes.
   printer.setPassRunner(&runner);
-  printer.run(&module);
+  printer.run(const_cast<wasm::Module*>(&module));
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::Function& func) {
+std::ostream& operator<<(std::ostream& o, const wasm::Function& func) {
   wasm::PrintSExpression print(o);
   print.setMinify(false);
   print.setDebugInfo(false);
-  print.visitFunction(&func);
+  print.visitFunction(const_cast<wasm::Function*>(&func));
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
+std::ostream& operator<<(std::ostream& o, const wasm::Expression& expression) {
   return wasm::printExpression(&expression, o);
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
+std::ostream& operator<<(std::ostream& o, const wasm::Expression* expression) {
   return wasm::printExpression(expression, o);
 }
 
@@ -3983,14 +3989,16 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
   return wasm::printExpression(pair.second, o, false, false, &pair.first);
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
+std::ostream& operator<<(std::ostream& o,
+                         const wasm::ShallowExpression expression) {
   wasm::PrintSExpression printer(o);
   printer.setModule(expression.module);
-  wasm::PrintExpressionContents(printer).visit(expression.expr);
+  wasm::PrintExpressionContents(printer).visit(
+    const_cast<Expression*>(expression.expr));
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
+std::ostream& operator<<(std::ostream& o, const wasm::StackInst& inst) {
   return wasm::printStackInst(&inst, o);
 }
 
@@ -4032,8 +4040,7 @@ std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
 
 std::ostream& operator<<(std::ostream& o, const Table& table) {
   wasm::PrintSExpression printer(o);
-  // TODO: printTableHeader should take a const Table*
-  printer.printTableHeader(const_cast<Table*>(&table));
+  printer.printTableHeader(&table);
   return o;
 }
 

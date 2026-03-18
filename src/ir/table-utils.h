@@ -118,7 +118,7 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
 // Returns whether a segment uses arbitrary wasm expressions, as opposed to the
 // original tables from the MVP that use function indices. (Some post-MVP tables
 // do so, and some do not, depending on their type and use.)
-bool usesExpressions(ElementSegment* curr, Module* module);
+bool usesExpressions(const ElementSegment* curr, const Module* module);
 
 // Information about a table's optimizability.
 struct TableInfo {

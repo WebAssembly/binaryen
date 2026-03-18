@@ -2421,9 +2421,9 @@ public:
   bool noPartialInline = false;
 
   // Methods
-  Signature getSig() { return type.getHeapType().getSignature(); }
-  Type getParams() { return getSig().params; }
-  Type getResults() { return getSig().results; }
+  Signature getSig() const { return type.getHeapType().getSignature(); }
+  Type getParams() const { return getSig().params; }
+  Type getResults() const { return getSig().results; }
   void setParams(Type params) {
     type = type.with(Signature(params, getResults()));
   }
@@ -2431,21 +2431,21 @@ public:
     type = type.with(Signature(getParams(), results));
   }
 
-  size_t getNumParams();
-  size_t getNumVars();
-  size_t getNumLocals();
+  size_t getNumParams() const;
+  size_t getNumVars() const;
+  size_t getNumLocals() const;
 
-  bool isParam(Index index);
-  bool isVar(Index index);
+  bool isParam(Index index) const;
+  bool isVar(Index index) const;
 
-  Name getLocalName(Index index);
-  Index getLocalIndex(Name name);
+  Name getLocalName(Index index) const;
+  Index getLocalIndex(Name name) const;
   bool hasLocalIndex(Name name) const;
-  Index getVarIndexBase();
-  Type getLocalType(Index index);
+  Index getVarIndexBase() const;
+  Type getLocalType(Index index) const;
 
-  Name getLocalNameOrDefault(Index index);
-  Name getLocalNameOrGeneric(Index index);
+  Name getLocalNameOrDefault(Index index) const;
+  Name getLocalNameOrGeneric(Index index) const;
 
   bool hasLocalName(Index index) const;
   void setLocalName(Index index, Name name);
@@ -2540,8 +2540,8 @@ public:
   Type addressType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
 
-  bool hasMax() { return max != kUnlimitedSize; }
-  bool is64() { return addressType == Type::i64; }
+  bool hasMax() const { return max != kUnlimitedSize; }
+  bool is64() const { return addressType == Type::i64; }
   void clear() {
     name = "";
     initial = 0;
@@ -2577,8 +2577,8 @@ public:
   bool shared = false;
   Type addressType = Type::i32;
 
-  bool hasMax() { return max != kUnlimitedSize; }
-  bool is64() { return addressType == Type::i64; }
+  bool hasMax() const { return max != kUnlimitedSize; }
+  bool is64() const { return addressType == Type::i64; }
   Address::address64_t maxSize32() const { return 1ull << (32 - pageSizeLog2); }
   Address::address64_t maxSize64() const {
     if (pageSizeLog2 == 0) {
@@ -2751,24 +2751,25 @@ public:
 };
 
 // Utility for printing an expression with named types.
-using ModuleExpression = std::pair<Module&, Expression*>;
+using ModuleExpression = std::pair<const Module&, const Expression*>;
 
 // Utilities for printing an type with a name, if the module defines a name.
-using ModuleType = std::pair<Module&, Type>;
-using ModuleHeapType = std::pair<Module&, HeapType>;
+using ModuleType = std::pair<const Module&, Type>;
+using ModuleHeapType = std::pair<const Module&, HeapType>;
 
 // Utility for printing only the top level of an expression. Named types will be
 // used if `module` is non-null.
 struct ShallowExpression {
-  Expression* expr;
-  Module* module = nullptr;
+  const Expression* expr;
+  const Module* module = nullptr;
 };
 
-std::ostream& operator<<(std::ostream& o, wasm::Module& module);
-std::ostream& operator<<(std::ostream& o, wasm::Function& func);
-std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, const wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, const wasm::Function& func);
+std::ostream& operator<<(std::ostream& o, const wasm::Expression& expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
-std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
+std::ostream& operator<<(std::ostream& o,
+                         const wasm::ShallowExpression expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
 std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo);

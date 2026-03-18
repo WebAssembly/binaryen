@@ -1618,19 +1618,21 @@ void StackSwitch::finalize() {
   type = cont.getHeapType().getContinuation().type.getSignature().params;
 }
 
-size_t Function::getNumParams() { return getParams().size(); }
+size_t Function::getNumParams() const { return getParams().size(); }
 
-size_t Function::getNumVars() { return vars.size(); }
+size_t Function::getNumVars() const { return vars.size(); }
 
-size_t Function::getNumLocals() { return getParams().size() + vars.size(); }
+size_t Function::getNumLocals() const {
+  return getParams().size() + vars.size();
+}
 
-bool Function::isParam(Index index) {
+bool Function::isParam(Index index) const {
   size_t size = getParams().size();
   assert(index < size + vars.size());
   return index < size;
 }
 
-bool Function::isVar(Index index) {
+bool Function::isVar(Index index) const {
   auto base = getVarIndexBase();
   assert(index < base + vars.size());
   return index >= base;
@@ -1640,7 +1642,7 @@ bool Function::hasLocalName(Index index) const {
   return localNames.find(index) != localNames.end();
 }
 
-Name Function::getLocalName(Index index) { return localNames.at(index); }
+Name Function::getLocalName(Index index) const { return localNames.at(index); }
 
 void Function::setLocalName(Index index, Name name) {
   assert(index < getNumLocals());
@@ -1648,7 +1650,7 @@ void Function::setLocalName(Index index, Name name) {
   localIndices[name] = index;
 }
 
-Name Function::getLocalNameOrDefault(Index index) {
+Name Function::getLocalNameOrDefault(Index index) const {
   auto nameIt = localNames.find(index);
   if (nameIt != localNames.end()) {
     return nameIt->second;
@@ -1657,7 +1659,7 @@ Name Function::getLocalNameOrDefault(Index index) {
   return Name();
 }
 
-Name Function::getLocalNameOrGeneric(Index index) {
+Name Function::getLocalNameOrGeneric(Index index) const {
   auto nameIt = localNames.find(index);
   if (nameIt != localNames.end()) {
     return nameIt->second;
@@ -1669,7 +1671,7 @@ bool Function::hasLocalIndex(Name name) const {
   return localIndices.find(name) != localIndices.end();
 }
 
-Index Function::getLocalIndex(Name name) {
+Index Function::getLocalIndex(Name name) const {
   auto iter = localIndices.find(name);
   if (iter == localIndices.end()) {
     Fatal() << "Function::getLocalIndex: " << name << " does not exist";
@@ -1677,9 +1679,9 @@ Index Function::getLocalIndex(Name name) {
   return iter->second;
 }
 
-Index Function::getVarIndexBase() { return getParams().size(); }
+Index Function::getVarIndexBase() const { return getParams().size(); }
 
-Type Function::getLocalType(Index index) {
+Type Function::getLocalType(Index index) const {
   auto numParams = getParams().size();
   if (index < numParams) {
     return getParams()[index];

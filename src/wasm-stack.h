@@ -565,12 +565,12 @@ private:
 
 // Generate and emit StackIR.
 std::ostream&
-printStackIR(std::ostream& o, Module* module, const PassOptions& options);
+printStackIR(std::ostream& o, const Module* module, const PassOptions& options);
 
 } // namespace wasm
 
 namespace std {
-std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
+std::ostream& operator<<(std::ostream& o, const wasm::StackInst& inst);
 } // namespace std
 
 #endif // wasm_stack_h
