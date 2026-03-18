@@ -3123,8 +3123,8 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     return;
   }
   shouldBeEqual(
-    curr->castType.getHeapType().getBottom(),
-    curr->ref->type.getHeapType().getBottom(),
+    HeapType(curr->castType.getHeapType().getTop()),
+    HeapType(curr->ref->type.getHeapType().getTop()),
     curr,
     "ref.test target type and ref type must have a common supertype");
 
@@ -3167,27 +3167,15 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
         curr->ref->type.isRef(), curr, "ref.cast ref must have ref type")) {
     return;
   }
-  // If the cast is unreachable but not the ref (we ruled out the former
-  // earlier), then the cast is unreachable because the cast type had no
-  // common supertype with the ref, which is invalid. This is the same as the
-  // check below us, but we must do it first (as getHeapType fails otherwise).
-  if (!shouldBeUnequal(
-        curr->type,
-        Type(Type::unreachable),
-        curr,
-        "ref.cast target type and ref type must have a common supertype")) {
-    return;
-  }
   // Also error (more generically) on i32 and anything else invalid here.
   if (!shouldBeTrue(curr->type.isRef(), curr, "ref.cast must have ref type")) {
     return;
   }
   shouldBeEqual(
-    curr->type.getHeapType().getBottom(),
-    curr->ref->type.getHeapType().getBottom(),
+    HeapType(curr->type.getHeapType().getTop()),
+    HeapType(curr->ref->type.getHeapType().getTop()),
     curr,
     "ref.cast target type and ref type must have a common supertype");
-
   // We should never have a nullable cast of a non-nullable reference, since
   // that unnecessarily loses type information.
   shouldBeTrue(curr->ref->type.isNullable() || curr->type.isNonNullable(),
@@ -3259,8 +3247,8 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
     }
     if (curr->ref->type != Type::unreachable) {
       shouldBeEqual(
-        curr->castType.getHeapType().getBottom(),
-        curr->ref->type.getHeapType().getBottom(),
+        HeapType(curr->castType.getHeapType().getTop()),
+        HeapType(curr->ref->type.getHeapType().getTop()),
         curr,
         "br_on_cast* target type and ref type must have a common supertype");
     }

@@ -1985,7 +1985,6 @@ Result<> IRBuilder::makeRefCast(Type type, bool isDesc) {
       return Err{"cast target must have descriptor"};
     }
   }
-
   RefCast curr;
   curr.type = type;
   // Placeholder value to differentiate ref.cast_desc_eq.
