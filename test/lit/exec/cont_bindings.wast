@@ -44,7 +44,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling null-binding
+ ;; CHECK:      [fuzz-exec] export null-binding
  ;; CHECK-NEXT: [trap null ref]
  (func $null-binding (export "null-binding")
   (drop
