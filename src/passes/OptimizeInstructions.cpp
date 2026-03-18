@@ -1432,10 +1432,6 @@ struct OptimizeInstructions
         // The call_ref is not reached; leave this for DCE.
         return;
       }
-      if (!TypeUpdating::canHandleAsLocal(lastOperandType)) {
-        // We cannot create a local, so we must give up.
-        return;
-      }
       Index tempLocal = builder.addVar(
         getFunction(),
         TypeUpdating::getValidLocalType(lastOperandType, features));
