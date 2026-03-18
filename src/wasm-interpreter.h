@@ -3470,9 +3470,11 @@ private:
           auto exportedFunc = getFunction((*function)->name);
           if (!Type::isSubType(exportedFunc.type, (*function)->type)) {
             trap((std::stringstream()
-                  << "Imported function with type "
+                  << "Imported function " << importable->importNames()
+                  << " with type "
                   << exportedFunc.type.getHeapType().getSignature().toString()
-                  << " isn't compatible with import declaration: "
+                  << " isn't compatible with import declaration with type "
+                     "(modulo rec groups): "
                   << (*function)->type.getHeapType().getSignature().toString())
                    .str());
           }
