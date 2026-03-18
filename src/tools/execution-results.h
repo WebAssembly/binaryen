@@ -488,7 +488,7 @@ struct ExecutionResults {
     // opts)
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Function) {
-        std::cout << "[fuzz-exec] calling " << exp->name << "\n";
+        std::cout << "[fuzz-exec] export " << exp->name << "\n";
         auto* func = wasm.getFunction(*exp->getInternalName());
         FunctionResult ret = run(func, wasm, instance);
         results[exp->name] = ret;
@@ -503,9 +503,8 @@ struct ExecutionResults {
           }
         }
       } else if (exp->kind == ExternalKind::Global) {
-        // Log the global's value. (We use "calling" here to match the output
-        // for calls, which simplifies the fuzzer.)
-        std::cout << "[fuzz-exec] calling " << exp->name << "\n";
+        // Log the global's value.
+        std::cout << "[fuzz-exec] export " << exp->name << "\n";
         Literals* value = instance.getExportedGlobalOrNull(exp->name);
         assert(value);
         assert(value->size() == 1);

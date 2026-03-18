@@ -25,7 +25,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling bindings
+ ;; CHECK:      [fuzz-exec] export bindings
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  (func $bindings (export "bindings")
@@ -44,7 +44,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling null-binding
+ ;; CHECK:      [fuzz-exec] export null-binding
  ;; CHECK-NEXT: [trap null ref]
  (func $null-binding (export "null-binding")
   (drop

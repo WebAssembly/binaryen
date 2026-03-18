@@ -450,7 +450,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # managed to run some code before exiting (modules with no
                 # exports will be considered "invalid" here, but that is very
                 # rare, and in a sense they are actually unuseful).
-                if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
+                if proc.returncode == 0 and b'[fuzz-exec] export ' in proc.stdout:
                     valid_executions += 1
                 else:
                     print('====')

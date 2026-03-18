@@ -15,8 +15,8 @@
 ;; RUN: wasm-opt %s -o %t.wasm -q
 ;; RUN: node %S/../../../scripts/fuzz_shell.js %t.wasm | filecheck %s
 
-;; CHECK:      [fuzz-exec] calling big
+;; CHECK:      [fuzz-exec] export big
 ;; CHECK-NEXT: [fuzz-exec] note result: big => -1 -1
-;; CHECK-NEXT: [fuzz-exec] calling medium
+;; CHECK-NEXT: [fuzz-exec] export medium
 ;; CHECK-NEXT: [fuzz-exec] note result: medium => 1 268435456
 

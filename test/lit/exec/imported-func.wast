@@ -15,15 +15,15 @@
  )
 )
 
-;; CHECK:      [fuzz-exec] calling func
+;; CHECK:      [fuzz-exec] export func
 ;; CHECK-NEXT: [fuzz-exec] running second module
-;; CHECK-NEXT: [fuzz-exec] calling cast-A
-;; CHECK-NEXT: [fuzz-exec] calling cast-B
-;; CHECK-NEXT: [fuzz-exec] calling cast-C
-;; CHECK-NEXT: [fuzz-exec] calling cast-A-exact
+;; CHECK-NEXT: [fuzz-exec] export cast-A
+;; CHECK-NEXT: [fuzz-exec] export cast-B
+;; CHECK-NEXT: [fuzz-exec] export cast-C
+;; CHECK-NEXT: [fuzz-exec] export cast-A-exact
 ;; CHECK-NEXT: [trap cast error]
-;; CHECK-NEXT: [fuzz-exec] calling cast-B-exact
+;; CHECK-NEXT: [fuzz-exec] export cast-B-exact
 ;; CHECK-NEXT: [trap cast error]
-;; CHECK-NEXT: [fuzz-exec] calling cast-C-exact
-;; CHECK-NEXT: [fuzz-exec] calling last
+;; CHECK-NEXT: [fuzz-exec] export cast-C-exact
+;; CHECK-NEXT: [fuzz-exec] export last
 

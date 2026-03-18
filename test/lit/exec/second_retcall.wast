@@ -18,6 +18,6 @@
 ;; Export a funcref through a global, and return_call it from the other module.
 ;; It must be called ok, print 42, and not error.
 
-;; CHECK:      [fuzz-exec] calling caller
+;; CHECK:      [fuzz-exec] export caller
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 
