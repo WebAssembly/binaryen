@@ -2566,6 +2566,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefGetDesc);
     }
+    if (heapType.isContinuation()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::StackSwitching,
+                  &Self::makeContBind);
+    }
   }
   if (wasm.features.hasGC()) {
     if (typeStructFields.find(type) != typeStructFields.end()) {
@@ -5451,6 +5455,23 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   }
   return fixFlowingType(
     builder.makeBrOn(op, targetName, make(refType), castType));
+}
+
+Expression* TranslateToFuzzReader::makeContBind(Type type) {
+  auto sig = type.getHeapType().getContinuation().type.getSignature();
+  // Add a single param to be bound. TODO: Add multiple, and look in
+  // interestingHeapTypes.
+  std::vector<Type> newParams;
+  for (auto t : sig.params) {
+    newParams.push_back(t);
+  }
+  auto newParam = getSingleConcreteType();
+  newParams.insert(newParams.begin(), newParam);
+  auto newSig = Signature(Type(newParams), sig.results);
+  auto newCont = Continuation(newSig);
+  auto newType = Type(newCont, NonNullable, Exact);
+  std::vector<Expression*> newArgs{make(newParam)};
+  return builder.makeContBind(type.getHeapType(), newArgs, make(newType));
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
