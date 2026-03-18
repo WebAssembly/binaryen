@@ -567,6 +567,14 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitArrayStore(ArrayStore* curr,
+                           std::optional<HeapType> ht = std::nullopt,
+                           std::optional<Type> valueType = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayStore(curr, ht, valueType);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayCopy(ArrayCopy* curr,
                           std::optional<HeapType> dest = std::nullopt,
                           std::optional<HeapType> src = std::nullopt) {
@@ -2370,6 +2378,20 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   CHECK_ERR(ChildPopper{*this}.visitArraySet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArraySet(curr.ref, curr.index, curr.value, order));
+  return Ok{};
+}
+
+Result<>
+IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+  if (!arrayType.isArray()) {
+    return Err{"expected array type annotation on array store"};
+  }
+
+  ArrayStore curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType, type));
+
+  CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
+  push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
   return Ok{};
 }
 

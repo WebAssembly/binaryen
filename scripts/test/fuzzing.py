@@ -124,6 +124,8 @@ unfuzzable = [
     'local-cse_idempotent.wast',
     # Not fully implemented.
     'waitqueue.wast',
+    # TODO: fix handling of the non-utf8 names here
+    'name-high-bytes.wast',
 ]
 
 

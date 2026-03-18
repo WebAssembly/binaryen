@@ -49,7 +49,8 @@ BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
 BinaryenFeatureRelaxedAtomics: 4194304
 BinaryenFeatureCustomPageSizes: 8388608
-BinaryenFeatureAll: 16777215
+BinaryenFeatureMultibyte: 16777216
+BinaryenFeatureAll: 33554431
 (f32.neg
  (f32.const -33.61199951171875)
 )

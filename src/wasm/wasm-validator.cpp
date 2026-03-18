@@ -555,6 +555,7 @@ public:
   void visitArrayNewFixed(ArrayNewFixed* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
+  void visitArrayStore(ArrayStore* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
   void visitArrayFill(ArrayFill* curr);
@@ -748,7 +749,7 @@ void FunctionValidator::validatePoppyExpression(Expression* curr) {
 
 void FunctionValidator::visitBlock(Block* curr) {
   auto feats = curr->type.getFeatures();
-  if (!shouldBeTrue(feats <= getModule()->features,
+  if (!shouldBeTrue(feats.isSubsetOf(getModule()->features),
                     curr,
                     "Block type requires additional features")) {
     getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
@@ -1133,7 +1134,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 }
 
 void FunctionValidator::visitConst(Const* curr) {
-  shouldBeTrue(curr->type.getFeatures() <= getModule()->features,
+  shouldBeTrue(curr->type.getFeatures().isSubsetOf(getModule()->features),
                curr,
                "all used features should be allowed");
 }
@@ -1592,7 +1593,7 @@ void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
       required |= FeatureSet::SIMD;
       break;
   }
-  if (!shouldBeTrue(required <= getModule()->features,
+  if (!shouldBeTrue(required.isSubsetOf(getModule()->features),
                     curr,
                     "SIMD ternary operation requires additional features")) {
     getStream() << getMissingFeaturesList(*getModule(), required) << '\n';
@@ -2099,7 +2100,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case InvalidBinary:
       WASM_UNREACHABLE("invliad binary op");
   }
-  shouldBeTrue(Features::get(curr->op) <= getModule()->features,
+  shouldBeTrue(Features::get(curr->op).isSubsetOf(getModule()->features),
                curr,
                "all used features should be allowed");
 }
@@ -2406,7 +2407,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
   }
-  shouldBeTrue(Features::get(curr->op) <= getModule()->features,
+  shouldBeTrue(Features::get(curr->op).isSubsetOf(getModule()->features),
                curr,
                "all used features should be allowed");
 }
@@ -2490,7 +2491,7 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
   // allow RefNull there as we represent tables that way regardless of what
   // features are enabled.
   auto feats = curr->type.getFeatures();
-  if (!shouldBeTrue(!getFunction() || feats <= getModule()->features,
+  if (!shouldBeTrue(!getFunction() || feats.isSubsetOf(getModule()->features),
                     curr,
                     "ref.null requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
@@ -3490,9 +3491,9 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
 }
 
 void FunctionValidator::visitStructRMW(StructRMW* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "struct.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -3542,9 +3543,9 @@ void FunctionValidator::visitStructRMW(StructRMW* curr) {
 }
 
 void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "struct.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -3828,6 +3829,32 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
   shouldBeTrue(element.mutable_, curr, "array.set type must be mutable");
 }
 
+void FunctionValidator::visitArrayStore(ArrayStore* curr) {
+  shouldBeTrue(getModule()->features.hasMultibyte(),
+               curr,
+               "array.store requires multibyte [--enable-multibyte]");
+  shouldBeEqualOrFirstIsUnreachable(curr->index->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array store index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  const char* mustBeArray = "array store target should be an array reference";
+  if (curr->type == Type::unreachable ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      curr->ref->type.getHeapType().isBottom() ||
+      !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
+    return;
+  }
+
+  auto heapType = curr->ref->type.getHeapType();
+  const auto& element = heapType.getArray().element;
+  shouldBeTrue(
+    element.packedType == Field::i8, curr, "array store type must be i8");
+  shouldBeTrue(element.mutable_, curr, "array store type must be mutable");
+}
+
 void FunctionValidator::visitArrayLen(ArrayLen* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "array.len requires gc [--enable-gc]");
@@ -3998,9 +4025,9 @@ void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
 }
 
 void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "array.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -4047,9 +4074,9 @@ void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
 }
 
 void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "array.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -4681,7 +4708,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
   }
-  shouldBeTrue(features <= getModule()->features,
+  shouldBeTrue(features.isSubsetOf(getModule()->features),
                curr->name,
                "all used types should be allowed");
 
@@ -4958,7 +4985,7 @@ void validateExports(Module& module, ValidationInfo& info) {
 void validateGlobals(Module& module, ValidationInfo& info) {
   std::unordered_set<Global*> seen;
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
-    info.shouldBeTrue(curr->type.getFeatures() <= module.features,
+    info.shouldBeTrue(curr->type.getFeatures().isSubsetOf(module.features),
                       curr->name,
                       "all used types should be allowed");
     info.shouldBeTrue(
@@ -4993,7 +5020,8 @@ void validateGlobals(Module& module, ValidationInfo& info) {
   // Check that globals have allowed types.
   for (auto& g : module.globals) {
     auto globalFeats = g->type.getFeatures();
-    if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
+    if (!info.shouldBeTrue(
+          globalFeats.isSubsetOf(module.features), g->name, "")) {
       info.getStream(nullptr)
         << "global type requires additional features "
         << getMissingFeaturesList(module, globalFeats) << '\n';
@@ -5129,7 +5157,7 @@ void validateTables(Module& module, ValidationInfo& info) {
       "Non-nullable reference types are not yet supported for tables");
     auto typeFeats = table->type.getFeatures();
     if (!info.shouldBeTrue(table->type == funcref ||
-                             typeFeats <= module.features,
+                             typeFeats.isSubsetOf(module.features),
                            "table",
                            "table type requires additional features ")) {
       info.getStream(nullptr)
@@ -5152,7 +5180,7 @@ void validateTables(Module& module, ValidationInfo& info) {
       "Non-nullable reference types are not yet supported for tables");
     auto typeFeats = segment->type.getFeatures();
     if (!info.shouldBeTrue(
-          segment->type == funcref || typeFeats <= module.features,
+          segment->type == funcref || typeFeats.isSubsetOf(module.features),
           "elem",
           "element segment type requires additional features ")) {
       info.getStream(nullptr)
@@ -5224,7 +5252,7 @@ void validateTags(Module& module, ValidationInfo& info) {
                         curr->name,
                         "Values in a tag should have concrete types");
     }
-    info.shouldBeTrue(features <= module.features,
+    info.shouldBeTrue(features.isSubsetOf(module.features),
                       curr->name,
                       "all param types in tags should be allowed");
   }
