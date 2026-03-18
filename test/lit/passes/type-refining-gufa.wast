@@ -611,3 +611,115 @@
  )
 )
 
+(module
+ ;; NRML:      (type $struct (struct (field (mut i32)) (field (mut eqref))))
+ ;; GUFA:      (type $struct (struct (field (mut i32)) (field (mut eqref))))
+ (type $struct (struct (field (mut i32)) (field (mut eqref))))
+
+ ;; NRML:      (type $1 (func (param (ref $struct) i32) (result i32)))
+
+ ;; NRML:      (type $2 (func (param (ref $struct) eqref) (result eqref)))
+
+ ;; NRML:      (type $3 (func))
+
+ ;; NRML:      (func $atomic.rmw (type $1) (param $0 (ref $struct)) (param $1 i32) (result i32)
+ ;; NRML-NEXT:  (struct.atomic.rmw.add $struct 0
+ ;; NRML-NEXT:   (local.get $0)
+ ;; NRML-NEXT:   (local.get $1)
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (type $1 (func (param (ref $struct) i32) (result i32)))
+
+ ;; GUFA:      (type $2 (func (param (ref $struct) eqref) (result eqref)))
+
+ ;; GUFA:      (type $3 (func))
+
+ ;; GUFA:      (func $atomic.rmw (type $1) (param $0 (ref $struct)) (param $1 i32) (result i32)
+ ;; GUFA-NEXT:  (struct.atomic.rmw.add $struct 0
+ ;; GUFA-NEXT:   (local.get $0)
+ ;; GUFA-NEXT:   (local.get $1)
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $atomic.rmw (param $0 (ref $struct)) (param $1 i32) (result i32)
+  ;; This RMW causes a write to the data, and reads something else after adding.
+  ;; We can infer no value here.
+  (struct.atomic.rmw.add $struct 0
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+
+ ;; NRML:      (func $atomic.rmw.cmpxchg (type $2) (param $0 (ref $struct)) (param $1 eqref) (result eqref)
+ ;; NRML-NEXT:  (struct.atomic.rmw.cmpxchg $struct 1
+ ;; NRML-NEXT:   (local.get $0)
+ ;; NRML-NEXT:   (local.get $1)
+ ;; NRML-NEXT:   (local.get $1)
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $atomic.rmw.cmpxchg (type $2) (param $0 (ref $struct)) (param $1 eqref) (result eqref)
+ ;; GUFA-NEXT:  (struct.atomic.rmw.cmpxchg $struct 1
+ ;; GUFA-NEXT:   (local.get $0)
+ ;; GUFA-NEXT:   (local.get $1)
+ ;; GUFA-NEXT:   (local.get $1)
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $atomic.rmw.cmpxchg (param $0 (ref $struct)) (param $1 eqref) (result eqref)
+  ;; This RMW causes a write to the data, preventing refining of the eqref
+  ;; field to nullref (which we would do if nothing was written).
+  (struct.atomic.rmw.cmpxchg $struct 1
+   (local.get $0)
+   (local.get $1)
+   (local.get $1)
+  )
+ )
+
+ ;; NRML:      (func $call (type $3)
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (call $atomic.rmw
+ ;; NRML-NEXT:    (struct.new_default $struct)
+ ;; NRML-NEXT:    (i32.const 42)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (call $atomic.rmw.cmpxchg
+ ;; NRML-NEXT:    (struct.new_default $struct)
+ ;; NRML-NEXT:    (ref.i31
+ ;; NRML-NEXT:     (i32.const 1337)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $call (type $3)
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (call $atomic.rmw
+ ;; GUFA-NEXT:    (struct.new_default $struct)
+ ;; GUFA-NEXT:    (i32.const 42)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (call $atomic.rmw.cmpxchg
+ ;; GUFA-NEXT:    (struct.new_default $struct)
+ ;; GUFA-NEXT:    (ref.i31
+ ;; GUFA-NEXT:     (i32.const 1337)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $call
+  ;; Complete the testcases with a call, so there is some data at all.
+  (drop
+   (call $atomic.rmw
+    (struct.new_default $struct)
+    (i32.const 42)
+   )
+  )
+  (drop
+   (call $atomic.rmw.cmpxchg
+    (struct.new_default $struct)
+    (ref.i31
+     (i32.const 1337)
+    )
+   )
+  )
+ )
+)

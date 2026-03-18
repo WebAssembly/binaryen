@@ -1073,16 +1073,19 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->expected, curr);
+    addChildParentLink(curr->replacement, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitStructWait(StructWait* curr) { addRoot(curr); }
@@ -2249,8 +2252,12 @@ private:
   // Similar to readFromData, but does a write for a struct.set or array.set.
   void writeToData(Expression* ref,
                    Expression* value,
-                   Index fieldIndex,
-                   bool multibyte = false);
+                   Index fieldIndex);
+
+  // A write with given contents.
+  void writeToData(Expression* ref,
+                   const PossibleContents& valueContents,
+                   Index fieldIndex);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -2839,6 +2846,14 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       // |child| is either the reference or the value child of a struct.set.
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, set->index);
+    } else if (auto* set = parent->dynCast<StructRMW>()) {
+      assert(set->ref == child || set->value == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(set->ref, PossibleContents::fromType(set->value->type), set->index);
+    } else if (auto* set = parent->dynCast<StructCmpxchg>()) {
+      assert(set->ref == child || set->expected == child || set->replacement == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(set->ref, PossibleContents::fromType(set->replacement->type), set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
       readFromData(get->ref->type, 0, contents, get);
@@ -2847,7 +2862,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       writeToData(set->ref, set->value, 0);
     } else if (auto* store = parent->dynCast<ArrayStore>()) {
       assert(store->ref == child || store->value == child);
-      writeToData(store->ref, store->value, 0, /*multibyte*/ true);
+      // TODO: model the stored value, and handle different but equal values in
+      //       type, e.g. writing i16 0x1212 is the same as i8 0x12.
+      writeToData(store->ref, PossibleContents::fromType(store->value->type), 0);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
       // Similar to struct.get.
       assert(get->ref == child);
@@ -3216,21 +3233,7 @@ void Flower::readFromData(Type declaredType,
 
 void Flower::writeToData(Expression* ref,
                          Expression* value,
-                         Index fieldIndex,
-                         bool multibyte) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "    add special writes\n";
-#endif
-
-  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
-
-#ifndef NDEBUG
-  // We must not have anything in the reference that is invalid for the wasm
-  // type there.
-  auto maximalContents = PossibleContents::coneType(ref->type);
-  assert(PossibleContents::isSubContents(refContents, maximalContents));
-#endif
-
+                         Index fieldIndex) {
   // We could set up links here as we do for reads, but as we get to this code
   // in any case, we can just flow the values forward directly. This avoids
   // adding any links (edges) to the graph (and edges are what we want to avoid
@@ -3253,6 +3256,24 @@ void Flower::writeToData(Expression* ref,
   // reference and value.)
 
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
+  writeToData(ref, valueContents, fieldIndex);
+}
+
+void Flower::writeToData(Expression* ref,
+                         const PossibleContents& valueContents,
+                         Index fieldIndex) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "    add special writes\n";
+#endif
+
+  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+
+#ifndef NDEBUG
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto maximalContents = PossibleContents::coneType(ref->type);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
+#endif
 
   // See the related comment in readFromData() as to why these are the only
   // things we need to check, and why the assertion afterwards contains the only
@@ -3265,9 +3286,6 @@ void Flower::writeToData(Expression* ref,
   // As in readFromData, normalize to the proper cone.
   auto cone = refContents.getCone();
   auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
-  if (multibyte) {
-    valueContents = PossibleContents::fromType(value->type);
-  }
 
   subTypes->iterSubTypes(
     cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
