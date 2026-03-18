@@ -723,3 +723,134 @@
   )
  )
 )
+
+;; As above, but with arrays.
+(module
+ ;; NRML:      (type $array-i32 (array (mut i32)))
+ ;; GUFA:      (type $array-i32 (array (mut i32)))
+ (type $array-i32 (array (mut i32)))
+
+ ;; NRML:      (type $array-eqref (array (mut eqref)))
+ ;; GUFA:      (type $array-eqref (array (mut eqref)))
+ (type $array-eqref (array (mut eqref)))
+
+ ;; NRML:      (type $2 (func (param (ref $array-i32) i32) (result i32)))
+
+ ;; NRML:      (type $3 (func (param (ref $array-eqref) eqref) (result eqref)))
+
+ ;; NRML:      (type $4 (func))
+
+ ;; NRML:      (func $atomic.rmw (type $2) (param $0 (ref $array-i32)) (param $1 i32) (result i32)
+ ;; NRML-NEXT:  (array.atomic.rmw.add $array-i32
+ ;; NRML-NEXT:   (local.get $0)
+ ;; NRML-NEXT:   (i32.const 10)
+ ;; NRML-NEXT:   (local.get $1)
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (type $2 (func (param (ref $array-i32) i32) (result i32)))
+
+ ;; GUFA:      (type $3 (func (param (ref $array-eqref) eqref) (result eqref)))
+
+ ;; GUFA:      (type $4 (func))
+
+ ;; GUFA:      (func $atomic.rmw (type $2) (param $0 (ref $array-i32)) (param $1 i32) (result i32)
+ ;; GUFA-NEXT:  (array.atomic.rmw.add $array-i32
+ ;; GUFA-NEXT:   (local.get $0)
+ ;; GUFA-NEXT:   (i32.const 10)
+ ;; GUFA-NEXT:   (local.get $1)
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $atomic.rmw (param $0 (ref $array-i32)) (param $1 i32) (result i32)
+  (array.atomic.rmw.add $array-i32
+   (local.get $0)
+   (i32.const 10)
+   (local.get $1)
+  )
+ )
+
+ ;; NRML:      (func $atomic.rmw.cmpxchg (type $3) (param $0 (ref $array-eqref)) (param $1 eqref) (result eqref)
+ ;; NRML-NEXT:  (array.atomic.rmw.cmpxchg $array-eqref
+ ;; NRML-NEXT:   (local.get $0)
+ ;; NRML-NEXT:   (i32.const 20)
+ ;; NRML-NEXT:   (local.get $1)
+ ;; NRML-NEXT:   (local.get $1)
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $atomic.rmw.cmpxchg (type $3) (param $0 (ref $array-eqref)) (param $1 eqref) (result eqref)
+ ;; GUFA-NEXT:  (array.atomic.rmw.cmpxchg $array-eqref
+ ;; GUFA-NEXT:   (local.get $0)
+ ;; GUFA-NEXT:   (i32.const 20)
+ ;; GUFA-NEXT:   (local.get $1)
+ ;; GUFA-NEXT:   (local.get $1)
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $atomic.rmw.cmpxchg (param $0 (ref $array-eqref)) (param $1 eqref) (result eqref)
+  (array.atomic.rmw.cmpxchg $array-eqref
+   (local.get $0)
+   (i32.const 20)
+   (local.get $1)
+   (local.get $1)
+  )
+ )
+
+ ;; NRML:      (func $call (type $4)
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (call $atomic.rmw
+ ;; NRML-NEXT:    (array.new_default $array-i32
+ ;; NRML-NEXT:     (i32.const 7)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:    (i32.const 42)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (call $atomic.rmw.cmpxchg
+ ;; NRML-NEXT:    (array.new_default $array-eqref
+ ;; NRML-NEXT:     (i32.const 14)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:    (ref.i31
+ ;; NRML-NEXT:     (i32.const 1337)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $call (type $4)
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (call $atomic.rmw
+ ;; GUFA-NEXT:    (array.new_default $array-i32
+ ;; GUFA-NEXT:     (i32.const 7)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (i32.const 42)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (call $atomic.rmw.cmpxchg
+ ;; GUFA-NEXT:    (array.new_default $array-eqref
+ ;; GUFA-NEXT:     (i32.const 14)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (ref.i31
+ ;; GUFA-NEXT:     (i32.const 1337)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $call
+  (drop
+   (call $atomic.rmw
+    (array.new_default $array-i32
+      (i32.const 7)
+    )
+    (i32.const 42)
+   )
+  )
+  (drop
+   (call $atomic.rmw.cmpxchg
+    (array.new_default $array-eqref
+      (i32.const 14)
+    )
+    (ref.i31
+     (i32.const 1337)
+    )
+   )
+  )
+ )
+)

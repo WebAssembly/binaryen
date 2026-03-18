@@ -1174,16 +1174,19 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->expected, curr);
+    addChildParentLink(curr->replacement, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitStringNew(StringNew* curr) {
@@ -2865,8 +2868,15 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       // TODO: model the stored value, and handle different but equal values in
       //       type, e.g. writing i16 0x1212 is the same as i8 0x12.
       writeToData(store->ref, PossibleContents::fromType(store->value->type), 0);
+    } else if (auto* set = parent->dynCast<ArrayRMW>()) {
+      assert(set->ref == child || set->value == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(set->ref, PossibleContents::fromType(set->value->type), set->index);
+    } else if (auto* set = parent->dynCast<ArrayCmpxchg>()) {
+      assert(set->ref == child || set->expected == child || set->replacement == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(set->ref, PossibleContents::fromType(set->replacement->type), set->index);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
-      // Similar to struct.get.
       assert(get->ref == child);
       readFromData(
         get->ref->type, DataLocation::DescriptorIndex, contents, get);
