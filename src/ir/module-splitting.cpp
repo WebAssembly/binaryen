@@ -1019,6 +1019,7 @@ void ModuleSplitter::shareImportableItems() {
         used.tables.insert(segment->table);
       }
     }
+
     // If primary module has exports, they are "used" in it. Secondary modules
     // don't have exports, so this only applies to the primary module.
     for (auto& ex : module.exports) {
@@ -1056,11 +1057,11 @@ void ModuleSplitter::shareImportableItems() {
     std::vector<Name> worklist(used.globals.begin(), used.globals.end());
     std::unordered_set<Name> visited(used.globals.begin(), used.globals.end());
     while (!worklist.empty()) {
-      Name currName = worklist.back();
+      Name name = worklist.back();
       worklist.pop_back();
       // At this point all globals are still in the primary module, so this
       // exists
-      auto* global = primary.getGlobal(currName);
+      auto* global = primary.getGlobal(name);
       if (!global->imported() && global->init) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
           if (visited.insert(get->name).second) {
