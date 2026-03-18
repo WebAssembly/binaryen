@@ -2776,12 +2776,11 @@ function wrapModule(module, self = {}) {
    * Gets the memory segment with the given name.
    * 
    * @param {string} name - The name of the memory segment to get.
-   * @returns {number} A MemorySegmentRef referring to the memory segment with the given name, or `null` if no such segment exists.
+   * @returns {number} A MemorySegmentRef referring to the memory segment with the given name, or `0` if no such segment exists.
    */
   self['getMemorySegment'] = function(name) {
     return preserveStack(() => {
-      const segment = Module['_BinaryenGetMemorySegment'](module, strToStack(name));
-      return segment === 0 ? null : segment;
+      return Module['_BinaryenGetMemorySegment'](module, strToStack(name));
     });
   };
   /**

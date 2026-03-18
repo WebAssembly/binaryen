@@ -1144,8 +1144,8 @@ function test_for_each() {
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
-  assert(module.getMemorySegment(expected_names[0]) !== null);
-  assert(module.getMemorySegment("NonExistantSegment") === null);
+  assert(module.getMemorySegment(expected_names[0]) !== 0);
+  assert(module.getMemorySegment("NonExistantSegment") === 0);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
     var segment = module.getMemorySegmentByIndex(i);
     var info = module.getMemorySegmentInfo(segment);
