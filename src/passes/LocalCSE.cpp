@@ -354,8 +354,7 @@ struct Scanner
     // them is not cheap, so leave them for later, after we know if there
     // actually are any requests for reuse of this value (which is rare).
     if (!curr->type.isConcrete() || curr->is<LocalGet>() ||
-        curr->is<LocalSet>() || Properties::isConstantExpression(curr) ||
-        !TypeUpdating::canHandleAsLocal(curr->type)) {
+        curr->is<LocalSet>() || Properties::isConstantExpression(curr)) {
       return false;
     }
 
