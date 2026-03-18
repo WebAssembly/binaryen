@@ -1534,12 +1534,10 @@ struct Heap2Local {
     // constant indexes, so they are effectively structs, and turning them into
     // such allows uniform handling later.
     for (auto* allocation : finder.arrayNews) {
-      // The point of this optimization is to replace heap allocations with
-      // locals, so we must be able to place the data in locals.
-      if (!canHandleAsLocals(allocation->type)) {
+      if (allocation->type == Type::unreachable) {
+        // Leave this for DCE.
         continue;
       }
-
       EscapeAnalyzer analyzer(
         localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
@@ -1554,11 +1552,10 @@ struct Heap2Local {
 
     // Next, process all structNews.
     for (auto* allocation : finder.structNews) {
-      // As above, we must be able to use locals for this data.
-      if (!canHandleAsLocals(allocation->type)) {
+      if (allocation->type == Type::unreachable) {
+        // Leave this for DCE.
         continue;
       }
-
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it into locals.
       EscapeAnalyzer analyzer(
@@ -1575,30 +1572,6 @@ struct Heap2Local {
     if (finder.hasPop && optimized) {
       EHUtils::handleBlockNestedPops(func, wasm);
     }
-  }
-
-  bool canHandleAsLocal(const Field& field) {
-    return TypeUpdating::canHandleAsLocal(field.type);
-  }
-
-  bool canHandleAsLocals(Type type) {
-    if (type == Type::unreachable) {
-      return false;
-    }
-
-    auto heapType = type.getHeapType();
-    if (heapType.isStruct()) {
-      auto& fields = heapType.getStruct().fields;
-      for (auto field : fields) {
-        if (!canHandleAsLocal(field)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    assert(heapType.isArray());
-    return canHandleAsLocal(heapType.getArray().element);
   }
 };
 

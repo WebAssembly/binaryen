@@ -143,7 +143,7 @@ function printed(x, y) {
   } else if (typeof x === 'bigint') {
     // Print bigints in legalized form, which is two 32-bit numbers of the low
     // and high bits.
-    return (Number(x) | 0) + ' ' + (Number(x >> 32n) | 0)
+    return (Number(x & 0xffffffffn) | 0) + ' ' + (Number(x >> 32n) | 0)
   } else if (typeof x !== 'number') {
     // Something that is not a number or string, like a reference. We can't
     // print a reference because it could look different after opts - imagine
@@ -198,6 +198,11 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
+// wasm2js does not define RuntimeError, so use that to check for it. wasm2js
+// overrides the entire WebAssembly object with a polyfill, so we know exactly
+// what it contains, and we need to handle some things differently below.
+var wasm2js = !WebAssembly.RuntimeError;
+
 // Calls a given function in a try-catch. Return 1 if an exception was thrown.
 // If |rethrow| is set, and an exception is thrown, it is caught and rethrown.
 // Wasm traps are not swallowed (see details below).
@@ -213,11 +218,7 @@ function callFunc(func) {
 
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
-    // check for that first (wasm2js does not define RuntimeError, so use
-    // that for the check - when wasm2js is run, we override the entire
-    // WebAssembly object with a polyfill, so we know exactly what it
-    // contains).
-    var wasm2js = !WebAssembly.RuntimeError;
+    // check for that first.
     if (!wasm2js) {
       // When running native wasm, we can detect wasm traps.
       if (e instanceof WebAssembly.RuntimeError) {
@@ -555,13 +556,55 @@ function build(binary, isSecond) {
       name = e;
       value = exports[e];
     } else {
-      // We are given an object form exportList, which has both a name and a
+      // We are given an object from exportList, which has both a name and a
       // value.
       name = e.name;
       value = e.value;
     }
 
+    // Check for a global. Note we must be careful in wasm2js mode, where we
+    // can't do instanceof here (the wasm polyfill there doesn't have such
+    // things). In wasm2js we strip global exports to avoid needing to handle
+    // them here (using stub-unsupported-js).
+    if (!wasm2js && (value instanceof WebAssembly.Global)) {
+      // We can log a global value and do other operations to check for bugs.
+      // First, do some operations on the Global wrapper itself.
+      JSON.stringify(value);
+      value.foobar;
+
+      // Log it at the right time later using a lambda. Note that we can't just
+      // capture |value| for the lambda, as the loop modifies it.
+      (() => {
+        var global = value;
+        value = () => {
+          // Time to log. Look at the exported value itself, not the global
+          // wrapper.
+          let actualValue;
+          try {
+            actualValue = global.value;
+          } catch (e) {
+            if (e.message.startsWith('get WebAssembly.Global.value')) {
+              // Just log a string instead of a value we cannot access from JS,
+              // like an exnref. Note we don't need matching code on the C++
+              // side in execution-results.h because illegal exports are pruned
+              // anyhow if we are going to compare execution in JS to C++.
+              actualValue = '<illegal value>';
+            } else {
+              throw e;
+            }
+          }
+          if (typeof actualValue === 'object') {
+            // logRef can do a little more than logValue, so use it when possible.
+            logRef(actualValue);
+          } else {
+            logValue(actualValue);
+          }
+        };
+      })();
+    }
+
     if (typeof value !== 'function') {
+      // Nothing we can call.
       continue;
     }
 
@@ -587,7 +630,7 @@ function build(binary, isSecond) {
     }
 
     // Execute the task.
-    console.log(`[fuzz-exec] calling ${task.name}${task.deferred ? ' (after defer)' : ''}`);
+    console.log(`[fuzz-exec] export ${task.name}${task.deferred ? ' (after defer)' : ''}`);
     let result;
     try {
       result = task.func();

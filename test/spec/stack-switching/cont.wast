@@ -123,10 +123,11 @@
     )
   )
 
-  (func (export "null-new") (result (ref null $k1))
+  (func (export "null-new")
     (cont.new $k1
       (ref.null $f1)
     )
+    (drop)
   )
 )
 
@@ -262,6 +263,34 @@
   )
   "type mismatch")
 
+
+;; Test resume_throw used on the very first execution of a continuation (so the
+;; code in the continuation function is never reached).
+(module
+  (tag $exn)
+
+  (type $f (func))
+  (type $k (cont $f))
+
+  (func $never
+    (unreachable)
+  )
+
+  (func (export "resume_throw-never")
+    (block $handle
+      (try_table (catch $exn $handle)
+        (resume_throw $k $exn
+          (cont.new $k (ref.func $never))
+        )
+      )
+    )
+  )
+
+  (elem declare func $never)
+)
+
+(assert_return (invoke "resume_throw-never"))
+
 ;; Simple state example
 
 (module $state
@@ -313,6 +342,7 @@
 )
 
 (assert_return (invoke "run") (i32.const 19))
+
 
 ;; Simple generator example
 
@@ -368,7 +398,6 @@
 (assert_return (invoke "sum" (i64.const 0) (i64.const 3)) (i64.const 6))
 (assert_return (invoke "sum" (i64.const 1) (i64.const 10)) (i64.const 55))
 (assert_return (invoke "sum" (i64.const 100) (i64.const 2000)) (i64.const 1_996_050))
-
 
 
 ;; Simple scheduler example
@@ -543,9 +572,10 @@
 (assert_return (invoke "run" (i32.const 1) (i32.const 1)))
 (assert_return (invoke "run" (i32.const 3) (i32.const 4)))
 
+
 ;; Nested example: generator in a thread
 
-(module $concurrent-generator
+(module $concurrent_generator
   (func $log (import "spectest" "print_i64") (param i64))
 
   (tag $syield (import "scheduler" "yield"))
@@ -599,6 +629,80 @@
 
 (assert_return (invoke "sum" (i64.const 10) (i64.const 20)) (i64.const 165))
 
+
+;; cont.bind
+
+(module
+  (type $f2 (func (param i32 i32) (result i32 i32 i32 i32 i32 i32)))
+  (type $f4 (func (param i32 i32 i32 i32) (result i32 i32 i32 i32 i32 i32)))
+  (type $f6 (func (param i32 i32 i32 i32 i32 i32) (result i32 i32 i32 i32 i32 i32)))
+
+  (type $k2 (cont $f2))
+  (type $k4 (cont $f4))
+  (type $k6 (cont $f6))
+
+  (elem declare func $f)
+  (func $f (param i32 i32 i32 i32 i32 i32) (result i32 i32 i32 i32 i32 i32)
+    (local.get 0) (local.get 1) (local.get 2)
+    (local.get 3) (local.get 4) (local.get 5)
+  )
+
+  (func (export "run") (result i32 i32 i32 i32 i32 i32)
+    (local $k6 (ref null $k6))
+    (local $k4 (ref null $k4))
+    (local $k2 (ref null $k2))
+    (local.set $k6 (cont.new $k6 (ref.func $f)))
+    (local.set $k4 (cont.bind $k6 $k4 (i32.const 1) (i32.const 2) (local.get $k6)))
+    (local.set $k2 (cont.bind $k4 $k2 (i32.const 3) (i32.const 4) (local.get $k4)))
+    (resume $k2 (i32.const 5) (i32.const 6) (local.get $k2))
+  )
+)
+
+;; TODO: Finish cont.bind in interpreter.
+;; (assert_return (invoke "run")
+;;   (i32.const 1) (i32.const 2) (i32.const 3)
+;;   (i32.const 4) (i32.const 5) (i32.const 6)
+;; )
+
+(module
+  (tag $e (result i32 i32 i32 i32 i32 i32))
+
+  (type $f0 (func (result i32 i32 i32 i32 i32 i32 i32)))
+  (type $f2 (func (param i32 i32) (result i32 i32 i32 i32 i32 i32 i32)))
+  (type $f4 (func (param i32 i32 i32 i32) (result i32 i32 i32 i32 i32 i32 i32)))
+  (type $f6 (func (param i32 i32 i32 i32 i32 i32) (result i32 i32 i32 i32 i32 i32 i32)))
+
+  (type $k0 (cont $f0))
+  (type $k2 (cont $f2))
+  (type $k4 (cont $f4))
+  (type $k6 (cont $f6))
+
+  (elem declare func $f)
+  (func $f (result i32 i32 i32 i32 i32 i32 i32)
+    (i32.const 0) (suspend $e)
+  )
+
+  (func (export "run") (result i32 i32 i32 i32 i32 i32 i32)
+    (local $k6 (ref null $k6))
+    (local $k4 (ref null $k4))
+    (local $k2 (ref null $k2))
+    (block $l (result (ref $k6))
+      (resume $k0 (on $e $l) (cont.new $k0 (ref.func $f)))
+      (unreachable)
+    )
+    (local.set $k6)
+    (local.set $k4 (cont.bind $k6 $k4 (i32.const 1) (i32.const 2) (local.get $k6)))
+    (local.set $k2 (cont.bind $k4 $k2 (i32.const 3) (i32.const 4) (local.get $k4)))
+    (resume $k2 (i32.const 5) (i32.const 6) (local.get $k2))
+  )
+)
+
+;; TODO: Finish cont.bind in interpreter.
+;; (assert_return (invoke "run")
+;;   (i32.const 0) (i32.const 1) (i32.const 2) (i32.const 3)
+;;   (i32.const 4) (i32.const 5) (i32.const 6)
+;; )
+
 ;; Subtyping
 (module
   (type $ft1 (func (param i32)))
@@ -638,6 +742,89 @@
 )
 (assert_return (invoke "set-global"))
 
+;; Switch
+(module
+  (rec
+    (type $ft (func (param (ref null $ct))))
+    (type $ct (cont $ft)))
+
+  (func $print-i32 (import "spectest" "print_i32") (param i32))
+
+  (global $fi (mut i32) (i32.const 0))
+  (global $gi (mut i32) (i32.const 1))
+
+  (tag $swap)
+
+  (func $init (export "init") (result i32)
+    (resume $ct (on $swap switch)
+      (cont.new $ct (ref.func $g))
+      (cont.new $ct (ref.func $f)))
+    (return (i32.const 42)))
+  (func $f (type $ft)
+    (local $nextk (ref null $ct))
+    (local.set $nextk (local.get 0))
+    (call $print-i32 (global.get $fi))
+    (switch $ct $swap (local.get $nextk))
+    (local.set $nextk)
+    (call $print-i32 (global.get $fi))
+    (switch $ct $swap (local.get $nextk))
+    (drop))
+  (func $g (type $ft)
+    (local $nextk (ref null $ct))
+    (local.set $nextk (local.get 0))
+    (call $print-i32 (global.get $gi))
+    (switch $ct $swap (local.get $nextk))
+    (local.set $nextk)
+    (call $print-i32 (global.get $gi)))
+  (elem declare func $f $g)
+)
+
+;; TODO: Fix wasm-shell assertion.
+;; (assert_return (invoke "init") (i32.const 42))
+
+(module
+  (rec
+    (type $ft (func (param i32) (param (ref null $ct)) (result i32)))
+    (type $ct (cont $ft)))
+
+  (func $print-i32 (import "spectest" "print_i32") (param i32))
+
+  (tag $swap (result i32))
+
+  (func $init (export "init") (result i32)
+    (resume $ct (on $swap switch)
+      (i32.const 1)
+      (cont.new $ct (ref.func $g))
+      (cont.new $ct (ref.func $f))))
+  (func $f (type $ft)
+    (local $i i32)
+    (local $nextk (ref null $ct))
+    (local.set $i (local.get 0))
+    (local.set $nextk (local.get 1))
+    (call $print-i32 (local.get $i))
+    (switch $ct $swap (i32.add (i32.const 1) (local.get $i)) (local.get $nextk))
+    (local.set $nextk)
+    (local.set $i)
+    (call $print-i32 (local.get $i))
+    (switch $ct $swap (i32.add (i32.const 1) (local.get $i)) (local.get $nextk))
+    (unreachable))
+  (func $g (type $ft)
+    (local $i i32)
+    (local $nextk (ref null $ct))
+    (local.set $i (local.get 0))
+    (local.set $nextk (local.get 1))
+    (call $print-i32 (local.get $i))
+    (switch $ct $swap (i32.add (i32.const 1) (local.get $i)) (local.get $nextk))
+    (local.set $nextk)
+    (local.set $i)
+    (call $print-i32 (local.get $i))
+    (return (local.get $i)))
+  (elem declare func $f $g)
+)
+
+;; TODO: Fix wasm-shell assertion.
+;; (assert_return (invoke "init") (i32.const 4))
+
 (assert_invalid
   (module
     (rec
@@ -651,6 +838,55 @@
       (switch $ct $swap (cont.new $ct2 (ref.null $ft2)))
       (drop)))
    "type mismatch")
+
+(assert_invalid
+  (module
+    (rec
+      (type $ft (func (param i32) (param (ref null $ct))))
+      (type $ct (cont $ft)))
+
+    (tag $swap)
+    (func $f (type $ft)
+      (switch $ct $swap (i64.const 0) (local.get 1))
+      (drop)
+      (drop)))
+   "type mismatch")
+
+(module
+  (type $ft1 (func))
+  (type $ct1 (cont $ft1))
+  (rec
+    (type $ft2 (func (param (ref null $ct2))))
+    (type $ct2 (cont $ft2)))
+
+  (tag $t)
+
+  (func $suspend (type $ft2)
+    (suspend $t))
+
+  (func $switch (type $ft2)
+    (switch $ct2 $t (local.get 0))
+    (drop))
+
+  (func (export "unhandled-suspend-t")
+    (resume $ct2 (on $t switch)
+      (cont.new $ct2 (ref.func $suspend))
+      (cont.new $ct2 (ref.func $suspend))))
+  (func (export "unhandled-switch-t")
+    (block $l (result (ref $ct1))
+      (resume $ct2 (on $t $l)
+        (cont.new $ct2 (ref.func $switch))
+        (cont.new $ct2 (ref.func $switch)))
+      (unreachable)
+    )
+    (unreachable))
+
+  (elem declare func $suspend $switch)
+)
+
+;; TODO: Fix assertion.
+;; (assert_suspension (invoke "unhandled-suspend-t") "unhandled tag")
+;; (assert_suspension (invoke "unhandled-switch-t") "unhandled tag")
 
 (module
   (rec
@@ -760,6 +996,39 @@
   (elem declare func $even $odd)
 )
 (assert_return (invoke "main") (i32.const 10))
+
+(module
+  (type $f1 (func (result i32)))
+  (type $c1 (cont $f1))
+  (type $f2 (func (param (ref null $c1)) (result i32)))
+  (type $c2 (cont $f2))
+  (type $f3 (func (param (ref null $c2)) (result i32)))
+  (type $c3 (cont $f3))
+  (tag $e (result i32))
+
+  (func $fn_1 (param (ref null $c2)) (result i32)
+    (local.get 0)
+    (switch $c2 $e)
+    (i32.const 24)
+  )
+  (elem declare func $fn_1)
+
+  (func $fn_2 (result i32)
+    (cont.new $c3 (ref.func $fn_1))
+    (switch $c3 $e)
+    (drop)
+    (i32.const -1)
+  )
+  (elem declare func $fn_2)
+
+  (func (export "main") (result i32)
+    (cont.new $c1 (ref.func $fn_2))
+    (resume $c1 (on $e switch))
+  )
+)
+
+;; TODO: Fix wasm-shell assertion failure.
+;; (assert_return (invoke "main") (i32.const -1))
 
 ;; Syntax: check unfolded forms
 (module
@@ -901,3 +1170,45 @@
     (func (param $k (ref $ct))
       (switch $ct $t)))
   "type mismatch in switch tag")
+
+;; Synthesized from https://github.com/WebAssembly/stack-switching/issues/117
+(assert_invalid
+  (module
+    (type $ft (func))
+    (type $ct (cont $ft))
+    (tag $t)
+
+    (func
+      (block $on_t (result (ref cont))
+        (resume $ct (on $t $on_t) (cont.new $ct (ref.null $ft)))
+        (unreachable)
+      )
+      (drop)
+    ))
+  "type mismatch: instruction requires concrete continuation reference type but label has [(ref cont)]")
+
+(assert_invalid
+  (module
+    (type $ft (func))
+    (type $ct (cont $ft))
+    (tag $t)
+
+    (func
+      (block $on_t (result (ref nocont))
+        (resume $ct (on $t $on_t) (cont.new $ct (ref.null $ft)))
+        (unreachable)
+      )
+      (drop)
+    ))
+  "type mismatch: instruction requires concrete continuation reference type but label has [(ref nocont)]")
+
+;; https://github.com/WebAssembly/stack-switching/issues/117#issuecomment-2908974084
+(module
+  (type $f (func))
+  (type $c (sub (cont $f)))
+  (tag $e)
+  (func (param $c (ref $c))
+    (local.get $c)
+    (resume $c)
+  )
+)

@@ -49,32 +49,32 @@
 ;; we get a random-like ordering, which includes some defers (each of which has
 ;; a later finish), showing that we interleave stacks.
 ;;
-;; CHECK: [fuzz-exec] calling a
-;; CHECK: [fuzz-exec] calling b
+;; CHECK: [fuzz-exec] export a
+;; CHECK: [fuzz-exec] export b
 ;; CHECK: [fuzz-exec] note result: a => 10
-;; CHECK: [fuzz-exec] calling b
+;; CHECK: [fuzz-exec] export b
 ;; CHECK: [fuzz-exec] note result: b => 20
-;; CHECK: [fuzz-exec] calling a
+;; CHECK: [fuzz-exec] export a
 ;; CHECK: (jspi: defer a)
-;; CHECK: [fuzz-exec] calling d
+;; CHECK: [fuzz-exec] export d
 ;; CHECK: (jspi: defer d)
-;; CHECK: [fuzz-exec] calling e
+;; CHECK: [fuzz-exec] export e
 ;; CHECK: [fuzz-exec] note result: b => 20
-;; CHECK: [fuzz-exec] calling c
+;; CHECK: [fuzz-exec] export c
 ;; CHECK: [fuzz-exec] note result: e => 50
-;; CHECK: [fuzz-exec] calling c
+;; CHECK: [fuzz-exec] export c
 ;; CHECK: (jspi: defer c)
-;; CHECK: [fuzz-exec] calling c
+;; CHECK: [fuzz-exec] export c
 ;; CHECK: (jspi: finish c)
 ;; CHECK: [fuzz-exec] note result: c => 30
-;; CHECK: [fuzz-exec] calling d
+;; CHECK: [fuzz-exec] export d
 ;; CHECK: [fuzz-exec] note result: c => 30
-;; CHECK: [fuzz-exec] calling d
+;; CHECK: [fuzz-exec] export d
 ;; CHECK: (jspi: finish d)
 ;; CHECK: [fuzz-exec] note result: d => 40
-;; CHECK: [fuzz-exec] calling e
+;; CHECK: [fuzz-exec] export e
 ;; CHECK: [fuzz-exec] note result: d => 40
-;; CHECK: [fuzz-exec] calling a
+;; CHECK: [fuzz-exec] export a
 ;; CHECK: (jspi: finish a)
 ;; CHECK: [fuzz-exec] note result: a => 10
 ;; CHECK: [fuzz-exec] note result: e => 50

@@ -150,7 +150,7 @@ public:
     auto f = [import, this](const Literals& arguments) -> Flow {
       if (import->module == "fuzzing-support") {
         if (import->base.startsWith("log")) {
-          // This is a logging function like log-i32 or log-f64
+          // This is a logging function like log-i32 or log-f64.
           std::cout << "[LoggingExternalInterface ";
           if (import->base == "log-branch") {
             // Report this as a special logging, so we can differentiate it
@@ -319,8 +319,8 @@ public:
     Literals arguments;
     for (const auto& param : sig.params) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
-      // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
-      if (param == Type::i64 || param == Type::v128 || param.isExn()) {
+      // on attempts to convert it to BigInt. Also trap on v128 etc.
+      if (param == Type::i64 || trapsOnJSBoundary(param)) {
         throwJSException();
       }
       if (!param.isDefaultable()) {
@@ -332,9 +332,9 @@ public:
     // Error on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
     for (const auto& result : sig.results) {
-      // An i64 result is fine: a BigInt will be provided. But v128 and exnref
-      // still error.
-      if (result == Type::v128 || result.isExn()) {
+      // An i64 result is fine: a BigInt will be provided. But v128 and
+      // [null]exnref still error.
+      if (trapsOnJSBoundary(result)) {
         throwJSException();
       }
     }
@@ -347,6 +347,21 @@ public:
       trap("suspend through JS");
     }
     return flow.values;
+  }
+
+  bool trapsOnJSBoundary(Type type) {
+    if (type == Type::v128) {
+      return true;
+    }
+    if (type.isRef()) {
+      // Exnref and [null][exn|cont]ref trap.
+      HeapType top = type.getHeapType().getTop();
+      if (top.isMaybeShared(HeapType::exn) ||
+          top.isMaybeShared(HeapType::cont)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
@@ -472,23 +487,32 @@ struct ExecutionResults {
     // execute all exported methods (that are therefore preserved through
     // opts)
     for (auto& exp : wasm.exports) {
-      if (exp->kind != ExternalKind::Function) {
-        continue;
-      }
-      std::cout << "[fuzz-exec] calling " << exp->name << "\n";
-      auto* func = wasm.getFunction(*exp->getInternalName());
-      FunctionResult ret = run(func, wasm, instance);
-      results[exp->name] = ret;
-      if (auto* values = std::get_if<Literals>(&ret)) {
-        // ignore the result if we hit an unreachable and returned no value
-        if (values->size() > 0) {
-          std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-          for (auto value : *values) {
-            printValue(value);
-            std::cout << '\n';
+      if (exp->kind == ExternalKind::Function) {
+        std::cout << "[fuzz-exec] export " << exp->name << "\n";
+        auto* func = wasm.getFunction(*exp->getInternalName());
+        FunctionResult ret = run(func, wasm, instance);
+        results[exp->name] = ret;
+        if (auto* values = std::get_if<Literals>(&ret)) {
+          // ignore the result if we hit an unreachable and returned no value
+          if (values->size() > 0) {
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
+            for (auto value : *values) {
+              printValue(value);
+              std::cout << '\n';
+            }
           }
         }
+      } else if (exp->kind == ExternalKind::Global) {
+        // Log the global's value.
+        std::cout << "[fuzz-exec] export " << exp->name << "\n";
+        Literals* value = instance.getExportedGlobalOrNull(exp->name);
+        assert(value);
+        assert(value->size() == 1);
+        std::cout << "[LoggingExternalInterface logging ";
+        printValue((*value)[0]);
+        std::cout << "]\n";
       }
+      // Ignore other exports for now. TODO
     }
   }
 

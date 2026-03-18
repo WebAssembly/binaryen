@@ -408,11 +408,6 @@ Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
 
 namespace TypeUpdating {
 
-bool canHandleAsLocal(Type type) {
-  // TODO: Inline this into its callers.
-  return type.isConcrete();
-}
-
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so no non-nullable ones at all.

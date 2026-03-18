@@ -16,7 +16,6 @@
 
 #include <iostream>
 #include <mutex>
-#include <set>
 #include <sstream>
 #include <unordered_set>
 
@@ -26,12 +25,12 @@
 #include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
-#include "ir/local-graph.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
+#include "support/mixed_arena.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
 #include "wasm-validator.h"
@@ -311,7 +310,15 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   // Validate a function.
   void validate(Function* func) { walkFunction(func); }
 
+  // The types sent to each label on branches.
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
+  // The Tags and continuation result types used to resume at this label.
+  struct ResumeInfo {
+    Expression* resume;
+    Tag* tag;
+    Type contResult;
+  };
+  std::unordered_map<Name, std::vector<ResumeInfo>> resumeInfos;
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
 
@@ -548,6 +555,7 @@ public:
   void visitArrayNewFixed(ArrayNewFixed* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
+  void visitArrayStore(ArrayStore* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
   void visitArrayFill(ArrayFill* curr);
@@ -570,6 +578,10 @@ public:
   void visitContNew(ContNew* curr);
   void visitContBind(ContBind* curr);
   void visitSuspend(Suspend* curr);
+  void validateResumeHandlers(Expression* curr,
+                              Type contResults,
+                              const ArenaVector<Name>& tags,
+                              const ArenaVector<Name>& labels);
   void visitResume(Resume* curr);
   void visitResumeThrow(ResumeThrow* curr);
   void visitStackSwitch(StackSwitch* curr);
@@ -737,7 +749,7 @@ void FunctionValidator::validatePoppyExpression(Expression* curr) {
 
 void FunctionValidator::visitBlock(Block* curr) {
   auto feats = curr->type.getFeatures();
-  if (!shouldBeTrue(feats <= getModule()->features,
+  if (!shouldBeTrue(feats.isSubsetOf(getModule()->features),
                     curr,
                     "Block type requires additional features")) {
     getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
@@ -759,6 +771,64 @@ void FunctionValidator::visitBlock(Block* curr) {
                       "break type must be a subtype of the target block type");
     }
     breakTypes.erase(iter);
+    // Check the tags of resume handlers that target this block as well.
+    if (auto it = resumeInfos.find(curr->name); it != resumeInfos.end()) {
+      for (const auto& [resume, tag_, contResult] : it->second) {
+        // TODO: Captured structured references are a C++20 extension.
+        const auto& tag = tag_;
+        // The tag's params must match the block results, except for the last
+        // result, which must be a continuation type whose parameters match the
+        // tag's results and whose results must be matched by the resumed
+        // continuation's results.
+        auto printHandler = [&]() {
+          if (!info.quiet) {
+            getStream() << "at (on " << tag->name << ' ' << curr->name << ")\n";
+          }
+        };
+        if (!shouldBeEqual(tag->params().size() + 1,
+                           curr->type.size(),
+                           resume,
+                           "mismatched resume handler tag and label arities")) {
+          printHandler();
+          break;
+        }
+        for (Index i = 0; i < tag->params().size(); ++i) {
+          if (!shouldBeSubType(tag->params()[i],
+                               curr->type[i],
+                               resume,
+                               "tag type does not match label type")) {
+            if (info.quiet) {
+              getStream() << "at index " << i << "\n";
+            }
+            break;
+          }
+        }
+        Type cont = curr->type[curr->type.size() - 1];
+        if (!shouldBeTrue(cont.isContinuation(),
+                          resume,
+                          "resume handler branches to label that does not take "
+                          "a continuation")) {
+          printHandler();
+          break;
+        }
+        auto contSig = cont.getHeapType().getContinuation().type.getSignature();
+        if (!shouldBeSubType(contSig.params,
+                             tag->results(),
+                             resume,
+                             "new continuation parameters do not match "
+                             "expected suspension results")) {
+          printHandler();
+        }
+        if (!shouldBeSubType(contResult,
+                             contSig.results,
+                             resume,
+                             "resumed continuation results do not match new "
+                             "continuation results")) {
+          printHandler();
+        }
+      }
+      resumeInfos.erase(it);
+    }
   }
 
   auto* func = getFunction();
@@ -1064,7 +1134,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 }
 
 void FunctionValidator::visitConst(Const* curr) {
-  shouldBeTrue(curr->type.getFeatures() <= getModule()->features,
+  shouldBeTrue(curr->type.getFeatures().isSubsetOf(getModule()->features),
                curr,
                "all used features should be allowed");
 }
@@ -1504,10 +1574,6 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
 void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
   FeatureSet required = FeatureSet::None;
   switch (curr->op) {
-    case RelaxedMaddVecF16x8:
-    case RelaxedNmaddVecF16x8:
-      required |= FeatureSet::FP16;
-      [[fallthrough]];
     case LaneselectI8x16:
     case LaneselectI16x8:
     case LaneselectI32x4:
@@ -1517,12 +1583,17 @@ void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
     case RelaxedMaddVecF64x2:
     case RelaxedNmaddVecF64x2:
     case DotI8x16I7x16AddSToVecI32x4:
-      required |= FeatureSet::RelaxedSIMD;
-      [[fallthrough]];
+      required |= FeatureSet::RelaxedSIMD | FeatureSet::SIMD;
+      break;
+    case MaddVecF16x8:
+    case NmaddVecF16x8:
+      required |= FeatureSet::FP16 | FeatureSet::SIMD;
+      break;
     case Bitselect:
       required |= FeatureSet::SIMD;
+      break;
   }
-  if (!shouldBeTrue(required <= getModule()->features,
+  if (!shouldBeTrue(required.isSubsetOf(getModule()->features),
                     curr,
                     "SIMD ternary operation requires additional features")) {
     getStream() << getMissingFeaturesList(*getModule(), required) << '\n';
@@ -2029,7 +2100,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case InvalidBinary:
       WASM_UNREACHABLE("invliad binary op");
   }
-  shouldBeTrue(Features::get(curr->op) <= getModule()->features,
+  shouldBeTrue(Features::get(curr->op).isSubsetOf(getModule()->features),
                curr,
                "all used features should be allowed");
 }
@@ -2336,7 +2407,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
   }
-  shouldBeTrue(Features::get(curr->op) <= getModule()->features,
+  shouldBeTrue(Features::get(curr->op).isSubsetOf(getModule()->features),
                curr,
                "all used features should be allowed");
 }
@@ -2420,7 +2491,7 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
   // allow RefNull there as we represent tables that way regardless of what
   // features are enabled.
   auto feats = curr->type.getFeatures();
-  if (!shouldBeTrue(!getFunction() || feats <= getModule()->features,
+  if (!shouldBeTrue(!getFunction() || feats.isSubsetOf(getModule()->features),
                     curr,
                     "ref.null requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
@@ -3053,8 +3124,8 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     return;
   }
   shouldBeEqual(
-    curr->castType.getHeapType().getBottom(),
-    curr->ref->type.getHeapType().getBottom(),
+    HeapType(curr->castType.getHeapType().getTop()),
+    HeapType(curr->ref->type.getHeapType().getTop()),
     curr,
     "ref.test target type and ref type must have a common supertype");
 
@@ -3097,27 +3168,15 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
         curr->ref->type.isRef(), curr, "ref.cast ref must have ref type")) {
     return;
   }
-  // If the cast is unreachable but not the ref (we ruled out the former
-  // earlier), then the cast is unreachable because the cast type had no
-  // common supertype with the ref, which is invalid. This is the same as the
-  // check below us, but we must do it first (as getHeapType fails otherwise).
-  if (!shouldBeUnequal(
-        curr->type,
-        Type(Type::unreachable),
-        curr,
-        "ref.cast target type and ref type must have a common supertype")) {
-    return;
-  }
   // Also error (more generically) on i32 and anything else invalid here.
   if (!shouldBeTrue(curr->type.isRef(), curr, "ref.cast must have ref type")) {
     return;
   }
   shouldBeEqual(
-    curr->type.getHeapType().getBottom(),
-    curr->ref->type.getHeapType().getBottom(),
+    HeapType(curr->type.getHeapType().getTop()),
+    HeapType(curr->ref->type.getHeapType().getTop()),
     curr,
     "ref.cast target type and ref type must have a common supertype");
-
   // We should never have a nullable cast of a non-nullable reference, since
   // that unnecessarily loses type information.
   shouldBeTrue(curr->ref->type.isNullable() || curr->type.isNonNullable(),
@@ -3179,13 +3238,7 @@ void FunctionValidator::visitRefGetDesc(RefGetDesc* curr) {
 void FunctionValidator::visitBrOn(BrOn* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "br_on* requires gc [--enable-gc]");
-  if (curr->ref->type == Type::unreachable) {
-    return;
-  }
-  if (!shouldBeTrue(
-        curr->ref->type.isRef(), curr, "br_on* ref must have ref type")) {
-    return;
-  }
+
   if (curr->op != BrOnNull && curr->op != BrOnNonNull) {
     // Common validation for all br_on_cast*
     if (!shouldBeTrue(curr->castType.isRef(),
@@ -3193,11 +3246,23 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                       "br_on_cast* must have reference cast type")) {
       return;
     }
-    shouldBeEqual(
-      curr->castType.getHeapType().getBottom(),
-      curr->ref->type.getHeapType().getBottom(),
-      curr,
-      "br_on_cast* target type and ref type must have a common supertype");
+    if (curr->ref->type != Type::unreachable) {
+      shouldBeEqual(
+        HeapType(curr->castType.getHeapType().getTop()),
+        HeapType(curr->ref->type.getHeapType().getTop()),
+        curr,
+        "br_on_cast* target type and ref type must have a common supertype");
+    }
+    shouldBeTrue(
+      curr->castType.isCastable(), curr, "br_on cannot cast to invalid type");
+  }
+
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->ref->type.isRef(), curr, "br_on* ref must have ref type")) {
+    return;
   }
   switch (curr->op) {
     case BrOnNull:
@@ -3263,8 +3328,6 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       }
       shouldBeTrue(
         curr->ref->type.isCastable(), curr, "br_on cannot cast invalid type");
-      shouldBeTrue(
-        curr->castType.isCastable(), curr, "br_on cannot cast to invalid type");
       break;
     }
   }
@@ -3416,9 +3479,9 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
 }
 
 void FunctionValidator::visitStructRMW(StructRMW* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "struct.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -3468,9 +3531,9 @@ void FunctionValidator::visitStructRMW(StructRMW* curr) {
 }
 
 void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "struct.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -3754,6 +3817,32 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
   shouldBeTrue(element.mutable_, curr, "array.set type must be mutable");
 }
 
+void FunctionValidator::visitArrayStore(ArrayStore* curr) {
+  shouldBeTrue(getModule()->features.hasMultibyte(),
+               curr,
+               "array.store requires multibyte [--enable-multibyte]");
+  shouldBeEqualOrFirstIsUnreachable(curr->index->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array store index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  const char* mustBeArray = "array store target should be an array reference";
+  if (curr->type == Type::unreachable ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      curr->ref->type.getHeapType().isBottom() ||
+      !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
+    return;
+  }
+
+  auto heapType = curr->ref->type.getHeapType();
+  const auto& element = heapType.getArray().element;
+  shouldBeTrue(
+    element.packedType == Field::i8, curr, "array store type must be i8");
+  shouldBeTrue(element.mutable_, curr, "array store type must be mutable");
+}
+
 void FunctionValidator::visitArrayLen(ArrayLen* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "array.len requires gc [--enable-gc]");
@@ -3924,9 +4013,9 @@ void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
 }
 
 void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "array.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -3973,9 +4062,9 @@ void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
 }
 
 void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
-  auto expected =
+  FeatureSet expected =
     FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
-  if (!shouldBeTrue(expected <= getModule()->features,
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
                     curr,
                     "array.atomic.rmw requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
@@ -4156,7 +4245,6 @@ void FunctionValidator::visitStringSliceWTF(StringSliceWTF* curr) {
 }
 
 void FunctionValidator::visitContNew(ContNew* curr) {
-  // TODO implement actual type-checking
   shouldBeTrue(!getModule() || getModule()->features.hasStackSwitching(),
                curr,
                "cont.new requires stack-switching [--enable-stack-switching]");
@@ -4172,7 +4260,8 @@ void FunctionValidator::visitContNew(ContNew* curr) {
   }
   shouldBeTrue(curr->type.isExact(), curr, "cont.new should be exact");
 
-  if (!shouldBeTrue(curr->type.isContinuation(),
+  if (!shouldBeTrue(curr->type.isRef() &&
+                      curr->type.getHeapType().isContinuation(),
                     curr,
                     "cont.new must be annotated with a continuation type")) {
     return;
@@ -4187,84 +4276,239 @@ void FunctionValidator::visitContNew(ContNew* curr) {
 }
 
 void FunctionValidator::visitContBind(ContBind* curr) {
-  // TODO implement actual type-checking
-  shouldBeTrue(!getModule() || getModule()->features.hasStackSwitching(),
-               curr,
-               "cont.bind requires stack-switching [--enable-stack-switching]");
-
-  if (curr->cont->type.isRef() &&
-      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+  if (!shouldBeTrue(
+        !getModule() || getModule()->features.hasStackSwitching(),
+        curr,
+        "cont.bind requires stack-switching [--enable-stack-switching]")) {
     return;
   }
 
-  if (curr->type == Type::unreachable) {
+  if (curr->cont->type == Type::unreachable ||
+      curr->type == Type::unreachable) {
     return;
   }
 
-  shouldBeTrue(
-    curr->cont->type.isContinuation() &&
-      curr->cont->type.getHeapType().getContinuation().type.isSignature(),
-    curr,
-    "the first type annotation on cont.bind must be a continuation type");
+  if (!shouldBeTrue(
+        curr->cont->type.isRef(), curr, "the input type must be a reference")) {
+    return;
+  }
+  auto inType = curr->cont->type.getHeapType();
 
-  shouldBeTrue(
-    curr->type.isContinuation() &&
-      curr->type.getHeapType().getContinuation().type.isSignature(),
-    curr,
-    "the second type annotation on cont.bind must be a continuation type");
-
-  if (!shouldBeTrue(curr->type.isNonNullable(),
+  if (!shouldBeTrue(inType.isMaybeShared(HeapType::nocont) ||
+                      inType.isContinuation(),
                     curr,
-                    "cont.bind should have a non-nullable reference type")) {
+                    "the input type must be a continuation type")) {
     return;
   }
-  shouldBeTrue(curr->type.isExact(), curr, "cont.bind should be exact");
+
+  if (!shouldBeTrue(
+        curr->type.isRef() && curr->type.isNonNullable() &&
+          curr->type.isExact(),
+        curr,
+        "the output type must be a non-nullable, exact reference")) {
+    return;
+  }
+  auto outType = curr->type.getHeapType();
+
+  if (!shouldBeTrue(outType.isContinuation(),
+                    curr,
+                    "the output type must be a continuation type")) {
+    return;
+  }
+
+  if (inType.isBottom()) {
+    return;
+  }
+
+  auto sigIn = inType.getContinuation().type.getSignature();
+  auto sigOut = outType.getContinuation().type.getSignature();
+
+  if (!shouldBeTrue(curr->operands.size() <= sigIn.params.size(),
+                    curr,
+                    "too many arguments for cont.bind")) {
+    return;
+  }
+
+  size_t numBound = curr->operands.size();
+  size_t numRemaining = sigIn.params.size() - numBound;
+
+  if (!shouldBeEqual(numRemaining,
+                     sigOut.params.size(),
+                     curr,
+                     "result continuation parameter count mismatch")) {
+    return;
+  }
+
+  for (size_t i = 0; i < numBound; ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         sigIn.params[i],
+                         curr,
+                         "cont.bind argument type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  for (size_t i = 0; i < numRemaining; ++i) {
+    if (!shouldBeSubType(sigOut.params[i],
+                         sigIn.params[numBound + i],
+                         curr,
+                         "result continuation parameter type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  shouldBeSubType(sigIn.results,
+                  sigOut.results,
+                  curr,
+                  "result continuation result type mismatch");
 }
 
 void FunctionValidator::visitSuspend(Suspend* curr) {
-  // TODO implement actual type-checking
-  shouldBeTrue(!getModule() || getModule()->features.hasStackSwitching(),
-               curr,
-               "suspend requires stack-switching [--enable-stack-switching]");
-}
-
-void FunctionValidator::visitResume(Resume* curr) {
-  // TODO implement actual type-checking
-  shouldBeTrue(!getModule() || getModule()->features.hasStackSwitching(),
-               curr,
-               "resume requires stack-switching [--enable-stack-switching]");
-
-  shouldBeTrue(
-    curr->sentTypes.size() == curr->handlerBlocks.size(),
-    curr,
-    "sentTypes cache in resume instruction has not been initialized");
-
-  if (curr->cont->type.isRef() &&
-      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+  if (!shouldBeTrue(
+        !getModule() || getModule()->features.hasStackSwitching(),
+        curr,
+        "suspend requires stack-switching [--enable-stack-switching]")) {
     return;
   }
 
-  shouldBeTrue(
-    (curr->cont->type.isContinuation() &&
-     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->type == Type::unreachable,
-    curr,
-    "resume must be annotated with a continuation type");
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "suspend tag must exist")) {
+    return;
+  }
+
+  auto sig = tag->type.getSignature();
+  if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
+                    curr,
+                    "suspend argument count mismatch")) {
+    return;
+  }
+
+  for (size_t i = 0; i < sig.params.size(); ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         sig.params[i],
+                         curr,
+                         "suspend argument type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, sig.results, curr, "suspend result type mismatch");
+}
+
+void FunctionValidator::validateResumeHandlers(
+  Expression* curr,
+  Type contResults,
+  const ArenaVector<Name>& tags,
+  const ArenaVector<Name>& labels) {
+  for (size_t i = 0; i < tags.size(); ++i) {
+    auto* tag = getModule()->getTagOrNull(tags[i]);
+    if (!shouldBeTrue(!!tag, curr, "resume handler tag must exist")) {
+      continue;
+    }
+    auto tagSig = tag->type.getSignature();
+
+    if (labels[i]) {
+      // (on $tag $label)
+      // label must accept [t1_tag* (ref $ct_handler)]
+      // and $ct_handler must be cont [t2_tag*] -> [sig.results]
+      // But we cannot check this here because we do not know what type the
+      // block named $label expects. Save the tag to check when we visit the
+      // block later.
+      if (!shouldBeTrue(breakTypes.count(labels[i]) != 0,
+                        curr,
+                        "all resume targets must be valid")) {
+        return;
+      }
+      resumeInfos[labels[i]].push_back({curr, tag, contResults});
+    } else {
+      // (on $tag switch)
+      // tag must be [] -> [t*] where t* are the continuation results.
+      if (shouldBeTrue(tagSig.params.size() == 0,
+                       curr,
+                       "switch handler tag must have no parameters")) {
+        // NB: Intentionally not checking subtypes here.
+        shouldBeEqual(tagSig.results,
+                      contResults,
+                      curr,
+                      "switch handler tag results mismatch");
+      }
+    }
+  }
+}
+
+void FunctionValidator::visitResume(Resume* curr) {
+  if (!shouldBeTrue(
+        !getModule() || getModule()->features.hasStackSwitching(),
+        curr,
+        "resume requires stack-switching [--enable-stack-switching]")) {
+    return;
+  }
+
+  if (curr->cont->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->cont->type.isRef(),
+                    curr,
+                    "resume continuation must be a reference")) {
+    return;
+  }
+
+  auto type = curr->cont->type.getHeapType();
+  if (type.isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
+  if (!shouldBeTrue(
+        type.isContinuation(),
+        curr,
+        "resume continuation must have a defined continuation type")) {
+    return;
+  }
+
+  auto sig = type.getContinuation().type.getSignature();
+
+  if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
+                    curr,
+                    "resume argument count mismatch")) {
+    return;
+  }
+
+  for (Index i = 0; i < sig.params.size(); ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         sig.params[i],
+                         curr,
+                         "resume argument type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, sig.results, curr, "resume result type mismatch");
+
+  validateResumeHandlers(
+    curr, sig.results, curr->handlerTags, curr->handlerBlocks);
 }
 
 void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
-  // TODO implement actual type-checking
-  shouldBeTrue(
-    !getModule() || (getModule()->features.hasExceptionHandling() &&
-                     getModule()->features.hasStackSwitching()),
-    curr,
-    "resume_throw requires exception handling [--enable-exception-handling] "
-    "and stack-switching [--enable-stack-switching]");
-
-  shouldBeTrue(
-    curr->sentTypes.size() == curr->handlerBlocks.size(),
-    curr,
-    "sentTypes cache in resume_throw instruction has not been initialized");
+  if (!shouldBeTrue(!getModule() ||
+                      (getModule()->features.hasExceptionHandling() &&
+                       getModule()->features.hasStackSwitching()),
+                    curr,
+                    "resume_throw requires exception handling "
+                    "[--enable-exception-handling] and stack-switching "
+                    "[--enable-stack-switching]")) {
+    return;
+  }
 
   if (curr->tag) {
     // Normal resume_throw
@@ -4272,11 +4516,27 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
       return;
     }
-    shouldBeEqual(curr->operands.size(),
-                  tag->params().size(),
-                  curr,
-                  "resume_throw num operands must match the tag");
-    // TODO: validate operand types as well
+    if (!shouldBeTrue(tag->type.getSignature().results == Type::none,
+                      curr,
+                      "resume_throw tag must have no results")) {
+      return;
+    }
+    if (!shouldBeTrue(curr->operands.size() ==
+                        tag->type.getSignature().params.size(),
+                      curr,
+                      "resume_throw operand count mismatch")) {
+      return;
+    }
+    for (size_t i = 0; i < tag->type.getSignature().params.size(); ++i) {
+      if (!shouldBeSubType(curr->operands[i]->type,
+                           tag->type.getSignature().params[i],
+                           curr,
+                           "resume_throw operand type mismatch")) {
+        if (!info.quiet) {
+          getStream() << "(at index " << i << ")\n";
+        }
+      }
+    }
   } else {
     // resume_throw_ref
     Type exnref = Type(HeapType::exn, Nullable);
@@ -4291,41 +4551,132 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     }
   }
 
-  if (curr->cont->type.isRef() &&
-      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+  if (curr->cont->type == Type::unreachable) {
     return;
   }
 
-  shouldBeTrue(
-    (curr->cont->type.isContinuation() &&
-     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->type == Type::unreachable,
-    curr,
-    "resume_throw must be annotated with a continuation type");
+  if (!shouldBeTrue(curr->cont->type.isRef(),
+                    curr,
+                    "resume_throw continuation must be a reference")) {
+    return;
+  }
+
+  auto type = curr->cont->type.getHeapType();
+  if (type.isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
+  if (!shouldBeTrue(
+        type.isContinuation(),
+        curr,
+        "resume_throw continuation must have a defined continuation type")) {
+    return;
+  }
+
+  auto sig = type.getContinuation().type.getSignature();
+
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, sig.results, curr, "resume_throw result type mismatch");
+
+  validateResumeHandlers(
+    curr, sig.results, curr->handlerTags, curr->handlerBlocks);
 }
 
 void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
-  // TODO implement actual type-checking
-  shouldBeTrue(!getModule() || getModule()->features.hasStackSwitching(),
-               curr,
-               "switch requires stack-switching [--enable-stack-switching]");
+  if (!shouldBeTrue(
+        !getModule() || getModule()->features.hasStackSwitching(),
+        curr,
+        "switch requires stack-switching [--enable-stack-switching]")) {
+    return;
+  }
 
   auto* tag = getModule()->getTagOrNull(curr->tag);
   if (!shouldBeTrue(!!tag, curr, "switch tag must exist")) {
     return;
   }
 
-  if (curr->cont->type.isRef() &&
-      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+  if (curr->cont->type == Type::unreachable) {
     return;
   }
 
-  shouldBeTrue(
-    (curr->cont->type.isContinuation() &&
-     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->type == Type::unreachable,
-    curr,
-    "switch must be annotated with a continuation type");
+  if (!shouldBeTrue(curr->cont->type.isRef(),
+                    curr,
+                    "switch continuation must be a reference")) {
+    return;
+  }
+
+  auto type = curr->cont->type.getHeapType();
+  if (type.isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
+  if (!shouldBeTrue(
+        type.isContinuation(),
+        curr,
+        "switch continuation must have a defined continuation type")) {
+    return;
+  }
+
+  auto sig1 = type.getContinuation().type.getSignature();
+
+  // sig1 should be [t1* (ref null $ct2)] -> [te1*]
+  if (!shouldBeTrue(sig1.params.size() >= 1,
+                    curr,
+                    "switch continuation must have at least one parameter (for "
+                    "the next continuation)")) {
+    return;
+  }
+
+  Type ct2Type = sig1.params[sig1.params.size() - 1];
+  if (!shouldBeTrue(
+        ct2Type.isContinuation(),
+        curr,
+        "the last parameter of the switch continuation must be a continuation "
+        "type")) {
+    return;
+  }
+
+  auto sig2 = ct2Type.getHeapType().getContinuation().type.getSignature();
+
+  // check operands (t1*)
+  size_t numT1 = sig1.params.size() - 1;
+  if (!shouldBeTrue(curr->operands.size() == numT1,
+                    curr,
+                    "switch argument count mismatch")) {
+    return;
+  }
+  for (size_t i = 0; i < numT1; ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         sig1.params[i],
+                         curr,
+                         "switch argument type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  auto tagSig = tag->type.getSignature();
+  if (!shouldBeTrue(tagSig.params.size() == 0,
+                    curr,
+                    "switch tag must have no parameters")) {
+    return;
+  }
+
+  // te1* <: t*
+  shouldBeSubType(sig1.results,
+                  tagSig.results,
+                  curr,
+                  "switch continuation result type mismatch");
+
+  // t* <: te2*
+  shouldBeSubType(
+    tagSig.results, sig2.results, curr, "switch tag result type mismatch");
+
+  // curr->type == t2*
+  // NB: Intentionally not doing a subtype check here.
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, sig2.params, curr, "switch result type mismatch");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
@@ -4345,7 +4696,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
   }
-  shouldBeTrue(features <= getModule()->features,
+  shouldBeTrue(features.isSubsetOf(getModule()->features),
                curr->name,
                "all used types should be allowed");
 
@@ -4400,6 +4751,7 @@ void FunctionValidator::visitFunction(Function* curr) {
     // expressions, and reset the state for next time. Note that we use some of
     // this state in the above validations, so this must appear last.
     assert(breakTypes.empty());
+    assert(resumeInfos.empty());
     assert(delegateTargetNames.empty());
     assert(rethrowTargetNames.empty());
     labelNames.clear();
@@ -4621,7 +4973,7 @@ void validateExports(Module& module, ValidationInfo& info) {
 void validateGlobals(Module& module, ValidationInfo& info) {
   std::unordered_set<Global*> seen;
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
-    info.shouldBeTrue(curr->type.getFeatures() <= module.features,
+    info.shouldBeTrue(curr->type.getFeatures().isSubsetOf(module.features),
                       curr->name,
                       "all used types should be allowed");
     info.shouldBeTrue(
@@ -4656,7 +5008,8 @@ void validateGlobals(Module& module, ValidationInfo& info) {
   // Check that globals have allowed types.
   for (auto& g : module.globals) {
     auto globalFeats = g->type.getFeatures();
-    if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
+    if (!info.shouldBeTrue(
+          globalFeats.isSubsetOf(module.features), g->name, "")) {
       info.getStream(nullptr)
         << "global type requires additional features "
         << getMissingFeaturesList(module, globalFeats) << '\n';
@@ -4792,7 +5145,7 @@ void validateTables(Module& module, ValidationInfo& info) {
       "Non-nullable reference types are not yet supported for tables");
     auto typeFeats = table->type.getFeatures();
     if (!info.shouldBeTrue(table->type == funcref ||
-                             typeFeats <= module.features,
+                             typeFeats.isSubsetOf(module.features),
                            "table",
                            "table type requires additional features ")) {
       info.getStream(nullptr)
@@ -4815,7 +5168,7 @@ void validateTables(Module& module, ValidationInfo& info) {
       "Non-nullable reference types are not yet supported for tables");
     auto typeFeats = segment->type.getFeatures();
     if (!info.shouldBeTrue(
-          segment->type == funcref || typeFeats <= module.features,
+          segment->type == funcref || typeFeats.isSubsetOf(module.features),
           "elem",
           "element segment type requires additional features ")) {
       info.getStream(nullptr)
@@ -4887,7 +5240,7 @@ void validateTags(Module& module, ValidationInfo& info) {
                         curr->name,
                         "Values in a tag should have concrete types");
     }
-    info.shouldBeTrue(features <= module.features,
+    info.shouldBeTrue(features.isSubsetOf(module.features),
                       curr->name,
                       "all param types in tags should be allowed");
   }

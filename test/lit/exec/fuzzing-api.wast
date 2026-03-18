@@ -9,7 +9,6 @@
  (import "fuzzing-support" "log-f64" (func $log-f64 (param f64)))
  (import "fuzzing-support" "log-anyref" (func $log-anyref (param anyref)))
  (import "fuzzing-support" "log-funcref" (func $log-funcref (param funcref)))
- (import "fuzzing-support" "log-contref" (func $log-contref (param contref)))
  (import "fuzzing-support" "log-externref" (func $log-externref (param externref)))
 
  (import "fuzzing-support" "throw" (func $throw (param i32)))
@@ -36,13 +35,12 @@
  ;; the IR it is actually last, as we always add function exports first.
  (export "table" (table $table))
 
- ;; CHECK:      [fuzz-exec] calling logging
+ ;; CHECK:      [fuzz-exec] export logging
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  (func $logging (export "logging")
   (call $log-i32
@@ -64,15 +62,12 @@
   (call $log-funcref
    (ref.func $logging)
   )
-  (call $log-contref
-   (ref.null cont)
-  )
   (call $log-externref
    (ref.null extern)
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling throwing
+ ;; CHECK:      [fuzz-exec] export throwing
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
  (func $throwing (export "throwing")
   ;; Throwing 0 throws a JS ("private") exception.
@@ -81,7 +76,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling throwing-tag
+ ;; CHECK:      [fuzz-exec] export throwing-tag
  ;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
  (func $throwing-tag (export "throwing-tag")
   ;; Throwing non-0 throws using the tag we imported.
@@ -90,7 +85,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling table.setting
+ ;; CHECK:      [fuzz-exec] export table.setting
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
  (func $table.setting (export "table.setting")
   (call $table.set
@@ -104,7 +99,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling table.getting
+ ;; CHECK:      [fuzz-exec] export table.getting
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
@@ -132,13 +127,12 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling export.calling
+ ;; CHECK:      [fuzz-exec] export export.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
  (func $export.calling (export "export.calling")
@@ -155,13 +149,12 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling export.calling.rethrow
+ ;; CHECK:      [fuzz-exec] export export.calling.rethrow
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
  (func $export.calling.rethrow (export "export.calling.rethrow")
@@ -179,13 +172,12 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling export.calling.catching
+ ;; CHECK:      [fuzz-exec] export export.calling.catching
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -205,13 +197,12 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling
+ ;; CHECK:      [fuzz-exec] export ref.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
  (func $ref.calling (export "ref.calling")
@@ -228,13 +219,12 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
+ ;; CHECK:      [fuzz-exec] export ref.calling.rethrow
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
  (func $ref.calling.rethrow (export "ref.calling.rethrow")
@@ -251,13 +241,12 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.catching
+ ;; CHECK:      [fuzz-exec] export ref.calling.catching
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging object]
  ;; CHECK-NEXT: [LoggingExternalInterface logging function]
- ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging null]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -289,7 +278,7 @@
   (i32.const 34)
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.legal
+ ;; CHECK:      [fuzz-exec] export ref.calling.legal
  ;; CHECK-NEXT: [LoggingExternalInterface logging 12]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  (func $ref.calling.legal (export "ref.calling.legal")
@@ -310,7 +299,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
+ ;; CHECK:      [fuzz-exec] export ref.calling.illegal
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal (export "ref.calling.illegal")
   ;; The i64 param causes an error here, so we will only log 1 because we catch an exception.
@@ -328,7 +317,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128
+ ;; CHECK:      [fuzz-exec] export ref.calling.illegal-v128
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal-v128 (export "ref.calling.illegal-v128")
   ;; As above, we throw on the v128 param, and log 1.
@@ -346,7 +335,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-exnref
+ ;; CHECK:      [fuzz-exec] export ref.calling.illegal-exnref
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal-exnref (export "ref.calling.illegal-exnref")
   ;; As above, we throw on the exnref param, and log 1.
@@ -357,7 +346,7 @@
   )
  )
 
- (func $illegal-result (result v128)
+ (func $illegal-v128-result (result v128)
   ;; Helper for the function below. The result is illegal for JS.
   (call $log-i32
    (i32.const 910)
@@ -365,15 +354,58 @@
   (v128.const i32x4 1 2 3 4)
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
+ ;; CHECK:      [fuzz-exec] export ref.calling.illegal-v128-result
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- (func $ref.calling.illegal-result (export "ref.calling.illegal-result")
+ (func $ref.calling.illegal-v128-result (export "ref.calling.illegal-v128-result")
   ;; The v128 result causes an error here, so we will log 1 as an exception. The JS
   ;; semantics determine that we do that check *before* the call, so the logging
   ;; of 910 does not go through.
   (call $log-i32
    (call $call.ref.catch
-    (ref.func $illegal-result)
+    (ref.func $illegal-v128-result)
+   )
+  )
+ )
+
+ (func $illegal-exnref-result (result exnref)
+  ;; Helper for the function below. The result is illegal for JS.
+  (call $log-i32
+   (i32.const 911)
+  )
+  (block $l (result exnref)
+    (try_table (catch_all_ref $l)
+      (call $throwing)
+    )
+    (unreachable)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export ref.calling.illegal-exnref-result
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ (func $ref.calling.illegal-exnref-result (export "ref.calling.illegal-exnref-result")
+  ;; As above with the v128, the exnref cannot be converted to a JS value.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $illegal-exnref-result)
+   )
+  )
+ )
+
+ (func $illegal-nullexnref-result (result nullexnref)
+  ;; Helper for the function below. The result is illegal for JS.
+  (call $log-i32
+   (i32.const 912)
+  )
+  (ref.null noexn)
+ )
+
+ ;; CHECK:      [fuzz-exec] export ref.calling.illegal-nullexnref-result
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ (func $ref.calling.illegal-nullexnref-result (export "ref.calling.illegal-nullexnref-result")
+  ;; As above, the nullexnref cannot be converted to a JS value.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $illegal-nullexnref-result)
    )
   )
  )
@@ -386,7 +418,7 @@
   (i64.const 90)
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
+ ;; CHECK:      [fuzz-exec] export ref.calling.legal-result
  ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  (func $ref.calling.legal-result (export "ref.calling.legal-result")
@@ -403,7 +435,7 @@
   (unreachable)
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.trap
+ ;; CHECK:      [fuzz-exec] export ref.calling.trap
  ;; CHECK-NEXT: [trap unreachable]
  (func $ref.calling.trap (export "ref.calling.trap")
   ;; We try to catch an exception here, but the target function traps, which is
@@ -415,7 +447,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling catch-js-tag
+ ;; CHECK:      [fuzz-exec] export catch-js-tag
  ;; CHECK-NEXT: [fuzz-exec] note result: catch-js-tag => 100
  (func $catch-js-tag (export "catch-js-tag") (result i32)
   ;; The table.set out of bounds will throw a JS exception, so it will be caught
@@ -437,7 +469,7 @@
  )
 
 
- ;; CHECK:      [fuzz-exec] calling do-sleep
+ ;; CHECK:      [fuzz-exec] export do-sleep
  ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
  (func $do-sleep (export "do-sleep") (result i32)
   (call $sleep
@@ -448,7 +480,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling return-externref-exception
+ ;; CHECK:      [fuzz-exec] export return-externref-exception
  ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $return-externref-exception (export "return-externref-exception") (result externref)
@@ -466,121 +498,120 @@
   )
  )
 )
-;; CHECK:      [fuzz-exec] calling logging
+;; CHECK:      [fuzz-exec] export logging
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 
-;; CHECK:      [fuzz-exec] calling throwing
+;; CHECK:      [fuzz-exec] export throwing
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
 
-;; CHECK:      [fuzz-exec] calling throwing-tag
+;; CHECK:      [fuzz-exec] export throwing-tag
 ;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
 
-;; CHECK:      [fuzz-exec] calling table.setting
+;; CHECK:      [fuzz-exec] export table.setting
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
 
-;; CHECK:      [fuzz-exec] calling table.getting
+;; CHECK:      [fuzz-exec] export table.getting
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
 
-;; CHECK:      [fuzz-exec] calling export.calling
+;; CHECK:      [fuzz-exec] export export.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
 
-;; CHECK:      [fuzz-exec] calling export.calling.rethrow
+;; CHECK:      [fuzz-exec] export export.calling.rethrow
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
 
-;; CHECK:      [fuzz-exec] calling export.calling.catching
+;; CHECK:      [fuzz-exec] export export.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling
+;; CHECK:      [fuzz-exec] export ref.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
+;; CHECK:      [fuzz-exec] export ref.calling.rethrow
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [exception thrown: imported-js-tag externref(0)]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.catching
+;; CHECK:      [fuzz-exec] export ref.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging object]
 ;; CHECK-NEXT: [LoggingExternalInterface logging function]
-;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging null]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.legal
+;; CHECK:      [fuzz-exec] export ref.calling.legal
 ;; CHECK-NEXT: [LoggingExternalInterface logging 12]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.illegal
+;; CHECK:      [fuzz-exec] export ref.calling.illegal
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128
+;; CHECK:      [fuzz-exec] export ref.calling.illegal-v128
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.illegal-exnref
+;; CHECK:      [fuzz-exec] export ref.calling.illegal-exnref
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
+;; CHECK:      [fuzz-exec] export ref.calling.illegal-v128-result
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
+;; CHECK:      [fuzz-exec] export ref.calling.illegal-exnref-result
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] export ref.calling.illegal-nullexnref-result
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] export ref.calling.legal-result
 ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.trap
+;; CHECK:      [fuzz-exec] export ref.calling.trap
 ;; CHECK-NEXT: [trap unreachable]
 
-;; CHECK:      [fuzz-exec] calling catch-js-tag
+;; CHECK:      [fuzz-exec] export catch-js-tag
 ;; CHECK-NEXT: [fuzz-exec] note result: catch-js-tag => 100
 
-;; CHECK:      [fuzz-exec] calling do-sleep
+;; CHECK:      [fuzz-exec] export do-sleep
 ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
 
-;; CHECK:      [fuzz-exec] calling return-externref-exception
+;; CHECK:      [fuzz-exec] export return-externref-exception
 ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
 ;; CHECK-NEXT: [fuzz-exec] comparing catch-js-tag
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
@@ -592,8 +623,10 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-exnref
-;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-exnref-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-nullexnref-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.rethrow

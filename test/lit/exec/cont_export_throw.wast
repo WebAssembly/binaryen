@@ -15,13 +15,13 @@
 
  (tag $tag (type $none))
 
- ;; CHECK:      [fuzz-exec] calling suspend
+ ;; CHECK:      [fuzz-exec] export suspend
  ;; CHECK-NEXT: [exception thrown: unhandled suspend]
  (func $suspend (export "suspend")
   (suspend $tag)
  )
 
- ;; CHECK:      [fuzz-exec] calling handled
+ ;; CHECK:      [fuzz-exec] export handled
  ;; CHECK-NEXT: [trap suspend through JS]
  (func $handled (export "handled")
   (drop
@@ -36,7 +36,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling suspend2
+ ;; CHECK:      [fuzz-exec] export suspend2
  ;; CHECK-NEXT: [exception thrown: unhandled suspend]
  (func $suspend2 (export "suspend2")
   (suspend $tag)

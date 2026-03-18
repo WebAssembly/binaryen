@@ -437,6 +437,33 @@ struct PrintExpressionContents
     return parent.printBlockType(sig);
   }
 
+  void printMemoryPostfix(uint8_t bytes, Type type) {
+    switch (bytes) {
+      case 1:
+        o << '8';
+        break;
+      case 2:
+        if (type == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
+        break;
+      case 4:
+        o << "32";
+        break;
+      default:
+        abort();
+    }
+  }
+
+  std::ostream& printStorePostfix(uint8_t bytes, Type valueType) {
+    if (bytes < 4 || (valueType == Type::i64 && bytes < 8)) {
+      printMemoryPostfix(bytes, valueType);
+    }
+    return o;
+  }
+
   void visitBlock(Block* curr) {
     printMedium(o, "block");
     if (curr->name.is()) {
@@ -556,19 +583,7 @@ struct PrintExpressionContents
     o << ".load";
     if (curr->type != Type::unreachable &&
         curr->bytes < curr->type.getByteSize()) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->type == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
+      printMemoryPostfix(curr->bytes, curr->type);
       if (curr->type != Type::f32) {
         o << (curr->signed_ ? "_s" : "_u");
       }
@@ -589,21 +604,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".store";
-    if (curr->bytes < 4 || (curr->valueType == Type::i64 && curr->bytes < 8)) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->valueType == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
-    }
+    printStorePostfix(curr->bytes, curr->valueType);
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
     printMemoryOrder(curr->order);
@@ -790,11 +791,11 @@ struct PrintExpressionContents
       case LaneselectI64x2:
         o << "i64x2.laneselect";
         break;
-      case RelaxedMaddVecF16x8:
-        o << "f16x8.relaxed_madd";
+      case MaddVecF16x8:
+        o << "f16x8.madd";
         break;
-      case RelaxedNmaddVecF16x8:
-        o << "f16x8.relaxed_nmadd";
+      case NmaddVecF16x8:
+        o << "f16x8.nmadd";
         break;
       case RelaxedMaddVecF32x4:
         o << "f32x4.relaxed_madd";
@@ -2476,6 +2477,18 @@ struct PrintExpressionContents
     printMemoryOrder(curr->order);
     o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
+  }
+  void visitArrayStore(ArrayStore* curr) {
+    prepareColor(o) << forceConcrete(curr->value->type);
+    o << ".store";
+    printStorePostfix(curr->bytes, curr->value->type);
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {

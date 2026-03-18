@@ -123,16 +123,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (v128.bitselect
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (local.get $1)
@@ -142,8 +132,6 @@
   ;; CHECK-NEXT: )
   (func $ternary (param v128 v128 v128)
     (drop (i32x4.dot_i8x16_i7x16_add_s (local.get 0) (local.get 1) (local.get 2)))
-    (drop (f16x8.relaxed_madd (local.get 0) (local.get 1) (local.get 2)))
-    (drop (f16x8.relaxed_nmadd (local.get 0) (local.get 1) (local.get 2)))
     (drop (f32x4.relaxed_madd (local.get 0) (local.get 1) (local.get 2)))
     (drop (f32x4.relaxed_nmadd (local.get 0) (local.get 1) (local.get 2)))
     (drop (f64x2.relaxed_madd (local.get 0) (local.get 1) (local.get 2)))
@@ -192,7 +180,7 @@
   ;; CHECK-NEXT: )
   (func $effects (param v128)
     (drop
-      (f16x8.relaxed_madd
+      (f32x4.relaxed_madd
         (call $effect)
         (local.get 0)
         (block (result v128)

@@ -53,20 +53,20 @@
 ;; func2 is more because we do not have a toplevel await, see comment in
 ;; fuzz_shell_jspi.wast.)
 ;;
-;; CHECK: [fuzz-exec] calling func2
+;; CHECK: [fuzz-exec] export func2
 ;; CHECK: [fuzz-exec] note result: func2 => 2
-;; CHECK: [fuzz-exec] calling func1
+;; CHECK: [fuzz-exec] export func1
 ;; CHECK: (jspi: defer func1)
-;; CHECK: [fuzz-exec] calling func3
+;; CHECK: [fuzz-exec] export func3
 ;; CHECK: [fuzz-exec] note result: func3 => 3
-;; CHECK: [fuzz-exec] calling func1 (after defer)
+;; CHECK: [fuzz-exec] export func1 (after defer)
 ;; CHECK: (jspi: finish func1)
 ;; CHECK: [fuzz-exec] note result: func1 => 1
-;; CHECK: [fuzz-exec] calling func5
+;; CHECK: [fuzz-exec] export func5
 ;; CHECK: (jspi: defer func5)
-;; CHECK: [fuzz-exec] calling func4
+;; CHECK: [fuzz-exec] export func4
 ;; CHECK: [fuzz-exec] note result: func4 => 4
-;; CHECK: [fuzz-exec] calling func5 (after defer)
+;; CHECK: [fuzz-exec] export func5 (after defer)
 ;; CHECK: (jspi: finish func5)
 ;; CHECK: [fuzz-exec] note result: func5 => 5
 

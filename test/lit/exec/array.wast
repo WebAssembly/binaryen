@@ -15,7 +15,7 @@
 
  (data $data "a")
 
- ;; CHECK:      [fuzz-exec] calling func
+ ;; CHECK:      [fuzz-exec] export func
  ;; CHECK-NEXT: [fuzz-exec] note result: func => 1
  (func $func (export "func") (result i32)
   ;; Verifies the order of execution is correct - we should return 1, not 2.
@@ -25,7 +25,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling new_active
+ ;; CHECK:      [fuzz-exec] export new_active
  ;; CHECK-NEXT: [trap out of bounds segment access in array.new_elem]
  (func $new_active (export "new_active")
   ;; Even though this is reading 0 items, offset 1 is out of bounds in that
@@ -38,7 +38,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling new_active_in_bounds
+ ;; CHECK:      [fuzz-exec] export new_active_in_bounds
  (func $new_active_in_bounds (export "new_active_in_bounds")
   ;; Even though this is dropped, we read 0 from offset 0, which is ok.
   (drop
@@ -49,7 +49,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling new_passive
+ ;; CHECK:      [fuzz-exec] export new_passive
  (func $new_passive (export "new_passive")
   ;; Using the passive segment here works.
   (drop
@@ -60,7 +60,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling init_active
+ ;; CHECK:      [fuzz-exec] export init_active
  ;; CHECK-NEXT: [trap out of bounds segment access in array.init_elem]
  (func $init_active (export "init_active")
   ;; Even though this is reading 0 items, offset 1 is out of bounds in that
@@ -75,7 +75,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling init_active_in_bounds
+ ;; CHECK:      [fuzz-exec] export init_active_in_bounds
  (func $init_active_in_bounds (export "init_active_in_bounds")
   ;; Even though this is dropped, we read 0 from offset 0, which is ok.
   (array.init_elem $array-func $active
@@ -88,7 +88,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling init_passive
+ ;; CHECK:      [fuzz-exec] export init_passive
  (func $init_passive (export "init_passive")
   ;; This works ok.
   (array.init_elem $array-func $passive
@@ -101,7 +101,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling drop_array.new_data
+ ;; CHECK:      [fuzz-exec] export drop_array.new_data
  ;; CHECK-NEXT: [trap dropped segment access in array.new_data]
  (func $drop_array.new_data (export "drop_array.new_data")
   ;; Dropping the data segment causes the next instruction to trap, even though
@@ -116,24 +116,24 @@
  )
 
 )
-;; CHECK:      [fuzz-exec] calling func
+;; CHECK:      [fuzz-exec] export func
 ;; CHECK-NEXT: [fuzz-exec] note result: func => 1
 
-;; CHECK:      [fuzz-exec] calling new_active
+;; CHECK:      [fuzz-exec] export new_active
 ;; CHECK-NEXT: [trap out of bounds segment access in array.new_elem]
 
-;; CHECK:      [fuzz-exec] calling new_active_in_bounds
+;; CHECK:      [fuzz-exec] export new_active_in_bounds
 
-;; CHECK:      [fuzz-exec] calling new_passive
+;; CHECK:      [fuzz-exec] export new_passive
 
-;; CHECK:      [fuzz-exec] calling init_active
+;; CHECK:      [fuzz-exec] export init_active
 ;; CHECK-NEXT: [trap out of bounds segment access in array.init_elem]
 
-;; CHECK:      [fuzz-exec] calling init_active_in_bounds
+;; CHECK:      [fuzz-exec] export init_active_in_bounds
 
-;; CHECK:      [fuzz-exec] calling init_passive
+;; CHECK:      [fuzz-exec] export init_passive
 
-;; CHECK:      [fuzz-exec] calling drop_array.new_data
+;; CHECK:      [fuzz-exec] export drop_array.new_data
 ;; CHECK-NEXT: [trap dropped segment access in array.new_data]
 ;; CHECK-NEXT: [fuzz-exec] comparing drop_array.new_data
 ;; CHECK-NEXT: [fuzz-exec] comparing func

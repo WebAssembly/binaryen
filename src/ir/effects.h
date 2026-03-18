@@ -846,6 +846,10 @@ private:
       // so we set these to true.
       parent.readsSharedMemory = true;
       parent.writesSharedMemory = true;
+      parent.readsSharedMutableStruct = true;
+      parent.writesSharedStruct = true;
+      parent.readsSharedMutableArray = true;
+      parent.writesSharedArray = true;
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
     }
     void visitPause(Pause* curr) {
@@ -1142,6 +1146,15 @@ private:
       // Null refs and OOB access.
       parent.implicitTrap = true;
       writesArray(curr->ref->type.getHeapType(), curr->order);
+    }
+    void visitArrayStore(ArrayStore* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.writesArray = true;
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArrayLen(ArrayLen* curr) {
       trapOnNull(curr->ref);

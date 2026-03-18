@@ -1308,4 +1308,66 @@
       (i32.const 2)
     )
   )
+
+  ;; CHECK:      (func $struct-rmw-unreachable-lowering (type $16) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.add $unshared-i32 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-rmw-unreachable-lowering (param (ref null $unshared-i32)) (result i32)
+    ;; Check that we skip lowering if an operand is unreachable.
+    (struct.atomic.rmw.add $unshared-i32 0
+      (local.get 0)
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $struct-cmpxchg-unreachable-lowering (type $16) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $unshared-i32 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-cmpxchg-unreachable-lowering (param (ref null $unshared-i32)) (result i32)
+    (struct.atomic.rmw.cmpxchg $unshared-i32 0
+      (local.get 0)
+      (i32.const 1)
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $array-rmw-unreachable-lowering (type $19) (param $0 (ref null $array)) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.rmw.add $array
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-rmw-unreachable-lowering (param (ref null $array)) (result i32)
+    ;; Check that we skip lowering if an operand is unreachable.
+    (array.atomic.rmw.add $array
+      (local.get 0)
+      (i32.const 0)
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $cmpxchg-unreachable-lowering (type $19) (param $0 (ref null $array)) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg $array
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cmpxchg-unreachable-lowering (param (ref null $array)) (result i32)
+    (array.atomic.rmw.cmpxchg $array
+      (local.get 0)
+      (i32.const 0)
+      (i32.const 1)
+      (unreachable)
+    )
+  )
 )
