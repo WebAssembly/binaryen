@@ -2253,9 +2253,7 @@ private:
                     Expression* read);
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
-  void writeToData(Expression* ref,
-                   Expression* value,
-                   Index fieldIndex);
+  void writeToData(Expression* ref, Expression* value, Index fieldIndex);
 
   // A write with given contents.
   void writeToData(Expression* ref,
@@ -2852,11 +2850,15 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<StructRMW>()) {
       assert(set->ref == child || set->value == child);
       // TODO: model the stored value, depending on the actual operation.
-      writeToData(set->ref, PossibleContents::fromType(set->value->type), set->index);
+      writeToData(
+        set->ref, PossibleContents::fromType(set->value->type), set->index);
     } else if (auto* set = parent->dynCast<StructCmpxchg>()) {
-      assert(set->ref == child || set->expected == child || set->replacement == child);
+      assert(set->ref == child || set->expected == child ||
+             set->replacement == child);
       // TODO: model the stored value, depending on the actual operation.
-      writeToData(set->ref, PossibleContents::fromType(set->replacement->type), set->index);
+      writeToData(set->ref,
+                  PossibleContents::fromType(set->replacement->type),
+                  set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
       readFromData(get->ref->type, 0, contents, get);
@@ -2867,15 +2869,20 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       assert(store->ref == child || store->value == child);
       // TODO: model the stored value, and handle different but equal values in
       //       type, e.g. writing i16 0x1212 is the same as i8 0x12.
-      writeToData(store->ref, PossibleContents::fromType(store->value->type), 0);
+      writeToData(
+        store->ref, PossibleContents::fromType(store->value->type), 0);
     } else if (auto* set = parent->dynCast<ArrayRMW>()) {
       assert(set->ref == child || set->value == child);
       // TODO: model the stored value, depending on the actual operation.
-      writeToData(set->ref, PossibleContents::fromType(set->value->type), set->index);
+      writeToData(
+        set->ref, PossibleContents::fromType(set->value->type), set->index);
     } else if (auto* set = parent->dynCast<ArrayCmpxchg>()) {
-      assert(set->ref == child || set->expected == child || set->replacement == child);
+      assert(set->ref == child || set->expected == child ||
+             set->replacement == child);
       // TODO: model the stored value, depending on the actual operation.
-      writeToData(set->ref, PossibleContents::fromType(set->replacement->type), set->index);
+      writeToData(set->ref,
+                  PossibleContents::fromType(set->replacement->type),
+                  set->index);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
       assert(get->ref == child);
       readFromData(
@@ -3241,9 +3248,7 @@ void Flower::readFromData(Type declaredType,
   connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
-void Flower::writeToData(Expression* ref,
-                         Expression* value,
-                         Index fieldIndex) {
+void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // We could set up links here as we do for reads, but as we get to this code
   // in any case, we can just flow the values forward directly. This avoids
   // adding any links (edges) to the graph (and edges are what we want to avoid
