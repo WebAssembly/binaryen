@@ -3028,6 +3028,8 @@ void Flower::filterDataContents(PossibleContents& contents,
   if (contents.isMany()) {
     // An unknown state (e.g. from combining writes of different types like in
     // multibyte array stores) translates into the most generic bounded type.
+    // TODO: We could optimize these, as e.g. a write of i16 0x1212 does not
+    // actually conflict with a write of i8 0x12.
     contents = PossibleContents::fromType(field->type);
   }
 
