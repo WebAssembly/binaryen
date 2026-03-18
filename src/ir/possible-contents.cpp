@@ -2874,15 +2874,13 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArrayRMW>()) {
       assert(set->ref == child || set->value == child);
       // TODO: model the stored value, depending on the actual operation.
-      writeToData(
-        set->ref, PossibleContents::fromType(set->value->type), 0);
+      writeToData(set->ref, PossibleContents::fromType(set->value->type), 0);
     } else if (auto* set = parent->dynCast<ArrayCmpxchg>()) {
       assert(set->ref == child || set->expected == child ||
              set->replacement == child);
       // TODO: model the stored value, depending on the actual operation.
-      writeToData(set->ref,
-                  PossibleContents::fromType(set->replacement->type),
-                  0);
+      writeToData(
+        set->ref, PossibleContents::fromType(set->replacement->type), 0);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
       assert(get->ref == child);
       readFromData(
