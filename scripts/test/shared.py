@@ -423,7 +423,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'if.wast',      # Requires more precise unreachable validation
     'imports.wast',  # Requires fixing handling of mutation to imported globals
     'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
-    'linking.wast',  # Missing function type validation on instantiation
+    'linking.wast',  # Missing global type validation on instantiation
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'instance.wast',  # Requires support for table default elements
@@ -445,8 +445,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
     'ref_test.wast',  # Requires host references to not be externalized i31refs
     'struct.wast',    # Fails to roundtrip unnamed types e.g. `(ref 0)`
-    'type-rec.wast',  # Missing function type validation on instantiation
-    'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'memory64.wast',        # Requires validations on the max memory size
     'imports3.wast',  # Requires better checking of exports from the special "spectest" module
     'relaxed_dot_product.wast',   # i16x8.relaxed_dot_i8x16_i7x16_s instruction not supported
