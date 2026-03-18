@@ -22,11 +22,11 @@
 ;; RUN: wasm-opt %s -o %t.wasm -q
 ;; RUN: node %S/../../../scripts/fuzz_shell.js %t.wasm | filecheck %s
 ;;
-;; CHECK: [fuzz-exec] calling a
+;; CHECK: [fuzz-exec] export a
 ;; CHECK: [fuzz-exec] note result: a => 10
-;; CHECK: [fuzz-exec] calling b
+;; CHECK: [fuzz-exec] export b
 ;; CHECK: [fuzz-exec] note result: b => 20
-;; CHECK: [fuzz-exec] calling c
+;; CHECK: [fuzz-exec] export c
 ;; CHECK: [fuzz-exec] note result: c => 30
 
 ;; Append another run with a seed that leads to a different order
@@ -36,18 +36,18 @@
 ;; RUN: node %t.js %t.wasm | filecheck %s --check-prefix=APPENDED
 ;;
 ;; The original order: a,b,c
-;; APPENDED: [fuzz-exec] calling a
+;; APPENDED: [fuzz-exec] export a
 ;; APPENDED: [fuzz-exec] note result: a => 10
-;; APPENDED: [fuzz-exec] calling b
+;; APPENDED: [fuzz-exec] export b
 ;; APPENDED: [fuzz-exec] note result: b => 20
-;; APPENDED: [fuzz-exec] calling c
+;; APPENDED: [fuzz-exec] export c
 ;; APPENDED: [fuzz-exec] note result: c => 30
 
 ;; A new order: b,c,a
-;; APPENDED: [fuzz-exec] calling b
+;; APPENDED: [fuzz-exec] export b
 ;; APPENDED: [fuzz-exec] note result: b => 20
-;; APPENDED: [fuzz-exec] calling c
+;; APPENDED: [fuzz-exec] export c
 ;; APPENDED: [fuzz-exec] note result: c => 30
-;; APPENDED: [fuzz-exec] calling a
+;; APPENDED: [fuzz-exec] export a
 ;; APPENDED: [fuzz-exec] note result: a => 10
 
