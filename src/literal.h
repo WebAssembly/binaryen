@@ -727,8 +727,8 @@ public:
   Literal convertSToF16x8() const;
   Literal convertUToF16x8() const;
   Literal swizzleI8x16(const Literal& other) const;
-  Literal relaxedMaddF16x8(const Literal& left, const Literal& right) const;
-  Literal relaxedNmaddF16x8(const Literal& left, const Literal& right) const;
+  Literal maddF16x8(const Literal& left, const Literal& right) const;
+  Literal nmaddF16x8(const Literal& left, const Literal& right) const;
   Literal relaxedMaddF32x4(const Literal& left, const Literal& right) const;
   Literal relaxedNmaddF32x4(const Literal& left, const Literal& right) const;
   Literal relaxedMaddF64x2(const Literal& left, const Literal& right) const;

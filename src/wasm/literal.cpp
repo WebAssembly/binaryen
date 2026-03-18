@@ -543,16 +543,16 @@ bool Literal::isCanonicalNaN() {
   if (!isNaN()) {
     return false;
   }
-  return (type == Type::f32 && NaNPayload(getf32()) == (1u << 23) - 1) ||
-         (type == Type::f64 && NaNPayload(getf64()) == (1ull << 52) - 1);
+  return (type == Type::f32 && NaNPayload(getf32()) == (1u << 22)) ||
+         (type == Type::f64 && NaNPayload(getf64()) == (1ull << 51));
 }
 
 bool Literal::isArithmeticNaN() {
   if (!isNaN()) {
     return false;
   }
-  return (type == Type::f32 && NaNPayload(getf32()) > (1u << 23) - 1) ||
-         (type == Type::f64 && NaNPayload(getf64()) > (1ull << 52) - 1);
+  return (type == Type::f32 && NaNPayload(getf32()) >= (1u << 22)) ||
+         (type == Type::f64 && NaNPayload(getf64()) >= (1ull << 51));
 }
 
 uint32_t Literal::NaNPayload(float f) {
@@ -1104,9 +1104,9 @@ Literal Literal::abs() const {
 Literal Literal::ceil() const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(std::ceil(getf32()));
+      return standardizeNaN(Literal(std::ceil(getf32())));
     case Type::f64:
-      return Literal(std::ceil(getf64()));
+      return standardizeNaN(Literal(std::ceil(getf64())));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1115,9 +1115,9 @@ Literal Literal::ceil() const {
 Literal Literal::floor() const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(std::floor(getf32()));
+      return standardizeNaN(Literal(std::floor(getf32())));
     case Type::f64:
-      return Literal(std::floor(getf64()));
+      return standardizeNaN(Literal(std::floor(getf64())));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1126,9 +1126,9 @@ Literal Literal::floor() const {
 Literal Literal::trunc() const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(std::trunc(getf32()));
+      return standardizeNaN(Literal(std::trunc(getf32())));
     case Type::f64:
-      return Literal(std::trunc(getf64()));
+      return standardizeNaN(Literal(std::trunc(getf64())));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -2939,14 +2939,12 @@ static Literal ternary(const Literal& a, const Literal& b, const Literal& c) {
 }
 } // namespace
 
-Literal Literal::relaxedMaddF16x8(const Literal& left,
-                                  const Literal& right) const {
+Literal Literal::maddF16x8(const Literal& left, const Literal& right) const {
   return ternary<8, &Literal::getLanesF16x8, &Literal::madd, &toFP16>(
     *this, left, right);
 }
 
-Literal Literal::relaxedNmaddF16x8(const Literal& left,
-                                   const Literal& right) const {
+Literal Literal::nmaddF16x8(const Literal& left, const Literal& right) const {
   return ternary<8, &Literal::getLanesF16x8, &Literal::nmadd, &toFP16>(
     *this, left, right);
 }

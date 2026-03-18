@@ -591,3 +591,50 @@
   )
 )
 
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:       (type $sub (sub $super (func)))
+  (type $sub (sub $super (func)))
+  ;; CHECK:       (type $cont-super (sub (cont $super)))
+  (type $cont-super (sub (cont $super)))
+  ;; CHECK:       (type $cont-sub (sub $cont-super (cont $sub)))
+  (type $cont-sub (sub $cont-super (cont $sub)))
+
+  ;; CHECK:       (type $4 (func (param (ref $cont-sub)) (result (ref $cont-super))))
+
+  ;; CHECK:      (func $cont-new (type $4) (param $sub (ref $cont-sub)) (result (ref $cont-super))
+  ;; CHECK-NEXT:  (local.get $sub)
+  ;; CHECK-NEXT: )
+  (func $cont-new (param $sub (ref $cont-sub)) (result (ref $cont-super))
+    ;; This requires $cont-sub <: $cont-super and $sub <: $super.
+    (local.get $sub)
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:       (type $sub (sub (func)))
+  (type $sub (sub $super (func)))
+  ;; CHECK:       (type $cont-super (sub (cont $super)))
+  (type $cont-super (sub (cont $super)))
+  ;; CHECK:       (type $cont-sub (sub (cont $sub)))
+  (type $cont-sub (sub $cont-super (cont $sub)))
+
+  ;; CHECK:       (type $4 (func (param (ref $cont-sub)) (result (ref $cont-sub))))
+
+  ;; CHECK:      (func $cont-new (type $4) (param $sub (ref $cont-sub)) (result (ref $cont-sub))
+  ;; CHECK-NEXT:  (local $keepalive (ref $cont-super))
+  ;; CHECK-NEXT:  (local.get $sub)
+  ;; CHECK-NEXT: )
+  (func $cont-new (param $sub (ref $cont-sub)) (result (ref $cont-sub))
+    (local $keepalive (ref $cont-super))
+    ;; As above, but now we return the subtype, so there is no constraint. We
+    ;; can unsubtype both the continuations and the funcs.
+    (local.get $sub)
+  )
+)
+

@@ -50,7 +50,7 @@ def test_wasm_opt():
         if ('translate-to-fuzz' in t or 'dwarf' in t) and \
            shared.skip_if_on_windows('fuzz translation tests'):
             continue
-        binary = '.wasm' in t
+        binary = t.endswith('.wasm')
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
         passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')

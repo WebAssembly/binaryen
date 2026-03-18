@@ -396,7 +396,7 @@ SPEC_TESTS_TO_SKIP = [
     # Test invalid
     'elem.wast',
 
-    # Requires wast `either` support
+    # Requires scoping of `register` statements within `thread` blocks
     'threads/thread.wast',
 
     # Requires better support for multi-threaded tests
@@ -418,10 +418,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Fail to parse data segment offset abbreviation
     'elem.wast',    # Requires modeling empty declarative segments
-    'f32.wast',     # Adding -0 and -nan should give a canonical NaN
-    'f64.wast',     # Adding -0 and -nan should give a canonical NaN
-    'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
-    'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
     'global.wast',  # Fail to parse table
     'if.wast',      # Requires more precise unreachable validation
@@ -453,20 +449,9 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'memory64.wast',        # Requires validations on the max memory size
     'imports3.wast',  # Requires better checking of exports from the special "spectest" module
-    'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
-    'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
-    'relaxed_dot_product.wast',   # Requires wast `either` support
-    'relaxed_laneselect.wast',    # Requires wast `either` support
-    'relaxed_madd_nmadd.wast',    # Requires wast `either` support
-    'relaxed_min_max.wast',       # Requires wast `either` support
+    'relaxed_dot_product.wast',   # i16x8.relaxed_dot_i8x16_i7x16_s instruction not supported
+    'relaxed_laneselect.wast',    # i8x16.relaxed_laneselect instruction not supported
     'simd_const.wast',            # Hex float constant not recognized as out of range
-    'simd_conversions.wast',      # Promoted NaN should be canonical
-    'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
-    'simd_f32x4_arith.wast',      # Adding inf and -inf should give a canonical NaN
-    'simd_f32x4_rounding.wast',   # Ceil of NaN should give a canonical NaN
-    'simd_f64x2.wast',            # Min of 0 and NaN should give a canonical NaN
-    'simd_f64x2_arith.wast',      # Adding inf and -inf should give a canonical NaN
-    'simd_f64x2_rounding.wast',   # Ceil of NaN should give a canonical NaN
     'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
 

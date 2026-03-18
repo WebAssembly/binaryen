@@ -82,19 +82,6 @@ struct HeapTypeInfo {
   constexpr bool isData() const { return isStruct() || isArray(); }
 };
 
-// Helper for coinductively checking whether a pair of Types or HeapTypes are in
-// a subtype relation.
-struct SubTyper {
-  bool isSubType(Type a, Type b);
-  bool isSubType(HeapType a, HeapType b);
-  bool isSubType(const Tuple& a, const Tuple& b);
-  bool isSubType(const Field& a, const Field& b);
-  bool isSubType(const Signature& a, const Signature& b);
-  bool isSubType(const Continuation& a, const Continuation& b);
-  bool isSubType(const Struct& a, const Struct& b);
-  bool isSubType(const Array& a, const Array& b);
-};
-
 // Helper for finding the equirecursive least upper bound of two types.
 // Helper for printing types.
 struct TypePrinter {
@@ -720,12 +707,41 @@ Type Type::get(unsigned byteSize, bool float_) {
   WASM_UNREACHABLE("invalid size");
 }
 
-bool Type::isSubType(Type left, Type right) {
-  // As an optimization, in the common case do not even construct a SubTyper.
-  if (left == right) {
+bool Type::isSubType(Type a, Type b) {
+  if (a == b) {
     return true;
   }
-  return SubTyper().isSubType(left, right);
+  if (a == Type::unreachable) {
+    return true;
+  }
+  if (a.isTuple() && b.isTuple()) {
+    if (a.size() != b.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < a.size(); ++i) {
+      if (!isSubType(a[i], b[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (!a.isRef() || !b.isRef()) {
+    return false;
+  }
+  if (a.isNullable() && !b.isNullable()) {
+    return false;
+  }
+  auto heapTypeA = a.getHeapType();
+  auto heapTypeB = b.getHeapType();
+  if (b.isExact()) {
+    if (a.isExact()) {
+      return heapTypeA == heapTypeB;
+    }
+    if (!heapTypeA.isBottom()) {
+      return false;
+    }
+  }
+  return HeapType::isSubType(heapTypeA, heapTypeB);
 }
 
 HeapTypeChildren Type::getHeapTypeChildren() {
@@ -1118,12 +1134,64 @@ HeapType::BasicHeapType HeapType::getUnsharedTop() const {
   WASM_UNREACHABLE("unexpected type");
 }
 
-bool HeapType::isSubType(HeapType left, HeapType right) {
-  // As an optimization, in the common case do not even construct a SubTyper.
-  if (left == right) {
+bool HeapType::isSubType(HeapType a, HeapType b) {
+  if (a == b) {
     return true;
   }
-  return SubTyper().isSubType(left, right);
+  if (a.isShared() != b.isShared()) {
+    return false;
+  }
+  if (b.isBasic()) {
+    auto aTop = a.getUnsharedTop();
+    auto aUnshared = a.isBasic() ? a.getBasic(Unshared) : a;
+    switch (b.getBasic(Unshared)) {
+      case HeapType::ext:
+        return aTop == HeapType::ext;
+      case HeapType::func:
+        return aTop == HeapType::func;
+      case HeapType::cont:
+        return aTop == HeapType::cont;
+      case HeapType::exn:
+        return aTop == HeapType::exn;
+      case HeapType::any:
+        return aTop == HeapType::any;
+      case HeapType::eq:
+        return aUnshared == HeapType::i31 || aUnshared == HeapType::none ||
+               aUnshared == HeapType::struct_ || aUnshared == HeapType::array ||
+               a.isStruct() || a.isArray();
+      case HeapType::i31:
+        return aUnshared == HeapType::none;
+      case HeapType::string:
+        return aUnshared == HeapType::noext;
+      case HeapType::struct_:
+        return aUnshared == HeapType::none || a.isStruct();
+      case HeapType::array:
+        return aUnshared == HeapType::none || a.isArray();
+      case HeapType::none:
+      case HeapType::noext:
+      case HeapType::nofunc:
+      case HeapType::nocont:
+      case HeapType::noexn:
+        return false;
+    }
+  }
+  if (a.isBasic()) {
+    // Basic HeapTypes are only subtypes of compound HeapTypes if they are
+    // bottom types.
+    return a == b.getBottom();
+  }
+  if (a.getKind() != b.getKind()) {
+    return false;
+  }
+  // Subtyping must be declared rather than derived from structure, so we will
+  // not recurse. TODO: optimize this search with some form of caching.
+  HeapTypeInfo* curr = getHeapTypeInfo(a);
+  while ((curr = curr->supertype)) {
+    if (curr == getHeapTypeInfo(b)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 std::vector<Type> HeapType::getTypeChildren() const {
@@ -1496,141 +1564,6 @@ unsigned Field::getByteSize() const {
 }
 
 namespace {
-
-bool SubTyper::isSubType(Type a, Type b) {
-  if (a == b) {
-    return true;
-  }
-  if (a == Type::unreachable) {
-    return true;
-  }
-  if (a.isTuple() && b.isTuple()) {
-    return isSubType(a.getTuple(), b.getTuple());
-  }
-  if (!a.isRef() || !b.isRef()) {
-    return false;
-  }
-  if (a.isNullable() && !b.isNullable()) {
-    return false;
-  }
-  auto heapTypeA = a.getHeapType();
-  auto heapTypeB = b.getHeapType();
-  if (b.isExact()) {
-    if (a.isExact()) {
-      return heapTypeA == heapTypeB;
-    }
-    if (!heapTypeA.isBottom()) {
-      return false;
-    }
-  }
-  return isSubType(heapTypeA, heapTypeB);
-}
-
-bool SubTyper::isSubType(HeapType a, HeapType b) {
-  // See:
-  // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
-  // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
-  if (a == b) {
-    return true;
-  }
-  if (a.isShared() != b.isShared()) {
-    return false;
-  }
-  if (b.isBasic()) {
-    auto aTop = a.getUnsharedTop();
-    auto aUnshared = a.isBasic() ? a.getBasic(Unshared) : a;
-    switch (b.getBasic(Unshared)) {
-      case HeapType::ext:
-        return aTop == HeapType::ext;
-      case HeapType::func:
-        return aTop == HeapType::func;
-      case HeapType::cont:
-        return aTop == HeapType::cont;
-      case HeapType::exn:
-        return aTop == HeapType::exn;
-      case HeapType::any:
-        return aTop == HeapType::any;
-      case HeapType::eq:
-        return aUnshared == HeapType::i31 || aUnshared == HeapType::none ||
-               aUnshared == HeapType::struct_ || aUnshared == HeapType::array ||
-               a.isStruct() || a.isArray();
-      case HeapType::i31:
-        return aUnshared == HeapType::none;
-      case HeapType::string:
-        return aUnshared == HeapType::noext;
-      case HeapType::struct_:
-        return aUnshared == HeapType::none || a.isStruct();
-      case HeapType::array:
-        return aUnshared == HeapType::none || a.isArray();
-      case HeapType::none:
-      case HeapType::noext:
-      case HeapType::nofunc:
-      case HeapType::nocont:
-      case HeapType::noexn:
-        return false;
-    }
-  }
-  if (a.isBasic()) {
-    // Basic HeapTypes are only subtypes of compound HeapTypes if they are
-    // bottom types.
-    return a == b.getBottom();
-  }
-  // Subtyping must be declared rather than derived from structure, so we will
-  // not recurse. TODO: optimize this search with some form of caching.
-  HeapTypeInfo* curr = getHeapTypeInfo(a);
-  while ((curr = curr->supertype)) {
-    if (curr == getHeapTypeInfo(b)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool SubTyper::isSubType(const Tuple& a, const Tuple& b) {
-  if (a.size() != b.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < a.size(); ++i) {
-    if (!isSubType(a[i], b[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool SubTyper::isSubType(const Field& a, const Field& b) {
-  if (a == b) {
-    return true;
-  }
-  // Immutable fields can be subtypes.
-  return a.mutable_ == Immutable && b.mutable_ == Immutable &&
-         a.packedType == b.packedType && isSubType(a.type, b.type);
-}
-
-bool SubTyper::isSubType(const Signature& a, const Signature& b) {
-  return isSubType(b.params, a.params) && isSubType(a.results, b.results);
-}
-
-bool SubTyper::isSubType(const Continuation& a, const Continuation& b) {
-  return isSubType(a.type, b.type);
-}
-
-bool SubTyper::isSubType(const Struct& a, const Struct& b) {
-  // There may be more fields on the left, but not fewer.
-  if (a.fields.size() < b.fields.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < b.fields.size(); ++i) {
-    if (!isSubType(a.fields[i], b.fields[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool SubTyper::isSubType(const Array& a, const Array& b) {
-  return isSubType(a.element, b.element);
-}
 
 void TypePrinter::printHeapTypeName(HeapType type) {
   if (type.isBasic()) {
@@ -2388,6 +2321,41 @@ void TypeBuilder::setShared(size_t i, Shareability share) {
 
 namespace {
 
+bool isValidSupertype(const Field& a, const Field& b) {
+  if (a == b) {
+    return true;
+  }
+  // Immutable fields can be subtypes.
+  return a.mutable_ == Immutable && b.mutable_ == Immutable &&
+         a.packedType == b.packedType && Type::isSubType(a.type, b.type);
+}
+
+bool isValidSupertype(const Signature& a, const Signature& b) {
+  return Type::isSubType(b.params, a.params) &&
+         Type::isSubType(a.results, b.results);
+}
+
+bool isValidSupertype(const Continuation& a, const Continuation& b) {
+  return HeapType::isSubType(a.type, b.type);
+}
+
+bool isValidSupertype(const Struct& a, const Struct& b) {
+  // There may be more fields on the left, but not fewer.
+  if (a.fields.size() < b.fields.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < b.fields.size(); ++i) {
+    if (!isValidSupertype(a.fields[i], b.fields[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool isValidSupertype(const Array& a, const Array& b) {
+  return isValidSupertype(a.element, b.element);
+}
+
 bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   if (!super.isOpen) {
     return false;
@@ -2425,16 +2393,15 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return false;
     }
   }
-  SubTyper typer;
   switch (sub.kind) {
     case HeapTypeKind::Func:
-      return typer.isSubType(sub.signature, super.signature);
+      return isValidSupertype(sub.signature, super.signature);
     case HeapTypeKind::Cont:
-      return typer.isSubType(sub.continuation, super.continuation);
+      return isValidSupertype(sub.continuation, super.continuation);
     case HeapTypeKind::Struct:
-      return typer.isSubType(sub.struct_, super.struct_);
+      return isValidSupertype(sub.struct_, super.struct_);
     case HeapTypeKind::Array:
-      return typer.isSubType(sub.array, super.array);
+      return isValidSupertype(sub.array, super.array);
     case HeapTypeKind::Basic:
       break;
   }
