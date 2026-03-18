@@ -2003,6 +2003,10 @@ struct OptimizeInstructions
     if (curr->ref->type.getHeapType().isShared()) {
       return;
     }
+    if (curr->type == Type::unreachable) {
+      // Leave this to DCE.
+      return;
+    }
 
     // Lower the RMW to its more basic operations. Breaking the atomic
     // operation into several non-atomic operations is safe because no other
@@ -2097,6 +2101,11 @@ struct OptimizeInstructions
     }
 
     if (curr->ref->type.getHeapType().isShared()) {
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // Leave this to DCE.
       return;
     }
 
