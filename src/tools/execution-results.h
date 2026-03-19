@@ -403,16 +403,6 @@ class FuzzerImportResolver
     if (mut || !type.isRef() || type.getHeapType() != HeapType::ext) {
       return nullptr;
     }
-<<<<<<< HEAD
-    // TODO: Generate a distinct payload for each global.
-    Global global;
-    global.type = type;
-    global.mutable_ = mut;
-    synthesizedGlobals.emplace_back(
-      RuntimeGlobal{global, Literals {
-                      Literal::makeExtern(0, Unshared)
-                    }});
-=======
     // Optimizations may reorder or remove imports, so we need a distinct
     // payload that is independent of the import order. Just compute a simple
     // payload integer from the import names. This must be kept in sync with
@@ -423,9 +413,12 @@ class FuzzerImportResolver
         payload = (payload + static_cast<Index>(c)) % 251;
       }
     }
+
+    Global global;
+    global.type = type;
+    global.mutable_ = mut;
     synthesizedGlobals.emplace_back(
-      Literals{Literal::makeExtern(payload, Unshared)});
->>>>>>> main
+      RuntimeGlobal{global, Literals{Literal::makeExtern(payload, Unshared)}});
     return &synthesizedGlobals.back();
   }
 
