@@ -650,7 +650,7 @@ function build(binary, isSecond) {
     }
 
     // Execute the task.
-    console.log(`[fuzz-exec] calling ${task.name}${task.deferred ? ' (after defer)' : ''}`);
+    console.log(`[fuzz-exec] export ${task.name}${task.deferred ? ' (after defer)' : ''}`);
     let result;
     try {
       result = task.func();

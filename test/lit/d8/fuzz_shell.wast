@@ -14,6 +14,6 @@
 ;;
 ;; RUN: v8 %S/../../../scripts/fuzz_shell.js -- %t.wasm | filecheck %s
 ;;
-;; CHECK: [fuzz-exec] calling test
+;; CHECK: [fuzz-exec] export test
 ;; CHECK: [fuzz-exec] note result: test => 42
 

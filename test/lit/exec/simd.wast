@@ -7,7 +7,7 @@
 
  (data $0 (i64.const 0) "abcdefg")
 
- ;; CHECK:      [fuzz-exec] calling load8x8_s
+ ;; CHECK:      [fuzz-exec] export load8x8_s
  ;; CHECK-NEXT: [fuzz-exec] note result: load8x8_s => i32x4 0x00620061 0x00640063 0x00660065 0x00000067
  (func $load8x8_s (export "load8x8_s") (result v128)
   (v128.load8x8_s align=2
@@ -15,7 +15,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling load32x2_u
+ ;; CHECK:      [fuzz-exec] export load32x2_u
  ;; CHECK-NEXT: [trap final > memory: 13835058055282163712 > 1048576]
  (func $load32x2_u (export "load32x2_u") (result v128)
   ;; This large 64-bit address is out of bounds, and this should trap.
@@ -24,7 +24,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling i8x16.avgr_u
+ ;; CHECK:      [fuzz-exec] export i8x16.avgr_u
  ;; CHECK-NEXT: [fuzz-exec] note result: i8x16.avgr_u => i32x4 0x80808080 0x80808080 0x80808080 0x80808080
  (func $i8x16.avgr_u (export "i8x16.avgr_u") (result v128)
   (i8x16.avgr_u
@@ -34,13 +34,13 @@
  )
 )
 
-;; CHECK:      [fuzz-exec] calling load8x8_s
+;; CHECK:      [fuzz-exec] export load8x8_s
 ;; CHECK-NEXT: [fuzz-exec] note result: load8x8_s => i32x4 0x00620061 0x00640063 0x00660065 0x00000067
 
-;; CHECK:      [fuzz-exec] calling load32x2_u
+;; CHECK:      [fuzz-exec] export load32x2_u
 ;; CHECK-NEXT: [trap final > memory: 13835058055282163712 > 1048576]
 
-;; CHECK:      [fuzz-exec] calling i8x16.avgr_u
+;; CHECK:      [fuzz-exec] export i8x16.avgr_u
 ;; CHECK-NEXT: [fuzz-exec] note result: i8x16.avgr_u => i32x4 0x80808080 0x80808080 0x80808080 0x80808080
 ;; CHECK-NEXT: [fuzz-exec] comparing i8x16.avgr_u
 ;; CHECK-NEXT: [fuzz-exec] comparing load32x2_u

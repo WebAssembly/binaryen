@@ -10,7 +10,7 @@
 
  (type $B (struct (field (mut anyref))))
 
- ;; CHECK:      [fuzz-exec] calling array
+ ;; CHECK:      [fuzz-exec] export array
  ;; CHECK-NEXT: [exception thrown: A object(null)]
  (func $array (export "array") (result (ref $A))
   ;; Throw a very large array. We should not print all 12K items in it, as that
@@ -23,7 +23,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling struct
+ ;; CHECK:      [fuzz-exec] export struct
  ;; CHECK-NEXT: [exception thrown: B object(null)]
  (func $struct (export "struct") (result (ref $B))
   (local $x (ref $B))

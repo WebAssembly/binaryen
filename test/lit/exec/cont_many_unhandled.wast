@@ -15,7 +15,7 @@
   (func $empty
   )
 
-  ;; CHECK:      [fuzz-exec] calling a
+  ;; CHECK:      [fuzz-exec] export a
   ;; CHECK-NEXT: [exception thrown: tag]
   (func $a (export "a")
     (resume_throw $cont $tag
@@ -25,13 +25,13 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling b
+  ;; CHECK:      [fuzz-exec] export b
   ;; CHECK-NEXT: [exception thrown: unhandled suspend]
   (func $b (export "b")
     (suspend $tag)
   )
 
-  ;; CHECK:      [fuzz-exec] calling c
+  ;; CHECK:      [fuzz-exec] export c
   ;; CHECK-NEXT: [exception thrown: unhandled suspend]
   (func $c (export "c")
     (suspend $tag)
