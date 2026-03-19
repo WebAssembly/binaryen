@@ -2108,7 +2108,13 @@ struct OptimizeInstructions
     // Just like other RMW operations, lower to basic operations when operating
     // on unshared memory.
     auto ref = builder.addVar(getFunction(), curr->ref->type);
-    auto expected = builder.addVar(getFunction(), curr->type);
+    auto expectedType = curr->type;
+    if (expectedType.isRef()) {
+      expectedType =
+        Type(HeapTypes::eq.getBasic(expectedType.getHeapType().getShared()),
+             Nullable);
+    }
+    auto expected = builder.addVar(getFunction(), expectedType);
     auto replacement = builder.addVar(getFunction(), curr->type);
     auto result = builder.addVar(getFunction(), curr->type);
     auto* block =
@@ -2122,7 +2128,7 @@ struct OptimizeInstructions
                             MemoryOrder::Unordered,
                             curr->type),
       curr->type);
-    auto* rhs = builder.makeLocalGet(expected, curr->type);
+    auto* rhs = builder.makeLocalGet(expected, expectedType);
     Expression* pred = nullptr;
     if (curr->type.isRef()) {
       pred = builder.makeRefEq(lhs, rhs);
