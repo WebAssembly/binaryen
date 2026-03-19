@@ -574,6 +574,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
         break;
       case HeapTypeKind::Cont:
         interestingHeapSubTypes[cont].push_back(type);
+        sigConts[type.getContinuation().type].push_back(type);
         break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
@@ -5467,9 +5468,10 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
   int tries = fuzzParams->TRIES;
   auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
   Index numAddedParams;
-  std::optional<Signature> newSig;
+  std::optional<HeapType> newSigType;
   while (tries-- > 0) {
-    auto pickedSig = pick(funcTypes).getSignature();
+    auto pickedSigType = pick(funcTypes);
+    auto pickedSig = pickedSigType.getSignature();
     auto numNewParams = pickedSig.params.size();
     if (numNewParams < numOldParams) {
       // Too short.
@@ -5485,16 +5487,16 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
       }
     }
     if (!bad) {
-      newSig = pickedSig;
+      newSigType = pickedSigType;
       break;
     }
   }
 
   // If we failed to find a signature, either use the current one (binding no
   // new params) or invent a new one, adding one param.
-  if (!newSig) {
+  if (!newSigType) {
     if (oneIn(2)) {
-      newSig = sig;
+      newSigType = sig;
     } else {
       std::vector<Type> newParams;
       for (auto t : sig.params) {
@@ -5502,14 +5504,26 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
       }
       auto newParam = getSingleConcreteType();
       newParams.insert(newParams.begin(), newParam);
-      newSig = Signature(Type(newParams), sig.results);
+      newSigType = Signature(Type(newParams), sig.results);
     }
   }
-  auto newCont = Continuation(*newSig); // TODO: use interestingHeapType oneIn2
-  auto newType = Type(newCont, NonNullable, Exact);
+  auto newSig = newSigType->getSignature();
+
+  // Pick a continuation type for the signature. If existing continuations use
+  // it, usually pick one of them.
+  auto& newSigConts = sigConts[*newSigType];
+  HeapType newCont;
+  if (!newSigConts.empty() && !oneIn(5)) {
+    newCont = pick(newSigConts);
+  } else {
+    newCont = Continuation(*newSig);
+  }
+  Type newType = Type(newCont, NonNullable, Exact);
+
+  // Generate the new args and the cont.bind.
   std::vector<Expression*> newArgs;
   for (Index i = 0; i < numAddedParams; i++) {
-    newArgs.push_back(make(newSig->params[i]));
+    newArgs.push_back(make(newSig.params[i]));
   }
   return builder.makeContBind(type.getHeapType(), newArgs, make(newType));
 }

@@ -217,6 +217,9 @@ private:
   // All arrays that are mutable.
   std::vector<HeapType> mutableArrays;
 
+  // Mapping of signatures to the continuations they are used by.
+  std::unordered_map<HeapType, std::vector<HeapType>> sigConts;
+
   // All tags that are valid as exception tags (which cannot have results).
   std::vector<Tag*> exceptionTags;
 
