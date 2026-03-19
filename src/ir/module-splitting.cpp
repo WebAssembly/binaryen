@@ -1194,9 +1194,9 @@ void ModuleSplitter::shareImportableItems() {
         for (auto* ref : FindAll<RefFunc>(secondaryGlobal->init).list) {
           // If ref.func's function is in a different secondary module, we
           // create a trampoline here.
-          if (allSecondaryFuncs.count(ref->func)) {
-            Index targetIndex = funcToSecondaryIndex.at(ref->func);
-            if (secondaries[targetIndex].get() != secondary) {
+          if (auto targetIndexIt = funcToSecondaryIndex.find(ref->func);
+              targetIndexIt != funcToSecondaryIndex.end()) {
+            if (secondaries[targetIndexIt->second].get() != secondary) {
               ref->func = getTrampoline(ref->func);
             }
           }
