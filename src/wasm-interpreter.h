@@ -2254,6 +2254,10 @@ public:
     VISIT(expected, curr->expected)
     VISIT(timeout, curr->timeout)
 
+    if (!curr->ref->type.isShared()) {
+      trap("cannot struct.wait a non-shared object");
+    }
+
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
