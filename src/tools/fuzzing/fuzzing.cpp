@@ -5467,7 +5467,7 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
   // bind a and b.
   int tries = fuzzParams->TRIES;
   auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
-  Index numAddedParams;
+  Index numAddedParams = -1;
   std::optional<HeapType> newSigType;
   while (tries-- > 0) {
     auto pickedSigType = pick(funcTypes);
