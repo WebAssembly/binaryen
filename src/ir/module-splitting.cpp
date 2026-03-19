@@ -998,10 +998,10 @@ void ModuleSplitter::shareImportableItems() {
 
     NameCollector collector(used);
     // We shouldn't use collector.walkModuleCode here, because we don't want to
-    // walk on global initializers. At this point, all globals are still in the
-    // primary module, so if we walk on global initializers here, globals appear
-    // in their initialalizers will be all marked as used in the primary module,
-    // which is not we want.
+    // walk global initializers. At this point, all globals are still in the
+    // primary module, so if we walk global initializers here, other globals appearing
+    // in their initializers will all be marked as used in the primary module,
+    // which is not what we want.
     //
     // For example, we have (global $a i32 (global.get $b)). Because $a is at
     // this point still in the primary module, $b will be marked as "used" in
@@ -1050,7 +1050,7 @@ void ModuleSplitter::shareImportableItems() {
     secondaryUsed.push_back(getUsedNames(*secondaryPtr));
   }
 
-  // Compute transitive closure of globals referenced in other globals'
+  // Compute the transitive closure of globals referenced in other globals'
   // initializers. Since globals can reference other globals, we must ensure
   // that if a global is used in a module, all its dependencies are also marked
   // as used.
