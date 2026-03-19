@@ -1136,11 +1136,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                        structGet});
       replaceCurrent(block);
       // Record the new data flow into and out of the new scratch local. This is
-      // necessary in case `ref` gets optimized later so we can detect that it
-      // flows to the new struct.atomic.get.
+      // necessary in case `ref` gets processed later so we can detect that it
+      // flows to the new struct.atomic.get, which may need to be replaced.
       analyzer.parents.setParent(curr->ref, setRefScratch);
       analyzer.parents.setParent(getRefScratch, structGet);
-      analyzer.parents.setParent(structGet, block);
       return;
     }
     if (analyzer.getInteraction(curr->ref) != ParentChildInteraction::Flows) {
