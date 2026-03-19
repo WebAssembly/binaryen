@@ -79,6 +79,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "support/insert_ordered.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -1073,20 +1074,19 @@ void ModuleSplitter::shareImportableItems() {
   // that if a global is used in a module, all its dependencies are also marked
   // as used.
   auto computeTransitiveGlobals = [&](UsedNames& used) {
-    std::vector<Name> worklist(used.globals.begin(), used.globals.end());
-    std::unordered_set<Name> visited(used.globals.begin(), used.globals.end());
+    UniqueNonrepeatingDeferredQueue<Name> worklist;
+    for (auto global : used.globals) {
+      worklist.push(global);
+    }
     while (!worklist.empty()) {
-      Name name = worklist.back();
-      worklist.pop_back();
+      Name name = worklist.pop();
       // At this point all globals are still in the primary module, so this
       // exists
       auto* global = primary.getGlobal(name);
       if (!global->imported() && global->init) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          if (visited.insert(get->name).second) {
-            worklist.push_back(get->name);
-            used.globals.insert(get->name);
-          }
+          worklist.push(get->name);
+          used.globals.insert(get->name);
         }
       }
     }
