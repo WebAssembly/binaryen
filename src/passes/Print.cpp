@@ -3971,8 +3971,8 @@ std::ostream& operator<<(std::ostream& o, wasm::Function& func) {
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
-  return wasm::printExpression(&expression, o);
+std::ostream& operator<<(std::ostream& o, const wasm::Expression& expression) {
+  return wasm::printExpression(const_cast<Expression*>(&expression), o);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {

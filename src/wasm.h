@@ -818,7 +818,7 @@ public:
   }
 
   // Print the expression to stderr. Meant for use while debugging.
-  void dump();
+  void dump() const;
 };
 
 const char* getExpressionName(Expression* curr);
@@ -2766,7 +2766,7 @@ struct ShallowExpression {
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
 std::ostream& operator<<(std::ostream& o, wasm::Function& func);
-std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, const wasm::Expression& expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);

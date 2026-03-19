@@ -22,6 +22,7 @@ namespace wasm {
 class Pass;
 
 // Normal passes:
+Pass* createDeadStoreEliminationPass();
 Pass* createAbstractTypeRefiningPass();
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();

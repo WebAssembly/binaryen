@@ -90,6 +90,7 @@ bool PassRegistry::isPassHidden(std::string name) {
 // PassRunner
 
 void PassRegistry::registerPasses() {
+  registerPass("ldse", "removes dead stores", createDeadStoreEliminationPass);
   registerPass("alignment-lowering",
                "lower unaligned loads and stores to smaller aligned ones",
                createAlignmentLoweringPass);
