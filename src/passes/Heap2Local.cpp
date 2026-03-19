@@ -203,14 +203,14 @@ struct EscapeAnalyzer {
   // We use a lazy graph here because we only need this for reference locals,
   // and even among them, only ones we see an allocation is stored to.
   const LazyLocalGraph& localGraph;
-  const Parents& parents;
+  Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
 
   const PassOptions& passOptions;
   Module& wasm;
 
   EscapeAnalyzer(const LazyLocalGraph& localGraph,
-                 const Parents& parents,
+                 Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
                  Module& wasm)
@@ -1126,15 +1126,21 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // optimize `ref` later and need to replace it with a null.
       auto refType = curr->ref->type.with(Nullable);
       auto refScratch = builder.addVar(func, refType);
-      auto* block = builder.makeBlock(
-        {builder.makeLocalSet(refScratch, curr->ref),
-         builder.makeDrop(curr->expected),
-         builder.makeDrop(curr->replacement),
-         builder.makeStructGet(curr->index,
-                               builder.makeLocalGet(refScratch, refType),
-                               curr->order,
-                               curr->type)});
+      auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
+      auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
+      auto* structGet = builder.makeStructGet(
+        curr->index, getRefScratch, curr->order, curr->type);
+      auto* block = builder.makeBlock({setRefScratch,
+                                       builder.makeDrop(curr->expected),
+                                       builder.makeDrop(curr->replacement),
+                                       structGet});
       replaceCurrent(block);
+      // Record the new data flow into and out of the new scratch local. This is
+      // necessary in case `ref` gets optimized later so we can detect that it
+      // flows to the new struct.atomic.get.
+      analyzer.parents.setParent(curr->ref, setRefScratch);
+      analyzer.parents.setParent(getRefScratch, structGet);
+      analyzer.parents.setParent(structGet, block);
       return;
     }
     if (analyzer.getInteraction(curr->ref) != ParentChildInteraction::Flows) {

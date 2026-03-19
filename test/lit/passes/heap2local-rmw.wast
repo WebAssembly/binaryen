@@ -958,13 +958,13 @@
   )
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $test (type $2)
+  ;; CHECK:      (func $cmpxchg-expected-first (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 (ref null (exact $struct)))
   ;; CHECK-NEXT:  (local $2 (ref null $array))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $array))
-  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (ref.null none)
@@ -985,13 +985,16 @@
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.atomic.get $struct 0
-  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    (block (result (ref null $array))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $cmpxchg-expected-first
     (drop
       (struct.atomic.rmw.cmpxchg $struct 0
         (struct.new_default $struct)
@@ -1001,8 +1004,78 @@
         ;; refinalize the cmpxchg to have the array replacement type, then get
         ;; confused and crash when later processing the `ref` operand.
         (array.new_default $array (i32.const 1))
+        ;; Normally replacements escape and cannot be optimized, but the cmpxchg
+        ;; is replaced when `expected` is processed, so we end up seeing that
+        ;; this doesn't escape.
         (array.new_default $array (i32.const 2))
       )
     )
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (struct (field (mut (ref null $array)))))
+    (type $struct (struct (field (mut (ref null $array)))))
+    ;; CHECK:       (type $array (array (mut i32)))
+    (type $array (array (field (mut i32))))
+  )
+  ;; CHECK:      (type $2 (func (result (ref $array))))
+
+  ;; CHECK:      (func $cmpxchg-expected-first (type $2) (result (ref $array))
+  ;; CHECK-NEXT:  (local $array (ref $array))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 (ref null (exact $struct)))
+  ;; CHECK-NEXT:  (local $3 (ref null $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $array
+  ;; CHECK-NEXT:      (array.new_default $array
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result (ref null $array))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $array)
+  ;; CHECK-NEXT: )
+  (func $cmpxchg-expected-first (result (ref $array))
+    ;; Same as before, but now the replacement still escapes. Nothing should go
+    ;; wrong.
+    (local $array (ref $array))
+    (drop
+      (struct.atomic.rmw.cmpxchg $struct 0
+        (struct.new_default $struct)
+        (array.new_default $array (i32.const 1))
+        (local.tee $array
+          (array.new_default $array (i32.const 2))
+        )
+      )
+    )
+    (local.get $array)
   )
 )
