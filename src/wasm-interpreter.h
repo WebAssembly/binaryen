@@ -2254,7 +2254,7 @@ public:
     VISIT(expected, curr->expected)
     VISIT(timeout, curr->timeout)
 
-    if (!curr->ref->type.isShared()) {
+    if (!curr->ref->type.getHeapType().isShared()) {
       trap("cannot struct.wait a non-shared object");
     }
 
