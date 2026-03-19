@@ -632,8 +632,8 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     }
   } gatherer(*this);
   // We shouldn't use collector.walkModuleCode here, because we don't want to
-  // walk on global initializers. At this point, all globals are still in the
-  // primary module, so if we walk on global initializers here, it will create
+  // walk global initializers. At this point, all globals are still in the
+  // primary module, so if we walk global initializers here, it will create
   // unnecessary trampolines.
   //
   // For example, we have (global $a funcref (ref.func $foo)), and $foo was
