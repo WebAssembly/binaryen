@@ -19,20 +19,20 @@
   (global $e i32 (global.get $f))
   (global $d i32 (global.get $e))
 
-  ;; PRIMARY:  (global $f i32 (i32.const 42))
-  ;; PRIMARY:  (global $e i32 (global.get $f))
+  ;; PRIMARY:      (global $f i32 (i32.const 42))
+  ;; PRIMARY:      (global $e i32 (global.get $f))
 
-  ;; PRIMARY:  (export "global" (global $f))
-  ;; PRIMARY:  (export "global_1" (global $e))
+  ;; PRIMARY:      (export "global" (global $f))
+  ;; PRIMARY:      (export "global_1" (global $e))
 
-  ;; SECONDARY:  (import "primary" "global" (global $f i32))
-  ;; SECONDARY:  (import "primary" "global_1" (global $e i32))
+  ;; SECONDARY:      (import "primary" "global" (global $f i32))
+  ;; SECONDARY:      (import "primary" "global_1" (global $e i32))
 
-  ;; SECONDARY:  (global $c i32 (i32.const 42))
-  ;; SECONDARY:  (global $b i32 (global.get $c))
-  ;; SECONDARY:  (global $a i32 (global.get $b))
+  ;; SECONDARY:      (global $c i32 (i32.const 42))
+  ;; SECONDARY:      (global $b i32 (global.get $c))
+  ;; SECONDARY:      (global $a i32 (global.get $b))
 
-  ;; SECONDARY:  (global $d i32 (global.get $e))
+  ;; SECONDARY:      (global $d i32 (global.get $e))
 
   ;; PRIMARY:      (func $keep
   ;; PRIMARY-NEXT:  (drop
