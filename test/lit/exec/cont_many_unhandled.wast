@@ -16,7 +16,7 @@
   )
 
   ;; CHECK:      [fuzz-exec] export a
-  ;; CHECK-NEXT: [exception thrown: tag ()]
+  ;; CHECK-NEXT: [exception thrown: tag]
   (func $a (export "a")
     (resume_throw $cont $tag
       (cont.new $cont

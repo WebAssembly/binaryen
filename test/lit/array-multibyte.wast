@@ -7,13 +7,13 @@
 ;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all -S -o -
 
 (module
+
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $i8_array (array (mut i8)))
   ;; RTRIP:      (type $0 (func))
 
   ;; RTRIP:      (type $i8_array (array (mut i8)))
-
   (type $i8_array (array (mut i8)))
 
   ;; CHECK:      (global $arr (ref $i8_array) (array.new_default $i8_array
