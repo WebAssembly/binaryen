@@ -4213,6 +4213,9 @@ public:
     VISIT(timeout, curr->timeout)
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
+    if (!info.instance->wasm.getMemory(info.name)->shared) {
+      trap("cannot atomic.wait a non-shared memory");
+    }
     auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), bytes, memorySizeBytes);
