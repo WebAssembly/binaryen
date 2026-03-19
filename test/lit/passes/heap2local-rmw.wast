@@ -1079,3 +1079,70 @@
     (local.get $array)
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (type $0 (func))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $array (array i8))
+    (type $array (array i8))
+    ;; CHECK:       (type $struct (struct (field (mut anyref))))
+    (type $struct (struct (field (mut anyref))))
+  )
+  ;; CHECK:      (func $test-scratch-oob (type $0)
+  ;; CHECK-NEXT:  (local $a arrayref)
+  ;; CHECK-NEXT:  (local $1 (ref null (exact $struct)))
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.new_fixed $array 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result anyref)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test-scratch-oob
+    (local $a arrayref)
+    ;; This allocation and set get optimized, creating the LocalGraph flower.
+    (local.set $a
+      (array.new_fixed $array 0)
+    )
+    (drop
+      ;; Then `expected` gets optimized, creating a new scratch local. Since the
+      ;; flower is already created, the index of the scratch local would be out
+      ;; of bounds if we tried to look it up in the LocalGraph.
+      (struct.atomic.rmw.cmpxchg $struct 0
+        (struct.new_default $struct)
+        (array.new_fixed $array 0)
+        (array.new_fixed $array 0)
+      )
+    )
+    (unreachable)
+  )
+)
