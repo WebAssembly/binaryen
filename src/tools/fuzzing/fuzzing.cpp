@@ -5516,7 +5516,7 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
   if (!newSigConts.empty() && !oneIn(5)) {
     newCont = pick(newSigConts);
   } else {
-    newCont = Continuation(*newSig);
+    newCont = Continuation(newSig);
   }
   Type newType = Type(newCont, NonNullable, Exact);
 
