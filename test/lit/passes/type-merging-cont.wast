@@ -64,11 +64,21 @@
 
   ;; CHECK:       (type $3 (func))
 
-  ;; CHECK:      (func $use-rec-group (type $3)
-  ;; CHECK-NEXT:  (local $t (ref null $contD))
+  ;; CHECK:      (func $uses (type $3)
+  ;; CHECK-NEXT:  (local $func (ref $func))
+  ;; CHECK-NEXT:  (local $funcB (ref $func))
+  ;; CHECK-NEXT:  (local $cont (ref $cont))
+  ;; CHECK-NEXT:  (local $contB (ref $cont))
+  ;; CHECK-NEXT:  (local $contC (ref $cont))
+  ;; CHECK-NEXT:  (local $contD (ref $contD))
   ;; CHECK-NEXT: )
-  (func $use-rec-group
-   (local $t (ref null $contD))
+  (func $uses
+    (local $func (ref $func))
+    (local $funcB (ref $funcB))
+    (local $cont (ref $cont))
+    (local $contB (ref $contB))
+    (local $contC (ref $contC))
+    (local $contD (ref $contD))
   )
 )
 
