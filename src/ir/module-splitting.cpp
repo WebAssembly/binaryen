@@ -45,7 +45,8 @@
 //      instantiation.
 //
 //   8. Export globals, tags, tables, and memories from the primary module and
-//      import them in the secondary modules.
+//      mport them in the secondary modules. If possible, move those module
+//      items instead to the secondary modules.
 //
 // Functions can be used or referenced three ways in a WebAssembly module: they
 // can be exported, called, or referenced with ref.func. The above procedure
