@@ -1165,6 +1165,7 @@ void ModuleSplitter::shareImportableItems() {
       getUsingSecondaries(global->name, &UsedNames::globals);
     bool usedInPrimary = primaryUsed.globals.count(global->name);
     if (!usedInPrimary && usingSecondaries.size() == 1) {
+      // We are moving this global to this secondary module
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyGlobal(global.get(), *secondary);
       globalsToRemove.push_back(global->name);
@@ -1178,7 +1179,7 @@ void ModuleSplitter::shareImportableItems() {
           exportImportFunction(ref->func, {secondary});
         }
       }
-    } else {
+    } else { // We are NOT moving this global to the secondary module
       for (auto* secondary : usingSecondaries) {
         auto* secondaryGlobal =
           ModuleUtils::copyGlobal(global.get(), *secondary);
