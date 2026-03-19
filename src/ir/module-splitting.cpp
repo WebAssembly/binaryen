@@ -999,9 +999,9 @@ void ModuleSplitter::shareImportableItems() {
     NameCollector collector(used);
     // We shouldn't use collector.walkModuleCode here, because we don't want to
     // walk global initializers. At this point, all globals are still in the
-    // primary module, so if we walk global initializers here, other globals appearing
-    // in their initializers will all be marked as used in the primary module,
-    // which is not what we want.
+    // primary module, so if we walk global initializers here, other globals
+    // appearing in their initializers will all be marked as used in the primary
+    // module, which is not what we want.
     //
     // For example, we have (global $a i32 (global.get $b)). Because $a is at
     // this point still in the primary module, $b will be marked as "used" in
