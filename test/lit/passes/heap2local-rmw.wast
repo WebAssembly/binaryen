@@ -590,7 +590,7 @@
   ;; CHECK:      (func $rmw-cmpxchg-ref (type $4) (param $0 (ref null $struct)) (param $1 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
   ;; CHECK-NEXT:  (local $3 (ref null $struct))
-  ;; CHECK-NEXT:  (local $4 (ref null $struct))
+  ;; CHECK-NEXT:  (local $4 eqref)
   ;; CHECK-NEXT:  (local $5 (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
@@ -1077,5 +1077,141 @@
       )
     )
     (local.get $array)
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $outer (struct (field (mut (ref $inner)))))
+    (type $outer (struct (field (mut (ref $inner)))))
+    ;; CHECK:       (type $inner (struct))
+    (type $inner (struct))
+
+    ;; CHECK:       (type $shared-outer (shared (struct (field (mut (ref $shared-inner))))))
+    (type $shared-outer (shared (struct (field (mut (ref $shared-inner))))))
+    ;; CHECK:       (type $shared-inner (shared (struct)))
+    (type $shared-inner (shared (struct)))
+  )
+  ;; CHECK:      (type $4 (func))
+
+  ;; CHECK:      (func $cmpxchg-non-nullable-field (type $4)
+  ;; CHECK-NEXT:  (local $0 (ref $inner))
+  ;; CHECK-NEXT:  (local $1 (ref $inner))
+  ;; CHECK-NEXT:  (local $2 (ref $inner))
+  ;; CHECK-NEXT:  (local $3 eqref)
+  ;; CHECK-NEXT:  (local $4 (ref $inner))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $inner))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (struct.new_default $inner)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (struct.new_default $inner)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cmpxchg-non-nullable-field
+    (drop
+      (struct.atomic.rmw.cmpxchg $outer 0
+        ;; When `ref` gets optimized, we need to make sure the scratch local for
+        ;; `expected` is nullable, even though the operand and field are both
+        ;; non-nullable. This avoids type errors when we later optimize the
+        ;; `expected` field and make it a nullref.
+        (struct.new $outer
+          (struct.new_default $inner)
+        )
+        (struct.new_default $inner)
+        (struct.new_default $inner)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cmpxchg-non-nullable-field-shared (type $4)
+  ;; CHECK-NEXT:  (local $0 (ref $shared-inner))
+  ;; CHECK-NEXT:  (local $1 (ref $shared-inner))
+  ;; CHECK-NEXT:  (local $2 (ref $shared-inner))
+  ;; CHECK-NEXT:  (local $3 (ref null (shared eq)))
+  ;; CHECK-NEXT:  (local $4 (ref $shared-inner))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $shared-inner))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (struct.new_default $shared-inner)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null (shared none))
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:      (ref.null (shared none))
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (struct.new_default $shared-inner)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cmpxchg-non-nullable-field-shared
+    (drop
+      (struct.atomic.rmw.cmpxchg $shared-outer 0
+        ;; Same, but now with shared types. The scratch local must be a shared
+        ;; eqref.
+        (struct.new $shared-outer
+          (struct.new_default $shared-inner)
+        )
+        (struct.new_default $shared-inner)
+        (struct.new_default $shared-inner)
+      )
+    )
   )
 )
