@@ -76,7 +76,7 @@
 )
 
 (module
-  (type $t (struct (field (mut waitqueue))))
+  (type $t (shared (struct (field (mut waitqueue)))))
 
   (global $g (mut (ref null $t)) (struct.new $t (i32.const 0)))
 
