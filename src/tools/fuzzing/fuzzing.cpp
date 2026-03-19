@@ -5472,6 +5472,10 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
   while (tries-- > 0) {
     auto pickedSigType = pick(funcTypes);
     auto pickedSig = pickedSigType.getSignature();
+    if (pickedSig.results != sig.results) {
+      // Results must match.
+      continue;
+    }
     auto numNewParams = pickedSig.params.size();
     if (numNewParams < numOldParams) {
       // Too short.
