@@ -555,6 +555,7 @@ public:
   void visitArrayNewFixed(ArrayNewFixed* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
+  void visitArrayLoad(ArrayLoad* curr);
   void visitArrayStore(ArrayStore* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
@@ -3815,6 +3816,31 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
                   curr,
                   "array.set must have the proper type");
   shouldBeTrue(element.mutable_, curr, "array.set type must be mutable");
+}
+
+void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
+  shouldBeTrue(getModule()->features.hasMultibyte(),
+               curr,
+               "array.load requires multibyte [--enable-multibyte]");
+  shouldBeEqualOrFirstIsUnreachable(curr->index->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array load index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  const char* mustBeArray = "array load target should be an array reference";
+  if (curr->type == Type::unreachable ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      curr->ref->type.getHeapType().isBottom() ||
+      !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
+    return;
+  }
+
+  auto heapType = curr->ref->type.getHeapType();
+  const auto& element = heapType.getArray().element;
+  shouldBeTrue(
+    element.packedType == Field::i8, curr, "array load type must be i8");
 }
 
 void FunctionValidator::visitArrayStore(ArrayStore* curr) {

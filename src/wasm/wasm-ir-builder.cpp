@@ -567,6 +567,13 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitArrayLoad(ArrayLoad* curr,
+                          std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayLoad(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayStore(ArrayStore* curr,
                            std::optional<HeapType> ht = std::nullopt,
                            std::optional<Type> valueType = std::nullopt) {
@@ -2392,6 +2399,22 @@ IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
   push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
+                                  unsigned bytes,
+                                  bool signed_,
+                                  Type type) {
+  if (!arrayType.isArray()) {
+    return Err{"expected array type annotation on array load"};
+  }
+
+  ArrayLoad curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayLoad(&curr, arrayType));
+
+  CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
+  push(builder.makeArrayLoad(bytes, signed_, curr.ref, curr.index, type));
   return Ok{};
 }
 

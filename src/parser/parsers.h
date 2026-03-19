@@ -1783,6 +1783,18 @@ Result<> makeLoad(Ctx& ctx,
                   int bytes,
                   bool isAtomic) {
 
+  if (ctx.in.takeSExprStart("type"sv)) {
+    auto arrayType = typeidx(ctx);
+    CHECK_ERR(arrayType);
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
+    }
+
+    return ctx.makeArrayLoad(
+      pos, annotations, type, bytes, signed_, *arrayType);
+  }
+
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
 

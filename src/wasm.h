@@ -739,6 +739,7 @@ public:
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
+    ArrayLoadId,
     ArrayStoreId,
     ArrayLenId,
     ArrayCopyId,
@@ -1868,6 +1869,19 @@ public:
   MemoryOrder order = MemoryOrder::Unordered;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
+  void finalize();
+};
+
+class ArrayLoad : public SpecificExpression<Expression::ArrayLoadId> {
+public:
+  ArrayLoad() = default;
+  ArrayLoad(MixedArena& allocator) {}
+
+  uint8_t bytes;
+  bool signed_ = false;
+  Expression* ref;
+  Expression* index;
 
   void finalize();
 };

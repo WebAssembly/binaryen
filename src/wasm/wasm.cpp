@@ -1337,6 +1337,12 @@ void ArrayGet::finalize() {
   }
 }
 
+void ArrayLoad::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
 void ArraySet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       value->type == Type::unreachable) {

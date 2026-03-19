@@ -3288,6 +3288,15 @@ void WasmBinaryReader::readVars() {
   }
 }
 
+Result<> WasmBinaryReader::readLoad(unsigned bytes, bool signed_, Type type) {
+  auto [mem, align, offset, backing] = getMemarg();
+  if (backing == BackingType::Array) {
+    HeapType arrayType = getIndexedHeapType();
+    return builder.makeArrayLoad(arrayType, bytes, signed_, type);
+  }
+  return builder.makeLoad(bytes, signed_, offset, align, type, mem);
+}
+
 Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
   auto [mem, align, offset, backing] = getMemarg();
   if (backing == BackingType::Array) {
@@ -3635,62 +3644,34 @@ Result<> WasmBinaryReader::readInst() {
       return builder.makeConst(getFloat32Literal());
     case BinaryConsts::F64Const:
       return builder.makeConst(getFloat64Literal());
-    case BinaryConsts::I32LoadMem8S: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(1, true, offset, align, Type::i32, mem);
-    }
-    case BinaryConsts::I32LoadMem8U: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(1, false, offset, align, Type::i32, mem);
-    }
-    case BinaryConsts::I32LoadMem16S: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(2, true, offset, align, Type::i32, mem);
-    }
-    case BinaryConsts::I32LoadMem16U: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(2, false, offset, align, Type::i32, mem);
-    }
-    case BinaryConsts::I32LoadMem: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(4, false, offset, align, Type::i32, mem);
-    }
-    case BinaryConsts::I64LoadMem8S: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(1, true, offset, align, Type::i64, mem);
-    }
-    case BinaryConsts::I64LoadMem8U: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(1, false, offset, align, Type::i64, mem);
-    }
-    case BinaryConsts::I64LoadMem16S: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(2, true, offset, align, Type::i64, mem);
-    }
-    case BinaryConsts::I64LoadMem16U: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(2, false, offset, align, Type::i64, mem);
-    }
-    case BinaryConsts::I64LoadMem32S: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(4, true, offset, align, Type::i64, mem);
-    }
-    case BinaryConsts::I64LoadMem32U: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(4, false, offset, align, Type::i64, mem);
-    }
-    case BinaryConsts::I64LoadMem: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(8, false, offset, align, Type::i64, mem);
-    }
-    case BinaryConsts::F32LoadMem: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(4, false, offset, align, Type::f32, mem);
-    }
-    case BinaryConsts::F64LoadMem: {
-      auto [mem, align, offset, backing] = getMemarg();
-      return builder.makeLoad(8, false, offset, align, Type::f64, mem);
-    }
+    case BinaryConsts::I32LoadMem8S:
+      return readLoad(1, true, Type::i32);
+    case BinaryConsts::I32LoadMem8U:
+      return readLoad(1, false, Type::i32);
+    case BinaryConsts::I32LoadMem16S:
+      return readLoad(2, true, Type::i32);
+    case BinaryConsts::I32LoadMem16U:
+      return readLoad(2, false, Type::i32);
+    case BinaryConsts::I32LoadMem:
+      return readLoad(4, false, Type::i32);
+    case BinaryConsts::I64LoadMem8S:
+      return readLoad(1, true, Type::i64);
+    case BinaryConsts::I64LoadMem8U:
+      return readLoad(1, false, Type::i64);
+    case BinaryConsts::I64LoadMem16S:
+      return readLoad(2, true, Type::i64);
+    case BinaryConsts::I64LoadMem16U:
+      return readLoad(2, false, Type::i64);
+    case BinaryConsts::I64LoadMem32S:
+      return readLoad(4, true, Type::i64);
+    case BinaryConsts::I64LoadMem32U:
+      return readLoad(4, false, Type::i64);
+    case BinaryConsts::I64LoadMem:
+      return readLoad(8, false, Type::i64);
+    case BinaryConsts::F32LoadMem:
+      return readLoad(4, false, Type::f32);
+    case BinaryConsts::F64LoadMem:
+      return readLoad(8, false, Type::f64);
     case BinaryConsts::I32StoreMem8: {
       return readStore(1, Type::i32);
     }

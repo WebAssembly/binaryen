@@ -1716,6 +1716,7 @@ public:
 
   void readExports();
 
+  Result<> readLoad(unsigned bytes, bool signed_, Type type);
   Result<> readStore(unsigned bytes, Type type);
 
   // The strings in the strings section (which are referred to by StringConst).
