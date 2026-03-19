@@ -61,7 +61,6 @@ namespace wasm {
 struct WasmException {
   Literal exn;
 };
-std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
 // An exception thrown when we try to execute non-constant code, that is, code
 // that we cannot properly evaluate at compile time (e.g. if it refers to an
@@ -4214,6 +4213,9 @@ public:
     VISIT(timeout, curr->timeout)
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
+    if (!info.instance->wasm.getMemory(info.name)->shared) {
+      trap("cannot atomic.wait a non-shared memory");
+    }
     auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), bytes, memorySizeBytes);
