@@ -3,41 +3,23 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec-before -q -o /dev/null 2>&1 | filecheck %s
 
 (module
-  ;; CHECK:      (type $t (struct (field (mut waitqueue))))
-  ;; RTRIP:      (type $t (struct (field (mut waitqueue))))
   (type $shared (shared (struct (field (mut waitqueue)))))
 
   (type $unshared (struct (field (mut waitqueue))))
 
-  ;; CHECK:      (func $wait (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.wait $t 0
-  ;; CHECK-NEXT:    (global.get $g)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $wait (type $0)
-  ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (struct.wait $t 0
-  ;; RTRIP-NEXT:    (global.get $g)
-  ;; RTRIP-NEXT:    (i32.const 0)
-  ;; RTRIP-NEXT:    (i64.const 0)
-  ;; RTRIP-NEXT:   )
-  ;; RTRIP-NEXT:  )
-  ;; RTRIP-NEXT: )
-  (func $wait-shared (param $t (ref $t))
-    (drop
-      (struct.wait $shared 0
-        (struct.new_default $shared)
-        (i32.const 0)
-        (i64.const 0)
-      )
+  ;; CHECK:      [fuzz-exec] export wait-shared
+  ;; CHECK-NEXT: [fuzz-exec] note result: wait-shared => 2
+  (func $wait-shared (export "wait-shared") (result i32)
+    (struct.wait $shared 0
+      (struct.new_default $shared)
+      (i32.const 0)
+      (i64.const 0)
     )
   )
 
-  (func $wait-unshared (param $t (ref $t))
+  ;; CHECK:      [fuzz-exec] export wait-unshared
+  ;; CHECK-NEXT: [trap cannot struct.wait a non-shared object]
+  (func $wait-unshared (export "wait-unshared")
     (drop
       (struct.wait $unshared 0
         (struct.new_default $unshared)
