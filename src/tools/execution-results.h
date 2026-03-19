@@ -20,9 +20,11 @@
 
 #include <deque>
 #include <memory>
+#include <unordered_set>
 
 #include "ir/import-names.h"
 #include "ir/import-utils.h"
+#include "ir/module-utils.h"
 #include "shell-interface.h"
 #include "support/utilities.h"
 #include "wasm-type.h"
@@ -437,9 +439,18 @@ struct ExecutionResults {
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
 
+  std::unordered_set<HeapType> publicTypes;
+
   // Execute a module and collect the results. Optionally, provide a second
   // module to link with it (like fuzz_shell's second module).
   void collect(Module& wasm, Module* second = nullptr) {
+    auto publicVec = ModuleUtils::getPublicHeapTypes(wasm);
+    publicTypes.insert(publicVec.begin(), publicVec.end());
+    if (second) {
+      auto secondPublicVec = ModuleUtils::getPublicHeapTypes(*second);
+      publicTypes.insert(secondPublicVec.begin(), secondPublicVec.end());
+    }
+
     try {
       // Instantiate the first module.
       LoggingExternalInterface interface(loggings, wasm);
@@ -537,13 +548,22 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
+    // Values may be recursive, so naively comparing their structures might
+    // recurse forever. Instead we need to check coinductive equality, which
+    // means we assume two values are equivalent until proven otherwise and do
+    // not recursively compare pairs of values we have already seen.
+    std::unordered_set<std::pair<GCData*, GCData*>> compared;
+    return areEqualImpl(a, b, compared);
+  }
+
+  bool areEqualImpl(Literal a,
+                    Literal b,
+                    std::unordered_set<std::pair<GCData*, GCData*>>& compared) {
     // Only compare some references. In general the optimizer may change
     // identities and structures of functions, types, and GC values in ways that
     // are not externally observable. We must therefore limit ourselves to
-    // comparing information that _is_ externally observable.
-    //
-    // TODO: We could compare more information when we know it will be
-    // externally visible, for example when the type of the value is public.
+    // comparing information that _is_ externally observable. This includes
+    // fields that are part of public types as well as configured JS prototypes.
     if (!a.type.isRef() || !b.type.isRef()) {
       return a == b;
     }
@@ -581,8 +601,51 @@ struct ExecutionResults {
     // However, we have no way of comparing pointer identities across
     // executions, so just recursively look for externally observable
     // differences in the prototypes.
-    if (!areEqual(a.getJSPrototype(), b.getJSPrototype())) {
+    if (!areEqualImpl(a.getJSPrototype(), b.getJSPrototype(), compared)) {
       return false;
+    }
+
+    // Check for public struct or array content.
+    auto publicType = getClosestPublicAncestor(htA);
+    if (publicType != getClosestPublicAncestor(htB)) {
+      // Since public types are externally observable, having different public
+      // types is an observable difference.
+      return false;
+    }
+    if (publicType && publicType->isData()) {
+      auto* dataA = a.getGCData().get();
+      auto* dataB = b.getGCData().get();
+      if (dataA == dataB) {
+        return true;
+      }
+      if (!compared.insert({dataA, dataB}).second) {
+        // We are already comparing these values. Assume they are equivalent
+        // (until possibly proven otherwise later) and do not recurse further.
+        return true;
+      }
+      compared.insert({dataA, dataB});
+
+      if (publicType->isStruct()) {
+        auto& fields = publicType->getStruct().fields;
+        auto& valuesA = dataA->values;
+        auto& valuesB = dataB->values;
+        for (Index i = 0; i < fields.size(); i++) {
+          if (!areEqualImpl(valuesA[i], valuesB[i], compared)) {
+            return false;
+          }
+        }
+      } else if (publicType->isArray()) {
+        auto& valuesA = dataA->values;
+        auto& valuesB = dataB->values;
+        if (valuesA.size() != valuesB.size()) {
+          return false;
+        }
+        for (Index i = 0; i < valuesA.size(); i++) {
+          if (!areEqualImpl(valuesA[i], valuesB[i], compared)) {
+            return false;
+          }
+        }
+      }
     }
 
     // Other differences are not observable, so conservatively consider the
@@ -590,13 +653,33 @@ struct ExecutionResults {
     return true;
   }
 
+  std::optional<HeapType> getClosestPublicAncestor(HeapType ht) {
+    while (true) {
+      if (publicTypes.count(ht)) {
+        return ht;
+      }
+      if (auto super = ht.getDeclaredSuperType()) {
+        ht = *super;
+      } else {
+        return std::nullopt;
+      }
+    }
+  }
+
   bool areEqual(Literals a, Literals b) {
+    std::unordered_set<std::pair<GCData*, GCData*>> compared;
+    return areEqualImpl(a, b, compared);
+  }
+
+  bool areEqualImpl(Literals a,
+                    Literals b,
+                    std::unordered_set<std::pair<GCData*, GCData*>>& compared) {
     if (a.size() != b.size()) {
       std::cout << "literal counts not identical! " << a << " != " << b << '\n';
       return false;
     }
     for (Index i = 0; i < a.size(); i++) {
-      if (!areEqual(a[i], b[i])) {
+      if (!areEqualImpl(a[i], b[i], compared)) {
         std::cout << "values not identical! " << a[i] << " != " << b[i] << '\n';
         return false;
       }

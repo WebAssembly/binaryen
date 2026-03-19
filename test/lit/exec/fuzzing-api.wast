@@ -29,6 +29,11 @@
 
  (type $i32 (struct i32))
 
+ (rec
+   (type $rec-A (struct (field (mut (ref null $rec-B)))))
+   (type $rec-B (struct (field (mut (ref null $rec-A)))))
+ )
+
  (table $table 10 20 funcref)
 
  ;; Note that the exported table appears first here, but in the binary and in
@@ -482,7 +487,6 @@
 
  ;; CHECK:      [fuzz-exec] export return-externref-exception
  ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => jserror
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $return-externref-exception (export "return-externref-exception") (result externref)
   ;; Call JS table.set in a way that throws (on out of bounds). The JS exception
   ;; is caught and returned from the function, so we can see what it looks like
@@ -497,6 +501,21 @@
    (unreachable)
   )
  )
+
+ ;; CHECK:      [fuzz-exec] export recursive-public-data
+ ;; CHECK-NEXT: [fuzz-exec] note result: recursive-public-data => object(null)
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $recursive-public-data (export "recursive-public-data") (result (ref null $rec-A))
+   ;; We should not infinitely recurse when comparing whether this recursive
+   ;; structure is equivalent in the two executions.
+   (local $a (ref null $rec-A))
+   (local $b (ref null $rec-B))
+   (local.set $a (struct.new_default $rec-A))
+   (local.set $b (struct.new $rec-B (local.get $a)))
+   (struct.set $rec-A 0 (local.get $a) (local.get $b))
+   (local.get $a)
+ )
+
 )
 ;; CHECK:      [fuzz-exec] export logging
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -613,12 +632,16 @@
 
 ;; CHECK:      [fuzz-exec] export return-externref-exception
 ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => jserror
+
+;; CHECK:      [fuzz-exec] export recursive-public-data
+;; CHECK-NEXT: [fuzz-exec] note result: recursive-public-data => object(null)
 ;; CHECK-NEXT: [fuzz-exec] comparing catch-js-tag
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.rethrow
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
+;; CHECK-NEXT: [fuzz-exec] comparing recursive-public-data
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
