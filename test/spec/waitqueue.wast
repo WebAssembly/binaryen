@@ -118,8 +118,7 @@
 (assert_trap (invoke "struct.wait" (i32.const 0) (i64.const 0)) "null ref")
 (assert_trap (invoke "struct.notify" (i32.const 0)) "null ref")
 
-;; Waiting on a non-shared struct traps.
-
+;; Waiting on a non-shared struct should trap.
 (module
   (type $t (struct (field (mut waitqueue))))
 
