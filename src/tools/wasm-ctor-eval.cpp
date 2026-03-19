@@ -42,6 +42,7 @@
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
+#include "interpreter/exception.h"
 
 using namespace wasm;
 
@@ -93,6 +94,12 @@ public:
     }
 
     return &it->second;
+  }
+
+  RuntimeMemory* getMemoryOrNull(ImportNames name,
+                                 const Memory& memory) const override {
+    Fatal() << "todo";
+    return nullptr;
   }
 
 private:
@@ -178,6 +185,43 @@ private:
   const std::function<Literal(Name, Type)> makeFuncData;
 };
 
+class CtorEvalRuntimeMemory : public RealRuntimeMemory {
+public:
+  using RealRuntimeMemory::RealRuntimeMemory;
+
+  // override to grow on access
+  Literal load(Address addr,
+               Address offset,
+               uint8_t byteCount,
+               MemoryOrder order,
+               Type type,
+               bool signed_) const override {
+    const_cast<CtorEvalRuntimeMemory*>(this)->ensureCapacity(addr + offset +
+                                                            byteCount);
+    return RealRuntimeMemory::load(
+      addr, offset, byteCount, order, type, signed_);
+  }
+
+  void store(Address addr,
+             Address offset,
+             uint8_t byteCount,
+             MemoryOrder order,
+             Literal value,
+             Type type) override {
+    ensureCapacity(addr + offset + byteCount);
+    RealRuntimeMemory::store(addr, offset, byteCount, order, value, type);
+  }
+
+  void ensureCapacity(Address size) {
+    if (size > memory.size()) {
+      if (size > 100 * 1024 * 1024) { // MaximumMemory
+        throw FailToEvalException("excessively high memory address accessed");
+      }
+      resize(size);
+    }
+  }
+};
+
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
 public:
   EvallingModuleRunner(
@@ -198,6 +242,9 @@ public:
             instanceInitialized,
             this->wasm,
             [this](Name name, Type type) { return makeFuncData(name, type); });
+        },
+        [](Memory memory) {
+          return std::make_unique<CtorEvalRuntimeMemory>(memory);
         }) {}
 
   Flow visitGlobalGet(GlobalGet* curr) {
@@ -285,9 +332,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   EvallingModuleRunner* instance;
   std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
-  // A representation of the contents of wasm memory as we execute.
-  std::unordered_map<Name, std::vector<char>> memories;
-
   // All the names of globals we've seen in the module. We cannot reuse these.
   // We must track these manually as we will be adding more, and as we do so we
   // also reorder them, so we remove and re-add globals, which means the module
@@ -309,23 +353,13 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   void applyToModule() {
     clearApplyState();
 
-    // If nothing was ever written to memories then there is nothing to update.
-    if (!memories.empty()) {
-      applyMemoryToModule();
-    }
-
+    applyMemoryToModule();
     applyGlobalsToModule();
   }
 
   void init(Module& wasm_, EvallingModuleRunner& instance_) override {
     wasm = &wasm_;
     instance = &instance_;
-    for (auto& memory : wasm->memories) {
-      if (!memory->imported()) {
-        std::vector<char> data;
-        memories[memory->name] = data;
-      }
-    }
 
     for (auto& global : wasm->globals) {
       usedGlobalNames.insert(global->name);
@@ -346,7 +380,13 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
             // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS
             // (0).
-            store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
+            auto* memory = instance->allMemories[wasm->memories[0]->name];
+            memory->store(arguments[0].geti32(),
+                          0,
+                          4,
+                          MemoryOrder::Unordered,
+                          Literal(int32_t(0)),
+                          Type::i32);
             return {Literal(int32_t(0))};
           }
 
@@ -368,7 +408,13 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
             // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS
             // (0).
-            store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
+            auto* memory = instance->allMemories[wasm->memories[0]->name];
+            memory->store(arguments[0].geti32(),
+                          0,
+                          4,
+                          MemoryOrder::Unordered,
+                          Literal(int32_t(0)),
+                          Type::i32);
             return {Literal(int32_t(0))};
           }
 
@@ -405,58 +451,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                    import->type);
   }
 
-  int8_t load8s(Address addr, Name memoryName) override {
-    return doLoad<int8_t>(addr, memoryName);
-  }
-  uint8_t load8u(Address addr, Name memoryName) override {
-    return doLoad<uint8_t>(addr, memoryName);
-  }
-  int16_t load16s(Address addr, Name memoryName) override {
-    return doLoad<int16_t>(addr, memoryName);
-  }
-  uint16_t load16u(Address addr, Name memoryName) override {
-    return doLoad<uint16_t>(addr, memoryName);
-  }
-  int32_t load32s(Address addr, Name memoryName) override {
-    return doLoad<int32_t>(addr, memoryName);
-  }
-  uint32_t load32u(Address addr, Name memoryName) override {
-    return doLoad<uint32_t>(addr, memoryName);
-  }
-  int64_t load64s(Address addr, Name memoryName) override {
-    return doLoad<int64_t>(addr, memoryName);
-  }
-  uint64_t load64u(Address addr, Name memoryName) override {
-    return doLoad<uint64_t>(addr, memoryName);
-  }
-  std::array<uint8_t, 16> load128(Address addr, Name memoryName) override {
-    return doLoad<std::array<uint8_t, 16>>(addr, memoryName);
-  }
-
-  void store8(Address addr, int8_t value, Name memoryName) override {
-    doStore<int8_t>(addr, value, memoryName);
-  }
-  void store16(Address addr, int16_t value, Name memoryName) override {
-    doStore<int16_t>(addr, value, memoryName);
-  }
-  void store32(Address addr, int32_t value, Name memoryName) override {
-    doStore<int32_t>(addr, value, memoryName);
-  }
-  void store64(Address addr, int64_t value, Name memoryName) override {
-    doStore<int64_t>(addr, value, memoryName);
-  }
-  void store128(Address addr,
-                const std::array<uint8_t, 16>& value,
-                Name memoryName) override {
-    doStore<std::array<uint8_t, 16>>(addr, value, memoryName);
-  }
-
-  bool growMemory(Name memoryName,
-                  Address /*oldSize*/,
-                  Address /*newSize*/) override {
-    throw FailToEvalException("grow memory");
-  }
-
   void trap(std::string_view why) override {
     throw FailToEvalException(std::string("trap: ") + std::string(why));
   }
@@ -476,42 +470,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
 private:
-  // We limit the size of memory to some reasonable amount. We handle memory in
-  // a linear/dense manner, so when we see a write to address X we allocate X
-  // memory to represent that, and so very high addresses can lead to OOM. In
-  // practice, ctor-eval should only run on low addresses anyhow, since static
-  // memory tends to be reasonably-sized and mallocs start at the start of the
-  // heap, so it's simpler to add an arbitrary limit here to avoid OOMs for now.
-  const size_t MaximumMemory = 100 * 1024 * 1024;
-
-  // TODO: handle unaligned too, see shell-interface
-  void* getMemory(Address address, Name memoryName, size_t size) {
-    auto it = memories.find(memoryName);
-    assert(it != memories.end());
-    auto& memory = it->second;
-    // resize the memory buffer as needed.
-    auto max = address + size;
-    if (max > memory.size()) {
-      if (max > MaximumMemory) {
-        throw FailToEvalException("excessively high memory address accessed");
-      }
-      memory.resize(max);
-    }
-    return &memory[address];
-  }
-
-  template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    memcpy(getMemory(address, memoryName, sizeof(T)), &value, sizeof(T));
-  }
-
-  template<typename T> T doLoad(Address address, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    T ret;
-    memcpy(&ret, getMemory(address, memoryName, sizeof(T)), sizeof(T));
-    return ret;
-  }
-
   // Clear the state of the operation of applying the interpreter's runtime
   // information into the module.
   //
@@ -530,9 +488,15 @@ private:
   }
 
   void applyMemoryToModule() {
+    if (wasm->memories.empty()) {
+      return;
+    }
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
     auto& memory = wasm->memories[0];
+    if (memory->imported()) {
+      return;
+    }
     if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
       auto curr = builder.makeDataSegment();
@@ -547,7 +511,10 @@ private:
 
     // Copy the current memory contents after execution into the Module's
     // memory.
-    segment->data = memories[memory->name];
+    auto* runtimeMemory =
+      static_cast<CtorEvalRuntimeMemory*>(instance->allMemories[memory->name]);
+    segment->data.resize(runtimeMemory->size());
+    runtimeMemory->copyTo((uint8_t*)segment->data.data(), 0, runtimeMemory->size());
   }
 
   // Serializing GC data requires more work than linear memory, because
@@ -1152,6 +1119,12 @@ start_eval:
       Flow flow;
       try {
         flow = instance.visit(curr);
+      } catch (TrapException&) {
+        throw FailToEvalException("trap");
+      } catch (WasmException& exn) {
+        std::stringstream ss;
+        ss << "exception thrown: " << exn;
+        throw FailToEvalException(ss.str());
       } catch (FailToEvalException& fail) {
         if (!quiet) {
           if (successes == 0) {
@@ -1388,7 +1361,15 @@ void evalCtors(Module& wasm,
     // create an instance for evalling
     EvallingModuleRunner instance(
       wasm, &interface, interface.instanceInitialized, linkedInstances);
-    instance.instantiate();
+    try {
+      instance.instantiate();
+    } catch (TrapException&) {
+      throw FailToEvalException("trap");
+    } catch (WasmException& exn) {
+      std::stringstream ss;
+      ss << "exception thrown: " << exn;
+      throw FailToEvalException(ss.str());
+    }
     interface.instanceInitialized = true;
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?

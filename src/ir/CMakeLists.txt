@@ -20,6 +20,7 @@ set(ir_SOURCES
   public-type-validator.cpp
   ReFinalize.cpp
   return-utils.cpp
+  runtime-memory.cpp
   runtime-table.cpp
   stack-utils.cpp
   table-utils.cpp
