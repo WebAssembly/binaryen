@@ -157,11 +157,11 @@
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
-#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -1110,17 +1110,36 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (analyzer.getInteraction(curr->ref) != ParentChildInteraction::Flows) {
-      // The allocation can't flow into `replacement` if we've made it this far,
-      // but it might flow into `expected`, in which case we don't need to do
-      // anything because we would still be performing the cmpxchg on a real
-      // struct. We only need to replace the cmpxchg if the ref is being
-      // replaced with locals.
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
       return;
     }
 
-    if (curr->type == Type::unreachable) {
-      // As with RefGetDesc and StructGet, above.
+    // The allocation might flow into `ref` or `expected`, but not
+    // `replacement`, because then it would be considered to have escaped.
+    if (analyzer.getInteraction(curr->expected) ==
+        ParentChildInteraction::Flows) {
+      // Since the allocation does not escape, it cannot possibly match the
+      // value already in the struct. The cmpxchg will just do a read. Drop the
+      // other arguments and do the atomic read at the end, when the cmpxchg
+      // would have happened. Use a nullable scratch local in case we also
+      // optimize `ref` later and need to replace it with a null.
+      auto refType = curr->ref->type.with(Nullable);
+      auto refScratch = builder.addVar(func, refType);
+      auto* block = builder.makeBlock(
+        {builder.makeLocalSet(refScratch, curr->ref),
+         builder.makeDrop(curr->expected),
+         builder.makeDrop(curr->replacement),
+         builder.makeStructGet(curr->index,
+                               builder.makeLocalGet(refScratch, refType),
+                               curr->order,
+                               curr->type)});
+      replaceCurrent(block);
+      return;
+    }
+    if (analyzer.getInteraction(curr->ref) != ParentChildInteraction::Flows) {
+      // Since the allocation does not flow from `ref`, it must not flow through
+      // this cmpxchg at all.
       return;
     }
 
