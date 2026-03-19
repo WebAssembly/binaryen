@@ -502,6 +502,9 @@ BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
 BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
 }
+BinaryenFeatures BinaryenFeatureMultibyte(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Multibyte);
+}
 BinaryenFeatures BinaryenFeatureCustomPageSizes(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CustomPageSizes);
 }

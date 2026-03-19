@@ -39,11 +39,11 @@
 ;;
 ;; RUN: v8 %S/../../../scripts/fuzz_shell.js -- %t.wasm | filecheck %s
 ;;
-;; CHECK: [fuzz-exec] calling throwing-js
+;; CHECK: [fuzz-exec] export throwing-js
 ;; CHECK: exception thrown: Error: js exception
-;; CHECK: [fuzz-exec] calling throwing-tag
+;; CHECK: [fuzz-exec] export throwing-tag
 ;; CHECK: exception thrown: [object WebAssembly.Exception]
-;; CHECK: [fuzz-exec] calling throwing-jstag-null
+;; CHECK: [fuzz-exec] export throwing-jstag-null
 ;; CHECK: exception thrown: null
 
 

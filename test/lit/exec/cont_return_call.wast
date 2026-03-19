@@ -15,7 +15,7 @@
 
  (tag $tag (type $none))
 
- ;; CHECK:      [fuzz-exec] calling main
+ ;; CHECK:      [fuzz-exec] export main
  ;; CHECK-NEXT: [LoggingExternalInterface logging 50]
  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]

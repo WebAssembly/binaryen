@@ -186,17 +186,6 @@ struct FunctionInfo {
   }
 };
 
-static bool canHandleParams(Function* func) {
-  // We cannot inline a function if we cannot handle placing its params in a
-  // locals, as all params become locals.
-  for (auto param : func->getParams()) {
-    if (!TypeUpdating::canHandleAsLocal(param)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
 
 struct FunctionInfoScanner
@@ -245,10 +234,6 @@ struct FunctionInfoScanner
 
   void visitFunction(Function* curr) {
     auto& info = infos[curr->name];
-
-    if (!canHandleParams(curr)) {
-      info.inliningMode = InliningMode::Uninlineable;
-    }
 
     info.size = Measurer::measure(curr->body);
 

@@ -1019,7 +1019,7 @@ void ModuleSplitter::shareImportableItems() {
     // walk on global initializers. At this point, all globals are still in the
     // primary module, so if we walk on global initializers here, globals appear
     // in their initialalizers will be all marked as used in the primary module,
-    // which is not true.
+    // which is not we want.
     //
     // For example, we have (global $a i32 (global.get $b)). Because $a is at
     // this point still in the primary module, $b will be marked as "used" in
@@ -1038,16 +1038,25 @@ void ModuleSplitter::shareImportableItems() {
         used.tables.insert(segment->table);
       }
     }
-    // If primary module has exports, they are "used" in it
+
+    // If primary module has exports, they are "used" in it. Secondary modules
+    // don't have exports, so this only applies to the primary module.
     for (auto& ex : module.exports) {
-      if (ex->kind == ExternalKind::Global) {
-        used.globals.insert(*ex->getInternalName());
-      } else if (ex->kind == ExternalKind::Memory) {
-        used.memories.insert(*ex->getInternalName());
-      } else if (ex->kind == ExternalKind::Table) {
-        used.tables.insert(*ex->getInternalName());
-      } else if (ex->kind == ExternalKind::Tag) {
-        used.tags.insert(*ex->getInternalName());
+      switch (ex->kind) {
+        case ExternalKind::Global:
+          used.globals.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Memory:
+          used.memories.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Table:
+          used.tables.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Tag:
+          used.tags.insert(*ex->getInternalName());
+          break;
+        default:
+          break;
       }
     }
     return used;
@@ -1067,11 +1076,11 @@ void ModuleSplitter::shareImportableItems() {
     std::vector<Name> worklist(used.globals.begin(), used.globals.end());
     std::unordered_set<Name> visited(used.globals.begin(), used.globals.end());
     while (!worklist.empty()) {
-      Name currName = worklist.back();
+      Name name = worklist.back();
       worklist.pop_back();
       // At this point all globals are still in the primary module, so this
       // exists
-      auto* global = primary.getGlobal(currName);
+      auto* global = primary.getGlobal(name);
       if (!global->imported() && global->init) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
           if (visited.insert(get->name).second) {
@@ -1111,9 +1120,9 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& memory : primary.memories) {
     auto usingSecondaries =
       getUsingSecondaries(memory->name, &UsedNames::memories);
-    bool inPrimary = primaryUsed.memories.count(memory->name);
+    bool usedInPrimary = primaryUsed.memories.count(memory->name);
 
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyMemory(memory.get(), *secondary);
       memoriesToRemove.push_back(memory->name);
@@ -1134,12 +1143,12 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& table : primary.tables) {
     auto usingSecondaries =
       getUsingSecondaries(table->name, &UsedNames::tables);
-    bool inPrimary = primaryUsed.tables.count(table->name);
+    bool usedInPrimary = primaryUsed.tables.count(table->name);
 
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       //  In case we copied this table to this secondary module in
-      //  setupTablePatching(), !inPrimary can't be satisfied, because the
+      //  setupTablePatching(), !usedInPrimary can't be satisfied, because the
       //  primary module should have an element segment that refers to this
       //  table.
       assert(!secondary->getTableOrNull(table->name));
@@ -1149,7 +1158,7 @@ void ModuleSplitter::shareImportableItems() {
       for (auto* secondary : usingSecondaries) {
         // 1. In case we copied this table to this secondary module in
         //    setupTablePatching(), secondary.getTableOrNull(table->name) is not
-        //    null, and we need to export it.
+        //    null, and we need to import it.
         // 2. As in the case with other module elements, if the table is used in
         //    the secondary module's instructions, we need to export it.
         auto secondaryTable = secondary->getTableOrNull(table->name);
@@ -1173,8 +1182,8 @@ void ModuleSplitter::shareImportableItems() {
 
     auto usingSecondaries =
       getUsingSecondaries(global->name, &UsedNames::globals);
-    bool inPrimary = primaryUsed.globals.count(global->name);
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    bool usedInPrimary = primaryUsed.globals.count(global->name);
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       // We are moving this global to this secondary module
       auto* secondary = usingSecondaries[0];
       auto* secondaryGlobal = ModuleUtils::copyGlobal(global.get(), *secondary);
@@ -1231,9 +1240,9 @@ void ModuleSplitter::shareImportableItems() {
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
     auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
-    bool inPrimary = primaryUsed.tags.count(tag->name);
+    bool usedInPrimary = primaryUsed.tags.count(tag->name);
 
-    if (!inPrimary && usingSecondaries.size() == 1) {
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyTag(tag.get(), *secondary);
       tagsToRemove.push_back(tag->name);

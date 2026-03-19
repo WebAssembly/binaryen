@@ -1,12 +1,12 @@
-[fuzz-exec] calling a
+[fuzz-exec] export a
 [fuzz-exec] note result: a => -69
-[fuzz-exec] calling b
+[fuzz-exec] export b
 [fuzz-exec] note result: b => -31768
-[fuzz-exec] calling c
+[fuzz-exec] export c
 [fuzz-exec] note result: c => -69
-[fuzz-exec] calling d
+[fuzz-exec] export d
 [fuzz-exec] note result: d => -31768
-[fuzz-exec] calling e
+[fuzz-exec] export e
 [fuzz-exec] note result: e => -2146649112
 (module
  (type $0 (func (result i64)))
@@ -42,32 +42,32 @@
   )
  )
 )
-[fuzz-exec] calling a
+[fuzz-exec] export a
 [fuzz-exec] note result: a => -69
-[fuzz-exec] calling b
+[fuzz-exec] export b
 [fuzz-exec] note result: b => -31768
-[fuzz-exec] calling c
+[fuzz-exec] export c
 [fuzz-exec] note result: c => -69
-[fuzz-exec] calling d
+[fuzz-exec] export d
 [fuzz-exec] note result: d => -31768
-[fuzz-exec] calling e
+[fuzz-exec] export e
 [fuzz-exec] note result: e => -2146649112
 [fuzz-exec] comparing a
 [fuzz-exec] comparing b
 [fuzz-exec] comparing c
 [fuzz-exec] comparing d
 [fuzz-exec] comparing e
-[fuzz-exec] calling unaligned_load
+[fuzz-exec] export unaligned_load
 [trap unaligned atomic operation]
-[fuzz-exec] calling unaligned_load_offset
+[fuzz-exec] export unaligned_load_offset
 [trap unaligned atomic operation]
-[fuzz-exec] calling aligned_for_size
+[fuzz-exec] export aligned_for_size
 [fuzz-exec] note result: aligned_for_size => 0
-[fuzz-exec] calling unaligned_notify
+[fuzz-exec] export unaligned_notify
 [trap unaligned atomic operation]
-[fuzz-exec] calling wrap_cmpxchg
+[fuzz-exec] export wrap_cmpxchg
 [LoggingExternalInterface logging 42]
-[fuzz-exec] calling oob_notify
+[fuzz-exec] export oob_notify
 [trap final > memory: 4294967192 > 65514]
 (module
  (type $0 (func (result i32)))
@@ -126,17 +126,17 @@
   )
  )
 )
-[fuzz-exec] calling unaligned_load
+[fuzz-exec] export unaligned_load
 [trap unaligned atomic operation]
-[fuzz-exec] calling unaligned_load_offset
+[fuzz-exec] export unaligned_load_offset
 [trap unaligned atomic operation]
-[fuzz-exec] calling aligned_for_size
+[fuzz-exec] export aligned_for_size
 [fuzz-exec] note result: aligned_for_size => 0
-[fuzz-exec] calling unaligned_notify
+[fuzz-exec] export unaligned_notify
 [trap unaligned atomic operation]
-[fuzz-exec] calling wrap_cmpxchg
+[fuzz-exec] export wrap_cmpxchg
 [LoggingExternalInterface logging 42]
-[fuzz-exec] calling oob_notify
+[fuzz-exec] export oob_notify
 [trap final > memory: 4294967192 > 65514]
 [fuzz-exec] comparing aligned_for_size
 [fuzz-exec] comparing oob_notify
@@ -144,7 +144,7 @@
 [fuzz-exec] comparing unaligned_load_offset
 [fuzz-exec] comparing unaligned_notify
 [fuzz-exec] comparing wrap_cmpxchg
-[fuzz-exec] calling unsigned_2_bytes
+[fuzz-exec] export unsigned_2_bytes
 [fuzz-exec] note result: unsigned_2_bytes => 65535
 (module
  (type $0 (func (result i32)))
@@ -158,10 +158,10 @@
   )
  )
 )
-[fuzz-exec] calling unsigned_2_bytes
+[fuzz-exec] export unsigned_2_bytes
 [fuzz-exec] note result: unsigned_2_bytes => 65535
 [fuzz-exec] comparing unsigned_2_bytes
-[fuzz-exec] calling rmw-reads-modifies-and-writes
+[fuzz-exec] export rmw-reads-modifies-and-writes
 [LoggingExternalInterface logging 0]
 (module
  (type $0 (func (param i32)))
@@ -183,10 +183,10 @@
   )
  )
 )
-[fuzz-exec] calling rmw-reads-modifies-and-writes
+[fuzz-exec] export rmw-reads-modifies-and-writes
 [LoggingExternalInterface logging 0]
 [fuzz-exec] comparing rmw-reads-modifies-and-writes
-[fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
+[fuzz-exec] export rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
 (module
  (type $0 (func (param i32)))
@@ -208,10 +208,10 @@
   )
  )
 )
-[fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
+[fuzz-exec] export rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
 [fuzz-exec] comparing rmw-reads-modifies-and-writes-asymmetrical
-[fuzz-exec] calling func
+[fuzz-exec] export func
 [fuzz-exec] note result: func => function
 (module
  (type $0 (func (result funcref)))
@@ -221,6 +221,6 @@
   (ref.func $func)
  )
 )
-[fuzz-exec] calling func
+[fuzz-exec] export func
 [fuzz-exec] note result: func => function
 [fuzz-exec] comparing func

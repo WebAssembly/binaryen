@@ -45,9 +45,6 @@ std::vector<Type> getLoggableTypes(const FeatureSet& features) {
       loggableTypes.push_back(Type(HeapType::func, Nullable));
       loggableTypes.push_back(Type(HeapType::ext, Nullable));
     }
-    if (features.hasStackSwitching()) {
-      loggableTypes.push_back(Type(HeapType::cont, Nullable));
-    }
     // Note: exnref traps on the JS boundary, so we cannot try to log it.
   }
 
@@ -1690,11 +1687,7 @@ Function* TranslateToFuzzReader::addFunction() {
 
   Index numVars = upToSquared(fuzzParams->MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
-    auto type = getConcreteType();
-    if (!TypeUpdating::canHandleAsLocal(type)) {
-      type = Type::i32;
-    }
-    func->vars.push_back(type);
+    func->vars.push_back(getConcreteType());
   }
   // Generate the function creation context after we filled in locals, which it
   // will scan.
@@ -2573,6 +2566,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefGetDesc);
     }
+    if (heapType.isContinuation()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::StackSwitching,
+                  &Self::makeContBind);
+    }
   }
   if (wasm.features.hasGC()) {
     if (typeStructFields.find(type) != typeStructFields.end()) {
@@ -3125,7 +3122,7 @@ Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   // the time), or emit a local.get of a new local, or emit a local.tee of a new
   // local.
   auto choice = upTo(3);
-  if (choice == 0 || !TypeUpdating::canHandleAsLocal(type)) {
+  if (choice == 0) {
     return makeConst(type);
   }
   // Otherwise, add a new local. If the type is not non-nullable then we may
@@ -5458,6 +5455,23 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   }
   return fixFlowingType(
     builder.makeBrOn(op, targetName, make(refType), castType));
+}
+
+Expression* TranslateToFuzzReader::makeContBind(Type type) {
+  auto sig = type.getHeapType().getContinuation().type.getSignature();
+  // Add a single param to be bound. TODO: Add multiple, and look in
+  // interestingHeapTypes.
+  std::vector<Type> newParams;
+  for (auto t : sig.params) {
+    newParams.push_back(t);
+  }
+  auto newParam = getSingleConcreteType();
+  newParams.insert(newParams.begin(), newParam);
+  auto newSig = Signature(Type(newParams), sig.results);
+  auto newCont = Continuation(newSig);
+  auto newType = Type(newCont, NonNullable, Exact);
+  std::vector<Expression*> newArgs{make(newParam)};
+  return builder.makeContBind(type.getHeapType(), newArgs, make(newType));
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {

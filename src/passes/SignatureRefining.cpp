@@ -168,6 +168,17 @@ struct SignatureRefining : public Pass {
         false;
     }
 
+    // Continuations must not have params refined, because we do not update
+    // their users (e.g. cont.bind, resume) with new types.
+    // TODO: support refining continuations
+    if (module->features.hasStackSwitching()) {
+      for (auto type : ModuleUtils::collectHeapTypes(*module)) {
+        if (type.isContinuation()) {
+          allInfo[type.getContinuation().type].canModifyParams = false;
+        }
+      }
+    }
+
     // Also skip modifying types used in tags, even private tags, since we don't
     // analyze exception handling or stack switching instructions. TODO: Analyze
     // and optimize exception handling and stack switching instructions.

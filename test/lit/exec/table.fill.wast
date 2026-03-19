@@ -11,7 +11,7 @@
   (i32.const 0)
  )
 
- ;; CHECK:      [fuzz-exec] calling fill
+ ;; CHECK:      [fuzz-exec] export fill
  ;; CHECK-NEXT: [trap out of bounds table access]
  (func $fill (export "fill")
   ;; This fill is out of bounds as the -1 is unsigned. Nothing will be written.
@@ -21,7 +21,7 @@
    (i32.const -1)
   )
  )
- ;; CHECK:      [fuzz-exec] calling call
+ ;; CHECK:      [fuzz-exec] export call
  ;; CHECK-NEXT: [trap null target in call_indirect]
  (func $call (export "call") (result i32)
   ;; Nothing was written, so this traps.

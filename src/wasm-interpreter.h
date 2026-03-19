@@ -382,6 +382,20 @@ protected:
     return Literal(allocation);
   }
 
+  template<typename T>
+  void writeBytes(T value, int numBytes, size_t index, Literals& values) {
+    if constexpr (std::is_same_v<T, std::array<uint8_t, 16>>) {
+      for (int i = 0; i < numBytes; ++i) {
+        values[index + i] = Literal(static_cast<int32_t>(value[i]));
+      }
+    } else {
+      for (int i = 0; i < numBytes; ++i) {
+        values[index + i] =
+          Literal(static_cast<int32_t>((value >> (i * 8)) & 0xff));
+      }
+    }
+  }
+
 public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -1710,16 +1724,10 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
-      case RelaxedMaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedMaddF16x8(b, c);
-      case RelaxedNmaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedNmaddF16x8(b, c);
+      case MaddVecF16x8:
+        return a.maddF16x8(b, c);
+      case NmaddVecF16x8:
+        return a.nmaddF16x8(b, c);
       case RelaxedMaddVecF32x4:
         if (relaxedBehavior == RelaxedBehavior::NonConstant) {
           return NONCONSTANT_FLOW;
@@ -2243,13 +2251,38 @@ public:
   }
 
   Flow visitStructWait(StructWait* curr) {
-    WASM_UNREACHABLE("struct.wait not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(expected, curr->expected)
+    VISIT(timeout, curr->timeout)
+
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& field = data->values[curr->index];
+    if (field.geti32() != expected.getSingleValue().geti32()) {
+      return Literal(int32_t{1}); // not equal
+    }
+    // TODO: Add threads support. For now, report a host limit here, as there
+    //       are no other threads that can wake us up. Without such threads,
+    //       we'd hang if there is no timeout, and even if there is a timeout
+    //       then we can hang for a long time if it is in a loop. The only
+    //       timeout value we allow here for now is 0.
+    if (timeout.getSingleValue().geti64() != 0) {
+      hostLimit("threads support");
+      return Flow();
+    }
+    return Literal(int32_t{2}); // Timed out
   }
 
   Flow visitStructNotify(StructNotify* curr) {
-    WASM_UNREACHABLE("struct.notify not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(count, curr->count)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return Literal(int32_t{0}); // none woken up
   }
 
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
@@ -2344,6 +2377,52 @@ public:
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
     data->values[i] = truncateForPacking(value.getSingleValue(), field);
+    return Flow();
+  }
+  Flow visitArrayStore(ArrayStore* curr) {
+    VISIT(ref, curr->ref)
+    VISIT(index, curr->index)
+    VISIT(value, curr->value)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+
+    Index i = index.getSingleValue().geti32();
+    size_t size = data->values.size();
+    // Use subtraction to avoid overflow.
+    if (i >= size || curr->bytes > (size - i)) {
+      trap("array oob");
+    }
+    switch (curr->value->type.getBasic()) {
+      case Type::i32:
+        writeBytes(
+          value.getSingleValue().geti32(), curr->bytes, i, data->values);
+        break;
+      case Type::i64:
+        writeBytes(
+          value.getSingleValue().geti64(), curr->bytes, i, data->values);
+        break;
+      case Type::f32:
+        writeBytes(value.getSingleValue().reinterpreti32(),
+                   curr->bytes,
+                   i,
+                   data->values);
+        break;
+      case Type::f64:
+        writeBytes(value.getSingleValue().reinterpreti64(),
+                   curr->bytes,
+                   i,
+                   data->values);
+        break;
+      case Type::v128:
+        writeBytes(
+          value.getSingleValue().getv128(), curr->bytes, i, data->values);
+        break;
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unimp basic type");
+    }
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
@@ -3431,9 +3510,7 @@ private:
           if (!MemoryUtils::isSubType(exportedMemory, **memory)) {
             trap("Imported memory isn't compatible.");
           }
-        }
-
-        if (auto** tableDecl = std::get_if<Table*>(&import)) {
+        } else if (auto** tableDecl = std::get_if<Table*>(&import)) {
           auto* importedTable = importResolver->getTableOrNull(
             importable->importNames(), **tableDecl);
           if (!importedTable) {
@@ -3449,7 +3526,21 @@ private:
                << " isn't compatible with import declaration: " << **tableDecl)
                 .str());
           }
+        } else if (auto** function = std::get_if<Function*>(&import)) {
+          auto exportedFunc = getFunction((*function)->name);
+          if (!Type::isSubType(exportedFunc.type, (*function)->type)) {
+            trap((std::stringstream()
+                  << "Imported function " << importable->importNames()
+                  << " with type "
+                  << exportedFunc.type.getHeapType().getSignature().toString()
+                  << " isn't compatible with import declaration with type "
+                     "(modulo rec groups): "
+                  << (*function)->type.getHeapType().getSignature().toString())
+                   .str());
+          }
         }
+
+        // TODO: remaining cases e.g. globals and tags.
       });
   }
 
@@ -4133,7 +4224,7 @@ public:
                                               memorySizeBytes,
                                               MemoryOrder::SeqCst);
     if (loaded != expected.getSingleValue()) {
-      return Literal(int32_t(1)); // not equal
+      return Literal(int32_t{1}); // not equal
     }
     // TODO: Add threads support. For now, report a host limit here, as there
     //       are no other threads that can wake us up. Without such threads,
@@ -4143,7 +4234,7 @@ public:
     if (timeout.getSingleValue().getInteger() != 0) {
       hostLimit("threads support");
     }
-    return Literal(int32_t(2)); // Timed out
+    return Literal(int32_t{2}); // Timed out
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     VISIT(ptr, curr->ptr)
@@ -4154,7 +4245,7 @@ public:
       curr, ptr.getSingleValue(), 4, memorySizeBytes);
     // Just check TODO actual threads support
     info.instance->checkAtomicAddress(addr, 4, memorySizeBytes);
-    return Literal(int32_t(0)); // none woken up
+    return Literal(int32_t{0}); // none woken up
   }
   Flow visitSIMDLoad(SIMDLoad* curr) {
     switch (curr->op) {
@@ -4751,14 +4842,19 @@ public:
     VISIT_ARGUMENTS(flow, curr->operands, arguments)
     VISIT(cont, curr->cont)
 
+    auto contValue = cont.getSingleValue();
+    if (contValue.isNull()) {
+      trap("null ref");
+    }
+
     // Create a new continuation, copying the old but with the new type +
     // arguments.
-    auto old = cont.getSingleValue().getContData();
+    auto old = contValue.getContData();
     auto newData = *old;
     newData.type = curr->type.getHeapType();
-    newData.resumeArguments = arguments;
-    // We handle only the simple case of applying all parameters, for now. TODO
-    assert(old->resumeArguments.empty());
+    for (auto arg : arguments) {
+      newData.resumeArguments.push_back(arg);
+    }
     // The old one is done.
     old->executed = true;
     return Literal(std::make_shared<ContData>(newData));

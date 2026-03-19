@@ -556,10 +556,6 @@ public:
 
 namespace TypeUpdating {
 
-// Checks whether a type is valid as a local, or whether
-// handleNonDefaultableLocals() can handle it if not.
-bool canHandleAsLocal(Type type);
-
 // Finds non-nullable locals, which are currently not supported, and handles
 // them. Atm this turns them into nullable ones, and adds ref.as_non_null on
 // their uses (which keeps the type of the users identical).

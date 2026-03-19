@@ -62,10 +62,19 @@ given_seed = None
 
 CLOSED_WORLD_FLAG = '--closed-world'
 
-# V8 does not support shared memories when running with
-# shared-everything enabled, so do not fuzz shared-everything
-# for now. The remaining features are not yet implemented in v8.
-DISALLOWED_FEATURES_IN_V8 = ['shared-everything', 'strings', 'stack-switching', 'relaxed-atomics']
+# V8 does not support shared memories when running with shared-everything
+# enabled, so do not fuzz shared-everything for now. The remaining features are
+# not yet implemented in v8.
+#
+# Keep this in sync with bundle_clusterfuzz.py.
+DISALLOWED_FEATURES_IN_V8 = [
+    'shared-everything',
+    'fp16',
+    'strings',
+    'stack-switching',
+    'relaxed-atomics',
+    'multibyte',
+]
 
 
 # utilities
@@ -147,11 +156,11 @@ def randomize_feature_opts():
                 FEATURE_OPTS.append(possible)
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
-    elif random.random() < 0.9:
-        # 90% of the remaining (2/3 * 0.9) use them all (0.54 probability). This is useful to maximize
-        # coverage, as enabling more features enables more optimizations and
-        # code paths, and also allows all initial contents to run.
-
+    # Otherwise, use all the features. This is useful to maximize
+    # coverage, as enabling more features enables more optimizations and
+    # code paths, and also allows all initial contents to run. However,
+    # half the time disable the specific ones that are a problem in V8.
+    elif random.random() < 0.5:
         # Disable features not allowed in V8 to increase V8 fuzzing.
         FEATURE_OPTS.extend(f'--disable-{feature}' for feature in DISALLOWED_FEATURES_IN_V8)
         # Relaxed SIMD's nondeterminism disables much but not
@@ -423,8 +432,8 @@ TRAP_PREFIX = '[trap '
 # Host limits are reported as [host limit REASON]
 HOST_LIMIT_PREFIX = '[host limit '
 
-# --fuzz-exec reports calls as [fuzz-exec] calling foo
-FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
+# --fuzz-exec reports calls as [fuzz-exec] export foo
+FUZZ_EXEC_EXPORT_PREFIX = '[fuzz-exec] export'
 
 # --fuzz-exec reports a stack limit using this notation
 STACK_LIMIT = '[trap stack limit]'
@@ -440,11 +449,11 @@ V8_UNINITIALIZED_NONDEF_LOCAL = 'uninitialized non-defaultable local'
 EXCEPTION_PREFIX = 'exception thrown: '
 
 
-# given a call line that includes FUZZ_EXEC_CALL_PREFIX, return the export that
-# is called
-def get_export_from_call_line(call_line):
-    assert FUZZ_EXEC_CALL_PREFIX in call_line
-    return call_line.split(FUZZ_EXEC_CALL_PREFIX)[1].strip()
+# given an export line that includes FUZZ_EXEC_EXPORT_PREFIX, return the export
+# that is called
+def get_export_from_export_line(export_line):
+    assert FUZZ_EXEC_EXPORT_PREFIX in export_line
+    return export_line.split(FUZZ_EXEC_EXPORT_PREFIX)[1].strip()
 
 
 # compare two strings, strictly
@@ -786,7 +795,7 @@ class CompareVMs(TestCaseHandler):
             def run(self, wasm):
                 output = run_bynterp(wasm, ['--fuzz-exec-before'])
                 if output != IGNORE:
-                    calls = output.count(FUZZ_EXEC_CALL_PREFIX)
+                    calls = output.count(FUZZ_EXEC_EXPORT_PREFIX)
                     errors = output.count(TRAP_PREFIX) + output.count(HOST_LIMIT_PREFIX)
                     if errors > calls / 2:
                         # A significant amount of execution on this testcase
@@ -1131,14 +1140,14 @@ class Wasm2JS(TestCaseHandler):
             # we can't test this function, which the trap is in the middle of.
             # erase everything from this function's output and onward, so we
             # only compare the previous trap-free code
-            call_start = interpreter.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_start = interpreter.rindex(FUZZ_EXEC_EXPORT_PREFIX, 0, trap_index)
             call_end = interpreter.index('\n', call_start)
-            call_line = interpreter[call_start:call_end]
+            export_line = interpreter[call_start:call_end]
             # fix up the call line so it matches the JS
-            fixed_call_line = fix_output_for_js(call_line)
-            before = before[:before.index(fixed_call_line)]
-            after = after[:after.index(fixed_call_line)]
-            interpreter = interpreter[:interpreter.index(call_line)]
+            fixed_export_line = fix_output_for_js(export_line)
+            before = before[:before.index(fixed_export_line)]
+            after = after[:after.index(fixed_export_line)]
+            interpreter = interpreter[:interpreter.index(export_line)]
 
         if compare_before_to_after:
             compare_between_vms(before, after, 'Wasm2JS (before/after)')
@@ -1293,14 +1302,14 @@ class TrapsNeverHappen(TestCaseHandler):
             # finding the call line right before us. that is, the output looks
             # like this:
             #
-            #   [fuzz-exec] calling foo
+            #   [fuzz-exec] export foo
             #   .. stuff happening during foo ..
-            #   [fuzz-exec] calling bar
+            #   [fuzz-exec] export bar
             #   .. stuff happening during bar ..
             #
             # if the trap happened during bar, the relevant call line is
-            # "[fuzz-exec] calling bar".
-            call_start = before.rfind(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            # "[fuzz-exec] export bar".
+            call_start = before.rfind(FUZZ_EXEC_EXPORT_PREFIX, 0, trap_index)
             if call_start < 0:
                 # the trap happened before we called an export, so it occured
                 # during startup (the start function, or memory segment
@@ -1311,17 +1320,17 @@ class TrapsNeverHappen(TestCaseHandler):
             # be prefixes of each other
             call_end = before.index(os.linesep, call_start) + 1
             # we now know the contents of the call line after which the trap
-            # happens, which is something like "[fuzz-exec] calling bar", and
+            # happens, which is something like "[fuzz-exec] export bar", and
             # it is unique since it contains the function being called.
-            call_line = before[call_start:call_end]
-            trapping_export = get_export_from_call_line(call_line)
+            export_line = before[call_start:call_end]
+            trapping_export = get_export_from_export_line(export_line)
 
             # now that we know the trapping export, we can leave only the safe
             # ones that are before it
             safe_exports = []
             for line in before.splitlines():
-                if FUZZ_EXEC_CALL_PREFIX in line:
-                    export = get_export_from_call_line(line)
+                if FUZZ_EXEC_EXPORT_PREFIX in line:
+                    export = get_export_from_export_line(line)
                     if export == trapping_export:
                         break
                     safe_exports.append(export)
@@ -1370,13 +1379,23 @@ class CtorEval(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
-        # get the expected execution results.
-        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
-
         # get the list of func exports, so we can tell ctor-eval what to eval.
-        ctors = ','.join(get_exports(wasm, ['func']))
+        func_exports = get_exports(wasm, ['func'])
+        ctors = ','.join(func_exports)
         if not ctors:
             return
+
+        # The fuzzer evaluates exports in the order they are given, so if there
+        # are global exports it may read them before the ctors are run - but
+        # the ctors are meant to run before anything else, and can modify
+        # those global values. Keep only function exports to avoid this
+        # confusion.
+        filtered = wasm + '.filtered.wasm'
+        filter_exports(wasm, filtered, func_exports)
+        wasm = filtered
+
+        # get the expected execution results.
+        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
         # Fix escaping of the names, as we will be passing them as commandline
         # parameters below (e.g. we want --ctors=foo\28bar and not
@@ -1427,10 +1446,10 @@ def traps_in_instantiation(output):
         trap_index = output.find('*exception*')
         if trap_index == -1:
             return False
-    call_index = output.find(FUZZ_EXEC_CALL_PREFIX)
-    if call_index == -1:
+    export_index = output.find(FUZZ_EXEC_EXPORT_PREFIX)
+    if export_index == -1:
         return True
-    return trap_index < call_index
+    return trap_index < export_index
 
 
 # Tests wasm-merge
@@ -1565,8 +1584,8 @@ class Split(TestCaseHandler):
         # primary module, but only the original ones.
         exports = []
         for line in output.splitlines():
-            if FUZZ_EXEC_CALL_PREFIX in line:
-                exports.append(get_export_from_call_line(line))
+            if FUZZ_EXEC_EXPORT_PREFIX in line:
+                exports.append(get_export_from_export_line(line))
 
         # pick which to split out, with a random rate of picking (biased towards
         # 0.5).
@@ -1760,7 +1779,7 @@ class ClusterFuzz(TestCaseHandler):
                  fuzz_file,
                  'extracted'])
             if get_exports('extracted.0.wasm', ['func']):
-                assert FUZZ_EXEC_CALL_PREFIX in output
+                assert FUZZ_EXEC_EXPORT_PREFIX in output
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
@@ -1871,8 +1890,9 @@ class Two(TestCaseHandler):
 
         # Make sure that we actually executed all exports from both
         # wasm files.
-        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
-        calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
+        exports = get_exports(wasm, ['func', 'global'])
+        exports += get_exports(second_wasm, ['func', 'global'])
+        calls_in_output = output.count(FUZZ_EXEC_EXPORT_PREFIX)
         if calls_in_output == 0:
             print(f'warning: no calls in output. output:\n{output}')
         assert calls_in_output == len(exports), exports
@@ -1989,11 +2009,11 @@ class Two(TestCaseHandler):
             b = merged_output_lines[i]
             if a == b:
                 continue
-            if a.startswith(FUZZ_EXEC_CALL_PREFIX):
+            if a.startswith(FUZZ_EXEC_EXPORT_PREFIX):
                 # Fix up
-                #   [fuzz-exec] calling foo/bar
+                #   [fuzz-exec] export foo/bar
                 # for different foo/bar. Just copy the original.
-                assert b.startswith(FUZZ_EXEC_CALL_PREFIX)
+                assert b.startswith(FUZZ_EXEC_EXPORT_PREFIX)
                 merged_output_lines[i] = output_lines[i]
             elif a.startswith(FUZZ_EXEC_NOTE_RESULT):
                 # Fix up
@@ -2252,7 +2272,7 @@ class BranchHintPreservation(TestCaseHandler):
         # any logging before the first call.)
         line_groups = [['before calls']]
         for line in out.splitlines():
-            if line.startswith(FUZZ_EXEC_CALL_PREFIX):
+            if line.startswith(FUZZ_EXEC_EXPORT_PREFIX):
                 line_groups.append([line])
             else:
                 line_groups[-1].append(line)

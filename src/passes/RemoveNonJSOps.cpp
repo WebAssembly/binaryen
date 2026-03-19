@@ -337,11 +337,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
 struct StubUnsupportedJSOpsPass
   : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
-  bool isFunctionParallel() override { return true; }
-
-  std::unique_ptr<Pass> create() override {
-    return std::make_unique<StubUnsupportedJSOpsPass>();
-  }
 
   void visitUnary(Unary* curr) {
     switch (curr->op) {
@@ -385,6 +380,20 @@ struct StubUnsupportedJSOpsPass
         value, LiteralUtils::makeZero(outputType, *getModule()));
     }
     replaceCurrent(replacement);
+  }
+
+  void visitModule(Module* module) {
+    // We remove global exports, as wasm2js doesn't emit them in a fully
+    // compatible form yet (they aren't instances of WebAssembly.Global).
+    std::vector<Name> badExports;
+    for (auto& exp : module->exports) {
+      if (exp->kind == ExternalKind::Global) {
+        badExports.push_back(exp->name);
+      }
+    }
+    for (auto name : badExports) {
+      module->removeExport(name);
+    }
   }
 };
 
