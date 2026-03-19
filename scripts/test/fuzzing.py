@@ -80,6 +80,9 @@ unfuzzable = [
     'type-refining-rmw.wast',
     'type-ssa-exact-rmw.wast',
     'cfp-rmw.wast',
+    'unsubtyping-cmpxchg.wast',
+    'struct-atomic-threads.wast',
+    'type-refining-gufa-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
     # https://github.com/WebAssembly/binaryen/issues/7176

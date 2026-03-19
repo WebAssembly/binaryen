@@ -321,7 +321,8 @@ void Fuzzer::checkCanonicalization() {
             builder[index] = getArray(type.getArray());
             continue;
           case HeapTypeKind::Cont:
-            WASM_UNREACHABLE("TODO: cont");
+            builder[index] = getContinuation(type.getContinuation());
+            continue;
           case HeapTypeKind::Basic:
             break;
         }
@@ -463,6 +464,11 @@ void Fuzzer::checkCanonicalization() {
 
     Array getArray(Array old) {
       old.element = getField(old.element);
+      return old;
+    }
+
+    Continuation getContinuation(Continuation old) {
+      old.type = getChildHeapType(old.type).get();
       return old;
     }
   };

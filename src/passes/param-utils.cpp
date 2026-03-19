@@ -131,15 +131,6 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
     }
   }
 
-  // The type must be valid for us to handle as a local (since we
-  // replace the parameter with a local).
-  // TODO: if there are no references at all, we can avoid creating a
-  //       local
-  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(index));
-  if (!typeIsValid) {
-    return Failure;
-  }
-
   // We can do it!
 
   // Remove the parameter from the function. We must add a new local

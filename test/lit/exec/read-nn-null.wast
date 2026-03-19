@@ -30,10 +30,10 @@
 (module
   (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
-  ;; NORMAL:      [fuzz-exec] calling foo
+  ;; NORMAL:      [fuzz-exec] export foo
   ;; NORMAL-NEXT: [LoggingExternalInterface logging 42]
   ;; NORMAL-NEXT: [trap unreachable]
-  ;; TNH:      [fuzz-exec] calling foo
+  ;; TNH:      [fuzz-exec] export foo
   ;; TNH-NEXT: [LoggingExternalInterface logging 42]
   ;; TNH-NEXT: [trap unreachable]
   (func $foo (export "foo") (param $i i32) (result funcref)
@@ -61,12 +61,12 @@
     )
   )
 )
-;; NORMAL:      [fuzz-exec] calling foo
+;; NORMAL:      [fuzz-exec] export foo
 ;; NORMAL-NEXT: [LoggingExternalInterface logging 42]
 ;; NORMAL-NEXT: [trap unreachable]
 ;; NORMAL-NEXT: [fuzz-exec] comparing foo
 
-;; TNH:      [fuzz-exec] calling foo
+;; TNH:      [fuzz-exec] export foo
 ;; TNH-NEXT: [LoggingExternalInterface logging 42]
 ;; TNH-NEXT: [trap unreachable]
 ;; TNH-NEXT: [fuzz-exec] comparing foo

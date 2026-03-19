@@ -467,7 +467,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
   void throwException(const WasmException& exn) override {
     std::stringstream ss;
-    ss << "exception thrown: " << exn;
+    auto& data = *exn.exn.getExnData();
+    ss << "exception thrown: " << data.tag->name;
+    if (!data.payload.empty()) {
+      ss << ' ' << data.payload;
+    }
     throw FailToEvalException(ss.str());
   }
 

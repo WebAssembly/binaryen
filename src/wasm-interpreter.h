@@ -62,7 +62,6 @@ namespace wasm {
 struct WasmException {
   Literal exn;
 };
-std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
 // An exception thrown when we try to execute non-constant code, that is, code
 // that we cannot properly evaluate at compile time (e.g. if it refers to an
