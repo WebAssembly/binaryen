@@ -1203,7 +1203,7 @@ void ModuleSplitter::shareImportableItems() {
           // 1. If ref.func's function is in the primary module, we export it
           //    here.
           // 2. If ref.func's function is in a different secondary module and we
-          //    just created a trampoline for it in the primary module, we
+          //    just created a trampoline for it in the primary module above, we
           //    export the trampoline here.
           if (primary.getFunctionOrNull(ref->func)) {
             exportImportFunction(ref->func, {secondary});
