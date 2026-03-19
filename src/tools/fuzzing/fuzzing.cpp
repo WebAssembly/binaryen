@@ -5459,18 +5459,58 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
 
 Expression* TranslateToFuzzReader::makeContBind(Type type) {
   auto sig = type.getHeapType().getContinuation().type.getSignature();
-  // Add a single param to be bound. TODO: Add multiple, and look in
-  // interestingHeapTypes.
-  std::vector<Type> newParams;
-  for (auto t : sig.params) {
-    newParams.push_back(t);
+  auto numOldParams = sig.params.size();
+
+  // Look for a compatible signature, one who we are a suffix of. For example,
+  // with params [x,y,z] we'd want a signature like [a,b,x,y,z] so that we can
+  // bind a and b.
+  int tries = fuzzParams->TRIES;
+  auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
+  Index numAddedParams;
+  std::optional<Signature> newSig;
+  while (tries-- > 0) {
+    auto pickedSig = pick(funcTypes).getSignature();
+    auto numNewParams = pickedSig.params.size();
+    if (numNewParams < numOldParams) {
+      // Too short.
+      continue;
+    }
+    // Ignoring the new params at the start, compare the tails.
+    numAddedParams = numNewParams - numOldParams;
+    bool bad = false;
+    for (Index i = 0; i < numOldParams; i++) {
+      if (pickedSig.params[numAddedParams + i] != sig.params[i]) {
+        bad = true;
+        break;
+      }
+    }
+    if (!bad) {
+      newSig = pickedSig;
+      break;
+    }
   }
-  auto newParam = getSingleConcreteType();
-  newParams.insert(newParams.begin(), newParam);
-  auto newSig = Signature(Type(newParams), sig.results);
-  auto newCont = Continuation(newSig);
+
+  // If we failed to find a signature, either use the current one (binding no
+  // new params) or invent a new one, adding one param.
+  if (!newSig) {
+    if (oneIn(2)) {
+      newSig = sig;
+    } else {
+      std::vector<Type> newParams;
+      for (auto t : sig.params) {
+        newParams.push_back(t);
+      }
+      auto newParam = getSingleConcreteType();
+      newParams.insert(newParams.begin(), newParam);
+      newSig = Signature(Type(newParams), sig.results);
+    }
+  }
+  auto newCont = Continuation(*newSig); // TODO: use interestingHeapType oneIn2
   auto newType = Type(newCont, NonNullable, Exact);
-  std::vector<Expression*> newArgs{make(newParam)};
+  std::vector<Expression*> newArgs;
+  for (Index i = 0; i < numAddedParams; i++) {
+    newArgs.push_back(make(newSig->params[i]));
+  }
   return builder.makeContBind(type.getHeapType(), newArgs, make(newType));
 }
 
