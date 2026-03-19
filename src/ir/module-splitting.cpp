@@ -1172,7 +1172,7 @@ void ModuleSplitter::shareImportableItems() {
       // Import global initializer's ref.func dependences
       if (global->init) {
         for (auto* ref : FindAll<RefFunc>(global->init).list) {
-          // Here, ref->func is either a function the primary module, or a
+          // Here, ref->func is either a function in the primary module, or a
           // trampoline created in indirectReferencesToSecondaryFunctions in
           // case the original function is in one of the secondaries.
           assert(primary.getFunctionOrNull(ref->func));
