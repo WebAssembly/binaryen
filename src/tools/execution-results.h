@@ -549,7 +549,7 @@ struct ExecutionResults {
     }
     // The environment always sees externalized references and is able to
     // observe the difference between external references and externalized
-    // internal references. Make sure this is accounted for below by unrapping
+    // internal references. Make sure this is accounted for below by unwrapping
     // the references.
     a = a.unwrap();
     b = b.unwrap();

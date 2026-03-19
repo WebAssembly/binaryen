@@ -14,8 +14,8 @@
  ;; CHECK-NEXT: [exception thrown: A object(null)]
  (func $array (export "array") (result (ref $A))
   ;; Throw a very large array. We should not print all 12K items in it, as that
-  ;; would be very verbose. Instead we stop after a reasonable amount and
-  ;; print [..] for the rest.
+  ;; would be very verbose. Instead we print exactly what fuzz_shel.js would
+  ;; print.
   (throw $A
    (array.new_default $A
     (i32.const 12345)
