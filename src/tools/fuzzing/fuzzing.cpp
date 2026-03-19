@@ -5482,23 +5482,18 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     }
     // Ignoring the new params at the start, compare the tails.
     auto numAddedParams = numNewParams - numOldParams;
-std::cout << "compar " << sig << " to " << pickedSig << " with num added " << numAddedParams << '\n';
     bool bad = false;
     for (Index i = 0; i < numOldParams; i++) {
-std::cout << "a1\n";
       if (pickedSig.params[numAddedParams + i] != sig.params[i]) {
-std::cout << "a2\n";
         bad = true;
         break;
       }
-std::cout << "a3\n";
     }
     if (!bad) {
       newSigType = pickedSigType;
       break;
     }
   }
-std::cout << "a4\n";
 
   Index numAddedParams;
   if (newSigType) {
@@ -5524,9 +5519,7 @@ std::cout << "a4\n";
 
   // Pick a continuation type for the signature. If existing continuations use
   // it, usually pick one of them.
-std::cout << "a5\n";
   auto& newSigConts = sigConts[*newSigType];
-std::cout << "a6\n";
   HeapType newCont;
   if (!newSigConts.empty() && !oneIn(5)) {
     newCont = pick(newSigConts);
@@ -5537,11 +5530,9 @@ std::cout << "a6\n";
 
   // Generate the new args and the cont.bind.
   std::vector<Expression*> newArgs;
-std::cout << "a7 " << numAddedParams << " : " << newSig << "\n";
   for (Index i = 0; i < numAddedParams; i++) {
     newArgs.push_back(make(newSig.params[i]));
   }
-std::cout << "a9\n";
   return builder.makeContBind(type.getHeapType(), newArgs, make(newType));
 }
 
