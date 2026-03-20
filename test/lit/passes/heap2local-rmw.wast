@@ -1090,7 +1090,7 @@
     ;; CHECK:       (type $struct (struct (field (mut anyref))))
     (type $struct (struct (field (mut anyref))))
   )
-  ;; CHECK:      (func $test-scratch-oob (type $0)
+  ;; CHECK:      (func $test-cmpxchg-scratch-oob (type $0)
   ;; CHECK-NEXT:  (local $a arrayref)
   ;; CHECK-NEXT:  (local $1 (ref null (exact $struct)))
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -1127,7 +1127,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $test-scratch-oob
+  (func $test-cmpxchg-scratch-oob
     (local $a arrayref)
     ;; This allocation and set get optimized, creating the LocalGraph flower.
     (local.set $a

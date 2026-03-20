@@ -192,8 +192,8 @@ enum class ParentChildInteraction : int8_t {
   None,
 };
 
-// When we insert scratch locals, we need to record the flow between their set
-// and subsequent get.
+// When we insert scratch locals, we sometimes need to record the flow between
+// their set and subsequent get.
 using ScratchInfo = std::unordered_map<LocalSet*, LocalGet*>;
 
 // Core analysis that provides an escapes() method to check if an allocation
@@ -207,7 +207,11 @@ struct EscapeAnalyzer {
   // We use a lazy graph here because we only need this for reference locals,
   // and even among them, only ones we see an allocation is stored to. The
   // LocalGraph is is augmented by ScratchInfo, since the LocalGraph does not
-  // know about scratch locals we add.
+  // know about scratch locals we add. We currently only record scratch locals
+  // that might possibly have another optimized allocation flowing through them.
+  // If it's not possible for another optimized allocation to flow through the
+  // scratch local, then we will never look at it again after creating it and do
+  // not need to record it here.
   const LazyLocalGraph& localGraph;
   ScratchInfo& scratchInfo;
   Parents& parents;
