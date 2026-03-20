@@ -5461,7 +5461,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
 Expression* TranslateToFuzzReader::makeContBind(Type type) {
   // We must output a signature that corresponds to the type we were given.
   auto outputSig = type.getHeapType().getContinuation().type.getSignature();
-  auto numOutputParams = sig.params.size();
+  auto numOutputParams = outputSig.params.size();
 
   // Look for a compatible signature, one who we are a suffix of. For example,
   // with params [x,y,z] we'd want a signature like [a,b,x,y,z] so that we can
@@ -5511,7 +5511,7 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     // We failed to find a signature, either use the current one (binding no
     // input params) or invent a input one, adding one param.
     if (oneIn(2)) {
-      inputSigType = sig;
+      inputSigType = outputSig;
       numAddedParams = 0;
     } else {
       std::vector<Type> inputParams;
