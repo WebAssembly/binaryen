@@ -502,7 +502,7 @@ public:
   HeapType getNewHeapType(HeapType type) {
     auto iter = mapping.find(type);
     if (iter != mapping.end()) {
-      return iter->second;
+      type = iter->second;
     }
     return getTempHeapType(type);
   }
