@@ -17,7 +17,8 @@
 #ifndef wasm_ir_parents_h
 #define wasm_ir_parents_h
 
-#include "parsing.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -30,6 +31,10 @@ struct Parents {
       return iter->second;
     }
     return nullptr;
+  }
+
+  void setParent(Expression* child, Expression* parent) {
+    inner.parentMap[child] = parent;
   }
 
 private:
