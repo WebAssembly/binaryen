@@ -5460,46 +5460,49 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
 
 Expression* TranslateToFuzzReader::makeContBind(Type type) {
   // We must output a signature that corresponds to the type we were given.
-  auto outputSig = type.getHeapType().getContinuation().type.getSignature();
+  auto outputSigType = type.getHeapType().getContinuation().type;
+  auto outputSig = outputSigType.getSignature();
   auto numOutputParams = outputSig.params.size();
 
   // Look for a compatible signature, one who we are a suffix of. For example,
   // with params [x,y,z] we'd want a signature like [a,b,x,y,z] so that we can
   // bind a and b. That will be the input signature, which is longer, and after
-  // cont.bind it becomes the output signature.
-  auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
-  // Filter out signatures with incompatible results.
-  std::vector<HeapType> relevantFuncTypes;
-  for (auto funcType : funcTypes) {
-    if (funcType.getSignature().results == outputSig.results) {
-      relevantFuncTypes.push_back(funcType);
-    }
-  }
+  // cont.bind it becomes the output signature. Don't always do this, however.
   std::optional<HeapType> inputSigType;
-  if (!relevantFuncTypes.empty()) {
-    int tries = fuzzParams->TRIES;
-    while (tries-- > 0) {
-      auto pickedSigType = pick(relevantFuncTypes);
-      auto pickedSig = pickedSigType.getSignature();
-      assert(pickedSig.results == outputSig.results);
-      auto numinputParams = pickedSig.params.size();
-      if (numinputParams < numOutputParams) {
-        // Too short.
-        continue;
+  if (!oneIn(4)) {
+    auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
+    // Filter out signatures with incompatible results.
+    std::vector<HeapType> relevantFuncTypes;
+    for (auto funcType : funcTypes) {
+      if (funcType.getSignature().results == outputSig.results) {
+        relevantFuncTypes.push_back(funcType);
       }
-      // Ignoring the input params at the start, compare the tails.
-      auto numAddedParams = numinputParams - numOutputParams;
-      bool bad = false;
-      for (Index i = 0; i < numOutputParams; i++) {
-        if (!Type::isSubType(pickedSig.params[numAddedParams + i],
-                             outputSig.params[i])) {
-          bad = true;
+    }
+    if (!relevantFuncTypes.empty()) {
+      int tries = fuzzParams->TRIES;
+      while (tries-- > 0) {
+        auto pickedSigType = pick(relevantFuncTypes);
+        auto pickedSig = pickedSigType.getSignature();
+        assert(pickedSig.results == outputSig.results);
+        auto numinputParams = pickedSig.params.size();
+        if (numinputParams < numOutputParams) {
+          // Too short.
+          continue;
+        }
+        // Ignoring the input params at the start, compare the tails.
+        auto numAddedParams = numinputParams - numOutputParams;
+        bool bad = false;
+        for (Index i = 0; i < numOutputParams; i++) {
+          if (!Type::isSubType(pickedSig.params[numAddedParams + i],
+                               outputSig.params[i])) {
+            bad = true;
+            break;
+          }
+        }
+        if (!bad) {
+          inputSigType = pickedSigType;
           break;
         }
-      }
-      if (!bad) {
-        inputSigType = pickedSigType;
-        break;
       }
     }
   }
@@ -5512,7 +5515,7 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     // We failed to find a signature, either use the current one (binding no
     // input params) or invent a input one, adding one param.
     if (oneIn(2)) {
-      inputSigType = outputSig;
+      inputSigType = outputSigType;
       numAddedParams = 0;
     } else {
       std::vector<Type> inputParams;
