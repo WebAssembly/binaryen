@@ -5467,16 +5467,20 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
   // with params [x,y,z] we'd want a signature like [a,b,x,y,z] so that we can
   // bind a and b. That will be the input signature, which is longer, and after
   // cont.bind it becomes the output signature.
-  int tries = fuzzParams->TRIES;
   auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
-  std::optional<HeapType> inputSigType;
-  while (tries-- > 0) {
-    auto pickedSigType = pick(funcTypes);
-    auto pickedSig = pickedSigType.getSignature();
-    if (pickedSig.results != sig.results) {
-      // Results must match.
-      continue;
+  // Filter out signatures with incompatible results.
+  std::vector<HeapType> relevantFuncTypes;
+  for (auto funcType : funcTypes) {
+    if (funcType.getSignature().results == outputSig.results) {
+      relevantFuncTypes.push_back(funcType);
     }
+  }
+  std::optional<HeapType> inputSigType;
+  int tries = fuzzParams->TRIES;
+  while (tries-- > 0) {
+    auto pickedSigType = pick(relevantFuncTypes);
+    auto pickedSig = pickedSigType.getSignature();
+    assert(pickedSig.results == outputSig.results);
     auto numinputParams = pickedSig.params.size();
     if (numinputParams < numOutputParams) {
       // Too short.
@@ -5493,6 +5497,7 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     }
     if (!bad) {
       inputSigType = pickedSigType;
+      abort();
       break;
     }
   }
