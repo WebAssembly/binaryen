@@ -5459,15 +5459,17 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeContBind(Type type) {
-  auto sig = type.getHeapType().getContinuation().type.getSignature();
-  auto numOldParams = sig.params.size();
+  // We must output a signature that corresponds to the type we were given.
+  auto outputSig = type.getHeapType().getContinuation().type.getSignature();
+  auto numOutputParams = sig.params.size();
 
   // Look for a compatible signature, one who we are a suffix of. For example,
   // with params [x,y,z] we'd want a signature like [a,b,x,y,z] so that we can
-  // bind a and b.
+  // bind a and b. That will be the input signature, which is longer, and after
+  // cont.bind it becomes the output signature.
   int tries = fuzzParams->TRIES;
   auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
-  std::optional<HeapType> newSigType;
+  std::optional<HeapType> inputSigType;
   while (tries-- > 0) {
     auto pickedSigType = pick(funcTypes);
     auto pickedSig = pickedSigType.getSignature();
@@ -5475,65 +5477,65 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
       // Results must match.
       continue;
     }
-    auto numNewParams = pickedSig.params.size();
-    if (numNewParams < numOldParams) {
+    auto numinputParams = pickedSig.params.size();
+    if (numinputParams < numOutputParams) {
       // Too short.
       continue;
     }
-    // Ignoring the new params at the start, compare the tails.
-    auto numAddedParams = numNewParams - numOldParams;
+    // Ignoring the input params at the start, compare the tails.
+    auto numAddedParams = numinputParams - numOutputParams;
     bool bad = false;
-    for (Index i = 0; i < numOldParams; i++) {
+    for (Index i = 0; i < numOutputParams; i++) {
       if (pickedSig.params[numAddedParams + i] != sig.params[i]) {
         bad = true;
         break;
       }
     }
     if (!bad) {
-      newSigType = pickedSigType;
+      inputSigType = pickedSigType;
       break;
     }
   }
 
   Index numAddedParams;
-  if (newSigType) {
-    numAddedParams = newSigType->getSignature().params.size() - numOldParams;
+  if (inputSigType) {
+    numAddedParams = inputSigType->getSignature().params.size() - numOutputParams;
   } else {
     // We failed to find a signature, either use the current one (binding no
-    // new params) or invent a new one, adding one param.
+    // input params) or invent a input one, adding one param.
     if (oneIn(2)) {
-      newSigType = sig;
+      inputSigType = sig;
       numAddedParams = 0;
     } else {
-      std::vector<Type> newParams;
+      std::vector<Type> inputParams;
       for (auto t : sig.params) {
-        newParams.push_back(t);
+        inputParams.push_back(t);
       }
-      auto newParam = getSingleConcreteType();
-      newParams.insert(newParams.begin(), newParam);
-      newSigType = Signature(Type(newParams), sig.results);
+      auto inputParam = getSingleConcreteType();
+      inputParams.insert(inputParams.begin(), inputParam);
+      inputSigType = Signature(Type(inputParams), sig.results);
       numAddedParams = 1;
     }
   }
-  auto newSig = newSigType->getSignature();
+  auto inputSig = inputSigType->getSignature();
 
   // Pick a continuation type for the signature. If existing continuations use
   // it, usually pick one of them.
-  auto& newSigConts = sigConts[*newSigType];
-  HeapType newCont;
-  if (!newSigConts.empty() && !oneIn(5)) {
-    newCont = pick(newSigConts);
+  auto& inputSigConts = sigConts[*inputSigType];
+  HeapType inputCont;
+  if (!inputSigConts.empty() && !oneIn(5)) {
+    inputCont = pick(inputSigConts);
   } else {
-    newCont = Continuation(newSig);
+    inputCont = Continuation(inputSig);
   }
-  Type newType = Type(newCont, NonNullable, Exact);
+  Type inputType = Type(inputCont, NonNullable, Exact);
 
   // Generate the new args and the cont.bind.
   std::vector<Expression*> newArgs;
   for (Index i = 0; i < numAddedParams; i++) {
-    newArgs.push_back(make(newSig.params[i]));
+    newArgs.push_back(make(inputSig.params[i]));
   }
-  return builder.makeContBind(type.getHeapType(), newArgs, make(newType));
+  return builder.makeContBind(type.getHeapType(), newArgs, make(inputType));
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
