@@ -5464,51 +5464,50 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
   auto outputSig = outputSigType.getSignature();
   auto numOutputParams = outputSig.params.size();
 
-  // Look for a compatible signature, one who we are a suffix of. For example,
-  // with params [x,y,z] we'd want a signature like [a,b,x,y,z] so that we can
-  // bind a and b. That will be the input signature, which is longer, and after
-  // cont.bind it becomes the output signature. Don't always do this, however.
+  // Look for a compatible signature. Don't always do this, however - we have a
+  // few other options below.
   std::optional<HeapType> inputSigType;
   if (!oneIn(4)) {
     auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
-    // Filter out signatures with incompatible results.
+    // Filter out incompatible signatures.
     std::vector<HeapType> relevantFuncTypes;
     for (auto funcType : funcTypes) {
-      if (funcType.getSignature().results == outputSig.results) {
+      auto funcSig = funcType.getSignature();
+      if (funcSig.results != outputSig.results) {
+        // The results must match.
+        continue;
+      }
+
+      // The params must be compatible. For example, with output params [x,y,z]
+      // we'd want an input signature like [a,b,x,y,z] so that we can bind a and
+      // b.
+      auto numInputParams = funcSig.params.size();
+      if (numInputParams < numOutputParams) {
+        // Too short.
+        continue;
+      }
+      // Ignoring the input params at the start, compare the tails.
+      auto numAddedParams = numInputParams - numOutputParams;
+      bool bad = false;
+      for (Index i = 0; i < numOutputParams; i++) {
+        if (!Type::isSubType(outputSig.params[i],
+                             funcSig.params[numAddedParams + i])) {
+          bad = true;
+          break;
+        }
+      }
+      if (!bad) {
         relevantFuncTypes.push_back(funcType);
       }
     }
     if (!relevantFuncTypes.empty()) {
-      int tries = fuzzParams->TRIES;
-      while (tries-- > 0) {
-        auto pickedSigType = pick(relevantFuncTypes);
-        auto pickedSig = pickedSigType.getSignature();
-        assert(pickedSig.results == outputSig.results);
-        auto numInputParams = pickedSig.params.size();
-        if (numInputParams < numOutputParams) {
-          // Too short.
-          continue;
-        }
-        // Ignoring the input params at the start, compare the tails.
-        auto numAddedParams = numInputParams - numOutputParams;
-        bool bad = false;
-        for (Index i = 0; i < numOutputParams; i++) {
-          if (!Type::isSubType(outputSig.params[i],
-                               pickedSig.params[numAddedParams + i])) {
-            bad = true;
-            break;
-          }
-        }
-        if (!bad) {
-          inputSigType = pickedSigType;
-          break;
-        }
-      }
+      inputSigType = pick(relevantFuncTypes);
     }
   }
 
   Index numAddedParams;
   if (inputSigType) {
+    // We picked a signature, above.
     numAddedParams =
       inputSigType->getSignature().params.size() - numOutputParams;
   } else {
