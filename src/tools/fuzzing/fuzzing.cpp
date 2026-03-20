@@ -5476,29 +5476,31 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     }
   }
   std::optional<HeapType> inputSigType;
-  int tries = fuzzParams->TRIES;
-  while (tries-- > 0) {
-    auto pickedSigType = pick(relevantFuncTypes);
-    auto pickedSig = pickedSigType.getSignature();
-    assert(pickedSig.results == outputSig.results);
-    auto numinputParams = pickedSig.params.size();
-    if (numinputParams < numOutputParams) {
-      // Too short.
-      continue;
-    }
-    // Ignoring the input params at the start, compare the tails.
-    auto numAddedParams = numinputParams - numOutputParams;
-    bool bad = false;
-    for (Index i = 0; i < numOutputParams; i++) {
-      if (!Type::isSubType(pickedSig.params[numAddedParams + i],
-                           outputSig.params[i])) {
-        bad = true;
+  if (!relevantFuncTypes.empty()) {
+    int tries = fuzzParams->TRIES;
+    while (tries-- > 0) {
+      auto pickedSigType = pick(relevantFuncTypes);
+      auto pickedSig = pickedSigType.getSignature();
+      assert(pickedSig.results == outputSig.results);
+      auto numinputParams = pickedSig.params.size();
+      if (numinputParams < numOutputParams) {
+        // Too short.
+        continue;
+      }
+      // Ignoring the input params at the start, compare the tails.
+      auto numAddedParams = numinputParams - numOutputParams;
+      bool bad = false;
+      for (Index i = 0; i < numOutputParams; i++) {
+        if (!Type::isSubType(pickedSig.params[numAddedParams + i],
+                             outputSig.params[i])) {
+          bad = true;
+          break;
+        }
+      }
+      if (!bad) {
+        inputSigType = pickedSigType;
         break;
       }
-    }
-    if (!bad) {
-      inputSigType = pickedSigType;
-      break;
     }
   }
 
