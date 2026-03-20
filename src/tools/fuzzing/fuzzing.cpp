@@ -5490,7 +5490,8 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     auto numAddedParams = numinputParams - numOutputParams;
     bool bad = false;
     for (Index i = 0; i < numOutputParams; i++) {
-      if (!Type::isSubType(pickedSig.params[numAddedParams + i], outputSig.params[i])) {
+      if (!Type::isSubType(pickedSig.params[numAddedParams + i],
+                           outputSig.params[i])) {
         bad = true;
         break;
       }
@@ -5504,7 +5505,8 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
 
   Index numAddedParams;
   if (inputSigType) {
-    numAddedParams = inputSigType->getSignature().params.size() - numOutputParams;
+    numAddedParams =
+      inputSigType->getSignature().params.size() - numOutputParams;
   } else {
     // We failed to find a signature, either use the current one (binding no
     // input params) or invent a input one, adding one param.
