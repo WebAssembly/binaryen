@@ -5493,8 +5493,8 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
         auto numAddedParams = numinputParams - numOutputParams;
         bool bad = false;
         for (Index i = 0; i < numOutputParams; i++) {
-          if (!Type::isSubType(pickedSig.params[numAddedParams + i],
-                               outputSig.params[i])) {
+          if (!Type::isSubType(outputSig.params[i],
+                               pickedSig.params[numAddedParams + i])) {
             bad = true;
             break;
           }
