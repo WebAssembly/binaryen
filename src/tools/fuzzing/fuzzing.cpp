@@ -5490,14 +5490,14 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     auto numAddedParams = numinputParams - numOutputParams;
     bool bad = false;
     for (Index i = 0; i < numOutputParams; i++) {
-      if (pickedSig.params[numAddedParams + i] != sig.params[i]) {
+      if (!Type::isSubType(pickedSig.params[numAddedParams + i], outputSig.params[i])) {
         bad = true;
         break;
       }
     }
     if (!bad) {
       inputSigType = pickedSigType;
-      abort();
+      Fatal() << "picked";
       break;
     }
   }
@@ -5513,12 +5513,12 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
       numAddedParams = 0;
     } else {
       std::vector<Type> inputParams;
-      for (auto t : sig.params) {
+      for (auto t : outputSig.params) {
         inputParams.push_back(t);
       }
       auto inputParam = getSingleConcreteType();
       inputParams.insert(inputParams.begin(), inputParam);
-      inputSigType = Signature(Type(inputParams), sig.results);
+      inputSigType = Signature(Type(inputParams), outputSig.results);
       numAddedParams = 1;
     }
   }
