@@ -241,8 +241,7 @@ static void extractBytes(uint8_t (&dest)[16], const LaneArray<Lanes>& lanes) {
   for (size_t lane_index = 0; lane_index < Lanes; ++lane_index) {
     uint8_t bits[16];
     lanes[lane_index].getBits(bits);
-    LaneT lane;
-    memcpy(&lane, bits, sizeof(lane));
+    LaneT lane = Bits::readLE<LaneT>(bits);
     for (size_t offset = 0; offset < lane_width; ++offset) {
       bytes.at(lane_index * lane_width + offset) =
         uint8_t(lane >> (8 * offset));
@@ -317,24 +316,16 @@ Literal Literal::makeFromMemory(void* p, Type type) {
   assert(type.isNumber());
   switch (type.getBasic()) {
     case Type::i32: {
-      int32_t i;
-      memcpy(&i, p, sizeof(i));
-      return Literal(i);
+      return Literal(Bits::readLE<int32_t>(p));
     }
     case Type::i64: {
-      int64_t i;
-      memcpy(&i, p, sizeof(i));
-      return Literal(i);
+      return Literal(Bits::readLE<int64_t>(p));
     }
     case Type::f32: {
-      int32_t i;
-      memcpy(&i, p, sizeof(i));
-      return Literal(bit_cast<float>(i));
+      return Literal(bit_cast<float>(Bits::readLE<int32_t>(p)));
     }
     case Type::f64: {
-      int64_t i;
-      memcpy(&i, p, sizeof(i));
-      return Literal(bit_cast<double>(i));
+      return Literal(bit_cast<double>(Bits::readLE<int64_t>(p)));
     }
     case Type::v128: {
       uint8_t bytes[16];
@@ -461,11 +452,11 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
   switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
-      memcpy(buf, &i32, sizeof(i32));
+      Bits::writeLE<int32_t>(i32, buf);
       break;
     case Type::i64:
     case Type::f64:
-      memcpy(buf, &i64, sizeof(i64));
+      Bits::writeLE<int64_t>(i64, buf);
       break;
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
