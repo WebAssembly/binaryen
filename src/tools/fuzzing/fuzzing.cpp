@@ -5484,13 +5484,13 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
         auto pickedSigType = pick(relevantFuncTypes);
         auto pickedSig = pickedSigType.getSignature();
         assert(pickedSig.results == outputSig.results);
-        auto numinputParams = pickedSig.params.size();
-        if (numinputParams < numOutputParams) {
+        auto numInputParams = pickedSig.params.size();
+        if (numInputParams < numOutputParams) {
           // Too short.
           continue;
         }
         // Ignoring the input params at the start, compare the tails.
-        auto numAddedParams = numinputParams - numOutputParams;
+        auto numAddedParams = numInputParams - numOutputParams;
         bool bad = false;
         for (Index i = 0; i < numOutputParams; i++) {
           if (!Type::isSubType(outputSig.params[i],
