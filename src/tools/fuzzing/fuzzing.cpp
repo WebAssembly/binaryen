@@ -5498,7 +5498,6 @@ Expression* TranslateToFuzzReader::makeContBind(Type type) {
     }
     if (!bad) {
       inputSigType = pickedSigType;
-      Fatal() << "picked";
       break;
     }
   }
