@@ -419,7 +419,12 @@ def test_suite(name, func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         assert not (shared.options.abort_on_first_failure and shared.num_failures)
-        result = func(*args, **kwargs)
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            print(e)
+            shared.num_failures += 1
+            result = None
         if shared.options.abort_on_first_failure and shared.num_failures:
             raise Exception(f'test suite failed: {name}')
         return result
