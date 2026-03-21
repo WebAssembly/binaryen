@@ -22,7 +22,6 @@ Keeping: <none>
 After:
 (module
  (type $0 (func (param i32)))
- (global $glob (mut i32) (i32.const 7))
  (memory $mem 3 42 shared)
  (table $tab 3 42 funcref)
  (tag $e (type $0) (param i32))
@@ -46,7 +45,6 @@ After:
  (type $0 (func (param i32)))
  (import "env" "mem" (memory $mem 3 42 shared))
  (import "env" "tab" (table $tab 3 42 funcref))
- (import "env" "glob" (global $glob (mut i32)))
  (import "env" "e" (tag $e (type $0) (param i32)))
 )
 Secondary:
