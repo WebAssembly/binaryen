@@ -1599,6 +1599,7 @@ public:
   bool more() { return pos < input.size(); }
 
   std::string_view getByteView(size_t size);
+  uint8_t peekInt8();
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();

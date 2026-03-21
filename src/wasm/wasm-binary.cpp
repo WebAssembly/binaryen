@@ -2289,6 +2289,13 @@ std::string_view WasmBinaryReader::getByteView(size_t size) {
   return {input.data() + (pos - size), size};
 }
 
+uint8_t WasmBinaryReader::peekInt8() {
+  if (!more()) {
+    throwError("unexpected end of input");
+  }
+  return input[pos];
+}
+
 uint8_t WasmBinaryReader::getInt8() {
   if (!more()) {
     throwError("unexpected end of input");
@@ -5045,17 +5052,17 @@ void WasmBinaryReader::readTableDeclarations() {
   for (size_t i = 0; i < num; i++) {
     auto [name, isExplicit] = getOrMakeName(
       tableNames, numImports + i, makeName("", i), usedTableNames);
-    auto peekInt = getInt8();
+    auto peekInt = peekInt8();
     bool hasInit = false;
     if (peekInt == BinaryConsts::HasTableInitializer) {
+      // skip past the peeked int
+      pos++;
       auto reservedByte = getInt8();
       if (reservedByte != BinaryConsts::TableReservedByte) {
         // byte reserved for future extension, must be zero for now
         throwError("Malformed table");
       }
       hasInit = true;
-    } else {
-      pos--;
     }
     auto elemType = getType();
     if (!elemType.isRef()) {
