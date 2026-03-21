@@ -1189,7 +1189,7 @@ void ModuleSplitter::shareImportableItems() {
       // (memories, tables, and tags) that can just sit in the primary module
       // and later be DCE'ed by another pass, we should remove it here, because
       // an unused global can contain an initialier that refers to another
-      // global that has scheduled to move to a secondary module, like
+      // global that will be moved to a secondary module, like
       // (global $unused i32 (global.get $a)) // $a is moved to a secondary
       globalsToRemove.push_back(global->name);
 
