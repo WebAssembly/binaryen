@@ -1182,8 +1182,18 @@ void ModuleSplitter::shareImportableItems() {
 
     auto usingSecondaries =
       getUsingSecondaries(global->name, &UsedNames::globals);
-    bool usedInPrimary = primaryUsed.globals.count(global->name);
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    bool inPrimary = primaryUsed.globals.count(global->name);
+
+    if (!inPrimary && usingSecondaries.empty()) {
+      // It's not used anywhere, so delete it. Unlike other unused module items
+      // (memories, tables, and tags) that can just sit in the primary module
+      // and later be DCE'ed by another pass, we should remove it here, because
+      // an unused global can contain an initialier that refers to another
+      // global that will be moved to a secondary module, like
+      // (global $unused i32 (global.get $a)) // $a is moved to a secondary
+      globalsToRemove.push_back(global->name);
+
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       // We are moving this global to this secondary module
       auto* secondary = usingSecondaries[0];
       auto* secondaryGlobal = ModuleUtils::copyGlobal(global.get(), *secondary);
@@ -1213,6 +1223,7 @@ void ModuleSplitter::shareImportableItems() {
           // function.
         }
       }
+
     } else { // We are NOT moving this global to the secondary module
       if (global->init) {
         for (auto* ref : FindAll<RefFunc>(global->init).list) {

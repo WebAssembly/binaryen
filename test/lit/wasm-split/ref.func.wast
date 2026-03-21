@@ -45,6 +45,12 @@
  ;; PRIMARY-NEXT:  (drop
  ;; PRIMARY-NEXT:   (ref.func $trampoline_second)
  ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT:  (drop
+ ;; PRIMARY-NEXT:   (global.get $glob1)
+ ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT:  (drop
+ ;; PRIMARY-NEXT:   (global.get $glob2)
+ ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
  (func $prime
   (drop
@@ -52,6 +58,12 @@
   )
   (drop
    (ref.func $second)
+  )
+  (drop
+   (global.get $glob1)
+  )
+  (drop
+   (global.get $glob2)
   )
  )
 
