@@ -34,6 +34,11 @@
 
   ;; SECONDARY:      (global $d i32 (global.get $e))
 
+  ;; This dead global is referring to a global ($a) that's moved to the
+  ;; secondary module. This should be deleted.
+  ;; PRIMARY-NOT:  (global (global $dead i32 (global.get $a))
+  (global $dead i32 (global.get $a))
+
   ;; PRIMARY:      (func $keep
   ;; PRIMARY-NEXT:  (drop
   ;; PRIMARY-NEXT:   (global.get $e)
