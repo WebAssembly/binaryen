@@ -943,9 +943,7 @@ void TranslateToFuzzReader::finalizeTable() {
       }
       if (hasNonImported) {
         // table initializers can't reference module-defined globals.
-        // TODO: use makeConst if it can be made to work without crashing?
-        table->type = table->type.with(Nullable);
-        table->init = builder.makeRefNull(table->type.getHeapType());
+        table->init = makeConst(table->type);
       }
     }
 
@@ -971,11 +969,7 @@ void TranslateToFuzzReader::finalizeTable() {
       // Avoid an imported table (which the fuzz harness would need to handle).
       table->module = table->base = Name();
       if (table->type.isNonNullable()) {
-        // imported tables can have nullable types without an initializer,
-        // but this is not the case for module-defined tables, so make it
-        // nullable.
-        // TODO: use makeConst to provide an initializer of the correct type?
-        table->type = table->type.with(Nullable);
+        table->init = makeConst(table->type);
       }
     }
   }
