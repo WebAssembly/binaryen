@@ -1352,37 +1352,27 @@ public:
                      const std::vector<Name>& handlerBlocks,
                      const std::vector<Type>& sentTypes,
                      ExpressionList&& operands,
-                     Expression* cont) {
+                     Expression* cont,
+                     HeapType contType) {
     auto* ret = wasm.allocator.alloc<Resume>();
     ret->handlerTags.set(handlerTags);
     ret->handlerBlocks.set(handlerBlocks);
     ret->sentTypes.set(sentTypes);
     ret->operands = std::move(operands);
     ret->cont = cont;
+    assert(contType.isContinuation());
+    ret->type = contType.getContinuation().type.getSignature().results;
     ret->finalize();
     return ret;
   }
-  template<typename T>
-  Resume* makeResume(const std::vector<Name>& handlerTags,
-                     const std::vector<Name>& handlerBlocks,
-                     const std::vector<Type>& sentTypes,
-                     ExpressionList& operands,
-                     Expression* cont) {
-    auto* ret = wasm.allocator.alloc<Resume>();
-    ret->handlerTags.set(handlerTags);
-    ret->handlerBlocks.set(handlerBlocks);
-    ret->sentTypes.set(sentTypes);
-    ret->operands.set(operands);
-    ret->cont = cont;
-    ret->finalize();
-    return ret;
-  }
+
   ResumeThrow* makeResumeThrow(Name tag,
                                const std::vector<Name>& handlerTags,
                                const std::vector<Name>& handlerBlocks,
                                const std::vector<Type>& sentTypes,
                                ExpressionList&& operands,
-                               Expression* cont) {
+                               Expression* cont,
+                               HeapType contType) {
     auto* ret = wasm.allocator.alloc<ResumeThrow>();
     ret->tag = tag;
     ret->handlerTags.set(handlerTags);
@@ -1390,6 +1380,8 @@ public:
     ret->sentTypes.set(sentTypes);
     ret->operands = std::move(operands);
     ret->cont = cont;
+    assert(contType.isContinuation());
+    ret->type = contType.getContinuation().type.getSignature().results;
     ret->finalize();
     return ret;
   }
