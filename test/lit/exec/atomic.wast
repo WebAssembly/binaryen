@@ -5,15 +5,29 @@
 (module
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
- (memory $0 23 256 shared)
+ (memory $shared 23 256 shared)
+ (memory $unshared 10 20)
 
  ;; CHECK:      [fuzz-exec] export wait_and_log
  ;; CHECK-NEXT: [LoggingExternalInterface logging 2]
  (func $wait_and_log (export "wait_and_log")
   (call $log
-   (memory.atomic.wait64
+   (memory.atomic.wait64 $shared
     (i32.const 0)
     (i64.const 0)
+    (i64.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export wait_unshared
+ ;; CHECK-NEXT: [trap cannot atomic.wait a non-shared memory]
+ (func $wait_unshared (export "wait_unshared")
+  ;; Waiting on an unshared memory traps.
+  (drop
+   (memory.atomic.wait32 $unshared
+    (i32.const 0)
+    (i32.const 0)
     (i64.const 0)
    )
   )

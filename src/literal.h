@@ -20,6 +20,7 @@
 #include <array>
 #include <iostream>
 
+#include "support/bits.h"
 #include "support/hash.h"
 #include "support/name.h"
 #include "support/small_vector.h"
@@ -737,6 +738,14 @@ public:
   Literal externalize() const;
   Literal internalize() const;
 
+  // Internalize an externalized value or externalize an internalized value,
+  // otherwise return the literal unmodified.
+  Literal unwrap() const;
+
+  // Get the JS prototype configured via this struct's descriptor, if it exists,
+  // or null. Assumes this is a reference value.
+  Literal getJSPrototype() const;
+
 private:
   Literal addSatSI8(const Literal& other) const;
   Literal addSatUI8(const Literal& other) const;
@@ -823,7 +832,8 @@ template<> struct hash<wasm::Literal> {
           return digest;
         case wasm::Type::v128:
           uint64_t chunks[2];
-          memcpy(&chunks, a.getv128Ptr(), 16);
+          chunks[0] = wasm::Bits::readLE<uint64_t>(a.getv128Ptr());
+          chunks[1] = wasm::Bits::readLE<uint64_t>(&a.getv128Ptr()[8]);
           wasm::rehash(digest, chunks[0]);
           wasm::rehash(digest, chunks[1]);
           return digest;

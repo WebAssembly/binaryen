@@ -32,6 +32,7 @@
 #include "ir/memory-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/bits.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
@@ -467,7 +468,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
   void throwException(const WasmException& exn) override {
     std::stringstream ss;
-    ss << "exception thrown: " << exn;
+    auto& data = *exn.exn.getExnData();
+    ss << "exception thrown: " << data.tag->name;
+    if (!data.payload.empty()) {
+      ss << ' ' << data.payload;
+    }
     throw FailToEvalException(ss.str());
   }
 
@@ -497,15 +502,11 @@ private:
   }
 
   template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    memcpy(getMemory(address, memoryName, sizeof(T)), &value, sizeof(T));
+    Bits::writeLE<T>(value, getMemory(address, memoryName, sizeof(T)));
   }
 
   template<typename T> T doLoad(Address address, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    T ret;
-    memcpy(&ret, getMemory(address, memoryName, sizeof(T)), sizeof(T));
-    return ret;
+    return Bits::readLE<T>(getMemory(address, memoryName, sizeof(T)));
   }
 
   // Clear the state of the operation of applying the interpreter's runtime

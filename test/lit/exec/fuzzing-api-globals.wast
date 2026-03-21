@@ -18,7 +18,7 @@
 ;; CHECK:      [fuzz-exec] export global
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [fuzz-exec] export global-immref
-;; CHECK-NEXT: [LoggingExternalInterface logging object]
+;; CHECK-NEXT: [LoggingExternalInterface logging object(null)]
 ;; CHECK-NEXT: [fuzz-exec] export global-v128
 ;; CHECK-NEXT: [LoggingExternalInterface logging i32x4 0x0000000c 0x00000000 0x00000022 0x00000000]
 

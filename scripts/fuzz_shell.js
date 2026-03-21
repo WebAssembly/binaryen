@@ -144,16 +144,29 @@ function printed(x, y) {
     // Print bigints in legalized form, which is two 32-bit numbers of the low
     // and high bits.
     return (Number(x & 0xffffffffn) | 0) + ' ' + (Number(x >> 32n) | 0)
-  } else if (typeof x !== 'number') {
-    // Something that is not a number or string, like a reference. We can't
-    // print a reference because it could look different after opts - imagine
-    // that a function gets renamed internally (that is, the problem is that
-    // JS printing will emit some info about the reference and not a stable
-    // external representation of it). In those cases just print the type,
-    // which will be 'object' or 'function'.
-    return typeof x;
+  } else if (typeof x === 'object') {
+    // This may be one of the externref imports, in which case we can print its
+    // payload.
+    if (Object.hasOwn(x, 'payload')) {
+      return 'externref(' + x.payload + ')';
+    }
+    // Or maybe this is a JS error we caught.
+    if (x instanceof Error) {
+      return 'jserror';
+    }
+    // If this is a Wasm object, we can't access its type or any of its
+    // internal structure, which might have been changed by optimizations
+    // anyway. It might have a configured prototype, though, and that
+    // prototype may be an imported externref global we can identify by the
+    // payload we gave it.
+    return 'object(' + printed(Object.getPrototypeOf(x)) + ')';
+  } else if (typeof x === 'function') {
+    // We cannot print function names because they might have been changed by
+    // optimizations.
+    return 'function';
   } else {
     // A number. Print the whole thing.
+    assert(typeof x === 'number');
     return '' + x;
   }
 }
@@ -469,8 +482,15 @@ function makeImports(module) {
         baseImports[module] = {};
       }
       if (!baseImports[module][name]) {
-        // TODO: Use different payloads for different imports.
-        baseImports[module][name] = {};
+        // Compute a payload from the import names. This must be kept in sync
+        // with execution-results.h.
+        var payload = 0;
+        for (var name of [module, name]) {
+          for (var c of name) {
+            payload = (payload + c.charCodeAt(0)) % 251;
+          }
+        }
+        baseImports[module][name] = { payload };
       }
     }
   }
