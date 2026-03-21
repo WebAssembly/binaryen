@@ -5123,7 +5123,13 @@ void validateTables(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(table->initial <= table->max,
                       "table",
                       "size minimum must not be greater than maximum");
-    if (!table->imported() && !table->type.isNullable()) {
+    if (table->type.isNonNullable()) {
+      info.shouldBeTrue(module.features.hasGC(),
+                        "table",
+                        "tables must have a nullable type in MVP "
+                        "(requires --enable-gc).");
+    }
+    if (!table->imported() && table->type.isNonNullable()) {
       info.shouldBeTrue(table->init,
                         "table",
                         "module-defined tables with non-nullable types require "
