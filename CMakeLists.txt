@@ -555,7 +555,7 @@ if(EMSCRIPTEN)
   else()
     target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6")
   endif()
-  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii,getExceptionMessage")
   target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_js PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js PRIVATE optimized "--closure=1")
@@ -568,8 +568,6 @@ if(EMSCRIPTEN)
   # Don't exit the process on a fatal error, instead throw, so that JS can
   # catch.
   add_compile_flag("-DTHROW_ON_FATAL")
-  # Add support for printing C++ exceptions from JS.
-  target_link_libraries(binaryen_js PRIVATE "-sEXPORT_EXCEPTION_HANDLING_HELPERS")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
