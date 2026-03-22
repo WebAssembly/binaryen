@@ -20,7 +20,7 @@
 )
 
 ;; nullable table with initialization expression
-;; tables cannot have an initializer expression in MVP
+;; NO-GC: tables cannot have an initializer expression in MVP
 (module
  ;; CHECK:      (type $0 (func (param i32)))
  (type $0 (func (param i32)))
