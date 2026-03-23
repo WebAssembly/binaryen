@@ -21,4 +21,18 @@
       (i64.const 1)
     )
   )
+
+  ;; CHECK:      (func $array.load (type $2) (param $x (ref $array)) (result i64)
+  ;; CHECK-NEXT:  (i64.load32_u (type $array)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.load (param $x (ref $array)) (result i64)
+    ;; ArrayLoad operations cannot be removed or precomputed yet.
+    (i64.load32_u (type $array)
+      (local.get $x)
+      (i32.const 0)
+    )
+  )
 )
