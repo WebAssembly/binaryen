@@ -474,9 +474,13 @@ struct TypeRefining : public Pass {
 
     TypeRewriter(wasm, *this).update();
 
-    // Even with refinalizing (which we do below), we may still have situations
-    // that do not validate, because in some cases we can infer something more
-    // precise than can be represented in wasm. For example:
+    // Refinalization fixes up types and makes them fit in the places we write
+    // them to.
+    ReFinalize().run(getPassRunner(), &wasm);
+
+    // After refinalizing, we may still have situations that do not validate.
+    // In some cases we can infer something more precise than can be represented
+    // in wasm, like here:
     //
     //  (try (result A)
     //    (struct.get ..) ;; returns B.
@@ -531,6 +535,8 @@ struct TypeRefining : public Pass {
         curr->value = fixType(curr->value, fieldType);
       }
 
+      bool refinalize = false;
+
       // Fix up a given value so it fits into the type the location it is
       // written to.
       Expression* fixType(Expression* value, Type type) {
@@ -546,7 +552,8 @@ struct TypeRefining : public Pass {
         if (heapType.isBottom()) {
           auto* drop = builder.makeDrop(value);
           if (type.isNonNullable()) {
-            // This will just trap.
+            // This will just trap. Make it trap, and update parents' types.
+            refinalize = true;
             return builder.makeSequence(drop, builder.makeUnreachable());
           } else {
             return builder.makeSequence(drop, builder.makeRefNull(heapType));
@@ -554,13 +561,16 @@ struct TypeRefining : public Pass {
         }
         return builder.makeRefCast(value, type);
       }
+
+      void visitFunction(Function* func) {
+        if (refinalize) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
+      }
     };
 
     WriteUpdater updater;
     updater.run(getPassRunner(), &wasm);
-    updater.runOnModuleCode(getPassRunner(), &wasm);
-
-    ReFinalize().run(getPassRunner(), &wasm);
   }
 };
 

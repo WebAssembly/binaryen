@@ -1018,7 +1018,20 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $A)
-  ;; CHECK-NEXT:   (ref.cast (ref $A)
+  ;; CHECK-NEXT:   (if (result (ref $A))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (if (result (ref $A))
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
@@ -1028,23 +1041,6 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (ref.cast (ref $A)
-  ;; CHECK-NEXT:     (if (result (ref $A))
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (struct.get $A 0
-  ;; CHECK-NEXT:        (local.get $A)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (else
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1154,11 +1150,9 @@
   ;; CHECK:      (func $0 (type $2) (result (ref $A))
   ;; CHECK-NEXT:  (struct.new $A
   ;; CHECK-NEXT:   (ref.cast (ref (exact $B))
-  ;; CHECK-NEXT:    (ref.cast (ref (exact $B))
-  ;; CHECK-NEXT:     (struct.get $A 0
-  ;; CHECK-NEXT:      (struct.new $A
-  ;; CHECK-NEXT:       (struct.new_default $B)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (struct.new $A
+  ;; CHECK-NEXT:      (struct.new_default $B)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
