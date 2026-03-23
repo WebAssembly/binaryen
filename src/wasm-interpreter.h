@@ -2254,6 +2254,10 @@ public:
     VISIT(expected, curr->expected)
     VISIT(timeout, curr->timeout)
 
+    if (!curr->ref->type.getHeapType().isShared()) {
+      trap("cannot struct.wait a non-shared object");
+    }
+
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2888,14 +2892,12 @@ protected:
       case Field::NotPacked:
         return Literal::makeFromMemory(p, field.type);
       case Field::i8: {
-        int8_t i;
-        memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(int32_t(Bits::readLE<int8_t>(p))),
+                                  field);
       }
       case Field::i16: {
-        int16_t i;
-        memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(int32_t(Bits::readLE<int16_t>(p))),
+                                  field);
       }
       case Field::WaitQueue: {
         WASM_UNREACHABLE("waitqueue not implemented");
@@ -4265,6 +4267,9 @@ public:
     VISIT(timeout, curr->timeout)
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
+    if (!info.instance->wasm.getMemory(info.name)->shared) {
+      trap("cannot atomic.wait a non-shared memory");
+    }
     auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
       curr, ptr.getSingleValue(), bytes, memorySizeBytes);

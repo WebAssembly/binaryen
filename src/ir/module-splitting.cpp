@@ -45,7 +45,8 @@
 //      instantiation.
 //
 //   8. Export globals, tags, tables, and memories from the primary module and
-//      import them in the secondary modules.
+//      import them in the secondary modules. If possible, move those module
+//      items instead to the secondary modules.
 //
 // Functions can be used or referenced three ways in a WebAssembly module: they
 // can be exported, called, or referenced with ref.func. The above procedure
@@ -78,6 +79,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "support/insert_ordered.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -583,6 +585,25 @@ Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
   return builder.makeSequence(loadSecondary, callIndirect);
 }
 
+// Helper to walk expressions in segments but NOT in globals.
+template<typename Walker>
+static void walkSegments(Walker& walker, Module* module) {
+  walker.setModule(module);
+  for (auto& curr : module->elementSegments) {
+    if (curr->offset) {
+      walker.walk(curr->offset);
+    }
+    for (auto* item : curr->data) {
+      walker.walk(item);
+    }
+  }
+  for (auto& curr : module->dataSegments) {
+    if (curr->offset) {
+      walker.walk(curr->offset);
+    }
+  }
+}
+
 void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   // Turn references to secondary functions into references to thunks that
   // perform a direct call to the original referent. The direct calls in the
@@ -611,7 +632,25 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       }
     }
   } gatherer(*this);
-  gatherer.walkModule(&primary);
+  // We shouldn't use collector.walkModuleCode here, because we don't want to
+  // walk global initializers. At this point, all globals are still in the
+  // primary module, so if we walk global initializers here, it will create
+  // unnecessary trampolines.
+  //
+  // For example, we have (global $a funcref (ref.func $foo)), and $foo was
+  // split into a secondary module. Because $a is at this point still in the
+  // primary module, $foo will be considered to exist in a different module, so
+  // this will create a trampoline for $foo. But it is possible that later we
+  // find out $a is exclusively used by that secondary module and move $a there.
+  // In that case, $a can just reference $foo locally, but if we scan global
+  // initializers here, we would have created an unnecessary trampoline for
+  // $foo.
+  walkSegments(gatherer, &primary);
+  for (auto& curr : primary.functions) {
+    if (!curr->imported()) {
+      gatherer.walkFunction(curr.get());
+    }
+  }
   for (auto& secondaryPtr : secondaries) {
     gatherer.walkModule(secondaryPtr.get());
   }
@@ -977,7 +1016,19 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     NameCollector collector(used);
-    collector.walkModuleCode(&module);
+    // We shouldn't use collector.walkModuleCode here, because we don't want to
+    // walk global initializers. At this point, all globals are still in the
+    // primary module, so if we walk global initializers here, other globals
+    // appearing in their initializers will all be marked as used in the primary
+    // module, which is not what we want.
+    //
+    // For example, we have (global $a i32 (global.get $b)). Because $a is at
+    // this point still in the primary module, $b will be marked as "used" in
+    // the primary module. But $a can be moved to a secondary module later if it
+    // is used exclusively by that module. Then $b can be also moved, in case it
+    // doesn't have other uses. But if it is marked as "used" in the primary
+    // module, it can't.
+    walkSegments(collector, &module);
     for (auto& segment : module.dataSegments) {
       if (segment->memory.is()) {
         used.memories.insert(segment->memory);
@@ -1009,7 +1060,6 @@ void ModuleSplitter::shareImportableItems() {
           break;
       }
     }
-
     return used;
   };
 
@@ -1019,25 +1069,32 @@ void ModuleSplitter::shareImportableItems() {
     secondaryUsed.push_back(getUsedNames(*secondaryPtr));
   }
 
-  // Compute globals referenced in other globals' initializers. Since globals
-  // can reference other globals, we must ensure that if a global is used in a
-  // module, all its dependencies are also marked as used.
-  auto computeDependentItems = [&](UsedNames& used) {
-    std::vector<Name> worklist(used.globals.begin(), used.globals.end());
-    for (auto name : worklist) {
+  // Compute the transitive closure of globals referenced in other globals'
+  // initializers. Since globals can reference other globals, we must ensure
+  // that if a global is used in a module, all its dependencies are also marked
+  // as used.
+  auto computeTransitiveGlobals = [&](UsedNames& used) {
+    UniqueNonrepeatingDeferredQueue<Name> worklist;
+    for (auto global : used.globals) {
+      worklist.push(global);
+    }
+    while (!worklist.empty()) {
+      Name name = worklist.pop();
       // At this point all globals are still in the primary module, so this
       // exists
       auto* global = primary.getGlobal(name);
       if (!global->imported() && global->init) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
+          worklist.push(get->name);
           used.globals.insert(get->name);
         }
       }
     }
   };
 
+  computeTransitiveGlobals(primaryUsed);
   for (auto& used : secondaryUsed) {
-    computeDependentItems(used);
+    computeTransitiveGlobals(used);
   }
 
   // Given a name and module item kind, returns the list of secondary modules
@@ -1125,22 +1182,60 @@ void ModuleSplitter::shareImportableItems() {
 
     auto usingSecondaries =
       getUsingSecondaries(global->name, &UsedNames::globals);
-    bool usedInPrimary = primaryUsed.globals.count(global->name);
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
-      auto* secondary = usingSecondaries[0];
-      ModuleUtils::copyGlobal(global.get(), *secondary);
+    bool inPrimary = primaryUsed.globals.count(global->name);
+
+    if (!inPrimary && usingSecondaries.empty()) {
+      // It's not used anywhere, so delete it. Unlike other unused module items
+      // (memories, tables, and tags) that can just sit in the primary module
+      // and later be DCE'ed by another pass, we should remove it here, because
+      // an unused global can contain an initialier that refers to another
+      // global that will be moved to a secondary module, like
+      // (global $unused i32 (global.get $a)) // $a is moved to a secondary
       globalsToRemove.push_back(global->name);
-      // Import global initializer's ref.func dependences
-      if (global->init) {
-        for (auto* ref : FindAll<RefFunc>(global->init).list) {
-          // Here, ref->func is either a function the primary module, or a
-          // trampoline created in indirectReferencesToSecondaryFunctions in
-          // case the original function is in one of the secondaries.
-          assert(primary.getFunctionOrNull(ref->func));
-          exportImportFunction(ref->func, {secondary});
+
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
+      // We are moving this global to this secondary module
+      auto* secondary = usingSecondaries[0];
+      auto* secondaryGlobal = ModuleUtils::copyGlobal(global.get(), *secondary);
+      globalsToRemove.push_back(global->name);
+
+      if (secondaryGlobal->init) {
+        // When a global's initializer contains ref.func
+        for (auto* ref : FindAll<RefFunc>(secondaryGlobal->init).list) {
+          // If ref.func's function is in a different secondary module, we
+          // create a trampoline here.
+          if (auto targetIndexIt = funcToSecondaryIndex.find(ref->func);
+              targetIndexIt != funcToSecondaryIndex.end()) {
+            if (secondaries[targetIndexIt->second].get() != secondary) {
+              ref->func = getTrampoline(ref->func);
+            }
+          }
+          // 1. If ref.func's function is in the primary module, we export it
+          //    here.
+          // 2. If ref.func's function is in a different secondary module and we
+          //    just created a trampoline for it in the primary module above, we
+          //    export the trampoline here.
+          if (primary.getFunctionOrNull(ref->func)) {
+            exportImportFunction(ref->func, {secondary});
+          }
+          // If ref.func's function is in the same secondary module, we don't
+          // need to do anything. The ref.func can directly reference the
+          // function.
         }
       }
-    } else {
+
+    } else { // We are NOT moving this global to the secondary module
+      if (global->init) {
+        for (auto* ref : FindAll<RefFunc>(global->init).list) {
+          // If we are exporting this global from the primary module, we should
+          // create a trampoline here, because we skipped doing it for global
+          // initializers in indirectReferencesToSecondaryFunctions.
+          if (allSecondaryFuncs.count(ref->func)) {
+            ref->func = getTrampoline(ref->func);
+          }
+        }
+      }
+
       for (auto* secondary : usingSecondaries) {
         auto* secondaryGlobal =
           ModuleUtils::copyGlobal(global.get(), *secondary);

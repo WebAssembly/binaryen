@@ -215,6 +215,7 @@ public:
   }
   // ArrayLen is not disallowed here as it is an immutable property.
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayStore(ArrayStore* curr) { return Flow(NONCONSTANT_FLOW); }
 
   // Generates heap info for a heap-allocating expression.
   Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {

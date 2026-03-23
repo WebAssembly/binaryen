@@ -3,36 +3,41 @@
 ;; RUN: wasm-dis %t.2.wasm | filecheck %s --check-prefix SECONDARY
 
 ;; When a split global ($a here)'s initializer contains a ref.func of a split
-;; function, currently we create its trampoline in the primary module and export
-;; it.
-;; TODO Use $split in the secondary module directly in the split global
+;; function, we should NOT create any trampolines, and the split global should
+;; direclty refer to the function.
 
 (module
-  ;; PRIMARY:      (export "trampoline_split" (func $trampoline_split))
+  (global $a funcref (ref.func $split))
+  (global $b funcref (ref.func $keep))
+
+  ;; PRIMARY:      (export "keep" (func $keep))
+
+  ;; PRIMARY-NOT:  (export "trampoline_split"
+  ;; PRIMARY-NOT:  (func $trampoline_split
+
+  ;; SECONDARY:      (import "primary" "keep" (func $keep (exact)))
+
+  ;; SECONDARY:      (global $a funcref (ref.func $split))
+  ;; SECONDARY:      (global $b funcref (ref.func $keep))
 
   ;; PRIMARY:      (func $keep
   ;; PRIMARY-NEXT: )
   (func $keep)
 
-  ;; PRIMARY:      (func $trampoline_split
-  ;; PRIMARY-NEXT:  (call_indirect (type $0)
-  ;; PRIMARY-NEXT:   (i32.const 0)
-  ;; PRIMARY-NEXT:  )
-  ;; PRIMARY-NEXT: )
-
-
-  ;; SECONDARY:      (import "primary" "trampoline_split" (func $trampoline_split (exact)))
-  ;; SECONDARY:      (global $a funcref (ref.func $trampoline_split))
-  (global $a funcref (ref.func $split))
-
   ;; SECONDARY:      (func $split
   ;; SECONDARY-NEXT:  (drop
   ;; SECONDARY-NEXT:   (global.get $a)
+  ;; SECONDARY-NEXT:  )
+  ;; SECONDARY-NEXT:  (drop
+  ;; SECONDARY-NEXT:   (global.get $b)
   ;; SECONDARY-NEXT:  )
   ;; SECONDARY-NEXT: )
   (func $split
     (drop
       (global.get $a)
+    )
+    (drop
+      (global.get $b)
     )
   )
 )
