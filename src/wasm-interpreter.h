@@ -2398,17 +2398,24 @@ public:
       case Type::i32: {
         int32_t sval = static_cast<int32_t>(val);
         if (curr->signed_) {
-          if (curr->bytes == 1) sval = int32_t(int8_t(sval));
-          else if (curr->bytes == 2) sval = int32_t(int16_t(sval));
+          if (curr->bytes == 1) {
+            sval = static_cast<int32_t>(static_cast<int8_t>(sval));
+          } else if (curr->bytes == 2) {
+            sval = static_cast<int32_t>(static_cast<int16_t>(sval));
+          }
         }
         return Literal(sval);
       }
       case Type::i64: {
         int64_t sval = static_cast<int64_t>(val);
         if (curr->signed_) {
-          if (curr->bytes == 1) sval = int64_t(int8_t(sval));
-          else if (curr->bytes == 2) sval = int64_t(int16_t(sval));
-          else if (curr->bytes == 4) sval = int64_t(int32_t(sval));
+          if (curr->bytes == 1) {
+            sval = static_cast<int64_t>(static_cast<int8_t>(sval));
+          } else if (curr->bytes == 2) {
+            sval = static_cast<int64_t>(static_cast<int16_t>(sval));
+          } else if (curr->bytes == 4) {
+            sval = static_cast<int64_t>(static_cast<int32_t>(sval));
+          }
         }
         return Literal(sval);
       }

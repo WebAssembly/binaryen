@@ -3167,7 +3167,8 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
     // This is a constant. We can sign-extend it and use that value.
     unsigned bits = resultType.getByteSize() == 8 ? 64 : 32;
     if (bits <= bytes * 8) {
-      return; // No need to sign-extend for full size
+      // No need to sign-extend for full size.
+      return;
     }
     auto shifts = Literal(int32_t(bits - bytes * 8));
     auto lit = contents.getLiteral();
