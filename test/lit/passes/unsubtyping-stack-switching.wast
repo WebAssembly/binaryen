@@ -830,7 +830,7 @@
   (func $resume-throw-ref
     (local $sub (ref null $sub))
     ;; This does NOT require $sub <: $super because we turn this into a
-    ;; `resume $sub`.
+    ;; `resume_throw $sub`.
     (resume_throw $super $e
       (local.get $sub)
     )

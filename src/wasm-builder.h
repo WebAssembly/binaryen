@@ -1360,7 +1360,6 @@ public:
     ret->sentTypes.set(sentTypes);
     ret->operands = std::move(operands);
     ret->cont = cont;
-    assert(contType.isContinuation());
     ret->type = contType.getContinuation().type.getSignature().results;
     ret->finalize();
     return ret;
@@ -1380,7 +1379,6 @@ public:
     ret->sentTypes.set(sentTypes);
     ret->operands = std::move(operands);
     ret->cont = cont;
-    assert(contType.isContinuation());
     ret->type = contType.getContinuation().type.getSignature().results;
     ret->finalize();
     return ret;
