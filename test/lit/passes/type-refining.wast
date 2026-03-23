@@ -1018,20 +1018,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $A)
-  ;; CHECK-NEXT:   (if (result (ref $A))
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (struct.get $A 0
-  ;; CHECK-NEXT:      (local.get $A)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (else
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (if (result (ref $A))
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
@@ -1041,6 +1028,23 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (if (result (ref $A))
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (struct.get $A 0
+  ;; CHECK-NEXT:        (local.get $A)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1150,9 +1154,11 @@
   ;; CHECK:      (func $0 (type $2) (result (ref $A))
   ;; CHECK-NEXT:  (struct.new $A
   ;; CHECK-NEXT:   (ref.cast (ref (exact $B))
-  ;; CHECK-NEXT:    (struct.get $A 0
-  ;; CHECK-NEXT:     (struct.new $A
-  ;; CHECK-NEXT:      (struct.new_default $B)
+  ;; CHECK-NEXT:    (ref.cast (ref (exact $B))
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (struct.new $A
+  ;; CHECK-NEXT:       (struct.new_default $B)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1252,23 +1258,29 @@
   (tag $tag)
 
   ;; CHECK:      (func $struct.new (type $2) (param $extern externref) (result anyref)
-  ;; CHECK-NEXT:  (struct.new $A
-  ;; CHECK-NEXT:   (ref.cast (ref noextern)
-  ;; CHECK-NEXT:    (try (result externref)
-  ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (struct.get $A 0
-  ;; CHECK-NEXT:       (struct.new $A
-  ;; CHECK-NEXT:        (ref.as_non_null
-  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (try (result externref)
+  ;; CHECK-NEXT:       (do
+  ;; CHECK-NEXT:        (struct.get $A 0
+  ;; CHECK-NEXT:         (struct.new $A
+  ;; CHECK-NEXT:          (ref.as_non_null
+  ;; CHECK-NEXT:           (ref.null noextern)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (catch $tag
+  ;; CHECK-NEXT:        (local.get $extern)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch $tag
-  ;; CHECK-NEXT:      (local.get $extern)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $struct.new (param $extern externref) (result anyref)
@@ -1305,21 +1317,24 @@
   ;; CHECK:      (func $struct.set (type $3) (param $ref (ref $A)) (param $extern externref)
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (ref.cast (ref noextern)
-  ;; CHECK-NEXT:    (try (result externref)
-  ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (struct.get $A 0
-  ;; CHECK-NEXT:       (struct.new $A
-  ;; CHECK-NEXT:        (ref.as_non_null
-  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (try (result externref)
+  ;; CHECK-NEXT:      (do
+  ;; CHECK-NEXT:       (struct.get $A 0
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (ref.as_non_null
+  ;; CHECK-NEXT:          (ref.null noextern)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch $tag
-  ;; CHECK-NEXT:      (local.get $extern)
+  ;; CHECK-NEXT:      (catch $tag
+  ;; CHECK-NEXT:       (local.get $extern)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

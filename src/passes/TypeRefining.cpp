@@ -474,11 +474,9 @@ struct TypeRefining : public Pass {
 
     TypeRewriter(wasm, *this).update();
 
-    ReFinalize().run(getPassRunner(), &wasm);
-
-    // After refinalizing, we may still have situations that do not validate.
-    // In some cases we can infer something more precise than can be represented
-    // in wasm, like here:
+    // Even with refinalizing (which we do below), we may still have situations
+    // that do not validate, because in some cases we can infer something more
+    // precise than can be represented in wasm. For example:
     //
     //  (try (result A)
     //    (struct.get ..) ;; returns B.
@@ -514,9 +512,7 @@ struct TypeRefining : public Pass {
         for (Index i = 0; i < fields.size(); i++) {
           auto*& operand = curr->operands[i];
           auto fieldType = fields[i].type;
-          if (!Type::isSubType(operand->type, fieldType)) {
-            operand = Builder(*getModule()).makeRefCast(operand, fieldType);
-          }
+          operand = fixType(operand, fieldType);
         }
       }
 
@@ -532,17 +528,39 @@ struct TypeRefining : public Pass {
         }
 
         auto fieldType = type.getStruct().fields[curr->index].type;
+        curr->value = fixType(curr->value, fieldType);
+      }
 
-        if (!Type::isSubType(curr->value->type, fieldType)) {
-          curr->value =
-            Builder(*getModule()).makeRefCast(curr->value, fieldType);
+      // Fix up a given value so it fits into the type the location it is
+      // written to.
+      Expression* fixType(Expression* value, Type type) {
+        if (Type::isSubType(value->type, type)) {
+          return value;
         }
+        // We cast to fix this up. An exception is a bottom type, which we can
+        // handle by emitting a null (which works with types that cannot be
+        // cast, like continuations; it also explicitly provides the value being
+        // written, which other passes would do anyhow).
+        Builder builder(*getModule());
+        auto heapType = type.getHeapType();
+        if (heapType.isBottom()) {
+          auto* drop = builder.makeDrop(value);
+          if (type.isNonNullable()) {
+            // This will just trap.
+            return builder.makeSequence(drop, builder.makeUnreachable());
+          } else {
+            return builder.makeSequence(drop, builder.makeRefNull(heapType));
+          }
+        }
+        return builder.makeRefCast(value, type);
       }
     };
 
     WriteUpdater updater;
     updater.run(getPassRunner(), &wasm);
     updater.runOnModuleCode(getPassRunner(), &wasm);
+
+    ReFinalize().run(getPassRunner(), &wasm);
   }
 };
 
