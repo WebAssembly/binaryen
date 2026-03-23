@@ -25,7 +25,12 @@ namespace wasm {
 class RuntimeGlobal {
 public:
   RuntimeGlobal(Global definition, Literals literals = {})
-    : literals(literals), definition(definition) {}
+    : literals(literals), definition(definition) {
+    assert(!definition.imported() &&
+           "RuntimeGlobal expects a non-imported global definition");
+    assert(definition.init &&
+           "RuntimeGlobal expects a non-imported global definition");
+  }
 
   Literals literals;
 
