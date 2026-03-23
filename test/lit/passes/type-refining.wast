@@ -1288,8 +1288,8 @@
     ;; type than the body.
     ;;
     ;; In such situations we rely on other optimizations to improve things, like
-    ;; getting rid of the catch in this case. In this pass we add a cast to get
-    ;; things to validate, which should be removable by other passes later on.
+    ;; getting rid of the catch in this case. In this pass we add an unreachable
+    ;; for the uninhabitable type, which fixes validation.
     (struct.new $A
       (try (result externref)
         (do
