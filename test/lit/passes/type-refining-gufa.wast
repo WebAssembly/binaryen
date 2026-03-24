@@ -611,3 +611,54 @@
  )
 )
 
+;; When refining to nullcontref we cannot use a cast. Just emit a null.
+(module
+ (rec
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $func (sub (func)))
+  ;; GUFA:      (rec
+  ;; GUFA-NEXT:  (type $func (sub (func)))
+  (type $func (sub (func)))
+  ;; NRML:       (type $cont (sub (cont $func)))
+  ;; GUFA:       (type $cont (sub (cont $func)))
+  (type $cont (sub (cont $func)))
+  ;; NRML:       (type $struct (struct (field (ref null $cont))))
+  ;; GUFA:       (type $struct (struct (field nullcontref)))
+  (type $struct (struct (field (ref null $cont))))
+ )
+
+ ;; NRML:      (type $3 (func))
+
+ ;; NRML:      (func $test (type $3)
+ ;; NRML-NEXT:  (local $null (ref null $cont))
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.new $struct
+ ;; NRML-NEXT:    (local.get $null)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:       (type $3 (func))
+
+ ;; GUFA:      (func $test (type $3)
+ ;; GUFA-NEXT:  (local $null (ref null $cont))
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.new $struct
+ ;; GUFA-NEXT:    (block (result nullcontref)
+ ;; GUFA-NEXT:     (drop
+ ;; GUFA-NEXT:      (local.get $null)
+ ;; GUFA-NEXT:     )
+ ;; GUFA-NEXT:     (ref.null nocont)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $test
+  (local $null (ref null $cont))
+  (drop
+   (struct.new $struct
+    (local.get $null)
+   )
+  )
+ )
+)
+
