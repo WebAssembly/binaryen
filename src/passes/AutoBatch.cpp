@@ -102,7 +102,7 @@ struct AutoBatch : public Pass {
 
     // Add the flush import.
     flushName = Names::getValidFunctionName(*module, "flush");
-    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Type(Signature(Type::none, Type::none), NonNullable, Exact), {}));
+    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Type(Signature(Type::none, Type::none), NonNullable, Inexact), {}));
     // TODO: flags?
     flushFunc->module = "autobatch";
     flushFunc->base = "flush";
