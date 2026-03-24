@@ -1384,7 +1384,7 @@ class CtorEval(TestCaseHandler):
         # Avoid names that need escaping. Just allow simple names like func_256,
         # which the fuzzer emits
         # TODO: fix escaping in the tool and here
-        func_exports = [export for export in func_exports if re.fullmatch(r'^\w+$', export)]
+        func_exports = [export for export in func_exports if re.fullmatch(r'^[0-9a-zA-Z_]+$', export)]
         ctors = ','.join(func_exports)
         if not ctors:
             return
