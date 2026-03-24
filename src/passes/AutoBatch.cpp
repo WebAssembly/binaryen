@@ -95,11 +95,11 @@ struct AutoBatch : public Pass {
   void run(Module* module) override {
     asserts = hasArgument("autobatch-asserts");
 
-    builder = std::make_shared<Builder>(*module);
+    builder = std::make_unique<Builder>(*module);
 
     // Add the flush import.
     flushName = Names::getValidFunctionName(*module, "flush");
-    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Signature(Type::none, Type::none), {});
+    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Signature(Type::none, Type::none), {}));
     // TODO: flags?
     flushFunc->module = "autobatch";
     flushFunc->base = "flush";
@@ -111,7 +111,7 @@ struct AutoBatch : public Pass {
     // Add the command buffer position global.
     commandBufferPosGlobal = Names::getValidGlobalName(*module, "cmdbufpos");
     // TODO: support 64-bit offsets?
-    module->addGlobal(builder->makeGlobal(commandBufferPosGlobal, Type::i32, builder->makeConst(int32_t(0)), Mutable));
+    module->addGlobal(builder->makeGlobal(commandBufferPosGlobal, Type::i32, builder->makeConst(int32_t(0)), Builder::Mutable));
 
     // Build the mapping of integer ID to imports.
     for (auto& func : module->functions) {
@@ -128,12 +128,11 @@ struct AutoBatch : public Pass {
         // the original import in-place, so existing calls go to the wrapper
         // now.
         auto newImportName = Names::getValidFunctionName(*module, func->name);
-        auto* newImport =
-          ModuleUtils::copyFunction(func.get(), *module, newImportName);
+        ModuleUtils::copyFunction(func.get(), *module, newImportName);
 
         // This one is no longer an import.
         func->module = func->base = Name();
-        assert(!func->imported();
+        assert(!func->imported());
 
         // Fill in the wrapper body.
         if (func->getResults() == Type::none) {
@@ -149,20 +148,20 @@ struct AutoBatch : public Pass {
   // which to do it, and returns the code to serialize. Updates the offset to
   // the place for the thing after it.
   Index serialize(Expression* value, Index& offset) {
-    switch (curr->type) {
+    auto type = value->type;
+    switch (type) {
       case Type::i32:
       case Type::i64:
       case Type::f32:
       case Type::f64:
-        auto size = curr->type.getByteSize();
-        builder.makeStore(size, offset, size, ptr, value, curr->type, memory);
+        auto size = type.getByteSize();
+        builder.makeStore(size, offset, size, ptr, value, type, memory);
         offset += size;
         break;
       default:
         // TODO: if we cannot serialize something, return an error, and the
-        // caller can
-        //       flush and call, giving up on batching.
-        Fatal() << "AutoBatch: unsupported serialization type " << curr->type;
+        // caller can flush and call, giving up on batching.
+        Fatal() << "AutoBatch: unsupported serialization type " << type;
     }
   }
 
@@ -201,7 +200,7 @@ struct AutoBatch : public Pass {
   // Wrap a function that returns a result. We flush the command buffer, then
   // call it. TODO: we could also add it to the command buffer itself, to save
   // a call.
-  void wrapNonReturning(Function* func, Name importToCall) {
+  void wrapReturning(Function* func, Name importToCall) {
     std::vector<Expression*> body;
 
     // Flush the command buffer and rest the position, if we have anything.
