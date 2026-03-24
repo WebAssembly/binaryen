@@ -82,9 +82,12 @@ struct AutoBatch : public Pass {
 
   std::unique_ptr<Builder> builder;
 
-  // The name of the global containing the command buffer position.
-  // TODO: add a size as well, and a new export to users can set the pos+size.
+  // The name of the global containing the command buffer's base.
+  Name commandBufferBaseGlobal;
+  // The name of the global containing the command buffer current position
+  // relative to the base.
   Name commandBufferPosGlobal;
+  // TODO: add a size as well, and a new export to users can set the pos+size.
 
   // The memory we serialize to.
   Name memory;
@@ -107,6 +110,12 @@ struct AutoBatch : public Pass {
     // Use the first memory. TODO: use multi-memory?
     assert(!module->memories.empty());
     memory = module->memories[0]->name;
+
+    // Add the command buffer base global.
+    commandBufferBaseGlobal = Names::getValidGlobalName(*module, "cmdbufbase");
+    // TODO: allow setting a non-0 value here, right now we just use the start
+    //       of the memory
+    module->addGlobal(builder->makeGlobal(commandBufferBaseGlobal, Type::i32, builder->makeConst(int32_t(0)), Builder::Mutable));
 
     // Add the command buffer position global.
     commandBufferPosGlobal = Names::getValidGlobalName(*module, "cmdbufpos");
@@ -149,18 +158,22 @@ struct AutoBatch : public Pass {
   // the place for the thing after it.
   Index serialize(Expression* value, Index& offset) {
     auto type = value->type;
-    switch (type) {
+    if (!type.isBasic()) {
+      // TODO: if we cannot serialize something, return an error, and the
+      // caller can flush and call, giving up on batching.
+      Fatal() << "AutoBatch: unsupported compound type " << type;
+    }
+    switch (type.getBasic()) {
       case Type::i32:
       case Type::i64:
       case Type::f32:
       case Type::f64:
         auto size = type.getByteSize();
-        builder.makeStore(size, offset, size, ptr, value, type, memory);
+        auto* ptr = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
+        builder->makeStore(size, offset, size, ptr, value, type, memory);
         offset += size;
         break;
       default:
-        // TODO: if we cannot serialize something, return an error, and the
-        // caller can flush and call, giving up on batching.
         Fatal() << "AutoBatch: unsupported serialization type " << type;
     }
   }
@@ -173,7 +186,7 @@ struct AutoBatch : public Pass {
     // Stash the command buffer's position before our additions.
     auto posBefore = Builder::addVar(func, Type::i32);
     body.push_back(builder->makeLocalSet(
-      posBefore, builder->makeGlobalGet(commandBufferPosGlobal)));
+      posBefore, builder->makeGlobalGet(commandBufferPosGlobal, Type::i32)));
 
     Index offset = 0;
 
@@ -204,7 +217,7 @@ struct AutoBatch : public Pass {
     std::vector<Expression*> body;
 
     // Flush the command buffer and rest the position, if we have anything.
-    auto* check = builder->makeGlobalGet(commandBufferPosGlobal);
+    auto* check = builder->makeGlobalGet(commandBufferPosGlobal, Type::i32);
     auto* flush = builder->makeCall(flushName, Type::none);
     auto* reset = builder->makeGlobalSet(commandBufferPosGlobal,
                                          builder->makeConst(int32_t(0)));
