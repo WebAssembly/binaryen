@@ -119,6 +119,7 @@ unfuzzable = [
     'removable-if-unused-func.wast',
     'vacuum-removable-if-unused.wast',
     'vacuum-removable-if-unused-func.wast',
+    'inlining-optimizing-removable-if-unused.wast',
     'strip-toolchain-annotations-func.wast',
     'idempotent.wast',
     'optimize-instructions_idempotent.wast',
