@@ -60,6 +60,7 @@
 // TODO: flags to control special exports etc.
 //
 
+#include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -79,8 +80,12 @@ struct AutoBatch : public Pass {
 
   bool asserts;
 
+  std::unique_ptr<Builder> builder;
+
   void run(Module* module) override {
     asserts = hasArgument("autobatch-asserts")
+
+    builder = std::make_shared<Builder>(*module);
 
     // Build the mapping of integer ID to imports.
     for (auto& func : module->functions) {
@@ -92,19 +97,54 @@ struct AutoBatch : public Pass {
     // Wrap every import.
     for (auto& func : module->functions) {
       if (func->imported()) {
+        // Copy the original import to create the actual import that the wrapper
+        // calls. Doing it this way avoids needing to update callers: we replace
+        // the original import in-place, so existing calls go to the wrapper
+        // now.
+        auto newImportName = Names::getValidFunctionName(*module, func->name);
+        auto* newImport = ModuleUtils::copyFunction(func.get(), *module, newImportName);
+
+        // This one is no longer an import.
+        func->module = func->base = Name();
+        assert(!func->imported();
+
+        // Fill in the wrapper body.
         if (func->getResults() == Type::none) {
-          wrapNonReturning(func.get());
+          wrapNonReturning(func.get(), newImportName);
         } else {
-          wrapReturning(func.get());
+          wrapReturning(func.get(), newImportName);
         }
       }
     }
   }
 
-
   // Wrap a function that does not return a result. We add it to the command
   // buffer.
-  void wrapNonReturning(Function* func) {
+  void wrapNonReturning(Function* func, Name importToCall) {
+    std::vector<Expression*> body;
+    // TODO: support 64-bit offsets with Address?
+    Index offset = 0;
+
+    // Serialize the id.
+    // TODO: we could use an 8 or 16 bit id when the # of imports is small
+    offset = serialize(offset, builder->makeConst(int32_t(importIds[func->name])));
+
+    // Serialize the params.
+    auto params = func->getParams();
+    for (Index i = 0; i < params.size(); i++) {
+      offset = serialize(offset, builder->makeLocalGet(i, params[i]));
+    }
+  }
+
+  // Serialize a given expression to the command buffer. Receives the offset at
+  // which to do it, and returns the offset for the next thing after it.
+  Index serialize(Expression* curr, Index offset) {
+  }
+
+  // Wrap a function that returns a result. We flush the command buffer, then
+  // call it. TODO: we could also add it to the command buffer itself, to save
+  // a call.
+  void wrapNonReturning(Function* func, Name importToCall) {
   }
 };
 
