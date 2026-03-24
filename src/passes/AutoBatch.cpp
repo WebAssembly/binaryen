@@ -167,14 +167,17 @@ struct AutoBatch : public Pass {
       case Type::i32:
       case Type::i64:
       case Type::f32:
-      case Type::f64:
+      case Type::f64: {
         auto size = type.getByteSize();
         auto* ptr = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
-        builder->makeStore(size, offset, size, ptr, value, type, memory);
+        auto* ret = builder->makeStore(size, offset, size, ptr, value, type, memory);
         offset += size;
+        return ret;
         break;
-      default:
+      }
+      default: {
         Fatal() << "AutoBatch: unsupported serialization type " << type;
+      }
     }
   }
 
@@ -218,7 +221,7 @@ struct AutoBatch : public Pass {
 
     // Flush the command buffer and rest the position, if we have anything.
     auto* check = builder->makeGlobalGet(commandBufferPosGlobal, Type::i32);
-    auto* flush = builder->makeCall(flushName, Type::none);
+    auto* flush = builder->makeCall(flushName, {}, Type::none);
     auto* reset = builder->makeGlobalSet(commandBufferPosGlobal,
                                          builder->makeConst(int32_t(0)));
     auto* iff = builder->makeIf(check, builder->makeSequence(flush, reset));
