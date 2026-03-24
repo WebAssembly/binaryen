@@ -1379,8 +1379,12 @@ class CtorEval(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
-        # get the list of func exports, so we can tell ctor-eval what to eval.
+        # Get the list of func exports, so we can tell ctor-eval what to eval.
         func_exports = get_exports(wasm, ['func'])
+        # Avoid names that need escaping. Just allow simple names like func_256,
+        # which the fuzzer emits
+        # TODO: fix escaping in the tool and here
+        func_exports = [export for export in func_exports if re.fullmatch(r'^[0-9a-zA-Z_]+$', export)]
         ctors = ','.join(func_exports)
         if not ctors:
             return
@@ -1396,11 +1400,6 @@ class CtorEval(TestCaseHandler):
 
         # get the expected execution results.
         wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
-
-        # Fix escaping of the names, as we will be passing them as commandline
-        # parameters below (e.g. we want --ctors=foo\28bar and not
-        # --ctors=foo\\28bar; that extra escaping \ would cause an error).
-        ctors = ctors.replace('\\\\', '\\')
 
         # eval the wasm.
         # we can use --ignore-external-input because the fuzzer passes in 0 to
