@@ -102,8 +102,10 @@ struct AutoBatch : public Pass {
 
     // Add the flush import.
     flushName = Names::getValidFunctionName(*module, "flush");
-    auto flushType = Type(Signature(Type::none, Type::none), NonNullable, Inexact);
-    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, flushType, {}, nullptr));
+    auto flushType =
+      Type(Signature(Type::none, Type::none), NonNullable, Inexact);
+    auto* flushFunc = module->addFunction(
+      builder->makeFunction(flushName, flushType, {}, nullptr));
     // TODO: flags?
     flushFunc->module = "autobatch";
     flushFunc->base = "flush";
@@ -116,12 +118,18 @@ struct AutoBatch : public Pass {
     commandBufferBaseGlobal = Names::getValidGlobalName(*module, "cmdbufbase");
     // TODO: allow setting a non-0 value here, right now we just use the start
     //       of the memory
-    module->addGlobal(builder->makeGlobal(commandBufferBaseGlobal, Type::i32, builder->makeConst(int32_t(0)), Builder::Mutable));
+    module->addGlobal(builder->makeGlobal(commandBufferBaseGlobal,
+                                          Type::i32,
+                                          builder->makeConst(int32_t(0)),
+                                          Builder::Mutable));
 
     // Add the command buffer position global.
     commandBufferPosGlobal = Names::getValidGlobalName(*module, "cmdbufpos");
     // TODO: support 64-bit offsets?
-    module->addGlobal(builder->makeGlobal(commandBufferPosGlobal, Type::i32, builder->makeConst(int32_t(0)), Builder::Mutable));
+    module->addGlobal(builder->makeGlobal(commandBufferPosGlobal,
+                                          Type::i32,
+                                          builder->makeConst(int32_t(0)),
+                                          Builder::Mutable));
 
     // Build the mapping of integer ID to imports.
     for (auto& func : module->functions) {
@@ -172,7 +180,8 @@ struct AutoBatch : public Pass {
       case Type::f64: {
         auto size = type.getByteSize();
         auto* ptr = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
-        auto* ret = builder->makeStore(size, offset, size, ptr, value, type, memory);
+        auto* ret =
+          builder->makeStore(size, offset, size, ptr, value, type, memory);
         offset += size;
         return ret;
         break;
@@ -197,7 +206,8 @@ struct AutoBatch : public Pass {
 
     // Serialize the id.
     // TODO: we could use an 8 or 16 bit id when the # of imports is small
-    body.push_back(serialize(builder->makeConst(int32_t(importIds[func->name])), offset));
+    body.push_back(
+      serialize(builder->makeConst(int32_t(importIds[func->name])), offset));
 
     // Serialize the params.
     auto params = func->getParams();
