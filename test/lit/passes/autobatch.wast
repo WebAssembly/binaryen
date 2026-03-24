@@ -3,21 +3,25 @@
 ;; RUN: wasm-opt %s --autobatch -S -o - | filecheck %s
 
 (module
-  (import "outside" "foo1" (func $noresult1))
+  (import "outside" "foo1" (func $noresult1 (param i32) (param f64)))
 
-  (import "outside" "foo2" (func $noresult2))
+  (import "outside" "foo2" (func $noresult2 (param i64) (param f32)))
 
   (import "outside" "bar" (func $result (result f64)))
 
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $0 (func (result f64)))
 
-  ;; CHECK:      (type $1 (func (result f64)))
+  ;; CHECK:      (type $1 (func (param i32 f64)))
+
+  ;; CHECK:      (type $2 (func (param i64 f32)))
+
+  ;; CHECK:      (type $3 (func))
 
   ;; CHECK:      (import "autobatch" "flush" (func $flush))
 
-  ;; CHECK:      (import "outside" "foo1" (func $noresult1_5))
+  ;; CHECK:      (import "outside" "foo1" (func $noresult1_5 (param i32 f64)))
 
-  ;; CHECK:      (import "outside" "foo2" (func $noresult2_6))
+  ;; CHECK:      (import "outside" "foo2" (func $noresult2_6 (param i64 f32)))
 
   ;; CHECK:      (import "outside" "bar" (func $result_7 (result f64)))
 
@@ -28,36 +32,52 @@
   ;; CHECK:      (memory $mem 10 20)
   (memory $mem 10 20)
 
-  ;; CHECK:      (func $noresult1
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK:      (func $noresult1 (param $0 i32) (param $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local.set $2
   ;; CHECK-NEXT:   (global.get $cmdbufpos)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (global.get $cmdbufbase)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store offset=4
+  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f64.store offset=8
+  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $cmdbufpos
   ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (i32.const 16)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $noresult2
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK:      (func $noresult2 (param $0 i64) (param $1 f32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local.set $2
   ;; CHECK-NEXT:   (global.get $cmdbufpos)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (global.get $cmdbufbase)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i64.store offset=4
+  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f32.store offset=12
+  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $cmdbufpos
   ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (i32.const 16)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -76,23 +96,47 @@
   ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $caller (result f64)
-  ;; CHECK-NEXT:  (call $noresult1)
-  ;; CHECK-NEXT:  (call $noresult2)
+  ;; CHECK-NEXT:  (call $noresult1
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (f64.const 3.14159)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $noresult2
+  ;; CHECK-NEXT:   (i64.const 1234)
+  ;; CHECK-NEXT:   (f32.const 2.718280076980591)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $result)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $noresult1)
-  ;; CHECK-NEXT:  (call $noresult2)
+  ;; CHECK-NEXT:  (call $noresult1
+  ;; CHECK-NEXT:   (i32.const 942)
+  ;; CHECK-NEXT:   (f64.const 93.14159)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $noresult2
+  ;; CHECK-NEXT:   (i64.const 91234)
+  ;; CHECK-NEXT:   (f32.const 92.71827697753906)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $result)
   ;; CHECK-NEXT: )
   (func $caller (result f64)
     ;; A bunch of calls to them all.
-    (call $noresult1)
-    (call $noresult2)
+    (call $noresult1
+      (i32.const 42)
+      (f64.const 3.14159)
+    )
+    (call $noresult2
+      (i64.const 1234)
+      (f32.const 2.71828)
+    )
     (drop (call $result))
 
-    (call $noresult1)
-    (call $noresult2)
+    (call $noresult1
+      (i32.const 942)
+      (f64.const 93.14159)
+    )
+    (call $noresult2
+      (i64.const 91234)
+      (f32.const 92.71828)
+    )
     (call $result)
   )
 )
