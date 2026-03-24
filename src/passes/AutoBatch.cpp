@@ -128,7 +128,8 @@ struct AutoBatch : public Pass {
         // the original import in-place, so existing calls go to the wrapper
         // now.
         auto newImportName = Names::getValidFunctionName(*module, func->name);
-        auto* newImport = ModuleUtils::copyFunction(func.get(), *module, newImportName);
+        auto* newImport =
+          ModuleUtils::copyFunction(func.get(), *module, newImportName);
 
         // This one is no longer an import.
         func->module = func->base = Name();
@@ -158,7 +159,8 @@ struct AutoBatch : public Pass {
         offset += size;
         break;
       default:
-        // TODO: if we cannot serialize something, return an error, and the caller can
+        // TODO: if we cannot serialize something, return an error, and the
+        // caller can
         //       flush and call, giving up on batching.
         Fatal() << "AutoBatch: unsupported serialization type " << curr->type;
     }
@@ -171,7 +173,8 @@ struct AutoBatch : public Pass {
 
     // Stash the command buffer's position before our additions.
     auto posBefore = Builder::addVar(func, Type::i32);
-    body.push_back(builder->makeLocalSet(posBefore, builder->makeGlobalGet(commandBufferPosGlobal)));
+    body.push_back(builder->makeLocalSet(
+      posBefore, builder->makeGlobalGet(commandBufferPosGlobal)));
 
     Index offset = 0;
 
@@ -186,7 +189,10 @@ struct AutoBatch : public Pass {
     }
 
     // Update the command buffer position.
-    auto* total = builder->makeBinary(AddInt32, builder->makeLocalGet(posBefore, Type::i32), builder->makeConst(int32_t(offset)));
+    auto* total =
+      builder->makeBinary(AddInt32,
+                          builder->makeLocalGet(posBefore, Type::i32),
+                          builder->makeConst(int32_t(offset)));
     body.push_back(builder->makeGlobalSet(commandBufferPosGlobal, total));
 
     func->body = builder->makeBlock(body);
@@ -201,7 +207,8 @@ struct AutoBatch : public Pass {
     // Flush the command buffer and rest the position, if we have anything.
     auto* check = builder->makeGlobalGet(commandBufferPosGlobal);
     auto* flush = builder->makeCall(flushName, Type::none);
-    auto* reset = builder->makeGlobalSet(commandBufferPosGlobal, builder->makeConst(int32_t(0)));
+    auto* reset = builder->makeGlobalSet(commandBufferPosGlobal,
+                                         builder->makeConst(int32_t(0)));
     auto* iff = builder->makeIf(check, builder->makeSequence(flush, reset));
     body.push_back(iff);
 
