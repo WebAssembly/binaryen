@@ -1252,23 +1252,29 @@
   (tag $tag)
 
   ;; CHECK:      (func $struct.new (type $2) (param $extern externref) (result anyref)
-  ;; CHECK-NEXT:  (struct.new $A
-  ;; CHECK-NEXT:   (ref.cast (ref noextern)
-  ;; CHECK-NEXT:    (try (result externref)
-  ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (struct.get $A 0
-  ;; CHECK-NEXT:       (struct.new $A
-  ;; CHECK-NEXT:        (ref.as_non_null
-  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (try (result externref)
+  ;; CHECK-NEXT:       (do
+  ;; CHECK-NEXT:        (struct.get $A 0
+  ;; CHECK-NEXT:         (struct.new $A
+  ;; CHECK-NEXT:          (ref.as_non_null
+  ;; CHECK-NEXT:           (ref.null noextern)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (catch $tag
+  ;; CHECK-NEXT:        (local.get $extern)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch $tag
-  ;; CHECK-NEXT:      (local.get $extern)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $struct.new (param $extern externref) (result anyref)
@@ -1282,8 +1288,8 @@
     ;; type than the body.
     ;;
     ;; In such situations we rely on other optimizations to improve things, like
-    ;; getting rid of the catch in this case. In this pass we add a cast to get
-    ;; things to validate, which should be removable by other passes later on.
+    ;; getting rid of the catch in this case. In this pass we add an unreachable
+    ;; for the uninhabitable type, which fixes validation.
     (struct.new $A
       (try (result externref)
         (do
@@ -1305,21 +1311,24 @@
   ;; CHECK:      (func $struct.set (type $3) (param $ref (ref $A)) (param $extern externref)
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (ref.cast (ref noextern)
-  ;; CHECK-NEXT:    (try (result externref)
-  ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (struct.get $A 0
-  ;; CHECK-NEXT:       (struct.new $A
-  ;; CHECK-NEXT:        (ref.as_non_null
-  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (try (result externref)
+  ;; CHECK-NEXT:      (do
+  ;; CHECK-NEXT:       (struct.get $A 0
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (ref.as_non_null
+  ;; CHECK-NEXT:          (ref.null noextern)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch $tag
-  ;; CHECK-NEXT:      (local.get $extern)
+  ;; CHECK-NEXT:      (catch $tag
+  ;; CHECK-NEXT:       (local.get $extern)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

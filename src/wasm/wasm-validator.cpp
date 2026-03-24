@@ -4510,6 +4510,28 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     return;
   }
 
+  if (curr->cont->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->cont->type.isRef(),
+                    curr,
+                    "resume_throw continuation must be a reference")) {
+    return;
+  }
+
+  auto type = curr->cont->type.getHeapType();
+  if (type.isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
+  if (!shouldBeTrue(
+        type.isContinuation(),
+        curr,
+        "resume_throw continuation must have a defined continuation type")) {
+    return;
+  }
+
   if (curr->tag) {
     // Normal resume_throw
     auto* tag = getModule()->getTagOrNull(curr->tag);
@@ -4549,28 +4571,6 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
                       curr,
                       "resume_throw_ref must receive exnref");
     }
-  }
-
-  if (curr->cont->type == Type::unreachable) {
-    return;
-  }
-
-  if (!shouldBeTrue(curr->cont->type.isRef(),
-                    curr,
-                    "resume_throw continuation must be a reference")) {
-    return;
-  }
-
-  auto type = curr->cont->type.getHeapType();
-  if (type.isMaybeShared(HeapType::nocont)) {
-    return;
-  }
-
-  if (!shouldBeTrue(
-        type.isContinuation(),
-        curr,
-        "resume_throw continuation must have a defined continuation type")) {
-    return;
   }
 
   auto sig = type.getContinuation().type.getSignature();

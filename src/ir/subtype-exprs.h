@@ -494,32 +494,42 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                         curr->type.getHeapType().getContinuation().type);
   }
   void visitContBind(ContBind* curr) {
-    if (!curr->cont->type.isContinuation()) {
+    if (!curr->cont->type.isContinuation() || !curr->type.isContinuation()) {
       return;
     }
+    auto inType = curr->cont->type.getHeapType();
+    auto outType = curr->type.getHeapType();
+    auto sigIn = inType.getContinuation().type.getSignature();
+    auto sigOut = outType.getContinuation().type.getSignature();
+
     // Each of the bound arguments must remain subtypes of their expected
     // parameters.
-    auto params = curr->cont->type.getHeapType()
-                    .getContinuation()
-                    .type.getSignature()
-                    .params;
-    assert(curr->operands.size() <= params.size());
-    for (Index i = 0; i < curr->operands.size(); ++i) {
-      self()->noteSubtype(curr->operands[i], params[i]);
+    size_t numBound = curr->operands.size();
+    for (Index i = 0; i < numBound; ++i) {
+      self()->noteSubtype(curr->operands[i], sigIn.params[i]);
     }
+    // Each of the unbound output parameters must remain subtypes of their
+    // corresponding input parameters.
+    size_t numRemaining = sigIn.params.size() - numBound;
+    for (Index i = 0; i < numRemaining; ++i) {
+      self()->noteSubtype(sigOut.params[i], sigIn.params[numBound + i]);
+    }
+    // The original input results must remain a subtype of the new output
+    // results.
+    self()->noteSubtype(sigIn.results, sigOut.results);
   }
   void visitSuspend(Suspend* curr) {
+    auto sig = self()->getModule()->getTag(curr->tag)->type.getSignature();
     // The operands must remain subtypes of the parameters given by the tag.
-    auto params =
-      self()->getModule()->getTag(curr->tag)->type.getSignature().params;
-    assert(curr->operands.size() == params.size());
+    assert(curr->operands.size() == sig.params.size());
     for (Index i = 0; i < curr->operands.size(); ++i) {
-      self()->noteSubtype(curr->operands[i], params[i]);
+      self()->noteSubtype(curr->operands[i], sig.params[i]);
     }
   }
   void processResumeHandlers(Type contType,
                              const ArenaVector<Name>& handlerTags,
                              const ArenaVector<Name>& handlerBlocks) {
+    assert(contType.isContinuation());
     auto contSig = contType.getHeapType().getContinuation().type.getSignature();
     assert(handlerTags.size() == handlerBlocks.size());
     auto& wasm = *self()->getModule();

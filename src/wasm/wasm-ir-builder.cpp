@@ -2675,7 +2675,8 @@ IRBuilder::makeResume(HeapType ct,
                           resumetable->targets,
                           resumetable->sentTypes,
                           std::move(curr.operands),
-                          curr.cont));
+                          curr.cont,
+                          ct));
 
   return Ok{};
 }
@@ -2715,7 +2716,8 @@ IRBuilder::makeResumeThrow(HeapType ct,
                                resumetable->targets,
                                resumetable->sentTypes,
                                std::move(curr.operands),
-                               curr.cont));
+                               curr.cont,
+                               ct));
   return Ok{};
 }
 
