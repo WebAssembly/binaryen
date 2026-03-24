@@ -17,10 +17,12 @@
 //
 // Memory Packing.
 //
-// Reduces binary size by splitting data segments around ranges of zeros. This
-// pass assumes that memory initialized by active segments is zero on
-// instantiation and therefore simply drops the zero ranges from the active
-// segments. For passive segments, we perform the same splitting, but we also
+// Reduces binary size by splitting data segments around ranges of zeros. For
+// active segments, zero ranges are dropped only when memory is known to be
+// zero-filled at instantiation (module-declared memory, or imported memory with
+// --zero-filled-memory). When memory is imported without that guarantee, active
+// segments retain their zero ranges to explicitly overwrite memory contents.
+// For passive segments, we perform the same splitting, but we also
 // record how each segment was split and update all instructions that use it
 // accordingly. To preserve trapping semantics for memory.init instructions, it
 // is sometimes necessary to explicitly track whether input segments would have
@@ -102,6 +104,11 @@ struct MemoryPacking : public Pass {
   // TODO: don't run at all if the module has no memories
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  // Whether we can assume memory is zero-filled at instantiation. True for
+  // module-declared memories; true for imported memories only when the user
+  // passes --zero-filled-memory.
+  bool assumeZeroFilledMemory = true;
+
   void run(Module* module) override;
   bool canOptimize(std::vector<std::unique_ptr<Memory>>& memories,
                    std::vector<std::unique_ptr<DataSegment>>& dataSegments);
@@ -134,6 +141,10 @@ void MemoryPacking::run(Module* module) {
   if (!canOptimize(module->memories, module->dataSegments)) {
     return;
   }
+
+  auto& memory = module->memories[0];
+  assumeZeroFilledMemory =
+    !memory->imported() || getPassOptions().zeroFilledMemory;
 
   bool canHaveSegmentReferrers =
     module->features.hasBulkMemory() || module->features.hasGC();
@@ -199,14 +210,6 @@ bool MemoryPacking::canOptimize(
   if (memories.empty() || memories.size() > 1) {
     return false;
   }
-  auto& memory = memories[0];
-  // We must optimize under the assumption that memory has been initialized to
-  // zero. That is the case for a memory declared in the module, but for a
-  // memory that is imported, we must be told that it is zero-initialized.
-  if (memory->imported() && !getPassOptions().zeroFilledMemory) {
-    return false;
-  }
-
   // One segment is always ok to optimize, as it does not have the potential
   // problems handled below.
   if (dataSegments.size() <= 1) {
@@ -620,7 +623,16 @@ void MemoryPacking::createSplitSegments(
   for (size_t i = 0; i < ranges.size(); ++i) {
     Range& range = ranges[i];
     if (range.isZero) {
-      continue;
+      // For passive segments, zero ranges are always safe to skip because
+      // createReplacements will emit memory.fill instructions for them.
+      // For active segments, we can only skip zero ranges if we know memory
+      // is zero-filled at instantiation (module-declared memory, or imported
+      // memory with --zero-filled-memory). Otherwise, the zero bytes must
+      // remain in the segment to explicitly overwrite whatever the importer
+      // placed in memory.
+      if (segment->isPassive || assumeZeroFilledMemory) {
+        continue;
+      }
     }
     Expression* offset = nullptr;
     if (!segment->isPassive) {
