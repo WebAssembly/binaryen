@@ -86,10 +86,17 @@ struct AutoBatch : public Pass {
   // TODO: add a size as well, and a new export to users can set the pos+size.
   Name commandBufferPosGlobal;
 
+  // The memory we serialize to.
+  Name memory;
+
   void run(Module* module) override {
     asserts = hasArgument("autobatch-asserts");
 
     builder = std::make_shared<Builder>(*module);
+
+    // Use the first memory. TODO: use multi-memory?
+    assert(!module->memories.empty());
+    memory = module->memories[0]->name;
 
     // Add the command buffer position global.
     commandBufferPosGlobal = Names::getValidGlobalName(*module, "cmdbufpos");
@@ -127,6 +134,26 @@ struct AutoBatch : public Pass {
     }
   }
 
+  // Serialize a given value to the command buffer. Receives the offset at
+  // which to do it, and returns the code to serialize. Updates the offset to
+  // the place for the thing after it.
+  Index serialize(Expression* value, Index& offset) {
+    switch (curr->type) {
+      case Type::i32:
+      case Type::i64:
+      case Type::f32:
+      case Type::f64:
+        auto size = curr->type.getByteSize();
+        builder.makeStore(size, offset, size, ptr, value, curr->type, memory);
+        offset += size;
+        break;
+      default:
+        // TODO: if we cannot serialize something, return an error, and the caller can
+        //       flush and call, giving up on batching.
+        Fatal() << "AutoBatch: unsupported serialization type " << curr->type;
+    }
+  }
+
   // Wrap a function that does not return a result. We add it to the command
   // buffer.
   void wrapNonReturning(Function* func, Name importToCall) {
@@ -139,24 +166,17 @@ struct AutoBatch : public Pass {
 
     // Serialize the id.
     // TODO: we could use an 8 or 16 bit id when the # of imports is small
-    offset = serialize(offset, builder->makeConst(int32_t(importIds[func->name])));
+    serialize(builder->makeConst(int32_t(importIds[func->name])), offset);
 
     // Serialize the params.
     auto params = func->getParams();
     for (Index i = 0; i < params.size(); i++) {
-      offset = serialize(offset, builder->makeLocalGet(i, params[i]));
+      serialize(builder->makeLocalGet(i, params[i]), offset);
     }
 
     // Update the command buffer position.
     auto* total = builder->makeBinary(AddInt32, builder->makeLocalGet(posBefore, Type::i32), builder->makeConst(int32_t(offset)));
     body.push_back(builder->makeGlobalSet(commandBufferPosGlobal, total));
-  }
-
-  // Serialize a given expression to the command buffer. Receives the offset at
-  // which to do it, and returns the offset for the next thing after it.
-  // TODO: if we cannot serialize something, return an error, and the caller can
-  //       flush and call, giving up on batching.
-  Index serialize(Expression* curr, Index offset) {
   }
 
   // Wrap a function that returns a result. We flush the command buffer, then
