@@ -82,10 +82,19 @@ struct AutoBatch : public Pass {
 
   std::unique_ptr<Builder> builder;
 
+  // The name of the global containing the command buffer position.
+  // TODO: add a size as well, and a new export to users can set the pos+size.
+  Name commandBufferPosGlobal;
+
   void run(Module* module) override {
-    asserts = hasArgument("autobatch-asserts")
+    asserts = hasArgument("autobatch-asserts");
 
     builder = std::make_shared<Builder>(*module);
+
+    // Add the command buffer position global.
+    commandBufferPosGlobal = Names::getValidGlobalName(*module, "cmdbufpos");
+    // TODO: support 64-bit offsets?
+    module->addGlobal(builder->makeGlobal(commandBufferPosGlobal, Type::i32, builder->makeConst(int32_t(0)), Mutable));
 
     // Build the mapping of integer ID to imports.
     for (auto& func : module->functions) {
@@ -122,7 +131,10 @@ struct AutoBatch : public Pass {
   // buffer.
   void wrapNonReturning(Function* func, Name importToCall) {
     std::vector<Expression*> body;
-    // TODO: support 64-bit offsets with Address?
+    // Stash the command buffer's position before our additions.
+    auto posBefore = Builder::addVar(func, Type::i32);
+    body.push_back(builder->makeLocalSet(posBefore, builder->makeGlobalGet(commandBufferPosGlobal)));
+
     Index offset = 0;
 
     // Serialize the id.
@@ -134,10 +146,16 @@ struct AutoBatch : public Pass {
     for (Index i = 0; i < params.size(); i++) {
       offset = serialize(offset, builder->makeLocalGet(i, params[i]));
     }
+
+    // Update the command buffer position.
+    auto* total = builder->makeBinary(AddInt32, builder->makeLocalGet(posBefore, Type::i32), builder->makeConst(int32_t(offset)));
+    body.push_back(builder->makeGlobalSet(commandBufferPosGlobal, total));
   }
 
   // Serialize a given expression to the command buffer. Receives the offset at
   // which to do it, and returns the offset for the next thing after it.
+  // TODO: if we cannot serialize something, return an error, and the caller can
+  //       flush and call, giving up on batching.
   Index serialize(Expression* curr, Index offset) {
   }
 
