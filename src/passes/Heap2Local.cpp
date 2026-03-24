@@ -1250,7 +1250,10 @@ struct Array2Struct : PostWalker<Array2Struct> {
     for (Index i = 0; i < numFields; i++) {
       fields.push_back(element);
     }
-    structType = Struct(fields);
+    TypeBuilder typeBuilder(1);
+    typeBuilder[0] = Struct(fields);
+    typeBuilder[0].setShared(arrayType.getShared());
+    structType = (*typeBuilder.build())[0];
 
     // Generate a StructNew to replace the ArrayNew*.
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
