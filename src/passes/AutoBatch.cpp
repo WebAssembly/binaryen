@@ -156,7 +156,7 @@ struct AutoBatch : public Pass {
   // Serialize a given value to the command buffer. Receives the offset at
   // which to do it, and returns the code to serialize. Updates the offset to
   // the place for the thing after it.
-  Index serialize(Expression* value, Index& offset) {
+  Expression* serialize(Expression* value, Index& offset) {
     auto type = value->type;
     if (!type.isBasic()) {
       // TODO: if we cannot serialize something, return an error, and the
@@ -195,12 +195,12 @@ struct AutoBatch : public Pass {
 
     // Serialize the id.
     // TODO: we could use an 8 or 16 bit id when the # of imports is small
-    serialize(builder->makeConst(int32_t(importIds[func->name])), offset);
+    body.push_back(serialize(builder->makeConst(int32_t(importIds[func->name])), offset));
 
     // Serialize the params.
     auto params = func->getParams();
     for (Index i = 0; i < params.size(); i++) {
-      serialize(builder->makeLocalGet(i, params[i]), offset);
+      body.push_back(serialize(builder->makeLocalGet(i, params[i]), offset));
     }
 
     // Update the command buffer position.
