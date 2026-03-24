@@ -6,22 +6,9 @@
   ;; CHECK:      (type $shared-struct (shared (struct (field (mut (ref null (shared eq)))))))
   (type $shared-struct (shared (struct (field (mut (ref null (shared eq)))))))
   ;; CHECK:      (func $cmpxchg-shared-expected (type $1) (param $shared-struct (ref $shared-struct))
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $shared-struct 0
   ;; CHECK-NEXT:   (local.get $shared-struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $shared-struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructCmpxchg we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
