@@ -102,7 +102,7 @@ struct AutoBatch : public Pass {
 
     // Add the flush import.
     flushName = Names::getValidFunctionName(*module, "flush");
-    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Signature(Type::none, Type::none), {}));
+    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Type(Signature(Type::none, Type::none), NonNullable, Exact), {}));
     // TODO: flags?
     flushFunc->module = "autobatch";
     flushFunc->base = "flush";
@@ -142,6 +142,7 @@ struct AutoBatch : public Pass {
         // This one is no longer an import.
         func->module = func->base = Name();
         assert(!func->imported());
+        func->type = func->type.with(Exact);
 
         // Fill in the wrapper body.
         if (func->getResults() == Type::none) {
@@ -209,6 +210,8 @@ struct AutoBatch : public Pass {
                           builder->makeLocalGet(posBefore, Type::i32),
                           builder->makeConst(int32_t(offset)));
     body.push_back(builder->makeGlobalSet(commandBufferPosGlobal, total));
+
+    // TODO: add assertion here when asserts
 
     func->body = builder->makeBlock(body);
   }
