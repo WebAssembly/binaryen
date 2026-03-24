@@ -1175,9 +1175,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
     assert(!field.isPacked());
 
     // Hold everything in scratch locals, just like for other RMW ops and
-    // struct.new.
+    // struct.new. Use a nullable (shared) eqref local for `expected` to
+    // accommodate any allowed optimized or unoptimized value there.
+    auto expectedType = type;
+    if (type.isRef()) {
+      expectedType =
+        Type(HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
+    }
     auto oldScratch = builder.addVar(func, type);
-    auto expectedScratch = builder.addVar(func, type);
+    auto expectedScratch = builder.addVar(func, expectedType);
     auto replacementScratch = builder.addVar(func, type);
     auto local = localIndexes[curr->index];
 
@@ -1189,7 +1195,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // Create the check for whether we should do the exchange.
     auto* lhs = builder.makeLocalGet(local, type);
-    auto* rhs = builder.makeLocalGet(expectedScratch, type);
+    auto* rhs = builder.makeLocalGet(expectedScratch, expectedType);
     Expression* pred;
     if (type.isRef()) {
       pred = builder.makeRefEq(lhs, rhs);
