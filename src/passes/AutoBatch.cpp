@@ -102,7 +102,8 @@ struct AutoBatch : public Pass {
 
     // Add the flush import.
     flushName = Names::getValidFunctionName(*module, "flush");
-    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Type(Signature(Type::none, Type::none), NonNullable, Inexact), {}));
+    auto flushType = Type(Signature(Type::none, Type::none), NonNullable, Inexact);
+    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, flushType, {}, nullptr));
     // TODO: flags?
     flushFunc->module = "autobatch";
     flushFunc->base = "flush";
@@ -129,9 +130,9 @@ struct AutoBatch : public Pass {
       importIds[func->name] = id;
     }
 
-    // Wrap every import.
+    // Wrap every import (but leave our new import alone).
     for (auto& func : module->functions) {
-      if (func->imported()) {
+      if (func->imported() && func->name != flushName) {
         // Copy the original import to create the actual import that the wrapper
         // calls. Doing it this way avoids needing to update callers: we replace
         // the original import in-place, so existing calls go to the wrapper

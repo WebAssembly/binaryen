@@ -13,13 +13,13 @@
 
   ;; CHECK:      (type $1 (func (result f64)))
 
+  ;; CHECK:      (import "autobatch" "flush" (func $flush))
+
   ;; CHECK:      (import "outside" "foo1" (func $noresult1_5))
 
   ;; CHECK:      (import "outside" "foo2" (func $noresult2_6))
 
   ;; CHECK:      (import "outside" "bar" (func $result_7 (result f64)))
-
-  ;; CHECK:      (import "autobatch" "flush" (func $flush_8))
 
   ;; CHECK:      (global $cmdbufbase (mut i32) (i32.const 0))
 
@@ -97,19 +97,3 @@
   )
 )
 
-;; CHECK:      (func $flush
-;; CHECK-NEXT:  (local $0 i32)
-;; CHECK-NEXT:  (local.set $0
-;; CHECK-NEXT:   (global.get $cmdbufpos)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store
-;; CHECK-NEXT:   (global.get $cmdbufbase)
-;; CHECK-NEXT:   (i32.const 4)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (global.set $cmdbufpos
-;; CHECK-NEXT:   (i32.add
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:    (i32.const 4)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
