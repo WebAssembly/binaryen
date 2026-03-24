@@ -89,10 +89,20 @@ struct AutoBatch : public Pass {
   // The memory we serialize to.
   Name memory;
 
+  // The internal name of the flush import.
+  Name flushName;
+
   void run(Module* module) override {
     asserts = hasArgument("autobatch-asserts");
 
     builder = std::make_shared<Builder>(*module);
+
+    // Add the flush import.
+    flushName = Names::getValidFunctionName(*module, "flush");
+    auto* flushFunc = module->addFunction(builder->makeFunction(flushName, Signature(Type::none, Type::none), {});
+    // TODO: flags?
+    flushFunc->module = "autobatch";
+    flushFunc->base = "flush";
 
     // Use the first memory. TODO: use multi-memory?
     assert(!module->memories.empty());
@@ -158,6 +168,7 @@ struct AutoBatch : public Pass {
   // buffer.
   void wrapNonReturning(Function* func, Name importToCall) {
     std::vector<Expression*> body;
+
     // Stash the command buffer's position before our additions.
     auto posBefore = Builder::addVar(func, Type::i32);
     body.push_back(builder->makeLocalSet(posBefore, builder->makeGlobalGet(commandBufferPosGlobal)));
@@ -177,12 +188,32 @@ struct AutoBatch : public Pass {
     // Update the command buffer position.
     auto* total = builder->makeBinary(AddInt32, builder->makeLocalGet(posBefore, Type::i32), builder->makeConst(int32_t(offset)));
     body.push_back(builder->makeGlobalSet(commandBufferPosGlobal, total));
+
+    func->body = builder->makeBlock(body);
   }
 
   // Wrap a function that returns a result. We flush the command buffer, then
   // call it. TODO: we could also add it to the command buffer itself, to save
   // a call.
   void wrapNonReturning(Function* func, Name importToCall) {
+    std::vector<Expression*> body;
+
+    // Flush the command buffer and rest the position, if we have anything.
+    auto* check = builder->makeGlobalGet(commandBufferPosGlobal);
+    auto* flush = builder->makeCall(flushName, Type::none);
+    auto* reset = builder->makeGlobalSet(commandBufferPosGlobal, builder->makeConst(int32_t(0)));
+    auto* iff = builder->makeIf(check, builder->makeSequence(flush, reset));
+    body.push_back(iff);
+
+    // Call the import.
+    auto params = func->getParams();
+    std::vector<Expression*> args;
+    for (Index i = 0; i < params.size(); i++) {
+      args.push_back(builder->makeLocalGet(i, params[i]));
+    }
+    body.push_back(builder->makeCall(importToCall, args, func->getResults()));
+
+    func->body = builder->makeBlock(body);
   }
 };
 
