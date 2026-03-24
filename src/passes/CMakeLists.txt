@@ -20,6 +20,7 @@ set(passes_SOURCES
   AbstractTypeRefining.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
+  AutoBatch.cpp
   AvoidReinterprets.cpp
   CoalesceLocals.cpp
   CodePushing.cpp

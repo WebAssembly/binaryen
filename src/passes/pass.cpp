@@ -96,6 +96,9 @@ void PassRegistry::registerPasses() {
   registerPass("asyncify",
                "async/await style transform, allowing pausing and resuming",
                createAsyncifyPass);
+  registerPass("autobatch",
+               "automatically batch calls to imports",
+               createAutoBatchPass);
   registerPass("avoid-reinterprets",
                "Tries to avoid reinterpret operations via more loads",
                createAvoidReinterpretsPass);

@@ -25,6 +25,7 @@ class Pass;
 Pass* createAbstractTypeRefiningPass();
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();
+Pass* createAutoBatchPass();
 Pass* createAvoidReinterpretsPass();
 Pass* createCoalesceLocalsPass();
 Pass* createCoalesceLocalsWithLearningPass();
