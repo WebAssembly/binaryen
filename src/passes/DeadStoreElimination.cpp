@@ -1,12 +1,14 @@
+#include "analysis/cfg.h"
+#include "ir/local-graph.h"
+#include "ir/module-utils.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "passes/passes.h"
-#include "ir/module-utils.h"
-#include "ir/local-graph.h"
-#include "ir/properties.h"
-#include "analysis/cfg.h"
 
 namespace wasm {
 namespace {
+
+std::mutex m;
 
 struct ComparingLocalGraph : public LocalGraph {
   PassOptions& passOptions;
@@ -38,56 +40,74 @@ struct ComparingLocalGraph : public LocalGraph {
 };
 
 class DeadStoreEliminationPass : public Pass {
-    virtual std::unique_ptr<Pass> create() { return std::make_unique<DeadStoreEliminationPass>(); }
+  virtual std::unique_ptr<Pass> create() {
+    return std::make_unique<DeadStoreEliminationPass>();
+  }
 
-    bool isFunctionParallel() override { return true; }
+  bool isFunctionParallel() override { return true; }
 
-    // void run(Module* module) override {
-    //     ModuleUtils::iterDefinedFunctions(*module, [this, module](auto* function) { runOnFunction(module, function); });
-    // }
+  // void run(Module* module) override {
+  //     ModuleUtils::iterDefinedFunctions(*module, [this, module](auto*
+  //     function) { runOnFunction(module, function); });
+  // }
 
-    void runOnFunction(Module* module, Function* function) override {
-        std::cout<<"Ran on function " << function->name<< "\n";
+  int totalDeadStores{0};
 
-        ComparingLocalGraph localGraph(function, getPassOptions(), *module);
+  // struct DeadStoreInfo {
+  //   const StructSet* store;
+  //   std::vector<const StructGet*> conflictingGets;
+  // };
 
-        auto cfg = analysis::CFG::fromFunction(function);
+  void runOnFunction(Module* module, Function* function) override {
+    // std::cout<<"Ran on function " << function->name<< "\n";
 
-        // todo might want to use a map here
-        // keyed by the ref expression
-        int deadStoreCount = 0;
-        for (auto& block : cfg) {
-            for (const auto* inst : block) {
-                std::vector<const StructSet*> sets;
-                if (const StructSet* structSet = inst->dynCast<StructSet>()) {
-                    bool found = false;
-                    for (auto* otherSet : sets) {
-                        if (localGraph.equalValues(structSet->ref, otherSet->ref) && structSet->index == otherSet->index) {
-                            deadStoreCount++;
-                            found = true;
-                            // std::cout<<"Found dead store\n";
-                            // structSet->dump();
-                        }
-                    }
-                    if (!found) {
-                        sets.push_back(structSet);
-                        // std::cout<<"not equal\n";
-                    }
-                    // localGraph.equalValues(structSet->ref)
-                    // structSet->dump();
-                    // structSet->ref->dump();
-                } else if (const StructGet* structGet = inst->dynCast<StructGet>()) {
-                    // structGet->ref->dump();
-                }
+    ComparingLocalGraph localGraph(function, getPassOptions(), *module);
+
+    auto cfg = analysis::CFG::fromFunction(function);
+
+    // todo might want to use a map here
+    // keyed by the ref expression
+    int deadStoreCount = 0;
+    for (auto& block : cfg) {
+      std::vector<const StructSet*> potentiallyDeadSets;
+      // std::vector<DeadStoreInfo> potentiallyDeadSets;
+      for (const auto* inst : block) {
+        if (const StructSet* structSet = inst->dynCast<StructSet>()) {
+          bool found = false;
+          // for (auto* otherSet : potentiallyDeadSets) {
+          for (auto* otherSet : potentiallyDeadSets) {
+            if (localGraph.equalValues(structSet->ref, otherSet->ref) &&
+                structSet->index == otherSet->index) {
+              deadStoreCount++;
+              found = true;
             }
+          }
+          if (!found) {
+            potentiallyDeadSets.push_back(structSet);
+          }
+        // } else if (const StructGet* structGet = inst->dynCast<StructGet>())
+          // { structGet->ref->dump();
+        // } else if (const StructGet* structGet = inst->dynCast<StructGet>()) {
+        //   for (const auto* set : potentiallyDeadSets) {
+        //     if (localGraph.equalValues(set->ref, structGet->ref)) {
+
+        //     }
+        //   }
         }
+      }
     }
+
+    std::lock_guard _(m);
+    totalDeadStores += deadStoreCount;
+
+    std::cout<<totalDeadStores<<"\n";
+  }
 };
 
-}  // namespace
+} // namespace
 
 Pass* createDeadStoreEliminationPass() {
-    return new DeadStoreEliminationPass();
+  return new DeadStoreEliminationPass();
 }
 
-}  // namespace wasm
+} // namespace wasm
