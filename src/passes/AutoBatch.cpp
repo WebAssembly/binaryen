@@ -52,7 +52,21 @@
 // called, which has the result of keeping all those functions alive (since it
 // doesn't see the integer IDs actually used at runtime).
 //
-//   --pass-arg=asyncify-asserts
+//   --pass-arg=autobatch-js@filename
+//
+//      A filename to write the JS code for deserialization, that is, the
+//      implementation of flush() which flushes the command buffer. This code
+//      assumes the following variables are available:
+//
+//        * imports: The import object the wasm is instantiated with, so it can
+//                   call imports.
+//        * HEAP32: A Uint32Array view on the memory the wasm uses, so we can
+//                  read the command buffer.
+//        * HEAP64: A BigInt64Array view on the memory.
+//        * HEAPF32: A Float32Array view on the memory.
+//        * HEAPF64: A Float64Array view on the memory.
+//
+//   --pass-arg=autobatch-asserts
 //
 //      This enables extra asserts in the output, like checking if we exceed the
 //      size of the command buffer.
@@ -63,6 +77,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/file.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -161,6 +176,13 @@ struct AutoBatch : public Pass {
         }
       }
     }
+
+    // Emit the JS.
+    auto jsFile = getArgumentOrDefault("autobatch-js", "");
+    if (jsFile.empty()) {
+      Fatal() << "USAGE: wasm-opt --autobatch --pass-arg=autobatch-js@FILENAME";
+    }
+    emitJS(jsFile);
   }
 
   // Serialize a given value to the command buffer. Receives the offset at
@@ -250,6 +272,11 @@ struct AutoBatch : public Pass {
     body.push_back(builder->makeCall(importToCall, args, func->getResults()));
 
     func->body = builder->makeBlock(body);
+  }
+
+  void emitJS(const std::string& jsFile) {
+    Output output(jsFile, Flags::Text);
+    
   }
 };
 

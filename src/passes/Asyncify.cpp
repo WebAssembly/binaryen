@@ -258,6 +258,7 @@
 //      out why a certain function was instrumented.
 //
 //   --pass-arg=asyncify-memory@memory
+//
 //      Picks which exported memory of the module to store and load data from
 //      and to (useful if the module contains multiple memories).
 //
