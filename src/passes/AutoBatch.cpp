@@ -394,10 +394,9 @@ function flush(pos, end) {
       // Finish the call.
       out << ");\n";
 
-      // Bump the position to the proper alignment, if we need to.
-      if (ensure8ByteAlign(offset)) {
-        out << "        pos += 4;\n";
-      }
+      // Bump the position to the proper alignment, if we need to, and update.
+      ensure8ByteAlign(offset); // no need for bool TODO
+      out << "        pos += " << std::to_string(offset) << ";\n";
 
       // Finish the switch case.
       out << "        return;\n";
