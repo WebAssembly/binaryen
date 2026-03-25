@@ -329,6 +329,10 @@ function flush(pos, end) {
         continue;
       }
 
+      // Track the offset relative to `pos`, which we already incremented by 4
+      // for the id.
+      Index offset = 4;
+
       // Emit a case for the function.
       out << "      case ";
       out << std::to_string(id);
@@ -343,8 +347,6 @@ function flush(pos, end) {
 
       // Emit deserialization for each param.
       auto params = import->getParams();
-      // Track the offset relative to `pos`.
-      Index offset = 0;
       for (Index i = 0; i < params.size(); i++) {
         if (i > 0) {
           out << ", ";
