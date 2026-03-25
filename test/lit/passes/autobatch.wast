@@ -32,15 +32,19 @@
 
   ;; CHECK:      (type $2 (func (param i64 f32)))
 
-  ;; CHECK:      (type $3 (func (param i32 i32)))
+  ;; CHECK:      (type $3 (func (param i32 f32)))
+
+  ;; CHECK:      (type $4 (func (param i32 i32)))
 
   ;; CHECK:      (import "autobatch" "flush" (func $flush (param i32 i32)))
 
-  ;; CHECK:      (import "outside" "foo1" (func $noresult1_5 (param i32 f64)))
+  ;; CHECK:      (import "outside" "foo1" (func $noresult1_6 (param i32 f64)))
 
-  ;; CHECK:      (import "outside" "foo2" (func $noresult2_6 (param i64 f32)))
+  ;; CHECK:      (import "outside" "foo2" (func $noresult2_7 (param i64 f32)))
 
-  ;; CHECK:      (import "outside" "bar" (func $result_7 (result f64)))
+  ;; CHECK:      (import "outside" "foo3" (func $noresult3_8 (param i32 f32)))
+
+  ;; CHECK:      (import "outside" "bar" (func $result_9 (result f64)))
 
   ;; CHECK:      (global $cmdbufbase (mut i32) (i32.const 0))
 
@@ -99,6 +103,31 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
 
+  ;; CHECK:      (func $noresult3 (param $0 i32) (param $1 f32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (global.get $cmdbufpos)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store offset=4
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f32.store offset=8
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $cmdbufpos
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
   ;; CHECK:      (func $result (result f64)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $cmdbufpos)
@@ -112,7 +141,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $result_7)
+  ;; CHECK-NEXT:  (call $result_9)
   ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $caller (result f64)
@@ -126,6 +155,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $result)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $noresult3
+  ;; CHECK-NEXT:   (i32.const -1)
+  ;; CHECK-NEXT:   (f32.const -2.299999952316284)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $noresult1
   ;; CHECK-NEXT:   (i32.const 942)

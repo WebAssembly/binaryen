@@ -128,6 +128,8 @@ struct AutoBatch : public Pass {
 
     builder = std::make_unique<Builder>(*module);
 
+    auto numOriginalFunctions = module->functions.size();
+
     // Add the flush import, which receives start, end params.
     flushName = Names::getValidFunctionName(*module, "flush");
     auto flushType =
@@ -167,15 +169,18 @@ struct AutoBatch : public Pass {
       importIds[func->name] = id;
     }
 
-    // Wrap every import (but leave our new import alone).
-    for (auto& func : module->functions) {
+    // Wrap every import (but leave our new import alone). Loop until the
+    // original number of functions, so we do not modify flush() or any of the
+    // new functions we add.
+    for (Index i = 0; i < numOriginalFunctions; i++) {
+      auto* func = module->functions[i].get();
       if (func->imported() && func->name != flushName) {
         // Copy the original import to create the actual import that the wrapper
         // calls. Doing it this way avoids needing to update callers: we replace
         // the original import in-place, so existing calls go to the wrapper
         // now.
         auto newImportName = Names::getValidFunctionName(*module, func->name);
-        ModuleUtils::copyFunction(func.get(), *module, newImportName);
+        ModuleUtils::copyFunction(func, *module, newImportName);
 
         // This one is no longer an import.
         func->module = func->base = Name();
@@ -184,9 +189,9 @@ struct AutoBatch : public Pass {
 
         // Fill in the wrapper body.
         if (func->getResults() == Type::none) {
-          wrapNonReturning(func.get(), newImportName);
+          wrapNonReturning(func, newImportName);
         } else {
-          wrapReturning(func.get(), newImportName);
+          wrapReturning(func, newImportName);
         }
       }
     }
