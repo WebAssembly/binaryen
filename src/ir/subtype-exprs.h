@@ -412,6 +412,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto array = curr->ref->type.getHeapType().getArray();
     self()->noteSubtype(curr->value, array.element.type);
   }
+  void visitArrayLoad(ArrayLoad* curr) {}
   void visitArrayStore(ArrayStore* curr) {}
   void visitArrayLen(ArrayLen* curr) {}
   void visitArrayCopy(ArrayCopy* curr) {

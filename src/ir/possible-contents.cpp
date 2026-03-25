@@ -1105,6 +1105,13 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
     addChildParentLink(curr->value, curr);
   }
+  void visitArrayLoad(ArrayLoad* curr) {
+    if (!isRelevant(curr->ref)) {
+      addRoot(curr);
+      return;
+    }
+    addChildParentLink(curr->ref, curr);
+  }
   void visitArrayStore(ArrayStore* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
@@ -1755,6 +1762,7 @@ void TNHOracle::scan(Function* func,
     }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayLoad(ArrayLoad* curr) { notePossibleTrap(curr->ref); }
     void visitArrayStore(ArrayStore* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
     void visitArrayCopy(ArrayCopy* curr) {
@@ -2865,6 +2873,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
+    } else if (auto* load = parent->dynCast<ArrayLoad>()) {
+      assert(load->ref == child);
+      readFromData(load->ref->type, 0, contents, load);
     } else if (auto* store = parent->dynCast<ArrayStore>()) {
       assert(store->ref == child || store->value == child);
       // TODO: model the stored value, and handle different but equal values in
@@ -3108,15 +3119,25 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   auto signed_ = false;
   Expression* ref;
   Index index;
+  unsigned bytes = 0;
+  Type resultType = Type::none;
   if (auto* get = expr->dynCast<StructGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     index = get->index;
+    resultType = get->type;
   } else if (auto* get = expr->dynCast<ArrayGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     // Arrays are treated as having a single field.
     index = 0;
+    resultType = get->type;
+  } else if (auto* load = expr->dynCast<ArrayLoad>()) {
+    signed_ = load->signed_;
+    ref = load->ref;
+    index = 0;
+    bytes = load->bytes;
+    resultType = load->type;
   } else {
     WASM_UNREACHABLE("bad packed read");
   }
@@ -3135,13 +3156,21 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   assert(ref->type.isRef());
   auto field = GCTypeUtils::getField(ref->type.getHeapType(), index);
   assert(field);
-  if (!field->isPacked()) {
-    return;
+  if (!bytes) {
+    if (!field->isPacked()) {
+      return;
+    }
+    bytes = field->getByteSize();
   }
 
   if (contents.isLiteral()) {
     // This is a constant. We can sign-extend it and use that value.
-    auto shifts = Literal(int32_t(32 - field->getByteSize() * 8));
+    unsigned bits = resultType.getByteSize() == 8 ? 64 : 32;
+    if (bits <= bytes * 8) {
+      // No need to sign-extend for full size.
+      return;
+    }
+    auto shifts = Literal(int32_t(bits - bytes * 8));
     auto lit = contents.getLiteral();
     lit = lit.shl(shifts);
     lit = lit.shrS(shifts);

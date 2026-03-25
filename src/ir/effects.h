@@ -1147,6 +1147,15 @@ private:
       parent.implicitTrap = true;
       writesArray(curr->ref->type.getHeapType(), curr->order);
     }
+    void visitArrayLoad(ArrayLoad* curr) {
+      if (trapOnNull(curr->ref)) {
+        return;
+      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
+      readsArray(curr->ref->type.getHeapType(), MemoryOrder::Unordered);
+    }
+
     void visitArrayStore(ArrayStore* curr) {
       if (curr->ref->type.isNull()) {
         parent.trap = true;

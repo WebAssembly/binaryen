@@ -2478,6 +2478,23 @@ struct PrintExpressionContents
     o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
   }
+  void visitArrayLoad(ArrayLoad* curr) {
+    prepareColor(o) << forceConcrete(curr->type);
+    o << ".load";
+    if (curr->type != Type::unreachable &&
+        curr->bytes < curr->type.getByteSize()) {
+      printMemoryPostfix(curr->bytes, curr->type);
+      o << (curr->signed_ ? "_s" : "_u");
+    }
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
+  }
+
   void visitArrayStore(ArrayStore* curr) {
     prepareColor(o) << forceConcrete(curr->value->type);
     o << ".store";

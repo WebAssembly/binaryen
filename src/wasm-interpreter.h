@@ -2383,6 +2383,58 @@ public:
     data->values[i] = truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
+  Flow visitArrayLoad(ArrayLoad* curr) {
+    VISIT(ref, curr->ref)
+    VISIT(index, curr->index)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    Index i = index.getSingleValue().geti32();
+    size_t size = data->values.size();
+    if (i >= size || curr->bytes > (size - i)) {
+      trap("array oob");
+    }
+    uint64_t val = 0;
+    for (unsigned b = 0; b < curr->bytes; ++b) {
+      val |= static_cast<uint64_t>(data->values[i + b].geti32()) << (b * 8);
+    }
+    switch (curr->type.getBasic()) {
+      case Type::i32: {
+        int32_t sval = static_cast<int32_t>(val);
+        if (curr->signed_) {
+          if (curr->bytes == 1) {
+            sval = static_cast<int32_t>(static_cast<int8_t>(sval));
+          } else if (curr->bytes == 2) {
+            sval = static_cast<int32_t>(static_cast<int16_t>(sval));
+          }
+        }
+        return Literal(sval);
+      }
+      case Type::i64: {
+        int64_t sval = static_cast<int64_t>(val);
+        if (curr->signed_) {
+          if (curr->bytes == 1) {
+            sval = static_cast<int64_t>(static_cast<int8_t>(sval));
+          } else if (curr->bytes == 2) {
+            sval = static_cast<int64_t>(static_cast<int16_t>(sval));
+          } else if (curr->bytes == 4) {
+            sval = static_cast<int64_t>(static_cast<int32_t>(sval));
+          }
+        }
+        return Literal(sval);
+      }
+      case Type::f32: {
+        return Literal(bit_cast<float>(static_cast<int32_t>(val)));
+      }
+      case Type::f64: {
+        return Literal(bit_cast<double>(static_cast<int64_t>(val)));
+      }
+      default:
+        WASM_UNREACHABLE("invalid type");
+    }
+  }
+
   Flow visitArrayStore(ArrayStore* curr) {
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)

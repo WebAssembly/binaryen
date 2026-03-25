@@ -753,6 +753,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
            visit(curr->index) + visit(curr->value);
   }
+  CostType visitArrayLoad(ArrayLoad* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
+  }
   CostType visitArrayStore(ArrayStore* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
            visit(curr->index) + visit(curr->value);
