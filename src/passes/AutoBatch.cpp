@@ -52,6 +52,10 @@
 // called, which has the result of keeping all those functions alive (since it
 // doesn't see the integer IDs actually used at runtime).
 //
+// A flush() import is added, which is called to flush the command buffer. This
+// receives two parameters, one to the start of the buffer and one to the
+// location just past the end.
+//
 //   --pass-arg=autobatch-js@filename
 //
 //      A filename to write the JS code for deserialization, that is, the
@@ -180,9 +184,11 @@ struct AutoBatch : public Pass {
     // Emit the JS.
     auto jsFile = getArgumentOrDefault("autobatch-js", "");
     if (jsFile.empty()) {
-      Fatal() << "USAGE: wasm-opt --autobatch --pass-arg=autobatch-js@FILENAME";
+      std::cerr << "warning: not emitting JS. Use "
+                << "--pass-arg=autobatch-js@FILENAME\n";
+    } else {
+      emitJS(jsFile);
     }
-    emitJS(jsFile);
   }
 
   // Serialize a given value to the command buffer. Receives the offset at
@@ -201,6 +207,11 @@ struct AutoBatch : public Pass {
       case Type::f32:
       case Type::f64: {
         auto size = type.getByteSize();
+        // Ensure values are aligned.
+        auto miss = offset % size;
+        if (miss) {
+          offset += size - miss;
+        }
         auto* ptr = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
         auto* ret =
           builder->makeStore(size, offset, size, ptr, value, type, memory);
@@ -276,7 +287,9 @@ struct AutoBatch : public Pass {
 
   void emitJS(const std::string& jsFile) {
     Output output(jsFile, Flags::Text);
-    
+    output << R"(
+switch 
+)";
   }
 };
 
