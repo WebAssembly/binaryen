@@ -91,4 +91,10 @@
 ;; EXEC-NEXT: result: 42
 ;; EXEC-NEXT: test complete.
 
-;; TODO: test without autobatching, should be the same results
+;; Execute it again, without autobatching. The execution is the same.
+;; RUN: wasm-opt %s -o %t.wasm
+;; RUN: cat %S/autobatch-js-pre.js > %t.combined.js
+;; RUN: cat %S/autobatch-js-post.js >> %t.combined.js
+;; RUN: node %t.combined.js %t.wasm | filecheck %s --check-prefix=EXEC
+
+

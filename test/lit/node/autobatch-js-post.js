@@ -1,9 +1,13 @@
 // Code that goes after the flush() function that autobatch generates. This
 // instantiates and runs the code.
 
-imports.autobatch = {
-  flush: flush,
-};
+// We test with and without autobatching. Without, there is no flush method to
+// add.
+if (typeof flush === 'function') {
+  imports.autobatch = {
+    flush: flush,
+  };
+}
 
 let instance = new WebAssembly.Instance(mod, imports);
 
