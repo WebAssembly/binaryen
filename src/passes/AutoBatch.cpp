@@ -393,6 +393,9 @@ struct AutoBatch : public Pass {
       out << "      }\n";
     }
 
+    // Error handling.
+    out << "      default: throw `invalid id ${funcId}`;\n";
+
     // End the switch, loop, and function.
     out << "    }\n";
     out << "  }\n";

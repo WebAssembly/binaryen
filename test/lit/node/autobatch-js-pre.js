@@ -10,13 +10,13 @@ let mod = new WebAssembly.Module(binary);
 let imports = {
   outside: {
     foo1: (x, y) => {
-      console.log('foo1: ${x} ${y})');
+      console.log(`foo1: ${x} ${y})`);
     },
     foo2: (x, y) => {
-      console.log('foo1: ${x} ${y})');
+      console.log(`foo1: ${x} ${y})`);
     },
     foo3: (x, y) => {
-      console.log('foo1: ${x} ${y})');
+      console.log(`foo1: ${x} ${y})`);
     },
     bar: () => {
       console.log('bar');
