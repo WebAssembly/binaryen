@@ -130,8 +130,12 @@ struct AutoBatch : public Pass {
 
     auto numOriginalFunctions = module->functions.size();
 
-    // Build the mapping of integer ID to imports.
+    // Build the mapping of integer ID to imports. We map imports with no
+    // results, which are exactly the things we serialize commands to.
     for (auto& func : module->functions) {
+      if (!func->imported() || func->getResults() != Type::none) {
+        continue;
+      }
       Index id = imports.size();
       imports.push_back(func->name);
       originalImports.push_back(func.get());
