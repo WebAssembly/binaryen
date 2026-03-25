@@ -4037,4 +4037,11 @@ std::ostream& operator<<(std::ostream& o, const Table& table) {
   return o;
 }
 
+std::ostream& operator<<(std::ostream& o, const Global& global) {
+  wasm::PrintSExpression printer(o);
+  // TODO: visitGlobal should take a const Global*
+  printer.visitGlobal(const_cast<Global*>(&global));
+  return o;
+}
+
 } // namespace wasm

@@ -18,6 +18,7 @@
 #define wasm_ir_import_h
 
 #include "ir/import-names.h"
+#include "ir/runtime-global.h"
 #include "ir/runtime-table.h"
 #include "literal.h"
 #include "wasm-type.h"
@@ -130,11 +131,12 @@ class ImportResolver {
 public:
   virtual ~ImportResolver() = default;
 
-  // Returns null if the imported global does not exist. The returned Literals*
-  // lives as long as the ImportResolver instance. Takes name, type, and mut as
-  // parameters because these are parts of the global's externtype that the
-  // environment is allowed to reflect on when providing imports.
-  virtual Literals*
+  // Returns null if the imported global does not exist. The returned
+  // RuntimeGlobal* lives as long as the ImportResolver instance. Takes name,
+  // type, and mut as parameters because these are parts of the global's
+  // externtype that the environment is allowed to reflect on when providing
+  // imports.
+  virtual RuntimeGlobal*
   getGlobalOrNull(ImportNames name, Type type, bool mut) const = 0;
 
   // Returns null if the imported table does not exist. The returned
@@ -153,7 +155,7 @@ public:
     std::map<Name, std::shared_ptr<ModuleRunnerType>> linkedInstances)
     : linkedInstances(std::move(linkedInstances)) {}
 
-  Literals*
+  RuntimeGlobal*
   getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
     auto it = linkedInstances.find(name.module);
     if (it == linkedInstances.end()) {

@@ -423,7 +423,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'if.wast',      # Requires more precise unreachable validation
     'imports.wast',  # Requires fixing handling of mutation to imported globals
     'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
-    'linking.wast',  # Missing global type validation on instantiation
+    'linking.wast',  # Incorrectly allows covariant subtyping for table imports
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
     'instance.wast',  # Requires support for table default elements
