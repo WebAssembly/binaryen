@@ -2,10 +2,13 @@
 
 ;; RUN: wasm-opt %s --autobatch -S -o - | filecheck %s
 
-;; The output will replace imports with wrappers that serialize commands. (Note
-;; that while doing so we emit 64-bit values on 64-bit offsets.) $caller does
-;; not change at all, as calls to the imports now call wrappers with the same
-;; names.
+;; The output will replace non-returning imports with wrappers that serialize
+;; commands. (Note that while doing so we emit 64-bit values on 64-bit offsets.)
+;;
+;; Value-returning imports will flush in their wrappers, then do the call.
+
+;; $caller does not change at all, as calls to the imports now call wrappers
+;; with the same names.
 
 (module
   (import "outside" "foo1" (func $noresult1 (param i32) (param f64)))
@@ -20,9 +23,9 @@
 
   ;; CHECK:      (type $2 (func (param i64 f32)))
 
-  ;; CHECK:      (type $3 (func))
+  ;; CHECK:      (type $3 (func (param i32 i32)))
 
-  ;; CHECK:      (import "autobatch" "flush" (func $flush))
+  ;; CHECK:      (import "autobatch" "flush" (func $flush (param i32 i32)))
 
   ;; CHECK:      (import "outside" "foo1" (func $noresult1_5 (param i32 f64)))
 
@@ -91,7 +94,10 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $cmdbufpos)
   ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (call $flush)
+  ;; CHECK-NEXT:    (call $flush
+  ;; CHECK-NEXT:     (global.get $cmdbufbase)
+  ;; CHECK-NEXT:     (global.get $cmdbufpos)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.set $cmdbufpos
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )

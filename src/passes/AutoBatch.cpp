@@ -119,10 +119,10 @@ struct AutoBatch : public Pass {
 
     builder = std::make_unique<Builder>(*module);
 
-    // Add the flush import.
+    // Add the flush import, which receives start, end params.
     flushName = Names::getValidFunctionName(*module, "flush");
     auto flushType =
-      Type(Signature(Type::none, Type::none), NonNullable, Inexact);
+      Type(Signature({Type::i32, Type::i32}, Type::none), NonNullable, Inexact);
     auto* flushFunc = module->addFunction(
       builder->makeFunction(flushName, flushType, {}, nullptr));
     // TODO: flags?
@@ -268,7 +268,9 @@ struct AutoBatch : public Pass {
 
     // Flush the command buffer and rest the position, if we have anything.
     auto* check = builder->makeGlobalGet(commandBufferPosGlobal, Type::i32);
-    auto* flush = builder->makeCall(flushName, {}, Type::none);
+    auto* start = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
+    auto* end = builder->makeGlobalGet(commandBufferPosGlobal, Type::i32);
+    auto* flush = builder->makeCall(flushName, {start, end}, Type::none);
     auto* reset = builder->makeGlobalSet(commandBufferPosGlobal,
                                          builder->makeConst(int32_t(0)));
     auto* iff = builder->makeIf(check, builder->makeSequence(flush, reset));
@@ -288,6 +290,9 @@ struct AutoBatch : public Pass {
   void emitJS(const std::string& jsFile) {
     Output output(jsFile, Flags::Text);
     output << R"(
+function flush(pos, end) {
+  // Process commands until the end.
+  while (pos != end) {
 switch 
 )";
   }
