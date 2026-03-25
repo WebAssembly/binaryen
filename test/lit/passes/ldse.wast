@@ -1004,6 +1004,98 @@
   )
  )
 
+ ;; CHECK:      (func $global-with-get (type $15) (result i32)
+ ;; CHECK-NEXT:  (local $tmp i32)
+ ;; CHECK-NEXT:  (global.set $global$0
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $tmp
+ ;; CHECK-NEXT:   (global.get $global$0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $global$0
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tmp)
+ ;; CHECK-NEXT: )
+ (func $global-with-get (result i32)
+  (local $tmp i32)
+
+  (global.set $global$0
+   (i32.const 10)
+  )
+
+  ;; We observed the otherwise dead store so we can't optimize it.
+  (local.set $tmp (global.get $global$0))
+
+  (global.set $global$0
+   (i32.const 30)
+  )
+
+  (local.get $tmp)
+ )
+
+ ;; CHECK:      (func $nothing (type $3)
+ ;; CHECK-NEXT: )
+ (func $nothing
+ )
+
+ ;; CHECK:      (func $global-with-call (type $3)
+ ;; CHECK-NEXT:  (global.set $global$0
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $nothing)
+ ;; CHECK-NEXT:  (global.set $global$0
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $global-with-call
+  (global.set $global$0
+   (i32.const 10)
+  )
+
+  ;; A function call might observe the otherwise dead store.
+  ;; We don't know unless we compute global effects first.
+  (call $nothing)
+
+  (global.set $global$0
+   (i32.const 30)
+  )
+ )
+
+ ;; CHECK:      (func $global-branch-always-dead (type $16) (param $bool i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $bool)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (global.set $global$0
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (global.set $global$0
+ ;; CHECK-NEXT:     (i32.const 30)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $global-branch-always-dead (param $bool i32)
+  ;; This store is dead regardless of the branch.
+  (global.set $global$0
+   (i32.const 10)
+  )
+
+  (if (local.get $bool)
+   (then
+    (global.set $global$0 (i32.const 20))
+   )
+   (else
+    (global.set $global$0 (i32.const 30))
+   )
+  )
+ )
+
  ;; CHECK:      (func $global-trap (type $3)
  ;; CHECK-NEXT:  (global.set $global$0
  ;; CHECK-NEXT:   (i32.const 10)
