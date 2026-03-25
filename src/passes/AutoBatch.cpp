@@ -54,7 +54,9 @@
 //
 // A flush() import is added, which is called to flush the command buffer. This
 // receives two parameters, one to the start of the buffer and one to the
-// location just past the end.
+// location just past the end. This pass generates the JS to be called in
+// flush(), and you just need to connect that JS to the import for the wasm.
+// That import should have module "autobatch" and base name "flush" TODO flag
 //
 //   --pass-arg=autobatch-js@filename
 //

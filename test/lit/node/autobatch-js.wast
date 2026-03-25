@@ -20,7 +20,7 @@
   (memory $mem 10 20)
   (export "mem" (memory $mem))
 
-  (func $caller
+  (func $caller (export "caller")
     ;; Two calls and a flush.
     (call $noresult1
       (i32.const 42)
@@ -73,8 +73,14 @@
 ;; JS-NEXT:   }
 ;; JS-NEXT: }
 
+;; Combine our test JS with the generated JS.
+;; RUN: cat %S/autobatch-js-pre.js > %t.combined.js
+;; RUN: cat %t.js >> %t.combined.js
+;; RUN: cat %S/autobatch-js-post.js >> %t.combined.js
+
 ;; Execute the autobatched wasm.
-;; RUN: node %t.js %t.wasm | filecheck %s
+;; RUN: node %t.combined.js %t.wasm | filecheck %s
 
 ;; CHECK: test complete.
 
+;; TODO: test without autobatching, should be the same results

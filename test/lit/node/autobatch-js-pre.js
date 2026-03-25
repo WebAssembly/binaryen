@@ -1,10 +1,13 @@
+// Code that goes before the flush() function that autobatch generates. This
+// loads the binary and prepares the imports and other globals.
+
 let argv = process.argv.slice(2);
 
 let binary = require('fs').readFileSync(argv[0]);
 
-var module = new WebAssembly.Module(binary);
+let mod = new WebAssembly.Module(binary);
 
-var imports = {
+let imports = {
   outside: {
     foo1: (x, y) => {
       console.log('foo1: ${x} ${y})');
@@ -22,11 +25,5 @@ var imports = {
   },
 };
 
-var instance = new WebAssembly.Instance(module, imports);
+let HEAP32, HEAP64, HEAPF32, HEAPF64;
 
-for (var export in instance.exports) {
-  console.log('calling ${export}');
-  console.log(instance.exports[export]);
-}
-
-console.log('test complete.');
