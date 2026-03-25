@@ -30,11 +30,13 @@ struct ComparingLocalGraph : public LocalGraph {
         }
       }
     }
-    if (auto* aConst = a->dynCast<Const>()) {
-      if (auto* bConst = b->dynCast<Const>()) {
-        return aConst->value == bConst->value;
-      }
-    }
+
+    // not relevant
+    // if (auto* aConst = a->dynCast<Const>()) {
+    //   if (auto* bConst = b->dynCast<Const>()) {
+    //     return aConst->value == bConst->value;
+    //   }
+    // }
     return false;
   }
 };
@@ -46,20 +48,7 @@ class DeadStoreEliminationPass : public Pass {
 
   bool isFunctionParallel() override { return true; }
 
-  // void run(Module* module) override {
-  //     ModuleUtils::iterDefinedFunctions(*module, [this, module](auto*
-  //     function) { runOnFunction(module, function); });
-  // }
-
-  int totalDeadStores{0};
-
-  // struct DeadStoreInfo {
-  //   const StructSet* store;
-  //   std::vector<const StructGet*> conflictingGets;
-  // };
-
   void runOnFunction(Module* module, Function* function) override {
-    // std::cout<<"Ran on function " << function->name<< "\n";
 
     ComparingLocalGraph localGraph(function, getPassOptions(), *module);
 
@@ -70,14 +59,14 @@ class DeadStoreEliminationPass : public Pass {
     int deadStoreCount = 0;
     for (auto& block : cfg) {
       std::vector<const StructSet*> potentiallyDeadSets;
-      // std::vector<DeadStoreInfo> potentiallyDeadSets;
       for (const auto* inst : block) {
         if (const StructSet* structSet = inst->dynCast<StructSet>()) {
           bool found = false;
-          // for (auto* otherSet : potentiallyDeadSets) {
           for (auto* otherSet : potentiallyDeadSets) {
             if (localGraph.equalValues(structSet->ref, otherSet->ref) &&
                 structSet->index == otherSet->index) {
+              // We don't remove the dead store from potentiallyDeadSets, and we might increment multiple times on the same store, but that's fine.
+              // If we have e.g. 3 stores in a row, we'll only record the first and increment deadStoreCount twice on the first
               deadStoreCount++;
               found = true;
             }
@@ -85,22 +74,16 @@ class DeadStoreEliminationPass : public Pass {
           if (!found) {
             potentiallyDeadSets.push_back(structSet);
           }
-        // } else if (const StructGet* structGet = inst->dynCast<StructGet>())
-          // { structGet->ref->dump();
-        // } else if (const StructGet* structGet = inst->dynCast<StructGet>()) {
-        //   for (const auto* set : potentiallyDeadSets) {
-        //     if (localGraph.equalValues(set->ref, structGet->ref)) {
-
-        //     }
-        //   }
         }
       }
     }
 
-    std::lock_guard _(m);
-    totalDeadStores += deadStoreCount;
+    if (deadStoreCount == 0) {
+      return;
+    }
 
-    std::cout<<totalDeadStores<<"\n";
+    std::lock_guard _(m);
+    std::cout<<deadStoreCount<<"\n";
   }
 };
 
