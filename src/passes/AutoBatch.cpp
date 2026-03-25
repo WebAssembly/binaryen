@@ -317,7 +317,6 @@ struct AutoBatch : public Pass {
 function flush(pos, end) {
   while (pos != end) {
     auto funcId = HEAP32[pos >> 2];
-    pos += 4;
     switch (funcId) {
 )";
 
@@ -329,8 +328,7 @@ function flush(pos, end) {
         continue;
       }
 
-      // Track the offset relative to `pos`, which we already incremented by 4
-      // for the id.
+      // Track the offset relative to `pos`, which beings after the id.
       Index offset = 4;
 
       // Emit a case for the function.
@@ -353,35 +351,26 @@ function flush(pos, end) {
         }
         auto type = params[i];
         assert(type.isBasic());
-
-        // Gets an offset in string form, or nothing if there is no offset.
-        auto getOffset = [&]() {
-          if (!offset) {
-            return std::string("");
-          }
-          return " + " + std::to_string(offset);
-        };
-
         switch (type.getBasic()) {
           case Type::i32: {
-            out << "HEAP32[pos" << getOffset() << " >> 2]";
+            out << "HEAP32[pos + " + std::to_string(offset) + " >> 2]";
             offset += 4;
             break;
           }
           case Type::f32: {
-            out << "HEAPF32[pos" << getOffset() << " >> 2]";
+            out << "HEAPF32[pos + " + std::to_string(offset) + " >> 2]";
             offset += 4;
             break;
           }
           case Type::i64: {
             ensure8ByteAlign(offset);
-            out << "HEAP64[pos" << getOffset() << " >> 3]";
+            out << "HEAP64[pos + " + std::to_string(offset) + " >> 3]";
             offset += 8;
             break;
           }
           case Type::f64: {
             ensure8ByteAlign(offset);
-            out << "HEAPF64[pos" << getOffset() << " >> 3]";
+            out << "HEAPF64[pos + " + std::to_string(offset) + " >> 3]";
             offset += 8;
             break;
           }
