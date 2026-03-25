@@ -20,11 +20,14 @@
   ;; so it is aligned.
   (import "outside" "foo2" (func $noresult2 (param i64) (param f32)))
 
+  ;; A function with a result. We purposefully put this before "foo3" to test
+  ;; for mixups in the indexing (we do not index "bar", as calls to functions
+  ;; returning a value are not serialized).
+  (import "outside" "bar" (func $result (result f64)))
+
   ;; This serializes as [i32 id, i32 param, f32 param], which is a total of 12
   ;; bytes. We bump $cmdbufpos by 16, to keep the thing after us aligned.
   (import "outside" "foo3" (func $noresult3 (param i32) (param f32)))
-
-  (import "outside" "bar" (func $result (result f64)))
 
   ;; CHECK:      (type $0 (func (result f64)))
 
@@ -42,9 +45,9 @@
 
   ;; CHECK:      (import "outside" "foo2" (func $noresult2_7 (param i64 f32)))
 
-  ;; CHECK:      (import "outside" "foo3" (func $noresult3_8 (param i32 f32)))
+  ;; CHECK:      (import "outside" "bar" (func $result_8 (result f64)))
 
-  ;; CHECK:      (import "outside" "bar" (func $result_9 (result f64)))
+  ;; CHECK:      (import "outside" "foo3" (func $noresult3_9 (param i32 f32)))
 
   ;; CHECK:      (global $cmdbufbase (mut i32) (i32.const 0))
 
@@ -103,6 +106,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
 
+  ;; CHECK:      (func $result (result f64)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $cmdbufpos)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $flush
+  ;; CHECK-NEXT:     (global.get $cmdbufbase)
+  ;; CHECK-NEXT:     (global.get $cmdbufpos)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.set $cmdbufpos
+  ;; CHECK-NEXT:     (global.get $cmdbufbase)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $result_8)
+  ;; CHECK-NEXT: )
+
   ;; CHECK:      (func $noresult3 (param $0 i32) (param $1 f32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local.set $2
@@ -126,22 +145,6 @@
   ;; CHECK-NEXT:    (i32.const 16)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-
-  ;; CHECK:      (func $result (result f64)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $cmdbufpos)
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (call $flush
-  ;; CHECK-NEXT:     (global.get $cmdbufbase)
-  ;; CHECK-NEXT:     (global.get $cmdbufpos)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.set $cmdbufpos
-  ;; CHECK-NEXT:     (global.get $cmdbufbase)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $result_9)
   ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $caller (result f64)

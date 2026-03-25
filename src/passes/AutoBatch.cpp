@@ -100,13 +100,11 @@ namespace {
 struct AutoBatch : public Pass {
   AutoBatch() {}
 
-  // The function imports, in order. This maps ids to names.
-  std::vector<Name> imports; /// XXX needed?
-  // The reverse map of import names to ids.
-  std::unordered_map<Name, Index> importIds;
-
   // The original imports, before we wrapped them, in order of ids.
   std::vector<Function*> originalImports;
+
+  // Map import names to the ids we use to serialize them.
+  std::unordered_map<Name, Index> importIds;
 
   bool asserts;
 
@@ -138,8 +136,7 @@ struct AutoBatch : public Pass {
       if (!func->imported() || func->getResults() != Type::none) {
         continue;
       }
-      Index id = imports.size();
-      imports.push_back(func->name);
+      Index id = importIds.size();
       importIds[func->name] = id;
     }
 
@@ -185,9 +182,8 @@ struct AutoBatch : public Pass {
         // the original import in-place, so existing calls go to the wrapper
         // now.
         auto newImportName = Names::getValidFunctionName(*module, func->name);
-        auto* original =
-          ModuleUtils::copyFunction(func, *module, newImportName);
-        originalImports.push_back(original);
+        auto* originalImport =
+            ModuleUtils::copyFunction(func, *module, newImportName);
 
         // This one is no longer an import.
         func->module = func->base = Name();
@@ -197,6 +193,7 @@ struct AutoBatch : public Pass {
         // Fill in the wrapper body.
         if (func->getResults() == Type::none) {
           wrapNonReturning(func, newImportName);
+          originalImports.push_back(originalImport);
         } else {
           wrapReturning(func, newImportName);
         }
