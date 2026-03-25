@@ -143,6 +143,10 @@ public:
     return getGCAllocation(curr, [&]() { return Super::visitStructNew(curr); });
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructRMW(StructRMW* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructCmpxchg(StructCmpxchg* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return Flow(NONCONSTANT_FLOW);
@@ -184,6 +188,8 @@ public:
                            [&]() { return Super::visitArrayNewFixed(curr); });
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayRMW(ArrayRMW* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayCmpxchg(ArrayCmpxchg* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return Flow(NONCONSTANT_FLOW);
