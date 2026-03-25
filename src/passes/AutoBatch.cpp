@@ -130,6 +130,14 @@ struct AutoBatch : public Pass {
 
     auto numOriginalFunctions = module->functions.size();
 
+    // Build the mapping of integer ID to imports.
+    for (auto& func : module->functions) {
+      Index id = imports.size();
+      imports.push_back(func->name);
+      originalImports.push_back(func.get());
+      importIds[func->name] = id;
+    }
+
     // Add the flush import, which receives start, end params.
     flushName = Names::getValidFunctionName(*module, "flush");
     auto flushType =
@@ -160,14 +168,6 @@ struct AutoBatch : public Pass {
                                           Type::i32,
                                           builder->makeConst(int32_t(0)),
                                           Builder::Mutable));
-
-    // Build the mapping of integer ID to imports.
-    for (auto& func : module->functions) {
-      Index id = imports.size();
-      imports.push_back(func->name);
-      originalImports.push_back(func.get());
-      importIds[func->name] = id;
-    }
 
     // Wrap every import (but leave our new import alone). Loop until the
     // original number of functions, so we do not modify flush() or any of the
@@ -314,14 +314,18 @@ function flush(pos, end) {
   while (pos != end) {
     auto funcId = HEAP32[pos >> 2];
     pos += 4;
-    switch (funcId) {)";
+    switch (funcId) {
+)";
 
     // Emit deserialization code for each function.
-    for (Index id = 0; id < imports.size(); id++) {
+    for (Index id = 0; id < originalImports.size(); id++) {
       auto* import = originalImports[id];
+      if (import->getResults() != Type::none) {
+        // This is not something we serialize.
+        continue;
+      }
 
       // Emit a case for the function.
-      out << "\n";
       out << "      case ";
       out << std::to_string(id);
       out << ": {\n";
@@ -343,26 +347,35 @@ function flush(pos, end) {
         }
         auto type = params[i];
         assert(type.isBasic());
+
+        // Gets an offset in string form, or nothing if there is no offset.
+        auto getOffset = [&]() {
+          if (!offset) {
+            return std::string("");
+          }
+          return " + " + std::to_string(offset);
+        };
+
         switch (type.getBasic()) {
           case Type::i32: {
-            out << "HEAP32[pos " << std::to_string(offset) << " >> 2]";
+            out << "HEAP32[pos" << getOffset() << " >> 2]";
             offset += 4;
             break;
           }
           case Type::f32: {
-            out << "HEAPF32[pos " << std::to_string(offset) << " >> 2]";
+            out << "HEAPF32[pos" << getOffset() << " >> 2]";
             offset += 4;
             break;
           }
           case Type::i64: {
             ensure8ByteAlign(offset);
-            out << "HEAP64[pos " << std::to_string(offset) << " >> 3]";
+            out << "HEAP64[pos" << getOffset() << " >> 3]";
             offset += 8;
             break;
           }
           case Type::f64: {
             ensure8ByteAlign(offset);
-            out << "HEAPF64[pos " << std::to_string(offset) << " >> 3]";
+            out << "HEAPF64[pos" << getOffset() << " >> 3]";
             offset += 8;
             break;
           }
