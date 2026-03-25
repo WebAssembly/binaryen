@@ -315,7 +315,7 @@ struct AutoBatch : public Pass {
     // to call.
     out << R"(function flush(pos, end) {
   while (pos != end) {
-    auto funcId = HEAP32[pos >> 2];
+    let funcId = HEAP32[pos >> 2];
     switch (funcId) {
 )";
 

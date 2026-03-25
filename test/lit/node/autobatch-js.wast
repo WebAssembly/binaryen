@@ -18,6 +18,7 @@
   (import "outside" "bar" (func $result (result f64)))
 
   (memory $mem 10 20)
+  (export "mem" (memory $mem))
 
   (func $caller
     ;; Two calls and a flush.
@@ -51,7 +52,7 @@
 
 ;; JS:      function flush(pos, end) {
 ;; JS-NEXT:   while (pos != end) {
-;; JS-NEXT:     auto funcId = HEAP32[pos >> 2];
+;; JS-NEXT:     let funcId = HEAP32[pos >> 2];
 ;; JS-NEXT:     switch (funcId) {
 ;; JS-NEXT:       case 0: {
 ;; JS-NEXT:         imports['outside']['foo1'](HEAP32[pos + 4 >> 2], HEAPF64[pos + 8 >> 3]);
@@ -73,3 +74,7 @@
 ;; JS-NEXT: }
 
 ;; Execute the autobatched wasm.
+;; RUN: node %t.js %t.wasm | filecheck %s
+
+;; CHECK: test complete.
+
