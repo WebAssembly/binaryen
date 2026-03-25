@@ -13,10 +13,10 @@ let imports = {
       console.log(`foo1: ${x} ${y})`);
     },
     foo2: (x, y) => {
-      console.log(`foo1: ${x} ${y})`);
+      console.log(`foo2: ${x} ${y})`);
     },
     foo3: (x, y) => {
-      console.log(`foo1: ${x} ${y})`);
+      console.log(`foo3: ${x} ${y})`);
     },
     bar: () => {
       console.log('bar');

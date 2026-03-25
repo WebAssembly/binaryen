@@ -20,7 +20,7 @@
   (memory $mem 10 20)
   (export "mem" (memory $mem))
 
-  (func $caller (export "caller")
+  (func $caller (export "caller") (result f64)
     ;; Two calls and a flush.
     (call $noresult1
       (i32.const 42)
@@ -39,8 +39,8 @@
     )
     (drop (call $result))
 
-    ;; Flush.
-    (drop (call $result))
+    ;; Flush and test we get the result.
+    (call $result)
   )
 )
 
