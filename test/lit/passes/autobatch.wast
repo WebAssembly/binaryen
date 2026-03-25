@@ -3,17 +3,26 @@
 ;; RUN: wasm-opt %s --autobatch -S -o - | filecheck %s
 
 ;; The output will replace non-returning imports with wrappers that serialize
-;; commands. (Note that while doing so we emit 64-bit values on 64-bit offsets.)
+;; commands.
 ;;
 ;; Value-returning imports will flush in their wrappers, then do the call.
-
+;;
 ;; $caller does not change at all, as calls to the imports now call wrappers
 ;; with the same names.
 
 (module
+  ;; This serializes as [i32 id, i32 param, f64 param], which is a total of 16
+  ;; bytes. The f64 is aligned properly just by how the offsets work out.
   (import "outside" "foo1" (func $noresult1 (param i32) (param f64)))
 
+  ;; This serializes as [i32 id, i64 param, f32 param], which is a total of 16
+  ;; bytes again, but now the 64-bit param must have a 4-byte buffer before it,
+  ;; so it is aligned.
   (import "outside" "foo2" (func $noresult2 (param i64) (param f32)))
+
+  ;; This serializes as [i32 id, i32 param, f32 param], which is a total of 12
+  ;; bytes. We bump $cmdbufpos by 16, to keep the thing after us aligned.
+  (import "outside" "foo3" (func $noresult3 (param i32) (param f32)))
 
   (import "outside" "bar" (func $result (result f64)))
 
@@ -139,6 +148,11 @@
       (f32.const 2.71828)
     )
     (drop (call $result))
+
+    (call $noresult3
+      (i32.const -1)
+      (f32.const -2.3)
+    )
 
     (call $noresult1
       (i32.const 942)
