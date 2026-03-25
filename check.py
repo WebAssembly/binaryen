@@ -393,6 +393,60 @@ def run_unittest():
     shared.num_failures += len(result.errors) + len(result.failures)
 
 
+def run_binaryenjs_test_with_wrapped_stdout(s: Path):
+    """Return (bool, str) where the first element is whether the test was
+    successful and the second is the combined stdout and stderr of the test.
+    """
+    out = io.StringIO()
+    try:
+        binaryenjs.run_one_binaryen_js_test(str(s), stdout=out)
+    except Exception as e:
+        shared.num_failures += 1
+        # Serialize exceptions into the output string buffer
+        # so they can be reported on the main thread.
+        print(e, file=out)
+        return False, out.getvalue()
+    return True, out.getvalue()
+
+
+def run_binaryenjs_tests():
+    if not (shared.MOZJS or shared.NODEJS):
+        shared.fail_with_error('no vm to run binaryen.js tests')
+
+    if not os.path.exists(shared.BINARYEN_JS):
+        shared.fail_with_error('no ' + shared.BINARYEN_JS + ' build to test')
+
+    print('\n[ checking binaryen.js testcases (' + shared.BINARYEN_JS + ')... ]\n')
+
+    worker_count = os.cpu_count()
+    print("Running with", worker_count, "workers")
+    tests = (Path(x) for x in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']))
+
+    failed_stdouts = []
+    with ThreadPool(processes=worker_count) as pool:
+        try:
+            for success, stdout in pool.imap_unordered(run_binaryenjs_test_with_wrapped_stdout, tests):
+                if success:
+                    print(stdout, end="")
+                    continue
+
+                failed_stdouts.append(stdout)
+                if shared.options.abort_on_first_failure:
+                    with red_stderr():
+                        print("Aborted binaryen.js test suite execution after first failure. Set --no-fail-fast to disable this.", file=sys.stderr)
+                    break
+        except KeyboardInterrupt:
+            # Hard exit to avoid threads continuing to run after Ctrl-C.
+            # There's no concern of deadlocking during shutdown here.
+            os._exit(1)
+
+    if failed_stdouts:
+        with red_stderr():
+            print("Failed tests:", file=sys.stderr)
+            for failed in failed_stdouts:
+                print(failed, end="", file=sys.stderr)
+
+
 @shared.with_pass_debug()
 def run_lit():
     lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
@@ -441,7 +495,7 @@ TEST_SUITES = {
     'validator': run_validator_tests,
     'example': run_example_tests,
     'unit': run_unittest,
-    'binaryenjs': binaryenjs.test_binaryen_js,
+    'binaryenjs': run_binaryenjs_tests,
     'lit': run_lit,
     'gtest': run_gtest,
 }
