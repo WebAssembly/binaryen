@@ -93,9 +93,12 @@ struct AutoBatch : public Pass {
   AutoBatch() {}
 
   // The function imports, in order. This maps ids to names.
-  std::vector<Name> imports;
+  std::vector<Name> imports; /// XXX needed?
   // The reverse map of import names to ids.
   std::unordered_map<Name, Index> importIds;
+
+  // The original imports, before we wrapped them, in order of ids.
+  std::vector<Function*> originalImports;
 
   bool asserts;
 
@@ -154,6 +157,7 @@ struct AutoBatch : public Pass {
     for (auto& func : module->functions) {
       Index id = imports.size();
       imports.push_back(func->name);
+      originalImports.push_back(func.get());
       importIds[func->name] = id;
     }
 
@@ -187,7 +191,7 @@ struct AutoBatch : public Pass {
       std::cerr << "warning: not emitting JS. Use "
                 << "--pass-arg=autobatch-js@FILENAME\n";
     } else {
-      emitJS(jsFile);
+      emitJS(jsFile, module);
     }
   }
 
@@ -287,14 +291,79 @@ struct AutoBatch : public Pass {
     func->body = builder->makeBlock(body);
   }
 
-  void emitJS(const std::string& jsFile) {
-    Output output(jsFile, Flags::Text);
-    output << R"(
+  void emitJS(const std::string& jsFile, Module* module) {
+    Output out(jsFile, Flags::Text);
+
+    // The main loop goes over commands, each time switching over which function
+    // to call.
+    out << R"(
 function flush(pos, end) {
-  // Process commands until the end.
   while (pos != end) {
-switch 
+    auto funcId = HEAP32[pos >> 2];
+    pos += 4;
+    switch (funcId) {
+    }
+  }
+}
 )";
+
+    // Emit deserialization code for each function.
+    for (Index id = 0; id < imports.size(); id++) {
+      auto* import = originalImports[id];
+
+      // Emit a case for the function.
+      out << "\n";
+      out << "      case ";
+      out << std::to_string(id);
+      out << ": {\n";
+
+      // Emit a call to the function.
+      out << "        imports[";
+      out << "'" << import->module << "'";
+      out << "][";
+      out << "'" << import->base << "'";
+      out << "](";
+
+      // Emit deserialization for each param.
+      auto params = import->getParams();
+      for (Index i = 0; i < params.size(); i++) {
+        auto type = params[i];
+        switch (type.getBasic()) {
+          case Type::i32:
+          case Type::i64:
+          case Type::f32:
+          case Type::f64: {
+            auto size = type.getByteSize();
+            // Ensure values are aligned.
+            auto miss = offset % size;
+            if (miss) {
+              offset += size - miss;
+            }
+            auto* ptr = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
+            auto* ret =
+              builder->makeStore(size, offset, size, ptr, value, type, memory);
+            offset += size;
+            return ret;
+            break;
+          }
+          default: {
+            Fatal() << "AutoBatch: unsupported serialization type " << type;
+          }
+        }
+
+      
+        body.push_back(serialize(builder->makeLocalGet(i, params[i]), offset));
+      }
+      out << "      }\n";
+    }
+
+    // End the switch, loop, and function.
+    out << R"(
+    }
+  }
+}
+)";
+
   }
 };
 
