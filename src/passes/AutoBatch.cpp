@@ -392,12 +392,9 @@ struct AutoBatch : public Pass {
     }
 
     // End the switch, loop, and function.
-    out << R"(
-    }
-  }
-}
-)";
-
+    out << "    }\n";
+    out << "  }\n";
+    out << "}\n";
   }
 
   // Given an offset, bump it to 8-byte alignment. (We only need to handle the
