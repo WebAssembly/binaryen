@@ -2,6 +2,11 @@
 
 ;; RUN: wasm-opt %s --autobatch -S -o - | filecheck %s
 
+;; The output will replace imports with wrappers that serialize commands. (Note
+;; that while doing so we emit 64-bit values on 64-bit offsets.) $caller does
+;; not change at all, as calls to the imports now call wrappers with the same
+;; names.
+
 (module
   (import "outside" "foo1" (func $noresult1 (param i32) (param f64)))
 
@@ -66,18 +71,18 @@
   ;; CHECK-NEXT:   (global.get $cmdbufbase)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i64.store offset=4
+  ;; CHECK-NEXT:  (i64.store offset=8
   ;; CHECK-NEXT:   (global.get $cmdbufbase)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (f32.store offset=12
+  ;; CHECK-NEXT:  (f32.store offset=16
   ;; CHECK-NEXT:   (global.get $cmdbufbase)
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $cmdbufpos
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (local.get $2)
-  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
