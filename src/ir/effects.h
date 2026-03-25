@@ -287,9 +287,7 @@ public:
   //
   // TODO: Go through the optimizer and use this in all places that do not move
   //       code around.
-  bool hasUnremovableSideEffects() const {
-    return hasNonTrapSideEffects() || (trap && !trapsNeverHappen);
-  }
+  bool hasUnremovableSideEffects() const { return hasSideEffects(); }
 
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMutableGlobalState();
@@ -418,17 +416,10 @@ public:
     // anything.
     assert(!((trap && other.throws()) || (throws() && other.trap)));
     // We can't reorder an implicit trap in a way that could alter what global
-    // state is modified. However, in trapsNeverHappen mode we assume traps do
-    // not occur in practice, which lets us ignore this, at least in the case
-    // that the code executes. As mentioned above, we assume that there is no
-    // transfer of control flow between the things we are comparing, so all we
-    // need to do is check for such transfers in them.
-    if (!trapsNeverHappen || transfersControlFlow() ||
-        other.transfersControlFlow()) {
-      if ((trap && other.writesGlobalState()) ||
-          (other.trap && writesGlobalState())) {
-        return true;
-      }
+    // state is modified.
+    if ((trap && other.writesGlobalState()) ||
+        (other.trap && writesGlobalState())) {
+      return true;
     }
     return false;
   }
@@ -466,6 +457,12 @@ public:
     trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
     trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
+    if (trapsNeverHappen) {
+      trap = false;
+      implicitTrap = false;
+    } else if (ignoreImplicitTraps) {
+      implicitTrap = false;
+    }
     throws_ = throws_ || other.throws_;
     danglingPop = danglingPop || other.danglingPop;
     mayNotReturn = mayNotReturn || other.mayNotReturn;
@@ -1441,10 +1438,14 @@ private:
   void post() {
     assert(tryDepth == 0);
 
-    if (ignoreImplicitTraps) {
+    if (ignoreImplicitTraps || trapsNeverHappen) {
       implicitTrap = false;
     } else if (implicitTrap) {
       trap = true;
+    }
+
+    if (trapsNeverHappen) {
+      trap = false;
     }
   }
 };
