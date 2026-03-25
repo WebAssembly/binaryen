@@ -138,7 +138,6 @@ struct AutoBatch : public Pass {
       }
       Index id = imports.size();
       imports.push_back(func->name);
-      originalImports.push_back(func.get());
       importIds[func->name] = id;
     }
 
@@ -184,7 +183,8 @@ struct AutoBatch : public Pass {
         // the original import in-place, so existing calls go to the wrapper
         // now.
         auto newImportName = Names::getValidFunctionName(*module, func->name);
-        ModuleUtils::copyFunction(func, *module, newImportName);
+        auto* original = ModuleUtils::copyFunction(func, *module, newImportName);
+        originalImports.push_back(original);
 
         // This one is no longer an import.
         func->module = func->base = Name();
@@ -313,8 +313,7 @@ struct AutoBatch : public Pass {
 
     // The main loop goes over commands, each time switching over which function
     // to call.
-    out << R"(
-function flush(pos, end) {
+    out << R"(function flush(pos, end) {
   while (pos != end) {
     auto funcId = HEAP32[pos >> 2];
     switch (funcId) {
