@@ -185,7 +185,8 @@ struct AutoBatch : public Pass {
         // the original import in-place, so existing calls go to the wrapper
         // now.
         auto newImportName = Names::getValidFunctionName(*module, func->name);
-        auto* original = ModuleUtils::copyFunction(func, *module, newImportName);
+        auto* original =
+          ModuleUtils::copyFunction(func, *module, newImportName);
         originalImports.push_back(original);
 
         // This one is no longer an import.
@@ -259,18 +260,19 @@ struct AutoBatch : public Pass {
 
     // Serialize the id.
     // TODO: we could use an 8 or 16 bit id when the # of imports is small
-    body.push_back(
-      serialize(builder->makeConst(int32_t(importIds[func->name])), posLocal, offset));
+    body.push_back(serialize(
+      builder->makeConst(int32_t(importIds[func->name])), posLocal, offset));
 
     // Serialize the params.
     auto params = func->getParams();
     for (Index i = 0; i < params.size(); i++) {
-      body.push_back(serialize(builder->makeLocalGet(i, params[i]), posLocal, offset));
+      body.push_back(
+        serialize(builder->makeLocalGet(i, params[i]), posLocal, offset));
     }
 
     // The total we emit for this command must be aligned.
     ensure8ByteAlign(offset);
-    
+
     // Update the command buffer position.
     auto* total =
       builder->makeBinary(AddInt32,
