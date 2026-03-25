@@ -469,85 +469,6 @@ struct GlobalLogic : public Logic {
   }
 };
 
-// Optimize memory stores/loads.
-struct MemoryLogic : public ComparingLogic {
-  MemoryLogic(Function* func, PassOptions& passOptions, Module& wasm)
-    : ComparingLogic(func, passOptions, wasm) {}
-
-  bool isStore(Expression* curr) { return curr->is<Store>(); }
-
-  bool isLoad(Expression* curr) { return curr->is<Load>(); }
-
-  bool mayInteract(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
-    return currEffects.readsMemory || currEffects.writesMemory;
-  }
-
-  bool isLoadFrom(Expression* curr,
-                  const ShallowEffectAnalyzer& currEffects,
-                  Expression* store_) {
-    if (curr->type == Type::unreachable) {
-      return false;
-    }
-    if (auto* load = curr->dynCast<Load>()) {
-      auto* store = store_->cast<Store>();
-
-      // Atomic stores are dangerous, since they have additional trapping
-      // behavior - they trap on unaligned addresses. For simplicity, only
-      // consider the case where atomicity is identical.
-      // TODO: use ignoreImplicitTraps
-      if (store->isAtomic() != load->isAtomic()) {
-        return false;
-      }
-
-      // TODO: For now, only handle the obvious case where the operations are
-      //       identical in size and offset.
-      return load->bytes == store->bytes &&
-             load->bytes == load->type.getByteSize() &&
-             load->offset == store->offset &&
-             localGraph.equalValues(load->ptr, store->ptr);
-    }
-    return false;
-  }
-
-  bool isTrample(Expression* curr,
-                 const ShallowEffectAnalyzer& currEffects,
-                 Expression* store_) {
-    if (auto* otherStore = curr->dynCast<Store>()) {
-      auto* store = store_->cast<Store>();
-
-      // As in isLoadFrom, atomic stores are dangerous.
-      if (store->isAtomic() != otherStore->isAtomic()) {
-        return false;
-      }
-
-      // TODO: Compare in detail. For now, handle the obvious case where the
-      //       stores are identical in size, offset, etc., so that identical
-      //       repeat stores are handled. (An example of a case we do not handle
-      //       yet is a store of 1 byte that is trampled by a store of 2 bytes.)
-      return otherStore->bytes == store->bytes &&
-             otherStore->offset == store->offset &&
-             localGraph.equalValues(otherStore->ptr, store->ptr);
-    }
-    return false;
-  }
-
-  bool mayInteractWith(Expression* curr,
-                       const ShallowEffectAnalyzer& currEffects,
-                       Expression* store) {
-    // Anything we did not identify so far is dangerous.
-    //
-    // Among other things, this includes compare-and-swap, which does both a
-    // read and a write, which our infrastructure is not build to optimize.
-    return currEffects.readsMemory || currEffects.writesMemory;
-  }
-
-  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
-    auto* castStore = store->cast<Store>();
-    return builder.makeSequence(builder.makeDrop(castStore->ptr),
-                                builder.makeDrop(castStore->value));
-  }
-};
-
 // Optimize GC data: StructGet/StructSet.
 // TODO: Arrays.
 struct GCLogic : public ComparingLogic {
@@ -662,9 +583,6 @@ struct LocalDeadStoreElimination
   void doWalkFunction(Function* func) {
     // Optimize globals.
     DeadStoreCFG<GlobalLogic>(*getModule(), func, getPassOptions()).optimize();
-
-    // Optimize memory.
-    DeadStoreCFG<MemoryLogic>(*getModule(), func, getPassOptions()).optimize();
 
     // Optimize GC heap.
     if (getModule()->features.hasGC()) {
