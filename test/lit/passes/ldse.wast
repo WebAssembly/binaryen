@@ -19,7 +19,7 @@
  ;; CHECK:      (global $global$1 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
 
- ;; CHECK:      (func $simple-param (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $simple-param (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -59,7 +59,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-local (type $1)
+ ;; CHECK:      (func $simple-local (type $3)
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -100,7 +100,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-reaching-trap (type $1)
+ ;; CHECK:      (func $simple-reaching-trap (type $3)
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -169,7 +169,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-fallthrough (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $simple-fallthrough (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result (ref $A))
@@ -210,7 +210,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $ref-changes (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $ref-changes (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -276,7 +276,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-use (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $simple-use (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -566,11 +566,11 @@
   )
  )
 
- ;; CHECK:      (func $foo (type $1)
+ ;; CHECK:      (func $foo (type $3)
  ;; CHECK-NEXT: )
  (func $foo)
 
- ;; CHECK:      (func $call (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $call (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -594,7 +594,7 @@
   )
  )
 
- ;; CHECK:      (func $through-branches (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $through-branches (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -638,7 +638,7 @@
   )
  )
 
- ;; CHECK:      (func $just-one-branch-trample (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $just-one-branch-trample (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -675,7 +675,7 @@
   )
  )
 
- ;; CHECK:      (func $two-branch-trample (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $two-branch-trample (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -722,7 +722,7 @@
   )
  )
 
- ;; CHECK:      (func $just-one-branch-bad (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $just-one-branch-bad (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -761,7 +761,7 @@
   )
  )
 
- ;; CHECK:      (func $simple-in-branches (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $simple-in-branches (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (then
@@ -970,7 +970,7 @@
   )
  )
 
- ;; CHECK:      (func $no-basic-blocks (type $1)
+ ;; CHECK:      (func $no-basic-blocks (type $3)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $no-basic-blocks
@@ -978,7 +978,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $global (type $1)
+ ;; CHECK:      (func $global (type $3)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
@@ -1004,7 +1004,7 @@
   )
  )
 
- ;; CHECK:      (func $global-trap (type $1)
+ ;; CHECK:      (func $global-trap (type $3)
  ;; CHECK-NEXT:  (global.set $global$0
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
@@ -1035,7 +1035,7 @@
   )
  )
 
- ;; CHECK:      (func $gc-unreachable (type $3) (param $x (ref $A))
+ ;; CHECK:      (func $gc-unreachable (type $2) (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (loop $loop

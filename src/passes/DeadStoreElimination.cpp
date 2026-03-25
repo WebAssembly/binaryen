@@ -110,10 +110,6 @@ struct ComparingLocalGraph : public LocalGraph {
 // One implementation of Logic can handle globals, another memory, and another
 // GC, etc., implementing the various hooks appropriately.
 struct Logic {
-  Function* func;
-
-  Logic(Function* func, PassOptions& passOptions, Module& wasm) : func(func) {}
-
   //============================================================================
   // Hooks to identify relevant things to include in the analysis.
   //============================================================================
@@ -228,12 +224,13 @@ struct DeadStoreCFG
   PassOptions& passOptions;
   LogicType logic;
 
-  DeadStoreCFG(Module& wasm, Function* func, PassOptions& passOptions)
-    : func(func), passOptions(passOptions), logic(func, passOptions, wasm) {
+  DeadStoreCFG(Module& wasm,
+               Function* func,
+               PassOptions& passOptions,
+               LogicType logic)
+    : func(func), passOptions(passOptions), logic(std::move(logic)) {
     this->setModule(&wasm);
   }
-
-  ~DeadStoreCFG() {}
 
   void visitExpression(Expression* curr) {
     if (!this->currBasicBlock) {
@@ -420,13 +417,12 @@ struct ComparingLogic : public Logic {
   ComparingLocalGraph localGraph;
 
   ComparingLogic(Function* func, PassOptions& passOptions, Module& wasm)
-    : Logic(func, passOptions, wasm), localGraph(func, passOptions, wasm) {}
+    : localGraph(func, passOptions, wasm) {}
 };
 
 // Optimize module globals: GlobalSet/GlobalGet.
 struct GlobalLogic : public Logic {
-  GlobalLogic(Function* func, PassOptions& passOptions, Module& wasm)
-    : Logic(func, passOptions, wasm) {}
+  GlobalLogic(Function* func, PassOptions& passOptions, Module& wasm) {}
 
   bool isStore(Expression* curr) { return curr->is<GlobalSet>(); }
 
@@ -513,6 +509,9 @@ struct GCLogic : public ComparingLogic {
 
   // Check whether two GC operations may alias memory.
   template<typename U, typename V> bool mayAlias(U* u, V* v) {
+    static_assert(std::is_same_v<U, StructGet> || std::is_same_v<U, StructSet>);
+    static_assert(std::is_same_v<V, StructGet> || std::is_same_v<V, StructSet>);
+
     // If one of the inputs is unreachable, it does not execute, and so there
     // cannot be aliasing.
     auto uType = u->ref->type;
@@ -582,11 +581,19 @@ struct LocalDeadStoreElimination
 
   void doWalkFunction(Function* func) {
     // Optimize globals.
-    DeadStoreCFG<GlobalLogic>(*getModule(), func, getPassOptions()).optimize();
+    DeadStoreCFG<GlobalLogic>(*getModule(),
+                              func,
+                              getPassOptions(),
+                              GlobalLogic(func, getPassOptions(), *getModule()))
+      .optimize();
 
     // Optimize GC heap.
     if (getModule()->features.hasGC()) {
-      DeadStoreCFG<GCLogic>(*getModule(), func, getPassOptions()).optimize();
+      DeadStoreCFG<GCLogic>(*getModule(),
+                            func,
+                            getPassOptions(),
+                            GCLogic(func, getPassOptions(), *getModule()))
+        .optimize();
     }
   }
 };
