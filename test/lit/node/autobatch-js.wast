@@ -44,28 +44,28 @@
 )
 
 ;; RUN: wasm-opt %s --autobatch -o %t.wasm --pass-arg=autobatch-js@%t.js
-;; RUN: cat %t.js
+;; RUN: cat %t.js | filecheck %s --check-prefix=JS
 
-;; CHECK:      function flush(pos, end) {
-;; CHECK-NEXT:   while (pos != end) {
-;; CHECK-NEXT:     auto funcId = HEAP32[pos >> 2];
-;; CHECK-NEXT:     switch (funcId) {
-;; CHECK-NEXT:       case 0: {
-;; CHECK-NEXT:         imports['outside']['foo1'](HEAP32[pos + 4 >> 2], HEAPF64[pos + 8 >> 3]);
-;; CHECK-NEXT:         pos += 16;
-;; CHECK-NEXT:         return;
-;; CHECK-NEXT:       }
-;; CHECK-NEXT:       case 1: {
-;; CHECK-NEXT:         imports['outside']['foo2'](HEAP64[pos + 8 >> 3], HEAPF32[pos + 16 >> 2]);
-;; CHECK-NEXT:         pos += 24;
-;; CHECK-NEXT:         return;
-;; CHECK-NEXT:       }
-;; CHECK-NEXT:       case 2: {
-;; CHECK-NEXT:         imports['outside']['foo3'](HEAP32[pos + 4 >> 2], HEAPF32[pos + 8 >> 2]);
-;; CHECK-NEXT:         pos += 16;
-;; CHECK-NEXT:         return;
-;; CHECK-NEXT:       }
-;; CHECK-NEXT:     }
-;; CHECK-NEXT:   }
-;; CHECK-NEXT: }
+;; JS:      function flush(pos, end) {
+;; JS-NEXT:   while (pos != end) {
+;; JS-NEXT:     auto funcId = HEAP32[pos >> 2];
+;; JS-NEXT:     switch (funcId) {
+;; JS-NEXT:       case 0: {
+;; JS-NEXT:         imports['outside']['foo1'](HEAP32[pos + 4 >> 2], HEAPF64[pos + 8 >> 3]);
+;; JS-NEXT:         pos += 16;
+;; JS-NEXT:         return;
+;; JS-NEXT:       }
+;; JS-NEXT:       case 1: {
+;; JS-NEXT:         imports['outside']['foo2'](HEAP64[pos + 8 >> 3], HEAPF32[pos + 16 >> 2]);
+;; JS-NEXT:         pos += 24;
+;; JS-NEXT:         return;
+;; JS-NEXT:       }
+;; JS-NEXT:       case 2: {
+;; JS-NEXT:         imports['outside']['foo3'](HEAP32[pos + 4 >> 2], HEAPF32[pos + 8 >> 2]);
+;; JS-NEXT:         pos += 16;
+;; JS-NEXT:         return;
+;; JS-NEXT:       }
+;; JS-NEXT:     }
+;; JS-NEXT:   }
+;; JS-NEXT: }
 
