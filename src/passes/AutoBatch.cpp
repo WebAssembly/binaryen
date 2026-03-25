@@ -262,12 +262,10 @@ struct AutoBatch : public Pass {
       body.push_back(serialize(builder->makeLocalGet(i, params[i]), posLocal, offset));
     }
 
-    // Update the command buffer position. While doing so ensure we emit a
-    // multiple of 8 bytes.
-    if (offset % 8) {
-      assert(offset % 8 == 4);
-      offset += 4;
-    }
+    // The total we emit for this command must be aligned.
+    ensure8ByteAlign(offset);
+    
+    // Update the command buffer position.
     auto* total =
       builder->makeBinary(AddInt32,
                           builder->makeLocalGet(posLocal, Type::i32),
@@ -316,13 +314,8 @@ function flush(pos, end) {
   while (pos != end) {
     auto funcId = HEAP32[pos >> 2];
     pos += 4;
-    switch (funcId) {
-    }
-  }
-}
-)";
+    switch (funcId) {)";
 
-/*
     // Emit deserialization code for each function.
     for (Index id = 0; id < imports.size(); id++) {
       auto* import = originalImports[id];
@@ -342,42 +335,56 @@ function flush(pos, end) {
 
       // Emit deserialization for each param.
       auto params = import->getParams();
+      // Track the offset relative to `pos`.
+      Index offset = 0;
       for (Index i = 0; i < params.size(); i++) {
+        if (i > 0) {
+          out << ", ";
+        }
         auto type = params[i];
         assert(type.isBasic());
         switch (type.getBasic()) {
           case Type::i32: {
-            out << "HEAP32[pos >> 2]";
+            out << "HEAP32[pos " << std::to_string(offset) << " >> 2]";
             offset += 4;
             break;
           }
-          case Type::i64:
-          case Type::f32:
+          case Type::f32: {
+            out << "HEAPF32[pos " << std::to_string(offset) << " >> 2]";
+            offset += 4;
+            break;
+          }
+          case Type::i64: {
+            ensure8ByteAlign(offset);
+            out << "HEAP64[pos " << std::to_string(offset) << " >> 3]";
+            offset += 8;
+            break;
+          }
           case Type::f64: {
-            auto size = type.getByteSize();
-            // Ensure values are aligned.
-            auto miss = offset % size;
-            if (miss) {
-              offset += size - miss;
-            }
-            auto* ptr = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
-            auto* ret =
-              builder->makeStore(size, offset, size, ptr, value, type, memory);
-            offset += size;
-            return ret;
+            ensure8ByteAlign(offset);
+            out << "HEAPF64[pos " << std::to_string(offset) << " >> 3]";
+            offset += 8;
             break;
           }
           default: {
             Fatal() << "AutoBatch: unsupported serialization type " << type;
           }
         }
-
-      
-        body.push_back(serialize(builder->makeLocalGet(i, params[i]), offset));
       }
+
+      // Finish the call.
+      out << ");\n";
+
+      // Bump the position to the proper alignment, if we need to.
+      if (ensure8ByteAlign(offset)) {
+        out << "        pos += 4;\n";
+      }
+
+      // Finish the switch case.
+      out << "        return;\n";
       out << "      }\n";
     }
-*/
+
     // End the switch, loop, and function.
     out << R"(
     }
@@ -385,6 +392,18 @@ function flush(pos, end) {
 }
 )";
 
+  }
+
+  // Given an offset, bump it to 8-byte alignment. (We only need to handle the
+  // case of offset 4, as our values are all 32 or 64-bit.) Returns true if we
+  // changed the value.
+  bool ensure8ByteAlign(Index& offset) {
+    if (offset % 8) {
+      assert(offset % 8 == 4);
+      offset += 4;
+      return true;
+    }
+    return false;
   }
 };
 
