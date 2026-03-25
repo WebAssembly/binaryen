@@ -6541,19 +6541,19 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
 
 TypeBuilderErrorReason TypeBuilderErrorReasonSelfSupertype() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::SelfSupertype);
+    TypeBuilder::ErrorReasonKind::SelfSupertype);
 }
 TypeBuilderErrorReason TypeBuilderErrorReasonInvalidSupertype() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::InvalidSupertype);
+    TypeBuilder::ErrorReasonKind::InvalidSupertype);
 }
 TypeBuilderErrorReason TypeBuilderErrorReasonForwardSupertypeReference() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::ForwardSupertypeReference);
+    TypeBuilder::ErrorReasonKind::ForwardSupertypeReference);
 }
 TypeBuilderErrorReason TypeBuilderErrorReasonForwardChildReference() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::ForwardChildReference);
+    TypeBuilder::ErrorReasonKind::ForwardChildReference);
 }
 
 TypeBuilderRef TypeBuilderCreate(BinaryenIndex size) {
@@ -6652,7 +6652,7 @@ bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
       *errorIndex = err->index;
     }
     if (errorReason) {
-      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason);
+      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason.index());
     }
     delete B;
     return false;

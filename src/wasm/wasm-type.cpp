@@ -1503,47 +1503,125 @@ std::ostream& operator<<(std::ostream& os, Struct struct_) {
 std::ostream& operator<<(std::ostream& os, Array array) {
   return TypePrinter(os).print(array);
 }
-std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
+std::ostream& operator<<(std::ostream& os,
+                         TypeBuilder::ErrorReasonKind reason) {
   switch (reason) {
-    case TypeBuilder::ErrorReason::SelfSupertype:
+    case TypeBuilder::ErrorReasonKind::SelfSupertype:
       return os << "Heap type is a supertype of itself";
-    case TypeBuilder::ErrorReason::InvalidSupertype:
+    case TypeBuilder::ErrorReasonKind::InvalidSupertype:
       return os << "Heap type has an invalid supertype";
-    case TypeBuilder::ErrorReason::ForwardSupertypeReference:
+    case TypeBuilder::ErrorReasonKind::ForwardSupertypeReference:
       return os << "Heap type has an undeclared supertype";
-    case TypeBuilder::ErrorReason::ForwardChildReference:
+    case TypeBuilder::ErrorReasonKind::ForwardChildReference:
       return os << "Heap type has an undeclared child";
-    case TypeBuilder::ErrorReason::InvalidFuncType:
+    case TypeBuilder::ErrorReasonKind::InvalidFuncType:
       return os << "Continuation has invalid function type";
-    case TypeBuilder::ErrorReason::InvalidSharedType:
+    case TypeBuilder::ErrorReasonKind::InvalidSharedType:
       return os << "Shared types require shared-everything";
-    case TypeBuilder::ErrorReason::InvalidWaitQueue:
+    case TypeBuilder::ErrorReasonKind::InvalidWaitQueue:
       return os << "Waitqueues require shared-everything";
-    case TypeBuilder::ErrorReason::InvalidStringType:
+    case TypeBuilder::ErrorReasonKind::InvalidStringType:
       return os << "String types require strings feature";
-    case TypeBuilder::ErrorReason::InvalidUnsharedField:
+    case TypeBuilder::ErrorReasonKind::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
-    case TypeBuilder::ErrorReason::NonStructDescribes:
+    case TypeBuilder::ErrorReasonKind::NonStructDescribes:
       return os << "Describes clause on a non-struct type";
-    case TypeBuilder::ErrorReason::ForwardDescribesReference:
+    case TypeBuilder::ErrorReasonKind::ForwardDescribesReference:
       return os << "Describes clause is a forward reference";
-    case TypeBuilder::ErrorReason::MismatchedDescribes:
+    case TypeBuilder::ErrorReasonKind::MismatchedDescribes:
       return os << "Described type is not a matching descriptor";
-    case TypeBuilder::ErrorReason::NonStructDescriptor:
+    case TypeBuilder::ErrorReasonKind::NonStructDescriptor:
       return os << "Descriptor clause on a non-struct type";
-    case TypeBuilder::ErrorReason::MismatchedDescriptor:
+    case TypeBuilder::ErrorReasonKind::MismatchedDescriptor:
       return os << "Descriptor type does not describe heap type";
-    case TypeBuilder::ErrorReason::InvalidUnsharedDescriptor:
+    case TypeBuilder::ErrorReasonKind::InvalidUnsharedDescriptor:
       return os << "Heap type has an invalid unshared descriptor";
-    case TypeBuilder::ErrorReason::InvalidUnsharedDescribes:
+    case TypeBuilder::ErrorReasonKind::InvalidUnsharedDescribes:
       return os << "Heap type describes an invalid unshared type";
-    case TypeBuilder::ErrorReason::RequiresCustomDescriptors:
+    case TypeBuilder::ErrorReasonKind::RequiresCustomDescriptors:
       return os << "custom descriptors required but not enabled";
-    case TypeBuilder::ErrorReason::RecGroupCollision:
+    case TypeBuilder::ErrorReasonKind::RecGroupCollision:
       return os
              << "distinct rec groups would be identical after binary writing";
   }
   WASM_UNREACHABLE("Unexpected error reason");
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const TypeBuilder::ErrorReason& reason) {
+  auto kind = static_cast<TypeBuilder::ErrorReasonKind>(reason.index());
+  os << kind;
+  if (auto* collision = std::get_if<TypeBuilder::RecGroupCollision>(&reason)) {
+    if (collision->missingFeatures != FeatureSet(FeatureSet::None)) {
+      os << " (missing features " << collision->missingFeatures.toString()
+         << ")";
+    }
+  }
+  return os;
+}
+
+TypeBuilder::ErrorReason::ErrorReason(ErrorReasonKind kind) {
+  switch (kind) {
+    case ErrorReasonKind::SelfSupertype:
+      emplace<static_cast<size_t>(ErrorReasonKind::SelfSupertype)>();
+      break;
+    case ErrorReasonKind::InvalidSupertype:
+      emplace<static_cast<size_t>(ErrorReasonKind::InvalidSupertype)>();
+      break;
+    case ErrorReasonKind::ForwardSupertypeReference:
+      emplace<static_cast<size_t>(
+        ErrorReasonKind::ForwardSupertypeReference)>();
+      break;
+    case ErrorReasonKind::ForwardChildReference:
+      emplace<static_cast<size_t>(ErrorReasonKind::ForwardChildReference)>();
+      break;
+    case ErrorReasonKind::InvalidFuncType:
+      emplace<static_cast<size_t>(ErrorReasonKind::InvalidFuncType)>();
+      break;
+    case ErrorReasonKind::InvalidSharedType:
+      emplace<static_cast<size_t>(ErrorReasonKind::InvalidSharedType)>();
+      break;
+    case ErrorReasonKind::InvalidWaitQueue:
+      emplace<static_cast<size_t>(ErrorReasonKind::InvalidWaitQueue)>();
+      break;
+    case ErrorReasonKind::InvalidStringType:
+      emplace<static_cast<size_t>(ErrorReasonKind::InvalidStringType)>();
+      break;
+    case ErrorReasonKind::InvalidUnsharedField:
+      emplace<static_cast<size_t>(ErrorReasonKind::InvalidUnsharedField)>();
+      break;
+    case ErrorReasonKind::NonStructDescribes:
+      emplace<static_cast<size_t>(ErrorReasonKind::NonStructDescribes)>();
+      break;
+    case ErrorReasonKind::ForwardDescribesReference:
+      emplace<static_cast<size_t>(
+        ErrorReasonKind::ForwardDescribesReference)>();
+      break;
+    case ErrorReasonKind::MismatchedDescribes:
+      emplace<static_cast<size_t>(ErrorReasonKind::MismatchedDescribes)>();
+      break;
+    case ErrorReasonKind::NonStructDescriptor:
+      emplace<static_cast<size_t>(ErrorReasonKind::NonStructDescriptor)>();
+      break;
+    case ErrorReasonKind::MismatchedDescriptor:
+      emplace<static_cast<size_t>(ErrorReasonKind::MismatchedDescriptor)>();
+      break;
+    case ErrorReasonKind::InvalidUnsharedDescriptor:
+      emplace<static_cast<size_t>(
+        ErrorReasonKind::InvalidUnsharedDescriptor)>();
+      break;
+    case ErrorReasonKind::InvalidUnsharedDescribes:
+      emplace<static_cast<size_t>(ErrorReasonKind::InvalidUnsharedDescribes)>();
+      break;
+    case ErrorReasonKind::RequiresCustomDescriptors:
+      emplace<static_cast<size_t>(
+        ErrorReasonKind::RequiresCustomDescriptors)>();
+      break;
+    case ErrorReasonKind::RecGroupCollision:
+      emplace<static_cast<size_t>(ErrorReasonKind::RecGroupCollision)>(
+        RecGroupCollision{FeatureSet::None});
+      break;
+  }
 }
 
 unsigned Field::getByteSize() const {
@@ -2413,13 +2491,13 @@ validateType(Type type, FeatureSet feats, bool isShared) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (isShared && !heapType.isShared()) {
-      return TypeBuilder::ErrorReason::InvalidUnsharedField;
+      return TypeBuilder::ErrorReasonKind::InvalidUnsharedField;
     }
     if (heapType.isShared() && !feats.hasSharedEverything()) {
-      return TypeBuilder::ErrorReason::InvalidSharedType;
+      return TypeBuilder::ErrorReasonKind::InvalidSharedType;
     }
     if (heapType.isString() && !feats.hasStrings()) {
-      return TypeBuilder::ErrorReason::InvalidStringType;
+      return TypeBuilder::ErrorReasonKind::InvalidStringType;
     }
   }
   return std::nullopt;
@@ -2433,7 +2511,7 @@ validateStruct(const Struct& struct_, FeatureSet feats, bool isShared) {
     }
     if (field.packedType == Field::PackedType::WaitQueue &&
         !feats.hasSharedEverything()) {
-      return TypeBuilder::ErrorReason::InvalidWaitQueue;
+      return TypeBuilder::ErrorReasonKind::InvalidWaitQueue;
     }
   }
   return std::nullopt;
@@ -2464,10 +2542,10 @@ validateSignature(Signature sig, FeatureSet feats, bool isShared) {
 std::optional<TypeBuilder::ErrorReason>
 validateContinuation(Continuation cont, FeatureSet feats, bool isShared) {
   if (!cont.type.isSignature()) {
-    return TypeBuilder::ErrorReason::InvalidFuncType;
+    return TypeBuilder::ErrorReasonKind::InvalidFuncType;
   }
   if (isShared != cont.type.isShared()) {
-    return TypeBuilder::ErrorReason::InvalidFuncType;
+    return TypeBuilder::ErrorReasonKind::InvalidFuncType;
   }
   return std::nullopt;
 }
@@ -2480,48 +2558,48 @@ validateTypeInfo(HeapTypeInfo& info,
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
     if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
-      return TypeBuilder::ErrorReason::ForwardSupertypeReference;
+      return TypeBuilder::ErrorReasonKind::ForwardSupertypeReference;
     }
     // The supertype must have a valid structure.
     if (!isValidSupertype(info, *super)) {
-      return TypeBuilder::ErrorReason::InvalidSupertype;
+      return TypeBuilder::ErrorReasonKind::InvalidSupertype;
     }
   }
   if (auto* desc = info.described) {
     if (!features.hasCustomDescriptors()) {
-      return TypeBuilder::ErrorReason::RequiresCustomDescriptors;
+      return TypeBuilder::ErrorReasonKind::RequiresCustomDescriptors;
     }
     if (info.kind != HeapTypeKind::Struct) {
-      return TypeBuilder::ErrorReason::NonStructDescribes;
+      return TypeBuilder::ErrorReasonKind::NonStructDescribes;
     }
     assert(desc->isTemp && "unexpected canonical described type");
     if (!seenTypes.count(HeapType(uintptr_t(desc)))) {
-      return TypeBuilder::ErrorReason::ForwardDescribesReference;
+      return TypeBuilder::ErrorReasonKind::ForwardDescribesReference;
     }
     if (desc->descriptor != &info) {
-      return TypeBuilder::ErrorReason::MismatchedDescribes;
+      return TypeBuilder::ErrorReasonKind::MismatchedDescribes;
     }
   }
   if (auto* desc = info.descriptor) {
     if (!features.hasCustomDescriptors()) {
-      return TypeBuilder::ErrorReason::RequiresCustomDescriptors;
+      return TypeBuilder::ErrorReasonKind::RequiresCustomDescriptors;
     }
     if (info.kind != HeapTypeKind::Struct) {
-      return TypeBuilder::ErrorReason::NonStructDescriptor;
+      return TypeBuilder::ErrorReasonKind::NonStructDescriptor;
     }
     if (desc->described != &info) {
-      return TypeBuilder::ErrorReason::MismatchedDescriptor;
+      return TypeBuilder::ErrorReasonKind::MismatchedDescriptor;
     }
   }
   if (info.share == Shared) {
     if (!features.hasSharedEverything()) {
-      return TypeBuilder::ErrorReason::InvalidSharedType;
+      return TypeBuilder::ErrorReasonKind::InvalidSharedType;
     }
     if (info.described && info.described->share != Shared) {
-      return TypeBuilder::ErrorReason::InvalidUnsharedDescribes;
+      return TypeBuilder::ErrorReasonKind::InvalidUnsharedDescribes;
     }
     if (info.descriptor && info.descriptor->share != Shared) {
-      return TypeBuilder::ErrorReason::InvalidUnsharedDescriptor;
+      return TypeBuilder::ErrorReasonKind::InvalidUnsharedDescriptor;
     }
   }
   bool isShared = info.share == Shared;
@@ -2636,7 +2714,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
     for (auto child : type.getHeapTypeChildren()) {
       if (isTemp(child) && !seenTypes.count(child)) {
         return {TypeBuilder::Error{
-          i, TypeBuilder::ErrorReason::ForwardChildReference}};
+          i, TypeBuilder::ErrorReasonKind::ForwardChildReference}};
       }
     }
   }
@@ -2746,8 +2824,26 @@ TypeBuilder::BuildResult TypeBuilder::build() {
       auto group = (*built)[0].getRecGroup();
       auto uniqueGroup = impl->unique.insertOrGet(group);
       if (group != uniqueGroup) {
+        // There is a conflict. Find the set of missing featuers that would
+        // resolve the conflict if enabled.
+        FeatureSet missingFeatures = FeatureSet::None;
+        FeatureSet potential = FeatureSet::GC | FeatureSet::CustomDescriptors;
+        std::vector<HeapType> builtTypes = *built;
+        std::vector<HeapType> otherTypes(uniqueGroup.begin(),
+                                         uniqueGroup.end());
+        for (uint32_t x = 1; x & FeatureSet::All; x <<= 1) {
+          FeatureSet f(x);
+          if ((f & potential) && !impl->features.has(f)) {
+            // We have a potential missing feature. Check whether enabling it
+            // allows us to differentiate the rec groups.
+            if (RecGroupShape(builtTypes, impl->features | f) !=
+                RecGroupShape(otherTypes, impl->features | f)) {
+              missingFeatures |= f;
+            }
+          }
+        }
         return {TypeBuilder::Error{
-          groupStart, TypeBuilder::ErrorReason::RecGroupCollision}};
+          groupStart, TypeBuilder::RecGroupCollision{missingFeatures}}};
       }
     }
 

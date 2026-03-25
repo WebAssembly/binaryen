@@ -894,7 +894,7 @@ struct TypeBuilder {
   void setOpen(size_t i, bool open = true);
   void setShared(size_t i, Shareability share = Shared);
 
-  enum class ErrorReason {
+  enum class ErrorReasonKind {
     // There is a cycle in the supertype relation.
     SelfSupertype,
     // The declared supertype of a type is invalid.
@@ -932,6 +932,41 @@ struct TypeBuilder {
     // Two rec groups with different shapes would have the same shapes after
     // the binary writer generalizes refined types that use disabled features.
     RecGroupCollision,
+  };
+
+  struct RecGroupCollision {
+    FeatureSet missingFeatures;
+    bool operator==(const RecGroupCollision& other) const {
+      return missingFeatures == other.missingFeatures;
+    }
+  };
+
+  struct ErrorReason : std::variant<std::monostate, // SelfSupertype
+                                    std::monostate, // InvalidSupertype
+                                    std::monostate, // ForwardSupertypeReference
+                                    std::monostate, // ForwardChildReference
+                                    std::monostate, // InvalidFuncType
+                                    std::monostate, // InvalidSharedType
+                                    std::monostate, // InvalidWaitQueue
+                                    std::monostate, // InvalidStringType
+                                    std::monostate, // InvalidUnsharedField
+                                    std::monostate, // NonStructDescribes
+                                    std::monostate, // ForwardDescribesReference
+                                    std::monostate, // MismatchedDescribes
+                                    std::monostate, // NonStructDescriptor
+                                    std::monostate, // MismatchedDescriptor
+                                    std::monostate, // InvalidUnsharedDescriptor
+                                    std::monostate, // InvalidUnsharedDescribes
+                                    std::monostate, // RequiresCustomDescriptors
+                                    RecGroupCollision // RecGroupCollision
+                                    > {
+    using variant::variant;
+    ErrorReason(ErrorReasonKind kind);
+
+    bool operator==(ErrorReasonKind kind) const {
+      return index() == static_cast<size_t>(kind);
+    }
+    bool operator!=(ErrorReasonKind kind) const { return !(*this == kind); }
   };
 
   struct Error {
@@ -1082,7 +1117,7 @@ std::ostream& operator<<(std::ostream&, Continuation);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
-std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
+std::ostream& operator<<(std::ostream&, const TypeBuilder::ErrorReason&);
 
 // Inline some nontrivial methods here for performance reasons.
 
