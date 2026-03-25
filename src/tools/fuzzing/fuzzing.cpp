@@ -935,7 +935,7 @@ void TranslateToFuzzReader::finalizeTable() {
 
     if (table->init) {
       bool hasNonImported = false;
-      for ([[maybe_unused]] auto* get : FindAll<GlobalGet>(table->init).list) {
+      for (auto* get : FindAll<GlobalGet>(table->init).list) {
         if (!wasm.getGlobal(get->name)->imported()) {
           hasNonImported = true;
           break;
