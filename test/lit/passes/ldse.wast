@@ -12,8 +12,6 @@
  (type $B (struct (field (mut f64))))
  (type $C (struct (field (mut i32)) (field (mut i32))))
 
- (memory 10 10 shared)
-
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 0))
  (global $global$0 (mut i32) (i32.const 0))
  ;; CHECK:      (global $global$1 (mut i32) (i32.const 0))

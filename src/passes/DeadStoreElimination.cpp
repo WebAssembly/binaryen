@@ -139,7 +139,8 @@ struct Logic {
     //       after a trap) then we could stop assuming any trap can lead to
     //       access of global data, likely greatly reducing the number of
     //       barriers.
-    return currEffects.calls || currEffects.throws() || currEffects.trap ||
+    return currEffects.calls || currEffects.throws() ||
+           (!currEffects.trapsNeverHappen && currEffects.trap) ||
            currEffects.branchesOut;
   };
 
