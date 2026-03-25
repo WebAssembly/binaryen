@@ -46,15 +46,15 @@
   ;; CHECK-NEXT:   (global.get $cmdbufpos)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store
-  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store offset=4
-  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f64.store offset=8
-  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $cmdbufpos
@@ -71,21 +71,21 @@
   ;; CHECK-NEXT:   (global.get $cmdbufpos)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store
-  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i64.store offset=8
-  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f32.store offset=16
-  ;; CHECK-NEXT:   (global.get $cmdbufbase)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $cmdbufpos
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (local.get $2)
-  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 24)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -99,7 +99,7 @@
   ;; CHECK-NEXT:     (global.get $cmdbufpos)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.set $cmdbufpos
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (global.get $cmdbufbase)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

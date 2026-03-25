@@ -201,10 +201,11 @@ struct AutoBatch : public Pass {
     }
   }
 
-  // Serialize a given value to the command buffer. Receives the offset at
-  // which to do it, and returns the code to serialize. Updates the offset to
-  // the place for the thing after it.
-  Expression* serialize(Expression* value, Index& offset) {
+  // Serialize a given value to the command buffer. Receives the index of a
+  // local with the command buffer position, and the offset relative to that
+  // local. Returns the code to serialize, and updates the offset to the place
+  // for the thing after it.
+  Expression* serialize(Expression* value, Index posLocal, Index& offset) {
     auto type = value->type;
     // TODO: if we cannot serialize something, return an error, and the
     // caller can flush and call, giving up on batching.
@@ -220,7 +221,7 @@ struct AutoBatch : public Pass {
         if (miss) {
           offset += size - miss;
         }
-        auto* ptr = builder->makeGlobalGet(commandBufferPosGlobal, Type::i32);
+        auto* ptr = builder->makeLocalGet(posLocal, Type::i32);
         auto* ret =
           builder->makeStore(size, offset, size, ptr, value, type, memory);
         offset += size;
@@ -239,21 +240,21 @@ struct AutoBatch : public Pass {
     std::vector<Expression*> body;
 
     // Stash the command buffer's position before our additions.
-    auto posBefore = Builder::addVar(func, Type::i32);
+    auto posLocal = Builder::addVar(func, Type::i32);
     body.push_back(builder->makeLocalSet(
-      posBefore, builder->makeGlobalGet(commandBufferPosGlobal, Type::i32)));
+      posLocal, builder->makeGlobalGet(commandBufferPosGlobal, Type::i32)));
 
     Index offset = 0;
 
     // Serialize the id.
     // TODO: we could use an 8 or 16 bit id when the # of imports is small
     body.push_back(
-      serialize(builder->makeConst(int32_t(importIds[func->name])), offset));
+      serialize(builder->makeConst(int32_t(importIds[func->name])), posLocal, offset));
 
     // Serialize the params.
     auto params = func->getParams();
     for (Index i = 0; i < params.size(); i++) {
-      body.push_back(serialize(builder->makeLocalGet(i, params[i]), offset));
+      body.push_back(serialize(builder->makeLocalGet(i, params[i]), posLocal, offset));
     }
 
     // Update the command buffer position. While doing so ensure we emit a
@@ -264,7 +265,7 @@ struct AutoBatch : public Pass {
     }
     auto* total =
       builder->makeBinary(AddInt32,
-                          builder->makeLocalGet(posBefore, Type::i32),
+                          builder->makeLocalGet(posLocal, Type::i32),
                           builder->makeConst(int32_t(offset)));
     body.push_back(builder->makeGlobalSet(commandBufferPosGlobal, total));
 
@@ -316,6 +317,7 @@ function flush(pos, end) {
 }
 )";
 
+/*
     // Emit deserialization code for each function.
     for (Index id = 0; id < imports.size(); id++) {
       auto* import = originalImports[id];
@@ -341,7 +343,7 @@ function flush(pos, end) {
         switch (type.getBasic()) {
           case Type::i32: {
             out << "HEAP32[pos >> 2]";
-            pos += 4;
+            offset += 4;
             break;
           }
           case Type::i64:
@@ -370,7 +372,7 @@ function flush(pos, end) {
       }
       out << "      }\n";
     }
-
+*/
     // End the switch, loop, and function.
     out << R"(
     }
