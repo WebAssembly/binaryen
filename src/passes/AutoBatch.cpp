@@ -77,6 +77,12 @@
 //
 // TODO: flags to control special exports etc.
 //
+// Internal ABI: The command buffer's start is assumed to be 8-byte aligned.
+// Each command is a function id (32 bits) followed by the parameters. 8-byte
+// parameters are fully aligned (so JS can read them with a typed array). We
+// extend each command to be a multiple of 8 bytes so that each command can
+// assume itself to be 8-byte aligned.
+//
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -107,7 +113,7 @@ struct AutoBatch : public Pass {
   // The name of the global containing the command buffer's base.
   Name commandBufferBaseGlobal;
   // The name of the global containing the command buffer current position
-  // relative to the base.
+  // relative to the base, that is, the end of the command buffer.
   Name commandBufferPosGlobal;
   // TODO: add a size as well, and a new export to users can set the pos+size.
 
@@ -200,11 +206,9 @@ struct AutoBatch : public Pass {
   // the place for the thing after it.
   Expression* serialize(Expression* value, Index& offset) {
     auto type = value->type;
-    if (!type.isBasic()) {
-      // TODO: if we cannot serialize something, return an error, and the
-      // caller can flush and call, giving up on batching.
-      Fatal() << "AutoBatch: unsupported compound type " << type;
-    }
+    // TODO: if we cannot serialize something, return an error, and the
+    // caller can flush and call, giving up on batching.
+    assert(type.isBasic());
     switch (type.getBasic()) {
       case Type::i32:
       case Type::i64:
@@ -216,7 +220,7 @@ struct AutoBatch : public Pass {
         if (miss) {
           offset += size - miss;
         }
-        auto* ptr = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
+        auto* ptr = builder->makeGlobalGet(commandBufferPosGlobal, Type::i32);
         auto* ret =
           builder->makeStore(size, offset, size, ptr, value, type, memory);
         offset += size;
@@ -252,7 +256,12 @@ struct AutoBatch : public Pass {
       body.push_back(serialize(builder->makeLocalGet(i, params[i]), offset));
     }
 
-    // Update the command buffer position.
+    // Update the command buffer position. While doing so ensure we emit a
+    // multiple of 8 bytes.
+    if (offset % 8) {
+      assert(offset % 8 == 4);
+      offset += 4;
+    }
     auto* total =
       builder->makeBinary(AddInt32,
                           builder->makeLocalGet(posBefore, Type::i32),
@@ -275,8 +284,8 @@ struct AutoBatch : public Pass {
     auto* start = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
     auto* end = builder->makeGlobalGet(commandBufferPosGlobal, Type::i32);
     auto* flush = builder->makeCall(flushName, {start, end}, Type::none);
-    auto* reset = builder->makeGlobalSet(commandBufferPosGlobal,
-                                         builder->makeConst(int32_t(0)));
+    auto* start2 = builder->makeGlobalGet(commandBufferBaseGlobal, Type::i32);
+    auto* reset = builder->makeGlobalSet(commandBufferPosGlobal, start2);
     auto* iff = builder->makeIf(check, builder->makeSequence(flush, reset));
     body.push_back(iff);
 
@@ -328,8 +337,13 @@ function flush(pos, end) {
       auto params = import->getParams();
       for (Index i = 0; i < params.size(); i++) {
         auto type = params[i];
+        assert(type.isBasic());
         switch (type.getBasic()) {
-          case Type::i32:
+          case Type::i32: {
+            out << "HEAP32[pos >> 2]";
+            pos += 4;
+            break;
+          }
           case Type::i64:
           case Type::f32:
           case Type::f64: {
