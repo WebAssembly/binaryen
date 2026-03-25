@@ -19,9 +19,7 @@
   (type $struct (struct (field (mut i32))))
 
   ;; YESTNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (unreachable)
-  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
   ;; NO_TNH-NEXT:  (drop
@@ -184,7 +182,7 @@
   )
 
   ;; YESTNH:      (func $toplevel (type $0)
-  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $toplevel (type $0)
   ;; NO_TNH-NEXT:  (unreachable)

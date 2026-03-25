@@ -879,11 +879,7 @@
   )
 
   ;; TNH:      (func $select.unreachable.child.flip (type $6) (param $x (ref $struct)) (result (ref $struct))
-  ;; TNH-NEXT:  (select
-  ;; TNH-NEXT:   (local.get $x)
-  ;; TNH-NEXT:   (unreachable)
-  ;; TNH-NEXT:   (i32.const 1)
-  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (local.get $x)
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $select.unreachable.child.flip (type $6) (param $x (ref $struct)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (select
