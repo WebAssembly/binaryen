@@ -79,8 +79,16 @@
 ;; RUN: cat %S/autobatch-js-post.js >> %t.combined.js
 
 ;; Execute the autobatched wasm.
-;; RUN: node %t.combined.js %t.wasm | filecheck %s
+;; RUN: node %t.combined.js %t.wasm | filecheck %s --check-prefix=EXEC
 
-;; CHECK: test complete.
+;; EXEC:      calling caller
+;; EXEC-NEXT: foo1: 42 3.14159
+;; EXEC-NEXT: foo2: 1234 2.718280076980591
+;; EXEC-NEXT: bar
+;; EXEC-NEXT: foo3: -1 -2.299999952316284
+;; EXEC-NEXT: bar
+;; EXEC-NEXT: bar
+;; EXEC-NEXT: result: 42
+;; EXEC-NEXT: test complete.
 
 ;; TODO: test without autobatching, should be the same results
