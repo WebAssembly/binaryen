@@ -3547,7 +3547,12 @@ private:
             trap(
               (std::stringstream()
                << "Imported global " << importable->importNames()
-               << " with definition " << *exportedGlobal->getDefinition()
+               << " with type: "
+               << (exportedGlobal->getMutable() == Mutability::Mutable ? "(mut "
+                                                                       : "")
+               << exportedGlobal->getType()
+               << (exportedGlobal->getMutable() == Mutability::Mutable ? ")"
+                                                                       : "")
                << " isn't compatible with import declaration: " << **globalDecl)
                 .str());
           }
@@ -3581,7 +3586,9 @@ private:
       } else {
         Literals init = self()->visit(global->init).values;
         auto& definedGlobal =
-          definedGlobals.emplace_back(RuntimeGlobal{*global, std::move(init)});
+          definedGlobals.emplace_back(global->type,
+                                      global->mutable_ ? Mutable : Immutable,
+                                      std::move(init));
 
         [[maybe_unused]] auto [_, inserted] =
           allGlobals.try_emplace(global->name, &definedGlobal);

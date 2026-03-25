@@ -19,12 +19,12 @@
 namespace wasm {
 
 bool RuntimeGlobal::isSubType(const Global& global) const {
-  if (global.mutable_ != definition.mutable_) {
+  if (global.mutable_ != (mutable_ == Mutable)) {
     return false;
   }
 
-  return global.mutable_ ? global.type == definition.type
-                         : Type::isSubType(definition.type, global.type);
+  return global.mutable_ ? global.type == type
+                         : Type::isSubType(type, global.type);
 }
 
 } // namespace wasm

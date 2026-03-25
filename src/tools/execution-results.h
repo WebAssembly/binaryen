@@ -414,11 +414,10 @@ class FuzzerImportResolver
       }
     }
 
-    Global global;
-    global.type = type;
-    global.mutable_ = mut;
     synthesizedGlobals.emplace_back(
-      RuntimeGlobal{global, Literals{Literal::makeExtern(payload, Unshared)}});
+      type,
+      mut ? Mutable : Immutable,
+      Literals{Literal::makeExtern(payload, Unshared)});
     return &synthesizedGlobals.back();
   }
 

@@ -18,22 +18,26 @@
 #define wasm_ir_runtime_global_h
 
 #include "literal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
 
 class RuntimeGlobal {
 public:
-  RuntimeGlobal(Global definition, Literals literals = {})
-    : literals(literals), definition(definition) {}
+  RuntimeGlobal(Type type, Mutability mutable_, Literals literals = {})
+    : literals(literals), type(type), mutable_(mutable_) {}
 
   Literals literals;
 
-  const Global* getDefinition() const { return &definition; }
+  Type getType() const { return type; }
+  Mutability getMutable() const { return mutable_; }
+
   bool isSubType(const Global& global) const;
 
 private:
-  const Global definition;
+  const Type type;
+  const Mutability mutable_;
 };
 
 } // namespace wasm
