@@ -43,7 +43,10 @@
   )
 )
 
+;; Build the autobatched wasm and JS.
 ;; RUN: wasm-opt %s --autobatch -o %t.wasm --pass-arg=autobatch-js@%t.js
+
+;; Compare the JS to what we expect.
 ;; RUN: cat %t.js | filecheck %s --check-prefix=JS
 
 ;; JS:      function flush(pos, end) {
@@ -69,3 +72,4 @@
 ;; JS-NEXT:   }
 ;; JS-NEXT: }
 
+;; Execute the autobatched wasm.
