@@ -57,17 +57,17 @@
 ;; JS-NEXT:       case 0: {
 ;; JS-NEXT:         imports['outside']['foo1'](HEAP32[pos + 4 >> 2], HEAPF64[pos + 8 >> 3]);
 ;; JS-NEXT:         pos += 16;
-;; JS-NEXT:         return;
+;; JS-NEXT:         continue;
 ;; JS-NEXT:       }
 ;; JS-NEXT:       case 1: {
 ;; JS-NEXT:         imports['outside']['foo2'](HEAP64[pos + 8 >> 3], HEAPF32[pos + 16 >> 2]);
 ;; JS-NEXT:         pos += 24;
-;; JS-NEXT:         return;
+;; JS-NEXT:         continue;
 ;; JS-NEXT:       }
 ;; JS-NEXT:       case 2: {
 ;; JS-NEXT:         imports['outside']['foo3'](HEAP32[pos + 4 >> 2], HEAPF32[pos + 8 >> 2]);
 ;; JS-NEXT:         pos += 16;
-;; JS-NEXT:         return;
+;; JS-NEXT:         continue;
 ;; JS-NEXT:       }
 ;; JS-NEXT:     }
 ;; JS-NEXT:   }

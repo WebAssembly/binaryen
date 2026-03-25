@@ -389,7 +389,7 @@ struct AutoBatch : public Pass {
       out << "        pos += " << std::to_string(offset) << ";\n";
 
       // Finish the switch case.
-      out << "        return;\n";
+      out << "        continue;\n";
       out << "      }\n";
     }
 
