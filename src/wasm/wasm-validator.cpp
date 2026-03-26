@@ -5150,15 +5150,13 @@ void validateTables(Module& module, ValidationInfo& info) {
         "table",
         "table initializer value must be constant");
       validator.validate(table->init);
-      // Check that no module-defined globals are references.
+      // Check that no module-defined globals are referenced.
       for (auto* get : FindAll<GlobalGet>(table->init).list) {
         auto* global = module.getGlobalOrNull(get->name);
-        if (global) {
-          info.shouldBeTrue(
-            global->imported(),
-            table->init,
-            "table initializer may not refer to module-defined globals");
-        }
+        info.shouldBeTrue(
+          global && global->imported(),
+          table->init,
+          "table initializer may not refer to module-defined globals");
       }
     }
     auto typeFeats = table->type.getFeatures();
