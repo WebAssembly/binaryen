@@ -2976,6 +2976,17 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   std::cout << "TNHOracle informs us that " << *exprLoc.expr << " contains "
             << maximalContents << "\n";
 #endif
+
+  if (exprLoc.expr->is<ArrayLoad>()) {
+    // ArrayLoad cannot filter, as we can have writes of different sizes than
+    // the type of the location (e.g. write i32, do an i64.load). If there is
+    // any content, just report the maximal content, basically like a Memory.
+    if (!contents.isNone()) {
+      contents = maximalContents;
+    }
+    return;
+  }
+
   contents.intersect(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
