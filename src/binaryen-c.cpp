@@ -6652,7 +6652,7 @@ bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
       *errorIndex = err->index;
     }
     if (errorReason) {
-      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason.index());
+      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason.getKind());
     }
     delete B;
     return false;

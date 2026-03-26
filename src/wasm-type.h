@@ -941,32 +941,18 @@ struct TypeBuilder {
     }
   };
 
-  struct ErrorReason : std::variant<std::monostate, // SelfSupertype
-                                    std::monostate, // InvalidSupertype
-                                    std::monostate, // ForwardSupertypeReference
-                                    std::monostate, // ForwardChildReference
-                                    std::monostate, // InvalidFuncType
-                                    std::monostate, // InvalidSharedType
-                                    std::monostate, // InvalidWaitQueue
-                                    std::monostate, // InvalidStringType
-                                    std::monostate, // InvalidUnsharedField
-                                    std::monostate, // NonStructDescribes
-                                    std::monostate, // ForwardDescribesReference
-                                    std::monostate, // MismatchedDescribes
-                                    std::monostate, // NonStructDescriptor
-                                    std::monostate, // MismatchedDescriptor
-                                    std::monostate, // InvalidUnsharedDescriptor
-                                    std::monostate, // InvalidUnsharedDescribes
-                                    std::monostate, // RequiresCustomDescriptors
-                                    RecGroupCollision // RecGroupCollision
-                                    > {
+  struct ErrorReason : std::variant<ErrorReasonKind, RecGroupCollision> {
     using variant::variant;
-    ErrorReason(ErrorReasonKind kind);
 
-    bool operator==(ErrorReasonKind kind) const {
-      return index() == static_cast<size_t>(kind);
+    ErrorReasonKind getKind() const {
+      if (auto* kind = std::get_if<ErrorReasonKind>(this)) {
+        return *kind;
+      }
+      return ErrorReasonKind::RecGroupCollision;
     }
-    bool operator!=(ErrorReasonKind kind) const { return !(*this == kind); }
+
+    bool operator==(ErrorReasonKind kind) const { return getKind() == kind; }
+    bool operator!=(ErrorReasonKind kind) const { return getKind() != kind; }
   };
 
   struct Error {

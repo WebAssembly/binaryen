@@ -1,6 +1,6 @@
 ;; RUN: not wasm-opt %s -all --disable-gc 2>&1 | filecheck %s
 
-;; CHECK: error: invalid type: distinct rec groups would be identical after binary writing (missing features gc)
+;; CHECK: error: invalid type: distinct rec groups would be identical after binary writing (to resolve this, enable gc)
 
 (module
   (type $A (func (param externref)))

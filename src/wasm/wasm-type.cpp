@@ -1549,79 +1549,14 @@ std::ostream& operator<<(std::ostream& os,
 
 std::ostream& operator<<(std::ostream& os,
                          const TypeBuilder::ErrorReason& reason) {
-  auto kind = static_cast<TypeBuilder::ErrorReasonKind>(reason.index());
-  os << kind;
+  os << reason.getKind();
   if (auto* collision = std::get_if<TypeBuilder::RecGroupCollision>(&reason)) {
     if (collision->missingFeatures != FeatureSet(FeatureSet::None)) {
-      os << " (missing features " << collision->missingFeatures.toString()
-         << ")";
+      os << " (to resolve this, enable "
+         << collision->missingFeatures.toString() << ")";
     }
   }
   return os;
-}
-
-TypeBuilder::ErrorReason::ErrorReason(ErrorReasonKind kind) {
-  switch (kind) {
-    case ErrorReasonKind::SelfSupertype:
-      emplace<static_cast<size_t>(ErrorReasonKind::SelfSupertype)>();
-      break;
-    case ErrorReasonKind::InvalidSupertype:
-      emplace<static_cast<size_t>(ErrorReasonKind::InvalidSupertype)>();
-      break;
-    case ErrorReasonKind::ForwardSupertypeReference:
-      emplace<static_cast<size_t>(
-        ErrorReasonKind::ForwardSupertypeReference)>();
-      break;
-    case ErrorReasonKind::ForwardChildReference:
-      emplace<static_cast<size_t>(ErrorReasonKind::ForwardChildReference)>();
-      break;
-    case ErrorReasonKind::InvalidFuncType:
-      emplace<static_cast<size_t>(ErrorReasonKind::InvalidFuncType)>();
-      break;
-    case ErrorReasonKind::InvalidSharedType:
-      emplace<static_cast<size_t>(ErrorReasonKind::InvalidSharedType)>();
-      break;
-    case ErrorReasonKind::InvalidWaitQueue:
-      emplace<static_cast<size_t>(ErrorReasonKind::InvalidWaitQueue)>();
-      break;
-    case ErrorReasonKind::InvalidStringType:
-      emplace<static_cast<size_t>(ErrorReasonKind::InvalidStringType)>();
-      break;
-    case ErrorReasonKind::InvalidUnsharedField:
-      emplace<static_cast<size_t>(ErrorReasonKind::InvalidUnsharedField)>();
-      break;
-    case ErrorReasonKind::NonStructDescribes:
-      emplace<static_cast<size_t>(ErrorReasonKind::NonStructDescribes)>();
-      break;
-    case ErrorReasonKind::ForwardDescribesReference:
-      emplace<static_cast<size_t>(
-        ErrorReasonKind::ForwardDescribesReference)>();
-      break;
-    case ErrorReasonKind::MismatchedDescribes:
-      emplace<static_cast<size_t>(ErrorReasonKind::MismatchedDescribes)>();
-      break;
-    case ErrorReasonKind::NonStructDescriptor:
-      emplace<static_cast<size_t>(ErrorReasonKind::NonStructDescriptor)>();
-      break;
-    case ErrorReasonKind::MismatchedDescriptor:
-      emplace<static_cast<size_t>(ErrorReasonKind::MismatchedDescriptor)>();
-      break;
-    case ErrorReasonKind::InvalidUnsharedDescriptor:
-      emplace<static_cast<size_t>(
-        ErrorReasonKind::InvalidUnsharedDescriptor)>();
-      break;
-    case ErrorReasonKind::InvalidUnsharedDescribes:
-      emplace<static_cast<size_t>(ErrorReasonKind::InvalidUnsharedDescribes)>();
-      break;
-    case ErrorReasonKind::RequiresCustomDescriptors:
-      emplace<static_cast<size_t>(
-        ErrorReasonKind::RequiresCustomDescriptors)>();
-      break;
-    case ErrorReasonKind::RecGroupCollision:
-      emplace<static_cast<size_t>(ErrorReasonKind::RecGroupCollision)>(
-        RecGroupCollision{FeatureSet::None});
-      break;
-  }
 }
 
 unsigned Field::getByteSize() const {
