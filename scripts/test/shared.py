@@ -412,7 +412,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'binary.wast',   # Missing data count section validation
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
-    'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Fail to parse data segment offset abbreviation
     'elem.wast',    # Requires modeling empty declarative segments
     'func.wast',    # Duplicate parameter names not properly rejected
