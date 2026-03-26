@@ -48,8 +48,6 @@
 
 namespace wasm::ModuleSplitting {
 
-static const Name LOAD_SECONDARY_MODULE("__load_secondary_module");
-
 struct Config {
   // A vector of set of functions to split into that secondary. Each function
   // set belongs to a single secondary module. All others are kept in the
@@ -77,9 +75,6 @@ struct Config {
   // false, the original function names will be used (after `newExportPrefix`)
   // as the new export names.
   bool minimizeNewExportNames = false;
-  // When JSPI support is enabled the secondary module loading is handled by an
-  // imported function.
-  bool jspi = false;
 };
 
 struct Results {

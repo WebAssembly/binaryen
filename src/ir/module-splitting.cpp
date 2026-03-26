@@ -73,7 +73,6 @@
 //      from the IR before splitting.
 //
 #include "ir/module-splitting.h"
-#include "asmjs/shared-constants.h"
 #include "ir/export-utils.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
@@ -86,8 +85,6 @@
 namespace wasm::ModuleSplitting {
 
 namespace {
-
-static const Name LOAD_SECONDARY_STATUS = "load_secondary_module_status";
 
 template<class F> void forEachElement(Module& module, F f) {
   ModuleUtils::iterActiveElementSegments(module, [&](ElementSegment* segment) {
@@ -328,12 +325,10 @@ struct ModuleSplitter {
 
   // Other helpers
   void exportImportFunction(Name func, const std::set<Module*>& modules);
-  Expression* maybeLoadSecondary(Builder& builder, Expression* callIndirect);
   Name getTrampoline(Name funcName);
 
   // Main splitting steps
   void classifyFunctions();
-  void setupJSPI();
   void moveSecondaryFunctions();
   void thunkExportedSecondaryFunctions();
   void indirectReferencesToSecondaryFunctions();
@@ -346,9 +341,6 @@ struct ModuleSplitter {
     : config(config), primary(primary), tableManager(primary),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
     classifyFunctions();
-    if (config.jspi) {
-      setupJSPI();
-    }
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectReferencesToSecondaryFunctions();
@@ -358,25 +350,6 @@ struct ModuleSplitter {
     shareImportableItems();
   }
 };
-
-void ModuleSplitter::setupJSPI() {
-  // Add an imported function to load the secondary module.
-  auto import = Builder::makeFunction(
-    ModuleSplitting::LOAD_SECONDARY_MODULE,
-    Type(Signature(Type::none, Type::none), NonNullable, Inexact),
-    {});
-  import->module = ENV;
-  import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
-  primary.addFunction(std::move(import));
-  Builder builder(primary);
-  // Add a global to track whether the secondary module has been loaded yet.
-  primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
-                                       Type::i32,
-                                       builder.makeConst(int32_t(0)),
-                                       Builder::Mutable));
-  primary.addExport(builder.makeExport(
-    LOAD_SECONDARY_STATUS, LOAD_SECONDARY_STATUS, ExternalKind::Global));
-}
 
 std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
   // Create the secondary module and copy trivial properties.
@@ -449,12 +422,7 @@ void ModuleSplitter::classifyFunctions() {
     configSecondaryFuncs.insert(funcs.begin(), funcs.end());
   }
   for (auto& func : primary.functions) {
-    // In JSPI mode exported functions cannot be moved to the secondary
-    // module since that would make them async when they may not have the JSPI
-    // wrapper. Exported JSPI functions can still benefit from splitting though
-    // since only the JSPI wrapper stub will remain in the primary module.
     if (func->imported() || !configSecondaryFuncs.count(func->name) ||
-        (config.jspi && ExportUtils::isExported(primary, *func)) ||
         segmentReferrers.count(func->name)) {
       primaryFuncs.insert(func->name);
     } else {
@@ -569,20 +537,6 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
     Name trampoline = getTrampoline(*ex->getInternalName());
     ex->setInternalName(trampoline);
   }
-}
-
-Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
-                                               Expression* callIndirect) {
-  if (!config.jspi) {
-    return callIndirect;
-  }
-  // Check if the secondary module is loaded and if it isn't, call the
-  // function to load it.
-  auto* loadSecondary = builder.makeIf(
-    builder.makeUnary(EqZInt32,
-                      builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
-    builder.makeCall(ModuleSplitting::LOAD_SECONDARY_MODULE, {}, Type::none));
-  return builder.makeSequence(loadSecondary, callIndirect);
 }
 
 // Helper to walk expressions in segments but NOT in globals.
@@ -720,13 +674,12 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       auto tableSlot =
         parent.tableManager.getSlot(curr->target, func->type.getHeapType());
 
-      replaceCurrent(parent.maybeLoadSecondary(
-        builder,
+      replaceCurrent(
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
                                  func->type.getHeapType(),
-                                 curr->isReturn)));
+                                 curr->isReturn));
     }
   };
   CallIndirector callIndirector(*this);
