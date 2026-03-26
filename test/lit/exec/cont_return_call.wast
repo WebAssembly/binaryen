@@ -11,7 +11,7 @@
  (type $cont (cont $i32))
  (type $none (func))
 
- (import "fuzzing-support" "log" (func $log (param i32)))
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
  (tag $tag (type $none))
 
