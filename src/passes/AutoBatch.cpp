@@ -85,6 +85,10 @@
 // extend each command to be a multiple of 8 bytes so that each command can
 // assume itself to be 8-byte aligned.
 //
+// TODO: tools to detect reentrancy, which is dangerous
+//
+// TODO: benchmarks (webcc, emscripten glgears, rust mozhacks)
+//
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -315,7 +319,6 @@ struct AutoBatch : public Pass {
     // The main loop goes over commands, each time switching over which function
     // to call.
     out << R"(function flush(pos, end) {
-  console.log(pos, end);
   while (pos != end) {
     let funcId = HEAP32[pos >> 2];
     switch (funcId) {
