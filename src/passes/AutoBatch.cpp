@@ -91,6 +91,9 @@
 //
 //   * webcc: 50% faster (had to add flush() using emscripten_get_now, and make
 //            set_main_loop not throw (need to flush after it).
+//   * emscripten glgears (hello_world_gles.c): 0%, and profiling confirms that
+//                                              boundary not an issue (build
+//                                              with -DANIMATE)
 // TODO: benchmarks (emscripten glgears, rust mozhacks)
 //
 
