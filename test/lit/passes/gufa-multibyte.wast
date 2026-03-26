@@ -20,7 +20,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (export "test")
-  ;; We initialize with i8s, and read an i64. That should not confuse is, and
+  ;; We initialize with i8s, and read an i64. That should not confuse us, and
   ;; we do not optimize here (though we could, in theory, if we tracked the
   ;; bytes and saw the i64 must be 0).
   (drop
