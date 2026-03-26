@@ -83,6 +83,7 @@ unfuzzable = [
     'unsubtyping-cmpxchg.wast',
     'struct-atomic-threads.wast',
     'type-refining-gufa-rmw.wast',
+    'struct-cmpxchg-shared-expected.wast',
     'precompute-gc-atomics-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',

@@ -1002,8 +1002,12 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     assert(curr->index < fields.size());
     note(&curr->ref, Type(*ht, Nullable));
     auto type = fields[curr->index].type;
-    // TODO: (shared eq) as appropriate.
-    note(&curr->expected, type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    auto expectedType = type;
+    if (expectedType.isRef()) {
+      expectedType =
+        Type(HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
+    }
+    note(&curr->expected, expectedType);
     note(&curr->replacement, type);
   }
 
