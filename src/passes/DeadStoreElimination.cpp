@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 WebAssembly Community Group participants
+ * Copyright 2026 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,18 @@
 // "Store" is used generically here to mean a write to a non-local location,
 // which includes:
 //
-//  * Stores to linear memory (Store).
+//  * (not implemented) Stores to linear memory (Store).
 //  * Stores to globals (GlobalSet).
 //  * Stores to GC data (StructSet, ArraySet)
 //
-// This pass optimizes all of the above. It does so using a generic framework in
-// order to share as much code as possible between them. This has downsides for
-// globals, in particular, as they could be optimized with an IR that is tailor-
-// made for scanning of global indexes (much as we do in our analyses of locals
-// in other places). However, global operations are also less common than memory
-// and GC operations, so hopefully the tradeoff is reasonable.
+// This pass optimizes globals and GC data, but not linear memory (see #8456,
+// support for linear memory was removed compared to #3858). It does so using a
+// generic framework in order to share as much code as possible between them.
+// This has downsides for globals, in particular, as they could be optimized
+// with an IR that is tailor- made for scanning of global indexes (much as we do
+// in our analyses of locals in other places). However, global operations are
+// also less common than memory and GC operations, so hopefully the tradeoff is
+// reasonable.
 //
 // The generic framework here can handle both "statically" connected loads and
 // stores - for example, a load of a global of index N, after a store to that
