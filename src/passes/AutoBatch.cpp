@@ -87,7 +87,11 @@
 //
 // TODO: tools to detect reentrancy, which is dangerous
 //
-// TODO: benchmarks (webcc, emscripten glgears, rust mozhacks)
+// Benchmarks:
+//
+//   * webcc: 50% faster (had to add flush() using emscripten_get_now, and make
+//            set_main_loop not throw (need to flush after it).
+// TODO: benchmarks (emscripten glgears, rust mozhacks)
 //
 
 #include "ir/module-utils.h"
@@ -102,8 +106,6 @@ namespace wasm {
 namespace {
 
 struct AutoBatch : public Pass {
-  AutoBatch() {}
-
   // The original imports, before we wrapped them, in order of ids.
   std::vector<Function*> originalImports;
 
