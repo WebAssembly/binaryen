@@ -535,6 +535,32 @@ struct TypeRefining : public Pass {
         curr->value = fixType(curr->value, fieldType);
       }
 
+      void visitStructRMW(StructRMW* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+        auto type = curr->ref->type.getHeapType();
+        if (type.isBottom()) {
+          return;
+        }
+
+        auto fieldType = type.getStruct().fields[curr->index].type;
+        curr->value = fixType(curr->value, fieldType);
+      }
+
+      void visitStructCmpxchg(StructCmpxchg* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+        auto type = curr->ref->type.getHeapType();
+        if (type.isBottom()) {
+          return;
+        }
+
+        auto fieldType = type.getStruct().fields[curr->index].type;
+        curr->replacement = fixType(curr->replacement, fieldType);
+      }
+
       bool refinalize = false;
 
       // Fix up a given value so it fits into the type the location it is
