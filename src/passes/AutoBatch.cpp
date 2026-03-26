@@ -91,6 +91,11 @@
 // Benchmarks:
 //
 //   * emscripten microbenchmark (autobatch_bench.cpp): 2x speedup
+//       * emcc test/autobatch_bench.cpp -O3 --profiling -o b.html
+//              -sGLOBAL_BASE=1MB -sTOTAL_MEMORY=128MB
+//       * bin/wasm-opt -all b.wasm --autobatch -o b.wasm
+//                      --pass-arg=autobatch-js@autobatch.js
+//       * Then paste autobatch.js in the right place in b.js (see the cpp).
 //   * webcc: 1.5x speedup (had to add flush() and make set_main_loop not throw)
 //   * emscripten glgears (hello_world_gles.c): no change (profiling confirms
 //                                              boundary is not an issue; build
