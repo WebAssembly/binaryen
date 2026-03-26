@@ -417,9 +417,11 @@ public:
     assert(!((trap && other.throws()) || (throws() && other.trap)));
     // We can't reorder an implicit trap in a way that could alter what global
     // state is modified.
-    if ((trap && other.writesGlobalState()) ||
-        (other.trap && writesGlobalState())) {
-      return true;
+    if (transfersControlFlow() || other.transfersControlFlow()) {
+      if ((trap && other.writesGlobalState()) ||
+          (other.trap && writesGlobalState())) {
+        return true;
+      }
     }
     return false;
   }
