@@ -315,6 +315,7 @@ struct AutoBatch : public Pass {
     // The main loop goes over commands, each time switching over which function
     // to call.
     out << R"(function flush(pos, end) {
+  console.log(pos, end);
   while (pos != end) {
     let funcId = HEAP32[pos >> 2];
     switch (funcId) {
