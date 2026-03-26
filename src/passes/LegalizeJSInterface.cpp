@@ -432,7 +432,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
   bool isIllegal(Type type) {
     auto features = type.getFeatures();
     return features.hasSIMD() || features.hasMultivalue() ||
-           features.hasExceptionHandling();
+           features.hasExceptionHandling() || features.hasStackSwitching();
   }
 };
 

@@ -120,6 +120,74 @@ void BinaryInstWriter::emitStoreOpcode(uint8_t bytes, Type valueType) {
   }
 }
 
+void BinaryInstWriter::emitLoadOpcode(unsigned bytes, bool signed_, Type type) {
+  switch (type.getBasic()) {
+    case Type::i32: {
+      switch (bytes) {
+        case 1:
+          o << static_cast<int8_t>(signed_ ? BinaryConsts::I32LoadMem8S
+                                           : BinaryConsts::I32LoadMem8U);
+          break;
+        case 2:
+          o << static_cast<int8_t>(signed_ ? BinaryConsts::I32LoadMem16S
+                                           : BinaryConsts::I32LoadMem16U);
+          break;
+        case 4:
+          o << static_cast<int8_t>(BinaryConsts::I32LoadMem);
+          break;
+        default:
+          abort();
+      }
+      break;
+    }
+    case Type::i64: {
+      switch (bytes) {
+        case 1:
+          o << static_cast<int8_t>(signed_ ? BinaryConsts::I64LoadMem8S
+                                           : BinaryConsts::I64LoadMem8U);
+          break;
+        case 2:
+          o << static_cast<int8_t>(signed_ ? BinaryConsts::I64LoadMem16S
+                                           : BinaryConsts::I64LoadMem16U);
+          break;
+        case 4:
+          o << static_cast<int8_t>(signed_ ? BinaryConsts::I64LoadMem32S
+                                           : BinaryConsts::I64LoadMem32U);
+          break;
+        case 8:
+          o << static_cast<int8_t>(BinaryConsts::I64LoadMem);
+          break;
+        default:
+          abort();
+      }
+      break;
+    }
+    case Type::f32: {
+      switch (bytes) {
+        case 2:
+          o << static_cast<int8_t>(BinaryConsts::MiscPrefix)
+            << U32LEB(BinaryConsts::F32_F16LoadMem);
+          break;
+        case 4:
+          o << static_cast<int8_t>(BinaryConsts::F32LoadMem);
+          break;
+        default:
+          WASM_UNREACHABLE("invalid load size");
+      }
+      break;
+    }
+    case Type::f64:
+      o << static_cast<int8_t>(BinaryConsts::F64LoadMem);
+      break;
+    case Type::v128:
+      o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::V128Load);
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Loop);
@@ -315,81 +383,13 @@ void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
 }
 
 void BinaryInstWriter::visitLoad(Load* curr) {
+  if (curr->type == Type::unreachable) {
+    // the pointer is unreachable, so we are never reached; just don't emit
+    // a load
+    return;
+  }
   if (!curr->isAtomic()) {
-    switch (curr->type.getBasic()) {
-      case Type::i32: {
-        switch (curr->bytes) {
-          case 1:
-            o << static_cast<int8_t>(curr->signed_
-                                       ? BinaryConsts::I32LoadMem8S
-                                       : BinaryConsts::I32LoadMem8U);
-            break;
-          case 2:
-            o << static_cast<int8_t>(curr->signed_
-                                       ? BinaryConsts::I32LoadMem16S
-                                       : BinaryConsts::I32LoadMem16U);
-            break;
-          case 4:
-            o << static_cast<int8_t>(BinaryConsts::I32LoadMem);
-            break;
-          default:
-            abort();
-        }
-        break;
-      }
-      case Type::i64: {
-        switch (curr->bytes) {
-          case 1:
-            o << static_cast<int8_t>(curr->signed_
-                                       ? BinaryConsts::I64LoadMem8S
-                                       : BinaryConsts::I64LoadMem8U);
-            break;
-          case 2:
-            o << static_cast<int8_t>(curr->signed_
-                                       ? BinaryConsts::I64LoadMem16S
-                                       : BinaryConsts::I64LoadMem16U);
-            break;
-          case 4:
-            o << static_cast<int8_t>(curr->signed_
-                                       ? BinaryConsts::I64LoadMem32S
-                                       : BinaryConsts::I64LoadMem32U);
-            break;
-          case 8:
-            o << static_cast<int8_t>(BinaryConsts::I64LoadMem);
-            break;
-          default:
-            abort();
-        }
-        break;
-      }
-      case Type::f32: {
-        switch (curr->bytes) {
-          case 2:
-            o << static_cast<int8_t>(BinaryConsts::MiscPrefix)
-              << U32LEB(BinaryConsts::F32_F16LoadMem);
-            break;
-          case 4:
-            o << static_cast<int8_t>(BinaryConsts::F32LoadMem);
-            break;
-          default:
-            WASM_UNREACHABLE("invalid load size");
-        }
-        break;
-      }
-      case Type::f64:
-        o << static_cast<int8_t>(BinaryConsts::F64LoadMem);
-        break;
-      case Type::v128:
-        o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
-          << U32LEB(BinaryConsts::V128Load);
-        break;
-      case Type::unreachable:
-        // the pointer is unreachable, so we are never reached; just don't emit
-        // a load
-        return;
-      case Type::none:
-        WASM_UNREACHABLE("unexpected type");
-    }
+    emitLoadOpcode(curr->bytes, curr->signed_, curr->type);
   } else {
     o << static_cast<int8_t>(BinaryConsts::AtomicPrefix);
     switch (curr->type.getBasic()) {
@@ -428,8 +428,6 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         }
         break;
       }
-      case Type::unreachable:
-        return;
       default:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -2784,6 +2782,17 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
       << U32LEB(BinaryConsts::ArrayAtomicSet);
     parent.writeMemoryOrder(curr->order);
   }
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
+void BinaryInstWriter::visitArrayLoad(ArrayLoad* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  emitLoadOpcode(curr->bytes, curr->signed_, curr->type);
+  uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
+  o << U32LEB(alignmentBits);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 

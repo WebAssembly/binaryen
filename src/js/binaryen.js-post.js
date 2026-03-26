@@ -3274,15 +3274,22 @@ function handleFatalError(func) {
   try {
     return func();
   } catch (e) {
-    // Fatal errors begin with that prefix. Strip it out, and the newline.
-    // C++ exceptions are thrown as pointers (numbers) in release builds
-    // but CppException JS class in debug builds.
+    // Fatal errors begin with a specific prefix. Strip it out, and the newline.
     if (typeof e === 'number') {
+      // Older version of emscripten can throw C++ exceptions as pointers
+      // (numbers) in release builds.
       var [_, message] = getExceptionMessage(e);
       if (message?.startsWith('Fatal: ')) {
         throw new Error(message.substr(7).trim());
       }
     } else  {
+      // Newer version of emscripten always throw CppException object but don't
+      // always populate the `.message` field.
+      // TODO: Set EXCEPTION_STACK_TRACES instead?
+      if (!e.message) {
+        var [_, message] = getExceptionMessage(e);
+        e.message = message;
+      }
       e.message = e.message.replace('Fatal:', '');
       e.message = e.message.trim();
     }

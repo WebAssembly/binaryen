@@ -49,52 +49,6 @@
     (array.new_default $i8_array (i32.const 8))
   )
 
-  ;; Read i32 from an i8 array using regular array get instructions.
-  ;; TODO remove this and use the load instructions when implemented.
-  (func $load_i32_from_array
-    (export "load_i32_from_array")
-    (param $arr (ref $i8_array))
-    (param $idx i32)
-    (result i32)
-
-    ;; 1. Load the first byte (least significant)
-    (array.get_u $i8_array (local.get $arr) (local.get $idx))
-
-    ;; 2. Load the second byte and shift it left by 8 bits
-    (array.get_u $i8_array (local.get $arr) (i32.add (local.get $idx) (i32.const 1)))
-    (i32.const 8)
-    (i32.shl)
-    (i32.or)
-
-    ;; 3. Load the third byte and shift it left by 16 bits
-    (array.get_u $i8_array (local.get $arr) (i32.add (local.get $idx) (i32.const 2)))
-    (i32.const 16)
-    (i32.shl)
-    (i32.or)
-
-    ;; 4. Load the fourth byte (most significant) and shift it left by 24 bits
-    (array.get_u $i8_array (local.get $arr) (i32.add (local.get $idx) (i32.const 3)))
-    (i32.const 24)
-    (i32.shl)
-    (i32.or)
-  )
-
-  ;; TODO remove this and use the load instructions when implemented.
-  (func $load_i64_from_array
-    (export "load_i64_from_array")
-    (param $arr (ref $i8_array))
-    (param $idx i32)
-    (result i64)
-    (call $load_i32_from_array (local.get $arr) (local.get $idx))
-    (i64.extend_i32_u)
-
-    (call $load_i32_from_array (local.get $arr) (i32.add (local.get $idx) (i32.const 4)))
-    (i64.extend_i32_u)
-    (i64.const 32)
-    (i64.shl)
-    (i64.or)
-  )
-
   (func $get_array_4_byte (export "get_array_4_byte") (param $idx i32) (result i32)
     (array.get_u $i8_array (global.get $arr_4) (local.get $idx))
   )
@@ -184,8 +138,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i32_from_array (global.get $arr_4) (i32.const 0))
+    (i32.load8_u (type $i8_array) (global.get $arr_4) (i32.const 0))
   )
 
   (func $i32_set_and_get_i16 (export "i32_set_and_get_i16") (param $value i32) (result i32)
@@ -194,8 +147,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i32_from_array (global.get $arr_4) (i32.const 0))
+    (i32.load16_u (type $i8_array) (global.get $arr_4) (i32.const 0))
   )
 
   (func $i32_set_and_get_i32 (export "i32_set_and_get_i32") (param $value i32) (result i32)
@@ -204,8 +156,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i32_from_array (global.get $arr_4) (i32.const 0))
+    (i32.load (type $i8_array) (global.get $arr_4) (i32.const 0))
   )
 
   (func $set_and_get_f32 (export "set_and_get_f32") (param $value f32) (result f32)
@@ -214,8 +165,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i32_from_array (global.get $arr_4) (i32.const 0))
+    (i32.load (type $i8_array) (global.get $arr_4) (i32.const 0))
     (f32.reinterpret_i32)
   )
 
@@ -225,8 +175,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i64_from_array (global.get $arr_8) (i32.const 0))
+    (i64.load8_u (type $i8_array) (global.get $arr_8) (i32.const 0))
   )
 
   (func $i64_set_and_get_i16 (export "i64_set_and_get_i16") (param $value i64) (result i64)
@@ -235,8 +184,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i64_from_array (global.get $arr_8) (i32.const 0))
+    (i64.load16_u (type $i8_array) (global.get $arr_8) (i32.const 0))
   )
 
   (func $i64_set_and_get_i32 (export "i64_set_and_get_i32") (param $value i64) (result i64)
@@ -245,8 +193,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i64_from_array (global.get $arr_8) (i32.const 0))
+    (i64.load32_u (type $i8_array) (global.get $arr_8) (i32.const 0))
   )
 
   (func $i64_set_and_get_i64 (export "i64_set_and_get_i64") (param $value i64) (result i64)
@@ -255,8 +202,7 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i64_from_array (global.get $arr_8) (i32.const 0))
+    (i64.load (type $i8_array) (global.get $arr_8) (i32.const 0))
   )
 
   (func $set_and_get_f64 (export "set_and_get_f64") (param $value f64) (result f64)
@@ -265,9 +211,27 @@
       (i32.const 0)
       (local.get $value)
     )
-    ;; TODO: when multibyte get is supported use that instead here.
-    (call $load_i64_from_array (global.get $arr_8) (i32.const 0))
+    (i64.load (type $i8_array) (global.get $arr_8) (i32.const 0))
     (f64.reinterpret_i64)
+  )
+  (func $load_i32_16_u (export "load_i32_16_u") (param $idx i32) (result i32)
+    (i32.load16_u (type $i8_array) (global.get $arr_4) (local.get $idx))
+  )
+
+  (func $load_i32_16_s (export "load_i32_16_s") (param $idx i32) (result i32)
+    (i32.load16_s (type $i8_array) (global.get $arr_4) (local.get $idx))
+  )
+
+  (func $load_i32 (export "load_i32") (param $idx i32) (result i32)
+    (i32.load (type $i8_array) (global.get $arr_4) (local.get $idx))
+  )
+  (func $load_i64 (export "load_i64") (param $idx i32) (result i64)
+    (i64.load (type $i8_array) (global.get $arr_8) (local.get $idx))
+  )
+
+  (func $load_null (export "load_null") (result i32)
+    (local $null (ref null $i8_array))
+    (i32.load (type $i8_array) (local.get $null) (i32.const 0))
   )
 )
 
@@ -381,6 +345,30 @@
 (assert_return (invoke "get_array_8_byte" (i32.const 7)) (i32.const 0x12))
 
 ;;
+;; Byte-wise load tests
+;;
+
+(invoke "i32_set_i8" (i32.const 0) (i32.const 0x12))
+(invoke "i32_set_i8" (i32.const 1) (i32.const 0x34))
+(invoke "i32_set_i8" (i32.const 2) (i32.const 0x56))
+(invoke "i32_set_i8" (i32.const 3) (i32.const 0x78))
+
+(assert_return (invoke "load_i32_16_u" (i32.const 0)) (i32.const 0x3412))
+(assert_return (invoke "load_i32_16_s" (i32.const 0)) (i32.const 0x3412))
+
+;; Test sign extension
+(invoke "i32_set_i8" (i32.const 0) (i32.const 0xFF))
+(invoke "i32_set_i8" (i32.const 1) (i32.const 0x7F))
+(assert_return (invoke "load_i32_16_u" (i32.const 0)) (i32.const 0x7FFF))
+(assert_return (invoke "load_i32_16_s" (i32.const 0)) (i32.const 0x7FFF))
+
+(invoke "i32_set_i8" (i32.const 1) (i32.const 0xFF))
+(assert_return (invoke "load_i32_16_u" (i32.const 0)) (i32.const 0xFFFF))
+(assert_return (invoke "load_i32_16_s" (i32.const 0)) (i32.const -1))
+
+(assert_return (invoke "load_i32" (i32.const 0)) (i32.const 0x7856FFFF))
+
+;;
 ;; Bounds checks (32 bit with a 4-byte array)
 ;;
 
@@ -487,6 +475,23 @@
   )
   "array element type must be i8"
 )
+
+;; New OOB Load Tests
+(assert_trap (invoke "load_i32_16_u" (i32.const 3)) "out of bounds")
+(assert_trap (invoke "load_i32" (i32.const 1)) "out of bounds")
+(assert_trap (invoke "load_i64" (i32.const 1)) "out of bounds")
+
+;; Null reference for load
+(assert_trap (invoke "load_null") "null array")
+
+;; Unaligned reads
+(invoke "i32_set_i8" (i32.const 0) (i32.const 0x12))
+(invoke "i32_set_i8" (i32.const 1) (i32.const 0x34))
+(invoke "i32_set_i8" (i32.const 2) (i32.const 0x56))
+(invoke "i32_set_i8" (i32.const 3) (i32.const 0x78))
+
+(assert_return (invoke "load_i32_16_u" (i32.const 1)) (i32.const 0x5634))
+(assert_return (invoke "load_i32_16_u" (i32.const 2)) (i32.const 0x7856))
 
 ;; Null dereference
 

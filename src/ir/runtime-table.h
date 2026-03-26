@@ -47,8 +47,8 @@ public:
   // be imported with the definition of `other`
   virtual bool isSubType(const Table& other) {
     return tableDefinition.addressType == other.addressType &&
-           Type::isSubType(tableDefinition.type, other.type) &&
-           size() >= other.initial && tableDefinition.max <= other.max;
+           tableDefinition.type == other.type && size() >= other.initial &&
+           tableDefinition.max <= other.max;
   }
 
   const Table* getDefinition() const { return &tableDefinition; }

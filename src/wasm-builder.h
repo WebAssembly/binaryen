@@ -1132,6 +1132,21 @@ public:
     ret->finalize();
     return ret;
   }
+  ArrayLoad* makeArrayLoad(unsigned bytes,
+                           bool signed_,
+                           Expression* ref,
+                           Expression* index,
+                           Type type) {
+    auto* ret = wasm.allocator.alloc<ArrayLoad>();
+    ret->bytes = bytes;
+    ret->signed_ = signed_;
+    ret->ref = ref;
+    ret->index = index;
+    ret->type = type;
+    ret->finalize();
+    return ret;
+  }
+
   ArrayStore* makeArrayStore(unsigned bytes,
                              Expression* ref,
                              Expression* index,

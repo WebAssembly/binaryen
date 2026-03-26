@@ -570,6 +570,11 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<> makeArrayLoad(
+    Index, const std::vector<Annotation>&, Type, int, bool, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<>
   makeArrayStore(Index, const std::vector<Annotation>&, Type, int, HeapTypeT) {
     return Ok{};
@@ -2329,6 +2334,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     }
     return withLoc(
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
+  }
+
+  Result<> makeArrayLoad(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Type type,
+                         int bytes,
+                         bool signed_,
+                         HeapTypeT arrayType) {
+    return withLoc(pos,
+                   irBuilder.makeArrayLoad(arrayType, bytes, signed_, type));
   }
 
   Result<> makeArrayStore(Index pos,

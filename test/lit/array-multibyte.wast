@@ -426,4 +426,586 @@
     (i64.store32 (type $i8_array) (unreachable) (i32.const 1) (i64.const 2))
     (f64.store (type $i8_array) (unreachable) (i32.const 1) (f64.const 2.0))
   )
+  ;; CHECK:      (func $loads (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_u (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_s (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load16_u (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load16_s (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.load (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_u (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.load (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $loads (type $0)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load8_u (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load8_s (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load16_u (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load16_s (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (f32.load (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i64.load8_u (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i64.load16_u (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i64.load32_u (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i64.load (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (f64.load (type $i8_array)
+  ;; RTRIP-NEXT:    (global.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  (func $loads
+    (drop (i32.load8_u (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i32.load8_s (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i32.load16_u (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i32.load16_s (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i32.load (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (f32.load (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i64.load8_u (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i64.load16_u (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i64.load32_u (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (i64.load (type $i8_array) (global.get $arr) (i32.const 1)))
+    (drop (f64.load (type $i8_array) (global.get $arr) (i32.const 1)))
+  )
+
+  ;; CHECK:      (func $loads_null (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $loads_null (type $0)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  (func $loads_null
+    (drop (i32.load8_u (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i32.load8_s (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i32.load16_u (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i32.load16_s (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i32.load (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (f32.load (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i64.load8_u (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i64.load16_u (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i64.load32_u (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (i64.load (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+    (drop (f64.load (type $i8_array) (ref.null $i8_array) (i32.const 1)))
+  )
+
+  ;; CHECK:      (func $loads_unreachable (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $loads_unreachable (type $0)
+  ;; RTRIP-NEXT:  (unreachable)
+  ;; RTRIP-NEXT: )
+  (func $loads_unreachable
+    (drop (i32.load8_u (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i32.load8_s (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i32.load16_u (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i32.load16_s (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i32.load (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (f32.load (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i64.load8_u (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i64.load16_u (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i64.load32_u (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (i64.load (type $i8_array) (unreachable) (i32.const 1)))
+    (drop (f64.load (type $i8_array) (unreachable) (i32.const 1)))
+  )
+
+  ;; CHECK:      (func $stores_index_unreachable (type $0)
+  ;; CHECK-NEXT:  (i32.store8 (type $i8_array)
+  ;; CHECK-NEXT:   (global.get $arr)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $stores_index_unreachable (type $0)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (global.get $arr)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (unreachable)
+  ;; RTRIP-NEXT: )
+  (func $stores_index_unreachable
+    (i32.store8 (type $i8_array) (global.get $arr) (unreachable) (i32.const 2))
+  )
+
+  ;; CHECK:      (func $stores_value_unreachable (type $0)
+  ;; CHECK-NEXT:  (i32.store8 (type $i8_array)
+  ;; CHECK-NEXT:   (global.get $arr)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $stores_value_unreachable (type $0)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (global.get $arr)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.const 1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (unreachable)
+  ;; RTRIP-NEXT: )
+  (func $stores_value_unreachable
+    (i32.store8 (type $i8_array) (global.get $arr) (i32.const 1) (unreachable))
+  )
+
+  ;; CHECK:      (func $loads_index_unreachable (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load (type $i8_array)
+  ;; CHECK-NEXT:    (global.get $arr)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $loads_index_unreachable (type $0)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (global.get $arr)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (unreachable)
+  ;; RTRIP-NEXT: )
+  (func $loads_index_unreachable
+    (drop (i32.load8_u (type $i8_array) (global.get $arr) (unreachable)))
+  )
 )

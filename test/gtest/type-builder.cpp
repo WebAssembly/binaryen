@@ -215,7 +215,8 @@ TEST_F(TypeTest, DirectSelfSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
+  EXPECT_EQ(error->reason,
+            TypeBuilder::ErrorReasonKind::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
@@ -233,7 +234,8 @@ TEST_F(TypeTest, IndirectSelfSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
+  EXPECT_EQ(error->reason,
+            TypeBuilder::ErrorReasonKind::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
@@ -249,7 +251,7 @@ TEST_F(TypeTest, InvalidSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -265,7 +267,7 @@ TEST_F(TypeTest, InvalidFinalSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -282,7 +284,7 @@ TEST_F(TypeTest, InvalidSharedSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -299,7 +301,7 @@ TEST_F(TypeTest, InvalidUnsharedSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -319,7 +321,7 @@ TEST_F(TypeTest, ForwardReferencedChild) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardChildReference);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::ForwardChildReference);
   EXPECT_EQ(error->index, 1u);
 }
 

@@ -248,3 +248,170 @@
   )
  )
 )
+
+(module
+ ;; Test that we fix up types correctly after optimizing.
+ (rec
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $struct (struct (field (mut (ref null (exact $inner))))))
+  ;; GUFA:      (rec
+  ;; GUFA-NEXT:  (type $struct (struct (field (mut (ref (exact $inner))))))
+  (type $struct (struct (field (mut (ref null $inner)))))
+  ;; TODO: Optimize array types.
+  ;; NRML:       (type $array (array (mut (ref null $inner))))
+  ;; GUFA:       (type $array (array (mut (ref null $inner))))
+  (type $array (array (field (mut (ref null $inner)))))
+  ;; NRML:       (type $inner (struct))
+  ;; GUFA:       (type $inner (struct))
+  (type $inner (struct))
+ )
+ ;; NRML:       (type $3 (func (param (ref $struct))))
+
+ ;; NRML:       (type $4 (func (param (ref $array))))
+
+ ;; NRML:      (func $fix-struct-type (type $3) (param $uninhabited (ref $struct))
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.new $struct
+ ;; NRML-NEXT:    (struct.new_default $inner)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.atomic.rmw.xchg $struct 0
+ ;; NRML-NEXT:    (local.get $uninhabited)
+ ;; NRML-NEXT:    (ref.null none)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+ ;; NRML-NEXT:    (local.get $uninhabited)
+ ;; NRML-NEXT:    (ref.null none)
+ ;; NRML-NEXT:    (ref.null none)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:       (type $3 (func (param (ref $struct))))
+
+ ;; GUFA:       (type $4 (func (param (ref $array))))
+
+ ;; GUFA:      (func $fix-struct-type (type $3) (param $uninhabited (ref $struct))
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.new $struct
+ ;; GUFA-NEXT:    (struct.new_default $inner)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.atomic.rmw.xchg $struct 0
+ ;; GUFA-NEXT:    (local.get $uninhabited)
+ ;; GUFA-NEXT:    (ref.cast (ref none)
+ ;; GUFA-NEXT:     (ref.null none)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+ ;; GUFA-NEXT:    (local.get $uninhabited)
+ ;; GUFA-NEXT:    (ref.null none)
+ ;; GUFA-NEXT:    (ref.cast (ref none)
+ ;; GUFA-NEXT:     (ref.null none)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $fix-struct-type (param $uninhabited (ref $struct))
+  (drop
+   ;; This will make us refine the field type to (ref (exact $inner)).
+   (struct.new $struct
+    (struct.new $inner)
+   )
+  )
+  (drop
+   ;; GUFA knows that this cannot possibly be executed because the $uninhabited
+   ;; parameter is never given a value by a caller. As a result, this write of
+   ;; (ref null $inner) does not prevent refinement of the field and is instead
+   ;; fixed up by a cast. We must be sure to update the xchg's type afterward to
+   ;; maintain validity.
+   (struct.atomic.rmw.xchg $struct 0
+    (local.get $uninhabited)
+    (ref.null none)
+   )
+  )
+  (drop
+   ;; Same, but with a cmpxchg.
+   (struct.atomic.rmw.cmpxchg $struct 0
+    (local.get $uninhabited)
+    (ref.null none)
+    (ref.null none)
+   )
+  )
+ )
+ ;; NRML:      (func $fix-array-type (type $4) (param $uninhabited (ref $array))
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (array.new_fixed $array 1
+ ;; NRML-NEXT:    (struct.new_default $inner)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (array.atomic.rmw.xchg $array
+ ;; NRML-NEXT:    (local.get $uninhabited)
+ ;; NRML-NEXT:    (i32.const 0)
+ ;; NRML-NEXT:    (ref.null none)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (array.atomic.rmw.cmpxchg $array
+ ;; NRML-NEXT:    (local.get $uninhabited)
+ ;; NRML-NEXT:    (i32.const 0)
+ ;; NRML-NEXT:    (ref.null none)
+ ;; NRML-NEXT:    (ref.null none)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $fix-array-type (type $4) (param $uninhabited (ref $array))
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (array.new_fixed $array 1
+ ;; GUFA-NEXT:    (struct.new_default $inner)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (array.atomic.rmw.xchg $array
+ ;; GUFA-NEXT:    (local.get $uninhabited)
+ ;; GUFA-NEXT:    (i32.const 0)
+ ;; GUFA-NEXT:    (ref.null none)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (array.atomic.rmw.cmpxchg $array
+ ;; GUFA-NEXT:    (local.get $uninhabited)
+ ;; GUFA-NEXT:    (i32.const 0)
+ ;; GUFA-NEXT:    (ref.null none)
+ ;; GUFA-NEXT:    (ref.null none)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $fix-array-type (param $uninhabited (ref $array))
+  (drop
+   ;; If we optimized array types, this will make us refine the element type to
+   ;; (ref (exact $inner)). TODO.
+   (array.new_fixed $array 1
+    (struct.new $inner)
+   )
+  )
+  (drop
+   ;; Same as before, but with an array xchg.
+   (array.atomic.rmw.xchg $array
+    (local.get $uninhabited)
+    (i32.const 0)
+    (ref.null none)
+   )
+  )
+  (drop
+   ;; Same, but with a cmpxchg.
+   (array.atomic.rmw.cmpxchg $array
+    (local.get $uninhabited)
+    (i32.const 0)
+    (ref.null none)
+    (ref.null none)
+   )
+  )
+ )
+)

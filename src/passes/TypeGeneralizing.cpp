@@ -802,6 +802,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
+  void visitArrayLoad(ArrayLoad* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayStore(ArrayStore* curr) { WASM_UNREACHABLE("TODO"); }
 
   void visitArrayLen(ArrayLen* curr) {

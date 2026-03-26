@@ -2478,6 +2478,23 @@ struct PrintExpressionContents
     o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
   }
+  void visitArrayLoad(ArrayLoad* curr) {
+    prepareColor(o) << forceConcrete(curr->type);
+    o << ".load";
+    if (curr->type != Type::unreachable &&
+        curr->bytes < curr->type.getByteSize()) {
+      printMemoryPostfix(curr->bytes, curr->type);
+      o << (curr->signed_ ? "_s" : "_u");
+    }
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
+  }
+
   void visitArrayStore(ArrayStore* curr) {
     prepareColor(o) << forceConcrete(curr->value->type);
     o << ".store";
@@ -4034,6 +4051,13 @@ std::ostream& operator<<(std::ostream& o, const Table& table) {
   wasm::PrintSExpression printer(o);
   // TODO: printTableHeader should take a const Table*
   printer.printTableHeader(const_cast<Table*>(&table));
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const Global& global) {
+  wasm::PrintSExpression printer(o);
+  // TODO: visitGlobal should take a const Global*
+  printer.visitGlobal(const_cast<Global*>(&global));
   return o;
 }
 
