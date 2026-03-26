@@ -1552,8 +1552,10 @@ std::ostream& operator<<(std::ostream& os,
   os << reason.getKind();
   if (auto* collision = std::get_if<TypeBuilder::RecGroupCollision>(&reason)) {
     if (collision->missingFeatures != FeatureSet(FeatureSet::None)) {
-      os << " (to resolve this, enable "
-         << collision->missingFeatures.toString() << ")";
+      os << " (to resolve this, use";
+      collision->missingFeatures.iterFeatures(
+        [&](auto feat) { os << " --enable-" << FeatureSet::toString(feat); });
+      os << ")";
     }
   }
   return os;
