@@ -192,7 +192,7 @@ struct AutoBatch : public Pass {
         // now.
         auto newImportName = Names::getValidFunctionName(*module, func->name);
         auto* originalImport =
-            ModuleUtils::copyFunction(func, *module, newImportName);
+          ModuleUtils::copyFunction(func, *module, newImportName);
 
         // This one is no longer an import.
         func->module = func->base = Name();
