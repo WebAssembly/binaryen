@@ -5052,14 +5052,13 @@ void WasmBinaryReader::readTableDeclarations() {
   for (size_t i = 0; i < num; i++) {
     auto [name, isExplicit] = getOrMakeName(
       tableNames, numImports + i, makeName("", i), usedTableNames);
-    auto peekInt = peekInt8();
     bool hasInit = false;
-    if (peekInt == BinaryConsts::HasTableInitializer) {
-      // skip past the peeked int
-      pos++;
+    if (peekInt8() == BinaryConsts::HasTableInitializer) {
+      // Skip past the peeked byte.
+      getInt8();
       auto reservedByte = getInt8();
       if (reservedByte != BinaryConsts::TableReservedByte) {
-        // byte reserved for future extension, must be zero for now
+        // Byte reserved for future extension, must be zero for now.
         throwError("Malformed table");
       }
       hasInit = true;

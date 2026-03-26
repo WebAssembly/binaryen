@@ -3578,7 +3578,7 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     CHECK_ERR(tabtype);
     ttype = *tabtype;
     if (ctx.in.peekLParen() && !import) {
-      // imported tables cannot have initialization expression
+      // Imported tables cannot have initialization expression.
       auto e = expr(ctx);
       CHECK_ERR(e);
       init = *e;

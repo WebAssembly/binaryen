@@ -942,7 +942,7 @@ void TranslateToFuzzReader::finalizeTable() {
         }
       }
       if (hasNonImported) {
-        // table initializers can't reference module-defined globals.
+        // Table initializers can't reference module-defined globals.
         table->init = makeConst(table->type);
       }
     }
