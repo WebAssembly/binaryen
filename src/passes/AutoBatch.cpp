@@ -85,7 +85,8 @@
 // extend each command to be a multiple of 8 bytes so that each command can
 // assume itself to be 8-byte aligned.
 //
-// TODO: tools to detect reentrancy, which is dangerous
+// TODO: tools to detect problems: reentrancy and stale data (serialized
+//       pointers refer to data that might get changed)
 //
 // Benchmarks:
 //
