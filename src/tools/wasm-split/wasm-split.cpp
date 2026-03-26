@@ -308,12 +308,6 @@ void splitModule(const WasmSplitOptions& options) {
     std::cerr << "warning: not keeping any functions in the primary module\n";
   }
 
-  if (options.jspi) {
-    // The load secondary module function must be kept in the main module.
-    keepFuncs.insert(ModuleSplitting::LOAD_SECONDARY_MODULE);
-    splitFuncs.erase(ModuleSplitting::LOAD_SECONDARY_MODULE);
-  }
-
   // If warnings are enabled, check that any functions are being split out.
   if (!options.quiet && splitFuncs.size() == 0) {
     std::cerr
@@ -352,7 +346,6 @@ void splitModule(const WasmSplitOptions& options) {
   setCommonSplitConfigs(config, options);
   config.secondaryFuncs.push_back(std::move(splitFuncs));
   config.secondaryNames.push_back("deferred");
-  config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
   auto& secondary = *splitResults.secondaries.begin();
 
