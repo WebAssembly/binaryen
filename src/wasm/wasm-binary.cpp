@@ -789,12 +789,20 @@ void WasmBinaryWriter::writeTableDeclarations() {
   auto num = importInfo->getNumDefinedTables();
   o << U32LEB(num);
   ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
+    if (table->init) {
+      o << uint8_t(BinaryConsts::HasTableInitializer);
+      o << uint8_t(BinaryConsts::TableReservedByte);
+    }
     writeType(table->type);
     writeResizableLimits(table->initial,
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
                          table->is64());
+    if (table->init) {
+      writeExpression(table->init);
+      o << uint8_t(BinaryConsts::End);
+    }
   });
   finishSection(start);
 }
@@ -2281,6 +2289,13 @@ std::string_view WasmBinaryReader::getByteView(size_t size) {
   }
   pos += size;
   return {input.data() + (pos - size), size};
+}
+
+uint8_t WasmBinaryReader::peekInt8() {
+  if (!more()) {
+    throwError("unexpected end of input");
+  }
+  return input[pos];
 }
 
 uint8_t WasmBinaryReader::getInt8() {
@@ -5020,6 +5035,17 @@ void WasmBinaryReader::readTableDeclarations() {
   for (size_t i = 0; i < num; i++) {
     auto [name, isExplicit] = getOrMakeName(
       tableNames, numImports + i, makeName("", i), usedTableNames);
+    bool hasInit = false;
+    if (peekInt8() == BinaryConsts::HasTableInitializer) {
+      // Skip past the peeked byte.
+      getInt8();
+      auto reservedByte = getInt8();
+      if (reservedByte != BinaryConsts::TableReservedByte) {
+        // Byte reserved for future extension, must be zero for now.
+        throwError("Malformed table");
+      }
+      hasInit = true;
+    }
     auto elemType = getType();
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
@@ -5039,6 +5065,10 @@ void WasmBinaryReader::readTableDeclarations() {
     }
     if (pageSize != 0xff) {
       throwError("Tables may not specify a custom page size");
+    }
+    if (hasInit) {
+      auto* init = readExpression();
+      table->init = init;
     }
     wasm.addTable(std::move(table));
   }

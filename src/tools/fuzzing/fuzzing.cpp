@@ -620,12 +620,17 @@ void TranslateToFuzzReader::setupTables() {
     if (wasm.features.hasMemory64() && oneIn(2)) {
       addressType = Type::i64;
     }
+    Expression* init = nullptr;
+    if (wasm.features.hasGC() && oneIn(2)) {
+      init = builder.makeConstantExpression(Literal::makeNull(HeapType::func));
+    }
     auto tablePtr =
       builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"),
                         funcref,
                         initial,
                         max,
-                        addressType);
+                        addressType,
+                        init);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
@@ -929,6 +934,20 @@ void TranslateToFuzzReader::finalizeTable() {
         table->initial = std::max(table->initial, maxOffset);
       });
 
+    if (table->init) {
+      bool hasNonImported = false;
+      for (auto* get : FindAll<GlobalGet>(table->init).list) {
+        if (!wasm.getGlobal(get->name)->imported()) {
+          hasNonImported = true;
+          break;
+        }
+      }
+      if (hasNonImported) {
+        // Table initializers can't reference module-defined globals.
+        table->init = makeConst(table->type);
+      }
+    }
+
     // The code above raises table->initial to a size large enough to accomodate
     // all of its segments, with the intention of avoiding a trap during
     // startup. However a single segment of (say) size 4GB would have a table of
@@ -950,6 +969,9 @@ void TranslateToFuzzReader::finalizeTable() {
     if (!preserveImportsAndExports) {
       // Avoid an imported table (which the fuzz harness would need to handle).
       table->module = table->base = Name();
+      if (table->type.isNonNullable()) {
+        table->init = makeConst(table->type);
+      }
     }
   }
 }

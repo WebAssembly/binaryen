@@ -386,8 +386,8 @@ void test_read_with_feature() {
   BinaryenModuleRef module = BinaryenModuleCreate();
   // Having multiple tables makes this module inherently not MVP compatible
   // and requires the externref feature enabled to parse successfully.
-  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
-  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref(), NULL);
+  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref(), NULL);
 
   BinaryenFeatures features =
     BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
@@ -492,7 +492,7 @@ void test_core() {
   // Tags
   BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
 
-  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref(), NULL);
 
   // Exception handling
 
@@ -525,6 +525,7 @@ void test_core() {
   BinaryenType i16Array;
   BinaryenType funcArray;
   BinaryenType i32Struct;
+  BinaryenType i32StructNonNull;
   {
     TypeBuilderRef tb = TypeBuilderCreate(4);
     TypeBuilderSetArrayType(
@@ -546,6 +547,7 @@ void test_core() {
     i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
     funcArray = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
     i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[3], true);
+    i32StructNonNull = BinaryenTypeFromHeapType(builtHeapTypes[3], false);
   }
 
   // Memory. Add it before creating any memory-using instructions.
@@ -1372,7 +1374,7 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = {BinaryenFunctionGetName(sinker)};
-  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref(), NULL);
   BinaryenAddActiveElementSegment(
     module,
     "0",
@@ -1383,6 +1385,16 @@ void test_core() {
   BinaryenAddPassiveElementSegment(module, "passive", funcNames, 1);
   BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
   BinaryenRemoveElementSegment(module, "p2");
+
+  // Non-nullable table
+  BinaryenAddTable(
+    module,
+    "1",
+    1,
+    1,
+    i32StructNonNull,
+    BinaryenStructNew(
+      module, NULL, 0, BinaryenTypeGetHeapType(i32StructNonNull)));
 
   BinaryenExpressionRef funcrefExpr1 =
     BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType);
@@ -2024,7 +2036,7 @@ void test_for_each() {
                                BinaryenFunctionGetName(fns[2])};
     BinaryenExpressionRef constExprRef =
       BinaryenConst(module, BinaryenLiteralInt32(0));
-    BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
+    BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref(), NULL);
     BinaryenAddActiveElementSegment(
       module, "0", "0", funcNames, 3, constExprRef);
     assert(1 == BinaryenGetNumElementSegments(module));

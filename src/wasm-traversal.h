@@ -179,6 +179,9 @@ struct Walker : public VisitorType {
   }
 
   void walkTable(Table* table) {
+    if (table->init) {
+      walk(table->init);
+    }
     static_cast<SubType*>(this)->visitTable(table);
   }
 
@@ -248,6 +251,11 @@ struct Walker : public VisitorType {
     setModule(module);
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
+    for (auto& curr : module->tables) {
+      if (curr->init) {
+        self->walk(curr->init);
+      }
+    }
     for (auto& curr : module->globals) {
       if (!curr->imported()) {
         self->walk(curr->init);

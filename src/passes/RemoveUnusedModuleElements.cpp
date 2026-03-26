@@ -538,14 +538,19 @@ struct Analyzer {
               }
             });
           break;
-        case ModuleElementKind::Table:
+        case ModuleElementKind::Table: {
           ModuleUtils::iterTableSegments(
             *module, value, [&](ElementSegment* segment) {
               if (!segment->data.empty()) {
                 use({ModuleElementKind::ElementSegment, segment->name});
               }
             });
+          auto* table = module->getTable(value);
+          if (table->init) {
+            use(table->init);
+          }
           break;
+        }
         case ModuleElementKind::DataSegment: {
           auto* segment = module->getDataSegment(value);
           if (segment->offset) {
@@ -758,6 +763,13 @@ struct Analyzer {
       auto* segment = module->getElementSegment(value);
       for (auto* item : segment->data) {
         addReferences(item);
+      }
+    } else if (kind == ModuleElementKind::Table) {
+      auto* table = module->getTable(value);
+      if (table->init) {
+        // TODO: Might be possible to remove the init expression if the type is
+        // nullable.
+        addReferences(table->init);
       }
     }
   }

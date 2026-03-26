@@ -368,6 +368,9 @@ constexpr uint32_t HasBackingArrayMask = 1 << 4;
 constexpr uint32_t HasMemoryOrderMask = 1 << 5;
 constexpr uint32_t HasMemoryIndexMask = 1 << 6;
 
+constexpr uint8_t HasTableInitializer = 0x40;
+constexpr uint8_t TableReservedByte = 0x00;
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f
@@ -1603,6 +1606,7 @@ public:
   bool more() { return pos < input.size(); }
 
   std::string_view getByteView(size_t size);
+  uint8_t peekInt8();
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();
