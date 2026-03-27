@@ -622,9 +622,9 @@ int main(int argc, const char* argv[]) {
 
   // We can write wasm-split manifests that can later be fed to wasm-split to
   // split the merged module back up along the lines of the original modules.
-  // Map functions to their originating modules so we can write this manifest.
+  // Map modules to their functions so we can write the manifest.
   std::string manifestFile;
-  std::unordered_map<Name, Name> functionToModule;
+  std::unordered_map<Name, std::vector<Name>> moduleFuncs;
 
   const std::string WasmMergeOption = "wasm-merge options";
 
@@ -799,9 +799,10 @@ Input source maps can be specified by adding an -ism option right after the modu
       // The functions in the module have been renamed and copied rather than
       // moved, so we can get their final names directly. (We don't need this
       // for the first module because it does not appear in the manifest.)
+      auto& funcs = moduleFuncs[inputFileName];
       for (auto& func : currModule->functions) {
         if (!func->imported()) {
-          functionToModule[func->name] = inputFileName;
+          funcs.push_back(func->name);
         }
       }
 
@@ -852,20 +853,21 @@ Input source maps can be specified by adding an -ism option right after the modu
     // Skip module 0 because it will be the primary module for the split and
     // does not need to appear in the manifest.
     for (size_t i = 1; i < inputFileNames.size(); i++) {
-      const auto& moduleName = inputFileNames[i];
+      auto moduleName = inputFileNames[i];
+      const auto& funcs = moduleFuncs[moduleName];
+      if (funcs.empty()) {
+        continue;
+      }
+
       bool first = true;
-      for (auto& func : merged.functions) {
-        if (!func->imported() && functionToModule[func->name] == moduleName) {
-          if (first) {
-            manifest << moduleName << "\n";
-            first = false;
-          }
-          manifest << func->name.str << "\n";
+      for (auto func : funcs) {
+        if (first) {
+          manifest << moduleName << "\n";
+          first = false;
         }
+        manifest << func << "\n";
       }
-      if (!first) {
-        manifest << "\n";
-      }
+      manifest << "\n";
     }
   }
 
