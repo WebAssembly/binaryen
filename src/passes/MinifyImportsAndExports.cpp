@@ -62,14 +62,19 @@ private:
   void run(Module* module) override {
     // Minify the imported names.
     Names::MinifiedNameGenerator names;
-    std::map<Name, Name> oldToNew;
-    std::map<Name, Name> newToOld;
-    auto process = [&](Name& name) {
-      auto iter = oldToNew.find(name);
+    // Use a key of (module, base) for the old values, to handle colliding
+    // basenames between modules.
+    std::map<std::pair<Name, Name>, Name> oldToNew;
+    std::map<Name, std::pair<Name, Name>> newToOld;
+    // Process a name. This can be the basename of an import, or the full name
+    // of an export. The module name is only used for imports.
+    auto process = [&](Name& name, Name module=Name()) {
+      std::pair<Name, Name> key(module, name);
+      auto iter = oldToNew.find(key);
       if (iter == oldToNew.end()) {
         auto newName = names.getName();
-        oldToNew[name] = newName;
-        newToOld[newName] = name;
+        oldToNew[key] = newName;
+        newToOld[newName] = key;
         name = newName;
       } else {
         name = iter->second;
@@ -82,7 +87,7 @@ private:
       // and wasi, but not custom user things.
       if (minifyModules || curr->module == ENV ||
           curr->module.startsWith("wasi_")) {
-        process(curr->base);
+        process(curr->base, curr->module);
       }
     });
 
@@ -94,8 +99,15 @@ private:
     }
     module->updateMaps();
     // Emit the mapping.
-    for (auto& [new_, old] : newToOld) {
-      std::cout << old.str << " => " << new_.str << '\n';
+    for (auto& [new_, key] : newToOld) {
+      if (key.first) {
+        // A module.base for an import.
+        std::cout << key.first.str << "." << key.second.str << " => " << new_.str
+                  << '\n';
+      } else {
+        // An export.
+        std::cout << key.second.str << " => " << new_.str << '\n';
+      }
     }
 
     if (minifyModules) {
