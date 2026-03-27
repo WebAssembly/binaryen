@@ -390,6 +390,8 @@
 
  ;; CHECK:      (export "call" (func $call))
 
+ ;; CHECK:      (export "call_ref" (func $call_ref))
+
  ;; CHECK:      (func $sub (type $sub) (result i32)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: )
@@ -403,7 +405,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $do_call (result i32)
-  ;; Call $sub using type $super. The result, 42, is returned from this func.
+  ;; Call $sub using type $super. The result, 42, is returned from this
+  ;; function, even though we don't infer an explicit value here (the return-
+  ;; call is unreachable anyhow, and we don't replace an unreachable with a
+  ;; concrete type).
   (return_call_indirect $table (type $super)
    (i32.const 0)
   )
@@ -418,6 +423,29 @@
  (func $call (export "call") (result i32)
   ;; We can infer 42 here.
   (call $do_call)
+ )
+
+ ;; CHECK:      (func $do_call_ref (type $0) (result i32)
+ ;; CHECK-NEXT:  (return_call_ref $sub
+ ;; CHECK-NEXT:   (ref.func $sub)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $do_call_ref (result i32)
+  ;; As above, with a call_ref.
+  (return_call_ref $super
+   (ref.func $sub)
+  )
+ )
+
+ ;; CHECK:      (func $call_ref (type $0) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $do_call_ref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $call_ref (export "call_ref") (result i32)
+  ;; We can infer 42 here.
+  (call $do_call_ref)
  )
 )
 
