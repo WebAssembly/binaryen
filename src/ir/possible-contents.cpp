@@ -876,6 +876,11 @@ struct InfoCollector
           targetType, [&](HeapType subType, Index depth) {
             info.links.push_back({SignatureResultLocation{subType, i},
                                   ExpressionLocation{curr, i}});
+            if (curr->isReturn) {
+              // Send the result to the function's results as well.
+              info.links.push_back({SignatureResultLocation{subType, i},
+                                    ResultLocation{getFunction(), i}});
+            }
           });
       }
     }
