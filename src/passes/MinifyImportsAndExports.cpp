@@ -68,7 +68,7 @@ private:
     std::map<Name, std::pair<Name, Name>> newToOld;
     // Process a name. This can be the basename of an import, or the full name
     // of an export. The module name is only used for imports.
-    auto process = [&](Name& name, Name module=Name()) {
+    auto process = [&](Name& name, Name module = Name()) {
       std::pair<Name, Name> key(module, name);
       auto iter = oldToNew.find(key);
       if (iter == oldToNew.end()) {
@@ -102,8 +102,8 @@ private:
     for (auto& [new_, key] : newToOld) {
       if (key.first) {
         // A module.base for an import.
-        std::cout << key.first.str << "." << key.second.str << " => " << new_.str
-                  << '\n';
+        std::cout << key.first.str << "." << key.second.str << " => "
+                  << new_.str << '\n';
       } else {
         // An export.
         std::cout << key.second.str << " => " << new_.str << '\n';
