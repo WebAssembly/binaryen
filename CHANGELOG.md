@@ -15,6 +15,12 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add support for non-nullable table types and initialization expressions for
+   tables. This comes with a breaking change to C API: `BinaryenAddTable` takes
+   an additional `BinaryenExpressionRef` parameter to provide an initialization
+   expression. This may be set to NULL for tables without an initializer. In JS
+   this parameter is optional and so is not breaking. (#8405)
+
 v128
 ----
 
@@ -36,7 +42,7 @@ v127
    and `setValueI64`, previously took a hi/low pair but now take a single value
    which can be bigint or a number. Passing two values to these APIs will now
    trigger an assertion. (#7984)
-
+ 
 v126
 ----
 

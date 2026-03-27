@@ -3439,7 +3439,12 @@ void PrintSExpression::printTableHeader(Table* curr) {
     o << ' ' << curr->max;
   }
   o << ' ';
-  printType(curr->type) << ')';
+  printType(curr->type);
+  if (curr->init) {
+    o << ' ';
+    visit(curr->init);
+  }
+  o << ')';
 }
 
 void PrintSExpression::visitTable(Table* curr) {

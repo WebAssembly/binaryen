@@ -412,32 +412,26 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'binary.wast',   # Missing data count section validation
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
-    'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Fail to parse data segment offset abbreviation
     'elem.wast',    # Requires modeling empty declarative segments
     'func.wast',    # Duplicate parameter names not properly rejected
-    'global.wast',  # Fail to parse table
     'if.wast',      # Requires more precise unreachable validation
     'imports.wast',  # Requires fixing handling of mutation to imported globals
     'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
-    'instance.wast',  # Requires support for table default elements
     'table64.wast',   # Requires validations for table size
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
-    'ref_is_null.wast',  # Requires support for non-nullable reference types in tables
     'return_call_indirect.wast',  # Requires more precise unreachable validation
     'select.wast',  # Missing validation of type annotation on select
-    'table.wast',  # Requires support for table default elements
     'unreached-invalid.wast',  # Requires more precise unreachable validation
-    'array.wast',  # Requires support for table default elements
+    'array.wast',  # Failure to parse element segment item abbreviation
     'br_if.wast',  # Requires more precise branch validation
     'br_on_cast.wast',  # Requires host references to not be externalized i31refs
     'br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs
     'extern.wast',    # Requires ref.host wast constants
-    'i31.wast',       # Requires support for table default elements
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
     'ref_test.wast',  # Requires host references to not be externalized i31refs
     'struct.wast',    # Fails to roundtrip unnamed types e.g. `(ref 0)`

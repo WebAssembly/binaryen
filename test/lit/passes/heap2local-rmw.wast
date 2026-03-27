@@ -1283,3 +1283,38 @@
     )
   )
 )
+
+(module
+  (type $array (shared (array i8)))
+  ;; CHECK:      (type $struct (shared (struct (field (mut (ref null (shared array)))))))
+  (type $struct (shared (struct (field (mut (ref null (shared array)))))))
+
+  ;; CHECK:      (type $1 (func (param (ref $struct))))
+
+  ;; CHECK:      (func $unreachable-shared-expected (type $1) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-shared-expected (param $struct (ref $struct))
+    (drop
+      ;; This cmpxchg will not be optimized because it is unreachable.
+      (struct.atomic.rmw.cmpxchg $struct 0
+        (local.get $struct)
+        ;; This `expected` allocation does not escape, so it will be optimized.
+        ;; When we convert the array to a struct, we have to make sure it
+        ;; becomes a shared struct so that when we later optimize out the
+        ;; allocation, we know to replace it with a shared null. If we don't, we
+        ;; will end up with a non-shared null here, which would be invalid.
+        (array.new_fixed $array 0)
+        (unreachable)
+      )
+    )
+  )
+)

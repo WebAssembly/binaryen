@@ -332,3 +332,118 @@
     (drop (i32.const 30))
   )
 )
+
+;; As above, but now the table has an initialistion expression
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $foo (func))
+    ;; OPEN_WORLD:      (rec
+    ;; OPEN_WORLD-NEXT:  (type $foo (func))
+    (type $foo (func))
+    ;; CHECK:       (type $bar (func))
+    ;; OPEN_WORLD:       (type $bar (func))
+    (type $bar (func))
+  )
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (table $table 10 funcref (ref.func $foo-in-table))
+  ;; OPEN_WORLD:      (type $2 (func))
+
+  ;; OPEN_WORLD:      (table $table 10 funcref (ref.func $foo-in-table))
+  (table $table 10 funcref (ref.func $foo-in-table))
+  ;; CHECK:      (elem $table (i32.const 1) $bar)
+  ;; OPEN_WORLD:      (elem $table (i32.const 1) $bar)
+  (elem $table (i32.const 1) $bar)
+  ;; CHECK:      (elem declare func $foo-not-in-table)
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $2)
+  ;; CHECK-NEXT:  (call_indirect $table (type $foo)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (table.set $table
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $foo-not-in-table)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $foo-not-in-table)
+
+  ;; OPEN_WORLD:      (export "export" (func $export))
+
+  ;; OPEN_WORLD:      (func $export (type $2)
+  ;; OPEN_WORLD-NEXT:  (call_indirect $table (type $foo)
+  ;; OPEN_WORLD-NEXT:   (i32.const 5)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (table.set $table
+  ;; OPEN_WORLD-NEXT:   (i32.const 7)
+  ;; OPEN_WORLD-NEXT:   (ref.null nofunc)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (ref.func $foo-not-in-table)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $export (export "export")
+    (call_indirect $table (type $foo)
+      (i32.const 5)
+    )
+    (table.set $table
+      (i32.const 7)
+      (ref.null func)
+    )
+    ;; Take the reference of $foo-not-in-table, so that it is referred to but
+    ;; not in the table. The table.set will make our analysis believe it might
+    ;; be there (we do not track the flow of values precisely).
+    (drop
+      (ref.func $foo-not-in-table)
+    )
+  )
+
+  ;; CHECK:      (func $foo-in-table (type $foo)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $foo-in-table (type $foo)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (i32.const 10)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $foo-in-table (type $foo)
+    ;; As above.
+    (drop (i32.const 10))
+  )
+
+  ;; CHECK:      (func $foo-not-in-table (type $foo)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $foo-not-in-table (type $foo)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (i32.const 20)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $foo-not-in-table (type $foo)
+    ;; The reference taken of this function might be table.set'ed, so we can do
+    ;; nothing here.
+    (drop (i32.const 20))
+  )
+
+  ;; CHECK:      (func $bar (type $bar)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $bar (type $bar)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (i32.const 30)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $bar (type $bar)
+    ;; As above.
+    (drop (i32.const 30))
+  )
+)

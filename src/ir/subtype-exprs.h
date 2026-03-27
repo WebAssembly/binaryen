@@ -108,6 +108,11 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(global->init, global->type);
     }
   }
+  void visitTable(Table* table) {
+    if (table->init) {
+      self()->noteSubtype(table->init, table->type);
+    }
+  }
   void visitElementSegment(ElementSegment* seg) {
     if (seg->offset) {
       self()->noteSubtype(seg->type,
