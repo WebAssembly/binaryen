@@ -1,0 +1,6 @@
+(module
+  (import "env" "imported_third" (func $imported_third))
+  (func $third_func (export "third_func")
+    (call $imported_third)
+  )
+)
