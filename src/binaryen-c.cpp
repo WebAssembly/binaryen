@@ -5493,11 +5493,11 @@ uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   return ((Module*)module)->dataSegments.size();
 }
 BinaryenDataSegmentRef BinaryenGetDataSegment(BinaryenModuleRef module,
-                                                const char* segmentName) {
+                                              const char* segmentName) {
   return ((Module*)module)->getDataSegmentOrNull(Name(segmentName));
 }
 BinaryenDataSegmentRef BinaryenGetDataSegmentByIndex(BinaryenModuleRef module,
-                                                       BinaryenIndex index) {
+                                                     BinaryenIndex index) {
   const auto& dataSegments = ((Module*)module)->dataSegments;
   if (dataSegments.size() <= index) {
     Fatal() << "invalid memory segment index.";
