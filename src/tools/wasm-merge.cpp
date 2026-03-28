@@ -859,14 +859,10 @@ Input source maps can be specified by adding an -ism option right after the modu
         continue;
       }
 
-      bool first = true;
-      for (auto func : funcs) {
-        if (first) {
-          manifest << moduleName << "\n";
-          first = false;
-        }
-        manifest << func << "\n";
-      }
+      manifest << moduleName << "\n";                                          
+      for (auto func : funcs) {                                                
+        manifest << func << "\n";                                              
+      } 
       manifest << "\n";
     }
   }
