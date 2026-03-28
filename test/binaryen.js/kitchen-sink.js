@@ -1063,6 +1063,10 @@ function test_binaries_with_features() {
   console.log("module loaded from binary with features:");
   console.log(module.emitText());
   module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, binaryen.Features.MVP);
+  assert(!module.validate());
+  module.dispose();
 }
 
 function test_interpret() {
