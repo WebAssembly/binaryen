@@ -2773,26 +2773,26 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
   /**
-   * Gets the memory segment with the given name.
+   * Gets the data segment with the given name.
    * 
-   * @param {string} name - The name of the memory segment to get.
-   * @returns {number} A MemorySegmentRef referring to the memory segment with the given name, or `0` if no such segment exists.
+   * @param {string} name - The name of the data segment to get.
+   * @returns {number} A DataSegmentRef referring to the data segment with the given name, or `0` if no such segment exists.
    */
-  self['getMemorySegment'] = function(name) {
+  self['getDataSegment'] = function(name) {
     return preserveStack(() => {
-      return Module['_BinaryenGetMemorySegment'](module, strToStack(name));
+      return Module['_BinaryenGetDataSegment'](module, strToStack(name));
     });
   };
   /**
-   * Gets the memory segment at the given index.
+   * Gets the data segment at the given index.
    * 
-   * @param {number} index - The index of the memory segment to get.
-   * @returns {number} A MemorySegmentRef referring to the memory segment at the given index.
+   * @param {number} index - The index of the data segment to get.
+   * @returns {number} A DataSegmentRef referring to the data segment at the given index.
    * 
-   * @throws If no memory segment exists at the given index.
+   * @throws If no data segment exists at the given index.
    */
-  self['getMemorySegmentByIndex'] = function(index) {
-    return Module['_BinaryenGetMemorySegmentByIndex'](module, index);
+  self['getDataSegmentByIndex'] = function(index) {
+    return Module['_BinaryenGetDataSegmentByIndex'](module, index);
   };
   /**
    * Queries information about a memory segment.
@@ -2813,7 +2813,7 @@ function wrapModule(module, self = {}) {
       offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, segment);
     }
     return {
-      'name': UTF8ToString(Module['_BinaryenGetMemorySegmentName'](segment)),
+      'name': UTF8ToString(Module['_BinaryenDataSegmentGetName'](segment)),
       'offset': offset,
       'data': (function(){
         const size = Module['_BinaryenGetMemorySegmentByteLength'](segment);

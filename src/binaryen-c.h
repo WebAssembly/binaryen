@@ -3009,11 +3009,11 @@ BINARYEN_REF(DataSegment);
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
 BINARYEN_API BinaryenDataSegmentRef
-BinaryenGetMemorySegment(BinaryenModuleRef module, const char* segmentName);
+BinaryenGetDataSegment(BinaryenModuleRef module, const char* segmentName);
 BINARYEN_API BinaryenDataSegmentRef
-BinaryenGetMemorySegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
+BinaryenGetDataSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 BINARYEN_API const char*
-BinaryenGetMemorySegmentName(BinaryenDataSegmentRef segment);
+BinaryenDataSegmentGetName(BinaryenDataSegmentRef segment);
 BINARYEN_API uint32_t BinaryenGetMemorySegmentByteOffset(
   BinaryenModuleRef module, BinaryenDataSegmentRef segment);
 BINARYEN_API size_t

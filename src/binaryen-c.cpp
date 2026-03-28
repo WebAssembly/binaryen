@@ -5492,11 +5492,11 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   return ((Module*)module)->dataSegments.size();
 }
-BinaryenDataSegmentRef BinaryenGetMemorySegment(BinaryenModuleRef module,
+BinaryenDataSegmentRef BinaryenGetDataSegment(BinaryenModuleRef module,
                                                 const char* segmentName) {
   return ((Module*)module)->getDataSegmentOrNull(Name(segmentName));
 }
-BinaryenDataSegmentRef BinaryenGetMemorySegmentByIndex(BinaryenModuleRef module,
+BinaryenDataSegmentRef BinaryenGetDataSegmentByIndex(BinaryenModuleRef module,
                                                        BinaryenIndex index) {
   const auto& dataSegments = ((Module*)module)->dataSegments;
   if (dataSegments.size() <= index) {
@@ -5504,7 +5504,7 @@ BinaryenDataSegmentRef BinaryenGetMemorySegmentByIndex(BinaryenModuleRef module,
   }
   return dataSegments[index].get();
 }
-const char* BinaryenGetMemorySegmentName(BinaryenDataSegmentRef segment) {
+const char* BinaryenDataSegmentGetName(BinaryenDataSegmentRef segment) {
   return ((DataSegment*)segment)->name.str.data();
 }
 uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
