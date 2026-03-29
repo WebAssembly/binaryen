@@ -5640,8 +5640,11 @@ Expression* TranslateToFuzzReader::makeStructCmpxchg(Type type) {
     return makeStructGet(type);
   }
   auto* ref = makeTrappingRefUse(structType);
-  auto* expected = make(type);
-  auto* replacement = make(isEq ? eq : type);
+  // For reference fields, expected can be a subtype of eq. Only do use the
+  // extra flexibility occasionally because it makes the expected value less
+  // likely to be equal to the actual value.
+  auto* expected = make(isEq && oneIn(4) ? eq : type);
+  auto* replacement = make(type);
   auto order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
   return builder.makeStructCmpxchg(
     fieldIndex, ref, expected, replacement, order);
