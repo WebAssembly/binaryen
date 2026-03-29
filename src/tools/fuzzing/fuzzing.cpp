@@ -5600,9 +5600,7 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
 Expression* TranslateToFuzzReader::makeStructRMW(Type type) {
   bool isAny =
     type.isRef() &&
-    Type::isSubType(
-      type,
-      Type(HeapTypes::any.getBasic(type.getHeapType().getShared()), Nullable));
+    HeapType(type.getHeapType().getTop()).isMaybeShared(HeapType::any);
   if (type != Type::i32 && type != Type::i64 && !isAny) {
     // Not a valid field type for an RMW operation.
     return makeStructGet(type);
@@ -5628,9 +5626,7 @@ Expression* TranslateToFuzzReader::makeStructRMW(Type type) {
 Expression* TranslateToFuzzReader::makeStructCmpxchg(Type type) {
   bool isEq =
     type.isRef() &&
-    Type::isSubType(
-      type,
-      Type(HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable));
+    HeapType(type.getHeapType().getTop()).isMaybeShared(HeapType::any);
   if (type != Type::i32 && type != Type::i64 && !isEq) {
     // Not a valid field type for a cmpxchg operation.
     return makeStructGet(type);
