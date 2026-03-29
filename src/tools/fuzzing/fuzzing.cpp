@@ -5624,9 +5624,9 @@ Expression* TranslateToFuzzReader::makeStructRMW(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeStructCmpxchg(Type type) {
-  bool isEq =
-    type.isRef() &&
-    HeapType(type.getHeapType().getTop()).isMaybeShared(HeapType::any);
+  bool isShared = type.isRef() && type.getHeapType().isShared();
+  Type eq(HeapTypes::eq.getBasic(isShared ? Shared : Unshared), Nullable);
+  bool isEq = Type::isSubType(type, eq);
   if (type != Type::i32 && type != Type::i64 && !isEq) {
     // Not a valid field type for a cmpxchg operation.
     return makeStructGet(type);
@@ -5641,7 +5641,7 @@ Expression* TranslateToFuzzReader::makeStructCmpxchg(Type type) {
   }
   auto* ref = makeTrappingRefUse(structType);
   auto* expected = make(type);
-  auto* replacement = make(type);
+  auto* replacement = make(isEq ? eq : type);
   auto order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
   return builder.makeStructCmpxchg(
     fieldIndex, ref, expected, replacement, order);
