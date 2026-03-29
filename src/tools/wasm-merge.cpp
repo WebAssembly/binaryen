@@ -620,6 +620,12 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
 
+  // We can write wasm-split manifests that can later be fed to wasm-split to
+  // split the merged module back up along the lines of the original modules.
+  // Map modules to their functions so we can write the manifest.
+  std::string manifestFile;
+  std::unordered_map<Name, std::vector<Name>> moduleFuncs;
+
   const std::string WasmMergeOption = "wasm-merge options";
 
   ToolOptions options("wasm-merge",
@@ -686,6 +692,16 @@ Input source maps can be specified by adding an -ism option right after the modu
          Options::Arguments::One,
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
+         })
+    .add("--output-manifest",
+         "",
+         "Write a wasm-split manifest to the specified file. This manifest can "
+         "be given to wasm-split to split the merged module along the lines of "
+         "the original modules.",
+         WasmMergeOption,
+         Options::Arguments::One,
+         [&manifestFile](Options* o, const std::string& argument) {
+           manifestFile = argument;
          })
     .add("--rename-export-conflicts",
          "-rec",
@@ -780,6 +796,16 @@ Input source maps can be specified by adding an -ism option right after the modu
       // This is a later module: do a full merge.
       mergeInto(*currModule, inputFileName);
 
+      // The functions in the module have been renamed and copied rather than
+      // moved, so we can get their final names directly. (We don't need this
+      // for the first module because it does not appear in the manifest.)
+      auto& funcs = moduleFuncs[inputFileName];
+      for (auto& func : currModule->functions) {
+        if (!func->imported()) {
+          funcs.push_back(func->name);
+        }
+      }
+
       // Validate after each merged module, when we are in pass-debug mode
       // (this can be quadratic time).
       if (PassRunner::getPassDebug()) {
@@ -822,6 +848,25 @@ Input source maps can be specified by adding an -ism option right after the modu
   }
 
   // Output.
+  if (!manifestFile.empty()) {
+    std::ofstream manifest(manifestFile);
+    // Skip module 0 because it will be the primary module for the split and
+    // does not need to appear in the manifest.
+    for (size_t i = 1; i < inputFileNames.size(); i++) {
+      auto moduleName = inputFileNames[i];
+      const auto& funcs = moduleFuncs[moduleName];
+      if (funcs.empty()) {
+        continue;
+      }
+
+      manifest << moduleName << "\n";
+      for (auto func : funcs) {
+        manifest << func << "\n";
+      }
+      manifest << "\n";
+    }
+  }
+
   if (options.extra.count("output") > 0) {
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);

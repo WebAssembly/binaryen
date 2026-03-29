@@ -6,7 +6,7 @@
   (type $none (func))
   (type $cont (cont $none))
 
-  (import "fuzzing-support" "log" (func $log (param i32)))
+  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
   (import "fuzzing-support" "call-export" (func $call-export (param i32 i32)))
 

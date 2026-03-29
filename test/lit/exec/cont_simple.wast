@@ -12,7 +12,7 @@
   (type $f-get-i32 (func (param i32)))
   (type $k-get-i32 (cont $f-get-i32))
 
-  (import "fuzzing-support" "log" (func $log (param i32)))
+  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
   (tag $more)
   (tag $more-i32 (result i32))
