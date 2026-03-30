@@ -2751,6 +2751,35 @@ module loaded from binary form:
  )
 )
 
+module loaded from binary with features:
+(module
+ (type $0 (struct (field (mut i32)) (field (mut f64))))
+ (type $1 (func (result i32)))
+ (global $struct-global (mut (ref null $0)) (struct.new $0
+  (i32.const 42)
+  (f64.const 3.14)
+ ))
+ (func $get-field (type $1) (result i32)
+  (struct.get $0 0
+   (global.get $struct-global)
+  )
+ )
+)
+
+[wasm-validator error in function get-field] unexpected false: struct.get requires gc [--enable-gc], on 
+(struct.get $struct.0 0
+ (global.get $struct-global)
+)
+[wasm-validator error in module] unexpected false: all used types should be allowed, on 
+struct-global
+[wasm-validator error in module] unexpected false: struct.new requires gc [--enable-gc], on 
+(struct.new $struct.0
+ (i32.const 42)
+ (f64.const 3.14)
+)
+[wasm-validator error in module] unexpected false: , on 
+struct-global
+global type requires additional features [--enable-reference-types --enable-gc]
 (module
  (type $0 (func (param i32)))
  (type $1 (func))

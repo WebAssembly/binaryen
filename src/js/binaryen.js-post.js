@@ -3313,6 +3313,14 @@ Module['readBinary'] = function(data) {
   return wrapModule(ptr);
 };
 
+Module['readBinaryWithFeatures'] = function(data, features) {
+  const buffer = _malloc(data.length);
+  HEAP8.set(data, buffer);
+  const ptr = handleFatalError(() => Module['_BinaryenModuleReadWithFeatures'](buffer, data.length, features));
+  _free(buffer);
+  return wrapModule(ptr);
+};
+
 // Parses text format to a module
 Module['parseText'] = function(text) {
   const buffer = _malloc(text.length + 1);

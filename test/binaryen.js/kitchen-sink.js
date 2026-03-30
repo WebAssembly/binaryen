@@ -1020,6 +1020,55 @@ function test_binaries() {
   module.dispose();
 }
 
+function test_binaries_with_features() {
+  var builder = new binaryen.TypeBuilder(1);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+    { type: binaryen.f64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [structHeapType] = builder.buildAndDispose();
+  var structType = binaryen.getTypeFromHeapType(structHeapType, true);
+
+  var features = binaryen.Features.ReferenceTypes | binaryen.Features.GC;
+  module = new binaryen.Module();
+  module.setFeatures(features);
+
+  module.addGlobal("struct-global",
+    structType,
+    true,
+    module.struct.new(
+      [module.i32.const(42), module.f64.const(3.14)],
+      binaryen.getHeapType(structType)
+    )
+  );
+
+  module.addFunction("get-field", binaryen.none, binaryen.i32, [],
+    module.struct.get(
+      0,
+      module.global.get("struct-global", structType),
+      binaryen.i32,
+      false
+    )
+  );
+
+  assert(module.validate());
+  binaryen.setDebugInfo(true);
+  var buffer = module.emitBinary();
+  binaryen.setDebugInfo(false);
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, features);
+
+  assert(module.validate());
+  console.log("module loaded from binary with features:");
+  console.log(module.emitText());
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, binaryen.Features.MVP);
+  assert(!module.validate());
+  module.dispose();
+}
+
 function test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
   module = new binaryen.Module();
@@ -1230,6 +1279,7 @@ test_ids();
 test_core();
 test_relooper();
 test_binaries();
+test_binaries_with_features();
 test_interpret();
 test_nonvalid();
 test_parsing();
