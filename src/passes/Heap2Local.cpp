@@ -1387,9 +1387,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // Convert the ArraySet into a StructSet.
-    // TODO: Handle atomic array accesses.
-    replaceCurrent(builder.makeStructSet(
-      index, curr->ref, curr->value, MemoryOrder::Unordered));
+    replaceCurrent(
+      builder.makeStructSet(index, curr->ref, curr->value, curr->order));
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -1408,9 +1407,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // Convert the ArrayGet into a StructGet.
-    // TODO: Handle atomic array accesses.
     replaceCurrent(builder.makeStructGet(
-      index, curr->ref, MemoryOrder::Unordered, curr->type, curr->signed_));
+      index, curr->ref, curr->order, curr->type, curr->signed_));
   }
 
   void visitArrayRMW(ArrayRMW* curr) {
