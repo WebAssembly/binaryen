@@ -185,17 +185,17 @@ public:
     }
   }
 
-  size_t count(const T& x) const {
+  bool contains(const T& x) const {
     if (usingFixed()) {
       // Do a linear search.
       for (size_t i = 0; i < fixed.used; i++) {
         if (fixed.storage[i] == x) {
-          return 1;
+          return true;
         }
       }
-      return 0;
+      return false;
     } else {
-      return flexible.count(x);
+      return flexible.find(x) != flexible.end();
     }
   }
 
@@ -222,11 +222,11 @@ public:
     if (usingFixed()) {
       return std::all_of(fixed.storage.begin(),
                          fixed.storage.begin() + fixed.used,
-                         [&other](const T& x) { return other.count(x); });
+                         [&other](const T& x) { return other.contains(x); });
     } else if (other.usingFixed()) {
       return std::all_of(other.fixed.storage.begin(),
                          other.fixed.storage.begin() + other.fixed.used,
-                         [this](const T& x) { return count(x); });
+                         [this](const T& x) { return contains(x); });
     } else {
       return flexible == other.flexible;
     }

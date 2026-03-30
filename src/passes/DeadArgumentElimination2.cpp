@@ -1496,7 +1496,7 @@ void DAE2::collectStats() {
       if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
         auto [funcIndex, paramIndex] = *loc;
         for (auto loc : parent.funcInfos[funcIndex].callerParams[paramIndex]) {
-          if (optimizedNodes.count(loc)) {
+          if (optimizedNodes.contains(loc)) {
             push(loc);
           }
         }
@@ -1505,7 +1505,7 @@ void DAE2::collectStats() {
         if (auto it = parent.typeTreeInfos.find(funcType);
             it != parent.typeTreeInfos.end()) {
           for (auto loc : it->second.callerParams[paramIndex]) {
-            if (optimizedNodes.count(loc)) {
+            if (optimizedNodes.contains(loc)) {
               push(loc);
             }
           }

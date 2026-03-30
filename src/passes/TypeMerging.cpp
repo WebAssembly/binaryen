@@ -382,7 +382,7 @@ bool TypeMerging::merge(MergeKind kind) {
     auto chain = type.getDescriptorChain();
     bool hasCast =
       std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
-        return castTypes.count(t);
+        return castTypes.contains(t);
       });
     if (hasCast || !privateTypes.count(type)) {
       ensurePartition(type);
@@ -396,7 +396,7 @@ bool TypeMerging::merge(MergeKind kind) {
           super &&
           std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
             auto super = t.getDeclaredSuperType();
-            return super && exactCastTypes.count(*super);
+            return super && exactCastTypes.contains(*super);
           });
         if (!super || !shapeEq(type, *super) || superHasExactCast) {
           // Create a new partition for this type and bail.

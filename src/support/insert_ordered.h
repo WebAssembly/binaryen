@@ -74,6 +74,7 @@ template<typename T> struct InsertOrderedSet {
   }
 
   size_t count(const T& val) const { return Map.count(val); }
+  bool contains(const T& val) const { return Map.find(val) != Map.end(); }
 
   InsertOrderedSet() = default;
   InsertOrderedSet(const InsertOrderedSet& other) { *this = other; }
@@ -160,6 +161,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
   size_t size() const { return Map.size(); }
   bool empty() const { return Map.empty(); }
   size_t count(const Key& k) const { return Map.count(k); }
+  bool contains(const Key& k) const { return Map.find(k) != Map.end(); }
 
   InsertOrderedMap() = default;
   InsertOrderedMap(const InsertOrderedMap& other) {
