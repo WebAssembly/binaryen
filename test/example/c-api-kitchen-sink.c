@@ -2020,7 +2020,7 @@ void test_for_each() {
                       0,
                       makeInt32(module, expected_offsets[1]));
     assert(BinaryenGetDataSegment(module, segmentNames[0]) != NULL);
-    assert(BinaryenGetDataSegment(module, "NonExistantSegment") == NULL);
+    assert(BinaryenGetDataSegment(module, "NonExistentSegment") == NULL);
     for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
       char out[15] = {};
       BinaryenDataSegmentRef segment = BinaryenGetDataSegmentByIndex(module, i);
