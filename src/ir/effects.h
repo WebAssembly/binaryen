@@ -1431,6 +1431,97 @@ public:
     assert(!transfersControlFlow());
   }
 
+  int count() const {
+    size_t count = 0;
+    auto& effects = *this;
+
+    if (effects.branchesOut)
+      count++;
+    if (effects.calls)
+      count++;
+
+    // Size-based effects (counted as 1 if not empty)
+    if (!effects.localsRead.empty())
+      count++;
+    if (!effects.localsWritten.empty())
+      count++;
+    if (!effects.mutableGlobalsRead.empty())
+      count++;
+    if (!effects.globalsWritten.empty())
+      count++;
+
+    if (effects.readsMemory)
+      count++;
+    if (effects.writesMemory)
+      count++;
+    if (effects.readsSharedMemory)
+      count++;
+    if (effects.writesSharedMemory)
+      count++;
+    if (effects.readsTable)
+      count++;
+    if (effects.writesTable)
+      count++;
+    if (effects.readsMutableStruct)
+      count++;
+    if (effects.writesStruct)
+      count++;
+    if (effects.readsSharedMutableStruct)
+      count++;
+    if (effects.writesSharedStruct)
+      count++;
+    if (effects.readsMutableArray)
+      count++;
+    if (effects.writesArray)
+      count++;
+    if (effects.readsSharedMutableArray)
+      count++;
+    if (effects.writesSharedArray)
+      count++;
+    if (effects.trap)
+      count++;
+    if (effects.implicitTrap)
+      count++;
+
+    // Order-based effects
+    if (effects.readOrder != wasm::MemoryOrder::Unordered)
+      count++;
+    if (effects.writeOrder != wasm::MemoryOrder::Unordered)
+      count++;
+
+    if (effects.throws_)
+      count++;
+    if (effects.tryDepth)
+      count++;
+    if (effects.catchDepth)
+      count++;
+    if (effects.danglingPop)
+      count++;
+    if (effects.mayNotReturn)
+      count++;
+    if (effects.hasReturnCallThrow)
+      count++;
+
+    // Method-based checks
+    // if (effects.accessesLocal()) count++;
+    // if (effects.accessesMutableGlobal()) count++;
+    // if (effects.accessesMemory()) count++;
+    // if (effects.accessesTable()) count++;
+    // if (effects.accessesMutableStruct()) count++;
+    // if (effects.accessesArray()) count++;
+    // if (effects.throws()) count++;
+    // if (effects.transfersControlFlow()) count++;
+    // if (effects.writesGlobalState()) count++;
+    // if (effects.readsMutableGlobalState()) count++;
+    // if (effects.hasNonTrapSideEffects()) count++;
+    // if (effects.hasSideEffects()) count++;
+    // if (effects.hasUnremovableSideEffects()) count++;
+    // if (effects.hasAnything()) count++;
+    // if (effects.hasExternalBreakTargets()) count++;
+
+    return count;
+  }
+
 private:
   void post() {
     assert(tryDepth == 0);
@@ -1460,7 +1551,7 @@ public:
 } // namespace wasm
 
 namespace std {
-std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects);
+std::ostream& operator<<(std::ostream& o, const wasm::EffectAnalyzer& effects);
 } // namespace std
 
 #endif // wasm_ir_effects_h

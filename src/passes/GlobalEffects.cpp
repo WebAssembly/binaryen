@@ -84,7 +84,7 @@ struct GenerateGlobalEffects : public Pass {
                 // worst. To do so, clear the effects, which indicates nothing
                 // is known (so anything is possible).
                 // TODO: We could group effects by function type etc.
-                funcInfo.effects.reset();
+                // funcInfo.effects.reset();
               } else {
                 // No call here, but update throwing if we see it. (Only do so,
                 // however, if we have effects; if we cleared it - see before -

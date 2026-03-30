@@ -818,7 +818,7 @@ public:
   }
 
   // Print the expression to stderr. Meant for use while debugging.
-  void dump() const;
+  void dump(std::ostream& o = std::cout) const;
 };
 
 const char* getExpressionName(Expression* curr);

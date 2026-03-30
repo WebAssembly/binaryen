@@ -54,11 +54,34 @@ struct StoreInfo {
   // duplicate store, and this would definitely be dead if it weren't for these
   // effects (AND it's possible that there are conflicting gets as well).
   std::optional<EffectAnalyzer> conflictingEffects = std::nullopt;
-};
 
-enum class Barrier {
-  None,
-  Branch,
+  friend std::ostream& operator<<(std::ostream& os, const StoreInfo& info) {
+    os << "StoreInfo { ";
+
+    // Handle the pointer to StructSet
+    os << "store: ";
+    if (info.store) {
+      os << *info.store;
+    } else {
+      os << "nullptr";
+    }
+
+    os << ", duplicateStores: " << info.duplicateStores;
+    os << ", conflictingGets: " << info.conflictingGets;
+
+    // Handle the std::optional EffectAnalyzer
+    os << ", conflictingEffects: ";
+    if (info.conflictingEffects.has_value()) {
+      os << *info.conflictingEffects;
+    } else {
+      os << "none";
+    }
+
+    os << " }";
+    return os;
+  }
+
+  // }
 };
 
 using Info = std::variant<StoreInfo, EffectAnalyzer>;
@@ -102,6 +125,7 @@ class DeadStoreEliminationPass : public Pass {
               barriers.mergeIn(*barrier);
             }
           }
+          std::cout << "Should have got here twice\n";
           storeInfos.push_back(StoreInfo{structSet});
         } else if (const StructGet* structGet = inst->dynCast<StructGet>()) {
           for (auto it = storeInfos.rbegin(); it != storeInfos.rend(); ++it) {
@@ -123,8 +147,15 @@ class DeadStoreEliminationPass : public Pass {
             getPassOptions(), *module, const_cast<Expression*>(inst));
           // Add all the possible effects here
           // Maybe prune the ones that matter from effects
-          if (effects.branchesOut || effects.calls || effects.throws() || (!getPassOptions().trapsNeverHappen && effects.trap)) {
-            storeInfos.push_back(effects);
+          if (effects.branchesOut || effects.calls || effects.throws() ||
+              (!getPassOptions().trapsNeverHappen && effects.trap)) {
+            ShallowEffectAnalyzer prunedEffects(getPassOptions(), *module);
+            prunedEffects.branchesOut = effects.branchesOut;
+            prunedEffects.calls = effects.calls;
+            prunedEffects.throws_ = effects.throws_;
+            prunedEffects.delegateTargets = effects.delegateTargets;
+            // trap left out because we're using TNH in practice for now
+            storeInfos.push_back(prunedEffects);
           }
         }
       }
@@ -136,10 +167,16 @@ class DeadStoreEliminationPass : public Pass {
       }
 
       auto& storeInfo = std::get<StoreInfo>(info);
-      
+
+      std::cout << storeInfo << "\n";
+
+      // When running on the small binary and adding a throw, we can tell that
+      // the store is not dead but the effects don't print out for some reason.
       if (storeInfo.conflictingEffects) {
         std::lock_guard _(m);
-        std::cout<<*const_cast<EffectAnalyzer*>(&*storeInfo.conflictingEffects);
+        std::cout << "??\n";
+        // std::cout<<*const_cast<EffectAnalyzer*>(&*storeInfo.conflictingEffects);
+        std::cout << *storeInfo.conflictingEffects;
       }
       // if (storeInfo.duplicateStores && !storeInfo.conflictingGets &&
       //   !storeInfo.conflictingEffects) {

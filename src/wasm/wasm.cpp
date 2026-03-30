@@ -124,7 +124,7 @@ Name TUPLE("tuple");
 
 // Expressions
 
-void Expression::dump() const { std::cout << *this << '\n'; }
+void Expression::dump(std::ostream& o) const { o << *this << '\n'; }
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
