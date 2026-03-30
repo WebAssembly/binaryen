@@ -39,9 +39,9 @@
 #include <ir/import-utils.h>
 #include <ir/module-utils.h>
 #include <ir/names.h>
-#include <support/string.h>
 #include <pass.h>
 #include <shared-constants.h>
+#include <support/string.h>
 #include <wasm.h>
 
 namespace wasm {
