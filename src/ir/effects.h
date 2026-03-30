@@ -57,6 +57,9 @@ public:
     walk(func);
   }
 
+  // EffectAnalyzer(const EffectAnalyzer&) = default;
+  // EffectAnalyzer& operator=(const EffectAnalyzer&) = default;
+
   bool ignoreImplicitTraps : 1;
   bool trapsNeverHappen : 1;
 

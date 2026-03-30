@@ -45,11 +45,15 @@ struct StoreInfo {
   const StructSet* store = nullptr;
   int duplicateStores = 0;
 
-  // A struct.get observed this store. It may or may not be dead besides that (check `duplicateStores` for that) but it is definitely not dead because of the get.
+  // A struct.get observed this store. It may or may not be dead besides that
+  // (check `duplicateStores` for that) but it is definitely not dead because of
+  // the get.
   int conflictingGets = 0;
 
-
-  bool conflictingEffects = 0;
+  // This is counted differently. If this is set, then there is definitely a
+  // duplicate store, and this would definitely be dead if it weren't for these
+  // effects (AND it's possible that there are conflicting gets as well).
+  std::optional<EffectAnalyzer> conflictingEffects = std::nullopt;
 };
 
 enum class Barrier {
@@ -57,7 +61,7 @@ enum class Barrier {
   Branch,
 };
 
-using Info = std::variant<StoreInfo, Barrier>;
+using Info = std::variant<StoreInfo, EffectAnalyzer>;
 
 class DeadStoreEliminationPass : public Pass {
   virtual std::unique_ptr<Pass> create() {
@@ -78,20 +82,24 @@ class DeadStoreEliminationPass : public Pass {
     for (auto& block : cfg) {
       for (const auto* inst : block) {
         if (const StructSet* structSet = inst->dynCast<StructSet>()) {
-          std::vector<Barrier> barriers;
+          // std::vector<Barrier> barriers;
+          EffectAnalyzer barriers(getPassOptions(), *module);
+          assert(!barriers.hasAnything());
+
           for (auto it = storeInfos.rbegin(); it != storeInfos.rend(); ++it) {
             if (auto* storeInfo = std::get_if<StoreInfo>(&*it)) {
-              if (localGraph.equalValues(structSet->ref, storeInfo->store->ref) &&
+              if (localGraph.equalValues(structSet->ref,
+                                         storeInfo->store->ref) &&
                   structSet->index == storeInfo->store->index) {
                 storeInfo->duplicateStores++;
 
-                if (!barriers.empty()) {
-                  storeInfo->conflictingEffects = true;
+                if (barriers.hasAnything()) {
+                  storeInfo->conflictingEffects.emplace(barriers);
                 }
                 break;
               }
-            } else if (auto* barrier = std::get_if<Barrier>(&*it)) {
-              barriers.push_back(*barrier);
+            } else if (auto* barrier = std::get_if<EffectAnalyzer>(&*it)) {
+              barriers.mergeIn(*barrier);
             }
           }
           storeInfos.push_back(StoreInfo{structSet});
@@ -111,9 +119,12 @@ class DeadStoreEliminationPass : public Pass {
             }
           }
         } else {
-          ShallowEffectAnalyzer effects(getPassOptions(), *module, const_cast<Expression*>(inst));
-          if (effects.branchesOut) {
-            storeInfos.push_back(Barrier::Branch);
+          ShallowEffectAnalyzer effects(
+            getPassOptions(), *module, const_cast<Expression*>(inst));
+          // Add all the possible effects here
+          // Maybe prune the ones that matter from effects
+          if (effects.branchesOut || effects.calls || effects.throws() || (!getPassOptions().trapsNeverHappen && effects.trap)) {
+            storeInfos.push_back(effects);
           }
         }
       }
@@ -125,11 +136,16 @@ class DeadStoreEliminationPass : public Pass {
       }
 
       auto& storeInfo = std::get<StoreInfo>(info);
-
-      if (storeInfo.duplicateStores && !storeInfo.conflictingGets && !storeInfo.conflictingEffects) {
+      
+      if (storeInfo.conflictingEffects) {
         std::lock_guard _(m);
-        std::cout<<storeInfo.duplicateStores<<"\n";
+        std::cout<<*const_cast<EffectAnalyzer*>(&*storeInfo.conflictingEffects);
       }
+      // if (storeInfo.duplicateStores && !storeInfo.conflictingGets &&
+      //   !storeInfo.conflictingEffects) {
+      //   std::lock_guard _(m);
+      //   std::cout << storeInfo.duplicateStores << "\n";
+      // }
     }
   }
 };
