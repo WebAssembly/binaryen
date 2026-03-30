@@ -2598,6 +2598,12 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (typeStructFields.find(type) != typeStructFields.end()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeStructGet);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                    FeatureSet::Atomics | FeatureSet::SharedEverything,
+                  &Self::makeStructRMW);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                    FeatureSet::Atomics | FeatureSet::SharedEverything,
+                  &Self::makeStructCmpxchg);
     }
     if (typeArrays.find(type) != typeArrays.end()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
@@ -5583,8 +5589,65 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto [structType, fieldIndex] = pick(structFields);
   auto* ref = makeTrappingRefUse(structType);
   auto signed_ = maybeSignedGet(structType.getStruct().fields[fieldIndex]);
-  return builder.makeStructGet(
-    fieldIndex, ref, MemoryOrder::Unordered, type, signed_);
+  auto order = MemoryOrder::Unordered;
+  if (wasm.features.hasAtomics() && wasm.features.hasSharedEverything() &&
+      oneIn(2)) {
+    order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  }
+  return builder.makeStructGet(fieldIndex, ref, order, type, signed_);
+}
+
+Expression* TranslateToFuzzReader::makeStructRMW(Type type) {
+  bool isAny =
+    type.isRef() &&
+    HeapType(type.getHeapType().getTop()).isMaybeShared(HeapType::any);
+  if (type != Type::i32 && type != Type::i64 && !isAny) {
+    // Not a valid field type for an RMW operation.
+    return makeStructGet(type);
+  }
+  auto& structFields = typeStructFields[type];
+  assert(!structFields.empty());
+  auto [structType, fieldIndex] = pick(structFields);
+  const auto& field = structType.getStruct().fields[fieldIndex];
+  if (field.isPacked() || field.mutable_ == Immutable) {
+    // Cannot RMW a packed or immutable field.
+    return makeStructGet(type);
+  }
+  AtomicRMWOp op = RMWXchg;
+  if (type == Type::i32 || type == Type::i64) {
+    op = pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg);
+  }
+  auto* ref = makeTrappingRefUse(structType);
+  auto* value = make(type);
+  auto order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  return builder.makeStructRMW(op, fieldIndex, ref, value, order);
+}
+
+Expression* TranslateToFuzzReader::makeStructCmpxchg(Type type) {
+  bool isShared = type.isRef() && type.getHeapType().isShared();
+  Type eq(HeapTypes::eq.getBasic(isShared ? Shared : Unshared), Nullable);
+  bool isEq = Type::isSubType(type, eq);
+  if (type != Type::i32 && type != Type::i64 && !isEq) {
+    // Not a valid field type for a cmpxchg operation.
+    return makeStructGet(type);
+  }
+  auto& structFields = typeStructFields[type];
+  assert(!structFields.empty());
+  auto [structType, fieldIndex] = pick(structFields);
+  const auto& field = structType.getStruct().fields[fieldIndex];
+  if (field.isPacked() || field.mutable_ == Immutable) {
+    // Cannot RMW a packed or immutable field.
+    return makeStructGet(type);
+  }
+  auto* ref = makeTrappingRefUse(structType);
+  // For reference fields, expected can be a subtype of eq. Only do use the
+  // extra flexibility occasionally because it makes the expected value less
+  // likely to be equal to the actual value.
+  auto* expected = make(isEq && oneIn(4) ? eq : type);
+  auto* replacement = make(type);
+  auto order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  return builder.makeStructCmpxchg(
+    fieldIndex, ref, expected, replacement, order);
 }
 
 Expression* TranslateToFuzzReader::makeStructSet(Type type) {
@@ -5596,7 +5659,12 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
   auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
-  return builder.makeStructSet(fieldIndex, ref, value, MemoryOrder::Unordered);
+  auto order = MemoryOrder::Unordered;
+  if (wasm.features.hasAtomics() && wasm.features.hasSharedEverything() &&
+      oneIn(2)) {
+    order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  }
+  return builder.makeStructSet(fieldIndex, ref, value, order);
 }
 
 // Make a bounds check for an array operation, given a ref + index. An optional
