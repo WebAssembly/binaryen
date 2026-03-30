@@ -3,7 +3,9 @@
   (import "env"   "table" (table $0 4 funcref))
   (import "env"   "longname1" (func $internal1))
   (import "env"   "longname2" (func $internal2))
-  (import "env"   "longname3" (func $internal3))  ;; ^ note overlap
-  (import "other" "longname3" (func $internal3b)) ;; v in basename
+
+  (import "env"   "longname3" (func $internal3))  ;; \ note overlap
+  (import "other" "longname3" (func $internal3b)) ;; / in basename
+
   (import "other" "longname4" (func $internal4))
 )

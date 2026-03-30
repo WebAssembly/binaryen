@@ -100,20 +100,21 @@ private:
     }
     module->updateMaps();
 
-    // Emit the mapping in JSON format.
+    // Emit the mapping.
     std::cout << "{\n";
     std::cout << " \"imports\": [";
     bool first = true;
     for (auto& [new_, key] : newToOld) {
       if (key.first) {
         if (first) {
-          std::cout << ',';
           first = false;
+        } else {
+          std::cout << ',';
         }
-        std::cout << "\n  [\"";
-        String::printEscapedJSON(std::cout, key.first.str) << "\", ";
-        String::printEscapedJSON(std::cout, key.second.str) << "\", ";
-        String::printEscapedJSON(std::cout, new_.str) << "\"]";
+        std::cout << "\n  [";
+        String::printEscaped(std::cout, key.first.str) << ", ";
+        String::printEscaped(std::cout, key.second.str) << ", ";
+        String::printEscaped(std::cout, new_.str) << "]";
       }
     }
     std::cout << "\n ],\n\"exports\": [";
@@ -121,16 +122,17 @@ private:
     for (auto& [new_, key] : newToOld) {
       if (!key.first) {
         if (first) {
-          std::cout << ',';
           first = false;
+        } else {
+          std::cout << ',';
         }
-        std::cout << "\n  [\"";
-        String::printEscapedJSON(std::cout, key.second.str) << "\", ";
-        String::printEscapedJSON(std::cout, new_.str) << "\"]";
+        std::cout << "\n  [";
+        String::printEscaped(std::cout, key.second.str) << ", ";
+        String::printEscaped(std::cout, new_.str) << "]";
       }
     }
-    std::cout << "\n ]\n;";
-    std::cout << "}";
+    std::cout << "\n ]\n";
+    std::cout << "}\n";
 
     if (minifyModules) {
       doMinifyModules(module);

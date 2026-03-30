@@ -1,10 +1,16 @@
-env.memory => a
-env.table => b
-env.longname1 => c
-env.longname2 => d
-env.longname3 => e
-other.longname3 => f
-other.longname4 => g
+{
+ "imports": [
+  ["env", "memory", "a"],
+  ["env", "table", "b"],
+  ["env", "longname1", "c"],
+  ["env", "longname2", "d"],
+  ["env", "longname3", "e"],
+  ["other", "longname3", "f"],
+  ["other", "longname4", "g"]
+ ],
+"exports": [
+ ]
+}
 (module
  (type $0 (func))
  (import "a" "a" (memory $0 256 256))
