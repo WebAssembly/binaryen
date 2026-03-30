@@ -1243,9 +1243,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // it is not possible that `ref` will be processed later. We therefore do
       // not need to do the extra bookkeeping that we needed to do for
       // StructCmpxchg.
-      // analyzer.parents.setParent(curr->ref, setRefScratch);
-      // analyzer.scratchInfo.insert({setRefScratch, getRefScratch});
-      // analyzer.parents.setParent(getRefScratch, arrayGet);
       return;
     }
   }
@@ -1493,7 +1490,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // The `expected` value must be getting optimized. Since the accessed object
     // is remaining an array for now, do not change anything. The ArrayCmpxchg
-    // will be optimized later by Heap2Local.
+    // will be optimized later by Struct2Local.
     return;
   }
 
