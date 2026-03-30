@@ -2768,14 +2768,14 @@ void FunctionValidator::visitElemDrop(ElemDrop* curr) {
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
-    shouldBeTrue(delegateTargetNames.count(name) != 0,
+    shouldBeTrue(delegateTargetNames.contains(name),
                  curr,
                  "all delegate targets must be valid");
   }
 }
 
 void FunctionValidator::noteRethrow(Name name, Expression* curr) {
-  shouldBeTrue(rethrowTargetNames.count(name) != 0,
+  shouldBeTrue(rethrowTargetNames.contains(name),
                curr,
                "all rethrow targets must be valid");
 }
@@ -4447,7 +4447,7 @@ void FunctionValidator::validateResumeHandlers(
       // But we cannot check this here because we do not know what type the
       // block named $label expects. Save the tag to check when we visit the
       // block later.
-      if (!shouldBeTrue(breakTypes.count(labels[i]) != 0,
+      if (!shouldBeTrue(breakTypes.contains(labels[i]),
                         curr,
                         "all resume targets must be valid")) {
         return;
@@ -4989,7 +4989,7 @@ void validateExports(Module& module, ValidationInfo& info) {
       WASM_UNREACHABLE("invalid ExternalKind");
     }
     Name exportName = exp->name;
-    info.shouldBeFalse(exportNames.count(exportName) > 0,
+    info.shouldBeFalse(exportNames.contains(exportName),
                        exportName,
                        "module exports must be unique");
     exportNames.insert(exportName);
@@ -5023,7 +5023,7 @@ void validateGlobals(Module& module, ValidationInfo& info) {
       for (auto* get : FindAll<GlobalGet>(curr->init).list) {
         auto* global = module.getGlobalOrNull(get->name);
         info.shouldBeTrue(
-          global && (seen.count(global) || global->imported()),
+          global && (seen.contains(global) || global->imported()),
           curr->init,
           "global initializer should only refer to previous globals");
       }

@@ -144,7 +144,7 @@ public:
   }
 
   Literal getImportedFunction(Function* import) override {
-    if (linkedInstances.count(import->module)) {
+    if (linkedInstances.contains(import->module)) {
       return getImportInstance(import)->getExportedFunction(import->base);
     }
     auto f = [import, this](const Literals& arguments) -> Flow {

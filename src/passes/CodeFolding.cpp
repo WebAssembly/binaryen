@@ -209,7 +209,7 @@ struct CodeFolding
     if (!curr->name.is()) {
       return;
     }
-    if (unoptimizables.count(curr->name) > 0) {
+    if (unoptimizables.contains(curr->name)) {
       return;
     }
     auto iter = breakTails.find(curr->name);
@@ -356,10 +356,10 @@ private:
     }
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
-      if (tail.expr && modifieds.count(tail.expr) > 0) {
+      if (tail.expr && modifieds.contains(tail.expr)) {
         return;
       }
-      if (modifieds.count(tail.block) > 0) {
+      if (modifieds.contains(tail.block)) {
         return;
       }
       // if we were not modified, then we should be valid for processing
@@ -549,10 +549,10 @@ private:
       std::remove_if(tails.begin(),
                      tails.end(),
                      [&](Tail& tail) {
-                       if (tail.expr && modifieds.count(tail.expr) > 0) {
+                       if (tail.expr && modifieds.contains(tail.expr)) {
                          return true;
                        }
-                       if (tail.block && modifieds.count(tail.block) > 0) {
+                       if (tail.block && modifieds.contains(tail.block)) {
                          return true;
                        }
                        return false;

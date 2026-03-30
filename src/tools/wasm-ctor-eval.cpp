@@ -764,7 +764,7 @@ private:
           }
 
           if (auto* get = child->dynCast<GlobalGet>()) {
-            if (!readableGlobals.count(get->name)) {
+            if (!readableGlobals.contains(get->name)) {
               // This get cannot be read - it is a global that appears after
               // us - and so we must fix it up, using the method mentioned
               // before (setting it to null now, and later in the start
@@ -1417,7 +1417,7 @@ void evalCtors(Module& wasm,
       // time and undo any side effects here. Instead, if we will need the
       // export, disallow things that can block serialization, if we may end up
       // needing to serialize.
-      bool keeping = keptExportsSet.count(ctor);
+      bool keeping = keptExportsSet.contains(ctor);
       if (!keeping) {
         instance.allowContNew = true;
       } else {
@@ -1631,7 +1631,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.contains("output")) {
     if (options.debug) {
       std::cout << "writing..." << std::endl;
     }

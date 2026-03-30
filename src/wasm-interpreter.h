@@ -4155,7 +4155,7 @@ public:
     Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
     if (offsetVal + sizeVal > 0 &&
-        droppedElementSegments.count(curr->segment)) {
+        droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in table.init");
     }
     if (offsetVal + sizeVal > segment->data.size()) {
@@ -4573,7 +4573,8 @@ public:
     Address offsetVal(offset.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 &&
+        droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
     if (offsetVal + sizeVal > segment->data.size()) {
@@ -4690,7 +4691,7 @@ public:
     if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }
-    if (droppedDataSegments.count(curr->segment) && end > 0) {
+    if (droppedDataSegments.contains(curr->segment) && end > 0) {
       trap("dropped segment access in array.new_data");
     }
     contents.reserve(size);
@@ -4717,7 +4718,7 @@ public:
     if (end > seg.data.size()) {
       trap("out of bounds segment access in array.new_elem");
     }
-    if (end > 0 && droppedElementSegments.count(curr->segment)) {
+    if (end > 0 && droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.new_elem");
     }
     contents.reserve(size);
@@ -4754,7 +4755,8 @@ public:
     if (offsetVal + readSize > seg->data.size()) {
       trap("out of bounds segment access in array.init_data");
     }
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 &&
+        droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_data");
     }
     for (size_t i = 0; i < sizeVal; i++) {
@@ -4788,7 +4790,7 @@ public:
     if (max > seg->data.size()) {
       trap("out of bounds segment access in array.init_elem");
     }
-    if (max > 0 && droppedElementSegments.count(curr->segment)) {
+    if (max > 0 && droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_elem");
     }
     for (size_t i = 0; i < sizeVal; i++) {

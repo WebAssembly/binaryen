@@ -263,7 +263,7 @@ struct PassOptions {
   }
 
 private:
-  bool hasArgument(std::string key) { return arguments.count(key) > 0; }
+  bool hasArgument(std::string key) { return arguments.contains(key); }
 
   std::string getArgument(std::string key, std::string errorTextIfMissing) {
     if (!hasArgument(key)) {

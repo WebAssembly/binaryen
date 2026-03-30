@@ -296,7 +296,7 @@ void splitModule(const WasmSplitOptions& options) {
       }
       continue;
     }
-    if (!options.quiet && options.keepFuncs.count(func)) {
+    if (!options.quiet && options.keepFuncs.contains(func)) {
       std::cerr << "warning: function " << func
                 << " was to be both kept and split. It will be split.\n";
     }
@@ -337,7 +337,7 @@ void splitModule(const WasmSplitOptions& options) {
 #ifndef NDEBUG
   // Check that all defined functions are in one set or the other.
   ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-    assert(keepFuncs.count(func->name) || splitFuncs.count(func->name));
+    assert(keepFuncs.contains(func->name) || splitFuncs.contains(func->name));
   });
 #endif // NDEBUG
 
@@ -423,7 +423,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
           Fatal() << "Module name is empty\n";
         }
       }
-      if (moduleNameSet.count(name)) {
+      if (moduleNameSet.contains(name)) {
         Fatal() << "Module name " << name << " is listed more than once\n";
       }
       currModule = name;

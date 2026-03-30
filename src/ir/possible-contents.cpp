@@ -939,7 +939,7 @@ struct InfoCollector
     // If this goes to a public table, then we must root the output, as the
     // table could contain anything at all, and calling functions there could
     // return anything at all.
-    if (shared.publicTables.count(curr->table)) {
+    if (shared.publicTables.contains(curr->table)) {
       addRoot(curr);
     }
     // TODO: the table identity could also be used here in more ways
@@ -1736,8 +1736,8 @@ void TNHOracle::scan(Function* func,
         // not important in optimized code, as the most refined cast would be
         // the only one to exist there, so it's ok to keep things simple here.
         if (getFunction()->isParam(get->index) && type != get->type &&
-            info.castParams.count(get->index) == 0 &&
-            !writtenParams.count(get->index)) {
+            !info.castParams.contains(get->index) &&
+            !writtenParams.contains(get->index)) {
           info.castParams[get->index] = type;
         }
       }
@@ -2940,7 +2940,7 @@ void Flower::flowToTargetsAfterUpdate(LocationIndex locationIndex,
 void Flower::connectDuringFlow(Location from, Location to) {
   auto newLink = LocationLink{from, to};
   auto newIndexLink = getIndexes(newLink);
-  if (links.count(newIndexLink) == 0) {
+  if (!links.contains(newIndexLink)) {
     // This is a new link. Add it to the known links.
     links.insert(newIndexLink);
 
@@ -3359,7 +3359,7 @@ void Flower::dump(Location location) {
               << *loc->expr << " : " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<DataLocation>(&location)) {
     std::cout << "  dataloc ";
-    if (wasm.typeNames.count(loc->type)) {
+    if (wasm.typeNames.contains(loc->type)) {
       std::cout << '$' << wasm.typeNames[loc->type].name;
     } else {
       std::cout << loc->type << '\n';

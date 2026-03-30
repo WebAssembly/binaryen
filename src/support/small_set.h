@@ -187,7 +187,6 @@ public:
 
   bool contains(const T& x) const {
     if (usingFixed()) {
-      // Do a linear search.
       for (size_t i = 0; i < fixed.used; i++) {
         if (fixed.storage[i] == x) {
           return true;
@@ -195,7 +194,7 @@ public:
       }
       return false;
     } else {
-      return flexible.find(x) != flexible.end();
+      return flexible.contains(x);
     }
   }
 

@@ -71,7 +71,7 @@ struct TypeFinalizing : public Pass {
       void modifyTypeBuilderEntry(TypeBuilder& typeBuilder,
                                   Index i,
                                   HeapType oldType) override {
-        if (parent.modifiableTypes.count(oldType)) {
+        if (parent.modifiableTypes.contains(oldType)) {
           typeBuilder[i].setOpen(!parent.finalize);
         }
       }

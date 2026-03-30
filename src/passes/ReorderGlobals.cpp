@@ -56,11 +56,11 @@ struct UseCountScanner : public WalkerPass<PostWalker<UseCountScanner>> {
 
   void visitGlobalGet(GlobalGet* curr) {
     // We can't add a new element to the map in parallel.
-    assert(counts.count(curr->name) > 0);
+    assert(counts.contains(curr->name));
     counts[curr->name]++;
   }
   void visitGlobalSet(GlobalSet* curr) {
-    assert(counts.count(curr->name) > 0);
+    assert(counts.contains(curr->name));
     counts[curr->name]++;
   }
 

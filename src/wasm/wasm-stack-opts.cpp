@@ -211,7 +211,7 @@ void StackIROptimizer::local2Stack() {
       // optimized when they are visited in the binary writer and this
       // optimization would intefere with that one.
       if (auto* get = inst->origin->dynCast<LocalGet>();
-          get && inst->type.isSingle() && !deferredGets.count(get)) {
+          get && inst->type.isSingle() && !deferredGets.contains(get)) {
         // Use another local to clarify what instIndex means in this scope.
         auto getIndex = instIndex;
 
@@ -293,7 +293,7 @@ void StackIROptimizer::removeUnneededBlocks() {
       continue;
     }
     if (auto* block = inst->origin->dynCast<Block>()) {
-      if (!block->name.is() || !targets.count(block->name)) {
+      if (!block->name.is() || !targets.contains(block->name)) {
         // TODO optimize, maybe run remove-unused-names
         inst = nullptr;
       }

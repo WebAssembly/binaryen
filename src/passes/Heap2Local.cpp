@@ -573,7 +573,7 @@ struct EscapeAnalyzer {
     // Check that the gets can only read from the specific known sets.
     for (auto* get : gets) {
       for (auto* set : localGraph.getSets(get)) {
-        if (sets.count(set) == 0) {
+        if (!sets.contains(set)) {
           return false;
         }
       }
@@ -589,7 +589,7 @@ struct EscapeAnalyzer {
     // We can only replace something relevant that we found in the analysis.
     // (Not only would anything else be invalid to process, but also we wouldn't
     // know what interaction to give the replacement.)
-    assert(reachedInteractions.count(old));
+    assert(reachedInteractions.contains(old));
 
     // The replacement should have the same interaction as the thing it
     // replaces, since it is a drop-in replacement for it. The one exception is

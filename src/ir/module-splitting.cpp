@@ -422,8 +422,8 @@ void ModuleSplitter::classifyFunctions() {
     configSecondaryFuncs.insert(funcs.begin(), funcs.end());
   }
   for (auto& func : primary.functions) {
-    if (func->imported() || !configSecondaryFuncs.count(func->name) ||
-        segmentReferrers.count(func->name)) {
+    if (func->imported() || !configSecondaryFuncs.contains(func->name) ||
+        segmentReferrers.contains(func->name)) {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
@@ -484,7 +484,7 @@ void ModuleSplitter::moveSecondaryFunctions() {
   for (auto& funcNames : config.secondaryFuncs) {
     auto secondary = initSecondary(primary);
     for (auto funcName : funcNames) {
-      if (allSecondaryFuncs.count(funcName)) {
+      if (allSecondaryFuncs.contains(funcName)) {
         auto* func = primary.getFunction(funcName);
         ModuleUtils::copyFunction(func, *secondary);
         primary.removeFunction(funcName);
@@ -531,7 +531,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        !allSecondaryFuncs.count(*ex->getInternalName())) {
+        !allSecondaryFuncs.contains(*ex->getInternalName())) {
       continue;
     }
     Name trampoline = getTrampoline(*ex->getInternalName());
@@ -578,7 +578,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       // 1. ref.func's target func is in one of the secondary modules and
       // 2. the current module is a different module (either the primary module
       //    or a different secondary module)
-      if (parent.allSecondaryFuncs.count(curr->func) &&
+      if (parent.allSecondaryFuncs.contains(curr->func) &&
           (currModule == &parent.primary ||
            parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->func))
                .get() != currModule)) {
@@ -632,7 +632,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     std::vector<RefFunc*> relevantRefFuncs;
     for (auto* refFunc : refFuncs) {
       assert(refFunc->func == name);
-      if (!ignore.count(refFunc)) {
+      if (!ignore.contains(refFunc)) {
         relevantRefFuncs.push_back(refFunc);
       }
     }
@@ -656,7 +656,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
     CallIndirector(ModuleSplitter& parent) : parent(parent) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
-      if (!parent.allSecondaryFuncs.count(curr->target)) {
+      if (!parent.allSecondaryFuncs.contains(curr->target)) {
         return;
       }
       // Return if the current module is the same module as the call's target,
@@ -705,12 +705,12 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
             : primaryFuncs(primaryFuncs),
               calledPrimaryToModules(calledPrimaryToModules) {}
           void visitCall(Call* curr) {
-            if (primaryFuncs.count(curr->target)) {
+            if (primaryFuncs.contains(curr->target)) {
               calledPrimaryToModules[curr->target].insert(getModule());
             }
           }
           void visitRefFunc(RefFunc* curr) {
-            if (primaryFuncs.count(curr->func)) {
+            if (primaryFuncs.contains(curr->func)) {
               calledPrimaryToModules[curr->func].insert(getModule());
             }
           }
@@ -746,7 +746,7 @@ void ModuleSplitter::setupTablePatching() {
       if (!ref) {
         return;
       }
-      if (!allSecondaryFuncs.count(ref->func)) {
+      if (!allSecondaryFuncs.contains(ref->func)) {
         return;
       }
       assert(table == tableManager.activeTable->name);
@@ -1055,7 +1055,7 @@ void ModuleSplitter::shareImportableItems() {
   auto getUsingSecondaries = [&](const Name& name, auto UsedNames::* field) {
     std::vector<Module*> usingModules;
     for (size_t i = 0; i < secondaries.size(); ++i) {
-      if ((secondaryUsed[i].*field).count(name)) {
+      if ((secondaryUsed[i].*field).contains(name)) {
         usingModules.push_back(secondaries[i].get());
       }
     }
@@ -1073,7 +1073,7 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& memory : primary.memories) {
     auto usingSecondaries =
       getUsingSecondaries(memory->name, &UsedNames::memories);
-    bool usedInPrimary = primaryUsed.memories.count(memory->name);
+    bool usedInPrimary = primaryUsed.memories.contains(memory->name);
 
     if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
@@ -1096,7 +1096,7 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& table : primary.tables) {
     auto usingSecondaries =
       getUsingSecondaries(table->name, &UsedNames::tables);
-    bool usedInPrimary = primaryUsed.tables.count(table->name);
+    bool usedInPrimary = primaryUsed.tables.contains(table->name);
 
     if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
@@ -1135,7 +1135,7 @@ void ModuleSplitter::shareImportableItems() {
 
     auto usingSecondaries =
       getUsingSecondaries(global->name, &UsedNames::globals);
-    bool inPrimary = primaryUsed.globals.count(global->name);
+    bool inPrimary = primaryUsed.globals.contains(global->name);
 
     if (!inPrimary && usingSecondaries.empty()) {
       // It's not used anywhere, so delete it. Unlike other unused module items
@@ -1183,7 +1183,7 @@ void ModuleSplitter::shareImportableItems() {
           // If we are exporting this global from the primary module, we should
           // create a trampoline here, because we skipped doing it for global
           // initializers in indirectReferencesToSecondaryFunctions.
-          if (allSecondaryFuncs.count(ref->func)) {
+          if (allSecondaryFuncs.contains(ref->func)) {
             ref->func = getTrampoline(ref->func);
           }
         }
@@ -1204,7 +1204,7 @@ void ModuleSplitter::shareImportableItems() {
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
     auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
-    bool usedInPrimary = primaryUsed.tags.count(tag->name);
+    bool usedInPrimary = primaryUsed.tags.contains(tag->name);
 
     if (!usedInPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];

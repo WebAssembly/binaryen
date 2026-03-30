@@ -920,7 +920,7 @@ struct Optimizer
     // out the parameter.
     if (curr->index < funcInfo->paramUsages.size() &&
         !funcInfo->paramUsages[curr->index] &&
-        funcInfo->paramGets.count(curr)) {
+        funcInfo->paramGets.contains(curr)) {
       for (Index i = expressionStack.size(); i > 0; --i) {
         auto* expr = expressionStack[i - 1];
         if (expr->is<Call>() || expr->is<CallIndirect>() ||
@@ -1048,7 +1048,7 @@ struct Optimizer
       // or non-concrete expression it ultimately flows into.
       return;
     }
-    if (!removedExpressions.count(curr)) {
+    if (!removedExpressions.contains(curr)) {
       // We're keeping this one.
       return;
     }
@@ -1071,7 +1071,7 @@ struct Optimizer
 
 Expression* Optimizer::getReplacement(Expression* curr) {
   Builder builder(*getModule());
-  if (!removedExpressions.count(curr)) {
+  if (!removedExpressions.contains(curr)) {
     // This expression is not removed, so none of its children are either. (If
     // they were, they would already have been removed.)
     if (!curr->type.isConcrete()) {
@@ -1158,7 +1158,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
     static void scan(Collector* self, Expression** currp) {
       Expression* curr = *currp;
 
-      if (!self->removedExpressions.count(curr)) {
+      if (!self->removedExpressions.contains(curr)) {
         // The expressions we are removing form a sub-tree starting at the
         // root expression. There is therefore never a removed expression
         // inside a non-removed expression. We can just collect this

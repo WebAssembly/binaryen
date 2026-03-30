@@ -95,7 +95,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     : ignoreFunctions(ignoreFunctions) {}
 
   void visitLoad(Load* curr) {
-    if (ignoreFunctions.count(getFunction()->name) != 0 ||
+    if (ignoreFunctions.contains(getFunction()->name) ||
         curr->type == Type::unreachable) {
       return;
     }
@@ -108,7 +108,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (ignoreFunctions.count(getFunction()->name) != 0 ||
+    if (ignoreFunctions.contains(getFunction()->name) ||
         curr->type == Type::unreachable) {
       return;
     }

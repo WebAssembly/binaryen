@@ -93,7 +93,7 @@ struct TypeSCCs
       includedTypes(types.cbegin(), types.cend()) {}
   void pushChildren(HeapType parent) {
     for (auto child : parent.getReferencedHeapTypes()) {
-      if (includedTypes.count(child)) {
+      if (includedTypes.contains(child)) {
         push(child);
       }
     }
@@ -651,7 +651,7 @@ struct MinimizeRecGroups : Pass {
       while (!workList.empty()) {
         auto curr = workList.back();
         workList.pop_back();
-        if (!typeSet.count(curr)) {
+        if (!typeSet.contains(curr)) {
           continue;
         }
         if (seen.insert(curr).second) {

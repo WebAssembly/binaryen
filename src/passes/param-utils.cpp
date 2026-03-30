@@ -297,7 +297,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
       : callTargets(callTargets), onChange(onChange) {}
 
     void visitCall(Call* curr) {
-      if (!callTargets.count(curr->target)) {
+      if (!callTargets.contains(curr->target)) {
         return;
       }
 
@@ -354,7 +354,7 @@ void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
     }
 
     void handleCall(Expression* call, HeapType type) {
-      if (!callTargets.count(type)) {
+      if (!callTargets.contains(type)) {
         return;
       }
 
