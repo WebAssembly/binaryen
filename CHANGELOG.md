@@ -22,7 +22,7 @@ Current Trunk
   this parameter is optional and so is not breaking. (#8405)
 - MinifyImportsAndExports now has a new output format using JSON. This was
   changed while fixing bugs with colliding module names (to avoid two breaking
-  changes to the output).
+  changes to the output). (#8550)
 
 v128
 ----
