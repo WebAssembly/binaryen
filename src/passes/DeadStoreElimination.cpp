@@ -57,8 +57,8 @@ class DeadStoreEliminationPass : public Pass {
     // todo might want to use a map here
     // keyed by the ref expression
     int deadStoreCount = 0;
+    std::vector<const StructSet*> potentiallyDeadSets;
     for (auto& block : cfg) {
-      std::vector<const StructSet*> potentiallyDeadSets;
       for (const auto* inst : block) {
         if (const StructSet* structSet = inst->dynCast<StructSet>()) {
           bool found = false;
