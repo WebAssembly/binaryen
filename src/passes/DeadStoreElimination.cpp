@@ -41,6 +41,12 @@ struct ComparingLocalGraph : public LocalGraph {
   }
 };
 
+struct StoreInfo {
+  const StructSet* store = nullptr;
+  int duplicateStores = 0;
+  int conflictingGets = 0;
+};
+
 class DeadStoreEliminationPass : public Pass {
   virtual std::unique_ptr<Pass> create() {
     return std::make_unique<DeadStoreEliminationPass>();
@@ -56,34 +62,40 @@ class DeadStoreEliminationPass : public Pass {
 
     // todo might want to use a map here
     // keyed by the ref expression
-    int deadStoreCount = 0;
-    std::vector<const StructSet*> potentiallyDeadSets;
+    std::vector<StoreInfo> storeInfos;
     for (auto& block : cfg) {
       for (const auto* inst : block) {
         if (const StructSet* structSet = inst->dynCast<StructSet>()) {
-          bool found = false;
-          for (auto* otherSet : potentiallyDeadSets) {
-            if (localGraph.equalValues(structSet->ref, otherSet->ref) &&
-                structSet->index == otherSet->index) {
-              // We don't remove the dead store from potentiallyDeadSets, and we might increment multiple times on the same store, but that's fine.
-              // If we have e.g. 3 stores in a row, we'll only record the first and increment deadStoreCount twice on the first
-              deadStoreCount++;
-              found = true;
+          for (auto it = storeInfos.rbegin(); it != storeInfos.rend(); ++it) {
+            auto& storeInfo = *it;
+
+            if (localGraph.equalValues(structSet->ref, storeInfo.store->ref) &&
+                structSet->index == storeInfo.store->index) {
+              storeInfo.duplicateStores++;
+              break;
             }
           }
-          if (!found) {
-            potentiallyDeadSets.push_back(structSet);
+          storeInfos.push_back(StoreInfo{structSet});
+        } else if (const StructGet* structGet = inst->dynCast<StructGet>()) {
+          for (auto it = storeInfos.rbegin(); it != storeInfos.rend(); ++it) {
+            auto& storeInfo = *it;
+
+            if (localGraph.equalValues(structGet->ref, storeInfo.store->ref) &&
+                structGet->index == storeInfo.store->index) {
+              storeInfo.conflictingGets++;
+              break;
+            }
           }
         }
       }
     }
 
-    if (deadStoreCount == 0) {
-      return;
+    for (const auto& info : storeInfos) {
+      if (info.duplicateStores && !info.conflictingGets) {
+        std::lock_guard _(m);
+        std::cout<<info.duplicateStores<<"\n";
+      }
     }
-
-    std::lock_guard _(m);
-    std::cout<<deadStoreCount<<"\n";
   }
 };
 
