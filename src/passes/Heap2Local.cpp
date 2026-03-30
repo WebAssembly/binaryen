@@ -1215,6 +1215,40 @@ struct Struct2Local : PostWalker<Struct2Local> {
     block->type = type;
     replaceCurrent(block);
   }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+    // Array2Struct would have replaced this operation if the optimized
+    // allocation were flowing into the `ref` field, but not if it is flowing
+    // into the `expected` field.
+    if (analyzer.getInteraction(curr->expected) ==
+        ParentChildInteraction::Flows) {
+      // See the equivalent handling of allocations flowing through the
+      // `expected` field of StructCmpxchg.
+      auto refType = curr->ref->type.with(Nullable);
+      auto refScratch = builder.addVar(func, refType);
+      auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
+      auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
+      auto* arrayGet = builder.makeArrayGet(
+        getRefScratch, curr->index, curr->order, curr->type);
+      auto* block = builder.makeBlock({setRefScratch,
+                                       builder.makeDrop(curr->expected),
+                                       builder.makeDrop(curr->replacement),
+                                       arrayGet});
+      replaceCurrent(block);
+      // Since `ref` must be an array and arrays are processed before structs,
+      // it is not possible that `ref` will be processed later. We therefore do
+      // not need to do the extra bookkeeping that we needed to do for
+      // StructCmpxchg.
+      // analyzer.parents.setParent(curr->ref, setRefScratch);
+      // analyzer.scratchInfo.insert({setRefScratch, getRefScratch});
+      // analyzer.parents.setParent(getRefScratch, arrayGet);
+      return;
+    }
+  }
 };
 
 // An optimizer that handles the rewriting to turn a nonescaping array
@@ -1447,9 +1481,20 @@ struct Array2Struct : PostWalker<Array2Struct> {
       return;
     }
 
-    // Convert the ArrayCmpxchg into a StructCmpxchg.
-    replaceCurrent(builder.makeStructCmpxchg(
-      index, curr->ref, curr->expected, curr->replacement, curr->order));
+    // The allocation might flow into `ref` or `expected`, but not
+    // `replacement`, because then it would be considered to have escaped.
+    if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
+      // The accessed array is being optimzied. Convert the ArrayCmpxchg into a
+      // StructCmpxchg.
+      replaceCurrent(builder.makeStructCmpxchg(
+        index, curr->ref, curr->expected, curr->replacement, curr->order));
+      return;
+    }
+
+    // The `expected` value must be getting optimized. Since the accessed object
+    // is remaining an array for now, do not change anything. The ArrayCmpxchg
+    // will be optimized later by Heap2Local.
+    return;
   }
 
   // Some additional operations need special handling
