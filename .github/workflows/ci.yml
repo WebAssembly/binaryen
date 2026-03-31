@@ -63,5 +63,5 @@ jobs:
         ./alpine.sh ninja install
 
     - name: test
-      run: ./alpine.sh python3 ./check.py spec --no-fail-fast
+      run: ./alpine.sh python3 ./check.py spec
 
