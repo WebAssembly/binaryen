@@ -370,7 +370,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
     for (auto& func : module->functions) {
       // If the function is neither exported nor imported, no problem.
       auto imported = func->imported();
-      auto exported = exportedFunctions.count(func->name);
+      auto exported = exportedFunctions.contains(func->name);
       if (!imported && !exported) {
         continue;
       }
@@ -432,7 +432,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
   bool isIllegal(Type type) {
     auto features = type.getFeatures();
     return features.hasSIMD() || features.hasMultivalue() ||
-           features.hasExceptionHandling();
+           features.hasExceptionHandling() || features.hasStackSwitching();
   }
 };
 

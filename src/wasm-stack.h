@@ -131,7 +131,10 @@ private:
                         uint64_t offset,
                         Name memory,
                         MemoryOrder order,
-                        bool isRMW);
+                        bool isRMW,
+                        BackingType backing = BackingType::Memory);
+  void emitLoadOpcode(unsigned bytes, bool signed_, Type type);
+  void emitStoreOpcode(uint8_t bytes, Type valueType);
   int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;

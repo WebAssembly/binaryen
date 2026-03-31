@@ -393,7 +393,7 @@ For more on how to optimize effectively, see
 
   std::string firstOutput;
 
-  if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
+  if (extraFuzzCommand.size() > 0 && options.extra.contains("output")) {
     BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
@@ -464,7 +464,7 @@ For more on how to optimize effectively, see
     printStackIR(std::cout, &wasm, options.passOptions);
   }
 
-  if (options.extra.count("output") == 0) {
+  if (!options.extra.contains("output")) {
     if (!options.quiet) {
       bool printsToStdout = std::any_of(
         options.passes.begin(),

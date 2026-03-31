@@ -421,8 +421,8 @@ struct TypeTree {
       for (auto child : node.children) {
         std::cerr << " " << ModuleHeapType(wasm, nodes[child].type);
       }
-      if (node.exposedToJS) {
-        std::cerr << ", exposed to JS";
+      if (node.subtypesExposedToJS) {
+        std::cerr << ", subtypes exposed to JS";
       }
       std::cerr << '\n';
     }
@@ -820,6 +820,9 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     for (auto& global : wasm.globals) {
       collector.visitGlobal(global.get());
     }
+    for (auto& table : wasm.tables) {
+      collector.visitTable(table.get());
+    }
     for (auto& segment : wasm.elementSegments) {
       collector.visitElementSegment(segment.get());
     }
@@ -877,8 +880,22 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     types.setSupertype(sub, super);
 
     // If the supertype is exposed to JS, the subtype potentially is as well.
+    // `sub` may be the root of some existing subtype tree, and we have to
+    // propagate the exposure to JS to all those existing subtypes. We could
+    // just iterate over subtypes(), but manually traverse using
+    // immediateSubtypes() so we can avoid visiting subtrees that have already
+    // been marked.
     if (types.areSubtypesExposedToJS(super)) {
-      noteExposedToJS(sub);
+      std::vector<HeapType> work{{sub}};
+      while (!work.empty()) {
+        auto curr = work.back();
+        work.pop_back();
+        if (!types.areSubtypesExposedToJS(curr)) {
+          noteExposedToJS(curr);
+          auto subtypes = types.immediateSubtypes(curr);
+          work.insert(work.end(), subtypes.begin(), subtypes.end());
+        }
+      }
     }
 
     // Complete the descriptor squares to the left and right of the new
@@ -949,8 +966,10 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         noteSubtype(elem.type, super.getArray().element.type);
         break;
       }
-      case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Cont: {
+        noteSubtype(sub.getContinuation().type, super.getContinuation().type);
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }

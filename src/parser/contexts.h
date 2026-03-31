@@ -569,6 +569,16 @@ struct NullInstrParserCtx {
                      MemoryOrder) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<> makeArrayLoad(
+    Index, const std::vector<Annotation>&, Type, int, bool, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<>
+  makeArrayStore(Index, const std::vector<Annotation>&, Type, int, HeapTypeT) {
+    return Ok{};
+  }
   Result<> makeAtomicRMW(Index,
                          const std::vector<Annotation>&,
                          AtomicRMWOp,
@@ -1120,8 +1130,12 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                               Name name,
                               ImportNames* importNames,
                               TableType limits);
-  Result<>
-  addTable(Name, const std::vector<Name>&, ImportNames*, TableType, Index);
+  Result<> addTable(Name,
+                    const std::vector<Name>&,
+                    ImportNames*,
+                    TableType,
+                    std::optional<ExprT>,
+                    Index);
 
   // TODO: Record index of implicit elem for use when parsing types and instrs.
   Result<> addImplicitElems(TypeT, ElemListT&& elems);
@@ -1512,8 +1526,12 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return Ok{};
   }
 
-  Result<> addTable(
-    Name, const std::vector<Name>&, ImportNames*, Type ttype, Index pos) {
+  Result<> addTable(Name,
+                    const std::vector<Name>&,
+                    ImportNames*,
+                    Type ttype,
+                    std::optional<ExprT> init,
+                    Index pos) {
     auto& t = wasm.tables[index];
     if (!ttype.isRef()) {
       return in.err(pos, "expected reference type");
@@ -1877,10 +1895,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return Ok{};
   }
 
-  Result<>
-  addTable(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {
-    return Ok{};
-  }
+  Result<> addTable(Name,
+                    const std::vector<Name>&,
+                    ImportNames*,
+                    TableTypeT,
+                    std::optional<ExprT>,
+                    Index);
 
   Result<>
   addMemory(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {
@@ -2324,6 +2344,24 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     }
     return withLoc(
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
+  }
+
+  Result<> makeArrayLoad(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Type type,
+                         int bytes,
+                         bool signed_,
+                         HeapTypeT arrayType) {
+    return withLoc(pos,
+                   irBuilder.makeArrayLoad(arrayType, bytes, signed_, type));
+  }
+
+  Result<> makeArrayStore(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Type type,
+                          int bytes,
+                          HeapTypeT arrayType) {
+    return withLoc(pos, irBuilder.makeArrayStore(arrayType, bytes, type));
   }
 
   Result<> makeAtomicRMW(Index pos,

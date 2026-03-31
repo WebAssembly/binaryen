@@ -396,13 +396,13 @@ private:
                                const Expression* otherArm,
                                EffectAnalyzer& armEffects,
                                const EffectAnalyzer& otherArmEffects) {
-        if (!arm || !armEffects.localsRead.count(index) ||
-            otherArmEffects.localsRead.count(index)) {
+        if (!arm || !armEffects.localsRead.contains(index) ||
+            otherArmEffects.localsRead.contains(index)) {
           // No arm, or this arm has no read of the index, or the other arm
           // reads the index.
           return false;
         }
-        if (postIfEffects.localsRead.count(index) &&
+        if (postIfEffects.localsRead.contains(index) &&
             (!otherArm || otherArm->type != Type::unreachable)) {
           // The local is read later, which is bad, and there is no unreachable
           // in the other arm which as mentioned above is the only thing that

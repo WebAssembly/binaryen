@@ -177,7 +177,7 @@ void CoalesceLocals::calculateInterferences() {
   auto* func = getFunction();
 
   for (auto& curr : basicBlocks) {
-    if (liveBlocks.count(curr.get()) == 0) {
+    if (!liveBlocks.contains(curr.get())) {
       continue; // ignore dead blocks
     }
 

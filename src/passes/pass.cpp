@@ -74,7 +74,7 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
 }
 
 bool PassRegistry::containsPass(const std::string& name) {
-  return passInfos.count(name) > 0;
+  return passInfos.contains(name);
 }
 
 std::string PassRegistry::getPassDescription(std::string name) {
@@ -1003,7 +1003,7 @@ void PassRunner::clear() { passes.clear(); }
 void PassRunner::runPass(Pass* pass) {
   assert(!pass->isFunctionParallel());
 
-  if (options.passesToSkip.count(pass->name)) {
+  if (options.passesToSkip.contains(pass->name)) {
     return;
   }
 
@@ -1018,7 +1018,7 @@ void PassRunner::runPass(Pass* pass) {
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
 
-  if (options.passesToSkip.count(pass->name)) {
+  if (options.passesToSkip.contains(pass->name)) {
     return;
   }
 

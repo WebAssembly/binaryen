@@ -62,6 +62,7 @@ const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
 const char* RelaxedAtomicsFeature = "relaxed-atomics";
+const char* MultibyteFeature = "multibyte";
 const char* CustomPageSizesFeature = "custom-page-sizes";
 
 } // namespace BinaryConsts::CustomSections
@@ -1059,7 +1060,12 @@ void RefTest::finalize() {
   } else {
     type = Type::i32;
     // Do not unnecessarily lose type information.
-    castType = Type::getGreatestLowerBound(castType, ref->type);
+    auto newCastType = Type::getGreatestLowerBound(castType, ref->type);
+    if (newCastType == Type::unreachable) {
+      // This is invalid. Leave the existing types for the validator to catch.
+      return;
+    }
+    castType = newCastType;
   }
 }
 
@@ -1091,7 +1097,8 @@ void RefCast::finalize() {
 
   // We reach this before validation, so the input type might be totally wrong.
   // Return early in this case to avoid doing the wrong thing below.
-  if (!ref->type.isRef()) {
+  if (!ref->type.isRef() || !type.isRef() ||
+      ref->type.getHeapType().getTop() != type.getHeapType().getTop()) {
     return;
   }
 
@@ -1130,7 +1137,14 @@ void BrOn::finalize() {
     // cast type, we can improve the cast type in a way that will not change the
     // cast behavior. This satisfies the constraint we had before Custom
     // Descriptors that the cast type is a subtype of the input type.
-    castType = Type::getGreatestLowerBound(castType, ref->type);
+    auto newCastType = Type::getGreatestLowerBound(castType, ref->type);
+    if (newCastType == Type::unreachable) {
+      // This is not valid. Leave the original cast type in place for the
+      // validator to catch.
+      type = ref->type;
+      return;
+    }
+    castType = newCastType;
     assert(castType.isRef());
   } else if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
     if (desc->type.isNull()) {
@@ -1323,7 +1337,22 @@ void ArrayGet::finalize() {
   }
 }
 
+void ArrayLoad::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
 void ArraySet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayStore::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       value->type == Type::unreachable) {
     type = Type::unreachable;

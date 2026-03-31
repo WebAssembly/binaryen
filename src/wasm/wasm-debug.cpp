@@ -434,9 +434,9 @@ struct AddrExprMap {
 
 private:
   void add(Expression* expr, const BinaryLocations::Span span) {
-    assert(startMap.count(span.start) == 0);
+    assert(!startMap.contains(span.start));
     startMap[span.start] = expr;
-    assert(endMap.count(span.end) == 0);
+    assert(!endMap.contains(span.end));
     endMap[span.end] = expr;
   }
 
@@ -444,7 +444,7 @@ private:
            const BinaryLocations::DelimiterLocations& delimiter) {
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
-        assert(delimiterMap.count(delimiter[i]) == 0);
+        assert(!delimiterMap.contains(delimiter[i]));
         delimiterMap[delimiter[i]] = DelimiterInfo{expr, i};
       }
     }
@@ -656,7 +656,7 @@ struct LocationUpdater {
 
   // Given an offset in .debug_loc, get the old and new compile unit bases.
   OldToNew getCompileUnitBasesForLoc(size_t offset) const {
-    if (locToUnitMap.count(offset) == 0) {
+    if (!locToUnitMap.contains(offset)) {
       // There is no compile unit for this loc. It doesn't matter what we set
       // here.
       return OldToNew{0, 0};
@@ -732,7 +732,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should
           // probably investigate that.
-          if (newAddrInfo.count(newAddr)) {
+          if (newAddrInfo.contains(newAddr)) {
             continue;
           }
           newAddrs.push_back(newAddr);

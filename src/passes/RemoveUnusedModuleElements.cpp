@@ -397,7 +397,7 @@ struct Analyzer {
         // We must not have a type in both calledSignatures and
         // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
         // it any more.
-        assert(calledSignatures.count(subType) == 0);
+        assert(!calledSignatures.contains(subType));
 
         for (Name target : iter->second) {
           use({ModuleElementKind::Function, target});
@@ -454,11 +454,11 @@ struct Analyzer {
     auto element = ModuleElement{ModuleElementKind::Function, func};
 
     auto type = module->getFunction(func)->type.getHeapType();
-    if (calledSignatures.count(type)) {
+    if (calledSignatures.contains(type)) {
       // We must not have a type in both calledSignatures and
       // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
       // any more.
-      assert(uncalledRefFuncMap.count(type) == 0);
+      assert(!uncalledRefFuncMap.contains(type));
 
       // We've seen a RefFunc for this, so it is used.
       use(element);
@@ -471,7 +471,7 @@ struct Analyzer {
   }
 
   void useStructField(StructField structField) {
-    if (!readStructFields.count(structField)) {
+    if (!readStructFields.contains(structField)) {
       // Avoid a structured binding as the C++ spec does not allow capturing
       // them in lambdas, which we need below.
       auto type = structField.first;
@@ -509,7 +509,7 @@ struct Analyzer {
       auto curr = moduleQueue.back();
       moduleQueue.pop_back();
 
-      assert(used.count(curr));
+      assert(used.contains(curr));
       auto& [kind, value] = curr;
       switch (kind) {
         case ModuleElementKind::Function: {
@@ -538,14 +538,19 @@ struct Analyzer {
               }
             });
           break;
-        case ModuleElementKind::Table:
+        case ModuleElementKind::Table: {
           ModuleUtils::iterTableSegments(
             *module, value, [&](ElementSegment* segment) {
               if (!segment->data.empty()) {
                 use({ModuleElementKind::ElementSegment, segment->name});
               }
             });
+          auto* table = module->getTable(value);
+          if (table->init) {
+            use(table->init);
+          }
           break;
+        }
         case ModuleElementKind::DataSegment: {
           auto* segment = module->getDataSegment(value);
           if (segment->offset) {
@@ -644,7 +649,7 @@ struct Analyzer {
 
       // If this struct field has already been read, then we should use the
       // contents there now.
-      auto useOperandNow = readStructFields.count(structField);
+      auto useOperandNow = readStructFields.contains(structField);
 
       // Side effects are tricky to reason about - the side effects must happen
       // even if we never read the struct field - so give up and consider it
@@ -758,6 +763,13 @@ struct Analyzer {
       auto* segment = module->getElementSegment(value);
       for (auto* item : segment->data) {
         addReferences(item);
+      }
+    } else if (kind == ModuleElementKind::Table) {
+      auto* table = module->getTable(value);
+      if (table->init) {
+        // TODO: Might be possible to remove the init expression if the type is
+        // nullable.
+        addReferences(table->init);
       }
     }
   }
@@ -897,17 +909,18 @@ struct RemoveUnusedModuleElements : public Pass {
       // We need to emit something in the output if it has either a reference or
       // a use. Situations where we can do better (for the case of a reference
       // without any use) are handled separately below.
-      return analyzer.used.count(element) || analyzer.referenced.count(element);
+      return analyzer.used.contains(element) ||
+             analyzer.referenced.contains(element);
     };
 
     module->removeFunctions([&](Function* curr) {
       auto element = ModuleElement{ModuleElementKind::Function, curr->name};
-      if (analyzer.used.count(element)) {
+      if (analyzer.used.contains(element)) {
         // This is used.
         return false;
       }
 
-      if (analyzer.referenced.count(element)) {
+      if (analyzer.referenced.contains(element)) {
         // This is not used, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {

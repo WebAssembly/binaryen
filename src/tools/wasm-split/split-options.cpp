@@ -256,14 +256,6 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            placeholderNamespacePrefix = argument;
          })
-    .add("--jspi",
-         "",
-         "Transform the module to support asynchronously loading the secondary "
-         "module before any placeholder functions have been called.",
-         WasmSplitOption,
-         {Mode::Split},
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { jspi = true; })
     .add(
       "--export-prefix",
       "",
@@ -473,7 +465,7 @@ bool WasmSplitOptions::validate() {
 
   // Validate that all used options are allowed in the current mode.
   for (std::string& opt : usedOptions) {
-    if (!validOptions[static_cast<unsigned>(mode)].count(opt)) {
+    if (!validOptions[static_cast<unsigned>(mode)].contains(opt)) {
       std::stringstream msg;
       msg << "Option " << opt << " cannot be used in " << mode << " mode.";
       fail(msg.str());

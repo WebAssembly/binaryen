@@ -126,7 +126,7 @@ template<typename T>
 inline Name getValidNameGivenExisting(Name root, const T& existingNames) {
   return getValidName(
     root,
-    [&](Name test) { return !existingNames.count(test); },
+    [&](Name test) { return !existingNames.contains(test); },
     existingNames.size());
 }
 

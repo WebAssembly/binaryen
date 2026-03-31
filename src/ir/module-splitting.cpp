@@ -45,10 +45,8 @@
 //      instantiation.
 //
 //   8. Export globals, tags, tables, and memories from the primary module and
-//      import them in the secondary modules.
-//
-//   9. Run RemoveUnusedModuleElements pass on the secondary modules in order to
-//      remove unused imports.
+//      import them in the secondary modules. If possible, move those module
+//      items instead to the secondary modules.
 //
 // Functions can be used or referenced three ways in a WebAssembly module: they
 // can be exported, called, or referenced with ref.func. The above procedure
@@ -75,21 +73,18 @@
 //      from the IR before splitting.
 //
 #include "ir/module-splitting.h"
-#include "asmjs/shared-constants.h"
 #include "ir/export-utils.h"
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "ir/utils.h"
-#include "pass.h"
 #include "support/insert_ordered.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm::ModuleSplitting {
 
 namespace {
-
-static const Name LOAD_SECONDARY_STATUS = "load_secondary_module_status";
 
 template<class F> void forEachElement(Module& module, F f) {
   ModuleUtils::iterActiveElementSegments(module, [&](ElementSegment* segment) {
@@ -330,12 +325,10 @@ struct ModuleSplitter {
 
   // Other helpers
   void exportImportFunction(Name func, const std::set<Module*>& modules);
-  Expression* maybeLoadSecondary(Builder& builder, Expression* callIndirect);
   Name getTrampoline(Name funcName);
 
   // Main splitting steps
   void classifyFunctions();
-  void setupJSPI();
   void moveSecondaryFunctions();
   void thunkExportedSecondaryFunctions();
   void indirectReferencesToSecondaryFunctions();
@@ -348,9 +341,6 @@ struct ModuleSplitter {
     : config(config), primary(primary), tableManager(primary),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
     classifyFunctions();
-    if (config.jspi) {
-      setupJSPI();
-    }
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectReferencesToSecondaryFunctions();
@@ -360,25 +350,6 @@ struct ModuleSplitter {
     shareImportableItems();
   }
 };
-
-void ModuleSplitter::setupJSPI() {
-  // Add an imported function to load the secondary module.
-  auto import = Builder::makeFunction(
-    ModuleSplitting::LOAD_SECONDARY_MODULE,
-    Type(Signature(Type::none, Type::none), NonNullable, Inexact),
-    {});
-  import->module = ENV;
-  import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
-  primary.addFunction(std::move(import));
-  Builder builder(primary);
-  // Add a global to track whether the secondary module has been loaded yet.
-  primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
-                                       Type::i32,
-                                       builder.makeConst(int32_t(0)),
-                                       Builder::Mutable));
-  primary.addExport(builder.makeExport(
-    LOAD_SECONDARY_STATUS, LOAD_SECONDARY_STATUS, ExternalKind::Global));
-}
 
 std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
   // Create the secondary module and copy trivial properties.
@@ -451,13 +422,8 @@ void ModuleSplitter::classifyFunctions() {
     configSecondaryFuncs.insert(funcs.begin(), funcs.end());
   }
   for (auto& func : primary.functions) {
-    // In JSPI mode exported functions cannot be moved to the secondary
-    // module since that would make them async when they may not have the JSPI
-    // wrapper. Exported JSPI functions can still benefit from splitting though
-    // since only the JSPI wrapper stub will remain in the primary module.
-    if (func->imported() || !configSecondaryFuncs.count(func->name) ||
-        (config.jspi && ExportUtils::isExported(primary, *func)) ||
-        segmentReferrers.count(func->name)) {
+    if (func->imported() || !configSecondaryFuncs.contains(func->name) ||
+        segmentReferrers.contains(func->name)) {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
@@ -518,7 +484,7 @@ void ModuleSplitter::moveSecondaryFunctions() {
   for (auto& funcNames : config.secondaryFuncs) {
     auto secondary = initSecondary(primary);
     for (auto funcName : funcNames) {
-      if (allSecondaryFuncs.count(funcName)) {
+      if (allSecondaryFuncs.contains(funcName)) {
         auto* func = primary.getFunction(funcName);
         ModuleUtils::copyFunction(func, *secondary);
         primary.removeFunction(funcName);
@@ -565,7 +531,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        !allSecondaryFuncs.count(*ex->getInternalName())) {
+        !allSecondaryFuncs.contains(*ex->getInternalName())) {
       continue;
     }
     Name trampoline = getTrampoline(*ex->getInternalName());
@@ -573,18 +539,23 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
-Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
-                                               Expression* callIndirect) {
-  if (!config.jspi) {
-    return callIndirect;
+// Helper to walk expressions in segments but NOT in globals.
+template<typename Walker>
+static void walkSegments(Walker& walker, Module* module) {
+  walker.setModule(module);
+  for (auto& curr : module->elementSegments) {
+    if (curr->offset) {
+      walker.walk(curr->offset);
+    }
+    for (auto* item : curr->data) {
+      walker.walk(item);
+    }
   }
-  // Check if the secondary module is loaded and if it isn't, call the
-  // function to load it.
-  auto* loadSecondary = builder.makeIf(
-    builder.makeUnary(EqZInt32,
-                      builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
-    builder.makeCall(ModuleSplitting::LOAD_SECONDARY_MODULE, {}, Type::none));
-  return builder.makeSequence(loadSecondary, callIndirect);
+  for (auto& curr : module->dataSegments) {
+    if (curr->offset) {
+      walker.walk(curr->offset);
+    }
+  }
 }
 
 void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
@@ -607,7 +578,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       // 1. ref.func's target func is in one of the secondary modules and
       // 2. the current module is a different module (either the primary module
       //    or a different secondary module)
-      if (parent.allSecondaryFuncs.count(curr->func) &&
+      if (parent.allSecondaryFuncs.contains(curr->func) &&
           (currModule == &parent.primary ||
            parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->func))
                .get() != currModule)) {
@@ -615,7 +586,25 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       }
     }
   } gatherer(*this);
-  gatherer.walkModule(&primary);
+  // We shouldn't use collector.walkModuleCode here, because we don't want to
+  // walk global initializers. At this point, all globals are still in the
+  // primary module, so if we walk global initializers here, it will create
+  // unnecessary trampolines.
+  //
+  // For example, we have (global $a funcref (ref.func $foo)), and $foo was
+  // split into a secondary module. Because $a is at this point still in the
+  // primary module, $foo will be considered to exist in a different module, so
+  // this will create a trampoline for $foo. But it is possible that later we
+  // find out $a is exclusively used by that secondary module and move $a there.
+  // In that case, $a can just reference $foo locally, but if we scan global
+  // initializers here, we would have created an unnecessary trampoline for
+  // $foo.
+  walkSegments(gatherer, &primary);
+  for (auto& curr : primary.functions) {
+    if (!curr->imported()) {
+      gatherer.walkFunction(curr.get());
+    }
+  }
   for (auto& secondaryPtr : secondaries) {
     gatherer.walkModule(secondaryPtr.get());
   }
@@ -643,7 +632,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     std::vector<RefFunc*> relevantRefFuncs;
     for (auto* refFunc : refFuncs) {
       assert(refFunc->func == name);
-      if (!ignore.count(refFunc)) {
+      if (!ignore.contains(refFunc)) {
         relevantRefFuncs.push_back(refFunc);
       }
     }
@@ -667,7 +656,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
     CallIndirector(ModuleSplitter& parent) : parent(parent) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
-      if (!parent.allSecondaryFuncs.count(curr->target)) {
+      if (!parent.allSecondaryFuncs.contains(curr->target)) {
         return;
       }
       // Return if the current module is the same module as the call's target,
@@ -685,13 +674,12 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       auto tableSlot =
         parent.tableManager.getSlot(curr->target, func->type.getHeapType());
 
-      replaceCurrent(parent.maybeLoadSecondary(
-        builder,
+      replaceCurrent(
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
                                  func->type.getHeapType(),
-                                 curr->isReturn)));
+                                 curr->isReturn));
     }
   };
   CallIndirector callIndirector(*this);
@@ -717,12 +705,12 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
             : primaryFuncs(primaryFuncs),
               calledPrimaryToModules(calledPrimaryToModules) {}
           void visitCall(Call* curr) {
-            if (primaryFuncs.count(curr->target)) {
+            if (primaryFuncs.contains(curr->target)) {
               calledPrimaryToModules[curr->target].insert(getModule());
             }
           }
           void visitRefFunc(RefFunc* curr) {
-            if (primaryFuncs.count(curr->func)) {
+            if (primaryFuncs.contains(curr->func)) {
               calledPrimaryToModules[curr->func].insert(getModule());
             }
           }
@@ -758,7 +746,7 @@ void ModuleSplitter::setupTablePatching() {
       if (!ref) {
         return;
       }
-      if (!allSecondaryFuncs.count(ref->func)) {
+      if (!allSecondaryFuncs.contains(ref->func)) {
         return;
       }
       assert(table == tableManager.activeTable->name);
@@ -963,13 +951,11 @@ void ModuleSplitter::shareImportableItems() {
     }
   };
 
-  for (auto& secondaryPtr : secondaries) {
-    Module& secondary = *secondaryPtr;
-
-    // Collect names used in the secondary module
+  // Given a module, collect names used in the module
+  auto getUsedNames = [&](Module& module) {
     UsedNames used;
     ModuleUtils::ParallelFunctionAnalysis<UsedNames> nameCollector(
-      secondary, [&](Function* func, UsedNames& used) {
+      module, [&](Function* func, UsedNames& used) {
         if (!func->imported()) {
           NameCollector(used).walk(func->body);
         }
@@ -983,64 +969,256 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     NameCollector collector(used);
-    collector.walkModuleCode(&secondary);
-    for (auto& segment : secondary.dataSegments) {
+    // We shouldn't use collector.walkModuleCode here, because we don't want to
+    // walk global initializers. At this point, all globals are still in the
+    // primary module, so if we walk global initializers here, other globals
+    // appearing in their initializers will all be marked as used in the primary
+    // module, which is not what we want.
+    //
+    // For example, we have (global $a i32 (global.get $b)). Because $a is at
+    // this point still in the primary module, $b will be marked as "used" in
+    // the primary module. But $a can be moved to a secondary module later if it
+    // is used exclusively by that module. Then $b can be also moved, in case it
+    // doesn't have other uses. But if it is marked as "used" in the primary
+    // module, it can't.
+    walkSegments(collector, &module);
+    for (auto& segment : module.dataSegments) {
       if (segment->memory.is()) {
         used.memories.insert(segment->memory);
       }
     }
-    for (auto& segment : secondary.elementSegments) {
+    for (auto& segment : module.elementSegments) {
       if (segment->table.is()) {
         used.tables.insert(segment->table);
       }
     }
 
-    // Export module items that are used in the secondary module
-    for (auto& memory : primary.memories) {
-      if (!used.memories.count(memory->name)) {
-        continue;
+    // If primary module has exports, they are "used" in it. Secondary modules
+    // don't have exports, so this only applies to the primary module.
+    for (auto& ex : module.exports) {
+      switch (ex->kind) {
+        case ExternalKind::Global:
+          used.globals.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Memory:
+          used.memories.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Table:
+          used.tables.insert(*ex->getInternalName());
+          break;
+        case ExternalKind::Tag:
+          used.tags.insert(*ex->getInternalName());
+          break;
+        default:
+          break;
       }
-      auto secondaryMemory = ModuleUtils::copyMemory(memory.get(), secondary);
-      makeImportExport(
-        *memory, *secondaryMemory, "memory", ExternalKind::Memory);
+    }
+    return used;
+  };
+
+  UsedNames primaryUsed = getUsedNames(primary);
+  std::vector<UsedNames> secondaryUsed;
+  for (auto& secondaryPtr : secondaries) {
+    secondaryUsed.push_back(getUsedNames(*secondaryPtr));
+  }
+
+  // Compute the transitive closure of globals referenced in other globals'
+  // initializers. Since globals can reference other globals, we must ensure
+  // that if a global is used in a module, all its dependencies are also marked
+  // as used.
+  auto computeTransitiveGlobals = [&](UsedNames& used) {
+    UniqueNonrepeatingDeferredQueue<Name> worklist;
+    for (auto global : used.globals) {
+      worklist.push(global);
+    }
+    while (!worklist.empty()) {
+      Name name = worklist.pop();
+      // At this point all globals are still in the primary module, so this
+      // exists
+      auto* global = primary.getGlobal(name);
+      if (!global->imported() && global->init) {
+        for (auto* get : FindAll<GlobalGet>(global->init).list) {
+          worklist.push(get->name);
+          used.globals.insert(get->name);
+        }
+      }
+    }
+  };
+
+  computeTransitiveGlobals(primaryUsed);
+  for (auto& used : secondaryUsed) {
+    computeTransitiveGlobals(used);
+  }
+
+  // Given a name and module item kind, returns the list of secondary modules
+  // using that name
+  auto getUsingSecondaries = [&](const Name& name, auto UsedNames::* field) {
+    std::vector<Module*> usingModules;
+    for (size_t i = 0; i < secondaries.size(); ++i) {
+      if ((secondaryUsed[i].*field).contains(name)) {
+        usingModules.push_back(secondaries[i].get());
+      }
+    }
+    return usingModules;
+  };
+
+  // Share module items with secondary modules.
+  // 1. Only share an item with the modules that use it
+  // 2. If an item is used by only a single secondary module, move the item to
+  //    that secondary module. If an item is used by multiple modules (including
+  //    the primary and secondary modules), export the item from the primary and
+  //    import it from the using secondary modules.
+
+  std::vector<Name> memoriesToRemove;
+  for (auto& memory : primary.memories) {
+    auto usingSecondaries =
+      getUsingSecondaries(memory->name, &UsedNames::memories);
+    bool usedInPrimary = primaryUsed.memories.contains(memory->name);
+
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
+      auto* secondary = usingSecondaries[0];
+      ModuleUtils::copyMemory(memory.get(), *secondary);
+      memoriesToRemove.push_back(memory->name);
+    } else {
+      for (auto* secondary : usingSecondaries) {
+        auto* secondaryMemory =
+          ModuleUtils::copyMemory(memory.get(), *secondary);
+        makeImportExport(
+          *memory, *secondaryMemory, "memory", ExternalKind::Memory);
+      }
+    }
+  }
+  for (auto& name : memoriesToRemove) {
+    primary.removeMemory(name);
+  }
+
+  std::vector<Name> tablesToRemove;
+  for (auto& table : primary.tables) {
+    auto usingSecondaries =
+      getUsingSecondaries(table->name, &UsedNames::tables);
+    bool usedInPrimary = primaryUsed.tables.contains(table->name);
+
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
+      auto* secondary = usingSecondaries[0];
+      //  In case we copied this table to this secondary module in
+      //  setupTablePatching(), !usedInPrimary can't be satisfied, because the
+      //  primary module should have an element segment that refers to this
+      //  table.
+      assert(!secondary->getTableOrNull(table->name));
+      ModuleUtils::copyTable(table.get(), *secondary);
+      tablesToRemove.push_back(table->name);
+    } else {
+      for (auto* secondary : usingSecondaries) {
+        // 1. In case we copied this table to this secondary module in
+        //    setupTablePatching(), secondary.getTableOrNull(table->name) is not
+        //    null, and we need to import it.
+        // 2. As in the case with other module elements, if the table is used in
+        //    the secondary module's instructions, we need to export it.
+        auto secondaryTable = secondary->getTableOrNull(table->name);
+        if (!secondaryTable) {
+          secondaryTable = ModuleUtils::copyTable(table.get(), *secondary);
+        }
+        makeImportExport(*table, *secondaryTable, "table", ExternalKind::Table);
+      }
+    }
+  }
+  for (auto& name : tablesToRemove) {
+    primary.removeTable(name);
+  }
+
+  std::vector<Name> globalsToRemove;
+  for (auto& global : primary.globals) {
+    if (global->mutable_) {
+      assert(primary.features.hasMutableGlobals() &&
+             "TODO: add wrapper functions for disallowed mutable globals");
     }
 
-    for (auto& table : primary.tables) {
-      // 1. In case we copied this table to this secondary module in
-      //    setupTablePatching(), secondary.getTableOrNull(table->name) is not
-      //    null, and we need to export it.
-      // 2. As in the case with other module elements, if the table is used in
-      //    the secondary module's instructions, we need to export it.
-      auto secondaryTable = secondary.getTableOrNull(table->name);
-      if (!secondaryTable && !used.tables.count(table->name)) {
-        continue;
-      }
-      if (!secondaryTable) {
-        secondaryTable = ModuleUtils::copyTable(table.get(), secondary);
-      }
-      makeImportExport(*table, *secondaryTable, "table", ExternalKind::Table);
-    }
+    auto usingSecondaries =
+      getUsingSecondaries(global->name, &UsedNames::globals);
+    bool inPrimary = primaryUsed.globals.contains(global->name);
 
-    for (auto& global : primary.globals) {
-      if (!used.globals.count(global->name)) {
-        continue;
-      }
-      if (global->mutable_) {
-        assert(primary.features.hasMutableGlobals() &&
-               "TODO: add wrapper functions for disallowed mutable globals");
-      }
-      auto* secondaryGlobal = ModuleUtils::copyGlobal(global.get(), secondary);
-      makeImportExport(
-        *global, *secondaryGlobal, "global", ExternalKind::Global);
-    }
+    if (!inPrimary && usingSecondaries.empty()) {
+      // It's not used anywhere, so delete it. Unlike other unused module items
+      // (memories, tables, and tags) that can just sit in the primary module
+      // and later be DCE'ed by another pass, we should remove it here, because
+      // an unused global can contain an initialier that refers to another
+      // global that will be moved to a secondary module, like
+      // (global $unused i32 (global.get $a)) // $a is moved to a secondary
+      globalsToRemove.push_back(global->name);
 
-    for (auto& tag : primary.tags) {
-      if (!used.tags.count(tag->name)) {
-        continue;
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
+      // We are moving this global to this secondary module
+      auto* secondary = usingSecondaries[0];
+      auto* secondaryGlobal = ModuleUtils::copyGlobal(global.get(), *secondary);
+      globalsToRemove.push_back(global->name);
+
+      if (secondaryGlobal->init) {
+        // When a global's initializer contains ref.func
+        for (auto* ref : FindAll<RefFunc>(secondaryGlobal->init).list) {
+          // If ref.func's function is in a different secondary module, we
+          // create a trampoline here.
+          if (auto targetIndexIt = funcToSecondaryIndex.find(ref->func);
+              targetIndexIt != funcToSecondaryIndex.end()) {
+            if (secondaries[targetIndexIt->second].get() != secondary) {
+              ref->func = getTrampoline(ref->func);
+            }
+          }
+          // 1. If ref.func's function is in the primary module, we export it
+          //    here.
+          // 2. If ref.func's function is in a different secondary module and we
+          //    just created a trampoline for it in the primary module above, we
+          //    export the trampoline here.
+          if (primary.getFunctionOrNull(ref->func)) {
+            exportImportFunction(ref->func, {secondary});
+          }
+          // If ref.func's function is in the same secondary module, we don't
+          // need to do anything. The ref.func can directly reference the
+          // function.
+        }
       }
-      auto* secondaryTag = ModuleUtils::copyTag(tag.get(), secondary);
-      makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
+
+    } else { // We are NOT moving this global to the secondary module
+      if (global->init) {
+        for (auto* ref : FindAll<RefFunc>(global->init).list) {
+          // If we are exporting this global from the primary module, we should
+          // create a trampoline here, because we skipped doing it for global
+          // initializers in indirectReferencesToSecondaryFunctions.
+          if (allSecondaryFuncs.contains(ref->func)) {
+            ref->func = getTrampoline(ref->func);
+          }
+        }
+      }
+
+      for (auto* secondary : usingSecondaries) {
+        auto* secondaryGlobal =
+          ModuleUtils::copyGlobal(global.get(), *secondary);
+        makeImportExport(
+          *global, *secondaryGlobal, "global", ExternalKind::Global);
+      }
     }
+  }
+  for (auto& name : globalsToRemove) {
+    primary.removeGlobal(name);
+  }
+
+  std::vector<Name> tagsToRemove;
+  for (auto& tag : primary.tags) {
+    auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
+    bool usedInPrimary = primaryUsed.tags.contains(tag->name);
+
+    if (!usedInPrimary && usingSecondaries.size() == 1) {
+      auto* secondary = usingSecondaries[0];
+      ModuleUtils::copyTag(tag.get(), *secondary);
+      tagsToRemove.push_back(tag->name);
+    } else {
+      for (auto* secondary : usingSecondaries) {
+        auto* secondaryTag = ModuleUtils::copyTag(tag.get(), *secondary);
+        makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
+      }
+    }
+  }
+  for (auto& name : tagsToRemove) {
+    primary.removeTag(name);
   }
 }
 

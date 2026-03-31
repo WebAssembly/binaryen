@@ -1783,6 +1783,18 @@ Result<> makeLoad(Ctx& ctx,
                   int bytes,
                   bool isAtomic) {
 
+  if (ctx.in.takeSExprStart("type"sv)) {
+    auto arrayType = typeidx(ctx);
+    CHECK_ERR(arrayType);
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
+    }
+
+    return ctx.makeArrayLoad(
+      pos, annotations, type, bytes, signed_, *arrayType);
+  }
+
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
 
@@ -1818,6 +1830,16 @@ Result<> makeStore(Ctx& ctx,
                    Type type,
                    int bytes,
                    bool isAtomic) {
+  if (ctx.in.takeSExprStart("type"sv)) {
+    auto arrayType = typeidx(ctx);
+    CHECK_ERR(arrayType);
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
+    }
+
+    return ctx.makeArrayStore(pos, annotations, type, bytes, *arrayType);
+  }
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
 
@@ -3411,7 +3433,8 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTable(name ? *name : Name{}, {}, &names, *type, pos));
+    CHECK_ERR(ctx.addTable(
+      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
   } else if (ctx.in.takeSExprStart("memory"sv)) {
     auto name = ctx.in.takeID();
     auto type = memtype(ctx);
@@ -3504,7 +3527,11 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
 }
 
 // table ::= '(' 'table' id? ('(' 'export' name ')')*
-//               '(' 'import' mod:name nm:name ')'? index_type? tabletype ')'
+//               index_type? tabletype expr?
+//               ')'
+//         | '(' 'table' id? ('(' 'export' name ')')*
+//               '(' 'import' mod:name nm:name ')' index_type? tabletype
+//               ')'
 //         | '(' 'table' id? ('(' 'export' name ')')* index_type?
 //               reftype '(' 'elem' (elemexpr* | funcidx*) ')' ')'
 template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
@@ -3537,6 +3564,7 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
 
   std::optional<typename Ctx::TableTypeT> ttype;
   std::optional<typename Ctx::ElemListT> elems;
+  std::optional<typename Ctx::ExprT> init;
   if (type) {
     // We should have inline elements.
     if (!ctx.in.takeSExprStart("elem"sv)) {
@@ -3571,13 +3599,19 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     auto tabtype = tabletypeContinued(ctx, addressType);
     CHECK_ERR(tabtype);
     ttype = *tabtype;
+    if (ctx.in.peekLParen() && !import) {
+      // Imported tables cannot have initialization expression.
+      auto e = expr(ctx);
+      CHECK_ERR(e);
+      init = *e;
+    }
   }
 
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of table declaration");
   }
 
-  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, pos));
+  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, init, pos));
 
   if (elems) {
     CHECK_ERR(ctx.addImplicitElems(*type, std::move(*elems)));

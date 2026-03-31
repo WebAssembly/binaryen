@@ -191,7 +191,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
     // See if we read that global in the condition expression.
     EffectAnalyzer conditionEffects(getPassOptions(), *getModule(), condition);
-    if (!conditionEffects.mutableGlobalsRead.count(writtenGlobal)) {
+    if (!conditionEffects.mutableGlobalsRead.contains(writtenGlobal)) {
       return Name();
     }
     // As above, confirm we see an actual global.get, and not a call to one with
@@ -666,8 +666,8 @@ struct SimplifyGlobals : public Pass {
       // Go all the way back.
       for (auto& global : module->globals) {
         auto child = global->name;
-        if (copiedParentMap.count(child)) {
-          while (copiedParentMap.count(copiedParentMap[child])) {
+        if (copiedParentMap.contains(child)) {
+          while (copiedParentMap.contains(copiedParentMap[child])) {
             copiedParentMap[child] = copiedParentMap[copiedParentMap[child]];
           }
         }

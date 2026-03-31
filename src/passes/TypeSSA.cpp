@@ -296,7 +296,7 @@ struct TypeSSA : public Pass {
     for (auto* curr : news) {
       bool disallowed = false;
       if (curr->type.isRef()) {
-        disallowed = disallowedTypes.count(curr->type.getHeapType());
+        disallowed = disallowedTypes.contains(curr->type.getHeapType());
       }
       if (!disallowed && isInteresting(curr)) {
         newsToModify.push_back(curr);
@@ -372,7 +372,7 @@ struct TypeSSA : public Pass {
       curr->type = Type(newType, NonNullable, Exact);
 
       // If the old type has a nice name, make a nice name for the new one.
-      if (typeNames.count(oldType)) {
+      if (typeNames.contains(oldType)) {
         auto intendedName = typeNames[oldType].name.toString() + '_' +
                             std::to_string(++nameCounter);
         auto newName =

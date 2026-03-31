@@ -24,7 +24,7 @@
     )
   )
   ;; basic fill test
-  ;; CHECK:      [fuzz-exec] calling test1
+  ;; CHECK:      [fuzz-exec] export test1
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -56,7 +56,7 @@
     (call $assert_load (i32.const 4) (i32.const 0x0))
   )
   ;; Fill value is stored as a byte
-  ;; CHECK:      [fuzz-exec] calling test2
+  ;; CHECK:      [fuzz-exec] export test2
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 170]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -68,7 +68,7 @@
     (call $assert_load (i32.const 1) (i32.const 0xaa))
   )
   ;; Fill all of memory
-  ;; CHECK:      [fuzz-exec] calling test3
+  ;; CHECK:      [fuzz-exec] export test3
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -87,7 +87,7 @@
     (call $print_memory (i32.const 0) (i32.const 6))
   )
   ;; Succeed when writing 0 bytes at the end of the region
-  ;; CHECK:      [fuzz-exec] calling test4
+  ;; CHECK:      [fuzz-exec] export test4
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -108,7 +108,7 @@
     (call $print_memory (i32.const 0) (i32.const 7))
   )
   ;; Writing 0 bytes outside of memory is not allowed
-  ;; CHECK:      [fuzz-exec] calling test5
+  ;; CHECK:      [fuzz-exec] export test5
   ;; CHECK-NEXT: [trap out of bounds memory access in memory.fill]
   (func $test5 (export "test5")
     (memory.fill (i32.const 0x10001) (i32.const 0) (i32.const 0))
@@ -117,7 +117,7 @@
   )
   ;; again we do not test negative/overflowing addresses as the spec test does.
 )
-;; CHECK:      [fuzz-exec] calling test1
+;; CHECK:      [fuzz-exec] export test1
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -139,13 +139,13 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 4]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling test2
+;; CHECK:      [fuzz-exec] export test2
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 170]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 170]
 
-;; CHECK:      [fuzz-exec] calling test3
+;; CHECK:      [fuzz-exec] export test3
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -159,7 +159,7 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 5]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling test4
+;; CHECK:      [fuzz-exec] export test4
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -175,7 +175,7 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 6]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling test5
+;; CHECK:      [fuzz-exec] export test5
 ;; CHECK-NEXT: [trap unreachable]
 ;; CHECK-NEXT: [fuzz-exec] comparing test1
 ;; CHECK-NEXT: [fuzz-exec] comparing test2

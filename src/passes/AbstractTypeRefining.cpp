@@ -128,7 +128,7 @@ struct AbstractTypeRefining : public Pass {
     for (auto type : subTypes.getSubTypesFirstSort()) {
       // If any of our subtypes are created, so are we.
       for (auto subType : subTypes.getImmediateSubTypes(type)) {
-        if (createdTypesOrSubTypes.count(subType)) {
+        if (createdTypesOrSubTypes.contains(subType)) {
           createdTypesOrSubTypes.insert(type);
           break;
         }
@@ -155,7 +155,7 @@ struct AbstractTypeRefining : public Pass {
     //       in particular).
     Types abstractTypes;
     for (auto type : subTypes.types) {
-      if (createdTypes.count(type) == 0) {
+      if (!createdTypes.contains(type)) {
         abstractTypes.insert(type);
       }
     }
@@ -168,7 +168,7 @@ struct AbstractTypeRefining : public Pass {
     // chains where we want to refine a type A to a subtype of a subtype of
     // it.
     for (auto type : subTypes.getSubTypesFirstSort()) {
-      if (!abstractTypes.count(type)) {
+      if (!abstractTypes.contains(type)) {
         continue;
       }
 
@@ -183,7 +183,7 @@ struct AbstractTypeRefining : public Pass {
         // is relevant, if nothing is ever created of the others or their
         // subtypes.
         for (auto subType : typeSubTypes) {
-          if (createdTypesOrSubTypes.count(subType)) {
+          if (createdTypesOrSubTypes.contains(subType)) {
             if (!refinedType) {
               // This is the first relevant thing, and hopefully will remain
               // the only one.
@@ -256,7 +256,7 @@ struct AbstractTypeRefining : public Pass {
       // never-created types to the bottom type.
       //
       // We check this first as it is the most powerful change.
-      if (createdTypesOrSubTypes.count(type) == 0) {
+      if (!createdTypesOrSubTypes.contains(type)) {
         mapping[type] = type.getBottom();
         continue;
       }

@@ -353,7 +353,7 @@ struct Hasher {
     //   (block $x (br $x))
     //   (block $y (br $y))
     // But if the name is not known to us, hash the absolute one.
-    if (!internalNames.count(curr)) {
+    if (!internalNames.contains(curr)) {
       rehash(digest, 1);
       // Perform the same hashing as a generic name.
       visitNonScopeName(curr);

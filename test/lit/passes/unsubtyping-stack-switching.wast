@@ -23,7 +23,8 @@
   ;; CHECK-NEXT: )
   (func $cont-new (type $sub)
     (drop
-      ;; This requires $sub <: $super.
+      ;; This requires $sub <: $super because the operand is expected to be a
+      ;; $super but is actually a $sub.
       (cont.new $cont
         (ref.func $cont-new)
       )
@@ -48,7 +49,7 @@
   ;; CHECK:       (type $cont-none (cont $none))
   (type $cont-none (cont $none))
 
-  ;; CHECK:      (func $cont-bind (type $none)
+  ;; CHECK:      (func $cont-bind-operand (type $none)
   ;; CHECK-NEXT:  (local $one (ref null $cont-one))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (cont.bind $cont-one $cont-none
@@ -57,10 +58,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cont-bind
+  (func $cont-bind-operand
     (local $one (ref null $cont-one))
     (drop
-      ;; This requires $sub <: $super.
+      ;; This requires $sub <: $super because the operand is expected to be a
+      ;; $super.
       (cont.bind $cont-one $cont-none
         (struct.new $sub)
         (local.get $one)
@@ -73,6 +75,256 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (struct)))
   (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $one (func (param (ref $super))))
+  (type $one (func (param (ref $super))))
+  ;; CHECK:       (type $none (func))
+  (type $none (func))
+
+  ;; CHECK:       (type $cont-one (cont $one))
+  (type $cont-one (cont $one))
+  (type $cont-none (cont $none))
+
+  ;; CHECK:      (func $cont-bind-operand (type $none)
+  ;; CHECK-NEXT:  (local $one (ref null $cont-one))
+  ;; CHECK-NEXT:  (local $use-sub (ref null $sub))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $one)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-operand
+    (local $one (ref null $cont-one))
+    (local $use-sub (ref null $sub))
+    (drop
+      ;; Same as above, but now the operand is unreachable. We can optimize and
+      ;; should not crash.
+      (cont.bind $cont-one $cont-none
+        (unreachable)
+        (local.get $one)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $one (func (param (ref $super))))
+  (type $one (func (param (ref $super))))
+  ;; CHECK:       (type $none (func))
+  (type $none (func))
+
+  ;; CHECK:       (type $cont-one (cont $one))
+  (type $cont-one (cont $one))
+  ;; CHECK:       (type $cont-none (cont $none))
+  (type $cont-none (cont $none))
+
+  ;; CHECK:      (func $cont-bind-operand (type $none)
+  ;; CHECK-NEXT:  (local $one (ref null $cont-one))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.new_default $sub)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null nocont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-operand
+    (local $one (ref null $cont-one))
+    (drop
+      ;; Same as above, but now the continuation is null so we can optimize.
+      (cont.bind $cont-one $cont-none
+        (struct.new $sub)
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $in (func (param (ref $super))))
+  (type $in (func (param (ref $super))))
+  ;; CHECK:       (type $out (func (param (ref $sub))))
+  (type $out (func (param (ref $sub))))
+
+  ;; CHECK:       (type $cont-in (cont $in))
+  (type $cont-in (cont $in))
+  ;; CHECK:       (type $cont-out (cont $out))
+  (type $cont-out (cont $out))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (func $cont-bind-param (type $6)
+  ;; CHECK-NEXT:  (local $in (ref null $cont-in))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (cont.bind $cont-in $cont-out
+  ;; CHECK-NEXT:    (local.get $in)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-param
+    (local $in (ref null $cont-in))
+    (drop
+      ;; This requires $sub <: $super because the output continuation parameters
+      ;; must be subtypes of the unbound input continuation parameters.
+      (cont.bind $cont-in $cont-out
+        (local.get $in)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $in (func (param (ref $super))))
+  (type $in (func (param (ref $super))))
+  ;; CHECK:       (type $out (func (param (ref $sub))))
+  (type $out (func (param (ref $sub))))
+
+  ;; CHECK:       (type $cont-in (cont $in))
+  (type $cont-in (cont $in))
+  ;; CHECK:       (type $cont-out (cont $out))
+  (type $cont-out (cont $out))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (func $cont-bind-param (type $6)
+  ;; CHECK-NEXT:  (local $in (ref null $cont-in))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null nocont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-param
+    (local $in (ref null $cont-in))
+    (drop
+      ;; Same as above, but now the continuation is null so we can optimize.
+      (cont.bind $cont-in $cont-out
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $in (func (result (ref null $sub))))
+  (type $in (func (result (ref null $sub))))
+  ;; CHECK:       (type $out (func (result (ref null $super))))
+  (type $out (func (result (ref null $super))))
+
+  ;; CHECK:       (type $cont-in (cont $in))
+  (type $cont-in (cont $in))
+  ;; CHECK:       (type $cont-out (cont $out))
+  (type $cont-out (cont $out))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (func $cont-bind-result (type $6)
+  ;; CHECK-NEXT:  (local $in (ref null $cont-in))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (cont.bind $cont-in $cont-out
+  ;; CHECK-NEXT:    (local.get $in)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-result
+    (local $in (ref null $cont-in))
+    (drop
+      ;; This requires $sub <: $super because the result of the input
+      ;; continuation must be a subtype of the result of the output
+      ;; continuation.
+      (cont.bind $cont-in $cont-out
+        (local.get $in)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $in (func (result (ref null $sub))))
+  (type $in (func (result (ref null $sub))))
+  ;; CHECK:       (type $out (func (result (ref null $super))))
+  (type $out (func (result (ref null $super))))
+
+  ;; CHECK:       (type $cont-in (cont $in))
+  (type $cont-in (cont $in))
+  ;; CHECK:       (type $cont-out (cont $out))
+  (type $cont-out (cont $out))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (func $cont-bind-result (type $6)
+  ;; CHECK-NEXT:  (local $in (ref null $cont-in))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null nocont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-result
+    (local $in (ref null $cont-in))
+    (drop
+      ;; Same as above, but now the continuation is null so we can optimize.
+      (cont.bind $cont-in $cont-out
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
   ;; CHECK:       (type $sub (sub $super (struct)))
   (type $sub (sub $super (struct)))
 
@@ -80,17 +332,17 @@
 
   ;; CHECK:       (type $3 (func))
 
-  ;; CHECK:      (tag $e (type $2) (param (ref null $super)))
-  (tag $e (param (ref null $super)))
+  ;; CHECK:      (tag $take-super (type $2) (param (ref null $super)))
+  (tag $take-super (param (ref null $super)))
 
-  ;; CHECK:      (func $suspend (type $3)
-  ;; CHECK-NEXT:  (suspend $e
+  ;; CHECK:      (func $suspend-operand (type $3)
+  ;; CHECK-NEXT:  (suspend $take-super
   ;; CHECK-NEXT:   (struct.new_default $sub)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $suspend
+  (func $suspend-operand
     ;; This requires $sub <: $super.
-    (suspend $e
+    (suspend $take-super
       (struct.new $sub)
     )
   )
@@ -131,6 +383,67 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (struct)))
   (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func (param (ref null $super))))
+  (type $f (func (param (ref null $super))))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $4 (func))
+
+  ;; CHECK:      (func $resume-param (type $4)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable Resume we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.new_default $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-param
+    (local $cont (ref null $cont))
+    ;; Same as above, but now the continuation is null so we can optimize.
+    (resume $cont
+      (struct.new $sub)
+      (ref.null nocont)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $f (func))
+  (type $f (func))
+
+  (type $super (sub (cont $f)))
+  ;; CHECK:       (type $sub (sub (cont $f)))
+  (type $sub (sub $super (cont $f)))
+
+  ;; CHECK:      (func $resume-ref (type $f)
+  ;; CHECK-NEXT:  (local $sub (ref null $sub))
+  ;; CHECK-NEXT:  (resume $sub
+  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-ref
+    (local $sub (ref null $sub))
+    ;; This does NOT require $sub <: $super because we turn this into a
+    ;; `resume $sub`.
+    (resume $super
+      (local.get $sub)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
   ;; CHECK:       (type $sub (sub $super (struct)))
   (type $sub (sub $super (struct)))
 
@@ -143,27 +456,74 @@
 
   ;; CHECK:       (type $5 (func (result (ref null $super) (ref null $cont))))
 
-  ;; CHECK:      (tag $e (type $4) (param (ref null $sub)))
-  (tag $e (param (ref null $sub)))
+  ;; CHECK:      (tag $send-sub (type $4) (param (ref null $sub)))
+  (tag $send-sub (param (ref null $sub)))
 
-  ;; CHECK:      (func $resume-label (type $f)
+  ;; CHECK:      (func $resume-tag-param (type $f)
   ;; CHECK-NEXT:  (local $cont (ref null $cont))
   ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (block $l (type $5) (result (ref null $super) (ref null $cont))
-  ;; CHECK-NEXT:    (resume $cont (on $e $l)
+  ;; CHECK-NEXT:    (resume $cont (on $send-sub $l)
   ;; CHECK-NEXT:     (local.get $cont)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $resume-label
+  (func $resume-tag-param
     (local $cont (ref null $cont))
     (tuple.drop 2
       (block $l (result (ref null $super) (ref null $cont))
         ;; Sending the tag parameter to the block requires $sub <: $super.
-        (resume $cont (on $e $l)
+        (resume $cont (on $send-sub $l)
           (local.get $cont)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $4 (func (param (ref null $sub))))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super) (ref null $cont))))
+
+  ;; CHECK:      (tag $send-sub (type $4) (param (ref null $sub)))
+  (tag $send-sub (param (ref null $sub)))
+
+  ;; CHECK:      (func $resume-tag-param (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (block $l (type $5) (result (ref null $super) (ref null $cont))
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable Resume we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nocont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-tag-param
+    (local $cont (ref null $cont))
+    (tuple.drop 2
+      (block $l (result (ref null $super) (ref null $cont))
+        ;; Same as above, but now the continuation is null so we can optimize.
+        (resume $cont (on $send-sub $l)
+          (ref.null nocont)
         )
         (unreachable)
       )
@@ -180,39 +540,89 @@
 
   ;; CHECK:       (type $f (func))
   (type $f (func))
-  ;; CHECK:       (type $next-f (func (param (ref null $sub))))
-  (type $next-f (func (param (ref null $sub))))
-
   ;; CHECK:       (type $cont (cont $f))
   (type $cont (cont $f))
-  ;; CHECK:       (type $next-cont (cont $next-f))
-  (type $next-cont (cont $next-f))
+
+  ;; CHECK:       (type $receive-sub (func (param (ref null $sub))))
+  (type $receive-sub (func (param (ref null $sub))))
+  ;; CHECK:       (type $receive-sub-cont (cont $receive-sub))
+  (type $receive-sub-cont (cont $receive-sub))
 
   ;; CHECK:       (type $6 (func (result (ref null $super))))
 
-  ;; CHECK:      (tag $e (type $6) (result (ref null $super)))
-  (tag $e (result (ref null $super)))
+  ;; CHECK:      (tag $expect-super (type $6) (result (ref null $super)))
+  (tag $expect-super (result (ref null $super)))
 
-  ;; CHECK:      (func $resume-tag (type $f)
+  ;; CHECK:      (func $resume-tag-result (type $f)
   ;; CHECK-NEXT:  (local $cont (ref null $cont))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $l (result (ref null $next-cont))
-  ;; CHECK-NEXT:    (resume $cont (on $e $l)
+  ;; CHECK-NEXT:   (block $l (result (ref null $receive-sub-cont))
+  ;; CHECK-NEXT:    (resume $cont (on $expect-super $l)
   ;; CHECK-NEXT:     (local.get $cont)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null nocont)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $resume-tag
+  (func $resume-tag-result
     (local $cont (ref null $cont))
     (drop
-      (block $l (result (ref null $next-cont))
+      (block $l (result (ref null $receive-sub-cont))
         ;; Based on the tag, the continuation expects a $super back. Based on
         ;; the type we give the next continuation, we will send it a $sub back.
         ;; This requires $sub <: $super.
-        (resume $cont (on $e $l)
+        (resume $cont (on $expect-super $l)
           (local.get $cont)
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $receive-sub (func (param (ref null $sub))))
+  (type $receive-sub (func (param (ref null $sub))))
+  ;; CHECK:       (type $receive-sub-cont (cont $receive-sub))
+  (type $receive-sub-cont (cont $receive-sub))
+
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
+
+  ;; CHECK:      (tag $expect-super (type $6) (result (ref null $super)))
+  (tag $expect-super (result (ref null $super)))
+
+  ;; CHECK:      (func $resume-tag-result (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $receive-sub-cont))
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable Resume we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nocont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-tag-result
+    (local $cont (ref null $cont))
+    (drop
+      (block $l (result (ref null $receive-sub-cont))
+        ;; Same as above, but now the continuation is null so we can optimize.
+        (resume $cont (on $expect-super $l)
+          (ref.null nocont)
         )
         (ref.null nocont)
       )
@@ -227,27 +637,27 @@
   ;; CHECK:       (type $sub (sub $super (struct)))
   (type $sub (sub $super (struct)))
 
-  ;; CHECK:       (type $f (func (result (ref null $sub))))
-  (type $f (func (result (ref null $sub))))
-  ;; CHECK:       (type $next-f (func (result (ref null $super))))
-  (type $next-f (func (result (ref null $super))))
+  ;; CHECK:       (type $return-sub (func (result (ref null $sub))))
+  (type $return-sub (func (result (ref null $sub))))
+  ;; CHECK:       (type $return-super (func (result (ref null $super))))
+  (type $return-super (func (result (ref null $super))))
 
-  ;; CHECK:       (type $cont (cont $f))
-  (type $cont (cont $f))
-  ;; CHECK:       (type $next-cont (cont $next-f))
-  (type $next-cont (cont $next-f))
+  ;; CHECK:       (type $return-sub-cont (cont $return-sub))
+  (type $return-sub-cont (cont $return-sub))
+  ;; CHECK:       (type $return-super-cont (cont $return-super))
+  (type $return-super-cont (cont $return-super))
 
   ;; CHECK:       (type $6 (func))
 
   ;; CHECK:      (tag $e (type $6))
   (tag $e)
 
-  ;; CHECK:      (func $resume-result (type $6)
-  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK:      (func $resume-cont-result (type $6)
+  ;; CHECK-NEXT:  (local $cont (ref null $return-sub-cont))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $l (result (ref null $next-cont))
+  ;; CHECK-NEXT:   (block $l (result (ref null $return-super-cont))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (resume $cont (on $e $l)
+  ;; CHECK-NEXT:     (resume $return-sub-cont (on $e $l)
   ;; CHECK-NEXT:      (local.get $cont)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -255,15 +665,69 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $resume-result
-    (local $cont (ref null $cont))
+  (func $resume-cont-result
+    (local $cont (ref null $return-sub-cont))
     (drop
-      (block $l (result (ref null $next-cont))
+      (block $l (result (ref null $return-super-cont))
         (drop
           ;; The continuation we're resuming returns a $sub. In the next type we
           ;; give it, it returns a $super. This requires $sub <: $super.
-          (resume $cont (on $e $l)
+          (resume $return-sub-cont (on $e $l)
             (local.get $cont)
+          )
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $return-sub (func (result (ref null $sub))))
+  (type $return-sub (func (result (ref null $sub))))
+  ;; CHECK:       (type $return-super (func (result (ref null $super))))
+  (type $return-super (func (result (ref null $super))))
+
+  ;; CHECK:       (type $return-sub-cont (cont $return-sub))
+  (type $return-sub-cont (cont $return-sub))
+  ;; CHECK:       (type $return-super-cont (cont $return-super))
+  (type $return-super-cont (cont $return-super))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (tag $e (type $6))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-cont-result (type $6)
+  ;; CHECK-NEXT:  (local $cont (ref null $return-sub-cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $return-super-cont))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces unreachable Resume we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null nocont)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-cont-result
+    (local $cont (ref null $return-sub-cont))
+    (drop
+      (block $l (result (ref null $return-super-cont))
+        (drop
+          ;; Same as above, but now the continuation is null so we can optimize.
+          (resume $return-sub-cont (on $e $l)
+            (ref.null nocont)
           )
         )
         (ref.null nocont)
@@ -286,12 +750,12 @@
 
   ;; CHECK:       (type $4 (func (param (ref null $super))))
 
-  ;; CHECK:      (tag $e (type $4) (param (ref null $super)))
-  (tag $e (param (ref null $super)))
+  ;; CHECK:      (tag $throw-super (type $4) (param (ref null $super)))
+  (tag $throw-super (param (ref null $super)))
 
   ;; CHECK:      (func $resume-throw-param (type $f)
   ;; CHECK-NEXT:  (local $cont (ref null $cont))
-  ;; CHECK-NEXT:  (resume_throw $cont $e
+  ;; CHECK-NEXT:  (resume_throw $cont $throw-super
   ;; CHECK-NEXT:   (struct.new_default $sub)
   ;; CHECK-NEXT:   (local.get $cont)
   ;; CHECK-NEXT:  )
@@ -299,9 +763,174 @@
   (func $resume-throw-param
     (local $cont (ref null $cont))
     ;; This requires $sub <: $super
-    (resume_throw $cont $e
+    (resume_throw $cont $throw-super
       (struct.new $sub)
       (local.get $cont)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $4 (func (param (ref null $super))))
+
+  ;; CHECK:      (tag $throw-super (type $4) (param (ref null $super)))
+  (tag $throw-super (param (ref null $super)))
+
+  ;; CHECK:      (func $resume-throw-param (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.new_default $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-param
+    (local $cont (ref null $cont))
+    ;; Same as above, but now the continuation is null so we can optimize.
+    (resume_throw $cont $throw-super
+      (struct.new $sub)
+      (ref.null nocont)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $f (func))
+  (type $f (func))
+
+  (type $super (sub (cont $f)))
+  ;; CHECK:       (type $sub (sub (cont $f)))
+  (type $sub (sub $super (cont $f)))
+
+  ;; CHECK:      (tag $e (type $f))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-ref (type $f)
+  ;; CHECK-NEXT:  (local $sub (ref null $sub))
+  ;; CHECK-NEXT:  (resume_throw $sub $e
+  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-ref
+    (local $sub (ref null $sub))
+    ;; This does NOT require $sub <: $super because we turn this into a
+    ;; `resume_throw $sub`.
+    (resume_throw $super $e
+      (local.get $sub)
+    )
+  )
+)
+
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $4 (func (param (ref null $sub))))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super) (ref null $cont))))
+
+  ;; CHECK:      (tag $send-sub (type $4) (param (ref null $sub)))
+  (tag $send-sub (param (ref null $sub)))
+
+  ;; CHECK:      (tag $e (type $f))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-tag-param (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (block $l (type $5) (result (ref null $super) (ref null $cont))
+  ;; CHECK-NEXT:    (resume_throw $cont $e (on $send-sub $l)
+  ;; CHECK-NEXT:     (local.get $cont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-tag-param
+    (local $cont (ref null $cont))
+    (tuple.drop 2
+      (block $l (result (ref null $super) (ref null $cont))
+        ;; Sending the tag parameter to the block requires $sub <: $super.
+        (resume_throw $cont $e (on $send-sub $l)
+          (local.get $cont)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $4 (func (param (ref null $sub))))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super) (ref null $cont))))
+
+  ;; CHECK:      (tag $send-sub (type $4) (param (ref null $sub)))
+  (tag $send-sub (param (ref null $sub)))
+
+  ;; CHECK:      (tag $e (type $f))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-tag-param (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (block $l (type $5) (result (ref null $super) (ref null $cont))
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nocont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-tag-param
+    (local $cont (ref null $cont))
+    (tuple.drop 2
+      (block $l (result (ref null $super) (ref null $cont))
+        ;; Same as above, but now the continuation is null so we can optimize.
+        (resume_throw $cont $e (on $send-sub $l)
+          (ref.null nocont)
+        )
+        (unreachable)
+      )
     )
   )
 )
@@ -322,31 +951,512 @@
 
   ;; CHECK:       (type $5 (func (result (ref null $super) (ref null $cont))))
 
-  ;; CHECK:      (tag $e (type $4) (param (ref null $sub)))
-  (tag $e (param (ref null $sub)))
+  ;; CHECK:      (tag $send-sub (type $4) (param (ref null $sub)))
+  (tag $send-sub (param (ref null $sub)))
 
-  ;; CHECK:      (func $resume-throw-label (type $f)
+  ;; CHECK:      (func $resume-throw-ref-tag-param (type $f)
+  ;; CHECK-NEXT:  (local $exn exnref)
   ;; CHECK-NEXT:  (local $cont (ref null $cont))
   ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (block $l (type $5) (result (ref null $super) (ref null $cont))
-  ;; CHECK-NEXT:    (resume_throw $cont $e (on $e $l)
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    (resume_throw_ref $cont (on $send-sub $l)
+  ;; CHECK-NEXT:     (local.get $exn)
   ;; CHECK-NEXT:     (local.get $cont)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $resume-throw-label
+  (func $resume-throw-ref-tag-param
+    (local $exn exnref)
     (local $cont (ref null $cont))
     (tuple.drop 2
       (block $l (result (ref null $super) (ref null $cont))
-        ;; Sending the tag parameter to the block requires $sub <: $super.
-        (resume_throw $cont $e (on $e $l)
-          (ref.null none)
+        ;; Now with a resume_throw_ref. This requies $sub <: $super.
+        (resume_throw_ref $cont (on $send-sub $l)
+          (local.get $exn)
           (local.get $cont)
         )
         (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $4 (func (param (ref null $sub))))
+
+  ;; CHECK:       (type $5 (func (result (ref null $super) (ref null $cont))))
+
+  ;; CHECK:      (tag $send-sub (type $4) (param (ref null $sub)))
+  (tag $send-sub (param (ref null $sub)))
+
+  ;; CHECK:      (func $resume-throw-ref-tag-param (type $f)
+  ;; CHECK-NEXT:  (local $exn exnref)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (block $l (type $5) (result (ref null $super) (ref null $cont))
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $exn)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nocont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-ref-tag-param
+    (local $exn exnref)
+    (local $cont (ref null $cont))
+    (tuple.drop 2
+      (block $l (result (ref null $super) (ref null $cont))
+        ;; Same as above, but now the continuation is null so we can optimize.
+        (resume_throw_ref $cont (on $send-sub $l)
+          (local.get $exn)
+          (ref.null nocont)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $receive-sub (func (param (ref null $sub))))
+  (type $receive-sub (func (param (ref null $sub))))
+  ;; CHECK:       (type $receive-sub-cont (cont $receive-sub))
+  (type $receive-sub-cont (cont $receive-sub))
+
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
+
+  ;; CHECK:      (tag $expect-super (type $6) (result (ref null $super)))
+  (tag $expect-super (result (ref null $super)))
+
+  ;; CHECK:      (tag $e (type $f))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-tag-result (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $receive-sub-cont))
+  ;; CHECK-NEXT:    (resume_throw $cont $e (on $expect-super $l)
+  ;; CHECK-NEXT:     (local.get $cont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-tag-result
+    (local $cont (ref null $cont))
+    (drop
+      (block $l (result (ref null $receive-sub-cont))
+        ;; Based on the tag, the continuation expects a $super back. Based on
+        ;; the type we give the next continuation, we will send it a $sub back.
+        ;; This requires $sub <: $super.
+        (resume_throw $cont $e (on $expect-super $l)
+          (local.get $cont)
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $receive-sub (func (param (ref null $sub))))
+  (type $receive-sub (func (param (ref null $sub))))
+  ;; CHECK:       (type $receive-sub-cont (cont $receive-sub))
+  (type $receive-sub-cont (cont $receive-sub))
+
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
+
+  ;; CHECK:      (tag $expect-super (type $6) (result (ref null $super)))
+  (tag $expect-super (result (ref null $super)))
+
+  ;; CHECK:      (tag $e (type $f))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-tag-result (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $receive-sub-cont))
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nocont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-tag-result
+    (local $cont (ref null $cont))
+    (drop
+      (block $l (result (ref null $receive-sub-cont))
+        ;; Same as above, but now the continuation is null so we can optimize.
+        (resume_throw $cont $e (on $expect-super $l)
+          (ref.null nocont)
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $receive-sub (func (param (ref null $sub))))
+  (type $receive-sub (func (param (ref null $sub))))
+  ;; CHECK:       (type $receive-sub-cont (cont $receive-sub))
+  (type $receive-sub-cont (cont $receive-sub))
+
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
+
+  ;; CHECK:      (tag $expect-super (type $6) (result (ref null $super)))
+  (tag $expect-super (result (ref null $super)))
+
+  ;; CHECK:      (func $resume-throw-ref-tag-result (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $receive-sub-cont))
+  ;; CHECK-NEXT:    (resume_throw_ref $cont (on $expect-super $l)
+  ;; CHECK-NEXT:     (ref.null noexn)
+  ;; CHECK-NEXT:     (local.get $cont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-ref-tag-result
+    (local $cont (ref null $cont))
+    (drop
+      (block $l (result (ref null $receive-sub-cont))
+        ;; Now with resume_throw_ref. This requirest $sub <: $super.
+        (resume_throw_ref $cont (on $expect-super $l)
+          (ref.null noexn)
+          (local.get $cont)
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $f (func))
+  (type $f (func))
+  ;; CHECK:       (type $cont (cont $f))
+  (type $cont (cont $f))
+
+  ;; CHECK:       (type $receive-sub (func (param (ref null $sub))))
+  (type $receive-sub (func (param (ref null $sub))))
+  ;; CHECK:       (type $receive-sub-cont (cont $receive-sub))
+  (type $receive-sub-cont (cont $receive-sub))
+
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
+
+  ;; CHECK:      (tag $expect-super (type $6) (result (ref null $super)))
+  (tag $expect-super (result (ref null $super)))
+
+  ;; CHECK:      (func $resume-throw-ref-tag-result (type $f)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $receive-sub-cont))
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null noexn)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nocont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-ref-tag-result
+    (local $cont (ref null $cont))
+    (drop
+      (block $l (result (ref null $receive-sub-cont))
+        ;; Same as above, but now the continuation is null so we can optimize.
+        (resume_throw_ref $cont (on $expect-super $l)
+          (ref.null noexn)
+          (ref.null nocont)
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $return-sub (func (result (ref null $sub))))
+  (type $return-sub (func (result (ref null $sub))))
+  ;; CHECK:       (type $return-super (func (result (ref null $super))))
+  (type $return-super (func (result (ref null $super))))
+
+  ;; CHECK:       (type $return-sub-cont (cont $return-sub))
+  (type $return-sub-cont (cont $return-sub))
+  ;; CHECK:       (type $return-super-cont (cont $return-super))
+  (type $return-super-cont (cont $return-super))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (tag $e (type $6))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-cont-result (type $6)
+  ;; CHECK-NEXT:  (local $cont (ref null $return-sub-cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $return-super-cont))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (resume_throw $return-sub-cont $e (on $e $l)
+  ;; CHECK-NEXT:      (local.get $cont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-cont-result
+    (local $cont (ref null $return-sub-cont))
+    (drop
+      (block $l (result (ref null $return-super-cont))
+        (drop
+          ;; The continuation we're resuming returns a $sub. In the next type we
+          ;; give it, it returns a $super. This requires $sub <: $super.
+          (resume_throw $return-sub-cont $e (on $e $l)
+            (local.get $cont)
+          )
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $return-sub (func (result (ref null $sub))))
+  (type $return-sub (func (result (ref null $sub))))
+  ;; CHECK:       (type $return-super (func (result (ref null $super))))
+  (type $return-super (func (result (ref null $super))))
+
+  ;; CHECK:       (type $return-sub-cont (cont $return-sub))
+  (type $return-sub-cont (cont $return-sub))
+  ;; CHECK:       (type $return-super-cont (cont $return-super))
+  (type $return-super-cont (cont $return-super))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (tag $e (type $6))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-cont-result (type $6)
+  ;; CHECK-NEXT:  (local $cont (ref null $return-sub-cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $return-super-cont))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null nocont)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-cont-result
+    (local $cont (ref null $return-sub-cont))
+    (drop
+      (block $l (result (ref null $return-super-cont))
+        (drop
+          ;; Same as above, but now the continuation is null so we can optimize.
+          (resume_throw $return-sub-cont $e (on $e $l)
+            (ref.null nocont)
+          )
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $return-sub (func (result (ref null $sub))))
+  (type $return-sub (func (result (ref null $sub))))
+  ;; CHECK:       (type $return-super (func (result (ref null $super))))
+  (type $return-super (func (result (ref null $super))))
+
+  ;; CHECK:       (type $return-sub-cont (cont $return-sub))
+  (type $return-sub-cont (cont $return-sub))
+  ;; CHECK:       (type $return-super-cont (cont $return-super))
+  (type $return-super-cont (cont $return-super))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (tag $e (type $6))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-ref-cont-result (type $6)
+  ;; CHECK-NEXT:  (local $cont (ref null $return-sub-cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $return-super-cont))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (resume_throw_ref $return-sub-cont (on $e $l)
+  ;; CHECK-NEXT:      (ref.null noexn)
+  ;; CHECK-NEXT:      (local.get $cont)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-ref-cont-result
+    (local $cont (ref null $return-sub-cont))
+    (drop
+      (block $l (result (ref null $return-super-cont))
+        (drop
+          ;; The continuation we're resuming returns a $sub. In the next type we
+          ;; give it, it returns a $super. This requires $sub <: $super.
+          (resume_throw_ref $return-sub-cont (on $e $l)
+            (ref.null noexn)
+            (local.get $cont)
+          )
+        )
+        (ref.null nocont)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $return-sub (func (result (ref null $sub))))
+  (type $return-sub (func (result (ref null $sub))))
+  ;; CHECK:       (type $return-super (func (result (ref null $super))))
+  (type $return-super (func (result (ref null $super))))
+
+  ;; CHECK:       (type $return-sub-cont (cont $return-sub))
+  (type $return-sub-cont (cont $return-sub))
+  ;; CHECK:       (type $return-super-cont (cont $return-super))
+  (type $return-super-cont (cont $return-super))
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (tag $e (type $6))
+  (tag $e)
+
+  ;; CHECK:      (func $resume-throw-ref-cont-result (type $6)
+  ;; CHECK-NEXT:  (local $cont (ref null $return-sub-cont))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $return-super-cont))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null noexn)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null nocont)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-ref-cont-result
+    (local $cont (ref null $return-sub-cont))
+    (drop
+      (block $l (result (ref null $return-super-cont))
+        (drop
+          ;; Same as above, but now the continuation is null so we can optimize.
+          (resume_throw_ref $return-sub-cont (on $e $l)
+            (ref.null noexn)
+            (ref.null nocont)
+          )
+        )
+        (ref.null nocont)
       )
     )
   )
@@ -398,6 +1508,52 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $super (sub (struct)))
   (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  (rec
+    ;; CHECK:       (type $f (func (param (ref null $super) (ref null $ret-cont))))
+    (type $f (func (param (ref null $super) (ref null $ret-cont))))
+    ;; CHECK:       (type $cont (cont $f))
+    (type $cont (cont $f))
+
+    ;; CHECK:       (type $ret-f (func))
+    (type $ret-f (func))
+    ;; CHECK:       (type $ret-cont (cont $ret-f))
+    (type $ret-cont (cont $ret-f))
+  )
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (tag $e (type $6))
+  (tag $e)
+
+  ;; CHECK:      (func $switch-param (type $6)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StackSwitch we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.new_default $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $switch-param
+    (local $cont (ref null $cont))
+    ;; Same as above, but now the continuation is null so we can optimize.
+    (switch $cont $e
+      (struct.new $sub)
+      (ref.null nocont)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
   ;; CHECK:       (type $sub (sub $super (struct)))
   (type $sub (sub $super (struct)))
 
@@ -432,6 +1588,50 @@
     ;; the target continuation will return a $sub. This requires $sub <: $super.
     (switch $cont $e
       (local.get $cont)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
+
+  (rec
+    ;; CHECK:       (type $f (func (param (ref null $ret-cont)) (result (ref null $sub))))
+    (type $f (func (param (ref null $ret-cont)) (result (ref null $sub))))
+    ;; CHECK:       (type $cont (cont $f))
+    (type $cont (cont $f))
+
+    ;; CHECK:       (type $ret-f (func (result (ref null $super))))
+    (type $ret-f (func (result (ref null $super))))
+    ;; CHECK:       (type $ret-cont (cont $ret-f))
+    (type $ret-cont (cont $ret-f))
+  )
+
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
+
+  ;; CHECK:       (type $7 (func))
+
+  ;; CHECK:      (tag $e (type $6) (result (ref null $super)))
+  (tag $e (result (ref null $super)))
+
+  ;; CHECK:      (func $switch-target-result (type $7)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StackSwitch we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $switch-target-result
+    (local $cont (ref null $cont))
+    ;; Same as above, but now the continuation is null so we can optimize.
+    (switch $cont $e
+      (ref.null nocont)
     )
   )
 )
@@ -479,48 +1679,47 @@
   )
 )
 
-;; Test we do not error on resume_throw_ref. It adds no subtyping constraints
-;; between declared types besides those from the handlers.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $f (func))
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub (struct)))
+  (type $sub (sub $super (struct)))
 
-  ;; CHECK:       (type $k (cont $f))
+  (rec
+    ;; CHECK:       (type $f (func (param (ref null $ret-cont)) (result (ref null $sub))))
+    (type $f (func (param (ref null $ret-cont)) (result (ref null $sub))))
+    ;; CHECK:       (type $cont (cont $f))
+    (type $cont (cont $f))
 
-  ;; CHECK:      (elem declare func $no_handler)
-
-  ;; CHECK:      (tag $e0 (type $f))
-  (tag $e0)
-
-  (type $f (func))
-  (type $k (cont $f))
-
-  ;; CHECK:      (func $no_handler (type $f)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $no_handler
-    (unreachable)
+    ;; CHECK:       (type $ret-f (func (result (ref null $super))))
+    (type $ret-f (func (result (ref null $super))))
+    ;; CHECK:       (type $ret-cont (cont $ret-f))
+    (type $ret-cont (cont $ret-f))
   )
 
-  ;; CHECK:      (func $throw_unhandled_ref (type $f)
-  ;; CHECK-NEXT:  (resume_throw_ref $k
-  ;; CHECK-NEXT:   (block $h (result (ref exn))
-  ;; CHECK-NEXT:    (try_table (catch_ref $e0 $h)
-  ;; CHECK-NEXT:     (throw $e0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK:       (type $6 (func (result (ref null $sub))))
+
+  ;; CHECK:       (type $7 (func))
+
+  ;; CHECK:      (tag $e (type $6) (result (ref null $sub)))
+  (tag $e (result (ref null $sub)))
+
+  ;; CHECK:      (func $switch-return-result (type $7)
+  ;; CHECK-NEXT:  (local $cont (ref null $cont))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StackSwitch we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (cont.new $k
-  ;; CHECK-NEXT:    (ref.func $no_handler)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $throw_unhandled_ref
-    (block $h (result exnref)
-      (try_table (catch_ref $e0 $h) (throw $e0))
-      (unreachable)
+  (func $switch-return-result
+    (local $cont (ref null $cont))
+    ;; Same as above, but now the continuation is null so we can optimize.
+    (switch $cont $e
+      (ref.null nocont)
     )
-    (resume_throw_ref $k (cont.new $k (ref.func $no_handler)))
   )
 )
 
@@ -591,3 +1790,49 @@
   )
 )
 
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:       (type $sub (sub $super (func)))
+  (type $sub (sub $super (func)))
+  ;; CHECK:       (type $cont-super (sub (cont $super)))
+  (type $cont-super (sub (cont $super)))
+  ;; CHECK:       (type $cont-sub (sub $cont-super (cont $sub)))
+  (type $cont-sub (sub $cont-super (cont $sub)))
+
+  ;; CHECK:       (type $4 (func (param (ref $cont-sub)) (result (ref $cont-super))))
+
+  ;; CHECK:      (func $cont-subtyping (type $4) (param $sub (ref $cont-sub)) (result (ref $cont-super))
+  ;; CHECK-NEXT:  (local.get $sub)
+  ;; CHECK-NEXT: )
+  (func $cont-subtyping (param $sub (ref $cont-sub)) (result (ref $cont-super))
+    ;; This requires $cont-sub <: $cont-super and $sub <: $super.
+    (local.get $sub)
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:       (type $sub (sub (func)))
+  (type $sub (sub $super (func)))
+  ;; CHECK:       (type $cont-super (sub (cont $super)))
+  (type $cont-super (sub (cont $super)))
+  ;; CHECK:       (type $cont-sub (sub (cont $sub)))
+  (type $cont-sub (sub $cont-super (cont $sub)))
+
+  ;; CHECK:       (type $4 (func (param (ref $cont-sub)) (result (ref $cont-sub))))
+
+  ;; CHECK:      (func $cont-unsubtyping (type $4) (param $sub (ref $cont-sub)) (result (ref $cont-sub))
+  ;; CHECK-NEXT:  (local $keepalive (ref $cont-super))
+  ;; CHECK-NEXT:  (local.get $sub)
+  ;; CHECK-NEXT: )
+  (func $cont-unsubtyping (param $sub (ref $cont-sub)) (result (ref $cont-sub))
+    (local $keepalive (ref $cont-super))
+    ;; As above, but now we return the subtype, so there is no constraint. We
+    ;; can unsubtype both the continuations and the funcs.
+    (local.get $sub)
+  )
+)

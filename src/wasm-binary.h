@@ -44,6 +44,11 @@ enum {
   MaxLEB32Bytes = 5,
 };
 
+enum class BackingType {
+  Memory,
+  Array,
+};
+
 template<typename T, typename MiniT> struct LEB {
   static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
 
@@ -359,8 +364,12 @@ enum BrOnCastFlag {
 
 constexpr uint32_t ExactImport = 1 << 5;
 
+constexpr uint32_t HasBackingArrayMask = 1 << 4;
 constexpr uint32_t HasMemoryOrderMask = 1 << 5;
 constexpr uint32_t HasMemoryIndexMask = 1 << 6;
+
+constexpr uint8_t HasTableInitializer = 0x40;
+constexpr uint8_t TableReservedByte = 0x00;
 
 enum EncodedType {
   // value types
@@ -463,6 +472,7 @@ extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
 extern const char* CustomDescriptorsFeature;
 extern const char* RelaxedAtomicsFeature;
+extern const char* MultibyteFeature;
 extern const char* CustomPageSizesFeature;
 
 enum Subsection {
@@ -1596,6 +1606,7 @@ public:
   bool more() { return pos < input.size(); }
 
   std::string_view getByteView(size_t size);
+  uint8_t peekInt8();
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();
@@ -1709,6 +1720,9 @@ public:
 
   void readExports();
 
+  Result<> readLoad(unsigned bytes, bool signed_, Type type);
+  Result<> readStore(unsigned bytes, Type type);
+
   // The strings in the strings section (which are referred to by StringConst).
   std::vector<Name> strings;
   void readStrings();
@@ -1756,11 +1770,11 @@ public:
   void readJSCalledHints(size_t payloadLen);
   void readIdempotentHints(size_t payloadLen);
 
-  std::tuple<Address, Address, Index, MemoryOrder>
+  std::tuple<Address, Address, Index, MemoryOrder, BackingType>
   readMemoryAccess(bool isAtomic, bool isRMW);
   std::tuple<Name, Address, Address, MemoryOrder> getAtomicMemarg();
   std::tuple<Name, Address, Address, MemoryOrder> getRMWMemarg();
-  std::tuple<Name, Address, Address> getMemarg();
+  std::tuple<Name, Address, Address, BackingType> getMemarg();
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {

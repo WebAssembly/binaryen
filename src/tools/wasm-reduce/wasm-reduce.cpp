@@ -918,8 +918,7 @@ struct Reducer
               << numFuncs << ")\n";
     for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
-      if (!justReduced &&
-          functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
+      if (!justReduced && functionsWeTriedToRemove.contains(functionNames[i]) &&
           !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
         continue;
       }
@@ -1102,17 +1101,18 @@ struct Reducer
         }
       }
       void visitCall(Call* curr) {
-        if (names.count(curr->target)) {
+        if (names.contains(curr->target)) {
           replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
         }
       }
       void visitRefFunc(RefFunc* curr) {
-        if (names.count(curr->func)) {
+        if (names.contains(curr->func)) {
           replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
         }
       }
       void visitExport(Export* curr) {
-        if (auto* name = curr->getInternalName(); name && names.count(*name)) {
+        if (auto* name = curr->getInternalName();
+            name && names.contains(*name)) {
           exportsToRemove.push_back(curr->name);
         }
       }

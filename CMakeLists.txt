@@ -5,13 +5,13 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 128)
+project(binaryen LANGUAGES C CXX VERSION 129)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with scripts/test/shared.py cxx_standard
 # The if condition allows embedding in a project with a higher default C++ standard set
-set(REQUIRED_CXX_STANDARD 17)
+set(REQUIRED_CXX_STANDARD 20)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD ${REQUIRED_CXX_STANDARD})
 elseif(CMAKE_CXX_STANDARD LESS ${REQUIRED_CXX_STANDARD})
@@ -555,7 +555,7 @@ if(EMSCRIPTEN)
   else()
     target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6")
   endif()
-  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii,getExceptionMessage")
   target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free,__i32_load")
   target_link_libraries(binaryen_js PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js PRIVATE optimized "--closure=1")
@@ -568,8 +568,6 @@ if(EMSCRIPTEN)
   # Don't exit the process on a fatal error, instead throw, so that JS can
   # catch.
   add_compile_flag("-DTHROW_ON_FATAL")
-  # Add support for printing C++ exceptions from JS.
-  target_link_libraries(binaryen_js PRIVATE "-sEXPORT_EXCEPTION_HANDLING_HELPERS")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 

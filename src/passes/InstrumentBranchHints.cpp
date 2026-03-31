@@ -344,7 +344,7 @@ struct DeleteBranchHints : public InstrumentationProcessor<DeleteBranchHints> {
     if (auto info = getInstrumentation(curr->condition)) {
       if (auto* c = info->call->operands[0]->template dynCast<Const>()) {
         auto id = c->value.geti32();
-        if (idsToDelete.count(id)) {
+        if (idsToDelete.contains(id)) {
           // Remove the branch hint.
           getFunction()->codeAnnotations[curr].branchLikely = {};
         }

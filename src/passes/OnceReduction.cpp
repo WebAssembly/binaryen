@@ -593,7 +593,7 @@ struct OnceReduction : public Pass {
           // remove the logic if we are calling such a function. (As a result,
           // the order of iteration matters here, and so the outer loop in this
           // function must be deterministic.)
-          if (!removedExitLogic.count(call->target)) {
+          if (!removedExitLogic.contains(call->target)) {
             ExpressionManipulator::nop(list[0]);
             ExpressionManipulator::nop(list[1]);
             removedExitLogic.insert(func->name);

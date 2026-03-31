@@ -174,13 +174,13 @@ wabt_bin = os.path.join(wabt_dir, 'bin')
 
 def wabt_determine_platform():
     if sys.platform.startswith('linux'):
-        return 'ubuntu'
+        return 'linux'
     if sys.platform == 'darwin':
         return 'macos'
     if sys.platform == 'win32':
         return 'windows'
-    print('Cannot determine platform, assuming \'ubuntu\'')
-    return 'ubuntu'
+    print('Cannot determine platform, assuming \'linux\'')
+    return 'linux'
 
 
 def wabt_determine_release(platform):

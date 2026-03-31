@@ -9,7 +9,7 @@
   (memory $mem 1 1)
   (global $g (mut i32) (i32.const 0))
 
-  ;; CHECK:      [fuzz-exec] calling oob
+  ;; CHECK:      [fuzz-exec] export oob
   ;; CHECK-NEXT: [trap final > memory: 4294967295 > 65536]
   (func $oob (export "oob")
     (drop
@@ -26,17 +26,17 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling get
+  ;; CHECK:      [fuzz-exec] export get
   ;; CHECK-NEXT: [fuzz-exec] note result: get => 1
   (func $get (export "get") (result i32)
     ;; This should be 1
     (global.get $g)
   )
 )
-;; CHECK:      [fuzz-exec] calling oob
+;; CHECK:      [fuzz-exec] export oob
 ;; CHECK-NEXT: [trap final > memory: 4294967295 > 65536]
 
-;; CHECK:      [fuzz-exec] calling get
+;; CHECK:      [fuzz-exec] export get
 ;; CHECK-NEXT: [fuzz-exec] note result: get => 1
 ;; CHECK-NEXT: [fuzz-exec] comparing get
 ;; CHECK-NEXT: [fuzz-exec] comparing oob

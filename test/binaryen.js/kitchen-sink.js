@@ -772,6 +772,8 @@ function test_core() {
   assert(module.getNumTables() === 1);
   assert(module.getNumElementSegments() === 1);
 
+  module.addTable("t2", 1, 1, binaryen.i31ref, module.ref.i31(module.i32.const(1)));
+
   // Start function. One per module
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
   module.setStart(starter);
@@ -1018,6 +1020,55 @@ function test_binaries() {
   module.dispose();
 }
 
+function test_binaries_with_features() {
+  var builder = new binaryen.TypeBuilder(1);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+    { type: binaryen.f64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [structHeapType] = builder.buildAndDispose();
+  var structType = binaryen.getTypeFromHeapType(structHeapType, true);
+
+  var features = binaryen.Features.ReferenceTypes | binaryen.Features.GC;
+  module = new binaryen.Module();
+  module.setFeatures(features);
+
+  module.addGlobal("struct-global",
+    structType,
+    true,
+    module.struct.new(
+      [module.i32.const(42), module.f64.const(3.14)],
+      binaryen.getHeapType(structType)
+    )
+  );
+
+  module.addFunction("get-field", binaryen.none, binaryen.i32, [],
+    module.struct.get(
+      0,
+      module.global.get("struct-global", structType),
+      binaryen.i32,
+      false
+    )
+  );
+
+  assert(module.validate());
+  binaryen.setDebugInfo(true);
+  var buffer = module.emitBinary();
+  binaryen.setDebugInfo(false);
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, features);
+
+  assert(module.validate());
+  console.log("module loaded from binary with features:");
+  console.log(module.emitText());
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, binaryen.Features.MVP);
+  assert(!module.validate());
+  module.dispose();
+}
+
 function test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
   module = new binaryen.Module();
@@ -1142,13 +1193,17 @@ function test_for_each() {
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
+  assert(module.getDataSegment(expected_names[0]) !== 0);
+  assert(module.getDataSegment("NonExistantSegment") === 0);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
-    var segment = module.getMemorySegmentInfo(expected_names[i]);
-    assert(expected_offsets[i] === segment.offset);
-    var data8 = new Uint8Array(segment.data);
+    var segment = module.getDataSegmentByIndex(i);
+    var info = module.getMemorySegmentInfo(segment);
+    assert(expected_names[i] === info.name);
+    assert(expected_offsets[i] === info.offset);
+    var data8 = new Uint8Array(info.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);
-    assert(expected_passive[i] === segment.passive);
+    assert(expected_passive[i] === info.passive);
   }
 
   module.addTable("t0", 1, 0xffffffff);
@@ -1228,6 +1283,7 @@ test_ids();
 test_core();
 test_relooper();
 test_binaries();
+test_binaries_with_features();
 test_interpret();
 test_nonvalid();
 test_parsing();

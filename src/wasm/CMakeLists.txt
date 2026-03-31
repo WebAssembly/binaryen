@@ -7,7 +7,6 @@ set(wasm_SOURCES
   wasm-binary.cpp
   wasm-debug.cpp
   wasm-emscripten.cpp
-  wasm-interpreter.cpp
   wasm-io.cpp
   wasm-ir-builder.cpp
   wasm-stack.cpp

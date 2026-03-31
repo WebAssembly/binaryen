@@ -27,7 +27,7 @@ from pathlib import Path
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with CMakeLists.txt CXX_STANDARD
-cxx_standard = 17
+cxx_standard = 20
 
 
 def parse_args(args):
@@ -387,9 +387,6 @@ SPEC_TESTS_TO_SKIP = [
     # Requires us to write our own floating point parser
     'const.wast',
 
-    # Unlinkable module accepted
-    'linking.wast',
-
     # Invalid module accepted
     'unreached-invalid.wast',
 
@@ -415,55 +412,34 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'binary.wast',   # Missing data count section validation
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
-    'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Fail to parse data segment offset abbreviation
     'elem.wast',    # Requires modeling empty declarative segments
-    'f32.wast',     # Adding -0 and -nan should give a canonical NaN
-    'f64.wast',     # Adding -0 and -nan should give a canonical NaN
-    'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
-    'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
-    'global.wast',  # Fail to parse table
     'if.wast',      # Requires more precise unreachable validation
     'imports.wast',  # Requires fixing handling of mutation to imported globals
     'proposals/threads/imports.wast',  # Missing memory type validation on instantiation
-    'linking.wast',  # Missing function type validation on instantiation
     'proposals/threads/memory.wast',  # Missing memory type validation on instantiation
     'annotations.wast',  # String annotations IDs should be allowed
-    'instance.wast',  # Requires support for table default elements
     'table64.wast',   # Requires validations for table size
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
-    'ref_is_null.wast',  # Requires support for non-nullable reference types in tables
     'return_call_indirect.wast',  # Requires more precise unreachable validation
     'select.wast',  # Missing validation of type annotation on select
-    'table.wast',  # Requires support for table default elements
     'unreached-invalid.wast',  # Requires more precise unreachable validation
-    'array.wast',  # Requires support for table default elements
+    'array.wast',  # Failure to parse element segment item abbreviation
     'br_if.wast',  # Requires more precise branch validation
     'br_on_cast.wast',  # Requires host references to not be externalized i31refs
     'br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs
     'extern.wast',    # Requires ref.host wast constants
-    'i31.wast',       # Requires support for table default elements
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
     'ref_test.wast',  # Requires host references to not be externalized i31refs
     'struct.wast',    # Fails to roundtrip unnamed types e.g. `(ref 0)`
-    'type-rec.wast',  # Missing function type validation on instantiation
-    'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'memory64.wast',        # Requires validations on the max memory size
     'imports3.wast',  # Requires better checking of exports from the special "spectest" module
     'relaxed_dot_product.wast',   # i16x8.relaxed_dot_i8x16_i7x16_s instruction not supported
     'relaxed_laneselect.wast',    # i8x16.relaxed_laneselect instruction not supported
-    'relaxed_min_max.wast',       # Non-canonical NaN from f32x4.relaxed_min
     'simd_const.wast',            # Hex float constant not recognized as out of range
-    'simd_conversions.wast',      # Promoted NaN should be canonical
-    'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
-    'simd_f32x4_arith.wast',      # Adding inf and -inf should give a canonical NaN
-    'simd_f32x4_rounding.wast',   # Ceil of NaN should give a canonical NaN
-    'simd_f64x2.wast',            # Min of 0 and NaN should give a canonical NaN
-    'simd_f64x2_arith.wast',      # Adding inf and -inf should give a canonical NaN
-    'simd_f64x2_rounding.wast',   # Ceil of NaN should give a canonical NaN
     'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
 

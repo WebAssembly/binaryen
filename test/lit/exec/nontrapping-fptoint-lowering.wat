@@ -22,7 +22,7 @@
   (func $i64.trunc_sat_f64_s (param $x f64) (result i64) (i64.trunc_sat_f64_s (local.get $x)))
   (func $i64.trunc_sat_f64_u (param $x f64) (result i64) (i64.trunc_sat_f64_u (local.get $x)))
 
-  ;; CHECK:      [fuzz-exec] calling f32_i32
+  ;; CHECK:      [fuzz-exec] export f32_i32
   (func $f32_i32 (export "f32_i32")
     (call $assert_i32 (call $i32.trunc_sat_f32_s (f32.const 0.0)) (i32.const 0))
     (call $assert_i32 (call $i32.trunc_sat_f32_s (f32.const -0.0)) (i32.const 0))
@@ -49,7 +49,7 @@
     (drop (call $i32.trunc_sat_f32_s (f32.const -nan:0x200000)))
   )
 
-  ;; CHECK:      [fuzz-exec] calling f32_i32_u
+  ;; CHECK:      [fuzz-exec] export f32_i32_u
   (func $f32_i32_u (export "f32_i32_u")
     (call $assert_i32 (call $i32.trunc_sat_f32_u (f32.const 0.0)) (i32.const 0))
     (call $assert_i32 (call $i32.trunc_sat_f32_u (f32.const -0.0)) (i32.const 0))
@@ -74,7 +74,7 @@
     (drop (call $i32.trunc_sat_f32_u (f32.const -nan:0x200000)))
   )
 
-  ;; CHECK:      [fuzz-exec] calling f64_i32
+  ;; CHECK:      [fuzz-exec] export f64_i32
   (func $f64_i32 (export "f64_i32")
     (call $assert_i32 (call $i32.trunc_sat_f64_s (f64.const 0.0)) (i32.const 0))
     (call $assert_i32 (call $i32.trunc_sat_f64_s (f64.const -0.0)) (i32.const 0))
@@ -100,7 +100,7 @@
     (drop (call $i32.trunc_sat_f64_s (f64.const -nan:0x4000000000000)))
   )
 
-  ;; CHECK:      [fuzz-exec] calling f64_i32_s
+  ;; CHECK:      [fuzz-exec] export f64_i32_s
   (func $f64_i32_s (export "f64_i32_s")
     (call $assert_i32 (call $i32.trunc_sat_f64_u (f64.const 0.0)) (i32.const 0))
     (call $assert_i32 (call $i32.trunc_sat_f64_u (f64.const -0.0)) (i32.const 0))
@@ -130,7 +130,7 @@
     (drop (call $i32.trunc_sat_f64_u (f64.const -nan:0x4000000000000)))
   )
 
-  ;; CHECK:      [fuzz-exec] calling f32_i64
+  ;; CHECK:      [fuzz-exec] export f32_i64
   (func $f32_i64 (export "f32_i64")
     (call $assert_i64 (call $i64.trunc_sat_f32_s (f32.const 0.0)) (i64.const 0))
     (call $assert_i64 (call $i64.trunc_sat_f32_s (f32.const -0.0)) (i64.const 0))
@@ -158,7 +158,7 @@
     (drop (call $i64.trunc_sat_f32_s (f32.const -nan:0x200000)))
   )
 
-  ;; CHECK:      [fuzz-exec] calling f32_i64_u
+  ;; CHECK:      [fuzz-exec] export f32_i64_u
   (func $f32_i64_u (export "f32_i64_u")
     (call $assert_i64 (call $i64.trunc_sat_f32_u (f32.const 0.0)) (i64.const 0))
     (call $assert_i64 (call $i64.trunc_sat_f32_u (f32.const -0.0)) (i64.const 0))
@@ -181,7 +181,7 @@
     (drop (call $i64.trunc_sat_f32_u (f32.const -nan:0x200000)))
   )
 
-  ;; CHECK:      [fuzz-exec] calling f64_i64
+  ;; CHECK:      [fuzz-exec] export f64_i64
   (func $f64_i64 (export "f64_i64")
     (call $assert_i64 (call $i64.trunc_sat_f64_s (f64.const 0.0)) (i64.const 0))
     (call $assert_i64 (call $i64.trunc_sat_f64_s (f64.const -0.0)) (i64.const 0))
@@ -209,7 +209,7 @@
     (drop (call $i64.trunc_sat_f64_s (f64.const -nan:0x4000000000000)))
   )
 
-  ;; CHECK:      [fuzz-exec] calling f64_i64_u
+  ;; CHECK:      [fuzz-exec] export f64_i64_u
   (func $f64_i64_u (export "f64_i64_u")
     (call $assert_i64 (call $i64.trunc_sat_f64_u (f64.const 0.0)) (i64.const 0))
     (call $assert_i64 (call $i64.trunc_sat_f64_u (f64.const -0.0)) (i64.const 0))
@@ -236,21 +236,21 @@
     (drop (call $i64.trunc_sat_f64_u (f64.const -nan:0x4000000000000)))
   )
 )
-;; CHECK:      [fuzz-exec] calling f32_i32
+;; CHECK:      [fuzz-exec] export f32_i32
 
-;; CHECK:      [fuzz-exec] calling f32_i32_u
+;; CHECK:      [fuzz-exec] export f32_i32_u
 
-;; CHECK:      [fuzz-exec] calling f64_i32
+;; CHECK:      [fuzz-exec] export f64_i32
 
-;; CHECK:      [fuzz-exec] calling f64_i32_s
+;; CHECK:      [fuzz-exec] export f64_i32_s
 
-;; CHECK:      [fuzz-exec] calling f32_i64
+;; CHECK:      [fuzz-exec] export f32_i64
 
-;; CHECK:      [fuzz-exec] calling f32_i64_u
+;; CHECK:      [fuzz-exec] export f32_i64_u
 
-;; CHECK:      [fuzz-exec] calling f64_i64
+;; CHECK:      [fuzz-exec] export f64_i64
 
-;; CHECK:      [fuzz-exec] calling f64_i64_u
+;; CHECK:      [fuzz-exec] export f64_i64_u
 ;; CHECK-NEXT: [fuzz-exec] comparing f32_i32
 ;; CHECK-NEXT: [fuzz-exec] comparing f32_i32_u
 ;; CHECK-NEXT: [fuzz-exec] comparing f32_i64

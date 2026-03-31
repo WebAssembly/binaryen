@@ -22,6 +22,7 @@
 --enable-custom-descriptors
 --enable-relaxed-atomics
 --enable-custom-page-sizes
+--enable-multibyte
 (module
  (type $0 (func (result v128 externref)))
  (func $foo (type $0) (result v128 externref)

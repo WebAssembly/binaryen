@@ -32,6 +32,7 @@
 #include "ir/memory-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/bits.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
@@ -67,14 +68,14 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver() : stubLiteral({Literal(0)}) {};
+  EvallingImportResolver() : stubGlobal(Type::i32, Immutable, {Literal(0)}) {}
 
   // Return an unused stub value. We throw FailToEvalException on reading any
   // imported globals. We ignore the type and return an i32 literal since some
   // types can't be created anyway (e.g. ref none).
-  Literals*
+  RuntimeGlobal*
   getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
-    return &stubLiteral;
+    return &stubGlobal;
   }
 
   RuntimeTable* getTableOrNull(ImportNames name,
@@ -96,7 +97,7 @@ public:
   }
 
 private:
-  mutable Literals stubLiteral;
+  mutable RuntimeGlobal stubGlobal;
   mutable std::unordered_map<ImportNames, Tag> importedTags;
 };
 
@@ -467,7 +468,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
   void throwException(const WasmException& exn) override {
     std::stringstream ss;
-    ss << "exception thrown: " << exn;
+    auto& data = *exn.exn.getExnData();
+    ss << "exception thrown: " << data.tag->name;
+    if (!data.payload.empty()) {
+      ss << ' ' << data.payload;
+    }
     throw FailToEvalException(ss.str());
   }
 
@@ -497,15 +502,11 @@ private:
   }
 
   template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    memcpy(getMemory(address, memoryName, sizeof(T)), &value, sizeof(T));
+    Bits::writeLE<T>(value, getMemory(address, memoryName, sizeof(T)));
   }
 
   template<typename T> T doLoad(Address address, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    T ret;
-    memcpy(&ret, getMemory(address, memoryName, sizeof(T)), sizeof(T));
-    return ret;
+    return Bits::readLE<T>(getMemory(address, memoryName, sizeof(T)));
   }
 
   // Clear the state of the operation of applying the interpreter's runtime
@@ -564,8 +565,8 @@ private:
   void applyGlobalsToModule() {
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
-      for (const auto& [name, values] : instance->allGlobals) {
-        wasm->getGlobal(name)->init = getSerialization(*values);
+      for (const auto& [name, global] : instance->allGlobals) {
+        wasm->getGlobal(name)->init = getSerialization(global->literals);
       }
       return;
     }
@@ -602,7 +603,7 @@ private:
       // value when we created it.)
       auto iter = instance->allGlobals.find(oldGlobal->name);
       if (iter != instance->allGlobals.end()) {
-        oldGlobal->init = getSerialization(*iter->second, name);
+        oldGlobal->init = getSerialization(iter->second->literals, name);
       }
 
       // Add the global back to the module.
@@ -763,7 +764,7 @@ private:
           }
 
           if (auto* get = child->dynCast<GlobalGet>()) {
-            if (!readableGlobals.count(get->name)) {
+            if (!readableGlobals.contains(get->name)) {
               // This get cannot be read - it is a global that appears after
               // us - and so we must fix it up, using the method mentioned
               // before (setting it to null now, and later in the start
@@ -1416,7 +1417,7 @@ void evalCtors(Module& wasm,
       // time and undo any side effects here. Instead, if we will need the
       // export, disallow things that can block serialization, if we may end up
       // needing to serialize.
-      bool keeping = keptExportsSet.count(ctor);
+      bool keeping = keptExportsSet.contains(ctor);
       if (!keeping) {
         instance.allowContNew = true;
       } else {
@@ -1630,7 +1631,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.contains("output")) {
     if (options.debug) {
       std::cout << "writing..." << std::endl;
     }

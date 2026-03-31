@@ -53,7 +53,7 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   for (auto& kv : analysis.map) {
     auto& names = kv.second;
     for (auto name : names) {
-      if (!tableNames.count(name)) {
+      if (!tableNames.contains(name)) {
         ret.insert(name);
       }
     }

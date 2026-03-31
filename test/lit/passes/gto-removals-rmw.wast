@@ -74,3 +74,47 @@
     )
   )
 )
+
+;; When a field is removed, indexes in RMW and Cmpxchg should be updated.
+(module
+  ;; GTO should remove the first field because it is never read. The second
+  ;; field will then be shifted from index 1 to 0.
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (shared (struct (field (mut i32)))))
+  (type $struct (shared (struct (field (mut i64)) (field (mut i32)))))
+
+  ;; CHECK:       (type $1 (func (param (ref $struct))))
+
+  ;; CHECK:      (func $use-field (type $1) (param $ref (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.rmw.and $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-field (param $ref (ref $struct))
+    ;; Use field 1 with an atomic RMW.
+    (drop
+      (struct.atomic.rmw.and $struct 1
+        (local.get $ref)
+        (i32.const 1)
+      )
+    )
+    ;; Use field 1 with an atomic Cmpxchg.
+    (drop
+      (struct.atomic.rmw.cmpxchg $struct 1
+        (local.get $ref)
+        (i32.const 0)
+        (i32.const 1)
+      )
+    )
+  )
+)

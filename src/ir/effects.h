@@ -385,12 +385,13 @@ public:
     // write-write, write-read, and read-write conflicts on a local prevent
     // reordering.
     for (auto local : localsWritten) {
-      if (other.localsRead.count(local) || other.localsWritten.count(local)) {
+      if (other.localsRead.contains(local) ||
+          other.localsWritten.contains(local)) {
         return true;
       }
     }
     for (auto local : localsRead) {
-      if (other.localsWritten.count(local)) {
+      if (other.localsWritten.contains(local)) {
         return true;
       }
     }
@@ -401,13 +402,13 @@ public:
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.mutableGlobalsRead.count(global) ||
-          other.globalsWritten.count(global)) {
+      if (other.mutableGlobalsRead.contains(global) ||
+          other.globalsWritten.contains(global)) {
         return true;
       }
     }
     for (auto global : mutableGlobalsRead) {
-      if (other.globalsWritten.count(global)) {
+      if (other.globalsWritten.contains(global)) {
         return true;
       }
     }
@@ -568,7 +569,7 @@ private:
       // expression is not inside a try-catch_all. It is hard to figure out
       // whether the original try-delegate's body throws or not at this point.
       if (curr->name.is()) {
-        if (self->parent.delegateTargets.count(curr->name) &&
+        if (self->parent.delegateTargets.contains(curr->name) &&
             self->parent.tryDepth == 0) {
           self->parent.throws_ = true;
         }
@@ -846,6 +847,10 @@ private:
       // so we set these to true.
       parent.readsSharedMemory = true;
       parent.writesSharedMemory = true;
+      parent.readsSharedMutableStruct = true;
+      parent.writesSharedStruct = true;
+      parent.readsSharedMutableArray = true;
+      parent.writesSharedArray = true;
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
     }
     void visitPause(Pause* curr) {
@@ -1142,6 +1147,24 @@ private:
       // Null refs and OOB access.
       parent.implicitTrap = true;
       writesArray(curr->ref->type.getHeapType(), curr->order);
+    }
+    void visitArrayLoad(ArrayLoad* curr) {
+      if (trapOnNull(curr->ref)) {
+        return;
+      }
+      // Null refs and OOB access.
+      parent.implicitTrap = true;
+      readsArray(curr->ref->type.getHeapType(), MemoryOrder::Unordered);
+    }
+
+    void visitArrayStore(ArrayStore* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.writesArray = true;
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArrayLen(ArrayLen* curr) {
       trapOnNull(curr->ref);

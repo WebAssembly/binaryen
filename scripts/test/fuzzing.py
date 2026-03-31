@@ -70,16 +70,6 @@ unfuzzable = [
     # the fuzzer does not support imported memories
     'multi-memory-lowering-import.wast',
     'multi-memory-lowering-import-error.wast',
-    # the fuzzer does not support struct RMW ops
-    'gc-atomics.wast',
-    'gc-atomics-null-refs.wast',
-    'shared-structs.wast',
-    'heap2local-rmw.wast',
-    'optimize-instructions-struct-rmw.wast',
-    'gto-removals-rmw.wast',
-    'type-refining-rmw.wast',
-    'type-ssa-exact-rmw.wast',
-    'cfp-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
     # https://github.com/WebAssembly/binaryen/issues/7176
@@ -116,6 +106,7 @@ unfuzzable = [
     'removable-if-unused-func.wast',
     'vacuum-removable-if-unused.wast',
     'vacuum-removable-if-unused-func.wast',
+    'inlining-optimizing-removable-if-unused.wast',
     'strip-toolchain-annotations-func.wast',
     'idempotent.wast',
     'optimize-instructions_idempotent.wast',
@@ -124,6 +115,8 @@ unfuzzable = [
     'local-cse_idempotent.wast',
     # Not fully implemented.
     'waitqueue.wast',
+    # TODO: fix handling of the non-utf8 names here
+    'name-high-bytes.wast',
 ]
 
 

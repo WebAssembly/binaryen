@@ -241,7 +241,7 @@ struct LoopInvariantCodeMotion
         // to just outside the loop will preserve those relationships.
         // TODO: this still counts curr's sets as inside the loop, which
         //       might matter in non-flat mode.
-        if (loopSets.count(set)) {
+        if (loopSets.contains(set)) {
           return true;
         }
       }

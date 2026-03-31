@@ -101,8 +101,7 @@ convertToDirectCalls(T* curr,
   // execute first, so we'll use locals for them all. First, see if any are
   // unreachable, and if so stop trying to optimize and leave this for DCE.
   for (auto* operand : operands) {
-    if (operand->type == Type::unreachable ||
-        !TypeUpdating::canHandleAsLocal(operand->type)) {
+    if (operand->type == Type::unreachable) {
       return nullptr;
     }
   }

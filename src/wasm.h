@@ -739,6 +739,8 @@ public:
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
+    ArrayLoadId,
+    ArrayStoreId,
     ArrayLenId,
     ArrayCopyId,
     ArrayFillId,
@@ -1871,6 +1873,32 @@ public:
   void finalize();
 };
 
+class ArrayLoad : public SpecificExpression<Expression::ArrayLoadId> {
+public:
+  ArrayLoad() = default;
+  ArrayLoad(MixedArena& allocator) {}
+
+  uint8_t bytes;
+  bool signed_ = false;
+  Expression* ref;
+  Expression* index;
+
+  void finalize();
+};
+
+class ArrayStore : public SpecificExpression<Expression::ArrayStoreId> {
+public:
+  ArrayStore() = default;
+  ArrayStore(MixedArena& allocator) {}
+
+  uint8_t bytes;
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+
+  void finalize();
+};
+
 class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
 public:
   ArrayLen() = default;
@@ -2525,6 +2553,7 @@ public:
   Address max = kMaxSize;
   Type addressType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
+  Expression* init = nullptr;
 
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return addressType == Type::i64; }
@@ -2760,6 +2789,7 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
 std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo);
 std::ostream& operator<<(std::ostream& o, const wasm::ImportNames& importNames);
 std::ostream& operator<<(std::ostream& o, const Table& table);
+std::ostream& operator<<(std::ostream& o, const wasm::Global& global);
 
 } // namespace wasm
 

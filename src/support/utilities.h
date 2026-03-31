@@ -47,15 +47,6 @@ inline Destination bit_cast(const Source& source) {
   return destination;
 }
 
-inline size_t alignAddr(size_t address, size_t alignment) {
-  assert(alignment && Bits::isPowerOf2((uint32_t)alignment) &&
-         "Alignment is not a power of two!");
-
-  assert(address + alignment - 1 >= address);
-
-  return ((address + alignment - 1) & ~(alignment - 1));
-}
-
 // For fatal errors which could arise from input (i.e. not assertion failures)
 class Fatal {
 private:

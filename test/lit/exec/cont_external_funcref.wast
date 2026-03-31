@@ -17,6 +17,6 @@
 )
 
 ;; CHECK:      [fuzz-exec] running second module
-;; CHECK-NEXT: [fuzz-exec] calling export
+;; CHECK-NEXT: [fuzz-exec] export export
 ;; CHECK-NEXT: [fuzz-exec] note result: export => 42
 

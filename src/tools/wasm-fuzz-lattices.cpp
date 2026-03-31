@@ -36,6 +36,7 @@
 #include "analysis/reaching-definitions-transfer-function.h"
 #include "analysis/transfer-function.h"
 
+#include "support/bits.h"
 #include "support/command-line.h"
 #include "tools/fuzzing.h"
 #include "tools/fuzzing/random.h"
@@ -995,7 +996,7 @@ struct Fuzzer {
     // Fewer bytes are needed to generate three random lattices.
     std::vector<char> funcBytes(128);
     for (size_t i = 0; i < funcBytes.size(); i += sizeof(uint64_t)) {
-      *(uint64_t*)(funcBytes.data() + i) = getFuncRand();
+      Bits::writeLE<uint64_t>(getFuncRand(), funcBytes.data() + i);
     }
 
     Random rand(std::move(funcBytes));
@@ -1030,7 +1031,7 @@ struct Fuzzer {
     // 4kb of random bytes should be enough for anyone!
     std::vector<char> bytes(4096);
     for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
-      *(uint64_t*)(bytes.data() + i) = getRand();
+      Bits::writeLE<uint64_t>(getRand(), bytes.data() + i);
     }
 
     Module testModule;

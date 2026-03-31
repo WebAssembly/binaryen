@@ -658,7 +658,7 @@ int main(int argc, const char* argv[]) {
   // Apply to the wasm
   graph.apply();
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.contains("output")) {
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
