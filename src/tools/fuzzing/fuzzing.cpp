@@ -2608,6 +2608,12 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (typeArrays.find(type) != typeArrays.end()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeArrayGet);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                    FeatureSet::Atomics | FeatureSet::SharedEverything,
+                  &Self::makeArrayRMW);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                    FeatureSet::Atomics | FeatureSet::SharedEverything,
+                  &Self::makeArrayCmpxchg);
     }
   }
   return (this->*pick(options))(type);
@@ -5726,19 +5732,23 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   auto* ref = makeTrappingRefUse(arrayType);
   auto* index = make(Type::i32);
   auto signed_ = maybeSignedGet(arrayType.getArray().element);
+  auto order = MemoryOrder::Unordered;
+  if (wasm.features.hasAtomics() && wasm.features.hasSharedEverything() &&
+      oneIn(2)) {
+    order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  }
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    return builder.makeArrayGet(
-      ref, index, MemoryOrder::Unordered, type, signed_);
+    return builder.makeArrayGet(ref, index, order, type, signed_);
   }
   // To avoid a trap, check the length dynamically using this pattern:
   //
   //   index < array.len ? array[index] : ..some fallback value..
   //
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* get = builder.makeArrayGet(
-    check.getRef, check.getIndex, MemoryOrder::Unordered, type, signed_);
+  auto* get =
+    builder.makeArrayGet(check.getRef, check.getIndex, order, type, signed_);
   auto* fallback = makeTrivial(type);
   return builder.makeIf(check.condition, get, fallback);
 }
@@ -5753,19 +5763,94 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   auto* index = make(Type::i32);
   auto* ref = makeTrappingRefUse(arrayType);
   auto* value = make(elementType);
+  auto order = MemoryOrder::Unordered;
+  if (wasm.features.hasAtomics() && wasm.features.hasSharedEverything() &&
+      oneIn(2)) {
+    order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  }
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    return builder.makeArraySet(ref, index, value, MemoryOrder::Unordered);
+    return builder.makeArraySet(ref, index, value, order);
   }
-  // To avoid a trap, check the length dynamically using this pattern:
-  //
-  //   if (index < array.len) array[index] = value;
-  //
+  // To avoid a trap, check the length dynamically.
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* set = builder.makeArraySet(
-    check.getRef, check.getIndex, value, MemoryOrder::Unordered);
+  auto* set = builder.makeArraySet(check.getRef, check.getIndex, value, order);
   return builder.makeIf(check.condition, set);
+}
+
+Expression* TranslateToFuzzReader::makeArrayRMW(Type type) {
+  bool isAny =
+    type.isRef() &&
+    HeapType(type.getHeapType().getTop()).isMaybeShared(HeapType::any);
+  if (type != Type::i32 && type != Type::i64 && !isAny) {
+    // Not a valid element type for an RMW operation.
+    return makeArrayGet(type);
+  }
+  auto& arrays = typeArrays[type];
+  assert(!arrays.empty());
+  auto arrayType = pick(arrays);
+  const auto& element = arrayType.getArray().element;
+  if (element.isPacked() || element.mutable_ == Immutable) {
+    // Cannot RMW a packed or immutable field.
+    return makeArrayGet(type);
+  }
+  AtomicRMWOp op = RMWXchg;
+  if (type == Type::i32 || type == Type::i64) {
+    op = pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg);
+  }
+  auto* ref = makeTrappingRefUse(arrayType);
+  auto* index = make(Type::i32);
+  auto* value = make(type);
+  auto order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  // Only rarely emit a plain operation which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+    return builder.makeArrayRMW(op, ref, index, value, order);
+  }
+  // To avoid a trap, check the length dynamically.
+  auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
+  auto* rmw =
+    builder.makeArrayRMW(op, check.getRef, check.getIndex, value, order);
+  auto* fallback = makeTrivial(type);
+  return builder.makeIf(check.condition, rmw, fallback);
+}
+
+Expression* TranslateToFuzzReader::makeArrayCmpxchg(Type type) {
+  bool isShared = type.isRef() && type.getHeapType().isShared();
+  Type eq(HeapTypes::eq.getBasic(isShared ? Shared : Unshared), Nullable);
+  bool isEq = Type::isSubType(type, eq);
+  if (type != Type::i32 && type != Type::i64 && !isEq) {
+    // Not a valid element type for a cmpxchg operation.
+    return makeArrayGet(type);
+  }
+  auto& arrays = typeArrays[type];
+  assert(!arrays.empty());
+  auto arrayType = pick(arrays);
+  const auto& element = arrayType.getArray().element;
+  if (element.isPacked() || element.mutable_ == Immutable) {
+    // Cannot RMW a packed or immutable field.
+    return makeArrayGet(type);
+  }
+  auto* ref = makeTrappingRefUse(arrayType);
+  auto* index = make(Type::i32);
+  // For reference fields, expected can be a subtype of eq. Only use the extra
+  // flexibility occasionally because it makes the expected value less likely to
+  // be equal to the actual value.
+  auto* expected = make(isEq && oneIn(4) ? eq : type);
+  auto* replacement = make(type);
+  auto order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
+  // Only rarely emit a plain operation which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+    return builder.makeArrayCmpxchg(ref, index, expected, replacement, order);
+  }
+  // To avoid a trap, check the length dynamically.
+  auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
+  auto* cmpxchg = builder.makeArrayCmpxchg(
+    check.getRef, check.getIndex, expected, replacement, order);
+  auto* fallback = makeTrivial(type);
+  return builder.makeIf(check.condition, cmpxchg, fallback);
 }
 
 Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
