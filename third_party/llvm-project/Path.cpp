@@ -1079,6 +1079,14 @@ ErrorOr<perms> getPermissions(const Twine &Path) {
 #if defined(_WIN32)
 #include "Windows/Path.inc"
 #endif
+#else
+// Stub out directory_iterator_destruct, which at least GCC 16 instantiates from
+// llvm/Support/FileSystem.h even though binaryen never uses it:
+namespace llvm { namespace sys { namespace fs { namespace detail {
+std::error_code directory_iterator_destruct(DirIterState &) {
+  return std::error_code();
+}
+}}}}
 #endif
 
 #if 0 // XXX BINARYEN
