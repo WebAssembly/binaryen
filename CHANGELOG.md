@@ -22,10 +22,13 @@ Current Trunk
    - Convert `module.getMemorySegmentInfo` to take a data segment reference instead of a name, and return the name as part of the info.
 
 - Add support for non-nullable table types and initialization expressions for
-   tables. This comes with a breaking change to C API: `BinaryenAddTable` takes
-   an additional `BinaryenExpressionRef` parameter to provide an initialization
-   expression. This may be set to NULL for tables without an initializer. In JS
-   this parameter is optional and so is not breaking. (#8405)
+  tables. This comes with a breaking change to C API: `BinaryenAddTable` takes
+  an additional `BinaryenExpressionRef` parameter to provide an initialization
+  expression. This may be set to NULL for tables without an initializer. In JS
+  this parameter is optional and so is not breaking. (#8405)
+- MinifyImportsAndExports now has a new output format using JSON. This was
+  changed while fixing bugs with colliding module names (to avoid two breaking
+  changes to the output). (#8550)
 
 v128
 ----
