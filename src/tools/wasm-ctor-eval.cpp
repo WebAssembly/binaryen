@@ -1173,6 +1173,14 @@ start_eval:
           std::cout << "  ...stopping due to non-constant flow\n";
         }
         break;
+      } else if (flow.suspendTag) {
+        // A suspend reached the exit of the function, so it is unhandled in
+        // it. TODO: We could support the case of the calling function
+        // handling it.
+        if (!quiet) {
+          std::cout << "  ...stopping due to unhandled suspend\n";
+        }
+        break;
       }
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
@@ -1235,18 +1243,8 @@ start_eval:
       results = flow.values;
 
       if (flow.breaking()) {
-        if (flow.suspendTag) {
-          // A suspend reached the exit of the function, so it is unhandled in
-          // it. TODO: We could support the case of the calling function
-          // handling it.
-          if (!quiet) {
-            std::cout << "  ...stopping due to unhandled suspend\n";
-          }
-          return EvalCtorOutcome();
-        }
-
         // We are returning out of the function (either via a return, or via a
-        // break to |block|, which has the same outcome. That means we don't
+        // break to |block|, which has the same outcome). That means we don't
         // need to execute any more lines, and can consider them to be
         // executed.
         if (!quiet) {
