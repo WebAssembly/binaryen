@@ -8,16 +8,25 @@
 ;; precompute.)
 
 (module
+ ;; CHECK:      (type $none-none (func))
+
+ ;; CHECK:      (type $i32-none (func (param i32)))
  (type $i32-none (func (param i32)))
  (type $none-none (func))
 
+ ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (type $i32-none) (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (type $i32-none)))
 
+ ;; CHECK:      (global $global (mut i32) (i32.const 99))
  (global $global (mut i32) (i32.const 100))
 
+ ;; CHECK:      (tag $tag (type $none-none))
  (tag $tag (type $none-none))
 
  (export "ctor" (func $ctor))
+ ;; CHECK:      (export "ctor" (func $ctor_3))
+
+ ;; CHECK:      (export "main" (func $main))
  (export "main" (func $main))
 
  (func $ctor (type $none-none)
@@ -30,8 +39,16 @@
   (suspend $tag)
  )
 
+ ;; CHECK:      (func $main (type $none-none)
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (global.get $global)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $main (type $none-none)
   (global.get $global)
   (call $log)
  )
 )
+;; CHECK:      (func $ctor_3 (type $none-none)
+;; CHECK-NEXT:  (suspend $tag)
+;; CHECK-NEXT: )
