@@ -446,6 +446,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
 if get_platform() == 'linux':
     SPEC_TESTSUITE_TESTS_TO_SKIP += [
         'f32.wast',  # Errors on Linux x86_64 with musl, https://github.com/WebAssembly/binaryen/pull/8557
+        'f64.wast',  # Errors on Linux x86_64 with musl, https://github.com/WebAssembly/binaryen/pull/8557
     ]
 
 
