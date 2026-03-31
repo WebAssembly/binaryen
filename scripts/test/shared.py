@@ -443,6 +443,11 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
 
+if get_platform() == 'linux':
+    SPEC_TESTSUITE_TESTS_TO_SKIP += [
+        # 'f32.wast', # Errors on Linux x86_64 with musl, https://github.com/WebAssembly/binaryen/pull/8557
+    ]
+
 
 def _can_run_spec_test(test):
     test = Path(test)
