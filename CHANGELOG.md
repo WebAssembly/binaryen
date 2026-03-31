@@ -30,6 +30,9 @@ v129
    expression. This may be set to NULL for tables without an initializer. In JS
    this parameter is optional and so is not breaking. (#8405)
  - [multibyte] Add multibyte array store and load instructions. (#8059, #8504)
+ - MinifyImportsAndExports now has a new output format using JSON. This was
+   changed while fixing bugs with colliding module names (to avoid two breaking
+   changes to the output). (#8550)
  - Update from C++17 to C++20 (#8218)
 
 v128
