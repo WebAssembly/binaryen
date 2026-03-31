@@ -1085,22 +1085,24 @@
     ;; CHECK:      (type $0 (func))
 
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $array (array i8))
-    (type $array (array i8))
-    ;; CHECK:       (type $struct (struct (field (mut anyref))))
-    (type $struct (struct (field (mut anyref))))
+    ;; CHECK-NEXT:  (type $inner (array i8))
+    (type $inner (array i8))
+    ;; CHECK:       (type $struct (struct (field (mut eqref))))
+    (type $struct (struct (field (mut eqref))))
+    ;; CHECK:       (type $array (array (mut eqref)))
+    (type $array (array (field (mut eqref))))
   )
   ;; CHECK:      (func $test-cmpxchg-scratch-oob (type $0)
   ;; CHECK-NEXT:  (local $a arrayref)
   ;; CHECK-NEXT:  (local $1 (ref null (exact $struct)))
-  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (local $2 eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:   (block (result eqref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
@@ -1115,9 +1117,9 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (array.new_fixed $array 0)
+  ;; CHECK-NEXT:     (array.new_fixed $inner 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result anyref)
+  ;; CHECK-NEXT:    (block (result eqref)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1131,7 +1133,7 @@
     (local $a arrayref)
     ;; This allocation and set get optimized, creating the LocalGraph flower.
     (local.set $a
-      (array.new_fixed $array 0)
+      (array.new_fixed $inner 0)
     )
     (drop
       ;; Then `expected` gets optimized, creating a new scratch local. Since the
@@ -1139,8 +1141,76 @@
       ;; of bounds if we tried to look it up in the LocalGraph.
       (struct.atomic.rmw.cmpxchg $struct 0
         (struct.new_default $struct)
-        (array.new_fixed $array 0)
-        (array.new_fixed $array 0)
+        (array.new_fixed $inner 0)
+        (array.new_fixed $inner 0)
+      )
+    )
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $test-cmpxchg-scratch-oob-array (type $0)
+  ;; CHECK-NEXT:  (local $a arrayref)
+  ;; CHECK-NEXT:  (local $1 eqref)
+  ;; CHECK-NEXT:  (local $2 eqref)
+  ;; CHECK-NEXT:  (local $3 eqref)
+  ;; CHECK-NEXT:  (local $4 eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result eqref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (array.new_fixed $inner 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test-cmpxchg-scratch-oob-array
+    ;; Same as above, but accessing an array type. `ref` is always processed
+    ;; first, so we do not have the same problem to avoid.
+    (local $a arrayref)
+    (local.set $a
+      (array.new_fixed $inner 0)
+    )
+    (drop
+      (array.atomic.rmw.cmpxchg $array
+        (array.new_default $array
+          (i32.const 1)
+        )
+        (i32.const 0)
+        (array.new_fixed $inner 0)
+        (array.new_fixed $inner 0)
       )
     )
     (unreachable)
@@ -1314,6 +1384,55 @@
         ;; will end up with a non-shared null here, which would be invalid.
         (array.new_fixed $array 0)
         (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $array (array (mut eqref)))
+  (type $array (array (mut eqref)))
+
+  ;; CHECK:      (type $1 (func (param (ref $array))))
+
+  ;; CHECK:      (func $array-cmpxchg-expected (type $1) (param $array (ref $array))
+  ;; CHECK-NEXT:  (local $1 eqref)
+  ;; CHECK-NEXT:  (local $2 (ref null $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result eqref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $array)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.atomic.get $array
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-expected (param $array (ref $array))
+    (drop
+      ;; We should not convert this to a struct cmpxchg because we do not
+      ;; optimize the `ref`. We should still be able to optimize the `expected`
+      ;; field, though.
+      (array.atomic.rmw.cmpxchg $array
+        (local.get $array)
+        (i32.const 0)
+        (array.new_default $array
+          (i32.const 1)
+        )
+        (ref.null none)
       )
     )
   )
