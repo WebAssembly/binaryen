@@ -3574,6 +3574,10 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
   } else if (field.type.isRef()) {
     expectedExpectedType = Type(
       HeapTypes::eq.getBasic(field.type.getHeapType().getShared()), Nullable);
+    shouldBeSubType(field.type,
+                    expectedExpectedType,
+                    curr,
+                    "struct.atomic.rmw field type invalid for operation");
   } else {
     shouldBeTrue(
       false, curr, "struct.atomic.rmw field type invalid for operation");
@@ -4127,6 +4131,10 @@ void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
   } else if (element.type.isRef()) {
     expectedExpectedType = Type(
       HeapTypes::eq.getBasic(element.type.getHeapType().getShared()), Nullable);
+    shouldBeSubType(element.type,
+                    expectedExpectedType,
+                    curr,
+                    "array.atomic.rmw element type invalid for operation");
   } else {
     shouldBeTrue(
       false, curr, "array.atomic.rmw element type invalid for operation");
