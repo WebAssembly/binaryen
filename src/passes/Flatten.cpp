@@ -462,7 +462,9 @@ struct Flatten
 
   void doWalkFunction(Function* curr) {
     // Lower things before the main walk.
-    LowerUnflattenable(*getModule(), getPassOptions()).walk(curr->body);
+    LowerUnflattenable(*getModule(), getPassOptions()).walkFunction(curr);
+
+std::cout << "after " << *curr << '\n';
 
     WalkerPass<
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>>::
