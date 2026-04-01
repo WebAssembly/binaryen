@@ -1137,83 +1137,84 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // The allocation might flow into `ref` or `expected`, but not
     // `replacement`, because then it would be considered to have escaped.
-    if (analyzer.getInteraction(curr->expected) ==
-        ParentChildInteraction::Flows) {
-      // Since the allocation does not escape, it cannot possibly match the
-      // value already in the struct. The cmpxchg will just do a read. Drop the
-      // other arguments and do the atomic read at the end, when the cmpxchg
-      // would have happened. Use a nullable scratch local in case we also
-      // optimize `ref` later and need to replace it with a null.
-      auto refType = curr->ref->type.with(Nullable);
-      auto refScratch = builder.addVar(func, refType);
-      auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
-      auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
-      auto* structGet = builder.makeStructGet(
-        curr->index, getRefScratch, curr->order, curr->type);
-      auto* block = builder.makeBlock({setRefScratch,
-                                       builder.makeDrop(curr->expected),
-                                       builder.makeDrop(curr->replacement),
-                                       structGet});
+    if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
+      [[maybe_unused]] auto& field = fields[curr->index];
+      auto type = curr->type;
+      assert(type == field.type);
+      assert(!field.isPacked());
+
+      // Hold everything in scratch locals, just like for other RMW ops and
+      // struct.new. Use a nullable (shared) eqref local for `expected` to
+      // accommodate any allowed optimized or unoptimized value there.
+      auto expectedType = type;
+      if (type.isRef()) {
+        expectedType = Type(
+          HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
+      }
+      auto oldScratch = builder.addVar(func, type);
+      auto expectedScratch = builder.addVar(func, expectedType);
+      auto replacementScratch = builder.addVar(func, type);
+      auto local = localIndexes[curr->index];
+
+      auto* block = builder.makeBlock(
+        {builder.makeDrop(curr->ref),
+         builder.makeLocalSet(expectedScratch, curr->expected),
+         builder.makeLocalSet(replacementScratch, curr->replacement),
+         builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type))});
+
+      // Create the check for whether we should do the exchange.
+      auto* lhs = builder.makeLocalGet(local, type);
+      auto* rhs = builder.makeLocalGet(expectedScratch, expectedType);
+      Expression* pred;
+      if (type.isRef()) {
+        pred = builder.makeRefEq(lhs, rhs);
+      } else {
+        pred =
+          builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), lhs, rhs);
+      }
+
+      // The conditional exchange.
+      block->list.push_back(builder.makeIf(
+        pred,
+        builder.makeLocalSet(local,
+                             builder.makeLocalGet(replacementScratch, type))));
+
+      // Unstash the old value.
+      block->list.push_back(builder.makeLocalGet(oldScratch, type));
+      block->type = type;
       replaceCurrent(block);
-      // Record the new data flow into and out of the new scratch local. This is
-      // necessary in case `ref` gets processed later so we can detect that it
-      // flows to the new struct.atomic.get, which may need to be replaced.
-      analyzer.parents.setParent(curr->ref, setRefScratch);
-      analyzer.scratchInfo.insert({setRefScratch, getRefScratch});
-      analyzer.parents.setParent(getRefScratch, structGet);
       return;
     }
-    if (analyzer.getInteraction(curr->ref) != ParentChildInteraction::Flows) {
+    if (analyzer.getInteraction(curr->expected) !=
+        ParentChildInteraction::Flows) {
       // Since the allocation does not flow from `ref`, it must not flow through
       // this cmpxchg at all.
       return;
     }
 
-    [[maybe_unused]] auto& field = fields[curr->index];
-    auto type = curr->type;
-    assert(type == field.type);
-    assert(!field.isPacked());
-
-    // Hold everything in scratch locals, just like for other RMW ops and
-    // struct.new. Use a nullable (shared) eqref local for `expected` to
-    // accommodate any allowed optimized or unoptimized value there.
-    auto expectedType = type;
-    if (type.isRef()) {
-      expectedType =
-        Type(HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
-    }
-    auto oldScratch = builder.addVar(func, type);
-    auto expectedScratch = builder.addVar(func, expectedType);
-    auto replacementScratch = builder.addVar(func, type);
-    auto local = localIndexes[curr->index];
-
-    auto* block = builder.makeBlock(
-      {builder.makeDrop(curr->ref),
-       builder.makeLocalSet(expectedScratch, curr->expected),
-       builder.makeLocalSet(replacementScratch, curr->replacement),
-       builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type))});
-
-    // Create the check for whether we should do the exchange.
-    auto* lhs = builder.makeLocalGet(local, type);
-    auto* rhs = builder.makeLocalGet(expectedScratch, expectedType);
-    Expression* pred;
-    if (type.isRef()) {
-      pred = builder.makeRefEq(lhs, rhs);
-    } else {
-      pred =
-        builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), lhs, rhs);
-    }
-
-    // The conditional exchange.
-    block->list.push_back(
-      builder.makeIf(pred,
-                     builder.makeLocalSet(
-                       local, builder.makeLocalGet(replacementScratch, type))));
-
-    // Unstash the old value.
-    block->list.push_back(builder.makeLocalGet(oldScratch, type));
-    block->type = type;
+    // Since the allocation does not escape, it cannot possibly match the value
+    // already in the struct. The cmpxchg will just do a read. Drop the other
+    // arguments and do the atomic read at the end, when the cmpxchg would have
+    // happened. Use a nullable scratch local in case we also optimize `ref`
+    // later and need to replace it with a null.
+    auto refType = curr->ref->type.with(Nullable);
+    auto refScratch = builder.addVar(func, refType);
+    auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
+    auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
+    auto* structGet = builder.makeStructGet(
+      curr->index, getRefScratch, curr->order, curr->type);
+    auto* block = builder.makeBlock({setRefScratch,
+                                     builder.makeDrop(curr->expected),
+                                     builder.makeDrop(curr->replacement),
+                                     structGet});
     replaceCurrent(block);
+    // Record the new data flow into and out of the new scratch local. This is
+    // necessary in case `ref` gets processed later so we can detect that it
+    // flows to the new struct.atomic.get, which may need to be replaced.
+    analyzer.parents.setParent(curr->ref, setRefScratch);
+    analyzer.scratchInfo.insert({setRefScratch, getRefScratch});
+    analyzer.parents.setParent(getRefScratch, structGet);
+    return;
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
