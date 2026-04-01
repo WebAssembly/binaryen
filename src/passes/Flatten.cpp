@@ -82,9 +82,9 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
     //   flowValue
     //
     // Each op fills in those things.
-    Expression* condition; // uses refTee
-    Expression* brValue;
-    Expression* flowValue;
+    Expression* condition = nullptr; // uses refTee
+    Expression* brValue = nullptr;
+    Expression* flowValue = nullptr;
     bool flip = false; // whether to flip the condition.
 
     switch (curr->op) {
@@ -114,13 +114,9 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
         flowValue = builder.makeRefCast(getRef(), curr->castType);
         break;
       }
-      case BrOnCastDescEq: {
-        assert(false); // TODO
-        break;
-      }
+      case BrOnCastDescEq:
       case BrOnCastDescEqFail: {
-        assert(false); // TODO
-        break;
+        WASM_UNREACHABLE("TODO");
       }
     }
 
