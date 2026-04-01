@@ -87,76 +87,33 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
     Expression* condition; // uses refTee
     Expression* brValue;
     Expression* flowValue;
+    bool flip = false; // whether to flip the condition.
 
     switch (curr->op) {
-      case BrOnNull:
-      case BrOnNonNull: {
-        // br_on_null => if null, branch; flow out nn value
-        // br_on_non_null => if !null, branch with nn value; flow out value
+      case BrOnNull: {
         condition = builder.makeRefIsNull(refTee);
         brValue = nullptr;
-        if (curr->op == BrOnNonNull) {
-          condition = builder.makeUnary(EqZInt32, condition);
-          brValue = builder.makeRefAs(RefAsNonNull, getRef());
-        }
         flowValue = getRef();
-        if (curr->op == BrOnNull) {
-          flowValue = builder.makeRefAs(RefAsNonNull, flowValue);
-        }
+        break;
+      }
+      case BrOnNonNull: {
+        condition = builder.makeRefIsNull(refTee);
+        flip = true;
+        brValue = builder.makeRefAs(RefAsNonNull, getRef());
+        flowValue = builder.makeRefAs(RefAsNonNull, getRef());
         break;
       }
       case BrOnCast: {
+        condition = builder.makeRefTest(refTee, curr->castType);
+        brValue = builder.makeRefCast(getRef(), curr->castType);
+        flowValue = getRef();
+        break;
+      }
       case BrOnCastFail: {
-        // br_on_cast => if test, branch with cast value; flow out value
-        // br_on_cast_fail => if !test, branch with value; flow out cast value
-        auto* condition = builder.makeRefTest(refTee, curr->castType);
-        Expression* brValue = getRef();
-        if (curr->op == BrOnCast) {
-          brValue = builder.makeRefCast(brValue, curr->castType);
-        } else {
-          condition = builder.makeUnary(EqZInt32, condition);
-        }
-        auto* br = builder.makeBreak(curr->name, brValue);
-        auto* iff = builder.makeIf(condition, br);
-        auto* flowOut = getRef();
-        if (curr->op == BrOnNull) {
-          flowOut = builder.makeRefAs(RefAsNonNull, flowOut);
-        }
-        auto* seq = builder.makeSequence(iff, flowOut);
-        replaceCurrent(seq);
-        return;
-        // Sends the cast value, if it is a subtype.
-        //
-        //   (br_on_cast $target type (X))
-        // =>
-        //   temp = (X)
-        //   (if (ref.test type temp)
-        //     $target's storage = (ref.cast type temp);
-        //     br $target
-        //   )
-        //
-
-        // If condition.
-        auto* get = builder.makeLocalGet(refTemp, refType);
-        condition = builder.makeRefTest(get, br->castType);
-        if (br->op == BrOnCastFail) {
-          condition = builder.makeUnary(EqZInt32, condition);
-        }
-
-        // If body.
-        Expression* sent = builder.makeLocalGet(refTemp, refType);
-        if (br->op == BrOnCast) {
-          sent = builder.makeRefCast(sent, br->castType);
-        }
-        auto* set = builder.makeLocalSet(blockTemp, sent);
-        auto* br2 = builder.makeBreak(br->name);
-        ifTrue = builder.makeBlock({set, br2});
-
-        // Flow out the proper value otherwise.
-        after = builder.makeLocalGet(refTemp, refType);
-        if (br->op == BrOnCastFail) {
-          after = builder.makeRefCast(after, br->castType);
-        }
+        condition = builder.makeRefTest(refTee, curr->castType);
+        flip = true;
+        brValue = getRef();
+        flowValue = builder.makeRefCast(getRef(), curr->castType);
         break;
       }
       case BrOnCastDescEq: {
@@ -167,6 +124,10 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
         assert(false); // TODO
         break;
       }
+    }
+
+    if (flip) {
+      condition = builder.makeUnary(EqZInt32, condition);
     }
 
     auto* br = builder.makeBreak(curr->name, brValue);
@@ -501,7 +462,14 @@ struct Flatten
     }
   }
 
-  void visitFunction(Function* curr) {
+  void doWalkFunction(Function* curr) {
+    // Lower things before the main walk.
+    LowerUnflattenable(*getModule(), getPassOptions()).walk(curr->body);
+
+    WalkerPass<
+      ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>>::doWalkFunction(curr);
+
+    // Finish up.
     auto* originalBody = curr->body;
     // if the body is a block with a result, turn that into a return
     if (curr->body->type.isConcrete()) {
