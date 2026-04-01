@@ -1142,9 +1142,9 @@ Literal Literal::trunc() const {
 Literal Literal::nearbyint() const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(std::nearbyint(getf32()));
+      return standardizeNaN(Literal(std::nearbyint(getf32())));
     case Type::f64:
-      return Literal(std::nearbyint(getf64()));
+      return standardizeNaN(Literal(std::nearbyint(getf64())));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
