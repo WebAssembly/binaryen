@@ -75,16 +75,46 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
       return builder.makeLocalGet(refTemp, refType);
     };
 
+    // The overall shape we emit is to check a condition, branch if so with
+    // some value, and if not, flow out something:
+    //
+    //   if (condition) {
+    //     br(brValue);
+    //   }
+    //   flowValue
+    //
+    // Each op fills in those things.
+    Expression* condition; // uses refTee
+    Expression* brValue;
+    Expression* flowValue;
+
     switch (curr->op) {
       case BrOnNull:
       case BrOnNonNull: {
         // br_on_null => if null, branch; flow out nn value
-        // br_on_non_null => if non_null, branch with nn value; flow out value
-        auto* condition = builder.makeRefIsNull(refTee);
-        Expression* brValue = nullptr;
+        // br_on_non_null => if !null, branch with nn value; flow out value
+        condition = builder.makeRefIsNull(refTee);
+        brValue = nullptr;
         if (curr->op == BrOnNonNull) {
           condition = builder.makeUnary(EqZInt32, condition);
           brValue = builder.makeRefAs(RefAsNonNull, getRef());
+        }
+        flowValue = getRef();
+        if (curr->op == BrOnNull) {
+          flowValue = builder.makeRefAs(RefAsNonNull, flowValue);
+        }
+        break;
+      }
+      case BrOnCast: {
+      case BrOnCastFail: {
+        // br_on_cast => if test, branch with cast value; flow out value
+        // br_on_cast_fail => if !test, branch with value; flow out cast value
+        auto* condition = builder.makeRefTest(refTee, curr->castType);
+        Expression* brValue = getRef();
+        if (curr->op == BrOnCast) {
+          brValue = builder.makeRefCast(brValue, curr->castType);
+        } else {
+          condition = builder.makeUnary(EqZInt32, condition);
         }
         auto* br = builder.makeBreak(curr->name, brValue);
         auto* iff = builder.makeIf(condition, br);
@@ -95,9 +125,6 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
         auto* seq = builder.makeSequence(iff, flowOut);
         replaceCurrent(seq);
         return;
-      }
-      case BrOnCast: {
-      case BrOnCastFail: {
         // Sends the cast value, if it is a subtype.
         //
         //   (br_on_cast $target type (X))
@@ -141,6 +168,11 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
         break;
       }
     }
+
+    auto* br = builder.makeBreak(curr->name, brValue);
+    auto* iff = builder.makeIf(condition, br);
+    auto* seq = builder.makeSequence(iff, flowValue);
+    replaceCurrent(seq);
   }
 
   void replaceUnreachableWithDrops(Expression* curr) {
