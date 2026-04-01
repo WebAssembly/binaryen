@@ -67,8 +67,8 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
     }
 
     // All ops stash the ref to a temp var.
-    auto refType = curr->ref->type auto refTemp =
-      builder.addVar(getFunction(), refType);
+    auto refType = curr->ref->type;
+    auto refTemp = builder.addVar(getFunction(), refType);
     // All ops will use this refTee, and more gets.
     auto* refTee = builder.makeLocalTee(refTemp, curr->ref);
     auto getRef = [&]() { return builder.makeLocalGet(refTemp, refType); };
@@ -134,10 +134,10 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
     replaceCurrent(seq);
   }
 
-  void replaceUnreachableWithDrops(Expression* curr) {
+  void replaceUnreachableWithDrops() {
     Builder builder(*getModule());
 
-    getDroppedChildrenAndAppend(curr,
+    getDroppedChildrenAndAppend(getCurrent(),
                                 *getModule(),
                                 options,
                                 builder.makeUnreachable(),
