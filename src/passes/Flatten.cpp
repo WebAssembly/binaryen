@@ -70,7 +70,7 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
     auto refType = curr->ref->type;
     auto refTemp = builder.addVar(getFunction(), refType);
     // All ops will use this refTee, and more gets.
-    auto* refTee = builder.makeLocalTee(refTemp, curr->ref);
+    auto* refTee = builder.makeLocalTee(refTemp, curr->ref, refType);
     auto getRef = [&]() { return builder.makeLocalGet(refTemp, refType); };
 
     // The overall shape we emit is to check a condition, branch if so with
