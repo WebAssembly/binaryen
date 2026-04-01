@@ -9,6 +9,19 @@
   ;; CHECK:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
+  (func $br_on_null (param $x (ref null $A)) (result (ref $A))
+    (block $non-null (result (ref $A))
+      (block $block
+        (return
+          (br_on_null $block
+            (local.get $x)
+          )
+        )
+      )
+      (unreachable)
+    )
+  )
+
   ;; CHECK:      (func $br_on_non_null (type $2) (param $x (ref null $A)) (result (ref $A))
   ;; CHECK-NEXT:  (local $1 (ref null $A))
   ;; CHECK-NEXT:  (local $2 (ref null $A))

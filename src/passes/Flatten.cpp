@@ -91,14 +91,14 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
       case BrOnNull: {
         condition = builder.makeRefIsNull(refTee);
         brValue = nullptr;
-        flowValue = getRef();
+        flowValue = builder.makeRefAs(RefAsNonNull, getRef());
         break;
       }
       case BrOnNonNull: {
         condition = builder.makeRefIsNull(refTee);
         flip = true;
         brValue = builder.makeRefAs(RefAsNonNull, getRef());
-        flowValue = builder.makeRefAs(RefAsNonNull, getRef());
+        flowValue = getRef();
         break;
       }
       case BrOnCast: {
