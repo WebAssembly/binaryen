@@ -75,12 +75,15 @@ inline void verifyFlatness(Function* func) {
     void visitExpression(Expression* curr) {
       if (Properties::isControlFlowStructure(curr)) {
         verify(!curr->type.isConcrete(),
-               "control flow structures must not flow values", curr);
+               "control flow structures must not flow values",
+               curr);
       } else if (auto* set = curr->dynCast<LocalSet>()) {
         verify(!set->isTee() || set->type == Type::unreachable,
-               "tees are not allowed, only sets", set);
+               "tees are not allowed, only sets",
+               set);
         verify(!Properties::isControlFlowStructure(set->value),
-               "set values cannot be control flow", set);
+               "set values cannot be control flow",
+               set);
       } else {
         for (auto* child : ChildIterator(curr)) {
           bool isRefAsNonNull =
@@ -89,7 +92,8 @@ inline void verifyFlatness(Function* func) {
                    child->is<LocalGet>() || child->is<Unreachable>() ||
                    isRefAsNonNull,
                  "instructions must only have constant expressions, local.get, "
-                 "or unreachable as children", curr);
+                 "or unreachable as children",
+                 curr);
         }
       }
     }

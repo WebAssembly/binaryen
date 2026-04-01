@@ -57,8 +57,8 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
   Builder builder;
   const PassOptions& options;
 
-  LowerUnflattenable(Module& wasm, const PassOptions& options) : builder(wasm), options(options) {
-  }
+  LowerUnflattenable(Module& wasm, const PassOptions& options)
+    : builder(wasm), options(options) {}
 
   void visitBrOn(BrOn* curr) {
     if (curr->type == Type::unreachable) {
@@ -67,13 +67,11 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
     }
 
     // All ops stash the ref to a temp var.
-    auto refType = curr->ref->type
-    auto refTemp = builder.addVar(getFunction(), refType);
+    auto refType = curr->ref->type auto refTemp =
+      builder.addVar(getFunction(), refType);
     // All ops will use this refTee, and more gets.
     auto* refTee = builder.makeLocalTee(refTemp, curr->ref);
-    auto getRef = [&]() {
-      return builder.makeLocalGet(refTemp, refType);
-    };
+    auto getRef = [&]() { return builder.makeLocalGet(refTemp, refType); };
 
     // The overall shape we emit is to check a condition, branch if so with
     // some value, and if not, flow out something:
@@ -139,7 +137,11 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
   void replaceUnreachableWithDrops(Expression* curr) {
     Builder builder(*getModule());
 
-    getDroppedChildrenAndAppend(curr, *getModule(), options, builder.makeUnreachable(), DropMode::IgnoreParentEffects);
+    getDroppedChildrenAndAppend(curr,
+                                *getModule(),
+                                options,
+                                builder.makeUnreachable(),
+                                DropMode::IgnoreParentEffects);
   }
 };
 
@@ -467,7 +469,8 @@ struct Flatten
     LowerUnflattenable(*getModule(), getPassOptions()).walk(curr->body);
 
     WalkerPass<
-      ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>>::doWalkFunction(curr);
+      ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>>::
+      doWalkFunction(curr);
 
     // Finish up.
     auto* originalBody = curr->body;
