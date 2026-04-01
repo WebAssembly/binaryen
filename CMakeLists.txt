@@ -550,8 +550,8 @@ if(EMSCRIPTEN)
   if(JS_OF_OCAML)
     # js_of_ocaml needs a specified variable with special comment to provide the library to consumer
     target_link_libraries(binaryen_js PRIVATE "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
-    # Currently, js_of_ocaml can only process ES5 code
-    target_link_libraries(binaryen_js PRIVATE optimized "--closure-args=\"--language_out=ECMASCRIPT5\"")
+    # js_of_ocaml does not support top level await
+    target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
   else()
     target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6")
   endif()
