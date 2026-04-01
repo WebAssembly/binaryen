@@ -2,7 +2,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions -S -o - | filecheck %s
 
 ;; Test that (if (i32.and X (i32.const 1)) T E) is optimized to
-;; (if (i32.ctz X) E T), saving one instruction.
+;; (if (i32.ctz X) E T), and (br_if N V (i32.eqz (i32.and X 1))) to
+;; (br_if N V (i32.ctz X)), saving one instruction in each case.
 
 (module
   ;; CHECK:      (func $lsb-if (param $x i32) (result i32)
@@ -47,6 +48,32 @@
       (i32.and (i32.const 1) (local.get $x))
       (then (i32.const 1))
       (else (i32.const 0))
+    )
+  )
+
+  ;; CHECK:      (func $lsb-brif (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $done (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $done
+  ;; CHECK-NEXT:     (i32.const 99)
+  ;; CHECK-NEXT:     (i32.ctz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $lsb-brif (param $x i32) (result i32)
+    ;; br_if (eqz (and X 1)) => br_if (ctz X): the typical is_skewed/is_scalar pattern
+    (block $done (result i32)
+      (drop
+        (br_if $done
+          (i32.const 99)
+          (i32.eqz (i32.and (local.get $x) (i32.const 1)))
+        )
+      )
+      (i32.const 42)
     )
   )
 )

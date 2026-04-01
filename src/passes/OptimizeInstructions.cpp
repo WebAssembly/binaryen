@@ -3136,6 +3136,24 @@ private:
               binary->op = op;
               return binary;
             }
+            // eqz(and X 1) ==> ctz X  in boolean context:
+            // both are truthy iff LSB(X) == 0, saving one instruction.
+            if (binary->op == AndInt32) {
+              Expression* other = nullptr;
+              if (auto* c = binary->right->dynCast<Const>()) {
+                if (c->value.geti32() == 1) {
+                  other = binary->left;
+                }
+              } else if (auto* c = binary->left->dynCast<Const>()) {
+                if (c->value.geti32() == 1) {
+                  other = binary->right;
+                }
+              }
+              if (other) {
+                Builder builder(*getModule());
+                return builder.makeUnary(CtzInt32, other);
+              }
+            }
           }
         }
         if (unary->op == EqZInt32 || unary->op == EqZInt64) {
