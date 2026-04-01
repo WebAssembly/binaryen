@@ -39,6 +39,7 @@
 // tuples.
 
 #include <ir/branch-utils.h>
+#include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/eh-utils.h>
 #include <ir/flat.h>
@@ -49,6 +50,105 @@
 #include <wasm.h>
 
 namespace wasm {
+
+// Lowers instructions that Flatten cannot directly handle. It is simpler to
+// first lower them to instructions that it can.
+struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
+  Builder builder;
+  const PassOptions& options;
+
+  LowerUnflattenable(Module& wasm, const PassOptions& options) : builder(wasm), options(options) {
+  }
+
+  void visitBrOn(BrOn* curr) {
+    if (curr->type == Type::unreachable) {
+      replaceUnreachableWithDrops();
+      return;
+    }
+
+    // All ops stash the ref to a temp var.
+    auto refType = curr->ref->type
+    auto refTemp = builder.addVar(getFunction(), refType);
+    // All ops will use this refTee, and more gets.
+    auto* refTee = builder.makeLocalTee(refTemp, curr->ref);
+    auto getRef = [&]() {
+      return builder.makeLocalGet(refTemp, refType);
+    };
+
+    switch (curr->op) {
+      case BrOnNull:
+      case BrOnNonNull: {
+        // br_on_null => if null, branch; flow out nn value
+        // br_on_non_null => if non_null, branch with nn value; flow out value
+        auto* condition = builder.makeRefIsNull(refTee);
+        Expression* brValue = nullptr;
+        if (curr->op == BrOnNonNull) {
+          condition = builder.makeUnary(EqZInt32, condition);
+          brValue = builder.makeRefAs(RefAsNonNull, getRef());
+        }
+        auto* br = builder.makeBreak(curr->name, brValue);
+        auto* iff = builder.makeIf(condition, br);
+        auto* flowOut = getRef();
+        if (curr->op == BrOnNull) {
+          flowOut = builder.makeRefAs(RefAsNonNull, flowOut);
+        }
+        auto* seq = builder.makeSequence(iff, flowOut);
+        replaceCurrent(seq);
+        return;
+      }
+      case BrOnCast: {
+      case BrOnCastFail: {
+        // Sends the cast value, if it is a subtype.
+        //
+        //   (br_on_cast $target type (X))
+        // =>
+        //   temp = (X)
+        //   (if (ref.test type temp)
+        //     $target's storage = (ref.cast type temp);
+        //     br $target
+        //   )
+        //
+
+        // If condition.
+        auto* get = builder.makeLocalGet(refTemp, refType);
+        condition = builder.makeRefTest(get, br->castType);
+        if (br->op == BrOnCastFail) {
+          condition = builder.makeUnary(EqZInt32, condition);
+        }
+
+        // If body.
+        Expression* sent = builder.makeLocalGet(refTemp, refType);
+        if (br->op == BrOnCast) {
+          sent = builder.makeRefCast(sent, br->castType);
+        }
+        auto* set = builder.makeLocalSet(blockTemp, sent);
+        auto* br2 = builder.makeBreak(br->name);
+        ifTrue = builder.makeBlock({set, br2});
+
+        // Flow out the proper value otherwise.
+        after = builder.makeLocalGet(refTemp, refType);
+        if (br->op == BrOnCastFail) {
+          after = builder.makeRefCast(after, br->castType);
+        }
+        break;
+      }
+      case BrOnCastDescEq: {
+        assert(false); // TODO
+        break;
+      }
+      case BrOnCastDescEqFail: {
+        assert(false); // TODO
+        break;
+      }
+    }
+  }
+
+  void replaceUnreachableWithDrops(Expression* curr) {
+    Builder builder(*getModule());
+
+    getDroppedChildrenAndAppend(curr, *getModule(), options, builder.makeUnreachable(), DropMode::IgnoreParentEffects);
+  }
+};
 
 // We use the following algorithm: we maintain a list of "preludes", code
 // that runs right before an expression. When we visit an expression we
@@ -308,175 +408,6 @@ struct Flatten
             replaceCurrent(br->value);
           }
         }
-
-      } else if (auto* br = curr->dynCast<BrOn>()) {
-        if (auto sent = br->getSentType(); sent != Type::none) {
-          // We are sending a value here, so we need to use a local instead.
-          assert(br->type != Type::unreachable); // TODO handle
-
-          // All patterns need the input ref in a temp local.
-          auto refType = br->ref->type;
-          auto refTemp = builder.addVar(getFunction(), refType);
-          ourPreludes.push_back(builder.makeLocalSet(refTemp, br->ref));
-
-          // All patterns need to know the block type and temp storage for
-          // values sent there.
-          Type blockType = findBreakTarget(br->name)->type;
-          Index blockTemp = getTempForBreakTarget(br->name, blockType);
-
-          // Each pattern fills in the condition for an if, and the if's ifTrue
-          // arm.
-          Expression* condition = nullptr; // avoid compiler warnings
-          Expression* ifTrue = nullptr;
-          // If set, this appears after the if.
-          Expression* after = nullptr;
-
-          // TODO: restructure each of these in OptimizeInstructions/RUBrs
-          switch (br->op) {
-            case BrOnNull: {
-              // BrOnNull does not send a value.
-              assert(false);
-              break;
-            }
-            case BrOnNonNull: {
-              // Sends the non-null value, if it is non-null.
-              //
-              //   (br_on_non_null $target (X))
-              // =>
-              //   temp = (X)
-              //   (if (temp != null)
-              //     $target's storage = temp;
-              //     br $target
-              //   )
-              //
-
-              // If condition.
-              auto* get = builder.makeLocalGet(refTemp, refType);
-              auto* isNull = builder.makeRefIsNull(get);
-              auto isNullTemp = builder.addVar(getFunction(), Type::i32);
-              ourPreludes.push_back(builder.makeLocalSet(isNullTemp, isNull));
-              auto* getIsNull = builder.makeLocalGet(isNullTemp, Type::i32);
-              condition = builder.makeUnary(EqZInt32, getIsNull);
-
-              // If body.
-              auto* get2 = builder.makeLocalGet(refTemp, refType);
-              auto* set = builder.makeLocalSet(blockTemp, get2); // XXX don't we need RefAsNonNull?
-              auto* br2 = builder.makeBreak(br->name);
-              ifTrue = builder.makeBlock({set, br2});
-              break;
-            }
-            case BrOnCast:
-            case BrOnCastFail: {
-              // Sends the cast value, if it is a subtype.
-              //
-              //   (br_on_cast $target type (X))
-              // =>
-              //   temp = (X)
-              //   (if (ref.test type temp)
-              //     $target's storage = (ref.cast type temp);
-              //     br $target
-              //   )
-              //
-
-              // If condition.
-              auto* get = builder.makeLocalGet(refTemp, refType);
-              condition = builder.makeRefTest(get, br->castType);
-              if (br->op == BrOnCastFail) {
-                condition = builder.makeUnary(EqZInt32, condition);
-              }
-
-              // If body.
-              Expression* sent = builder.makeLocalGet(refTemp, refType);
-              if (br->op == BrOnCast) {
-                sent = builder.makeRefCast(sent, br->castType);
-              }
-              auto* set = builder.makeLocalSet(blockTemp, sent);
-              auto* br2 = builder.makeBreak(br->name);
-              ifTrue = builder.makeBlock({set, br2});
-
-              // Flow out the proper value otherwise.
-              after = builder.makeLocalGet(refTemp, refType);
-              if (br->op == BrOnCastFail) {
-                after = builder.makeRefCast(after, br->castType);
-              }
-              break;
-            }
-            case BrOnCastDescEq: {
-              assert(false); // TODO
-              break;
-            }
-            case BrOnCastDescEqFail: {
-              assert(false); // TODO
-              break;
-            }
-          }
-
-          // Build the replacement If.
-          auto* iff = builder.makeIf(condition, ifTrue);
-          if (!after) {
-            replaceCurrent(iff);
-          } else {
-            // Add the If as a prelude, and replace ourselves with |after|.
-            ourPreludes.push_back(iff);
-            replaceCurrent(after);
-          }
-        }
-        
-        /*
-        if (br->value) {
-          auto type = br->value->type;
-          if (type.isConcrete()) {
-            // we are sending a value. use a local instead
-            Type blockType = findBreakTarget(br->name)->type;
-            Index temp = getTempForBreakTarget(br->name, blockType);
-            ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
-
-            // br_if leaves a value on the stack if not taken, which later can
-            // be the last element of the enclosing innermost block and flow
-            // out. The local we created using 'getTempForBreakTarget' returns
-            // the return type of the block this branch is targetting, which may
-            // not be the same with the innermost block's return type. For
-            // example,
-            // (block $any (result anyref)
-            //   (block (result funcref)
-            //     (local.tee $0
-            //       (br_if $any
-            //         (ref.null func)
-            //         (i32.const 0)
-            //       )
-            //     )
-            //   )
-            // )
-            // In this case we need two locals to store (ref.null); one with
-            // funcref type that's for the target block ($label0) and one more
-            // with anyref type in case for flowing out. Here we create the
-            // second 'flowing out' local in case two block's types are
-            // different.
-            if (type != blockType) {
-              temp = builder.addVar(getFunction(), type);
-              ourPreludes.push_back(builder.makeLocalSet(
-                temp, ExpressionManipulator::copy(br->value, *getModule())));
-            }
-
-            if (br->condition) {
-              // the value must also flow out
-              ourPreludes.push_back(br);
-              if (br->type.isConcrete()) {
-                replaceCurrent(builder.makeLocalGet(temp, type));
-              } else {
-                assert(br->type == Type::unreachable);
-                replaceCurrent(builder.makeUnreachable());
-              }
-            }
-            br->value = nullptr;
-            br->finalize();
-          } else {
-            assert(type == Type::unreachable);
-            // we don't need the br at all
-            replaceCurrent(br->value);
-          }
-        }
-        */
 
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
