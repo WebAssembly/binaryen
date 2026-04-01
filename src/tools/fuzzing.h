@@ -189,6 +189,7 @@ private:
   Name callRefImportName;
   Name callRefCatchImportName;
   Name sleepImportName;
+  Name importedGlobalModuleName = "__fuzz_import";
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -215,6 +216,9 @@ private:
 
   // All arrays that are mutable.
   std::vector<HeapType> mutableArrays;
+
+  // Mapping of signatures to the continuations they are used by.
+  std::unordered_map<HeapType, std::vector<HeapType>> sigConts;
 
   // All tags that are valid as exception tags (which cannot have results).
   std::vector<Tag*> exceptionTags;
@@ -331,6 +335,8 @@ private:
   void setupMemory();
   void setupHeapTypes();
   void setupTables();
+  bool isImportableGlobalType(Type type);
+  bool isImportableGlobal(Global* global);
   void setupGlobals();
   void setupTags();
   void addTag();
@@ -526,15 +532,21 @@ private:
   Expression* makeRefCast(Type type);
   Expression* makeRefGetDesc(Type type);
   Expression* makeBrOn(Type type);
+  Expression* makeContBind(Type type);
+  // TODO: Expression* makeResume(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
   // packed.
   bool maybeSignedGet(const Field& field);
 
   Expression* makeStructGet(Type type);
+  Expression* makeStructRMW(Type type);
+  Expression* makeStructCmpxchg(Type type);
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
   Expression* makeArraySet(Type type);
+  Expression* makeArrayRMW(Type type);
+  Expression* makeArrayCmpxchg(Type type);
   // Use a single method for the misc array operations, to not give them too
   // much representation (e.g. compared to struct operations, which only include
   // get/set).

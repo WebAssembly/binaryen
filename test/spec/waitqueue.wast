@@ -76,9 +76,13 @@
 )
 
 (module
-  (type $t (struct (field (mut waitqueue))))
+  (type $t (shared (struct (field (mut waitqueue)))))
 
-  (global $g (ref null $t) (struct.new $t (i32.const 0)))
+  (global $g (mut (ref null $t)) (struct.new $t (i32.const 0)))
+
+  (func (export "setToNull")
+    (global.set $g (ref.null $t))
+  )
 
   (func (export "struct.wait") (param $expected i32) (param $timeout i64) (result i32)
     (struct.wait $t 0 (global.get $g) (local.get $expected) (local.get $timeout))
@@ -92,7 +96,37 @@
     (struct.set $t 0 (global.get $g) (i32.const 1))
   )
 
-  (func (export "struct.get") (param $count i32) (result i32)
+  (func (export "struct.get") (result i32)
     (struct.get $t 0 (global.get $g))
   )
 )
+
+(invoke "struct.set" (i32.const 1))
+(assert_return (invoke "struct.get") (i32.const 1))
+
+;; Control word didn't match, don't wait and return 1.
+(assert_return (invoke "struct.wait" (i32.const 0) (i64.const 100)) (i32.const 1))
+
+;; Control word matched, wait 0ns and return 2.
+(assert_return (invoke "struct.wait" (i32.const 1) (i64.const 0)) (i32.const 2))
+
+;; Try to wake up 1 thread, but no-one was waiting.
+(assert_return (invoke "struct.notify" (i32.const 1)) (i32.const 0))
+
+(invoke "setToNull")
+
+(assert_trap (invoke "struct.wait" (i32.const 0) (i64.const 0)) "null ref")
+(assert_trap (invoke "struct.notify" (i32.const 0)) "null ref")
+
+;; Waiting on a non-shared struct should trap.
+(module
+  (type $t (struct (field (mut waitqueue))))
+
+  (global $g (mut (ref null $t)) (struct.new $t (i32.const 0)))
+
+  (func (export "struct.wait") (param $expected i32) (param $timeout i64) (result i32)
+    (struct.wait $t 0 (global.get $g) (local.get $expected) (local.get $timeout))
+  )
+)
+(assert_trap (invoke "struct.wait" (i32.const 0) (i64.const 100)) "not shared")
+

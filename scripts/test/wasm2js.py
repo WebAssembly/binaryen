@@ -42,10 +42,15 @@ def check_for_stale_files():
     all_tests = basic_tests + spec_tests + wasm2js_tests
     all_tests = [os.path.basename(os.path.splitext(t)[0]) for t in all_tests]
 
+    assert_test_prefixes = [t.split('.')[0] for t in assert_tests]
+    skipped_test_prefixes = [t.split('.')[0] for t in shared.SPEC_TESTSUITE_TESTS_TO_SKIP]
+
     all_files = os.listdir(shared.get_test_dir('wasm2js'))
     for f in all_files:
         prefix = f.split('.')[0]
-        if prefix in [t.split('.')[0] for t in assert_tests]:
+        if prefix in assert_test_prefixes:
+            continue
+        if prefix in skipped_test_prefixes:
             continue
         if prefix not in all_tests:
             shared.fail_with_error(f'orphan test output: {f}')

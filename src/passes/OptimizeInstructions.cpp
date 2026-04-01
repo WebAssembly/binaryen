@@ -1432,10 +1432,6 @@ struct OptimizeInstructions
         // The call_ref is not reached; leave this for DCE.
         return;
       }
-      if (!TypeUpdating::canHandleAsLocal(lastOperandType)) {
-        // We cannot create a local, so we must give up.
-        return;
-      }
       Index tempLocal = builder.addVar(
         getFunction(),
         TypeUpdating::getValidLocalType(lastOperandType, features));
@@ -2003,6 +1999,10 @@ struct OptimizeInstructions
     if (curr->ref->type.getHeapType().isShared()) {
       return;
     }
+    if (curr->type == Type::unreachable) {
+      // Leave this to DCE.
+      return;
+    }
 
     // Lower the RMW to its more basic operations. Breaking the atomic
     // operation into several non-atomic operations is safe because no other
@@ -2100,10 +2100,21 @@ struct OptimizeInstructions
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // Leave this to DCE.
+      return;
+    }
+
     // Just like other RMW operations, lower to basic operations when operating
     // on unshared memory.
     auto ref = builder.addVar(getFunction(), curr->ref->type);
-    auto expected = builder.addVar(getFunction(), curr->type);
+    auto expectedType = curr->type;
+    if (expectedType.isRef()) {
+      expectedType =
+        Type(HeapTypes::eq.getBasic(expectedType.getHeapType().getShared()),
+             Nullable);
+    }
+    auto expected = builder.addVar(getFunction(), expectedType);
     auto replacement = builder.addVar(getFunction(), curr->type);
     auto result = builder.addVar(getFunction(), curr->type);
     auto* block =
@@ -2117,7 +2128,7 @@ struct OptimizeInstructions
                             MemoryOrder::Unordered,
                             curr->type),
       curr->type);
-    auto* rhs = builder.makeLocalGet(expected, curr->type);
+    auto* rhs = builder.makeLocalGet(expected, expectedType);
     Expression* pred = nullptr;
     if (curr->type.isRef()) {
       pred = builder.makeRefEq(lhs, rhs);
@@ -2793,6 +2804,7 @@ private:
 
     // Ignore extraneous things and compare them syntactically. We can also
     // look at the full fallthrough for both sides now.
+    auto* originalLeft = left;
     left = getFallthrough(left);
     auto* originalRight = right;
     right = getFallthrough(right);
@@ -2817,6 +2829,26 @@ private:
       auto originalRightEffects = effects(originalRight);
       auto rightEffects = effects(right);
       if (originalRightEffects.invalidates(rightEffects)) {
+        return false;
+      }
+    }
+
+    // The same, with left, as we can have this situation:
+    //
+    //  (local.tee $x ..)
+    //    (something using $x)
+    //  )
+    //  (something using $x)
+    //
+    // The fallthroughs are identical, but the tee may cause us to read a
+    // different value.
+    if (originalLeft != left) {
+      auto originalLeftEffects = effects(originalLeft);
+      // |left == right| here (we would have exited early, otherwise, above), so
+      // we could compute either. Compute |left| as it might have better cache
+      // locality.
+      auto leftEffects = effects(left);
+      if (originalLeftEffects.invalidates(leftEffects)) {
         return false;
       }
     }

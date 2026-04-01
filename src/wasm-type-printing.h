@@ -48,7 +48,9 @@ template<typename Subclass> struct TypeNameGeneratorBase {
 
 private:
   constexpr void assertValidUsage() {
-#if !defined(__GNUC__) || __GNUC__ >= 14
+    // This check current causes a crash on MSVC
+    // TODO: Convert to C++20 requires check
+#if !defined(_MSC_VER) && (!defined(__GNUC__) || __GNUC__ >= 14)
     // Check that the subclass provides `getNames` with the correct type.
     using Self = TypeNameGeneratorBase<Subclass>;
     static_assert(

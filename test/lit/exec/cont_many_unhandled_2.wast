@@ -15,13 +15,13 @@
 
  (tag $tag (type $func))
 
- ;; CHECK:      [fuzz-exec] calling suspend
+ ;; CHECK:      [fuzz-exec] export suspend
  ;; CHECK-NEXT: [exception thrown: unhandled suspend]
  (func $suspend (export "suspend")
   (suspend $tag)
  )
 
- ;; CHECK:      [fuzz-exec] calling try-resume
+ ;; CHECK:      [fuzz-exec] export try-resume
  (func $try-resume (export "try-resume")
   (block $block
    (try_table (catch_all $block)
@@ -34,8 +34,8 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling call-suspend
- ;; CHECK-NEXT: [exception thrown: unhandled suspend]
+ ;; CHECK:      [fuzz-exec] export call-suspend
+ ;; CHECK-NEXT: [trap suspend through JS]
  (func $call-suspend (export "call-suspend")
   (drop
    (call $call-export-catch

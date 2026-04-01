@@ -609,8 +609,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LaneselectI16x8:
       case LaneselectI32x4:
       case LaneselectI64x2:
-      case RelaxedMaddVecF16x8:
-      case RelaxedNmaddVecF16x8:
+      case MaddVecF16x8:
+      case NmaddVecF16x8:
       case RelaxedMaddVecF32x4:
       case RelaxedNmaddVecF32x4:
       case RelaxedMaddVecF64x2:
@@ -750,6 +750,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
   }
   CostType visitArraySet(ArraySet* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
+  }
+  CostType visitArrayLoad(ArrayLoad* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
+  }
+  CostType visitArrayStore(ArrayStore* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
            visit(curr->index) + visit(curr->value);
   }

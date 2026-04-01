@@ -20,6 +20,7 @@
 #include "common.h"
 #include "contexts.h"
 #include "lexer.h"
+#include "wasm.h"
 #include "wat-parser-internal.h"
 
 namespace wasm::WATParser {
@@ -829,7 +830,34 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
   return ctx.makeLimits(uint64_t(*n), m);
 }
 
-// memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared?
+// mempagesize? ::= ('(' 'pagesize' u64 ')') ?
+template<typename Ctx> MaybeResult<uint8_t> mempagesize(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("pagesize"sv)) {
+    return {}; // No pagesize specified
+  }
+  auto pageSize = ctx.in.takeU64();
+  if (!pageSize) {
+    return ctx.in.err("expected page size");
+  }
+
+  if (!Bits::isPowerOf2(*pageSize)) {
+    return ctx.in.err("page size must be a power of two");
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of mempagesize");
+  }
+
+  uint8_t pageSizeLog2 = (uint8_t)Bits::ceilLog2(*pageSize);
+
+  if (pageSizeLog2 != 0 && pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+    return ctx.in.err("memory page size can only be 1 or 64 KiB");
+  }
+
+  return pageSizeLog2;
+}
+
+// memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared? mempagesize?
 //  note: the index type 'i32' or 'i64' is already parsed to simplify parsing of
 //  memory abbreviations.
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx& ctx) {
@@ -851,7 +879,11 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
   if (ctx.in.takeKeyword("shared"sv)) {
     shared = true;
   }
-  return ctx.makeMemType(addressType, *limits, shared);
+  MaybeResult<uint8_t> mempageSize = mempagesize(ctx);
+  CHECK_ERR(mempageSize);
+  const uint8_t pageSizeLog2 =
+    mempageSize ? *mempageSize : Memory::kDefaultPageSizeLog2;
+  return ctx.makeMemType(addressType, *limits, shared, pageSizeLog2);
 }
 
 // memorder ::= 'seqcst' | 'acqrel'
@@ -1751,6 +1783,18 @@ Result<> makeLoad(Ctx& ctx,
                   int bytes,
                   bool isAtomic) {
 
+  if (ctx.in.takeSExprStart("type"sv)) {
+    auto arrayType = typeidx(ctx);
+    CHECK_ERR(arrayType);
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
+    }
+
+    return ctx.makeArrayLoad(
+      pos, annotations, type, bytes, signed_, *arrayType);
+  }
+
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
 
@@ -1786,6 +1830,16 @@ Result<> makeStore(Ctx& ctx,
                    Type type,
                    int bytes,
                    bool isAtomic) {
+  if (ctx.in.takeSExprStart("type"sv)) {
+    auto arrayType = typeidx(ctx);
+    CHECK_ERR(arrayType);
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
+    }
+
+    return ctx.makeArrayStore(pos, annotations, type, bytes, *arrayType);
+  }
   auto mem = maybeMemidx(ctx);
   CHECK_ERR(mem);
 
@@ -3187,7 +3241,7 @@ template<typename Ctx> Result<> comptype(Ctx& ctx) {
   }
   if (auto type = structtype(ctx)) {
     CHECK_ERR(type);
-    ctx.addStructType(*type);
+    CHECK_ERR(ctx.addStructType(*type));
     return Ok{};
   }
   if (auto type = arraytype(ctx)) {
@@ -3379,7 +3433,8 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTable(name ? *name : Name{}, {}, &names, *type, pos));
+    CHECK_ERR(ctx.addTable(
+      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
   } else if (ctx.in.takeSExprStart("memory"sv)) {
     auto name = ctx.in.takeID();
     auto type = memtype(ctx);
@@ -3472,7 +3527,11 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
 }
 
 // table ::= '(' 'table' id? ('(' 'export' name ')')*
-//               '(' 'import' mod:name nm:name ')'? index_type? tabletype ')'
+//               index_type? tabletype expr?
+//               ')'
+//         | '(' 'table' id? ('(' 'export' name ')')*
+//               '(' 'import' mod:name nm:name ')' index_type? tabletype
+//               ')'
 //         | '(' 'table' id? ('(' 'export' name ')')* index_type?
 //               reftype '(' 'elem' (elemexpr* | funcidx*) ')' ')'
 template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
@@ -3505,6 +3564,7 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
 
   std::optional<typename Ctx::TableTypeT> ttype;
   std::optional<typename Ctx::ElemListT> elems;
+  std::optional<typename Ctx::ExprT> init;
   if (type) {
     // We should have inline elements.
     if (!ctx.in.takeSExprStart("elem"sv)) {
@@ -3539,13 +3599,19 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     auto tabtype = tabletypeContinued(ctx, addressType);
     CHECK_ERR(tabtype);
     ttype = *tabtype;
+    if (ctx.in.peekLParen() && !import) {
+      // Imported tables cannot have initialization expression.
+      auto e = expr(ctx);
+      CHECK_ERR(e);
+      init = *e;
+    }
   }
 
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of table declaration");
   }
 
-  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, pos));
+  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, init, pos));
 
   if (elems) {
     CHECK_ERR(ctx.addImplicitElems(*type, std::move(*elems)));
@@ -3584,6 +3650,8 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
 
   std::optional<typename Ctx::MemTypeT> mtype;
   std::optional<typename Ctx::DataStringT> data;
+  MaybeResult<uint8_t> mempageSize = mempagesize(ctx);
+  CHECK_ERR(mempageSize);
   if (ctx.in.takeSExprStart("data"sv)) {
     if (import) {
       return ctx.in.err("imported memories cannot have inline data");
@@ -3593,9 +3661,17 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline data");
     }
-    mtype =
-      ctx.makeMemType(addressType, ctx.getLimitsFromData(*datastr), false);
+    const uint8_t pageSizeLog2 =
+      mempageSize.getPtr() ? *mempageSize : Memory::kDefaultPageSizeLog2;
+    mtype = ctx.makeMemType(addressType,
+                            ctx.getLimitsFromData(*datastr, pageSizeLog2),
+                            false,
+                            pageSizeLog2);
     data = *datastr;
+  } else if (mempageSize) {
+    // If we have a memory page size not within a memtype expression, we expect
+    // a memory abbreviation.
+    return ctx.in.err("expected data segment in memory abbreviation");
   } else {
     auto type = memtypeContinued(ctx, addressType);
     CHECK_ERR(type);

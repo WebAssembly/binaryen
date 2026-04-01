@@ -94,11 +94,6 @@
 ;; CHECK-NEXT:   --placeholder-namespace              [split, multi-split] The same as
 ;; CHECK-NEXT:                                        --placeholder-namespace-prefix.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --jspi                               [split] Transform the module to support
-;; CHECK-NEXT:                                        asynchronously loading the secondary
-;; CHECK-NEXT:                                        module before any placeholder functions
-;; CHECK-NEXT:                                        have been called.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --export-prefix                      [split, multi-split] An identifying
 ;; CHECK-NEXT:                                        prefix to prepend to new export names
 ;; CHECK-NEXT:                                        created by module splitting.
@@ -152,6 +147,9 @@
 ;; CHECK-NEXT:   --debuginfo,-g                       [split, multi-split, instrument] Emit
 ;; CHECK-NEXT:                                        names section in wasm binary (or full
 ;; CHECK-NEXT:                                        debuginfo in wast)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-debug                        [split, multi-split, instrument] Strip
+;; CHECK-NEXT:                                        debug info (including the names section)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles, multi-split]
 ;; CHECK-NEXT:                                        Output file.
@@ -275,11 +273,19 @@
 ;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
 ;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multibyte                   Enable multibyte array loads and stores
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multibyte                  Disable multibyte array loads and stores
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-relaxed-atomics             Enable acquire/release atomic memory
 ;; CHECK-NEXT:                                        operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-atomics            Disable acquire/release atomic memory
 ;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-page-sizes           Enable custom page sizes
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-page-sizes          Disable custom page sizes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

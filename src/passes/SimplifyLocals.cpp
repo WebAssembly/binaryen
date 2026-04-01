@@ -203,7 +203,7 @@ struct SimplifyLocals
 
     // post-block cleanups
     if (curr->name.is()) {
-      if (unoptimizableBlocks.count(curr->name)) {
+      if (unoptimizableBlocks.contains(curr->name)) {
         sinkables.clear();
         unoptimizableBlocks.erase(curr->name);
       }
@@ -303,7 +303,7 @@ struct SimplifyLocals
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
     for (auto& [index, info] : sinkables) {
-      if (effects.invalidates(info.effects)) {
+      if (effects.orderedAfter(info.effects)) {
         invalidated.push_back(index);
       }
     }
@@ -431,7 +431,7 @@ struct SimplifyLocals
 
     if (set && self->canSink(set)) {
       Index index = set->index;
-      assert(self->sinkables.count(index) == 0);
+      assert(!self->sinkables.contains(index));
       self->sinkables.emplace(std::pair{
         index,
         SinkableInfo(currp, self->getPassOptions(), *self->getModule())});
@@ -503,7 +503,7 @@ struct SimplifyLocals
   }
 
   void optimizeBlockReturn(Block* block) {
-    if (!block->name.is() || unoptimizableBlocks.count(block->name) > 0) {
+    if (!block->name.is() || unoptimizableBlocks.contains(block->name)) {
       return;
     }
     auto breaks = std::move(blockBreaks[block->name]);
@@ -521,7 +521,7 @@ struct SimplifyLocals
     for (auto& [index, _] : sinkables) {
       bool inAll = true;
       for (size_t j = 0; j < breaks.size(); j++) {
-        if (breaks[j].sinkables.count(index) == 0) {
+        if (!breaks[j].sinkables.contains(index)) {
           inAll = false;
           break;
         }
@@ -573,7 +573,7 @@ struct SimplifyLocals
             EffectAnalyzer value(
               this->getPassOptions(), *this->getModule(), set);
             *breakLocalSetPointer = set;
-            if (condition.invalidates(value)) {
+            if (condition.orderedBefore(value)) {
               // indeed, we can't do this, stop
               return;
             }
@@ -673,7 +673,7 @@ struct SimplifyLocals
     } else {
       // Look for a shared index.
       for (auto& [index, _] : ifTrue) {
-        if (ifFalse.count(index) > 0) {
+        if (ifFalse.contains(index)) {
           goodIndex = index;
           found = true;
           break;

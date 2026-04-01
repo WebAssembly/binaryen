@@ -5,7 +5,7 @@
 (module
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
- ;; CHECK:      [fuzz-exec] calling i32x4.dot_i8x16_i7x16_add_s
+ ;; CHECK:      [fuzz-exec] export i32x4.dot_i8x16_i7x16_add_s
  ;; CHECK-NEXT: [LoggingExternalInterface logging 8]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 14]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 22]

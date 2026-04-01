@@ -56,11 +56,13 @@ struct FeatureSet {
     CallIndirectOverlong = 1 << 20,
     CustomDescriptors = 1 << 21,
     RelaxedAtomics = 1 << 22,
+    CustomPageSizes = 1 << 23,
+    Multibyte = 1 << 24,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 23) - 1,
+    All = (1 << 25) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -111,6 +113,10 @@ struct FeatureSet {
         return "custom-descriptors";
       case RelaxedAtomics:
         return "relaxed-atomics";
+      case CustomPageSizes:
+        return "custom-page-sizes";
+      case Multibyte:
+        return "multibyte";
       case MVP:
       case Default:
       case All:
@@ -172,6 +178,8 @@ struct FeatureSet {
     return (features & CustomDescriptors) != 0;
   }
   bool hasRelaxedAtomics() const { return (features & RelaxedAtomics) != 0; }
+  bool hasCustomPageSizes() const { return (features & CustomPageSizes) != 0; }
+  bool hasMultibyte() const { return (features & Multibyte) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -199,6 +207,7 @@ struct FeatureSet {
   void setBulkMemoryOpt(bool v = true) { set(BulkMemoryOpt, v); }
   void setCustomDescriptors(bool v = true) { set(CustomDescriptors, v); }
   void setRelaxedAtomics(bool v = true) { set(RelaxedAtomics, v); }
+  void setMultibyte(bool v = true) { set(Multibyte, v); }
   void setMVP() { features = MVP; }
   void setAll() { features = All; }
 
@@ -213,12 +222,12 @@ struct FeatureSet {
     }
   }
 
-  bool operator<=(const FeatureSet& other) const {
+  bool isSubsetOf(const FeatureSet& other) const {
     return !(features & ~other.features);
   }
 
   bool operator==(const FeatureSet& other) const {
-    return *this <= other && other <= *this;
+    return isSubsetOf(other) && other.isSubsetOf(*this);
   }
 
   bool operator!=(const FeatureSet& other) const { return !(*this == other); }

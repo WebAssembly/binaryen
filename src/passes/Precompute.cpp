@@ -143,6 +143,10 @@ public:
     return getGCAllocation(curr, [&]() { return Super::visitStructNew(curr); });
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructRMW(StructRMW* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructCmpxchg(StructCmpxchg* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return Flow(NONCONSTANT_FLOW);
@@ -184,6 +188,8 @@ public:
                            [&]() { return Super::visitArrayNewFixed(curr); });
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayRMW(ArrayRMW* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayCmpxchg(ArrayCmpxchg* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return Flow(NONCONSTANT_FLOW);
@@ -215,6 +221,11 @@ public:
   }
   // ArrayLen is not disallowed here as it is an immutable property.
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayLoad(ArrayLoad* curr) {
+    // TODO: We could optimize loads from immutable data, like ArrayGet.
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayStore(ArrayStore* curr) { return Flow(NONCONSTANT_FLOW); }
 
   // Generates heap info for a heap-allocating expression.
   Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {
@@ -694,7 +705,7 @@ struct Precompute
       InsertOrderedMap<Select*, ExpressionStack> stackMap;
 
       void visitSelect(Select* curr) {
-        if (parent.partiallyPrecomputable.count(curr)) {
+        if (parent.partiallyPrecomputable.contains(curr)) {
           stackMap[curr] = expressionStack;
         }
       }
@@ -732,7 +743,7 @@ struct Precompute
       Index selectIndex = stack.size() - 1;
       assert(selectIndex >= 1);
 
-      if (modified.count(select)) {
+      if (modified.contains(select)) {
         // This select was modified; go to the next one.
         continue;
       }
@@ -743,7 +754,7 @@ struct Precompute
       for (Index parentIndex = selectIndex - 1; parentIndex != Index(-1);
            parentIndex--) {
         auto* parent = stack[parentIndex];
-        if (modified.count(parent)) {
+        if (modified.contains(parent)) {
           // This parent was modified; exit the loop on parents as no upper
           // parent is valid to try either.
           break;
@@ -907,7 +918,7 @@ private:
     // Given a set, see if it has a constant value. If so, note that on
     // setValues and add to the work list.
     auto checkConstantSet = [&](LocalSet* set) {
-      if (setValues.count(set)) {
+      if (setValues.contains(set)) {
         // Already known to be constant.
         return;
       }
@@ -948,7 +959,7 @@ private:
 
     // The same, for a get.
     auto checkConstantGet = [&](LocalGet* get) {
-      if (getValues.count(get)) {
+      if (getValues.contains(get)) {
         // Already known to be constant.
         return;
       }

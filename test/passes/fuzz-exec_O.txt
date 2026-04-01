@@ -1,6 +1,6 @@
-[fuzz-exec] calling func_0
+[fuzz-exec] export func_0
 [trap final > memory: 4294967295 > 65514]
-[fuzz-exec] calling func_1
+[fuzz-exec] export func_1
 [trap final > memory: 4294967295 > 65514]
 (module
  (type $0 (func (result i64)))
@@ -24,29 +24,29 @@
   )
  )
 )
-[fuzz-exec] calling func_0
+[fuzz-exec] export func_0
 [trap final > memory: 4294967295 > 65514]
-[fuzz-exec] calling func_1
+[fuzz-exec] export func_1
 [trap final > memory: 4294967295 > 65514]
 [fuzz-exec] comparing func_0
 [fuzz-exec] comparing func_1
-[fuzz-exec] calling div
+[fuzz-exec] export div
 [fuzz-exec] note result: div => nan:0x400000
-[fuzz-exec] calling mul1
+[fuzz-exec] export mul1
 [fuzz-exec] note result: mul1 => nan:0x400000
-[fuzz-exec] calling mul2
+[fuzz-exec] export mul2
 [fuzz-exec] note result: mul2 => nan:0x400000
-[fuzz-exec] calling add1
+[fuzz-exec] export add1
 [fuzz-exec] note result: add1 => nan:0x400000
-[fuzz-exec] calling add2
+[fuzz-exec] export add2
 [fuzz-exec] note result: add2 => nan:0x400000
-[fuzz-exec] calling add3
+[fuzz-exec] export add3
 [fuzz-exec] note result: add3 => nan:0x400000
-[fuzz-exec] calling add4
+[fuzz-exec] export add4
 [fuzz-exec] note result: add4 => nan:0x400000
-[fuzz-exec] calling sub1
+[fuzz-exec] export sub1
 [fuzz-exec] note result: sub1 => nan:0x400000
-[fuzz-exec] calling sub2
+[fuzz-exec] export sub2
 [fuzz-exec] note result: sub2 => nan:0x400000
 (module
  (type $0 (func (result f32)))
@@ -63,23 +63,23 @@
   (f32.const nan:0x400000)
  )
 )
-[fuzz-exec] calling div
+[fuzz-exec] export div
 [fuzz-exec] note result: div => nan:0x400000
-[fuzz-exec] calling mul1
+[fuzz-exec] export mul1
 [fuzz-exec] note result: mul1 => nan:0x400000
-[fuzz-exec] calling mul2
+[fuzz-exec] export mul2
 [fuzz-exec] note result: mul2 => nan:0x400000
-[fuzz-exec] calling add1
+[fuzz-exec] export add1
 [fuzz-exec] note result: add1 => nan:0x400000
-[fuzz-exec] calling add2
+[fuzz-exec] export add2
 [fuzz-exec] note result: add2 => nan:0x400000
-[fuzz-exec] calling add3
+[fuzz-exec] export add3
 [fuzz-exec] note result: add3 => nan:0x400000
-[fuzz-exec] calling add4
+[fuzz-exec] export add4
 [fuzz-exec] note result: add4 => nan:0x400000
-[fuzz-exec] calling sub1
+[fuzz-exec] export sub1
 [fuzz-exec] note result: sub1 => nan:0x400000
-[fuzz-exec] calling sub2
+[fuzz-exec] export sub2
 [fuzz-exec] note result: sub2 => nan:0x400000
 [fuzz-exec] comparing add1
 [fuzz-exec] comparing add2

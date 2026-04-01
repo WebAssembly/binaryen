@@ -370,7 +370,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
     for (auto& func : module->functions) {
       // If the function is neither exported nor imported, no problem.
       auto imported = func->imported();
-      auto exported = exportedFunctions.count(func->name);
+      auto exported = exportedFunctions.contains(func->name);
       if (!imported && !exported) {
         continue;
       }
@@ -414,13 +414,25 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
     ReFinalize().run(getPassRunner(), module);
     ReFinalize().runOnModuleCode(getPassRunner(), module);
 
-    // TODO: globals etc.
+    // Globals.
+    std::vector<Name> illegalExports;
+    for (auto& exp : module->exports) {
+      if (exp->kind == ExternalKind::Global) {
+        auto name = *exp->getInternalName();
+        if (isIllegal(module->getGlobal(name)->type)) {
+          illegalExports.push_back(exp->name);
+        }
+      }
+    }
+    for (auto name : illegalExports) {
+      module->removeExport(name);
+    }
   }
 
   bool isIllegal(Type type) {
     auto features = type.getFeatures();
     return features.hasSIMD() || features.hasMultivalue() ||
-           features.hasExceptionHandling();
+           features.hasExceptionHandling() || features.hasStackSwitching();
   }
 };
 

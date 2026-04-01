@@ -131,15 +131,6 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
     }
   }
 
-  // The type must be valid for us to handle as a local (since we
-  // replace the parameter with a local).
-  // TODO: if there are no references at all, we can avoid creating a
-  //       local
-  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(index));
-  if (!typeIsValid) {
-    return Failure;
-  }
-
   // We can do it!
 
   // Remove the parameter from the function. We must add a new local
@@ -306,7 +297,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
       : callTargets(callTargets), onChange(onChange) {}
 
     void visitCall(Call* curr) {
-      if (!callTargets.count(curr->target)) {
+      if (!callTargets.contains(curr->target)) {
         return;
       }
 
@@ -363,7 +354,7 @@ void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
     }
 
     void handleCall(Expression* call, HeapType type) {
-      if (!callTargets.count(type)) {
+      if (!callTargets.contains(type)) {
         return;
       }
 

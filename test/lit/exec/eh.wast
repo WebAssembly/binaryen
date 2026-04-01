@@ -5,13 +5,13 @@
 (module
   (tag $e-i32 (param i32))
 
-  ;; CHECK:      [fuzz-exec] calling throw
+  ;; CHECK:      [fuzz-exec] export throw
   ;; CHECK-NEXT: [exception thrown: e-i32 1]
   (func $throw (export "throw")
     (throw $e-i32 (i32.const 1))
   )
 
-  ;; CHECK:      [fuzz-exec] calling try_table-catch
+  ;; CHECK:      [fuzz-exec] export try_table-catch
   (func $try_table-catch (export "try_table-catch")
     (block $tryend
       (drop
@@ -25,7 +25,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling catchless-try_table
+  ;; CHECK:      [fuzz-exec] export catchless-try_table
   ;; CHECK-NEXT: [exception thrown: e-i32 3]
   (func $catchless-try_table (export "catchless-try_table")
     (try_table
@@ -33,12 +33,12 @@
     )
   )
 )
-;; CHECK:      [fuzz-exec] calling throw
+;; CHECK:      [fuzz-exec] export throw
 ;; CHECK-NEXT: [exception thrown: e-i32 1]
 
-;; CHECK:      [fuzz-exec] calling try_table-catch
+;; CHECK:      [fuzz-exec] export try_table-catch
 
-;; CHECK:      [fuzz-exec] calling catchless-try_table
+;; CHECK:      [fuzz-exec] export catchless-try_table
 ;; CHECK-NEXT: [exception thrown: e-i32 3]
 ;; CHECK-NEXT: [fuzz-exec] comparing catchless-try_table
 ;; CHECK-NEXT: [fuzz-exec] comparing throw

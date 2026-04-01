@@ -6,13 +6,13 @@
   (type $none (func))
   (type $cont (cont $none))
 
-  (import "fuzzing-support" "log" (func $log (param i32)))
+  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
   (import "fuzzing-support" "call-export" (func $call-export (param i32 i32)))
 
   (tag $tag (type $none))
 
-  ;; CHECK:      [fuzz-exec] calling suspend
+  ;; CHECK:      [fuzz-exec] export suspend
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
   ;; CHECK-NEXT: [exception thrown: unhandled suspend]
   (func $suspend (export "suspend")
@@ -22,9 +22,9 @@
     (call $log (i32.const 20))
   )
 
-  ;; CHECK:      [fuzz-exec] calling call-call-export
+  ;; CHECK:      [fuzz-exec] export call-call-export
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
-  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
+  ;; CHECK-NEXT: [trap suspend through JS]
   (func $call-call-export (export "call-call-export")
     ;; Call suspend as an export. We cannot suspend through JS, so we throw.
     (call $call-export
@@ -33,9 +33,9 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling handled
+  ;; CHECK:      [fuzz-exec] export handled
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
-  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
+  ;; CHECK-NEXT: [trap suspend through JS]
   (func $handled (export "handled")
     ;; As above, but inside a continuation, so it would be handled - if we could
     ;; suspend though JS. But we can't, so we throw.

@@ -34,6 +34,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output-source-map-url,-osu         Emit specified string as source map URL
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-manifest                    Write a wasm-split manifest to the
+;; CHECK-NEXT:                                        specified file. This manifest can be
+;; CHECK-NEXT:                                        given to wasm-split to split the merged
+;; CHECK-NEXT:                                        module along the lines of the original
+;; CHECK-NEXT:                                        modules.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --rename-export-conflicts,-rec       Rename exports to avoid conflicts (rather
 ;; CHECK-NEXT:                                        than error)
 ;; CHECK-NEXT:
@@ -157,11 +163,19 @@
 ;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
 ;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multibyte                   Enable multibyte array loads and stores
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multibyte                  Disable multibyte array loads and stores
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-relaxed-atomics             Enable acquire/release atomic memory
 ;; CHECK-NEXT:                                        operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-atomics            Disable acquire/release atomic memory
 ;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-page-sizes           Enable custom page sizes
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-page-sizes          Disable custom page sizes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

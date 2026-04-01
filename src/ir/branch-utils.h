@@ -418,7 +418,7 @@ public:
   }
 
   bool hasBranch(Expression* curr, Name target) {
-    bool result = getBranches(curr).count(target);
+    bool result = getBranches(curr).contains(target);
 #if BRANCH_UTILS_DEBUG
     assert(bresult == BranchSeeker::has(curr, target));
 #endif

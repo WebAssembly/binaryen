@@ -41,6 +41,7 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/runtime-global.h"
 #include "ir/runtime-table.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
@@ -61,7 +62,6 @@ namespace wasm {
 struct WasmException {
   Literal exn;
 };
-std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
 // An exception thrown when we try to execute non-constant code, that is, code
 // that we cannot properly evaluate at compile time (e.g. if it refers to an
@@ -362,8 +362,7 @@ protected:
   Literal makeGCData(Literals&& data,
                      Type type,
                      Literal desc = Literal::makeNull(HeapType::none)) {
-    auto allocation =
-      std::make_shared<GCData>(type.getHeapType(), std::move(data), desc);
+    auto allocation = std::make_shared<GCData>(std::move(data), desc);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     // GC data with cycles will leak, since shared_ptrs do not handle cycles.
     // Binaryen is generally not used in long-running programs so we just ignore
@@ -381,6 +380,20 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation);
+  }
+
+  template<typename T>
+  void writeBytes(T value, int numBytes, size_t index, Literals& values) {
+    if constexpr (std::is_same_v<T, std::array<uint8_t, 16>>) {
+      for (int i = 0; i < numBytes; ++i) {
+        values[index + i] = Literal(static_cast<int32_t>(value[i]));
+      }
+    } else {
+      for (int i = 0; i < numBytes; ++i) {
+        values[index + i] =
+          Literal(static_cast<int32_t>((value >> (i * 8)) & 0xff));
+      }
+    }
   }
 
 public:
@@ -1711,16 +1724,10 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
-      case RelaxedMaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedMaddF16x8(b, c);
-      case RelaxedNmaddVecF16x8:
-        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
-          return NONCONSTANT_FLOW;
-        }
-        return a.relaxedNmaddF16x8(b, c);
+      case MaddVecF16x8:
+        return a.maddF16x8(b, c);
+      case NmaddVecF16x8:
+        return a.nmaddF16x8(b, c);
       case RelaxedMaddVecF32x4:
         if (relaxedBehavior == RelaxedBehavior::NonConstant) {
           return NONCONSTANT_FLOW;
@@ -2244,13 +2251,42 @@ public:
   }
 
   Flow visitStructWait(StructWait* curr) {
-    WASM_UNREACHABLE("struct.wait not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(expected, curr->expected)
+    VISIT(timeout, curr->timeout)
+
+    if (!curr->ref->type.getHeapType().isShared()) {
+      trap("cannot struct.wait a non-shared object");
+    }
+
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& field = data->values[curr->index];
+    if (field.geti32() != expected.getSingleValue().geti32()) {
+      return Literal(int32_t{1}); // not equal
+    }
+    // TODO: Add threads support. For now, report a host limit here, as there
+    //       are no other threads that can wake us up. Without such threads,
+    //       we'd hang if there is no timeout, and even if there is a timeout
+    //       then we can hang for a long time if it is in a loop. The only
+    //       timeout value we allow here for now is 0.
+    if (timeout.getSingleValue().geti64() != 0) {
+      hostLimit("threads support");
+      return Flow();
+    }
+    return Literal(int32_t{2}); // Timed out
   }
 
   Flow visitStructNotify(StructNotify* curr) {
-    WASM_UNREACHABLE("struct.notify not implemented");
-    return Flow();
+    VISIT(ref, curr->ref)
+    VISIT(count, curr->count)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return Literal(int32_t{0}); // none woken up
   }
 
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
@@ -2345,6 +2381,104 @@ public:
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
     data->values[i] = truncateForPacking(value.getSingleValue(), field);
+    return Flow();
+  }
+  Flow visitArrayLoad(ArrayLoad* curr) {
+    VISIT(ref, curr->ref)
+    VISIT(index, curr->index)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    Index i = index.getSingleValue().geti32();
+    size_t size = data->values.size();
+    if (i >= size || curr->bytes > (size - i)) {
+      trap("array oob");
+    }
+    uint64_t val = 0;
+    for (unsigned b = 0; b < curr->bytes; ++b) {
+      val |= static_cast<uint64_t>(data->values[i + b].geti32()) << (b * 8);
+    }
+    switch (curr->type.getBasic()) {
+      case Type::i32: {
+        int32_t sval = static_cast<int32_t>(val);
+        if (curr->signed_) {
+          if (curr->bytes == 1) {
+            sval = static_cast<int32_t>(static_cast<int8_t>(sval));
+          } else if (curr->bytes == 2) {
+            sval = static_cast<int32_t>(static_cast<int16_t>(sval));
+          }
+        }
+        return Literal(sval);
+      }
+      case Type::i64: {
+        int64_t sval = static_cast<int64_t>(val);
+        if (curr->signed_) {
+          if (curr->bytes == 1) {
+            sval = static_cast<int64_t>(static_cast<int8_t>(sval));
+          } else if (curr->bytes == 2) {
+            sval = static_cast<int64_t>(static_cast<int16_t>(sval));
+          } else if (curr->bytes == 4) {
+            sval = static_cast<int64_t>(static_cast<int32_t>(sval));
+          }
+        }
+        return Literal(sval);
+      }
+      case Type::f32: {
+        return Literal(bit_cast<float>(static_cast<int32_t>(val)));
+      }
+      case Type::f64: {
+        return Literal(bit_cast<double>(static_cast<int64_t>(val)));
+      }
+      default:
+        WASM_UNREACHABLE("invalid type");
+    }
+  }
+
+  Flow visitArrayStore(ArrayStore* curr) {
+    VISIT(ref, curr->ref)
+    VISIT(index, curr->index)
+    VISIT(value, curr->value)
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+
+    Index i = index.getSingleValue().geti32();
+    size_t size = data->values.size();
+    // Use subtraction to avoid overflow.
+    if (i >= size || curr->bytes > (size - i)) {
+      trap("array oob");
+    }
+    switch (curr->value->type.getBasic()) {
+      case Type::i32:
+        writeBytes(
+          value.getSingleValue().geti32(), curr->bytes, i, data->values);
+        break;
+      case Type::i64:
+        writeBytes(
+          value.getSingleValue().geti64(), curr->bytes, i, data->values);
+        break;
+      case Type::f32:
+        writeBytes(value.getSingleValue().reinterpreti32(),
+                   curr->bytes,
+                   i,
+                   data->values);
+        break;
+      case Type::f64:
+        writeBytes(value.getSingleValue().reinterpreti64(),
+                   curr->bytes,
+                   i,
+                   data->values);
+        break;
+      case Type::v128:
+        writeBytes(
+          value.getSingleValue().getv128(), curr->bytes, i, data->values);
+        break;
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unimp basic type");
+    }
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
@@ -2759,14 +2893,12 @@ protected:
       case Field::NotPacked:
         return Literal::makeFromMemory(p, field.type);
       case Field::i8: {
-        int8_t i;
-        memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(int32_t(Bits::readLE<int8_t>(p))),
+                                  field);
       }
       case Field::i16: {
-        int16_t i;
-        memcpy(&i, p, sizeof(i));
-        return truncateForPacking(Literal(int32_t(i)), field);
+        return truncateForPacking(Literal(int32_t(Bits::readLE<int16_t>(p))),
+                                  field);
       }
       case Field::WaitQueue: {
         WASM_UNREACHABLE("waitqueue not implemented");
@@ -3182,7 +3314,7 @@ public:
   // Keyed by internal name. All globals in the module, including imports.
   // `definedGlobals` contains non-imported globals. Points to `definedGlobals`
   // of this instance and other instances.
-  std::unordered_map<Name, Literals*> allGlobals;
+  std::unordered_map<Name, RuntimeGlobal*> allGlobals;
 
   // Like `allGlobals`. Keyed by internal name. All tables including imports.
   std::unordered_map<Name, RuntimeTable*> allTables;
@@ -3276,7 +3408,7 @@ public:
                    func->type);
   }
 
-  Literals* getExportedGlobalOrNull(Name name) {
+  RuntimeGlobal* getExportedGlobalOrNull(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Global) {
       return nullptr;
@@ -3310,7 +3442,7 @@ public:
                                << " not found.")
                                 .str());
     }
-    return *global;
+    return global->literals;
   }
 
   Tag* getExportedTagOrNull(Name name) {
@@ -3350,7 +3482,7 @@ private:
   // Globals that were defined in this module and not from an import.
   // `allGlobals` contains these values + imported globals, keyed by their
   // internal name.
-  std::vector<Literals> definedGlobals;
+  std::vector<RuntimeGlobal> definedGlobals;
   std::vector<std::unique_ptr<RuntimeTable>> definedTables;
   std::vector<Tag> definedTags;
 
@@ -3432,9 +3564,7 @@ private:
           if (!MemoryUtils::isSubType(exportedMemory, **memory)) {
             trap("Imported memory isn't compatible.");
           }
-        }
-
-        if (auto** tableDecl = std::get_if<Table*>(&import)) {
+        } else if (auto** tableDecl = std::get_if<Table*>(&import)) {
           auto* importedTable = importResolver->getTableOrNull(
             importable->importNames(), **tableDecl);
           if (!importedTable) {
@@ -3450,7 +3580,39 @@ private:
                << " isn't compatible with import declaration: " << **tableDecl)
                 .str());
           }
+        } else if (auto** function = std::get_if<Function*>(&import)) {
+          auto exportedFunc = getFunction((*function)->name);
+          if (!Type::isSubType(exportedFunc.type, (*function)->type)) {
+            trap((std::stringstream()
+                  << "Imported function " << importable->importNames()
+                  << " with type "
+                  << exportedFunc.type.getHeapType().getSignature().toString()
+                  << " isn't compatible with import declaration with type "
+                     "(modulo rec groups): "
+                  << (*function)->type.getHeapType().getSignature().toString())
+                   .str());
+          }
+        } else if (auto** globalDecl = std::get_if<Global*>(&import)) {
+          auto* exportedGlobal =
+            importResolver->getGlobalOrNull(importable->importNames(),
+                                            (*globalDecl)->type,
+                                            (*globalDecl)->mutable_);
+          if (!exportedGlobal->isSubType(**globalDecl)) {
+            trap(
+              (std::stringstream()
+               << "Imported global " << importable->importNames()
+               << " with type: "
+               << (exportedGlobal->getMutable() == Mutability::Mutable ? "(mut "
+                                                                       : "")
+               << exportedGlobal->getType()
+               << (exportedGlobal->getMutable() == Mutability::Mutable ? ")"
+                                                                       : "")
+               << " isn't compatible with import declaration: " << **globalDecl)
+                .str());
+          }
         }
+
+        // TODO: remaining cases e.g. tags.
       });
   }
 
@@ -3463,8 +3625,8 @@ private:
     for (auto& global : wasm.globals) {
       if (global->imported()) {
         auto importNames = global->importNames();
-        auto importedGlobal =
-          importResolver->getGlobalOrNull(importNames, global->type);
+        auto importedGlobal = importResolver->getGlobalOrNull(
+          importNames, global->type, global->mutable_);
         if (!importedGlobal) {
           externalInterface->trap((std::stringstream()
                                    << "Imported global " << importNames
@@ -3477,7 +3639,10 @@ private:
         assert(inserted && "Unexpected repeated global name");
       } else {
         Literals init = self()->visit(global->init).values;
-        auto& definedGlobal = definedGlobals.emplace_back(std::move(init));
+        auto& definedGlobal =
+          definedGlobals.emplace_back(global->type,
+                                      global->mutable_ ? Mutable : Immutable,
+                                      std::move(init));
 
         [[maybe_unused]] auto [_, inserted] =
           allGlobals.try_emplace(global->name, &definedGlobal);
@@ -3541,12 +3706,17 @@ private:
         // parsing/validation checked this already.
         assert(inserted && "Unexpected repeated table name");
       } else {
-        assert(table->type.isNullable() &&
-               "We only support nullable tables today");
-
-        auto null = Literal::makeNull(table->type.getHeapType());
+        Literal initVal;
+        if (table->init) {
+          initVal =
+            ExpressionRunner<SubType>::visit(table->init).getSingleValue();
+        } else {
+          assert(table->type.isNullable() &&
+                 "Non-nullable table must have an init expressions");
+          initVal = Literal::makeNull(table->type.getHeapType());
+        }
         auto& runtimeTable =
-          definedTables.emplace_back(createTable(null, *table));
+          definedTables.emplace_back(createTable(initVal, *table));
         [[maybe_unused]] auto [_, inserted] =
           allTables.try_emplace(table->name, runtimeTable.get());
         assert(inserted && "Unexpected repeated table name");
@@ -3667,6 +3837,10 @@ private:
       externalInterface->trap("setMemorySize called on non-existing memory");
     }
     iter->second = size;
+  }
+
+  Address getMemorySizeBytes(Name memory) {
+    return getMemorySize(memory) * wasm.getMemory(memory)->pageSize();
   }
 
 public:
@@ -3981,7 +4155,7 @@ public:
     Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
     if (offsetVal + sizeVal > 0 &&
-        droppedElementSegments.count(curr->segment)) {
+        droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in table.init");
     }
     if (offsetVal + sizeVal > segment->data.size()) {
@@ -4025,24 +4199,24 @@ public:
 
   Flow visitGlobalGet(GlobalGet* curr) {
     auto name = curr->name;
-    return *allGlobals.at(name);
+    return allGlobals.at(name)->literals;
   }
   Flow visitGlobalSet(GlobalSet* curr) {
     auto name = curr->name;
     VISIT(flow, curr->value)
 
-    *allGlobals.at(name) = flow.values;
+    allGlobals.at(name)->literals = flow.values;
     return Flow();
   }
 
   Flow visitLoad(Load* curr) {
     VISIT(flow, curr->ptr)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr =
-      info.instance->getFinalAddress(curr, flow.getSingleValue(), memorySize);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
+    auto addr = info.instance->getFinalAddress(
+      curr, flow.getSingleValue(), memorySizeBytes);
     if (curr->isAtomic()) {
-      info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
+      info.instance->checkAtomicAddress(addr, curr->bytes, memorySizeBytes);
     }
     auto ret = info.interface()->load(curr, addr, info.name);
     return ret;
@@ -4051,11 +4225,11 @@ public:
     VISIT(ptr, curr->ptr)
     VISIT(value, curr->value)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
+    auto addr = info.instance->getFinalAddress(
+      curr, ptr.getSingleValue(), memorySizeBytes);
     if (curr->isAtomic()) {
-      info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
+      info.instance->checkAtomicAddress(addr, curr->bytes, memorySizeBytes);
     }
     info.interface()->store(curr, addr, value.getSingleValue(), info.name);
     return Flow();
@@ -4065,11 +4239,11 @@ public:
     VISIT(ptr, curr->ptr)
     VISIT(value, curr->value)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
+    auto addr = info.instance->getFinalAddress(
+      curr, ptr.getSingleValue(), memorySizeBytes);
     auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySize, curr->order);
+      addr, curr->bytes, curr->type, info.name, memorySizeBytes, curr->order);
     auto computed = value.getSingleValue();
     switch (curr->op) {
       case RMWAdd:
@@ -4091,7 +4265,7 @@ public:
         break;
     }
     info.instance->doAtomicStore(
-      addr, curr->bytes, computed, info.name, memorySize);
+      addr, curr->bytes, computed, info.name, memorySizeBytes);
     return loaded;
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
@@ -4099,15 +4273,18 @@ public:
     VISIT(expected, curr->expected)
     VISIT(replacement, curr->replacement)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
+    auto addr = info.instance->getFinalAddress(
+      curr, ptr.getSingleValue(), memorySizeBytes);
     expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
     auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySize, curr->order);
+      addr, curr->bytes, curr->type, info.name, memorySizeBytes, curr->order);
     if (loaded == expected.getSingleValue()) {
-      info.instance->doAtomicStore(
-        addr, curr->bytes, replacement.getSingleValue(), info.name, memorySize);
+      info.instance->doAtomicStore(addr,
+                                   curr->bytes,
+                                   replacement.getSingleValue(),
+                                   info.name,
+                                   memorySizeBytes);
     }
     return loaded;
   }
@@ -4117,17 +4294,20 @@ public:
     VISIT(timeout, curr->timeout)
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
+    if (!info.instance->wasm.getMemory(info.name)->shared) {
+      trap("cannot atomic.wait a non-shared memory");
+    }
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), bytes, memorySize);
+      curr, ptr.getSingleValue(), bytes, memorySizeBytes);
     auto loaded = info.instance->doAtomicLoad(addr,
                                               bytes,
                                               curr->expectedType,
                                               info.name,
-                                              memorySize,
+                                              memorySizeBytes,
                                               MemoryOrder::SeqCst);
     if (loaded != expected.getSingleValue()) {
-      return Literal(int32_t(1)); // not equal
+      return Literal(int32_t{1}); // not equal
     }
     // TODO: Add threads support. For now, report a host limit here, as there
     //       are no other threads that can wake us up. Without such threads,
@@ -4137,18 +4317,18 @@ public:
     if (timeout.getSingleValue().getInteger() != 0) {
       hostLimit("threads support");
     }
-    return Literal(int32_t(2)); // Timed out
+    return Literal(int32_t{2}); // Timed out
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     VISIT(ptr, curr->ptr)
     VISIT(count, curr->notifyCount)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), 4, memorySize);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
+    auto addr = info.instance->getFinalAddress(
+      curr, ptr.getSingleValue(), 4, memorySizeBytes);
     // Just check TODO actual threads support
-    info.instance->checkAtomicAddress(addr, 4, memorySize);
-    return Literal(int32_t(0)); // none woken up
+    info.instance->checkAtomicAddress(addr, 4, memorySizeBytes);
+    return Literal(int32_t{0}); // none woken up
   }
   Flow visitSIMDLoad(SIMDLoad* curr) {
     switch (curr->op) {
@@ -4228,13 +4408,13 @@ public:
       }
       WASM_UNREACHABLE("invalid op");
     };
-    auto memorySize = info.instance->getMemorySize(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     auto addressType = curr->ptr->type;
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
         auto ptr = Literal::makeFromInt64(src, addressType);
-        lane = loadLane(
-          info.instance->getFinalAddress(curr, ptr, laneBytes, memorySize));
+        lane = loadLane(info.instance->getFinalAddress(
+          curr, ptr, laneBytes, memorySizeBytes));
         src =
           ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
       }
@@ -4264,9 +4444,9 @@ public:
   Flow visitSIMDLoadZero(SIMDLoad* curr) {
     VISIT(flow, curr->ptr)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     Address src = info.instance->getFinalAddress(
-      curr, flow.getSingleValue(), curr->getMemBytes(), memorySize);
+      curr, flow.getSingleValue(), curr->getMemBytes(), memorySizeBytes);
     auto zero =
       Literal::makeZero(curr->op == Load32ZeroVec128 ? Type::i32 : Type::i64);
     if (curr->op == Load32ZeroVec128) {
@@ -4281,9 +4461,9 @@ public:
     VISIT(ptrFlow, curr->ptr)
     VISIT(vecFlow, curr->vec)
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     Address addr = info.instance->getFinalAddress(
-      curr, ptrFlow.getSingleValue(), curr->getMemBytes(), memorySize);
+      curr, ptrFlow.getSingleValue(), curr->getMemBytes(), memorySizeBytes);
     Literal vec = vecFlow.getSingleValue();
     switch (curr->op) {
       case Load8LaneVec128:
@@ -4351,7 +4531,7 @@ public:
     VISIT(flow, curr->delta)
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    auto* memory = info.instance->wasm.getMemory(info.name);
+    Memory* memory = info.instance->wasm.getMemory(info.name);
     auto addressType = memory->addressType;
     auto fail = Literal::makeFromInt64(-1, addressType);
     Flow ret = Literal::makeFromInt64(memorySize, addressType);
@@ -4359,7 +4539,8 @@ public:
     uint64_t maxAddr = addressType == Type::i32
                          ? std::numeric_limits<uint32_t>::max()
                          : std::numeric_limits<uint64_t>::max();
-    if (delta > maxAddr / Memory::kPageSize) {
+    Address::address64_t pageSizeLog2 = memory->pageSizeLog2;
+    if (delta > (maxAddr >> pageSizeLog2)) {
       // Impossible to grow this much.
       return fail;
     }
@@ -4371,9 +4552,8 @@ public:
     if (newSize > memory->max) {
       return fail;
     }
-    if (!info.interface()->growMemory(info.name,
-                                      memorySize * Memory::kPageSize,
-                                      newSize * Memory::kPageSize)) {
+    if (!info.interface()->growMemory(
+          info.name, (memorySize << pageSizeLog2), (newSize << pageSizeLog2))) {
       // We failed to grow the memory in practice, even though it was valid
       // to try to do so.
       return fail;
@@ -4393,21 +4573,22 @@ public:
     Address offsetVal(offset.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 &&
+        droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
     if (offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in memory.init");
     }
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    if (destVal + sizeVal > memorySize * Memory::kPageSize) {
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
+    if (destVal + sizeVal > memorySizeBytes) {
       trap("out of bounds memory access in memory.init");
     }
     for (size_t i = 0; i < sizeVal; ++i) {
       Literal addr(destVal + i);
       info.interface()->store8(
-        info.instance->getFinalAddressWithoutOffset(addr, 1, memorySize),
+        info.instance->getFinalAddressWithoutOffset(addr, 1, memorySizeBytes),
         segment->data[offsetVal + i],
         info.name);
     }
@@ -4427,10 +4608,12 @@ public:
 
     auto destInfo = getMemoryInstanceInfo(curr->destMemory);
     auto sourceInfo = getMemoryInstanceInfo(curr->sourceMemory);
-    auto destMemorySize = destInfo.instance->getMemorySize(destInfo.name);
-    auto sourceMemorySize = sourceInfo.instance->getMemorySize(sourceInfo.name);
-    if (sourceVal + sizeVal > sourceMemorySize * Memory::kPageSize ||
-        destVal + sizeVal > destMemorySize * Memory::kPageSize ||
+    auto sourceMemorySizeBytes =
+      sourceInfo.instance->getMemorySizeBytes(sourceInfo.name);
+    auto destMemorySizeBytes =
+      destInfo.instance->getMemorySizeBytes(destInfo.name);
+    if (sourceVal + sizeVal > sourceMemorySizeBytes ||
+        destVal + sizeVal > destMemorySizeBytes ||
         // FIXME: better/cheaper way to detect wrapping?
         sourceVal + sizeVal < sourceVal || sourceVal + sizeVal < sizeVal ||
         destVal + sizeVal < destVal || destVal + sizeVal < sizeVal) {
@@ -4449,10 +4632,10 @@ public:
     for (int64_t i = start; i != end; i += step) {
       destInfo.interface()->store8(
         destInfo.instance->getFinalAddressWithoutOffset(
-          Literal(destVal + i), 1, destMemorySize),
+          Literal(destVal + i), 1, destMemorySizeBytes),
         sourceInfo.interface()->load8s(
           sourceInfo.instance->getFinalAddressWithoutOffset(
-            Literal(sourceVal + i), 1, sourceMemorySize),
+            Literal(sourceVal + i), 1, sourceMemorySizeBytes),
           sourceInfo.name),
         destInfo.name);
     }
@@ -4466,17 +4649,16 @@ public:
     Address sizeVal(size.getSingleValue().getUnsigned());
 
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
+    auto memorySizeBytes = info.instance->getMemorySizeBytes(info.name);
     // FIXME: cheaper wrapping detection?
-    if (destVal > memorySize * Memory::kPageSize ||
-        sizeVal > memorySize * Memory::kPageSize ||
-        destVal + sizeVal > memorySize * Memory::kPageSize) {
+    if (destVal > memorySizeBytes || sizeVal > memorySizeBytes ||
+        destVal + sizeVal > memorySizeBytes) {
       trap("out of bounds memory access in memory.fill");
     }
     uint8_t val(value.getSingleValue().geti32());
     for (size_t i = 0; i < sizeVal; ++i) {
       info.interface()->store8(info.instance->getFinalAddressWithoutOffset(
-                                 Literal(destVal + i), 1, memorySize),
+                                 Literal(destVal + i), 1, memorySizeBytes),
                                val,
                                info.name);
     }
@@ -4509,7 +4691,7 @@ public:
     if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }
-    if (droppedDataSegments.count(curr->segment) && end > 0) {
+    if (droppedDataSegments.contains(curr->segment) && end > 0) {
       trap("dropped segment access in array.new_data");
     }
     contents.reserve(size);
@@ -4536,7 +4718,7 @@ public:
     if (end > seg.data.size()) {
       trap("out of bounds segment access in array.new_elem");
     }
-    if (end > 0 && droppedElementSegments.count(curr->segment)) {
+    if (end > 0 && droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.new_elem");
     }
     contents.reserve(size);
@@ -4573,7 +4755,8 @@ public:
     if (offsetVal + readSize > seg->data.size()) {
       trap("out of bounds segment access in array.init_data");
     }
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 &&
+        droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_data");
     }
     for (size_t i = 0; i < sizeVal; i++) {
@@ -4607,7 +4790,7 @@ public:
     if (max > seg->data.size()) {
       trap("out of bounds segment access in array.init_elem");
     }
-    if (max > 0 && droppedElementSegments.count(curr->segment)) {
+    if (max > 0 && droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_elem");
     }
     for (size_t i = 0; i < sizeVal; i++) {
@@ -4744,14 +4927,19 @@ public:
     VISIT_ARGUMENTS(flow, curr->operands, arguments)
     VISIT(cont, curr->cont)
 
+    auto contValue = cont.getSingleValue();
+    if (contValue.isNull()) {
+      trap("null ref");
+    }
+
     // Create a new continuation, copying the old but with the new type +
     // arguments.
-    auto old = cont.getSingleValue().getContData();
+    auto old = contValue.getContData();
     auto newData = *old;
     newData.type = curr->type.getHeapType();
-    newData.resumeArguments = arguments;
-    // We handle only the simple case of applying all parameters, for now. TODO
-    assert(old->resumeArguments.empty());
+    for (auto arg : arguments) {
+      newData.resumeArguments.push_back(arg);
+    }
     // The old one is done.
     old->executed = true;
     return Literal(std::make_shared<ContData>(newData));
@@ -5165,36 +5353,35 @@ protected:
 
   template<class LS>
   Address
-  getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySize) {
-    Address memorySizeBytes = memorySize * Memory::kPageSize;
+  getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySizeBytes) {
     uint64_t addr = ptr.getUnsigned();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
     trapIfGt(bytes, memorySizeBytes, "bytes > memory");
-    checkLoadAddress(addr, bytes, memorySize);
+    checkLoadAddress(addr, bytes, memorySizeBytes);
     return addr;
   }
 
   template<class LS>
-  Address getFinalAddress(LS* curr, Literal ptr, Address memorySize) {
-    return getFinalAddress(curr, ptr, curr->bytes, memorySize);
+  Address getFinalAddress(LS* curr, Literal ptr, Address memorySizeBytes) {
+    return getFinalAddress(curr, ptr, curr->bytes, memorySizeBytes);
   }
 
-  Address
-  getFinalAddressWithoutOffset(Literal ptr, Index bytes, Address memorySize) {
+  Address getFinalAddressWithoutOffset(Literal ptr,
+                                       Index bytes,
+                                       Address memorySizeBytes) {
     uint64_t addr = ptr.getUnsigned();
-    checkLoadAddress(addr, bytes, memorySize);
+    checkLoadAddress(addr, bytes, memorySizeBytes);
     return addr;
   }
 
-  void checkLoadAddress(Address addr, Index bytes, Address memorySize) {
-    Address memorySizeBytes = memorySize * Memory::kPageSize;
+  void checkLoadAddress(Address addr, Index bytes, Address memorySizeBytes) {
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
   }
 
-  void checkAtomicAddress(Address addr, Index bytes, Address memorySize) {
-    checkLoadAddress(addr, bytes, memorySize);
+  void checkAtomicAddress(Address addr, Index bytes, Address memorySizeBytes) {
+    checkLoadAddress(addr, bytes, memorySizeBytes);
     // Unaligned atomics trap.
     if (bytes > 1) {
       if (addr & (bytes - 1)) {
@@ -5207,12 +5394,12 @@ protected:
                        Index bytes,
                        Type type,
                        Name memoryName,
-                       Address memorySize,
+                       Address memorySizeBytes,
                        MemoryOrder order) {
     if (order == MemoryOrder::Unordered) {
       Fatal() << "Expected a non-unordered MemoryOrder in doAtomicLoad";
     }
-    checkAtomicAddress(addr, bytes, memorySize);
+    checkAtomicAddress(addr, bytes, memorySizeBytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;
@@ -5233,8 +5420,8 @@ protected:
                      Index bytes,
                      Literal toStore,
                      Name memoryName,
-                     Address memorySize) {
-    checkAtomicAddress(addr, bytes, memorySize);
+                     Address memorySizeBytes) {
+    checkAtomicAddress(addr, bytes, memorySizeBytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;

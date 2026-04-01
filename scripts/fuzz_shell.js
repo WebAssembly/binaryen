@@ -143,17 +143,30 @@ function printed(x, y) {
   } else if (typeof x === 'bigint') {
     // Print bigints in legalized form, which is two 32-bit numbers of the low
     // and high bits.
-    return (Number(x) | 0) + ' ' + (Number(x >> 32n) | 0)
-  } else if (typeof x !== 'number') {
-    // Something that is not a number or string, like a reference. We can't
-    // print a reference because it could look different after opts - imagine
-    // that a function gets renamed internally (that is, the problem is that
-    // JS printing will emit some info about the reference and not a stable
-    // external representation of it). In those cases just print the type,
-    // which will be 'object' or 'function'.
-    return typeof x;
+    return (Number(x & 0xffffffffn) | 0) + ' ' + (Number(x >> 32n) | 0)
+  } else if (typeof x === 'object') {
+    // This may be one of the externref imports, in which case we can print its
+    // payload.
+    if (Object.hasOwn(x, 'payload')) {
+      return 'externref(' + x.payload + ')';
+    }
+    // Or maybe this is a JS error we caught.
+    if (x instanceof Error) {
+      return 'jserror';
+    }
+    // If this is a Wasm object, we can't access its type or any of its
+    // internal structure, which might have been changed by optimizations
+    // anyway. It might have a configured prototype, though, and that
+    // prototype may be an imported externref global we can identify by the
+    // payload we gave it.
+    return 'object(' + printed(Object.getPrototypeOf(x)) + ')';
+  } else if (typeof x === 'function') {
+    // We cannot print function names because they might have been changed by
+    // optimizations.
+    return 'function';
   } else {
     // A number. Print the whole thing.
+    assert(typeof x === 'number');
     return '' + x;
   }
 }
@@ -198,6 +211,11 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
+// wasm2js does not define RuntimeError, so use that to check for it. wasm2js
+// overrides the entire WebAssembly object with a polyfill, so we know exactly
+// what it contains, and we need to handle some things differently below.
+var wasm2js = !WebAssembly.RuntimeError;
+
 // Calls a given function in a try-catch. Return 1 if an exception was thrown.
 // If |rethrow| is set, and an exception is thrown, it is caught and rethrown.
 // Wasm traps are not swallowed (see details below).
@@ -213,11 +231,7 @@ function callFunc(func) {
 
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
-    // check for that first (wasm2js does not define RuntimeError, so use
-    // that for the check - when wasm2js is run, we override the entire
-    // WebAssembly object with a polyfill, so we know exactly what it
-    // contains).
-    var wasm2js = !WebAssembly.RuntimeError;
+    // check for that first.
     if (!wasm2js) {
       // When running native wasm, we can detect wasm traps.
       if (e instanceof WebAssembly.RuntimeError) {
@@ -291,7 +305,7 @@ function oneIn(n) {
 
 // Set up the imports.
 var tempRet0;
-var imports = {
+var baseImports = {
   'fuzzing-support': {
     // Logging.
     'log-i32': logValue,
@@ -400,15 +414,15 @@ var imports = {
 // If Tags are available, add some.
 if (typeof WebAssembly.Tag !== 'undefined') {
   // A tag for general use in the fuzzer.
-  var wasmTag = imports['fuzzing-support']['wasmtag'] = new WebAssembly.Tag({
+  var wasmTag = baseImports['fuzzing-support']['wasmtag'] = new WebAssembly.Tag({
     'parameters': ['i32']
   });
 
   // The JSTag that represents a JS tag.
-  imports['fuzzing-support']['jstag'] = WebAssembly.JSTag;
+  baseImports['fuzzing-support']['jstag'] = WebAssembly.JSTag;
 
   // This allows j2wasm content to run in the fuzzer.
-  imports['imports'] = {
+  baseImports['imports'] = {
     'j2wasm.ExceptionUtils.tag': new WebAssembly.Tag({
       'parameters': ['externref']
     }),
@@ -419,8 +433,8 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 if (JSPI) {
   for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref',
                     'call-ref-catch']) {
-    imports['fuzzing-support'][name] =
-      new WebAssembly.Suspending(imports['fuzzing-support'][name]);
+    baseImports['fuzzing-support'][name] =
+      new WebAssembly.Suspending(baseImports['fuzzing-support'][name]);
   }
 }
 
@@ -438,7 +452,7 @@ function wrapExportForJSPI(value) {
 // will be provided by the secondary module, and must be called using an
 // indirection.
 if (secondBinary) {
-  imports['placeholder.deferred'] = new Proxy({}, {
+  baseImports['placeholder.deferred'] = new Proxy({}, {
     get(target, prop, receiver) {
       // Return a function that throws. We could do an indirect call using the
       // exported table, but as we immediately link in the secondary module,
@@ -452,16 +466,49 @@ if (secondBinary) {
   });
 }
 
+function makeImports(module) {
+  // Reflect on the imports to add necessary externref globals.
+  if (WebAssembly.Module.imports === undefined) {
+    // We must be running with wasm2js, in which case reference types must not
+    // be enabled and there are no externref globals.
+    return baseImports;
+  }
+  // Add missing imported immutable externref globals.
+  // TODO: Support more kinds of imported globals, but this would require being
+  // able to reflect more precisely on the global externtypes.
+  for (var {module, name, kind} of WebAssembly.Module.imports(module)) {
+    if (kind == 'global') {
+      if (!baseImports[module]) {
+        baseImports[module] = {};
+      }
+      if (!baseImports[module][name]) {
+        // Compute a payload from the import names. This must be kept in sync
+        // with execution-results.h.
+        var payload = 0;
+        for (var name of [module, name]) {
+          for (var c of name) {
+            payload = (payload + c.charCodeAt(0)) % 251;
+          }
+        }
+        baseImports[module][name] = { payload };
+      }
+    }
+  }
+  return baseImports;
+}
+
 // Compile and instantiate a wasm file. Receives the binary to build, and
 // whether it is the second one.
 function build(binary, isSecond) {
+  var module = new WebAssembly.Module(binary);
+
+  var imports = makeImports(module);
+
   if (isSecond) {
     assert(secondBinary);
     // Provide the primary module's exports to the secondary.
     imports['primary'] = exports;
   }
-
-  var module = new WebAssembly.Module(binary);
 
   var instance;
   try {
@@ -529,13 +576,55 @@ function build(binary, isSecond) {
       name = e;
       value = exports[e];
     } else {
-      // We are given an object form exportList, which has both a name and a
+      // We are given an object from exportList, which has both a name and a
       // value.
       name = e.name;
       value = e.value;
     }
 
+    // Check for a global. Note we must be careful in wasm2js mode, where we
+    // can't do instanceof here (the wasm polyfill there doesn't have such
+    // things). In wasm2js we strip global exports to avoid needing to handle
+    // them here (using stub-unsupported-js).
+    if (!wasm2js && (value instanceof WebAssembly.Global)) {
+      // We can log a global value and do other operations to check for bugs.
+      // First, do some operations on the Global wrapper itself.
+      JSON.stringify(value);
+      value.foobar;
+
+      // Log it at the right time later using a lambda. Note that we can't just
+      // capture |value| for the lambda, as the loop modifies it.
+      (() => {
+        var global = value;
+        value = () => {
+          // Time to log. Look at the exported value itself, not the global
+          // wrapper.
+          let actualValue;
+          try {
+            actualValue = global.value;
+          } catch (e) {
+            if (e.message.startsWith('get WebAssembly.Global.value')) {
+              // Just log a string instead of a value we cannot access from JS,
+              // like an exnref. Note we don't need matching code on the C++
+              // side in execution-results.h because illegal exports are pruned
+              // anyhow if we are going to compare execution in JS to C++.
+              actualValue = '<illegal value>';
+            } else {
+              throw e;
+            }
+          }
+          if (typeof actualValue === 'object') {
+            // logRef can do a little more than logValue, so use it when possible.
+            logRef(actualValue);
+          } else {
+            logValue(actualValue);
+          }
+        };
+      })();
+    }
+
     if (typeof value !== 'function') {
+      // Nothing we can call.
       continue;
     }
 
@@ -561,7 +650,7 @@ function build(binary, isSecond) {
     }
 
     // Execute the task.
-    console.log(`[fuzz-exec] calling ${task.name}${task.deferred ? ' (after defer)' : ''}`);
+    console.log(`[fuzz-exec] export ${task.name}${task.deferred ? ' (after defer)' : ''}`);
     let result;
     try {
       result = task.func();

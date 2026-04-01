@@ -3,12 +3,12 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec -q -o /dev/null 2>&1 | filecheck %s
 
 (module
-  ;; CHECK:      [fuzz-exec] calling get-ref
+  ;; CHECK:      [fuzz-exec] export get-ref
   ;; CHECK-NEXT: [trap fuzzer can only send defaultable parameters to exports]
   (func $get-ref (export "get-ref") (param $0 (ref any))
     (nop)
   )
 )
-;; CHECK:      [fuzz-exec] calling get-ref
+;; CHECK:      [fuzz-exec] export get-ref
 ;; CHECK-NEXT: [trap fuzzer can only send defaultable parameters to exports]
 ;; CHECK-NEXT: [fuzz-exec] comparing get-ref

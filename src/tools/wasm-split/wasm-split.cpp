@@ -95,9 +95,14 @@ void adjustTableSize(Module& wasm, int initialSize, bool secondary = false) {
 void writeModule(Module& wasm,
                  std::string filename,
                  const WasmSplitOptions& options) {
+  if (options.stripDebug) {
+    PassRunner runner(&wasm, options.passOptions);
+    runner.add("strip-debug");
+    runner.run();
+  }
   ModuleWriter writer(options.passOptions);
   writer.setBinary(options.emitBinary);
-  writer.setDebugInfo(options.passOptions.debugInfo);
+  writer.setDebugInfo(options.passOptions.debugInfo && !options.stripDebug);
   if (options.emitModuleNames) {
     writer.setEmitModuleName(true);
   }
@@ -291,7 +296,7 @@ void splitModule(const WasmSplitOptions& options) {
       }
       continue;
     }
-    if (!options.quiet && options.keepFuncs.count(func)) {
+    if (!options.quiet && options.keepFuncs.contains(func)) {
       std::cerr << "warning: function " << func
                 << " was to be both kept and split. It will be split.\n";
     }
@@ -301,12 +306,6 @@ void splitModule(const WasmSplitOptions& options) {
 
   if (!options.quiet && keepFuncs.size() == 0) {
     std::cerr << "warning: not keeping any functions in the primary module\n";
-  }
-
-  if (options.jspi) {
-    // The load secondary module function must be kept in the main module.
-    keepFuncs.insert(ModuleSplitting::LOAD_SECONDARY_MODULE);
-    splitFuncs.erase(ModuleSplitting::LOAD_SECONDARY_MODULE);
   }
 
   // If warnings are enabled, check that any functions are being split out.
@@ -338,7 +337,7 @@ void splitModule(const WasmSplitOptions& options) {
 #ifndef NDEBUG
   // Check that all defined functions are in one set or the other.
   ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-    assert(keepFuncs.count(func->name) || splitFuncs.count(func->name));
+    assert(keepFuncs.contains(func->name) || splitFuncs.contains(func->name));
   });
 #endif // NDEBUG
 
@@ -347,7 +346,6 @@ void splitModule(const WasmSplitOptions& options) {
   setCommonSplitConfigs(config, options);
   config.secondaryFuncs.push_back(std::move(splitFuncs));
   config.secondaryNames.push_back("deferred");
-  config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
   auto& secondary = *splitResults.secondaries.begin();
 
@@ -425,7 +423,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
           Fatal() << "Module name is empty\n";
         }
       }
-      if (moduleNameSet.count(name)) {
+      if (moduleNameSet.contains(name)) {
         Fatal() << "Module name " << name << " is listed more than once\n";
       }
       currModule = name;

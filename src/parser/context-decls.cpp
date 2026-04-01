@@ -108,6 +108,7 @@ Result<> ParseDeclsCtx::addTable(Name name,
                                  const std::vector<Name>& exports,
                                  ImportNames* import,
                                  TableType type,
+                                 std::optional<ExprT>,
                                  Index pos) {
   CHECK_ERR(checkImport(pos, import));
   auto t = addTableDecl(pos, name, import, type);
@@ -144,6 +145,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
   m->initial = type.limits.initial;
   m->max = type.limits.max ? *type.limits.max : Memory::kUnlimitedSize;
   m->shared = type.shared;
+  m->pageSizeLog2 = type.pageSizeLog2;
   if (name) {
     // TODO: if the existing memory is not explicitly named, fix its name
     // and continue.

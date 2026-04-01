@@ -273,7 +273,7 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (scopeMangledNames.count(ret)) {
+      if (scopeMangledNames.contains(ret)) {
         // When export names collide things may be confusing, as this is
         // observable externally by the person using the JS. Report a warning.
         if (scope == NameScope::Export) {
@@ -289,7 +289,7 @@ public:
       //   var bar = 0;
       // }
       // function bar() { ..
-      if (scope == NameScope::Local && topMangledNames.count(ret)) {
+      if (scope == NameScope::Local && topMangledNames.contains(ret)) {
         continue;
       }
       // We found a good name, use it.
@@ -476,13 +476,13 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     } else {
       Ref theVar = ValueBuilder::makeVar();
       asmFunc[3]->push_back(theVar);
-      ValueBuilder::appendToVar(
-        theVar,
-        BUFFER,
-        ValueBuilder::makeNew(ValueBuilder::makeCall(
-          ValueBuilder::makeName("ArrayBuffer"),
-          ValueBuilder::makeInt(Address::address32_t(
-            wasm->memories[0]->initial.addr * Memory::kPageSize)))));
+      ValueBuilder::appendToVar(theVar,
+                                BUFFER,
+                                ValueBuilder::makeNew(ValueBuilder::makeCall(
+                                  ValueBuilder::makeName("ArrayBuffer"),
+                                  ValueBuilder::makeInt(Address::address32_t(
+                                    wasm->memories[0]->initial.addr
+                                    << wasm->memories[0]->pageSizeLog2)))));
     }
   }
 
@@ -604,7 +604,7 @@ static bool needsQuoting(Name name) {
 }
 
 void Wasm2JSBuilder::ensureModuleVar(Ref ast, const Importable& imp) {
-  if (seenModuleImports.count(imp.module) > 0) {
+  if (seenModuleImports.contains(imp.module)) {
     return;
   }
   Ref theVar = ValueBuilder::makeVar();
@@ -889,7 +889,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Top));
   // arguments
   bool needCoercions = options.optimizeLevel == 0 || standaloneFunction ||
-                       functionsCallableFromOutside.count(func->name);
+                       functionsCallableFromOutside.contains(func->name);
   for (Index i = 0; i < func->getNumParams(); i++) {
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
@@ -996,7 +996,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           break;
         }
         // If we have already seen this block, stop here.
-        if (unneededExpressions.count(block)) {
+        if (unneededExpressions.contains(block)) {
           // XXX FIXME we should probably abort the entire optimization
           break;
         }
@@ -1025,7 +1025,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           }
           namesBranchedTo.insert(newBranches.begin(), newBranches.end());
         }
-        if (namesBranchedTo.count(block->name)) {
+        if (namesBranchedTo.contains(block->name)) {
           break;
         }
         // We can move code after the child (reached by branching on the
@@ -1151,7 +1151,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
     // Visitors
 
     Ref visitBlock(Block* curr) {
-      if (switchProcessor.unneededExpressions.count(curr)) {
+      if (switchProcessor.unneededExpressions.contains(curr)) {
         // We have had our tail hoisted into a switch that is nested in our
         // first position, so we don't need to emit that code again, or
         // ourselves in fact.
@@ -1201,7 +1201,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
     }
 
     Ref makeBreakOrContinue(Name name) {
-      if (continueLabels.count(name)) {
+      if (continueLabels.contains(name)) {
         return ValueBuilder::makeContinue(fromName(name, NameScope::Label));
       } else {
         return ValueBuilder::makeBreak(fromName(name, NameScope::Label));
@@ -1275,7 +1275,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       // Emit any remaining groups by just emitting branches to their code,
       // which will appear outside the switch.
       for (auto& [target, indexes] : targetIndexes) {
-        if (emittedTargets.count(target)) {
+        if (emittedTargets.contains(target)) {
           continue;
         }
         stopFurtherFallthrough();
@@ -1294,7 +1294,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       // TODO: if the group the default is in is not the largest, we can turn
       // the largest into
       //       the default by using a local and a check on the range
-      if (!emittedTargets.count(curr->default_)) {
+      if (!emittedTargets.contains(curr->default_)) {
         stopFurtherFallthrough();
         ValueBuilder::appendDefaultToSwitch(theSwitch);
         ValueBuilder::appendCodeToSwitch(
@@ -2007,7 +2007,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       Ref val = visit(curr->value, EXPRESSION_RESULT);
       bool needCoercion =
         parent->options.optimizeLevel == 0 || standaloneFunction ||
-        parent->functionsCallableFromOutside.count(func->name);
+        parent->functionsCallableFromOutside.contains(func->name);
       if (needCoercion) {
         val = makeJsCoercion(val, wasmToJsType(curr->value->type));
       }
@@ -2372,6 +2372,14 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitArrayLoad(ArrayLoad* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayStore(ArrayStore* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitArrayLen(ArrayLen* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2494,13 +2502,12 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
 
 void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
   Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
-  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
-    makeJsCoercion(ValueBuilder::makeBinary(
-                     ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
-                                           IString("byteLength")),
-                     DIV,
-                     ValueBuilder::makeInt(Memory::kPageSize)),
-                   JsType::JS_INT)));
+  memorySizeFunc[3]->push_back(
+    ValueBuilder::makeReturn(ValueBuilder::makeBinary(
+      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
+                            IString("byteLength")),
+      RSHIFT,
+      ValueBuilder::makeInt(wasm->memories[0]->pageSizeLog2))));
   ast->push_back(memorySizeFunc);
 
   if (!wasm->memories.empty() &&
@@ -2544,9 +2551,10 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
                              LT,
                              ValueBuilder::makeName(IString("newPages"))),
     IString("&&"),
-    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newPages")),
-                             LT,
-                             ValueBuilder::makeInt(Memory::kMaxSize32)));
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeName(IString("newPages")),
+      LT,
+      ValueBuilder::makeNum(wasm->memories[0]->maxSize32())));
   // Also enforce the module's declared memory maximum, if one exists.
   if (!wasm->memories.empty() && wasm->memories[0]->hasMax()) {
     condition = ValueBuilder::makeBinary(
@@ -2566,9 +2574,10 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
     IString("newBuffer"),
     ValueBuilder::makeNew(ValueBuilder::makeCall(
       ARRAY_BUFFER,
-      ValueBuilder::makeCall(MATH_IMUL,
-                             ValueBuilder::makeName(IString("newPages")),
-                             ValueBuilder::makeInt(Memory::kPageSize)))));
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("newPages")),
+        LSHIFT,
+        ValueBuilder::makeInt(wasm->memories[0]->pageSizeLog2)))));
 
   Ref newHEAP8 = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newHEAP8);
@@ -2709,12 +2718,12 @@ void Wasm2JSGlue::emitPreES6() {
     // Right now codegen requires a flat namespace going into the module,
     // meaning we don't support importing the same name from multiple namespaces
     // yet.
-    if (baseModuleMap.count(base) && baseModuleMap[base] != module) {
+    if (baseModuleMap.contains(base) && baseModuleMap[base] != module) {
       Fatal() << "the name " << base << " cannot be imported from "
               << "two different modules yet";
     }
     baseModuleMap[base] = module;
-    if (seenModules.count(module) == 0) {
+    if (!seenModules.contains(module)) {
       out << "import * as " << asmangle(module.toString()) << " from '"
           << module << "';\n";
       seenModules.insert(module);
@@ -2760,7 +2769,8 @@ void Wasm2JSGlue::emitPostES6() {
   // can be used for conversions, so make sure there's at least one page.
   if (!wasm.memories.empty() && wasm.memories[0]->imported()) {
     out << "var mem" << moduleName.str << " = new ArrayBuffer("
-        << wasm.memories[0]->initial.addr * Memory::kPageSize << ");\n";
+        << (wasm.memories[0]->initial.addr << wasm.memories[0]->pageSizeLog2)
+        << ");\n";
   }
 
   // Actually invoke the `asmFunc` generated function, passing in all global
@@ -2775,7 +2785,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    if (seenModules.count(import->module) > 0) {
+    if (seenModules.contains(import->module)) {
       return;
     }
     out << "  \"" << import->module
@@ -2801,7 +2811,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    if (seenModules.count(import->module) > 0) {
+    if (seenModules.contains(import->module)) {
       return;
     }
     out << "  \"" << import->module

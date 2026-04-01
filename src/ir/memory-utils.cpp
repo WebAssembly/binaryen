@@ -22,7 +22,8 @@ namespace wasm::MemoryUtils {
 
 bool isSubType(const Memory& a, const Memory& b) {
   return a.shared == b.shared && a.addressType == b.addressType &&
-         a.initial >= b.initial && a.max <= b.max;
+         a.initial >= b.initial && a.max <= b.max &&
+         a.pageSizeLog2 == b.pageSizeLog2;
 }
 
 bool flatten(Module& wasm) {

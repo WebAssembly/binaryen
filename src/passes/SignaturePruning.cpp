@@ -199,6 +199,17 @@ struct SignaturePruning : public Pass {
       allInfo[tag->type].optimizable = false;
     }
 
+    // Continuations must not have params refined, because we do not update
+    // their users (e.g. cont.bind, resume) with new types.
+    // TODO: support refining continuations
+    if (module->features.hasStackSwitching()) {
+      for (auto type : ModuleUtils::collectHeapTypes(*module)) {
+        if (type.isContinuation()) {
+          allInfo[type.getContinuation().type].optimizable = false;
+        }
+      }
+    }
+
     // Signature-called functions must also not be modified.
     // TODO: Explore whether removing parameters from the end could be
     //       beneficial (check if it does not regress call performance with JS).
@@ -266,7 +277,7 @@ struct SignaturePruning : public Pass {
       // to prune them.
       SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i) == 0) {
+        if (!usedParams.contains(i)) {
           unusedParams.insert(i);
         }
       }

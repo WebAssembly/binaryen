@@ -170,10 +170,40 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     if (codeEffects.hasAnything()) {
       return Name();
     }
+    // Verify that we actually have a global.set here. We could also have a
+    // call to a function for whom we have computed function effects, but that
+    // is not what we want: such a function can be called from other places too.
+    // This read-only-to-write pattern must contain an actual global.set, so we
+    // can count the sets in the entire program to confirm that no dangerous
+    // ones exist. (In other words, we cannot take the shortcut of assuming that
+    // the effect "writes global $foo" means we actually have a global.set $foo
+    // here.)
+    auto found = false;
+    for (auto* set : FindAll<GlobalSet>(code).list) {
+      if (set->name == writtenGlobal) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return Name();
+    }
 
     // See if we read that global in the condition expression.
     EffectAnalyzer conditionEffects(getPassOptions(), *getModule(), condition);
-    if (!conditionEffects.mutableGlobalsRead.count(writtenGlobal)) {
+    if (!conditionEffects.mutableGlobalsRead.contains(writtenGlobal)) {
+      return Name();
+    }
+    // As above, confirm we see an actual global.get, and not a call to one with
+    // computed effects.
+    found = false;
+    for (auto* get : FindAll<GlobalGet>(condition).list) {
+      if (get->name == writtenGlobal) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
       return Name();
     }
 
@@ -636,8 +666,8 @@ struct SimplifyGlobals : public Pass {
       // Go all the way back.
       for (auto& global : module->globals) {
         auto child = global->name;
-        if (copiedParentMap.count(child)) {
-          while (copiedParentMap.count(copiedParentMap[child])) {
+        if (copiedParentMap.contains(child)) {
+          while (copiedParentMap.contains(copiedParentMap[child])) {
             copiedParentMap[child] = copiedParentMap[copiedParentMap[child]];
           }
         }

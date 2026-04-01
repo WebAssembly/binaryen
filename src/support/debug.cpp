@@ -32,7 +32,7 @@ bool wasm::isDebugEnabled(const char* type) {
   if (debugTypesEnabled.empty()) {
     return true;
   }
-  return debugTypesEnabled.count(type) > 0;
+  return debugTypesEnabled.contains(type);
 }
 
 void wasm::setDebugEnabled(const char* types) {

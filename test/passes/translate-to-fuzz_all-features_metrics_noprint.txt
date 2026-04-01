@@ -1,56 +1,50 @@
 Metrics
 total
  [exports]      : 14      
- [funcs]        : 8       
- [globals]      : 26      
- [imports]      : 14      
+ [funcs]        : 18      
+ [globals]      : 2       
+ [imports]      : 13      
  [memories]     : 1       
  [memory-data]  : 16      
- [table-data]   : 1       
+ [table-data]   : 3       
  [tables]       : 2       
- [tags]         : 1       
- [total]        : 614     
- [vars]         : 30      
- ArrayNewFixed  : 8       
- AtomicCmpxchg  : 2       
+ [tags]         : 2       
+ [total]        : 527     
+ [vars]         : 50      
+ ArrayNewFixed  : 2       
  AtomicFence    : 1       
- AtomicNotify   : 1       
- Binary         : 32      
- Block          : 91      
- BrOn           : 1       
- Break          : 18      
- Call           : 21      
- CallRef        : 2       
- Const          : 120     
- ContNew        : 1       
- DataDrop       : 1       
+ Binary         : 27      
+ Block          : 97      
+ Break          : 9       
+ Call           : 17      
+ CallRef        : 1       
+ Const          : 103     
  Drop           : 8       
- GlobalGet      : 47      
- GlobalSet      : 34      
- I31Get         : 1       
- If             : 34      
- Load           : 5       
- LocalGet       : 30      
- LocalSet       : 14      
- Loop           : 9       
+ GlobalGet      : 48      
+ GlobalSet      : 44      
+ If             : 29      
+ LocalGet       : 14      
+ LocalSet       : 10      
+ Loop           : 4       
  MemoryInit     : 1       
- Nop            : 11      
- RefAs          : 3       
- RefFunc        : 11      
- RefI31         : 1       
- RefNull        : 9       
- RefTest        : 1       
- Return         : 5       
+ Nop            : 7       
+ RefAs          : 1       
+ RefEq          : 2       
+ RefFunc        : 7       
+ RefI31         : 6       
+ RefNull        : 5       
+ Return         : 4       
  SIMDExtract    : 2       
- Select         : 4       
- Store          : 3       
- StringConst    : 7       
- StringEncode   : 3       
+ Select         : 2       
+ Store          : 1       
+ StringConst    : 5       
+ StringEncode   : 1       
  StringEq       : 1       
  StringMeasure  : 1       
- StructNew      : 3       
- Try            : 6       
- TryTable       : 3       
- TupleMake      : 7       
- Unary          : 34      
- Unreachable    : 17      
+ StructNew      : 7       
+ TableSet       : 1       
+ TryTable       : 2       
+ TupleExtract   : 1       
+ TupleMake      : 4       
+ Unary          : 29      
+ Unreachable    : 23      

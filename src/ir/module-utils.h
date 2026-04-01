@@ -315,7 +315,7 @@ struct ParallelFunctionAnalysis {
       }
 
       void doWalkFunction(Function* curr) {
-        assert(map.count(curr));
+        assert(map.contains(curr));
         work(curr, map[curr]);
       }
 

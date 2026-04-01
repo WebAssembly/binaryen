@@ -567,6 +567,21 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitArrayLoad(ArrayLoad* curr,
+                          std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayLoad(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitArrayStore(ArrayStore* curr,
+                           std::optional<HeapType> ht = std::nullopt,
+                           std::optional<Type> valueType = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayStore(curr, ht, valueType);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayCopy(ArrayCopy* curr,
                           std::optional<HeapType> dest = std::nullopt,
                           std::optional<HeapType> src = std::nullopt) {
@@ -1974,6 +1989,9 @@ Result<> IRBuilder::makeRefTest(Type type) {
 }
 
 Result<> IRBuilder::makeRefCast(Type type, bool isDesc) {
+  if (!type.isCastable()) {
+    return Err{"ref.cast cannot cast to invalid type"};
+  }
   std::optional<HeapType> descriptor;
   if (isDesc) {
     assert(type.isRef());
@@ -2027,6 +2045,9 @@ Result<> IRBuilder::makeBrOn(Index label,
   curr.op = op;
   curr.castType = out;
   curr.desc = nullptr;
+  if (op != BrOnNull && op != BrOnNonNull && !out.isCastable()) {
+    return Err{"br_on cannot cast to invalid type"};
+  }
   CHECK_ERR(visitBrOn(&curr));
 
   // Validate type immediates before we forget them.
@@ -2367,6 +2388,36 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   return Ok{};
 }
 
+Result<>
+IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+  if (!arrayType.isArray()) {
+    return Err{"expected array type annotation on array store"};
+  }
+
+  ArrayStore curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType, type));
+
+  CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
+  push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
+                                  unsigned bytes,
+                                  bool signed_,
+                                  Type type) {
+  if (!arrayType.isArray()) {
+    return Err{"expected array type annotation on array load"};
+  }
+
+  ArrayLoad curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayLoad(&curr, arrayType));
+
+  CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
+  push(builder.makeArrayLoad(bytes, signed_, curr.ref, curr.index, type));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeArrayLen() {
   ArrayLen curr;
   CHECK_ERR(visitArrayLen(&curr));
@@ -2647,7 +2698,8 @@ IRBuilder::makeResume(HeapType ct,
                           resumetable->targets,
                           resumetable->sentTypes,
                           std::move(curr.operands),
-                          curr.cont));
+                          curr.cont,
+                          ct));
 
   return Ok{};
 }
@@ -2687,7 +2739,8 @@ IRBuilder::makeResumeThrow(HeapType ct,
                                resumetable->targets,
                                resumetable->sentTypes,
                                std::move(curr.operands),
-                               curr.cont));
+                               curr.cont,
+                               ct));
   return Ok{};
 }
 

@@ -876,6 +876,11 @@ struct InfoCollector
           targetType, [&](HeapType subType, Index depth) {
             info.links.push_back({SignatureResultLocation{subType, i},
                                   ExpressionLocation{curr, i}});
+            if (curr->isReturn) {
+              // Send the result to the function's results as well.
+              info.links.push_back({SignatureResultLocation{subType, i},
+                                    ResultLocation{getFunction(), i}});
+            }
           });
       }
     }
@@ -934,7 +939,7 @@ struct InfoCollector
     // If this goes to a public table, then we must root the output, as the
     // table could contain anything at all, and calling functions there could
     // return anything at all.
-    if (shared.publicTables.count(curr->table)) {
+    if (shared.publicTables.contains(curr->table)) {
       addRoot(curr);
     }
     // TODO: the table identity could also be used here in more ways
@@ -1073,16 +1078,19 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->expected, curr);
+    addChildParentLink(curr->replacement, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitStructWait(StructWait* curr) { addRoot(curr); }
@@ -1096,6 +1104,20 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+  }
+  void visitArrayLoad(ArrayLoad* curr) {
+    if (!isRelevant(curr->ref)) {
+      addRoot(curr);
+      return;
+    }
+    addChildParentLink(curr->ref, curr);
+  }
+  void visitArrayStore(ArrayStore* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
@@ -1164,16 +1186,19 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // TODO: Model the modification part of the RMW in addition to the read and
-    // the write.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->expected, curr);
+    addChildParentLink(curr->replacement, curr);
+    // TODO: Model the output
     addRoot(curr);
   }
   void visitStringNew(StringNew* curr) {
@@ -1366,6 +1391,9 @@ struct InfoCollector
   void visitSuspend(Suspend* curr) {
     // TODO: optimize when possible
     addRoot(curr);
+
+    // The given values are written to the tag, just the same as a throw.
+    handleThrow(curr);
   }
 
   template<typename T> void handleResume(T* curr) {
@@ -1708,8 +1736,8 @@ void TNHOracle::scan(Function* func,
         // not important in optimized code, as the most refined cast would be
         // the only one to exist there, so it's ok to keep things simple here.
         if (getFunction()->isParam(get->index) && type != get->type &&
-            info.castParams.count(get->index) == 0 &&
-            !writtenParams.count(get->index)) {
+            !info.castParams.contains(get->index) &&
+            !writtenParams.contains(get->index)) {
           info.castParams[get->index] = type;
         }
       }
@@ -1739,6 +1767,8 @@ void TNHOracle::scan(Function* func,
     }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayLoad(ArrayLoad* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayStore(ArrayStore* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
     void visitArrayCopy(ArrayCopy* curr) {
       notePossibleTrap(curr->srcRef);
@@ -2238,6 +2268,11 @@ private:
   // Similar to readFromData, but does a write for a struct.set or array.set.
   void writeToData(Expression* ref, Expression* value, Index fieldIndex);
 
+  // A write with given contents.
+  void writeToData(Expression* ref,
+                   const PossibleContents& valueContents,
+                   Index fieldIndex);
+
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
 
@@ -2573,7 +2608,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   for (const auto& [location, value] : roots) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  init root\n";
-    dump(location);
+    dump(getLocation(location));
     value.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
@@ -2740,6 +2775,11 @@ bool Flower::updateContents(LocationIndex locationIndex,
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
     filtered = true;
+  } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    // Multibyte array stores with differing widths can merge to Many, so
+    // filter again afterwards to fall back to the declared type limit.
+    filterDataContents(contents, *dataLoc);
+    filtered = true;
   }
 
   // Check if anything changed after filtering, if we did so.
@@ -2820,14 +2860,44 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       // |child| is either the reference or the value child of a struct.set.
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, set->index);
+    } else if (auto* set = parent->dynCast<StructRMW>()) {
+      assert(set->ref == child || set->value == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(
+        set->ref, PossibleContents::fromType(set->value->type), set->index);
+    } else if (auto* set = parent->dynCast<StructCmpxchg>()) {
+      assert(set->ref == child || set->expected == child ||
+             set->replacement == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(set->ref,
+                  PossibleContents::fromType(set->replacement->type),
+                  set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
       readFromData(get->ref->type, 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
+    } else if (auto* load = parent->dynCast<ArrayLoad>()) {
+      assert(load->ref == child);
+      readFromData(load->ref->type, 0, contents, load);
+    } else if (auto* store = parent->dynCast<ArrayStore>()) {
+      assert(store->ref == child || store->value == child);
+      // TODO: model the stored value, and handle different but equal values in
+      //       type, e.g. writing i16 0x1212 is the same as i8 0x12.
+      writeToData(
+        store->ref, PossibleContents::fromType(store->value->type), 0);
+    } else if (auto* set = parent->dynCast<ArrayRMW>()) {
+      assert(set->ref == child || set->value == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(set->ref, PossibleContents::fromType(set->value->type), 0);
+    } else if (auto* set = parent->dynCast<ArrayCmpxchg>()) {
+      assert(set->ref == child || set->expected == child ||
+             set->replacement == child);
+      // TODO: model the stored value, depending on the actual operation.
+      writeToData(
+        set->ref, PossibleContents::fromType(set->replacement->type), 0);
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
-      // Similar to struct.get.
       assert(get->ref == child);
       readFromData(
         get->ref->type, DataLocation::DescriptorIndex, contents, get);
@@ -2870,7 +2940,7 @@ void Flower::flowToTargetsAfterUpdate(LocationIndex locationIndex,
 void Flower::connectDuringFlow(Location from, Location to) {
   auto newLink = LocationLink{from, to};
   auto newIndexLink = getIndexes(newLink);
-  if (links.count(newIndexLink) == 0) {
+  if (!links.contains(newIndexLink)) {
     // This is a new link. Add it to the known links.
     links.insert(newIndexLink);
 
@@ -2911,6 +2981,17 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   std::cout << "TNHOracle informs us that " << *exprLoc.expr << " contains "
             << maximalContents << "\n";
 #endif
+
+  if (exprLoc.expr->is<ArrayLoad>()) {
+    // ArrayLoad cannot filter, as we can have writes of different sizes than
+    // the type of the location (e.g. write i32, do an i64.load). If there is
+    // any content, just report the maximal content, basically like a Memory.
+    if (!contents.isNone()) {
+      contents = maximalContents;
+    }
+    return;
+  }
+
   contents.intersect(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
@@ -3003,6 +3084,13 @@ void Flower::filterDataContents(PossibleContents& contents,
     contents = PossibleContents::none();
     return;
   }
+  if (contents.isMany()) {
+    // An unknown state (e.g. from combining writes of different types like in
+    // multibyte array stores) translates into the most generic bounded type.
+    // TODO: We could optimize these, as e.g. a write of i16 0x1212 does not
+    // actually conflict with a write of i8 0x12.
+    contents = PossibleContents::fromType(field->type);
+  }
 
   if (field->isPacked()) {
     // We must handle packed fields carefully.
@@ -3047,15 +3135,25 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   auto signed_ = false;
   Expression* ref;
   Index index;
+  unsigned bytes = 0;
+  Type resultType = Type::none;
   if (auto* get = expr->dynCast<StructGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     index = get->index;
+    resultType = get->type;
   } else if (auto* get = expr->dynCast<ArrayGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     // Arrays are treated as having a single field.
     index = 0;
+    resultType = get->type;
+  } else if (auto* load = expr->dynCast<ArrayLoad>()) {
+    signed_ = load->signed_;
+    ref = load->ref;
+    index = 0;
+    bytes = load->bytes;
+    resultType = load->type;
   } else {
     WASM_UNREACHABLE("bad packed read");
   }
@@ -3074,13 +3172,21 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   assert(ref->type.isRef());
   auto field = GCTypeUtils::getField(ref->type.getHeapType(), index);
   assert(field);
-  if (!field->isPacked()) {
-    return;
+  if (!bytes) {
+    if (!field->isPacked()) {
+      return;
+    }
+    bytes = field->getByteSize();
   }
 
   if (contents.isLiteral()) {
     // This is a constant. We can sign-extend it and use that value.
-    auto shifts = Literal(int32_t(32 - field->getByteSize() * 8));
+    unsigned bits = resultType.getByteSize() == 8 ? 64 : 32;
+    if (bits <= bytes * 8) {
+      // No need to sign-extend for full size.
+      return;
+    }
+    auto shifts = Literal(int32_t(bits - bytes * 8));
     auto lit = contents.getLiteral();
     lit = lit.shl(shifts);
     lit = lit.shrS(shifts);
@@ -3186,19 +3292,6 @@ void Flower::readFromData(Type declaredType,
 }
 
 void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "    add special writes\n";
-#endif
-
-  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
-
-#ifndef NDEBUG
-  // We must not have anything in the reference that is invalid for the wasm
-  // type there.
-  auto maximalContents = PossibleContents::coneType(ref->type);
-  assert(PossibleContents::isSubContents(refContents, maximalContents));
-#endif
-
   // We could set up links here as we do for reads, but as we get to this code
   // in any case, we can just flow the values forward directly. This avoids
   // adding any links (edges) to the graph (and edges are what we want to avoid
@@ -3221,6 +3314,24 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // reference and value.)
 
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
+  writeToData(ref, valueContents, fieldIndex);
+}
+
+void Flower::writeToData(Expression* ref,
+                         const PossibleContents& valueContents,
+                         Index fieldIndex) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "    add special writes\n";
+#endif
+
+  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+
+#ifndef NDEBUG
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto maximalContents = PossibleContents::coneType(ref->type);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
+#endif
 
   // See the related comment in readFromData() as to why these are the only
   // things we need to check, and why the assertion afterwards contains the only
@@ -3248,7 +3359,7 @@ void Flower::dump(Location location) {
               << *loc->expr << " : " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<DataLocation>(&location)) {
     std::cout << "  dataloc ";
-    if (wasm.typeNames.count(loc->type)) {
+    if (wasm.typeNames.contains(loc->type)) {
       std::cout << '$' << wasm.typeNames[loc->type].name;
     } else {
       std::cout << loc->type << '\n';

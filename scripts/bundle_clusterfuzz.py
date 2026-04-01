@@ -102,7 +102,8 @@ else:
     binaryen_lib = shared.options.binaryen_lib
 
 # ClusterFuzz's run.py uses these features. Keep this in sync with that, so that
-# we only bundle initial content that makes sense for it.
+# we only bundle initial content that makes sense for it. Also keep it in sync
+# with fuzz_opt.py's DISALLOWED_FEATURES_IN_V8.
 features = [
     '-all',
     '--disable-shared-everything',
@@ -110,6 +111,7 @@ features = [
     '--disable-strings',
     '--disable-stack-switching',
     '--disable-relaxed-atomics',
+    '--disable-multibyte',
 ]
 
 with tarfile.open(output_file, "w:gz") as tar:

@@ -75,12 +75,12 @@ struct DuplicateFunctionElimination : public Pass {
         // O(N^2) here unless the hash is quite poor.
         for (Index i = 0; i < size - 1; i++) {
           auto* first = group[i];
-          if (duplicates.count(first->name)) {
+          if (duplicates.contains(first->name)) {
             continue;
           }
           for (Index j = i + 1; j < size; j++) {
             auto* second = group[j];
-            if (duplicates.count(second->name)) {
+            if (duplicates.contains(second->name)) {
               continue;
             }
             if (FunctionUtils::equal(first, second)) {
@@ -95,7 +95,7 @@ struct DuplicateFunctionElimination : public Pass {
       if (replacements.size() > 0) {
         // remove the duplicates
         module->removeFunctions(
-          [&](Function* func) { return duplicates.count(func->name) > 0; });
+          [&](Function* func) { return duplicates.contains(func->name); });
         OptUtils::replaceFunctions(getPassRunner(), *module, replacements);
       } else {
         break;

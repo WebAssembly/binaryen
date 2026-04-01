@@ -45,3 +45,40 @@
   )
 )
 
+;; A chain of continuations. During merging here we map types that are being
+;; rebuilt, and should not error while doing so. We can merge the function
+;; types, and all but two of the continuations.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $func (sub (func)))
+    (type $func (sub (func)))
+    ;; CHECK:       (type $cont (sub (cont $func)))
+    (type $cont (sub (cont $func)))
+    (type $contB (sub $cont (cont $func)))
+    (type $contC (sub $contB (cont $func)))
+    (type $funcB (sub $func (func)))
+    ;; CHECK:       (type $contD (sub final $cont (cont $func)))
+    (type $contD (sub final $contC (cont $funcB)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (func $uses (type $3)
+  ;; CHECK-NEXT:  (local $func (ref $func))
+  ;; CHECK-NEXT:  (local $funcB (ref $func))
+  ;; CHECK-NEXT:  (local $cont (ref $cont))
+  ;; CHECK-NEXT:  (local $contB (ref $cont))
+  ;; CHECK-NEXT:  (local $contC (ref $cont))
+  ;; CHECK-NEXT:  (local $contD (ref $contD))
+  ;; CHECK-NEXT: )
+  (func $uses
+    (local $func (ref $func))
+    (local $funcB (ref $funcB))
+    (local $cont (ref $cont))
+    (local $contB (ref $contB))
+    (local $contC (ref $contC))
+    (local $contD (ref $contD))
+  )
+)
+

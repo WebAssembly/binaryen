@@ -224,7 +224,7 @@ struct GlobalStructInference : public Pass {
         curr = *super;
 
         // As above, avoid adding pointless data for anything unoptimizable.
-        if (!unoptimizable.count(curr)) {
+        if (!unoptimizable.contains(curr)) {
           for (auto global : globals) {
             typeGlobals[curr].push_back(global);
           }
@@ -382,7 +382,7 @@ struct GlobalStructInference : public Pass {
         if (auto* get = ref->dynCast<GlobalGet>()) {
           // The global.get must be valid, and not in the process of being
           // rewritten to point to a new un-nested global.
-          if (!unnestingGlobalGets.count(get)) {
+          if (!unnestingGlobalGets.contains(get)) {
             auto* global = wasm.getGlobal(get->name);
             if (!global->mutable_ && !global->imported()) {
               if (auto* structNew = global->init->dynCast<StructNew>()) {

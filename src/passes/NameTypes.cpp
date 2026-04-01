@@ -40,7 +40,7 @@ struct NameTypes : public Pass {
     // it.
     size_t i = 0;
     for (auto& type : types) {
-      if (module->typeNames.count(type) == 0 ||
+      if (!module->typeNames.contains(type) ||
           module->typeNames[type].name.size() >= NameLenLimit) {
         module->typeNames[type].name = "type_" + std::to_string(i++);
       }
@@ -60,7 +60,7 @@ struct NameTypes : public Pass {
       }
       if (name.size() > 1 && name.back() == '_') {
         name.pop_back();
-        if (!used.count(name)) {
+        if (!used.contains(name)) {
           names.name = name;
           used.insert(name);
         }

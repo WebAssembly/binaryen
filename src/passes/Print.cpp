@@ -188,14 +188,14 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       // Use indices for any remaining type names, skipping any that are already
       // used.
       for (auto type : types) {
-        if (parent.currModule->typeNames.count(type)) {
+        if (parent.currModule->typeNames.contains(type)) {
           ++i;
           continue;
         }
         Name name;
         do {
           name = std::to_string(i++);
-        } while (usedNames.count(name));
+        } while (usedNames.contains(name));
         fallbackNames[type] = {name, {}};
       }
     }
@@ -437,6 +437,33 @@ struct PrintExpressionContents
     return parent.printBlockType(sig);
   }
 
+  void printMemoryPostfix(uint8_t bytes, Type type) {
+    switch (bytes) {
+      case 1:
+        o << '8';
+        break;
+      case 2:
+        if (type == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
+        break;
+      case 4:
+        o << "32";
+        break;
+      default:
+        abort();
+    }
+  }
+
+  std::ostream& printStorePostfix(uint8_t bytes, Type valueType) {
+    if (bytes < 4 || (valueType == Type::i64 && bytes < 8)) {
+      printMemoryPostfix(bytes, valueType);
+    }
+    return o;
+  }
+
   void visitBlock(Block* curr) {
     printMedium(o, "block");
     if (curr->name.is()) {
@@ -556,19 +583,7 @@ struct PrintExpressionContents
     o << ".load";
     if (curr->type != Type::unreachable &&
         curr->bytes < curr->type.getByteSize()) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->type == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
+      printMemoryPostfix(curr->bytes, curr->type);
       if (curr->type != Type::f32) {
         o << (curr->signed_ ? "_s" : "_u");
       }
@@ -589,21 +604,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".store";
-    if (curr->bytes < 4 || (curr->valueType == Type::i64 && curr->bytes < 8)) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->valueType == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
-    }
+    printStorePostfix(curr->bytes, curr->valueType);
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
     printMemoryOrder(curr->order);
@@ -790,11 +791,11 @@ struct PrintExpressionContents
       case LaneselectI64x2:
         o << "i64x2.laneselect";
         break;
-      case RelaxedMaddVecF16x8:
-        o << "f16x8.relaxed_madd";
+      case MaddVecF16x8:
+        o << "f16x8.madd";
         break;
-      case RelaxedNmaddVecF16x8:
-        o << "f16x8.relaxed_nmadd";
+      case NmaddVecF16x8:
+        o << "f16x8.nmadd";
         break;
       case RelaxedMaddVecF32x4:
         o << "f32x4.relaxed_madd";
@@ -2477,6 +2478,35 @@ struct PrintExpressionContents
     o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
   }
+  void visitArrayLoad(ArrayLoad* curr) {
+    prepareColor(o) << forceConcrete(curr->type);
+    o << ".load";
+    if (curr->type != Type::unreachable &&
+        curr->bytes < curr->type.getByteSize()) {
+      printMemoryPostfix(curr->bytes, curr->type);
+      o << (curr->signed_ ? "_s" : "_u");
+    }
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
+  }
+
+  void visitArrayStore(ArrayStore* curr) {
+    prepareColor(o) << forceConcrete(curr->value->type);
+    o << ".store";
+    printStorePostfix(curr->bytes, curr->value->type);
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
+  }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
     printMedium(o, "array.copy ");
@@ -3409,7 +3439,12 @@ void PrintSExpression::printTableHeader(Table* curr) {
     o << ' ' << curr->max;
   }
   o << ' ';
-  printType(curr->type) << ')';
+  printType(curr->type);
+  if (curr->init) {
+    o << ' ';
+    visit(curr->init);
+  }
+  o << ')';
 }
 
 void PrintSExpression::visitTable(Table* curr) {
@@ -3497,6 +3532,11 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   }
   if (curr->shared) {
     printMedium(o, " shared");
+  }
+  if (curr->pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+    o << " (";
+    printMedium(o, "pagesize") << ' ' << (1 << (curr->pageSizeLog2));
+    o << ')';
   }
   o << ")";
 }
@@ -4016,6 +4056,13 @@ std::ostream& operator<<(std::ostream& o, const Table& table) {
   wasm::PrintSExpression printer(o);
   // TODO: printTableHeader should take a const Table*
   printer.printTableHeader(const_cast<Table*>(&table));
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const Global& global) {
+  wasm::PrintSExpression printer(o);
+  // TODO: visitGlobal should take a const Global*
+  printer.visitGlobal(const_cast<Global*>(&global));
   return o;
 }
 

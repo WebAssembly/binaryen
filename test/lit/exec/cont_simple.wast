@@ -12,7 +12,7 @@
   (type $f-get-i32 (func (param i32)))
   (type $k-get-i32 (cont $f-get-i32))
 
-  (import "fuzzing-support" "log" (func $log (param i32)))
+  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
   (tag $more)
   (tag $more-i32 (result i32))
@@ -49,7 +49,7 @@
     (call $log (i32.const -3))
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-block
+  ;; CHECK:      [fuzz-exec] export run-block
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -84,7 +84,7 @@
     (call $log (i32.const -6))
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-block-nested
+  ;; CHECK:      [fuzz-exec] export run-block-nested
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -114,7 +114,7 @@
     (call $log (local.get $x))
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-local
+  ;; CHECK:      [fuzz-exec] export run-local
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -143,7 +143,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-multi-locals
+  ;; CHECK:      [fuzz-exec] export run-multi-locals
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -174,7 +174,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-loop
+  ;; CHECK:      [fuzz-exec] export run-loop
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -238,7 +238,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-if
+  ;; CHECK:      [fuzz-exec] export run-if
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -269,7 +269,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-if-condition
+  ;; CHECK:      [fuzz-exec] export run-if-condition
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -320,7 +320,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-value-stack
+  ;; CHECK:      [fuzz-exec] export run-value-stack
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
@@ -374,7 +374,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-nested-unary
+  ;; CHECK:      [fuzz-exec] export run-nested-unary
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
@@ -407,7 +407,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-nested-unary-more
+  ;; CHECK:      [fuzz-exec] export run-nested-unary-more
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -475,7 +475,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-nested-binary
+  ;; CHECK:      [fuzz-exec] export run-nested-binary
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -543,7 +543,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-trinary
+  ;; CHECK:      [fuzz-exec] export run-trinary
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
@@ -585,7 +585,7 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-ret-i32
+  ;; CHECK:      [fuzz-exec] export run-ret-i32
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   ;; CHECK-NEXT: [fuzz-exec] note result: run-ret-i32 => 42
@@ -608,7 +608,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-pause-i32
+  ;; CHECK:      [fuzz-exec] export run-pause-i32
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
@@ -658,7 +658,7 @@
     (call $log (suspend $more-i32))
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-param
+  ;; CHECK:      [fuzz-exec] export run-param
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -701,7 +701,7 @@
     (suspend $more)
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-calls
+  ;; CHECK:      [fuzz-exec] export run-calls
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -763,7 +763,7 @@
     (suspend $more)
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-call_indirect
+  ;; CHECK:      [fuzz-exec] export run-call_indirect
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -10]
@@ -794,7 +794,7 @@
     (suspend $more)
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-call_ref
+  ;; CHECK:      [fuzz-exec] export run-call_ref
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
@@ -826,7 +826,7 @@
     (suspend $more)
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-bind
+  ;; CHECK:      [fuzz-exec] export run-bind
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -851,7 +851,7 @@
     (call $log (i32.const 1337))
   )
 
-  ;; CHECK:      [fuzz-exec] calling resume_throw-never
+  ;; CHECK:      [fuzz-exec] export resume_throw-never
   ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
   (func $resume_throw-never (export "resume_throw-never")
     (block $more
@@ -865,7 +865,7 @@
     (call $log (i32.const 42))
   )
 
-  ;; CHECK:      [fuzz-exec] calling suspend-unhandled-block
+  ;; CHECK:      [fuzz-exec] export suspend-unhandled-block
   ;; CHECK-NEXT: [exception thrown: unhandled suspend]
   (func $suspend-unhandled-block (export "suspend-unhandled-block")
     ;; The nop here means that we are inside a block. The block will try to save

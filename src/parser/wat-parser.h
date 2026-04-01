@@ -74,12 +74,28 @@ struct NaNResult {
 
 using LaneResult = std::variant<Literal, NaNResult>;
 
-using LaneResults = std::vector<LaneResult>;
+struct LaneResults {
+  enum class LaneType {
+    Int,
+    Float,
+  };
+  LaneResults(LaneType type, std::vector<LaneResult> lanes = {})
+    : type(type), lanes(std::move(lanes)) {}
+
+  LaneType type;
+  std::vector<LaneResult> lanes;
+};
 
 using ExpectedResult =
   std::variant<Literal, NullRefResult, RefResult, NaNResult, LaneResults>;
 
-using ExpectedResults = std::vector<ExpectedResult>;
+using ResultAlternatives = std::vector<ExpectedResult>;
+
+// The WAST spec states that `either`s maybe be nested arbitrarily e.g.
+// (either (either "a" "b") (either "a" "c"))
+// but we store this flattened since there's no way to tell the difference
+// anyway.
+using ExpectedResults = std::vector<ResultAlternatives>;
 
 struct AssertReturn {
   Action action;
@@ -128,15 +144,31 @@ struct ModuleInstantiation {
   std::optional<Name> instanceName;
 };
 
-using WASTCommand =
-  std::variant<WASTModule, Register, Action, Assertion, ModuleInstantiation>;
+struct ScriptEntry;
+using WASTScript = std::vector<ScriptEntry>;
+
+struct ThreadBlock {
+  Name name;
+  std::optional<Name> sharedModule;
+  WASTScript commands;
+};
+
+struct Wait {
+  Name thread;
+};
+
+using WASTCommand = std::variant<WASTModule,
+                                 Register,
+                                 Action,
+                                 Assertion,
+                                 ModuleInstantiation,
+                                 ThreadBlock,
+                                 Wait>;
 
 struct ScriptEntry {
   WASTCommand cmd;
   size_t line;
 };
-
-using WASTScript = std::vector<ScriptEntry>;
 
 Result<WASTScript> parseScript(std::string_view in);
 

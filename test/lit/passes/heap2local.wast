@@ -4615,8 +4615,10 @@
 
   ;; CHECK:      (type $struct (shared (struct (field (mut i32)))))
   (type $struct (shared (struct (field (mut i32)))))
+  ;; CHECK:      (type $array (shared (array (mut i32))))
+  (type $array (shared (array (field (mut i32)))))
 
-  ;; CHECK:      (func $acqrel (type $0)
+  ;; CHECK:      (func $acqrel-struct (type $0)
   ;; CHECK-NEXT:  (local $0 (ref null $struct))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
@@ -4644,7 +4646,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $acqrel
+  (func $acqrel-struct
     (local (ref null $struct))
     (local.set 0
       (struct.new_default $struct)
@@ -4662,7 +4664,56 @@
     )
   )
 
-  ;; CHECK:      (func $seqcst (type $0)
+  ;; CHECK:      (func $acqrel-array (type $0)
+  ;; CHECK-NEXT:  (local $0 (ref null $array))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $acqrel-array
+    (local (ref null $array))
+    (local.set 0
+      (array.new_default $array
+        (i32.const 1)
+      )
+    )
+    ;; Same as with the struct. We can optimize.
+    (drop
+      (array.atomic.get acqrel $array
+        (local.get 0)
+        (i32.const 0)
+      )
+    )
+    (array.atomic.set acqrel $array
+      (local.get 0)
+      (i32.const 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $seqcst-struct (type $0)
   ;; CHECK-NEXT:  (local $0 (ref null $struct))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
@@ -4690,7 +4741,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $seqcst
+  (func $seqcst-struct
     (local (ref null $struct))
     (local.set 0
       (struct.new_default $struct)
@@ -4705,6 +4756,55 @@
     (struct.atomic.set $struct 0
       (local.get 0)
       (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $seqcst-array (type $0)
+  ;; CHECK-NEXT:  (local $0 (ref null $array))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $seqcst-array
+    (local (ref null $array))
+    (local.set 0
+      (array.new_default $array
+        (i32.const 1)
+      )
+    )
+    ;; Same as with the struct. We can optimize.
+    (drop
+      (array.atomic.get seqcst $array
+        (local.get 0)
+        (i32.const 0)
+      )
+    )
+    (array.atomic.set seqcst $array
+      (local.get 0)
+      (i32.const 0)
+      (i32.const 1)
     )
   )
 )

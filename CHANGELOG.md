@@ -14,6 +14,38 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+
+v129
+----
+
+ - Add a `BinaryenDataSegmentRef` type to the C API. (#8286)
+   - Add `BinaryenGetDataSegment` and `BinaryenGetDataSegmentByIndex` to the C API, which allow looking up a data segment by name or index.
+   - Add `BinaryenDataSegmentGetName` to the C API, which allows looking up a data segment's name.
+   - Convert `BinaryenGetMemorySegmentByteOffset`, `BinaryenGetMemorySegmentByteLength`, `BinaryenGetMemorySegmentPassive` and `BinaryenCopyMemorySegmentData` to take a `BinaryenDataSegmentRef` instead of a name.
+   - Add `module.getDataSegment`, `module.getDataSegmentByIndex` to the JS API, which allows looking up a data segment by name or index.
+   - Convert `module.getMemorySegmentInfo` to take a data segment reference instead of a name, and return the name as part of the info.
+ - Add support for non-nullable table types and initialization expressions for
+   tables. This comes with a breaking change to C API: `BinaryenAddTable` takes
+   an additional `BinaryenExpressionRef` parameter to provide an initialization
+   expression. This may be set to NULL for tables without an initializer. In JS
+   this parameter is optional and so is not breaking. (#8405)
+ - [multibyte] Add multibyte array store and load instructions. (#8059, #8504)
+ - MinifyImportsAndExports now has a new output format using JSON. This was
+   changed while fixing bugs with colliding module names (to avoid two breaking
+   changes to the output). (#8550)
+ - Update from C++17 to C++20 (#8218)
+
+v128
+----
+
+ - (bugfix release)
+
+v127
+----
+
+ - Implement the Custom Page Sizes proposal. (#8307)
+ - New intrinsic: `@binaryen.idempotent`. (#8354)
+ - Add --strip-debug option to wasm-split (#8432)
  - The emscripten build of binaryen no longer targets pure JS (via wasm2js) by
    default.  This allows us to enable WASM_BIGINT and other features that
    wasm2js does not support.  There is now just a single binaryen_js target.  It
@@ -24,7 +56,7 @@ Current Trunk
    and `setValueI64`, previously took a hi/low pair but now take a single value
    which can be bigint or a number. Passing two values to these APIs will now
    trigger an assertion. (#7984)
-
+ 
 v126
 ----
 

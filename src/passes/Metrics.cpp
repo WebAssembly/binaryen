@@ -213,7 +213,7 @@ struct Metrics
         continue;
       }
       o << " " << left << setw(15) << key << ": " << setw(8) << value;
-      if (lastCounts.count(key)) {
+      if (lastCounts.contains(key)) {
         int before = lastCounts[key];
         int after = value;
         if (after - before) {

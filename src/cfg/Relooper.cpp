@@ -40,7 +40,7 @@ namespace CFG {
 
 template<class T, class U>
 static bool contains(const T& container, const U& contained) {
-  return !!container.count(contained);
+  return container.contains(contained);
 }
 
 // Rendering utilities
@@ -667,7 +667,7 @@ struct Optimizer : public RelooperRecursor {
         // Add a branch to the target (which may be the unchanged original) in
         // the set of new branches. If it's a replacement, it may collide, and
         // we need to merge.
-        if (NewBranchesOut.count(Replacement)) {
+        if (NewBranchesOut.contains(Replacement)) {
 #if RELOOPER_OPTIMIZER_DEBUG
           std::cout << "  merge\n";
 #endif
@@ -915,7 +915,7 @@ private:
       return false;
     }
     for (auto& [ABlock, ABranch] : A->BranchesOut) {
-      if (B->BranchesOut.count(ABlock) == 0) {
+      if (!B->BranchesOut.contains(ABlock)) {
         return false;
       }
       auto* BBranch = B->BranchesOut[ABlock];
@@ -1578,7 +1578,7 @@ void Relooper::Calculate(Block* Entry) {
             // jumped to forward, without using the label variable
             bool Checked = false;
             for (auto* Entry : *Entries) {
-              if (InitialEntries.count(Entry)) {
+              if (InitialEntries.contains(Entry)) {
                 Checked = true;
                 break;
               }

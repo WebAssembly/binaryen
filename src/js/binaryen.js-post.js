@@ -193,6 +193,7 @@ function initializeConstants() {
     'BulkMemoryOpt',
     'CallIndirectOverlong',
     'RelaxedAtomics',
+    'CustomPageSizes',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2612,8 +2613,8 @@ function wrapModule(module, self = {}) {
   self['getGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetGlobal'](module, strToStack(name)));
   };
-  self['addTable'] = function(table, initial, maximum, type = Module['_BinaryenTypeFuncref']()) {
-    return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum, type));
+  self['addTable'] = function(table, initial, maximum, type = Module['_BinaryenTypeFuncref'](), init = null) {
+    return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum, type, init));
   }
   self['getTable'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetTable'](module, strToStack(name)));
@@ -2771,27 +2772,60 @@ function wrapModule(module, self = {}) {
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
-  self['getMemorySegmentInfo'] = function(name) {
+  /**
+   * Gets the data segment with the given name.
+   * 
+   * @param {string} name - The name of the data segment to get.
+   * @returns {number} A DataSegmentRef referring to the data segment with the given name, or `0` if no such segment exists.
+   */
+  self['getDataSegment'] = function(name) {
     return preserveStack(() => {
-      const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
-      let offset = null;
-      if (!passive) {
-        offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, strToStack(name));
-      }
-      return {
-        'offset': offset,
-        'data': (function(){
-          const size = Module['_BinaryenGetMemorySegmentByteLength'](module, strToStack(name));
-          const ptr = _malloc(size);
-          Module['_BinaryenCopyMemorySegmentData'](module, strToStack(name), ptr);
-          const res = new Uint8Array(size);
-          res.set(HEAP8.subarray(ptr, ptr + size));
-          _free(ptr);
-          return res.buffer;
-        })(),
-        'passive': passive
-      };
+      return Module['_BinaryenGetDataSegment'](module, strToStack(name));
     });
+  };
+  /**
+   * Gets the data segment at the given index.
+   * 
+   * @param {number} index - The index of the data segment to get.
+   * @returns {number} A DataSegmentRef referring to the data segment at the given index.
+   * 
+   * @throws If no data segment exists at the given index.
+   */
+  self['getDataSegmentByIndex'] = function(index) {
+    return Module['_BinaryenGetDataSegmentByIndex'](module, index);
+  };
+  /**
+   * Queries information about a memory segment.
+   * 
+   * @param {number} segment  - A MemorySegmentRef referring to the memory segment to get information about.
+   * @returns {Object} An object containing the following fields:
+   *   - `name`: The name of the segment.
+   *   - `offset`: If the segment is active, the offset expression of the segment. Otherwise, `null`.
+   *   - `data`: A buffer containing the data of the segment.
+   *   - `passive`: A boolean indicating whether the segment is passive.
+    * 
+    * @throws If the given segment reference is invalid.
+   */
+  self['getMemorySegmentInfo'] = function(segment) {
+    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](segment));
+    let offset = null;
+    if (!passive) {
+      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, segment);
+    }
+    return {
+      'name': UTF8ToString(Module['_BinaryenDataSegmentGetName'](segment)),
+      'offset': offset,
+      'data': (function(){
+        const size = Module['_BinaryenGetMemorySegmentByteLength'](segment);
+        const ptr = _malloc(size);
+        Module['_BinaryenCopyMemorySegmentData'](segment, ptr);
+        const res = new Uint8Array(size);
+        res.set(HEAP8.subarray(ptr, ptr + size));
+        _free(ptr);
+        return res.buffer;
+      })(),
+      'passive': passive
+    };
   };
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
@@ -3273,15 +3307,22 @@ function handleFatalError(func) {
   try {
     return func();
   } catch (e) {
-    // Fatal errors begin with that prefix. Strip it out, and the newline.
-    // C++ exceptions are thrown as pointers (numbers) in release builds
-    // but CppException JS class in debug builds.
+    // Fatal errors begin with a specific prefix. Strip it out, and the newline.
     if (typeof e === 'number') {
+      // Older version of emscripten can throw C++ exceptions as pointers
+      // (numbers) in release builds.
       var [_, message] = getExceptionMessage(e);
       if (message?.startsWith('Fatal: ')) {
         throw new Error(message.substr(7).trim());
       }
     } else  {
+      // Newer version of emscripten always throw CppException object but don't
+      // always populate the `.message` field.
+      // TODO: Set EXCEPTION_STACK_TRACES instead?
+      if (!e.message) {
+        var [_, message] = getExceptionMessage(e);
+        e.message = message;
+      }
       e.message = e.message.replace('Fatal:', '');
       e.message = e.message.trim();
     }
@@ -3301,6 +3342,14 @@ Module['readBinary'] = function(data) {
   const buffer = _malloc(data.length);
   HEAP8.set(data, buffer);
   const ptr = handleFatalError(() => Module['_BinaryenModuleRead'](buffer, data.length));
+  _free(buffer);
+  return wrapModule(ptr);
+};
+
+Module['readBinaryWithFeatures'] = function(data, features) {
+  const buffer = _malloc(data.length);
+  HEAP8.set(data, buffer);
+  const ptr = handleFatalError(() => Module['_BinaryenModuleReadWithFeatures'](buffer, data.length, features));
   _free(buffer);
   return wrapModule(ptr);
 };

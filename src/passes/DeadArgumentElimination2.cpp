@@ -52,6 +52,7 @@
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "support/index.h"
+#include "support/mixed_arena.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -354,9 +355,25 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
     }
   }
 
-  void visitResume(Resume* curr) { noteContinuation(curr->cont->type); }
+  void visitResumeHandlers(const ArenaVector<Name>& labels) {
+    for (Index i = 0; i < labels.size(); ++i) {
+      if (labels[i]) {
+        auto* target = findBreakTarget(labels[i]);
+        assert(target->type.size() >= 1);
+        auto newContType = target->type[target->type.size() - 1];
+        assert(newContType.isContinuation());
+        noteContinuation(newContType);
+      }
+    }
+  }
+
+  void visitResume(Resume* curr) {
+    noteContinuation(curr->cont->type);
+    visitResumeHandlers(curr->handlerBlocks);
+  }
   void visitResumeThrow(ResumeThrow* curr) {
     noteContinuation(curr->cont->type);
+    visitResumeHandlers(curr->handlerBlocks);
   }
   void visitStackSwitch(StackSwitch* curr) {
     noteContinuation(curr->cont->type);
@@ -903,7 +920,7 @@ struct Optimizer
     // out the parameter.
     if (curr->index < funcInfo->paramUsages.size() &&
         !funcInfo->paramUsages[curr->index] &&
-        funcInfo->paramGets.count(curr)) {
+        funcInfo->paramGets.contains(curr)) {
       for (Index i = expressionStack.size(); i > 0; --i) {
         auto* expr = expressionStack[i - 1];
         if (expr->is<Call>() || expr->is<CallIndirect>() ||
@@ -1031,7 +1048,7 @@ struct Optimizer
       // or non-concrete expression it ultimately flows into.
       return;
     }
-    if (!removedExpressions.count(curr)) {
+    if (!removedExpressions.contains(curr)) {
       // We're keeping this one.
       return;
     }
@@ -1054,7 +1071,7 @@ struct Optimizer
 
 Expression* Optimizer::getReplacement(Expression* curr) {
   Builder builder(*getModule());
-  if (!removedExpressions.count(curr)) {
+  if (!removedExpressions.contains(curr)) {
     // This expression is not removed, so none of its children are either. (If
     // they were, they would already have been removed.)
     if (!curr->type.isConcrete()) {
@@ -1141,7 +1158,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
     static void scan(Collector* self, Expression** currp) {
       Expression* curr = *currp;
 
-      if (!self->removedExpressions.count(curr)) {
+      if (!self->removedExpressions.contains(curr)) {
         // The expressions we are removing form a sub-tree starting at the
         // root expression. There is therefore never a removed expression
         // inside a non-removed expression. We can just collect this
@@ -1479,7 +1496,7 @@ void DAE2::collectStats() {
       if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
         auto [funcIndex, paramIndex] = *loc;
         for (auto loc : parent.funcInfos[funcIndex].callerParams[paramIndex]) {
-          if (optimizedNodes.count(loc)) {
+          if (optimizedNodes.contains(loc)) {
             push(loc);
           }
         }
@@ -1488,7 +1505,7 @@ void DAE2::collectStats() {
         if (auto it = parent.typeTreeInfos.find(funcType);
             it != parent.typeTreeInfos.end()) {
           for (auto loc : it->second.callerParams[paramIndex]) {
-            if (optimizedNodes.count(loc)) {
+            if (optimizedNodes.contains(loc)) {
               push(loc);
             }
           }

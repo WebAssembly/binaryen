@@ -14,6 +14,7 @@
     ;; CHECK:       (type $desc (describes $struct) (struct (field externref)))
     (type $desc (describes $struct) (struct (field externref)))
   )
+
   ;; CHECK:       (type $2 (func))
 
   ;; CHECK:       (type $3 (func (result (ref $struct))))
@@ -234,5 +235,395 @@
         (local.get $struct)
       )
     )
+  )
+)
+
+(module
+  ;; Supertype on the boundary propagates exposure to subtypes.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; $super flows out, so $sub is exposed, so $sub-desc's externref field is
+  ;; kept.
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param (ref null $super))))
+
+  ;; CHECK:      (import "" "" (func $import (type $4) (param (ref null $super))))
+  (import "" "" (func $import (param (ref null $super))))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; Same, but now the type is exact on the boundary, so it does not propagate
+  ;; exposure to subtypes. We can remove all of $sub-desc's fields, unlike
+  ;; before.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param (ref null (exact $super)))))
+
+  ;; CHECK:      (import "" "" (func $import (type $4) (param (ref null (exact $super)))))
+  (import "" "" (func $import (param (ref null (exact $super)))))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; Same, but now there is an abstract supertype on the boundary. We still
+  ;; propagate the fact that the type flows out and keep the externref field in
+  ;; $sub-desc.
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param anyref)))
+
+  ;; CHECK:      (import "" "" (func $import (type $4) (param anyref)))
+  (import "" "" (func $import (param anyref)))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; Now we have to propagate through multiple supertypes without descriptors.
+  ;; We cannot optimize the externref field in the subtype descriptor.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $mid (sub $super (struct (field i32))))
+  (type $mid (sub $super (struct (field i32))))
+  (rec
+    ;; CHECK:       (type $sub (sub $mid (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $mid (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $4 (func))
+
+  ;; CHECK:      (type $5 (func (param (ref null $super))))
+
+  ;; CHECK:      (import "" "" (func $import (type $5) (param (ref null $super))))
+  (import "" "" (func $import (param (ref null $super))))
+
+  ;; CHECK:      (func $use-sub (type $4)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; Now the supertype is a result of the imported function rather than a
+  ;; parameter. It does not flow out, so we can optimize the subtype's
+  ;; descriptor.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (result (ref null $super))))
+
+  ;; CHECK:      (import "" "" (func $import (type $4) (result (ref null $super))))
+  (import "" "" (func $import (result (ref null $super))))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; An exported function instead of an imported function. The supertype flows
+  ;; out as a result, so we cannot optimize the externref in $sub-desc.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (result (ref null $super))))
+
+  ;; CHECK:      (export "export" (func $export))
+  (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $4) (result (ref null $super))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $export (result (ref null $super))
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; Now The supertype is a parameter of the exported function. It does not flow
+  ;; out and we can optimize.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param (ref null $super))))
+
+  ;; CHECK:      (export "export" (func $export))
+  (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $4) (param $0 (ref null $super))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $export (param (ref null $super))
+    (nop)
+  )
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; The supertype flows out via an imported mutable global. We cannot optimize
+  ;; the externref field in $sub-desc.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (import "" "" (global $import (mut (ref null $super))))
+  (import "" "" (global $import (mut (ref null $super))))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; Now the imported global is immutable. The value does not flow out and we
+  ;; can optimize $sub-desc.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (import "" "" (global $import (ref null $super)))
+  (import "" "" (global $import (ref null $super)))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; The supertype flows out via an exported mutable global. We cannot optimize
+  ;; the externref field in $sub-desc.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (global $export (mut (ref null $super)) (ref.null none))
+  (global $export (export "export") (mut (ref null $super)) (ref.null none))
+
+  ;; CHECK:      (export "export" (global $export))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; Now the exported global is immutable. The supertype still flows out, so we
+  ;; cannot optimize the externref field in $sub-desc.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (global $export (ref null $super) (ref.null none))
+  (global $export (export "export") (ref null $super) (ref.null none))
+
+  ;; CHECK:      (export "export" (global $export))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; The supertype flows out via an imported table. We cannot optimize the
+  ;; externref field in $sub-desc.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (import "" "" (table $t 1 (ref null $super)))
+  (import "" "" (table $t 1 (ref null $super)))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
+  )
+)
+
+(module
+  ;; The supertype flows out via an exported table. We cannot optimize the
+  ;; externref field in $sub-desc.
+  ;; CHECK:      (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field i32))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub-desc) (struct (field i32 i64))))
+    ;; CHECK:       (type $sub-desc (describes $sub) (struct (field externref)))
+    (type $sub-desc (describes $sub) (struct (field externref i64)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (table $t 1 (ref null $super))
+  (table $t (export "export") 1 (ref null $super))
+
+  ;; CHECK:      (export "export" (table $t))
+
+  ;; CHECK:      (func $use-sub (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref null $sub))
+  ;; CHECK-NEXT: )
+  (func $use-sub
+    (local (ref null $sub))
   )
 )
