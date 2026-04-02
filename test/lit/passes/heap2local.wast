@@ -1004,7 +1004,7 @@
         ;; After the outer one is optimized, the inner one can be optimized in
         ;; principle, as it can be seen to no longer escape. However, we depend
         ;; on other optimizations to actually remove the outer allocation (like
-        ;; vacuum), and so it cannot be optimized. If we ran vaccum, and then
+        ;; vacuum), and so it cannot be optimized. If we ran vacuum, and then
         ;; additional iterations, this might be handled.
         (struct.new_default $struct.recursive)
       )

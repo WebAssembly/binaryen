@@ -18,7 +18,7 @@
 // Create `dynCall` helper functions used by emscripten.  These allow JavaScript
 // to call back into WebAssembly given a function pointer (table index). These
 // are used primarily to implement the `invoke` functions which in turn are used
-// to implment exceptions handling and setjmp/longjmp.  Creates one for each
+// to implement exceptions handling and setjmp/longjmp.  Creates one for each
 // signature in the indirect function table.
 //
 

@@ -417,7 +417,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
     // sink a drop into an arm of an if-else if the other arm ends in an
     // unreachable, as it if is a branch, this can make that branch optimizable
-    // and more vaccuming possible
+    // and more vacuuming possible
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && iff->type.isConcrete()) {
       // reuse the drop in both cases

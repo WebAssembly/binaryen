@@ -167,7 +167,7 @@ struct Analyzer
 
       void note(Expression**, Constraints type) {
         // Check closed type constraints for exactness. Other kinds of type
-        // constaints do not concern us.
+        // constraints do not concern us.
         // TODO: Handle tuples?
         for (auto varType : type) {
           if (auto* t = std::get_if<Type>(&varType)) {
@@ -198,8 +198,8 @@ struct Analyzer
 
   void visitGlobal(Global* global) {
     // This could be more precise by checking that the init expression is not
-    // null before inhibiting optimization, or by just inhibiting optmization of
-    // the allocations used in the initialization, but this is simpler.
+    // null before inhibiting optimization, or by just inhibiting optimization
+    // of the allocations used in the initialization, but this is simpler.
     for (auto type : global->type) {
       if (type.isExact()) {
         disallowedTypes.insert(type.getHeapType());

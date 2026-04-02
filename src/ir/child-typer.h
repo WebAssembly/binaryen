@@ -22,7 +22,7 @@
 
 namespace wasm {
 
-// CRTP visitor for determining constaints on the types of expression children.
+// CRTP visitor for determining constraints on the types of expression children.
 // For each child of the visited expression, calls a callback with the VarTypes
 // giving the constraint on the child:
 //

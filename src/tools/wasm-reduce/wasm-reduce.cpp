@@ -1559,7 +1559,7 @@ More documentation can be found at
       }
     }
 
-    // no point in a factor lorger than the size
+    // no point in a factor larger than the size
     assert(newSize > 4); // wasm modules are >4 bytes anyhow
     factor = std::min(factor, int(newSize) / 4);
 

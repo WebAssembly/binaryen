@@ -1066,7 +1066,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
     // TODO: Consider running the fixup only if we are actually removing any
     // descriptors. This would require a better way of detecting this than
-    // collecing and iterating over all the types, though.
+    // collecting and iterating over all the types, though.
     struct Rewriter : WalkerPass<PostWalker<Rewriter>> {
       const TypeTree& types;
 

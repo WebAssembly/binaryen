@@ -356,7 +356,7 @@
       (type $desc (describes $struct) (struct))
     )
     (func (param $any anyref) (param $desc (ref null $desc)) (result (ref null (exact $struct)))
-      ;; The sent type cannnot be exact because the descriptor is not exact.
+      ;; The sent type cannot be exact because the descriptor is not exact.
       (br_on_cast_desc_eq 0 anyref (ref null $struct)
         (local.get $any)
         (local.get $desc)

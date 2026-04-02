@@ -304,7 +304,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         }
       }
 
-      // Exception thrown. Note outselves so that we will create a link to each
+      // Exception thrown. Note ourselves so that we will create a link to each
       // catch within the try / each destination block within the try_table when
       // we get there.
       self->throwingInstsStack[i].push_back(self->currBasicBlock);

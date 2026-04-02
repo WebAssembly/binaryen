@@ -246,7 +246,7 @@ struct CodeFolding
     auto* right = curr->ifFalse->dynCast<Block>();
     // If one is a block and the other isn't, and the non-block is a tail of the
     // other, we can fold that - for our convenience, we just add a block and
-    // run the rest of the optimization mormally.
+    // run the rest of the optimization normally.
     auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
       // If other is a suffix of the block, wrap it in a block.
       //
@@ -594,10 +594,10 @@ private:
       for (auto* item : items) {
         saved += Measurer::measure(item) * (tails.size() - 1);
       }
-      // compure the cost: in non-fallthroughs, we are replacing the final
+      // compute the cost: in non-fallthroughs, we are replacing the final
       // element with a br; for a fallthrough, if there is one, we must
       // add a return element (for the function body, so it doesn't reach us)
-      // TODO: handle fallthroughts for return
+      // TODO: handle fallthroughs for return
       Index cost = tails.size();
       // we also need to add two blocks: for us to break to, and to contain
       // that block and the merged code. very possibly one of the blocks

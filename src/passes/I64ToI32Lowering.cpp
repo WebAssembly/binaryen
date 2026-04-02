@@ -489,7 +489,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       return;
     }
     // We cannot break this up into smaller operations as it must be atomic.
-    // Lower to an instrinsic function that wasm2js will implement.
+    // Lower to an intrinsic function that wasm2js will implement.
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
     auto* getLow = builder->makeCall(

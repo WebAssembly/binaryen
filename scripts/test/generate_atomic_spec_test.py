@@ -147,7 +147,7 @@ def func():
       )
     """
     return f''';; Memory index must come before memory ordering if present.
-;; Both immediates are optional; an ommitted memory ordering will be treated as seqcst.
+;; Both immediates are optional; an omitted memory ordering will be treated as seqcst.
 (func $test-all-ops
 {indent(newline.join(statement(template, mem_idx, mem_ptr_type, ordering) for template, (mem_idx, mem_ptr_type), ordering in all_combinations()))}
 )'''

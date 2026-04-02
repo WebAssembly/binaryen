@@ -1192,7 +1192,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       : public PostWalker<JumpThreader,
                           UnifiedExpressionVisitor<JumpThreader>> {
       // Map of all labels (branch targets) to the branches going to them. (We
-      // only care about blocks here, and not loops, but for simplicitly we
+      // only care about blocks here, and not loops, but for simplicity we
       // store all branch targets since blocks are 99% of that set anyhow. Any
       // loops are ignored later.)
       std::unordered_map<Name, std::vector<Expression*>> labelToBranches;

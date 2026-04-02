@@ -87,7 +87,7 @@ FUZZER_ARGS = [
     # Enable all features but disable ones not yet ready for fuzzing. This may
     # be a smaller set than fuzz_opt.py, as that enables a few experimental
     # flags, while here we just fuzz with d8's --wasm-staging. This should be
-    # synchonized with bundle_clusterfuzz.
+    # synchronized with bundle_clusterfuzz.
     '-all',
     '--disable-shared-everything',
     '--disable-fp16',

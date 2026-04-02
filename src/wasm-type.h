@@ -764,7 +764,7 @@ struct Array {
 
 // TypeBuilder - allows for the construction of recursive types. Contains a
 // table of `n` mutable HeapTypes and can construct temporary types that are
-// backed by those HeapTypes, refering to them by reference. Those temporary
+// backed by those HeapTypes, referring to them by reference. Those temporary
 // types are owned by the TypeBuilder and should only be used in the
 // construction of HeapTypes to insert into the TypeBuilder. Temporary types
 // should never be used in the construction of normal Types, only other

@@ -63,7 +63,7 @@ enum class InliningMode {
   // We do not know yet if this function can be inlined, as that has
   // not been computed yet.
   Unknown,
-  // This function cannot be inlinined in any way.
+  // This function cannot be inlined in any way.
   Uninlineable,
   // This function can be inlined fully, that is, normally: the entire function
   // can be inlined. This is in contrast to split/partial inlining, see below.
@@ -1260,7 +1260,7 @@ struct Inlining : public Pass {
   // whether to optimize where we inline
   bool optimize = false;
 
-  // the information for each function. recomputed in each iteraction
+  // the information for each function. recomputed in each interaction
   NameInfoMap infos;
 
   std::unique_ptr<FunctionSplitter> functionSplitter;

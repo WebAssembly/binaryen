@@ -387,7 +387,7 @@ struct EarlyCastApplier : public PostWalker<EarlyCastApplier> {
   }
 };
 
-// Find the best casted verisons of local.gets: other local.gets with the same
+// Find the best casted versions of local.gets: other local.gets with the same
 // value, but cast to a more refined type.
 struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
 

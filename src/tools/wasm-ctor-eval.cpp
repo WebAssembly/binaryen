@@ -1107,7 +1107,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   // the locals here. That is, we need to save the local state in the function,
   // which we do by setting up at the entry. We update this list of expressions
   // at the same time as applyToModule() - we must only do it after an entire
-  // atomic "chunk" has been processed succesfully, we do not want partial
+  // atomic "chunk" has been processed successfully, we do not want partial
   // updates from an item in the block that we only partially evalled. When we
   // construct the (partially) evalled function, we will create local.sets of
   // these expressions at the beginning.
@@ -1213,7 +1213,7 @@ start_eval:
       // module. Note that we must serialize the locals now as doing so may
       // cause changes that must be applied to the module (e.g. GC data may
       // cause globals to be added). And we must apply to the module now, and
-      // not later, as we must do so right after a successfull partial eval
+      // not later, as we must do so right after a successful partial eval
       // (after any failure to eval, the global state is no long valid to be
       // applied to the module, as incomplete changes may have occurred).
       //

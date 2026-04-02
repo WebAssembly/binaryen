@@ -148,7 +148,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   //  if (global % 17 < 4) { global = 1 }
   //
   // What we want to disallow is using the global to actually do something that
-  // is noticeeable *aside* from writing the global, like this:
+  // is noticeable *aside* from writing the global, like this:
   //
   //  if (global ? foo() : bar()) { .. }
   //
@@ -582,7 +582,7 @@ struct SimplifyGlobals : public Pass {
       }
 
       if (info.imported || info.exported) {
-        // If the global is observable from the outside, we can't do anythng
+        // If the global is observable from the outside, we can't do anything
         // here.
         //
         // TODO: optimize the case of an imported but immutable global, etc.

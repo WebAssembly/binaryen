@@ -2761,7 +2761,7 @@ TypeBuilder::BuildResult TypeBuilder::build() {
       auto group = (*built)[0].getRecGroup();
       auto uniqueGroup = impl->unique.insertOrGet(group);
       if (group != uniqueGroup) {
-        // There is a conflict. Find the set of missing featuers that would
+        // There is a conflict. Find the set of missing features that would
         // resolve the conflict if enabled.
         FeatureSet missingFeatures = FeatureSet::None;
         FeatureSet potential = FeatureSet::GC | FeatureSet::CustomDescriptors;

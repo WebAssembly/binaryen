@@ -1480,7 +1480,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // The allocation might flow into `ref` or `expected`, but not
     // `replacement`, because then it would be considered to have escaped.
     if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
-      // The accessed array is being optimzied. Convert the ArrayCmpxchg into a
+      // The accessed array is being optimized. Convert the ArrayCmpxchg into a
       // StructCmpxchg.
       replaceCurrent(builder.makeStructCmpxchg(
         index, curr->ref, curr->expected, curr->replacement, curr->order));

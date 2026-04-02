@@ -209,7 +209,7 @@ void StackIROptimizer::local2Stack() {
       bool optimized = false;
       // Do not optimize multivalue locals, since those will be better
       // optimized when they are visited in the binary writer and this
-      // optimization would intefere with that one.
+      // optimization would interfere with that one.
       if (auto* get = inst->origin->dynCast<LocalGet>();
           get && inst->type.isSingle() && !deferredGets.contains(get)) {
         // Use another local to clarify what instIndex means in this scope.

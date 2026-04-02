@@ -636,7 +636,7 @@ struct Monomorphize : public Pass {
       return;
     }
 
-    // TODO: ignore calls with unreachable operands for simplicty
+    // TODO: ignore calls with unreachable operands for simplicity
 
     // Compute the call context, and the new operands that the call would send
     // if we use that context.

@@ -1031,7 +1031,7 @@ bool PrincipalType::compose(const PrincipalType& next) {
 
   apply(assignments, *this);
   // If a type variable was instantiated with bottom type (i.e. unreachable) due
-  // to popping from an unreachabile stack, the result type may end with some
+  // to popping from an unreachable stack, the result type may end with some
   // number of unreachables. This is nonsensical, since `unreachable` is not a
   // concrete type. We could have alternatively left the variables
   // uninstantiated, but it would have no corresponding introduction on the left
