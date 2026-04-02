@@ -3245,7 +3245,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   Index baseIndex = func->getVarIndexBase();
   for (auto& type : localTypes) {
     nextFreeIndex[type] = baseIndex;
-    baseIndex += numLocalsByType[type];
+    baseIndex += getNumLocalsForType(type);
   }
 
   // Map the IR index pairs to indices.
@@ -3261,19 +3261,34 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     scratchLocals[type] = nextFreeIndex[type];
   }
 
-  o << U32LEB(numLocalsByType.size());
+  o << U32LEB(localTypes.size());
   for (auto& localType : localTypes) {
-    o << U32LEB(numLocalsByType.at(localType));
+    o << U32LEB(getNumLocalsForType(localType));
     parent.writeType(localType);
   }
 }
 
 void BinaryInstWriter::noteLocalType(Type type, Index count) {
+  // Group types by the type they will eventually be written out as. For
+  // example, we do not need to differentiate exact and inexact versions of the
+  // same reference type if custom descriptors is not enabled and the type will
+  // be written as inexact either way.
+  auto feats = parent.getModule()->features;
+  type = type.asWrittenGivenFeatures(feats);
   auto& num = numLocalsByType[type];
   if (num == 0) {
     localTypes.push_back(type);
   }
   num += count;
+}
+
+Index BinaryInstWriter::getNumLocalsForType(Type type) {
+  auto feats = parent.getModule()->features;
+  type = type.asWrittenGivenFeatures(feats);
+  if (auto it = numLocalsByType.find(type); it != numLocalsByType.end()) {
+    return it->second;
+  }
+  return 0;
 }
 
 InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
