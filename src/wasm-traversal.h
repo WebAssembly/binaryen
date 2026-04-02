@@ -354,6 +354,15 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 #define DELEGATE_ID curr->_id
 
+    // Don't push empty tasks, that is, functions that we just push to the
+    // stack, pop, and then nothing happens when we call the empty function. The
+    // default visitFoo() in Visitor is empty, and the static doVisitFoo() in
+    // Walker just calls it, so if neither have been changed, we know that
+    // nothing will run.
+    //
+    // Note that we check Visitor<..> and not VisitorType. Only Visitor is the
+    // actual top type we know has empty visitors, while VisitorType could be
+    // anything.
 #define DELEGATE_START(id)                                                     \
   if constexpr (&SubType::visit##id !=                                         \
                   &Visitor<SubType,                                            \
