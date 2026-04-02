@@ -3463,7 +3463,7 @@ private:
     }
     // remove added/subbed zeros
     struct ZeroRemover : public PostWalker<ZeroRemover> {
-      // TODO: we could save the binaries and costs we drop, and reuse them
+      // TODO: we could save the Binary and Const nodes we drop, and reuse them
       // later
 
       PassOptions& passOptions;
