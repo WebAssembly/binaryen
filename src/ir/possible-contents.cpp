@@ -3136,28 +3136,30 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   Expression* ref;
   Index index;
   unsigned bytes = 0;
-  Type resultType = Type::none;
   if (auto* get = expr->dynCast<StructGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     index = get->index;
-    resultType = get->type;
   } else if (auto* get = expr->dynCast<ArrayGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     // Arrays are treated as having a single field.
     index = 0;
-    resultType = get->type;
   } else if (auto* load = expr->dynCast<ArrayLoad>()) {
     signed_ = load->signed_;
     ref = load->ref;
     index = 0;
     bytes = load->bytes;
-    resultType = load->type;
   } else {
     WASM_UNREACHABLE("bad packed read");
   }
   if (!signed_) {
+    return;
+  }
+
+  Type resultType = expr->type;
+  if (resultType == Type::unreachable) {
+    // This read never executes.
     return;
   }
 
