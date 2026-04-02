@@ -36,7 +36,10 @@ namespace wasm {
 
 // A generic visitor, defaulting to doing nothing on each visit
 
-template<typename SubType, typename ReturnType = void> struct Visitor {
+template<typename SubType, typename ReturnType_ = void> struct Visitor {
+  // Capture the parameter in something we can access later.
+  using ReturnType = ReturnType_;
+
   // Expression visitors
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
@@ -352,7 +355,14 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 #define DELEGATE_ID curr->_id
 
 #define DELEGATE_START(id)                                                     \
-  self->pushTask(SubType::doVisit##id, currp);                                 \
+  if constexpr (&SubType::visit##id !=                                         \
+                &Visitor<SubType,                                              \
+                        typename SubType::VisitorReturnType>::visit##id || \
+&SubType::doVisit##id !=                                         \
+                &Visitor<SubType,                                              \
+                        typename SubType::VisitorReturnType>::doVisit##id) {     \
+    self->pushTask(SubType::doVisit##id, currp);                               \
+  }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
