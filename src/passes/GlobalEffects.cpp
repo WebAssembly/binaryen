@@ -36,61 +36,72 @@ struct FuncInfo {
   // Directly-called functions from this function.
   std::unordered_set<Name> calledFunctions;
 
-  std::unordered_set<HeapType> indirectCalledTypes;
+  // std::unordered_set<HeapType> indirectCalledTypes;
 };
 
+// struct FuncTypeInfo {
+//   // not sure if we want this. It won't include indirect calls at first
+//   std::optional<EffectAnalyzer> effects;
+
+//   std::unordered_set<>
+// };
 
 // TODO: private method to avoid module param?
 // Or store Functions in funcInfos instead of Names
-std::unordered_map<Name, std::unordered_set<Name>> transitiveCallers(Module& module, std::map<Function*, FuncInfo> funcInfos) {
-    std::unordered_map<Name, std::unordered_set<Name>> callers;
+std::unordered_map<Name, std::unordered_set<Name>>
+transitiveCallers(Module& module, std::map<Function*, FuncInfo> funcInfos) {
+  std::unordered_map<Name, std::unordered_set<Name>> callers;
 
-    // Our work queue contains info about a new call pair: a call from a caller
-    // to a called function, that is information we then apply and propagate.
-    using CallPair = std::pair<Name, Name>; // { caller, called }
-    UniqueDeferredQueue<CallPair> work;
-    for (auto& [func, info] : funcInfos) {
-      for (auto& called : info.calledFunctions) {
-        work.push({func->name, called});
+  // Our work queue contains info about a new call pair: a call from a caller
+  // to a called function, that is information we then apply and propagate.
+  using CallPair = std::pair<Name, Name>; // { caller, called }
+  UniqueDeferredQueue<CallPair> work;
+  for (auto& [func, info] : funcInfos) {
+    for (auto& called : info.calledFunctions) {
+      work.push({func->name, called});
+    }
+  }
+
+  // Compute the transitive closure of the call graph, that is, fill out
+  // |callers| so that it contains the list of all callers - even through a
+  // chain - of each function.
+  while (!work.empty()) {
+    auto [caller, called] = work.pop();
+
+    // We must not already have an entry for this call (that would imply we
+    // are doing wasted work).
+    assert(!callers[called].contains(caller));
+
+    // Apply the new call information.
+    callers[called].insert(caller);
+
+    // We just learned that |caller| calls |called|. It also calls
+    // transitively, which we need to propagate to all places unaware of that
+    // information yet.
+    //
+    //   caller => called => called by called
+    //
+    auto& calledInfo = funcInfos[module.getFunction(called)];
+    for (auto calledByCalled : calledInfo.calledFunctions) {
+      if (!callers[calledByCalled].contains(caller)) {
+        work.push({caller, calledByCalled});
       }
     }
+  }
 
-    // Compute the transitive closure of the call graph, that is, fill out
-    // |callers| so that it contains the list of all callers - even through a
-    // chain - of each function.
-    while (!work.empty()) {
-      auto [caller, called] = work.pop();
-
-      // We must not already have an entry for this call (that would imply we
-      // are doing wasted work).
-      assert(!callers[called].contains(caller));
-
-      // Apply the new call information.
-      callers[called].insert(caller);
-
-      // We just learned that |caller| calls |called|. It also calls
-      // transitively, which we need to propagate to all places unaware of that
-      // information yet.
-      //
-      //   caller => called => called by called
-      //
-      auto& calledInfo = funcInfos[module.getFunction(called)];
-      for (auto calledByCalled : calledInfo.calledFunctions) {
-        if (!callers[calledByCalled].contains(caller)) {
-          work.push({caller, calledByCalled});
-        }
-      }
-    }
-
-    return callers;
+  return callers;
 }
-
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
     // First, we do a scan of each function to see what effects they have,
     // including which functions they call directly (so that we can compute
     // transitive effects later).
+
+    // indirect calls that directly appear in the given type.
+    // Later we will compute a transitive closure of this.
+    std::unordered_map<HeapType, std::unordered_set<HeapType>>
+      indirectCallTypes;
 
     ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
       *module, [&](Function* func, FuncInfo& funcInfo) {
@@ -121,9 +132,17 @@ struct GenerateGlobalEffects : public Pass {
             Module& wasm;
             PassOptions& options;
             FuncInfo& funcInfo;
+            std::unordered_map<HeapType, std::unordered_set<HeapType>>&
+              indirectCallTypes;
 
-            CallScanner(Module& wasm, PassOptions& options, FuncInfo& funcInfo)
-              : wasm(wasm), options(options), funcInfo(funcInfo) {}
+            CallScanner(
+              Module& wasm,
+              PassOptions& options,
+              FuncInfo& funcInfo,
+              std::unordered_map<HeapType, std::unordered_set<HeapType>>&
+                indirectCallTypes)
+              : wasm(wasm), options(options), funcInfo(funcInfo),
+                indirectCallTypes(indirectCallTypes) {}
 
             void visitExpression(Expression* curr) {
               ShallowEffectAnalyzer effects(options, wasm, curr);
@@ -139,9 +158,11 @@ struct GenerateGlobalEffects : public Pass {
                 } else {
                   assert(false && "Unexpected type of call");
                 }
-      
-                funcInfo.indirectCalledTypes.insert(type);
-                funcInfo.effects.reset();
+
+                indirectCallTypes[getFunction()->type.getHeapType()].insert(
+                  type);
+                // funcInfo.indirectCalledTypes.insert(type);
+                // funcInfo.effects.reset();
               } else {
                 // No call here, but update throwing if we see it. (Only do so,
                 // however, if we have effects; if we cleared it - see before -
@@ -152,7 +173,8 @@ struct GenerateGlobalEffects : public Pass {
               }
             }
           };
-          CallScanner scanner(*module, getPassOptions(), funcInfo);
+          CallScanner scanner(
+            *module, getPassOptions(), funcInfo, indirectCallTypes);
           scanner.walkFunction(func);
         }
       });
@@ -164,7 +186,18 @@ struct GenerateGlobalEffects : public Pass {
     //
     // callers[foo] = [func that calls foo, another func that calls foo, ..]
     //
-    std::unordered_map<Name, std::unordered_set<Name>> callers = transitiveCallers(*module, analysis.map);
+    auto callers = transitiveCallers(*module, analysis.map);
+
+    // Like above, for a function of a given type, what are the types of
+    // indirect calls that may end up (transitively) calling it?
+    // TODO
+    std::unordered_map<HeapType, std::unordered_set<HeapType>>
+      transitiveIndirectCallTypes;
+    for (auto& [caller, callees] : indirectCallTypes) {
+      for (auto callee : callees) {
+        transitiveIndirectCallTypes[callee].insert(caller);
+      }
+    }
 
     // Now that we have transitively propagated all static calls, apply that
     // information. First, apply infinite recursion: if a function can call
@@ -199,6 +232,22 @@ struct GenerateGlobalEffects : public Pass {
         // Add func's effects to the caller.
         callerEffects->mergeIn(*funcEffects);
       }
+
+      const auto& callingTypes =
+        transitiveIndirectCallTypes[module->getFunction(func->name)
+                                      ->type.getHeapType()];
+      // We don't know effects for imports?
+      // TODO: double-check on how this should be handled
+
+      std::cout << "func type " << func->type << "\n";
+      for (const HeapType callingType : callingTypes) {
+        std::cout << "callingType " << callingType << "\n";
+        ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+          if (HeapType::isSubType(func->type.getHeapType(), callingType)) {
+            analysis.map[func].effects->mergeIn(*funcEffects);
+          }
+        });
+      }
     }
 
     // Generate the final data, starting from a blank slate where nothing is
@@ -210,6 +259,7 @@ struct GenerateGlobalEffects : public Pass {
       }
 
       func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
+      std::cout << "Effects " << func->name << " " << *func->effects << "\n";
     }
   }
 };
@@ -222,7 +272,7 @@ struct DiscardGlobalEffects : public Pass {
   }
 };
 
-}  // namespace
+} // namespace
 
 Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }
 
