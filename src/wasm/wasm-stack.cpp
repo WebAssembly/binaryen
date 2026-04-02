@@ -3269,7 +3269,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
 }
 
 void BinaryInstWriter::noteLocalType(Type type, Index count) {
-  // Group types by the type they will eventually be written out as. For
+  // Group locals by the type they will eventually be written out as. For
   // example, we do not need to differentiate exact and inexact versions of the
   // same reference type if custom descriptors is not enabled and the type will
   // be written as inexact either way.
