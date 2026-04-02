@@ -27,19 +27,70 @@
 
 namespace wasm {
 
+namespace {
+
+struct FuncInfo {
+  // Effects in this function.
+  std::optional<EffectAnalyzer> effects;
+
+  // Directly-called functions from this function.
+  std::unordered_set<Name> calledFunctions;
+
+  std::unordered_set<HeapType> indirectCalledTypes;
+};
+
+
+// TODO: private method to avoid module param?
+// Or store Functions in funcInfos instead of Names
+std::unordered_map<Name, std::unordered_set<Name>> transitiveCallers(Module& module, std::map<Function*, FuncInfo> funcInfos) {
+    std::unordered_map<Name, std::unordered_set<Name>> callers;
+
+    // Our work queue contains info about a new call pair: a call from a caller
+    // to a called function, that is information we then apply and propagate.
+    using CallPair = std::pair<Name, Name>; // { caller, called }
+    UniqueDeferredQueue<CallPair> work;
+    for (auto& [func, info] : funcInfos) {
+      for (auto& called : info.calledFunctions) {
+        work.push({func->name, called});
+      }
+    }
+
+    // Compute the transitive closure of the call graph, that is, fill out
+    // |callers| so that it contains the list of all callers - even through a
+    // chain - of each function.
+    while (!work.empty()) {
+      auto [caller, called] = work.pop();
+
+      // We must not already have an entry for this call (that would imply we
+      // are doing wasted work).
+      assert(!callers[called].contains(caller));
+
+      // Apply the new call information.
+      callers[called].insert(caller);
+
+      // We just learned that |caller| calls |called|. It also calls
+      // transitively, which we need to propagate to all places unaware of that
+      // information yet.
+      //
+      //   caller => called => called by called
+      //
+      auto& calledInfo = funcInfos[module.getFunction(called)];
+      for (auto calledByCalled : calledInfo.calledFunctions) {
+        if (!callers[calledByCalled].contains(caller)) {
+          work.push({caller, calledByCalled});
+        }
+      }
+    }
+
+    return callers;
+}
+
+
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
     // First, we do a scan of each function to see what effects they have,
     // including which functions they call directly (so that we can compute
     // transitive effects later).
-
-    struct FuncInfo {
-      // Effects in this function.
-      std::optional<EffectAnalyzer> effects;
-
-      // Directly-called functions from this function.
-      std::unordered_set<Name> calledFunctions;
-    };
 
     ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
       *module, [&](Function* func, FuncInfo& funcInfo) {
@@ -80,10 +131,16 @@ struct GenerateGlobalEffects : public Pass {
                 // Note the direct call.
                 funcInfo.calledFunctions.insert(call->target);
               } else if (effects.calls) {
-                // This is an indirect call of some sort, so we must assume the
-                // worst. To do so, clear the effects, which indicates nothing
-                // is known (so anything is possible).
-                // TODO: We could group effects by function type etc.
+                HeapType type;
+                if (auto* callRef = curr->dynCast<CallRef>()) {
+                  type = callRef->target->type.getHeapType();
+                } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
+                  type = callIndirect->heapType;
+                } else {
+                  assert(false && "Unexpected type of call");
+                }
+      
+                funcInfo.indirectCalledTypes.insert(type);
                 funcInfo.effects.reset();
               } else {
                 // No call here, but update throwing if we see it. (Only do so,
@@ -107,44 +164,7 @@ struct GenerateGlobalEffects : public Pass {
     //
     // callers[foo] = [func that calls foo, another func that calls foo, ..]
     //
-    std::unordered_map<Name, std::unordered_set<Name>> callers;
-
-    // Our work queue contains info about a new call pair: a call from a caller
-    // to a called function, that is information we then apply and propagate.
-    using CallPair = std::pair<Name, Name>; // { caller, called }
-    UniqueDeferredQueue<CallPair> work;
-    for (auto& [func, info] : analysis.map) {
-      for (auto& called : info.calledFunctions) {
-        work.push({func->name, called});
-      }
-    }
-
-    // Compute the transitive closure of the call graph, that is, fill out
-    // |callers| so that it contains the list of all callers - even through a
-    // chain - of each function.
-    while (!work.empty()) {
-      auto [caller, called] = work.pop();
-
-      // We must not already have an entry for this call (that would imply we
-      // are doing wasted work).
-      assert(!callers[called].contains(caller));
-
-      // Apply the new call information.
-      callers[called].insert(caller);
-
-      // We just learned that |caller| calls |called|. It also calls
-      // transitively, which we need to propagate to all places unaware of that
-      // information yet.
-      //
-      //   caller => called => called by called
-      //
-      auto& calledInfo = analysis.map[module->getFunction(called)];
-      for (auto calledByCalled : calledInfo.calledFunctions) {
-        if (!callers[calledByCalled].contains(caller)) {
-          work.push({caller, calledByCalled});
-        }
-      }
-    }
+    std::unordered_map<Name, std::unordered_set<Name>> callers = transitiveCallers(*module, analysis.map);
 
     // Now that we have transitively propagated all static calls, apply that
     // information. First, apply infinite recursion: if a function can call
@@ -201,6 +221,8 @@ struct DiscardGlobalEffects : public Pass {
     }
   }
 };
+
+}  // namespace
 
 Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }
 
