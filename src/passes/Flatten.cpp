@@ -98,7 +98,7 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
         condition = builder.makeRefIsNull(refTee);
         flip = true;
         brValue = builder.makeRefAs(RefAsNonNull, getRef());
-        flowValue = getRef();
+        // No value flos out.
         break;
       }
       case BrOnCast: {
@@ -125,9 +125,11 @@ struct LowerUnflattenable : public PostWalker<LowerUnflattenable> {
     }
 
     auto* br = builder.makeBreak(curr->name, brValue);
-    auto* iff = builder.makeIf(condition, br);
-    auto* seq = builder.makeSequence(iff, flowValue);
-    replaceCurrent(seq);
+    Expression* result = builder.makeIf(condition, br);
+    if (flowValue) {
+      result = builder.makeSequence(result, flowValue);
+    }
+    replaceCurrent(result);
   }
 
   void replaceUnreachableWithDrops() {
@@ -463,8 +465,6 @@ struct Flatten
   void doWalkFunction(Function* curr) {
     // Lower things before the main walk.
     LowerUnflattenable(*getModule(), getPassOptions()).walkFunction(curr);
-
-std::cout << "after " << *curr << '\n';
 
     WalkerPass<
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>>::
