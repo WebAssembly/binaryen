@@ -150,6 +150,7 @@ private:
   std::unordered_map<Type, size_t> numLocalsByType;
 
   void noteLocalType(Type type, Index count = 1);
+  Index getNumLocalsForType(Type type);
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract. If there are multiple scratch locals of the same type, they
