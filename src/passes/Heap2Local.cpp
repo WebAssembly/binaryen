@@ -461,40 +461,31 @@ struct EscapeAnalyzer {
         }
       }
       void visitArraySet(ArraySet* curr) {
-        if (!curr->index->is<Const>()) {
-          // Array operations on nonconstant indexes do not escape in the normal
-          // sense, but they do escape from our being able to analyze them, so
-          // stop as soon as we see one.
-          return;
-        }
-
-        // As StructGet.
-        if (curr->ref == child) {
+        // Arrays flowing into array operations on nonconstant indexes do not
+        // escape in the normal sense, but they do escape from our being able to
+        // analyze them, so stop as soon as we see one.
+        if (child == curr->ref && curr->index->is<Const>()) {
           escapes = false;
           fullyConsumes = true;
         }
       }
       void visitArrayGet(ArrayGet* curr) {
-        if (!curr->index->is<Const>()) {
-          return;
+        if (child == curr->ref && curr->index->is<Const>()) {
+          escapes = false;
+          fullyConsumes = true;
         }
-        escapes = false;
-        fullyConsumes = true;
       }
       void visitArrayRMW(ArrayRMW* curr) {
-        if (!curr->index->is<Const>()) {
-          return;
-        }
-        if (curr->ref == child) {
+        if (child == curr->ref && curr->index->is<Const>()) {
           escapes = false;
           fullyConsumes = true;
         }
       }
       void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-        if (!curr->index->is<Const>()) {
-          return;
-        }
-        if (curr->ref == child || curr->expected == child) {
+        // Allocations flowing into `expected` are fully consumed and
+        // optimizable even if the index is not constant.
+        if (child == curr->expected ||
+            (child == curr->ref && curr->index->is<Const>())) {
           escapes = false;
           fullyConsumes = true;
         }
@@ -1233,9 +1224,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto refScratch = builder.addVar(func, refType);
       auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
       auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
+
+      auto indexScratch = builder.addVar(func, Type::i32);
+      auto* setIndexScratch = builder.makeLocalSet(indexScratch, curr->index);
+      auto* getIndexScratch = builder.makeLocalGet(indexScratch, Type::i32);
+
       auto* arrayGet = builder.makeArrayGet(
-        getRefScratch, curr->index, curr->order, curr->type);
+        getRefScratch, getIndexScratch, curr->order, curr->type);
       auto* block = builder.makeBlock({setRefScratch,
+                                       setIndexScratch,
                                        builder.makeDrop(curr->expected),
                                        builder.makeDrop(curr->replacement),
                                        arrayGet});
@@ -1467,19 +1464,19 @@ struct Array2Struct : PostWalker<Array2Struct> {
       return;
     }
 
-    auto index = getIndex(curr->index);
-    if (index >= numFields) {
-      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->expected),
-                                        builder.makeDrop(curr->replacement),
-                                        builder.makeUnreachable()}));
-      refinalize = true;
-      return;
-    }
-
     // The allocation might flow into `ref` or `expected`, but not
     // `replacement`, because then it would be considered to have escaped.
     if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
+      auto index = getIndex(curr->index);
+      if (index >= numFields) {
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->expected),
+                                          builder.makeDrop(curr->replacement),
+                                          builder.makeUnreachable()}));
+        refinalize = true;
+        return;
+      }
+
       // The accessed array is being optimized. Convert the ArrayCmpxchg into a
       // StructCmpxchg.
       replaceCurrent(builder.makeStructCmpxchg(
