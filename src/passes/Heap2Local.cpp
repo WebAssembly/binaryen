@@ -482,6 +482,8 @@ struct EscapeAnalyzer {
         }
       }
       void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+        // Allocations flowing into `expected` are fully consumed and
+        // optimizable even if the index is not constant.
         if (child == curr->expected ||
             (child == curr->ref && curr->index->is<Const>())) {
           escapes = false;
@@ -1475,7 +1477,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
         return;
       }
 
-      // The accessed array is being optimzied. Convert the ArrayCmpxchg into a
+      // The accessed array is being optimized. Convert the ArrayCmpxchg into a
       // StructCmpxchg.
       replaceCurrent(builder.makeStructCmpxchg(
         index, curr->ref, curr->expected, curr->replacement, curr->order));
