@@ -359,8 +359,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
                   &Visitor<SubType,                                            \
                            typename SubType::ReturnType>::visit##id ||         \
                 &SubType::doVisit##id !=                                       \
-                  &Visitor<SubType,                                            \
-                           typename SubType::ReturnType>::doVisit##id) {       \
+                  &Walker<SubType, VisitorType>::doVisit##id) {                \
     self->pushTask(SubType::doVisit##id, currp);                               \
   }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
