@@ -357,10 +357,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 #define DELEGATE_START(id)                                                     \
   if constexpr (&SubType::visit##id !=                                         \
                   &Visitor<SubType,                                            \
-                           typename SubType::ReturnType>::visit##id ||  \
+                           typename SubType::ReturnType>::visit##id ||         \
                 &SubType::doVisit##id !=                                       \
-                  &Visitor<SubType, typename SubType::ReturnType>::     \
-                    doVisit##id) {                                             \
+                  &Visitor<SubType,                                            \
+                           typename SubType::ReturnType>::doVisit##id) {       \
     self->pushTask(SubType::doVisit##id, currp);                               \
   }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
