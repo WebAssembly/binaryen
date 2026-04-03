@@ -250,8 +250,11 @@ struct GenerateGlobalEffects : public Pass {
           if (HeapType::isSubType(indirectCallee->type.getHeapType(), calleeType)) {
             if (!funcEffects) analysis.map[func].effects.reset();
             if (!analysis.map[func].effects || !funcEffects) return;
+            // if (!indirectCallee->effects) return;
 
-            analysis.map[func].effects->mergeIn(*funcEffects);
+            // analysis.map[func].effects->mergeIn(*funcEffects);
+            if (!indirectCallee->effects) return;
+            analysis.map[func].effects->mergeIn(*indirectCallee->effects);
           }
         });
       }

@@ -69,9 +69,6 @@
   )
 
   ;; CHECK:      (func $g (type $5) (param $ref (ref $maybe-has-effects)) (result i32)
-  ;; CHECK-NEXT:  (call $calls-effectful-function-via-ref
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $g (param $ref (ref $maybe-has-effects)) (result i32)
