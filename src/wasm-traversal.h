@@ -372,10 +372,8 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 11
 #define DELEGATE_START(id)                                                     \
   if (&SubType::visit##id !=                                                   \
-                  &Visitor<SubType,                                            \
-                           typename SubType::ReturnType>::visit##id ||         \
-                &SubType::doVisit##id !=                                       \
-                  &Walker<SubType, VisitorType>::doVisit##id) {                \
+        &Visitor<SubType, typename SubType::ReturnType>::visit##id ||          \
+      &SubType::doVisit##id != &Walker<SubType, VisitorType>::doVisit##id) {   \
     self->pushTask(SubType::doVisit##id, currp);                               \
   }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
