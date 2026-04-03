@@ -315,19 +315,7 @@
   ;; INCLUDE-NEXT:    (call $return-call-throw-and-catch)
   ;; INCLUDE-NEXT:   )
   ;; INCLUDE-NEXT:  )
-  ;; INCLUDE-NEXT:  (block $tryend0
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend0)
-  ;; INCLUDE-NEXT:    (call $return-call-indirect-throw-and-catch)
-  ;; INCLUDE-NEXT:   )
-  ;; INCLUDE-NEXT:  )
-  ;; INCLUDE-NEXT:  (block $tryend1
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend1)
-  ;; INCLUDE-NEXT:    (call $return-call-ref-throw-and-catch)
-  ;; INCLUDE-NEXT:   )
-  ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT:  (call $return-call-throw-and-catch)
-  ;; INCLUDE-NEXT:  (call $return-call-indirect-throw-and-catch)
-  ;; INCLUDE-NEXT:  (call $return-call-ref-throw-and-catch)
   ;; INCLUDE-NEXT: )
   (func $call-return-call-throw-and-catch
     (block $tryend

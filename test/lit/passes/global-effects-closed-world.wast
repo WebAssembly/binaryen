@@ -47,7 +47,7 @@
     (call_ref $nopType (i32.const 1) (local.get $ref))
   )
 
-  ;; CHECK:      (func $a (type $3) (param $ref (ref $nopType)) (result i32)
+  ;; CHECK:      (func $f (type $3) (param $ref (ref $nopType)) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $f (param $ref (ref $nopType)) (result i32)
@@ -68,7 +68,7 @@
     (call_ref $maybe-has-effects (i32.const 1) (i32.const 2) (local.get $ref))
   )
 
-  ;; CHECK:      (func $b (type $5) (param $ref (ref $maybe-has-effects)) (result i32)
+  ;; CHECK:      (func $g (type $5) (param $ref (ref $maybe-has-effects)) (result i32)
   ;; CHECK-NEXT:  (call $calls-effectful-function-via-ref
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
@@ -79,5 +79,15 @@
     ;; We don't know so don't optimize it out.
     (call $calls-effectful-function-via-ref (local.get $ref))
     (i32.const 1)
+  )
+
+  ;; (func
+  ;;   ()
+  ;; )
+
+  ;; CHECK:      (func $h (type $6)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $h
   )
 )

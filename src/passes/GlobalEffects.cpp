@@ -233,17 +233,24 @@ struct GenerateGlobalEffects : public Pass {
         callerEffects->mergeIn(*funcEffects);
       }
 
-      const auto& callingTypes =
+      const auto& calleeTypes =
         transitiveIndirectCallTypes[module->getFunction(func->name)
                                       ->type.getHeapType()];
       // We don't know effects for imports?
       // TODO: double-check on how this should be handled
 
+      // Also, this is maybe too conservative. We might add effects to functions that don't indirect call at all!
+      // They might just happen to share a type with another function that does indirect call.
+      // I think we can just change some of the usages of HeapType to Name and it will work out.
+
       std::cout << "func type " << func->type << "\n";
-      for (const HeapType callingType : callingTypes) {
-        std::cout << "callingType " << callingType << "\n";
-        ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-          if (HeapType::isSubType(func->type.getHeapType(), callingType)) {
+      for (const HeapType calleeType : calleeTypes) {
+        std::cout << "calleeType " << calleeType << "\n";
+        ModuleUtils::iterDefinedFunctions(*module, [&](Function* indirectCallee) {
+          if (HeapType::isSubType(indirectCallee->type.getHeapType(), calleeType)) {
+            if (!funcEffects) analysis.map[func].effects.reset();
+            if (!analysis.map[func].effects || !funcEffects) return;
+
             analysis.map[func].effects->mergeIn(*funcEffects);
           }
         });
