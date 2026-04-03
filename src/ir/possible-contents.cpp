@@ -881,6 +881,7 @@ struct InfoCollector
               info.links.push_back({SignatureResultLocation{subType, i},
                                     ResultLocation{getFunction(), i}});
             }
+            return true;
           });
       }
     }

@@ -675,6 +675,7 @@ struct ConstantFieldPropagation : public Pass {
           if (readable[{sub, Exact}][dst.index].combine(val)) {
             applyCopiesFrom(sub, Exact, dst.index, val);
           }
+          return true;
         });
       } else {
         // The copy destination is exact, so there are no subtypes to
