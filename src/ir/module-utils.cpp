@@ -363,16 +363,15 @@ struct TypeInfos {
     }
   }
   void note(Type type) {
-    if (type.isNumber() || type.getID() == Type::none ||
-        type.getID() == Type::unreachable) {
-      return;
-    }
+    // Handle the common case of a ref directly, to avoid a scan of children.
     if (type.isRef()) {
       note(type.getHeapType());
       return;
     }
-    for (HeapType ht : type.getHeapTypeChildren()) {
-      note(ht);
+    if (type.isTuple()) {
+      for (HeapType ht : type.getHeapTypeChildren()) {
+        note(ht);
+      }
     }
   }
   // Ensure a type is included without increasing its count.
@@ -382,16 +381,14 @@ struct TypeInfos {
     }
   }
   void include(Type type) {
-    if (type.isNumber() || type.getID() == Type::none ||
-        type.getID() == Type::unreachable) {
-      return;
-    }
     if (type.isRef()) {
       include(type.getHeapType());
       return;
     }
-    for (HeapType ht : type.getHeapTypeChildren()) {
-      include(ht);
+    if (type.isTuple()) {
+      for (HeapType ht : type.getHeapTypeChildren()) {
+        include(ht);
+      }
     }
   }
   void noteControlFlow(Signature sig) {
