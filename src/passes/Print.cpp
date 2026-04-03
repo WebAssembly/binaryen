@@ -3766,7 +3766,7 @@ public:
 
 Pass* createMinifiedPrinterPass() { return new MinifiedPrinter(); }
 
-// Prints out a module withough elision, i.e., the full ast
+// Prints out a module without elision, i.e., the full ast
 
 class FullPrinter : public Printer {
 public:

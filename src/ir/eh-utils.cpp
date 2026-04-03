@@ -42,7 +42,7 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
   auto* implicitBlock = catchBody->dynCast<Block>();
 
   // Go down the line for the first child until we reach a leaf. A pop should be
-  // in that first-decendant line.
+  // in that first-descendant line.
   Expression** firstChildPtr = nullptr;
   while (true) {
     if (firstChild->is<Pop>()) {

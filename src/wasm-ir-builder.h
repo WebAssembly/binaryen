@@ -466,7 +466,7 @@ private:
     // When transitioning to a new scope for a delimiter like `else` or catch,
     // most of the scope context is preserved, but some parts need to be reset.
     // `keepInput` means that control flow parameters are available at the
-    // begninning of the scope after the delimiter.
+    // beginning of the scope after the delimiter.
     void resetForDelimiter(bool keepInput) {
       exprStack.clear();
       unreachable = false;

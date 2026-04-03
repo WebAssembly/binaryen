@@ -122,7 +122,7 @@ bool usesExpressions(ElementSegment* curr, Module* module);
 
 // Information about a table's optimizability.
 struct TableInfo {
-  // Whether the table may be modifed at runtime, either because it is imported
+  // Whether the table may be modified at runtime, either because it is imported
   // or exported, or table.set operations exist for it in the code.
   bool mayBeModified = false;
 

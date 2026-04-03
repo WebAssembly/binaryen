@@ -679,7 +679,7 @@
   (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any)) (param $y (ref null any))
     (drop
       (local.tee $x
-        ;; this *cannnot* be moved through the tee outward, as the param is in
+        ;; this *cannot* be moved through the tee outward, as the param is in
         ;; fact non-nullable, and we depend on the ref.as_non_null in order to
         ;; get a valid type to assign to it
         (ref.as_non_null

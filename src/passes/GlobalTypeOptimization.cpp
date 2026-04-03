@@ -424,7 +424,7 @@ struct GlobalTypeOptimization : public Pass {
     std::unordered_set<HeapType> subtypesExposed;
 
     // Mark the relevant prototype field as read and return true iff we newly
-    // know we have to propate the exposure to subtypes.
+    // know we have to propagate the exposure to subtypes.
     auto noteExposed = [&](HeapType type, Exactness exact = Inexact) -> bool {
       if (auto desc = type.getDescriptorType();
           desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {

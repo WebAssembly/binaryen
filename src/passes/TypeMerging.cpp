@@ -467,7 +467,7 @@ bool TypeMerging::merge(MergeKind kind) {
     // Normally splitting partitions like this would require re-running DFA
     // minimization afterward, but in this case it is not possible that the
     // manual splits cause types in any other partition to become
-    // differentiatable. A type and its subtype cannot differ by referring to
+    // differentiable. A type and its subtype cannot differ by referring to
     // different, unrelated types in the same position because then they would
     // not be in a valid subtype relationship.
     std::vector<std::vector<HeapType>> newPartitions;

@@ -67,7 +67,7 @@ namespace wasm::Match {
 //
 //    Matches Binary expressions. Takes an optional pointer to Binary* at which
 //    to store the matched Binary*, followed by either a BinaryOp or an
-//    Abstract::Op describing which binary expresions to match, followed by
+//    Abstract::Op describing which binary expressions to match, followed by
 //    matchers to apply to the binary expression's left and right operands.
 //
 //  select

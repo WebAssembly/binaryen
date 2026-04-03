@@ -3062,7 +3062,7 @@ BINARYEN_API void BinaryenModulePrintStackIR(BinaryenModuleRef module);
 BINARYEN_API void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 
 // Validate a module, showing errors on problems.
-//  @return 0 if an error occurred, 1 if validated succesfully
+//  @return 0 if an error occurred, 1 if validated successfully
 BINARYEN_API bool BinaryenModuleValidate(BinaryenModuleRef module);
 
 // Runs the standard optimization passes on the module. Uses the currently set
@@ -3283,7 +3283,7 @@ BINARYEN_API BinaryenModuleAllocateAndWriteResult
 BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
                                const char* sourceMapUrl);
 
-// Serialize a module in s-expression form. Implicity allocates the returned
+// Serialize a module in s-expression form. Implicitly allocates the returned
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
 BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);

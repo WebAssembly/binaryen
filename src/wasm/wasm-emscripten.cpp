@@ -121,7 +121,7 @@ private:
         OffsetSearcher(std::unordered_map<Name, Address>& offsets)
           : offsets(offsets) {}
         void visitMemoryInit(MemoryInit* curr) {
-          // The desitination of the memory.init is either a constant
+          // The destination of the memory.init is either a constant
           // or the result of an addition with __memory_base in the
           // case of PIC code.
           auto* dest = curr->dest->dynCast<Const>();

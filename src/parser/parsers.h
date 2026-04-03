@@ -1340,7 +1340,7 @@ loop(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
 //            | '(' 'try' label blocktype '(' 'do' instr* ')'
 //                  ('(' 'catch' tagidx instr* ')')*
 //                  ('(' 'catch_all' instr* ')')? ')'
-//            | 'try' label blocktype instr* 'deledate' label
+//            | 'try' label blocktype instr* 'delegate' label
 //            | '(' 'try' label blocktype '(' 'do' instr* ')'
 //                '(' 'delegate' label ')' ')'
 template<typename Ctx>

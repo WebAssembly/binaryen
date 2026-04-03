@@ -102,7 +102,7 @@ struct GenerateGlobalEffects : public Pass {
 
     // Compute the transitive closure of effects. To do so, first construct for
     // each function a list of the functions that it is called by (so we need to
-    // propogate its effects to them), and then we'll construct the closure of
+    // propagate its effects to them), and then we'll construct the closure of
     // that.
     //
     // callers[foo] = [func that calls foo, another func that calls foo, ..]

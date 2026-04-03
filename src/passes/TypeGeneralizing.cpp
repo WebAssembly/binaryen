@@ -560,7 +560,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
       for (size_t i = 0; i < numParams; ++i) {
         if (candidateSig.params[i] != sig.params[i]) {
           // Generalizing further would restrict how much we could generalize
-          // this argument, so we choose not to generalize futher.
+          // this argument, so we choose not to generalize further.
           // TODO: Experiment with making the opposite choice.
           goto done;
         }
@@ -815,7 +815,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     auto srcType = curr->srcRef->type.getHeapType();
     if (destType.isBottom() || srcType.isBottom()) {
       // This will be emitted as unreachable. Do not require anything of the
-      // input, exept that the bottom refs remain bottom.
+      // input, except that the bottom refs remain bottom.
       clearStack();
       auto nullref = Type(HeapType::none, Nullable);
       push(destType.isBottom() ? nullref : Type::none);

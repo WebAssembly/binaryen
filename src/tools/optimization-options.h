@@ -357,7 +357,7 @@ struct OptimizationOptions : public ToolOptions {
 
   // Pass arguments with the same name as the pass are stored per-instance on
   // PassInfo, while all other arguments are stored globally on
-  // passOptions.arguments (which is what the overriden method on ToolOptions
+  // passOptions.arguments (which is what the overridden method on ToolOptions
   // does).
   void addPassArg(const std::string& key, const std::string& value) override {
     // Scan the current pass list for the last defined instance of a pass named

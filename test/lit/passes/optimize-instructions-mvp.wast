@@ -18144,7 +18144,7 @@
   ;; CHECK-NEXT: )
   (func $skip-added-constants-negative (result i32)
     ;; Reasonable negative constants can be optimized. But the add is
-    ;; canoncalized into a sub, and atm we do not optimize such added constants.
+    ;; canonicalized into a sub, and atm we do not optimize such added constants.
     (i32.ge_s
       (i32.add
         (i32.shr_u
@@ -18174,7 +18174,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $skip-added-constants-negative-flip (result i32)
-    ;; As above, but flipped. The add is canoncalized into a sub, and atm we do
+    ;; As above, but flipped. The add is canonicalized into a sub, and atm we do
     ;; not optimize such added constants.
     (i32.ge_s
       (i32.add
@@ -18233,7 +18233,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix-flip (result i32)
-    ;; As above, but with sign flipped. The add is canoncalized into a sub, and
+    ;; As above, but with sign flipped. The add is canonicalized into a sub, and
     ;; atm we do not optimize such added constants.
     (i32.ge_s
       (i32.add

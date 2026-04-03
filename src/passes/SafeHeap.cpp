@@ -17,7 +17,7 @@
 //
 // Instruments code to check for incorrect heap access. This checks
 // for dereferencing 0 (null pointer access), reading past the valid
-// top of sbrk()-addressible memory, and incorrect alignment notation.
+// top of sbrk()-addressable memory, and incorrect alignment notation.
 //
 
 #include "asmjs/shared-constants.h"

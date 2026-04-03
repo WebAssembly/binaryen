@@ -3262,7 +3262,7 @@
       )
     )
     (drop
-      ;; This can be optimzied in principle, but our analysis cannot yet prove
+      ;; This can be optimized in principle, but our analysis cannot yet prove
       ;; there is no synchronization. TODO.
       (struct.atomic.get acqrel $shared 0
         (local.get 0)

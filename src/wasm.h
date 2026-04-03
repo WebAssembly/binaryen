@@ -122,7 +122,7 @@ enum UnaryOp {
   TruncSFloat64ToInt64,
   TruncUFloat64ToInt32,
   TruncUFloat64ToInt64,
-  // reintepret bits to int
+  // reinterpret bits to int
   ReinterpretFloat32,
   ReinterpretFloat64,
   // int to float
@@ -143,7 +143,7 @@ enum UnaryOp {
   ReinterpretInt64,
 
   // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
-  // because the input integer is in an i64 value insetad of an i32 value.
+  // because the input integer is in an i64 value instead of an i32 value.
   ExtendS8Int32,
   ExtendS16Int32,
   ExtendS8Int64,
@@ -1095,7 +1095,7 @@ public:
   AtomicFence() = default;
   AtomicFence(MixedArena& allocator) : AtomicFence() {}
 
-  // Current wasm threads only supports sequentialy consistent atomics, but
+  // Current wasm threads only supports sequentially consistent atomics, but
   // other orderings may be added in the future. This field is reserved for
   // that, and currently set to 0.
   uint8_t order = 0;
