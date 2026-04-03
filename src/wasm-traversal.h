@@ -363,6 +363,23 @@ struct PostWalker : public Walker<SubType, VisitorType> {
     // Note that we check Visitor<..> and not VisitorType. Only Visitor is the
     // actual top type we know has empty visitors, while VisitorType could be
     // anything.
+    //
+    // Unfortunately we must avoid this in gcc 11 and earlier, as they error on
+    // these function pointers not being constexpr. Remove the constexpr there.
+    // Note that even if this ends up being a runtime check, it should be faster
+    // than pushing empty tasks, as the check is much faster than the push/pop/
+    // call, and a large number of our calls (most, perhaps) are not overridden.
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 11
+#define DELEGATE_START(id)                                                     \
+  if (&SubType::visit##id !=                                                   \
+                  &Visitor<SubType,                                            \
+                           typename SubType::ReturnType>::visit##id ||         \
+                &SubType::doVisit##id !=                                       \
+                  &Walker<SubType, VisitorType>::doVisit##id) {                \
+    self->pushTask(SubType::doVisit##id, currp);                               \
+  }                                                                            \
+  [[maybe_unused]] auto* cast = curr->cast<id>();
+#else
 #define DELEGATE_START(id)                                                     \
   if constexpr (&SubType::visit##id !=                                         \
                   &Visitor<SubType,                                            \
@@ -372,6 +389,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
     self->pushTask(SubType::doVisit##id, currp);                               \
   }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
+#endif
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
