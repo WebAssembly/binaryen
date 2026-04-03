@@ -1695,6 +1695,7 @@ TEST_F(TypeTest, TestIterSubTypes) {
   HeapType A, B, C, D;
   {
     TypeBuilder builder(4);
+    builder.createRecGroup(0, 4);
     builder[0].setOpen() = Struct();
     builder[1].setOpen().subTypeOf(builder[0]) = Struct();
     builder[2].setOpen().subTypeOf(builder[0]) = Struct();
