@@ -363,6 +363,14 @@ struct TypeInfos {
     }
   }
   void note(Type type) {
+    if (type.isNumber() || type.getID() == Type::none ||
+        type.getID() == Type::unreachable) {
+      return;
+    }
+    if (type.isRef()) {
+      note(type.getHeapType());
+      return;
+    }
     for (HeapType ht : type.getHeapTypeChildren()) {
       note(ht);
     }
@@ -374,6 +382,14 @@ struct TypeInfos {
     }
   }
   void include(Type type) {
+    if (type.isNumber() || type.getID() == Type::none ||
+        type.getID() == Type::unreachable) {
+      return;
+    }
+    if (type.isRef()) {
+      include(type.getHeapType());
+      return;
+    }
     for (HeapType ht : type.getHeapTypeChildren()) {
       include(ht);
     }
