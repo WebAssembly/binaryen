@@ -1001,7 +1001,7 @@ void Inhabitator::markNullable(FieldPos field) {
       // lambdas being unable to capture structured bindings.
       const size_t index = idx;
       subtypes.iterSubTypes(
-        curr, [&](HeapType type, Index) { nullables.insert({type, index}); });
+        curr, [&](HeapType type, Index) { nullables.insert({type, index}); return true; });
       break;
   }
 }

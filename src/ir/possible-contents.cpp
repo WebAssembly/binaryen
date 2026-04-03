@@ -3282,6 +3282,7 @@ void Flower::readFromData(Type declaredType,
                            [&](HeapType type, Index depth) {
                              connectDuringFlow(DataLocation{type, fieldIndex},
                                                coneReadLocation);
+                             return true;
                            });
 
     // TODO: we can end up with redundant links here if we see one cone first
@@ -3351,6 +3352,7 @@ void Flower::writeToData(Expression* ref,
     cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
       auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
+      return true;
     });
 }
 

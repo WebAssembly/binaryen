@@ -332,27 +332,23 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // as having failed.
     auto fail = false;
     auto handleType = [&](HeapType type, Index depth) {
-      if (fail) {
-        // TODO: Add a mechanism to halt |iterSubTypes| in the middle, as once
-        //       we fail there is no point to further iterating.
-        return;
-      }
+      assert(!fail);
 
       auto iter = refTestInfos.find({type, Exact});
       if (iter == refTestInfos.end()) {
         // This type has no allocations, so we can ignore it: it is abstract.
-        return;
+        return true;
       }
 
       auto value = iter->second[index];
       if (!value.hasNoted()) {
         // Also abstract and ignorable.
-        return;
+        return true;
       }
       if (!value.isConstant()) {
         // The value here is not constant, so give up entirely.
         fail = true;
-        return;
+        return false;
       }
 
       // Consider the constant value compared to previous ones.
@@ -376,9 +372,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         // the last, we've failed to find only two values.
         if (i == 1) {
           fail = true;
-          return;
+          return false;
         }
       }
+
+      return true;
     };
     subTypes.iterSubTypes(refHeapType, handleType);
 

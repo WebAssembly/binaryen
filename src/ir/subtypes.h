@@ -168,11 +168,14 @@ struct SubTypes {
 
   // Efficiently iterate on subtypes of a type, up to a particular depth (depth
   // 0 means not to traverse subtypes, etc.). The callback function receives
-  // (type, depth).
+  // (type, depth) and returns whether to continue the scan (i.e. if it returns
+  // false, we stop).
   template<typename F>
   void iterSubTypes(HeapType type, Index depth, F func) const {
     // Start by traversing the type itself.
-    func(type, 0);
+    if (!func(type, 0)) {
+      return;
+    }
 
     if (depth == 0) {
       // Nothing else to scan.
@@ -201,7 +204,9 @@ struct SubTypes {
       auto& currVec = *item.vec;
       assert(currDepth <= depth);
       for (auto type : currVec) {
-        func(type, currDepth);
+        if (!func(type, currDepth)) {
+          return;
+        }
         auto* subVec = &getImmediateSubTypes(type);
         if (currDepth + 1 <= depth && !subVec->empty()) {
           work.push_back({subVec, currDepth + 1});

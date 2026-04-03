@@ -496,6 +496,7 @@ struct Analyzer {
           }
         }
         unreadStructFieldExprMap.erase(subStructField);
+        return true;
       });
     }
   }
