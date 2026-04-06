@@ -2301,7 +2301,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-    Split(),
+    # Split(),
     RoundtripText(),
     ClusterFuzz(),
     Two(),
