@@ -328,31 +328,23 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     } values[2];
 
     // Handle one of the subtypes of the relevant type. We check what value it
-    // has for the field, and update |values|. If we hit a problem, we mark us
-    // as having failed.
-    auto fail = false;
+    // has for the field, and update |values|. If we hit a problem, we stop
+    // early.
     auto handleType = [&](HeapType type, Index depth) {
-      if (fail) {
-        // TODO: Add a mechanism to halt |iterSubTypes| in the middle, as once
-        //       we fail there is no point to further iterating.
-        return;
-      }
-
       auto iter = refTestInfos.find({type, Exact});
       if (iter == refTestInfos.end()) {
         // This type has no allocations, so we can ignore it: it is abstract.
-        return;
+        return true;
       }
 
       auto value = iter->second[index];
       if (!value.hasNoted()) {
         // Also abstract and ignorable.
-        return;
+        return true;
       }
       if (!value.isConstant()) {
         // The value here is not constant, so give up entirely.
-        fail = true;
-        return;
+        return false;
       }
 
       // Consider the constant value compared to previous ones.
@@ -375,14 +367,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         // least, we can do that if there is another iteration: If it's already
         // the last, we've failed to find only two values.
         if (i == 1) {
-          fail = true;
-          return;
+          return false;
         }
       }
-    };
-    subTypes.iterSubTypes(refHeapType, handleType);
 
-    if (fail) {
+      return true;
+    };
+
+    // If we stopped early, we hit a problem and failed.
+    if (!subTypes.iterSubTypes(refHeapType, handleType)) {
       return;
     }
 
@@ -677,6 +670,7 @@ struct ConstantFieldPropagation : public Pass {
           if (readable[{sub, Exact}][dst.index].combine(val)) {
             applyCopiesFrom(sub, Exact, dst.index, val);
           }
+          return true;
         });
       } else {
         // The copy destination is exact, so there are no subtypes to
