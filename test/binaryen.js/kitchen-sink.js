@@ -1195,9 +1195,9 @@ function test_for_each() {
   ], false);
   assert(module.getDataSegment(expected_names[0]) !== 0);
   assert(module.getDataSegment("NonExistantSegment") === 0);
-  for (i = 0; i < module.getNumMemorySegments(); i++) {
+  for (i = 0; i < module.getNumDataSegments(); i++) {
     var segment = module.getDataSegmentByIndex(i);
-    var info = module.getMemorySegmentInfo(segment);
+    var info = module.getDataSegmentInfo(segment);
     assert(expected_names[i] === info.name);
     assert(expected_offsets[i] === info.offset);
     var data8 = new Uint8Array(info.data);
