@@ -29,6 +29,22 @@ namespace wasm {
 
 namespace {
 
+// template <std::derived_from<Named> T>
+struct HashNamed {
+  std::size_t operator()(const Named& named) const {
+    return std::hash<Name>{}(named.name);
+  }
+};
+
+struct EqNamed {
+  bool operator()(const Named& a, const Named& b) const {
+    return a.name == b.name;
+  }
+};
+
+template<std::derived_from<Named> T>
+using NamedSet = std::unordered_set<T, HashNamed, EqNamed>;
+
 struct FuncInfo {
   // Effects in this function.
   std::optional<EffectAnalyzer> effects;
@@ -100,8 +116,8 @@ struct GenerateGlobalEffects : public Pass {
 
     // indirect calls that directly appear in the given type.
     // Later we will compute a transitive closure of this.
-    std::unordered_map<HeapType, std::unordered_set<HeapType>>
-      indirectCallTypes;
+
+    std::unordered_map<Name, std::unordered_set<HeapType>> indirectCallTypes;
 
     ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
       *module, [&](Function* func, FuncInfo& funcInfo) {
@@ -132,15 +148,14 @@ struct GenerateGlobalEffects : public Pass {
             Module& wasm;
             PassOptions& options;
             FuncInfo& funcInfo;
-            std::unordered_map<HeapType, std::unordered_set<HeapType>>&
+            std::unordered_map<Name, std::unordered_set<HeapType>>&
               indirectCallTypes;
 
-            CallScanner(
-              Module& wasm,
-              PassOptions& options,
-              FuncInfo& funcInfo,
-              std::unordered_map<HeapType, std::unordered_set<HeapType>>&
-                indirectCallTypes)
+            CallScanner(Module& wasm,
+                        PassOptions& options,
+                        FuncInfo& funcInfo,
+                        std::unordered_map<Name, std::unordered_set<HeapType>>&
+                          indirectCallTypes)
               : wasm(wasm), options(options), funcInfo(funcInfo),
                 indirectCallTypes(indirectCallTypes) {}
 
@@ -159,10 +174,12 @@ struct GenerateGlobalEffects : public Pass {
                   assert(false && "Unexpected type of call");
                 }
 
-                indirectCallTypes[getFunction()->type.getHeapType()].insert(
-                  type);
-                // funcInfo.indirectCalledTypes.insert(type);
-                // funcInfo.effects.reset();
+                indirectCallTypes[getFunction()->name].insert(type);
+                // TODO
+                // callersForIndirectType[getFunction()->type.getHeapType()].insert(
+                //   *function);
+                // callersForIndirectType[getFunction()->type.getHeapType()].insert(
+                //   *function);
               } else {
                 // No call here, but update throwing if we see it. (Only do so,
                 // however, if we have effects; if we cleared it - see before -
@@ -188,14 +205,31 @@ struct GenerateGlobalEffects : public Pass {
     //
     auto callers = transitiveCallers(*module, analysis.map);
 
-    // Like above, for a function of a given type, what are the types of
-    // indirect calls that may end up (transitively) calling it?
+    std::unordered_map<HeapType, std::unordered_set<Name>> functionsWithType;
+    for (auto& func : module->functions) {
+      functionsWithType[func->type.getHeapType()].insert(func->name);
+    }
+
+    // Like above, for a function of a given type, what are the functions that
+    // may end up (transitively) calling it?
     // TODO
-    std::unordered_map<HeapType, std::unordered_set<HeapType>>
-      transitiveIndirectCallTypes;
-    for (auto& [caller, callees] : indirectCallTypes) {
+
+    // auto indirectCallers = transitiveCallers(*module)
+    std::unordered_map<Name, std::unordered_set<Name>> transitiveIndirectCalls;
+    for (auto& [caller, calleeTypes] : indirectCallTypes) {
+      for (auto calleeType : calleeTypes) {
+        for (auto function : functionsWithType[calleeType]) {
+          transitiveIndirectCalls[caller].insert(function);
+        }
+        // transitiveIndirectCallTypes[callee.type.getHeapType()].insert(caller);
+      }
+    }
+
+    std::unordered_map<Name, std::unordered_set<Name>>
+      transitiveIndirectCallees;
+    for (auto& [caller, callees] : transitiveIndirectCalls) {
       for (auto callee : callees) {
-        transitiveIndirectCallTypes[callee].insert(caller);
+        transitiveIndirectCallees[callee].insert(caller);
       }
     }
 
@@ -233,30 +267,51 @@ struct GenerateGlobalEffects : public Pass {
         callerEffects->mergeIn(*funcEffects);
       }
 
-      const auto& calleeTypes =
-        transitiveIndirectCallTypes[module->getFunction(func->name)
-                                      ->type.getHeapType()];
+      // const auto& calleeTypes =
+      //   transitiveIndirectCallTypes[module->getFunction(func->name)
+      //                                 ->type.getHeapType()];
       // We don't know effects for imports?
       // TODO: double-check on how this should be handled
 
-      // Also, this is maybe too conservative. We might add effects to functions that don't indirect call at all!
-      // They might just happen to share a type with another function that does indirect call.
-      // I think we can just change some of the usages of HeapType to Name and it will work out.
+      // Also, this is maybe too conservative. We might add effects to functions
+      // that don't indirect call at all! They might just happen to share a type
+      // with another function that does indirect call. I think we can just
+      // change some of the usages of HeapType to Name and it will work out.
 
-      std::cout << "func type " << func->type << "\n";
-      for (const HeapType calleeType : calleeTypes) {
-        std::cout << "calleeType " << calleeType << "\n";
-        ModuleUtils::iterDefinedFunctions(*module, [&](Function* indirectCallee) {
-          if (HeapType::isSubType(indirectCallee->type.getHeapType(), calleeType)) {
-            if (!funcEffects) analysis.map[func].effects.reset();
-            if (!analysis.map[func].effects || !funcEffects) return;
-            // if (!indirectCallee->effects) return;
+      // std::cout << "func type " << func->type << "\n";
+      // for (const HeapType calleeType : calleeTypes) {
+      //   std::cout << "calleeType " << calleeType << "\n";
+      //   ModuleUtils::iterDefinedFunctions(*module, [&](Function*
+      //   indirectCallee) {
+      //     if (HeapType::isSubType(indirectCallee->type.getHeapType(),
+      //     calleeType)) {
+      //       if (!funcEffects) analysis.map[func].effects.reset();
+      //       if (!analysis.map[func].effects || !funcEffects) return;
+      //       // if (!indirectCallee->effects) return;
 
-            // analysis.map[func].effects->mergeIn(*funcEffects);
-            if (!indirectCallee->effects) return;
-            analysis.map[func].effects->mergeIn(*indirectCallee->effects);
-          }
-        });
+      //       // analysis.map[func].effects->mergeIn(*funcEffects);
+      //       if (!indirectCallee->effects) return;
+      //       analysis.map[func].effects->mergeIn(*indirectCallee->effects);
+      //     }
+      //   });
+      // }
+
+      for (auto caller : transitiveIndirectCallees[func->name]) {
+        auto& callerEffects = analysis.map[module->getFunction(caller)].effects;
+        if (!callerEffects) {
+          // Nothing is known for the caller, which is already the worst case.
+          continue;
+        }
+
+        if (!funcEffects) {
+          // Nothing is known for the called function, which means nothing is
+          // known for the caller either.
+          callerEffects.reset();
+          continue;
+        }
+
+        // Add func's effects to the caller.
+        callerEffects->mergeIn(*funcEffects);
       }
     }
 
