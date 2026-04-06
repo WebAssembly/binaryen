@@ -48,6 +48,9 @@
   )
 
   ;; CHECK:      (func $f (type $3) (param $ref (ref $nopType)) (result i32)
+  ;; CHECK-NEXT:  (call $calls-nop-via-ref
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $f (param $ref (ref $nopType)) (result i32)
