@@ -1021,6 +1021,9 @@ BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
 BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
   return PromoteLowVecF32x4ToVecF64x2;
 }
+BinaryenOp BinaryenPromoteLowVecF16x8ToVecF32x4(void) {
+  return PromoteLowVecF16x8ToVecF32x4;
+}
 BinaryenOp BinaryenRelaxedTruncSVecF32x4ToVecI32x4(void) {
   return RelaxedTruncSVecF32x4ToVecI32x4;
 }

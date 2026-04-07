@@ -447,6 +447,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case TruncSatUVecF16x8ToVecI16x8:
       case ConvertSVecI16x8ToVecF16x8:
       case ConvertUVecI16x8ToVecF16x8:
+      case PromoteLowVecF16x8ToVecF32x4:
       case AnyTrueVec128:
       case AllTrueVecI8x16:
       case AllTrueVecI16x8:

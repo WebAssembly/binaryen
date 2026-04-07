@@ -4474,6 +4474,8 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeUnary(ConvertSVecI16x8ToVecF16x8);
         case BinaryConsts::F16x8ConvertI16x8U:
           return builder.makeUnary(ConvertUVecI16x8ToVecF16x8);
+        case BinaryConsts::F32x4PromoteLowF16x8:
+          return builder.makeUnary(PromoteLowVecF16x8ToVecF32x4);
         case BinaryConsts::I8x16ExtractLaneS:
           return builder.makeSIMDExtract(ExtractLaneSVecI8x16,
                                          getLaneIndex(16));

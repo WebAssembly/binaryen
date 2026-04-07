@@ -1401,6 +1401,9 @@ struct PrintExpressionContents
       case ConvertUVecI16x8ToVecF16x8:
         o << "f16x8.convert_i16x8_u";
         break;
+      case PromoteLowVecF16x8ToVecF32x4:
+        o << "f32x4.promote_low_f16x8";
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
     }
