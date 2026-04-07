@@ -714,6 +714,7 @@ void Unary::finalize() {
     case TruncSatUVecF16x8ToVecI16x8:
     case ConvertSVecI16x8ToVecF16x8:
     case ConvertUVecI16x8ToVecF16x8:
+    case PromoteLowVecF16x8ToVecF32x4:
       type = Type::v128;
       break;
     case AnyTrueVec128:

@@ -549,6 +549,7 @@ instructions = [
     ("i16x8.trunc_sat_f16x8_u",  "makeUnary(UnaryOp::TruncSatUVecF16x8ToVecI16x8)"),
     ("f16x8.convert_i16x8_s",    "makeUnary(UnaryOp::ConvertSVecI16x8ToVecF16x8)"),
     ("f16x8.convert_i16x8_u",    "makeUnary(UnaryOp::ConvertUVecI16x8ToVecF16x8)"),
+    ("f32x4.promote_low_f16x8",  "makeUnary(UnaryOp::PromoteLowVecF16x8ToVecF32x4)"),
     ("f16x8.madd",               "makeSIMDTernary(SIMDTernaryOp::MaddVecF16x8)"),
     ("f16x8.nmadd",              "makeSIMDTernary(SIMDTernaryOp::NmaddVecF16x8)"),
 

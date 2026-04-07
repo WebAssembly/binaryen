@@ -1459,6 +1459,10 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F16x8ConvertI16x8U);
       break;
+    case PromoteLowVecF16x8ToVecF32x4:
+      o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4PromoteLowF16x8);
+      break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
   }

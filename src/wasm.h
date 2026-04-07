@@ -251,6 +251,7 @@ enum UnaryOp {
   TruncSatUVecF16x8ToVecI16x8,
   ConvertSVecI16x8ToVecF16x8,
   ConvertUVecI16x8ToVecF16x8,
+  PromoteLowVecF16x8ToVecF32x4,
 
   InvalidUnary
 };
