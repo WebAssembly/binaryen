@@ -39,6 +39,8 @@
   (func (export "f16x8.convert_i16x8_s") (param $0 v128) (result v128) (f16x8.convert_i16x8_s (local.get $0)))
   (func (export "f16x8.convert_i16x8_u") (param $0 v128) (result v128) (f16x8.convert_i16x8_u (local.get $0)))
   (func (export "f32x4.promote_low_f16x8") (param $0 v128) (result v128) (f32x4.promote_low_f16x8 (local.get $0)))
+  (func (export "f16x8.demote_f32x4_zero") (param $0 v128) (result v128) (f16x8.demote_f32x4_zero (local.get $0)))
+  (func (export "f16x8.demote_f64x2_zero") (param $0 v128) (result v128) (f16x8.demote_f64x2_zero (local.get $0)))
   ;; Multiple operation tests:
   (func (export "splat_replace") (result v128) (f16x8.replace_lane 0 (f16x8.splat (f32.const 1)) (f32.const 99))
  )
@@ -268,3 +270,55 @@
     (v128.const i16x8 0x0001 0      0 0 0 0 0 0))
     ;;                2^-24
     (v128.const i32x4 0x33800000 0      0 0))
+
+(assert_return (invoke "f16x8.demote_f32x4_zero"
+    ;;                1.0        2.0        3.0        4.0
+    (v128.const i32x4 0x3f800000 0x40000000 0x40400000 0x40800000))
+    ;;                1.0    2.0    3.0    4.0    0 0 0 0
+    (v128.const i16x8 0x3c00 0x4000 0x4200 0x4400 0 0 0 0))
+
+(assert_return (invoke "f16x8.demote_f64x2_zero"
+    ;;                1.0                2.0
+    (v128.const i64x2 0x3ff0000000000000 0x4000000000000000))
+    ;;                1.0    2.0    0 0 0 0 0 0
+    (v128.const i16x8 0x3c00 0x4000 0 0 0 0 0 0))
+
+;; Edge cases: Infinities, NaNs, Zeros
+(assert_return (invoke "f16x8.demote_f32x4_zero"
+    ;;                inf        -inf       nan        -0.0
+    (v128.const i32x4 0x7f800000 0xff800000 0x7fc00000 0x80000000))
+    ;;                inf    -inf   nan    -0.0   0 0 0 0
+    (v128.const i16x8 0x7c00 0xfc00 0x7e00 0x8000 0 0 0 0))
+
+;; Edge cases: Overflow
+(assert_return (invoke "f16x8.demote_f32x4_zero"
+    ;;                1e5        -1e5       65504      -65504
+    (v128.const i32x4 0x47c35000 0xc7c35000 0x477fe000 0xc77fe000))
+    ;;                inf    -inf   65504  -65504 0 0 0 0
+    (v128.const i16x8 0x7c00 0xfc00 0x7bff 0xfbff 0 0 0 0))
+
+;; Edge cases: Infinities, NaNs, Zeros
+(assert_return (invoke "f16x8.demote_f64x2_zero"
+    ;;                inf                -inf
+    (v128.const i64x2 0x7ff0000000000000 0xfff0000000000000))
+    ;;                inf    -inf   0 0 0 0 0 0
+    (v128.const i16x8 0x7c00 0xfc00 0 0 0 0 0 0))
+
+(assert_return (invoke "f16x8.demote_f64x2_zero"
+    ;;                nan                -0.0
+    (v128.const i64x2 0x7ff8000000000000 0x8000000000000000))
+    ;;                nan    -0.0   0 0 0 0 0 0
+    (v128.const i16x8 0x7e00 0x8000 0 0 0 0 0 0))
+
+;; Edge cases: Overflow
+(assert_return (invoke "f16x8.demote_f64x2_zero"
+    ;;                1e5                -1e5
+    (v128.const i64x2 0x40f86a0000000000 0xc0f86a0000000000))
+    ;;                inf    -inf   0 0 0 0 0 0
+    (v128.const i16x8 0x7c00 0xfc00 0 0 0 0 0 0))
+
+(assert_return (invoke "f16x8.demote_f64x2_zero"
+    ;;                65504              -65504
+    (v128.const i64x2 0x40effc0000000000 0xc0effc0000000000))
+    ;;                65504  -65504 0 0 0 0 0 0
+    (v128.const i16x8 0x7bff 0xfbff 0 0 0 0 0 0))

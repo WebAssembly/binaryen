@@ -505,12 +505,34 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
-          case 'd':
-            if (op == "f16x8.div"sv) {
-              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::DivVecF16x8));
-              return Ok{};
+          case 'd': {
+            switch (buf[7]) {
+              case 'e': {
+                switch (buf[14]) {
+                  case '3':
+                    if (op == "f16x8.demote_f32x4_zero"sv) {
+                      CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::DemoteZeroVecF32x4ToVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case '6':
+                    if (op == "f16x8.demote_f64x2_zero"sv) {
+                      CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::DemoteZeroVecF64x2ToVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'i':
+                if (op == "f16x8.div"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::DivVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 'e': {
             switch (buf[7]) {
               case 'q':

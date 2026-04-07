@@ -285,6 +285,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case ConvertSVecI16x8ToVecF16x8:
       case ConvertUVecI16x8ToVecF16x8:
       case PromoteLowVecF16x8ToVecF32x4:
+      case DemoteZeroVecF32x4ToVecF16x8:
+      case DemoteZeroVecF64x2ToVecF16x8:
         ret = 1;
         break;
       case InvalidUnary:

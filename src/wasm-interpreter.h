@@ -1166,6 +1166,10 @@ public:
         return value.convertUToF16x8();
       case PromoteLowVecF16x8ToVecF32x4:
         return value.promoteLowF16x8ToF32x4();
+      case DemoteZeroVecF32x4ToVecF16x8:
+        return value.demoteZeroF32x4ToF16x8();
+      case DemoteZeroVecF64x2ToVecF16x8:
+        return value.demoteZeroF64x2ToF16x8();
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }

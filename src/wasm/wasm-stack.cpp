@@ -1459,6 +1459,14 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F16x8ConvertI16x8U);
       break;
+    case DemoteZeroVecF32x4ToVecF16x8:
+      o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F16x8DemoteF32x4Zero);
+      break;
+    case DemoteZeroVecF64x2ToVecF16x8:
+      o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F16x8DemoteF64x2Zero);
+      break;
     case PromoteLowVecF16x8ToVecF32x4:
       o << static_cast<int8_t>(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F32x4PromoteLowF16x8);

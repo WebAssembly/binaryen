@@ -1404,6 +1404,12 @@ struct PrintExpressionContents
       case PromoteLowVecF16x8ToVecF32x4:
         o << "f32x4.promote_low_f16x8";
         break;
+      case DemoteZeroVecF32x4ToVecF16x8:
+        o << "f16x8.demote_f32x4_zero";
+        break;
+      case DemoteZeroVecF64x2ToVecF16x8:
+        o << "f16x8.demote_f64x2_zero";
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
     }
