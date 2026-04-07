@@ -45,7 +45,7 @@ inline bool hasPossibleJSPrototypeField(HeapType type) {
 
 // Calls flowIn and flowOut on all types that may flow in from or out to JS.
 template<typename In, typename Out>
-void iterJSInterface(Module& wasm, In flowIn, Out flowOut) {
+void iterJSInterface(const Module& wasm, In flowIn, Out flowOut) {
   // @binaryen.js.called functions are called from JS. Their parameters flow
   // in from JS and their results flow back out.
   for (auto f : Intrinsics(wasm).getJSCalledFunctions()) {

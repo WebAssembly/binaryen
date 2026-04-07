@@ -645,7 +645,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
   }
 
-  void analyzeJSInterface(Module& wasm) {
+  void analyzeJSInterface(const Module& wasm) {
     if (!wasm.features.hasCustomDescriptors()) {
       return;
     }
