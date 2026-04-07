@@ -344,7 +344,7 @@ private:
 };
 
 // Define which expression classes are leaves. We can handle them more
-// optimally below. The accuracy of this list is tested in XXX
+// optimally below. The accuracy of this list is tested in leaves.cpp.
 template<typename T> struct IsLeaf : std::false_type {};
 
 template<> struct IsLeaf<LocalGet> : std::true_type {};
@@ -391,7 +391,9 @@ struct PostWalker : public Walker<SubType, VisitorType> {
     // than pushing empty tasks, as the check is much faster than the push/pop/
     // call, and a large number of our calls (most, perhaps) are not overridden.
     //
-    // Likewise, just visit TODO comment + test
+    // If we do *not* have an empty visitor, we can still optimize in the case
+    // of a leaf: leaves have no children, so we can just call doVisit* rather
+    // than push that task, pop it later, and call that.
 #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 11
 #define DELEGATE_START(id)                                                     \
   if (&SubType::visit##id !=                                                   \
