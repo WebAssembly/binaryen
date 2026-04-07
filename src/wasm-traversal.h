@@ -343,6 +343,28 @@ private:
   Module* currModule = nullptr;     // current module being processed
 };
 
+// Define which expression classes are leaves. We can handle them more
+// optimally below. The accuracy of this list is tested in XXX
+template <typename T>
+struct IsLeaf : std::false_type {};
+
+template <> struct IsLeaf<LocalGet> : std::true_type {};
+template <> struct IsLeaf<GlobalGet> : std::true_type {};
+template <> struct IsLeaf<AtomicFence> : std::true_type {};
+template <> struct IsLeaf<Pause> : std::true_type {};
+template <> struct IsLeaf<DataDrop> : std::true_type {};
+template <> struct IsLeaf<Const> : std::true_type {};
+template <> struct IsLeaf<MemorySize> : std::true_type {};
+template <> struct IsLeaf<RefNull> : std::true_type {};
+template <> struct IsLeaf<RefFunc> : std::true_type {};
+template <> struct IsLeaf<TableSize> : std::true_type {};
+template <> struct IsLeaf<ElemDrop> : std::true_type {};
+template <> struct IsLeaf<Rethrow> : std::true_type {};
+template <> struct IsLeaf<Nop> : std::true_type {};
+template <> struct IsLeaf<Unreachable> : std::true_type {};
+template <> struct IsLeaf<Pop> : std::true_type {};
+template <> struct IsLeaf<StringConst> : std::true_type {};
+
 // Walks in post-order, i.e., children first. When there isn't an obvious
 // order to operands, we follow them in order of execution.
 
@@ -369,6 +391,8 @@ struct PostWalker : public Walker<SubType, VisitorType> {
     // Note that even if this ends up being a runtime check, it should be faster
     // than pushing empty tasks, as the check is much faster than the push/pop/
     // call, and a large number of our calls (most, perhaps) are not overridden.
+    //
+    // Likewise, just visit TODO comment + test
 #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 11
 #define DELEGATE_START(id)                                                     \
   if (&SubType::visit##id !=                                                   \
@@ -377,17 +401,21 @@ struct PostWalker : public Walker<SubType, VisitorType> {
     self->pushTask(SubType::doVisit##id, currp);                               \
   }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
-#else
+#else // constexpr
 #define DELEGATE_START(id)                                                     \
   if constexpr (&SubType::visit##id !=                                         \
                   &Visitor<SubType,                                            \
                            typename SubType::ReturnType>::visit##id ||         \
                 &SubType::doVisit##id !=                                       \
                   &Walker<SubType, VisitorType>::doVisit##id) {                \
-    self->pushTask(SubType::doVisit##id, currp);                               \
-  }                                                                            \
+    if constexpr (IsLeaf<id>::value &&   &SubType::scan == &PostWalker<SubType, VisitorType>::scan  ) {                           \
+      SubType::doVisit##id(self, currp);       \
+    } else { \
+      self->pushTask(SubType::doVisit##id, currp);                             \
+    } \
+  } \
   [[maybe_unused]] auto* cast = curr->cast<id>();
-#endif
+#endif // constexpr
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
