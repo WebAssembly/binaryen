@@ -363,8 +363,15 @@ struct TypeInfos {
     }
   }
   void note(Type type) {
-    for (HeapType ht : type.getHeapTypeChildren()) {
-      note(ht);
+    // Handle the common case of a ref directly, to avoid a scan of children.
+    if (type.isRef()) {
+      note(type.getHeapType());
+      return;
+    }
+    if (type.isTuple()) {
+      for (HeapType ht : type.getHeapTypeChildren()) {
+        note(ht);
+      }
     }
   }
   // Ensure a type is included without increasing its count.
@@ -374,8 +381,14 @@ struct TypeInfos {
     }
   }
   void include(Type type) {
-    for (HeapType ht : type.getHeapTypeChildren()) {
-      include(ht);
+    if (type.isRef()) {
+      include(type.getHeapType());
+      return;
+    }
+    if (type.isTuple()) {
+      for (HeapType ht : type.getHeapTypeChildren()) {
+        include(ht);
+      }
     }
   }
   void noteControlFlow(Signature sig) {
