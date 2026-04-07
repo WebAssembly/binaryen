@@ -26,24 +26,26 @@ TEST_F(LeavesTest, Automatic) {
   // Count total expression classes and total with children.
   size_t total = 0, totalWithChildren = 0;
 
-#define DELEGATE_START(id)                                                     \
-  bool hasChildren = false;
+#define DELEGATE_FIELD_CASE_START(id)                                                     \
+  { \
+    bool hasChildren = false;
 
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
-  hasChildren = true;
+    hasChildren = true;
 
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  hasChildren = true;
+    hasChildren = true;
 
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
-  hasChildren = true;
+    hasChildren = true;
 
   // Verify that IsLeaf has the right value.
-#define DELEGATE_END(id)                                                       \
-  EXPECT_EQ(IsLeaf<id>::value, hasChildren); \
-  total++; \
-  if (hasChildren) { \
-    totalWithChildren++; \
+#define DELEGATE_FIELD_CASE_END(id)                                                       \
+    EXPECT_EQ(IsLeaf<id>::value, !hasChildren); \
+    total++; \
+    if (hasChildren) { \
+      totalWithChildren++; \
+    } \
   }
 
 #define DELEGATE_FIELD_INT(id, field)
@@ -60,6 +62,9 @@ TEST_F(LeavesTest, Automatic) {
 #define DELEGATE_FIELD_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+
+#define DELEGATE_FIELD_MAIN_START
+#define DELEGATE_FIELD_MAIN_END
 
 #include "wasm-delegations-fields.def"
 
