@@ -12,6 +12,7 @@ set(unittest_SOURCES
   dataflow.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
+  execution-results.cpp
   glbs.cpp
   interpreter.cpp
   intervals.cpp
