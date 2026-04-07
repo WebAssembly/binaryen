@@ -1,5 +1,5 @@
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 #include "gtest/gtest.h"
 
@@ -26,26 +26,23 @@ TEST_F(LeavesTest, Automatic) {
   // Count total expression classes and total with children.
   size_t total = 0, totalWithChildren = 0;
 
-#define DELEGATE_FIELD_CASE_START(id)                                                     \
-  { \
+#define DELEGATE_FIELD_CASE_START(id)                                          \
+  {                                                                            \
     bool hasChildren = false;
 
-#define DELEGATE_FIELD_CHILD(id, field)                                        \
-    hasChildren = true;
+#define DELEGATE_FIELD_CHILD(id, field) hasChildren = true;
 
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-    hasChildren = true;
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field) hasChildren = true;
 
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
-    hasChildren = true;
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field) hasChildren = true;
 
   // Verify that IsLeaf has the right value.
-#define DELEGATE_FIELD_CASE_END(id)                                                       \
-    EXPECT_EQ(IsLeaf<id>::value, !hasChildren); \
-    total++; \
-    if (hasChildren) { \
-      totalWithChildren++; \
-    } \
+#define DELEGATE_FIELD_CASE_END(id)                                            \
+  EXPECT_EQ(IsLeaf<id>::value, !hasChildren);                                  \
+  total++;                                                                     \
+  if (hasChildren) {                                                           \
+    totalWithChildren++;                                                       \
+  }                                                                            \
   }
 
 #define DELEGATE_FIELD_INT(id, field)
