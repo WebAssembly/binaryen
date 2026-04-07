@@ -38,11 +38,11 @@ TEST_F(LeavesTest, Automatic) {
 
   // Verify that IsLeaf has the right value.
 #define DELEGATE_FIELD_CASE_END(id)                                            \
-    EXPECT_EQ(IsLeaf<id>::value, !hasChildren);                                \
-    total++;                                                                   \
-    if (hasChildren) {                                                         \
-      totalWithChildren++;                                                     \
-    }                                                                          \
+  EXPECT_EQ(IsLeaf<id>::value, !hasChildren);                                  \
+  total++;                                                                     \
+  if (hasChildren) {                                                           \
+    totalWithChildren++;                                                       \
+  }                                                                            \
   }
 
 #define DELEGATE_FIELD_INT(id, field)
