@@ -32,7 +32,7 @@ namespace wasm {
 
 class EffectAnalyzer {
 public:
-  EffectAnalyzer(const PassOptions& passOptions, Module& module)
+  EffectAnalyzer(const PassOptions& passOptions, const Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen), branchesOut(false),
       calls(false), readsMemory(false), writesMemory(false),
@@ -46,7 +46,7 @@ public:
       features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module,
+                 const Module& module,
                  Expression* ast)
     : EffectAnalyzer(passOptions, module) {
     walk(ast);
@@ -136,7 +136,7 @@ public:
   // more here.)
   bool hasReturnCallThrow : 1;
 
-  Module& module;
+  const Module& module;
   FeatureSet features;
 
   std::set<Index> localsRead;
