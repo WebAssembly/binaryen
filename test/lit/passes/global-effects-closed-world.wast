@@ -13,16 +13,17 @@
   ;; CHECK:      (type $sub (sub $super (struct)))
   (type $sub (sub $super (struct)))
 
-  ;; CHECK:      (type $func-with-sub-param (func (param (ref $sub))))
+  ;; CHECK:      (type $func-with-sub-param (sub (func (param (ref $sub)))))
 
   ;; CHECK:      (type $uninhabited (func (param f32)))
   (type $uninhabited (func (param f32)))
 
   ;; Subtype
-  ;; CHECK:      (type $func-with-super-param (func (param (ref $super))))
-  (type $func-with-super-param (func (param (ref $super))))
-  ;; Supertype
-  (type $func-with-sub-param (func (param (ref $sub))))
+  (type $func-with-sub-param (sub (func (param (ref $sub)))))
+
+  ;; Subtype
+  ;; CHECK:      (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
+  (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
 
   ;; CHECK:      (global $g (mut i32) (i32.const 0))
   (global $g (mut i32) (i32.const 0))

@@ -23,6 +23,7 @@
 
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
@@ -117,8 +118,15 @@ std::unordered_map<HeapType, std::unordered_set<Name>>
 typeToFunctionNames(const Module& module) {
   std::unordered_map<HeapType, std::unordered_set<Name>> ret;
 
+  // TODO
+  SubTypes s(*const_cast<Module*>(&module));
+
   for (const auto& func : module.functions) {
-    ret[func->type.getHeapType()].insert(func->name);
+    s.iterSubTypes(func->type.getHeapType(), [&ret, &func](HeapType type, int _) {
+      std::cout<<"subtype "<< func->type.getHeapType() << " " << type<< "\n";
+      ret[type].insert(func->name);
+    });
+    // ret[func->type.getHeapType()].insert(func->name);
   }
 
   return ret;
@@ -166,13 +174,6 @@ transitiveClosure(const Module& module,
     //   caller => called => called by called
     //
     auto it = funcInfos.find(module.getFunction(called));
-
-    // TODO: this should never be missing?
-    if (it == funcInfos.end()) {
-      std::cout << "missing key " << called << "\n";
-      throw(1);
-      // assert(false && ("missing key " + called));
-    }
     auto& calledInfo = it->second;
     // auto& calledInfo = funcInfos.at(module.getFunction(called));
     for (auto calledByCalled : calledInfo.calledFunctions) {
@@ -225,11 +226,6 @@ struct GenerateGlobalEffects : public Pass {
     for (auto& [func, info] : funcInfos) {
       indirectCallersNonTransitive[func->name];
       for (auto& calledType : info.indirectCalledTypes) {
-        // auto asdf = functionsWithType.at(calledType);
-        // auto foo = indirectCallersNonTransitive[func->name];
-        // asdf.merge(foo);
-        // foo.merge(asdf);
-
         if (auto it = functionsWithType.find(calledType);
             it != functionsWithType.end()) {
           indirectCallersNonTransitive[func->name].insert(it->second.begin(),
