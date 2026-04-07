@@ -345,25 +345,24 @@ private:
 
 // Define which expression classes are leaves. We can handle them more
 // optimally below. The accuracy of this list is tested in XXX
-template <typename T>
-struct IsLeaf : std::false_type {};
+template<typename T> struct IsLeaf : std::false_type {};
 
-template <> struct IsLeaf<LocalGet> : std::true_type {};
-template <> struct IsLeaf<GlobalGet> : std::true_type {};
-template <> struct IsLeaf<AtomicFence> : std::true_type {};
-template <> struct IsLeaf<Pause> : std::true_type {};
-template <> struct IsLeaf<DataDrop> : std::true_type {};
-template <> struct IsLeaf<Const> : std::true_type {};
-template <> struct IsLeaf<MemorySize> : std::true_type {};
-template <> struct IsLeaf<RefNull> : std::true_type {};
-template <> struct IsLeaf<RefFunc> : std::true_type {};
-template <> struct IsLeaf<TableSize> : std::true_type {};
-template <> struct IsLeaf<ElemDrop> : std::true_type {};
-template <> struct IsLeaf<Rethrow> : std::true_type {};
-template <> struct IsLeaf<Nop> : std::true_type {};
-template <> struct IsLeaf<Unreachable> : std::true_type {};
-template <> struct IsLeaf<Pop> : std::true_type {};
-template <> struct IsLeaf<StringConst> : std::true_type {};
+template<> struct IsLeaf<LocalGet> : std::true_type {};
+template<> struct IsLeaf<GlobalGet> : std::true_type {};
+template<> struct IsLeaf<AtomicFence> : std::true_type {};
+template<> struct IsLeaf<Pause> : std::true_type {};
+template<> struct IsLeaf<DataDrop> : std::true_type {};
+template<> struct IsLeaf<Const> : std::true_type {};
+template<> struct IsLeaf<MemorySize> : std::true_type {};
+template<> struct IsLeaf<RefNull> : std::true_type {};
+template<> struct IsLeaf<RefFunc> : std::true_type {};
+template<> struct IsLeaf<TableSize> : std::true_type {};
+template<> struct IsLeaf<ElemDrop> : std::true_type {};
+template<> struct IsLeaf<Rethrow> : std::true_type {};
+template<> struct IsLeaf<Nop> : std::true_type {};
+template<> struct IsLeaf<Unreachable> : std::true_type {};
+template<> struct IsLeaf<Pop> : std::true_type {};
+template<> struct IsLeaf<StringConst> : std::true_type {};
 
 // Walks in post-order, i.e., children first. When there isn't an obvious
 // order to operands, we follow them in order of execution.
@@ -408,12 +407,13 @@ struct PostWalker : public Walker<SubType, VisitorType> {
                            typename SubType::ReturnType>::visit##id ||         \
                 &SubType::doVisit##id !=                                       \
                   &Walker<SubType, VisitorType>::doVisit##id) {                \
-    if constexpr (IsLeaf<id>::value &&   &SubType::scan == &PostWalker<SubType, VisitorType>::scan  ) {                           \
-      SubType::doVisit##id(self, currp);       \
-    } else { \
+    if constexpr (IsLeaf<id>::value &&                                         \
+                  &SubType::scan == &PostWalker<SubType, VisitorType>::scan) { \
+      SubType::doVisit##id(self, currp);                                       \
+    } else {                                                                   \
       self->pushTask(SubType::doVisit##id, currp);                             \
-    } \
-  } \
+    }                                                                          \
+  }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
 #endif // constexpr
 
