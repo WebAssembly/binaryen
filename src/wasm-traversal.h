@@ -411,10 +411,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
                   &Walker<SubType, VisitorType>::doVisit##id) {                \
     if constexpr (IsLeaf<id>::value &&                                         \
                   &SubType::scan == &PostWalker<SubType, VisitorType>::scan) { \
-      SubType::doVisit##id(self, currp);                                       \
-    } else {                                                                   \
-      self->pushTask(SubType::doVisit##id, currp);                             \
-    }                                                                          \
+      SubType::doVisit##id(self, currp);    \
+      return;                                    \
+    } \
+    self->pushTask(SubType::doVisit##id, currp);                             \
   }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
 #endif // constexpr
