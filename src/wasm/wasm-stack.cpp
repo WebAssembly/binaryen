@@ -15,10 +15,8 @@
  */
 
 #include "wasm-stack.h"
-#include "ir/find_all.h"
 #include "ir/properties.h"
 #include "wasm-binary.h"
-#include "wasm-debug.h"
 
 namespace wasm {
 
@@ -3245,11 +3243,11 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   // Map IR (local index, tuple index) pairs to binary local indices. Since
   // locals are grouped by type, start by calculating the base indices for each
   // type.
-  std::unordered_map<Type, Index> nextFreeIndex;
+  TypeIndexMap nextFreeIndex(parent.getModule()->features);
   Index baseIndex = func->getVarIndexBase();
   for (auto& type : localTypes) {
     nextFreeIndex[type] = baseIndex;
-    baseIndex += getNumLocalsForType(type);
+    baseIndex += numLocalsByType[type];
   }
 
   // Map the IR index pairs to indices.
@@ -3267,18 +3265,12 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
 
   o << U32LEB(localTypes.size());
   for (auto& localType : localTypes) {
-    o << U32LEB(getNumLocalsForType(localType));
+    o << U32LEB(numLocalsByType[localType]);
     parent.writeType(localType);
   }
 }
 
 void BinaryInstWriter::noteLocalType(Type type, Index count) {
-  // Group locals by the type they will eventually be written out as. For
-  // example, we do not need to differentiate exact and inexact versions of the
-  // same reference type if custom descriptors is not enabled and the type will
-  // be written as inexact either way.
-  auto feats = parent.getModule()->features;
-  type = type.asWrittenGivenFeatures(feats);
   auto& num = numLocalsByType[type];
   if (num == 0) {
     localTypes.push_back(type);
@@ -3286,21 +3278,13 @@ void BinaryInstWriter::noteLocalType(Type type, Index count) {
   num += count;
 }
 
-Index BinaryInstWriter::getNumLocalsForType(Type type) {
-  auto feats = parent.getModule()->features;
-  type = type.asWrittenGivenFeatures(feats);
-  if (auto it = numLocalsByType.find(type); it != numLocalsByType.end()) {
-    return it->second;
-  }
-  return 0;
-}
-
-InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
+BinaryInstWriter::TypeIndexMap BinaryInstWriter::countScratchLocals() {
   struct ScratchLocalFinder : PostWalker<ScratchLocalFinder> {
     BinaryInstWriter& parent;
-    InsertOrderedMap<Type, Index> scratches;
+    TypeIndexMap scratches;
 
-    ScratchLocalFinder(BinaryInstWriter& parent) : parent(parent) {}
+    ScratchLocalFinder(BinaryInstWriter& parent)
+      : parent(parent), scratches(parent.parent.getModule()->features) {}
 
     void visitTupleExtract(TupleExtract* curr) {
       if (curr->type == Type::unreachable) {
