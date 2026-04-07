@@ -165,7 +165,16 @@ transitiveClosure(const Module& module,
     //
     //   caller => called => called by called
     //
-    auto& calledInfo = funcInfos.at(module.getFunction(called));
+    auto it = funcInfos.find(module.getFunction(called));
+
+    // TODO: this should never be missing?
+    if (it == funcInfos.end()) {
+      std::cout << "missing key " << called << "\n";
+      throw(1);
+      // assert(false && ("missing key " + called));
+    }
+    auto& calledInfo = it->second;
+    // auto& calledInfo = funcInfos.at(module.getFunction(called));
     for (auto calledByCalled : calledInfo.calledFunctions) {
       if (!callers[calledByCalled].contains(caller)) {
         work.push({caller, calledByCalled});
@@ -179,18 +188,17 @@ transitiveClosure(const Module& module,
 std::unordered_map<Name, std::unordered_set<Name>> transitiveClosure(
   const Module& module,
   const std::unordered_map<Name, std::unordered_set<Name>>& funcInfos) {
-  std::map<Function*, FuncInfo> other;
-  auto _ =
+  auto transformed =
     funcInfos | std::views::transform(
                   [&](const auto& pair) -> std::pair<Function*, FuncInfo> {
                     auto& [k, v] = pair;
 
-                    auto& func = module.getFunction(k);
+                    auto* func = module.getFunction(k);
                     FuncInfo info;
                     info.calledFunctions = v;
-                    return {func->name, info};
+                    return {func, info};
                   });
-
+  std::map<Function*, FuncInfo> other(transformed.begin(), transformed.end());
   return transitiveClosure(module, other);
 }
 
@@ -215,6 +223,7 @@ struct GenerateGlobalEffects : public Pass {
     std::unordered_map<Name, std::unordered_set<Name>>
       indirectCallersNonTransitive;
     for (auto& [func, info] : funcInfos) {
+      indirectCallersNonTransitive[func->name];
       for (auto& calledType : info.indirectCalledTypes) {
         // auto asdf = functionsWithType.at(calledType);
         // auto foo = indirectCallersNonTransitive[func->name];
@@ -226,17 +235,22 @@ struct GenerateGlobalEffects : public Pass {
           indirectCallersNonTransitive[func->name].insert(it->second.begin(),
                                                           it->second.end());
         }
-        // indirectCallersNonTransitive[func->name].merge(functionsWithType.at(calledType));
       }
-      // for (const auto& name : functionsWitType[])
-      // for ()
-      // info.indirectCalledTypes[func->name]
     }
 
     // indirectCallers[foo] = [func that indirect calls something with the same
     // type as foo, ..]
     const std::unordered_map<Name, std::unordered_set<Name>> indirectCallers =
       transitiveClosure(*module, indirectCallersNonTransitive);
+
+    std::cout << "indirectCallers\n";
+    for (auto [callee, callers] : indirectCallers) {
+      std::cout << callee << "\n";
+      for (auto caller : callers) {
+        std::cout << "\t" << caller << "\n";
+      }
+      std::cout << "\n";
+    }
 
     // Now that we have transitively propagated all static calls, apply that
     // information. First, apply infinite recursion: if a function can call
@@ -303,6 +317,7 @@ struct GenerateGlobalEffects : public Pass {
         continue;
       }
 
+      std::cout << func->name << " has effects " << *info.effects << "\n";
       func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
     }
   }
