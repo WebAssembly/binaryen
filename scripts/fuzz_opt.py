@@ -688,6 +688,10 @@ def get_v8_extra_flags():
     if random.random() < 0.5:
         flags += ['--wasm-assert-types']
 
+    # Some other options make sense to use sometimes.
+    if random.random() < 0.5:
+        flags += ['--no-wasm-generic-wrapper']
+
     return flags
 
 
@@ -862,8 +866,6 @@ class CompareVMs(TestCaseHandler):
 
             def run(self, wasm):
                 flags = ['--no-liftoff']
-                if random.random() < 0.5:
-                    flags += ['--no-wasm-generic-wrapper']
                 return super().run(wasm, extra_d8_flags=flags)
 
         class Wasm2C:
