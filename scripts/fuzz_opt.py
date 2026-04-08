@@ -607,7 +607,7 @@ def note_ignored_vm_run(reason, extra_text='', amount=1):
 
 
 # Run a VM command, and filter out known issues.
-def run_vm(cmd):
+def run_vm(cmd, checked=True):
     def filter_known_issues(output):
         known_issues = [
             # can be caused by flatten, ssa, etc. passes
@@ -650,7 +650,11 @@ def run_vm(cmd):
 
     try:
         # some known issues do not cause the entire process to fail
-        return filter_known_issues(run(cmd))
+        if checked:
+            ret = run(cmd)
+        else:
+            ret = run_unchecked(cmd)
+        return filter_known_issues(ret)
     except subprocess.CalledProcessError:
         # other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
@@ -833,8 +837,8 @@ class D8:
 
     extra_d8_flags = []
 
-    def run_js(self, js, wasm):
-        return run_vm([shared.V8, js] + shared.V8_OPTS + get_v8_extra_flags() + self.extra_d8_flags + ['--', wasm])
+    def run_js(self, js, wasm, checked=True):
+        return run_vm([shared.V8, js] + shared.V8_OPTS + get_v8_extra_flags() + self.extra_d8_flags + ['--', wasm], checked=checked)
 
     def run(self, wasm):
         return self.run(js=get_fuzz_shell_js(), wasm=wasm)
@@ -2163,14 +2167,26 @@ class PreserveImportsExportsJS(TestCaseHandler):
     # testcase simply traps, in which case we mark it as such, and test that it
     # traps both before and after.
     def do_run(self, vm, js, wasm):
-        try:
-            return vm.run_js(js, wasm)
-        except Exception as e:
-            # We run this twice (before and after opts), so increment 0.5 each
-            # time.
-            note_ignored_vm_run('PreserveImportsExportsJS trap',
-                                amount=0.5)
-            return 'JS exception'  # TODO: can we keep some output?
+        # TODO: filter error stuff, both to error on identical errors before and
+        #       after, and to remove stack traces that add random diffs.
+        out = vm.run_js(js, wasm, checked=False)
+        cleaned = []
+        for line in out.splitlines():
+            if ': RuntimeError:' in line:
+                # This is part of an error like
+                #
+                #  wasm-function[2]:0x273: RuntimeError: unreachable
+                #
+                # We must ignore the binary location, which opts can change.
+                line = 'TRAP'
+            elif 'at wasm://' in line:
+                # This is part of an error like
+                #
+                #     at wasm://wasm/12345678:wasm-function[42]:0x123
+                #
+                line = '(stack trace)'
+            cleaned.append(line)
+        return '\n'.join(cleaned)
 
     def can_run_on_wasm(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
