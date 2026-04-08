@@ -2109,6 +2109,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
         # Pick a js+wasm pair.
         js_files = list(pathlib.Path(in_binaryen('test', 'js_wasm')).glob('*.mjs'))
         js_file = str(random.choice(js_files))
+        print(f'js file: {js_file}')
         wat_file = str(pathlib.Path(js_file).with_suffix('.wat'))
 
         # Verify the wat works with our features
