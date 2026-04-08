@@ -2105,15 +2105,6 @@ class PreserveImportsExportsJS(TestCaseHandler):
         js_file = str(random.choice(js_files))
         wat_file = str(pathlib.Path(js_file).with_suffix('.wat'))
 
-        # Verify the wat works with our features
-        try:
-            run([in_bin('wasm-opt'), wat_file] + FEATURE_OPTS,
-                stderr=subprocess.PIPE,
-                silent=True)
-        except Exception:
-            note_ignored_vm_run('features not compatible with js+wasm')
-            return
-
         # Modify the initial wat to get the pre-optimizations wasm.
         pre_wasm = abspath('pre.wasm')
         processed = run([in_bin('wasm-opt'), input] + FEATURE_OPTS + [
@@ -2166,6 +2157,14 @@ class PreserveImportsExportsJS(TestCaseHandler):
             return 'JS exception'  # TODO: can we keep some output?
 
     def can_run_on_wasm(self, wasm):
+        # Verify the wat works with our features
+        try:
+            run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS,
+                stderr=subprocess.PIPE,
+                silent=True)
+        except Exception:
+            return False
+
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
 
