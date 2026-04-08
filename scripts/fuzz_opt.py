@@ -2091,7 +2091,9 @@ class PreserveImportsExportsRandom(TestCaseHandler):
 # PreserveImportsExportsRandom which starts with a random file and modifies it,
 # this starts with a fixed js+wasm testcase, known to work and to have
 # interesting operations on the js/wasm boundary, and then randomly modifies
-# the wasm.
+# the wasm. This simulates how an external fuzzer could use binaryen to modify
+# its known-working testcases.
+# TODO: Reduction how?
 class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
@@ -2126,7 +2128,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
             D8Turboshaft(),
         ]
         pre_vm = random.choice(vms)
-        pre = pre_vm.run_js(js_file, pre_wasm)
+        pre = self.do_run(pre_vm, js_file, pre_wasm)
 
         # Optimize.
         post_wasm = abspath('post.wasm')
@@ -2134,10 +2136,23 @@ class PreserveImportsExportsJS(TestCaseHandler):
 
         # Run after opts, in a random vm.
         post_vm = random.choice(vms)
-        post = post_vm.run_js(js_file, post_wasm)
+        post = self.do_run(post_vm, js_file, post_wasm)
 
         # Compare
         compare(pre, post, 'PreserveImportsExportsJS')
+
+    # Run a VM on a js+wasm combination, handling exceptions. It is possible the
+    # testcase simply traps, in which case we mark it as such, and test that it
+    # traps both before and after.
+    def do_run(self, vm, js, wasm):
+        try:
+            return vm.run_js(js, wasm)
+        except Exception as e:
+            # We run this twice (before and after opts), so increment 0.5 each
+            # time.
+            note_ignored_vm_run('PreserveImportsExportsJS trap',
+                                amount=0.5)
+            return 'JS exception'  # TODO: can we keep some output?
 
     def can_run_on_wasm(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
