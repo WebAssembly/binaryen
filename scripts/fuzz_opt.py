@@ -2098,6 +2098,8 @@ class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        # TODO: We could allow less than INPUT_SIZE_MIN for size(input)
+
         # Pick a js+wasm pair.
         js_files = list(pathlib.Path(in_binaryen('test', 'js_wasm')).glob('*.mjs'))
         js_file = str(random.choice(js_files))
@@ -2132,7 +2134,16 @@ class PreserveImportsExportsJS(TestCaseHandler):
 
         # Optimize.
         post_wasm = abspath('post.wasm')
-        run([in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS)
+        cmd = [in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if proc.returncode:
+            if 'Invalid configureAll' in proc.stderr:
+                note_ignored_vm_run('PreserveImportsExportsJS bad configureAll')
+                return
+
+            # Anything else is a problem.
+            print(proc.stderr)
+            raise Exception('opts failed')
 
         # Run after opts, in a random vm.
         post_vm = random.choice(vms)
