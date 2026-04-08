@@ -5,6 +5,8 @@
   ;; CHECK:      (type $maybe-has-effects (func (param i32 i32)))
   (type $maybe-has-effects (func (param i32 i32)))
 
+  ;; CHECK:      (type $only-has-effects-in-non-exported-function (func (param f32 f32)))
+
   ;; CHECK:      (type $nopType (func (param i32)))
   (type $nopType (func (param i32)))
 
@@ -24,6 +26,8 @@
   ;; Subtype
   ;; CHECK:      (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
   (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
+
+  (type $only-has-effects-in-non-exported-function (func (param f32 f32)))
 
   (table 10 funcref)
 
@@ -51,7 +55,7 @@
     (nop)
   )
 
-  ;; CHECK:      (func $calls-nop-via-ref (type $6) (param $ref (ref $nopType))
+  ;; CHECK:      (func $calls-nop-via-ref (type $7) (param $ref (ref $nopType))
   ;; CHECK-NEXT:  (call_ref $nopType
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (local.get $ref)
@@ -65,7 +69,7 @@
     (call_ref $nopType (i32.const 1) (local.get $ref))
   )
 
-  ;; CHECK:      (func $f (type $6) (param $ref (ref $nopType))
+  ;; CHECK:      (func $f (type $7) (param $ref (ref $nopType))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $f (param $ref (ref $nopType))
@@ -74,7 +78,7 @@
     (call $calls-nop-via-ref (local.get $ref))
   )
 
-  ;; CHECK:      (func $calls-effectful-function-via-ref (type $7) (param $ref (ref $maybe-has-effects))
+  ;; CHECK:      (func $calls-effectful-function-via-ref (type $8) (param $ref (ref $maybe-has-effects))
   ;; CHECK-NEXT:  (call_ref $maybe-has-effects
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 2)
@@ -85,7 +89,7 @@
     (call_ref $maybe-has-effects (i32.const 1) (i32.const 2) (local.get $ref))
   )
 
-  ;; CHECK:      (func $g (type $7) (param $ref (ref $maybe-has-effects))
+  ;; CHECK:      (func $g (type $8) (param $ref (ref $maybe-has-effects))
   ;; CHECK-NEXT:  (call $calls-effectful-function-via-ref
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
@@ -96,7 +100,7 @@
     (call $calls-effectful-function-via-ref (local.get $ref))
   )
 
-  ;; CHECK:      (func $calls-uninhabited (type $8) (param $ref (ref $uninhabited))
+  ;; CHECK:      (func $calls-uninhabited (type $9) (param $ref (ref $uninhabited))
   ;; CHECK-NEXT:  (call_ref $uninhabited
   ;; CHECK-NEXT:   (f32.const 0)
   ;; CHECK-NEXT:   (local.get $ref)
@@ -106,7 +110,7 @@
     (call_ref $uninhabited (f32.const 0) (local.get $ref))
   )
 
-  ;; CHECK:      (func $h (type $8) (param $ref (ref $uninhabited))
+  ;; CHECK:      (func $h (type $9) (param $ref (ref $uninhabited))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $h (param $ref (ref $uninhabited))
@@ -129,7 +133,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $calls-ref-with-subtype (type $9) (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
+  ;; CHECK:      (func $calls-ref-with-subtype (type $10) (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
   ;; CHECK-NEXT:  (call_ref $func-with-sub-param
   ;; CHECK-NEXT:   (local.get $sub)
   ;; CHECK-NEXT:   (local.get $func)
@@ -139,7 +143,7 @@
     (call_ref $func-with-sub-param (local.get $sub) (local.get $func))
   )
 
-  ;; CHECK:      (func $asdf (type $9) (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
+  ;; CHECK:      (func $asdf (type $10) (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
   ;; CHECK-NEXT:  (call $calls-ref-with-subtype
   ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:   (local.get $sub)
@@ -153,5 +157,36 @@
     ;; have effects, and we can call_ref with that subtype, so we need to
     ;; include the unreachable effect and we can't optimize out this call.
     (call $calls-ref-with-subtype (local.get $func) (local.get $sub))
+  )
+
+  ;; CHECK:      (func $no-effects (type $only-has-effects-in-non-exported-function) (param $0 f32) (param $1 f32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $no-effects (type $only-has-effects-in-non-exported-function) (param f32 f32)
+  )
+
+  ;; CHECK:      (func $has-effects-but-not-exported (type $only-has-effects-in-non-exported-function) (param $0 f32) (param $1 f32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $has-effects-but-not-exported (type $only-has-effects-in-non-exported-function) (param f32 f32)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $calls-type-with-effects-but-not-addressable (type $11) (param $ref (ref $only-has-effects-in-non-exported-function))
+  ;; CHECK-NEXT:  (call_ref $only-has-effects-in-non-exported-function
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-type-with-effects-but-not-addressable (param $ref (ref $only-has-effects-in-non-exported-function))
+    (call_ref $only-has-effects-in-non-exported-function (f32.const 0) (f32.const 0) (local.get $ref))
+  )
+
+  ;; CHECK:      (func $i (type $11) (param $ref (ref $only-has-effects-in-non-exported-function))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $i (param $ref (ref $only-has-effects-in-non-exported-function))
+    (call $calls-type-with-effects-but-not-addressable (local.get $ref))
   )
 )
