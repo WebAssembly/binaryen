@@ -351,3 +351,76 @@
  (func $export (export "export")
  )
 )
+
+;; Now the problem happens when we write a continuation to a global, which we
+;; cannot do. Nothing can be optimized here.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; NOKEEP:      (type $func (func))
+ (type $func (func))
+ ;; CHECK:      (type $cont (cont $func))
+ ;; NOKEEP:      (type $cont (cont $func))
+ (type $cont (cont $func))
+
+ ;; CHECK:      (type $2 (func (result (ref null $cont))))
+
+ ;; CHECK:      (global $global (mut (ref null $cont)) (ref.null nocont))
+ ;; NOKEEP:      (type $2 (func (result (ref null $cont))))
+
+ ;; NOKEEP:      (global $global (mut (ref null $cont)) (ref.null nocont))
+ (global $global (mut (ref null $cont)) (ref.null $cont))
+
+ ;; CHECK:      (elem declare func $func)
+
+ ;; CHECK:      (export "read" (func $read))
+
+ ;; CHECK:      (export "test" (func $test))
+ ;; NOKEEP:      (elem declare func $func)
+
+ ;; NOKEEP:      (export "read" (func $read))
+
+ ;; NOKEEP:      (export "test" (func $test))
+ (export "test" (func $test))
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $func (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $func
+ )
+
+ ;; CHECK:      (func $test (type $func)
+ ;; CHECK-NEXT:  (global.set $global
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $test (type $func)
+ ;; NOKEEP-NEXT:  (global.set $global
+ ;; NOKEEP-NEXT:   (cont.new $cont
+ ;; NOKEEP-NEXT:    (ref.func $func)
+ ;; NOKEEP-NEXT:   )
+ ;; NOKEEP-NEXT:  )
+ ;; NOKEEP-NEXT: )
+ (func $test
+  (global.set $global
+   (cont.new $cont
+    (ref.func $func)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $read (type $2) (result (ref null $cont))
+ ;; CHECK-NEXT:  (global.get $global)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $read (type $2) (result (ref null $cont))
+ ;; NOKEEP-NEXT:  (global.get $global)
+ ;; NOKEEP-NEXT: )
+ (func $read (export "read") (result (ref null $cont))
+  (global.get $global)
+ )
+)
+
