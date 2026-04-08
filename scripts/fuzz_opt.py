@@ -2172,7 +2172,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
         out = vm.run_js(js, wasm, checked=False)
         cleaned = []
         for line in out.splitlines():
-            if ': RuntimeError:' in line:
+            if ': RuntimeError:' in line or ': TypeError:' in line:
                 # This is part of an error like
                 #
                 #  wasm-function[2]:0x273: RuntimeError: unreachable
