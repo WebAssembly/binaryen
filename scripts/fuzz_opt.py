@@ -693,17 +693,12 @@ def get_v8_extra_flags():
 
 
 V8_LIFTOFF_ARGS = ['--liftoff']
+V8_NO_LIFTOFF_ARGS = ['--no-liftoff']
 
 
-# Default to running with liftoff enabled, because we need to pick either
-# liftoff or turbo* for consistency (otherwise running the same command twice
-# may have different results due to NaN nondeterminism), and liftoff is faster
-# for small things.
-def run_d8_js(js, args=[], liftoff=True):
+def run_d8_js(js, args=[]):
     cmd = [shared.V8] + shared.V8_OPTS
     cmd += get_v8_extra_flags()
-    if liftoff:
-        cmd += V8_LIFTOFF_ARGS
     cmd += [js]
     if args:
         cmd += ['--'] + args
@@ -741,8 +736,8 @@ def get_fuzz_shell_js():
     return JSPI_JS_FILE
 
 
-def run_d8_wasm(wasm, liftoff=True, args=[]):
-    return run_d8_js(get_fuzz_shell_js(), [wasm] + args, liftoff=liftoff)
+def run_d8_wasm(wasm, args=[]):
+    return run_d8_js(get_fuzz_shell_js(), [wasm] + args)
 
 
 def all_disallowed(features):
@@ -862,7 +857,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8_turboshaft'
 
             def run(self, wasm):
-                flags = ['--no-liftoff']
+                flags = V8_NO_LIFTOFF_ARGS
                 if random.random() < 0.5:
                     flags += ['--no-wasm-generic-wrapper']
                 return super().run(wasm, extra_d8_flags=flags)
@@ -2103,31 +2098,34 @@ class PreserveImportsExportsJS(TestCaseHandler):
             note_ignored_vm_run('features not compatible with js+wasm')
             return
 
-        # Generate some random input data.
-        data = abspath('preserve_input.dat')
-        make_random_input(random_size(), data)
-
-        # Modify the initial wat.
-        wasm = abspath('modified.wasm')
-        processed = run([in_bin('wasm-opt'), data] + FEATURE_OPTS + [
+        # Modify the initial wat to get the pre-optimizations wasm.
+        pre_wasm = abspath('pre.wasm')
+        processed = run([in_bin('wasm-opt'), input] + FEATURE_OPTS + [
             '-ttf',
             '--fuzz-preserve-imports-exports',
             '--initial-fuzz=' + wat_file,
-            '-o', wasm
+            '-o', pre_wasm
         ])
 
-        # Pick VMs to test the code before and after optimizations.
-        vms = [
-            D8(),
-            D8Liftoff(),
-            D8Turboshaft(),
-        ]
-        vm_pre = random.choice(vms)
-        vm_post = random.choice(vms)
+        # Pick v8 opts.
+        v8_opts = random.choice([
+          [],
+          V8_LIFTOFF_ARGS,
+          V8_NO_LIFTOFF_ARGS,
+        ])
 
-        pre = vm_pre.run(
+        # Run before opts.
+        pre = run_d8_js(js_file, v8_opts + ['--', pre_wasm])
 
-        1/0
+        # Optimize.
+        post_wasm = abspath('post.wasm')
+        run([in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS)
+
+        # Run after opts.
+        post = run_d8_js(js_file, v8_opts + ['--', post_wasm])
+
+        # Compare
+        compare(pre, post, 'PreserveImportsExportsJS')
 
 
 # Test that we preserve branch hints properly. The invariant that we test here
