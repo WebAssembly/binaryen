@@ -357,23 +357,20 @@ jobs:
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: emsdk install
-      run: |
-        mkdir $HOME/emsdk
-        git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
-        $HOME/emsdk/emsdk update-tags
-        $HOME/emsdk/emsdk install tot
-        $HOME/emsdk/emsdk activate tot
+      uses: emscripten-core/setup-emsdk@v15
+      with:
+        version: tot
     - name: override emscripten repository
       if: ${{ env.EMSCRIPTEN_REPO != '' }}
       run: |
-        $HOME/emsdk/emsdk install emscripten-main-64bit \
+        $EMSDK/emsdk install emscripten-main-64bit \
           --override-repository emscripten-main-64bit@$EMSCRIPTEN_REPO
-        $HOME/emsdk/emsdk activate emscripten-main-64bit
+        $EMSDK/emsdk activate emscripten-main-64bit
     - name: update path
-      run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
+      run:  echo "PATH=$PATH:$EMSDK" >> $GITHUB_ENV
     - name: emcc-tests
       run: |
-        source $HOME/emsdk/emsdk_env.sh
+        source $EMSDK/emsdk_env.sh
         ./scripts/emcc-tests.sh
 
   # Windows + gcc needs work before the tests will run, so just test the compile
