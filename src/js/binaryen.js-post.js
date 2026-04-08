@@ -2769,8 +2769,8 @@ function wrapModule(module, self = {}) {
       return memoryInfo;
     });
   };
-  self['getNumMemorySegments'] = function() {
-    return Module['_BinaryenGetNumMemorySegments'](module);
+  self['getNumDataSegments'] = function() {
+    return Module['_BinaryenGetNumDataSegments'](module);
   };
   /**
    * Gets the data segment with the given name.
@@ -2795,9 +2795,9 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetDataSegmentByIndex'](module, index);
   };
   /**
-   * Queries information about a memory segment.
+   * Queries information about a data segment.
    * 
-   * @param {number} segment  - A MemorySegmentRef referring to the memory segment to get information about.
+   * @param {number} segment  - A DataSegmentRef referring to the data segment to get information about.
    * @returns {Object} An object containing the following fields:
    *   - `name`: The name of the segment.
    *   - `offset`: If the segment is active, the offset expression of the segment. Otherwise, `null`.
@@ -2806,19 +2806,19 @@ function wrapModule(module, self = {}) {
     * 
     * @throws If the given segment reference is invalid.
    */
-  self['getMemorySegmentInfo'] = function(segment) {
-    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](segment));
+  self['getDataSegmentInfo'] = function(segment) {
+    const passive = Boolean(Module['_BinaryenGetDataSegmentPassive'](segment));
     let offset = null;
     if (!passive) {
-      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, segment);
+      offset = Module['_BinaryenGetDataSegmentByteOffset'](module, segment);
     }
     return {
       'name': UTF8ToString(Module['_BinaryenDataSegmentGetName'](segment)),
       'offset': offset,
       'data': (function(){
-        const size = Module['_BinaryenGetMemorySegmentByteLength'](segment);
+        const size = Module['_BinaryenGetDataSegmentByteLength'](segment);
         const ptr = _malloc(size);
-        Module['_BinaryenCopyMemorySegmentData'](segment, ptr);
+        Module['_BinaryenCopyDataSegmentData'](segment, ptr);
         const res = new Uint8Array(size);
         res.set(HEAP8.subarray(ptr, ptr + size));
         _free(ptr);

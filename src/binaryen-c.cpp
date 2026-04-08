@@ -5492,7 +5492,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 
 // Memory segments
 
-uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
+uint32_t BinaryenGetNumDataSegments(BinaryenModuleRef module) {
   return ((Module*)module)->dataSegments.size();
 }
 BinaryenDataSegmentRef BinaryenGetDataSegment(BinaryenModuleRef module,
@@ -5510,8 +5510,8 @@ BinaryenDataSegmentRef BinaryenGetDataSegmentByIndex(BinaryenModuleRef module,
 const char* BinaryenDataSegmentGetName(BinaryenDataSegmentRef segment) {
   return ((DataSegment*)segment)->name.str.data();
 }
-uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
-                                            BinaryenDataSegmentRef segment) {
+uint32_t BinaryenGetDataSegmentByteOffset(BinaryenModuleRef module,
+                                          BinaryenDataSegmentRef segment) {
   auto* wasm = (Module*)module;
 
   auto globalOffset = [&](const Expression* const& expr,
@@ -5628,14 +5628,13 @@ bool BinaryenMemoryIs64(BinaryenModuleRef module, const char* name) {
   }
   return memory->is64();
 }
-size_t BinaryenGetMemorySegmentByteLength(BinaryenDataSegmentRef segment) {
+size_t BinaryenGetDataSegmentByteLength(BinaryenDataSegmentRef segment) {
   return ((DataSegment*)segment)->data.size();
 }
-bool BinaryenGetMemorySegmentPassive(BinaryenDataSegmentRef segment) {
+bool BinaryenGetDataSegmentPassive(BinaryenDataSegmentRef segment) {
   return ((DataSegment*)segment)->isPassive;
 }
-void BinaryenCopyMemorySegmentData(BinaryenDataSegmentRef segment,
-                                   char* buffer) {
+void BinaryenCopyDataSegmentData(BinaryenDataSegmentRef segment, char* buffer) {
   std::copy(((DataSegment*)segment)->data.cbegin(),
             ((DataSegment*)segment)->data.cend(),
             buffer);

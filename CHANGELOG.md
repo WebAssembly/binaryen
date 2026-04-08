@@ -15,6 +15,15 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Rename `MemorySegment` functions to `DataSegment` in the c and js apis
+   - Rename `BinaryenGetNumMemorySegments` to `BinaryenGetNumDataSegments` in c api.
+   - Rename `BinaryenGetMemorySegmentByteOffset` to `BinaryenGetDataSegmentByteOffset` in c api.
+   - Rename `BinaryenGetMemorySegmentByteLength` to `BinaryenGetDataSegmentByteLength` in c api.
+   - Rename `BinaryenGetMemorySegmentPassive` to `BinaryenGetDataSegmentPassive` in c api.
+   - Rename `BinaryenCopyMemorySegmentData` to `BinaryenCopyDataSegmentData` in c api.
+   - Rename `module.getNumMemorySegments` to `module.getNumDataSegments` in js api.
+   - Rename `module.getMemorySegmentInfo` to `module.getDataSegmentInfo` in js api.
+
 v129
 ----
 

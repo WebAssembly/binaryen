@@ -2021,16 +2021,16 @@ void test_for_each() {
                       makeInt32(module, expected_offsets[1]));
     assert(BinaryenGetDataSegment(module, segmentNames[0]) != NULL);
     assert(BinaryenGetDataSegment(module, "NonExistentSegment") == NULL);
-    for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
+    for (i = 0; i < BinaryenGetNumDataSegments(module); i++) {
       char out[15] = {};
       BinaryenDataSegmentRef segment = BinaryenGetDataSegmentByIndex(module, i);
       assert(segment != NULL);
       assert(BinaryenDataSegmentGetName(segment) != NULL);
-      assert(BinaryenGetMemorySegmentByteOffset(module, segment) ==
+      assert(BinaryenGetDataSegmentByteOffset(module, segment) ==
              expected_offsets[i]);
-      assert(BinaryenGetMemorySegmentByteLength(segment) == segmentSizes[i]);
-      assert(BinaryenGetMemorySegmentPassive(segment) == segmentPassives[i]);
-      BinaryenCopyMemorySegmentData(segment, out);
+      assert(BinaryenGetDataSegmentByteLength(segment) == segmentSizes[i]);
+      assert(BinaryenGetDataSegmentPassive(segment) == segmentPassives[i]);
+      BinaryenCopyDataSegmentData(segment, out);
       assert(0 == strcmp(segmentDatas[i], out));
     }
   }
