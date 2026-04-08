@@ -2125,7 +2125,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
             D8Liftoff(),
             D8Turboshaft(),
         ]
-        pre_vm = random.choice(vm)
+        pre_vm = random.choice(vms)
         pre = pre_vm.run_js(js_file, pre_wasm)
 
         # Optimize.
@@ -2133,11 +2133,16 @@ class PreserveImportsExportsJS(TestCaseHandler):
         run([in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS)
 
         # Run after opts, in a random vm.
-        post_vm = random.choice(vm)
+        post_vm = random.choice(vms)
         post = post_vm.run_js(js_file, post_wasm)
 
         # Compare
         compare(pre, post, 'PreserveImportsExportsJS')
+
+        1/0
+
+    def can_run_on_wasm(self, wasm):
+        return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
 
 # Test that we preserve branch hints properly. The invariant that we test here
