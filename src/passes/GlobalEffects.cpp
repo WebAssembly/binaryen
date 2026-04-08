@@ -24,6 +24,8 @@
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
+#include "ir/element-utils.h"
+#include "ir/table-utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
@@ -297,6 +299,22 @@ struct GenerateGlobalEffects : public Pass {
       }
     }
 
+    std::unordered_set<Name> funcsWithAddress;
+
+    auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(*module);
+    funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
+
+    ElementUtils::iterAllElementFunctionNames(module, [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
+
+    for (const auto& export_ : module->exports) {
+      funcsWithAddress.insert(export_->name);
+    }
+
+    std::cout<<"funcsWithAddress\n";
+    for (auto name : funcsWithAddress) {
+      std::cout<<name<<"\n";
+    }
+
     // Next, apply function effects to their callers.
     for (auto& [func, info] : funcInfos) {
       auto& funcEffects = info.effects;
@@ -317,6 +335,11 @@ struct GenerateGlobalEffects : public Pass {
 
         // Add func's effects to the caller.
         callerEffects->mergeIn(*funcEffects);
+      }
+
+      if (!funcsWithAddress.contains(func->name)) {
+        // This function hasn't had its address taken, so no-one can indirect call it
+        continue;
       }
 
       auto indirectCallersOfThisFunction =
