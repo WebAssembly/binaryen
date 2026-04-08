@@ -689,6 +689,9 @@ def get_v8_extra_flags():
     if random.random() < 0.5:
         flags += ['--wasm-assert-types']
 
+    if random.random() < 0.5:
+        flags += ['--no-wasm-generic-wrapper']
+
     return flags
 
 
@@ -828,11 +831,13 @@ class BinaryenInterpreter:
 class D8:
     name = 'd8'
 
-    def run_js(self, js, wasm, extra_d8_flags=[]):
-        return run_vm([shared.V8, js] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
+    extra_d8_flags = []
 
-    def run(self, wasm, extra_d8_flags=[]):
-        return self.run(js=get_fuzz_shell_js(), wasm=wasm, extra_d8_flags=extra_d8_flags)
+    def run_js(self, js, wasm):
+        return run_vm([shared.V8, js] + shared.V8_OPTS + get_v8_extra_flags() + self.extra_d8_flags + ['--', wasm])
+
+    def run(self, wasm):
+        return self.run(js=get_fuzz_shell_js(), wasm=wasm)
 
     def can_run(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
@@ -855,17 +860,14 @@ class D8:
 class D8Liftoff(D8):
     name = 'd8_liftoff'
 
-    def run(self, wasm):
-        return super().run(wasm, extra_d8_flags=V8_LIFTOFF_ARGS)
+    extra_d8_flags = V8_LIFTOFF_ARGS
+
 
 class D8Turboshaft(D8):
     name = 'd8_turboshaft'
 
-    def run(self, wasm):
-        flags = V8_NO_LIFTOFF_ARGS
-        if random.random() < 0.5:
-            flags += ['--no-wasm-generic-wrapper']
-        return super().run(wasm, extra_d8_flags=flags)
+    extra_d8_flags = V8_NO_LIFTOFF_ARGS
+
 
 class Wasm2C:
     name = 'wasm2c'
