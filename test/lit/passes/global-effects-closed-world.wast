@@ -140,7 +140,10 @@
   )
 
   ;; CHECK:      (func $asdf (type $8) (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $calls-ref-with-subtype
+  ;; CHECK-NEXT:   (local.get $func)
+  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $asdf (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
     ;; Check that we account for subtyping correctly.
