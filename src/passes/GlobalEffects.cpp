@@ -113,8 +113,9 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   return analysis.map;
 }
 
-template <typename T>
-std::unordered_map<T, std::unordered_set<T>> transitiveClosure2(const std::unordered_map<T, std::unordered_set<T>>& in) {
+template<typename T>
+std::unordered_map<T, std::unordered_set<T>>
+transitiveClosure2(const std::unordered_map<T, std::unordered_set<T>>& in) {
   UniqueNonrepeatingDeferredQueue<std::pair<T, T>> work;
 
   for (const auto& [curr, neighbors] : in) {
@@ -130,7 +131,8 @@ std::unordered_map<T, std::unordered_set<T>> transitiveClosure2(const std::unord
     closure[curr].insert(neighbor);
 
     auto neighborNeighbors = in.find(neighbor);
-    if (neighborNeighbors == in.end()) continue;
+    if (neighborNeighbors == in.end())
+      continue;
     for (const auto& neighborNeighbor : neighborNeighbors->second) {
       work.push({curr, neighborNeighbor});
     }
@@ -193,25 +195,9 @@ transitiveClosure(const Module& module,
   return callers;
 }
 
-// std::unordered_map<Name, std::unordered_set<Name>> transitiveClosure(
-//   const Module& module,
-//   const std::unordered_map<Name, std::unordered_set<Name>>& funcInfos) {
-//   auto transformed =
-//     funcInfos | std::views::transform(
-//                   [&](const auto& pair) -> std::pair<Function*, FuncInfo> {
-//                     auto& [k, v] = pair;
-
-//                     auto* func = module.getFunction(k);
-//                     FuncInfo info;
-//                     info.calledFunctions = v;
-//                     return {func, info};
-//                   });
-//   std::map<Function*, FuncInfo> other(transformed.begin(), transformed.end());
-//   return transitiveClosure(module, other);
-// }
-
-template <typename K, typename V>
-std::unordered_map<V, std::unordered_set<K>> flip(const std::unordered_map<K, std::unordered_set<V>>& in) {
+template<typename K, typename V>
+std::unordered_map<V, std::unordered_set<K>>
+flip(const std::unordered_map<K, std::unordered_set<V>>& in) {
   std::unordered_map<V, std::unordered_set<K>> flipped;
   for (const auto& [k, vs] : in) {
     for (const auto& v : vs) {
@@ -221,7 +207,63 @@ std::unordered_map<V, std::unordered_set<K>> flip(const std::unordered_map<K, st
   return flipped;
 }
 
-// std::unordered_map<HeapType, std::unordered_set<Name>> 
+std::unordered_map<HeapType, std::unordered_set<Name>>
+callersOfHeapType(std::map<Function*, FuncInfo> funcInfos,
+                  const SubTypes& subtypes) {
+  // Find the 'entry points' of indirect calls Name -> HeapType.
+  // At the same time, start recording connections for the transitive closure of
+  // indirect calls HeapType -> HeapType. This will be used to find the set of
+  // HeapTypes that are reachable via any sequence of indirect calls from a
+  // given function (Name -> HeapType)
+  std::unordered_map<Name, std::unordered_set<HeapType>>
+    indirectCallersNonTransitive;
+  std::unordered_map<HeapType, std::unordered_set<HeapType>> indirectCalls;
+  for (auto& [func, info] : funcInfos) {
+    auto& set = indirectCallersNonTransitive[func->name];
+    auto& indirectCallsSet = indirectCalls[func->type.getHeapType()];
+    for (auto& calledType : info.indirectCalledTypes) {
+      set.insert(calledType);
+      indirectCallsSet.insert(calledType);
+    }
+  }
+
+  std::unordered_map<HeapType, std::unordered_set<HeapType>> subTypesToAdd;
+
+  for (const auto& [type, _] : indirectCalls) {
+    subtypes.iterSubTypes(type, [&subTypesToAdd, type](HeapType sub, int _) {
+      subTypesToAdd[type].insert(sub);
+      return true;
+    });
+  }
+
+  for (const auto& [k, v] : subTypesToAdd) {
+    auto it = indirectCalls.find(k);
+
+    // No need to add this. It wasn't in the map because no function has this
+    // type, so there are no effects to aggregate and we can forget about it.
+    if (it == indirectCalls.end())
+      continue;
+
+    it->second.insert(v.begin(), v.end());
+  }
+
+  auto a = transitiveClosure2<HeapType>(indirectCalls);
+
+  // Pretend that each subtype is indirect called by its supertype.
+  // This might not be the case but it's accurate enough since any caller that
+  // may indirect call a given type may also indirect call its subtype.
+  for (const auto& [k, v] : indirectCallersNonTransitive) {
+    for (const auto& x : v) {
+      auto y = a[x];
+
+      // we're leaving what was already there but should be fine
+      // since it's covered under transitive calls anyway
+      indirectCallersNonTransitive[k].insert(y.begin(), y.end());
+    }
+  }
+
+  return flip(indirectCallersNonTransitive);
+}
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
@@ -230,66 +272,8 @@ struct GenerateGlobalEffects : public Pass {
     // transitive effects later).
     auto funcInfos = analyzeFuncs(*module, getPassOptions());
 
-    // Find the 'entry points' of indirect calls Name -> HeapType.
-    // At the same time, start recording connections for the transitive closure of indirect calls
-    // HeapType -> HeapType. This will be used to find the set of HeapTypes that are reachable via any sequence of indirect calls from a given function
-    // (Name -> HeapType)
-    std::unordered_map<Name, std::unordered_set<HeapType>>
-      indirectCallersNonTransitive;
-    std::unordered_map<HeapType, std::unordered_set<HeapType>> indirectCalls;
-    for (auto& [func, info] : funcInfos) {
-      auto& set = indirectCallersNonTransitive[func->name];
-      auto& indirectCallsSet = indirectCalls[func->type.getHeapType()];
-      for (auto& calledType : info.indirectCalledTypes) {
-          set.insert(calledType);
-          indirectCallsSet.insert(calledType);
-      }
-    }
-
-    // indirectCallers[foo] = [func that indirect calls something with the same
-    // type as foo, ..]
-    // const std::unordered_map<HeapType, std::unordered_set<Name>> indirectCallers =
-    //   transitiveClosure(*module, indirectCallersNonTransitive);
-
-    // TODO: need to take subtypes into account here
-    // we can pretend that each type 'indirect calls' its subtypes
-    // This is good enough because when querying the particular function Name that 
-    // indirect calls someone we want to take its indirect calls into account anyway
-    // So just pretend that it indirect calls its subtypes.
-
     SubTypes subtypes(*module);
-    std::unordered_map<HeapType, std::unordered_set<HeapType>> subTypesToAdd;
-
-    for (const auto& [type, _] : indirectCalls) {
-      subtypes.iterSubTypes(type, [&subTypesToAdd, type](HeapType sub, int _) { subTypesToAdd[type].insert(sub); return true; });
-    }
-
-    for (const auto& [k, v] : subTypesToAdd) {
-      auto it = indirectCalls.find(k);
-
-      // No need to add this. It wasn't in the map because no function has this 
-      // type, so there are no effects to aggregate and we can forget about it.
-      if (it == indirectCalls.end()) continue;
-
-      it->second.insert(v.begin(), v.end());
-    }
-
-    auto a = transitiveClosure2<HeapType>(indirectCalls);
-
-    // Pretend that each subtype is indirect called by its supertype.
-    // This might not be the case but it's accurate enough since any caller that
-    // may indirect call a given type may also indirect call its subtype.
-    for (const auto& [k, v]: indirectCallersNonTransitive) {
-      for (const auto& x : v) {
-        auto y = a[x];
-
-        // we're leaving what was already there but should be fine
-        // since it's covered under transitive calls anyway
-        indirectCallersNonTransitive[k].insert(y.begin(), y.end());
-      }
-    }
-
-    std::unordered_map<HeapType, std::unordered_set<Name>> flipped = flip(indirectCallersNonTransitive);
+    auto indirectCallers = callersOfHeapType(funcInfos, subtypes);
 
     // Compute the transitive closure of effects. To do so, first construct for
     // each function a list of the functions that it is called by (so we need to
@@ -300,7 +284,6 @@ struct GenerateGlobalEffects : public Pass {
     //
     std::unordered_map<Name, std::unordered_set<Name>> callers =
       transitiveClosure(*module, funcInfos);
-
 
     // Now that we have transitively propagated all static calls, apply that
     // information. First, apply infinite recursion: if a function can call
@@ -336,8 +319,9 @@ struct GenerateGlobalEffects : public Pass {
         callerEffects->mergeIn(*funcEffects);
       }
 
-      auto indirectCallersOfThisFunction = flipped.find(func->type.getHeapType());
-      if (indirectCallersOfThisFunction == flipped.end()) {
+      auto indirectCallersOfThisFunction =
+        indirectCallers.find(func->type.getHeapType());
+      if (indirectCallersOfThisFunction == indirectCallers.end()) {
         continue;
       }
       for (Name caller : indirectCallersOfThisFunction->second) {
