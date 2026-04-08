@@ -2139,8 +2139,6 @@ class PreserveImportsExportsJS(TestCaseHandler):
         # Compare
         compare(pre, post, 'PreserveImportsExportsJS')
 
-        1/0
-
     def can_run_on_wasm(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
