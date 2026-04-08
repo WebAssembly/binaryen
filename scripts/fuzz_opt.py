@@ -2095,7 +2095,11 @@ class PreserveImportsExportsRandom(TestCaseHandler):
 # interesting operations on the js/wasm boundary, and then randomly modifies
 # the wasm. This simulates how an external fuzzer could use binaryen to modify
 # its known-working testcases.
-# TODO: Reduction how?
+#
+# This reads wasm+js combinations from the test/js_wasm directory, so as new
+# testcases are added there, this will fuzz them.
+#
+# TODO: Add a good way to reduce these testcases.
 class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
