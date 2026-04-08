@@ -696,9 +696,15 @@ V8_LIFTOFF_ARGS = ['--liftoff']
 V8_NO_LIFTOFF_ARGS = ['--no-liftoff']
 
 
-def run_d8_js(js, args=[]):
+# Default to running with liftoff enabled, because we need to pick either
+# liftoff or turbo* for consistency (otherwise running the same command twice
+# may have different results due to NaN nondeterminism), and liftoff is faster
+# for small things.
+def run_d8_js(js, args=[], liftoff=True):
     cmd = [shared.V8] + shared.V8_OPTS
     cmd += get_v8_extra_flags()
+    if liftoff:
+        cmd += V8_LIFTOFF_ARGS
     cmd += [js]
     if args:
         cmd += ['--'] + args
@@ -736,8 +742,8 @@ def get_fuzz_shell_js():
     return JSPI_JS_FILE
 
 
-def run_d8_wasm(wasm, args=[]):
-    return run_d8_js(get_fuzz_shell_js(), [wasm] + args)
+def run_d8_wasm(wasm, liftoff=True, args=[]):
+    return run_d8_js(get_fuzz_shell_js(), [wasm] + args, liftoff=liftoff)
 
 
 def all_disallowed(features):
@@ -2086,7 +2092,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # Pick a js+wasm pair.
         js_files = list(pathlib.Path(in_binaryen('test', 'js_wasm')).glob('*.mjs'))
-        js_file = random.choice(js_files)
+        js_file = str(random.choice(js_files))
         wat_file = str(pathlib.Path(js_file).with_suffix('.wat'))
 
         # Verify the wat works with our features
