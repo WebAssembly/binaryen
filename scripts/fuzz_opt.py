@@ -2108,7 +2108,14 @@ class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # TODO: We could allow less than INPUT_SIZE_MIN for size(input)
+        # Some of the time use a custom input. The normal inputs the fuzzer
+        # generates are in range INPUT_SIZE_MIN-INPUT_SIZE_MAX, which is good
+        # for new testcases, but the more changes we make to js+wasm testcases,
+        # the more chance we have to break things entirely (the js/wasm boundary
+        # is fragile). It is useful to also fuzz smaller sizes.
+        if random.random() < 0.25:
+            size = random.randint(0, INPUT_SIZE_MIN * 2)
+            make_random_input(size, input)
 
         # Pick a js+wasm pair.
         js_files = list(pathlib.Path(in_binaryen('test', 'js_wasm')).glob('*.mjs'))
@@ -2131,7 +2138,8 @@ class PreserveImportsExportsJS(TestCaseHandler):
             '-ttf',
             '--fuzz-preserve-imports-exports',
             '--initial-fuzz=' + wat_file,
-            '-o', pre_wasm
+            '-o', pre_wasm,
+            '-g',
         ])
 
         # Pick vm and run before we optimize the wasm.
@@ -2167,8 +2175,6 @@ class PreserveImportsExportsJS(TestCaseHandler):
     # testcase simply traps, in which case we mark it as such, and test that it
     # traps both before and after.
     def do_run(self, vm, js, wasm):
-        # TODO: filter error stuff, both to error on identical errors before and
-        #       after, and to remove stack traces that add random diffs.
         out = vm.run_js(js, wasm, checked=False)
         cleaned = []
         for line in out.splitlines():
