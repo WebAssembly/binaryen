@@ -2188,7 +2188,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
             elif '(<anonymous>)' in line:
                 # Anonymous parts of stack traces sometimes differ, due to
                 # inlining.
-                line = ''
+                continue
             cleaned.append(line)
         return '\n'.join(cleaned)
 
