@@ -70,7 +70,7 @@
 ;; CHECK-NEXT:                                                 fuzzing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --fuzz-preserve-imports-exports               don't add imports and exports in
-;; CHECK-NEXT:                                                 -ttf mode
+;; CHECK-NEXT:                                                 -ttf mode, and keep the start
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in
 ;; CHECK-NEXT:                                                 -ttf mode
