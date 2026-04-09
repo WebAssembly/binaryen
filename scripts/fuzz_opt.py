@@ -2422,7 +2422,20 @@ class BranchHintPreservation(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
+    CtorEval(),
+    Merge(),
+    # Split(), # https://github.com/WebAssembly/binaryen/issues/8510
+    RoundtripText(),
+    ClusterFuzz(),
+    Two(),
+    PreserveImportsExportsRandom(),
     PreserveImportsExportsJS(),
+    BranchHintPreservation(),
 ]
 
 
