@@ -2185,6 +2185,10 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 #     at wasm://wasm/12345678:wasm-function[42]:0x123
                 #
                 line = '(stack trace)'
+            elif '(<anonymous>)' in line:
+                # Anonymous parts of stack traces sometimes differ, due to
+                # inlining.
+                line = ''
             cleaned.append(line)
         return '\n'.join(cleaned)
 
