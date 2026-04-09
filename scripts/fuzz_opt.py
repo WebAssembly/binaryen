@@ -2158,6 +2158,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
         # Optimize.
         post_wasm = abspath('post.wasm')
         cmd = [in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS
+        print(' '.join(cmd))
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if proc.returncode:
             if 'Invalid configureAll' in proc.stderr:
