@@ -606,7 +606,7 @@ def note_ignored_vm_run(reason, extra_text='', amount=1):
 
 
 # Run a VM command, and filter out known issues.
-def run_vm(cmd):
+def run_vm(cmd, checked=True):
     def filter_known_issues(output):
         known_issues = [
             # can be caused by flatten, ssa, etc. passes
@@ -649,7 +649,11 @@ def run_vm(cmd):
 
     try:
         # some known issues do not cause the entire process to fail
-        return filter_known_issues(run(cmd))
+        if checked:
+            ret = run(cmd)
+        else:
+            ret = run_unchecked(cmd)
+        return filter_known_issues(ret)
     except subprocess.CalledProcessError:
         # other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
@@ -696,6 +700,7 @@ def get_v8_extra_flags():
 
 
 V8_LIFTOFF_ARGS = ['--liftoff']
+V8_NO_LIFTOFF_ARGS = ['--no-liftoff']
 
 
 # Default to running with liftoff enabled, because we need to pick either
@@ -831,8 +836,13 @@ class BinaryenInterpreter:
 class D8:
     name = 'd8'
 
-    def run(self, wasm, extra_d8_flags=[]):
-        return run_vm([shared.V8, get_fuzz_shell_js()] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
+    extra_d8_flags = []
+
+    def run_js(self, js, wasm, checked=True):
+        return run_vm([shared.V8, js] + shared.V8_OPTS + get_v8_extra_flags() + self.extra_d8_flags + ['--', wasm], checked=checked)
+
+    def run(self, wasm):
+        return self.run(js=get_fuzz_shell_js(), wasm=wasm)
 
     def can_run(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
@@ -856,16 +866,13 @@ class D8:
 class D8Liftoff(D8):
     name = 'd8_liftoff'
 
-    def run(self, wasm):
-        return super().run(wasm, extra_d8_flags=V8_LIFTOFF_ARGS)
+    extra_d8_flags = V8_LIFTOFF_ARGS
 
 
 class D8Turboshaft(D8):
     name = 'd8_turboshaft'
 
-    def run(self, wasm):
-        flags = ['--no-liftoff']
-        return super().run(wasm, extra_d8_flags=flags)
+    extra_d8_flags = V8_NO_LIFTOFF_ARGS
 
 
 class Wasm2C:
