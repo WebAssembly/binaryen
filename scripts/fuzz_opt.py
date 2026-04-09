@@ -2187,7 +2187,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 # must also remove the specific trap, as Binaryen can change
                 # that.
                 line = 'TRAP'
-            elif 'at wasm://' in line or '(<anonymous>)' in line:
+            elif 'wasm://' in line or '(<anonymous>)' in line:
                 # This is part of a stack trace like
                 #
                 #     at wasm://wasm/12345678:wasm-function[42]:0x123
