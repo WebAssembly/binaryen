@@ -55,7 +55,8 @@
 // to the same thing, and after merging it can still reach it).
 //
 
-#include <iterator>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
@@ -74,9 +75,9 @@ static const Index WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH = 3;
 struct ExpressionMarker
   : public PostWalker<ExpressionMarker,
                       UnifiedExpressionVisitor<ExpressionMarker>> {
-  std::set<Expression*>& marked;
+  std::unordered_set<Expression*>& marked;
 
-  ExpressionMarker(std::set<Expression*>& marked, Expression* expr)
+  ExpressionMarker(std::unordered_set<Expression*>& marked, Expression* expr)
     : marked(marked) {
     walk(expr);
   }
@@ -122,13 +123,16 @@ struct CodeFolding
 
   // pass state
 
-  std::map<Name, std::vector<Tail>> breakTails; // break target name => tails
-                                                // that reach it
+  std::unordered_map<Name, std::vector<Tail>>
+    breakTails;                       // break target name => tails
+                                      // that reach it
   std::vector<Tail> unreachableTails; // tails leading to (unreachable)
   std::vector<Tail> returnTails;      // tails leading to (return)
-  std::set<Name> unoptimizables;      // break target names that we can't handle
-  std::set<Expression*> modifieds;    // modified code should not be processed
-                                      // again, wait for next pass
+  std::unordered_set<Name>
+    unoptimizables; // break target names that we can't handle
+  std::unordered_set<Expression*>
+    modifieds; // modified code should not be processed
+               // again, wait for next pass
 
   // walking
 
@@ -308,13 +312,14 @@ private:
     auto allTargets = BranchUtils::getBranchTargets(outOf);
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
-      std::vector<Name> intersection;
-      std::set_intersection(allTargets.begin(),
-                            allTargets.end(),
-                            exiting.begin(),
-                            exiting.end(),
-                            std::back_inserter(intersection));
-      if (intersection.size() > 0) {
+      bool hasIntersection = false;
+      for (auto& name : exiting) {
+        if (allTargets.count(name)) {
+          hasIntersection = true;
+          break;
+        }
+      }
+      if (hasIntersection) {
         // anything exiting that is in all targets is something bad
         return false;
       }
@@ -644,9 +649,10 @@ private:
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a
       // subset
-      std::map<Expression*, size_t> hashes; // expression => hash value
+      std::unordered_map<Expression*, size_t>
+        hashes; // expression => hash value
       // hash value => expressions with that hash
-      std::map<size_t, std::vector<Expression*>> hashed;
+      std::unordered_map<size_t, std::vector<Expression*>> hashed;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto hash = hashes[item] = ExpressionAnalyzer::hash(item);
@@ -654,7 +660,7 @@ private:
       }
       // look at each hash value exactly once. we do this in a deterministic
       // order by iterating over a vector retaining insertion order.
-      std::set<size_t> seen;
+      std::unordered_set<size_t> seen;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto digest = hashes[item];
