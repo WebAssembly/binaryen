@@ -788,6 +788,7 @@ class FuzzExec(TestCaseHandler):
 
 # VMs
 
+
 class BinaryenInterpreter:
     name = 'binaryen interpreter'
 
@@ -826,6 +827,7 @@ class BinaryenInterpreter:
     def can_compare_to_other(self, other):
         return True
 
+
 class D8:
     name = 'd8'
 
@@ -850,11 +852,13 @@ class D8:
         # compare to others.
         return self.can_compare_to_self() and LEGALIZE
 
+
 class D8Liftoff(D8):
     name = 'd8_liftoff'
 
     def run(self, wasm):
         return super().run(wasm, extra_d8_flags=V8_LIFTOFF_ARGS)
+
 
 class D8Turboshaft(D8):
     name = 'd8_turboshaft'
@@ -862,6 +866,7 @@ class D8Turboshaft(D8):
     def run(self, wasm):
         flags = ['--no-liftoff']
         return super().run(wasm, extra_d8_flags=flags)
+
 
 class Wasm2C:
     name = 'wasm2c'
@@ -906,6 +911,7 @@ class Wasm2C:
     def can_compare_to_other(self, other):
         # C won't trap on OOB, and NaNs can differ from wasm VMs
         return not OOB and not NANS
+
 
 class Wasm2C2Wasm(Wasm2C):
     name = 'wasm2c2wasm'
@@ -953,6 +959,7 @@ class Wasm2C2Wasm(Wasm2C):
     def can_compare_to_other(self, other):
         # NaNs can differ from wasm VMs
         return not NANS
+
 
 class CompareVMs(TestCaseHandler):
     frequency = 1
