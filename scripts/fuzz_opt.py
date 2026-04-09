@@ -693,6 +693,7 @@ def get_v8_extra_flags():
     if random.random() < 0.5:
         flags += ['--wasm-assert-types']
 
+    # Some other options make sense to use sometimes.
     if random.random() < 0.5:
         flags += ['--no-wasm-generic-wrapper']
 
@@ -791,8 +792,8 @@ class FuzzExec(TestCaseHandler):
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         run([in_bin('wasm-opt'), before_wasm] + opts + ['--fuzz-exec'])
 
-
 # VMs
+
 
 class BinaryenInterpreter:
     name = 'binaryen interpreter'
@@ -832,6 +833,7 @@ class BinaryenInterpreter:
     def can_compare_to_other(self, other):
         return True
 
+
 class D8:
     name = 'd8'
 
@@ -860,6 +862,7 @@ class D8:
         # If not legalized, the JS will fail immediately, so no point to
         # compare to others.
         return self.can_compare_to_self() and LEGALIZE
+
 
 class D8Liftoff(D8):
     name = 'd8_liftoff'
@@ -916,6 +919,7 @@ class Wasm2C:
     def can_compare_to_other(self, other):
         # C won't trap on OOB, and NaNs can differ from wasm VMs
         return not OOB and not NANS
+
 
 class Wasm2C2Wasm(Wasm2C):
     name = 'wasm2c2wasm'
