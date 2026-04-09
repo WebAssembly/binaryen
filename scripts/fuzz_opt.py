@@ -2172,12 +2172,14 @@ class PreserveImportsExportsJS(TestCaseHandler):
         out = vm.run_js(js, wasm, checked=False)
         cleaned = []
         for line in out.splitlines():
-            if ': RuntimeError:' in line or ': TypeError:' in line:
+            if 'RuntimeError:' in line or 'TypeError:' in line:
                 # This is part of an error like
                 #
                 #  wasm-function[2]:0x273: RuntimeError: unreachable
                 #
-                # We must ignore the binary location, which opts can change.
+                # We must ignore the binary location, which opts can change. We
+                # must also remove the specific trap, as Binaryen can change
+                # that.
                 line = 'TRAP'
             elif 'at wasm://' in line:
                 # This is part of an error like
