@@ -842,7 +842,7 @@ class D8:
         return run_vm([shared.V8, js] + shared.V8_OPTS + get_v8_extra_flags() + self.extra_d8_flags + ['--', wasm], checked=checked)
 
     def run(self, wasm):
-        return self.run(js=get_fuzz_shell_js(), wasm=wasm)
+        return self.run_js(js=get_fuzz_shell_js(), wasm=wasm)
 
     def can_run(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
