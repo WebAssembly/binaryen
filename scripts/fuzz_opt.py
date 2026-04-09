@@ -2102,7 +2102,7 @@ class PreserveImportsExportsRandom(TestCaseHandler):
 # this starts with a fixed js+wasm testcase, known to work and to have
 # interesting operations on the js/wasm boundary, and then randomly modifies
 # the wasm. This simulates how an external fuzzer could use binaryen to modify
-# its known-working testcases.
+# its known-working testcases (parallel to how we test ClusterFuzz here).
 #
 # This reads wasm+js combinations from the test/js_wasm directory, so as new
 # testcases are added there, this will fuzz them.
@@ -2146,7 +2146,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
             '-g',
         ])
 
-        # Pick vm and run before we optimize the wasm.
+        # Pick a vm and run before we optimize the wasm.
         vms = [
             D8(),
             D8Liftoff(),
@@ -2161,6 +2161,9 @@ class PreserveImportsExportsJS(TestCaseHandler):
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if proc.returncode:
             if 'Invalid configureAll' in proc.stderr:
+                # We have a hard error on unfamiliar configureAll patterns atm.
+                # Mutation of configureAll will easily break that pattern, so we
+                # must ignore such cases.
                 note_ignored_vm_run('PreserveImportsExportsJS bad configureAll')
                 return
 
@@ -2175,9 +2178,6 @@ class PreserveImportsExportsJS(TestCaseHandler):
         # Compare
         compare(pre, post, 'PreserveImportsExportsJS')
 
-    # Run a VM on a js+wasm combination, handling exceptions. It is possible the
-    # testcase simply traps, in which case we mark it as such, and test that it
-    # traps both before and after.
     def do_run(self, vm, js, wasm):
         out = vm.run_js(js, wasm, checked=False)
         cleaned = []
