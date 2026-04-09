@@ -2133,7 +2133,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 stderr=subprocess.PIPE,
                 silent=True)
         except Exception:
-            note_ignored_vm_run('features not compatible with js+wasm')
+            note_ignored_vm_run('PreserveImportsExportsJS: features not compatible with js+wasm')
             return
 
         # Modify the initial wat to get the pre-optimizations wasm.
@@ -2164,7 +2164,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 # We have a hard error on unfamiliar configureAll patterns atm.
                 # Mutation of configureAll will easily break that pattern, so we
                 # must ignore such cases.
-                note_ignored_vm_run('PreserveImportsExportsJS bad configureAll')
+                note_ignored_vm_run('PreserveImportsExportsJS: bad configureAll')
                 return
 
             # Anything else is a problem.
@@ -2180,6 +2180,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
 
     def do_run(self, vm, js, wasm):
         out = vm.run_js(js, wasm, checked=False)
+
         cleaned = []
         for line in out.splitlines():
             if 'RuntimeError:' in line or 'TypeError:' in line:
