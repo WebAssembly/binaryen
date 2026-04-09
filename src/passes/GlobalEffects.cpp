@@ -22,10 +22,52 @@
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
+#include "support/hash.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
+
+namespace {
+
+template<typename T>
+std::unordered_map<T, std::unordered_set<T>>
+transitiveClosure(const std::unordered_map<T, std::unordered_set<T>>& in) {
+  std::unordered_map<T, std::unordered_set<T>> transitive;
+
+  std::unordered_set<std::pair<T, T>> processed;
+  std::deque<std::pair<T, T>> work;
+
+  for (const auto& [k, neighbors] : in) {
+    for (const auto& neighbor : neighbors) {
+      work.emplace_back(k, neighbor);
+      processed.emplace(k, neighbor);
+    }
+  }
+
+  while (!work.empty()) {
+    auto [curr, next] = work.back();
+    work.pop_back();
+
+    transitive[curr].insert(next);
+
+    const auto& neighborNeighbors = in.find(next);
+    if (neighborNeighbors == in.end()) {
+      continue;
+    }
+
+    for (const T& neighborNeighbor : neighborNeighbors->second) {
+      if (processed.count({curr, neighborNeighbor})) {
+        continue;
+      }
+
+      processed.emplace(curr, neighborNeighbor);
+      work.emplace_back(curr, neighborNeighbor);
+    }
+  }
+
+  return transitive;
+}
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
@@ -108,76 +150,38 @@ struct GenerateGlobalEffects : public Pass {
     // callers[foo] = [func that calls foo, another func that calls foo, ..]
     //
     std::unordered_map<Name, std::unordered_set<Name>> callers;
-
-    // Our work queue contains info about a new call pair: a call from a caller
-    // to a called function, that is information we then apply and propagate.
-    using CallPair = std::pair<Name, Name>; // { caller, called }
-    UniqueDeferredQueue<CallPair> work;
-    for (auto& [func, info] : analysis.map) {
-      for (auto& called : info.calledFunctions) {
-        work.push({func->name, called});
-      }
+    for (const auto& [func, info] : analysis.map) {
+      callers[func->name].insert(info.calledFunctions.begin(),
+                                 info.calledFunctions.end());
     }
 
-    // Compute the transitive closure of the call graph, that is, fill out
-    // |callers| so that it contains the list of all callers - even through a
-    // chain - of each function.
-    while (!work.empty()) {
-      auto [caller, called] = work.pop();
+    auto callersTransitive = transitiveClosure(callers);
 
-      // We must not already have an entry for this call (that would imply we
-      // are doing wasted work).
-      assert(!callers[called].contains(caller));
-
-      // Apply the new call information.
-      callers[called].insert(caller);
-
-      // We just learned that |caller| calls |called|. It also calls
-      // transitively, which we need to propagate to all places unaware of that
-      // information yet.
-      //
-      //   caller => called => called by called
-      //
-      auto& calledInfo = analysis.map[module->getFunction(called)];
-      for (auto calledByCalled : calledInfo.calledFunctions) {
-        if (!callers[calledByCalled].contains(caller)) {
-          work.push({caller, calledByCalled});
-        }
-      }
-    }
-
-    // Now that we have transitively propagated all static calls, apply that
-    // information. First, apply infinite recursion: if a function can call
-    // itself then it might recurse infinitely, which we consider an effect (a
-    // trap).
+    // Check for functions that may have infinite recursion
     for (auto& [func, info] : analysis.map) {
-      if (callers[func->name].contains(func->name)) {
+      if (auto it = callersTransitive.find(func->name);
+          it != callersTransitive.end() && it->second.contains(func->name)) {
         if (info.effects) {
           info.effects->trap = true;
         }
       }
     }
 
-    // Next, apply function effects to their callers.
-    for (auto& [func, info] : analysis.map) {
-      auto& funcEffects = info.effects;
-
-      for (auto& caller : callers[func->name]) {
-        auto& callerEffects = analysis.map[module->getFunction(caller)].effects;
+    for (const auto& [caller, callees] : callersTransitive) {
+      auto& callerEffects = analysis.map[module->getFunction(caller)].effects;
+      for (const auto& callee : callees) {
+        const auto& calleeEffects =
+          analysis.map[module->getFunction(callee)].effects;
         if (!callerEffects) {
-          // Nothing is known for the caller, which is already the worst case.
           continue;
         }
 
-        if (!funcEffects) {
-          // Nothing is known for the called function, which means nothing is
-          // known for the caller either.
+        if (!calleeEffects) {
           callerEffects.reset();
           continue;
         }
 
-        // Add func's effects to the caller.
-        callerEffects->mergeIn(*funcEffects);
+        callerEffects->mergeIn(*calleeEffects);
       }
     }
 
@@ -201,6 +205,8 @@ struct DiscardGlobalEffects : public Pass {
     }
   }
 };
+
+} // namespace
 
 Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }
 
