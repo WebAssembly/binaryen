@@ -2381,8 +2381,12 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   }
 
   // Remove a start function - the fuzzing harness expects code to run only
-  // from exports.
-  wasm.start = Name();
+  // from exports. When preserving imports and exports, however, we need to
+  // keep any start method, as it may be important to keep the contract between
+  // the wasm and the outside.
+  if (!preserveImportsAndExports) {
+    wasm.start = Name();
+  }
 }
 
 void TranslateToFuzzReader::dropToLog(Function* func) {
