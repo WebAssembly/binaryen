@@ -2107,8 +2107,8 @@ class PreserveImportsExportsRandom(TestCaseHandler):
 # This reads wasm+js combinations from the test/js_wasm directory, so as new
 # testcases are added there, this will fuzz them.
 #
-# Note that bugs found by this fuzzer tend to require the following during
-# reducing: BINARYEN_TRUST_GIVEN_WASM=1 in the env. TODO: simplify this
+# Note that bugs found by this fuzzer require BINARYEN_TRUST_GIVEN_WASM=1 in the
+# env for reduction. TODO: simplify this
 class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
@@ -2159,6 +2159,10 @@ class PreserveImportsExportsJS(TestCaseHandler):
         if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
             print('using given wasm', before_wasm)
             pre_wasm = before_wasm
+        else:
+            # Otherwise, overwrite before_wasm, so that if we end up reducing
+            # this, the fuzzer knows where to start.
+            shutil.copyfile(pre_wasm, before_wasm)
 
         # Pick a vm and run before we optimize the wasm.
         vms = [
