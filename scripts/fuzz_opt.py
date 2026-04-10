@@ -2122,6 +2122,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 # pre wasm file, the one we began with, as `before_wasm`, so
                 # that the reducer will make us proceed exactly from there.
                 shutil.copyfile(self.pre_wasm, before_wasm)
+            raise e
 
     def do_handle_pair(self, input, before_wasm, after_wasm, opts):
         # Some of the time use a custom input. The normal inputs the fuzzer
