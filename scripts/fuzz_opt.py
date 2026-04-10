@@ -2113,6 +2113,17 @@ class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        try:
+            self.do_handle_pair(input, before_wasm, after_wasm, opts)
+        except Exception as e:
+            if not os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
+                # We errored, and we were not given a wasm file to trust as we
+                # reduce, so this is the first time we hit an error. Save the
+                # pre wasm file, the one we began with, as `before_wasm`, so
+                # that the reducer will make us proceed exactly from there.
+                shutil.copyfile(self.pre_wasm, before_wasm)
+
+    def do_handle_pair(self, input, before_wasm, after_wasm, opts):
         # Some of the time use a custom input. The normal inputs the fuzzer
         # generates are in range INPUT_SIZE_MIN-INPUT_SIZE_MAX, which is good
         # for new testcases, but the more changes we make to js+wasm testcases,
@@ -2153,16 +2164,16 @@ class PreserveImportsExportsJS(TestCaseHandler):
             '-g',
         ])
 
+        # We successfully generated pre_wasm; stash it for possible reduction
+        # purposes later.
+        self.pre_wasm = pre_wasm
+
         # If we were given a wasm file, use that instead of all the above. We
         # do this now, after creating pre_wasm, because we still need to consume
         # all the randomness normally.
         if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
             print('using given wasm', before_wasm)
             pre_wasm = before_wasm
-        else:
-            # Otherwise, overwrite before_wasm, so that if we end up reducing
-            # this, the fuzzer knows where to start.
-            shutil.copyfile(pre_wasm, before_wasm)
 
         # Pick a vm and run before we optimize the wasm.
         vms = [
