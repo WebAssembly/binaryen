@@ -2136,6 +2136,12 @@ class PreserveImportsExportsJS(TestCaseHandler):
             note_ignored_vm_run('PreserveImportsExportsJS: features not compatible with js+wasm')
             return
 
+        # Make sure the testcase runs by itself - there should be no invalid
+        # testcases.
+        original_wasm = 'orig.wasm'
+        run([in_bin('wasm-opt'), wat_file, '-o', original_wasm] + FEATURE_OPTS)
+        D8().run_js(js_file, original_wasm)
+
         # Modify the initial wat to get the pre-optimizations wasm.
         pre_wasm = abspath('pre.wasm')
         processed = run([in_bin('wasm-opt'), input] + FEATURE_OPTS + [
