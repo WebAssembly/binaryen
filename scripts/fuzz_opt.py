@@ -28,10 +28,10 @@ script covers different options being passed)
 
 import contextlib
 import difflib
-import pathlib
 import json
 import math
 import os
+import pathlib
 import random
 import re
 import shutil
