@@ -117,6 +117,10 @@ unfuzzable = [
     'waitqueue.wast',
     # TODO: fix handling of the non-utf8 names here
     'name-high-bytes.wast',
+    # JS interop testcases have complex js-wasm interactions
+    'js_interop_counter.wat',
+    'js_interop_cases.wat',
+    'js_interop_corners.wat',
 ]
 
 
