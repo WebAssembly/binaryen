@@ -2107,7 +2107,8 @@ class PreserveImportsExportsRandom(TestCaseHandler):
 # This reads wasm+js combinations from the test/js_wasm directory, so as new
 # testcases are added there, this will fuzz them.
 #
-# TODO: Add a good way to reduce these testcases.
+# Note that bugs found by this fuzzer tend to require the following during
+# reducing: BINARYEN_TRUST_GIVEN_WASM=1 in the env. TODO: simplify this
 class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
@@ -2151,6 +2152,13 @@ class PreserveImportsExportsJS(TestCaseHandler):
             '-o', pre_wasm,
             '-g',
         ])
+
+        # If we were given a wasm file, use that instead of all the above. We
+        # do this now, after creating pre_wasm, because we still need to consume
+        # all the randomness normally.
+        if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
+            print('using given wasm', before_wasm)
+            pre_wasm = before_wasm
 
         # Pick a vm and run before we optimize the wasm.
         vms = [
