@@ -662,7 +662,7 @@ struct Printer {
       std::cout << ", ";
       printInternal(node->getValue(2));
     } else {
-      WASM_UNREACHABLE("unexecpted node type");
+      WASM_UNREACHABLE("unexpected node type");
     }
   }
 
