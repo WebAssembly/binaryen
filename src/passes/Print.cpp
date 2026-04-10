@@ -3868,7 +3868,7 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
       break;
     }
     default:
-      WASM_UNREACHABLE("unexpeted op");
+      WASM_UNREACHABLE("unexpected op");
   }
   return o;
 }
@@ -3961,7 +3961,7 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         break;
       }
       default:
-        WASM_UNREACHABLE("unexpeted op");
+        WASM_UNREACHABLE("unexpected op");
     }
     o << '\n';
   }

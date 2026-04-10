@@ -4921,7 +4921,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
           bytes = pick(1, 2, 4);
           break;
         default:
-          WASM_UNREACHABLE("invalide value");
+          WASM_UNREACHABLE("invalid value");
       }
       break;
     }
@@ -4940,7 +4940,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
           bytes = pick(1, 2, 4, 8);
           break;
         default:
-          WASM_UNREACHABLE("invalide value");
+          WASM_UNREACHABLE("invalid value");
       }
       break;
     }
