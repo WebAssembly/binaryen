@@ -1,5 +1,3 @@
-// interop_extra.mjs
-
 let protoFactory = new Proxy({}, {
     get(target, prop, receiver) {
         // Always return a fresh, empty object.

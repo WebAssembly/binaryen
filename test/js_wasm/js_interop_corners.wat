@@ -29,7 +29,6 @@
     (type $Default.desc (sub (describes $Default) (struct (field (ref extern)))))
   )
 
-  ;; Non-recursive types should be outside the rec group for builtin compatibility
   (type $exact_f_t (func (param i32) (result i32)))
   (type $newB_t (func (param i32 i32) (result (ref $B))))
   (type $newC_t (func (param i32 i32 i32) (result (ref $C))))
@@ -159,6 +158,7 @@
   (func (export "get_B_vtable") (result (ref (exact $B.desc))) (global.get $B.vtable))
 
   (global $Default.vtable (ref (exact $Default.desc)) (struct.new $Default.desc (global.get $A.proto)))
+
   (func (export "newDefault") (result (ref $Default))
     (struct.new_default_desc $Default (global.get $Default.vtable))
   )

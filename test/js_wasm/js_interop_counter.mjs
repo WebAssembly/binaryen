@@ -1,7 +1,5 @@
 // https://github.com/WebAssembly/custom-descriptors/blob/main/proposals/custom-descriptors/Overview.md
 
-// counter.mjs
-
 let protoFactory = new Proxy({}, {
     get(target, prop, receiver) {
         // Always return a fresh, empty object.

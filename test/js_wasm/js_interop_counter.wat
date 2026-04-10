@@ -1,7 +1,5 @@
 ;; https://github.com/WebAssembly/custom-descriptors/blob/main/proposals/custom-descriptors/Overview.md
 
-;; counter.wasm
-
 (module
   (rec
     (type $counter (descriptor $counter.vtable) (struct (field $val (mut i32))))
