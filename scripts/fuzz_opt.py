@@ -2157,7 +2157,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
 
         # Modify the initial wat to get the pre-optimizations wasm.
         pre_wasm = abspath('pre.wasm')
-        processed = run([in_bin('wasm-opt'), input] + FEATURE_OPTS + [
+        run([in_bin('wasm-opt'), input] + FEATURE_OPTS + [
             '-ttf',
             '--fuzz-preserve-imports-exports',
             '--initial-fuzz=' + wat_file,
