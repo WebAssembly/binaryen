@@ -55,6 +55,7 @@
 // to the same thing, and after merging it can still reach it).
 //
 
+#include <iterator>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -312,14 +313,13 @@ private:
     auto allTargets = BranchUtils::getBranchTargets(outOf);
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
-      bool hasIntersection = false;
-      for (auto& name : exiting) {
-        if (allTargets.count(name)) {
-          hasIntersection = true;
-          break;
-        }
-      }
-      if (hasIntersection) {
+      std::vector<Name> intersection;
+      std::set_intersection(allTargets.begin(),
+                            allTargets.end(),
+                            exiting.begin(),
+                            exiting.end(),
+                            std::back_inserter(intersection));
+      if (intersection.size() > 0) {
         // anything exiting that is in all targets is something bad
         return false;
       }
