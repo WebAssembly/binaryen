@@ -30,8 +30,12 @@ namespace wasm {
 
 namespace {
 
+constexpr auto UnknownEffects = std::nullopt;
+
 struct FuncInfo {
-  // Effects in this function.
+  // Effects in this function. nullopt / UnknownEffects means that we don't know
+  // what effects this function has, so we conservatively assume all effects.
+  // Nullopt cases won't be copied to Function::effects.
   std::optional<EffectAnalyzer> effects;
 
   // Directly-called functions from this function.
@@ -85,7 +89,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               // worst. To do so, clear the effects, which indicates nothing
               // is known (so anything is possible).
               // TODO: We could group effects by function type etc.
-              funcInfo.effects.reset();
+              funcInfo.effects = UnknownEffects;
             } else {
               // No call here, but update throwing if we see it. (Only do so,
               // however, if we have effects; if we cleared it - see before -
@@ -109,16 +113,14 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
 // Then B inherits effects from C and A inherits effects from both B and C.
 void propagateEffects(
   const Module& module,
-  const std::unordered_map<Name, std::unordered_set<Name>>& in,
+  const std::unordered_map<Name, std::unordered_set<Name>>& reverseCallGraph,
   std::map<Function*, FuncInfo>& funcInfos) {
 
-  std::unordered_set<std::pair<Name, Name>> processed;
-  std::deque<std::pair<Name, Name>> work;
+  UniqueNonrepeatingDeferredQueue<std::pair<Name, Name>> work;
 
-  for (const auto& [callee, callers] : in) {
+  for (const auto& [callee, callers] : reverseCallGraph) {
     for (const auto& caller : callers) {
-      work.emplace_back(callee, caller);
-      processed.emplace(callee, caller);
+      work.push(std::pair(callee, caller));
     }
   }
 
@@ -131,7 +133,7 @@ void propagateEffects(
     }
 
     if (!calleeEffects) {
-      callerEffects.reset();
+      callerEffects = UnknownEffects;
       return;
     }
 
@@ -139,8 +141,7 @@ void propagateEffects(
   };
 
   while (!work.empty()) {
-    auto [callee, caller] = work.back();
-    work.pop_back();
+    auto [callee, caller] = work.pop();
 
     if (callee == caller) {
       auto& callerEffects = funcInfos.at(module.getFunction(caller)).effects;
@@ -154,18 +155,13 @@ void propagateEffects(
     // lines.
     propagate(callee, caller);
 
-    const auto& callerCallers = in.find(caller);
-    if (callerCallers == in.end()) {
+    const auto& callerCallers = reverseCallGraph.find(caller);
+    if (callerCallers == reverseCallGraph.end()) {
       continue;
     }
 
     for (const Name& callerCaller : callerCallers->second) {
-      if (processed.contains({callee, callerCaller})) {
-        continue;
-      }
-
-      processed.emplace(callee, callerCaller);
-      work.emplace_back(callee, callerCaller);
+      work.push(std::pair(callee, callerCaller));
     }
   }
 }
