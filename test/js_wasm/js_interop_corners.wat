@@ -148,10 +148,9 @@
 
   (func (export "test_br_on_cast_desc_eq_fail") (param $a (ref $A)) (param $desc (ref (exact $B.desc))) (result i32)
     (block $fail (result (ref $A))
-      (drop (br_on_cast_desc_eq_fail $fail (ref $A) (ref $B) (local.get $a) (local.get $desc)))
+      (br_on_cast_desc_eq_fail $fail (ref $A) (ref $B) (local.get $a) (local.get $desc))
       (return (i32.const 1))
     )
-    (drop)
     (return (i32.const 0))
   )
 
