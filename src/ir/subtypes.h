@@ -172,7 +172,8 @@ struct SubTypes {
   // false, we stop. Returns the last value returned to it, that is, returns
   // true if we did not stop early, and false if we did.
   template<typename F>
-  bool iterSubTypes(HeapType type, Index depth, F func) const {
+  bool iterSubTypes(HeapType type, Index depth, F func) const
+  requires requires(F func, HeapType subtype, Index depth) { { func(subtype, depth) } -> std::same_as<bool>; } {
     // Start by traversing the type itself.
     if (!func(type, 0)) {
       return false;
@@ -219,7 +220,9 @@ struct SubTypes {
   }
 
   // As above, but iterate to the maximum depth.
-  template<typename F> bool iterSubTypes(HeapType type, F func) const {
+  template<typename F>
+  bool iterSubTypes(HeapType type, F func) const
+  requires requires(F func, HeapType subtype, Index depth) { { func(subtype, depth) } -> std::same_as<bool>; } {
     return iterSubTypes(type, std::numeric_limits<Index>::max(), func);
   }
 
