@@ -18,6 +18,7 @@
 #define wasm_ir_effects_h
 
 #include <cassert>
+#include <unordered_set>
 
 #include "ir/intrinsics.h"
 #include "pass.h"
@@ -141,8 +142,8 @@ public:
 
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
-  std::set<Name> mutableGlobalsRead;
-  std::set<Name> globalsWritten;
+  std::unordered_set<Name> mutableGlobalsRead;
+  std::unordered_set<Name> globalsWritten;
 
   // The nested depth of try-catch_all. If an instruction that may throw is
   // inside an inner try-catch_all, we don't mark it as 'throws_', because it
@@ -513,8 +514,8 @@ public:
     return hasAnything();
   }
 
-  std::set<Name> breakTargets;
-  std::set<Name> delegateTargets;
+  std::unordered_set<Name> breakTargets;
+  std::unordered_set<Name> delegateTargets;
 
 private:
   struct InternalAnalyzer
