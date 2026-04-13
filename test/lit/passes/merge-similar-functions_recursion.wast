@@ -6,22 +6,964 @@
 ;; default stack sizes.
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $0 (sub (struct)))
   (type $0 (sub (struct)))
+  ;; CHECK:       (type $2 (sub $0 (struct)))
   (type $2 (sub $0 (struct)))
+  ;; CHECK:       (type $1 (sub $0 (struct)))
   (type $1 (sub $0 (struct)))
+  ;; CHECK:       (type $4 (sub final $0 (struct)))
   (type $4 (sub final $0 (struct)))
+  ;; CHECK:       (type $5 (sub final $2 (struct)))
   (type $5 (sub final $2 (struct)))
+  ;; CHECK:       (type $6 (sub final $0 (struct)))
   (type $6 (sub final $0 (struct)))
+  ;; CHECK:       (type $7 (sub final $1 (struct)))
   (type $7 (sub final $1 (struct)))
+  ;; CHECK:       (type $8 (sub final $1 (struct)))
   (type $8 (sub final $1 (struct)))
+  ;; CHECK:       (type $11 (sub final $0 (struct (field (ref null $0)) (field (ref null $8)) (field (ref null $7)) (field (ref null $6)) (field (ref null $6)) (field (ref null $12)) (field (ref null $6)) (field (ref null $0)) (field (ref null $6)) (field (ref null $7)) (field (ref null $5)) (field (ref null $12)) (field (ref null $6)) (field (ref null $4)) (field (ref null $7)) (field (ref null $12)) (field (ref null $12)) (field (ref null $12)) (field (ref null $12)))))
   (type $11 (sub final $0 (struct (field (ref null $0)) (field (ref null $8)) (field (ref null $7)) (field (ref null $6)) (field (ref null $6)) (field (ref null $12)) (field (ref null $6)) (field (ref null $0)) (field (ref null $6)) (field (ref null $7)) (field (ref null $5)) (field (ref null $12)) (field (ref null $6)) (field (ref null $4)) (field (ref null $7)) (field (ref null $12)) (field (ref null $12)) (field (ref null $12)) (field (ref null $12)))))
+  ;; CHECK:       (type $12 (sub final $0 (struct)))
   (type $12 (sub final $0 (struct)))
+  ;; CHECK:       (type $13 (func (param (ref null $0)) (result (ref null $12))))
   (type $13 (func (param (ref null $0)) (result (ref null $12))))
+  ;; CHECK:       (type $17 (func (param (ref null $12) (ref null $0)) (result (ref (exact $12)))))
   (type $17 (func (param (ref null $12) (ref null $0)) (result (ref (exact $12)))))
  )
+ ;; CHECK:      (func $0 (type $17) (param $0 (ref null $12)) (param $1 (ref null $0)) (result (ref (exact $12)))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
  (func $0 (type $17) (param $0 (ref null $12)) (param $1 (ref null $0)) (result (ref (exact $12)))
   (unreachable)
  )
+ ;; CHECK:      (func $3 (type $13) (param $0 (ref null $0)) (result (ref null $12))
+ ;; CHECK-NEXT:  (local $1 (ref (exact $12)))
+ ;; CHECK-NEXT:  (local $2 (ref null (exact $12)))
+ ;; CHECK-NEXT:  (local $3 (ref null $11))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $0
+ ;; CHECK-NEXT:    (call $0
+ ;; CHECK-NEXT:     (call $0
+ ;; CHECK-NEXT:      (call $0
+ ;; CHECK-NEXT:       (call $0
+ ;; CHECK-NEXT:        (call $0
+ ;; CHECK-NEXT:         (call $0
+ ;; CHECK-NEXT:          (call $0
+ ;; CHECK-NEXT:           (call $0
+ ;; CHECK-NEXT:            (call $0
+ ;; CHECK-NEXT:             (call $0
+ ;; CHECK-NEXT:              (call $0
+ ;; CHECK-NEXT:               (call $0
+ ;; CHECK-NEXT:                (call $0
+ ;; CHECK-NEXT:                 (call $0
+ ;; CHECK-NEXT:                  (call $0
+ ;; CHECK-NEXT:                   (call $0
+ ;; CHECK-NEXT:                    (call $0
+ ;; CHECK-NEXT:                     (call $0
+ ;; CHECK-NEXT:                      (call $0
+ ;; CHECK-NEXT:                       (call $0
+ ;; CHECK-NEXT:                        (call $0
+ ;; CHECK-NEXT:                         (call $0
+ ;; CHECK-NEXT:                          (call $0
+ ;; CHECK-NEXT:                           (call $0
+ ;; CHECK-NEXT:                            (call $0
+ ;; CHECK-NEXT:                             (call $0
+ ;; CHECK-NEXT:                              (call $0
+ ;; CHECK-NEXT:                               (call $0
+ ;; CHECK-NEXT:                                (call $0
+ ;; CHECK-NEXT:                                 (call $0
+ ;; CHECK-NEXT:                                  (call $0
+ ;; CHECK-NEXT:                                   (call $0
+ ;; CHECK-NEXT:                                    (call $0
+ ;; CHECK-NEXT:                                     (call $0
+ ;; CHECK-NEXT:                                      (call $0
+ ;; CHECK-NEXT:                                       (call $0
+ ;; CHECK-NEXT:                                        (call $0
+ ;; CHECK-NEXT:                                         (call $0
+ ;; CHECK-NEXT:                                          (call $0
+ ;; CHECK-NEXT:                                           (call $0
+ ;; CHECK-NEXT:                                            (call $0
+ ;; CHECK-NEXT:                                             (call $0
+ ;; CHECK-NEXT:                                              (call $0
+ ;; CHECK-NEXT:                                               (call $0
+ ;; CHECK-NEXT:                                                (call $0
+ ;; CHECK-NEXT:                                                 (call $0
+ ;; CHECK-NEXT:                                                  (call $0
+ ;; CHECK-NEXT:                                                   (call $0
+ ;; CHECK-NEXT:                                                    (call $0
+ ;; CHECK-NEXT:                                                     (call $0
+ ;; CHECK-NEXT:                                                      (call $0
+ ;; CHECK-NEXT:                                                       (call $0
+ ;; CHECK-NEXT:                                                        (call $0
+ ;; CHECK-NEXT:                                                         (call $0
+ ;; CHECK-NEXT:                                                          (call $0
+ ;; CHECK-NEXT:                                                           (call $0
+ ;; CHECK-NEXT:                                                            (call $0
+ ;; CHECK-NEXT:                                                             (call $0
+ ;; CHECK-NEXT:                                                              (call $0
+ ;; CHECK-NEXT:                                                               (call $0
+ ;; CHECK-NEXT:                                                                (call $0
+ ;; CHECK-NEXT:                                                                 (call $0
+ ;; CHECK-NEXT:                                                                  (call $0
+ ;; CHECK-NEXT:                                                                   (call $0
+ ;; CHECK-NEXT:                                                                    (call $0
+ ;; CHECK-NEXT:                                                                     (call $0
+ ;; CHECK-NEXT:                                                                      (call $0
+ ;; CHECK-NEXT:                                                                       (call $0
+ ;; CHECK-NEXT:                                                                        (call $0
+ ;; CHECK-NEXT:                                                                         (call $0
+ ;; CHECK-NEXT:                                                                          (call $0
+ ;; CHECK-NEXT:                                                                           (call $0
+ ;; CHECK-NEXT:                                                                            (call $0
+ ;; CHECK-NEXT:                                                                             (call $0
+ ;; CHECK-NEXT:                                                                              (call $0
+ ;; CHECK-NEXT:                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                      (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                       (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                        (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                         (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                          (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                           (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                            (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                             (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                              (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                               (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                 (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                  (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                   (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                    (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                     (call $0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                      (local.tee $1
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                       (ref.as_non_null
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                        (local.get $2)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                     (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                   (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                 (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                       (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                     (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                   (struct.get $11 0
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                    (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                 (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                             (struct.get $11 1
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                              (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                         (struct.get $11 2
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                          (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                       (struct.get $11 3
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                        (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                    (struct.get $11 4
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                     (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                  (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                 (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                        (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                       (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                      (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                    (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                  (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                 (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                                (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                               (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                              (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                             (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                            (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                           (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                          (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                         (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                        (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                       (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                      (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                    (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                 (struct.get $11 5
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                  (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                       (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                     (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                   (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                 (struct.get $11 6
+ ;; CHECK-NEXT:                                                                                                                                                                                                                  (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                                           (struct.get $11 7
+ ;; CHECK-NEXT:                                                                                                                                                                                                            (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                                       (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                                     (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                   (struct.get $11 8
+ ;; CHECK-NEXT:                                                                                                                                                                                                    (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                 (struct.get $11 9
+ ;; CHECK-NEXT:                                                                                                                                                                                                  (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                               (struct.get $11 10
+ ;; CHECK-NEXT:                                                                                                                                                                                                (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                                       (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                                     (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                                   (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                 (struct.get $11 11
+ ;; CHECK-NEXT:                                                                                                                                                                                  (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                               (struct.get $11 12
+ ;; CHECK-NEXT:                                                                                                                                                                                (local.get $3)
+ ;; CHECK-NEXT:                                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                                       (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                                     (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                                   (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                                 (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                                       (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                                     (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                                   (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                                 (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                                              (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                                             (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                                            (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                                           (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                                          (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                                         (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                                        (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                                       (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                                      (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                                    (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                                  (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                                 (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                                (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                                               (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                                              (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                                             (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                                            (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                                           (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                                          (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                                         (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                                        (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                                       (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                                      (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                                    (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                                  (ref.null none)
+ ;; CHECK-NEXT:                                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                                 (local.get $1)
+ ;; CHECK-NEXT:                                                                                                                )
+ ;; CHECK-NEXT:                                                                                                                (ref.null none)
+ ;; CHECK-NEXT:                                                                                                               )
+ ;; CHECK-NEXT:                                                                                                               (local.get $1)
+ ;; CHECK-NEXT:                                                                                                              )
+ ;; CHECK-NEXT:                                                                                                              (ref.null none)
+ ;; CHECK-NEXT:                                                                                                             )
+ ;; CHECK-NEXT:                                                                                                             (local.get $1)
+ ;; CHECK-NEXT:                                                                                                            )
+ ;; CHECK-NEXT:                                                                                                            (ref.null none)
+ ;; CHECK-NEXT:                                                                                                           )
+ ;; CHECK-NEXT:                                                                                                           (local.get $1)
+ ;; CHECK-NEXT:                                                                                                          )
+ ;; CHECK-NEXT:                                                                                                          (ref.null none)
+ ;; CHECK-NEXT:                                                                                                         )
+ ;; CHECK-NEXT:                                                                                                         (local.get $1)
+ ;; CHECK-NEXT:                                                                                                        )
+ ;; CHECK-NEXT:                                                                                                        (ref.null none)
+ ;; CHECK-NEXT:                                                                                                       )
+ ;; CHECK-NEXT:                                                                                                       (local.get $1)
+ ;; CHECK-NEXT:                                                                                                      )
+ ;; CHECK-NEXT:                                                                                                      (ref.null none)
+ ;; CHECK-NEXT:                                                                                                     )
+ ;; CHECK-NEXT:                                                                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                                                                    )
+ ;; CHECK-NEXT:                                                                                                    (ref.null none)
+ ;; CHECK-NEXT:                                                                                                   )
+ ;; CHECK-NEXT:                                                                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                                                                  )
+ ;; CHECK-NEXT:                                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                                 )
+ ;; CHECK-NEXT:                                                                                                 (ref.null none)
+ ;; CHECK-NEXT:                                                                                                )
+ ;; CHECK-NEXT:                                                                                                (local.get $1)
+ ;; CHECK-NEXT:                                                                                               )
+ ;; CHECK-NEXT:                                                                                               (ref.null none)
+ ;; CHECK-NEXT:                                                                                              )
+ ;; CHECK-NEXT:                                                                                              (local.get $1)
+ ;; CHECK-NEXT:                                                                                             )
+ ;; CHECK-NEXT:                                                                                             (ref.null none)
+ ;; CHECK-NEXT:                                                                                            )
+ ;; CHECK-NEXT:                                                                                            (local.get $1)
+ ;; CHECK-NEXT:                                                                                           )
+ ;; CHECK-NEXT:                                                                                           (ref.null none)
+ ;; CHECK-NEXT:                                                                                          )
+ ;; CHECK-NEXT:                                                                                          (local.get $1)
+ ;; CHECK-NEXT:                                                                                         )
+ ;; CHECK-NEXT:                                                                                         (ref.null none)
+ ;; CHECK-NEXT:                                                                                        )
+ ;; CHECK-NEXT:                                                                                        (local.get $1)
+ ;; CHECK-NEXT:                                                                                       )
+ ;; CHECK-NEXT:                                                                                       (ref.null none)
+ ;; CHECK-NEXT:                                                                                      )
+ ;; CHECK-NEXT:                                                                                      (local.get $1)
+ ;; CHECK-NEXT:                                                                                     )
+ ;; CHECK-NEXT:                                                                                     (struct.get $11 13
+ ;; CHECK-NEXT:                                                                                      (local.get $3)
+ ;; CHECK-NEXT:                                                                                     )
+ ;; CHECK-NEXT:                                                                                    )
+ ;; CHECK-NEXT:                                                                                    (local.get $1)
+ ;; CHECK-NEXT:                                                                                   )
+ ;; CHECK-NEXT:                                                                                   (struct.get $11 14
+ ;; CHECK-NEXT:                                                                                    (local.get $3)
+ ;; CHECK-NEXT:                                                                                   )
+ ;; CHECK-NEXT:                                                                                  )
+ ;; CHECK-NEXT:                                                                                  (local.get $1)
+ ;; CHECK-NEXT:                                                                                 )
+ ;; CHECK-NEXT:                                                                                 (local.get $1)
+ ;; CHECK-NEXT:                                                                                )
+ ;; CHECK-NEXT:                                                                                (ref.null none)
+ ;; CHECK-NEXT:                                                                               )
+ ;; CHECK-NEXT:                                                                               (local.get $1)
+ ;; CHECK-NEXT:                                                                              )
+ ;; CHECK-NEXT:                                                                              (ref.null none)
+ ;; CHECK-NEXT:                                                                             )
+ ;; CHECK-NEXT:                                                                             (local.get $1)
+ ;; CHECK-NEXT:                                                                            )
+ ;; CHECK-NEXT:                                                                            (ref.null none)
+ ;; CHECK-NEXT:                                                                           )
+ ;; CHECK-NEXT:                                                                           (local.get $1)
+ ;; CHECK-NEXT:                                                                          )
+ ;; CHECK-NEXT:                                                                          (ref.null none)
+ ;; CHECK-NEXT:                                                                         )
+ ;; CHECK-NEXT:                                                                         (local.get $1)
+ ;; CHECK-NEXT:                                                                        )
+ ;; CHECK-NEXT:                                                                        (ref.null none)
+ ;; CHECK-NEXT:                                                                       )
+ ;; CHECK-NEXT:                                                                       (local.get $1)
+ ;; CHECK-NEXT:                                                                      )
+ ;; CHECK-NEXT:                                                                      (ref.null none)
+ ;; CHECK-NEXT:                                                                     )
+ ;; CHECK-NEXT:                                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                                    )
+ ;; CHECK-NEXT:                                                                    (ref.null none)
+ ;; CHECK-NEXT:                                                                   )
+ ;; CHECK-NEXT:                                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                                  )
+ ;; CHECK-NEXT:                                                                  (ref.null none)
+ ;; CHECK-NEXT:                                                                 )
+ ;; CHECK-NEXT:                                                                 (local.get $1)
+ ;; CHECK-NEXT:                                                                )
+ ;; CHECK-NEXT:                                                                (ref.null none)
+ ;; CHECK-NEXT:                                                               )
+ ;; CHECK-NEXT:                                                               (local.get $1)
+ ;; CHECK-NEXT:                                                              )
+ ;; CHECK-NEXT:                                                              (ref.null none)
+ ;; CHECK-NEXT:                                                             )
+ ;; CHECK-NEXT:                                                             (local.get $1)
+ ;; CHECK-NEXT:                                                            )
+ ;; CHECK-NEXT:                                                            (ref.null none)
+ ;; CHECK-NEXT:                                                           )
+ ;; CHECK-NEXT:                                                           (local.get $1)
+ ;; CHECK-NEXT:                                                          )
+ ;; CHECK-NEXT:                                                          (ref.null none)
+ ;; CHECK-NEXT:                                                         )
+ ;; CHECK-NEXT:                                                         (local.get $1)
+ ;; CHECK-NEXT:                                                        )
+ ;; CHECK-NEXT:                                                        (ref.null none)
+ ;; CHECK-NEXT:                                                       )
+ ;; CHECK-NEXT:                                                       (local.get $1)
+ ;; CHECK-NEXT:                                                      )
+ ;; CHECK-NEXT:                                                      (ref.null none)
+ ;; CHECK-NEXT:                                                     )
+ ;; CHECK-NEXT:                                                     (local.get $1)
+ ;; CHECK-NEXT:                                                    )
+ ;; CHECK-NEXT:                                                    (ref.null none)
+ ;; CHECK-NEXT:                                                   )
+ ;; CHECK-NEXT:                                                   (local.get $1)
+ ;; CHECK-NEXT:                                                  )
+ ;; CHECK-NEXT:                                                  (ref.null none)
+ ;; CHECK-NEXT:                                                 )
+ ;; CHECK-NEXT:                                                 (local.get $1)
+ ;; CHECK-NEXT:                                                )
+ ;; CHECK-NEXT:                                                (ref.null none)
+ ;; CHECK-NEXT:                                               )
+ ;; CHECK-NEXT:                                               (ref.null none)
+ ;; CHECK-NEXT:                                              )
+ ;; CHECK-NEXT:                                              (local.get $1)
+ ;; CHECK-NEXT:                                             )
+ ;; CHECK-NEXT:                                             (ref.null none)
+ ;; CHECK-NEXT:                                            )
+ ;; CHECK-NEXT:                                            (local.get $1)
+ ;; CHECK-NEXT:                                           )
+ ;; CHECK-NEXT:                                           (ref.null none)
+ ;; CHECK-NEXT:                                          )
+ ;; CHECK-NEXT:                                          (local.get $1)
+ ;; CHECK-NEXT:                                         )
+ ;; CHECK-NEXT:                                         (ref.null none)
+ ;; CHECK-NEXT:                                        )
+ ;; CHECK-NEXT:                                        (local.get $1)
+ ;; CHECK-NEXT:                                       )
+ ;; CHECK-NEXT:                                       (ref.null none)
+ ;; CHECK-NEXT:                                      )
+ ;; CHECK-NEXT:                                      (local.get $1)
+ ;; CHECK-NEXT:                                     )
+ ;; CHECK-NEXT:                                     (ref.null none)
+ ;; CHECK-NEXT:                                    )
+ ;; CHECK-NEXT:                                    (local.get $1)
+ ;; CHECK-NEXT:                                   )
+ ;; CHECK-NEXT:                                   (ref.null none)
+ ;; CHECK-NEXT:                                  )
+ ;; CHECK-NEXT:                                  (local.get $1)
+ ;; CHECK-NEXT:                                 )
+ ;; CHECK-NEXT:                                 (ref.null none)
+ ;; CHECK-NEXT:                                )
+ ;; CHECK-NEXT:                                (local.get $1)
+ ;; CHECK-NEXT:                               )
+ ;; CHECK-NEXT:                               (local.get $1)
+ ;; CHECK-NEXT:                              )
+ ;; CHECK-NEXT:                              (ref.null none)
+ ;; CHECK-NEXT:                             )
+ ;; CHECK-NEXT:                             (local.get $1)
+ ;; CHECK-NEXT:                            )
+ ;; CHECK-NEXT:                            (local.get $1)
+ ;; CHECK-NEXT:                           )
+ ;; CHECK-NEXT:                           (ref.null none)
+ ;; CHECK-NEXT:                          )
+ ;; CHECK-NEXT:                          (local.get $1)
+ ;; CHECK-NEXT:                         )
+ ;; CHECK-NEXT:                         (ref.null none)
+ ;; CHECK-NEXT:                        )
+ ;; CHECK-NEXT:                        (local.get $1)
+ ;; CHECK-NEXT:                       )
+ ;; CHECK-NEXT:                       (ref.null none)
+ ;; CHECK-NEXT:                      )
+ ;; CHECK-NEXT:                      (struct.get $11 15
+ ;; CHECK-NEXT:                       (local.get $3)
+ ;; CHECK-NEXT:                      )
+ ;; CHECK-NEXT:                     )
+ ;; CHECK-NEXT:                     (local.get $1)
+ ;; CHECK-NEXT:                    )
+ ;; CHECK-NEXT:                    (struct.get $11 16
+ ;; CHECK-NEXT:                     (local.get $3)
+ ;; CHECK-NEXT:                    )
+ ;; CHECK-NEXT:                   )
+ ;; CHECK-NEXT:                   (local.get $1)
+ ;; CHECK-NEXT:                  )
+ ;; CHECK-NEXT:                  (struct.get $11 17
+ ;; CHECK-NEXT:                   (local.get $3)
+ ;; CHECK-NEXT:                  )
+ ;; CHECK-NEXT:                 )
+ ;; CHECK-NEXT:                 (local.get $1)
+ ;; CHECK-NEXT:                )
+ ;; CHECK-NEXT:                (struct.get $11 18
+ ;; CHECK-NEXT:                 (local.get $3)
+ ;; CHECK-NEXT:                )
+ ;; CHECK-NEXT:               )
+ ;; CHECK-NEXT:               (local.get $1)
+ ;; CHECK-NEXT:              )
+ ;; CHECK-NEXT:              (ref.as_non_null
+ ;; CHECK-NEXT:               (local.get $2)
+ ;; CHECK-NEXT:              )
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:             (ref.null none)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:            (local.get $1)
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:           (ref.null none)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (local.get $1)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (ref.null none)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (ref.null none)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $1)
+ ;; CHECK-NEXT: )
  (func $3 (type $13) (param $0 (ref null $0)) (result (ref null $12))
   (local $1 (ref (exact $12)))
   (local $2 (ref null (exact $12)))
