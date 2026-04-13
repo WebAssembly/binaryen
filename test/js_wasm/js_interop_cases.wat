@@ -146,10 +146,8 @@
         (br_on_cast_desc_eq $derived (ref $Base) (ref $Derived) (local.get $b) (global.get $Derived.vtable))
         (return (i32.const 0))
       )
-      (drop)
       (return (i32.const 1))
     )
-    (drop)
     (return (i32.const 2))
   )
 
