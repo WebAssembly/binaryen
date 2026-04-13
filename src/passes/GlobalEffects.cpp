@@ -22,7 +22,6 @@
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
-#include "support/hash.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
