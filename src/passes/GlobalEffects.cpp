@@ -19,10 +19,12 @@
 // Function::effects; see more details there.
 //
 
+#include "ir/table-utils.h"
 #include "ir/subtypes.h"
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
+#include "ir/element-utils.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -194,6 +196,20 @@ struct GenerateGlobalEffects : public Pass {
     std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> callers;
 
     std::unordered_set<HeapType> allIndirectCalledTypes;
+
+    std::unordered_set<Name> funcsWithAddress;
+
+    auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(*module);
+    funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
+    ElementUtils::iterAllElementFunctionNames(module, [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
+    for (const auto& export_ : module->exports) {
+      if (export_->kind == ExternalKind::Function) {
+        // This exported function might flow back to us even in a closed world,
+        // so it's essentially addressed.
+        funcsWithAddress.insert(export_->name);
+      }
+    }
+
     for (const auto& [func, info] : funcInfos) {
       // Name -> Name for direct calls
       for (const auto& callee : info.calledFunctions) {
@@ -206,7 +222,9 @@ struct GenerateGlobalEffects : public Pass {
       }
 
       // Name -> HeapType for function types
-      callers[func->name].insert(func->type.getHeapType());
+      if (funcsWithAddress.contains(func->name)) {
+        callers[func->name].insert(func->type.getHeapType());
+      }
 
       allIndirectCalledTypes.insert(func->type.getHeapType());
     }
@@ -218,6 +236,7 @@ struct GenerateGlobalEffects : public Pass {
         // A subtype is a 'callee' of its supertype. Supertypes need to inherit effects from their subtypes
         // See the example in (TODO)
         callers[sub].insert(type);
+        // callers[type].insert(sub);
         return true;
       });
     }

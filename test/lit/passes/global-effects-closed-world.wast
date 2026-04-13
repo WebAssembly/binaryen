@@ -206,7 +206,7 @@
   ;; CHECK:      (func $A (type $ttt) (param $0 i64)
   ;; CHECK-NEXT:  (call $B)
   ;; CHECK-NEXT: )
-  (func $A (param i64)
+  (func $A (export "A") (param i64)
     (call $B)
     ;; (call_ref $ttt (ref.func $u))
   )
@@ -224,7 +224,7 @@
   )
 
   ;; CHECK:      (func $foo (type $6)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $C)
   ;; CHECK-NEXT: )
   (func $foo
     (call $C)
