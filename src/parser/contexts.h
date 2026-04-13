@@ -1985,7 +1985,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   void setSrcLoc(const std::vector<Annotation>& annotations) {
     const Annotation* annotation = nullptr;
     for (auto& a : annotations) {
-      if (a.kind == srcAnnotationKind) {
+      if (a.kind.str == std::string_view("src")) {
         annotation = &a;
       }
     }
