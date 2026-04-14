@@ -102,11 +102,11 @@ struct SimplifyLocals
   // a list of all sinkable traces that exit a block. the last
   // is falling off the end, others are branches. this is used for
   // block returns
-  std::map<Name, std::vector<BlockBreak>> blockBreaks;
+  std::unordered_map<Name, std::vector<BlockBreak>> blockBreaks;
 
   // blocks that we can't produce a block return value for them.
   // (switch target, or some other reason)
-  std::set<Name> unoptimizableBlocks;
+  std::unordered_set<Name> unoptimizableBlocks;
 
   // A stack of sinkables from the current traversal state. When
   // execution reaches an if-else, it splits, and can then

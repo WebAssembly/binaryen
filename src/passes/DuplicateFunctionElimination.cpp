@@ -64,7 +64,7 @@ struct DuplicateFunctionElimination : public Pass {
       });
       // Find actually equal functions and prepare to replace them
       std::map<Name, Name> replacements;
-      std::set<Name> duplicates;
+      std::unordered_set<Name> duplicates;
       for (auto& [_, group] : hashGroups) {
         Index size = group.size();
         if (size == 1) {
