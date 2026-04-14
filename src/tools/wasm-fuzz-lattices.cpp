@@ -1067,7 +1067,7 @@ int main(int argc, const char* argv[]) {
 
   Options options("wasm-fuzz-lattices",
                   "Fuzz lattices for reflexivity, transitivity, and "
-                  "anti-symmetry, and tranfer functions for monotonicity.");
+                  "anti-symmetry, and transfer functions for monotonicity.");
 
   std::optional<uint64_t> seed;
   options.add("--seed",

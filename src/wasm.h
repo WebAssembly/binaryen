@@ -251,6 +251,7 @@ enum UnaryOp {
   TruncSatUVecF16x8ToVecI16x8,
   ConvertSVecI16x8ToVecF16x8,
   ConvertUVecI16x8ToVecF16x8,
+  PromoteLowVecF16x8ToVecF32x4,
 
   InvalidUnary
 };
@@ -2699,30 +2700,30 @@ private:
 public:
   Module() = default;
 
-  Export* getExport(Name name);
-  Function* getFunction(Name name);
-  Table* getTable(Name name);
-  ElementSegment* getElementSegment(Name name);
-  Memory* getMemory(Name name);
-  DataSegment* getDataSegment(Name name);
-  Global* getGlobal(Name name);
-  Tag* getTag(Name name);
+  Export* getExport(Name name) const;
+  Function* getFunction(Name name) const;
+  Table* getTable(Name name) const;
+  ElementSegment* getElementSegment(Name name) const;
+  Memory* getMemory(Name name) const;
+  DataSegment* getDataSegment(Name name) const;
+  Global* getGlobal(Name name) const;
+  Tag* getTag(Name name) const;
 
-  Export* getExportOrNull(Name name);
-  Table* getTableOrNull(Name name);
-  Memory* getMemoryOrNull(Name name);
-  ElementSegment* getElementSegmentOrNull(Name name);
-  DataSegment* getDataSegmentOrNull(Name name);
-  Function* getFunctionOrNull(Name name);
-  Global* getGlobalOrNull(Name name);
-  Tag* getTagOrNull(Name name);
+  Export* getExportOrNull(Name name) const;
+  Table* getTableOrNull(Name name) const;
+  Memory* getMemoryOrNull(Name name) const;
+  ElementSegment* getElementSegmentOrNull(Name name) const;
+  DataSegment* getDataSegmentOrNull(Name name) const;
+  Function* getFunctionOrNull(Name name) const;
+  Global* getGlobalOrNull(Name name) const;
+  Tag* getTagOrNull(Name name) const;
 
   // get* methods that are generic over the kind, that is, items are identified
   // by their kind and their name. Otherwise, they are similar to the above
   // get* methods. These return items that can be imports.
   // TODO: Add methods for things that cannot be imports (segments).
-  Importable* getImport(ModuleItemKind kind, Name name);
-  Importable* getImportOrNull(ModuleItemKind kind, Name name);
+  Importable* getImport(ModuleItemKind kind, Name name) const;
+  Importable* getImportOrNull(ModuleItemKind kind, Name name) const;
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);

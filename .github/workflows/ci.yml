@@ -221,7 +221,7 @@ jobs:
 
   # Run tests on Alpine Linux, which we use to make our release builds.
   # Note: Alpine uses musl libc.
-  # Keep in sync with build_release.yml. The only difference is that here we
+  # Keep in sync with create_release.yml. The only difference is that here we
   # do not have the "archive" and "upload tarball" jobs.
   build-alpine:
     name: alpine
@@ -259,8 +259,11 @@ jobs:
       run: ./alpine.sh pip3 install --break-system-packages -r requirements-dev.txt
 
     - name: cmake
+      # Build with an 8MB stack size, as otherwise Alpine/musl's default stack
+      # size for pthreads is tiny,
+      # https://github.com/WebAssembly/binaryen/issues/8594
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DBUILD_MIMALLOC=ON -DCMAKE_INSTALL_PREFIX=install
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_EXE_LINKER_FLAGS="-Wl,-z,stack-size=8388608" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DBUILD_MIMALLOC=ON -DCMAKE_INSTALL_PREFIX=install
 
     - name: build
       run: |
@@ -357,23 +360,20 @@ jobs:
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: emsdk install
-      run: |
-        mkdir $HOME/emsdk
-        git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
-        $HOME/emsdk/emsdk update-tags
-        $HOME/emsdk/emsdk install tot
-        $HOME/emsdk/emsdk activate tot
+      uses: emscripten-core/setup-emsdk@v15
+      with:
+        version: tot
     - name: override emscripten repository
       if: ${{ env.EMSCRIPTEN_REPO != '' }}
       run: |
-        $HOME/emsdk/emsdk install emscripten-main-64bit \
+        $EMSDK/emsdk install emscripten-main-64bit \
           --override-repository emscripten-main-64bit@$EMSCRIPTEN_REPO
-        $HOME/emsdk/emsdk activate emscripten-main-64bit
+        $EMSDK/emsdk activate emscripten-main-64bit
     - name: update path
-      run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
+      run:  echo "PATH=$PATH:$EMSDK" >> $GITHUB_ENV
     - name: emcc-tests
       run: |
-        source $HOME/emsdk/emsdk_env.sh
+        source $EMSDK/emsdk_env.sh
         ./scripts/emcc-tests.sh
 
   # Windows + gcc needs work before the tests will run, so just test the compile

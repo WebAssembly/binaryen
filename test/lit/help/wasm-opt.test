@@ -70,7 +70,7 @@
 ;; CHECK-NEXT:                                                 fuzzing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --fuzz-preserve-imports-exports               don't add imports and exports in
-;; CHECK-NEXT:                                                 -ttf mode
+;; CHECK-NEXT:                                                 -ttf mode, and keep the start
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in
 ;; CHECK-NEXT:                                                 -ttf mode
@@ -195,7 +195,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --func-metrics                                reports function metrics
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall fuctions used
+;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall functions used
 ;; CHECK-NEXT:                                                 by emscripten ABI
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-global-effects                     generate global effect info
@@ -379,7 +379,7 @@
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
 ;; CHECK-NEXT:                                                 uses
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --poppify                                     Tranform Binaryen IR into Poppy
+;; CHECK-NEXT:   --poppify                                     Transform Binaryen IR into Poppy
 ;; CHECK-NEXT:                                                 IR
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for

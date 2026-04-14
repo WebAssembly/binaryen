@@ -2381,8 +2381,12 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   }
 
   // Remove a start function - the fuzzing harness expects code to run only
-  // from exports.
-  wasm.start = Name();
+  // from exports. When preserving imports and exports, however, we need to
+  // keep any start method, as it may be important to keep the contract between
+  // the wasm and the outside.
+  if (!preserveImportsAndExports) {
+    wasm.start = Name();
+  }
 }
 
 void TranslateToFuzzReader::dropToLog(Function* func) {
@@ -4526,7 +4530,8 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
                                          TruncSatSVecF16x8ToVecI16x8,
                                          TruncSatUVecF16x8ToVecI16x8,
                                          ConvertSVecI16x8ToVecF16x8,
-                                         ConvertUVecI16x8ToVecF16x8)),
+                                         ConvertUVecI16x8ToVecF16x8,
+                                         PromoteLowVecF16x8ToVecF32x4)),
                              make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
@@ -4916,7 +4921,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
           bytes = pick(1, 2, 4);
           break;
         default:
-          WASM_UNREACHABLE("invalide value");
+          WASM_UNREACHABLE("invalid value");
       }
       break;
     }
@@ -4935,7 +4940,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
           bytes = pick(1, 2, 4, 8);
           break;
         default:
-          WASM_UNREACHABLE("invalide value");
+          WASM_UNREACHABLE("invalid value");
       }
       break;
     }

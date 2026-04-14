@@ -206,7 +206,7 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
     .add("--fuzz-preserve-imports-exports",
          "",
-         "don't add imports and exports in -ttf mode",
+         "don't add imports and exports in -ttf mode, and keep the start",
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {

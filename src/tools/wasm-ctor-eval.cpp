@@ -213,6 +213,13 @@ public:
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
 
+  Flow visitGlobalSet(GlobalSet* curr) {
+    if (curr->value->type.isContinuation()) {
+      throw FailToEvalException("cannot serialize continuations to globals");
+    }
+    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalSet(curr);
+  }
+
   Flow visitTableGet(TableGet* curr) {
     // We support tableLoad, below, so that call_indirect works (it calls it
     // internally), but we want to disable table.get for now.

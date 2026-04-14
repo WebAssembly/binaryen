@@ -597,6 +597,22 @@
    (local.get $0)
   )
  )
+
+ ;; CHECK-TEXT:      (func $f32x4.promote_low_f16x8 (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f32x4.promote_low_f16x8
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f32x4.promote_low_f16x8 (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f32x4.promote_low_f16x8
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f32x4.promote_low_f16x8 (param $0 v128) (result v128)
+  (f32x4.promote_low_f16x8
+   (local.get $0)
+  )
+ )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param v128 v128) (result v128)))
 
@@ -824,6 +840,12 @@
 
 ;; CHECK-BIN-NODEBUG:      (func $31 (type $1) (param $0 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.convert_i16x8_u
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $32 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f32x4.promote_low_f16x8
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

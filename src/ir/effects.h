@@ -18,6 +18,7 @@
 #define wasm_ir_effects_h
 
 #include <cassert>
+#include <unordered_set>
 
 #include "ir/intrinsics.h"
 #include "pass.h"
@@ -32,7 +33,7 @@ namespace wasm {
 
 class EffectAnalyzer {
 public:
-  EffectAnalyzer(const PassOptions& passOptions, Module& module)
+  EffectAnalyzer(const PassOptions& passOptions, const Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen), branchesOut(false),
       calls(false), readsMemory(false), writesMemory(false),
@@ -46,7 +47,7 @@ public:
       features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module,
+                 const Module& module,
                  Expression* ast)
     : EffectAnalyzer(passOptions, module) {
     walk(ast);
@@ -136,13 +137,13 @@ public:
   // more here.)
   bool hasReturnCallThrow : 1;
 
-  Module& module;
+  const Module& module;
   FeatureSet features;
 
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
-  std::set<Name> mutableGlobalsRead;
-  std::set<Name> globalsWritten;
+  std::unordered_set<Name> mutableGlobalsRead;
+  std::unordered_set<Name> globalsWritten;
 
   // The nested depth of try-catch_all. If an instruction that may throw is
   // inside an inner try-catch_all, we don't mark it as 'throws_', because it
@@ -513,8 +514,8 @@ public:
     return hasAnything();
   }
 
-  std::set<Name> breakTargets;
-  std::set<Name> delegateTargets;
+  std::unordered_set<Name> breakTargets;
+  std::unordered_set<Name> delegateTargets;
 
 private:
   struct InternalAnalyzer

@@ -1127,16 +1127,27 @@ switch (buf[0]) {
                 }
               }
               case 'p': {
-                switch (buf[8]) {
-                  case 'a':
-                    if (op == "f32x4.pmax"sv) {
-                      CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMaxVecF32x4));
-                      return Ok{};
+                switch (buf[7]) {
+                  case 'm': {
+                    switch (buf[8]) {
+                      case 'a':
+                        if (op == "f32x4.pmax"sv) {
+                          CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMaxVecF32x4));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 'i':
+                        if (op == "f32x4.pmin"sv) {
+                          CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMinVecF32x4));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "f32x4.pmin"sv) {
-                      CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMinVecF32x4));
+                  }
+                  case 'r':
+                    if (op == "f32x4.promote_low_f16x8"sv) {
+                      CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::PromoteLowVecF16x8ToVecF32x4));
                       return Ok{};
                     }
                     goto parse_error;
