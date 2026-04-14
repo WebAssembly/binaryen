@@ -573,6 +573,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     }
     return ret + visit(curr->left) + visit(curr->right);
   }
+  CostType visitWideIntBinary(WideIntBinary* curr) {
+    CostType ret = 1;
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
   CostType visitSelect(Select* curr) {
     return 1 + visit(curr->condition) + visit(curr->ifTrue) +
            visit(curr->ifFalse);

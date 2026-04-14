@@ -282,6 +282,10 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
 
+  Flow visitWideIntBinary(WideIntBinary* curr) {
+    return Super::visitWideIntBinary(curr);
+  }
+
   Flow visitStringEncode(StringEncode* curr) {
     // string.encode_wtf16_array is effectively an Array write operation, so
     // just like ArraySet and ArrayCopy above we must mark it as disallowed

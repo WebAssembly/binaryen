@@ -1757,6 +1757,15 @@ Result<> IRBuilder::makeBinary(BinaryOp op) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeWideIntBinary(WideIntBinaryOp op) {
+  WideIntBinary curr(wasm.allocator);
+  curr.op = op;
+  CHECK_ERR(visitWideIntBinary(&curr));
+  push(builder.makeWideIntBinary(
+    op, std::vector<Expression*>(curr.operands.begin(), curr.operands.end())));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeSelect(std::optional<Type> type) {
   Select curr;
   CHECK_ERR(visitSelect(&curr));

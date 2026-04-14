@@ -109,6 +109,7 @@ void ReFinalize::visitMemoryFill(MemoryFill* curr) { curr->finalize(); }
 void ReFinalize::visitConst(Const* curr) { curr->finalize(); }
 void ReFinalize::visitUnary(Unary* curr) { curr->finalize(); }
 void ReFinalize::visitBinary(Binary* curr) { curr->finalize(); }
+void ReFinalize::visitWideIntBinary(WideIntBinary* curr) { curr->finalize(); }
 void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }

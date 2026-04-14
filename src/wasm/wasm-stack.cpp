@@ -2287,6 +2287,17 @@ void BinaryInstWriter::visitSelect(Select* curr) {
   }
 }
 
+void BinaryInstWriter::visitWideIntBinary(WideIntBinary* curr) {
+  o << static_cast<int8_t>(BinaryConsts::MiscPrefix);
+  switch (curr->op) {
+    case AddInt128:
+      o << U32LEB(BinaryConsts::I64Add128);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid wide int binary op");
+  }
+}
+
 void BinaryInstWriter::visitReturn(Return* curr) {
   o << static_cast<int8_t>(BinaryConsts::Return);
 }

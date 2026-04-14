@@ -217,6 +217,22 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     }
   }
   Flow visitSelect(Select* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitWideIntBinary(WideIntBinary* curr) {
+    if (curr->op == AddInt128) {
+      uint64_t highRHS = pop().geti64();
+      uint64_t lowRHS = pop().geti64();
+      uint64_t highLHS = pop().geti64();
+      uint64_t lowLHS = pop().geti64();
+
+      uint64_t lowRes = lowLHS + lowRHS;
+      uint64_t highRes = highLHS + highRHS + (lowRes < lowLHS);
+
+      push(Literal(lowRes));
+      push(Literal(highRes));
+      return {};
+    }
+    WASM_UNREACHABLE("TODO");
+  }
   Flow visitDrop(Drop* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitReturn(Return* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitMemorySize(MemorySize* curr) { WASM_UNREACHABLE("TODO"); }

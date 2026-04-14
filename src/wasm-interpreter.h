@@ -1797,6 +1797,25 @@ public:
     VISIT(condition, curr->condition)
     return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
   }
+  Flow visitWideIntBinary(WideIntBinary* curr) {
+    Literals arguments;
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
+    if (curr->op == AddInt128) {
+      uint64_t lowLHS = arguments[0].geti64();
+      uint64_t highLHS = arguments[1].geti64();
+      uint64_t lowRHS = arguments[2].geti64();
+      uint64_t highRHS = arguments[3].geti64();
+
+      uint64_t lowRes = lowLHS + lowRHS;
+      uint64_t highRes = highLHS + highRHS + (lowRes < lowLHS);
+
+      Literals results;
+      results.push_back(Literal(lowRes));
+      results.push_back(Literal(highRes));
+      return results;
+    }
+    WASM_UNREACHABLE("invalid wide int binary op");
+  }
   Flow visitDrop(Drop* curr) {
     VISIT(value, curr->value)
     return Flow();
@@ -3046,6 +3065,9 @@ public:
   Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitWideIntBinary(WideIntBinary* curr) {
+    return ExpressionRunner<SubType>::visitWideIntBinary(curr);
   }
   Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }

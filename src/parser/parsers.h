@@ -91,6 +91,11 @@ Result<> makeNop(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeBinary(Ctx&, Index, const std::vector<Annotation>&, BinaryOp op);
 template<typename Ctx>
+Result<> makeWideIntBinary(Ctx&,
+                           Index,
+                           const std::vector<Annotation>&,
+                           WideIntBinaryOp op);
+template<typename Ctx>
 Result<> makeUnary(Ctx&, Index, const std::vector<Annotation>&, UnaryOp op);
 template<typename Ctx>
 Result<> makeSelect(Ctx&, Index, const std::vector<Annotation>&);
@@ -1590,6 +1595,14 @@ Result<> makeBinary(Ctx& ctx,
                     const std::vector<Annotation>& annotations,
                     BinaryOp op) {
   return ctx.makeBinary(pos, annotations, op);
+}
+
+template<typename Ctx>
+Result<> makeWideIntBinary(Ctx& ctx,
+                           Index pos,
+                           const std::vector<Annotation>& annotations,
+                           WideIntBinaryOp op) {
+  return ctx.makeWideIntBinary(pos, annotations, op);
 }
 
 template<typename Ctx>

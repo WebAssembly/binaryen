@@ -801,6 +801,21 @@ void Binary::finalize() {
   }
 }
 
+void WideIntBinary::finalize() {
+  bool unreachable = false;
+  for (auto* operand : operands) {
+    if (operand->type == Type::unreachable) {
+      unreachable = true;
+      break;
+    }
+  }
+  if (unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type({Type::i64, Type::i64});
+  }
+}
+
 void Select::finalize() {
   assert(ifTrue && ifFalse);
   if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||

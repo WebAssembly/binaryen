@@ -703,6 +703,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
   }
 
+  void visitWideIntBinary(WideIntBinary* curr) {
+    size_t num = 4;
+    curr->operands.resize(num);
+    for (size_t i = 0; i < num; ++i) {
+      note(&curr->operands[i], Type::i64);
+    }
+  }
+
   void visitSelect(Select* curr, std::optional<Type> type = std::nullopt) {
     if (type) {
       note(&curr->ifTrue, *type);

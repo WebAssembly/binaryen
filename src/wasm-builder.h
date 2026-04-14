@@ -660,6 +660,14 @@ public:
     ret->finalize();
     return ret;
   }
+  WideIntBinary* makeWideIntBinary(WideIntBinaryOp op,
+                                   const std::vector<Expression*>& operands) {
+    auto* ret = wasm.allocator.alloc<WideIntBinary>();
+    ret->op = op;
+    ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
   Select*
   makeSelect(Expression* condition, Expression* ifTrue, Expression* ifFalse) {
     auto* ret = wasm.allocator.alloc<Select>();

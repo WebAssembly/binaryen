@@ -638,6 +638,10 @@ enum StringEqOp {
   StringEqCompare,
 };
 
+enum WideIntBinaryOp {
+  AddInt128,
+};
+
 //
 // Expressions
 //
@@ -767,6 +771,7 @@ public:
     StackSwitchId,
     StructWaitId,
     StructNotifyId,
+    WideIntBinaryId,
     NumExpressionIds
   };
   Id _id;
@@ -1294,6 +1299,16 @@ public:
   // except for relationals
 
   bool isRelational();
+
+  void finalize();
+};
+
+class WideIntBinary : public SpecificExpression<Expression::WideIntBinaryId> {
+public:
+  WideIntBinary(MixedArena& allocator) : operands(allocator) {}
+
+  WideIntBinaryOp op;
+  ExpressionList operands;
 
   void finalize();
 };

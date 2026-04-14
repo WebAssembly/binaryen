@@ -476,6 +476,10 @@ struct NullInstrParserCtx {
   Result<> makeBinary(Index, const std::vector<Annotation>&, BinaryOp) {
     return Ok{};
   }
+  Result<>
+  makeWideIntBinary(Index, const std::vector<Annotation>&, WideIntBinaryOp) {
+    return Ok{};
+  }
   Result<> makeUnary(Index, const std::vector<Annotation>&, UnaryOp) {
     return Ok{};
   }
@@ -2157,6 +2161,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                       const std::vector<Annotation>& annotations,
                       BinaryOp op) {
     return withLoc(pos, irBuilder.makeBinary(op));
+  }
+
+  Result<> makeWideIntBinary(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             WideIntBinaryOp op) {
+    return withLoc(pos, irBuilder.makeWideIntBinary(op));
   }
 
   Result<>

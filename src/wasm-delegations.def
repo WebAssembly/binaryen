@@ -119,5 +119,6 @@ DELEGATE(ResumeThrow);
 DELEGATE(StackSwitch);
 DELEGATE(StructWait);
 DELEGATE(StructNotify);
+DELEGATE(WideIntBinary);
 
 #undef DELEGATE

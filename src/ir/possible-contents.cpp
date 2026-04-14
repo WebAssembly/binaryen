@@ -634,6 +634,7 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitBinary(Binary* curr) { addRoot(curr); }
+  void visitWideIntBinary(WideIntBinary* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
     receiveChildValue(curr->ifTrue, curr);
     receiveChildValue(curr->ifFalse, curr);

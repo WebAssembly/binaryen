@@ -2025,6 +2025,17 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
   }
+  void visitWideIntBinary(WideIntBinary* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case AddInt128:
+        o << "i64.add128";
+        break;
+      default:
+        WASM_UNREACHABLE("invalid wide int binary op");
+    }
+    restoreNormalColor(o);
+  }
   void visitSelect(Select* curr) {
     prepareColor(o) << "select";
     restoreNormalColor(o);
