@@ -31,6 +31,7 @@ import difflib
 import json
 import math
 import os
+import pathlib
 import random
 import re
 import shutil
@@ -2049,8 +2050,9 @@ class Two(TestCaseHandler):
         compare(output, merged_output, 'Two-Merged')
 
 
-# Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
-class PreserveImportsExports(TestCaseHandler):
+# Test --fuzz-preserve-imports-exports on random inputs. This should never
+# modify imports or exports.
+class PreserveImportsExportsRandom(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
@@ -2093,6 +2095,147 @@ class PreserveImportsExports(TestCaseHandler):
             return '\n'.join(lines)
 
         compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
+
+
+# Test --fuzz-preserve-imports-exports on a realistic js+wasm input. Unlike
+# PreserveImportsExportsRandom which starts with a random file and modifies it,
+# this starts with a fixed js+wasm testcase, known to work and to have
+# interesting operations on the js/wasm boundary, and then randomly modifies
+# the wasm. This simulates how an external fuzzer could use binaryen to modify
+# its known-working testcases (parallel to how we test ClusterFuzz here).
+#
+# This reads wasm+js combinations from the test/js_wasm directory, so as new
+# testcases are added there, this will fuzz them.
+#
+# Note that bugs found by this fuzzer require BINARYEN_TRUST_GIVEN_WASM=1 in the
+# env for reduction. TODO: simplify this
+class PreserveImportsExportsJS(TestCaseHandler):
+    frequency = 1
+
+    def handle_pair(self, input, before_wasm, after_wasm, opts):
+        try:
+            self.do_handle_pair(input, before_wasm, after_wasm, opts)
+        except Exception as e:
+            if not os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
+                # We errored, and we were not given a wasm file to trust as we
+                # reduce, so this is the first time we hit an error. Save the
+                # pre wasm file, the one we began with, as `before_wasm`, so
+                # that the reducer will make us proceed exactly from there.
+                shutil.copyfile(self.pre_wasm, before_wasm)
+            raise e
+
+    def do_handle_pair(self, input, before_wasm, after_wasm, opts):
+        # Some of the time use a custom input. The normal inputs the fuzzer
+        # generates are in range INPUT_SIZE_MIN-INPUT_SIZE_MAX, which is good
+        # for new testcases, but the more changes we make to js+wasm testcases,
+        # the more chance we have to break things entirely (the js/wasm boundary
+        # is fragile). It is useful to also fuzz smaller sizes.
+        if random.random() < 0.25:
+            size = random.randint(0, INPUT_SIZE_MIN * 2)
+            make_random_input(size, input)
+
+        # Pick a js+wasm pair.
+        js_files = list(pathlib.Path(in_binaryen('test', 'js_wasm')).glob('*.mjs'))
+        js_file = str(random.choice(js_files))
+        print(f'js file: {js_file}')
+        wat_file = str(pathlib.Path(js_file).with_suffix('.wat'))
+
+        # Verify the wat works with our features
+        try:
+            run([in_bin('wasm-opt'), wat_file] + FEATURE_OPTS,
+                stderr=subprocess.PIPE,
+                silent=True)
+        except Exception:
+            note_ignored_vm_run('PreserveImportsExportsJS: features not compatible with js+wasm')
+            return
+
+        # Make sure the testcase runs by itself - there should be no invalid
+        # testcases.
+        original_wasm = 'orig.wasm'
+        run([in_bin('wasm-opt'), wat_file, '-o', original_wasm] + FEATURE_OPTS)
+        D8().run_js(js_file, original_wasm)
+
+        # Modify the initial wat to get the pre-optimizations wasm.
+        pre_wasm = abspath('pre.wasm')
+        run([in_bin('wasm-opt'), input] + FEATURE_OPTS + [
+            '-ttf',
+            '--fuzz-preserve-imports-exports',
+            '--initial-fuzz=' + wat_file,
+            '-o', pre_wasm,
+            '-g',
+        ])
+
+        # We successfully generated pre_wasm; stash it for possible reduction
+        # purposes later.
+        self.pre_wasm = pre_wasm
+
+        # If we were given a wasm file, use that instead of all the above. We
+        # do this now, after creating pre_wasm, because we still need to consume
+        # all the randomness normally.
+        if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
+            print('using given wasm', before_wasm)
+            pre_wasm = before_wasm
+
+        # Pick a vm and run before we optimize the wasm.
+        vms = [
+            D8(),
+            D8Liftoff(),
+            D8Turboshaft(),
+        ]
+        pre_vm = random.choice(vms)
+        pre = self.do_run(pre_vm, js_file, pre_wasm)
+
+        # Optimize.
+        post_wasm = abspath('post.wasm')
+        cmd = [in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS
+        print(' '.join(cmd))
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode:
+            if 'Invalid configureAll' in proc.stderr:
+                # We have a hard error on unfamiliar configureAll patterns atm.
+                # Mutation of configureAll will easily break that pattern, so we
+                # must ignore such cases.
+                note_ignored_vm_run('PreserveImportsExportsJS: bad configureAll')
+                return
+
+            # Anything else is a problem.
+            print(proc.stderr)
+            raise Exception('opts failed')
+
+        # Run after opts, in a random vm.
+        post_vm = random.choice(vms)
+        post = self.do_run(post_vm, js_file, post_wasm)
+
+        # Compare
+        compare(pre, post, 'PreserveImportsExportsJS')
+
+    def do_run(self, vm, js, wasm):
+        out = vm.run_js(js, wasm, checked=False)
+
+        cleaned = []
+        for line in out.splitlines():
+            if 'RuntimeError:' in line or 'TypeError:' in line:
+                # This is part of an error like
+                #
+                #  wasm-function[2]:0x273: RuntimeError: unreachable
+                #
+                # We must ignore the binary location, which opts can change. We
+                # must also remove the specific trap, as Binaryen can change
+                # that.
+                line = 'TRAP'
+            elif 'wasm://' in line or '(<anonymous>)' in line:
+                # This is part of a stack trace like
+                #
+                #     at wasm://wasm/12345678:wasm-function[42]:0x123
+                #     at (<anonymous>)
+                #
+                # Ignore it, as traces differ based on optimizations.
+                continue
+            cleaned.append(line)
+        return '\n'.join(cleaned)
+
+    def can_run_on_wasm(self, wasm):
+        return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
 
 # Test that we preserve branch hints properly. The invariant that we test here
@@ -2322,7 +2465,8 @@ testcase_handlers = [
     RoundtripText(),
     ClusterFuzz(),
     Two(),
-    PreserveImportsExports(),
+    PreserveImportsExportsRandom(),
+    PreserveImportsExportsJS(),
     BranchHintPreservation(),
 ]
 
