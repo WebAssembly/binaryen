@@ -2919,7 +2919,7 @@ Literal Literal::demoteZeroF32x4ToF16x8() const {
     result[i] = Literal(fp16_ieee_from_fp32_value(lanes[i].getf32()));
   }
   for (size_t i = 4; i < 8; ++i) {
-    result[i] = Literal(int32_t(0));
+    result[i] = Literal(int32_t{0});
   }
   return Literal(result);
 }
@@ -2931,7 +2931,7 @@ Literal Literal::demoteZeroF64x2ToF16x8() const {
     result[i] = Literal(fp16_ieee_from_fp32_value(lanes[i].demote().getf32()));
   }
   for (size_t i = 2; i < 8; ++i) {
-    result[i] = Literal(int32_t(0));
+    result[i] = Literal(int32_t{0});
   }
   return Literal(result);
 }

@@ -322,3 +322,26 @@
     (v128.const i64x2 0x40effc0000000000 0xc0effc0000000000))
     ;;                65504  -65504 0 0 0 0 0 0
     (v128.const i16x8 0x7bff 0xfbff 0 0 0 0 0 0))
+
+;; Precision loss cases
+(assert_return (invoke "f16x8.demote_f32x4_zero"
+    ;;                1.000244140625 1.000244140625 1.000244140625 1.000244140625
+    (v128.const i32x4 0x3f800800     0x3f800800     0x3f800800     0x3f800800))
+    ;;                1.0    1.0    1.0    1.0     0 0 0 0
+    (v128.const i16x8 0x3c00 0x3c00 0x3c00 0x3c00 0 0 0 0))
+
+(assert_return (invoke "f16x8.demote_f64x2_zero"
+    ;;                1.000244140625      1.000244140625
+    (v128.const i64x2 0x3ff0010000000000 0x3ff0010000000000))
+    ;;                1.0    1.0    0 0 0 0 0 0
+    (v128.const i16x8 0x3c00 0x3c00 0 0 0 0 0 0))
+
+;; TODO: Test Non-canonical NaN cases when an f16 const is supported in wat.
+;; (assert_return (invoke "f16x8.demote_f32x4_zero"
+;;    ;;                non-canonical NaN
+;;    (v128.const i32x4 0x7f800001 0 0 0))
+;;    (v128.const f16x8 nan:arithmetic 0 0 0 0 0 0 0))
+;; (assert_return (invoke "f16x8.demote_f64x2_zero"
+;;    ;;                non-canonical NaN
+;;    (v128.const i64x2 0x7ff0000000000001 0))
+;;    (v128.const f16x8 nan:arithmetic 0 0 0 0 0 0 0))
