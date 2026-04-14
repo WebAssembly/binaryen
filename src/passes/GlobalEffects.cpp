@@ -120,6 +120,68 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
 
 using CallGraphNode = std::variant<Name, HeapType>;
 
+// Build a call graph for indirect and direct calls.
+// key (callee) -> value (caller)
+// Name         -> Name     : callee is called directly by caller
+// Name         -> HeapType : callee is a potential target of a virtual call with this HeapType
+// HeapType     -> Name     : callee is indirectly called by caller
+// HeapType     -> HeapType : callee is a subtype of caller
+std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> buildReverseCallGraph(Module& module, const std::map<Function*, FuncInfo> funcInfos) {
+  // callee : caller
+  std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
+    callers;
+
+  std::unordered_set<HeapType> allIndirectCalledTypes;
+
+  std::unordered_set<Name> funcsWithAddress;
+
+  auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(module);
+  funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
+  ElementUtils::iterAllElementFunctionNames(
+    &module,
+    [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
+  for (const auto& export_ : module.exports) {
+    if (export_->kind == ExternalKind::Function) {
+      // This exported function might flow back to us even in a closed world,
+      // so it's essentially addressed.
+      funcsWithAddress.insert(export_->name);
+    }
+  }
+
+  for (const auto& [func, info] : funcInfos) {
+    // Name -> Name for direct calls
+    for (const auto& callee : info.calledFunctions) {
+      callers[callee].insert(func->name);
+    }
+
+    // HeapType -> Name for indirect calls
+    for (const auto& calleeType : info.indirectCalledTypes) {
+      callers[calleeType].insert(func->name);
+    }
+
+    // Name -> HeapType for function types
+    if (funcsWithAddress.contains(func->name)) {
+      callers[func->name].insert(func->type.getHeapType());
+    }
+
+    allIndirectCalledTypes.insert(func->type.getHeapType());
+  }
+
+  SubTypes subtypes(module);
+  for (auto type : allIndirectCalledTypes) {
+    subtypes.iterSubTypes(type, [&callers, type](HeapType sub, int _) {
+      // HeapType -> HeapType
+      // A subtype is a 'callee' of its supertype.
+      // Supertypes need to inherit effects from their subtypes since they may
+      // be called via a ref to the subtype.
+      callers[sub].insert(type);
+      return true;
+    });
+  }
+
+  return callers;
+}
+
 // Propagate effects from callees to callers transitively
 // e.g. if A -> B -> C (A calls B which calls C)
 // Then B inherits effects from C and A inherits effects from both B and C.
@@ -138,14 +200,16 @@ void propagateEffects(
     }
   }
 
-  auto propagate = [&](Name* callee, Name* caller) {
-    if (callee == nullptr || caller == nullptr) {
+  auto propagate = [&](const CallGraphNode& calleeNode, const CallGraphNode& callerNode) {
+    if (!std::get_if<Name>(&calleeNode) || !std::get_if<Name>(&callerNode)) {
       return;
     }
 
-    auto& callerEffects = funcInfos.at(module.getFunction(*caller)).effects;
+    Name callee = std::get<Name>(calleeNode);
+    Name caller = std::get<Name>(callerNode);
+    auto& callerEffects = funcInfos.at(module.getFunction(caller)).effects;
     const auto& calleeEffects =
-      funcInfos.at(module.getFunction(*callee)).effects;
+      funcInfos.at(module.getFunction(callee)).effects;
     if (callerEffects == UnknownEffects) {
       return;
     }
@@ -155,7 +219,7 @@ void propagateEffects(
       return;
     }
 
-    if (*callee == *caller) {
+    if (callee == caller) {
       callerEffects->trap = true;
     } else {
       callerEffects->mergeIn(*calleeEffects);
@@ -177,7 +241,7 @@ void propagateEffects(
     // Even if nothing changed, we still need to keep traversing the callers
     // to look for a potential cycle which adds a trap affect on the above
     // lines.
-    propagate(std::get_if<Name>(&callee), std::get_if<Name>(&caller));
+    propagate(callee, caller);
 
     const auto& callerCallers = reverseCallGraph.find(caller);
     if (callerCallers == reverseCallGraph.end()) {
@@ -197,55 +261,7 @@ struct GenerateGlobalEffects : public Pass {
 
     // callee : caller
     std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
-      callers;
-
-    std::unordered_set<HeapType> allIndirectCalledTypes;
-
-    std::unordered_set<Name> funcsWithAddress;
-
-    auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(*module);
-    funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
-    ElementUtils::iterAllElementFunctionNames(
-      module,
-      [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
-    for (const auto& export_ : module->exports) {
-      if (export_->kind == ExternalKind::Function) {
-        // This exported function might flow back to us even in a closed world,
-        // so it's essentially addressed.
-        funcsWithAddress.insert(export_->name);
-      }
-    }
-
-    for (const auto& [func, info] : funcInfos) {
-      // Name -> Name for direct calls
-      for (const auto& callee : info.calledFunctions) {
-        callers[callee].insert(func->name);
-      }
-
-      // HeapType -> Name for indirect calls
-      for (const auto& calleeType : info.indirectCalledTypes) {
-        callers[calleeType].insert(func->name);
-      }
-
-      // Name -> HeapType for function types
-      if (funcsWithAddress.contains(func->name)) {
-        callers[func->name].insert(func->type.getHeapType());
-      }
-
-      allIndirectCalledTypes.insert(func->type.getHeapType());
-    }
-
-    SubTypes subtypes(*module);
-    for (auto type : allIndirectCalledTypes) {
-      subtypes.iterSubTypes(type, [&callers, type](HeapType sub, int _) {
-        // HeapType -> HeapType
-        // A subtype is a 'callee' of its supertype.
-        // Supertypes need to inherit effects from their subtypes since they may
-        // be called via a ref to the subtype.
-        callers[sub].insert(type);
-        return true;
-      });
-    }
+      callers = buildReverseCallGraph(*module, funcInfos);
 
     propagateEffects(*module, callers, funcInfos);
 
