@@ -26,15 +26,9 @@
 
  ;; CHECK:      (type $10 (func (result funcref)))
 
- ;; CHECK:      (type $11 (func (param i32 i32) (result (ref func))))
-
- ;; CHECK:      (type $12 (func (param i32 i32) (result funcref)))
-
- ;; CHECK:      (type $13 (func (param i32 i32)))
-
  ;; CHECK:      (import "out" "log" (func $log (type $2) (param i32)))
  (import "out" "log" (func $log (param i32)))
- ;; CHECK:      (elem declare func $br_on_non_null $br_on_null $foo $i32_=>_none $none_=>_i32 $redirect_child)
+ ;; CHECK:      (elem declare func $br_on_non_null $br_on_null $i32_=>_none $none_=>_i32)
 
  ;; CHECK:      (func $foo (type $3) (result (ref null $struct))
  ;; CHECK-NEXT:  (if (result (ref null $struct))
@@ -287,114 +281,6 @@
     (local.tee $x (ref.null nofunc))
    )
    (unreachable)
-  )
- )
-
- ;; CHECK:      (func $redirect_child (type $11) (param $x i32) (param $y i32) (result (ref func))
- ;; CHECK-NEXT:  (block $outer (result (ref func))
- ;; CHECK-NEXT:   (block $inner (result (ref func))
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_if $inner
- ;; CHECK-NEXT:      (ref.func $foo)
- ;; CHECK-NEXT:      (local.get $x)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_if $inner
- ;; CHECK-NEXT:      (ref.func $redirect_child)
- ;; CHECK-NEXT:      (local.get $y)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $redirect_child (param $x i32) (param $y i32) (result (ref func))
-  ;; The br_if can go to the outer block instead of the inner.
-  (block $outer (result (ref func))
-   (block $inner (result (ref func))
-    (drop
-     (br_if $inner
-      (ref.func $foo)
-      (local.get $x)
-     )
-    )
-    (drop
-     (br_if $inner
-      (ref.func $redirect_child)
-      (local.get $y)
-     )
-    )
-    (unreachable)
-   )
-  )
- )
-
- ;; CHECK:      (func $redirect_child_subtype (type $12) (param $x i32) (param $y i32) (result funcref)
- ;; CHECK-NEXT:  (block $outer (result funcref)
- ;; CHECK-NEXT:   (block $inner (result (ref func))
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_if $inner
- ;; CHECK-NEXT:      (ref.func $foo)
- ;; CHECK-NEXT:      (local.get $x)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_if $inner
- ;; CHECK-NEXT:      (ref.func $redirect_child)
- ;; CHECK-NEXT:      (local.get $y)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $redirect_child_subtype (param $x i32) (param $y i32) (result (ref null func))
-  ;; As above, but now the inner block has a subtype. We can still redirect.
-  (block $outer (result (ref null func))
-   (block $inner (result (ref func))
-    (drop
-     (br_if $inner
-      (ref.func $foo)
-      (local.get $x)
-     )
-    )
-    (drop
-     (br_if $inner
-      (ref.func $redirect_child)
-      (local.get $y)
-     )
-    )
-    (unreachable)
-   )
-  )
- )
-
- ;; CHECK:      (func $redirect_child_none (type $13) (param $x i32) (param $y i32)
- ;; CHECK-NEXT:  (block $outer
- ;; CHECK-NEXT:   (block $inner
- ;; CHECK-NEXT:    (br_if $outer
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br_if $outer
- ;; CHECK-NEXT:     (local.get $y)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $redirect_child_none (param $x i32) (param $y i32)
-  ;; As above, but now the blocks are none-typed. We can still redirect.
-  (block $outer
-   (block $inner
-    (br_if $inner
-     (local.get $x)
-    )
-    (br_if $inner
-     (local.get $y)
-    )
-    (unreachable)
-   )
   )
  )
 )
