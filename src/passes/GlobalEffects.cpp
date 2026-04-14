@@ -90,6 +90,11 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               // Note the direct call.
               funcInfo.calledFunctions.insert(call->target);
             } else if (effects.calls) {
+              if (!options.closedWorld) {
+                funcInfo.effects = UnknownEffects;
+                return;
+              }
+
               HeapType type;
               if (auto* callRef = curr->dynCast<CallRef>()) {
                 type = callRef->target->type.getHeapType();
@@ -118,6 +123,36 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   return std::move(analysis.map);
 }
 
+// Funcs that can be the target of a virtual call
+// These are either:
+// - Part of an (elem declare ...) or (elem ...) directive
+// - Exported, since they may flow back to us from the host
+std::unordered_set<Name> getFuncsWithAddress(Module& module) {
+  std::unordered_set<Name> funcsWithAddress;
+  for (const auto& fun : module.functions) {
+    funcsWithAddress.insert(fun->name);
+  }
+  return funcsWithAddress;
+
+  // {
+  // auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(module);
+  // funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
+  // }
+
+  // ElementUtils::iterAllElementFunctionNames(
+  //   &module,
+  //   [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
+  // for (const auto& export_ : module.exports) {
+  //   if (export_->kind == ExternalKind::Function) {
+  //     // This exported function might flow back to us even in a closed world,
+  //     // so it's essentially addressed.
+  //     funcsWithAddress.insert(export_->name);
+  //   }
+  // }
+
+  // return funcsWithAddress;
+}
+
 using CallGraphNode = std::variant<Name, HeapType>;
 
 // Build a call graph for indirect and direct calls.
@@ -126,6 +161,8 @@ using CallGraphNode = std::variant<Name, HeapType>;
 // Name         -> HeapType : callee is a potential target of a virtual call with this HeapType
 // HeapType     -> Name     : callee is indirectly called by caller
 // HeapType     -> HeapType : callee is a subtype of caller
+
+// TODO: only track indirect calls in closed world
 std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> buildReverseCallGraph(Module& module, const std::map<Function*, FuncInfo> funcInfos) {
   // callee : caller
   std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
@@ -133,20 +170,11 @@ std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> buildRevers
 
   std::unordered_set<HeapType> allIndirectCalledTypes;
 
-  std::unordered_set<Name> funcsWithAddress;
-
-  auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(module);
-  funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
-  ElementUtils::iterAllElementFunctionNames(
-    &module,
-    [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
-  for (const auto& export_ : module.exports) {
-    if (export_->kind == ExternalKind::Function) {
-      // This exported function might flow back to us even in a closed world,
-      // so it's essentially addressed.
-      funcsWithAddress.insert(export_->name);
-    }
-  }
+  // Funcs that can be the target of a virtual call
+  // These are either:
+  // - Part of an (elem declare ...) or (elem ...) directive
+  // - Exported, since they may flow back to us from the host
+  std::unordered_set<Name> funcsWithAddress = getFuncsWithAddress(module);
 
   for (const auto& [func, info] : funcInfos) {
     // Name -> Name for direct calls
@@ -262,6 +290,15 @@ struct GenerateGlobalEffects : public Pass {
     // callee : caller
     std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
       callers = buildReverseCallGraph(*module, funcInfos);
+
+    // for (const auto& [callee, callers] : callers) {
+    //   for (const auto& caller : callers) {
+    //     const auto* calleeName = std::get_if<Name>(&callee);
+    //     const auto* callerName = std::get_if<Name>(&caller);
+    //     if (!calleeName || !callerName) continue;
+    //     std::cout<<*calleeName<<"\t\t->\t\t"<<*callerName<<"\n";
+    //   }
+    // }
 
     propagateEffects(*module, callers, funcInfos);
 
