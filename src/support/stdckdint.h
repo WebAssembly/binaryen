@@ -29,12 +29,20 @@ template<typename T> bool ckd_add(T* output, T a, T b) {
   // Atm this polyfill only supports unsigned types.
   static_assert(std::is_unsigned_v<T>);
 
-  T result = a + b;
-  if (result < a) {
-    return true;
-  }
-  *output = result;
-  return false;
+  *output = a + b;
+  return *output < a;
+#endif
+}
+
+template<typename T> bool ckd_sub(T* output, T a, T b) {
+#if __has_builtin(__builtin_sub_overflow)
+  return __builtin_sub_overflow(a, b, output);
+#else
+  // Atm this polyfill only supports unsigned types.
+  static_assert(std::is_unsigned_v<T>);
+
+  *output = a - b;
+  return *output > a;
 #endif
 }
 

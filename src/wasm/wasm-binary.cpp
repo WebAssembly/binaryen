@@ -3998,6 +3998,10 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::MemoryFill:
           return builder.makeMemoryFill(getMemoryName(getU32LEB()));
+        case BinaryConsts::I64Add128:
+          return builder.makeWideIntAddSub(AddInt128);
+        case BinaryConsts::I64Sub128:
+          return builder.makeWideIntAddSub(SubInt128);
         case BinaryConsts::TableSize:
           return builder.makeTableSize(getTableName(getU32LEB()));
         case BinaryConsts::TableGrow:

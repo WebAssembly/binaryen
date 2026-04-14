@@ -173,9 +173,9 @@ struct ValidationInfo {
     return true;
   }
 
-  template<typename T, typename S>
+  template<typename T>
   bool shouldBeEqualOrFirstIsUnreachable(
-    S left, S right, T curr, const char* text, Function* func = nullptr) {
+    Type left, Type right, T curr, const char* text, Function* func = nullptr) {
     if (left != Type::unreachable && left != right) {
       std::ostringstream ss;
       ss << left << " != " << right << ": " << text;
@@ -508,6 +508,7 @@ public:
   void visitMemoryCopy(MemoryCopy* curr);
   void visitMemoryFill(MemoryFill* curr);
   void visitBinary(Binary* curr);
+  void visitWideIntAddSub(WideIntAddSub* curr);
   void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
@@ -607,9 +608,11 @@ private:
     return info.shouldBeEqual(left, right, curr, text, getFunction());
   }
 
-  template<typename T, typename S>
-  bool
-  shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
+  template<typename T>
+  bool shouldBeEqualOrFirstIsUnreachable(Type left,
+                                         Type right,
+                                         T curr,
+                                         const char* text) {
     return info.shouldBeEqualOrFirstIsUnreachable(
       left, right, curr, text, getFunction());
   }
@@ -2440,6 +2443,21 @@ void FunctionValidator::visitSelect(Select* curr) {
     shouldBeTrue(Type::isSubType(curr->ifFalse->type, curr->type),
                  curr,
                  "select's right expression must be subtype of select's type");
+  }
+}
+
+void FunctionValidator::visitWideIntAddSub(WideIntAddSub* curr) {
+  shouldBeTrue(getModule()->features.hasWideArithmetic(),
+               curr,
+               "i64.add128 / i64.sub128 require wide arithmetic "
+               "[--enable-wide-arithmetic]");
+
+  for (auto* operand :
+       {curr->leftLow, curr->leftHigh, curr->rightLow, curr->rightHigh}) {
+    shouldBeEqualOrFirstIsUnreachable(operand->type,
+                                      Type(Type::BasicType::i64),
+                                      curr,
+                                      "wide binary child types must be i64");
   }
 }
 
