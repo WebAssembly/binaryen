@@ -47,10 +47,10 @@ struct FuncInfo {
   std::unordered_set<HeapType> indirectCalledTypes;
 };
 
-std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
-                                           const PassOptions& passOptions) {
-  ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
-    module, [&](Function* func, FuncInfo& funcInfo) {
+std::unordered_map<Function*, FuncInfo>
+analyzeFuncs(Module& module, const PassOptions& passOptions) {
+  ModuleUtils::ParallelFunctionAnalysis<FuncInfo, Immutable, std::unordered_map>
+    analysis(module, [&](Function* func, FuncInfo& funcInfo) {
       if (func->imported()) {
         // Imports can do anything, so we need to assume the worst anyhow,
         // which is the same as not specifying any effects for them in the
@@ -101,7 +101,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
                 type = callIndirect->heapType;
               } else {
-                assert(false && "Unexpected type of call");
+                assert("Unexpected type of call");
               }
 
               funcInfo.indirectCalledTypes.insert(type);
@@ -123,58 +123,34 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   return std::move(analysis.map);
 }
 
-// Funcs that can be the target of a virtual call
-// These are either:
-// - Part of an (elem declare ...) or (elem ...) directive
-// - Exported, since they may flow back to us from the host
-std::unordered_set<Name> getFuncsWithAddress(Module& module) {
-  std::unordered_set<Name> funcsWithAddress;
-  for (const auto& fun : module.functions) {
-    funcsWithAddress.insert(fun->name);
-  }
-  return funcsWithAddress;
-
-  // {
-  // auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(module);
-  // funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
-  // }
-
-  // ElementUtils::iterAllElementFunctionNames(
-  //   &module,
-  //   [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
-  // for (const auto& export_ : module.exports) {
-  //   if (export_->kind == ExternalKind::Function) {
-  //     // This exported function might flow back to us even in a closed world,
-  //     // so it's essentially addressed.
-  //     funcsWithAddress.insert(export_->name);
-  //   }
-  // }
-
-  // return funcsWithAddress;
-}
-
 using CallGraphNode = std::variant<Name, HeapType>;
 
 // Build a call graph for indirect and direct calls.
 // key (callee) -> value (caller)
 // Name         -> Name     : callee is called directly by caller
-// Name         -> HeapType : callee is a potential target of a virtual call with this HeapType
-// HeapType     -> Name     : callee is indirectly called by caller
-// HeapType     -> HeapType : callee is a subtype of caller
-
-// TODO: only track indirect calls in closed world
-std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> buildReverseCallGraph(Module& module, const std::map<Function*, FuncInfo> funcInfos) {
+// Name         -> HeapType : callee is a potential target of a virtual call
+// with this HeapType HeapType     -> Name     : callee is indirectly called by
+// caller HeapType     -> HeapType : callee is a subtype of caller If we're
+// running in an open world, we only include Name -> Name edges.
+std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
+buildReverseCallGraph(Module& module,
+                      const std::unordered_map<Function*, FuncInfo>& funcInfos,
+                      bool closedWorld) {
   // callee : caller
-  std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
-    callers;
+  std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> callers;
+
+  if (!closedWorld) {
+    for (const auto& [func, info] : funcInfos) {
+      // Name -> Name for direct calls
+      for (const auto& callee : info.calledFunctions) {
+        callers[callee].insert(func->name);
+      }
+    }
+
+    return callers;
+  }
 
   std::unordered_set<HeapType> allIndirectCalledTypes;
-
-  // Funcs that can be the target of a virtual call
-  // These are either:
-  // - Part of an (elem declare ...) or (elem ...) directive
-  // - Exported, since they may flow back to us from the host
-  std::unordered_set<Name> funcsWithAddress = getFuncsWithAddress(module);
 
   for (const auto& [func, info] : funcInfos) {
     // Name -> Name for direct calls
@@ -188,16 +164,16 @@ std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> buildRevers
     }
 
     // Name -> HeapType for function types
-    if (funcsWithAddress.contains(func->name)) {
-      callers[func->name].insert(func->type.getHeapType());
-    }
+    // TODO: only look at functions that are addressable
+    // i.e. appear in a (ref.func) or are exported
+    callers[func->name].insert(func->type.getHeapType());
 
     allIndirectCalledTypes.insert(func->type.getHeapType());
   }
 
   SubTypes subtypes(module);
   for (auto type : allIndirectCalledTypes) {
-    subtypes.iterSubTypes(type, [&callers, type](HeapType sub, int _) {
+    subtypes.iterSubTypes(type, [&callers, type](HeapType sub, Index _) {
       // HeapType -> HeapType
       // A subtype is a 'callee' of its supertype.
       // Supertypes need to inherit effects from their subtypes since they may
@@ -217,19 +193,27 @@ void propagateEffects(
   const Module& module,
   const std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>&
     reverseCallGraph,
-  std::map<Function*, FuncInfo>& funcInfos) {
+  std::unordered_map<Function*, FuncInfo>& funcInfos) {
 
   using CallGraphEdge = std::pair<CallGraphNode, CallGraphNode>;
   UniqueNonrepeatingDeferredQueue<CallGraphEdge> work;
 
   for (const auto& [callee, callers] : reverseCallGraph) {
+    // We only care about roots that will lead to a Name -> Name connection
+    // If there's a HeapType with no Name callee, we don't need to process it
+    // anyway.
+    if (!std::holds_alternative<Name>(callee)) {
+      continue;
+    }
     for (const auto& caller : callers) {
       work.push(std::pair(callee, caller));
     }
   }
 
-  auto propagate = [&](const CallGraphNode& calleeNode, const CallGraphNode& callerNode) {
-    if (!std::get_if<Name>(&calleeNode) || !std::get_if<Name>(&callerNode)) {
+  auto propagate = [&](const CallGraphNode& calleeNode,
+                       const CallGraphNode& callerNode) {
+    if (!std::holds_alternative<Name>(calleeNode) ||
+        !std::holds_alternative<Name>(callerNode)) {
       return;
     }
 
@@ -257,15 +241,6 @@ void propagateEffects(
   while (!work.empty()) {
     auto [callee, caller] = work.pop();
 
-    if (std::get_if<Name>(&callee) == std::get_if<Name>(&caller) &&
-        std::holds_alternative<Name>(callee)) {
-      auto& callerEffects =
-        funcInfos.at(module.getFunction(std::get<Name>(caller))).effects;
-      if (callerEffects) {
-        callerEffects->trap = true;
-      }
-    }
-
     // Even if nothing changed, we still need to keep traversing the callers
     // to look for a potential cycle which adds a trap affect on the above
     // lines.
@@ -276,6 +251,7 @@ void propagateEffects(
       continue;
     }
 
+    // TODO: handle exact refs here
     for (const CallGraphNode& callerCaller : callerCallers->second) {
       work.push(std::pair(callee, callerCaller));
     }
@@ -284,21 +260,13 @@ void propagateEffects(
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
-    std::map<Function*, FuncInfo> funcInfos =
+    std::unordered_map<Function*, FuncInfo> funcInfos =
       analyzeFuncs(*module, getPassOptions());
 
     // callee : caller
     std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
-      callers = buildReverseCallGraph(*module, funcInfos);
-
-    // for (const auto& [callee, callers] : callers) {
-    //   for (const auto& caller : callers) {
-    //     const auto* calleeName = std::get_if<Name>(&callee);
-    //     const auto* callerName = std::get_if<Name>(&caller);
-    //     if (!calleeName || !callerName) continue;
-    //     std::cout<<*calleeName<<"\t\t->\t\t"<<*callerName<<"\n";
-    //   }
-    // }
+      callers =
+        buildReverseCallGraph(*module, funcInfos, getPassOptions().closedWorld);
 
     propagateEffects(*module, callers, funcInfos);
 

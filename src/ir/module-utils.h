@@ -271,7 +271,7 @@ template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
 template<typename T,
          Mutability Mut = Immutable,
-         template<typename, typename> class MapT = DefaultMap>
+         template<typename, typename, typename...> class MapT = DefaultMap>
 struct ParallelFunctionAnalysis {
   Module& wasm;
 

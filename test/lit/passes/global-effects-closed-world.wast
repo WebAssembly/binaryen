@@ -155,6 +155,56 @@
   )
 )
 
+;; Same as above but this time our reference is the exact supertype
+;; So we know not to aggregate effects from the subtype.
+;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
+(module
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:      (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; Supertype
+  ;; CHECK:      (type $func-with-sub-param (sub (func (param (ref $sub)))))
+  (type $func-with-sub-param (sub (func (param (ref $sub)))))
+  ;; Subtype
+  ;; CHECK:      (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
+  (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
+
+  ;; CHECK:      (func $nop-with-supertype (type $func-with-sub-param) (param $0 (ref $sub))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $nop-with-supertype (export "nop-with-supertype") (type $func-with-sub-param) (param (ref $sub))
+  )
+
+  ;; CHECK:      (func $effectful-with-subtype (type $func-with-super-param) (param $0 (ref $super))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $effectful-with-subtype (export "effectful-with-subtype") (type $func-with-super-param) (param (ref $super))
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $calls-ref-with-subtype (type $3) (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
+  ;; CHECK-NEXT:  (call_ref $func-with-sub-param
+  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK-NEXT:   (local.get $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-ref-with-subtype (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
+    (call_ref $func-with-sub-param (local.get $sub) (local.get $func))
+  )
+
+  ;; CHECK:      (func $f (type $3) (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
+  ;; CHECK-NEXT:  (call $calls-ref-with-subtype
+  ;; CHECK-NEXT:   (local.get $func)
+  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $f (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
+    (call $calls-ref-with-subtype (local.get $func) (local.get $sub))
+  )
+)
+
 (module
   ;; CHECK:      (type $only-has-effects-in-not-addressable-function (func (param i32)))
   (type $only-has-effects-in-not-addressable-function (func (param i32)))
@@ -183,9 +233,15 @@
   )
 
   ;; CHECK:      (func $f (type $1) (param $ref (ref $only-has-effects-in-not-addressable-function))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $calls-type-with-effects-but-not-addressable
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $f (param $ref (ref $only-has-effects-in-not-addressable-function))
+    ;; The type $has-effects-but-not-exported doesn't have an address because
+    ;; it's not exported and it's never the target of a ref.func.
+    ;; We should be able to determine that $ref can only point to $nop
+    ;; TODO: Only aggregate effects from functions that are addressed.
     (call $calls-type-with-effects-but-not-addressable (local.get $ref))
   )
 )
@@ -255,7 +311,9 @@
   )
 
   ;; CHECK:      (func $f (type $1) (param $ref (ref $t))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $indirect-calls
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $f (param $ref (ref $t))
     ;; $indirect-calls might end up calling an imported function,
@@ -264,5 +322,5 @@
   )
 )
 
-;; TODO exact types
+
 ;; TODO functions that are referenced other ways besides exporting
