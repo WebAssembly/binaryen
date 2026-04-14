@@ -1224,11 +1224,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // if this block has just one child, a sub-block, then jumps to the
           // former are jumps to us, really
           if (auto* child = list[0]->dynCast<Block>()) {
-            // the two blocks must have the same type for us to update the
-            // branch, as otherwise one block may be unreachable and the other
-            // concrete, so one might lack a value
-            if (child->name.is() && child->name != curr->name &&
-                child->type == curr->type) {
+            if (child->name.is()) {
               redirectBranches(child, curr->name);
             }
           }
