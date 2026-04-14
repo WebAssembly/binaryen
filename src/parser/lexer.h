@@ -353,6 +353,7 @@ inline std::optional<uint64_t> Lexer::takeOffset() {
       return o;
     }
   }
+  pos = startPos;
   return std::nullopt;
 }
 
@@ -374,6 +375,7 @@ inline std::optional<uint32_t> Lexer::takeAlign() {
       return o;
     }
   }
+  pos = startPos;
   return std::nullopt;
 }
 
@@ -407,7 +409,7 @@ inline std::optional<float> Lexer::takeF32() {
       if (result->n == 0) {
         return -0.0f;
       }
-      return static_cast<float>(static_cast<int64_t>(result->n));
+      return -static_cast<float>(result->n);
     }
     return static_cast<float>(result->n);
   }
@@ -444,7 +446,7 @@ inline std::optional<double> Lexer::takeF64() {
       if (result->n == 0) {
         return -0.0;
       }
-      return static_cast<double>(static_cast<int64_t>(result->n));
+      return -static_cast<double>(result->n);
     }
     return static_cast<double>(result->n);
   }
