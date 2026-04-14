@@ -2,7 +2,6 @@ FILE(GLOB parser_HEADERS *.h)
 set(parser_SOURCES
  context-decls.cpp
  context-defs.cpp
- lexer.cpp
  parse-1-decls.cpp
  parse-2-typedefs.cpp
  parse-3-implicit-types.cpp
