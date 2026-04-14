@@ -191,6 +191,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --ldse                                        removes dead stores (only
+;; CHECK-NEXT:                                                 looking at local info)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-and-prune-js-interface             legalizes the import/export
 ;; CHECK-NEXT:                                                 boundary and prunes when needed
 ;; CHECK-NEXT:
