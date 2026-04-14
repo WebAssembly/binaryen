@@ -63,6 +63,7 @@
 #include "ir/effects.h"
 #include "ir/eh-utils.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -134,6 +135,10 @@ struct CodeFolding
   std::unordered_set<Expression*>
     modifieds; // modified code should not be processed
                // again, wait for next pass
+
+  // Cache for hasExitingBranches results. Populated by a single bottom-up
+  // walk to avoid O(N^2) repeated tree traversals on nested blocks.
+  std::unordered_map<Expression*, bool> exitingBranchCache_;
 
   // walking
 
@@ -299,6 +304,7 @@ struct CodeFolding
       returnTails.clear();
       unoptimizables.clear();
       modifieds.clear();
+      exitingBranchCache_.clear();
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
@@ -306,6 +312,57 @@ struct CodeFolding
   }
 
 private:
+  // Pre-populate the exiting branch cache for all sub-expressions of root
+  // in a single O(N) bottom-up walk. After this, exitingBranchCache_
+  // lookups are O(1).
+  void populateExitingBranchCache(Expression* root) {
+    struct CachePopulator
+      : public PostWalker<CachePopulator,
+                          UnifiedExpressionVisitor<CachePopulator>> {
+      std::unordered_map<Expression*, bool>& cache;
+      // Track unresolved branch targets at each node. We propagate children's
+      // targets upward: add uses, remove defs. If any remain, the expression
+      // has exiting branches.
+      std::unordered_map<Expression*, std::unordered_set<Name>> targetSets;
+
+      CachePopulator(std::unordered_map<Expression*, bool>& cache)
+        : cache(cache) {}
+
+      void visitExpression(Expression* curr) {
+        std::unordered_set<Name> targets;
+        // Merge children's target sets into ours (move to avoid copies)
+        ChildIterator children(curr);
+        for (auto* child : children) {
+          auto it = targetSets.find(child);
+          if (it != targetSets.end()) {
+            if (targets.empty()) {
+              targets = std::move(it->second);
+            } else {
+              targets.merge(it->second);
+            }
+            targetSets.erase(it);
+          }
+        }
+        // Add branch uses (names this expression branches to)
+        BranchUtils::operateOnScopeNameUses(
+          curr, [&](Name& name) { targets.insert(name); });
+        // Remove branch defs (names this expression defines as targets)
+        BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
+          if (name.is()) {
+            targets.erase(name);
+          }
+        });
+        bool hasExiting = !targets.empty();
+        cache[curr] = hasExiting;
+        if (hasExiting) {
+          targetSets[curr] = std::move(targets);
+        }
+      }
+    };
+    CachePopulator populator(exitingBranchCache_);
+    populator.walk(root);
+  }
+
   // check if we can move a list of items out of another item. we can't do so
   // if one of the items has a branch to something inside outOf that is not
   // inside that item
@@ -549,6 +606,11 @@ private:
     if (tails.size() < 2) {
       return false;
     }
+    // Pre-populate the cache once at the top level so all subsequent
+    // exitingBranchCache_ lookups are O(1).
+    if (num == 0) {
+      populateExitingBranchCache(getFunction()->body);
+    }
     // remove things that are untoward and cannot be optimized
     tails.erase(
       std::remove_if(tails.begin(),
@@ -637,9 +699,7 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(
-                                      getPassOptions(), *getModule(), newItem)
-                                      .hasExternalBreakTargets()) {
+                                if (exitingBranchCache_[newItem]) {
                                   return true;
                                 }
                                 return false;
