@@ -19,12 +19,12 @@
 // Function::effects; see more details there.
 //
 
-#include "ir/table-utils.h"
-#include "ir/subtypes.h"
 #include "ir/effects.h"
-#include "ir/module-utils.h"
-#include "pass.h"
 #include "ir/element-utils.h"
+#include "ir/module-utils.h"
+#include "ir/subtypes.h"
+#include "ir/table-utils.h"
+#include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -125,7 +125,8 @@ using CallGraphNode = std::variant<Name, HeapType>;
 // Then B inherits effects from C and A inherits effects from both B and C.
 void propagateEffects(
   const Module& module,
-  const std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>& reverseCallGraph,
+  const std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>&
+    reverseCallGraph,
   std::map<Function*, FuncInfo>& funcInfos) {
 
   using CallGraphEdge = std::pair<CallGraphNode, CallGraphNode>;
@@ -164,8 +165,10 @@ void propagateEffects(
   while (!work.empty()) {
     auto [callee, caller] = work.pop();
 
-    if (std::get_if<Name>(&callee) == std::get_if<Name>(&caller) && std::holds_alternative<Name>(callee)) {
-      auto& callerEffects = funcInfos.at(module.getFunction(std::get<Name>(caller))).effects;
+    if (std::get_if<Name>(&callee) == std::get_if<Name>(&caller) &&
+        std::holds_alternative<Name>(callee)) {
+      auto& callerEffects =
+        funcInfos.at(module.getFunction(std::get<Name>(caller))).effects;
       if (callerEffects) {
         callerEffects->trap = true;
       }
@@ -193,7 +196,8 @@ struct GenerateGlobalEffects : public Pass {
       analyzeFuncs(*module, getPassOptions());
 
     // callee : caller
-    std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>> callers;
+    std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>
+      callers;
 
     std::unordered_set<HeapType> allIndirectCalledTypes;
 
@@ -201,7 +205,9 @@ struct GenerateGlobalEffects : public Pass {
 
     auto refFuncs = TableUtils::getFunctionsNeedingElemDeclare(*module);
     funcsWithAddress.insert(refFuncs.begin(), refFuncs.end());
-    ElementUtils::iterAllElementFunctionNames(module, [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
+    ElementUtils::iterAllElementFunctionNames(
+      module,
+      [&funcsWithAddress](Name name) { funcsWithAddress.insert(name); });
     for (const auto& export_ : module->exports) {
       if (export_->kind == ExternalKind::Function) {
         // This exported function might flow back to us even in a closed world,
@@ -233,10 +239,10 @@ struct GenerateGlobalEffects : public Pass {
     for (auto type : allIndirectCalledTypes) {
       subtypes.iterSubTypes(type, [&callers, type](HeapType sub, int _) {
         // HeapType -> HeapType
-        // A subtype is a 'callee' of its supertype. Supertypes need to inherit effects from their subtypes
-        // See the example in (TODO)
+        // A subtype is a 'callee' of its supertype.
+        // Supertypes need to inherit effects from their subtypes since they may
+        // be called via a ref to the subtype.
         callers[sub].insert(type);
-        // callers[type].insert(sub);
         return true;
       });
     }
@@ -247,7 +253,7 @@ struct GenerateGlobalEffects : public Pass {
     // known.
     for (auto& [func, info] : funcInfos) {
       func->effects.reset();
-      if (!info.effects) {
+      if (info.effects == UnknownEffects) {
         continue;
       }
 
