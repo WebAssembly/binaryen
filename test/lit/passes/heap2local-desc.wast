@@ -1410,6 +1410,9 @@
     (local.set $temp
       (struct.new_default $desc)
     )
+    ;; The ref.test's input will become unreachable after we optimize. We should
+    ;; not emit a const for the test result, even though we know it, as this is
+    ;; unreachable code which would not validate.
     (drop
       (ref.test (ref none)
         (ref.cast_desc_eq (ref $struct)
