@@ -2920,7 +2920,7 @@ if [ -n "$BINARYEN_FIRST_WASM" ]; then
   # file. pass the first one in as the main file, and use the env var for the
   # second.
   BINARYEN_SECOND_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} $BINARYEN_FIRST_WASM > o 2> e
-#elif [ -n "$BINARYEN_PIEJS_WASM" ]; then
+elif [ -n "$BINARYEN_PIEJS_WASM" ]; then
   # BINARYEN_PIEJS_WASM was provided, so we want to give that fuzzer the actual
   # file we are reducing. All other fuzzers should *not* be given this file, as
   # it may not even be valid for them (that fuzzer uses special js/wasm
