@@ -73,7 +73,6 @@
 //      from the IR before splitting.
 //
 #include "ir/module-splitting.h"
-#include "ir/export-utils.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -336,6 +335,7 @@ struct ModuleSplitter {
   void exportImportCalledPrimaryFunctions();
   void setupTablePatching();
   void shareImportableItems();
+  void cleanupUnusedTrampolines();
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), primary(primary), tableManager(primary),
@@ -348,6 +348,7 @@ struct ModuleSplitter {
     exportImportCalledPrimaryFunctions();
     setupTablePatching();
     shareImportableItems();
+    cleanupUnusedTrampolines();
   }
 };
 
@@ -508,7 +509,9 @@ Name ModuleSplitter::getTrampoline(Name funcName) {
     primary, std::string("trampoline_") + funcName.toString());
   it->second = trampoline;
 
-  // Generate the call and the function.
+  // Generate the call and the function. We generate a direct call here, but
+  // this will be converted to a call_indirect in
+  // indirectCallsToSecondaryFunctions.
   std::vector<Expression*> args;
   for (Index i = 0; i < oldFunc->getNumParams(); i++) {
     args.push_back(builder.makeLocalGet(i, oldFunc->getLocalType(i)));
@@ -559,6 +562,21 @@ static void walkSegments(Walker& walker, Module* module) {
 }
 
 void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
+  // Pre-create trampolines for secondary functions referenced in global
+  // initializers. We don't mutate the globals yet (that happens later in
+  // shareImportableItems), but we must create the trampolines now so they
+  // are processed correctly by indirectCallsToSecondaryFunctions and
+  // setupTablePatching.
+  for (auto& global : primary.globals) {
+    if (global->init) {
+      for (auto* ref : FindAll<RefFunc>(global->init).list) {
+        if (allSecondaryFuncs.count(ref->func)) {
+          getTrampoline(ref->func);
+        }
+      }
+    }
+  }
+
   // Turn references to secondary functions into references to thunks that
   // perform a direct call to the original referent. The direct calls in the
   // thunks will be handled like all other cross-module calls later, in
@@ -1219,6 +1237,55 @@ void ModuleSplitter::shareImportableItems() {
   }
   for (auto& name : tagsToRemove) {
     primary.removeTag(name);
+  }
+}
+
+void ModuleSplitter::cleanupUnusedTrampolines() {
+  // We pre-created trampolines for all functions referenced in global
+  // initializers' ref.funcs in indirectReferencesToSecondaryFunctions.
+  // But after splitting module items, if a trampoline is not used in the
+  // primary module, it means it was created for a global initializer but that
+  // global ended up moving to the same secondary module as the function
+  // referenced in the global initializer's ref.func. We can remove them here.
+  // TODO Remove placeholders and table elements created by unused trampolines
+  std::unordered_set<Name> usedFuncs;
+
+  struct FuncrefCollector : public PostWalker<FuncrefCollector> {
+    std::vector<Name>& used;
+    FuncrefCollector(std::vector<Name>& used) : used(used) {}
+    void visitRefFunc(RefFunc* curr) { used.push_back(curr->func); }
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> analysis(
+    primary, [&](Function* func, std::vector<Name>& used) {
+      if (!func->imported()) {
+        FuncrefCollector(used).walkFunction(func);
+      }
+    });
+
+  for (auto& [_, usedList] : analysis.map) {
+    usedFuncs.insert(usedList.begin(), usedList.end());
+  }
+
+  std::vector<Name> moduleCodeUsed;
+  FuncrefCollector(moduleCodeUsed).walkModuleCode(&primary);
+  usedFuncs.insert(moduleCodeUsed.begin(), moduleCodeUsed.end());
+
+  for (auto& ex : primary.exports) {
+    if (ex->kind == ExternalKind::Function) {
+      usedFuncs.insert(*ex->getInternalName());
+    }
+  }
+
+  std::vector<Name> trampolinesToRemove;
+  for (auto& [_, trampoline] : trampolineMap) {
+    if (!usedFuncs.count(trampoline)) {
+      trampolinesToRemove.push_back(trampoline);
+    }
+  }
+  for (auto& name : trampolinesToRemove) {
+    primary.removeFunction(name);
+    primaryFuncs.erase(name);
   }
 }
 
