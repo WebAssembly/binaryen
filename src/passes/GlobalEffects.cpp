@@ -22,7 +22,7 @@
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
+#include "support/strongly_connected_components.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -107,61 +107,154 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   return std::move(analysis.map);
 }
 
-// Propagate effects from callees to callers transitively
-// e.g. if A -> B -> C (A calls B which calls C)
-// Then B inherits effects from C and A inherits effects from both B and C.
-void propagateEffects(
-  const Module& module,
-  const std::unordered_map<Name, std::unordered_set<Name>>& reverseCallGraph,
-  std::map<Function*, FuncInfo>& funcInfos) {
-
-  UniqueNonrepeatingDeferredQueue<std::pair<Name, Name>> work;
-
-  for (const auto& [callee, callers] : reverseCallGraph) {
-    for (const auto& caller : callers) {
-      work.push(std::pair(callee, caller));
+std::unordered_map<Function*, std::unordered_set<Function*>>
+buildCallGraph(const Module& module,
+               const std::map<Function*, FuncInfo>& funcInfos) {
+  std::unordered_map<Function*, std::unordered_set<Function*>> callGraph;
+  for (const auto& [func, info] : funcInfos) {
+    for (Name callee : info.calledFunctions) {
+      callGraph[func].insert(module.getFunction(callee));
     }
   }
 
-  auto propagate = [&](Name callee, Name caller) {
-    auto& callerEffects = funcInfos.at(module.getFunction(caller)).effects;
-    const auto& calleeEffects =
-      funcInfos.at(module.getFunction(callee)).effects;
-    if (!callerEffects) {
-      return;
-    }
+  return callGraph;
+}
 
-    if (!calleeEffects) {
-      callerEffects = UnknownEffects;
-      return;
-    }
+// Propagate effects from callees to callers transitively
+// e.g. if A -> B -> C (A calls B which calls C)
+// Then B inherits effects from C and A inherits effects from both B and C.
+//
+// Generate SCC for the call graph, then traverse it in reverse topological
+// order processing each callee before its callers. When traversing:
+// - Merge all of the effects of functions within the CC
+// - Also merge the (already computed) effects of each callee CC
+// - Add trap effects for potentially recursive call chains
+void propagateEffects(
+  const Module& module,
+  const PassOptions& passOptions,
+  std::map<Function*, FuncInfo>& funcInfos,
+  const std::unordered_map<Function*, std::unordered_set<Function*>>
+    callGraph) {
+  struct CallGraphSCCs
+    : SCCs<std::vector<Function*>::const_iterator, CallGraphSCCs> {
+    const std::map<Function*, FuncInfo>& funcInfos;
+    const std::unordered_map<Function*, std::unordered_set<Function*>>&
+      callGraph;
+    const Module& module;
 
-    callerEffects->mergeIn(*calleeEffects);
+    CallGraphSCCs(
+      const std::vector<Function*>& funcs,
+      const std::map<Function*, FuncInfo>& funcInfos,
+      const std::unordered_map<Function*, std::unordered_set<Function*>>&
+        callGraph,
+      const Module& module)
+      : SCCs<std::vector<Function*>::const_iterator, CallGraphSCCs>(
+          funcs.begin(), funcs.end()),
+        funcInfos(funcInfos), callGraph(callGraph), module(module) {}
+
+    void pushChildren(Function* f) {
+      auto callees = callGraph.find(f);
+      if (callees == callGraph.end()) {
+        return;
+      }
+
+      for (auto* callee : callees->second) {
+        push(callee);
+      }
+    }
   };
 
-  while (!work.empty()) {
-    auto [callee, caller] = work.pop();
+  std::vector<Function*> allFuncs;
+  for (auto& [func, info] : funcInfos) {
+    allFuncs.push_back(func);
+  }
+  CallGraphSCCs sccs(allFuncs, funcInfos, callGraph, module);
 
-    if (callee == caller) {
-      auto& callerEffects = funcInfos.at(module.getFunction(caller)).effects;
-      if (callerEffects) {
-        callerEffects->trap = true;
+  std::unordered_map<Function*, int> sccMembers;
+  std::unordered_map<int, std::optional<EffectAnalyzer>> componentEffects;
+
+  int ccIndex = 0;
+  for (auto ccIterator : sccs) {
+    ccIndex++;
+    std::optional<EffectAnalyzer>& ccEffects = componentEffects[ccIndex];
+    std::vector<Function*> ccFuncs(ccIterator.begin(), ccIterator.end());
+
+    ccEffects.emplace(passOptions, module);
+
+    for (Function* f : ccFuncs) {
+      sccMembers.emplace(f, ccIndex);
+    }
+
+    std::unordered_set<int> calleeSccs;
+    for (Function* caller : ccFuncs) {
+      auto callees = callGraph.find(caller);
+      if (callees == callGraph.end()) {
+        continue;
+      }
+      for (auto* callee : callees->second) {
+        calleeSccs.insert(sccMembers.at(callee));
       }
     }
 
-    // Even if nothing changed, we still need to keep traversing the callers
-    // to look for a potential cycle which adds a trap affect on the above
-    // lines.
-    propagate(callee, caller);
+    // Merge in effects from callees
+    for (int calleeScc : calleeSccs) {
+      const auto& calleeComponentEffects = componentEffects.at(calleeScc);
+      if (calleeComponentEffects == UnknownEffects) {
+        ccEffects = UnknownEffects;
+        break;
+      }
 
-    const auto& callerCallers = reverseCallGraph.find(caller);
-    if (callerCallers == reverseCallGraph.end()) {
+      else if (ccEffects != UnknownEffects) {
+        ccEffects->mergeIn(*calleeComponentEffects);
+      }
+    }
+
+    // Add trap effects for potential cycles.
+    if (ccFuncs.size() > 1) {
+      if (ccEffects != UnknownEffects) {
+        ccEffects->trap = true;
+      }
+    } else {
+      auto* func = ccFuncs[0];
+      if (funcInfos.at(func).calledFunctions.contains(func->name)) {
+        if (ccEffects != UnknownEffects) {
+          ccEffects->trap = true;
+        }
+      }
+    }
+
+    // Aggregate effects within this CC
+    if (ccEffects) {
+      for (Function* f : ccFuncs) {
+        const auto& effects = funcInfos.at(f).effects;
+        if (effects == UnknownEffects) {
+          ccEffects = UnknownEffects;
+          break;
+        }
+
+        ccEffects->mergeIn(*effects);
+      }
+    }
+
+    // Assign each function's effects to its CC effects.
+    for (Function* f : ccFuncs) {
+      if (!ccEffects) {
+        funcInfos.at(f).effects = UnknownEffects;
+      } else {
+        funcInfos.at(f).effects.emplace(*ccEffects);
+      }
+    }
+  }
+}
+
+void copyEffectsToFunctions(const std::map<Function*, FuncInfo> funcInfos) {
+  for (auto& [func, info] : funcInfos) {
+    func->effects.reset();
+    if (!info.effects) {
       continue;
     }
 
-    for (const Name& callerCaller : callerCallers->second) {
-      work.push(std::pair(callee, callerCaller));
-    }
+    func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
   }
 }
 
@@ -170,26 +263,11 @@ struct GenerateGlobalEffects : public Pass {
     std::map<Function*, FuncInfo> funcInfos =
       analyzeFuncs(*module, getPassOptions());
 
-    // callee : caller
-    std::unordered_map<Name, std::unordered_set<Name>> callers;
-    for (const auto& [func, info] : funcInfos) {
-      for (const auto& callee : info.calledFunctions) {
-        callers[callee].insert(func->name);
-      }
-    }
+    auto callGraph = buildCallGraph(*module, funcInfos);
 
-    propagateEffects(*module, callers, funcInfos);
+    propagateEffects(*module, getPassOptions(), funcInfos, callGraph);
 
-    // Generate the final data, starting from a blank slate where nothing is
-    // known.
-    for (auto& [func, info] : funcInfos) {
-      func->effects.reset();
-      if (!info.effects) {
-        continue;
-      }
-
-      func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
-    }
+    copyEffectsToFunctions(funcInfos);
   }
 };
 
