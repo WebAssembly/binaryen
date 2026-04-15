@@ -3491,6 +3491,7 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   typename Ctx::TypeUseT type;
   Exactness exact = Exact;
   std::optional<typename Ctx::LocalsT> localVars;
+  bool skipped = false;
 
   if (import) {
     auto use = exacttypeuse(ctx);
@@ -3505,13 +3506,14 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
       CHECK_ERR(l);
       localVars = *l;
     }
-    if (!ctx.skipFunctionBody()) {
+    skipped = ctx.skipFunctionBody();
+    if (!skipped) {
       CHECK_ERR(instrs(ctx));
       ctx.setSrcLoc(ctx.in.takeAnnotations());
     }
   }
 
-  if (!ctx.skipFunctionBody() && !ctx.in.takeRParen()) {
+  if ((import || !skipped) && !ctx.in.takeRParen()) {
     return ctx.in.err("expected end of function");
   }
 

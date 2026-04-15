@@ -1074,6 +1074,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     recTypeDefs.push_back({{}, pos, Index(recTypeDefs.size()), {}});
   }
 
+  bool skipFunctionBody();
+
   Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
     return Limits{n, m};
   }

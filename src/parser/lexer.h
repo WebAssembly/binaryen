@@ -82,6 +82,15 @@ public:
     advance();
   }
 
+  // Consume the next `n` characters.
+  void take(size_t n) { pos += n; }
+  void takeAll() { pos = buffer.size(); }
+
+  // Whether the unlexed input starts with prefix `sv`.
+  size_t startsWith(std::string_view sv) const {
+    return next().starts_with(sv);
+  }
+
   std::optional<char> peekChar() const;
 
   bool peekLParen() { return !empty() && peek() == '('; }
@@ -155,15 +164,6 @@ public:
   }
 
 private:
-  // Whether the unlexed input starts with prefix `sv`.
-  size_t startsWith(std::string_view sv) const {
-    return next().starts_with(sv);
-  }
-
-  // Consume the next `n` characters.
-  void take(size_t n) { pos += n; }
-  void takeAll() { pos = buffer.size(); }
-
   std::optional<int> getDigit(char c);
 
   std::optional<int> getHexDigit(char c);
