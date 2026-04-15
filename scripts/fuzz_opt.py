@@ -2927,7 +2927,7 @@ elif [ -n "$BINARYEN_PIEJS_WASM" ]; then
   # combinations. We therefore provide the temp wasm file to BINARYEN_PIEJS_WASM
   # and *not* as a Python argument after the seed.
   BINARYEN_PIEJS_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} > o 2> e
-#else
+else
   # run the command normally
   ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
 fi
