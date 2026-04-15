@@ -2107,8 +2107,9 @@ class PreserveImportsExportsRandom(TestCaseHandler):
 # This reads wasm+js combinations from the test/js_wasm directory, so as new
 # testcases are added there, this will fuzz them.
 #
-# Note that bugs found by this fuzzer require BINARYEN_TRUST_GIVEN_WASM=1 in the
-# env for reduction. TODO: simplify this
+# Note that bugs found by this fuzzer require BINARYEN_PIEJS_WASM=1 in the
+# env for reduction. TODO: simplify this, and show it when the fuzzer prints out
+# the command to reduce.
 class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
@@ -2116,9 +2117,9 @@ class PreserveImportsExportsJS(TestCaseHandler):
         try:
             self.do_handle_pair(input, before_wasm, after_wasm, opts)
         except Exception as e:
-            if not os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
-                # We errored, and we were not given a wasm file to trust as we
-                # reduce, so this is the first time we hit an error. Save the
+            if not os.environ.get('BINARYEN_PIEJS_WASM'):
+                # We errored, and we were not in the middle of reducing a given
+                # file, so this is the first time we hit an error. Save the
                 # pre wasm file, the one we began with, as `before_wasm`, so
                 # that the reducer will make us proceed exactly from there.
                 shutil.copyfile(self.pre_wasm, before_wasm)
@@ -2172,9 +2173,10 @@ class PreserveImportsExportsJS(TestCaseHandler):
         # If we were given a wasm file, use that instead of all the above. We
         # do this now, after creating pre_wasm, because we still need to consume
         # all the randomness normally.
-        if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
-            print('using given wasm', before_wasm)
-            pre_wasm = before_wasm
+        given_wasm = os.environ.get('BINARYEN_PIEJS_WASM')
+        if given_wasm:
+            print('using BINARYEN_PIEJS_WASM', given_wasm)
+            pre_wasm = given_wasm
 
         # Pick a vm and run before we optimize the wasm.
         vms = [
@@ -2913,14 +2915,21 @@ echo "  " $?
 
 echo "The following value should be >0:"
 
-if [ -z "$BINARYEN_FIRST_WASM" ]; then
-  # run the command normally
-  ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
-else
-  # BINARYEN_FIRST_WASM was provided so we should actually reduce the *second*
+if [ -n "$BINARYEN_FIRST_WASM" ]; then
+  # BINARYEN_FIRST_WASM was provided, so we should actually reduce the *second*
   # file. pass the first one in as the main file, and use the env var for the
   # second.
   BINARYEN_SECOND_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} $BINARYEN_FIRST_WASM > o 2> e
+#elif [ -n "$BINARYEN_PIEJS_WASM" ]; then
+  # BINARYEN_PIEJS_WASM was provided, so we want to give that fuzzer the actual
+  # file we are reducing. All other fuzzers should *not* be given this file, as
+  # it may not even be valid for them (that fuzzer uses special js/wasm
+  # combinations. We therefore provide the temp wasm file to BINARYEN_PIEJS_WASM
+  # and *not* as a Python argument after the seed.
+  BINARYEN_PIEJS_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} > o 2> e
+#else
+  # run the command normally
+  ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
 fi
 
 echo "  " $?
@@ -2948,8 +2957,7 @@ echo "  " $?
 #
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
 #
-# If the testcase handler uses a second wasm file, you may be able to reduce it
-# using BINARYEN_SECOND_WASM.
+# For reducing Two and PreserveImportsExportsJS, see the comments there.
 #
 ''')
 
