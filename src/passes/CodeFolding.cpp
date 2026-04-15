@@ -136,9 +136,10 @@ struct CodeFolding
     modifieds; // modified code should not be processed
                // again, wait for next pass
 
-  // Cache for hasExitingBranches results. Populated by a single bottom-up
-  // walk to avoid O(N^2) repeated tree traversals on nested blocks.
-  std::unordered_map<Expression*, bool> exitingBranchCache_;
+  // Cache of expressions that have branches exiting to targets defined
+  // outside them. Populated lazily on first access via PostWalker.
+  std::unordered_set<Expression*> exitingBranchCache_;
+  bool exitingBranchCachePopulated_ = false;
 
   // walking
 
@@ -305,6 +306,7 @@ struct CodeFolding
       unoptimizables.clear();
       modifieds.clear();
       exitingBranchCache_.clear();
+      exitingBranchCachePopulated_ = false;
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
@@ -312,6 +314,17 @@ struct CodeFolding
   }
 
 private:
+  // Check if an expression has branches that exit to targets defined outside
+  // it. The cache is populated lazily on first call using a PostWalker for
+  // efficient bottom-up traversal.
+  bool hasExitingBranches(Expression* expr) {
+    if (!exitingBranchCachePopulated_) {
+      populateExitingBranchCache(getFunction()->body);
+      exitingBranchCachePopulated_ = true;
+    }
+    return exitingBranchCache_.count(expr);
+  }
+
   // Pre-populate the exiting branch cache for all sub-expressions of root
   // in a single O(N) bottom-up walk. After this, exitingBranchCache_
   // lookups are O(1).
@@ -319,14 +332,13 @@ private:
     struct CachePopulator
       : public PostWalker<CachePopulator,
                           UnifiedExpressionVisitor<CachePopulator>> {
-      std::unordered_map<Expression*, bool>& cache;
+      std::unordered_set<Expression*>& cache;
       // Track unresolved branch targets at each node. We propagate children's
       // targets upward: add uses, remove defs. If any remain, the expression
       // has exiting branches.
       std::unordered_map<Expression*, std::unordered_set<Name>> targetSets;
 
-      CachePopulator(std::unordered_map<Expression*, bool>& cache)
-        : cache(cache) {}
+      CachePopulator(std::unordered_set<Expression*>& cache) : cache(cache) {}
 
       void visitExpression(Expression* curr) {
         std::unordered_set<Name> targets;
@@ -353,8 +365,8 @@ private:
           }
         });
         bool hasExiting = !targets.empty();
-        cache[curr] = hasExiting;
         if (hasExiting) {
+          cache.insert(curr);
           targetSets[curr] = std::move(targets);
         }
       }
@@ -606,11 +618,6 @@ private:
     if (tails.size() < 2) {
       return false;
     }
-    // Pre-populate the cache once at the top level so all subsequent
-    // exitingBranchCache_ lookups are O(1).
-    if (num == 0) {
-      populateExitingBranchCache(getFunction()->body);
-    }
     // remove things that are untoward and cannot be optimized
     tails.erase(
       std::remove_if(tails.begin(),
@@ -699,7 +706,7 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (exitingBranchCache_[newItem]) {
+                                if (hasExitingBranches(newItem)) {
                                   return true;
                                 }
                                 return false;
