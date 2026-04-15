@@ -121,17 +121,17 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     // we are synthesizing a block to help us determine later whether we need to
     // run the nested pop fixup.
     scopeStack[0].noteSyntheticBlock();
-    std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.valIndex,
+    std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.hoistIndex,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
-    scope.exprStack.resize(hoisted.valIndex);
+    scope.exprStack.resize(hoisted.hoistIndex);
     pushSynthetic(block);
   };
 
   auto type = scope.exprStack.back()->type;
 
   if (type.size() == sizeHint || type.size() <= 1) {
-    if (hoisted.valIndex < scope.exprStack.size() - 1) {
+    if (hoisted.hoistIndex < scope.exprStack.size() - 1) {
       packageAsBlock(type);
     }
     return Ok{};

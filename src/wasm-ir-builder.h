@@ -717,7 +717,7 @@ private:
     // be the original value-producing expression, or if we are popping
     // greedily, it might be the deepest none-typed expression under the
     // value-producing expression.
-    Index valIndex;
+    Index hoistIndex;
     // The local.get placed on the stack, if any.
     LocalGet* get;
   };
