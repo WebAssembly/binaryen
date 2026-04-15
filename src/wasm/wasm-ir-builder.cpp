@@ -61,29 +61,37 @@ Result<Index> IRBuilder::addScratchLocal(Type type) {
   return Builder::addVar(func, name, type);
 }
 
-MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
+MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   auto& stack = getScope().exprStack;
-  int index = stack.size() - 1;
-  for (; index >= 0; --index) {
-    if (stack[index]->type != Type::none) {
+  int valIndex = stack.size() - 1;
+  for (; valIndex >= 0; --valIndex) {
+    if (stack[valIndex]->type != Type::none) {
       break;
     }
   }
-  if (index < 0) {
+  if (valIndex < 0) {
     // There is no value-producing or unreachable expression.
     return {};
   }
-  if (unsigned(index) == stack.size() - 1) {
-    // Value-producing expression already on top of the stack.
-    return HoistedVal{Index(index), nullptr};
+
+  int hoistIndex = valIndex;
+  if (greedy) {
+    while (hoistIndex > 0 && stack[hoistIndex - 1]->type == Type::none) {
+      --hoistIndex;
+    }
   }
-  auto*& expr = stack[index];
+
+  if (unsigned(valIndex) == stack.size() - 1) {
+    // Value-producing expression already on top of the stack.
+    return HoistedVal{Index(hoistIndex), nullptr};
+  }
+  auto*& expr = stack[valIndex];
   if (expr->type == Type::unreachable) {
     // Make sure the top of the stack also has an unreachable expression.
     if (stack.back()->type != Type::unreachable) {
       pushSynthetic(builder.makeUnreachable());
     }
-    return HoistedVal{Index(index), nullptr};
+    return HoistedVal{Index(hoistIndex), nullptr};
   }
   // Hoist with a scratch local. Normally the scratch local is the same type as
   // the hoisted expression, but we may need to adjust it given the enabled
@@ -99,7 +107,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   expr = builder.makeLocalSet(*scratchIdx, expr);
   auto* get = builder.makeLocalGet(*scratchIdx, type);
   pushSynthetic(get);
-  return HoistedVal{Index(index), get};
+  return HoistedVal{Index(hoistIndex), get};
 }
 
 Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
@@ -123,7 +131,7 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
   auto type = scope.exprStack.back()->type;
 
   if (type.size() == sizeHint || type.size() <= 1) {
-    if (hoisted.get) {
+    if (hoisted.valIndex < scope.exprStack.size() - 1) {
       packageAsBlock(type);
     }
     return Ok{};
@@ -379,8 +387,10 @@ private:
         continue;
       }
 
-      // Pop a child normally.
-      auto val = pop(children[i].constraint.size());
+      // Pop a child normally. Pop greedily for children other than the first
+      // (i.e. the last to be popped).
+      bool greedy = i > 0;
+      auto val = pop(children[i].constraint.size(), greedy);
       CHECK_ERR(val);
       *children[i].childp = *val;
     }
@@ -458,12 +468,22 @@ private:
     return false;
   }
 
-  Result<Expression*> pop(size_t size) {
+  // If `greedy`, then we will pop additional none-typed expressions that come
+  // before the value-producing expression. The additional expressions will be
+  // packaged into a block with the value-producing expression. This is better
+  // than leaving them on top of the stack, where they will force the use of a
+  // scratch local when the next operand is popped. `greedy` should be used when
+  // popping all children of an expression except the first (i.e. the
+  // last child to be popped). Not being greedy for the last popped child defers
+  // the creation of a block to hold its none-typed predecessors. It may turn
+  // out that such a block is not necessary, for example when the none-typed
+  // expressions can be included directly into a parent block scope.
+  Result<Expression*> pop(size_t size, bool greedy = false) {
     assert(size >= 1);
     auto& scope = builder.getScope();
 
     // Find the suffix of expressions that do not produce values.
-    auto hoisted = builder.hoistLastValue();
+    auto hoisted = builder.hoistLastValue(greedy);
     CHECK_ERR(hoisted);
     if (!hoisted) {
       // There are no expressions that produce values.
@@ -489,7 +509,7 @@ private:
     std::vector<Expression*> elems;
     elems.resize(size);
     for (int i = size - 1; i >= 0; --i) {
-      auto elem = pop(1);
+      auto elem = pop(1, greedy || i > 0);
       CHECK_ERR(elem);
       elems[i] = *elem;
     }
