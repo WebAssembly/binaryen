@@ -862,6 +862,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // We must not modify unreachable code here, as we will replace it with a
+      // const, which has a concrete type (similar to the situation with
+      // local.get in other cases in this pass).
+      return;
+    }
+
     // This test operates on the allocation, which means we can compute whether
     // it will succeed statically. We do not even need
     // GCTypeUtils::evaluateCastCheck because we know the allocation's type
