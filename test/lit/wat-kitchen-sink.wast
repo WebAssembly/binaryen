@@ -5259,4 +5259,11 @@
    )
   )
  )
+
+ (func $paren-in-string
+   ;; We should not be tripped up by an extra close parenthesis inside a string.
+   (drop
+     (string.const ")")
+   )
+ )
 )
