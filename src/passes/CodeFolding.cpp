@@ -399,6 +399,41 @@ private:
   // inside that item
   bool canMove(const std::vector<Expression*>& items, Expression* outOf) {
     auto allTargets = BranchUtils::getBranchTargets(outOf);
+    bool hasTry = false;
+    bool hasTryTable = false;
+    if (getModule()->features.hasExceptionHandling()) {
+      hasTry = FindAll<Try>(outOf).has();
+      hasTryTable = FindAll<TryTable>(outOf).has();
+    }
+    return canMoveImpl(items, allTargets, hasTry, hasTryTable);
+  }
+
+  // Cached data for the function body, computed on demand to avoid repeated
+  // O(N) tree walks in optimizeTerminatingTails.
+  BranchUtils::NameSet bodyBranchTargets;
+  bool bodyHasTry = false;
+  bool bodyHasTryTable = false;
+  bool bodyCachePopulated = false;
+
+  // Like canMove, but uses precomputed branch targets and Try/TryTable
+  // presence. This avoids repeated O(N) tree walks when outOf is the
+  // function body and canMove is called multiple times.
+  bool canMoveWithCachedBodyInfo(const std::vector<Expression*>& items) {
+    if (!bodyCachePopulated) {
+      bodyBranchTargets = BranchUtils::getBranchTargets(getFunction()->body);
+      if (getModule()->features.hasExceptionHandling()) {
+        bodyHasTry = FindAll<Try>(getFunction()->body).has();
+        bodyHasTryTable = FindAll<TryTable>(getFunction()->body).has();
+      }
+      bodyCachePopulated = true;
+    }
+    return canMoveImpl(items, bodyBranchTargets, bodyHasTry, bodyHasTryTable);
+  }
+
+  bool canMoveImpl(const std::vector<Expression*>& items,
+                   const BranchUtils::NameSet& allTargets,
+                   bool hasTry,
+                   bool hasTryTable) {
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
       std::vector<Name> intersection;
@@ -429,9 +464,7 @@ private:
         // conservative approximation because there can be cases that
         // 'try'/'try_table' is within the expression that may throw so it is
         // safe to take the expression out.
-        // TODO: optimize this check to avoid two FindAlls.
-        if (effects.throws() &&
-            (FindAll<Try>(outOf).has() || FindAll<TryTable>(outOf).has())) {
+        if (effects.throws() && (hasTry || hasTryTable)) {
           return false;
         }
       }
@@ -698,8 +731,7 @@ private:
       cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
       // if we cannot merge to the end, then we definitely need 2 blocks,
       // and a branch
-      // TODO: efficiency, entire body
-      if (!canMove(items, getFunction()->body)) {
+      if (!canMoveWithCachedBodyInfo(items)) {
         cost += 1 + WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
         // TODO: to do this, we need to maintain a map of element=>parent,
         //       so that we can insert the new blocks in the right place
