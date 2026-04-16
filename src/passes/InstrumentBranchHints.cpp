@@ -433,7 +433,8 @@ struct DeInstrumentBranchHints
 
     // Mark the log-branch import as having no side effects - we are removing it
     // entirely here, and its effect should not stop us when we compute effects.
-    module->getFunction(logBranchImport)->effects = std::make_shared<EffectAnalyzer>(getPassOptions(), *module);
+    module->getFunction(logBranchImport)->effects =
+      std::make_shared<EffectAnalyzer>(getPassOptions(), *module);
 
     InstrumentationProcessor<DeInstrumentBranchHints>::doWalkModule(module);
   }
