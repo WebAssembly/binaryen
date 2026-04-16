@@ -113,8 +113,13 @@ CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos) {
   CallGraph callGraph;
   for (const auto& [func, info] : funcInfos) {
+    if (info.calledFunctions.empty()) {
+      continue;
+    }
+
+    auto& callees = callGraph[func];
     for (Name callee : info.calledFunctions) {
-      callGraph[func].insert(module.getFunction(callee));
+      callees.insert(module.getFunction(callee));
     }
   }
 
