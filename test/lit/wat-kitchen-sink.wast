@@ -586,16 +586,12 @@
  )
 
  ;; CHECK:      (func $add-stacky (type $1) (result i32)
- ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (i32.add
+ ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (local.set $scratch
- ;; CHECK-NEXT:     (i32.const 1)
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (local.get $scratch)
+ ;; CHECK-NEXT:    (i32.const 2)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $add-stacky (result i32)
@@ -646,17 +642,11 @@
  ;; CHECK:      (func $add-stacky-4 (type $1) (result i32)
  ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (local $scratch_1 i32)
- ;; CHECK-NEXT:  (local $scratch_2 i32)
- ;; CHECK-NEXT:  (local.set $scratch_2
+ ;; CHECK-NEXT:  (local.set $scratch_1
  ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $scratch_1
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:     (local.get $scratch_1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block (result i32)
  ;; CHECK-NEXT:     (local.set $scratch
  ;; CHECK-NEXT:      (i32.const 2)
  ;; CHECK-NEXT:     )
@@ -666,7 +656,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (local.get $scratch_2)
+ ;; CHECK-NEXT:  (local.get $scratch_1)
  ;; CHECK-NEXT: )
  (func $add-stacky-4 (result i32)
   i32.const 1
@@ -738,21 +728,17 @@
  )
 
  ;; CHECK:      (func $add-twice-stacky (type $ret2) (result i32 i32)
- ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (local.set $scratch
- ;; CHECK-NEXT:     (i32.add
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:      (i32.const 2)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (local.get $scratch)
- ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.add
- ;; CHECK-NEXT:    (i32.const 3)
- ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (i32.add
+ ;; CHECK-NEXT:     (i32.const 3)
+ ;; CHECK-NEXT:     (i32.const 4)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
