@@ -96,6 +96,7 @@
 //
 
 #include "ir/drop.h"
+#include "ir/effects.h"
 #include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
@@ -272,6 +273,8 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     // The condition before the instrumentation (a pointer to it, so we can
     // replace it).
     Expression** originalCondition;
+    // The local that the original condition is stored in temporarily.
+    Index tempLocal;
     // The call to the logging that the instrumentation added.
     Call* call;
   };
@@ -330,7 +333,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
       return {};
     }
     // Great, this is indeed a prior instrumentation.
-    return Instrumentation{&set->value, call};
+    return Instrumentation{&set->value, set->index, call};
   }
 };
 
@@ -374,7 +377,24 @@ struct DeInstrumentBranchHints
       // IR, and the original condition is still used in another place, until
       // we remove the logging calls; since we will remove the calls anyhow, we
       // just need some valid IR there).
-      std::swap(curr->condition, *info->originalCondition);
+      //
+      // Check for dangerous effects in the condition we are about to replace,
+      // to avoid a situation where the condition looks like this:
+      //
+      //  (set $temp (original condition))
+      //   ..effects..
+      //  (local.get $temp)
+      //
+      // We cannot replace all this with the original condition, as it would
+      // remove the effects.
+      EffectAnalyzer effects(getPassOptions(), *getModule(), curr->condition);
+      // The only condition we allow is a write to the temp local from the
+      // instrumentation, which getInstrumentation() verified has no other uses
+      // than us.
+      effects.localsWritten.erase(info->tempLocal);
+      if (!effects.hasUnremovableSideEffects()) {
+        std::swap(curr->condition, *info->originalCondition);
+      }
     }
   }
 
@@ -402,6 +422,20 @@ struct DeInstrumentBranchHints
                                              DropMode::IgnoreParentEffects);
       }
     }
+  }
+
+  void doWalkModule(Module* module) {
+    auto logBranchImport = getLogBranchImport(module);
+    if (!logBranchImport) {
+      Fatal()
+        << "No branch hint logging import found. Was this code instrumented?";
+    }
+
+    // Mark the log-branch import as having no side effects - we are removing it
+    // entirely here, and its effect should not stop us when we compute effects.
+    module->getFunction(logBranchImport)->effects = std::make_shared<EffectAnalyzer>(getPassOptions(), *module);
+
+    InstrumentationProcessor<DeInstrumentBranchHints>::doWalkModule(module);
   }
 };
 
