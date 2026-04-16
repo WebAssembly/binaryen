@@ -1528,6 +1528,8 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Describes clause on a non-struct type";
     case TypeBuilder::ErrorReasonKind::ForwardDescribesReference:
       return os << "Describes clause is a forward reference";
+    case TypeBuilder::ErrorReasonKind::ForwardDescriptorReference:
+      return os << "Descriptor clause is a forward reference";
     case TypeBuilder::ErrorReasonKind::MismatchedDescribes:
       return os << "Described type is not a matching descriptor";
     case TypeBuilder::ErrorReasonKind::NonStructDescriptor:
@@ -2509,7 +2511,6 @@ validateTypeInfo(HeapTypeInfo& info,
     if (info.kind != HeapTypeKind::Struct) {
       return TypeBuilder::ErrorReasonKind::NonStructDescribes;
     }
-    assert(desc->isTemp && "unexpected canonical described type");
     if (!seenTypes.contains(HeapType(uintptr_t(desc)))) {
       return TypeBuilder::ErrorReasonKind::ForwardDescribesReference;
     }
@@ -2654,6 +2655,14 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
           i, TypeBuilder::ErrorReasonKind::ForwardChildReference}};
       }
     }
+    if (auto desc = type.getDescriptorType()) {
+      if (isTemp(*desc) && !seenTypes.contains(*desc)) {
+        return {TypeBuilder::Error{
+          i, TypeBuilder::ErrorReasonKind::ForwardDescriptorReference}};
+      }
+    }
+    // Describes clauses were already checked as we validated each type in the
+    // group.
   }
 
   // The rec group is valid, so we can try to move the group into the global rec
