@@ -94,7 +94,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
                 type = callIndirect->heapType;
               } else {
-                assert(false && "Unexpected type of call");
+                Fatal() << "Unexpected call type";
               }
 
               funcInfo.indirectCalledTypes.insert(type);
@@ -123,34 +123,41 @@ using CallGraphNode = std::variant<Function*, HeapType>;
 using CallGraph =
   std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>;
 
+/* Build a call graph for indirect and direct calls.
+
+ key (caller) -> value (callee)
+ Name         -> Name     : direct call
+ Name         -> HeapType : indirect call to the given HeapType
+ HeapType     -> Name     : The function `callee` has the type `caller`. The
+                            HeapType may essentially 'call' any of its
+                            potential implementations.
+ HeapType     -> HeapType : `callee` is a subtype of `caller`. A call_ref
+                            could target any subtype of the ref, so we need to
+                            aggregate effects of subtypes of the target type.
+
+ If we're running in an open world, we only include Name -> Name edges.
+*/
 CallGraph buildCallGraph(Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
                          bool closedWorld) {
   CallGraph callGraph;
 
-  if (!closedWorld) {
-    for (const auto& [func, info] : funcInfos) {
-      if (info.calledFunctions.empty()) {
-        continue;
-      }
-
-      auto& callees = callGraph[func];
-      for (Name calleeFunction : info.calledFunctions) {
-        callees.insert(module.getFunction(calleeFunction));
-      }
-    }
-    return callGraph;
-  }
-
   std::unordered_set<HeapType> allFunctionTypes;
   for (const auto& [caller, callerInfo] : funcInfos) {
+    auto& callees = callGraph[caller];
     for (Name calleeFunction : callerInfo.calledFunctions) {
-      callGraph[caller].insert(module.getFunction(calleeFunction));
+      callees.insert(module.getFunction(calleeFunction));
+    }
+
+    // In open world, just connect functions. Indirect calls are already handled
+    // by giving such functions unknown effects.
+    if (!closedWorld) {
+      continue;
     }
 
     allFunctionTypes.insert(caller->type.getHeapType());
     for (HeapType calleeType : callerInfo.indirectCalledTypes) {
-      callGraph[caller].insert(calleeType);
+      callees.insert(calleeType);
       allFunctionTypes.insert(calleeType);
     }
     callGraph[caller->type.getHeapType()].insert(caller);
@@ -210,11 +217,7 @@ void propagateEffects(const Module& module,
         funcInfos(funcInfos), callGraph(callGraph), module(module) {}
 
     void pushChildren(CallGraphNode node) {
-      auto callees = callGraph.find(node);
-      if (callees == callGraph.end()) {
-        return;
-      }
-      for (CallGraphNode callee : callees->second) {
+      for (CallGraphNode callee : callGraph.at(node)) {
         push(callee);
       }
     }
@@ -249,12 +252,7 @@ void propagateEffects(const Module& module,
 
     std::unordered_set<int> calleeSccs;
     for (CallGraphNode caller : cc) {
-      auto callees = callGraph.find(caller);
-      if (callees == callGraph.end()) {
-        continue;
-      }
-
-      for (CallGraphNode callee : callees->second) {
+      for (CallGraphNode callee : callGraph.at(caller)) {
         calleeSccs.insert(funcComponents.at(callee));
       }
     }
