@@ -29,14 +29,7 @@ namespace wasm {
 
 namespace {
 
-constexpr auto UnknownEffects = std::nullopt;
-
 struct FuncInfo {
-  // Effects in this function. nullopt / UnknownEffects means that we don't know
-  // what effects this function has, so we conservatively assume all effects.
-  // Nullopt cases won't be copied to Function::effects.
-  std::optional<EffectAnalyzer> effects;
-
   // Directly-called functions from this function.
   std::unordered_set<Name> calledFunctions;
 };
@@ -46,25 +39,25 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     module, [&](Function* func, FuncInfo& funcInfo) {
       if (func->imported()) {
-        // Imports can do anything, so we need to assume the worst anyhow,
-        // which is the same as not specifying any effects for them in the
-        // map (which we do by not setting funcInfo.effects).
+        // Imports can do anything, so we need to assume the worst anyhow.
+        func->effects = nullptr;
         return;
       }
 
       // Gather the effects.
-      funcInfo.effects.emplace(passOptions, module, func);
+      func->effects =
+        std::make_shared<EffectAnalyzer>(passOptions, module, func);
 
-      if (funcInfo.effects->calls) {
+      if (func->effects->calls) {
         // There are calls in this function, which we will analyze in detail.
         // Clear the |calls| field first, and we'll handle calls of all sorts
         // below.
-        funcInfo.effects->calls = false;
+        func->effects->calls = false;
 
         // Clear throws as well, as we are "forgetting" calls right now, and
         // want to forget their throwing effect as well. If we see something
         // else that throws, below, then we'll note that there.
-        funcInfo.effects->throws_ = false;
+        func->effects->throws_ = false;
 
         struct CallScanner
           : public PostWalker<CallScanner,
@@ -72,11 +65,13 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
           Module& wasm;
           const PassOptions& options;
           FuncInfo& funcInfo;
+          Function* func;
 
           CallScanner(Module& wasm,
                       const PassOptions& options,
-                      FuncInfo& funcInfo)
-            : wasm(wasm), options(options), funcInfo(funcInfo) {}
+                      FuncInfo& funcInfo,
+                      Function* func)
+            : wasm(wasm), options(options), funcInfo(funcInfo), func(func) {}
 
           void visitExpression(Expression* curr) {
             ShallowEffectAnalyzer effects(options, wasm, curr);
@@ -88,18 +83,18 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               // worst. To do so, clear the effects, which indicates nothing
               // is known (so anything is possible).
               // TODO: We could group effects by function type etc.
-              funcInfo.effects = UnknownEffects;
+              func->effects = nullptr;
             } else {
               // No call here, but update throwing if we see it. (Only do so,
               // however, if we have effects; if we cleared it - see before -
               // then we assume the worst anyhow, and have nothing to update.)
-              if (effects.throws_ && funcInfo.effects) {
-                funcInfo.effects->throws_ = true;
+              if (effects.throws_ && func->effects) {
+                func->effects->throws_ = true;
               }
             }
           }
         };
-        CallScanner scanner(module, passOptions, funcInfo);
+        CallScanner scanner(module, passOptions, funcInfo, func);
         scanner.walkFunction(func);
       }
     });
@@ -171,15 +166,15 @@ void propagateEffects(
   CallGraphSCCs sccs(allFuncs, funcInfos, callGraph, module);
 
   std::unordered_map<Function*, int> sccMembers;
-  std::unordered_map<int, std::optional<EffectAnalyzer>> componentEffects;
+  std::unordered_map<int, std::shared_ptr<EffectAnalyzer>> componentEffects;
 
   int ccIndex = 0;
   for (auto ccIterator : sccs) {
     ccIndex++;
-    std::optional<EffectAnalyzer>& ccEffects = componentEffects[ccIndex];
+    std::shared_ptr<EffectAnalyzer>& ccEffects = componentEffects[ccIndex];
     std::vector<Function*> ccFuncs(ccIterator.begin(), ccIterator.end());
 
-    ccEffects.emplace(passOptions, module);
+    ccEffects = std::make_shared<EffectAnalyzer>(passOptions, module);
 
     for (Function* f : ccFuncs) {
       sccMembers.emplace(f, ccIndex);
@@ -199,25 +194,25 @@ void propagateEffects(
     // Merge in effects from callees
     for (int calleeScc : calleeSccs) {
       const auto& calleeComponentEffects = componentEffects.at(calleeScc);
-      if (calleeComponentEffects == UnknownEffects) {
-        ccEffects = UnknownEffects;
+      if (calleeComponentEffects == nullptr) {
+        ccEffects.reset();
         break;
       }
 
-      else if (ccEffects != UnknownEffects) {
+      else if (ccEffects != nullptr) {
         ccEffects->mergeIn(*calleeComponentEffects);
       }
     }
 
     // Add trap effects for potential cycles.
     if (ccFuncs.size() > 1) {
-      if (ccEffects != UnknownEffects) {
+      if (ccEffects != nullptr) {
         ccEffects->trap = true;
       }
     } else {
       auto* func = ccFuncs[0];
       if (funcInfos.at(func).calledFunctions.contains(func->name)) {
-        if (ccEffects != UnknownEffects) {
+        if (ccEffects != nullptr) {
           ccEffects->trap = true;
         }
       }
@@ -226,9 +221,9 @@ void propagateEffects(
     // Aggregate effects within this CC
     if (ccEffects) {
       for (Function* f : ccFuncs) {
-        const auto& effects = funcInfos.at(f).effects;
-        if (effects == UnknownEffects) {
-          ccEffects = UnknownEffects;
+        const auto& effects = f->effects;
+        if (effects == nullptr) {
+          ccEffects.reset();
           break;
         }
 
@@ -238,23 +233,8 @@ void propagateEffects(
 
     // Assign each function's effects to its CC effects.
     for (Function* f : ccFuncs) {
-      if (!ccEffects) {
-        funcInfos.at(f).effects = UnknownEffects;
-      } else {
-        funcInfos.at(f).effects.emplace(*ccEffects);
-      }
+      f->effects = ccEffects;
     }
-  }
-}
-
-void copyEffectsToFunctions(const std::map<Function*, FuncInfo> funcInfos) {
-  for (auto& [func, info] : funcInfos) {
-    func->effects.reset();
-    if (!info.effects) {
-      continue;
-    }
-
-    func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
   }
 }
 
@@ -266,8 +246,6 @@ struct GenerateGlobalEffects : public Pass {
     auto callGraph = buildCallGraph(*module, funcInfos);
 
     propagateEffects(*module, getPassOptions(), funcInfos, callGraph);
-
-    copyEffectsToFunctions(funcInfos);
   }
 };
 

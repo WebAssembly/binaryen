@@ -92,7 +92,7 @@
   ;; WITHOUT-NEXT:  (call $cycle-2)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $cycle-1 (type $void)
-  ;; INCLUDE-NEXT:  (call $cycle-2)
+  ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
   (func $cycle-1
     ;; $cycle-1 and -2 form a cycle together, in which no call can be removed.
@@ -103,7 +103,7 @@
   ;; WITHOUT-NEXT:  (call $cycle-1)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $cycle-2 (type $void)
-  ;; INCLUDE-NEXT:  (call $cycle-1)
+  ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
   (func $cycle-2
     (call $cycle-1)
