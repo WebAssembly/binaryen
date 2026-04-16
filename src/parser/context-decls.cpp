@@ -329,6 +329,11 @@ bool ParseDeclsCtx::skipFunctionBody() {
       }
       continue;
     }
+    // Avoid confusion due to parens inside strings by skipping strings as a
+    // unit.
+    if (in.takeString()) {
+      continue;
+    }
     in.take(1);
     in.advance();
   }
