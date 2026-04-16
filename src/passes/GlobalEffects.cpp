@@ -107,10 +107,11 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   return std::move(analysis.map);
 }
 
-std::unordered_map<Function*, std::unordered_set<Function*>>
-buildCallGraph(const Module& module,
-               const std::map<Function*, FuncInfo>& funcInfos) {
-  std::unordered_map<Function*, std::unordered_set<Function*>> callGraph;
+using CallGraph = std::unordered_map<Function*, std::unordered_set<Function*>>;
+
+CallGraph buildCallGraph(const Module& module,
+                         const std::map<Function*, FuncInfo>& funcInfos) {
+  CallGraph callGraph;
   for (const auto& [func, info] : funcInfos) {
     for (Name callee : info.calledFunctions) {
       callGraph[func].insert(module.getFunction(callee));
@@ -118,6 +119,19 @@ buildCallGraph(const Module& module,
   }
 
   return callGraph;
+}
+
+void mergeMaybeEffects(std::optional<EffectAnalyzer>& dest,
+                       const std::optional<EffectAnalyzer>& src) {
+  if (dest == UnknownEffects) {
+    return;
+  }
+  if (src == UnknownEffects) {
+    dest = UnknownEffects;
+    return;
+  }
+
+  dest->mergeIn(*src);
 }
 
 // Propagate effects from callees to callers transitively
@@ -129,12 +143,10 @@ buildCallGraph(const Module& module,
 // - Merge all of the effects of functions within the CC
 // - Also merge the (already computed) effects of each callee CC
 // - Add trap effects for potentially recursive call chains
-void propagateEffects(
-  const Module& module,
-  const PassOptions& passOptions,
-  std::map<Function*, FuncInfo>& funcInfos,
-  const std::unordered_map<Function*, std::unordered_set<Function*>>
-    callGraph) {
+void propagateEffects(const Module& module,
+                      const PassOptions& passOptions,
+                      std::map<Function*, FuncInfo>& funcInfos,
+                      const CallGraph& callGraph) {
   struct CallGraphSCCs
     : SCCs<std::vector<Function*>::const_iterator, CallGraphSCCs> {
     const std::map<Function*, FuncInfo>& funcInfos;
@@ -170,19 +182,18 @@ void propagateEffects(
   }
   CallGraphSCCs sccs(allFuncs, funcInfos, callGraph, module);
 
-  std::unordered_map<Function*, int> sccMembers;
-  std::unordered_map<int, std::optional<EffectAnalyzer>> componentEffects;
+  std::vector<std::optional<EffectAnalyzer>> componentEffects;
+  // Points to an index in componentEffects
+  std::unordered_map<Function*, Index> funcComponents;
 
-  int ccIndex = 0;
   for (auto ccIterator : sccs) {
-    ccIndex++;
-    std::optional<EffectAnalyzer>& ccEffects = componentEffects[ccIndex];
+    std::optional<EffectAnalyzer>& ccEffects =
+      componentEffects.emplace_back(std::in_place, passOptions, module);
+
     std::vector<Function*> ccFuncs(ccIterator.begin(), ccIterator.end());
 
-    ccEffects.emplace(passOptions, module);
-
     for (Function* f : ccFuncs) {
-      sccMembers.emplace(f, ccIndex);
+      funcComponents.emplace(f, componentEffects.size() - 1);
     }
 
     std::unordered_set<int> calleeSccs;
@@ -192,21 +203,14 @@ void propagateEffects(
         continue;
       }
       for (auto* callee : callees->second) {
-        calleeSccs.insert(sccMembers.at(callee));
+        calleeSccs.insert(funcComponents.at(callee));
       }
     }
 
     // Merge in effects from callees
     for (int calleeScc : calleeSccs) {
       const auto& calleeComponentEffects = componentEffects.at(calleeScc);
-      if (calleeComponentEffects == UnknownEffects) {
-        ccEffects = UnknownEffects;
-        break;
-      }
-
-      else if (ccEffects != UnknownEffects) {
-        ccEffects->mergeIn(*calleeComponentEffects);
-      }
+      mergeMaybeEffects(ccEffects, calleeComponentEffects);
     }
 
     // Add trap effects for potential cycles.
@@ -227,12 +231,7 @@ void propagateEffects(
     if (ccEffects) {
       for (Function* f : ccFuncs) {
         const auto& effects = funcInfos.at(f).effects;
-        if (effects == UnknownEffects) {
-          ccEffects = UnknownEffects;
-          break;
-        }
-
-        ccEffects->mergeIn(*effects);
+        mergeMaybeEffects(ccEffects, effects);
       }
     }
 
@@ -247,7 +246,7 @@ void propagateEffects(
   }
 }
 
-void copyEffectsToFunctions(const std::map<Function*, FuncInfo> funcInfos) {
+void copyEffectsToFunctions(const std::map<Function*, FuncInfo>& funcInfos) {
   for (auto& [func, info] : funcInfos) {
     func->effects.reset();
     if (!info.effects) {
