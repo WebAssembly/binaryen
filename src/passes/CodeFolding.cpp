@@ -136,11 +136,6 @@ struct CodeFolding
     modifieds; // modified code should not be processed
                // again, wait for next pass
 
-  // Cache of expressions that have branches exiting to targets defined
-  // outside them. Populated lazily on first access via PostWalker.
-  std::unordered_set<Expression*> exitingBranchCache_;
-  bool exitingBranchCachePopulated_ = false;
-
   // walking
 
   void visitExpression(Expression* curr) {
@@ -305,8 +300,8 @@ struct CodeFolding
       returnTails.clear();
       unoptimizables.clear();
       modifieds.clear();
-      exitingBranchCache_.clear();
-      exitingBranchCachePopulated_ = false;
+      exitingBranchCache.clear();
+      exitingBranchCachePopulated = false;
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
@@ -314,19 +309,21 @@ struct CodeFolding
   }
 
 private:
-  // Check if an expression has branches that exit to targets defined outside
-  // it. The cache is populated lazily on first call using a PostWalker for
-  // efficient bottom-up traversal.
+  // Cache of expressions that have branches exiting to targets defined
+  // outside them. Populated lazily on first access via hasExitingBranches().
+  std::unordered_set<Expression*> exitingBranchCache;
+  bool exitingBranchCachePopulated = false;
+
   bool hasExitingBranches(Expression* expr) {
-    if (!exitingBranchCachePopulated_) {
+    if (!exitingBranchCachePopulated) {
       populateExitingBranchCache(getFunction()->body);
-      exitingBranchCachePopulated_ = true;
+      exitingBranchCachePopulated = true;
     }
-    return exitingBranchCache_.count(expr);
+    return exitingBranchCache.count(expr);
   }
 
   // Pre-populate the exiting branch cache for all sub-expressions of root
-  // in a single O(N) bottom-up walk. After this, exitingBranchCache_
+  // in a single O(N) bottom-up walk. After this, exitingBranchCache
   // lookups are O(1).
   void populateExitingBranchCache(Expression* root) {
     struct CachePopulator
@@ -371,7 +368,7 @@ private:
         }
       }
     };
-    CachePopulator populator(exitingBranchCache_);
+    CachePopulator populator(exitingBranchCache);
     populator.walk(root);
   }
 
