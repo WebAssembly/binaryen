@@ -3,9 +3,9 @@
 ;; RUN: wasm-opt %s -all --optimize-level=3 --generate-stack-ir --optimize-stack-ir --roundtrip --print-stack-ir  | filecheck %s
 
 (module
-  ;; CHECK:      (type $0 (func (param f64) (result i32 f64 anyref)))
+  ;; CHECK:      (type $0 (func (result i32 f64 anyref)))
 
-  ;; CHECK:      (type $1 (func (result i32 f64 anyref)))
+  ;; CHECK:      (type $1 (func (param f64) (result i32 f64 anyref)))
 
   ;; CHECK:      (type $2 (func (result i32 f64)))
 
@@ -13,7 +13,7 @@
 
   ;; CHECK:      (type $4 (func (result i32 f64 anyref anyref)))
 
-  ;; CHECK:      (func $multivalue-return (type $1) (result i32 f64 anyref)
+  ;; CHECK:      (func $multivalue-return (type $0) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -144,7 +144,7 @@
     )
   )
 
-  ;; CHECK:      (func $multivalue-return-non-get (type $0) (param $other f64) (result i32 f64 anyref)
+  ;; CHECK:      (func $multivalue-return-bad-get (type $1) (param $other f64) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (local $3 anyref)
@@ -165,9 +165,9 @@
   ;; CHECK-NEXT:  local.get $3
   ;; CHECK-NEXT:  tuple.make 3
   ;; CHECK-NEXT: )
-  (func $multivalue-return-non-get (param $other f64) (result i32 f64 anyref)
+  (func $multivalue-return-bad-get (param $other f64) (result i32 f64 anyref)
     (local $temp (tuple i32 f64 anyref))
-    ;; As the first case, but one get is replaced with something else, so we do
+    ;; As the first case, but one get has the wrong index, so we do
     ;; not optimize.
     (tuple.make 3
       (tuple.extract 3 0
@@ -182,7 +182,49 @@
     )
   )
 
-  ;; CHECK:      (func $multivalue-return-non-extract (type $0) (param $other f64) (result i32 f64 anyref)
+  ;; CHECK:      (func $multivalue-return-non-get (type $0) (result i32 f64 anyref)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 f64 anyref))
+  ;; CHECK-NEXT:  (local $scratch_4 f64)
+  ;; CHECK-NEXT:  (local $scratch_5 i32)
+  ;; CHECK-NEXT:  call $multivalue-return
+  ;; CHECK-NEXT:  local.tee $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 0
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 1
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 2
+  ;; CHECK-NEXT:  local.set $2
+  ;; CHECK-NEXT:  local.set $1
+  ;; CHECK-NEXT:  local.tee $temp
+  ;; CHECK-NEXT:  local.get $1
+  ;; CHECK-NEXT:  local.get $2
+  ;; CHECK-NEXT:  tuple.make 3
+  ;; CHECK-NEXT: )
+  (func $multivalue-return-non-get (result i32 f64 anyref)
+    (local $temp (tuple i32 f64 anyref))
+    ;; As the first case, but one get is replaced by a non-get, so we do
+    ;; not optimize.
+    (tuple.make 3
+      (tuple.extract 3 0
+        (local.tee $temp
+          (call $multivalue-return)
+        )
+      )
+      (tuple.extract 3 1
+        (nop) ;; this breaks the pattern, appearing where the get
+              ;; should be
+        (local.get $temp)
+      )
+      (tuple.extract 3 2
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multivalue-return-non-extract (type $1) (param $other f64) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $3 f64)
