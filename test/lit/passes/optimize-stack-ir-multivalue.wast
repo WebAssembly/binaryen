@@ -13,6 +13,8 @@
 
   ;; CHECK:      (type $4 (func (result i32 f64 anyref anyref)))
 
+  ;; CHECK:      (type $5 (func (param f64) (result i32 anyref anyref)))
+
   ;; CHECK:      (func $multivalue-return (type $0) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
@@ -224,6 +226,45 @@
     )
   )
 
+  ;; CHECK:      (func $multivalue-return-bad-extract (type $5) (param $other f64) (result i32 anyref anyref)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 anyref)
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 f64 anyref))
+  ;; CHECK-NEXT:  (local $scratch_5 f64)
+  ;; CHECK-NEXT:  (local $scratch_6 i32)
+  ;; CHECK-NEXT:  call $multivalue-return
+  ;; CHECK-NEXT:  local.tee $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 0
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 1
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 2
+  ;; CHECK-NEXT:  local.set $3
+  ;; CHECK-NEXT:  local.set $2
+  ;; CHECK-NEXT:  local.tee $temp
+  ;; CHECK-NEXT:  local.get $3
+  ;; CHECK-NEXT:  local.get $3
+  ;; CHECK-NEXT:  tuple.make 3
+  ;; CHECK-NEXT: )
+  (func $multivalue-return-bad-extract (param $other f64) (result i32 anyref anyref)
+    (local $temp (tuple i32 f64 anyref))
+    ;; As the first case, but one extract has the wrong index, so we
+    ;; do not optimize.
+    (tuple.make 3
+      (tuple.extract 3 0
+        (local.tee $temp
+          (call $multivalue-return)
+        )
+      )
+      (tuple.extract 3 2  ;; this changed from 1 to 2
+        (local.get $temp)
+      )
+      (tuple.extract 3 2
+        (local.get $temp)
+      )
+    )
+  )
   ;; CHECK:      (func $multivalue-return-non-extract (type $1) (param $other f64) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $scratch i32)
