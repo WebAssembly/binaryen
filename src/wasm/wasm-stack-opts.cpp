@@ -301,14 +301,14 @@ void StackIROptimizer::local2Stack() {
     // This is a tee of a tuple. Look for the expected extracts/gets. Each
     // tuple index has 2 items.
     auto size = tee->type.size();
-    if (instIndex + size * 2 >= insts.size()) {
-      // Not enough items.
-      continue;
-    }
     bool ok = true;
     for (Index i = 0; i < size; i++) {
       // Each tuple index has a pair of items.
       auto tupleIndexStart = instIndex + i * 2;
+      if (tupleIndexStart + 1 >= insts.size()) {
+        ok = false;
+        break;
+      }
       auto* first = insts[tupleIndexStart];
       auto* second = insts[tupleIndexStart + 1];
       if (!first || !second) {
