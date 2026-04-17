@@ -15,6 +15,8 @@
 
   ;; CHECK:      (type $5 (func (param f64) (result i32 anyref anyref)))
 
+  ;; CHECK:      (type $6 (func))
+
   ;; CHECK:      (func $multivalue-return (type $0) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
@@ -321,6 +323,68 @@
       )
       (tuple.extract 3 2
         (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multiple-multivalue-return (type $6)
+  ;; CHECK-NEXT:  (local $temp3 i32)
+  ;; CHECK-NEXT:  (local $temp2 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (local $4 anyref)
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 f64 anyref))
+  ;; CHECK-NEXT:  (local $scratch_6 f64)
+  ;; CHECK-NEXT:  (local $scratch_7 i32)
+  ;; CHECK-NEXT:  (local $scratch_8 (tuple i32 f64))
+  ;; CHECK-NEXT:  (local $scratch_9 i32)
+  ;; CHECK-NEXT:  call $multivalue-return
+  ;; CHECK-NEXT:  local.tee $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 0
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 1
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 2
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  call $multivalue-return-too-short
+  ;; CHECK-NEXT:  local.tee $scratch_8
+  ;; CHECK-NEXT:  tuple.extract 2 0
+  ;; CHECK-NEXT:  local.get $scratch_8
+  ;; CHECK-NEXT:  tuple.extract 2 1
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT: )
+  (func $multiple-multivalue-return
+    (local $temp3 (tuple i32 f64 anyref))
+    (local $temp2 (tuple i32 f64))
+    ;; Multiple optimizations in one function.
+    (tuple.drop 3
+      (tuple.make 3
+        (tuple.extract 3 0
+          (local.tee $temp3
+            (call $multivalue-return)
+          )
+        )
+        (tuple.extract 3 1
+          (local.get $temp3)
+        )
+        (tuple.extract 3 2
+          (local.get $temp3)
+        )
+      )
+    )
+    (tuple.drop 2
+      (tuple.make 2
+        (tuple.extract 2 0
+          (local.tee $temp2
+            (call $multivalue-return-too-short)
+          )
+        )
+        (tuple.extract 2 1
+          (local.get $temp2)
+        )
       )
     )
   )
