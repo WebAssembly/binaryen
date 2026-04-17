@@ -177,14 +177,10 @@ CallGraph buildCallGraph(const Module& module,
   for (HeapType type : allFunctionTypes) {
     // Not needed except that during lookup we expect the key to exist.
     callGraph[type];
-
-    for (auto super = type.getDeclaredSuperType(); super;
-         super = super->getDeclaredSuperType()) {
-      // Don't bother noting supertypes with no functions in it. There are no
-      // effects to aggregate anyway.
-      if (allFunctionTypes.contains(*super)) {
-        callGraph[*super].insert(type);
-      }
+    for (HeapType curr = type;
+         std::optional<HeapType> super = curr.getDeclaredSuperType();
+         curr = *super) {
+      callGraph[*super].insert(type);
     }
   }
 

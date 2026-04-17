@@ -54,7 +54,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $g (param $ref (ref null $nopType))
-    ;; Similar to $f, but we may still trap here because the ref is null.
+    ;; Similar to $f, but we may still trap here because the ref is null, so we
+    ;; don't optimize.
     (call $calls-nop-via-nullable-ref (local.get $ref))
   )
 )
