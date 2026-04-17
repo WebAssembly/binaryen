@@ -7,6 +7,8 @@
 
   ;; CHECK:      (type $1 (func (result i32 f64)))
 
+  ;; CHECK:      (type $2 (func (result i32 f64 anyref eqref)))
+
   ;; CHECK:      (func $multivalue-return (type $0) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
@@ -65,6 +67,34 @@
       (tuple.extract 3 1
         (local.get $temp)
       )
+    )
+  )
+
+  ;; CHECK:      (func $multivalue-return-extra (type $2) (result i32 f64 anyref eqref)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 f64 anyref))
+  ;; CHECK-NEXT:  call $multivalue-return
+  ;; CHECK-NEXT:  ref.null none
+  ;; CHECK-NEXT:  tuple.make 4
+  ;; CHECK-NEXT: )
+  (func $multivalue-return-extra (result i32 f64 anyref eqref)
+    (local $temp (tuple i32 f64 anyref))
+    ;; As above, but we add an item to the tuple. We can optimize here.
+    (tuple.make 4
+      (tuple.extract 3 0
+        (local.tee $temp
+          (call $multivalue-return)
+        )
+      )
+      (tuple.extract 3 1
+        (local.get $temp)
+      )
+      (tuple.extract 3 2
+        (local.get $temp)
+      )
+      (ref.null eq)
     )
   )
 )
