@@ -7,6 +7,8 @@
 
   ;; CHECK:      (type $1 (func (param i32 i32 i32)))
 
+  ;; CHECK:      (type $2 (func (result i32)))
+
   ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log (type $1) (param i32 i32 i32)))
   (import "fuzzing-support" "log-branch" (func $log (param i32 i32 i32)))
 
@@ -161,6 +163,59 @@
       (@metadata.code.branch_hint "\01")
       (br_if $out
         (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-unreachable (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (block $block (result i32)
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-unreachable (result i32)
+    (local $0 i32)
+    ;; The unreachable here must be executed. Normally we replace the br_if's
+    ;; entire condition, but here we only remove the call to $log.
+    (block $block (result i32)
+      (br_if $block
+        (i32.const 0)
+        (block (result i32)
+          (block
+            (local.set $0
+              (i32.const 42)
+            )
+            (if
+              (i32.const 1)
+              (then
+                (unreachable)
+              )
+            )
+          )
+          (call $log
+            (i32.const 0)
+            (i32.const 0)
+            (local.get $0)
+          )
+          (local.get $0)
+        )
       )
     )
   )
