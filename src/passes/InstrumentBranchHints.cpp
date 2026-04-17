@@ -386,7 +386,10 @@ struct DeInstrumentBranchHints
       //  (local.get $temp)
       //
       // We cannot replace all this with the original condition, as it would
-      // remove the effects.
+      // remove the effects. (Even in that case we will remove the actual call
+      // to log the branch hint, below, so this just prevents some cleanup that
+      // is normally safe - the cleanup is mainly useful to allow inspection of
+      // testcases for debugging.)
       EffectAnalyzer effects(getPassOptions(), *getModule(), curr->condition);
       // The only condition we allow is a write to the temp local from the
       // instrumentation, which getInstrumentation() verified has no other uses
