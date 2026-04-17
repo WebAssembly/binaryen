@@ -7,15 +7,15 @@
 
   ;; CHECK:      (type $1 (func (param f64) (result i32 f64 anyref)))
 
-  ;; CHECK:      (type $2 (func (result i32 f64)))
+  ;; CHECK:      (type $2 (func (param i32 f64 anyref)))
 
-  ;; CHECK:      (type $3 (func (result i32 f64 anyref eqref)))
+  ;; CHECK:      (type $3 (func (result i32 f64)))
 
-  ;; CHECK:      (type $4 (func (result i32 f64 anyref anyref)))
+  ;; CHECK:      (type $4 (func (result i32 f64 anyref eqref)))
 
-  ;; CHECK:      (type $5 (func (param f64) (result i32 anyref anyref)))
+  ;; CHECK:      (type $5 (func (result i32 f64 anyref anyref)))
 
-  ;; CHECK:      (type $6 (func (param i32 f64 anyref)))
+  ;; CHECK:      (type $6 (func (param f64) (result i32 anyref anyref)))
 
   ;; CHECK:      (func $multivalue-return (type $0) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
@@ -42,7 +42,7 @@
     )
   )
 
-  ;; CHECK:      (func $multivalue-return-too-short (type $2) (result i32 f64)
+  ;; CHECK:      (func $multivalue-return-too-short (type $3) (result i32 f64)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -78,7 +78,7 @@
     )
   )
 
-  ;; CHECK:      (func $multivalue-return-extra (type $3) (result i32 f64 anyref eqref)
+  ;; CHECK:      (func $multivalue-return-extra (type $4) (result i32 f64 anyref eqref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -106,7 +106,7 @@
     )
   )
 
-  ;; CHECK:      (func $multivalue-return-extra-middle (type $4) (result i32 f64 anyref anyref)
+  ;; CHECK:      (func $multivalue-return-extra-middle (type $5) (result i32 f64 anyref anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -228,7 +228,7 @@
     )
   )
 
-  ;; CHECK:      (func $multivalue-return-bad-extract (type $5) (param $other f64) (result i32 anyref anyref)
+  ;; CHECK:      (func $multivalue-return-bad-extract (type $6) (param $other f64) (result i32 anyref anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (local $3 anyref)
@@ -327,7 +327,7 @@
     )
   )
 
-  ;; CHECK:      (func $multiple-multivalue-return (type $6) (param $0 i32) (param $1 f64) (param $2 anyref)
+  ;; CHECK:      (func $multiple-multivalue-return (type $2) (param $0 i32) (param $1 f64) (param $2 anyref)
   ;; CHECK-NEXT:  (local $temp3 i32)
   ;; CHECK-NEXT:  (local $temp2 i32)
   ;; CHECK-NEXT:  (local $5 f64)
@@ -382,6 +382,68 @@
         (local.tee $temp3
           (call $multivalue-return)
         )
+      )
+      (tuple.extract 3 1
+        (local.get $temp3)
+      )
+      (tuple.extract 3 2
+        (local.get $temp3)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multiple-multivalue-return-local-reuse (type $2) (param $0 i32) (param $1 f64) (param $2 anyref)
+  ;; CHECK-NEXT:  (local $temp3 i32)
+  ;; CHECK-NEXT:  (local $temp2 i32)
+  ;; CHECK-NEXT:  (local $5 f64)
+  ;; CHECK-NEXT:  (local $6 f64)
+  ;; CHECK-NEXT:  (local $7 anyref)
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 f64 anyref))
+  ;; CHECK-NEXT:  (local $scratch_9 f64)
+  ;; CHECK-NEXT:  (local $scratch_10 i32)
+  ;; CHECK-NEXT:  call $multivalue-return
+  ;; CHECK-NEXT:  local.tee $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 0
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 1
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 2
+  ;; CHECK-NEXT:  local.set $7
+  ;; CHECK-NEXT:  local.set $5
+  ;; CHECK-NEXT:  local.tee $temp3
+  ;; CHECK-NEXT:  local.get $5
+  ;; CHECK-NEXT:  local.get $7
+  ;; CHECK-NEXT:  call $multiple-multivalue-return
+  ;; CHECK-NEXT:  local.get $temp3
+  ;; CHECK-NEXT:  local.get $5
+  ;; CHECK-NEXT:  local.get $7
+  ;; CHECK-NEXT:  call $multiple-multivalue-return
+  ;; CHECK-NEXT: )
+  (func $multiple-multivalue-return-local-reuse (param i32 f64 anyref)
+    (local $temp3 (tuple i32 f64 anyref))
+    (local $temp2 (tuple i32 f64))
+
+    ;; As the last case, we have two things to possibly optimize. Here we reuse
+    ;; the tee'd value after the first one, which prevents any optimizations of
+    ;; this pattern.
+
+    (call $multiple-multivalue-return
+      (tuple.extract 3 0
+        (local.tee $temp3
+          (call $multivalue-return)
+        )
+      )
+      (tuple.extract 3 1
+        (local.get $temp3)
+      )
+      (tuple.extract 3 2
+        (local.get $temp3)
+      )
+    )
+
+    (call $multiple-multivalue-return
+      (tuple.extract 3 0
+        (local.get $temp3)  ;; this changed
       )
       (tuple.extract 3 1
         (local.get $temp3)

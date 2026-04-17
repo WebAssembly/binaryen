@@ -298,9 +298,16 @@ void StackIROptimizer::local2Stack() {
       continue;
     }
 
+    // The tee must be read by exactly the proper number of gets, and no more,
+    // which is one less than the tuple size (the tee provides one get).
+    auto size = tee->type.size();
+    auto& setInfluences = localGraph.getSetInfluences(tee);
+    if (setInfluences.size() != size - 1) {
+      continue;
+    }
+
     // This is a tee of a tuple. Look for the expected extracts/gets. Each
     // tuple index has 2 items.
-    auto size = tee->type.size();
     bool ok = true;
     for (Index i = 0; i < size; i++) {
       // Each tuple index has a pair of items.
