@@ -223,6 +223,14 @@ struct CallGraphSCCs
   }
 };
 
+// Explicit deduction guide to resolve -Wctad-maybe-unsupported
+template<std::ranges::common_range Range>
+CallGraphSCCs(
+  Range&&,
+  const std::map<Function*, FuncInfo>&,
+  const std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>&,
+  const Module&) -> CallGraphSCCs<Range>;
+
 // Propagate effects from callees to callers transitively
 // e.g. if A -> B -> C (A calls B which calls C)
 // Then B inherits effects from C and A inherits effects from both B and C.
