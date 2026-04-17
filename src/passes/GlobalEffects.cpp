@@ -239,11 +239,6 @@ void propagateEffects(const Module& module,
   // We only care about Functions that are roots, not types
   // A type would be a root if a function exists with that type, but no-one
   // indirect calls the type.
-  std::vector<CallGraphNode> allFuncs;
-  for (auto& [func, info] : funcInfos) {
-    allFuncs.push_back(func);
-  }
-
   auto funcNodes = std::views::keys(callGraph) |
                    std::views::filter([](auto node) {
                      return std::holds_alternative<Function*>(node);
