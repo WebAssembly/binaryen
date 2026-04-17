@@ -5,6 +5,8 @@
 (module
   ;; CHECK:      (type $0 (func (result i32 f64 anyref)))
 
+  ;; CHECK:      (type $1 (func (result i32 f64)))
+
   ;; CHECK:      (func $multivalue-return (type $0) (result i32 f64 anyref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $1 f64)
@@ -25,6 +27,42 @@
         (local.get $temp)
       )
       (tuple.extract 3 2
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multivalue-return-too-short (type $1) (result i32 f64)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 f64 anyref))
+  ;; CHECK-NEXT:  (local $scratch_4 f64)
+  ;; CHECK-NEXT:  (local $scratch_5 i32)
+  ;; CHECK-NEXT:  call $multivalue-return
+  ;; CHECK-NEXT:  local.tee $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 0
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 1
+  ;; CHECK-NEXT:  local.get $scratch
+  ;; CHECK-NEXT:  tuple.extract 3 2
+  ;; CHECK-NEXT:  local.set $2
+  ;; CHECK-NEXT:  local.set $1
+  ;; CHECK-NEXT:  local.tee $temp
+  ;; CHECK-NEXT:  local.get $1
+  ;; CHECK-NEXT:  tuple.make 2
+  ;; CHECK-NEXT: )
+  (func $multivalue-return-too-short (result i32 f64)
+    (local $temp (tuple i32 f64 anyref))
+    ;; As above, but we only return 2 of the tuple's 3 items (i.e., we are too
+    ;; short to fit the pattern), so we do not optimize here.
+    (tuple.make 2
+      (tuple.extract 3 0
+        (local.tee $temp
+          (call $multivalue-return)
+        )
+      )
+      (tuple.extract 3 1
         (local.get $temp)
       )
     )

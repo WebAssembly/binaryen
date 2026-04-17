@@ -309,17 +309,23 @@ void StackIROptimizer::local2Stack() {
     for (Index i = 0; i < size; i++) {
       // Each tuple index has a pair of items.
       auto tupleIndexStart = instIndex + i * 2;
+      auto* first = insts[tupleIndexStart];
+      auto* second = insts[tupleIndexStart + 1];
+      if (!first || !second) {
+        ok = false;
+        break;
+      }
       // The first tuple index has the tee (already validated). Others have a
       // get.
       if (i != 0) {
-        auto* get = insts[tupleIndexStart]->origin->dynCast<LocalGet>();
+        auto* get = first->origin->dynCast<LocalGet>();
         if (!get || get->index != tee->index) {
           ok = false;
           break;
         }
       }
       // The second item of the pair is an extract.
-      auto* extract = insts[tupleIndexStart + 1]->origin->dynCast<TupleExtract>();
+      auto* extract = second->origin->dynCast<TupleExtract>();
       if (!extract || extract->index != i) {
         ok = false;
         break;
