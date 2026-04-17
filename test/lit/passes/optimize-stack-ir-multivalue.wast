@@ -335,16 +335,22 @@
   ;; CHECK-NEXT:  (local $7 anyref)
   ;; CHECK-NEXT:  (local $scratch (tuple i32 f64 anyref))
   ;; CHECK-NEXT:  (local $scratch_9 (tuple i32 f64))
+  ;; CHECK-NEXT:  (local $scratch_10 (tuple i32 f64 anyref))
   ;; CHECK-NEXT:  call $multivalue-return
   ;; CHECK-NEXT:  call $multiple-multivalue-return
   ;; CHECK-NEXT:  call $multivalue-return-too-short
   ;; CHECK-NEXT:  ref.null none
   ;; CHECK-NEXT:  call $multiple-multivalue-return
+  ;; CHECK-NEXT:  call $multivalue-return
+  ;; CHECK-NEXT:  call $multiple-multivalue-return
   ;; CHECK-NEXT: )
   (func $multiple-multivalue-return (param i32 f64 anyref)
     (local $temp3 (tuple i32 f64 anyref))
     (local $temp2 (tuple i32 f64))
-    ;; Multiple optimizations in one function.
+
+    ;; Multiple optimizations in one function, including a case where we reuse
+    ;; the local index.
+
     (call $multiple-multivalue-return
       (tuple.extract 3 0
         (local.tee $temp3
@@ -358,6 +364,7 @@
         (local.get $temp3)
       )
     )
+
     (call $multiple-multivalue-return
       (tuple.extract 2 0
         (local.tee $temp2
@@ -368,6 +375,20 @@
         (local.get $temp2)
       )
       (ref.null any)
+    )
+
+    (call $multiple-multivalue-return
+      (tuple.extract 3 0
+        (local.tee $temp3
+          (call $multivalue-return)
+        )
+      )
+      (tuple.extract 3 1
+        (local.get $temp3)
+      )
+      (tuple.extract 3 2
+        (local.get $temp3)
+      )
     )
   )
 )
