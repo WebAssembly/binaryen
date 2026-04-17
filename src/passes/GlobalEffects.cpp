@@ -177,10 +177,11 @@ CallGraph buildCallGraph(const Module& module,
   for (HeapType type : allFunctionTypes) {
     // Not needed except that during lookup we expect the key to exist.
     callGraph[type];
-    for (HeapType curr = type;
-         std::optional<HeapType> super = curr.getDeclaredSuperType();
-         curr = *super) {
+
+    HeapType curr = type;
+    while (std::optional<HeapType> super = curr.getDeclaredSuperType()) {
       callGraph[*super].insert(type);
+      curr = *super;
     }
   }
 
@@ -199,39 +200,6 @@ void mergeMaybeEffects(std::optional<EffectAnalyzer>& dest,
 
   dest->mergeIn(*src);
 }
-
-template<std::ranges::common_range Range>
-  requires std::same_as<std::ranges::range_value_t<Range>, CallGraphNode>
-struct CallGraphSCCs
-  : SCCs<std::ranges::iterator_t<Range>, CallGraphSCCs<Range>> {
-  const std::map<Function*, FuncInfo>& funcInfos;
-  const CallGraph& callGraph;
-  const Module& module;
-
-  CallGraphSCCs(
-    Range&& nodes,
-    const std::map<Function*, FuncInfo>& funcInfos,
-    const std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>&
-      callGraph,
-    const Module& module)
-    : SCCs<std::ranges::iterator_t<Range>, CallGraphSCCs<Range>>(
-        std::ranges::begin(nodes), std::ranges::end(nodes)),
-      funcInfos(funcInfos), callGraph(callGraph), module(module) {}
-
-  void pushChildren(CallGraphNode node) {
-    for (CallGraphNode callee : callGraph.at(node)) {
-      this->push(callee);
-    }
-  }
-};
-
-// Explicit deduction guide to resolve -Wctad-maybe-unsupported
-template<std::ranges::common_range Range>
-CallGraphSCCs(
-  Range&&,
-  const std::map<Function*, FuncInfo>&,
-  const std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>&,
-  const Module&) -> CallGraphSCCs<Range>;
 
 // Propagate effects from callees to callers transitively
 // e.g. if A -> B -> C (A calls B which calls C)
@@ -254,6 +222,29 @@ void propagateEffects(const Module& module,
                      return std::holds_alternative<Function*>(node);
                    }) |
                    std::views::common;
+  using funcNodesType = decltype(funcNodes);
+
+  struct CallGraphSCCs
+    : SCCs<std::ranges::iterator_t<funcNodesType>, CallGraphSCCs> {
+
+    const std::map<Function*, FuncInfo>& funcInfos;
+    const CallGraph& callGraph;
+    const Module& module;
+
+    CallGraphSCCs(decltype(funcNodes)&& nodes,
+                  const std::map<Function*, FuncInfo>& funcInfos,
+                  const CallGraph& callGraph,
+                  const Module& module)
+      : SCCs<std::ranges::iterator_t<funcNodesType>, CallGraphSCCs>(
+          std::ranges::begin(nodes), std::ranges::end(nodes)),
+        funcInfos(funcInfos), callGraph(callGraph), module(module) {}
+
+    void pushChildren(CallGraphNode node) {
+      for (CallGraphNode callee : callGraph.at(node)) {
+        push(callee);
+      }
+    }
+  };
   CallGraphSCCs sccs(std::move(funcNodes), funcInfos, callGraph, module);
 
   std::vector<std::optional<EffectAnalyzer>> componentEffects;

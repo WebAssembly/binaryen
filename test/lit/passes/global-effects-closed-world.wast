@@ -114,6 +114,19 @@
     (call_ref $uninhabited (i32.const 1) (local.get $ref))
   )
 
+  ;; CHECK:      (func $calls-nullable-uninhabited (type $2) (param $ref (ref null $uninhabited))
+  ;; CHECK-NEXT:  (call_ref $uninhabited
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-nullable-uninhabited (param $ref (ref null $uninhabited))
+    ;; This must be null, so it's guaranteed to trap and can't be optimized out.
+    ;; TODO: try to optimize this to (unreachable)
+    (call_ref $uninhabited (i32.const 1) (local.get $ref))
+  )
+
+
   ;; CHECK:      (func $f (type $1) (param $ref (ref $uninhabited))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -122,6 +135,17 @@
     ;; call this function with and there are no effects to aggregate.
     ;; Remove this call.
     (call $calls-uninhabited (local.get $ref))
+  )
+
+  ;; CHECK:      (func $g (type $2) (param $ref (ref null $uninhabited))
+  ;; CHECK-NEXT:  (call $calls-nullable-uninhabited
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $g (param $ref (ref null $uninhabited))
+    ;; Similar to above but we have a nullable reference, so we may trap and
+    ;; can't optimize the call out.
+    (call $calls-nullable-uninhabited (local.get $ref))
   )
 )
 
@@ -303,6 +327,9 @@
   ;; CHECK-NEXT:  (call $calls-unreachable-via-ref-and-direct-call-transtively)
   ;; CHECK-NEXT: )
   (func $f
+    ;; Test that we can analyze longer call chains containing both indirect and
+    ;; direct calls. In this case the call chain hits an unreachable via an
+    ;; indirect call, then direct call, so we can't optimize this out.
     (call $calls-unreachable-via-ref-and-direct-call-transtively)
   )
 )
