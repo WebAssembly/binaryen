@@ -343,3 +343,30 @@
     (call $indirect-calls (local.get $ref))
   )
 )
+
+(module
+  (type $t (func (param i32)))
+  ;; CHECK:      (func $calls-unreachable (type $0)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-unreachable (export "calls-unreachable")
+    (call_ref $t (unreachable))
+  )
+
+  ;; CHECK:      (func $f (type $0)
+  ;; CHECK-NEXT:  (call $calls-unreachable)
+  ;; CHECK-NEXT: )
+  (func $f
+    ;; $t looks like it has no effects, but unreachable is passed in,
+    ;; so preserve the trap.
+    (call $calls-unreachable)
+  )
+)

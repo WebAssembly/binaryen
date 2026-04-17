@@ -23,7 +23,6 @@
 
 #include "ir/effects.h"
 #include "ir/module-utils.h"
-#include "ir/subtypes.h"
 #include "pass.h"
 #include "support/strongly_connected_components.h"
 #include "wasm.h"
