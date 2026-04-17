@@ -2869,7 +2869,12 @@ if __name__ == '__main__':
             # longer working on the original test case but modified one, which
             # is likely to be called within wasm-reduce script itself, so
             # original.wasm and reduce.sh should not be overwritten.
-            if not given_wasm:
+            #
+            # We must also consider the case of BINARYEN_PIEJS_WASM as us being
+            # given a wasm file. We are given one in this case, but only for
+            # that particular fuzzer, hence it is passed in through an env var
+            # and not the usual mechanism.
+            if not given_wasm and not os.environ.get('BINARYEN_PIEJS_WASM'):
                 # We can't do this if a.wasm doesn't exist, which can be the
                 # case if we failed to even generate the wasm.
                 if not os.path.exists('a.wasm'):
@@ -2895,6 +2900,7 @@ on valid wasm files.)
                 # the side, so that we can autoreduce using the name "a.wasm"
                 # which we use internally)
                 original_wasm = abspath('original.wasm')
+                print(f'copying a.wasm to original for reduction: {original_wasm}')
                 shutil.copyfile('a.wasm', original_wasm)
                 # write out a useful reduce.sh
                 auto_init = ''
