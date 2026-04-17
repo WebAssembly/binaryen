@@ -2931,7 +2931,7 @@ elif [ -n "$BINARYEN_PIEJS_WASM" ]; then
   # BINARYEN_PIEJS_WASM was provided, so we want to give that fuzzer the actual
   # file we are reducing. All other fuzzers should *not* be given this file, as
   # it may not even be valid for them (that fuzzer uses special js/wasm
-  # combinations. We therefore provide the temp wasm file to BINARYEN_PIEJS_WASM
+  # combinations). We therefore provide the temp wasm file to BINARYEN_PIEJS_WASM
   # and *not* as a Python argument after the seed.
   BINARYEN_PIEJS_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} > o 2> e
 else
