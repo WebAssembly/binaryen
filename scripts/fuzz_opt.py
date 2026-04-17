@@ -2157,13 +2157,19 @@ class PreserveImportsExportsJS(TestCaseHandler):
 
         # Modify the initial wat to get the pre-optimizations wasm.
         pre_wasm = abspath('pre.wasm')
-        run([in_bin('wasm-opt'), input] + FEATURE_OPTS + [
+        gen_args = [
+            input,
             '-ttf',
             '--fuzz-preserve-imports-exports',
             '--initial-fuzz=' + wat_file,
             '-o', pre_wasm,
             '-g',
-        ])
+        ]
+        # We do not copy all of GEN_ARGS, as we don't need e.g. legalization.
+        if not NANS:
+            # TODO: do we also need this in each reduction step?
+            gen_args += ['--denan']
+        run([in_bin('wasm-opt')] + gen_args + FEATURE_OPTS)
 
         # We successfully generated pre_wasm; stash it for possible reduction
         # purposes later.
@@ -2206,8 +2212,9 @@ class PreserveImportsExportsJS(TestCaseHandler):
         post_vm = random.choice(vms)
         post = self.do_run(post_vm, js_file, post_wasm)
 
-        # Compare
-        compare(pre, post, 'PreserveImportsExportsJS')
+        # Compare, if we can.
+        if pre_vm.can_compare_to_other(post_vm):
+            compare(pre, post, 'PreserveImportsExportsJS')
 
     def do_run(self, vm, js, wasm):
         out = vm.run_js(js, wasm, checked=False)
