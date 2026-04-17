@@ -122,24 +122,27 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
 }
 
 using CallGraphNode = std::variant<Function*, HeapType>;
+
+/*
+ Call graph for indirect and direct calls.
+
+ key (caller) -> value (callee)
+ Function  -> Function : direct call
+ Function  -> HeapType : indirect call to the given HeapType
+ HeapType  -> Function : The function `callee` has the type `caller`. The
+                         HeapType may essentially 'call' any of its
+                         potential implementations.
+ HeapType  -> HeapType : `callee` is a subtype of `caller`. A call_ref
+                         could target any subtype of the ref, so we need to
+                         aggregate effects of subtypes of the target type.
+
+ If we're running in an open world, we only include Function -> Function edges,
+ and don't compute effects for indirect calls, conservatively assuming the
+ worst.
+*/
 using CallGraph =
   std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>;
 
-/*
- Build a call graph for indirect and direct calls.
-
- key (caller) -> value (callee)
- Name         -> Name     : direct call
- Name         -> HeapType : indirect call to the given HeapType
- HeapType     -> Name     : The function `callee` has the type `caller`. The
-                            HeapType may essentially 'call' any of its
-                            potential implementations.
- HeapType     -> HeapType : `callee` is a subtype of `caller`. A call_ref
-                            could target any subtype of the ref, so we need to
-                            aggregate effects of subtypes of the target type.
-
- If we're running in an open world, we only include Name -> Name edges.
-*/
 CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
                          bool closedWorld) {
@@ -149,7 +152,7 @@ CallGraph buildCallGraph(const Module& module,
   for (const auto& [caller, callerInfo] : funcInfos) {
     auto& callees = callGraph[caller];
 
-    // Name -> Name
+    // Function -> Function
     for (Name calleeFunction : callerInfo.calledFunctions) {
       callees.insert(module.getFunction(calleeFunction));
     }
@@ -158,24 +161,26 @@ CallGraph buildCallGraph(const Module& module,
       continue;
     }
 
-    // Name -> Type
+    // Function -> Type
     allFunctionTypes.insert(caller->type.getHeapType());
     for (HeapType calleeType : callerInfo.indirectCalledTypes) {
       callees.insert(calleeType);
       allFunctionTypes.insert(calleeType);
     }
 
-    // Type -> Name
+    // Type -> Function
     callGraph[caller->type.getHeapType()].insert(caller);
   }
 
   // Type -> Type
   for (HeapType type : allFunctionTypes) {
-    // Not needed but during lookup we expect the key to exist.
+    // Not needed except that during lookup we expect the key to exist.
     callGraph[type];
 
     for (auto super = type.getDeclaredSuperType(); super;
          super = super->getDeclaredSuperType()) {
+      // Don't bother noting supertypes with no functions in it. There are no
+      // effects to aggregate anyway.
       if (allFunctionTypes.contains(*super)) {
         callGraph[*super].insert(type);
       }
@@ -244,7 +249,7 @@ void propagateEffects(const Module& module,
                       const PassOptions& passOptions,
                       std::map<Function*, FuncInfo>& funcInfos,
                       const CallGraph& callGraph) {
-  // We only care about Functions that are roots, not types
+  // We only care about Functions that are roots, not types.
   // A type would be a root if a function exists with that type, but no-one
   // indirect calls the type.
   auto funcNodes = std::views::keys(callGraph) |

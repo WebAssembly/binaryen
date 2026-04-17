@@ -19,13 +19,25 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-nop-via-ref (param $ref (ref $nopType))
-    ;; This can only possibly be a nop in closed-world
+    ;; This can only possibly be a nop in closed-world.
     ;; Ideally vacuum could optimize this out but we don't have a way to share
     ;; this information with other passes today.
     ;; For now, we can at least annotate that the call to this function in $f
-    ;; has no effects
+    ;; has no effects.
+    ;; TODO: This call_ref could be marked as having no effects, like the call below.
     (call_ref $nopType (i32.const 1) (local.get $ref))
   )
+
+  ;; CHECK:      (func $calls-nop-via-nullable-ref (type $2) (param $ref (ref null $nopType))
+  ;; CHECK-NEXT:  (call_ref $nopType
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-nop-via-nullable-ref (param $ref (ref null $nopType))
+    (call_ref $nopType (i32.const 1) (local.get $ref))
+  )
+
 
   ;; CHECK:      (func $f (type $1) (param $ref (ref $nopType))
   ;; CHECK-NEXT:  (nop)
@@ -34,6 +46,16 @@
     ;; $calls-nop-via-ref has no effects because we determined that it can only
     ;; call $nop. We can optimize this call out.
     (call $calls-nop-via-ref (local.get $ref))
+  )
+
+  ;; CHECK:      (func $g (type $2) (param $ref (ref null $nopType))
+  ;; CHECK-NEXT:  (call $calls-nop-via-nullable-ref
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $g (param $ref (ref null $nopType))
+    ;; Similar to $f, but we may still trap here because the ref is null.
+    (call $calls-nop-via-nullable-ref (local.get $ref))
   )
 )
 
@@ -71,7 +93,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $f (param $ref (ref $maybe-has-effects))
-    ;; This may be a nop or it may trap depending on the ref
+    ;; This may be a nop or it may trap depending on the ref.
     ;; We don't know so don't optimize it out.
     (call $calls-effectful-function-via-ref (local.get $ref))
   )
@@ -156,7 +178,7 @@
 )
 
 ;; Same as above but this time our reference is the exact supertype
-;; So we know not to aggregate effects from the subtype.
+;; so we know not to aggregate effects from the subtype.
 ;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
 (module
   ;; CHECK:      (type $super (sub (struct)))
@@ -240,7 +262,7 @@
   (func $f (param $ref (ref $only-has-effects-in-not-addressable-function))
     ;; The type $has-effects-but-not-exported doesn't have an address because
     ;; it's not exported and it's never the target of a ref.func.
-    ;; We should be able to determine that $ref can only point to $nop
+    ;; We should be able to determine that $ref can only point to $nop.
     ;; TODO: Only aggregate effects from functions that are addressed.
     (call $calls-type-with-effects-but-not-addressable (local.get $ref))
   )
