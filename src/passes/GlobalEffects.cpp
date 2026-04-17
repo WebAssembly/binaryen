@@ -19,6 +19,8 @@
 // PassOptions structure; see more details there.
 //
 
+#include <ranges>
+
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -94,7 +96,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
                 type = callIndirect->heapType;
               } else {
-                Fatal() << "Unexpected call type";
+                WASM_UNREACHABLE("Unexpected call type");
               }
 
               funcInfo.indirectCalledTypes.insert(type);
@@ -123,7 +125,8 @@ using CallGraphNode = std::variant<Function*, HeapType>;
 using CallGraph =
   std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>;
 
-/* Build a call graph for indirect and direct calls.
+/*
+ Build a call graph for indirect and direct calls.
 
  key (caller) -> value (callee)
  Name         -> Name     : direct call
@@ -137,7 +140,7 @@ using CallGraph =
 
  If we're running in an open world, we only include Name -> Name edges.
 */
-CallGraph buildCallGraph(Module& module,
+CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
                          bool closedWorld) {
   CallGraph callGraph;
@@ -145,30 +148,38 @@ CallGraph buildCallGraph(Module& module,
   std::unordered_set<HeapType> allFunctionTypes;
   for (const auto& [caller, callerInfo] : funcInfos) {
     auto& callees = callGraph[caller];
+
+    // Name -> Name
     for (Name calleeFunction : callerInfo.calledFunctions) {
       callees.insert(module.getFunction(calleeFunction));
     }
 
-    // In open world, just connect functions. Indirect calls are already handled
-    // by giving such functions unknown effects.
     if (!closedWorld) {
       continue;
     }
 
+    // Name -> Type
     allFunctionTypes.insert(caller->type.getHeapType());
     for (HeapType calleeType : callerInfo.indirectCalledTypes) {
       callees.insert(calleeType);
       allFunctionTypes.insert(calleeType);
     }
+
+    // Type -> Name
     callGraph[caller->type.getHeapType()].insert(caller);
   }
 
-  SubTypes subtypes(module);
+  // Type -> Type
   for (HeapType type : allFunctionTypes) {
-    subtypes.iterSubTypes(type, [&callGraph, type](HeapType sub, auto _) {
-      callGraph[type].insert(sub);
-      return true;
-    });
+    // Not needed but during lookup we expect the key to exist.
+    callGraph[type];
+
+    for (auto super = type.getDeclaredSuperType(); super;
+         super = super->getDeclaredSuperType()) {
+      if (allFunctionTypes.contains(*super)) {
+        callGraph[*super].insert(type);
+      }
+    }
   }
 
   return callGraph;
@@ -187,6 +198,31 @@ void mergeMaybeEffects(std::optional<EffectAnalyzer>& dest,
   dest->mergeIn(*src);
 }
 
+template<std::ranges::common_range Range>
+  requires std::same_as<std::ranges::range_value_t<Range>, CallGraphNode>
+struct CallGraphSCCs
+  : SCCs<std::ranges::iterator_t<Range>, CallGraphSCCs<Range>> {
+  const std::map<Function*, FuncInfo>& funcInfos;
+  const CallGraph& callGraph;
+  const Module& module;
+
+  CallGraphSCCs(
+    Range&& nodes,
+    const std::map<Function*, FuncInfo>& funcInfos,
+    const std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>&
+      callGraph,
+    const Module& module)
+    : SCCs<std::ranges::iterator_t<Range>, CallGraphSCCs<Range>>(
+        std::ranges::begin(nodes), std::ranges::end(nodes)),
+      funcInfos(funcInfos), callGraph(callGraph), module(module) {}
+
+  void pushChildren(CallGraphNode node) {
+    for (CallGraphNode callee : callGraph.at(node)) {
+      this->push(callee);
+    }
+  }
+};
+
 // Propagate effects from callees to callers transitively
 // e.g. if A -> B -> C (A calls B which calls C)
 // Then B inherits effects from C and A inherits effects from both B and C.
@@ -200,29 +236,6 @@ void propagateEffects(const Module& module,
                       const PassOptions& passOptions,
                       std::map<Function*, FuncInfo>& funcInfos,
                       const CallGraph& callGraph) {
-  struct CallGraphSCCs
-    : SCCs<std::vector<CallGraphNode>::const_iterator, CallGraphSCCs> {
-    const std::map<Function*, FuncInfo>& funcInfos;
-    const CallGraph& callGraph;
-    const Module& module;
-
-    CallGraphSCCs(
-      const std::vector<CallGraphNode>& nodes,
-      const std::map<Function*, FuncInfo>& funcInfos,
-      const std::unordered_map<CallGraphNode,
-                               std::unordered_set<CallGraphNode>>& callGraph,
-      const Module& module)
-      : SCCs<std::vector<CallGraphNode>::const_iterator, CallGraphSCCs>(
-          nodes.begin(), nodes.end()),
-        funcInfos(funcInfos), callGraph(callGraph), module(module) {}
-
-    void pushChildren(CallGraphNode node) {
-      for (CallGraphNode callee : callGraph.at(node)) {
-        push(callee);
-      }
-    }
-  };
-
   // We only care about Functions that are roots, not types
   // A type would be a root if a function exists with that type, but no-one
   // indirect calls the type.
@@ -231,11 +244,16 @@ void propagateEffects(const Module& module,
     allFuncs.push_back(func);
   }
 
-  CallGraphSCCs sccs(allFuncs, funcInfos, callGraph, module);
+  auto funcNodes = std::views::keys(callGraph) |
+                   std::views::filter([](auto node) {
+                     return std::holds_alternative<Function*>(node);
+                   }) |
+                   std::views::common;
+  CallGraphSCCs sccs(std::move(funcNodes), funcInfos, callGraph, module);
 
   std::vector<std::optional<EffectAnalyzer>> componentEffects;
   // Points to an index in componentEffects
-  std::unordered_map<CallGraphNode, Index> funcComponents;
+  std::unordered_map<CallGraphNode, Index> nodeComponents;
 
   for (auto ccIterator : sccs) {
     std::optional<EffectAnalyzer>& ccEffects =
@@ -244,7 +262,7 @@ void propagateEffects(const Module& module,
 
     std::vector<Function*> ccFuncs;
     for (CallGraphNode node : cc) {
-      funcComponents.emplace(node, componentEffects.size() - 1);
+      nodeComponents.emplace(node, componentEffects.size() - 1);
       if (auto** func = std::get_if<Function*>(&node)) {
         ccFuncs.push_back(*func);
       }
@@ -253,7 +271,7 @@ void propagateEffects(const Module& module,
     std::unordered_set<int> calleeSccs;
     for (CallGraphNode caller : cc) {
       for (CallGraphNode callee : callGraph.at(caller)) {
-        calleeSccs.insert(funcComponents.at(callee));
+        calleeSccs.insert(nodeComponents.at(callee));
       }
     }
 
