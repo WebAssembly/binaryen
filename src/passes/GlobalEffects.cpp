@@ -91,6 +91,8 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
             } else if (effects.calls && options.closedWorld) {
               HeapType type;
               if (auto* callRef = curr->dynCast<CallRef>()) {
+                // call_ref on unreachable does not have a call effect,
+                // so this must be a HeapType.
                 type = callRef->target->type.getHeapType();
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
                 type = callIndirect->heapType;
