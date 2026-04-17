@@ -2122,6 +2122,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 # file, so this is the first time we hit an error. Save the
                 # pre wasm file, the one we began with, as `before_wasm`, so
                 # that the reducer will make us proceed exactly from there.
+                print(f'copying {self.pre_wasm} to original for reduction: {before_wasm}')
                 shutil.copyfile(self.pre_wasm, before_wasm)
             raise e
 
