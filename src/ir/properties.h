@@ -534,6 +534,24 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
     }                                                                          \
   }
 
+#define DELEGATE_IMMEDIATE_TYPED_RESULT(id)                                    \
+  if (curr->type == Type::unreachable) {                                       \
+    if constexpr (id::SpecificId == Expression::Id::RefCastId) {               \
+      auto* cast = curr->cast<RefCast>();                                      \
+      if (!cast->desc) {                                                       \
+        return true;                                                           \
+      }                                                                        \
+      if (!cast->desc->type.isRef()) {                                         \
+        return true;                                                           \
+      }                                                                        \
+      if (!cast->desc->type.getHeapType().getDescribedType()) {                \
+        return true;                                                           \
+      }                                                                        \
+      return false;                                                            \
+    }                                                                          \
+    return true;                                                               \
+  }
+
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)
 #define DELEGATE_FIELD_INT(id, field)
@@ -552,25 +570,6 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
 
 #include "wasm-delegations-fields.def"
 
-  if (curr->type == Type::unreachable) {
-    if (curr->is<StructNew>() || curr->is<ArrayNew>() ||
-        curr->is<ArrayNewData>() || curr->is<ArrayNewElem>() ||
-        curr->is<ArrayNewFixed>() || curr->is<ContNew>() ||
-        curr->is<ContBind>()) {
-      return true;
-    }
-    if (auto* cast = curr->dynCast<RefCast>()) {
-      if (!cast->desc) {
-        return true;
-      }
-      if (!cast->desc->type.isRef()) {
-        return true;
-      }
-      if (!cast->desc->type.getHeapType().getDescribedType()) {
-        return true;
-      }
-    }
-  }
   return false;
 }
 
