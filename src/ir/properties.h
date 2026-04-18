@@ -568,7 +568,7 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
       }
       if (!cast->desc->type.getHeapType().getDescribedType()) {
         return true;
-      };
+      }
     }
   }
   return false;
