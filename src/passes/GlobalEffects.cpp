@@ -231,7 +231,7 @@ void propagateEffects(const Module& module,
     const CallGraph& callGraph;
     const Module& module;
 
-    CallGraphSCCs(decltype(funcNodes)&& nodes,
+    CallGraphSCCs(funcNodesType&& nodes,
                   const std::map<Function*, FuncInfo>& funcInfos,
                   const CallGraph& callGraph,
                   const Module& module)
