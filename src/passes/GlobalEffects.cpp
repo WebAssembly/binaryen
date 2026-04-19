@@ -161,12 +161,14 @@ CallGraph buildCallGraph(const Module& module,
     if (!closedWorld) {
       continue;
     }
-
     // Function -> Type
     allFunctionTypes.insert(caller->type.getHeapType());
     for (HeapType calleeType : callerInfo.indirectCalledTypes) {
       callees.insert(calleeType);
-      allFunctionTypes.insert(calleeType);
+
+      // Add the key to ensure the lookup doesn't fail for indirect calls to
+      // uninhabited types.
+      callGraph[calleeType];
     }
 
     // Type -> Function
