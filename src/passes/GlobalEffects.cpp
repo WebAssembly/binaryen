@@ -20,6 +20,7 @@
 //
 
 #include "ir/effects.h"
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/graph_traversal.h"
@@ -44,8 +45,55 @@ struct FuncInfo {
   std::unordered_set<HeapType> indirectCalledTypes;
 };
 
+std::unordered_set<Function*> getAddressedFuncs(Module& module) {
+  struct AddressedFuncsWalker
+    : PostWalker<AddressedFuncsWalker,
+                 UnifiedExpressionVisitor<AddressedFuncsWalker>> {
+    const Module& module;
+    std::unordered_set<Function*>& addressedFuncs;
+
+    AddressedFuncsWalker(const Module& module,
+                         std::unordered_set<Function*>& addressedFuncs)
+      : module(module), addressedFuncs(addressedFuncs) {}
+
+    void visitExpression(Expression* curr) {
+      if (auto* refFunc = curr->dynCast<RefFunc>()) {
+        addressedFuncs.insert(module.getFunction(refFunc->func));
+      }
+    }
+  };
+
+  std::unordered_set<Function*> addressedFuncs;
+  AddressedFuncsWalker walker(module, addressedFuncs);
+  walker.walkModule(&module);
+
+  ModuleUtils::iterImportedFunctions(
+    module, [&addressedFuncs, &module](Function* import) {
+      addressedFuncs.insert(module.getFunction(import->name));
+    });
+
+  for (const auto& export_ : module.exports) {
+    if (export_->kind != ExternalKind::Function) {
+      continue;
+    }
+
+    // TODO: internal or external? I think internal
+    // This might be why we failed to lookup the function earlier
+    // Maybe we can use Function* after all
+    addressedFuncs.insert(module.getFunction(*export_->getInternalName()));
+  }
+
+  ElementUtils::iterAllElementFunctionNames(
+    &module, [&addressedFuncs, &module](Name func) {
+      addressedFuncs.insert(module.getFunction(func));
+    });
+
+  return addressedFuncs;
+}
+
 std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
                                            const PassOptions& passOptions) {
+  std::unordered_set<Name> addressedFuncs;
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     module, [&](Function* func, FuncInfo& funcInfo) {
       if (func->imported()) {
@@ -76,10 +124,14 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
           const PassOptions& options;
           FuncInfo& funcInfo;
 
+          std::unordered_set<Name>& addressedFuncs;
+
           CallScanner(Module& wasm,
                       const PassOptions& options,
-                      FuncInfo& funcInfo)
-            : wasm(wasm), options(options), funcInfo(funcInfo) {}
+                      FuncInfo& funcInfo,
+                      std::unordered_set<Name>& addressedFuncs)
+            : wasm(wasm), options(options), funcInfo(funcInfo),
+              addressedFuncs(addressedFuncs) {}
 
           void visitExpression(Expression* curr) {
             ShallowEffectAnalyzer effects(options, wasm, curr);
@@ -113,7 +165,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
             }
           }
         };
-        CallScanner scanner(module, passOptions, funcInfo);
+        CallScanner scanner(module, passOptions, funcInfo, addressedFuncs);
         scanner.walkFunction(func);
       }
     });
@@ -143,6 +195,7 @@ using CallGraph =
 
 CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
+                         const std::unordered_set<Function*> addressedFuncs,
                          bool closedWorld) {
   CallGraph callGraph;
   if (!closedWorld) {
@@ -178,7 +231,9 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     // Type -> Function
-    callGraph[caller->type.getHeapType()].insert(caller);
+    if (addressedFuncs.contains(caller)) {
+      callGraph[caller->type.getHeapType()].insert(caller);
+    }
   }
 
   // Type -> Type
@@ -346,11 +401,12 @@ void propagateEffects(
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
-    std::map<Function*, FuncInfo> funcInfos =
-      analyzeFuncs(*module, getPassOptions());
+    auto funcInfos = analyzeFuncs(*module, getPassOptions());
 
-    auto callGraph =
-      buildCallGraph(*module, funcInfos, getPassOptions().closedWorld);
+    auto addressedFuncs = getAddressedFuncs(*module);
+
+    auto callGraph = buildCallGraph(
+      *module, funcInfos, addressedFuncs, getPassOptions().closedWorld);
 
     propagateEffects(*module,
                      getPassOptions(),
