@@ -60,6 +60,46 @@
   )
 )
 
+;; Same as the above but with call_indirect
+(module
+  ;; CHECK:      (type $nopType (func (param i32)))
+  (type $nopType (func (param i32)))
+
+  (table 1 1 funcref)
+
+  ;; CHECK:      (func $nop (type $nopType) (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $nop (export "nop") (type $nopType)
+    (nop)
+  )
+
+  ;; CHECK:      (func $calls-nop-via-ref (type $1)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $nopType)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-nop-via-ref
+    ;; This can only possibly be a nop in closed-world.
+    ;; Ideally vacuum could optimize this out but we don't have a way to share
+    ;; this information with other passes today.
+    ;; For now, we can at least annotate that the call to this function in $f
+    ;; has no effects.
+    ;; TODO: This call_ref could be marked as having no effects, like the call below.
+    (call_indirect (type $nopType) (i32.const 1) (i32.const 0))
+  )
+
+  ;; CHECK:      (func $f (type $1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $f
+    ;; $calls-nop-via-ref has no effects because we determined that it can only
+    ;; call $nop. We can optimize this call out.
+    (call $calls-nop-via-ref)
+  )
+)
+
 (module
   ;; CHECK:      (type $maybe-has-effects (func (param i32)))
   (type $maybe-has-effects (func (param i32)))
@@ -97,6 +137,47 @@
     ;; This may be a nop or it may trap depending on the ref.
     ;; We don't know so don't optimize it out.
     (call $calls-effectful-function-via-ref (local.get $ref))
+  )
+)
+
+;; Same as above but with call_indirect
+(module
+  (table 1 1 funcref)
+
+  ;; CHECK:      (type $maybe-has-effects (func (param i32)))
+  (type $maybe-has-effects (func (param i32)))
+
+  ;; CHECK:      (func $unreachable (type $maybe-has-effects) (param $0 i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $unreachable (export "unreachable") (type $maybe-has-effects) (param i32)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $nop2 (type $maybe-has-effects) (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $nop2 (export "nop2") (type $maybe-has-effects) (param i32)
+    (nop)
+  )
+
+  ;; CHECK:      (func $calls-effectful-function-via-ref (type $1)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $maybe-has-effects)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-effectful-function-via-ref
+    (call_indirect (type $maybe-has-effects) (i32.const 1) (i32.const 1))
+  )
+
+  ;; CHECK:      (func $f (type $1)
+  ;; CHECK-NEXT:  (call $calls-effectful-function-via-ref)
+  ;; CHECK-NEXT: )
+  (func $f
+    ;; This may be a nop or it may trap depending on the ref.
+    ;; We don't know so don't optimize it out.
+    (call $calls-effectful-function-via-ref)
   )
 )
 
@@ -150,55 +231,46 @@
 )
 
 (module
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
-  ;; CHECK:      (type $sub (sub $super (struct)))
-  (type $sub (sub $super (struct)))
-
-  ;; Supertype
-  ;; CHECK:      (type $func-with-sub-param (sub (func (param (ref $sub)))))
-  (type $func-with-sub-param (sub (func (param (ref $sub)))))
+  ;; CHECK:      (type $super (sub (func)))
+  (type $super (sub (func)))
   ;; Subtype
-  ;; CHECK:      (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
-  (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
+  ;; CHECK:      (type $sub (sub $super (func)))
+  (type $sub (sub $super (func)))
 
-  ;; CHECK:      (func $nop-with-supertype (type $func-with-sub-param) (param $0 (ref $sub))
+  ;; CHECK:      (func $nop-with-supertype (type $super)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $nop-with-supertype (export "nop-with-supertype") (type $func-with-sub-param) (param (ref $sub))
+  (func $nop-with-supertype (export "nop-with-supertype") (type $super)
   )
 
-  ;; CHECK:      (func $effectful-with-subtype (type $func-with-super-param) (param $0 (ref $super))
+  ;; CHECK:      (func $effectful-with-subtype (type $sub)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $effectful-with-subtype (export "effectful-with-subtype") (type $func-with-super-param) (param (ref $super))
+  (func $effectful-with-subtype (export "effectful-with-subtype") (type $sub)
     (unreachable)
   )
 
-  ;; CHECK:      (func $calls-ref-with-subtype (type $3) (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
-  ;; CHECK-NEXT:  (call_ref $func-with-sub-param
-  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK:      (func $calls-ref-with-supertype (type $1) (param $func (ref $super))
+  ;; CHECK-NEXT:  (call_ref $super
   ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $calls-ref-with-subtype (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
-    (call_ref $func-with-sub-param (local.get $sub) (local.get $func))
+  (func $calls-ref-with-supertype (param $func (ref $super))
+    (call_ref $super (local.get $func))
   )
 
-  ;; CHECK:      (func $f (type $3) (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
-  ;; CHECK-NEXT:  (call $calls-ref-with-subtype
+  ;; CHECK:      (func $f (type $1) (param $func (ref $super))
+  ;; CHECK-NEXT:  (call $calls-ref-with-supertype
   ;; CHECK-NEXT:   (local.get $func)
-  ;; CHECK-NEXT:   (local.get $sub)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $f (param $func (ref $func-with-sub-param)) (param $sub (ref $sub))
+  (func $f (param $func (ref $super))
     ;; Check that we account for subtyping correctly.
-    ;; The type $func-with-sub-param (the supertype) has no effects (i.e. the
-    ;; union of all effects of functions with this type is empty).
-    ;; However, a subtype of $func-with-sub-param ($func-with-super-param) does
-    ;; have effects, and we can call_ref with that subtype, so we need to
-    ;; include the unreachable effect and we can't optimize out this call.
-    (call $calls-ref-with-subtype (local.get $func) (local.get $sub))
+    ;; $super has no effects (i.e. the union of all effects of functions with
+    ;; this type is empty). However, $sub does have effects, and we can call_ref
+    ;; with that subtype, so we need to include the unreachable effect and we
+    ;; can't optimize out this call.
+    (call $calls-ref-with-supertype (local.get $func))
   )
 )
 
@@ -206,49 +278,41 @@
 ;; so we know not to aggregate effects from the subtype.
 ;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
 (module
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
-  ;; CHECK:      (type $sub (sub $super (struct)))
-  (type $sub (sub $super (struct)))
+  ;; CHECK:      (type $super (sub (func)))
+  (type $super (sub (func)))
 
-  ;; Supertype
-  ;; CHECK:      (type $func-with-sub-param (sub (func (param (ref $sub)))))
-  (type $func-with-sub-param (sub (func (param (ref $sub)))))
-  ;; Subtype
-  ;; CHECK:      (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
-  (type $func-with-super-param (sub $func-with-sub-param (func (param (ref $super)))))
+  ;; CHECK:      (type $sub (sub $super (func)))
+  (type $sub (sub $super (func)))
 
-  ;; CHECK:      (func $nop-with-supertype (type $func-with-sub-param) (param $0 (ref $sub))
+  ;; CHECK:      (func $nop-with-supertype (type $super)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $nop-with-supertype (export "nop-with-supertype") (type $func-with-sub-param) (param (ref $sub))
+  (func $nop-with-supertype (export "nop-with-supertype") (type $super)
   )
 
-  ;; CHECK:      (func $effectful-with-subtype (type $func-with-super-param) (param $0 (ref $super))
+  ;; CHECK:      (func $effectful-with-subtype (type $sub)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $effectful-with-subtype (export "effectful-with-subtype") (type $func-with-super-param) (param (ref $super))
+  (func $effectful-with-subtype (export "effectful-with-subtype") (type $sub)
     (unreachable)
   )
 
-  ;; CHECK:      (func $calls-ref-with-subtype (type $3) (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
-  ;; CHECK-NEXT:  (call_ref $func-with-sub-param
-  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK:      (func $calls-ref-with-supertype (type $1) (param $func (ref (exact $super)))
+  ;; CHECK-NEXT:  (call_ref $super
   ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $calls-ref-with-subtype (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
-    (call_ref $func-with-sub-param (local.get $sub) (local.get $func))
+  (func $calls-ref-with-supertype (param $func (ref (exact $super)))
+    (call_ref $super (local.get $func))
   )
 
-  ;; CHECK:      (func $f (type $3) (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
-  ;; CHECK-NEXT:  (call $calls-ref-with-subtype
+  ;; CHECK:      (func $f (type $1) (param $func (ref (exact $super)))
+  ;; CHECK-NEXT:  (call $calls-ref-with-supertype
   ;; CHECK-NEXT:   (local.get $func)
-  ;; CHECK-NEXT:   (local.get $sub)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $f (param $func (ref (exact $func-with-sub-param))) (param $sub (ref $sub))
-    (call $calls-ref-with-subtype (local.get $func) (local.get $sub))
+  (func $f (param $func (ref (exact $super)))
+    (call $calls-ref-with-supertype (local.get $func))
   )
 )
 
