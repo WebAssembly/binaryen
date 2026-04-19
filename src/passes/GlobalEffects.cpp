@@ -26,6 +26,7 @@
 #include "pass.h"
 #include "support/graph_traversal.h"
 #include "support/strongly_connected_components.h"
+#include "support/utilities.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -227,10 +228,13 @@ void mergeMaybeEffects(std::optional<EffectAnalyzer>& dest,
 // - Merge all of the effects of functions within the CC
 // - Also merge the (already computed) effects of each callee CC
 // - Add trap effects for potentially recursive call chains
-void propagateEffects(const Module& module,
-                      const PassOptions& passOptions,
-                      std::map<Function*, FuncInfo>& funcInfos,
-                      const CallGraph& callGraph) {
+void propagateEffects(
+  const Module& module,
+  const PassOptions& passOptions,
+  std::map<Function*, FuncInfo>& funcInfos,
+  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>&
+    typeEffects,
+  const CallGraph& callGraph) {
   // We only care about Functions that are roots, not types.
   // A type would be a root if a function exists with that type, but no-one
   // indirect calls the type.
@@ -319,12 +323,21 @@ void propagateEffects(const Module& module,
     }
 
     // Assign each function's effects to its CC effects.
-    for (Function* f : ccFuncs) {
-      if (!ccEffects) {
-        funcInfos.at(f).effects = UnknownEffects;
-      } else {
-        funcInfos.at(f).effects.emplace(*ccEffects);
-      }
+    for (auto node : cc) {
+      std::visit(overloaded{[&](HeapType type) {
+                              if (ccEffects != UnknownEffects) {
+                                typeEffects[type] =
+                                  std::make_shared<EffectAnalyzer>(*ccEffects);
+                              }
+                            },
+                            [&](Function* f) {
+                              if (!ccEffects) {
+                                funcInfos.at(f).effects = UnknownEffects;
+                              } else {
+                                funcInfos.at(f).effects.emplace(*ccEffects);
+                              }
+                            }},
+                 node);
     }
   }
 }
@@ -348,7 +361,8 @@ struct GenerateGlobalEffects : public Pass {
     auto callGraph =
       buildCallGraph(*module, funcInfos, getPassOptions().closedWorld);
 
-    propagateEffects(*module, getPassOptions(), funcInfos, callGraph);
+    propagateEffects(
+      *module, getPassOptions(), funcInfos, module->typeEffects, callGraph);
 
     copyEffectsToFunctions(funcInfos);
   }

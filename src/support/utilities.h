@@ -94,6 +94,10 @@ public:
 #define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
 #endif
 
+template<class... Ts> struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+
 } // namespace wasm
 
 #endif // wasm_support_utilities_h
