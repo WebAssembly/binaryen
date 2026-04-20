@@ -48,26 +48,33 @@ struct FuncInfo {
   std::unordered_set<HeapType> indirectCalledTypes;
 };
 
+/*
+ Only funcs that are 'addressed' may be the target of an indirect call. A
+ function is addressed if:
+ - It appears in a ref.func expression
+ - It appears in an `elem declare` statement (note that we already ignore `elem`
+   statements in our IR, but we check separately for funcs that appear in
+ `ref.func`).
+ - It's exported, because it may flow back to us as a reference.
+ - It's imported, which implies it is `elem declare`d.
+
+ If a function doesn't meet any of these criteria, it can't be the target of
+ an indirect call and we don't need to include its effects in indirect calls.
+*/
 std::unordered_set<Function*> getAddressedFuncs(Module& module) {
-  struct AddressedFuncsWalker
-    : PostWalker<AddressedFuncsWalker,
-                 UnifiedExpressionVisitor<AddressedFuncsWalker>> {
-    const Module& module;
+  struct AddressedFuncsWalker : PostWalker<AddressedFuncsWalker> {
     std::unordered_set<Function*>& addressedFuncs;
 
-    AddressedFuncsWalker(const Module& module,
-                         std::unordered_set<Function*>& addressedFuncs)
-      : module(module), addressedFuncs(addressedFuncs) {}
+    AddressedFuncsWalker(std::unordered_set<Function*>& addressedFuncs)
+      : addressedFuncs(addressedFuncs) {}
 
-    void visitExpression(Expression* curr) {
-      if (auto* refFunc = curr->dynCast<RefFunc>()) {
-        addressedFuncs.insert(module.getFunction(refFunc->func));
-      }
+    void visitRefFunc(RefFunc* refFunc) {
+      addressedFuncs.insert(getModule()->getFunction(refFunc->func));
     }
   };
 
   std::unordered_set<Function*> addressedFuncs;
-  AddressedFuncsWalker walker(module, addressedFuncs);
+  AddressedFuncsWalker walker(addressedFuncs);
   walker.walkModule(&module);
 
   ModuleUtils::iterImportedFunctions(
@@ -80,9 +87,6 @@ std::unordered_set<Function*> getAddressedFuncs(Module& module) {
       continue;
     }
 
-    // TODO: internal or external? I think internal
-    // This might be why we failed to lookup the function earlier
-    // Maybe we can use Function* after all
     addressedFuncs.insert(module.getFunction(*export_->getInternalName()));
   }
 
@@ -96,7 +100,6 @@ std::unordered_set<Function*> getAddressedFuncs(Module& module) {
 
 std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
                                            const PassOptions& passOptions) {
-  std::unordered_set<Name> addressedFuncs;
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     module, [&](Function* func, FuncInfo& funcInfo) {
       if (func->imported()) {
@@ -127,14 +130,10 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
           const PassOptions& options;
           FuncInfo& funcInfo;
 
-          std::unordered_set<Name>& addressedFuncs;
-
           CallScanner(Module& wasm,
                       const PassOptions& options,
-                      FuncInfo& funcInfo,
-                      std::unordered_set<Name>& addressedFuncs)
-            : wasm(wasm), options(options), funcInfo(funcInfo),
-              addressedFuncs(addressedFuncs) {}
+                      FuncInfo& funcInfo)
+            : wasm(wasm), options(options), funcInfo(funcInfo) {}
 
           void visitExpression(Expression* curr) {
             ShallowEffectAnalyzer effects(options, wasm, curr);
@@ -168,7 +167,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
             }
           }
         };
-        CallScanner scanner(module, passOptions, funcInfo, addressedFuncs);
+        CallScanner scanner(module, passOptions, funcInfo);
         scanner.walkFunction(func);
       }
     });
@@ -198,7 +197,7 @@ using CallGraph =
 
 CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
-                         const std::unordered_set<Function*> addressedFuncs,
+                         const std::unordered_set<Function*>& addressedFuncs,
                          bool closedWorld) {
   CallGraph callGraph;
   if (!closedWorld) {
@@ -397,7 +396,8 @@ void copyEffectsToFunctions(const std::map<Function*, FuncInfo>& funcInfos) {
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
-    auto funcInfos = analyzeFuncs(*module, getPassOptions());
+    std::map<Function*, FuncInfo> funcInfos =
+      analyzeFuncs(*module, getPassOptions());
 
     auto addressedFuncs = getAddressedFuncs(*module);
 
