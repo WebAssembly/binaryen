@@ -24,6 +24,7 @@
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
+#include "support/graph_traversal.h"
 #include "support/strongly_connected_components.h"
 #include "wasm.h"
 
@@ -148,6 +149,18 @@ CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
                          bool closedWorld) {
   CallGraph callGraph;
+  if (!closedWorld) {
+    for (const auto& [caller, callerInfo] : funcInfos) {
+      auto& callees = callGraph[caller];
+
+      // Function -> Function
+      for (Name calleeFunction : callerInfo.calledFunctions) {
+        callees.insert(module.getFunction(calleeFunction));
+      }
+    }
+
+    return callGraph;
+  }
 
   std::unordered_set<HeapType> allFunctionTypes;
   for (const auto& [caller, callerInfo] : funcInfos) {
@@ -158,9 +171,6 @@ CallGraph buildCallGraph(const Module& module,
       callees.insert(module.getFunction(calleeFunction));
     }
 
-    if (!closedWorld) {
-      continue;
-    }
     // Function -> Type
     allFunctionTypes.insert(caller->type.getHeapType());
     for (HeapType calleeType : callerInfo.indirectCalledTypes) {
@@ -176,16 +186,21 @@ CallGraph buildCallGraph(const Module& module,
   }
 
   // Type -> Type
-  for (HeapType type : allFunctionTypes) {
-    // Not needed except that during lookup we expect the key to exist.
-    callGraph[type];
+  // Do a DFS up the type heirarchy for all function implementations.
+  // We are essentially walking up each supertype chain and adding edges from
+  // super -> subtype, but doing it via DFS to avoid repeated work.
+  Graph superTypeGraph(allFunctionTypes.begin(),
+          allFunctionTypes.end(),
+          [&callGraph](auto&& push, HeapType t) {
+            // Not needed except that during lookup we expect the key to exist.
+            callGraph[t];
 
-    HeapType curr = type;
-    while (std::optional<HeapType> super = curr.getDeclaredSuperType()) {
-      callGraph[*super].insert(type);
-      curr = *super;
-    }
-  }
+            if (auto super = t.getDeclaredSuperType()) {
+              callGraph[*super].insert(t);
+              push(*super);
+            }
+          });
+  (void)superTypeGraph.traverseDepthFirst();
 
   return callGraph;
 }
