@@ -570,25 +570,6 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
 
 #include "wasm-delegations-fields.def"
 
-  if (curr->type == Type::unreachable) {
-    if (curr->is<StructNew>() || curr->is<ArrayNew>() ||
-        curr->is<ArrayNewData>() || curr->is<ArrayNewElem>() ||
-        curr->is<ArrayNewFixed>() || curr->is<ContNew>() ||
-        curr->is<ContBind>()) {
-      return true;
-    }
-    if (auto* cast = curr->dynCast<RefCast>()) {
-      if (!cast->desc) {
-        return true;
-      }
-      if (!cast->desc->type.isRef()) {
-        return true;
-      }
-      if (!cast->desc->type.getHeapType().getDescribedType()) {
-        return true;
-      };
-    }
-  }
   return false;
 }
 
