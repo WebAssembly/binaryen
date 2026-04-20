@@ -39,18 +39,18 @@ public:
     std::vector<T> stack(roots.begin(), roots.end());
     std::unordered_set<T> visited(roots.begin(), roots.end());
 
+    auto maybePush = [&](const T& t) {
+      if (visited.contains(t)) {
+        return;
+      }
+
+      visited.insert(t);
+      stack.push_back(t);
+    };
+
     while (!stack.empty()) {
       auto curr = std::move(stack.back());
       stack.pop_back();
-
-      auto maybePush = [&](const T& t) {
-        if (visited.contains(t)) {
-          return;
-        }
-
-        visited.insert(t);
-        stack.push_back(t);
-      };
 
       successors(maybePush, curr);
     }
