@@ -22,6 +22,7 @@
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
+#include "support/graph_traversal.h"
 #include "support/strongly_connected_components.h"
 #include "wasm.h"
 
