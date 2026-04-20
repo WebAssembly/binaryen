@@ -180,6 +180,9 @@ public:
             }
           }
           std::cout << "]\n";
+          if (import->base == "log-branch") {
+            return arguments[0];
+          }
           return {};
         } else if (import->base == "throw") {
           // Throw something, depending on the value of the argument. 0 means

@@ -2281,7 +2281,7 @@ class BranchHintPreservation(TestCaseHandler):
         for line in out.splitlines():
             if line.startswith(LOG_BRANCH_PREFIX):
                 # (1:-1 strips away the '[', ']' at the edges)
-                _, _, id_, hint, actual = line[1:-1].split(' ')
+                _, _, actual, hint, id_ = line[1:-1].split(' ')
                 all_ids.add(id_)
                 if hint != actual:
                     # This hint was misleading.
@@ -2443,7 +2443,7 @@ class BranchHintPreservation(TestCaseHandler):
                 continue
             for line in group:
                 if line.startswith(LOG_BRANCH_PREFIX):
-                    _, _, id_, hint, actual = line[1:-1].split(' ')
+                    _, _, actual, hint, id_ = line[1:-1].split(' ')
                     hint = int(hint)
                     actual = int(actual)
                     assert hint in (0, 1)
