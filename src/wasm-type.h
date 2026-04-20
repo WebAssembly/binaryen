@@ -917,6 +917,8 @@ struct TypeBuilder {
     NonStructDescribes,
     // The described type is an invalid forward reference.
     ForwardDescribesReference,
+    // The descriptor type is an invalid forward reference.
+    ForwardDescriptorReference,
     // The described type does not have this type as a descriptor.
     MismatchedDescribes,
     // A descriptor clause on a non-struct type.

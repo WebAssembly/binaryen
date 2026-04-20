@@ -320,63 +320,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTryTable(TryTable* curr);
 
   void printUnreachableReplacement(Expression* curr);
-  bool maybePrintUnreachableReplacement(Expression* curr, Type type);
-  void visitRefCast(RefCast* curr) {
-    if ((curr->desc && curr->desc->type != Type::unreachable) ||
-        !maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructNew(StructNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNew(ArrayNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewData(ArrayNewData* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitContNew(ContNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitContBind(ContBind* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitResume(Resume* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitResumeThrow(ResumeThrow* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStackSwitch(StackSwitch* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
 
   // Module-level visitors
   void handleSignature(Function* curr, bool printImplicitNames = false);
@@ -3143,19 +3086,6 @@ void PrintSExpression::printUnreachableReplacement(Expression* curr) {
   decIndent();
 }
 
-bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
-                                                        Type type) {
-  // When we cannot print an instruction because the child from which it's
-  // supposed to get a type immediate is unreachable, then we print a
-  // semantically-equivalent block that drops each of the children and ends in
-  // an unreachable.
-  if (type == Type::unreachable) {
-    printUnreachableReplacement(curr);
-    return true;
-  }
-  return false;
-}
-
 static bool requiresExplicitFuncType(HeapType type) {
   // When the `(type $f)` in a function's typeuse is omitted, the typeuse
   // matches or declares an MVP function type. When the intended type is not an
@@ -4009,6 +3939,10 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
+  if (Properties::hasUnwritableTypeImmediate(expression.expr)) {
+    o << "(; unreachable " << getExpressionName(expression.expr) << " ;)";
+    return o;
+  }
   wasm::PrintSExpression printer(o);
   printer.setModule(expression.module);
   wasm::PrintExpressionContents(printer).visit(expression.expr);

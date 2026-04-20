@@ -5259,4 +5259,59 @@
    )
   )
  )
+
+ ;; CHECK:      (func $stacky-unreachable-fallback (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-unreachable-fallback
+   ;; i32 cannot be the struct.set's ref child, so we cannot pop past the
+   ;; unreachable. The unreachable and the following nop are popped together.
+   i32.const 0
+   unreachable
+   nop
+   struct.set $pair 0
+ )
+
+ ;; CHECK:      (func $stacky-unreachable-ok (type $0)
+ ;; CHECK-NEXT:  (struct.set $pair $first
+ ;; CHECK-NEXT:   (struct.new_default $pair)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-unreachable-ok
+   ;; Now we can pop past the unreachable. The unreachable and nop are still
+   ;; popped together.
+   struct.new_default $pair
+   unreachable
+   nop
+   struct.set $pair 0
+ )
+
+ ;; CHECK:      (func $paren-in-string (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (string.const ")")
+ ;; CHECK-NEXT:  )
+ (func $paren-in-string
+   ;; We should not be tripped up by an extra close parenthesis inside a string.
+   (drop
+     (string.const ")")
+   )
+ )
 )
