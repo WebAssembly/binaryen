@@ -7,6 +7,8 @@
 
   ;; CHECK:      (type $1 (func (param i32 i32 i32) (result i32)))
 
+  ;; CHECK:      (type $2 (func (param i32) (result i32)))
+
   ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log (type $1) (param i32 i32 i32) (result i32)))
   (import "fuzzing-support" "log-branch" (func $log (param i32 i32 i32) (result i32)))
 
@@ -117,5 +119,42 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $stacky (type $2) (param $c i32) (result i32)
+  ;; CHECK-NEXT:  (block $l (result i32)
+  ;; CHECK-NEXT:   (br_if $l
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (call $log
+  ;; CHECK-NEXT:      (local.get $c)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $stacky (param $c i32) (result i32)
+    block $l (result i32)
+      i32.const 42
+      ;; Because the parser greedily pulls previous none-typed expressions into
+      ;; block, this condition will be parsed as this:
+      ;;
+      ;; (block
+      ;;   (nop)
+      ;;   (call $log-branch ...))
+      ;; )
+      ;;
+      ;; We must be able to find and handle this pattern to remove the hint.
+      nop
+      local.get $c
+      i32.const 1
+      i32.const 10
+      call $log
+      (@metadata.code.branch_hint "\01")
+      br_if $l
+    end
   )
 )

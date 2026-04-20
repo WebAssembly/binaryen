@@ -98,6 +98,7 @@
 
 #include "ir/effects.h"
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/string.h"
@@ -231,18 +232,6 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
 
     Super::doWalkModule(module);
   }
-
-  // Helpers
-
-  // Check if an expression's condition is instrumented, and return the
-  // instrumentation call if so. Otherwise return null.
-  Call* getInstrumentation(Expression* condition) {
-    auto* call = condition->dynCast<Call>();
-    if (!call || call->target != logBranch) {
-      return nullptr;
-    }
-    return call;
-  }
 };
 
 struct DeleteBranchHints : public InstrumentationProcessor<DeleteBranchHints> {
@@ -251,15 +240,27 @@ struct DeleteBranchHints : public InstrumentationProcessor<DeleteBranchHints> {
   // The set of IDs to delete.
   std::unordered_set<Index> idsToDelete;
 
+  std::optional<uint32_t> getBranchID(Expression* condition,
+                                      const PassOptions& passOptions,
+                                      Module& wasm) {
+    auto* call =
+      Properties::getFallthrough(condition, getPassOptions(), *getModule())
+        ->dynCast<Call>();
+    if (!call || call->target != logBranch || call->operands.size() != 3) {
+      return std::nullopt;
+    }
+    auto* c = call->operands[2]->dynCast<Const>();
+    if (!c || c->type != Type::i32) {
+      return std::nullopt;
+    }
+    return c->value.geti32();
+  }
+
   template<typename T> void processCondition(T* curr) {
-    if (auto* call = getInstrumentation(curr->condition)) {
-      if (auto* c = call->operands[2]->template dynCast<Const>()) {
-        auto id = c->value.geti32();
-        if (idsToDelete.contains(id)) {
-          // Remove the branch hint.
-          getFunction()->codeAnnotations[curr].branchLikely = {};
-        }
-      }
+    if (auto id = getBranchID(curr->condition, getPassOptions(), *getModule());
+        id && idsToDelete.contains(*id)) {
+      // Remove the branch hint.
+      getFunction()->codeAnnotations[curr].branchLikely = std::nullopt;
     }
   }
 
