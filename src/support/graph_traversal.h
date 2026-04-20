@@ -15,6 +15,9 @@
  */
 
 #include <concepts>
+#include <functional>
+#include <iterator>
+#include <unordered_set>
 
 namespace wasm {
 
