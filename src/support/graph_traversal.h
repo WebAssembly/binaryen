@@ -19,8 +19,9 @@
 namespace wasm {
 
 template<typename T, typename SuccessorFunction>
-  requires std::invocable<SuccessorFunction, std::function<void(const T&)>&, const T&>
-class Graph {
+  requires std::
+    invocable<SuccessorFunction, std::function<void(const T&)>&, const T&>
+  class Graph {
 public:
   template<std::input_iterator It, std::sentinel_for<It> Sen>
     requires std::convertible_to<std::iter_reference_t<It>, T>
@@ -28,6 +29,9 @@ public:
     : roots(rootsBegin, rootsEnd),
       successors(std::forward<decltype(successors)>(successors)) {}
 
+  // Traverse the graph depth-first, calling `successors` exactly once for each
+  // node (unless the node appears multiple times in `roots`). Return the set of
+  // nodes visited.
   std::unordered_set<T> traverseDepthFirst() const {
     std::vector<T> stack(roots.begin(), roots.end());
     std::unordered_set<T> visited(roots.begin(), roots.end());

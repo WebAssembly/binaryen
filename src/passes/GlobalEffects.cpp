@@ -190,16 +190,17 @@ CallGraph buildCallGraph(const Module& module,
   // We are essentially walking up each supertype chain and adding edges from
   // super -> subtype, but doing it via DFS to avoid repeated work.
   Graph superTypeGraph(allFunctionTypes.begin(),
-          allFunctionTypes.end(),
-          [&callGraph](auto&& push, HeapType t) {
-            // Not needed except that during lookup we expect the key to exist.
-            callGraph[t];
+                       allFunctionTypes.end(),
+                       [&callGraph](auto&& push, HeapType t) {
+                         // Not needed except that during lookup we expect the
+                         // key to exist.
+                         callGraph[t];
 
-            if (auto super = t.getDeclaredSuperType()) {
-              callGraph[*super].insert(t);
-              push(*super);
-            }
-          });
+                         if (auto super = t.getDeclaredSuperType()) {
+                           callGraph[*super].insert(t);
+                           push(*super);
+                         }
+                       });
   (void)superTypeGraph.traverseDepthFirst();
 
   return callGraph;
