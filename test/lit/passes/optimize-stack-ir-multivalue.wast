@@ -49,7 +49,7 @@
   (func $multivalue-return (result i32 f64 anyref)
     (local $temp (tuple i32 f64 anyref))
     ;; We can remove all these tuple operations after optiming and
-    ;; roundtripping (though a few locals will be added FIXME).
+    ;; roundtripping (though a few locals will be added in roundtripping FIXME).
     (tuple.make 3
       (tuple.extract 3 0
         (local.tee $temp
