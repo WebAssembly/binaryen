@@ -12,6 +12,7 @@ set(unittest_SOURCES
   dataflow.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
+  graph.cpp
   leaves.cpp
   glbs.cpp
   interpreter.cpp
