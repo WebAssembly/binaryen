@@ -95,8 +95,8 @@ def parse_args(args):
     parser.add_argument(
         '--no-auto-initial-contents', dest='auto_initial_contents',
         action='store_false', default=True,
-        help='Select important initial contents automaticaly in fuzzer. '
-             'Default: disabled.')
+        help='Disables the automatic selection of important initial contents '
+             'in fuzzer.')
 
     return parser.parse_args(args)
 
