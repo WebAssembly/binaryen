@@ -38,7 +38,8 @@
 ;; CHECK-NEXT:                                        specified file. This manifest can be
 ;; CHECK-NEXT:                                        given to wasm-split to split the merged
 ;; CHECK-NEXT:                                        module along the lines of the original
-;; CHECK-NEXT:                                        modules.
+;; CHECK-NEXT:                                        modules. Implies --debuginfo to preserve
+;; CHECK-NEXT:                                        function names in the output module.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --rename-export-conflicts,-rec       Rename exports to avoid conflicts (rather
 ;; CHECK-NEXT:                                        than error)
