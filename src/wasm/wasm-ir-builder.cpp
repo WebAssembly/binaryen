@@ -2093,6 +2093,15 @@ Result<> IRBuilder::makeBrOn(Index label,
   }
   CHECK_ERR(visitBrOn(&curr));
 
+  // Validate things that would cause errors later.
+  if (curr.ref->type != Type::unreachable && !curr.ref->type.isRef()) {
+    return Err{"br_on* ref must be a ref"};
+  }
+  if (curr.desc && curr.desc->type != Type::unreachable &&
+      !curr.desc->type.isRef()) {
+    return Err{"br_on_cast_desc* must be a ref"};
+  }
+
   // Validate type immediates before we forget them.
   switch (op) {
     case BrOnNull:
