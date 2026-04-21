@@ -80,11 +80,10 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
-    auto handleCall = [&](bool isReturn) {
+    auto handleCall = [&](bool mayThrow, bool isReturn) {
       if (!self->connectAdjacentBlocks) {
-        // Control is nonlinear if we return, or if EH is enabled or may be.
-        if (isReturn || !self->getModule() ||
-            self->getModule()->features.hasExceptionHandling()) {
+        // Control is nonlinear if we return or throw.
+        if (isReturn || !self->getModule() || mayThrow) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
       }
@@ -153,11 +152,31 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::CallId: {
-        handleCall(curr->cast<Call>()->isReturn);
+        auto* call = curr->cast<Call>();
+
+        bool mayThrow = !self->getModule() ||
+                        self->getModule()->features.hasExceptionHandling();
+        if (mayThrow && self->getModule()) {
+          auto* effects =
+            self->getModule()->getFunction(call->target)->effects.get();
+
+          if (effects && !effects->throws_) {
+            mayThrow = false;
+          }
+        }
+
+        handleCall(mayThrow, call->isReturn);
         return;
       }
       case Expression::Id::CallRefId: {
-        handleCall(curr->cast<CallRef>()->isReturn);
+        auto* callRef = curr->cast<CallRef>();
+
+        // TODO: Effect analysis for indirect calls isn't implemented yet.
+        // Assume any indirect call my throw for now.
+        bool mayThrow = !self->getModule() ||
+                        self->getModule()->features.hasExceptionHandling();
+
+        handleCall(mayThrow, callRef->isReturn);
         return;
       }
       case Expression::Id::TryId: {
