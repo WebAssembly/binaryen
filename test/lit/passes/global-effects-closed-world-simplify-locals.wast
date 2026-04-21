@@ -53,7 +53,7 @@
     (call_ref $indirect-type-super (i32.const 1) (local.get $ref))
   )
 
-  ;; CHECK:      (func $test-merge (type $1) (param $ref (ref $indirect-type-super))
+  ;; CHECK:      (func $merges-multiple-effects (type $1) (param $ref (ref $indirect-type-super))
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local $z i32)
