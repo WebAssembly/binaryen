@@ -21,16 +21,20 @@
 
 namespace wasm {
 
-template<typename T, typename SuccessorFunction>
-  requires std::
-    invocable<SuccessorFunction, std::function<void(const T&)>&, const T&>
-  class Graph {
+// SuccessorFunction should be an invocable that takes a 'push' function (which
+// is an invocable that takes a `const T&`), and a `const T&`. i.e.
+// SuccessorFunction should call `push` for each neighbor of the T that it's
+// called with.
+// TODO: We don't have a good way to write this with concepts today.
+// Something like this should do it, but we hit an ICE on dwarf symbols in debug
+// builds: requires requires(const SuccessorFunction& successors, const T& t) {
+// successors([](const T&) { }, t); }
+template<typename T, typename SuccessorFunction> class Graph {
 public:
   template<std::input_iterator It, std::sentinel_for<It> Sen>
     requires std::convertible_to<std::iter_reference_t<It>, T>
-  Graph(It rootsBegin, Sen rootsEnd, auto&& successors)
-    : roots(rootsBegin, rootsEnd),
-      successors(std::forward<decltype(successors)>(successors)) {}
+  Graph(It rootsBegin, Sen rootsEnd, SuccessorFunction successors)
+    : roots(rootsBegin, rootsEnd), successors(std::move(successors)) {}
 
   // Traverse the graph depth-first, calling `successors` exactly once for each
   // node (unless the node appears multiple times in `roots`). Return the set of
@@ -40,12 +44,10 @@ public:
     std::unordered_set<T> visited(roots.begin(), roots.end());
 
     auto maybePush = [&](const T& t) {
-      if (visited.contains(t)) {
-        return;
+      auto [_, inserted] = visited.insert(t);
+      if (inserted) {
+        stack.push_back(t);
       }
-
-      visited.insert(t);
-      stack.push_back(t);
     };
 
     while (!stack.empty()) {
