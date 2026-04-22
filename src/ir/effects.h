@@ -333,10 +333,21 @@ public:
   // can reorder them even if B traps (even if A has a global effect like a
   // global.set, since we assume B does not trap in traps-never-happen).
   bool orderedBefore(const EffectAnalyzer& other) const {
+    extern bool debugReorderingEnabled;
+    bool canReorder = true;
+#define RECORD_BLOCK(reason)                                                   \
+  do {                                                                         \
+    if (!debugReorderingEnabled)                                               \
+      return true;                                                             \
+    extern void recordBlockingEffect(const char*);                             \
+    recordBlockingEffect(reason);                                              \
+    canReorder = false;                                                        \
+  } while (0)
+
     // Cannot reorder control flow and side effects.
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects())) {
-      return true;
+      RECORD_BLOCK("control flow and side effects");
     }
     // write-write, write-read, and read-write conflicts on possibly aliasing
     // locations prevent reordering. Calls may access these locations.
@@ -356,22 +367,22 @@ public:
         ((other.writesArray || other.calls) && accessesArray()) ||
         ((writesSharedArray || calls) && other.accessesSharedArray()) ||
         ((other.writesSharedArray || other.calls) && accessesSharedArray())) {
-      return true;
+      RECORD_BLOCK("memory/table/struct/array alias conflict");
     }
     // Cannot reorder anything before dangling pops.
     if (danglingPop) {
-      return true;
+      RECORD_BLOCK("dangling pop");
     }
     // Shared location accesses cannot be reordered after (but may be able to be
     // reordered before) release stores.
     if (other.writeOrder >= MemoryOrder::AcqRel &&
         accessesSharedGlobalState()) {
-      return true;
+      RECORD_BLOCK("shared access after release store");
     }
     // Shared location accesses cannot be reordered before (but may be able to
     // be reordered after) acquire loads.
     if (readOrder >= MemoryOrder::AcqRel && other.accessesSharedGlobalState()) {
-      return true;
+      RECORD_BLOCK("shared access before acquire load");
     }
     // No shared location accesses may be reordered in either direction around a
     // seqcst operation.
@@ -381,36 +392,40 @@ public:
         ((other.readOrder == MemoryOrder::SeqCst ||
           other.writeOrder == MemoryOrder::SeqCst) &&
          accessesSharedGlobalState())) {
-      return true;
+      RECORD_BLOCK("shared access around seqcst");
     }
     // write-write, write-read, and read-write conflicts on a local prevent
     // reordering.
     for (auto local : localsWritten) {
       if (other.localsRead.contains(local) ||
           other.localsWritten.contains(local)) {
-        return true;
+        RECORD_BLOCK("local conflict");
+        break;
       }
     }
     for (auto local : localsRead) {
       if (other.localsWritten.contains(local)) {
-        return true;
+        RECORD_BLOCK("local conflict");
+        break;
       }
     }
     // write-write, write-read, and read-write conflicts on globals prevent
     // reordering. Unlike for locals, calls can access globals.
     if ((other.calls && accessesMutableGlobal()) ||
         (calls && other.accessesMutableGlobal())) {
-      return true;
+      RECORD_BLOCK("global conflict with call");
     }
     for (auto global : globalsWritten) {
       if (other.mutableGlobalsRead.contains(global) ||
           other.globalsWritten.contains(global)) {
-        return true;
+        RECORD_BLOCK("global conflict");
+        break;
       }
     }
     for (auto global : mutableGlobalsRead) {
       if (other.globalsWritten.contains(global)) {
-        return true;
+        RECORD_BLOCK("global conflict");
+        break;
       }
     }
     // Note that the above includes disallowing the reordering of a trap with an
@@ -418,7 +433,9 @@ public:
     // function, so transfersControlFlow would be true) - while we allow the
     // reordering of traps with each other, we do not reorder exceptions with
     // anything.
-    assert(!((trap && other.throws()) || (throws() && other.trap)));
+    if ((trap && other.throws()) || (throws() && other.trap)) {
+      RECORD_BLOCK("trap and throws");
+    }
     // We can't reorder an implicit trap in a way that could alter what global
     // state is modified. However, in trapsNeverHappen mode we assume traps do
     // not occur in practice, which lets us ignore this, at least in the case
@@ -429,10 +446,12 @@ public:
         other.transfersControlFlow()) {
       if ((trap && other.writesGlobalState()) ||
           (other.trap && writesGlobalState())) {
-        return true;
+        RECORD_BLOCK("trap and global state modification");
       }
     }
-    return false;
+
+#undef RECORD_BLOCK
+    return !canReorder;
   }
 
   bool orderedAfter(const EffectAnalyzer& other) {
@@ -443,7 +462,13 @@ public:
   // either direction.
   // TODO: Update users to check order more precisely and remove this.
   bool invalidates(const EffectAnalyzer& other) {
-    return orderedBefore(other) || orderedAfter(other);
+    extern bool debugReorderingEnabled;
+    if (!debugReorderingEnabled) {
+      return orderedBefore(other) || orderedAfter(other);
+    }
+    bool before = orderedBefore(other);
+    bool after = orderedAfter(other);
+    return before || after;
   }
 
   void mergeIn(const EffectAnalyzer& other) {

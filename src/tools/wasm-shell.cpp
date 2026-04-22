@@ -654,6 +654,10 @@ struct Shell {
   }
 };
 
+namespace wasm {
+extern void printBlockingEffectCounts();
+}
+
 int main(int argc, const char* argv[]) {
   Name entry;
   std::set<size_t> skipped;
@@ -688,5 +692,6 @@ int main(int argc, const char* argv[]) {
   std::cerr << "all checks passed.\n";
   Colors::normal(std::cerr);
 
+  wasm::printBlockingEffectCounts();
   flush_and_quick_exit(0);
 }

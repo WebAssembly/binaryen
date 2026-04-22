@@ -17,6 +17,56 @@
 #include "ir/effects.h"
 #include "wasm.h"
 
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <string>
+
+namespace wasm {
+
+bool debugReorderingEnabled = getenv("BINARYEN_DEBUG_REORDERING") != nullptr;
+
+struct BlockingEffectCounter {
+  std::map<std::string, size_t> counts;
+  std::mutex mutex;
+
+  BlockingEffectCounter() {}
+
+  ~BlockingEffectCounter() {}
+
+  static void print_counts();
+
+  void record(const char* reason) {
+    if (debugReorderingEnabled) {
+      std::lock_guard<std::mutex> lock(mutex);
+      counts[reason]++;
+    }
+  }
+};
+
+BlockingEffectCounter globalBlockingEffectCounter;
+
+void BlockingEffectCounter::print_counts() {
+  auto& counter = globalBlockingEffectCounter;
+  std::lock_guard<std::mutex> lock(counter.mutex);
+  if (debugReorderingEnabled && counter.counts.size() > 0) {
+    std::cerr << "Blocking Effect Counts:\n";
+    for (const auto& pair : counter.counts) {
+      std::cerr << "  " << pair.first << ": " << pair.second << "\n";
+    }
+    std::cerr.flush();
+    counter.counts.clear(); // To avoid double-printing
+  }
+}
+
+void recordBlockingEffect(const char* reason) {
+  globalBlockingEffectCounter.record(reason);
+}
+
+void printBlockingEffectCounts() { globalBlockingEffectCounter.print_counts(); }
+
+} // namespace wasm
+
 namespace std {
 
 std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {

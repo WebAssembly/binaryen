@@ -73,6 +73,10 @@ willRemoveDebugInfo(const std::vector<OptimizationOptions::PassInfo>& passes) {
 // main
 //
 
+namespace wasm {
+extern void printBlockingEffectCounts();
+}
+
 int main(int argc, const char* argv[]) {
   Name entry;
   bool emitBinary = true;
@@ -477,6 +481,7 @@ For more on how to optimize effectively, see
       }
     }
 
+    wasm::printBlockingEffectCounts();
     flush_and_quick_exit(0);
     return 0;
   }
@@ -502,5 +507,6 @@ For more on how to optimize effectively, see
     }
   }
 
+  wasm::printBlockingEffectCounts();
   flush_and_quick_exit(0);
 }

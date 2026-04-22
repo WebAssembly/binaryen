@@ -138,7 +138,8 @@ size_t wasm::file_size(std::string filename) {
   return infile.tellg();
 }
 
-void wasm::flush_and_quick_exit(int code) {
+namespace wasm {
+void flush_and_quick_exit(int code) {
   // We expect C++ files to be flushed by their destructors already. Flush the
   // standard streams manually.
   std::cout << std::flush;
@@ -163,3 +164,5 @@ void wasm::flush_and_quick_exit(int code) {
   _Exit(code);
 #endif
 }
+
+} // namespace wasm
