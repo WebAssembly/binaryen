@@ -29,12 +29,12 @@
 
 #include "ir/branch-utils.h"
 #include "ir/iteration.h"
-#include "ir/literal-utils.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
+#include "support/delta_debugging.h"
 #include "support/file.h"
 #include "support/hash.h"
 #include "support/path.h"
@@ -894,8 +894,45 @@ struct Reducer
     }
   }
 
-  // Reduces entire functions at a time. Returns whether we did a significant
-  // amount of reduction that justifies doing even more.
+  void reduceFunctionBodies() {
+    std::cerr << "|    try to remove function bodies\n";
+    // Use function indices to speed up finding the complement of the kept
+    // partition.
+    std::vector<Index> funcs;
+    funcs.reserve(module->functions.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      funcs.push_back(i);
+    }
+    deltaDebugging(
+      std::move(funcs),
+      [&](Index partitionIndex,
+          Index numPartitions,
+          const std::vector<Index>& partition) {
+        std::cerr << "|     try partition " << partitionIndex + 1 << " / "
+                  << numPartitions << " (size " << partition.size() << ")\n";
+        std::vector<Name> removed;
+        removed.reserve(module->functions.size() - partition.size());
+        Index i = 0;
+        for (Index j : partition) {
+          while (i < j) {
+            removed.push_back(module->functions[i++]->name);
+          }
+          ++i;
+        }
+        while (i < module->functions.size()) {
+          removed.push_back(module->functions[i++]->name);
+        }
+        if (tryToEmptyFunctions(removed)) {
+          // TODO: Consider doing this just once after the delta debugging since
+          // we never need to restore from the working copy while removing
+          // function bodies.
+          noteReduction(removed.size());
+          return true;
+        }
+        return false;
+      });
+  }
+
   bool reduceFunctions() {
     // try to remove functions
     std::vector<Name> functionNames;
@@ -936,11 +973,9 @@ struct Reducer
       }
       std::cerr << "|     trying at i=" << i << " of size " << names.size()
                 << "\n";
-      // Try to remove functions and/or empty them. Note that
-      // tryToRemoveFunctions() will reload the module if it fails, which means
-      // function names may change - for that reason, run it second.
-      justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
-      if (justReduced) {
+      // Note that tryToRemoveFunctions() will reload the module if it fails,
+      // which means function names may change.
+      if (tryToRemoveFunctions(names)) {
         noteReduction(names.size());
         // Subtract 1 since the loop increments us anyhow by one: we want to
         // skip over the skipped functions, and not any more.
@@ -967,8 +1002,11 @@ struct Reducer
     assert(curr == module.get());
     curr = nullptr;
 
+    reduceFunctionBodies();
+
     // Reduction of entire functions at a time is very effective, and we do it
     // with exponential growth and backoff, so keep doing it while it works.
+    // TODO: Figure out how to use delta debugging for this as well.
     while (reduceFunctions()) {
     }
 
