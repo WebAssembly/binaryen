@@ -508,6 +508,9 @@ BinaryenFeatures BinaryenFeatureMultibyte(void) {
 BinaryenFeatures BinaryenFeatureCustomPageSizes(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CustomPageSizes);
 }
+BinaryenFeatures BinaryenFeatureCompactImports(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::CompactImports);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }

@@ -379,6 +379,7 @@ void test_features() {
   printf("BinaryenFeatureCustomPageSizes: %d\n",
          BinaryenFeatureCustomPageSizes());
   printf("BinaryenFeatureMultibyte: %d\n", BinaryenFeatureMultibyte());
+  printf("BinaryenFeatureCompactImports: %d\n", BinaryenFeatureCompactImports());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
