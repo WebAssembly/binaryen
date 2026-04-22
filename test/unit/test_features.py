@@ -422,14 +422,15 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
                             opts=['-mvp', '--detect-features', '--enable-simd'])
 
     def test_emit_all_features(self):
+        temp_path = os.path.join(shared.options.out_dir, 'test_emit_all_features.wasm')
         p = shared.run_process(shared.WASM_OPT +
-                               ['--emit-target-features', '-all', '-o', '-'],
+                               ['--emit-target-features', '-all', '-o', temp_path],
                                input="(module)", check=False,
                                capture_output=True, decode_output=False)
         self.assertEqual(p.returncode, 0)
         p2 = shared.run_process(shared.WASM_OPT +
-                                ['--print-features', '-o', os.devnull],
-                                input=p.stdout, check=False,
+                                ['--print-features', '-o', os.devnull, temp_path],
+                                check=False,
                                 capture_output=True)
         self.assertEqual(p2.returncode, 0)
         self.assertEqual([
