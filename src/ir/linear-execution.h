@@ -82,8 +82,10 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
 
     auto handleCall = [&](bool mayThrow, bool isReturn) {
       if (!self->connectAdjacentBlocks) {
-        // Control is nonlinear if we return or throw.
-        if (isReturn || !self->getModule() || mayThrow) {
+        // Control is nonlinear if we return or throw. Traps don't need to be
+        // taken into account since they don't break control flow in a way
+        // that's observable.
+        if (mayThrow || isReturn) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
       }
@@ -166,18 +168,29 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         }
 
         handleCall(mayThrow, call->isReturn);
-        return;
+        break;
       }
       case Expression::Id::CallRefId: {
         auto* callRef = curr->cast<CallRef>();
 
         // TODO: Effect analysis for indirect calls isn't implemented yet.
-        // Assume any indirect call my throw for now.
+        // Assume any indirect call may throw for now.
         bool mayThrow = !self->getModule() ||
                         self->getModule()->features.hasExceptionHandling();
 
         handleCall(mayThrow, callRef->isReturn);
-        return;
+        break;
+      }
+      case Expression::Id::CallIndirectId: {
+        auto* callIndirect = curr->cast<CallIndirect>();
+
+        // TODO: Effect analysis for indirect calls isn't implemented yet.
+        // Assume any indirect call may throw for now.
+        bool mayThrow = !self->getModule() ||
+                        self->getModule()->features.hasExceptionHandling();
+
+        handleCall(mayThrow, callIndirect->isReturn);
+        break;
       }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);
