@@ -2912,6 +2912,30 @@ Literal Literal::truncSatZeroUToI32x4() const {
 Literal Literal::demoteZeroToF32x4() const {
   return unary_zero<4, &Literal::getLanesF64x2, &Literal::demote>(*this);
 }
+Literal Literal::demoteZeroF32x4ToF16x8() const {
+  auto lanes = getLanesF32x4();
+  LaneArray<8> result;
+  for (size_t i = 0; i < 4; ++i) {
+    result[i] = Literal(fp16_ieee_from_fp32_value(lanes[i].getf32()));
+  }
+  for (size_t i = 4; i < 8; ++i) {
+    result[i] = Literal(int32_t{0});
+  }
+  return Literal(result);
+}
+
+Literal Literal::demoteZeroF64x2ToF16x8() const {
+  auto lanes = getLanesF64x2();
+  LaneArray<8> result;
+  for (size_t i = 0; i < 2; ++i) {
+    result[i] = Literal(fp16_ieee_from_fp32_value(lanes[i].demote().getf32()));
+  }
+  for (size_t i = 2; i < 8; ++i) {
+    result[i] = Literal(int32_t{0});
+  }
+  return Literal(result);
+}
+
 Literal Literal::promoteLowToF64x2() const {
   return extendF32<LaneOrder::Low>(*this);
 }

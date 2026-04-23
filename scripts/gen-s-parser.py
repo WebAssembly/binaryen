@@ -550,6 +550,8 @@ instructions = [
     ("f16x8.convert_i16x8_s",    "makeUnary(UnaryOp::ConvertSVecI16x8ToVecF16x8)"),
     ("f16x8.convert_i16x8_u",    "makeUnary(UnaryOp::ConvertUVecI16x8ToVecF16x8)"),
     ("f32x4.promote_low_f16x8",  "makeUnary(UnaryOp::PromoteLowVecF16x8ToVecF32x4)"),
+    ("f16x8.demote_f32x4_zero",  "makeUnary(UnaryOp::DemoteZeroVecF32x4ToVecF16x8)"),
+    ("f16x8.demote_f64x2_zero",  "makeUnary(UnaryOp::DemoteZeroVecF64x2ToVecF16x8)"),
     ("f16x8.madd",               "makeSIMDTernary(SIMDTernaryOp::MaddVecF16x8)"),
     ("f16x8.nmadd",              "makeSIMDTernary(SIMDTernaryOp::NmaddVecF16x8)"),
 
