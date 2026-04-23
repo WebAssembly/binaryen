@@ -2427,7 +2427,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     void visitCall(Call* curr) {
       if (getModule()->getFunction(curr->target)->imported()) {
-        map[curr->func].callImports.push_back(curr);
+        map[curr->target].callImports.push_back(curr);
       }
     }
 
@@ -2446,7 +2446,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // are not changing the arity, which JS might notice). Each place we may
   // refine, we are given the maximum refinement and pick a random type between
   // it and the old type.
-  auto maybeRefine = [](Type old, Type new_) {
+  auto maybeRefine = [&](Type old, Type new_) {
     if (!new_.isRef()) {
       // A non-reference like i32, or unreachable (no values reach this place),
       // so it does not matter.
