@@ -417,6 +417,10 @@ private:
   void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
 
+  // Mutate the JS boundary, that is, make changes on the wasm side that JS
+  // would not be broken by (JS does not care about types).
+  void mutateJSBoundary();
+
   // Note a global for use during code generation.
   void useGlobalLater(Global* global);
 

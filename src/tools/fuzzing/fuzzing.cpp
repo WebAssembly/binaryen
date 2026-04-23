@@ -413,6 +413,11 @@ void TranslateToFuzzReader::build() {
   PassRunner runner(&wasm);
   ReFinalize().run(&runner, &wasm);
   ReFinalize().walkModuleCode(&wasm);
+
+  // If fuzzing against JS, we can refine
+  if (againstJS) {
+    mutateJSBoundary();
+  }
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -2387,6 +2392,50 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   if (!preserveImportsAndExports) {
     wasm.start = Name();
   }
+}
+
+void TranslateToFuzzReader::mutateJSBoundary() {
+  assert(againstJS);
+
+  // Scan to find functions whose address is taken. We cannot modify their
+  // signatures at all.
+
+  struct FunctionInfo {
+    std::atomic<Index> refs;
+  };
+
+  using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
+
+  struct FunctionInfoScanner
+    : public WalkerPass<PostWalker<FunctionInfoScanner>> {
+    bool isFunctionParallel() override { return true; }
+
+    bool modifiesBinaryenIR() override { return false; }
+
+    FunctionInfoScanner(NameInfoMap& map) : map(map) {}
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<FunctionInfoScanner>(map);
+    }
+
+    void visitRefFunc(RefFunc* curr) {
+      map[curr->func].refs++;
+    }
+  };
+
+  NameInfoMap map;
+  FunctionInfoScanner scanner(map);
+  PassRunner runner(&wasm);
+  scanner.run(&runner, &wasm);
+  scanner.walkModuleCode(&wasm);
+
+  // If a function does not have its address taken, we can refine types. This is
+  // safe because we will still send and receive the right number of values (we
+  // are not changing the arity, which JS might notice).
+  //
+  // First, refine params sent to imports.
+  for (
+  // Second, refine results sent from exports.
 }
 
 void TranslateToFuzzReader::dropToLog(Function* func) {
