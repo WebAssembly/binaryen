@@ -2545,24 +2545,19 @@ def test_one(random_input, given_wasm):
     if len(filtered_handlers) == 0:
         # pick at least one, to not waste the effort we put into making the wasm
         filtered_handlers = [random.choice(relevant_handlers)]
-    # run only some of the pair handling handlers. if we ran them all all the
-    # time that would mean we have less variety in wasm files and passes run
-    # on them in the same amount of time.
-    NUM_PAIR_HANDLERS = 3
-    used_handlers = set()
-    for _ in range(NUM_PAIR_HANDLERS):
-        testcase_handler = random.choice(filtered_handlers)
-        if testcase_handler in used_handlers:
-            continue
-        used_handlers.add(testcase_handler)
-        assert testcase_handler.can_run_on_wasm('a.wasm')
-        print('running testcase handler:', testcase_handler.__class__.__name__)
-        testcase_handler.increment_runs()
+    # run only one of the handlers. this is less efficient in terms of how many
+    # handlers we run, but more varied in the wasms we see. it also avoids the
+    # annoyance of running two testcase handlers on the same testcase during
+    # reduction (it is much simpler to reduce when only the failing thing is
+    # being run).
+    testcase_handler = random.choice(filtered_handlers)
+    assert testcase_handler.can_run_on_wasm('a.wasm')
+    print('running testcase handler:', testcase_handler.__class__.__name__)
+    testcase_handler.increment_runs()
 
-        # let the testcase handler handle this testcase however it wants. in this case we give it
-        # the input and both wasms.
-        testcase_handler.handle_pair(input=random_input, before_wasm=abspath('a.wasm'), after_wasm=abspath('b.wasm'), opts=opts + FEATURE_OPTS)
-        print('')
+    # let the testcase handler handle this testcase however it wants. in this case we give it
+    # the input and both wasms.
+    testcase_handler.handle_pair(input=random_input, before_wasm=abspath('a.wasm'), after_wasm=abspath('b.wasm'), opts=opts + FEATURE_OPTS)
 
     return bytes
 
