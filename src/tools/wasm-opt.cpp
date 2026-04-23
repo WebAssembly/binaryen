@@ -87,6 +87,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzMemory = true;
   bool fuzzOOB = true;
   bool fuzzPreserveImportsAndExports = false;
+  bool fuzzAgainstJS = false;
   std::string fuzzImport;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
@@ -211,6 +212,14 @@ For more on how to optimize effectively, see
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {
            fuzzPreserveImportsAndExports = true;
+         })
+    .add("--fuzz-against-js",
+         "",
+         "modify the wasm in valid ways that assume it is used only from JS",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           fuzzAgainstJS = true;
          })
     .add(
       "--fuzz-import",
@@ -349,6 +358,7 @@ For more on how to optimize effectively, see
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
+    reader.setAgainstJS(fuzzAgainstJS);
     if (!fuzzImport.empty()) {
       reader.setImportedModule(fuzzImport);
     }

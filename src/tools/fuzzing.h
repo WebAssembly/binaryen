@@ -132,6 +132,9 @@ public:
   void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
     preserveImportsAndExports = preserveImportsAndExports_;
   }
+  void setAgainstJS(bool againstJS_) {
+    againstJS = againstJS_;
+  }
   void setImportedModule(std::string importedModuleName);
 
   void build();
@@ -158,6 +161,11 @@ private:
   // exports, which is useful if the tool using us only wants us to mutate an
   // existing testcase (using initial-content).
   bool preserveImportsAndExports = false;
+
+  // Whether the wasm will be used from JS and in no other way. This lets us
+  // modify the wasm in ways that keep it valid from JS's point of view, but
+  // which might cause issues when linked against wasm or used otherwise.
+  bool againstJS = false;
 
   // An optional module to import from.
   std::optional<Module> importedModule;
