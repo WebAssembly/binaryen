@@ -2447,12 +2447,43 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // refine, we are given the maximum refinement and pick a random type between
   // it and the old type.
   auto maybeRefine = [](Type old, Type new_) {
-    if (new_ == Type::unreachable) {
-      // No values reach this place, so it does not matter.
+    if (!new_.isRef()) {
+      // A non-reference like i32, or unreachable (no values reach this place),
+      // so it does not matter.
       return old;
     }
 
-    assert(Type::isSubType(new_, old));
+    // Pick the heap type.
+    auto oldHeapType = old.getHeapType();
+    auto newHeapType = new_.getHeapType();
+    assert(HeapType::isSubType(newHeapType, oldHeapType));
+    std::vector<HeapType> options;
+    options.push_back(oldHeapType);
+    while (newHeapType != oldHeapType) {
+      options.push_back(newHeapType);
+      // We continue until we reach the old type.
+      auto next = newHeapType.getSuperType();
+      assert(next);
+      newHeapType = *next;
+    }
+    newHeapType = pick(options);
+
+    // Pick the nullability.
+    auto oldNullability = old.getNullability();
+    auto newNullability = new_.getNullability();
+    if (newNullability != oldNullability) {
+      newNullability = getNullability();
+    }
+
+    // Pick the exactness.
+    auto oldExactness = old.getExactness();
+    auto newExactness = new_.getExactness();
+    if (newExactness != oldExactness) {
+      // TODO: once getExactness is fixed, use
+      newExactness = oneIn(2) ? Exact : Inexact;
+    }
+
+    return Type(newHeapType, newNullability, newExactness);
   };
 
   // First, refine params sent to imports.
