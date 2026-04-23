@@ -2486,8 +2486,43 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     return Type(newHeapType, newNullability, newExactness);
   };
 
-  // First, refine params sent to imports.
-  for (
+  // First, refine params sent to imports. Gather the LUB sent to each import,
+  // and then refine.
+  std::unordered_map<Name, LUBFinder> paramLUBs;
+  for (auto& [_, info]) {
+    for (auto* call : info.callImports) {
+      std::vector<Type> sent;
+      for (auto* operand : call->operands) {
+        sent.push_back(operand->type);
+      }
+      paramLUBs[call->target].note(Type(sent));
+    }
+  }
+
+  for (auto& name : wasm.functions) {
+    auto* func = wasm.getFunction(name);
+    if (!func->imported()) {
+      continue;
+    }
+    if (map[name].reffed) {
+      continue;
+    }
+
+    // Find the LUB, which is the most we can refine.
+    auto lub = paramLUBs[name];
+    if (!lub.noted()) {
+      continue;
+    }
+
+    // Refine.
+    auto oldParams = func->getParams();
+    assert(oldParams.size() == lub.size());
+    std::vector<Type> newParams;
+    for (Index i = 0; i < lub.size(); i++) {
+      newParams.push_back(maybeRefine(oldParams[i], lub[i]));
+    }
+    setParams(Type(newParams));
+  }
 
   // Second, refine results sent from exports.
   for (auto& exp : wasm.exports) {
@@ -2499,9 +2534,12 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       continue;
     }
 
-    // Find the LUB, which is the most we can refine.
+    // Find the LUB.
     auto* func = wasm.getFunction(name);
     auto lub = LUB::getResultsLUB(func, wasm);
+    if (!lub.noted()) {
+      continue;
+    }
 
     // Refine.
     auto oldResults = func->getResults();
