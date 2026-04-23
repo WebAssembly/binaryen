@@ -2417,6 +2417,8 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     bool modifiesBinaryenIR() override { return false; }
 
+    NameInfoMap& map;
+
     FunctionInfoScanner(NameInfoMap& map) : map(map) {}
 
     std::unique_ptr<Pass> create() override {
@@ -2519,7 +2521,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     for (Index i = 0; i < lub.size(); i++) {
       newParams.push_back(maybeRefine(oldParams[i], lub[i]));
     }
-    setParams(Type(newParams));
+    func->setParams(Type(newParams));
   }
 
   // Second, refine results sent from exports.
@@ -2546,7 +2548,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     for (Index i = 0; i < lub.size(); i++) {
       newResults.push_back(maybeRefine(oldResults[i], lub[i]));
     }
-    setResults(Type(newResults));
+    func->setResults(Type(newResults));
   }
 }
 
