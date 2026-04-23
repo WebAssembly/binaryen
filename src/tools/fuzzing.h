@@ -132,9 +132,7 @@ public:
   void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
     preserveImportsAndExports = preserveImportsAndExports_;
   }
-  void setAgainstJS(bool againstJS_) {
-    againstJS = againstJS_;
-  }
+  void setAgainstJS(bool againstJS_) { againstJS = againstJS_; }
   void setImportedModule(std::string importedModuleName);
 
   void build();

@@ -213,14 +213,13 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) {
            fuzzPreserveImportsAndExports = true;
          })
-    .add("--fuzz-against-js",
-         "",
-         "modify the wasm in valid ways that assume it is used only from JS",
-         WasmOptOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) {
-           fuzzAgainstJS = true;
-         })
+    .add(
+      "--fuzz-against-js",
+      "",
+      "modify the wasm in valid ways that assume it is used only from JS",
+      WasmOptOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { fuzzAgainstJS = true; })
     .add(
       "--fuzz-import",
       "",

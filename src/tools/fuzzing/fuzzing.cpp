@@ -2429,9 +2429,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       }
     }
 
-    void visitRefFunc(RefFunc* curr) {
-      map[curr->func].reffed = true;
-    }
+    void visitRefFunc(RefFunc* curr) { map[curr->func].reffed = true; }
   };
 
   NameInfoMap map;
