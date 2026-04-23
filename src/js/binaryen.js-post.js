@@ -2417,6 +2417,11 @@ function wrapModule(module, self = {}) {
   self['stringref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['stringref']);
+    },
+    'const'(value) {
+      return preserveStack(() => {
+        return Module['_BinaryenStringConst'](module, strToStack(value));
+      });
     }
   };
 
