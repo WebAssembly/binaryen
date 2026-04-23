@@ -2031,6 +2031,9 @@ struct PrintExpressionContents
       case AddInt128:
         o << "i64.add128";
         break;
+      case SubInt128:
+        o << "i64.sub128";
+        break;
       default:
         WASM_UNREACHABLE("invalid wide int binary op");
     }

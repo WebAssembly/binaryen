@@ -640,6 +640,7 @@ enum StringEqOp {
 
 enum WideIntAddSubOp {
   AddInt128,
+  SubInt128,
 };
 
 //

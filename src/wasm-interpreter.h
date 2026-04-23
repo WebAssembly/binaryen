@@ -1802,14 +1802,20 @@ public:
     VISIT(leftHigh, curr->leftHigh);
     VISIT(rightLow, curr->rightLow);
     VISIT(rightHigh, curr->rightHigh);
-    if (curr->op == AddInt128) {
+    if (curr->op == AddInt128 || curr->op == SubInt128) {
       uint64_t lowLHS = leftLow.getSingleValue().geti64();
       uint64_t highLHS = leftHigh.getSingleValue().geti64();
       uint64_t lowRHS = rightLow.getSingleValue().geti64();
       uint64_t highRHS = rightHigh.getSingleValue().geti64();
 
-      uint64_t lowRes = lowLHS + lowRHS;
-      uint64_t highRes = highLHS + highRHS + (lowRes < lowLHS);
+      uint64_t lowRes, highRes;
+      if (curr->op == AddInt128) {
+        lowRes = lowLHS + lowRHS;
+        highRes = highLHS + highRHS + (lowRes < lowLHS);
+      } else {
+        lowRes = lowLHS - lowRHS;
+        highRes = highLHS - highRHS - (lowLHS < lowRHS);
+      }
 
       Literals results;
       results.push_back(Literal(lowRes));

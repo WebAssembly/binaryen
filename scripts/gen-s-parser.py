@@ -147,6 +147,7 @@ instructions = [
     ("i64.rotl",       "makeBinary(BinaryOp::RotLInt64)"),
     ("i64.rotr",       "makeBinary(BinaryOp::RotRInt64)"),
     ("i64.add128",     "makeWideIntAddSub(WideIntAddSubOp::AddInt128)"),
+    ("i64.sub128",     "makeWideIntAddSub(WideIntAddSubOp::SubInt128)"),
     ("f32.abs",        "makeUnary(UnaryOp::AbsFloat32)"),
     ("f32.neg",        "makeUnary(UnaryOp::NegFloat32)"),
     ("f32.ceil",       "makeUnary(UnaryOp::CeilFloat32)"),

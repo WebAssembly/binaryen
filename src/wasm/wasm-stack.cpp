@@ -2293,6 +2293,9 @@ void BinaryInstWriter::visitWideIntAddSub(WideIntAddSub* curr) {
     case AddInt128:
       o << U32LEB(BinaryConsts::I64Add128);
       break;
+    case SubInt128:
+      o << U32LEB(BinaryConsts::I64Sub128);
+      break;
     default:
       WASM_UNREACHABLE("invalid wide int binary op");
   }
