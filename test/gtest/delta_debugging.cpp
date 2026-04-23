@@ -80,3 +80,10 @@ TEST(DeltaDebuggingTest, DifferentTypes) {
   std::vector<std::string> expected = {"banana", "date"};
   EXPECT_EQ(result, expected);
 }
+
+TEST(DeltaDebuggingTest, UnconditionallyTrue) {
+  std::vector<int> items = {0, 1, 2, 3};
+  auto result = deltaDebugging(
+    items, [](size_t, size_t, const std::vector<int>&) { return true; });
+  EXPECT_TRUE(result.empty());
+}

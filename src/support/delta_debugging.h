@@ -37,6 +37,13 @@ namespace wasm {
 // `partition` items.
 template<typename T, typename F>
 std::vector<T> deltaDebugging(std::vector<T> items, F&& tryPartition) {
+  if (items.empty()) {
+    return items;
+  }
+  // First try removing everything.
+  if (tryPartition(0, 1, {})) {
+    return {};
+  }
   size_t numPartitions = 2;
   while (numPartitions <= items.size()) {
     // Partition the items.
@@ -98,12 +105,13 @@ std::vector<T> deltaDebugging(std::vector<T> items, F&& tryPartition) {
       }
     }
 
-    // Otherwise, make the partitions finer grained.
-    if (numPartitions < items.size()) {
-      numPartitions = std::min(items.size(), 2 * numPartitions);
-    } else {
+    if (numPartitions == items.size()) {
+      // Cannot further refine the partitions. We're done.
       break;
     }
+
+    // Otherwise, make the partitions finer grained.
+    numPartitions = std::min(items.size(), 2 * numPartitions);
   }
   return items;
 }
