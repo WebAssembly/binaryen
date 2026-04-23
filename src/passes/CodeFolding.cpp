@@ -56,6 +56,7 @@
 //
 
 #include <iterator>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -301,7 +302,6 @@ struct CodeFolding
       unoptimizables.clear();
       modifieds.clear();
       exitingBranchCache.clear();
-      exitingBranchCachePopulated = false;
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
@@ -309,67 +309,101 @@ struct CodeFolding
   }
 
 private:
-  // Cache of expressions that have branches exiting to targets defined
-  // outside them. Populated lazily on first access via hasExitingBranches().
-  std::unordered_set<Expression*> exitingBranchCache;
-  bool exitingBranchCachePopulated = false;
+  // Cache of exiting branch names, populated on demand. Only queried roots
+  // are stored. nullopt means no exiting branches; a set holds the names.
+  std::unordered_map<Expression*, std::optional<std::unordered_set<Name>>>
+    exitingBranchCache;
 
   bool hasExitingBranches(Expression* expr) {
-    if (!exitingBranchCachePopulated) {
-      populateExitingBranchCache(getFunction()->body);
-      exitingBranchCachePopulated = true;
+    auto it = exitingBranchCache.find(expr);
+    if (it != exitingBranchCache.end()) {
+      return it->second.has_value();
     }
-    return exitingBranchCache.count(expr);
+    return populateExitingBranchCache(expr);
   }
 
-  // Pre-populate the exiting branch cache for all sub-expressions of root
-  // in a single O(N) bottom-up walk. After this, exitingBranchCache
-  // lookups are O(1).
-  void populateExitingBranchCache(Expression* root) {
+  // Walk |root| bottom-up computing exiting branches. Name sets are kept
+  // transiently (moved from children, erased after merge). Only the root's
+  // name set is persisted. Already-cached subtrees are skipped via scan(),
+  // and their cached names are merged in precisely.
+  bool populateExitingBranchCache(Expression* root) {
     struct CachePopulator
       : public PostWalker<CachePopulator,
                           UnifiedExpressionVisitor<CachePopulator>> {
-      std::unordered_set<Expression*>& cache;
-      // Track unresolved branch targets at each node. We propagate children's
-      // targets upward: add uses, remove defs. If any remain, the expression
-      // has exiting branches.
-      std::unordered_map<Expression*, std::unordered_set<Name>> targetSets;
+      std::unordered_map<Expression*, std::optional<std::unordered_set<Name>>>&
+        resultCache;
+      Expression* root;
+      bool rootResult = false;
+      std::unordered_map<Expression*, std::unordered_set<Name>> nameSets;
 
-      CachePopulator(std::unordered_set<Expression*>& cache) : cache(cache) {}
+      CachePopulator(std::unordered_map<
+                       Expression*,
+                       std::optional<std::unordered_set<Name>>>& resultCache,
+                     Expression* root)
+        : resultCache(resultCache), root(root) {}
+
+      static void scan(CachePopulator* self, Expression** currp) {
+        auto* curr = *currp;
+        if (self->resultCache.count(curr)) {
+          return;
+        }
+        PostWalker<CachePopulator,
+                   UnifiedExpressionVisitor<CachePopulator>>::scan(self, currp);
+      }
 
       void visitExpression(Expression* curr) {
         std::unordered_set<Name> targets;
-        // Merge children's target sets into ours (move to avoid copies)
+
         ChildIterator children(curr);
         for (auto* child : children) {
-          auto it = targetSets.find(child);
-          if (it != targetSets.end()) {
+          auto it = nameSets.find(child);
+          if (it != nameSets.end()) {
             if (targets.empty()) {
               targets = std::move(it->second);
             } else {
               targets.merge(it->second);
             }
-            targetSets.erase(it);
+            nameSets.erase(it);
+          } else {
+            // Child was skipped by scan() — merge its cached names.
+            auto cacheIt = resultCache.find(child);
+            if (cacheIt != resultCache.end() && cacheIt->second) {
+              if (targets.empty()) {
+                targets = *cacheIt->second;
+              } else {
+                targets.insert(cacheIt->second->begin(),
+                               cacheIt->second->end());
+              }
+            }
           }
         }
-        // Add branch uses (names this expression branches to)
+
         BranchUtils::operateOnScopeNameUses(
           curr, [&](Name& name) { targets.insert(name); });
-        // Remove branch defs (names this expression defines as targets)
+
         BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
           if (name.is()) {
             targets.erase(name);
           }
         });
-        bool hasExiting = !targets.empty();
-        if (hasExiting) {
-          cache.insert(curr);
-          targetSets[curr] = std::move(targets);
+
+        if (!targets.empty()) {
+          nameSets[curr] = std::move(targets);
+        }
+        if (curr == root) {
+          auto it = nameSets.find(curr);
+          if (it != nameSets.end()) {
+            resultCache[curr] = std::move(it->second);
+            rootResult = true;
+          } else {
+            resultCache[curr] = std::nullopt;
+          }
         }
       }
     };
-    CachePopulator populator(exitingBranchCache);
+    CachePopulator populator(exitingBranchCache, root);
     populator.walk(root);
+    return populator.rootResult;
   }
 
   // check if we can move a list of items out of another item. we can't do so
