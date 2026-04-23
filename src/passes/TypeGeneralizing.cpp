@@ -433,6 +433,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitConst(Const* curr) {}
   void visitUnary(Unary* curr) {}
   void visitBinary(Binary* curr) {}
+  void visitWideIntAddSub(WideIntAddSub* curr) {}
 
   void visitSelect(Select* curr) {
     if (curr->type.isRef()) {

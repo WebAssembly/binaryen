@@ -1138,6 +1138,11 @@ enum ASTNodes {
   MemoryCopy = 0x0a,
   MemoryFill = 0x0b,
 
+  // wide arithmetic opcodes
+
+  I64Add128 = 0x13,
+  I64Sub128 = 0x14,
+
   // reference types opcodes
 
   TableGrow = 0x0f,

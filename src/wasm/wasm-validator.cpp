@@ -508,6 +508,7 @@ public:
   void visitMemoryCopy(MemoryCopy* curr);
   void visitMemoryFill(MemoryFill* curr);
   void visitBinary(Binary* curr);
+  void visitWideIntAddSub(WideIntAddSub* curr);
   void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
@@ -936,16 +937,18 @@ void FunctionValidator::validatePoppyBlockElements(Block* curr) {
 
 void FunctionValidator::visitLoop(Loop* curr) {
   if (curr->name.is()) {
+    auto noteLabelName = [&](Name name) {
+      auto iter = breakTypes.find(name);
+      assert(iter != breakTypes.end()); // we set it ourselves
+      for (Type breakType : iter->second) {
+        shouldBeEqual(breakType,
+                      Type(Type::none),
+                      curr,
+                      "breaks to a loop cannot pass a value");
+      }
+      breakTypes.erase(iter);
+    };
     noteLabelName(curr->name);
-    auto iter = breakTypes.find(curr->name);
-    assert(iter != breakTypes.end()); // we set it ourselves
-    for (Type breakType : iter->second) {
-      shouldBeEqual(breakType,
-                    Type(Type::none),
-                    curr,
-                    "breaks to a loop cannot pass a value");
-    }
-    breakTypes.erase(iter);
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
@@ -2442,6 +2445,21 @@ void FunctionValidator::visitSelect(Select* curr) {
                  "select's right expression must be subtype of select's type");
   }
 }
+
+void FunctionValidator::visitWideIntAddSub(WideIntAddSub* curr) {
+  if (!shouldBeTrue(getModule()->features.hasWideArithmetic(),
+                    curr,
+                    "Wide arithmetic is not enabled")) {
+    return;
+  }
+  for (auto* operand : {curr->leftLow, curr->leftHigh, curr->rightLow, curr->rightHigh}) {
+    if (operand->type != Type::unreachable) {
+      shouldBeEqual(
+        operand->type, Type(Type::i64), curr, "wide binary child types must be i64");
+    }
+  }
+}
+
 
 void FunctionValidator::visitDrop(Drop* curr) {
   shouldBeTrue(curr->value->type.isConcrete() ||
