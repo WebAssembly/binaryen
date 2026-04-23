@@ -194,6 +194,7 @@ function initializeConstants() {
     'CallIndirectOverlong',
     'RelaxedAtomics',
     'CustomPageSizes',
+    'WideArithmetic',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();

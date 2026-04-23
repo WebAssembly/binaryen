@@ -474,6 +474,7 @@ extern const char* CustomDescriptorsFeature;
 extern const char* RelaxedAtomicsFeature;
 extern const char* MultibyteFeature;
 extern const char* CustomPageSizesFeature;
+extern const char* WideArithmeticFeature;
 
 enum Subsection {
   NameModule = 0,
