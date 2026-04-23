@@ -87,10 +87,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   }
   auto*& expr = stack[valIndex];
   if (expr->type == Type::unreachable) {
-    // Make sure the top of the stack also has an unreachable expression.
-    if (stack.back()->type != Type::unreachable) {
-      pushSynthetic(builder.makeUnreachable());
-    }
+    // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
   }
   // Hoist with a scratch local. Normally the scratch local is the same type as
@@ -129,6 +126,11 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
   };
 
   auto type = scope.exprStack.back()->type;
+  if (type == Type::none) {
+    // If we did not have a value on top of the stack and did not add a scratch
+    // local, then there must have been an unreachable.
+    type = Type::unreachable;
+  }
 
   if (type.size() == sizeHint || type.size() <= 1) {
     if (hoisted.hoistIndex < scope.exprStack.size() - 1) {
@@ -280,6 +282,8 @@ void IRBuilder::dump() {
       if (tryy->name) {
         std::cerr << " " << tryy->name;
       }
+    } else if (scope.getTryTable()) {
+      std::cerr << "try_table";
     } else {
       WASM_UNREACHABLE("unexpected scope");
     }
@@ -303,7 +307,8 @@ void IRBuilder::dump() {
     std::cerr << ":\n";
 
     for (auto* expr : scope.exprStack) {
-      std::cerr << "    " << ShallowExpression{expr} << "\n";
+      std::cerr << "    " << ShallowExpression{expr} << " (; "
+                << expr->type.toString() << " ;)\n";
     }
   }
 #endif // IR_BUILDER_DEBUG
@@ -356,32 +361,26 @@ private:
   Result<> popConstrainedChildren(std::vector<Child>& children) {
     auto& scope = builder.getScope();
 
-    // The index of the shallowest unreachable instruction on the stack, found
-    // by checkNeedsUnreachableFallback.
-    std::optional<size_t> unreachableIndex;
-
-    // Whether popping the children past the unreachable would produce a type
-    // mismatch or try to pop from an empty stack.
-    bool needUnreachableFallback = false;
+    // The stack size at which we are about to pop an unreachable instruction
+    // that we must not pop past because the expressions underneath it do not
+    // have the types we need.
+    std::optional<size_t> unreachableFallbackSize;
 
     // We only need to check requirements if there is an unreachable.
     // Otherwise the validator will catch any problems.
     if (scope.unreachable) {
-      needUnreachableFallback =
-        checkNeedsUnreachableFallback(children, unreachableIndex);
+      unreachableFallbackSize = checkNeedsUnreachableFallback(children);
     }
 
     // We have checked all the constraints, so we are ready to pop children.
     for (int i = children.size() - 1; i >= 0; --i) {
-      if (needUnreachableFallback &&
-          scope.exprStack.size() == *unreachableIndex + 1 && i > 0) {
+      if (unreachableFallbackSize &&
+          scope.exprStack.size() == *unreachableFallbackSize && i > 0) {
         // The next item on the stack is the unreachable instruction we must
-        // not pop past. We cannot insert unreachables in front of it because
-        // it might be a branch we actually have to execute, so this next item
-        // must be child 0. But we are not ready to pop child 0 yet, so
-        // synthesize an unreachable instead of popping. The deeper
-        // instructions that would otherwise have been popped will remain on
-        // the stack to become prior children of future expressions or to be
+        // not pop past. We could pop it as child 0, but we are not ready to pop
+        // child 0 yet, so synthesize an unreachable instead of popping. The
+        // deeper instructions that would otherwise have been popped will remain
+        // on the stack to become prior children of future expressions or to be
         // implicitly dropped at the end of the scope.
         *children[i].childp = builder.builder.makeUnreachable();
         continue;
@@ -397,9 +396,10 @@ private:
     return Ok{};
   }
 
-  bool checkNeedsUnreachableFallback(const std::vector<Child>& children,
-                                     std::optional<size_t>& unreachableIndex) {
+  std::optional<size_t>
+  checkNeedsUnreachableFallback(const std::vector<Child>& children) {
     auto& scope = builder.getScope();
+    std::optional<size_t> unreachableFallbackSize;
 
     // Two-part indices into the stack of available expressions and the vector
     // of requirements, allowing them to move independently with the granularity
@@ -408,6 +408,9 @@ private:
     size_t stackTupleIndex = 0;
     size_t childIndex = children.size();
     size_t childTupleIndex = 0;
+
+    // Whether we are deeper than some concrete expression.
+    bool seenConcrete = false;
 
     // Check whether the values on the stack will be able to meet the given
     // requirements.
@@ -435,7 +438,7 @@ private:
             // the input unreachable instruction is executed first. If we are
             // not reaching past an unreachable, the error will be caught when
             // we pop.
-            return true;
+            return unreachableFallbackSize;
           }
           --stackIndex;
           stackTupleIndex = scope.exprStack[stackIndex]->type.size() - 1;
@@ -450,22 +453,35 @@ private:
       }
 
       // We have an available type and a constraint. Only check constraints if
-      // we are past an unreachable, since otherwise we can leave problems to be
-      // caught by the validator later.
+      // we are deeper than an unreachable, since otherwise we can leave
+      // problems to be caught by the validator later.
       auto type = scope.exprStack[stackIndex]->type[stackTupleIndex];
-      if (unreachableIndex) {
+      if (unreachableFallbackSize) {
         auto constraint = children[childIndex].constraint[childTupleIndex];
         if (!PrincipalType::matches(type, constraint)) {
-          return true;
+          return unreachableFallbackSize;
         }
       }
 
-      // No problems for children after this unreachable.
+      // We may need an unreachable fallback if we find violated constraints in
+      // expressions deeper than this unreachable. Calculate the stack size at
+      // which this unreachable will be the next thing popped. This size is
+      // usually one more than the current index, but if there are no shallower
+      // concrete expressions, then everything down to this unreachable will be
+      // popped at once immediately at the current stack size.
       if (type == Type::unreachable) {
-        unreachableIndex = stackIndex;
+        unreachableFallbackSize =
+          seenConcrete ? stackIndex + 1 : scope.exprStack.size();
+      } else {
+        // We skipped none-typed expressions and this isn't unreachable, so it
+        // must be concrete.
+        assert(type.isConcrete());
+        seenConcrete = true;
       }
     }
-    return false;
+
+    // No unreachable fallback necessary.
+    return std::nullopt;
   }
 
   // If `greedy`, then we will pop additional none-typed expressions that come
@@ -846,6 +862,13 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     CHECK_ERR(hoisted);
     if (!hoisted) {
       return Err{"popping from empty stack"};
+    }
+
+    if (scope.exprStack.back()->type == Type::none) {
+      // Nothing was hoisted, which means there must have been an unreachable
+      // buried under none-type expressions. It is not valid to end a concretely
+      // typed block with none-typed expressions, so add an extra unreachable.
+      pushSynthetic(builder.makeUnreachable());
     }
 
     if (type.isTuple()) {
@@ -2069,6 +2092,15 @@ Result<> IRBuilder::makeBrOn(Index label,
     return Err{"br_on cannot cast to invalid type"};
   }
   CHECK_ERR(visitBrOn(&curr));
+
+  // Validate things that would cause errors later.
+  if (curr.ref->type != Type::unreachable && !curr.ref->type.isRef()) {
+    return Err{"br_on* ref must be a ref"};
+  }
+  if (curr.desc && curr.desc->type != Type::unreachable &&
+      !curr.desc->type.isRef()) {
+    return Err{"br_on_cast_desc* must be a ref"};
+  }
 
   // Validate type immediates before we forget them.
   switch (op) {

@@ -697,11 +697,13 @@ Input source maps can be specified by adding an -ism option right after the modu
          "",
          "Write a wasm-split manifest to the specified file. This manifest can "
          "be given to wasm-split to split the merged module along the lines of "
-         "the original modules.",
+         "the original modules. Implies --debuginfo to preserve function names "
+         "in the output module.",
          WasmMergeOption,
          Options::Arguments::One,
-         [&manifestFile](Options* o, const std::string& argument) {
+         [&](Options* o, const std::string& argument) {
            manifestFile = argument;
+           debugInfo = true;
          })
     .add("--rename-export-conflicts",
          "-rec",

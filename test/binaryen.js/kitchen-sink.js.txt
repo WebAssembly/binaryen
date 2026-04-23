@@ -35,7 +35,8 @@ Features.Strings: 16384
 Features.MultiMemory: 32768
 Features.RelaxedAtomics: 4194304
 Features.CustomPageSizes: 8388608
-Features.All: 33554431
+Features.WideArithmetic: 33554432
+Features.All: 67108863
 InvalidId: 0
 BlockId: 1
 IfId: 2

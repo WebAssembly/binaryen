@@ -521,8 +521,8 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
 }
 
 // Whether this instruction will be unwritable in the text and binary formats
-// because it requires a type index immediate giving the type of a child that
-// has unreachable or null type, and therefore does not have a type index.
+// because it requires a type index immediate computed from an expression with
+// unreachable or null type, and therefore no type index.
 inline bool hasUnwritableTypeImmediate(Expression* curr) {
 #define DELEGATE_ID curr->_id
 
@@ -532,6 +532,24 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
     if (type == Type::unreachable || type.isNull()) {                          \
       return true;                                                             \
     }                                                                          \
+  }
+
+#define DELEGATE_IMMEDIATE_TYPED_RESULT(id)                                    \
+  if (curr->type == Type::unreachable) {                                       \
+    if constexpr (id::SpecificId == Expression::Id::RefCastId) {               \
+      auto* cast = curr->cast<RefCast>();                                      \
+      if (!cast->desc) {                                                       \
+        return true;                                                           \
+      }                                                                        \
+      if (!cast->desc->type.isRef()) {                                         \
+        return true;                                                           \
+      }                                                                        \
+      if (!cast->desc->type.getHeapType().getDescribedType()) {                \
+        return true;                                                           \
+      }                                                                        \
+      return false;                                                            \
+    }                                                                          \
+    return true;                                                               \
   }
 
 #define DELEGATE_FIELD_CHILD(id, field)
