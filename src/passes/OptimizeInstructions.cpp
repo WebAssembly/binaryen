@@ -1193,6 +1193,28 @@ struct OptimizeInstructions
           BranchHints::flip(curr, getFunction());
         }
       }
+      // (i32.and X 1) as if-else condition =>  (i32.ctz X) with swapped arms,
+      // since ctz(X) == 0  iff  LSB(X) == 1  (saves one instruction).
+      if (auto* binary = curr->condition->dynCast<Binary>()) {
+        if (binary->op == AndInt32) {
+          Expression* other = nullptr;
+          if (auto* c = binary->right->dynCast<Const>()) {
+            if (c->value.geti32() == 1) {
+              other = binary->left;
+            }
+          } else if (auto* c = binary->left->dynCast<Const>()) {
+            if (c->value.geti32() == 1) {
+              other = binary->right;
+            }
+          }
+          if (other) {
+            Builder builder(*getModule());
+            curr->condition = builder.makeUnary(CtzInt32, other);
+            std::swap(curr->ifTrue, curr->ifFalse);
+            BranchHints::flip(curr, getFunction());
+          }
+        }
+      }
       // Note that we do not consider metadata here. Like LLVM, we ignore
       // metadata when trying to fold code together, preferring certain
       // optimization over possible benefits of profiling data.
@@ -3113,6 +3135,24 @@ private:
             if (op != InvalidBinary) {
               binary->op = op;
               return binary;
+            }
+            // eqz(and X 1) ==> ctz X  in boolean context:
+            // both are truthy iff LSB(X) == 0, saving one instruction.
+            if (binary->op == AndInt32) {
+              Expression* other = nullptr;
+              if (auto* c = binary->right->dynCast<Const>()) {
+                if (c->value.geti32() == 1) {
+                  other = binary->left;
+                }
+              } else if (auto* c = binary->left->dynCast<Const>()) {
+                if (c->value.geti32() == 1) {
+                  other = binary->right;
+                }
+              }
+              if (other) {
+                Builder builder(*getModule());
+                return builder.makeUnary(CtzInt32, other);
+              }
             }
           }
         }
