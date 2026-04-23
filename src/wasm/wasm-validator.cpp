@@ -508,7 +508,7 @@ public:
   void visitMemoryCopy(MemoryCopy* curr);
   void visitMemoryFill(MemoryFill* curr);
   void visitBinary(Binary* curr);
-  void visitWideIntBinary(WideIntBinary* curr);
+  void visitWideIntAddSub(WideIntAddSub* curr);
   void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
@@ -2444,25 +2444,20 @@ void FunctionValidator::visitSelect(Select* curr) {
   }
 }
 
-void FunctionValidator::visitWideIntBinary(WideIntBinary* curr) {
+void FunctionValidator::visitWideIntAddSub(WideIntAddSub* curr) {
   if (!shouldBeTrue(getModule()->features.hasWideArithmetic(),
                     curr,
                     "Wide arithmetic is not enabled")) {
     return;
   }
-  for (auto* operand : curr->operands) {
+  for (auto* operand : {curr->leftLow, curr->leftHigh, curr->rightLow, curr->rightHigh}) {
     if (operand->type != Type::unreachable) {
-      shouldBeEqual(operand->type,
-                    Type(Type::i64),
-                    curr,
-                    "wide binary child types must be i64");
+      shouldBeEqual(
+        operand->type, Type(Type::i64), curr, "wide binary child types must be i64");
     }
   }
-  if (curr->op == AddInt128) {
-    shouldBeEqual(
-      curr->operands.size(), size_t(4), curr, "add128 must have 4 operands");
-  }
 }
+
 
 void FunctionValidator::visitDrop(Drop* curr) {
   shouldBeTrue(curr->value->type.isConcrete() ||

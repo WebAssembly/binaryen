@@ -801,15 +801,9 @@ void Binary::finalize() {
   }
 }
 
-void WideIntBinary::finalize() {
-  bool unreachable = false;
-  for (auto* operand : operands) {
-    if (operand->type == Type::unreachable) {
-      unreachable = true;
-      break;
-    }
-  }
-  if (unreachable) {
+void WideIntAddSub::finalize() {
+  if (leftLow->type == Type::unreachable || leftHigh->type == Type::unreachable ||
+      rightLow->type == Type::unreachable || rightHigh->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type({Type::i64, Type::i64});

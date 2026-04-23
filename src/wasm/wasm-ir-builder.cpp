@@ -1757,12 +1757,12 @@ Result<> IRBuilder::makeBinary(BinaryOp op) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeWideIntBinary(WideIntBinaryOp op) {
-  WideIntBinary curr(wasm.allocator);
+Result<> IRBuilder::makeWideIntAddSub(WideIntAddSubOp op) {
+  WideIntAddSub curr;
   curr.op = op;
-  CHECK_ERR(visitWideIntBinary(&curr));
-  push(builder.makeWideIntBinary(
-    op, std::vector<Expression*>(curr.operands.begin(), curr.operands.end())));
+  CHECK_ERR(visitWideIntAddSub(&curr));
+  push(builder.makeWideIntAddSub(
+    op, curr.leftLow, curr.leftHigh, curr.rightLow, curr.rightHigh));
   return Ok{};
 }
 

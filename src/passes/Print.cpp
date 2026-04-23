@@ -2025,7 +2025,7 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
   }
-  void visitWideIntBinary(WideIntBinary* curr) {
+  void visitWideIntAddSub(WideIntAddSub* curr) {
     prepareColor(o);
     switch (curr->op) {
       case AddInt128:

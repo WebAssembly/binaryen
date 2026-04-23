@@ -91,10 +91,9 @@ Result<> makeNop(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeBinary(Ctx&, Index, const std::vector<Annotation>&, BinaryOp op);
 template<typename Ctx>
-Result<> makeWideIntBinary(Ctx&,
-                           Index,
-                           const std::vector<Annotation>&,
-                           WideIntBinaryOp op);
+Result<>
+makeWideIntAddSub(Ctx&, Index, const std::vector<Annotation>&, WideIntAddSubOp op);
+
 template<typename Ctx>
 Result<> makeUnary(Ctx&, Index, const std::vector<Annotation>&, UnaryOp op);
 template<typename Ctx>
@@ -1598,11 +1597,11 @@ Result<> makeBinary(Ctx& ctx,
 }
 
 template<typename Ctx>
-Result<> makeWideIntBinary(Ctx& ctx,
+Result<> makeWideIntAddSub(Ctx& ctx,
                            Index pos,
                            const std::vector<Annotation>& annotations,
-                           WideIntBinaryOp op) {
-  return ctx.makeWideIntBinary(pos, annotations, op);
+                           WideIntAddSubOp op) {
+  return ctx.makeWideIntAddSub(pos, annotations, op);
 }
 
 template<typename Ctx>

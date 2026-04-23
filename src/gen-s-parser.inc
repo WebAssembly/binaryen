@@ -3415,7 +3415,7 @@ switch (buf[0]) {
                         goto parse_error;
                       case '1':
                         if (op == "i64.add128"sv) {
-                          CHECK_ERR(makeWideIntBinary(ctx, pos, annotations, WideIntBinaryOp::AddInt128));
+                          CHECK_ERR(makeWideIntAddSub(ctx, pos, annotations, WideIntAddSubOp::AddInt128));
                           return Ok{};
                         }
                         goto parse_error;

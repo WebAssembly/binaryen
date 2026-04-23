@@ -217,7 +217,7 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     }
   }
   Flow visitSelect(Select* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitWideIntBinary(WideIntBinary* curr) {
+  Flow visitWideIntAddSub(WideIntAddSub* curr) {
     if (curr->op == AddInt128) {
       uint64_t highRHS = pop().geti64();
       uint64_t lowRHS = pop().geti64();

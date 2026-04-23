@@ -660,11 +660,17 @@ public:
     ret->finalize();
     return ret;
   }
-  WideIntBinary* makeWideIntBinary(WideIntBinaryOp op,
-                                   const std::vector<Expression*>& operands) {
-    auto* ret = wasm.allocator.alloc<WideIntBinary>();
+  WideIntAddSub* makeWideIntAddSub(WideIntAddSubOp op,
+                                   Expression* leftLow,
+                                   Expression* leftHigh,
+                                   Expression* rightLow,
+                                   Expression* rightHigh) {
+    auto* ret = wasm.allocator.alloc<WideIntAddSub>();
     ret->op = op;
-    ret->operands.set(operands);
+    ret->leftLow = leftLow;
+    ret->leftHigh = leftHigh;
+    ret->rightLow = rightLow;
+    ret->rightHigh = rightHigh;
     ret->finalize();
     return ret;
   }

@@ -1960,8 +1960,8 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       return makeJsCoercion(ret, wasmToJsType(curr->type));
     }
 
-    Ref visitWideIntBinary(WideIntBinary* curr) {
-      Fatal() << "wide arithmetic is not supported by wasm2js";
+    Ref visitWideIntAddSub(WideIntAddSub* curr) {
+      WASM_UNREACHABLE("wide arithmetic is not supported by wasm2js");
     }
 
     Ref visitSelect(Select* curr) {

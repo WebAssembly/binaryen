@@ -2287,7 +2287,7 @@ void BinaryInstWriter::visitSelect(Select* curr) {
   }
 }
 
-void BinaryInstWriter::visitWideIntBinary(WideIntBinary* curr) {
+void BinaryInstWriter::visitWideIntAddSub(WideIntAddSub* curr) {
   o << static_cast<int8_t>(BinaryConsts::MiscPrefix);
   switch (curr->op) {
     case AddInt128:

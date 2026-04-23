@@ -638,7 +638,7 @@ enum StringEqOp {
   StringEqCompare,
 };
 
-enum WideIntBinaryOp {
+enum WideIntAddSubOp {
   AddInt128,
 };
 
@@ -771,7 +771,7 @@ public:
     StackSwitchId,
     StructWaitId,
     StructNotifyId,
-    WideIntBinaryId,
+    WideIntAddSubId,
     NumExpressionIds
   };
   Id _id;
@@ -1303,12 +1303,16 @@ public:
   void finalize();
 };
 
-class WideIntBinary : public SpecificExpression<Expression::WideIntBinaryId> {
+class WideIntAddSub : public SpecificExpression<Expression::WideIntAddSubId> {
 public:
-  WideIntBinary(MixedArena& allocator) : operands(allocator) {}
+  WideIntAddSub() = default;
+  WideIntAddSub(MixedArena& allocator) {}
 
-  WideIntBinaryOp op;
-  ExpressionList operands;
+  WideIntAddSubOp op;
+  Expression* leftLow;
+  Expression* leftHigh;
+  Expression* rightLow;
+  Expression* rightHigh;
 
   void finalize();
 };

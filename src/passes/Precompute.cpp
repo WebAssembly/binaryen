@@ -282,8 +282,8 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
 
-  Flow visitWideIntBinary(WideIntBinary* curr) {
-    return Super::visitWideIntBinary(curr);
+  Flow visitWideIntAddSub(WideIntAddSub* curr) {
+    return Super::visitWideIntAddSub(curr);
   }
 
   Flow visitStringEncode(StringEncode* curr) {
