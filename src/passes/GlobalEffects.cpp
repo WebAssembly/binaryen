@@ -52,9 +52,9 @@ struct FuncInfo {
  Only funcs that are 'addressed' may be the target of an indirect call. A
  function is addressed if:
  - It appears in a ref.func expression
- - It appears in an `elem declare` statement (note that we already ignore `elem`
+ - It appears in an `elem` segment (note that we already ignore `elem declare`
    statements in our IR, but we check separately for funcs that appear in
- `ref.func`).
+   `ref.func`).
  - It's exported, because it may flow back to us as a reference.
  - It's imported, which implies it is `elem declare`d.
 
