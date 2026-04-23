@@ -19,6 +19,7 @@
 #include "ir/glbs.h"
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
+#include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/subtype-exprs.h"
@@ -2401,7 +2402,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // signatures at all.
 
   struct FunctionInfo {
-    std::atomic<Index> refs;
+    // Whether there are references to this function itself.
+    std::atomic<bool> reffed = false;
+
+    // Calls to imports from this function.
+    std::vector<Call*> callImports;
   };
 
   using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
@@ -2418,24 +2423,64 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       return std::make_unique<FunctionInfoScanner>(map);
     }
 
+    void visitCall(Call* curr) {
+      if (getModule()->getFunction(curr->target)->imported()) {
+        map[curr->func].callImports.push_back(curr);
+      }
+    }
+
     void visitRefFunc(RefFunc* curr) {
-      map[curr->func].refs++;
+      map[curr->func].reffed = true;
     }
   };
 
   NameInfoMap map;
   FunctionInfoScanner scanner(map);
   PassRunner runner(&wasm);
+  scanner.setModule(&wasm);
   scanner.run(&runner, &wasm);
   scanner.walkModuleCode(&wasm);
 
   // If a function does not have its address taken, we can refine types. This is
   // safe because we will still send and receive the right number of values (we
-  // are not changing the arity, which JS might notice).
-  //
+  // are not changing the arity, which JS might notice). Each place we may
+  // refine, we are given the maximum refinement and pick a random type between
+  // it and the old type.
+  auto maybeRefine = [](Type old, Type new_) {
+    if (new_ == Type::unreachable) {
+      // No values reach this place, so it does not matter.
+      return old;
+    }
+
+    assert(Type::isSubType(new_, old));
+  };
+
   // First, refine params sent to imports.
   for (
+
   // Second, refine results sent from exports.
+  for (auto& exp : wasm.exports) {
+    if (exp->kind != ExternalKind::Function) {
+      continue;
+    }
+    auto name = exp->getInternalName();
+    if (map[name].reffed) {
+      continue;
+    }
+
+    // Find the LUB, which is the most we can refine.
+    auto* func = wasm.getFunction(name);
+    auto lub = LUB::getResultsLUB(func, wasm);
+
+    // Refine.
+    auto oldResults = func->getResults();
+    assert(oldResults.size() == lub.size());
+    std::vector<Type> newResults;
+    for (Index i = 0; i < lub.size(); i++) {
+      newResults.push_back(maybeRefine(oldResults[i], lub[i]));
+    }
+    setResults(Type(newResults));
+  }
 }
 
 void TranslateToFuzzReader::dropToLog(Function* func) {
