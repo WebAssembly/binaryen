@@ -807,6 +807,16 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Function, func->name);
       });
     }
+    // If requested, remove exported functions with empty bodies.
+    if (hasArgument("remove-unused-module-elements-ignore-nop-exports")) {
+      module->removeExports([&](Export* exp) {
+        if (exp->kind != ExternalKind::Function) {
+          return false;
+        }
+        auto* func = module->getFunction(*exp->getInternalName());
+        return !func->imported() && func->body->is<Nop>();
+      });
+    }
     // Exports are roots.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
