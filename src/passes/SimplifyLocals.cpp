@@ -47,6 +47,7 @@
 //
 
 #include "ir/equivalent_sets.h"
+#include <cstdio>
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/find_all.h>
@@ -54,12 +55,54 @@
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
 #include <ir/utils.h>
+#include <mutex>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <wasm.h>
 
 namespace wasm {
+
+// Instrumentation: append one line per checkInvalidations call to a CSV.
+namespace {
+FILE* ci_logFile = nullptr;
+std::mutex ci_logMutex;
+
+void ci_log(const char* path,
+            size_t sinkables,
+            size_t candidates,
+            bool readsLocal,
+            bool writesLocal,
+            bool calls,
+            bool memory,
+            bool gc,
+            bool trap,
+            bool cf,
+            bool globalState) {
+  std::lock_guard<std::mutex> lock(ci_logMutex);
+  if (!ci_logFile) {
+    ci_logFile = fopen("/tmp/ci_stats.csv", "w");
+    if (!ci_logFile)
+      return;
+    fprintf(ci_logFile,
+            "path,sinkables,candidates,readsLocal,writesLocal,calls,memory,gc,"
+            "trap,controlFlow,globalState\n");
+  }
+  fprintf(ci_logFile,
+          "%s,%zu,%zu,%d,%d,%d,%d,%d,%d,%d,%d\n",
+          path,
+          sinkables,
+          candidates,
+          readsLocal,
+          writesLocal,
+          calls,
+          memory,
+          gc,
+          trap,
+          cf,
+          globalState);
+}
+} // anonymous namespace
 
 // Main class
 
@@ -386,6 +429,17 @@ struct SimplifyLocals
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
+    bool readsLocal = !effects.localsRead.empty();
+    bool writesLocal = !effects.localsWritten.empty();
+    bool hasCalls = effects.calls;
+    bool hasMemory = effects.readsMemory || effects.writesMemory;
+    bool hasGC = effects.readsMutableStruct || effects.writesStruct ||
+                 effects.readsMutableArray || effects.writesArray;
+    bool hasTrap = effects.trap;
+    bool hasCF = effects.transfersControlFlow();
+    bool hasGlobalState =
+      effects.writesGlobalState() || effects.readsMutableGlobalState();
+
     // Fast path: if the current expression only accesses locals (no memory,
     // calls, globals, traps, control flow, etc.), we can use reverse indices
     // to find conflicting sinkables in O(|locals touched|) instead of
@@ -397,10 +451,8 @@ struct SimplifyLocals
     // asymmetric check: sinkable.transfersControlFlow() &&
     // current.hasSideEffects(). The latter is handled via
     // controlFlowSinkables below.
-    if (!effects.transfersControlFlow() && !effects.writesGlobalState() &&
-        !effects.readsMutableGlobalState() && !effects.danglingPop &&
-        !effects.trap && !effects.hasSynchronization() &&
-        !effects.mayNotReturn) {
+    if (!hasCF && !hasGlobalState && !effects.danglingPop && !hasTrap &&
+        !effects.hasSynchronization() && !effects.mayNotReturn) {
       std::unordered_set<Index> candidates;
       // When the current expression reads local L, any sinkable that writes L
       // has a write-read conflict.
@@ -430,6 +482,17 @@ struct SimplifyLocals
         candidates.insert(controlFlowSinkables.begin(),
                           controlFlowSinkables.end());
       }
+      ci_log("fast",
+             sinkables.size(),
+             candidates.size(),
+             readsLocal,
+             writesLocal,
+             hasCalls,
+             hasMemory,
+             hasGC,
+             hasTrap,
+             hasCF,
+             hasGlobalState);
       std::vector<Index> invalidated;
       for (auto key : candidates) {
         auto it = sinkables.find(key);
@@ -445,6 +508,17 @@ struct SimplifyLocals
 
     // Slow path: the expression has non-local effects, so we must check all
     // sinkables.
+    ci_log("slow",
+           sinkables.size(),
+           sinkables.size(),
+           readsLocal,
+           writesLocal,
+           hasCalls,
+           hasMemory,
+           hasGC,
+           hasTrap,
+           hasCF,
+           hasGlobalState);
     std::vector<Index> invalidated;
     for (auto& [index, info] : sinkables) {
       if (effects.orderedAfter(info.effects)) {
