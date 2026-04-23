@@ -2489,7 +2489,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // First, refine params sent to imports. Gather the LUB sent to each import,
   // and then refine.
   std::unordered_map<Name, LUBFinder> paramLUBs;
-  for (auto& [_, info]) {
+  for (auto& [_, info] : map) {
     for (auto* call : info.callImports) {
       std::vector<Type> sent;
       for (auto* operand : call->operands) {
@@ -2499,27 +2499,27 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     }
   }
 
-  for (auto& name : wasm.functions) {
-    auto* func = wasm.getFunction(name);
+  for (auto& func : wasm.functions) {
     if (!func->imported()) {
       continue;
     }
-    if (map[name].reffed) {
+    if (map[func->name].reffed) {
       continue;
     }
 
     // Find the LUB, which is the most we can refine.
-    auto lub = paramLUBs[name];
+    auto lub = paramLUBs[func->name];
     if (!lub.noted()) {
       continue;
     }
 
     // Refine.
     auto oldParams = func->getParams();
-    assert(oldParams.size() == lub.size());
+    auto lubType = lub.getLUB();
+    assert(oldParams.size() == lubType.size());
     std::vector<Type> newParams;
-    for (Index i = 0; i < lub.size(); i++) {
-      newParams.push_back(maybeRefine(oldParams[i], lub[i]));
+    for (Index i = 0; i < lubType.size(); i++) {
+      newParams.push_back(maybeRefine(oldParams[i], lubType[i]));
     }
     func->setParams(Type(newParams));
   }
@@ -2529,7 +2529,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     if (exp->kind != ExternalKind::Function) {
       continue;
     }
-    auto name = exp->getInternalName();
+    auto name = *exp->getInternalName();
     if (map[name].reffed) {
       continue;
     }
@@ -2543,10 +2543,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     // Refine.
     auto oldResults = func->getResults();
-    assert(oldResults.size() == lub.size());
+    auto lubType = lub.getLUB();
+    assert(oldResults.size() == lubType.size());
     std::vector<Type> newResults;
-    for (Index i = 0; i < lub.size(); i++) {
-      newResults.push_back(maybeRefine(oldResults[i], lub[i]));
+    for (Index i = 0; i < lubType.size(); i++) {
+      newResults.push_back(maybeRefine(oldResults[i], lubType[i]));
     }
     func->setResults(Type(newResults));
   }
