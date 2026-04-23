@@ -513,11 +513,9 @@
   ;; NTRAP:      (func $cast-desc-eq-weaker-nondesc-child-effects (type $14) (param $ref anyref) (param $desc (ref $sub.desc))
   ;; NTRAP-NEXT:  (drop
   ;; NTRAP-NEXT:   (ref.cast_desc_eq (ref $sub)
-  ;; NTRAP-NEXT:    (ref.as_non_null
-  ;; NTRAP-NEXT:     (block (result anyref)
-  ;; NTRAP-NEXT:      (call $effect)
-  ;; NTRAP-NEXT:      (local.get $ref)
-  ;; NTRAP-NEXT:     )
+  ;; NTRAP-NEXT:    (block (result anyref)
+  ;; NTRAP-NEXT:     (call $effect)
+  ;; NTRAP-NEXT:     (local.get $ref)
   ;; NTRAP-NEXT:    )
   ;; NTRAP-NEXT:    (block (result (ref $sub.desc))
   ;; NTRAP-NEXT:     (call $effect)
@@ -1407,21 +1405,17 @@
   ;; CHECK-NEXT: )
   ;; NTRAP:      (func $ref.cast_desc_eq-ref.as_non_null (type $4)
   ;; NTRAP-NEXT:  (local $null (ref null $struct))
-  ;; NTRAP-NEXT:  (local $1 (ref $struct))
-  ;; NTRAP-NEXT:  (local $2 (ref null $desc))
+  ;; NTRAP-NEXT:  (local $1 (ref null $desc))
   ;; NTRAP-NEXT:  (drop
   ;; NTRAP-NEXT:   (block (result (ref $struct))
   ;; NTRAP-NEXT:    (local.set $1
-  ;; NTRAP-NEXT:     (ref.as_non_null
-  ;; NTRAP-NEXT:      (local.get $null)
-  ;; NTRAP-NEXT:     )
-  ;; NTRAP-NEXT:    )
-  ;; NTRAP-NEXT:    (local.set $2
   ;; NTRAP-NEXT:     (block (result (ref null $desc))
   ;; NTRAP-NEXT:      (return)
   ;; NTRAP-NEXT:     )
   ;; NTRAP-NEXT:    )
-  ;; NTRAP-NEXT:    (local.get $1)
+  ;; NTRAP-NEXT:    (ref.as_non_null
+  ;; NTRAP-NEXT:     (local.get $null)
+  ;; NTRAP-NEXT:    )
   ;; NTRAP-NEXT:   )
   ;; NTRAP-NEXT:  )
   ;; NTRAP-NEXT:  (drop
