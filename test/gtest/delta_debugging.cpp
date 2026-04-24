@@ -87,3 +87,11 @@ TEST(DeltaDebuggingTest, UnconditionallyTrue) {
     items, [](size_t, size_t, const std::vector<int>&) { return true; });
   EXPECT_TRUE(result.empty());
 }
+
+TEST(DeltaDebuggingTest, UnconditionallyFalse) {
+  std::vector<int> items = {0, 1, 2, 3};
+  auto result = deltaDebugging(
+    items, [](size_t, size_t, const std::vector<int>&) { return false; });
+  std::vector<int> expected = {0, 1, 2, 3};
+  EXPECT_EQ(result, expected);
+}
