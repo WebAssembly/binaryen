@@ -22,6 +22,7 @@
 #include <ranges>
 
 #include "ir/effects.h"
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/graph_traversal.h"
@@ -46,6 +47,56 @@ struct FuncInfo {
   // Types that are targets of indirect calls.
   std::unordered_set<HeapType> indirectCalledTypes;
 };
+
+/*
+ Only funcs that are 'addressed' may be the target of an indirect call. A
+ function is addressed if:
+ - It appears in a ref.func expression
+ - It appears in an `elem` segment (note that we already ignore `elem declare`
+   statements in our IR, but we check separately for funcs that appear in
+   `ref.func`).
+ - It's exported, because it may flow back to us as a reference.
+ - It's imported, which implies it is `elem declare`d.
+
+ If a function doesn't meet any of these criteria, it can't be the target of
+ an indirect call and we don't need to include its effects in indirect calls.
+*/
+std::unordered_set<Function*> getAddressedFuncs(Module& module) {
+  struct AddressedFuncsWalker : PostWalker<AddressedFuncsWalker> {
+    std::unordered_set<Function*>& addressedFuncs;
+
+    AddressedFuncsWalker(std::unordered_set<Function*>& addressedFuncs)
+      : addressedFuncs(addressedFuncs) {}
+
+    void visitRefFunc(RefFunc* refFunc) {
+      addressedFuncs.insert(getModule()->getFunction(refFunc->func));
+    }
+  };
+
+  std::unordered_set<Function*> addressedFuncs;
+  AddressedFuncsWalker walker(addressedFuncs);
+  walker.walkModule(&module);
+
+  ModuleUtils::iterImportedFunctions(
+    module, [&addressedFuncs, &module](Function* import) {
+      addressedFuncs.insert(module.getFunction(import->name));
+    });
+
+  for (const auto& export_ : module.exports) {
+    if (export_->kind != ExternalKind::Function) {
+      continue;
+    }
+
+    addressedFuncs.insert(module.getFunction(*export_->getInternalName()));
+  }
+
+  ElementUtils::iterAllElementFunctionNames(
+    &module, [&addressedFuncs, &module](Name func) {
+      addressedFuncs.insert(module.getFunction(func));
+    });
+
+  return addressedFuncs;
+}
 
 std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
                                            const PassOptions& passOptions) {
@@ -146,6 +197,7 @@ using CallGraph =
 
 CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
+                         const std::unordered_set<Function*>& addressedFuncs,
                          bool closedWorld) {
   CallGraph callGraph;
   if (!closedWorld) {
@@ -181,7 +233,9 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     // Type -> Function
-    callGraph[caller->type.getHeapType()].insert(caller);
+    if (addressedFuncs.contains(caller)) {
+      callGraph[caller->type.getHeapType()].insert(caller);
+    }
   }
 
   // Type -> Type
@@ -345,8 +399,10 @@ struct GenerateGlobalEffects : public Pass {
     std::map<Function*, FuncInfo> funcInfos =
       analyzeFuncs(*module, getPassOptions());
 
-    auto callGraph =
-      buildCallGraph(*module, funcInfos, getPassOptions().closedWorld);
+    auto addressedFuncs = getAddressedFuncs(*module);
+
+    auto callGraph = buildCallGraph(
+      *module, funcInfos, addressedFuncs, getPassOptions().closedWorld);
 
     propagateEffects(*module, getPassOptions(), funcInfos, callGraph);
 
