@@ -179,7 +179,7 @@
     (call_ref $super (local.get $func))
   )
 
-  ;; CHECK:      (func $calls-ref-with-exact-supertype (type $2) (param $func (ref (exact $super)))
+  ;; CHECK:      (func $calls-ref-with-exact-supertype (type $3) (param $func (ref (exact $super)))
   ;; CHECK-NEXT:  (call_ref $super
   ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:  )

@@ -730,34 +730,17 @@ private:
       if (auto* target = parent.module.getFunctionOrNull(curr->target)) {
         targetEffects = target->effects.get();
       }
+      if (targetEffects) {
+        populateEffectsFromGlobalEffects(*targetEffects, curr);
+        return;
+      }
 
       if (curr->isReturn) {
         parent.branchesOut = true;
         // When EH is enabled, any call can throw.
-        if (parent.features.hasExceptionHandling() &&
-            (!targetEffects || targetEffects->throws())) {
+        if (parent.features.hasExceptionHandling()) {
           parent.hasReturnCallThrow = true;
         }
-      }
-
-      if (targetEffects) {
-        // We have effect information for this call target, and can just use
-        // that. The one change we may want to make is to remove throws_, if the
-        // target function throws and we know that will be caught anyhow, the
-        // same as the code below for the general path. We can always filter out
-        // throws for return calls because they are already more precisely
-        // captured by `branchesOut`, which models the return, and
-        // `hasReturnCallThrow`, which models the throw that will happen after
-        // the return.
-        if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
-          auto filteredEffects = *targetEffects;
-          filteredEffects.throws_ = false;
-          parent.mergeIn(filteredEffects);
-        } else {
-          // Just merge in all the effects.
-          parent.mergeIn(*targetEffects);
-        }
-        return;
       }
 
       parent.calls = true;
@@ -770,9 +753,19 @@ private:
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
+      auto* table = getModule()->getTable(curr->table);
+      if (!Type::isSubType(Type(curr->heapType, Nullability::Nullable), table->type)) {
+        parent.trap = true;
+        return;
+      }
+
       if (auto it = parent.module.typeEffects.find(curr->heapType);
           it != parent.module.typeEffects.end()) {
         parent.mergeIn(*it->second);
+
+        if (table->type.isNullable()) {
+          parent.implicitTrap = true;
+        }
         return;
       }
 
@@ -1049,10 +1042,24 @@ private:
         return;
       }
 
+      const EffectAnalyzer* targetEffects = nullptr;
       if (auto it =
             parent.module.typeEffects.find(curr->target->type.getHeapType());
           it != parent.module.typeEffects.end()) {
+        targetEffects = it->second.get();
         parent.mergeIn(*it->second);
+      }
+
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+        // When EH is enabled, any call can throw.
+        if (parent.features.hasExceptionHandling() &&
+            (!targetEffects || targetEffects->throws())) {
+          parent.hasReturnCallThrow = true;
+        }
+      }
+
+      if (targetEffects) {
         return;
       }
 
@@ -1347,6 +1354,26 @@ private:
 
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
+      }
+    }
+
+    private:
+    template <typename Call>
+    bool populateEffectsFromGlobalEffects(const EffectAnalyzer& effects, const Call* curr) {
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+        if (effects.throws()) {
+          parent.hasReturnCallThrow = true;
+        }
+      }
+
+      if (effects.throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
+        auto filteredEffects = effects;
+        filteredEffects.throws_ = false;
+        parent.mergeIn(filteredEffects);
+      } else {
+        // Just merge in all the effects.
+        parent.mergeIn(effects);
       }
     }
   };

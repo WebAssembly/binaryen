@@ -2723,7 +2723,8 @@ public:
   std::unordered_map<HeapType, Index> typeIndices;
 
   // Potential effects for bodies of indirect calls to this type.
-  // TODO: make this into Type
+  // TODO: Use Type instead of HeapType to account for nullability and
+  // exactness.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     typeEffects;
 
