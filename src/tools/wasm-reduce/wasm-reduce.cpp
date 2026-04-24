@@ -930,8 +930,8 @@ struct Reducer
           // the remaining set. We don't want to waste time on very fine-grained
           // partitions when we could switch to another reduction strategy
           // instead.
-          if (partition.size() > 0 &&
-              partition.size() < std::sqrt(nontrivialFuncIndices.size())) {
+          if (size_t sqrtRemaining = std::sqrt(nontrivialFuncIndices.size());
+              partition.size() > 0 && partition.size() < sqrtRemaining) {
             throw EarlyReturn{};
           }
 
