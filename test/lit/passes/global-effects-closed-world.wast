@@ -196,6 +196,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-uninhabited (param $ref (ref $uninhabited))
+    ;; It's impossible to create a ref to call this function with.
+    ;; TODO: Optimize this to (unreachable).
     (call_ref $uninhabited (i32.const 1) (local.get $ref))
   )
 
@@ -207,7 +209,7 @@
   ;; CHECK-NEXT: )
   (func $calls-nullable-uninhabited (param $ref (ref null $uninhabited))
     ;; This must be null, so it's guaranteed to trap and can't be optimized out.
-    ;; TODO: try to optimize this to (unreachable)
+    ;; TODO: Optimize this to (unreachable).
     (call_ref $uninhabited (i32.const 1) (local.get $ref))
   )
 
@@ -263,6 +265,15 @@
     (call_ref $super (local.get $func))
   )
 
+  ;; CHECK:      (func $calls-ref-with-exact-supertype (type $2) (param $func (ref (exact $super)))
+  ;; CHECK-NEXT:  (call_ref $super
+  ;; CHECK-NEXT:   (local.get $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-ref-with-exact-supertype (param $func (ref (exact $super)))
+    (call_ref $super (local.get $func))
+  )
+
   ;; CHECK:      (func $f (type $1) (param $func (ref $super))
   ;; CHECK-NEXT:  (call $calls-ref-with-supertype
   ;; CHECK-NEXT:   (local.get $func)
@@ -276,47 +287,17 @@
     ;; can't optimize out this call.
     (call $calls-ref-with-supertype (local.get $func))
   )
-)
 
-;; Same as above but this time our reference is the exact supertype
-;; so we know not to aggregate effects from the subtype.
-;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
-(module
-  ;; CHECK:      (type $super (sub (func)))
-  (type $super (sub (func)))
-
-  ;; CHECK:      (type $sub (sub $super (func)))
-  (type $sub (sub $super (func)))
-
-  ;; CHECK:      (func $nop-with-supertype (type $super)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $nop-with-supertype (export "nop-with-supertype") (type $super)
-  )
-
-  ;; CHECK:      (func $effectful-with-subtype (type $sub)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $effectful-with-subtype (export "effectful-with-subtype") (type $sub)
-    (unreachable)
-  )
-
-  ;; CHECK:      (func $calls-ref-with-supertype (type $1) (param $func (ref (exact $super)))
-  ;; CHECK-NEXT:  (call_ref $super
+  ;; CHECK:      (func $g (type $2) (param $func (ref (exact $super)))
+  ;; CHECK-NEXT:  (call $calls-ref-with-exact-supertype
   ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $calls-ref-with-supertype (param $func (ref (exact $super)))
-    (call_ref $super (local.get $func))
-  )
-
-  ;; CHECK:      (func $f (type $1) (param $func (ref (exact $super)))
-  ;; CHECK-NEXT:  (call $calls-ref-with-supertype
-  ;; CHECK-NEXT:   (local.get $func)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $f (param $func (ref (exact $super)))
-    (call $calls-ref-with-supertype (local.get $func))
+  (func $g (param $func (ref (exact $super)))
+    ;; Same as above but this time our reference is the exact supertype
+    ;; so we know not to aggregate effects from the subtype.
+    ;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
+    (call $calls-ref-with-exact-supertype (local.get $func))
   )
 )
 

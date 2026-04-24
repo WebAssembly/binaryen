@@ -98,7 +98,8 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
                 type = callIndirect->heapType;
               } else {
-                WASM_UNREACHABLE("Unexpected call type");
+                funcInfo.effects = UnknownEffects;
+                return;
               }
 
               funcInfo.indirectCalledTypes.insert(type);
@@ -125,23 +126,21 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
 
 using CallGraphNode = std::variant<Function*, HeapType>;
 
-/*
- Call graph for indirect and direct calls.
-
- key (caller) -> value (callee)
- Function  -> Function : direct call
- Function  -> HeapType : indirect call to the given HeapType
- HeapType  -> Function : The function `callee` has the type `caller`. The
-                         HeapType may essentially 'call' any of its
-                         potential implementations.
- HeapType  -> HeapType : `callee` is a subtype of `caller`. A call_ref
-                         could target any subtype of the ref, so we need to
-                         aggregate effects of subtypes of the target type.
-
- If we're running in an open world, we only include Function -> Function edges,
- and don't compute effects for indirect calls, conservatively assuming the
- worst.
-*/
+// Call graph for indirect and direct calls.
+//
+// key (caller) -> value (callee)
+// Function  -> Function : direct call
+// Function  -> HeapType : indirect call to the given HeapType
+// HeapType  -> Function : The function `callee` has the type `caller`. The
+//                         HeapType may essentially 'call' any of its
+//                         potential implementations.
+// HeapType  -> HeapType : `callee` is a subtype of `caller`. A call_ref
+//                         could target any subtype of the ref, so we need to
+//                         aggregate effects of subtypes of the target type.
+//
+// If we're running in an open world, we only include Function -> Function
+// edges, and don't compute effects for indirect calls, conservatively assuming
+// the worst.
 using CallGraph =
   std::unordered_map<CallGraphNode, std::unordered_set<CallGraphNode>>;
 
