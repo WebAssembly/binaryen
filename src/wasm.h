@@ -2684,6 +2684,11 @@ public:
   std::unordered_map<HeapType, TypeNames> typeNames;
   std::unordered_map<HeapType, Index> typeIndices;
 
+  // Potential effects for bodies of indirect calls to this type.
+  // TODO: make this into Type
+  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+    typeEffects;
+
   MixedArena allocator;
 
 private:
