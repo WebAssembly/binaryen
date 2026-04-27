@@ -28,6 +28,8 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         export_results = set()
 
         for _ in range(iters):
+            print('.', end='')
+
             # Generate raw random data
             with open(temp_dat.name, 'wb') as f:
                 f.write(bytes([random.randint(0, 255) for x in range(size)]))
@@ -43,21 +45,21 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             # Find the params/results that might be refined.
             for line in wat.splitlines():
                 if line.startswith(' (import "module" "base" (func $import '):
-                    params, results = parse_params_results(line)
-                    import_params.insert(params)
-                    assert results == 'eqref', 'cannot refine import result'
+                    params, results = self.parse_params_results(line)
+                    import_params.add(params)
+                    assert results == '(result eqref)', 'cannot refine import result'
                 elif line.startswith(' (import "module" "base" (func $import-reffed '):
-                    params, results = parse_params_results(line)
-                    assert params == 'i32 anyref', 'cannot refine reffed stuff'
-                    assert results == 'eqref', 'cannot refine import result'
+                    params, results = self.parse_params_results(line)
+                    assert params == '(param i32 anyref)', 'cannot refine reffed stuff'
+                    assert results == '(result eqref)', 'cannot refine import result'
                 if line.startswith(' (func $export '):
-                    params, results = parse_params_results(line)
+                    params, results = self.parse_params_results(line)
                     assert params == '(param $0 i32) (param $1 anyref)', 'cannot refine export params'
-                    export_results.insert(results)
+                    export_results.add(results)
                 if line.startswith(' (func $export-reffed '):
-                    params, results = parse_params_results(line)
+                    params, results = self.parse_params_results(line)
                     assert params == '(param $0 i32) (param $1 anyref)', 'cannot refine export params'
-                    assert results == 'eqref', 'cannot refine reffed stuff'
+                    assert results == '(result eqref)', 'cannot refine reffed stuff'
 
         # We looked at 1000 cases, and we should be refining half the time, so
         # we must see more than one refinement, unless we are so lucky we'd win
@@ -87,7 +89,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                     if line[end] == '(':
                         parens += 1
                     elif line[end] == ')':
-                        parens += 1
+                        parens -= 1
                     end += 1
 
                 # Add (separated by a space).
@@ -96,7 +98,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                 ret += line[start:end]
 
                 # Keep looking.
-                start = end
+                pos = end
 
             print('find', what, line, '    ======>>>>>    ', ret)
             return ret
