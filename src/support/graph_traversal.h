@@ -18,6 +18,7 @@
 #include <functional>
 #include <iterator>
 #include <unordered_set>
+#include <vector>
 
 namespace wasm {
 
