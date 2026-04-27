@@ -70,6 +70,12 @@ Literal::Literal(Type type) : type(type) {
     return;
   }
 
+  if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
+    assert(type.isNonNullable());
+    new (&gcData) std::shared_ptr<GCData>(new GCData({}, Literal()));
+    return;
+  }
+
   WASM_UNREACHABLE("Unexpected literal type");
 }
 
@@ -102,6 +108,7 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   assert((isData() && gcData) ||
          (type.isMaybeShared(HeapType::ext) && gcData) ||
          (type.isMaybeShared(HeapType::string) && gcData) ||
+         (type.isMaybeShared(HeapType::waitqueue) && gcData) ||
          (type.isMaybeShared(HeapType::any) && gcData) ||
          (type.isBottom() && !gcData));
 }
@@ -185,7 +192,11 @@ Literal::Literal(const Literal& other) : type(other.type) {
       return;
     }
     case HeapType::any:
-      // Internalized external reference or string.
+    case HeapType::eq:
+    case HeapType::string:
+    case HeapType::waitqueue:
+    case HeapType::nowaitqueue:
+      // Internalized external reference, string, or waitqueue.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
     case HeapType::none:
@@ -194,14 +205,11 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::noexn:
     case HeapType::nocont:
       WASM_UNREACHABLE("null literals should already have been handled");
-    case HeapType::eq:
     case HeapType::func:
     case HeapType::cont:
     case HeapType::struct_:
     case HeapType::array:
       WASM_UNREACHABLE("invalid type");
-    case HeapType::string:
-      WASM_UNREACHABLE("TODO: string literals");
   }
 }
 
@@ -369,8 +377,10 @@ std::shared_ptr<FuncData> Literal::getFuncData() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isNull() || isData() ||
-         (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)));
+  assert(
+    isNull() || isData() ||
+    (type.isRef() && (type.getHeapType().isMaybeShared(HeapType::ext) ||
+                      type.getHeapType().isMaybeShared(HeapType::waitqueue))));
   return gcData;
 }
 
@@ -757,6 +767,16 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
             // TODO: Use wtf16.view() once we have C++20.
             String::printEscapedJSON(o, wtf16.str());
             o << ")";
+          }
+          break;
+        }
+        case HeapType::waitqueue:
+        case HeapType::nowaitqueue: {
+          auto data = literal.getGCData();
+          if (!data) {
+            o << "nullwaitqueue";
+          } else {
+            o << "waitqueue(" << data << ")";
           }
           break;
         }
