@@ -229,6 +229,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-blocks                                merges blocks to their parents
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --merge-data-segments                         merges adjacent active data
+;; CHECK-NEXT:                                                 segments into a single segment
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-j2cl-itables                          Merges itable structures into
 ;; CHECK-NEXT:                                                 vtables to make types more
 ;; CHECK-NEXT:                                                 compact
