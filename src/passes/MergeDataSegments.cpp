@@ -35,7 +35,7 @@ namespace wasm {
 namespace {
 
 // The maximum size possible for a single data segment.
-constexpr size_t MAX_SEG_SIZE = std::numeric_limits<int32_t>::max();
+constexpr uint64_t MAX_SEG_SIZE = std::numeric_limits<uint32_t>::max();
 
 struct SegmentEntry {
   Address start;
@@ -150,12 +150,12 @@ struct MergeInfo {
   // result in a trap during instantiation. This method should return Maybe or
   // Yes before the segment is added to a SegmentMap, otherwise address
   // overflows could occur in the merge algorithm.
-  InBounds inBounds(const Literal& offset, size_t size) {
-    if (offset.isNegative() || size > MAX_SEG_SIZE) {
+  InBounds inBounds(Address start, size_t size) {
+    if (size > MAX_SEG_SIZE) {
       return InBounds::No;
     }
     uint64_t end;
-    if (std::ckd_add(&end, offset.getUnsigned(), size)) {
+    if (std::ckd_add<uint64_t>(&end, start, size)) {
       return InBounds::No;
     }
     if (end == 0) {
@@ -240,11 +240,11 @@ struct MergeInfo {
         continue;
       }
 
-      size_t leftSegSize =
+      uint64_t leftSegSize =
         3 + lebSize(left->start) + lebSize(leftSize) + leftSize;
-      size_t rightSegSize =
+      uint64_t rightSegSize =
         3 + lebSize(right->start) + lebSize(rightSize) + rightSize;
-      size_t mergedSegSize =
+      uint64_t mergedSegSize =
         3 + lebSize(left->start) + lebSize(mergedSize) + mergedSize;
       if (leftSegSize + rightSegSize < mergedSegSize) {
         left = right++;
@@ -396,14 +396,15 @@ struct MergeDataSegments : public Pass {
       auto& info = infos[seg->memory];
 
       if (auto* c = seg->offset->dynCast<Const>()) {
-        auto inBounds = info.inBounds(c->value, seg->data.size());
+        Address start = c->value.getUnsigned();
+        auto inBounds = info.inBounds(start, seg->data.size());
         if (inBounds == InBounds::No) {
           trapSegment = std::move(seg);
           break;
         }
 
         SegmentEntry entry;
-        entry.start = c->value.getUnsigned();
+        entry.start = start;
         entry.name = seg->name;
         if (!seg->data.empty()) {
           entry.data = std::move(seg->data);
@@ -463,8 +464,7 @@ struct MergeDataSegments : public Pass {
         }
 
         // For the bounds check, we conservatively assume that the offset is 0.
-        auto zero = Literal::makeZero(info.mem->addressType);
-        if (info.inBounds(zero, seg->data.size()) == InBounds::No) {
+        if (info.inBounds(0, seg->data.size()) == InBounds::No) {
           trapSegment = std::move(seg);
           break;
         }
