@@ -2486,6 +2486,9 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       newExactness = Inexact;
     }
 
+//std::cout << "old: " << oldHeapType << " : " << oldNullability << " : " << oldExactness << '\n';
+//std::cout << "new: " << newHeapType << " : " << newNullability << " : " << newExactness << '\n';
+
     return Type(newHeapType, newNullability, newExactness);
   };
 
@@ -2494,9 +2497,16 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   std::unordered_map<Name, LUBFinder> paramLUBs;
   for (auto& [_, info] : map) {
     for (auto* call : info.callImports) {
+      auto declaredParams = wasm.getFunction(call->target)->getParams();
       std::vector<Type> sent;
-      for (auto* operand : call->operands) {
-        sent.push_back(operand->type);
+      for (Index i = 0; i < call->operands.size(); i++) {
+        auto type = call->operands[i]->type;
+        if (type == Type::unreachable) {
+          // Nothing sent here, so use the declared type - what we refine to
+          // must still validate even though this call is unreachable.
+          type = declaredParams[i];
+        }
+        sent.push_back(type);
       }
       paramLUBs[call->target].note(Type(sent));
     }
