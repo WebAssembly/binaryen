@@ -1,4 +1,6 @@
+import random
 import subprocess
+import tempfile
 
 from scripts.test import shared
 
@@ -22,8 +24,8 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
 
         # The set of all params we see, for the import that is refinable. Ditto
         # for export results.
-        import_params = Set()
-        export_results = Set()
+        import_params = set()
+        export_results = set()
 
         for _ in range(iters):
             # Generate raw random data
@@ -32,7 +34,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
 
             # Generate the fuzz testcase from the random data + the initial
             # contents.
-            args = ['-ttf', temp_dat.name, '--initial-fuzz=' + initial]
+            args = ['-ttf', temp_dat.name, '--initial-fuzz=' + initial, '-all']
             args += ['--fuzz-preserve-imports-exports', '--fuzz-against-js']
             args += ['--print']
             wat = shared.run_process(shared.WASM_OPT + args,
@@ -65,7 +67,39 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         print(f'export_results: {export_results}')
         assert len(export_results) >= 2
 
+    # Given a line with wat params and results, parse and return them.
     def parse_params_results(self, line):
-        # Given a line with wat params and results, parse and return them.
+        # Find either params or results.
+        def get(what, line):
+            ret = ''
+            pos = 0
 
+            while True:
+                # Find the thing we are looking for.
+                start = line.find(what, pos)
+                if start < 0:
+                    break
+
+                # Find the end paren.
+                parens = 1
+                end = start + 1
+                while parens > 0:
+                    if line[end] == '(':
+                        parens += 1
+                    elif line[end] == ')':
+                        parens += 1
+                    end += 1
+
+                # Add (separated by a space).
+                if ret:
+                    ret += ' '
+                ret += line[start:end]
+
+                # Keep looking.
+                start = end
+
+            print('find', what, line, '    ======>>>>>    ', ret)
+            return ret
+
+        return get('(param', line), get('(result', line)
 
