@@ -34,7 +34,6 @@
     (drop
       (call $import-reffed
         (i32.const 20)
-        ;; Send $A. We can refine the anyref to $A or $A2 (but not $B or $B2).
         (struct.new $A)
       )
     )
