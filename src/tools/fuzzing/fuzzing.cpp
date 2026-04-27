@@ -2479,8 +2479,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     auto oldExactness = old.getExactness();
     auto newExactness = new_.getExactness();
     if (newExactness != oldExactness) {
-      // TODO: once getExactness is fixed, use
+      // TODO: once getExactness() is fixed (see there), use that
       newExactness = oneIn(2) ? Exact : Inexact;
+    }
+    if (newHeapType.isBasic()) {
+      newExactness = Inexact;
     }
 
     return Type(newHeapType, newNullability, newExactness);
@@ -2551,6 +2554,26 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     }
     func->setResults(Type(newResults));
   }
+
+  // Update return types from calls to exports whose results we refined.
+  struct CallUpdater : public WalkerPass<PostWalker<CallUpdater>> {
+    bool isFunctionParallel() override { return true; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<CallUpdater>();
+    }
+
+    void visitCall(Call* curr) {
+      if (curr->type != Type::unreachable) {
+        curr->type = getModule()->getFunction(curr->target)->getResults();
+      }
+    }
+  } updater;
+  updater.setModule(&wasm);
+  updater.run(&runner, &wasm);
+
+  // Propagate after our changes.
+  ReFinalize().run(&runner, &wasm);
 }
 
 void TranslateToFuzzReader::dropToLog(Function* func) {
