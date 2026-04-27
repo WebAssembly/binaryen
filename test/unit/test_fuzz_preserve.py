@@ -5,33 +5,32 @@ from scripts.test import shared
 from . import utils
 
 
-class InitialFuzzTest(utils.BinaryenTestCase):
-    def test_empty_initial(self):
-        # generate fuzz from random data
-        data = self.input_path('random_data.txt')
-        a = shared.run_process(shared.WASM_OPT + ['-ttf', '--print', data],
-                               stdout=subprocess.PIPE).stdout
+class PreserveFuzzTest(utils.BinaryenTestCase):
+    def test_against_js(self):
+        # When --fuzz-against-js is used, the wasm is only going to be fuzzed
+        # against JS, so the fuzzer mutates the boundary in valid ways, even if
+        # --fuzz-preserve-imports-exports is set.
+        #
+        # Testing this deterministically is too hard (as the fuzzer evolves, it
+        # will handle random data differently, and the test would constantly get
+        # out of date). Instead, test randomly, in a way that the chance of a
+        # flake is unrealistic.
+        size = 10 * 1024
+        iters = 1000
+        temp_dat = tempfile.NamedTemporaryFile(suffix='.dat')
+        initial = self.input_path('fuzz.wat')
 
-        # generate fuzz from random data with initial empty wasm
-        empty_wasm = self.input_path('empty.wasm')
-        b = shared.run_process(
-            shared.WASM_OPT + ['-ttf', '--print', data,
-                               '--initial-fuzz=' + empty_wasm],
-            stdout=subprocess.PIPE).stdout
+        for _ in range(iters):
+            # Generate raw random data
+            with open(temp_dat.name, 'wb') as f:
+                f.write(bytes([random.randint(0, 255) for x in range(size)]))
 
-        # an empty initial wasm causes no changes
-        self.assertEqual(a, b)
+            # Generate the fuzz testcase from the random data + the initial
+            # contents.
+            args = ['-ttf', temp_dat.name, '--initial-fuzz=' + initial]
+            args += ['--fuzz-preserve-imports-exports', '--fuzz-against-js']
+            args += ['--print']
+            wat = shared.run_process(shared.WASM_OPT + args,
+                                   stdout=subprocess.PIPE).stdout
 
-    def test_small_initial(self):
-        data = self.input_path('random_data.txt')
-        hello_wat = self.input_path('hello_world.wat')
-        out = shared.run_process(shared.WASM_OPT + ['-ttf', '--print', data,
-                                 '--initial-fuzz=' + hello_wat],
-                                 stdout=subprocess.PIPE).stdout
-
-        # the function should be there (perhaps with modified contents - don't
-        # check that)
-        self.assertIn('(export "add" (func $add))', out)
-
-        # there should be other fuzz contents added as well
-        self.assertGreater(out.count('(export '), 1)
+ 
