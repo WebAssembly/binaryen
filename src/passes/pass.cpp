@@ -293,6 +293,9 @@ void PassRegistry::registerPasses() {
                createMemoryPackingPass);
   registerPass(
     "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
+  registerPass("merge-data-segments",
+               "merges adjacent active data segments into a single segment",
+               createMergeDataSegmentsPass);
   registerPass("merge-similar-functions",
                "merges similar functions when benefical",
                createMergeSimilarFunctionsPass);
