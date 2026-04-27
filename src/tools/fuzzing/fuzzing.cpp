@@ -2459,12 +2459,18 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     assert(HeapType::isSubType(newHeapType, oldHeapType));
     std::vector<HeapType> options;
     options.push_back(oldHeapType);
-    while (newHeapType != oldHeapType) {
+    // We continue until we reach the old type. Note we cannot do that if
+    // newHeapType is null, because it has more than one super, and getSuperType
+    // does not work. TODO: handle all possible supers.
+    if (newHeapType.isNull()) {
       options.push_back(newHeapType);
-      // We continue until we reach the old type.
-      auto next = newHeapType.getSuperType();
-      assert(next);
-      newHeapType = *next;
+    } else {
+      while (newHeapType != oldHeapType) {
+        options.push_back(newHeapType);
+        auto next = newHeapType.getSuperType();
+        assert(next);
+        newHeapType = *next;
+      }
     }
     newHeapType = pick(options);
 
