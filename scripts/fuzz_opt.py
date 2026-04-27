@@ -2219,6 +2219,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
     def do_run(self, vm, js, wasm):
         out = vm.run_js(js, wasm, checked=False)
 
+        # Clean up stack traces.
         cleaned = []
         for line in out.splitlines():
             if 'RuntimeError:' in line or 'TypeError:' in line:
@@ -2240,7 +2241,14 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 # Ignore it, as details of traces differ based on optimizations.
                 continue
             cleaned.append(line)
-        return '\n'.join(cleaned)
+        cleaned = '\n'.join(cleaned)
+
+        # Clean up function references, which can differ after opts, things like
+        #
+        #  function 77() { [native code] }
+        #
+        cleaned = re.sub(r'function \d+\(\) ', 'function <ID>() ', cleaned)
+        return cleaned
 
     def can_run_on_wasm(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
