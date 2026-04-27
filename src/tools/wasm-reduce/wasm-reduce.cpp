@@ -29,12 +29,12 @@
 
 #include "ir/branch-utils.h"
 #include "ir/iteration.h"
-#include "ir/literal-utils.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
+#include "support/delta_debugging.h"
 #include "support/file.h"
 #include "support/hash.h"
 #include "support/path.h"
@@ -894,8 +894,105 @@ struct Reducer
     }
   }
 
-  // Reduces entire functions at a time. Returns whether we did a significant
-  // amount of reduction that justifies doing even more.
+  bool isEmptyBody(Expression* body) {
+    if (body->is<Nop>() || body->is<Unreachable>()) {
+      return true;
+    }
+    if (auto* block = body->dynCast<Block>()) {
+      return block->list.empty();
+    }
+    return false;
+  }
+
+  void reduceFunctionBodies() {
+    std::cerr << "|    try to remove function bodies\n";
+    // Use function indices to speed up finding the complement of the kept
+    // partition.
+    std::vector<Index> nontrivialFuncIndices;
+    nontrivialFuncIndices.reserve(module->functions.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      auto& func = module->functions[i];
+      // Skip functions that already have trivial bodies.
+      if (func->imported() || isEmptyBody(func->body)) {
+        continue;
+      }
+      nontrivialFuncIndices.push_back(i);
+    }
+    // TODO: Use something other than an exception to implement early return.
+    struct EarlyReturn {};
+    try {
+      deltaDebugging(
+        nontrivialFuncIndices,
+        [&](Index partitionIndex,
+            Index numPartitions,
+            const std::vector<Index>& partition) {
+          // Stop early if the partition size is less than the square root of
+          // the remaining set. We don't want to waste time on very fine-grained
+          // partitions when we could switch to another reduction strategy
+          // instead.
+          if (size_t sqrtRemaining = std::sqrt(nontrivialFuncIndices.size());
+              partition.size() > 0 && partition.size() < sqrtRemaining) {
+            throw EarlyReturn{};
+          }
+
+          std::cerr << "|     try partition " << partitionIndex + 1 << " / "
+                    << numPartitions << " (size " << partition.size() << ")\n";
+          Index removedSize = nontrivialFuncIndices.size() - partition.size();
+          std::vector<Expression*> oldBodies(removedSize);
+
+          // We first need to remove each non-kept function body, and later we
+          // might need to restore the same function bodies. Abstract the logic
+          // for iterating over these function bodies. `f` takes a Function* and
+          // Expression*& for the stashed body.
+          auto forEachRemovedFuncBody = [&](auto f) {
+            Index bodyIndex = 0;
+            Index nontrivialIndex = 0;
+            Index partitionIndex = 0;
+            while (nontrivialIndex < nontrivialFuncIndices.size()) {
+              if (partitionIndex < partition.size() &&
+                  nontrivialFuncIndices[nontrivialIndex] ==
+                    partition[partitionIndex]) {
+                // Kept, skip it.
+                nontrivialIndex++;
+                partitionIndex++;
+              } else {
+                // Removed, process it
+                Index funcIndex = nontrivialFuncIndices[nontrivialIndex++];
+                f(module->functions[funcIndex].get(), oldBodies[bodyIndex++]);
+              }
+            }
+            assert(bodyIndex == removedSize);
+            assert(partitionIndex == partition.size());
+          };
+
+          // Stash the bodies.
+          forEachRemovedFuncBody([&](Function* func, Expression*& oldBody) {
+            oldBody = func->body;
+            Builder builder(*module);
+            if (func->getResults() == Type::none) {
+              func->body = builder.makeNop();
+            } else {
+              func->body = builder.makeUnreachable();
+            }
+          });
+
+          if (!writeAndTestReduction()) {
+            // Failure. Restore the bodies.
+            forEachRemovedFuncBody([](Function* func, Expression*& oldBody) {
+              func->body = oldBody;
+            });
+            return false;
+          }
+
+          // Success!
+          noteReduction(removedSize);
+          nontrivialFuncIndices = partition;
+          return true;
+        });
+    } catch (EarlyReturn) {
+    }
+  }
+
   bool reduceFunctions() {
     // try to remove functions
     std::vector<Name> functionNames;
@@ -936,11 +1033,9 @@ struct Reducer
       }
       std::cerr << "|     trying at i=" << i << " of size " << names.size()
                 << "\n";
-      // Try to remove functions and/or empty them. Note that
-      // tryToRemoveFunctions() will reload the module if it fails, which means
-      // function names may change - for that reason, run it second.
-      justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
-      if (justReduced) {
+      // Note that tryToRemoveFunctions() will reload the module if it fails,
+      // which means function names may change.
+      if (tryToRemoveFunctions(names)) {
         noteReduction(names.size());
         // Subtract 1 since the loop increments us anyhow by one: we want to
         // skip over the skipped functions, and not any more.
@@ -967,8 +1062,11 @@ struct Reducer
     assert(curr == module.get());
     curr = nullptr;
 
+    reduceFunctionBodies();
+
     // Reduction of entire functions at a time is very effective, and we do it
     // with exponential growth and backoff, so keep doing it while it works.
+    // TODO: Figure out how to use delta debugging for this as well.
     while (reduceFunctions()) {
     }
 
@@ -1044,41 +1142,6 @@ struct Reducer
           func->body = funcBody;
         }
       }
-    }
-  }
-
-  // Try to empty out the bodies of some functions.
-  bool tryToEmptyFunctions(std::vector<Name> names) {
-    std::vector<Expression*> oldBodies;
-    size_t actuallyEmptied = 0;
-    for (auto name : names) {
-      auto* func = module->getFunction(name);
-      auto* oldBody = func->body;
-      oldBodies.push_back(oldBody);
-      // Nothing to do for imported functions (body is nullptr) or for bodies
-      // that have already been as reduced as we can make them.
-      if (func->imported() || oldBody->is<Unreachable>() ||
-          oldBody->is<Nop>()) {
-        continue;
-      }
-      actuallyEmptied++;
-      bool useUnreachable = func->getResults() != Type::none;
-      if (useUnreachable) {
-        func->body = builder->makeUnreachable();
-      } else {
-        func->body = builder->makeNop();
-      }
-    }
-    if (actuallyEmptied > 0 && writeAndTestReduction()) {
-      std::cerr << "|        emptied " << actuallyEmptied << " / "
-                << names.size() << " functions\n";
-      return true;
-    } else {
-      // Restore the bodies.
-      for (size_t i = 0; i < names.size(); i++) {
-        module->getFunction(names[i])->body = oldBodies[i];
-      }
-      return false;
     }
   }
 
@@ -1504,9 +1567,19 @@ More documentation can be found at
 
   bool stopping = false;
 
+  bool first = true;
   while (1) {
     Reducer reducer(
       command, test, working, binary, deNan, verbose, debugInfo, options);
+
+    // For extremely large modules with slow reproduction commands, reducing
+    // function bodies first can be more effective than running passes. TODO:
+    // clean this up and reconsider the order of reducers.
+    if (first) {
+      reducer.loadWorking();
+      reducer.reduceFunctionBodies();
+      first = false;
+    }
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
