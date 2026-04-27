@@ -34,6 +34,9 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             with open(temp_dat.name, 'wb') as f:
                 f.write(bytes([random.randint(0, 255) for x in range(size)]))
 
+            import shutil
+            shutil.copyfile(temp_dat.name, '/tmp/waka')
+
             # Generate the fuzz testcase from the random data + the initial
             # contents.
             args = ['-ttf', temp_dat.name, '--initial-fuzz=' + initial, '-all']

@@ -2413,7 +2413,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
   struct FunctionInfoScanner
     : public WalkerPass<PostWalker<FunctionInfoScanner>> {
-    bool isFunctionParallel() override { return true; }
+    // Not parallel for simplicity, see the map update below.
 
     bool modifiesBinaryenIR() override { return false; }
 
