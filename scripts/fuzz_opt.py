@@ -2219,6 +2219,10 @@ class PreserveImportsExportsJS(TestCaseHandler):
     def do_run(self, vm, js, wasm):
         out = vm.run_js(js, wasm, checked=False)
 
+        # VM crashes are actual issues we want to find.
+        if '(core dumped)' in out or 'Received signal' in out or '== C stack trace ==' in out or '== JS stack trace ==' in out:
+            raise Exception(f"VM crash:\n\n{out}")
+
         # Clean up stack traces.
         cleaned = []
         for line in out.splitlines():
