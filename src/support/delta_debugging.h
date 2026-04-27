@@ -36,7 +36,7 @@ namespace wasm {
 // It should return true iff the property is preserved while keeping only
 // `partition` items.
 template<typename T, typename F>
-std::vector<T> deltaDebugging(std::vector<T> items, F&& tryPartition) {
+std::vector<T> deltaDebugging(std::vector<T> items, const F& tryPartition) {
   if (items.empty()) {
     return items;
   }
