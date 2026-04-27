@@ -406,6 +406,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       break;
     case HeapType::array:
     case HeapType::string:
+    case HeapType::waitqueue:
       // As the last non-bottom types in their hierarchies, it should not be
       // possible for `a` to be array or string. We know that `b` != `a` and
       // that `b` is not bottom, but that `b` and `a` are in the same hierarchy,
@@ -415,6 +416,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     case HeapType::nofunc:
     case HeapType::nocont:
     case HeapType::noexn:
+    case HeapType::nowaitqueue:
       // Bottom types already handled.
       WASM_UNREACHABLE("unexpected basic type");
   }
@@ -963,6 +965,8 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case noexn:
         return {};
       case string:
+      case waitqueue:
+      case nowaitqueue:
         return HeapType(ext).getBasic(share);
       case eq:
         return HeapType(any).getBasic(share);
@@ -1031,6 +1035,8 @@ size_t HeapType::getDepth() const {
           break;
         case HeapType::eq:
         case HeapType::string:
+        case HeapType::waitqueue:
+        case HeapType::nowaitqueue:
           depth++;
           break;
         case HeapType::i31:
@@ -1082,6 +1088,8 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
       case none:
         return none;
       case string:
+      case waitqueue:
+      case nowaitqueue:
       case noext:
         return noext;
       case nofunc:
@@ -1129,6 +1137,8 @@ HeapType::BasicHeapType HeapType::getUnsharedTop() const {
     case array:
     case exn:
     case string:
+    case waitqueue:
+    case nowaitqueue:
       break;
   }
   WASM_UNREACHABLE("unexpected type");
@@ -1162,6 +1172,8 @@ bool HeapType::isSubType(HeapType a, HeapType b) {
       case HeapType::i31:
         return aUnshared == HeapType::none;
       case HeapType::string:
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue:
         return aUnshared == HeapType::noext;
       case HeapType::struct_:
         return aUnshared == HeapType::none || a.isStruct();
@@ -1349,6 +1361,10 @@ FeatureSet HeapType::getFeatures() const {
           case HeapType::string:
             feats |= FeatureSet::ReferenceTypes | FeatureSet::Strings;
             return;
+          case HeapType::waitqueue:
+          case HeapType::nowaitqueue:
+            feats |= FeatureSet::SharedEverything;
+            return;
           case HeapType::noext:
           case HeapType::nofunc:
             // Technically introduced in GC, but used internally as part of
@@ -1518,8 +1534,6 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Continuation has invalid function type";
     case TypeBuilder::ErrorReasonKind::InvalidSharedType:
       return os << "Shared types require shared-everything";
-    case TypeBuilder::ErrorReasonKind::InvalidWaitQueue:
-      return os << "Waitqueues require shared-everything";
     case TypeBuilder::ErrorReasonKind::InvalidStringType:
       return os << "String types require strings feature";
     case TypeBuilder::ErrorReasonKind::InvalidUnsharedField:
@@ -1573,8 +1587,6 @@ unsigned Field::getByteSize() const {
     case Field::PackedType::i16:
       return 2;
     case Field::PackedType::NotPacked:
-      return 4;
-    case Field::PackedType::WaitQueue:
       return 4;
   }
   WASM_UNREACHABLE("impossible packed type");
@@ -1656,6 +1668,10 @@ std::ostream& TypePrinter::print(Type type) {
         case HeapType::string:
           os << "stringref";
           break;
+        case HeapType::waitqueue:
+        case HeapType::nowaitqueue:
+          os << "waitqueueref";
+          break;
         case HeapType::none:
           os << "nullref";
           break;
@@ -1730,6 +1746,10 @@ std::ostream& TypePrinter::print(HeapType type) {
         break;
       case HeapType::string:
         os << "string";
+        break;
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue:
+        os << "waitqueue";
         break;
       case HeapType::none:
         os << "none";
@@ -1832,8 +1852,6 @@ std::ostream& TypePrinter::print(const Field& field) {
       os << "i8";
     } else if (packedType == Field::PackedType::i16) {
       os << "i16";
-    } else if (packedType == Field::PackedType::WaitQueue) {
-      os << "waitqueue";
     } else {
       WASM_UNREACHABLE("unexpected packed type");
     }
@@ -2447,10 +2465,6 @@ validateStruct(const Struct& struct_, FeatureSet feats, bool isShared) {
   for (auto& field : struct_.fields) {
     if (auto err = validateType(field.type, feats, isShared)) {
       return err;
-    }
-    if (field.packedType == Field::PackedType::WaitQueue &&
-        !feats.hasSharedEverything()) {
-      return TypeBuilder::ErrorReasonKind::InvalidWaitQueue;
     }
   }
   return std::nullopt;

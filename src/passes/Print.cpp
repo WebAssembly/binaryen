@@ -2379,12 +2379,11 @@ struct PrintExpressionContents
     o << ' ';
     o << curr->index;
   }
-  void visitStructNotify(StructNotify* curr) {
-    printMedium(o, "struct.notify");
-    o << ' ';
-    printHeapTypeName(curr->ref->type.getHeapType());
-    o << ' ';
-    o << curr->index;
+  void visitWaitqueueNew(WaitqueueNew* curr) {
+    printMedium(o, "waitqueue.new");
+  }
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {
+    printMedium(o, "waitqueue.notify");
   }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new");

@@ -685,6 +685,8 @@ struct HeapTypeGeneratorImpl {
         case HeapType::ext:
         case HeapType::exn:
         case HeapType::string:
+        case HeapType::waitqueue:
+        case HeapType::nowaitqueue:
         case HeapType::none:
         case HeapType::noext:
         case HeapType::nofunc:
@@ -749,6 +751,8 @@ struct HeapTypeGeneratorImpl {
         candidates.push_back(HeapTypes::any.getBasic(share));
         break;
       case HeapType::string:
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue:
         candidates.push_back(HeapTypes::ext.getBasic(share));
         break;
       case HeapType::none:

@@ -383,7 +383,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->replacement, type);
   }
   void visitStructWait(StructWait* curr) {}
-  void visitStructNotify(StructNotify* curr) {}
+  void visitWaitqueueNew(WaitqueueNew* curr) {}
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {}
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;

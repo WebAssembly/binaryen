@@ -2727,15 +2727,14 @@ void BinaryInstWriter::visitStructWait(StructWait* curr) {
   o << U32LEB(curr->index);
 }
 
-void BinaryInstWriter::visitStructNotify(StructNotify* curr) {
-  if (curr->ref->type.isNull()) {
-    emitUnreachable();
-    return;
-  }
+void BinaryInstWriter::visitWaitqueueNew(WaitqueueNew* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << U32LEB(BinaryConsts::StructNotify);
-  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-  o << U32LEB(curr->index);
+    << U32LEB(BinaryConsts::WaitqueueNew);
+}
+
+void BinaryInstWriter::visitWaitqueueNotify(WaitqueueNotify* curr) {
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::WaitqueueNotify);
 }
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {

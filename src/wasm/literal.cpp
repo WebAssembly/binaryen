@@ -185,7 +185,11 @@ Literal::Literal(const Literal& other) : type(other.type) {
       return;
     }
     case HeapType::any:
-      // Internalized external reference or string.
+    case HeapType::eq:
+    case HeapType::string:
+    case HeapType::waitqueue:
+    case HeapType::nowaitqueue:
+      // Internalized external reference, string, or waitqueue.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
     case HeapType::none:
@@ -194,14 +198,11 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::noexn:
     case HeapType::nocont:
       WASM_UNREACHABLE("null literals should already have been handled");
-    case HeapType::eq:
     case HeapType::func:
     case HeapType::cont:
     case HeapType::struct_:
     case HeapType::array:
       WASM_UNREACHABLE("invalid type");
-    case HeapType::string:
-      WASM_UNREACHABLE("TODO: string literals");
   }
 }
 
@@ -757,6 +758,16 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
             // TODO: Use wtf16.view() once we have C++20.
             String::printEscapedJSON(o, wtf16.str());
             o << ")";
+          }
+          break;
+        }
+        case HeapType::waitqueue:
+        case HeapType::nowaitqueue: {
+          auto data = literal.getGCData();
+          if (!data) {
+            o << "nullwaitqueue";
+          } else {
+            o << "waitqueue(" << data << ")";
           }
           break;
         }

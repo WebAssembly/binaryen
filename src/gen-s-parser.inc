@@ -5411,52 +5411,41 @@ switch (buf[0]) {
                 }
               }
               case 'n': {
-                switch (buf[8]) {
-                  case 'e': {
-                    switch (buf[10]) {
-                      case '\0':
-                        if (op == "struct.new"sv) {
-                          CHECK_ERR(makeStructNew(ctx, pos, annotations, false, false));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      case '_': {
-                        switch (buf[13]) {
-                          case 'f': {
-                            switch (buf[18]) {
-                              case '\0':
-                                if (op == "struct.new_default"sv) {
-                                  CHECK_ERR(makeStructNew(ctx, pos, annotations, true, false));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              case '_':
-                                if (op == "struct.new_default_desc"sv) {
-                                  CHECK_ERR(makeStructNew(ctx, pos, annotations, true, true));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
+                switch (buf[10]) {
+                  case '\0':
+                    if (op == "struct.new"sv) {
+                      CHECK_ERR(makeStructNew(ctx, pos, annotations, false, false));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case '_': {
+                    switch (buf[13]) {
+                      case 'f': {
+                        switch (buf[18]) {
+                          case '\0':
+                            if (op == "struct.new_default"sv) {
+                              CHECK_ERR(makeStructNew(ctx, pos, annotations, true, false));
+                              return Ok{};
                             }
-                          }
-                          case 's':
-                            if (op == "struct.new_desc"sv) {
-                              CHECK_ERR(makeStructNew(ctx, pos, annotations, false, true));
+                            goto parse_error;
+                          case '_':
+                            if (op == "struct.new_default_desc"sv) {
+                              CHECK_ERR(makeStructNew(ctx, pos, annotations, true, true));
                               return Ok{};
                             }
                             goto parse_error;
                           default: goto parse_error;
                         }
                       }
+                      case 's':
+                        if (op == "struct.new_desc"sv) {
+                          CHECK_ERR(makeStructNew(ctx, pos, annotations, false, true));
+                          return Ok{};
+                        }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  case 'o':
-                    if (op == "struct.notify"sv) {
-                      CHECK_ERR(makeStructNotify(ctx, pos, annotations));
-                      return Ok{};
-                    }
-                    goto parse_error;
                   default: goto parse_error;
                 }
               }
@@ -5850,6 +5839,23 @@ switch (buf[0]) {
       case 'x':
         if (op == "v128.xor"sv) {
           CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::XorVec128));
+          return Ok{};
+        }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
+  case 'w': {
+    switch (buf[11]) {
+      case 'e':
+        if (op == "waitqueue.new"sv) {
+          CHECK_ERR(makeWaitqueueNew(ctx, pos, annotations));
+          return Ok{};
+        }
+        goto parse_error;
+      case 'o':
+        if (op == "waitqueue.notify"sv) {
+          CHECK_ERR(makeWaitqueueNotify(ctx, pos, annotations));
           return Ok{};
         }
         goto parse_error;

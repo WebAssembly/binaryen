@@ -244,7 +244,8 @@ public:
   makeStructRMW(AtomicRMWOp op, HeapType type, Index field, MemoryOrder order);
   Result<> makeStructCmpxchg(HeapType type, Index field, MemoryOrder order);
   Result<> makeStructWait(HeapType type, Index index);
-  Result<> makeStructNotify(HeapType type, Index index);
+  Result<> makeWaitqueueNew();
+  Result<> makeWaitqueueNotify();
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);

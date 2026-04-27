@@ -443,7 +443,10 @@ struct CodeScanner : PostWalker<CodeScanner> {
   void visitStructGet(StructGet* curr) { info.note(curr->ref->type); }
   void visitStructSet(StructSet* curr) { info.note(curr->ref->type); }
   void visitStructWait(StructWait* curr) { info.note(curr->ref->type); }
-  void visitStructNotify(StructNotify* curr) { info.note(curr->ref->type); }
+  void visitWaitqueueNew(WaitqueueNew* curr) { info.note(curr->type); }
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {
+    info.note(curr->waitqueue->type);
+  }
   void visitArrayGet(ArrayGet* curr) { info.note(curr->ref->type); }
   void visitArraySet(ArraySet* curr) { info.note(curr->ref->type); }
   void visitContBind(ContBind* curr) {

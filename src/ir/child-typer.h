@@ -1032,21 +1032,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
 
     note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->waitqueue, Type(HeapType::waitqueue, Nullable));
     note(&curr->expected, Type(Type::BasicType::i32));
     note(&curr->timeout, Type(Type::BasicType::i64));
   }
 
-  void visitStructNotify(StructNotify* curr,
-                         std::optional<HeapType> ht = std::nullopt) {
-    if (!ht) {
-      if (!curr->ref->type.isStruct()) {
-        self().noteUnknown();
-        return;
-      }
-      ht = curr->ref->type.getHeapType();
-    }
+  void visitWaitqueueNew(WaitqueueNew* curr) {}
 
-    note(&curr->ref, Type(*ht, Nullable));
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {
+    note(&curr->waitqueue, Type(HeapType::waitqueue, Nullable));
     note(&curr->count, Type(Type::BasicType::i32));
   }
 

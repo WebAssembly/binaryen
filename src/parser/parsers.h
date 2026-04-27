@@ -457,6 +457,12 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
   if (ctx.in.takeKeyword("nocont"sv)) {
     return ctx.makeNocontType(share);
   }
+  if (ctx.in.takeKeyword("waitqueue"sv)) {
+    return ctx.makeWaitqueueType(share);
+  }
+  if (ctx.in.takeKeyword("nowaitqueue"sv)) {
+    return ctx.makeNowaitqueueType(share);
+  }
   return ctx.in.err("expected abstract heap type");
 }
 
@@ -722,9 +728,6 @@ template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("i16"sv)) {
     return ctx.makeI16();
-  }
-  if (ctx.in.takeKeyword("waitqueue"sv)) {
-    return ctx.makeWaitQueue();
   }
 
   auto type = valtype(ctx);
@@ -2561,14 +2564,17 @@ Result<> makeStructWait(Ctx& ctx,
 }
 
 template<typename Ctx>
-Result<> makeStructNotify(Ctx& ctx,
+Result<> makeWaitqueueNew(Ctx& ctx,
                           Index pos,
                           const std::vector<Annotation>& annotations) {
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  auto field = fieldidx(ctx, *type);
-  CHECK_ERR(field);
-  return ctx.makeStructNotify(pos, annotations, *type, *field);
+  return ctx.makeWaitqueueNew(pos, annotations);
+}
+
+template<typename Ctx>
+Result<> makeWaitqueueNotify(Ctx& ctx,
+                             Index pos,
+                             const std::vector<Annotation>& annotations) {
+  return ctx.makeWaitqueueNotify(pos, annotations);
 }
 
 template<typename Ctx>

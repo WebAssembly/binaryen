@@ -567,7 +567,8 @@ public:
   void visitArrayRMW(ArrayRMW* curr);
   void visitArrayCmpxchg(ArrayCmpxchg* curr);
   void visitStructWait(StructWait* curr);
-  void visitStructNotify(StructNotify* curr);
+  void visitWaitqueueNew(WaitqueueNew* curr);
+  void visitWaitqueueNotify(WaitqueueNotify* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -3622,6 +3623,11 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     curr,
     "struct.wait requires shared-everything [--enable-shared-everything]");
 
+  shouldBeSubType(
+    curr->waitqueue->type,
+    Type(HeapType(HeapType::waitqueue).getBasic(Shared), Nullable),
+    curr,
+    "struct.wait waitqueue must be a shared waitqueue reference");
   shouldBeEqual(curr->expected->type,
                 Type(Type::BasicType::i32),
                 curr,
@@ -3636,26 +3642,31 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
   // * The reference arg is a subtype of the type immediate
   // * The index immediate is a valid field index of the type immediate (and
   // thus valid for the reference's type too)
-  // * The index points to a packed waitqueue field
+  // * The index points to a mutable i32 field (currently checked implicitly)
 }
 
-void FunctionValidator::visitStructNotify(StructNotify* curr) {
+void FunctionValidator::visitWaitqueueNew(WaitqueueNew* curr) {
   shouldBeTrue(
     !getModule() || getModule()->features.hasSharedEverything(),
     curr,
-    "struct.notify requires shared-everything [--enable-shared-everything]");
+    "waitqueue.new requires shared-everything [--enable-shared-everything]");
+}
 
+void FunctionValidator::visitWaitqueueNotify(WaitqueueNotify* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "waitqueue.notify requires shared-everything [--enable-shared-everything]");
+
+  shouldBeSubType(
+    curr->waitqueue->type,
+    Type(HeapType(HeapType::waitqueue).getBasic(Shared), Nullable),
+    curr,
+    "waitqueue.notify waitqueue must be a shared waitqueue reference");
   shouldBeEqual(curr->count->type,
                 Type(Type::BasicType::i32),
                 curr,
-                "struct.notify count must be an i32");
-
-  // Checks to the ref argument's type are done in IRBuilder where we have the
-  // type annotation immediate available. We check that
-  // * The reference arg is a subtype of the type immediate
-  // * The index immediate is a valid field index of the type immediate (and
-  // thus valid for the reference's type too)
-  // * The index points to a packed waitqueue field
+                "waitqueue.notify count must be an i32");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {

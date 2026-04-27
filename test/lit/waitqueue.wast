@@ -2,9 +2,9 @@
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s
 ;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s --check-prefix=RTRIP
 (module
-  ;; CHECK:      (type $t (struct (field (mut waitqueue))))
-  ;; RTRIP:      (type $t (struct (field (mut waitqueue))))
-  (type $t (struct (field (mut waitqueue))))
+  ;; CHECK:      (type $t (shared (struct (field (mut i32)))))
+  ;; RTRIP:      (type $t (shared (struct (field (mut i32)))))
+  (type $t (shared (struct (field (mut i32)))))
 
   ;; CHECK:      (global $g (ref $t) (struct.new $t
   ;; CHECK-NEXT:  (i32.const 0)
@@ -13,12 +13,15 @@
   ;; RTRIP-NEXT:  (i32.const 0)
   ;; RTRIP-NEXT: ))
   (global $g (ref $t) (struct.new $t (i32.const 0)))
-
+  ;; CHECK:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared noextern)))
+  ;; RTRIP:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared noextern)))
+  (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared waitqueue)))
 
   ;; CHECK:      (func $wait (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.wait $t 0
   ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:    (global.get $wq)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
@@ -28,33 +31,34 @@
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (struct.wait $t 0
   ;; RTRIP-NEXT:    (global.get $g)
+  ;; RTRIP-NEXT:    (global.get $wq)
   ;; RTRIP-NEXT:    (i32.const 0)
   ;; RTRIP-NEXT:    (i64.const 0)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   (func $wait
-    (drop (struct.wait $t 0 (global.get $g) (i32.const 0) (i64.const 0)))
+    (drop (struct.wait $t 0 (global.get $g) (global.get $wq) (i32.const 0) (i64.const 0)))
   )
 
   ;; CHECK:      (func $notify (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.notify $t 0
-  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:   (waitqueue.notify
+  ;; CHECK-NEXT:    (global.get $wq)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $notify (type $0)
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (struct.notify $t 0
-  ;; RTRIP-NEXT:    (global.get $g)
+  ;; RTRIP-NEXT:   (waitqueue.notify
+  ;; RTRIP-NEXT:    (global.get $wq)
   ;; RTRIP-NEXT:    (i32.const 1)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   (func $notify
-    (drop (struct.notify $t 0 (global.get $g) (i32.const 1)))
+    (drop (waitqueue.notify (global.get $wq) (i32.const 1)))
   )
 
   ;; CHECK:      (func $wait-unreachable (type $0)
@@ -62,6 +66,9 @@
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructWait we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (global.get $wq)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 0)
@@ -74,17 +81,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $wait-unreachable (type $0)
-  ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (unreachable)
-  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (unreachable)
   ;; RTRIP-NEXT: )
   (func $wait-unreachable
-    (drop (struct.wait $t 0 (unreachable) (i32.const 0) (i64.const 0)))
+    (drop (struct.wait $t 0 (unreachable) (global.get $wq) (i32.const 0) (i64.const 0)))
   )
 
   ;; CHECK:      (func $notify-unreachable (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNotify we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -96,19 +101,20 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $notify-unreachable (type $0)
-  ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (unreachable)
-  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (unreachable)
   ;; RTRIP-NEXT: )
   (func $notify-unreachable
-    (drop (struct.notify $t 0 (unreachable) (i32.const 1)))
+    (drop (waitqueue.notify (unreachable) (i32.const 1)))
   )
 
   ;; CHECK:      (func $wait-none (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructWait we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (global.get $wq)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 0)
@@ -122,7 +128,10 @@
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $wait-none (type $0)
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (ref.null none)
+  ;; RTRIP-NEXT:   (ref.null (shared none))
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (global.get $wq)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (i32.const 0)
@@ -135,14 +144,14 @@
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   (func $wait-none
-    (drop (struct.wait $t 0 (ref.null none) (i32.const 0) (i64.const 0)))
+    (drop (struct.wait $t 0 (ref.null $t) (global.get $wq) (i32.const 0) (i64.const 0)))
   )
 
   ;; CHECK:      (func $notify-none (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNotify we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.null (shared noextern))
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -153,43 +162,18 @@
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $notify-none (type $0)
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (ref.null none)
-  ;; RTRIP-NEXT:  )
-  ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (i32.const 1)
-  ;; RTRIP-NEXT:  )
-  ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (unreachable)
+  ;; RTRIP-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
+  ;; RTRIP-NEXT:    (drop
+  ;; RTRIP-NEXT:     (ref.null (shared noextern))
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:    (drop
+  ;; RTRIP-NEXT:     (i32.const 1)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:    (unreachable)
+  ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   (func $notify-none
-    (drop (struct.notify $t 0 (ref.null none) (i32.const 1)))
-  )
-
-  ;; CHECK:      (func $struct-get-set (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get_u $t 0
-  ;; CHECK-NEXT:    (global.get $g)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $t 0
-  ;; CHECK-NEXT:   (global.get $g)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $struct-get-set (type $0)
-  ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (struct.get_u $t 0
-  ;; RTRIP-NEXT:    (global.get $g)
-  ;; RTRIP-NEXT:   )
-  ;; RTRIP-NEXT:  )
-  ;; RTRIP-NEXT:  (struct.set $t 0
-  ;; RTRIP-NEXT:   (global.get $g)
-  ;; RTRIP-NEXT:   (i32.const 1)
-  ;; RTRIP-NEXT:  )
-  ;; RTRIP-NEXT: )
-  (func $struct-get-set
-    (drop (struct.get $t 0 (global.get $g)))
-    (struct.set $t 0 (global.get $g) (i32.const 1))
+    (drop (waitqueue.notify (ref.null (shared waitqueue)) (i32.const 1)))
   )
 )

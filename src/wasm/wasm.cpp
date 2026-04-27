@@ -1322,9 +1322,28 @@ void StructCmpxchg::finalize() {
   }
 }
 
-void StructWait::finalize() { type = Type::i32; }
+void StructWait::finalize() {
+  if (ref->type == Type::unreachable || waitqueue->type == Type::unreachable ||
+      expected->type == Type::unreachable ||
+      timeout->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
-void StructNotify::finalize() { type = Type::i32; }
+void WaitqueueNew::finalize() {
+  type = Type(HeapType(HeapType::waitqueue).getBasic(Shared), NonNullable);
+}
+
+void WaitqueueNotify::finalize() {
+  if (waitqueue->type == Type::unreachable ||
+      count->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||

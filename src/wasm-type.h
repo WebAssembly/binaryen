@@ -127,9 +127,11 @@ public:
     nofunc = 13 << UsedBits,
     nocont = 14 << UsedBits,
     noexn = 15 << UsedBits,
+    waitqueue = 16 << UsedBits,
+    nowaitqueue = 17 << UsedBits,
   };
   static constexpr BasicHeapType _last_basic_type =
-    BasicHeapType(noexn | SharedMask);
+    BasicHeapType(nowaitqueue | SharedMask);
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -581,14 +583,18 @@ public:
   };
 
   Iterator begin() const { return Iterator{{this, 0}}; }
-  Iterator end() const { return Iterator{{this, size()}}; }
+  Iterator end() const {
+    return Iterator{{this, size()}};
+  }
   std::reverse_iterator<Iterator> rbegin() const {
     return std::make_reverse_iterator(end());
   }
   std::reverse_iterator<Iterator> rend() const {
     return std::make_reverse_iterator(begin());
   }
-  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
+  const Type& operator[](size_t i) const {
+    return *Iterator{{this, i}};
+  }
 };
 
 Type Type::asWrittenGivenFeatures(FeatureSet feats) const {
@@ -677,8 +683,12 @@ public:
   };
 
   Iterator begin() const { return Iterator{{this, 0}}; }
-  Iterator end() const { return Iterator{{this, size()}}; }
-  HeapType operator[](size_t i) const { return *Iterator{{this, i}}; }
+  Iterator end() const {
+    return Iterator{{this, size()}};
+  }
+  HeapType operator[](size_t i) const {
+    return *Iterator{{this, i}};
+  }
 };
 
 struct Signature {
@@ -709,7 +719,6 @@ struct Field {
     NotPacked,
     i8,
     i16,
-    WaitQueue,
   } packedType; // applicable iff type=i32
   Mutability mutable_;
 
@@ -915,8 +924,6 @@ struct TypeBuilder {
     InvalidFuncType,
     // A shared type with shared-everything disabled.
     InvalidSharedType,
-    // WaitQueue was used with shared-everything disabled.
-    InvalidWaitQueue,
     // A string type with strings disabled.
     InvalidStringType,
     // A non-shared field of a shared heap type.
@@ -1130,12 +1137,14 @@ inline bool HeapType::isBottom() const {
       case array:
       case exn:
       case string:
+      case waitqueue:
         return false;
       case none:
       case noext:
       case nofunc:
       case nocont:
       case noexn:
+      case nowaitqueue:
         return true;
     }
   }

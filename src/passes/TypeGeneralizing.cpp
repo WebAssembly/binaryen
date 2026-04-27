@@ -701,7 +701,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
 
-  void visitStructNotify(StructNotify* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitWaitqueueNew(WaitqueueNew* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitWaitqueueNotify(WaitqueueNotify* curr) { WASM_UNREACHABLE("TODO"); }
 
   void visitArrayNew(ArrayNew* curr) {
     // We cannot yet generalize allocations. Push a requirement for the

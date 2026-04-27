@@ -211,7 +211,8 @@ instructions = [
     # atomic instructions
     ("memory.atomic.notify",    "makeAtomicNotify()"),
     ("struct.wait",             "makeStructWait()"),
-    ("struct.notify",           "makeStructNotify()"),
+    ("waitqueue.new",           "makeWaitqueueNew()"),
+    ("waitqueue.notify",        "makeWaitqueueNotify()"),
     ("memory.atomic.wait32",    "makeAtomicWait(Type::i32)"),
     ("memory.atomic.wait64",    "makeAtomicWait(Type::i64)"),
     ("atomic.fence",            "makeAtomicFence()"),

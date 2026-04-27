@@ -1097,6 +1097,9 @@ private:
       if (trapOnNull(curr->ref)) {
         return;
       }
+      if (trapOnNull(curr->waitqueue)) {
+        return;
+      }
       // StructWait doesn't strictly write a struct, but it does modify the
       // waiters list associated with the waitqueue field, which we can think
       // of as a write.
@@ -1107,16 +1110,13 @@ private:
       // If the timeout is negative and no-one wakes us.
       parent.mayNotReturn = true;
     }
-    void visitStructNotify(StructNotify* curr) {
-      if (trapOnNull(curr->ref)) {
+    void visitWaitqueueNew(WaitqueueNew* curr) {}
+    void visitWaitqueueNotify(WaitqueueNotify* curr) {
+      if (trapOnNull(curr->waitqueue)) {
         return;
       }
-      // Non-shared notifies just return 0.
-      if (curr->ref->type.getHeapType().isShared()) {
-        return;
-      }
-      // AtomicNotify doesn't strictly write the struct, but it does
-      // modify the waiters list associated with the waitqueue field, which we
+      // AtomicNotify doesn't strictly write anything, but it does
+      // modify the waiters list associated with the waitqueue, which we
       // can think of as a write.
       parent.readsSharedMutableStruct = true;
       parent.writesSharedStruct = true;

@@ -1426,22 +1426,29 @@ public:
 
   StructWait* makeStructWait(Index index,
                              Expression* ref,
+                             Expression* waitqueue,
                              Expression* expected,
                              Expression* timeout) {
     auto* ret = wasm.allocator.alloc<StructWait>();
     ret->index = index;
     ret->ref = ref;
+    ret->waitqueue = waitqueue;
     ret->expected = expected;
     ret->timeout = timeout;
     ret->finalize();
     return ret;
   }
 
-  StructNotify*
-  makeStructNotify(Index index, Expression* ref, Expression* count) {
-    auto* ret = wasm.allocator.alloc<StructNotify>();
-    ret->index = index;
-    ret->ref = ref;
+  WaitqueueNew* makeWaitqueueNew() {
+    auto* ret = wasm.allocator.alloc<WaitqueueNew>();
+    ret->finalize();
+    return ret;
+  }
+
+  WaitqueueNotify* makeWaitqueueNotify(Expression* waitqueue,
+                                       Expression* count) {
+    auto* ret = wasm.allocator.alloc<WaitqueueNotify>();
+    ret->waitqueue = waitqueue;
     ret->count = count;
     ret->finalize();
     return ret;

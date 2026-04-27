@@ -118,7 +118,8 @@ DELEGATE(Resume);
 DELEGATE(ResumeThrow);
 DELEGATE(StackSwitch);
 DELEGATE(StructWait);
-DELEGATE(StructNotify);
 DELEGATE(WideIntAddSub);
+DELEGATE(WaitqueueNew);
+DELEGATE(WaitqueueNotify);
 
 #undef DELEGATE

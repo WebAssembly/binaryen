@@ -773,8 +773,9 @@ public:
     ResumeThrowId,
     StackSwitchId,
     StructWaitId,
-    StructNotifyId,
     WideIntAddSubId,
+    WaitqueueNewId,
+    WaitqueueNotifyId,
     NumExpressionIds
   };
   Id _id;
@@ -1797,6 +1798,7 @@ public:
   StructWait(MixedArena& allocator) : StructWait() {}
 
   Expression* ref;
+  Expression* waitqueue;
   Expression* expected;
   Expression* timeout;
   Index index;
@@ -1804,14 +1806,22 @@ public:
   void finalize();
 };
 
-class StructNotify : public SpecificExpression<Expression::StructNotifyId> {
+class WaitqueueNew : public SpecificExpression<Expression::WaitqueueNewId> {
 public:
-  StructNotify() = default;
-  StructNotify(MixedArena& allocator) : StructNotify() {}
+  WaitqueueNew() = default;
+  WaitqueueNew(MixedArena& allocator) : WaitqueueNew() {}
 
-  Expression* ref;
+  void finalize();
+};
+
+class WaitqueueNotify
+  : public SpecificExpression<Expression::WaitqueueNotifyId> {
+public:
+  WaitqueueNotify() = default;
+  WaitqueueNotify(MixedArena& allocator) : WaitqueueNotify() {}
+
+  Expression* waitqueue;
   Expression* count;
-  Index index;
 
   void finalize();
 };
