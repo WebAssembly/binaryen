@@ -195,6 +195,7 @@ function initializeConstants() {
     'RelaxedAtomics',
     'CustomPageSizes',
     'WideArithmetic',
+    'CompactImports',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
