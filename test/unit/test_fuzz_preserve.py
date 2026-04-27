@@ -27,8 +27,8 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         import_params = set()
         export_results = set()
 
-        for _ in range(iters):
-            print('.', end='')
+        for i in range(iters):
+            print(i)
 
             # Generate raw random data
             with open(temp_dat.name, 'wb') as f:
@@ -42,6 +42,11 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             wat = shared.run_process(shared.WASM_OPT + args,
                                    stdout=subprocess.PIPE).stdout
 
+            # The things that begin reffed might end up not reffed, if mutation
+            # removes the refs. Check for that.
+            import_reffed_is_reffed = '(ref.func $import-reffed)' in wat
+            export_reffed_is_reffed = '(ref.func $export-reffed)' in wat
+
             # Find the params/results that might be refined.
             for line in wat.splitlines():
                 if line.startswith(' (import "module" "base" (func $import '):
@@ -50,7 +55,8 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                     assert results == '(result eqref)', 'cannot refine import result'
                 elif line.startswith(' (import "module" "base" (func $import-reffed '):
                     params, results = self.parse_params_results(line)
-                    assert params == '(param i32 anyref)', 'cannot refine reffed stuff'
+                    if import_reffed_is_reffed:
+                        assert params == '(param i32 anyref)', 'cannot refine reffed stuff'
                     assert results == '(result eqref)', 'cannot refine import result'
                 if line.startswith(' (func $export '):
                     params, results = self.parse_params_results(line)
@@ -59,7 +65,8 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                 if line.startswith(' (func $export-reffed '):
                     params, results = self.parse_params_results(line)
                     assert params == '(param $0 i32) (param $1 anyref)', 'cannot refine export params'
-                    assert results == '(result eqref)', 'cannot refine reffed stuff'
+                    if export_reffed_is_reffed:
+                        assert results == '(result eqref)', 'cannot refine reffed stuff'
 
         # We looked at 1000 cases, and we should be refining half the time, so
         # we must see more than one refinement, unless we are so lucky we'd win
