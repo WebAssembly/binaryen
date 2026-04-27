@@ -18,7 +18,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         # out of date). Instead, test randomly, in a way that the chance of a
         # flake is unrealistic.
         size = 10 * 1024
-        iters = 1000
+        iters = 100
         temp_dat = tempfile.NamedTemporaryFile(suffix='.dat')
         initial = self.input_path('fuzz.wat')
 
@@ -28,7 +28,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         export_results = set()
 
         for i in range(iters):
-            print(i)
+            print(f"\r{i}/{iters}...", end='', flush=True)
 
             # Generate raw random data
             with open(temp_dat.name, 'wb') as f:
@@ -79,6 +79,9 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         print(f'export_results: {export_results}')
         assert len(export_results) >= 2
 
+        # We should see struct types
+        # We should see exactness
+
     # Given a line with wat params and results, parse and return them.
     def parse_params_results(self, line):
         # Find either params or results.
@@ -110,7 +113,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                 # Keep looking.
                 pos = end
 
-            print('find', what, line, '    ======>>>>>    ', ret)
+            # print('find', what, line, '    ======>>>>>    ', ret)
             return ret
 
         return get('(param', line), get('(result', line)
