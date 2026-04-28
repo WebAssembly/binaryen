@@ -51,7 +51,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             # Generate raw random data
             size = random.randint(1, max_size)
             with open(temp_dat.name, 'wb') as f:
-                f.write(bytes([random.randint(0, 255) for x in range(max_size)]))
+                f.write(bytes([random.randint(0, 255) for x in range(size)]))
 
             # Generate the fuzz testcase from the random data + the initial
             # contents.
@@ -158,4 +158,3 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             return ret
 
         return get('(param', line), get('(result', line)
-
