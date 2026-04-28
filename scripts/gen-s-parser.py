@@ -18,6 +18,8 @@ import sys
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
+# ruff: noqa: E241
+
 instructions = [
     ("unreachable",    "makeUnreachable()"),
     ("nop",            "makeNop()"),
@@ -713,7 +715,8 @@ class CodePrinter:
         # call in a 'with' statement
         return self
 
-    def print_line(self, line):
+    @staticmethod
+    def print_line(line):
         print("  " * CodePrinter.indents + line)
 
 

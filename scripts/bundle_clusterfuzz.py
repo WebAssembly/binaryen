@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
-'''
-Bundle files for uploading to ClusterFuzz.
+"""Bundle files for uploading to ClusterFuzz.
 
 Usage:
 
@@ -68,7 +67,7 @@ After uploading to ClusterFuzz, you can wait a while for it to run, and then:
 
   3. Check the stats and crashes page (known crashes should at least be showing
      up). Note that these may take longer to show up than 1 and 2.
-'''
+"""
 
 import glob
 import os
