@@ -581,18 +581,14 @@ public:
   };
 
   Iterator begin() const { return Iterator{{this, 0}}; }
-  Iterator end() const {
-    return Iterator{{this, size()}};
-  }
+  Iterator end() const { return Iterator{{this, size()}}; }
   std::reverse_iterator<Iterator> rbegin() const {
     return std::make_reverse_iterator(end());
   }
   std::reverse_iterator<Iterator> rend() const {
     return std::make_reverse_iterator(begin());
   }
-  const Type& operator[](size_t i) const {
-    return *Iterator{{this, i}};
-  }
+  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 Type Type::asWrittenGivenFeatures(FeatureSet feats) const {
@@ -675,12 +671,8 @@ public:
   };
 
   Iterator begin() const { return Iterator{{this, 0}}; }
-  Iterator end() const {
-    return Iterator{{this, size()}};
-  }
-  HeapType operator[](size_t i) const {
-    return *Iterator{{this, i}};
-  }
+  Iterator end() const { return Iterator{{this, size()}}; }
+  HeapType operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 struct Signature {
