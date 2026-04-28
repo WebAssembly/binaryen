@@ -45,6 +45,7 @@
 #include "ir/runtime-table.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
+#include "support/int128.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
@@ -1831,6 +1832,29 @@ public:
     Literals results;
     results.push_back(Literal(lowResult));
     results.push_back(Literal(highResult));
+    return results;
+  }
+  Flow visitWideIntMul(WideIntMul* curr) {
+    VISIT(left, curr->left);
+    VISIT(right, curr->right);
+    uint64_t lhs = left.getSingleValue().geti64();
+    uint64_t rhs = right.getSingleValue().geti64();
+
+    Int128 result;
+    switch (curr->op) {
+      case MulWideSInt64: {
+        result = mul_wide_s(lhs, rhs);
+        break;
+      }
+      case MulWideUInt64: {
+        result = mul_wide_u(lhs, rhs);
+        break;
+      }
+    }
+
+    Literals results;
+    results.push_back(Literal(result.low));
+    results.push_back(Literal(result.high));
     return results;
   }
   Flow visitDrop(Drop* curr) {

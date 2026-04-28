@@ -120,5 +120,6 @@ DELEGATE(StackSwitch);
 DELEGATE(StructWait);
 DELEGATE(StructNotify);
 DELEGATE(WideIntAddSub);
+DELEGATE(WideIntMul);
 
 #undef DELEGATE

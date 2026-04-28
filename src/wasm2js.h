@@ -1964,6 +1964,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       WASM_UNREACHABLE("wide arithmetic is not supported by wasm2js");
     }
 
+    Ref visitWideIntMul(WideIntMul* curr) {
+      WASM_UNREACHABLE("wide arithmetic is not supported by wasm2js");
+    }
+
     Ref visitSelect(Select* curr) {
       // If the condition has effects that interact with the operands, we must
       // reorder it to the start. We must also use locals if the values have

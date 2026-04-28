@@ -645,6 +645,11 @@ enum WideIntAddSubOp {
   SubInt128,
 };
 
+enum WideIntMulOp {
+  MulWideSInt64,
+  MulWideUInt64,
+};
+
 //
 // Expressions
 //
@@ -775,6 +780,7 @@ public:
     StructWaitId,
     StructNotifyId,
     WideIntAddSubId,
+    WideIntMulId,
     NumExpressionIds
   };
   Id _id;
@@ -1316,6 +1322,18 @@ public:
   Expression* leftHigh;
   Expression* rightLow;
   Expression* rightHigh;
+
+  void finalize();
+};
+
+class WideIntMul : public SpecificExpression<Expression::WideIntMulId> {
+public:
+  WideIntMul() = default;
+  WideIntMul(MixedArena& allocator) {}
+
+  WideIntMulOp op;
+  Expression* left;
+  Expression* right;
 
   void finalize();
 };
