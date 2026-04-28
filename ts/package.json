@@ -1,0 +1,33 @@
+{
+  "name": "binaryen.ts",
+  "description": "Browser & Node.js builds of Binaryen, a compiler infrastructure and toolchain library for WebAssembly.",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WebAssembly/binaryen.git"
+  },
+  "keywords": [
+    "webassembly",
+    "wasm",
+    "typescript",
+    "javascript"
+  ],
+  "type": "module",
+  "main": "./dist/binaryen.js",
+  "scripts": {
+    "compile": "tsc"
+  },
+  "files": [
+    "package.json",
+    "package-lock.json",
+    "./dist/*.d.ts",
+    "./dist/*.js"
+  ],
+  "devDependencies": {
+    "typescript": "~6.0.0"
+  },
+  "engines": {
+    "node": "^22 || ^24"
+  }
+}

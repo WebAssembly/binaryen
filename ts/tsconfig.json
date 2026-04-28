@@ -1,0 +1,25 @@
+{
+	// Reference: https://www.typescriptlang.org/tsconfig/
+	"compilerOptions": {
+		// Type Checking
+		"exactOptionalPropertyTypes":         true,
+		"noImplicitOverride":                 true,
+		"noImplicitReturns":                  true,
+		"noPropertyAccessFromIndexSignature": true,
+
+		// Modules
+		"rewriteRelativeImportExtensions": true,
+		"rootDir":                         "./src/",
+
+		// Emit
+		"declaration": true,
+		"outDir":      "./dist/",
+
+		// Interop Constraints
+		"verbatimModuleSyntax": true,
+
+		// Completeness
+		"skipLibCheck": true,
+	},
+	"include": ["./src/"],
+}

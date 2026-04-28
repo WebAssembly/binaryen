@@ -1,0 +1,14 @@
+# EditorConfig: https://EditorConfig.org
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = tab
+indent_style = tab
+insert_final_newline = true
+max_line_length = off
+trim_trailing_whitespace = true
+
+[**/package{,-lock}.json]
+indent_size = 2
+indent_style = space
