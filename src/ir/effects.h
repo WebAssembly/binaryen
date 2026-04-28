@@ -770,6 +770,12 @@ private:
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
+      if (auto it = parent.module.typeEffects.find(curr->heapType);
+          it != parent.module.typeEffects.end()) {
+        parent.mergeIn(*it->second);
+        return;
+      }
+
       parent.calls = true;
       if (curr->isReturn) {
         parent.branchesOut = true;
@@ -1040,6 +1046,14 @@ private:
       if (trapOnNull(curr->target)) {
         return;
       }
+
+      if (auto it =
+            parent.module.typeEffects.find(curr->target->type.getHeapType());
+          it != parent.module.typeEffects.end()) {
+        parent.mergeIn(*it->second);
+        return;
+      }
+
       if (curr->isReturn) {
         parent.branchesOut = true;
         if (parent.features.hasExceptionHandling()) {
