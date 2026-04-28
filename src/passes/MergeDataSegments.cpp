@@ -132,8 +132,10 @@ struct SegmentEntry {
 
 using SegmentMap = std::set<SegmentEntry, SegmentEntry::CompareStart>;
 
+// Bytes needed to represent a nonnegative integer in the unsigned LEB encoding.
+size_t ulebSize(uint64_t x) { return (std::bit_width(x) + 6) / 7; }
 // Bytes needed to represent a nonnegative integer in the signed LEB encoding.
-size_t lebSize(uint64_t x) { return (std::bit_width(x) + 7) / 7; }
+size_t slebSize(uint64_t x) { return (std::bit_width(x) + 7) / 7; }
 
 enum InBounds { No, Maybe, Yes };
 
@@ -223,9 +225,9 @@ struct MergeInfo {
       return;
     }
     // Pessimistically assume that all data segments use the implicit memory 0
-    // encoding. Then, the total size of a data segment is 3 + lebSize(offset) +
-    // lebSize(size) + size. We greedily attempt to merge segments in a single
-    // pass from lower to higher addresses.
+    // encoding. Then, the total size of a data segment is 3 + slebSize(offset)
+    // + ulebSize(size) + size. We greedily attempt to merge segments in a
+    // single pass from lower to higher addresses.
     auto left = newSegments.begin();
     auto right = left;
     ++right;
@@ -241,11 +243,11 @@ struct MergeInfo {
       }
 
       uint64_t leftSegSize =
-        3 + lebSize(left->start) + lebSize(leftSize) + leftSize;
+        3 + slebSize(left->start) + ulebSize(leftSize) + leftSize;
       uint64_t rightSegSize =
-        3 + lebSize(right->start) + lebSize(rightSize) + rightSize;
+        3 + slebSize(right->start) + ulebSize(rightSize) + rightSize;
       uint64_t mergedSegSize =
-        3 + lebSize(left->start) + lebSize(mergedSize) + mergedSize;
+        3 + slebSize(left->start) + ulebSize(mergedSize) + mergedSize;
       if (leftSegSize + rightSegSize < mergedSegSize) {
         left = right++;
         continue;
