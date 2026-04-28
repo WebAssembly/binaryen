@@ -1,6 +1,7 @@
 import random
 import subprocess
 import tempfile
+import time
 
 from scripts.test import shared
 
@@ -17,8 +18,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         # will handle random data differently, and the test would constantly get
         # out of date). Instead, test randomly, in a way that the chance of a
         # flake is unrealistic.
-        size = 10 * 1024
-        iters = 100
+        max_size = 1024
         temp_dat = tempfile.NamedTemporaryFile(suffix='.dat')
         initial = self.input_path('fuzz.wat')
 
@@ -27,12 +27,34 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         import_params = set()
         export_results = set()
 
-        for i in range(iters):
-            print(f"\r{i}/{iters}...", end='', flush=True)
+        # Run for at least a certain number of iterations, but keep going after
+        # if we still failed to find what we want, to avoid flakes. We keep
+        # going until a full minute.
+        min_iters = 100
+        start_time = time.time()
+        max_time = start_time + 60
+
+        i = 0
+        while True:
+            i += 1
+
+            # We want to see some variety in both, but don't want to see
+            # everything we expect in both (as one might be slower than the
+            # other).
+            if self.is_varied(import_params) and self.is_varied(export_results) and \
+               self.found_expected(import_params | export_results):
+                print(f"{i} iterations {round(time.time() - start_time, 2)} seconds)")
+                print(f'proper import_params : {import_params}')
+                print(f'proper export_results: {export_results}')
+                return
+
+            if i > min_iters and time.time() > max_time:
+                raise Exception('looked too long and still failed')
 
             # Generate raw random data
+            size = random.randint(1, max_size)
             with open(temp_dat.name, 'wb') as f:
-                f.write(bytes([random.randint(0, 255) for x in range(size)]))
+                f.write(bytes([random.randint(0, 255) for x in range(max_size)]))
 
             import shutil
             shutil.copyfile(temp_dat.name, '/tmp/waka')
@@ -71,16 +93,33 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                     if export_reffed_is_reffed:
                         assert results == '(result eqref)', 'cannot refine reffed stuff'
 
-        # We looked at 1000 cases, and we should be refining half the time, so
-        # we must see more than one refinement, unless we are so lucky we'd win
-        # the lottery a thousand times and more.
-        print(f'import_params: {import_params}')
-        assert len(import_params) >= 2
-        print(f'export_results: {export_results}')
-        assert len(export_results) >= 2
+    # Given the types we saw for params or results, see if it has some
+    # variety at all. Without fuzzing, we'd always see the same thing here.
+    def is_varied(self, data):
+        return len(data) >= 2
 
-        # We should see struct types
-        # We should see exactness
+    # Given the types we saw for params or results, look in detail for the
+    # things we expect to see.
+    def found_expected(self, data):
+        # Look for significant variety, more than is_varied.
+        if len(data) < 5:
+            return False
+
+        string = str(data)
+
+        # There must be non-nullable types.
+        if '(ref (' not in string:
+            return False
+
+        # There must be exact types.
+        if '(exact ' not in string:
+            return False
+
+        # There must be defined types.
+        if ' $' not in string:
+            return False
+
+        return True
 
     # Given a line with wat params and results, parse and return them.
     def parse_params_results(self, line):
