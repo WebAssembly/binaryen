@@ -2526,7 +2526,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     }
     // Do not alter the signature of configureAll, which will make the VM
     // reject it immediately.
-    if (intrinsics.isConfigureAll(func.get()) {
+    if (intrinsics.isConfigureAll(func.get())) {
       continue;
     }
 
