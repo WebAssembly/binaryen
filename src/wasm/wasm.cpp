@@ -810,7 +810,8 @@ void WideIntAddSub::finalize() {
       rightHigh->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type({Type::i64, Type::i64});
+    static Type i64Pair = HeapTypes::getI64Pair();
+    type = i64Pair;
   }
 }
 

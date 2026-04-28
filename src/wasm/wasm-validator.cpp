@@ -2455,7 +2455,7 @@ void FunctionValidator::visitWideIntAddSub(WideIntAddSub* curr) {
   for (auto* operand :
        {curr->leftLow, curr->leftHigh, curr->rightLow, curr->rightHigh}) {
     shouldBeEqualOrFirstIsUnreachable(operand->type,
-                                      Type(Type::BasicType::i64),
+                                      Type(Type::i64),
                                       curr,
                                       "wide binary child types must be i64");
   }
