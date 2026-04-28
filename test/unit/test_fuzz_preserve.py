@@ -90,6 +90,9 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
     # Given the types we saw for params or results, look in detail for the
     # things we expect to see.
     def found_expected(self, data):
+        # The many returns here seem to be the best way to write this code.
+        # ruff: noqa: PLR0911
+
         # Look for significant variety.
         if len(data) < 5:
             return False
