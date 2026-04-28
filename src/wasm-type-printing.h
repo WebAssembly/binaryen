@@ -17,6 +17,7 @@
 #ifndef wasm_wasm_type_printing_h
 #define wasm_wasm_type_printing_h
 
+#include <concepts>
 #include <cstddef>
 #include <iostream>
 #include <unordered_map>
@@ -34,9 +35,6 @@ namespace wasm {
 template<typename Subclass> struct TypeNameGeneratorBase {
   TypeNameGeneratorBase() { assertValidUsage(); }
 
-  TypeNames getNames(HeapType type) {
-    WASM_UNREACHABLE("Derived class must implement getNames");
-  }
   HeapType::Printed operator()(HeapType type) {
     return type.print(
       [&](HeapType ht) { return static_cast<Subclass*>(this)->getNames(ht); });
@@ -48,16 +46,9 @@ template<typename Subclass> struct TypeNameGeneratorBase {
 
 private:
   constexpr void assertValidUsage() {
-    // This check current causes a crash on MSVC
-    // TODO: Convert to C++20 requires check
-#if !defined(_MSC_VER) && (!defined(__GNUC__) || __GNUC__ >= 14)
-    // Check that the subclass provides `getNames` with the correct type.
-    using Self = TypeNameGeneratorBase<Subclass>;
-    static_assert(
-      static_cast<TypeNames (Self::*)(HeapType)>(&Self::getNames) !=
-        static_cast<TypeNames (Self::*)(HeapType)>(&Subclass::getNames),
-      "Derived class must implement getNames");
-#endif
+    static_assert(requires(Subclass& s, HeapType ht) {
+      { s.getNames(ht) } -> std::same_as<TypeNames>;
+    }, "Derived class must implement getNames");
   }
 };
 
@@ -123,11 +114,8 @@ struct ModuleTypeNameGenerator
   ModuleTypeNameGenerator(const Module& wasm, FallbackGenerator& fallback)
     : wasm(wasm), fallback(fallback) {}
 
-  // TODO: Use C++20 `requires` to clean this up.
-  template<class T = FallbackGenerator>
-  ModuleTypeNameGenerator(
-    const Module& wasm,
-    std::enable_if_t<std::is_same_v<T, DefaultTypeNameGenerator>>* = nullptr)
+  ModuleTypeNameGenerator(const Module& wasm)
+    requires std::is_same_v<FallbackGenerator, DefaultTypeNameGenerator>
     : ModuleTypeNameGenerator(wasm, defaultGenerator) {}
 
   TypeNames getNames(HeapType type) {
