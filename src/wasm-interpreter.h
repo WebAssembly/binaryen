@@ -1801,6 +1801,38 @@ public:
     VISIT(condition, curr->condition)
     return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
   }
+  Flow visitWideIntAddSub(WideIntAddSub* curr) {
+    VISIT(leftLow, curr->leftLow);
+    VISIT(leftHigh, curr->leftHigh);
+    VISIT(rightLow, curr->rightLow);
+    VISIT(rightHigh, curr->rightHigh);
+
+    uint64_t lowLHS = leftLow.getSingleValue().geti64();
+    uint64_t highLHS = leftHigh.getSingleValue().geti64();
+    uint64_t lowRHS = rightLow.getSingleValue().geti64();
+    uint64_t highRHS = rightHigh.getSingleValue().geti64();
+
+    uint64_t lowResult = 0;
+    uint64_t highResult = 0;
+
+    switch (curr->op) {
+      case AddInt128: {
+        bool overflowed = std::ckd_add(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS + highRHS + overflowed;
+        break;
+      }
+      case SubInt128: {
+        bool overflowed = std::ckd_sub(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS - highRHS - overflowed;
+        break;
+      }
+    }
+
+    Literals results;
+    results.push_back(Literal(lowResult));
+    results.push_back(Literal(highResult));
+    return results;
+  }
   Flow visitDrop(Drop* curr) {
     VISIT(value, curr->value)
     return Flow();

@@ -803,6 +803,18 @@ void Binary::finalize() {
   }
 }
 
+void WideIntAddSub::finalize() {
+  if (leftLow->type == Type::unreachable ||
+      leftHigh->type == Type::unreachable ||
+      rightLow->type == Type::unreachable ||
+      rightHigh->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    static Type i64Pair = HeapTypes::getI64Pair();
+    type = i64Pair;
+  }
+}
+
 void Select::finalize() {
   assert(ifTrue && ifFalse);
   if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||

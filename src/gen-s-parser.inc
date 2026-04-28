@@ -3427,12 +3427,23 @@ switch (buf[0]) {
             switch (buf[4]) {
               case 'a': {
                 switch (buf[5]) {
-                  case 'd':
-                    if (op == "i64.add"sv) {
-                      CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AddInt64));
-                      return Ok{};
+                  case 'd': {
+                    switch (buf[7]) {
+                      case '\0':
+                        if (op == "i64.add"sv) {
+                          CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AddInt64));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '1':
+                        if (op == "i64.add128"sv) {
+                          CHECK_ERR(makeWideIntAddSub(ctx, pos, annotations, WideIntAddSubOp::AddInt128));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   case 'n':
                     if (op == "i64.and"sv) {
                       CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AndInt64));
@@ -4113,12 +4124,23 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'u':
-                    if (op == "i64.sub"sv) {
-                      CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubInt64));
-                      return Ok{};
+                  case 'u': {
+                    switch (buf[7]) {
+                      case '\0':
+                        if (op == "i64.sub"sv) {
+                          CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubInt64));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '1':
+                        if (op == "i64.sub128"sv) {
+                          CHECK_ERR(makeWideIntAddSub(ctx, pos, annotations, WideIntAddSubOp::SubInt128));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   default: goto parse_error;
                 }
               }

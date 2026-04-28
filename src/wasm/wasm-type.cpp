@@ -2848,6 +2848,11 @@ HeapType getMutI16Array() {
   return i16Array;
 }
 
+Type getI64Pair() {
+  static Type i64Pair({Type::i64, Type::i64});
+  return i64Pair;
+}
+
 } // namespace wasm::HeapTypes
 
 namespace std {

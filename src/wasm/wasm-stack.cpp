@@ -2295,6 +2295,20 @@ void BinaryInstWriter::visitSelect(Select* curr) {
   }
 }
 
+void BinaryInstWriter::visitWideIntAddSub(WideIntAddSub* curr) {
+  o << static_cast<int8_t>(BinaryConsts::MiscPrefix);
+  switch (curr->op) {
+    case AddInt128: {
+      o << U32LEB(BinaryConsts::I64Add128);
+      break;
+    }
+    case SubInt128: {
+      o << U32LEB(BinaryConsts::I64Sub128);
+      break;
+    }
+  }
+}
+
 void BinaryInstWriter::visitReturn(Return* curr) {
   o << static_cast<int8_t>(BinaryConsts::Return);
 }

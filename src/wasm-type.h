@@ -645,6 +645,8 @@ constexpr HeapType noexn = HeapType::noexn;
 HeapType getMutI8Array();
 HeapType getMutI16Array();
 
+Type getI64Pair();
+
 } // namespace HeapTypes
 
 // A recursion group consisting of one or more HeapTypes. HeapTypes with single
