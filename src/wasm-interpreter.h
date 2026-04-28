@@ -1806,34 +1806,32 @@ public:
     VISIT(leftHigh, curr->leftHigh);
     VISIT(rightLow, curr->rightLow);
     VISIT(rightHigh, curr->rightHigh);
-    if (curr->op == AddInt128 || curr->op == SubInt128) {
-      uint64_t lowLHS = leftLow.getSingleValue().geti64();
-      uint64_t highLHS = leftHigh.getSingleValue().geti64();
-      uint64_t lowRHS = rightLow.getSingleValue().geti64();
-      uint64_t highRHS = rightHigh.getSingleValue().geti64();
 
-      uint64_t lowResult = 0;
-      uint64_t highResult = 0;
+    uint64_t lowLHS = leftLow.getSingleValue().geti64();
+    uint64_t highLHS = leftHigh.getSingleValue().geti64();
+    uint64_t lowRHS = rightLow.getSingleValue().geti64();
+    uint64_t highRHS = rightHigh.getSingleValue().geti64();
 
-      switch (curr->op) {
-        case AddInt128: {
-          bool overflowed = std::ckd_add(&lowResult, lowLHS, lowRHS);
-          highResult = highLHS + highRHS + overflowed;
-          break;
-        }
-        case SubInt128: {
-          bool overflowed = std::ckd_sub(&lowResult, lowLHS, lowRHS);
-          highResult = highLHS - highRHS - overflowed;
-          break;
-        }
+    uint64_t lowResult = 0;
+    uint64_t highResult = 0;
+
+    switch (curr->op) {
+      case AddInt128: {
+        bool overflowed = std::ckd_add(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS + highRHS + overflowed;
+        break;
       }
-
-      Literals results;
-      results.push_back(Literal(lowResult));
-      results.push_back(Literal(highResult));
-      return results;
+      case SubInt128: {
+        bool overflowed = std::ckd_sub(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS - highRHS - overflowed;
+        break;
+      }
     }
-    WASM_UNREACHABLE("invalid wide int binary op");
+
+    Literals results;
+    results.push_back(Literal(lowResult));
+    results.push_back(Literal(highResult));
+    return results;
   }
   Flow visitDrop(Drop* curr) {
     VISIT(value, curr->value)
