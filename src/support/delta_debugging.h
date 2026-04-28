@@ -35,7 +35,7 @@ template<typename T> struct DeltaDebugger {
   std::vector<T> test;
 
 private:
-  Index numPartitions;
+  Index numPartitions = 1;
   Index currentPartition = 0;
   bool testingComplements = false;
   bool triedEmpty = false;
@@ -43,8 +43,7 @@ private:
   std::vector<std::vector<T>> partitions;
 
 public:
-  DeltaDebugger(std::vector<T> items)
-    : working(std::move(items)), test(), numPartitions(2) {}
+  DeltaDebugger(std::vector<T> items) : working(std::move(items)) {}
 
   bool finished() const {
     return isFinished || (triedEmpty && working.size() <= 1);
@@ -53,16 +52,13 @@ public:
   Index partitionIndex() { return currentPartition; }
 
   void accept() {
-    if (isFinished) {
-      return;
+    if (test.empty()) {
+      triedEmpty = true;
     }
 
     working = std::move(test);
 
-    if (!triedEmpty) {
-      triedEmpty = true;
-      isFinished = working.size() <= 1;
-      updateTest();
+    if (finished()) {
       return;
     }
 
@@ -77,13 +73,14 @@ public:
   }
 
   void reject() {
-    if (isFinished) {
+    if (test.empty()) {
+      triedEmpty = true;
+      numPartitions = 2;
+      updateTest();
       return;
     }
 
-    if (!triedEmpty) {
-      triedEmpty = true;
-      updateTest();
+    if (finished()) {
       return;
     }
 
