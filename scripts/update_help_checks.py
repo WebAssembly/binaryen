@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A test case update script for lit help checks.
-"""
+"""A test case update script for lit help checks."""
 
 import os
 import subprocess

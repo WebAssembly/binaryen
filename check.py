@@ -265,7 +265,9 @@ def run_one_spec_test(wast: Path, stdout=None):
 
 
 def run_spec_test_with_wrapped_stdout(wast: Path):
-    """Return (bool, str) where the first element is whether the test was
+    """Run a single spec test while capturing stdout.
+
+    Return (bool, str) where the first element is whether the test was
     successful and the second is the combined stdout and stderr of the test.
     """
     out = io.StringIO()

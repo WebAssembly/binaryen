@@ -1,6 +1,7 @@
 #!/usr/bin/python3
-"""Run various fuzzing operations on random inputs, using wasm-opt. See
-"testcase_handlers" below for the list of fuzzing operations.
+"""Run various fuzzing operations on random inputs, using wasm-opt.
+
+See "testcase_handlers" below for the list of fuzzing operations.
 
 Usage:
 
@@ -42,6 +43,7 @@ import time
 import traceback
 from datetime import datetime, timedelta, timezone
 from os.path import abspath
+from typing import override
 
 from test import fuzzing, shared, support
 
@@ -459,7 +461,7 @@ def get_export_from_export_line(export_line):
 
 # compare two strings, strictly
 def compare(x, y, context, verbose=True):
-    if x != y and IGNORE not in (x, y):
+    if x != y and IGNORE not in {x, y}:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
         if verbose:
             raise Exception(f"{context} comparison error, expected to have '{x}' == '{y}', diff:\n\n{message}")
@@ -769,12 +771,14 @@ class TestCaseHandler:
     # If the core handle_pair() method is not overridden, it calls handle() on
     # each of the items. That is useful if you just want the two wasms and don't
     # care about their relationship.
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.handle(before_wasm)
         # Add some visual space between the independent parts.
         print('\n')
         self.handle(after_wasm)
 
+    @override
     def can_run_on_wasm(self, wasm):
         return True
 
@@ -789,6 +793,7 @@ class TestCaseHandler:
 class FuzzExec(TestCaseHandler):
     frequency = 1
 
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         run([in_bin('wasm-opt'), before_wasm] + opts + ['--fuzz-exec'])
 
@@ -798,6 +803,7 @@ class FuzzExec(TestCaseHandler):
 class BinaryenInterpreter:
     name = 'binaryen interpreter'
 
+    @override
     def run(self, wasm):
         output = run_bynterp(wasm, ['--fuzz-exec-before'])
         if output != IGNORE:
@@ -824,12 +830,15 @@ class BinaryenInterpreter:
                                     amount=0.5)
         return output
 
+    @override
     def can_run(self, wasm):
         return True
 
+    @override
     def can_compare_to_self(self):
         return True
 
+    @override
     def can_compare_to_other(self, other):
         return True
 
@@ -842,17 +851,21 @@ class D8:
     def run_js(self, js, wasm, checked=True):
         return run_vm([shared.V8, js] + shared.V8_OPTS + get_v8_extra_flags() + self.extra_d8_flags + ['--', wasm], checked=checked)
 
+    @override
     def run(self, wasm):
         return self.run_js(js=get_fuzz_shell_js(), wasm=wasm)
 
+    @override
     def can_run(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
+    @override
     def can_compare_to_self(self):
         # With nans, VM differences can confuse us, so only very simple VMs
         # can compare to themselves after opts in that case.
         return not NANS
 
+    @override
     def can_compare_to_other(self, other):
         # Relaxed SIMD allows different behavior between VMs, so only
         # allow comparisons to other d8 variants if it is enabled.
@@ -892,6 +905,7 @@ class Wasm2C:
             print('warning: no wabt found:', e)
             self.wasm2c_dir = None
 
+    @override
     def can_run(self, wasm):
         if self.wasm2c_dir is None:
             return False
@@ -904,6 +918,7 @@ class Wasm2C:
         # wasm2c doesn't support most features
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'custom-descriptors', 'relaxed-atomics'])
 
+    @override
     def run(self, wasm):
         run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
         run(['wasm2c', wasm, '-o', 'wasm.c'])
@@ -911,11 +926,13 @@ class Wasm2C:
         run(compile_cmd)
         return run_vm(['./a.out'])
 
+    @override
     def can_compare_to_self(self):
         # The binaryen optimizer changes NaNs in the ways that wasm
         # expects, but that's not quite what C has
         return not NANS
 
+    @override
     def can_compare_to_other(self, other):
         # C won't trap on OOB, and NaNs can differ from wasm VMs
         return not OOB and not NANS
@@ -929,6 +946,7 @@ class Wasm2C2Wasm(Wasm2C):
 
         self.has_emcc = shared.which('emcc') is not None
 
+    @override
     def run(self, wasm):
         run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
         run(['wasm2c', wasm, '-o', 'wasm.c'])
@@ -955,6 +973,7 @@ class Wasm2C2Wasm(Wasm2C):
             run(compile_cmd)
         return run_d8_js(abspath('a.out.js'))
 
+    @override
     def can_run(self, wasm):
         # quite slow (more steps), so run it less frequently
         if random.random() < 0.8:
@@ -964,6 +983,7 @@ class Wasm2C2Wasm(Wasm2C):
         return super().can_run(wasm) and self.has_emcc and \
             os.path.getsize(wasm) <= INPUT_SIZE_MEAN
 
+    @override
     def can_compare_to_other(self, other):
         # NaNs can differ from wasm VMs
         return not NANS
@@ -987,6 +1007,7 @@ class CompareVMs(TestCaseHandler):
                     # Wasm2C2Wasm()
                     ]
 
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
 
@@ -1033,7 +1054,8 @@ class CompareVMs(TestCaseHandler):
 
         return vm_results
 
-    def compare_before_and_after(self, before, after):
+    @staticmethod
+    def compare_before_and_after(before, after):
         # compare each VM to itself on the before and after inputs
         for vm in before.keys():
             if vm in after and vm.can_compare_to_self():
@@ -1044,6 +1066,7 @@ class CompareVMs(TestCaseHandler):
 class CheckDeterminism(TestCaseHandler):
     frequency = 0.2
 
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
         run([in_bin('wasm-opt'), before_wasm, '-o', abspath('b1.wasm')] + opts)
@@ -1061,6 +1084,7 @@ class CheckDeterminism(TestCaseHandler):
 class Wasm2JS(TestCaseHandler):
     frequency = 0.1
 
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before_wasm_temp = before_wasm + '.temp.wasm'
         after_wasm_temp = after_wasm + '.temp.wasm'
@@ -1173,6 +1197,7 @@ class Wasm2JS(TestCaseHandler):
                 interpreter = fix_output_for_js(interpreter)
                 compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
+    @override
     def run(self, wasm):
         with open(get_fuzz_shell_js()) as f:
             wrapper = f.read()
@@ -1199,6 +1224,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(wrapper)
         return run_vm([shared.NODEJS, js_file, abspath('a.wasm')])
 
+    @override
     def can_run_on_wasm(self, wasm):
         # TODO: properly handle memory growth. right now the wasm2js handler
         # uses --emscripten which assumes the Memory is created before, and
@@ -1299,6 +1325,7 @@ def wasm_notices_export_changes(wasm):
 class TrapsNeverHappen(TestCaseHandler):
     frequency = 0.25
 
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
 
@@ -1385,6 +1412,7 @@ class TrapsNeverHappen(TestCaseHandler):
 
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
+    @override
     def can_run_on_wasm(self, wasm):
         # If the wasm is sensitive to changes in exports then we cannot alter
         # them, but we must remove trapping exports (see above), so we cannot
@@ -1396,6 +1424,7 @@ class TrapsNeverHappen(TestCaseHandler):
 class CtorEval(TestCaseHandler):
     frequency = 0.1
 
+    @override
     def handle(self, wasm):
         # Get the list of func exports, so we can tell ctor-eval what to eval.
         func_exports = get_exports(wasm, ['func'])
@@ -1436,6 +1465,7 @@ class CtorEval(TestCaseHandler):
 
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
 
+    @override
     def can_run_on_wasm(self, wasm):
         # ctor-eval modifies exports, because it assumes they are ctors and so
         # are only called once (so if it evals them away, they can be
@@ -1473,6 +1503,7 @@ def traps_in_instantiation(output):
 class Merge(TestCaseHandler):
     frequency = 0.15
 
+    @override
     def handle(self, wasm):
         # generate a second wasm file to merge. note that we intentionally pick
         # a smaller size than the main wasm file, so that reduction is
@@ -1569,6 +1600,7 @@ class Merge(TestCaseHandler):
 
         compare_between_vms(output, merged_output, 'Merge')
 
+    @override
     def can_run_on_wasm(self, wasm):
         # wasm-merge combines exports, which can alter their indexes and lead to
         # noticeable differences if the wasm is sensitive to such things, which
@@ -1585,6 +1617,7 @@ FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
 class Split(TestCaseHandler):
     frequency = 0.1
 
+    @override
     def handle(self, wasm):
         # get the list of function names, some of which we will decide to split
         # out
@@ -1680,6 +1713,7 @@ class Split(TestCaseHandler):
         if not (NANS and optimized):
             compare_between_vms(output, linked_output, 'Split')
 
+    @override
     def can_run_on_wasm(self, wasm):
         # to run the split wasm we use JS, that is, JS links the exports of one
         # to the imports of the other, etc. since we run in JS, the wasm must be
@@ -1695,6 +1729,7 @@ class Split(TestCaseHandler):
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
 
+    @override
     def handle(self, wasm):
         # use name-types because in wasm GC we can end up truncating the default
         # names which are very long, causing names to collide and the wast to be
@@ -1724,6 +1759,7 @@ class ClusterFuzz(TestCaseHandler):
     # we generate our own using run.py. If we used handle, we'd be called twice
     # for each iteration (once for each of the wasm files we ignore), which is
     # confusing.
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # Do not run ClusterFuzz in the first seconds of fuzzing: the first time
         # it runs is very slow (to build the bundle), which is annoying when you
@@ -1862,6 +1898,7 @@ class Two(TestCaseHandler):
     # module interactions.
     frequency = 1  # TODO: We may want even higher priority here
 
+    @override
     def handle(self, wasm):
         # Generate a second wasm file. (For fuzzing, we may be given one, but we
         # still do the work to prepare to generate it, as that consumes random
@@ -1998,7 +2035,8 @@ class Two(TestCaseHandler):
 
         compare(output, optimized_output, 'Two-V8')
 
-    def compare_to_merged_output(self, output, merged_output):
+    @staticmethod
+    def compare_to_merged_output(output, merged_output):
         # Comparing the original output from two files to the output after
         # merging them is not trivial. First, remove the extra logging that
         # --fuzz-exec-second adds.
@@ -2055,6 +2093,7 @@ class Two(TestCaseHandler):
 class PreserveImportsExportsRandom(TestCaseHandler):
     frequency = 0.1
 
+    @override
     def handle(self, wasm):
         # We will later verify that no imports or exports changed, by comparing
         # to the unprocessed original text.
@@ -2112,6 +2151,7 @@ class PreserveImportsExportsRandom(TestCaseHandler):
 class PreserveImportsExportsJS(TestCaseHandler):
     frequency = 1
 
+    @override
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         try:
             self.do_handle_pair(input, before_wasm, after_wasm, opts)
@@ -2216,7 +2256,8 @@ class PreserveImportsExportsJS(TestCaseHandler):
         if pre_vm.can_compare_to_other(post_vm):
             compare(pre, post, 'PreserveImportsExportsJS')
 
-    def do_run(self, vm, js, wasm):
+    @staticmethod
+    def do_run(vm, js, wasm):
         out = vm.run_js(js, wasm, checked=False)
 
         # VM crashes are actual issues we want to find.
@@ -2254,6 +2295,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
         cleaned = re.sub(r'function \d+\(\) ', 'function <ID>() ', cleaned)
         return cleaned
 
+    @override
     def can_run_on_wasm(self, wasm):
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
@@ -2272,6 +2314,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
 class BranchHintPreservation(TestCaseHandler):
     frequency = 0.1
 
+    @override
     def handle(self, wasm):
         # Generate an instrumented wasm.
         instrumented = wasm + '.inst.wasm'
@@ -2465,7 +2508,7 @@ class BranchHintPreservation(TestCaseHandler):
                     _, _, actual, hint, id_ = line[1:-1].split(' ')
                     hint = int(hint)
                     actual = int(actual)
-                    assert hint in (0, 1)
+                    assert hint in {0, 1}
                     # We do not care about the integer value of the condition,
                     # only if it was 0 or non-zero.
                     actual = (actual != 0)
