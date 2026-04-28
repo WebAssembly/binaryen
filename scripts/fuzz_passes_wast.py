@@ -18,7 +18,7 @@
 
 Starting with a wast, then running random passes on the wast, and seeing
 if they break optimization or validation
-"""
+
 Usage: Provide the filename of the wast.
 """
 
