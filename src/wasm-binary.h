@@ -1604,6 +1604,8 @@ public:
   void setSkipFunctionBodies(bool skipFunctionBodies_) {
     skipFunctionBodies = skipFunctionBodies_;
   }
+  void setNeedCodeLocations(bool value) { needCodeLocations = value; }
+
   void read();
   void readCustomSection(size_t payloadLen);
 
@@ -1787,6 +1789,8 @@ public:
 
   // Allow users to query the target features section features after parsing.
   FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
+
+  size_t getCodeSectionLocation() { return codeSectionLocation; }
 
 private:
   // In certain modes we need to note the locations of expressions, to match
