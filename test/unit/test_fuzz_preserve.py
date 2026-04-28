@@ -27,10 +27,9 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         import_params = set()
         export_results = set()
 
-        # Run for at least a certain number of iterations, but keep going after
-        # if we still failed to find what we want, to avoid flakes. We keep
-        # going until a full minute.
-        min_iters = 100
+        # Run until we find what we want. Stop only if we reached a max number
+        # of iterations and a timeout.
+        min_iters = 200
         start_time = time.time()
         max_time = start_time + 60
 
@@ -117,6 +116,10 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
 
         # There must be defined types.
         if ' $' not in string:
+            return False
+
+        # There must be defined non-exact types.
+        if '(ref $' not in string:
             return False
 
         return True
