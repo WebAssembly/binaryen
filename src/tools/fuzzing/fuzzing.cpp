@@ -2447,7 +2447,6 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // refine, we are given the maximum refinement and pick a random type between
   // it and the old type.
   auto maybeRefine = [&](Type old, Type new_) {
-    std::cout << "maybe " << old << " to " << new_ << '\n';
     if (!new_.isRef()) {
       // A non-reference like i32, or unreachable (no values reach this place),
       // so it does not matter.
@@ -2461,12 +2460,10 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     std::vector<HeapType> options;
     while (1) {
       options.push_back(newHeapType);
-std::cout << " happy push " << newHeapType << '\n';
       // We cannot look at a bottom type's supers (there can be many, and the
       // getSuperType() API doesn't return them).
       // TODO: handle all possible supers.
       if (newHeapType.isBottom()) {
-std::cout << " sad push " << oldHeapType << '\n';
         options.push_back(oldHeapType);
         break;
       }
@@ -2478,7 +2475,6 @@ std::cout << " sad push " << oldHeapType << '\n';
       assert(next);
       newHeapType = *next;
     }
-std::cout << "opts: " << options.size() << '\n';
     newHeapType = pick(options);
 
     // Pick the nullability.
@@ -2498,10 +2494,6 @@ std::cout << "opts: " << options.size() << '\n';
     if (newHeapType.isBasic()) {
       newExactness = Inexact;
     }
-
-//std::cout << "old: " << oldHeapType << " : " << oldNullability << " : " << oldExactness << '\n';
-//std::cout << "new: " << newHeapType << " : " << newNullability << " : " << newExactness << '\n';
-    std::cout << "  => " << Type(newHeapType, newNullability, newExactness) << '\n';
 
     return Type(newHeapType, newNullability, newExactness);
   };
@@ -2553,7 +2545,6 @@ std::cout << "opts: " << options.size() << '\n';
 
   // Second, refine results sent from exports.
   for (auto& exp : wasm.exports) {
-    std::cout << "exp " << exp->name << '\n';
     if (exp->kind != ExternalKind::Function) {
       continue;
     }
@@ -2561,7 +2552,6 @@ std::cout << "opts: " << options.size() << '\n';
     if (map[name].reffed) {
       continue;
     }
-    std::cout << "  unreffed exp " << name << '\n';
 
     // Find the LUB.
     auto* func = wasm.getFunction(name);

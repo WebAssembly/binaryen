@@ -40,8 +40,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             # We want to see some variety in both, but don't want to see
             # everything we expect in both (as one might be slower than the
             # other).
-            if self.is_varied(import_params) and self.is_varied(export_results) and \
-               self.found_expected(import_params | export_results):
+            if self.found_expected(import_params) and self.found_expected(export_results):
                 print(f"{i} iterations {round(time.time() - start_time, 2)} seconds)")
                 print(f'proper import_params : {import_params}')
                 print(f'proper export_results: {export_results}')
@@ -92,19 +91,18 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                     if export_reffed_is_reffed:
                         assert results == '(result eqref)', 'cannot refine reffed stuff'
 
-    # Given the types we saw for params or results, see if it has some
-    # variety at all. Without fuzzing, we'd always see the same thing here.
-    def is_varied(self, data):
-        return len(data) >= 2
-
     # Given the types we saw for params or results, look in detail for the
     # things we expect to see.
     def found_expected(self, data):
-        # Look for significant variety, more than is_varied.
+        # Look for significant variety.
         if len(data) < 5:
             return False
 
         string = str(data)
+
+        # There must be nullable types.
+        if '(ref null' not in string:
+            return False
 
         # There must be non-nullable types.
         if '(ref (' not in string:
@@ -114,11 +112,7 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         if '(exact ' not in string:
             return False
 
-        # There must be defined types.
-        if ' $' not in string:
-            return False
-
-        # There must be defined non-exact types.
+        # There must be inexact types (this also tests defined types).
         if '(ref $' not in string:
             return False
 
