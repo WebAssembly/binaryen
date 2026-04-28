@@ -105,6 +105,8 @@ public:
     updateTest();
   }
 
+  // Convenience wrapper for when there is already a bool determining whether to
+  // accept or reject the current test sequence.
   void resolve(bool success) {
     if (success) {
       accept();
