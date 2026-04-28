@@ -415,7 +415,6 @@ void TranslateToFuzzReader::build() {
   ReFinalize().run(&runner, &wasm);
   ReFinalize().walkModuleCode(&wasm);
 
-  // If fuzzing against JS, we can refine
   if (againstJS) {
     mutateJSBoundary();
   }
@@ -2403,7 +2402,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
   struct FunctionInfo {
     // Whether there are references to this function itself.
-    std::atomic<bool> reffed = false;
+    bool reffed = false;
 
     // Calls to imports from this function.
     std::vector<Call*> callImports;
