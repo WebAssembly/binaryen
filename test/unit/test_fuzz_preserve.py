@@ -16,8 +16,8 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         #
         # Testing this deterministically is too hard (as the fuzzer evolves, it
         # will handle random data differently, and the test would constantly get
-        # out of date). Instead, test randomly, in a way that the chance of a
-        # flake is unrealistic.
+        # out of date). Instead, test randomly, but in a way that the chance of
+        # a flake is unrealistic.
         max_size = 1024
         temp_dat = tempfile.NamedTemporaryFile(suffix='.dat')
         initial = self.input_path('fuzz.wat')
@@ -31,6 +31,8 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         # of iterations and a timeout.
         min_iters = 200
         start_time = time.time()
+        # Locally this succeeds in less than 1 second. Give it a very wide
+        # margin of error to avoid flakes.
         max_time = start_time + 60
 
         i = 0
@@ -109,14 +111,20 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             return False
 
         # There must be non-nullable types.
-        if '(ref (' not in string:
+        if '(ref (' not in string and '(ref $' not in string:
+            return False
+
+        string = string.replace('null ', '')
+
+        # There must be defined types.
+        if ' $' not in string:
             return False
 
         # There must be exact types.
         if '(exact ' not in string:
             return False
 
-        # There must be inexact types (this also tests defined types).
+        # There must be inexact types.
         if '(ref $' not in string:
             return False
 

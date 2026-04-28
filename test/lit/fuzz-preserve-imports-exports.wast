@@ -57,5 +57,3 @@
   )
 )
 
-
-how to test new flagg?
