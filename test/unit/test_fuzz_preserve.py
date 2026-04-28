@@ -100,6 +100,10 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
 
         string = str(data)
 
+        # Each of the following has a 50% chance to get emitted each time, so
+        # over many iterations, the chance of failing to find them goes
+        # exponentially to nothing.
+
         # There must be nullable types.
         if '(ref null' not in string:
             return False
