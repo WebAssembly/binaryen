@@ -1490,8 +1490,12 @@ void StringNew::finalize() {
       (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    // TODO: Make this exact.
-    type = Type(HeapType::string, NonNullable);
+    // If our operand is shared, we are shared.
+    auto share = Unshared;
+    if (ref->type.isRef()) {
+      share = ref->type.getHeapType().getShared();
+    }
+    type = Type(HeapType(HeapType::string).getBasic(share), NonNullable);
   }
 }
 
@@ -1521,8 +1525,12 @@ void StringConcat::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // TODO: Make this exact.
-    type = Type(HeapType::string, NonNullable);
+    // If our operands are shared, we are shared.
+    auto share = Unshared;
+    if (left->type.isRef()) {
+      share = left->type.getHeapType().getShared();
+    }
+    type = Type(HeapType(HeapType::string).getBasic(share), NonNullable);
   }
 }
 
@@ -1555,8 +1563,12 @@ void StringSliceWTF::finalize() {
       end->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // TODO: Make this exact.
-    type = Type(HeapType::string, NonNullable);
+    // If our operand is shared, we are shared.
+    auto share = Unshared;
+    if (ref->type.isRef()) {
+      share = ref->type.getHeapType().getShared();
+    }
+    type = Type(HeapType(HeapType::string).getBasic(share), NonNullable);
   }
 }
 

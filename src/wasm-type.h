@@ -643,7 +643,9 @@ constexpr HeapType noexn = HeapType::noexn;
 // Certain heap types are used by standard operations. Provide central accessors
 // for them to avoid having to build them everywhere they are used.
 HeapType getMutI8Array();
+HeapType getSharedMutI8Array();
 HeapType getMutI16Array();
+HeapType getSharedMutI16Array();
 
 } // namespace HeapTypes
 
