@@ -1,6 +1,6 @@
 Metrics
 total
- [exports]      : 14      
+ [exports]      : 13      
  [funcs]        : 18      
  [globals]      : 2       
  [imports]      : 13      
@@ -9,8 +9,8 @@ total
  [table-data]   : 3       
  [tables]       : 2       
  [tags]         : 2       
- [total]        : 527     
- [vars]         : 50      
+ [total]        : 525     
+ [vars]         : 51      
  ArrayNewFixed  : 2       
  AtomicFence    : 1       
  Binary         : 27      
@@ -18,12 +18,12 @@ total
  Break          : 9       
  Call           : 17      
  CallRef        : 1       
- Const          : 103     
+ Const          : 101     
  Drop           : 8       
  GlobalGet      : 48      
  GlobalSet      : 44      
  If             : 29      
- LocalGet       : 14      
+ LocalGet       : 15      
  LocalSet       : 10      
  Loop           : 4       
  MemoryInit     : 1       
@@ -45,6 +45,6 @@ total
  TableSet       : 1       
  TryTable       : 2       
  TupleExtract   : 1       
- TupleMake      : 4       
+ TupleMake      : 3       
  Unary          : 29      
  Unreachable    : 23      

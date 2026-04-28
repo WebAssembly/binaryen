@@ -70,9 +70,7 @@ def warn(msg):
 
 
 def itertests(args):
-    """
-    Yield (filename, lines) for each test specified in the command line args
-    """
+    """Yield (filename, lines) for each test specified in the command line args."""
     for pattern in args.tests:
         tests = glob.glob(pattern, recursive=True)
         if not tests:

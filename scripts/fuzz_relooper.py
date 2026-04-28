@@ -14,9 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-This fuzzes the relooper using the C API.
-'''
+"""Script that fuzzes the relooper using the C API."""
 
 # ruff: noqa: UP031
 

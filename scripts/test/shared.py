@@ -130,7 +130,7 @@ if not options.binaryen_bin:
 options.binaryen_bin = os.path.normpath(os.path.abspath(options.binaryen_bin))
 
 if not options.binaryen_lib:
-    options.binaryen_lib = os.path.join(os.path.dirname(options.binaryen_bin),  'lib')
+    options.binaryen_lib = os.path.join(os.path.dirname(options.binaryen_bin), 'lib')
 
 options.binaryen_lib = os.path.normpath(os.path.abspath(options.binaryen_lib))
 
@@ -344,13 +344,14 @@ def fail_if_not_identical_to_file(actual, expected_file):
 
 
 def get_test_dir(name):
-    """Returns the test directory located at BINARYEN_ROOT/test/[name]."""
+    """Return the test directory located at BINARYEN_ROOT/test/[name]."""
     return os.path.join(options.binaryen_test, name)
 
 
 def get_tests(test_dir, extensions=[], recursive=False):
-    """Returns the list of test files in a given directory. 'extensions' is a
-    list of file extensions. If 'extensions' is empty, returns all files.
+    """Return the list of test files in a given directory.
+
+    'extensions' is a list of file extensions. If 'extensions' is empty, returns all files.
     """
     tests = []
     star = '**/*' if recursive else '*'
@@ -461,15 +462,14 @@ options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
 # check utilities
 
 
-def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary', base_name=None, stdout=None):
+def binary_format_check(wast, verify_final_result=True, base_name=None, stdout=None):
     # checks we can convert the wast to binary and back
 
     as_file = f"{base_name}-a.wasm" if base_name is not None else "a.wasm"
     disassembled_file = f"{base_name}-ab.wast" if base_name is not None else "ab.wast"
 
     print('         (binary format check)', file=stdout)
-    cmd = WASM_AS + [wast, '-o', as_file, '-all'] + wasm_as_args
+    cmd = WASM_AS + [wast, '-o', as_file, '-all', '-g']
     print('            ', ' '.join(cmd), file=stdout)
     if os.path.exists(as_file):
         os.unlink(as_file)
@@ -490,7 +490,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
 
     if verify_final_result:
         actual = open(disassembled_file).read()
-        fail_if_not_identical_to_file(actual, wast + binary_suffix)
+        fail_if_not_identical_to_file(actual, wast + '.fromBinary')
 
     return disassembled_file
 

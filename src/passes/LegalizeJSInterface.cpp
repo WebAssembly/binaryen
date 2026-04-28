@@ -161,9 +161,6 @@ struct LegalizeJSInterface : public Pass {
         module->removeFunction(pair.first);
       }
     }
-
-    module->removeExport(GET_TEMP_RET_EXPORT);
-    module->removeExport(SET_TEMP_RET_EXPORT);
   }
 
 private:
