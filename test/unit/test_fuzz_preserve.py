@@ -39,9 +39,6 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
         while True:
             i += 1
 
-            # We want to see some variety in both, but don't want to see
-            # everything we expect in both (as one might be slower than the
-            # other).
             if self.found_expected(import_params) and self.found_expected(export_results):
                 print(f"{i} iterations {round(time.time() - start_time, 2)} seconds)")
                 print(f'proper import_params : {import_params}')
@@ -55,9 +52,6 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
             size = random.randint(1, max_size)
             with open(temp_dat.name, 'wb') as f:
                 f.write(bytes([random.randint(0, 255) for x in range(max_size)]))
-
-            import shutil
-            shutil.copyfile(temp_dat.name, '/tmp/waka')
 
             # Generate the fuzz testcase from the random data + the initial
             # contents.
@@ -161,7 +155,6 @@ class PreserveFuzzTest(utils.BinaryenTestCase):
                 # Keep looking.
                 pos = end
 
-            # print('find', what, line, '    ======>>>>>    ', ret)
             return ret
 
         return get('(param', line), get('(result', line)
