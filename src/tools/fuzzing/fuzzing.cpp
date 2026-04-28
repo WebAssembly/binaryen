@@ -2524,6 +2524,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     if (map[func->name].reffed) {
       continue;
     }
+    // Do not alter the signature of configureAll, which will make the VM
+    // reject it immediately.
+    if (intrinsics.isConfigureAll(func.get()) {
+      continue;
+    }
 
     // Find the LUB, which is the most we can refine.
     auto lub = paramLUBs[func->name];
