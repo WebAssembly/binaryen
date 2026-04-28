@@ -2524,9 +2524,10 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     if (map[func->name].reffed) {
       continue;
     }
-    // Do not alter the signature of configureAll, which will make the VM
-    // reject it immediately.
-    if (intrinsics.isConfigureAll(func.get())) {
+    // Do not alter the signature of configureAll or other VM builtins. Changing
+    // these to something the VM does not expect will just cause it to
+    // immediately reject the module by trapping.
+    if (func->module.startsWith("wasm:")) {
       continue;
     }
 
