@@ -36,6 +36,7 @@ struct Name : public IString {
   Name(std::string_view str) : IString(str, false) {}
   Name(const char* str) : IString(str, false) {}
   Name(IString str) : IString(str) {}
+  Name(IString::View str) : IString(str) {}
   Name(const std::string& str) : IString(str) {}
 
   // String literals do not need to be copied. Note: Not safe to construct from

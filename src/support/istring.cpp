@@ -19,7 +19,11 @@
 
 namespace wasm {
 
-std::string_view IString::interned(std::string_view s, bool reuse) {
+const char* IString::interned(std::string_view s) {
+  if (s.data() == nullptr) {
+    return nullptr;
+  }
+
   // We need a set of string_views that can be modified in-place to minimize
   // the number of lookups we do. Since set elements cannot normally be
   // modified, wrap the string_views in a container that provides mutability
@@ -57,7 +61,7 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
   auto [localIt, localInserted] = localStrings.insert(s);
   if (!localInserted) {
     // We already had a local copy of this string.
-    return localIt->str;
+    return localIt->str.data();
   }
 
   // No copy yet in the local cache. Check the global cache.
@@ -66,22 +70,24 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
   if (!globalInserted) {
     // We already had a global copy of this string. Cache it locally.
     localIt->str = globalIt->str;
-    return localIt->str;
+    return localIt->str.data();
   }
 
-  if (!reuse) {
-    // We have a new string, but it doesn't have a stable address. Create a copy
-    // of the data at a stable address we can use. Make sure it is null
-    // terminated so legacy uses that get a C string still work.
-    char* data = (char*)arena.allocSpace(s.size() + 1, 1);
-    std::copy(s.begin(), s.end(), data);
-    data[s.size()] = '\0';
-    s = std::string_view(data, s.size());
-  }
+  // We have a new string. Create a copy of the data at a stable address with a
+  // header we can use. Make sure it is null terminated so legacy uses that get
+  // a C string still work.
+  uint32_t size = s.size();
+  char* buffer = (char*)arena.allocSpace(sizeof(uint32_t) + size + 1,
+                                         alignof(uint32_t));
+  *(uint32_t*)buffer = size;
+  char* data = buffer + sizeof(uint32_t);
+  std::copy(s.begin(), s.end(), data);
+  data[size] = '\0';
+  s = std::string_view(data, size);
 
   // Intern our new string.
   localIt->str = globalIt->str = s;
-  return s;
+  return data;
 }
 
 } // namespace wasm
