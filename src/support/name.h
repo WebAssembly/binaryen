@@ -51,9 +51,7 @@ struct Name : public IString {
     }
   }
 
-  static Name fromInt(size_t i) {
-    return IString(std::to_string(i).c_str());
-  }
+  static Name fromInt(size_t i) { return IString(std::to_string(i).c_str()); }
 
   bool hasSubstring(IString substring) {
     // TODO: Use C++23 `contains`.
