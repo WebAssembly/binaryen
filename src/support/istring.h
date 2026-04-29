@@ -84,7 +84,8 @@ public:
     }
     friend bool operator!=(const char* a, const View& b) { return !(a == b); }
 
-    std::string_view substr(size_t pos, size_t len = std::string_view::npos) const {
+    std::string_view substr(size_t pos,
+                            size_t len = std::string_view::npos) const {
       return std::string_view(*this).substr(pos, len);
     }
     size_t find(std::string_view s, size_t pos = 0) const {
@@ -167,7 +168,9 @@ public:
     }
     return str.substr(str.size() - suffix.size()) == suffix;
   }
-  bool endsWith(IString other) const { return endsWith(std::string_view(other.str)); }
+  bool endsWith(IString other) const {
+    return endsWith(std::string_view(other.str));
+  }
 
   // Disambiguate for string literals.
   template<int N> bool endsWith(const char (&str)[N]) const {

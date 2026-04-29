@@ -77,8 +77,8 @@ const char* IString::interned(std::string_view s) {
   // header we can use. Make sure it is null terminated so legacy uses that get
   // a C string still work.
   uint32_t size = s.size();
-  char* buffer = (char*)arena.allocSpace(sizeof(uint32_t) + size + 1,
-                                         alignof(uint32_t));
+  char* buffer =
+    (char*)arena.allocSpace(sizeof(uint32_t) + size + 1, alignof(uint32_t));
   *(uint32_t*)buffer = size;
   char* data = buffer + sizeof(uint32_t);
   std::copy(s.begin(), s.end(), data);
