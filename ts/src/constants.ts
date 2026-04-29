@@ -12,6 +12,7 @@ import {
 // ## Static Types ## //
 export type Type = number;
 export type HeapType = number;
+export type PackedType = number;
 export type ElementSegmentRef = number;
 export type ExpressionRef = number;
 export type FunctionRef = number;

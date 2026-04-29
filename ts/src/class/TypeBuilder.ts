@@ -1,38 +1,173 @@
 import {
 	BinaryenObj,
+	stackAlloc,
 } from "../-pre.ts";
+import type {
+	HeapType,
+	PackedType,
+	Type,
+} from "../constants.ts";
+import {
+	HEAPU32,
+	i8sToStack,
+	i32sToStack,
+	preserveStack,
+} from "../utils.ts";
+
+
+
+type Field = {
+	/** The type of the struct field. */
+	type: Type,
+	/** The field’s packed type. */
+	packedType: PackedType,
+	/** Is the field mutable? */
+	mutable: boolean,
+};
 
 
 
 export class TypeBuilder {
-	// eslint-disable-next-line no-unused-private-class-members
 	readonly #ptr: number;
 
 	constructor(size: number) {
 		this.#ptr = BinaryenObj["_TypeBuilderCreate"](size);
 	}
 
-	grow() {}
+	/**
+	 * Grow the builder by the given number of types.
+	 * @param count the number of slots to add
+	 */
+	grow(count: number): void {
+		BinaryenObj["_TypeBuilderGrow"](this.#ptr, count);
+	}
 
-	getSize() {}
+	/**
+	 * @return the number of types in the builder
+	 */
+	getSize(): number {
+		return BinaryenObj["_TypeBuilderGetSize"](this.#ptr);
+	}
 
-	setSignatureType() {}
+	/**
+	 * Add a function signature type
+	 * @param index index of the type to add
+	 * @param paramTypes function’s parameter types, as a multi-value type
+	 * @param resultTypes function’s result types, as a multi-value type
+	 */
+	setSignatureType(index: number, paramTypes: Type, resultTypes: Type): void {
+		BinaryenObj["_TypeBuilderSetSignatureType"](this.#ptr, index, paramTypes, resultTypes);
+	}
 
-	setStructType() {}
+	/**
+	 * Add a struct type.
+	 * @param index index of the type to add
+	 * @param fields array of fields in the struct
+	 */
+	setStructType(index: number, fields: readonly Field[]): void {
+		preserveStack(() => {
+			const numFields = fields.length;
+			const types = new Array(numFields);
+			const packedTypes = new Array(numFields);
+			const mutables = new Array(numFields);
+			for (let i = 0; i < numFields; i++) {
+				const {type: typ, packedType, mutable} = fields[i];
+				types[i] = typ;
+				packedTypes[i] = packedType;
+				mutables[i] = mutable;
+			}
+			BinaryenObj["_TypeBuilderSetStructType"](
+				this.#ptr,
+				index,
+				i32sToStack(types),
+				i32sToStack(packedTypes),
+				i8sToStack(mutables),
+				numFields,
+			);
+		});
+	}
 
-	setArrayType() {}
+	/**
+	 * Add an array type.
+	 * @param index index of the type to add
+	 * @param elementType type of element in the array
+	 * @param elementPackedType packed type of elements
+	 * @param elementMutable are array entries mutable?
+	 */
+	setArrayType(index: number, elementType: Type, elementPackedType: Type, elementMutable: boolean): void {
+		BinaryenObj["_TypeBuilderSetArrayType"](this.#ptr, index, elementType, elementPackedType, elementMutable);
+	}
 
-	getTempHeapType() {}
+	/**
+	 * Retrieve a heap type from the builder, before disposal.
+	 * @param index index of the type to get
+	 * @return the heap type at the given index
+	 */
+	getTempHeapType(index: number): HeapType {
+		return BinaryenObj["_TypeBuilderGetTempHeapType"](this.#ptr, index);
+	}
 
-	getTempTupleType() {}
+	/**
+	 * Retrieve a tuple type.
+	 * @param types types in the tuple
+	 * @return the tuple type
+	 */
+	getTempTupleType(types: readonly Type[]): Type {
+		return preserveStack(() => BinaryenObj["_TypeBuilderGetTempTupleType"](this.#ptr, i32sToStack(types), types.length));
+	}
 
-	getTempRefType() {}
+	/**
+	 * Generate a refence type from the given temporary heap type.
+	 * @param heapType the heap type in the type builder to use
+	 * @param nullable is the reference type nullable?
+	 * @return the reference type
+	 */
+	getTempRefType(heapType: HeapType, nullable: boolean): Type {
+		return BinaryenObj["_TypeBuilderGetTempRefType"](this.#ptr, heapType, nullable);
+	}
 
-	setSubType() {}
+	/**
+	 * Declare a type as a subtype of another.
+	 * @param index the index of the type to set
+	 * @param superType the supertype
+	 */
+	setSubType(index: number, superType: Type): void {
+		BinaryenObj["_TypeBuilderSetSubType"](this.#ptr, index, superType);
+	}
 
-	setOpen() {}
+	/**
+	 * Declare a type as “open”, i.e., not “final” (it may be extended/subtyped).
+	 * @param index the index of the type to set
+	 */
+	setOpen(index: number): void {
+		BinaryenObj["_TypeBuilderSetOpen"](this.#ptr, index);
+	}
 
-	createRecGroup() {}
+	/**
+	 * Create a recursive group.
+	 * @param index index in the builder to create the group
+	 * @param length number of types in the group
+	 */
+	createRecGroup(index: number, length: number): void {
+		BinaryenObj["_TypeBuilderCreateRecGroup"](this.#ptr, index, length);
+	}
 
-	buildAndDispose() {}
+	/**
+	 * Resolve any and all recursive types in the TypeBuilder and return their finalized forms.
+	 * @return list of finalized heap types in the builder
+	 */
+	buildAndDispose(): HeapType[] {
+		return preserveStack(() => {
+			const numTypes = this.getSize();
+			const array = stackAlloc(numTypes << 2);
+			if (!BinaryenObj["_TypeBuilderBuildAndDispose"](this.#ptr, array, 0, 0)) {
+				throw new TypeError("TypeBuilder.buildAndDispose failed");
+			}
+			const types = new Array(numTypes);
+			for (let i = 0; i < numTypes; i++) {
+				types[i] = HEAPU32[(array >>> 2) + i];
+			}
+			return types;
+		});
+	}
 }
