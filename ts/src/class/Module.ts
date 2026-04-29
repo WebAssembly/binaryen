@@ -1,5 +1,5 @@
-import {block} from "./expressions/Block.ts";
-import {BinaryenObj} from "./pre.ts";
+import {BinaryenObj} from "../-pre.ts";
+import {block} from "./expression/Block.ts";
 
 
 

@@ -1,6 +1,6 @@
-import type {ExpressionRef} from "../constants.ts";
-import {BinaryenObj} from "../pre.ts";
-import {THIS_PTR} from "../utils.ts";
+import {BinaryenObj} from "../../-pre.ts";
+import type {ExpressionRef} from "../../constants.ts";
+import {THIS_PTR} from "../../utils.ts";
 
 
 

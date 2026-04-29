@@ -1,15 +1,15 @@
-import {Module} from "../Module.ts";
+import {BinaryenObj} from "../../-pre.ts";
 import {
 	type ExpressionRef,
 	type Type,
 	none,
-} from "../constants.ts";
-import {BinaryenObj} from "../pre.ts";
+} from "../../constants.ts";
 import {
 	i32sToStack,
 	preserveStack,
 	strToStack,
-} from "../utils.ts";
+} from "../../utils.ts";
+import type {Module} from "../Module.ts";
 import {Expression} from "./Expression.ts";
 
 

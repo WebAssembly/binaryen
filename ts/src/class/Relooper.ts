@@ -1,5 +1,5 @@
+import {BinaryenObj} from "../-pre.ts";
 import type {Module} from "./Module.ts";
-import {BinaryenObj} from "./pre.ts";
 
 
 

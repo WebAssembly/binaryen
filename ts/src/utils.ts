@@ -4,7 +4,7 @@ import {
 	stackRestore,
 	stackSave,
 	stringToUTF8OnStack,
-} from "./pre.ts";
+} from "./-pre.ts";
 
 
 

@@ -1,5 +1,5 @@
-import type {FunctionRef} from "./constants.ts";
-import {THIS_PTR} from "./utils.ts";
+import type {FunctionRef} from "../constants.ts";
+import {THIS_PTR} from "../utils.ts";
 
 
 

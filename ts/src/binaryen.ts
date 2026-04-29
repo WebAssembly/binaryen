@@ -1,13 +1,13 @@
+export * from "./constants.ts";
+export * from "./global.ts";
 export {
 	ExpressionRunner,
 	ExpressionRunnerFlag,
-} from "./ExpressionRunner.ts";
+} from "./class/ExpressionRunner.ts";
 export {
 	Feature,
 	Module,
-} from "./Module.ts";
-export {Relooper} from "./Relooper.ts";
-export {TypeBuilder} from "./TypeBuilder.ts";
-export * from "./constants.ts";
-export * from "./expressions/index.ts";
-export * from "./global.ts";
+} from "./class/Module.ts";
+export {Relooper} from "./class/Relooper.ts";
+export {TypeBuilder} from "./class/TypeBuilder.ts";
+export * from "./class/expression/index.ts";
