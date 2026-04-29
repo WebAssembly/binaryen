@@ -1,4 +1,6 @@
-import {BinaryenObj} from "../-pre.ts";
+import {
+	BinaryenObj,
+} from "../-pre.ts";
 import type {
 	ExpressionRef,
 	RelooperBlockRef,
@@ -7,7 +9,9 @@ import {
 	i32sToStack,
 	preserveStack,
 } from "../utils.ts";
-import type {Module} from "./Module.ts";
+import type {
+	Module,
+} from "./Module.ts";
 
 
 

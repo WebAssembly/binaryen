@@ -1,9 +1,13 @@
-import {BinaryenObj} from "../../-pre.ts";
+import {
+	BinaryenObj,
+} from "../../-pre.ts";
 import type {
 	ExpressionId,
 	ExpressionRef,
 } from "../../constants.ts";
-import {THIS_PTR} from "../../utils.ts";
+import {
+	THIS_PTR,
+} from "../../utils.ts";
 
 
 
@@ -18,6 +22,7 @@ export class Expression {
 	static getId(expr: number) {
 		return BinaryenObj["_BinaryenExpressionGetId"](expr);
 	}
+
 	static getType() {}
 	static setType() {}
 	static finalize() {}

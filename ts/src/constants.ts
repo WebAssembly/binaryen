@@ -3,7 +3,9 @@
 
 
 
-import {BinaryenObj} from "./-pre.ts";
+import {
+	BinaryenObj,
+} from "./-pre.ts";
 
 
 

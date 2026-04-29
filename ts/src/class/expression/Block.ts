@@ -1,4 +1,6 @@
-import {BinaryenObj} from "../../-pre.ts";
+import {
+	BinaryenObj,
+} from "../../-pre.ts";
 import {
 	ExpressionId,
 	type ExpressionRef,
@@ -10,8 +12,12 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
-import type {Module} from "../Module.ts";
-import {Expression} from "./Expression.ts";
+import type {
+	Module,
+} from "../Module.ts";
+import {
+	Expression,
+} from "./Expression.ts";
 
 
 

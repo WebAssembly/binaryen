@@ -1,11 +1,17 @@
-import {BinaryenObj} from "../../-pre.ts";
+import {
+	BinaryenObj,
+} from "../../-pre.ts";
 import {
 	ExpressionId,
 	type ExpressionRef,
 	type Type,
 } from "../../constants.ts";
-import type {Module} from "../Module.ts";
-import {Expression} from "./Expression.ts";
+import type {
+	Module,
+} from "../Module.ts";
+import {
+	Expression,
+} from "./Expression.ts";
 
 
 

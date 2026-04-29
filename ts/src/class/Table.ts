@@ -1,5 +1,9 @@
-import type {TableRef} from "../constants.ts";
-import {THIS_PTR} from "../utils.ts";
+import type {
+	TableRef,
+} from "../constants.ts";
+import {
+	THIS_PTR,
+} from "../utils.ts";
 
 
 

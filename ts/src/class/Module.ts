@@ -1,6 +1,12 @@
-import {BinaryenObj} from "../-pre.ts";
-import {block} from "./expression/Block.ts";
-import {localGet} from "./expression/LocalGet.ts";
+import {
+	BinaryenObj,
+} from "../-pre.ts";
+import {
+	block,
+} from "./expression/Block.ts";
+import {
+	localGet,
+} from "./expression/LocalGet.ts";
 import {
 	localSet,
 	localTee,
@@ -15,6 +21,7 @@ import {
  * we would leak them. Instead, Const creation is fused together with
  * an intermediate stack allocation of this size to pass the value.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SIZE_OF_LITERAL = BinaryenObj["_BinaryenSizeofLiteral"]();
 
 

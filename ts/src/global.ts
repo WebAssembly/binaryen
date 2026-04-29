@@ -27,6 +27,7 @@ import {
  * @param func the function to call
  * @return the return value of the given function
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleFatalError(func: () => number): number {
 	try {
 		return func();
@@ -36,6 +37,7 @@ function handleFatalError(func: () => number): number {
 			// Older version of emscripten can throw C++ exceptions as pointers (numbers) in release builds.
 			const [_, message] = getExceptionMessage(e);
 			if (message?.startsWith("Fatal: ")) {
+				// eslint-disable-next-line preserve-caught-error
 				throw new Error(message.substr(7).trim());
 			}
 		} else {

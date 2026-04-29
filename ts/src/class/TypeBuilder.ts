@@ -1,8 +1,11 @@
-import {BinaryenObj} from "../-pre.ts";
+import {
+	BinaryenObj,
+} from "../-pre.ts";
 
 
 
 export class TypeBuilder {
+	// eslint-disable-next-line no-unused-private-class-members
 	readonly #ptr: number;
 
 	constructor(size: number) {
