@@ -67,6 +67,10 @@ export class Module {
 
 	getGlobal() {}
 
+	getGlobalByIndex() {}
+
+	getNumGlobals() {}
+
 	removeGlobal() {}
 
 	// ### Memories ### //
@@ -81,6 +85,10 @@ export class Module {
 
 	getTable() {}
 
+	getTableByIndex() {}
+
+	getNumTables() {}
+
 	getTableSegments() {}
 
 	removeTable() {}
@@ -91,6 +99,10 @@ export class Module {
 	getFunction() {}
 
 	removeFunction() {}
+
+	getNumFunctions() {}
+
+	getFunctionByIndex() {}
 
 	// ### Data Segments ### //
 	getNumDataSegments() {}
@@ -107,6 +119,10 @@ export class Module {
 	addPassiveElementSegment() {}
 
 	getElementSegment() {}
+
+	getElementSegmentByIndex() {}
+
+	getNumElementSegments() {}
 
 	removeElementSegment() {}
 
@@ -135,7 +151,56 @@ export class Module {
 
 	addFunctionExport() {}
 
+	getExport() {}
+
+	getNumExports() {}
+
+	getExportByIndex() {}
+
 	removeExport() {}
+
+	// ## Binaryen Operations ## //
+	emitText() {}
+
+	emitStackIR() {}
+
+	emitAsmjs() {}
+
+	emitBinary() {}
+
+	getFeatures() {}
+
+	setFeatures() {}
+
+	setTypeName() {}
+
+	setFieldName() {}
+
+	addCustomSection() {}
+
+	interpret() {}
+
+	validate() {}
+
+	optimize() {}
+
+	optimizeFunction() {}
+
+	updateMaps() {}
+
+	runPasses() {}
+
+	runPassesOnFunction() {}
+
+	dispose() {}
+
+	addDebugInfoFileName() {}
+
+	getDebugInfoFileName() {}
+
+	setDebugLocation() {}
+
+	copyExpression() {}
 }
 
 
