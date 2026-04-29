@@ -19,7 +19,7 @@ class BinaryenFunction {
 	static setBody() {}
 
 
-	readonly [THIS_PTR]: FunctionRef;
+	private readonly [THIS_PTR]: FunctionRef;
 
 	constructor(func: FunctionRef) {
 		this[THIS_PTR] = func;

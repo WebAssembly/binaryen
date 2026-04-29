@@ -1,5 +1,5 @@
 {
-	// Reference: https://www.typescriptlang.org/tsconfig/
+	// TSConfig: https://www.typescriptlang.org/tsconfig/
 	"compilerOptions": {
 		// Type Checking
 		"exactOptionalPropertyTypes":         true,

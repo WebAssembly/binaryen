@@ -1,3 +1,8 @@
+// # Globals # //
+// Top-level functions available in the public API.
+
+
+
 import {
 	BinaryenObj,
 	getExceptionMessage,
@@ -12,11 +17,6 @@ import {
 	i32sToStack,
 	preserveStack,
 } from "./utils.ts";
-
-
-
-// # Globals # //
-// Top-level functions available in the public API.
 
 
 
@@ -127,7 +127,7 @@ export function getSideEffects() {}
 
 
 
-// ## Global Getters and Setters ## //
+// ## Global Getters & Setters ## //
 export function getOptimizeLevel() {};
 
 export function setOptimizeLevel() {};

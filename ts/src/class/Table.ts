@@ -16,7 +16,7 @@ export class Table {
 	static setType() {}
 
 
-	readonly [THIS_PTR]: TableRef;
+	private readonly [THIS_PTR]: TableRef;
 
 	constructor(table: TableRef) {
 		this[THIS_PTR] = table;

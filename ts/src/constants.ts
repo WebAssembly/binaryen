@@ -1,9 +1,9 @@
-import {BinaryenObj} from "./-pre.ts";
-
-
-
 // # Expressions, Types, and Constants # //
 // Compile-time types used by TypeScript, Binaryen types, expression types, and other enums.
+
+
+
+import {BinaryenObj} from "./-pre.ts";
 
 
 
@@ -42,29 +42,29 @@ export const f64: Type = BinaryenObj["_BinaryenTypeFloat64"]();
 export const v128: Type = BinaryenObj["_BinaryenTypeVec128"]();
 
 // ### Reference Types ### //
-/** Reference type `(ref null any)`. */
+/** `(ref null any)` */
 export const anyref: Type = BinaryenObj["_BinaryenTypeAnyref"]();
-/** Reference type `(ref null eq)`. */
+/** `(ref null eq)` */
 export const eqref: Type = BinaryenObj["_BinaryenTypeEqref"]();
-/** Reference type `(ref null i31)`. */
+/** `(ref null i31)` */
 export const i31ref: Type = BinaryenObj["_BinaryenTypeI31ref"]();
-/** Reference type `(ref null struct)`. */
+/** `(ref null struct)` */
 export const structref: Type = BinaryenObj["_BinaryenTypeStructref"]();
-/** Reference type `(ref null array)`. */
+/** `(ref null array)` */
 export const arrayref: Type = BinaryenObj["_BinaryenTypeArrayref"]();
-/** Reference type `(ref null func)`. */
+/** `(ref null func)` */
 export const funcref: Type = BinaryenObj["_BinaryenTypeFuncref"]();
-/** Reference type `(ref null exn)`. */
+/** `(ref null exn)` */
 // export const exnref: Type = BinaryenObj["_BinaryenTypeExnref"](); // TODO: uncomment once supported in Binaryen
-/** Reference type `(ref null extern)`. */
+/** `(ref null extern)` */
 export const externref: Type = BinaryenObj["_BinaryenTypeExternref"]();
-/** Reference type `(ref null none)`. */
+/** `(ref null none)` */
 export const nullref: Type = BinaryenObj["_BinaryenTypeNullref"]();
-/** Reference type `(ref null nofunc)`. */
+/** `(ref null nofunc)` */
 export const nullfuncref: Type = BinaryenObj["_BinaryenTypeNullFuncref"]();
-/** Reference type `(ref null noexn)`. */
+/** `(ref null noexn)` */
 // export const nullexnref: Type = BinaryenObj["_BinaryenTypeNullExnref"](); // TODO: uncomment once supported in Binaryen
-/** Reference type `(ref null noextern)`. */
+/** `(ref null noextern)` */
 export const nullexternref: Type = BinaryenObj["_BinaryenTypeNullExternref"]();
 
 // ### Packed Types ### //
@@ -74,7 +74,7 @@ export const i16: Type = BinaryenObj["_BinaryenPackedTypeInt16"]();
 
 // ### Proposed Types ### //
 // These types are not yet in the WASM spec. Move them to their respective sections once finalized.
-/** Reference type `(ref null string)`. */
+/** `(ref null string)` */
 export const stringref: Type = BinaryenObj["_BinaryenTypeStringref"]();
 
 

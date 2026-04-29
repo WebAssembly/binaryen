@@ -1,3 +1,8 @@
+// # Utilities # //
+// Functions and constants used internally. These are not exported publicly.
+
+
+
 import {
 	BinaryenObj,
 	stackAlloc,
@@ -5,11 +10,6 @@ import {
 	stackSave,
 	stringToUTF8OnStack,
 } from "./-pre.ts";
-
-
-
-// # Utilities # //
-// Global functions and constants needed across all `.ts` files. These are not exported publicly.
 
 
 
