@@ -1,3 +1,4 @@
+import {block} from "./expressions/Block.ts";
 import {BinaryenObj} from "./pre.ts";
 
 
@@ -48,6 +49,8 @@ export class Module {
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	// ## Expression Creation ## //
+	// ### Control Instructions ### //
+	block = block;
 
 	// ## Module Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html

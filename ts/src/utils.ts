@@ -20,6 +20,11 @@ export const HEAPU32: Uint32Array = BinaryenObj["HEAPU32"] as any;
 
 
 
+/** Private symbol used to store the underlying C-API pointer of a wrapped object. */
+export const THIS_PTR: unique symbol = Symbol();
+
+
+
 /**
  * Exports friendly API methods.
  * @param func [description]
