@@ -215,8 +215,7 @@ public:
       auto index = temps[type]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
-                      .c_str(),
-                    false);
+                      .c_str());
       ret = fromName(ret, NameScope::Local);
     }
     if (func->localIndices.find(ret) == func->localIndices.end()) {
