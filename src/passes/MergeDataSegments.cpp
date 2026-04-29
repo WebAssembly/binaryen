@@ -368,8 +368,17 @@ struct MergeDataSegments : public Pass {
       info.zeroFilled = zeroFilledMemory || !mem->imported();
     }
 
-    std::vector<std::unique_ptr<DataSegment>> oldSegments;
-    module->dataSegments.swap(oldSegments);
+    // Gather all active segments from the module, leaving passive segments
+    // behind. Also gather all active segment names for the final renaming step.
+    std::vector<std::unique_ptr<DataSegment>> activeSegments;
+    std::unordered_set<Name> activeNames;
+    for (auto& seg : module->dataSegments) {
+      if (!seg->isPassive) {
+        activeNames.insert(seg->name);
+        activeSegments.push_back(std::move(seg));
+      }
+    }
+    std::erase(module->dataSegments, nullptr);
 
     // To avoid changing observable behavior, we flush all existing data before
     // adding a new data segment that may be out-of-bounds. Between flushes, we
@@ -380,21 +389,14 @@ struct MergeDataSegments : public Pass {
     // its name in boundsCheckSeg in case we need to synthesize it again.
     std::optional<Name> boundsCheckMem = std::nullopt;
     std::optional<Name> boundsCheckSeg = std::nullopt;
-    // We also keep track of the activeNames so that we can rename active
-    // segments referred to by instructions, and retain an emptySegment in case
-    // we need a name but no nonempty active segments are left.
-    std::unordered_set<Name> activeNames;
+    // Retain an emptySegment in case we need a target for the renaming step,
+    // but no active segments remain after removing empty segments.
     std::unique_ptr<DataSegment> emptySegment = nullptr;
     // If a segment is guaranteed to cause an out-of-bounds trap, then we flush
     // all prior segments, copy it verbatim, then drop all remaining segments.
     std::unique_ptr<DataSegment> trapSegment = nullptr;
 
-    for (auto& seg : oldSegments) {
-      if (seg->isPassive) {
-        module->dataSegments.push_back(std::move(seg));
-        continue;
-      }
-      activeNames.insert(seg->name);
+    for (auto& seg : activeSegments) {
       auto& info = infos[seg->memory];
 
       if (auto* c = seg->offset->dynCast<Const>()) {
@@ -416,7 +418,7 @@ struct MergeDataSegments : public Pass {
 
         // If a constant-offset segment is statically in-bounds, we simply merge
         // it into its appropriate memory; otherwise, we flush all memories,
-        // then mark its segment as needing a bounds check next flush.
+        // then mark its own memory as needing a bounds check next flush.
         if (!trapsNeverHappen && inBounds != InBounds::Yes) {
           flushAll(module, infos, boundsCheckMem, boundsCheckSeg, std::nullopt);
           boundsCheckMem = info.mem->name;
@@ -488,10 +490,10 @@ struct MergeDataSegments : public Pass {
     }
     module->updateDataSegmentsMap();
 
-    // Determine a destination segment for any instructions that refer to an
-    // active segment. If there are no active segments left in the output, then
-    // there must have been some empty active segment in the input, which we
-    // have retained in emptySegment.
+    // Determine a target segment for any instructions that refer to an active
+    // segment. If there are no active segments left in the output, then there
+    // must have been an empty active segment in the input, which we have
+    // retained in emptySegment.
     std::optional<Name> firstActive = std::nullopt;
     for (const auto& seg : module->dataSegments) {
       if (!seg->isPassive) {
@@ -500,7 +502,7 @@ struct MergeDataSegments : public Pass {
       }
     }
     assert(firstActive || emptySegment);
-    Name destName = firstActive ? *firstActive : emptySegment->name;
+    Name targetName = firstActive ? *firstActive : emptySegment->name;
 
     struct ActiveSegmentRenamer
       : public WalkerPass<PostWalker<ActiveSegmentRenamer>> {
@@ -508,46 +510,46 @@ struct MergeDataSegments : public Pass {
       bool requiresNonNullableLocalFixups() override { return false; }
 
       std::unordered_set<Name> srcNames;
-      Name destName;
-      bool destUsed = false;
+      Name targetName;
+      bool targetUsed = false;
 
-      ActiveSegmentRenamer(std::unordered_set<Name> srcNames, Name destName)
-        : srcNames(std::move(srcNames)), destName(destName) {}
+      ActiveSegmentRenamer(std::unordered_set<Name> srcNames, Name targetName)
+        : srcNames(std::move(srcNames)), targetName(targetName) {}
 
       void visitMemoryInit(MemoryInit* curr) {
         if (srcNames.contains(curr->segment)) {
-          curr->segment = destName;
-          destUsed = true;
+          curr->segment = targetName;
+          targetUsed = true;
         }
       }
 
       void visitDataDrop(DataDrop* curr) {
         if (srcNames.contains(curr->segment)) {
-          curr->segment = destName;
-          destUsed = true;
+          curr->segment = targetName;
+          targetUsed = true;
         }
       }
 
       void visitArrayNewData(ArrayNewData* curr) {
         if (srcNames.contains(curr->segment)) {
-          curr->segment = destName;
-          destUsed = true;
+          curr->segment = targetName;
+          targetUsed = true;
         }
       }
 
       void visitArrayInitData(ArrayInitData* curr) {
         if (srcNames.contains(curr->segment)) {
-          curr->segment = destName;
-          destUsed = true;
+          curr->segment = targetName;
+          targetUsed = true;
         }
       }
     };
 
-    // Replace the names, then actually add the empty segment if needed.
-    ActiveSegmentRenamer renamer(std::move(activeNames), destName);
+    // Replace the names, then add an empty target segment if needed.
+    ActiveSegmentRenamer renamer(std::move(activeNames), targetName);
     renamer.run(getPassRunner(), module);
     renamer.runOnModuleCode(getPassRunner(), module);
-    if (renamer.destUsed && !firstActive) {
+    if (renamer.targetUsed && !firstActive) {
       module->dataSegments.push_back(std::move(emptySegment));
       module->updateDataSegmentsMap();
     }
