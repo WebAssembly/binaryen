@@ -22,16 +22,22 @@
 
 namespace wasm {
 
-template<typename PromiseType> struct GetPromise {
-  PromiseType* promise = nullptr;
-  bool await_ready() const noexcept { return false; }
-  bool await_suspend(std::coroutine_handle<PromiseType> h) noexcept {
-    promise = &h.promise();
-    return false;
-  }
-  PromiseType* await_resume() const noexcept { return promise; }
-};
+// A generator that yields T and receives U on resumption (if U is not
+// void). The one-way generator (where U is void) provides the following
+// methods:
+//
+//   bool next() - Resume the coroutine and return whether it can be resumed
+//                 again.
+//   T& get() - Return the current yielded value.
+//
+// The two-way generator (where U is not void) provides the following methods:
+//
 
+//   bool resume(U) - Resume the coroutine and return whether it can be resumed
+//                    again.
+//   T& get() - Return the current yielded value.
+//
+// TODO: Make the one-way generator into a forward iterator.
 template<typename T, typename U = void> struct Generator;
 
 // One-way generator
