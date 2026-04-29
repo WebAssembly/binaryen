@@ -45,6 +45,8 @@ template<typename T> struct DeltaDebugger {
   size_t partitionIndex() const { return task.get()->currPartition; }
 
   void resolve(bool success) {
+    // If the algorithm is finished, do not resume the coroutine and let it
+    // return; we depend on its local state remaining live.
     if (finished()) {
       return;
     }
@@ -81,6 +83,8 @@ private:
     if (co_yield &state) {
       working = {};
       finished = true;
+      // Yield the final results rather than returning because we need the local
+      // state to remain live for the lifetime of the DeltaDebugger.
       co_yield &state;
       co_return;
     }
