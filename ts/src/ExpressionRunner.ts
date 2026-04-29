@@ -1,13 +1,13 @@
+import type {Module} from "./Module.ts";
+import type {
+	ExpressionRef,
+	ExpressionRunnerRef,
+} from "./constants.ts";
 import {BinaryenObj} from "./pre.ts";
 import {
 	preserveStack,
 	strToStack,
 } from "./utils.ts";
-import type {
-	ExpressionRef,
-	ExpressionRunnerRef,
-} from "./constants.ts";
-import type {Module} from "./Module.ts";
 
 
 

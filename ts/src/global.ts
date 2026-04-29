@@ -1,3 +1,7 @@
+import type {
+	HeapType,
+	Type,
+} from "./constants.ts";
 import {
 	BinaryenObj,
 	getExceptionMessage,
@@ -8,10 +12,6 @@ import {
 	i32sToStack,
 	preserveStack,
 } from "./utils.ts";
-import type {
-	HeapType,
-	Type,
-} from "./constants.ts";
 
 
 
