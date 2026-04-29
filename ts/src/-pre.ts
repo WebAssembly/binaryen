@@ -12,4 +12,5 @@ export declare function stackSave(): unknown;
 export declare function stackRestore(stack: unknown): unknown;
 export declare function stackAlloc(length: number): number;
 export declare function stringToUTF8OnStack(str: string): number;
+export declare function UTF8ToString(n: number): string;
 export declare function getExceptionMessage(e: number | Error): [unknown, string];
