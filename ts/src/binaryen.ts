@@ -1,5 +1,5 @@
 export * from "./global.ts";
-export * from "./expressions.ts";
+export * from "./constants.ts";
 export {
 	Feature,
 	Module,

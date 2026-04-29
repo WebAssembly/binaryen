@@ -6,7 +6,7 @@ import {
 import type {
 	ExpressionRef,
 	ExpressionRunnerRef,
-} from "./expressions.ts";
+} from "./constants.ts";
 import type {Module} from "./Module.ts";
 
 
