@@ -26,9 +26,12 @@
 //      placeholder function (and eventually to the original secondary
 //      function), allocating a new table slot for the placeholder if necessary.
 //
-//   4. Replace all references to each secondary module's functions in the
-//      primary module's and each other secondary module's table segments with
-//      references to imported placeholder functions.
+//   4. Pre-create trampolines for secondary functions referenced in global
+//      initializers but not yet replace the function references. Replace all
+//      other references to each secondary module's functions in the primary
+//      module's and each other secondary module's table segments with
+//      references to trampoline functions that call imported placeholder
+//      functions.
 //
 //   5. Rewrite direct calls from primary functions to secondary functions to be
 //      indirect calls to their placeholder functions (and eventually to their
@@ -47,6 +50,9 @@
 //   8. Export globals, tags, tables, and memories from the primary module and
 //      import them in the secondary modules. If possible, move those module
 //      items instead to the secondary modules.
+//
+//   9. Delete unused trampoline functions pre-created in 3, since some global
+//      initializers end up referencing functions the same module.
 //
 // Functions can be used or referenced three ways in a WebAssembly module: they
 // can be exported, called, or referenced with ref.func. The above procedure
