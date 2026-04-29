@@ -56,7 +56,6 @@
 //
 
 #include <iterator>
-#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -310,14 +309,13 @@ struct CodeFolding
 
 private:
   // Cache of exiting branch names, populated on demand. Only queried roots
-  // are stored. nullopt means no exiting branches; a set holds the names.
-  std::unordered_map<Expression*, std::optional<std::unordered_set<Name>>>
-    exitingBranchCache;
+  // are stored. An empty set means no exiting branches.
+  std::unordered_map<Expression*, std::unordered_set<Name>> exitingBranchCache;
 
   bool hasExitingBranches(Expression* expr) {
     auto it = exitingBranchCache.find(expr);
     if (it != exitingBranchCache.end()) {
-      return it->second.has_value();
+      return !it->second.empty();
     }
     return populateExitingBranchCache(expr);
   }
@@ -330,16 +328,14 @@ private:
     struct CachePopulator
       : public PostWalker<CachePopulator,
                           UnifiedExpressionVisitor<CachePopulator>> {
-      std::unordered_map<Expression*, std::optional<std::unordered_set<Name>>>&
-        resultCache;
+      std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache;
       Expression* root;
       bool rootResult = false;
       std::unordered_map<Expression*, std::unordered_set<Name>> nameSets;
 
-      CachePopulator(std::unordered_map<
-                       Expression*,
-                       std::optional<std::unordered_set<Name>>>& resultCache,
-                     Expression* root)
+      CachePopulator(
+        std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache,
+        Expression* root)
         : resultCache(resultCache), root(root) {}
 
       static void scan(CachePopulator* self, Expression** currp) {
@@ -367,12 +363,11 @@ private:
           } else {
             // Child was skipped by scan() — merge its cached names.
             auto cacheIt = resultCache.find(child);
-            if (cacheIt != resultCache.end() && cacheIt->second) {
+            if (cacheIt != resultCache.end() && !cacheIt->second.empty()) {
               if (targets.empty()) {
-                targets = *cacheIt->second;
+                targets = cacheIt->second;
               } else {
-                targets.insert(cacheIt->second->begin(),
-                               cacheIt->second->end());
+                targets.insert(cacheIt->second.begin(), cacheIt->second.end());
               }
             }
           }
@@ -396,7 +391,7 @@ private:
             resultCache[curr] = std::move(it->second);
             rootResult = true;
           } else {
-            resultCache[curr] = std::nullopt;
+            resultCache[curr] = {};
           }
         }
       }
