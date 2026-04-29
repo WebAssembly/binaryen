@@ -13,10 +13,10 @@ import {
 
 
 
-export const HEAP8: Int8Array = BinaryenObj["HEAP8"];
-export const HEAPU8: Uint8Array = BinaryenObj["HEAPU8"];
-export const HEAP32: Int32Array = BinaryenObj["HEAP32"];
-export const HEAPU32: Uint32Array = BinaryenObj["HEAPU32"];
+export const HEAP8: Int8Array = BinaryenObj["HEAP8"] as any;
+export const HEAPU8: Uint8Array = BinaryenObj["HEAPU8"] as any;
+export const HEAP32: Int32Array = BinaryenObj["HEAP32"] as any;
+export const HEAPU32: Uint32Array = BinaryenObj["HEAPU32"] as any;
 
 
 

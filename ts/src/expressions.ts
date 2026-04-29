@@ -87,10 +87,20 @@ export const stringref: Type = BinaryenObj["_BinaryenTypeStringref"]();
 
 
 
+/**
+ * Creates a multi-value type from an array of types.
+ * @param types the array of types
+ * @return a tuple type containing the array’s components
+ */
 export function createType(types: readonly Type[]): Type {
 	return preserveStack(() => BinaryenObj["_BinaryenTypeCreate"](i32sToStack(types), types.length));
 }
 
+/**
+ * Expands a multi-value type to an array of types.
+ * @param typ the tuple type
+ * @return an array containing the tuple’s components
+ */
 export function expandType(typ: Type): Type[] {
 	return preserveStack(() => {
 		const numTypes = BinaryenObj["_BinaryenTypeArity"](typ);
