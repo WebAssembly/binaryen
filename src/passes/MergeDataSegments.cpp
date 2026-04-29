@@ -222,7 +222,7 @@ struct MergeInfo {
         if (!zeroFilled) {
           return false;
         }
-        dest.resize(dest.size() + (it->start - start));
+        dest.resize(it->start - start);
       }
       if (end <= it->end()) {
         dest.insert(
@@ -232,7 +232,6 @@ struct MergeInfo {
       dest.insert(dest.end(), it->data.begin(), it->data.end());
       ++it;
     }
-
     if (!zeroFilled) {
       return false;
     }
@@ -264,11 +263,11 @@ struct MergeInfo {
       }
 
       uint64_t leftSegSize =
-        3 + slebSize(left->start) + ulebSize(leftSize) + leftSize;
+        leftSize + 3 + slebSize(left->start) + ulebSize(leftSize);
       uint64_t rightSegSize =
-        3 + slebSize(right->start) + ulebSize(rightSize) + rightSize;
+        rightSize + 3 + slebSize(right->start) + ulebSize(rightSize);
       uint64_t mergedSegSize =
-        3 + slebSize(left->start) + ulebSize(mergedSize) + mergedSize;
+        mergedSize + 3 + slebSize(left->start) + ulebSize(mergedSize);
       if (leftSegSize + rightSegSize < mergedSegSize) {
         left = right++;
         continue;
