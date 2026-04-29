@@ -1,5 +1,6 @@
 import {BinaryenObj} from "../../-pre.ts";
 import {
+	ExpressionId,
 	type ExpressionRef,
 	type Type,
 	none,
@@ -26,6 +27,11 @@ export class Block extends Expression {
 	static appendChild() {}
 	static insertChildAt() {}
 	static removeChildAt() {}
+
+
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.Block, expr);
+	}
 }
 
 

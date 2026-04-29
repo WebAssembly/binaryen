@@ -1,6 +1,14 @@
 import {BinaryenObj} from "../../-pre.ts";
-import type {ExpressionRef} from "../../constants.ts";
+import type {
+	ExpressionId,
+	ExpressionRef,
+} from "../../constants.ts";
 import {THIS_PTR} from "../../utils.ts";
+
+
+
+/** Expression ID-to-wrapper map. */
+export const EXPR_WRAPPERS = new Map<ExpressionId, Expression>();
 
 
 
@@ -18,8 +26,9 @@ export class Expression {
 
 	protected readonly [THIS_PTR]: number;
 
-	constructor(expr: ExpressionRef) {
+	constructor(exprId: ExpressionId, expr: ExpressionRef) {
 		this[THIS_PTR] = expr;
+		EXPR_WRAPPERS.set(exprId, this);
 	}
 
 	valueOf() {

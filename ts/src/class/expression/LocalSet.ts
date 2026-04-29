@@ -1,5 +1,6 @@
 import {BinaryenObj} from "../../-pre.ts";
 import {
+	ExpressionId,
 	type ExpressionRef,
 	type Type,
 } from "../../constants.ts";
@@ -15,6 +16,11 @@ export class LocalSet extends Expression {
 	static isTee() {}
 	static getValue() {}
 	static setValue() {}
+
+
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.LocalSet, expr);
+	}
 }
 
 
