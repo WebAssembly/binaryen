@@ -76,13 +76,16 @@ const char* IString::interned(std::string_view s) {
   // We have a new string. Create a copy of the data at a stable address with a
   // header we can use. Make sure it is null terminated so legacy uses that get
   // a C string still work.
-  uint32_t size = s.size();
+  size_t size = s.size();
+  // The string must fit in 32 bits, including the null terminator.
+  assert(size < std::numeric_limits<uint32_t>::max());
   char* buffer =
     (char*)arena.allocSpace(sizeof(uint32_t) + size + 1, alignof(uint32_t));
-  *(uint32_t*)buffer = size;
+  *static_cast<uint32_t*>(buffer) = size;
   char* data = buffer + sizeof(uint32_t);
   std::copy(s.begin(), s.end(), data);
   data[size] = '\0';
+  // TODO
   s = std::string_view(data, size);
 
   // Intern our new string.

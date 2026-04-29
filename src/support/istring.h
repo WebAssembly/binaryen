@@ -36,11 +36,26 @@ private:
   static const char* interned(std::string_view s);
 
 public:
+  // Strings are stored in Pascal style: a size followed by the characters. We
+  // keep the internal pointer pointing to the data, so that data() is a no-op;
+  // computing the size, which is more rare, requires looking back and doing a
+  // load.
+  //
+  // The size is limited to 4 bytes, so the maximum string we support is 4GB-1.
+  //
+  // The alternative approach of using a string_view here, i.e., keeping the
+  // pointer and size in the IString, uses 4% more memory. That is, this
+  // optimization saves a lot of space, because while it adds 4 bytes to each
+  // interned string itself, we tend to have many views on each (e.g. a single
+  // interned name of a function, and a view in every Call of it).
+  //
+  // We provide a View here, which is a string_view-like interface that hides
+  // those internal details.
   struct View {
     const char* internal = nullptr;
     const char* data() const { return internal; }
     size_t size() const {
-      return internal ? *(const uint32_t*)(internal - 4) : 0;
+      return internal ? *static_cast<const uint32_t*>)(internal - 4) : 0;
     }
     char operator[](size_t x) const { return internal[x]; }
     operator std::string_view() const { return {internal, size()}; }
@@ -107,9 +122,7 @@ public:
 
   IString(View v) : str(v) {}
 
-  IString(std::string_view s, bool reuse = true) : str{interned(s)} {}
-
-  // But other C strings generally do need to be copied.
+  IString(std::string_view s) : str{interned(s)} {}
   IString(const char* str) : str{interned(str)} {}
   IString(const std::string& str) : str{interned(str)} {}
 
