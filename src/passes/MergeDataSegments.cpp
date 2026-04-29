@@ -476,19 +476,20 @@ struct MergeDataSegments : public Pass {
             flushAll(module, infos, boundsCheck, seg->memory);
           }
           info.zeroFilled = false;
+
+          // For the bounds check, conservatively assume that the offset is 0.
+          if (info.inBounds(0, seg->data.size()) == InBounds::No) {
+            trapSegment = std::move(seg);
+            break;
+          }
+          module->dataSegments.push_back(std::move(seg));
         } else {
           // An empty non-constant-offset segment only triggers a bounds check.
           if (!trapsNeverHappen) {
             flushAll(module, infos, boundsCheck, std::nullopt);
+            module->dataSegments.push_back(std::move(seg));
           }
         }
-
-        // For the bounds check, we conservatively assume that the offset is 0.
-        if (info.inBounds(0, seg->data.size()) == InBounds::No) {
-          trapSegment = std::move(seg);
-          break;
-        }
-        module->dataSegments.push_back(std::move(seg));
       }
     }
 
