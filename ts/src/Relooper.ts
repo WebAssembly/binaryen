@@ -6,8 +6,8 @@ import {BinaryenObj} from "./pre.ts";
 export class Relooper {
 	readonly ptr: number;
 
-	constructor(module: Module) {
-		this.ptr = BinaryenObj["_RelooperCreate"](module.ptr)
+	constructor(mod: Module) {
+		this.ptr = BinaryenObj["_RelooperCreate"](mod.ptr)
 	}
 
 	addBlock() {}

@@ -21,8 +21,8 @@ export enum ExpressionRunnerFlag {
 export class ExpressionRunner {
 	readonly ptr: ExpressionRunnerRef;
 
-	constructor(module: Module, flags: ExpressionRunnerFlag, maxDepth: number, maxLoopIterations: number) {
-		this.ptr = BinaryenObj["_ExpressionRunnerCreate"](module.ptr, flags, maxDepth, maxLoopIterations);
+	constructor(mod: Module, flags: ExpressionRunnerFlag, maxDepth: number, maxLoopIterations: number) {
+		this.ptr = BinaryenObj["_ExpressionRunnerCreate"](mod.ptr, flags, maxDepth, maxLoopIterations);
 	}
 
 	setLocalValue(index: number, valueExpr: ExpressionRef): boolean {
