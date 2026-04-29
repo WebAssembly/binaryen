@@ -30,7 +30,7 @@ export class Block extends Expression {
 
 
 
-export function block(this: Module, name: string, children: readonly ExpressionRef[], resultType: Type = none) {
+export function block(this: Module, name: string, children: readonly ExpressionRef[], resultType: Type = none): ExpressionRef {
 	return preserveStack(() => BinaryenObj["_BinaryenBlock"](
 		this.ptr,
 		strToStack(name),

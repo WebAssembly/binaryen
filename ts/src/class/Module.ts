@@ -1,5 +1,10 @@
 import {BinaryenObj} from "../-pre.ts";
 import {block} from "./expression/Block.ts";
+import {localGet} from "./expression/LocalGet.ts";
+import {
+	localSet,
+	localTee,
+} from "./expression/LocalSet.ts";
 
 
 
@@ -53,6 +58,15 @@ export class Module {
 	// ## Expression Creation ## //
 	// ### Control Instructions ### //
 	block = block;
+
+	// ### Variable Instructions ### //
+	get local() {
+		return {
+			get: localGet.bind(this),
+			set: localSet.bind(this),
+			tee: localTee.bind(this),
+		};
+	}
 
 	// ## Module Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
