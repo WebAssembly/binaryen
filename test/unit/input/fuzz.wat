@@ -8,11 +8,11 @@
     (type $B2 (sub $B(struct)))
   )
 
-  ;; Two imports, one which will be reffed.
+  ;; Two imports, one which will be referenced.
   (import "module" "base" (func $import (param i32 anyref) (result eqref)))
   (import "module" "base" (func $import-reffed (param i32 anyref) (result eqref)))
 
-  ;; Two exports, one which will be reffed.
+  ;; Two exports, one which will be referenced.
 
   (func $export (export "export") (param $0 i32) (param $1 anyref) (result eqref)
     ;; Add the refs.
