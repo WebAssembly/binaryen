@@ -42,6 +42,8 @@ export enum Feature {
 	WideArithmetic = BinaryenObj["_BinaryenFeatureWideArithmetic"](),
 	All = BinaryenObj["_BinaryenFeatureAll"](),
 }
+/** @deprecated Enum name is now singular. */
+export const Features = Feature;
 
 
 
