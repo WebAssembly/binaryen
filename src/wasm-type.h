@@ -645,9 +645,15 @@ constexpr HeapType noexn = HeapType::noexn;
 HeapType getMutI8Array();
 HeapType getMutI16Array();
 
+} // namespace HeapTypes
+
+namespace Types {
+
+// Certain Types are used by standard operations. Provide central accessors
+// for them to avoid having to build them everywhere they are used.
 Type getI64Pair();
 
-} // namespace HeapTypes
+} // namespace Types
 
 // A recursion group consisting of one or more HeapTypes. HeapTypes with single
 // members are encoded without using any additional memory, which is why
