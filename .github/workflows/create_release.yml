@@ -108,6 +108,7 @@ jobs:
           ${{ steps.archive-arm64.outputs.SHASUM }}
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+  # Keep in sync with ci.yml.
   # Note: Alpine uses musl libc.
   build-alpine:
     name: alpine
@@ -145,8 +146,11 @@ jobs:
       run: ./alpine.sh pip3 install --break-system-packages -r requirements-dev.txt
 
     - name: cmake
+      # Build with an 8MB stack size, as otherwise Alpine/musl's default stack
+      # size for pthreads is tiny,
+      # https://github.com/WebAssembly/binaryen/issues/8594
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DBUILD_MIMALLOC=ON -DCMAKE_INSTALL_PREFIX=install
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_EXE_LINKER_FLAGS="-Wl,-z,stack-size=8388608" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DBUILD_MIMALLOC=ON -DCMAKE_INSTALL_PREFIX=install
 
     - name: build
       run: |

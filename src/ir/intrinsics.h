@@ -33,10 +33,10 @@
 namespace wasm {
 
 class Intrinsics {
-  Module& module;
+  const Module& module;
 
 public:
-  Intrinsics(Module& module) : module(module) {}
+  Intrinsics(const Module& module) : module(module) {}
 
   // Check if an instruction is the Binaryen call.without.effects intrinsic.
   //

@@ -165,9 +165,9 @@ struct J2CLItableMerging : public Pass {
       if (!g->type.isStruct()) {
         continue;
       }
-      if (structInfoByVtableType.count(g->type.getHeapType())) {
+      if (structInfoByVtableType.contains(g->type.getHeapType())) {
         tableGlobalsByType[g->type.getHeapType()] = g.get();
-      } else if (structInfoByITableType.count(g->type.getHeapType())) {
+      } else if (structInfoByITableType.contains(g->type.getHeapType())) {
         tableGlobalsByType[g->type.getHeapType()] = g.get();
       }
     }

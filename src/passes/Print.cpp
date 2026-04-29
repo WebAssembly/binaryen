@@ -188,14 +188,14 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       // Use indices for any remaining type names, skipping any that are already
       // used.
       for (auto type : types) {
-        if (parent.currModule->typeNames.count(type)) {
+        if (parent.currModule->typeNames.contains(type)) {
           ++i;
           continue;
         }
         Name name;
         do {
           name = std::to_string(i++);
-        } while (usedNames.count(name));
+        } while (usedNames.contains(name));
         fallbackNames[type] = {name, {}};
       }
     }
@@ -320,63 +320,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTryTable(TryTable* curr);
 
   void printUnreachableReplacement(Expression* curr);
-  bool maybePrintUnreachableReplacement(Expression* curr, Type type);
-  void visitRefCast(RefCast* curr) {
-    if ((curr->desc && curr->desc->type != Type::unreachable) ||
-        !maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructNew(StructNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNew(ArrayNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewData(ArrayNewData* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitContNew(ContNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitContBind(ContBind* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitResume(Resume* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitResumeThrow(ResumeThrow* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStackSwitch(StackSwitch* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
 
   // Module-level visitors
   void handleSignature(Function* curr, bool printImplicitNames = false);
@@ -1401,6 +1344,15 @@ struct PrintExpressionContents
       case ConvertUVecI16x8ToVecF16x8:
         o << "f16x8.convert_i16x8_u";
         break;
+      case PromoteLowVecF16x8ToVecF32x4:
+        o << "f32x4.promote_low_f16x8";
+        break;
+      case DemoteZeroVecF32x4ToVecF16x8:
+        o << "f16x8.demote_f32x4_zero";
+        break;
+      case DemoteZeroVecF64x2ToVecF16x8:
+        o << "f16x8.demote_f64x2_zero";
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
     }
@@ -2076,6 +2028,20 @@ struct PrintExpressionContents
 
       case InvalidBinary:
         WASM_UNREACHABLE("unvalid binary operator");
+    }
+    restoreNormalColor(o);
+  }
+  void visitWideIntAddSub(WideIntAddSub* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case AddInt128: {
+        o << "i64.add128";
+        break;
+      }
+      case SubInt128: {
+        o << "i64.sub128";
+        break;
+      }
     }
     restoreNormalColor(o);
   }
@@ -3140,19 +3106,6 @@ void PrintSExpression::printUnreachableReplacement(Expression* curr) {
   decIndent();
 }
 
-bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
-                                                        Type type) {
-  // When we cannot print an instruction because the child from which it's
-  // supposed to get a type immediate is unreachable, then we print a
-  // semantically-equivalent block that drops each of the children and ends in
-  // an unreachable.
-  if (type == Type::unreachable) {
-    printUnreachableReplacement(curr);
-    return true;
-  }
-  return false;
-}
-
 static bool requiresExplicitFuncType(HeapType type) {
   // When the `(type $f)` in a function's typeuse is omitted, the typeuse
   // matches or declares an MVP function type. When the intended type is not an
@@ -3766,7 +3719,7 @@ public:
 
 Pass* createMinifiedPrinterPass() { return new MinifiedPrinter(); }
 
-// Prints out a module withough elision, i.e., the full ast
+// Prints out a module without elision, i.e., the full ast
 
 class FullPrinter : public Printer {
 public:
@@ -3865,7 +3818,7 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
       break;
     }
     default:
-      WASM_UNREACHABLE("unexpeted op");
+      WASM_UNREACHABLE("unexpected op");
   }
   return o;
 }
@@ -3958,7 +3911,7 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         break;
       }
       default:
-        WASM_UNREACHABLE("unexpeted op");
+        WASM_UNREACHABLE("unexpected op");
     }
     o << '\n';
   }
@@ -4006,6 +3959,10 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
+  if (Properties::hasUnwritableTypeImmediate(expression.expr)) {
+    o << "(; unreachable " << getExpressionName(expression.expr) << " ;)";
+    return o;
+  }
   wasm::PrintSExpression printer(o);
   printer.setModule(expression.module);
   wasm::PrintExpressionContents(printer).visit(expression.expr);

@@ -80,11 +80,12 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
-    auto handleCall = [&](bool isReturn) {
+    auto handleCall = [&](bool mayThrow, bool isReturn) {
       if (!self->connectAdjacentBlocks) {
-        // Control is nonlinear if we return, or if EH is enabled or may be.
-        if (isReturn || !self->getModule() ||
-            self->getModule()->features.hasExceptionHandling()) {
+        // Control is nonlinear if we return or throw. Traps don't need to be
+        // taken into account since they don't break control flow in a way
+        // that's observable.
+        if (mayThrow || isReturn) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
       }
@@ -153,12 +154,43 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::CallId: {
-        handleCall(curr->cast<Call>()->isReturn);
-        return;
+        auto* call = curr->cast<Call>();
+
+        bool mayThrow = !self->getModule() ||
+                        self->getModule()->features.hasExceptionHandling();
+        if (mayThrow && self->getModule()) {
+          auto* effects =
+            self->getModule()->getFunction(call->target)->effects.get();
+
+          if (effects && !effects->throws_) {
+            mayThrow = false;
+          }
+        }
+
+        handleCall(mayThrow, call->isReturn);
+        break;
       }
       case Expression::Id::CallRefId: {
-        handleCall(curr->cast<CallRef>()->isReturn);
-        return;
+        auto* callRef = curr->cast<CallRef>();
+
+        // TODO: Effect analysis for indirect calls isn't implemented yet.
+        // Assume any indirect call may throw for now.
+        bool mayThrow = !self->getModule() ||
+                        self->getModule()->features.hasExceptionHandling();
+
+        handleCall(mayThrow, callRef->isReturn);
+        break;
+      }
+      case Expression::Id::CallIndirectId: {
+        auto* callIndirect = curr->cast<CallIndirect>();
+
+        // TODO: Effect analysis for indirect calls isn't implemented yet.
+        // Assume any indirect call may throw for now.
+        bool mayThrow = !self->getModule() ||
+                        self->getModule()->features.hasExceptionHandling();
+
+        handleCall(mayThrow, callIndirect->isReturn);
+        break;
       }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);

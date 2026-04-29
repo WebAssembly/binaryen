@@ -1695,6 +1695,7 @@ TEST_F(TypeTest, TestIterSubTypes) {
   HeapType A, B, C, D;
   {
     TypeBuilder builder(4);
+    builder.createRecGroup(0, 4);
     builder[0].setOpen() = Struct();
     builder[1].setOpen().subTypeOf(builder[0]) = Struct();
     builder[2].setOpen().subTypeOf(builder[0]) = Struct();
@@ -1717,6 +1718,7 @@ TEST_F(TypeTest, TestIterSubTypes) {
     TypeDepths ret;
     subTypes.iterSubTypes(type, depth, [&](HeapType subType, Index depth) {
       ret.insert({subType, depth});
+      return true;
     });
     return ret;
   };
@@ -1729,6 +1731,23 @@ TEST_F(TypeTest, TestIterSubTypes) {
   EXPECT_EQ(getSubTypes(C, 0), TypeDepths({{C, 0}}));
   EXPECT_EQ(getSubTypes(C, 1), TypeDepths({{C, 0}, {D, 1}}));
   EXPECT_EQ(getSubTypes(C, 2), TypeDepths({{C, 0}, {D, 1}}));
+
+  // When the iteration function returns |false|, we stop.
+  int count = 0;
+  subTypes.iterSubTypes(A, 3, [&](HeapType subType, Index depth) {
+    count++;
+    // Stop after the second increment.
+    return count != 2;
+  });
+  EXPECT_EQ(count, 2);
+
+  // If we return true, we iterate through all four.
+  count = 0;
+  subTypes.iterSubTypes(A, 3, [&](HeapType subType, Index depth) {
+    count++;
+    return true;
+  });
+  EXPECT_EQ(count, 4);
 }
 
 // Test supertypes

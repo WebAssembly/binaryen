@@ -224,7 +224,7 @@ struct GlobalStructInference : public Pass {
         curr = *super;
 
         // As above, avoid adding pointless data for anything unoptimizable.
-        if (!unoptimizable.count(curr)) {
+        if (!unoptimizable.contains(curr)) {
           for (auto global : globals) {
             typeGlobals[curr].push_back(global);
           }
@@ -382,7 +382,7 @@ struct GlobalStructInference : public Pass {
         if (auto* get = ref->dynCast<GlobalGet>()) {
           // The global.get must be valid, and not in the process of being
           // rewritten to point to a new un-nested global.
-          if (!unnestingGlobalGets.count(get)) {
+          if (!unnestingGlobalGets.contains(get)) {
             auto* global = wasm.getGlobal(get->name);
             if (!global->mutable_ && !global->imported()) {
               if (auto* structNew = global->init->dynCast<StructNew>()) {
@@ -473,8 +473,8 @@ struct GlobalStructInference : public Pass {
         if (values.size() == 1) {
           // The case of 1 value is simple: trap if the ref is null, and
           // otherwise return the value. Since the field is immutable, there
-          // cannot have been any writes to it we must synchonize with, so we do
-          // not need a fence.
+          // cannot have been any writes to it we must synchronize with, so we
+          // do not need a fence.
           replaceCurrent(builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
             getReadValue(values[0], fieldIndex, field, curr)));
@@ -655,7 +655,7 @@ struct GlobalStructInference : public Pass {
       }
     };
 
-    // Find the optimization opportunitites in parallel.
+    // Find the optimization opportunities in parallel.
     ModuleUtils::ParallelFunctionAnalysis<GlobalsToUnnest> optimization(
       *module, [&](Function* func, GlobalsToUnnest& globalsToUnnest) {
         if (func->imported()) {

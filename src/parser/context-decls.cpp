@@ -15,6 +15,7 @@
  */
 
 #include "contexts.h"
+#include "parsers.h"
 
 namespace wasm::WATParser {
 
@@ -300,6 +301,43 @@ Result<> ParseDeclsCtx::addTag(Name name,
   // TODO: tag annotations
   tagDefs.push_back({name, pos, Index(tagDefs.size()), {}});
   return Ok{};
+}
+
+bool ParseDeclsCtx::skipFunctionBody() {
+  using namespace std::string_view_literals;
+  size_t depth = 1;
+  while (depth > 0 && !in.empty()) {
+    if (in.takeLParen()) {
+      ++depth;
+      continue;
+    }
+    if (in.takeRParen()) {
+      --depth;
+      continue;
+    }
+    if (auto kw = in.takeKeyword()) {
+      if (*kw == "block"sv || *kw == "loop"sv || *kw == "if"sv ||
+          *kw == "try"sv || *kw == "try_table"sv) {
+        in.takeID();
+        (void)typeuse(*this);
+        continue;
+      }
+      if (*kw == "call_indirect"sv || *kw == "return_call_indirect"sv) {
+        (void)maybeTableidx(*this);
+        (void)typeuse(*this, false);
+        continue;
+      }
+      continue;
+    }
+    // Avoid confusion due to parens inside strings by skipping strings as a
+    // unit.
+    if (in.takeString()) {
+      continue;
+    }
+    in.take(1);
+    in.advance();
+  }
+  return true;
 }
 
 } // namespace wasm::WATParser

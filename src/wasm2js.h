@@ -273,7 +273,7 @@ public:
       }
       auto mangled = asmangle(out.str());
       ret = stringToIString(mangled);
-      if (scopeMangledNames.count(ret)) {
+      if (scopeMangledNames.contains(ret)) {
         // When export names collide things may be confusing, as this is
         // observable externally by the person using the JS. Report a warning.
         if (scope == NameScope::Export) {
@@ -289,7 +289,7 @@ public:
       //   var bar = 0;
       // }
       // function bar() { ..
-      if (scope == NameScope::Local && topMangledNames.count(ret)) {
+      if (scope == NameScope::Local && topMangledNames.contains(ret)) {
         continue;
       }
       // We found a good name, use it.
@@ -604,7 +604,7 @@ static bool needsQuoting(Name name) {
 }
 
 void Wasm2JSBuilder::ensureModuleVar(Ref ast, const Importable& imp) {
-  if (seenModuleImports.count(imp.module) > 0) {
+  if (seenModuleImports.contains(imp.module)) {
     return;
   }
   Ref theVar = ValueBuilder::makeVar();
@@ -889,7 +889,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Top));
   // arguments
   bool needCoercions = options.optimizeLevel == 0 || standaloneFunction ||
-                       functionsCallableFromOutside.count(func->name);
+                       functionsCallableFromOutside.contains(func->name);
   for (Index i = 0; i < func->getNumParams(); i++) {
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
@@ -996,7 +996,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           break;
         }
         // If we have already seen this block, stop here.
-        if (unneededExpressions.count(block)) {
+        if (unneededExpressions.contains(block)) {
           // XXX FIXME we should probably abort the entire optimization
           break;
         }
@@ -1025,7 +1025,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           }
           namesBranchedTo.insert(newBranches.begin(), newBranches.end());
         }
-        if (namesBranchedTo.count(block->name)) {
+        if (namesBranchedTo.contains(block->name)) {
           break;
         }
         // We can move code after the child (reached by branching on the
@@ -1151,7 +1151,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
     // Visitors
 
     Ref visitBlock(Block* curr) {
-      if (switchProcessor.unneededExpressions.count(curr)) {
+      if (switchProcessor.unneededExpressions.contains(curr)) {
         // We have had our tail hoisted into a switch that is nested in our
         // first position, so we don't need to emit that code again, or
         // ourselves in fact.
@@ -1201,7 +1201,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
     }
 
     Ref makeBreakOrContinue(Name name) {
-      if (continueLabels.count(name)) {
+      if (continueLabels.contains(name)) {
         return ValueBuilder::makeContinue(fromName(name, NameScope::Label));
       } else {
         return ValueBuilder::makeBreak(fromName(name, NameScope::Label));
@@ -1275,7 +1275,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       // Emit any remaining groups by just emitting branches to their code,
       // which will appear outside the switch.
       for (auto& [target, indexes] : targetIndexes) {
-        if (emittedTargets.count(target)) {
+        if (emittedTargets.contains(target)) {
           continue;
         }
         stopFurtherFallthrough();
@@ -1294,7 +1294,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       // TODO: if the group the default is in is not the largest, we can turn
       // the largest into
       //       the default by using a local and a check on the range
-      if (!emittedTargets.count(curr->default_)) {
+      if (!emittedTargets.contains(curr->default_)) {
         stopFurtherFallthrough();
         ValueBuilder::appendDefaultToSwitch(theSwitch);
         ValueBuilder::appendCodeToSwitch(
@@ -1960,6 +1960,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       return makeJsCoercion(ret, wasmToJsType(curr->type));
     }
 
+    Ref visitWideIntAddSub(WideIntAddSub* curr) {
+      WASM_UNREACHABLE("wide arithmetic is not supported by wasm2js");
+    }
+
     Ref visitSelect(Select* curr) {
       // If the condition has effects that interact with the operands, we must
       // reorder it to the start. We must also use locals if the values have
@@ -2007,7 +2011,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       Ref val = visit(curr->value, EXPRESSION_RESULT);
       bool needCoercion =
         parent->options.optimizeLevel == 0 || standaloneFunction ||
-        parent->functionsCallableFromOutside.count(func->name);
+        parent->functionsCallableFromOutside.contains(func->name);
       if (needCoercion) {
         val = makeJsCoercion(val, wasmToJsType(curr->value->type));
       }
@@ -2718,12 +2722,12 @@ void Wasm2JSGlue::emitPreES6() {
     // Right now codegen requires a flat namespace going into the module,
     // meaning we don't support importing the same name from multiple namespaces
     // yet.
-    if (baseModuleMap.count(base) && baseModuleMap[base] != module) {
+    if (baseModuleMap.contains(base) && baseModuleMap[base] != module) {
       Fatal() << "the name " << base << " cannot be imported from "
               << "two different modules yet";
     }
     baseModuleMap[base] = module;
-    if (seenModules.count(module) == 0) {
+    if (!seenModules.contains(module)) {
       out << "import * as " << asmangle(module.toString()) << " from '"
           << module << "';\n";
       seenModules.insert(module);
@@ -2785,7 +2789,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    if (seenModules.count(import->module) > 0) {
+    if (seenModules.contains(import->module)) {
       return;
     }
     out << "  \"" << import->module
@@ -2811,7 +2815,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    if (seenModules.count(import->module) > 0) {
+    if (seenModules.contains(import->module)) {
       return;
     }
     out << "  \"" << import->module

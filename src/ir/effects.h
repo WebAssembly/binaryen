@@ -18,6 +18,7 @@
 #define wasm_ir_effects_h
 
 #include <cassert>
+#include <unordered_set>
 
 #include "ir/intrinsics.h"
 #include "pass.h"
@@ -32,7 +33,7 @@ namespace wasm {
 
 class EffectAnalyzer {
 public:
-  EffectAnalyzer(const PassOptions& passOptions, Module& module)
+  EffectAnalyzer(const PassOptions& passOptions, const Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen), branchesOut(false),
       calls(false), readsMemory(false), writesMemory(false),
@@ -46,7 +47,7 @@ public:
       features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module,
+                 const Module& module,
                  Expression* ast)
     : EffectAnalyzer(passOptions, module) {
     walk(ast);
@@ -136,13 +137,13 @@ public:
   // more here.)
   bool hasReturnCallThrow : 1;
 
-  Module& module;
+  const Module& module;
   FeatureSet features;
 
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
-  std::set<Name> mutableGlobalsRead;
-  std::set<Name> globalsWritten;
+  std::unordered_set<Name> mutableGlobalsRead;
+  std::unordered_set<Name> globalsWritten;
 
   // The nested depth of try-catch_all. If an instruction that may throw is
   // inside an inner try-catch_all, we don't mark it as 'throws_', because it
@@ -385,12 +386,13 @@ public:
     // write-write, write-read, and read-write conflicts on a local prevent
     // reordering.
     for (auto local : localsWritten) {
-      if (other.localsRead.count(local) || other.localsWritten.count(local)) {
+      if (other.localsRead.contains(local) ||
+          other.localsWritten.contains(local)) {
         return true;
       }
     }
     for (auto local : localsRead) {
-      if (other.localsWritten.count(local)) {
+      if (other.localsWritten.contains(local)) {
         return true;
       }
     }
@@ -401,13 +403,13 @@ public:
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.mutableGlobalsRead.count(global) ||
-          other.globalsWritten.count(global)) {
+      if (other.mutableGlobalsRead.contains(global) ||
+          other.globalsWritten.contains(global)) {
         return true;
       }
     }
     for (auto global : mutableGlobalsRead) {
-      if (other.globalsWritten.count(global)) {
+      if (other.globalsWritten.contains(global)) {
         return true;
       }
     }
@@ -512,8 +514,8 @@ public:
     return hasAnything();
   }
 
-  std::set<Name> breakTargets;
-  std::set<Name> delegateTargets;
+  std::unordered_set<Name> breakTargets;
+  std::unordered_set<Name> delegateTargets;
 
 private:
   struct InternalAnalyzer
@@ -568,7 +570,7 @@ private:
       // expression is not inside a try-catch_all. It is hard to figure out
       // whether the original try-delegate's body throws or not at this point.
       if (curr->name.is()) {
-        if (self->parent.delegateTargets.count(curr->name) &&
+        if (self->parent.delegateTargets.contains(curr->name) &&
             self->parent.tryDepth == 0) {
           self->parent.throws_ = true;
         }
@@ -943,6 +945,7 @@ private:
         }
       }
     }
+    void visitWideIntAddSub(WideIntAddSub* curr) {}
     void visitSelect(Select* curr) {}
     void visitDrop(Drop* curr) {}
     void visitReturn(Return* curr) { parent.branchesOut = true; }

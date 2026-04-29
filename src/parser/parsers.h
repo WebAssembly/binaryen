@@ -91,6 +91,11 @@ Result<> makeNop(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeBinary(Ctx&, Index, const std::vector<Annotation>&, BinaryOp op);
 template<typename Ctx>
+Result<> makeWideIntAddSub(Ctx&,
+                           Index,
+                           const std::vector<Annotation>&,
+                           WideIntAddSubOp op);
+template<typename Ctx>
 Result<> makeUnary(Ctx&, Index, const std::vector<Annotation>&, UnaryOp op);
 template<typename Ctx>
 Result<> makeSelect(Ctx&, Index, const std::vector<Annotation>&);
@@ -1340,7 +1345,7 @@ loop(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
 //            | '(' 'try' label blocktype '(' 'do' instr* ')'
 //                  ('(' 'catch' tagidx instr* ')')*
 //                  ('(' 'catch_all' instr* ')')? ')'
-//            | 'try' label blocktype instr* 'deledate' label
+//            | 'try' label blocktype instr* 'delegate' label
 //            | '(' 'try' label blocktype '(' 'do' instr* ')'
 //                '(' 'delegate' label ')' ')'
 template<typename Ctx>
@@ -1590,6 +1595,14 @@ Result<> makeBinary(Ctx& ctx,
                     const std::vector<Annotation>& annotations,
                     BinaryOp op) {
   return ctx.makeBinary(pos, annotations, op);
+}
+
+template<typename Ctx>
+Result<> makeWideIntAddSub(Ctx& ctx,
+                           Index pos,
+                           const std::vector<Annotation>& annotations,
+                           WideIntAddSubOp op) {
+  return ctx.makeWideIntAddSub(pos, annotations, op);
 }
 
 template<typename Ctx>
@@ -3491,6 +3504,7 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   typename Ctx::TypeUseT type;
   Exactness exact = Exact;
   std::optional<typename Ctx::LocalsT> localVars;
+  bool skipped = false;
 
   if (import) {
     auto use = exacttypeuse(ctx);
@@ -3505,13 +3519,14 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
       CHECK_ERR(l);
       localVars = *l;
     }
-    if (!ctx.skipFunctionBody()) {
+    skipped = ctx.skipFunctionBody();
+    if (!skipped) {
       CHECK_ERR(instrs(ctx));
       ctx.setSrcLoc(ctx.in.takeAnnotations());
     }
   }
 
-  if (!ctx.skipFunctionBody() && !ctx.in.takeRParen()) {
+  if ((import || !skipped) && !ctx.in.takeRParen()) {
     return ctx.in.err("expected end of function");
   }
 

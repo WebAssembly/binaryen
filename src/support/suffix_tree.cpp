@@ -135,7 +135,7 @@ unsigned SuffixTree::extend(unsigned EndIdx, unsigned SuffixesToAdd) {
     unsigned FirstChar = Str[Active.Idx];
 
     // Have we inserted anything starting with FirstChar at the current node?
-    if (Active.Node->Children.count(FirstChar) == 0) {
+    if (!Active.Node->Children.contains(FirstChar)) {
       // If not, then we can just insert a leaf and move to the next step.
       insertLeaf(*Active.Node, EndIdx, FirstChar);
 

@@ -931,6 +931,17 @@ TEST(LexerTest, LexString) {
   EXPECT_FALSE(Lexer("\"too big \\u{110000}\""sv).takeString());
 }
 
+TEST(LexerTest, Annotations) {
+  Lexer lexer(
+    "      (@metadata.code.branch_hint \"\\01\")\n      (@metadata.code.branch_hint \"\\00\")\n      (br_if $out"sv);
+  // Trigger advance/skipSpace which parses annotations.
+  lexer.takeID();
+  auto annotations = lexer.takeAnnotations();
+  ASSERT_EQ(annotations.size(), 2u);
+  EXPECT_EQ(annotations[0].contents, " \"\\01\""sv);
+  EXPECT_EQ(annotations[1].contents, " \"\\00\""sv);
+}
+
 TEST(LexerTest, LexKeywords) {
   Lexer lexer("module type func import rEsErVeD");
   ASSERT_EQ(lexer.takeKeyword(), "module"sv);

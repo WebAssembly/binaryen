@@ -7,9 +7,7 @@ from . import utils
 
 class WebLimitations(utils.BinaryenTestCase):
     def test_many_params(self):
-        """Test that we warn on large numbers of parameters, which Web VMs
-        disallow."""
-
+        """Test that we warn on large numbers of parameters, which Web VMs disallow."""
         params = '(param i32) ' * 1001
         module = f'''
         (module
@@ -23,9 +21,7 @@ class WebLimitations(utils.BinaryenTestCase):
                       p.stderr)
 
     def test_many_locals(self):
-        """Test that we warn on large numbers of locals, which Web VMs
-        disallow."""
-
+        """Test that we warn on large numbers of locals, which Web VMs disallow."""
         params = '(local i32) ' * 50_001
         module = f'''
         (module

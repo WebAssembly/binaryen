@@ -190,6 +190,7 @@ public:
   Result<> makeConst(Literal val);
   Result<> makeUnary(UnaryOp op);
   Result<> makeBinary(BinaryOp op);
+  Result<> makeWideIntAddSub(WideIntAddSubOp op);
   Result<> makeSelect(std::optional<Type> type = std::nullopt);
   Result<> makeDrop();
   Result<> makeReturn();
@@ -466,7 +467,7 @@ private:
     // When transitioning to a new scope for a delimiter like `else` or catch,
     // most of the scope context is preserved, but some parts need to be reset.
     // `keepInput` means that control flow parameters are available at the
-    // begninning of the scope after the delimiter.
+    // beginning of the scope after the delimiter.
     void resetForDelimiter(bool keepInput) {
       exprStack.clear();
       unreachable = false;
@@ -713,15 +714,20 @@ private:
   Result<Index> addScratchLocal(Type);
 
   struct HoistedVal {
-    // The index in the stack of the original value-producing expression.
-    Index valIndex;
+    // The index in the stack of the deepest expression to be popped. This can
+    // be the original value-producing expression, or if we are popping
+    // greedily, it might be the deepest none-typed expression under the
+    // value-producing expression.
+    Index hoistIndex;
     // The local.get placed on the stack, if any.
     LocalGet* get;
   };
 
   // Find the last value-producing expression, if any, and hoist its value to
-  // the top of the stack using a scratch local if necessary.
-  MaybeResult<HoistedVal> hoistLastValue();
+  // the top of the stack using a scratch local if necessary. If `greedy`, then
+  // also include none-typed expressions and the value-producing expression in
+  // the hoisted range of expressions.
+  MaybeResult<HoistedVal> hoistLastValue(bool greedy = false);
   // Transform the stack as necessary such that the original producer of the
   // hoisted value will be popped along with the final expression that produces
   // the value, if they are different. May only be called directly after

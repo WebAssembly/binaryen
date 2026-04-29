@@ -38,7 +38,8 @@
 ;; CHECK-NEXT:                                        specified file. This manifest can be
 ;; CHECK-NEXT:                                        given to wasm-split to split the merged
 ;; CHECK-NEXT:                                        module along the lines of the original
-;; CHECK-NEXT:                                        modules.
+;; CHECK-NEXT:                                        modules. Implies --debuginfo to preserve
+;; CHECK-NEXT:                                        function names in the output module.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --rename-export-conflicts,-rec       Rename exports to avoid conflicts (rather
 ;; CHECK-NEXT:                                        than error)
@@ -176,6 +177,10 @@
 ;; CHECK-NEXT:   --enable-custom-page-sizes           Enable custom page sizes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-page-sizes          Disable custom page sizes
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-wide-arithmetic             Enable wide arithmetic
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-wide-arithmetic            Disable wide arithmetic
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

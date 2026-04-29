@@ -22,10 +22,10 @@ MODULE_DEFINITION_OR_INSTANCE = re.compile(r'(?m)\(module\s+(instance|definition
 
 
 def split_wast(wastFile):
-    '''
-    Returns a list of pairs of module definitions and assertions.
+    """Return a list of pairs of module definitions and assertions.
+
     Module invalidity tests, as well as (module definition ...) and (module instance ...) are skipped.
-    '''
+    """
     # if it's a binary, leave it as is, we can't split it
     wast = None
     if not wastFile.endswith('.wasm'):
@@ -137,11 +137,12 @@ def _subprocess_run(*args, **kwargs):
 
 def run_command(cmd, expected_status=0, stdout=None, stderr=None,
                 expected_err=None, err_contains=False, err_ignore=None):
-    '''
+    """Run a subprocess, returning its output.
+
     stderr - None, subprocess.PIPE, subprocess.STDOUT or a file handle / io.StringIO to write stdout to
     stdout - File handle to print debug messages to
     returns the process's stdout
-    '''
+    """
     if expected_err is not None:
         assert stderr == subprocess.PIPE or stderr is None, \
             "Can't redirect stderr if using expected_err"

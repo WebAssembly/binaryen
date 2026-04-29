@@ -167,7 +167,7 @@ struct Analyzer
 
       void note(Expression**, Constraints type) {
         // Check closed type constraints for exactness. Other kinds of type
-        // constaints do not concern us.
+        // constraints do not concern us.
         // TODO: Handle tuples?
         for (auto varType : type) {
           if (auto* t = std::get_if<Type>(&varType)) {
@@ -198,8 +198,8 @@ struct Analyzer
 
   void visitGlobal(Global* global) {
     // This could be more precise by checking that the init expression is not
-    // null before inhibiting optimization, or by just inhibiting optmization of
-    // the allocations used in the initialization, but this is simpler.
+    // null before inhibiting optimization, or by just inhibiting optimization
+    // of the allocations used in the initialization, but this is simpler.
     for (auto type : global->type) {
       if (type.isExact()) {
         disallowedTypes.insert(type.getHeapType());
@@ -296,7 +296,7 @@ struct TypeSSA : public Pass {
     for (auto* curr : news) {
       bool disallowed = false;
       if (curr->type.isRef()) {
-        disallowed = disallowedTypes.count(curr->type.getHeapType());
+        disallowed = disallowedTypes.contains(curr->type.getHeapType());
       }
       if (!disallowed && isInteresting(curr)) {
         newsToModify.push_back(curr);
@@ -372,7 +372,7 @@ struct TypeSSA : public Pass {
       curr->type = Type(newType, NonNullable, Exact);
 
       // If the old type has a nice name, make a nice name for the new one.
-      if (typeNames.count(oldType)) {
+      if (typeNames.contains(oldType)) {
         auto intendedName = typeNames[oldType].name.toString() + '_' +
                             std::to_string(++nameCounter);
         auto newName =

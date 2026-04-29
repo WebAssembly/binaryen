@@ -1528,6 +1528,8 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Describes clause on a non-struct type";
     case TypeBuilder::ErrorReasonKind::ForwardDescribesReference:
       return os << "Describes clause is a forward reference";
+    case TypeBuilder::ErrorReasonKind::ForwardDescriptorReference:
+      return os << "Descriptor clause is a forward reference";
     case TypeBuilder::ErrorReasonKind::MismatchedDescribes:
       return os << "Described type is not a matching descriptor";
     case TypeBuilder::ErrorReasonKind::NonStructDescriptor:
@@ -2494,7 +2496,7 @@ validateTypeInfo(HeapTypeInfo& info,
   if (auto* super = info.supertype) {
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
-    if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
+    if (super->isTemp && !seenTypes.contains(HeapType(uintptr_t(super)))) {
       return TypeBuilder::ErrorReasonKind::ForwardSupertypeReference;
     }
     // The supertype must have a valid structure.
@@ -2509,8 +2511,7 @@ validateTypeInfo(HeapTypeInfo& info,
     if (info.kind != HeapTypeKind::Struct) {
       return TypeBuilder::ErrorReasonKind::NonStructDescribes;
     }
-    assert(desc->isTemp && "unexpected canonical described type");
-    if (!seenTypes.count(HeapType(uintptr_t(desc)))) {
+    if (!seenTypes.contains(HeapType(uintptr_t(desc)))) {
       return TypeBuilder::ErrorReasonKind::ForwardDescribesReference;
     }
     if (desc->descriptor != &info) {
@@ -2649,11 +2650,19 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto type = asHeapType(typeInfos[i]);
     for (auto child : type.getHeapTypeChildren()) {
-      if (isTemp(child) && !seenTypes.count(child)) {
+      if (isTemp(child) && !seenTypes.contains(child)) {
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReasonKind::ForwardChildReference}};
       }
     }
+    if (auto desc = type.getDescriptorType()) {
+      if (isTemp(*desc) && !seenTypes.contains(*desc)) {
+        return {TypeBuilder::Error{
+          i, TypeBuilder::ErrorReasonKind::ForwardDescriptorReference}};
+      }
+    }
+    // Describes clauses were already checked as we validated each type in the
+    // group.
   }
 
   // The rec group is valid, so we can try to move the group into the global rec
@@ -2761,7 +2770,7 @@ TypeBuilder::BuildResult TypeBuilder::build() {
       auto group = (*built)[0].getRecGroup();
       auto uniqueGroup = impl->unique.insertOrGet(group);
       if (group != uniqueGroup) {
-        // There is a conflict. Find the set of missing featuers that would
+        // There is a conflict. Find the set of missing features that would
         // resolve the conflict if enabled.
         FeatureSet missingFeatures = FeatureSet::None;
         FeatureSet potential = FeatureSet::GC | FeatureSet::CustomDescriptors;
@@ -2837,6 +2846,11 @@ HeapType getMutI8Array() {
 HeapType getMutI16Array() {
   static HeapType i16Array = Array(Field(Field::i16, Mutable));
   return i16Array;
+}
+
+Type getI64Pair() {
+  static Type i64Pair({Type::i64, Type::i64});
+  return i64Pair;
 }
 
 } // namespace wasm::HeapTypes

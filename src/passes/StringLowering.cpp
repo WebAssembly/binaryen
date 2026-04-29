@@ -177,14 +177,15 @@ struct StringGathering : public Pass {
       module->globals.begin(),
       module->globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return definingNames.count(a->name) && !definingNames.count(b->name);
+        return definingNames.contains(a->name) &&
+               !definingNames.contains(b->name);
       });
   }
 
   void replaceStrings(Module* module) {
     Builder builder(*module);
     for (auto** stringPtr : stringPtrs) {
-      if (stringPtrsToPreserve.count(stringPtr)) {
+      if (stringPtrsToPreserve.contains(stringPtr)) {
         continue;
       }
       auto* stringConst = (*stringPtr)->cast<StringConst>();

@@ -188,7 +188,7 @@ struct ExnData {
 //
 // The key idea in this approach to suspending and resuming is that to suspend
 // you want to unwind the stack - you "jump" back to some outer scope - and to
-// reume, we want to rewind the stack - to get everything back exactly the way
+// resume, we want to rewind the stack - to get everything back exactly the way
 // it was, so we can pick things back up. And, to achieve that, we really just
 // need two things:
 //    * To rewind the call stack. If we called foo() and then bar(), we want to
@@ -1164,6 +1164,12 @@ public:
         return value.convertSToF16x8();
       case ConvertUVecI16x8ToVecF16x8:
         return value.convertUToF16x8();
+      case PromoteLowVecF16x8ToVecF32x4:
+        return value.promoteLowF16x8ToF32x4();
+      case DemoteZeroVecF32x4ToVecF16x8:
+        return value.demoteZeroF32x4ToF16x8();
+      case DemoteZeroVecF64x2ToVecF16x8:
+        return value.demoteZeroF64x2ToF16x8();
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }
@@ -1795,6 +1801,38 @@ public:
     VISIT(condition, curr->condition)
     return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
   }
+  Flow visitWideIntAddSub(WideIntAddSub* curr) {
+    VISIT(leftLow, curr->leftLow);
+    VISIT(leftHigh, curr->leftHigh);
+    VISIT(rightLow, curr->rightLow);
+    VISIT(rightHigh, curr->rightHigh);
+
+    uint64_t lowLHS = leftLow.getSingleValue().geti64();
+    uint64_t highLHS = leftHigh.getSingleValue().geti64();
+    uint64_t lowRHS = rightLow.getSingleValue().geti64();
+    uint64_t highRHS = rightHigh.getSingleValue().geti64();
+
+    uint64_t lowResult = 0;
+    uint64_t highResult = 0;
+
+    switch (curr->op) {
+      case AddInt128: {
+        bool overflowed = std::ckd_add(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS + highRHS + overflowed;
+        break;
+      }
+      case SubInt128: {
+        bool overflowed = std::ckd_sub(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS - highRHS - overflowed;
+        break;
+      }
+    }
+
+    Literals results;
+    results.push_back(Literal(lowResult));
+    results.push_back(Literal(highResult));
+    return results;
+  }
   Flow visitDrop(Drop* curr) {
     VISIT(value, curr->value)
     return Flow();
@@ -1958,7 +1996,7 @@ public:
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     // Single-module implementation. This is used from Precompute, for example.
-    // It is overriden in ModuleRunner to add logic for finding the proper
+    // It is overridden in ModuleRunner to add logic for finding the proper
     // imported tag (which single-module cases don't care about).
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
@@ -4155,7 +4193,7 @@ public:
     Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
     if (offsetVal + sizeVal > 0 &&
-        droppedElementSegments.count(curr->segment)) {
+        droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in table.init");
     }
     if (offsetVal + sizeVal > segment->data.size()) {
@@ -4573,7 +4611,8 @@ public:
     Address offsetVal(offset.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 &&
+        droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
     if (offsetVal + sizeVal > segment->data.size()) {
@@ -4690,7 +4729,7 @@ public:
     if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }
-    if (droppedDataSegments.count(curr->segment) && end > 0) {
+    if (droppedDataSegments.contains(curr->segment) && end > 0) {
       trap("dropped segment access in array.new_data");
     }
     contents.reserve(size);
@@ -4717,7 +4756,7 @@ public:
     if (end > seg.data.size()) {
       trap("out of bounds segment access in array.new_elem");
     }
-    if (end > 0 && droppedElementSegments.count(curr->segment)) {
+    if (end > 0 && droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.new_elem");
     }
     contents.reserve(size);
@@ -4754,7 +4793,8 @@ public:
     if (offsetVal + readSize > seg->data.size()) {
       trap("out of bounds segment access in array.init_data");
     }
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 &&
+        droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_data");
     }
     for (size_t i = 0; i < sizeVal; i++) {
@@ -4788,7 +4828,7 @@ public:
     if (max > seg->data.size()) {
       trap("out of bounds segment access in array.init_elem");
     }
-    if (max > 0 && droppedElementSegments.count(curr->segment)) {
+    if (max > 0 && droppedElementSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_elem");
     }
     for (size_t i = 0; i < sizeVal; i++) {

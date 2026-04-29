@@ -94,7 +94,9 @@ public:
                    BufferWithRandomAccess& o,
                    Function* func,
                    bool DWARF)
-    : parent(parent), o(o), func(func), DWARF(DWARF) {}
+    : parent(parent), o(o), func(func), DWARF(DWARF),
+      numLocalsByType(parent.getModule()->features),
+      scratchLocals(parent.getModule()->features) {}
 
   void visit(Expression* curr) {
     if (func) {
@@ -144,19 +146,45 @@ private:
 
   std::vector<Name> breakStack;
 
+  // Map types to indices or counts, but transparently convert the key types to
+  // their written versions given the enabled features.
+  struct TypeIndexMap : private InsertOrderedMap<Type, Index> {
+    FeatureSet feats;
+
+  public:
+    using InsertOrderedMap<Type, Index>::iterator;
+    using InsertOrderedMap<Type, Index>::const_iterator;
+    using InsertOrderedMap<Type, Index>::begin;
+    using InsertOrderedMap<Type, Index>::end;
+    using InsertOrderedMap<Type, Index>::size;
+
+    TypeIndexMap(FeatureSet feats)
+      : InsertOrderedMap<Type, Index>(), feats(feats) {}
+
+    Index& operator[](Type type) {
+      return InsertOrderedMap::operator[](type.asWrittenGivenFeatures(feats));
+    }
+    iterator find(Type type) {
+      return InsertOrderedMap::find(type.asWrittenGivenFeatures(feats));
+    }
+    const_iterator find(Type type) const {
+      return InsertOrderedMap::find(type.asWrittenGivenFeatures(feats));
+    }
+  };
+
   // The types of locals in the compact form, in order.
   std::vector<Type> localTypes;
   // type => number of locals of that type in the compact form
-  std::unordered_map<Type, size_t> numLocalsByType;
+  TypeIndexMap numLocalsByType;
 
   void noteLocalType(Type type, Index count = 1);
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract. If there are multiple scratch locals of the same type, they
   // are contiguous and this map holds the index of the first.
-  InsertOrderedMap<Type, Index> scratchLocals;
+  TypeIndexMap scratchLocals;
   // Return the type and number of required scratch locals.
-  InsertOrderedMap<Type, Index> countScratchLocals();
+  TypeIndexMap countScratchLocals();
 
   // local.get, local.tee, and global.get expressions that will be followed by
   // tuple.extracts. We can optimize these by getting only the local for the

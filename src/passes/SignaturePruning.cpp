@@ -277,7 +277,7 @@ struct SignaturePruning : public Pass {
       // to prune them.
       SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i) == 0) {
+        if (!usedParams.contains(i)) {
           unusedParams.insert(i);
         }
       }
@@ -315,7 +315,7 @@ struct SignaturePruning : public Pass {
       // Create a new signature. When the TypeRewriter operates below it will
       // modify the existing heap type in place to change its signature to this
       // one. TypeRewriter will also ensure that distinct types remain
-      // disctinct, even if they have the same signature after optimization.
+      // distinct, even if they have the same signature after optimization.
       newSignatures[type] = Signature(Type(newParams), sig.results);
 
       // removeParameters() updates the type as it goes, but in this pass we

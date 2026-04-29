@@ -465,7 +465,7 @@ bool WasmSplitOptions::validate() {
 
   // Validate that all used options are allowed in the current mode.
   for (std::string& opt : usedOptions) {
-    if (!validOptions[static_cast<unsigned>(mode)].count(opt)) {
+    if (!validOptions[static_cast<unsigned>(mode)].contains(opt)) {
       std::stringstream msg;
       msg << "Option " << opt << " cannot be used in " << mode << " mode.";
       fail(msg.str());

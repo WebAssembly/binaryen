@@ -22,6 +22,21 @@
 
 namespace wasm {
 
+namespace {
+
+template<typename Value>
+const Value& getModuleElement(const std::unordered_map<Name, Value>& m,
+                              Name name,
+                              std::string_view funcName) {
+  auto iter = m.find(name);
+  if (iter == m.end()) {
+    Fatal() << "Module::" << funcName << ": " << name << " does not exist";
+  }
+  return iter->second;
+}
+
+} // namespace
+
 // shared constants
 
 Name RETURN_FLOW("*return:)*");
@@ -64,6 +79,7 @@ const char* CustomDescriptorsFeature = "custom-descriptors";
 const char* RelaxedAtomicsFeature = "relaxed-atomics";
 const char* MultibyteFeature = "multibyte";
 const char* CustomPageSizesFeature = "custom-page-sizes";
+const char* WideArithmeticFeature = "wide-arithmetic";
 
 } // namespace BinaryConsts::CustomSections
 
@@ -714,6 +730,9 @@ void Unary::finalize() {
     case TruncSatUVecF16x8ToVecI16x8:
     case ConvertSVecI16x8ToVecF16x8:
     case ConvertUVecI16x8ToVecF16x8:
+    case PromoteLowVecF16x8ToVecF32x4:
+    case DemoteZeroVecF32x4ToVecF16x8:
+    case DemoteZeroVecF64x2ToVecF16x8:
       type = Type::v128;
       break;
     case AnyTrueVec128:
@@ -781,6 +800,18 @@ void Binary::finalize() {
     type = Type::i32;
   } else {
     type = left->type;
+  }
+}
+
+void WideIntAddSub::finalize() {
+  if (leftLow->type == Type::unreachable ||
+      leftHigh->type == Type::unreachable ||
+      rightLow->type == Type::unreachable ||
+      rightHigh->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    static Type i64Pair = HeapTypes::getI64Pair();
+    type = i64Pair;
   }
 }
 
@@ -1705,45 +1736,35 @@ void Function::clearDebugInfo() {
   epilogLocation.reset();
 }
 
-template<typename Map>
-typename Map::mapped_type&
-getModuleElement(Map& m, Name name, std::string_view funcName) {
-  auto iter = m.find(name);
-  if (iter == m.end()) {
-    Fatal() << "Module::" << funcName << ": " << name << " does not exist";
-  }
-  return iter->second;
-}
-
-Export* Module::getExport(Name name) {
+Export* Module::getExport(Name name) const {
   return getModuleElement(exportsMap, name, "getExport");
 }
 
-Function* Module::getFunction(Name name) {
+Function* Module::getFunction(Name name) const {
   return getModuleElement(functionsMap, name, "getFunction");
 }
 
-Table* Module::getTable(Name name) {
+Table* Module::getTable(Name name) const {
   return getModuleElement(tablesMap, name, "getTable");
 }
 
-ElementSegment* Module::getElementSegment(Name name) {
+ElementSegment* Module::getElementSegment(Name name) const {
   return getModuleElement(elementSegmentsMap, name, "getElementSegment");
 }
 
-Memory* Module::getMemory(Name name) {
+Memory* Module::getMemory(Name name) const {
   return getModuleElement(memoriesMap, name, "getMemory");
 }
 
-DataSegment* Module::getDataSegment(Name name) {
+DataSegment* Module::getDataSegment(Name name) const {
   return getModuleElement(dataSegmentsMap, name, "getDataSegment");
 }
 
-Global* Module::getGlobal(Name name) {
+Global* Module::getGlobal(Name name) const {
   return getModuleElement(globalsMap, name, "getGlobal");
 }
 
-Tag* Module::getTag(Name name) {
+Tag* Module::getTag(Name name) const {
   return getModuleElement(tagsMap, name, "getTag");
 }
 
@@ -1756,39 +1777,39 @@ typename Map::mapped_type getModuleElementOrNull(Map& m, Name name) {
   return iter->second;
 }
 
-Export* Module::getExportOrNull(Name name) {
+Export* Module::getExportOrNull(Name name) const {
   return getModuleElementOrNull(exportsMap, name);
 }
 
-Function* Module::getFunctionOrNull(Name name) {
+Function* Module::getFunctionOrNull(Name name) const {
   return getModuleElementOrNull(functionsMap, name);
 }
 
-Table* Module::getTableOrNull(Name name) {
+Table* Module::getTableOrNull(Name name) const {
   return getModuleElementOrNull(tablesMap, name);
 }
 
-ElementSegment* Module::getElementSegmentOrNull(Name name) {
+ElementSegment* Module::getElementSegmentOrNull(Name name) const {
   return getModuleElementOrNull(elementSegmentsMap, name);
 }
 
-Memory* Module::getMemoryOrNull(Name name) {
+Memory* Module::getMemoryOrNull(Name name) const {
   return getModuleElementOrNull(memoriesMap, name);
 }
 
-DataSegment* Module::getDataSegmentOrNull(Name name) {
+DataSegment* Module::getDataSegmentOrNull(Name name) const {
   return getModuleElementOrNull(dataSegmentsMap, name);
 }
 
-Global* Module::getGlobalOrNull(Name name) {
+Global* Module::getGlobalOrNull(Name name) const {
   return getModuleElementOrNull(globalsMap, name);
 }
 
-Tag* Module::getTagOrNull(Name name) {
+Tag* Module::getTagOrNull(Name name) const {
   return getModuleElementOrNull(tagsMap, name);
 }
 
-Importable* Module::getImport(ModuleItemKind kind, Name name) {
+Importable* Module::getImport(ModuleItemKind kind, Name name) const {
   switch (kind) {
     case ModuleItemKind::Function:
       return getFunction(name);
@@ -1809,7 +1830,7 @@ Importable* Module::getImport(ModuleItemKind kind, Name name) {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
+Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) const {
   auto doReturn = [](Importable* importable) {
     return importable ? importable->imported() ? importable : nullptr : nullptr;
   };

@@ -74,7 +74,7 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
 }
 
 bool PassRegistry::containsPass(const std::string& name) {
-  return passInfos.count(name) > 0;
+  return passInfos.contains(name);
 }
 
 std::string PassRegistry::getPassDescription(std::string name) {
@@ -178,7 +178,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass("generate-dyncalls",
-               "generate dynCall fuctions used by emscripten ABI",
+               "generate dynCall functions used by emscripten ABI",
                createGenerateDynCallsPass);
   registerPass(
     "generate-i64-dyncalls",
@@ -367,7 +367,7 @@ void PassRegistry::registerPasses() {
                "pick load signs based on their uses",
                createPickLoadSignsPass);
   registerPass(
-    "poppify", "Tranform Binaryen IR into Poppy IR", createPoppifyPass);
+    "poppify", "Transform Binaryen IR into Poppy IR", createPoppifyPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -1003,7 +1003,7 @@ void PassRunner::clear() { passes.clear(); }
 void PassRunner::runPass(Pass* pass) {
   assert(!pass->isFunctionParallel());
 
-  if (options.passesToSkip.count(pass->name)) {
+  if (options.passesToSkip.contains(pass->name)) {
     return;
   }
 
@@ -1018,7 +1018,7 @@ void PassRunner::runPass(Pass* pass) {
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
 
-  if (options.passesToSkip.count(pass->name)) {
+  if (options.passesToSkip.contains(pass->name)) {
     return;
   }
 

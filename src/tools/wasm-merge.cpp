@@ -251,7 +251,7 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
         if (iter == updates.end()) {
           return name;
         }
-        if (visited.count(name)) {
+        if (visited.contains(name)) {
           // This is a loop of imports, which means we cannot resolve a useful
           // name. Report an error.
           Fatal() << "wasm-merge: infinite loop of imports on " << oldName;
@@ -451,7 +451,7 @@ void fuseImportsAndExports(const PassOptions& options) {
   for (auto& ex : merged.exports) {
     // skip type exports
     if (auto* name = ex->getInternalName()) {
-      assert(exportModuleMap.count(ex.get()));
+      assert(exportModuleMap.contains(ex.get()));
       ExportInfo& exportInfo = exportModuleMap[ex.get()];
       kindModuleExportMaps[ex->kind][exportInfo.moduleName]
                           [exportInfo.baseName] = *name;
@@ -670,7 +670,7 @@ Input source maps can be specified by adding an -ism option right after the modu
          [&](Options* o, const std::string& argument) {
            size_t pos = inputFiles.size();
            if (pos == 0 || pos != inputFileNames.size() ||
-               inputSourceMapFilenames.count(pos - 1)) {
+               inputSourceMapFilenames.contains(pos - 1)) {
              std::cerr << "Option '-ism " << argument
                        << "' should be right after the module name\n";
              exit(EXIT_FAILURE);
@@ -697,11 +697,13 @@ Input source maps can be specified by adding an -ism option right after the modu
          "",
          "Write a wasm-split manifest to the specified file. This manifest can "
          "be given to wasm-split to split the merged module along the lines of "
-         "the original modules.",
+         "the original modules. Implies --debuginfo to preserve function names "
+         "in the output module.",
          WasmMergeOption,
          Options::Arguments::One,
-         [&manifestFile](Options* o, const std::string& argument) {
+         [&](Options* o, const std::string& argument) {
            manifestFile = argument;
+           debugInfo = true;
          })
     .add("--rename-export-conflicts",
          "-rec",
@@ -867,7 +869,7 @@ Input source maps can be specified by adding an -ism option right after the modu
     }
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.contains("output")) {
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);

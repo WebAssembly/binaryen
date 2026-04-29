@@ -1192,7 +1192,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       : public PostWalker<JumpThreader,
                           UnifiedExpressionVisitor<JumpThreader>> {
       // Map of all labels (branch targets) to the branches going to them. (We
-      // only care about blocks here, and not loops, but for simplicitly we
+      // only care about blocks here, and not loops, but for simplicity we
       // store all branch targets since blocks are 99% of that set anyhow. Any
       // loops are ignored later.)
       std::unordered_map<Name, std::vector<Expression*>> labelToBranches;
@@ -1224,11 +1224,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // if this block has just one child, a sub-block, then jumps to the
           // former are jumps to us, really
           if (auto* child = list[0]->dynCast<Block>()) {
-            // the two blocks must have the same type for us to update the
-            // branch, as otherwise one block may be unreachable and the other
-            // concrete, so one might lack a value
-            if (child->name.is() && child->name != curr->name &&
-                child->type == curr->type) {
+            if (child->name.is()) {
               redirectBranches(child, curr->name);
             }
           }
@@ -1994,7 +1990,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               Index i = 0;
               while (1) {
                 defaultName = "tablify|" + std::to_string(i++);
-                if (usedNames.count(defaultName) == 0) {
+                if (!usedNames.contains(defaultName)) {
                   break;
                 }
               }

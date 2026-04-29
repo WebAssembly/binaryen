@@ -634,6 +634,7 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitBinary(Binary* curr) { addRoot(curr); }
+  void visitWideIntAddSub(WideIntAddSub* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
     receiveChildValue(curr->ifTrue, curr);
     receiveChildValue(curr->ifFalse, curr);
@@ -876,6 +877,12 @@ struct InfoCollector
           targetType, [&](HeapType subType, Index depth) {
             info.links.push_back({SignatureResultLocation{subType, i},
                                   ExpressionLocation{curr, i}});
+            if (curr->isReturn) {
+              // Send the result to the function's results as well.
+              info.links.push_back({SignatureResultLocation{subType, i},
+                                    ResultLocation{getFunction(), i}});
+            }
+            return true;
           });
       }
     }
@@ -934,7 +941,7 @@ struct InfoCollector
     // If this goes to a public table, then we must root the output, as the
     // table could contain anything at all, and calling functions there could
     // return anything at all.
-    if (shared.publicTables.count(curr->table)) {
+    if (shared.publicTables.contains(curr->table)) {
       addRoot(curr);
     }
     // TODO: the table identity could also be used here in more ways
@@ -1731,8 +1738,8 @@ void TNHOracle::scan(Function* func,
         // not important in optimized code, as the most refined cast would be
         // the only one to exist there, so it's ok to keep things simple here.
         if (getFunction()->isParam(get->index) && type != get->type &&
-            info.castParams.count(get->index) == 0 &&
-            !writtenParams.count(get->index)) {
+            !info.castParams.contains(get->index) &&
+            !writtenParams.contains(get->index)) {
           info.castParams[get->index] = type;
         }
       }
@@ -2935,7 +2942,7 @@ void Flower::flowToTargetsAfterUpdate(LocationIndex locationIndex,
 void Flower::connectDuringFlow(Location from, Location to) {
   auto newLink = LocationLink{from, to};
   auto newIndexLink = getIndexes(newLink);
-  if (links.count(newIndexLink) == 0) {
+  if (!links.contains(newIndexLink)) {
     // This is a new link. Add it to the known links.
     links.insert(newIndexLink);
 
@@ -3131,28 +3138,30 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   Expression* ref;
   Index index;
   unsigned bytes = 0;
-  Type resultType = Type::none;
   if (auto* get = expr->dynCast<StructGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     index = get->index;
-    resultType = get->type;
   } else if (auto* get = expr->dynCast<ArrayGet>()) {
     signed_ = get->signed_;
     ref = get->ref;
     // Arrays are treated as having a single field.
     index = 0;
-    resultType = get->type;
   } else if (auto* load = expr->dynCast<ArrayLoad>()) {
     signed_ = load->signed_;
     ref = load->ref;
     index = 0;
     bytes = load->bytes;
-    resultType = load->type;
   } else {
     WASM_UNREACHABLE("bad packed read");
   }
   if (!signed_) {
+    return;
+  }
+
+  Type resultType = expr->type;
+  if (resultType == Type::unreachable) {
+    // This read never executes.
     return;
   }
 
@@ -3275,6 +3284,7 @@ void Flower::readFromData(Type declaredType,
                            [&](HeapType type, Index depth) {
                              connectDuringFlow(DataLocation{type, fieldIndex},
                                                coneReadLocation);
+                             return true;
                            });
 
     // TODO: we can end up with redundant links here if we see one cone first
@@ -3344,6 +3354,7 @@ void Flower::writeToData(Expression* ref,
     cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
       auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
+      return true;
     });
 }
 
@@ -3354,7 +3365,7 @@ void Flower::dump(Location location) {
               << *loc->expr << " : " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<DataLocation>(&location)) {
     std::cout << "  dataloc ";
-    if (wasm.typeNames.count(loc->type)) {
+    if (wasm.typeNames.contains(loc->type)) {
       std::cout << '$' << wasm.typeNames[loc->type].name;
     } else {
       std::cout << loc->type << '\n';

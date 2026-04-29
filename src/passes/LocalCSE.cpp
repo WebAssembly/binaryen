@@ -315,7 +315,7 @@ struct Scanner
       // requesting replacement. And then when we see the second A, all it needs
       // to update is the second B.
       for (auto* child : ChildIterator(curr)) {
-        if (!requestInfos.count(child)) {
+        if (!requestInfos.contains(child)) {
           // The child never had a request. While it repeated (since the parent
           // repeats), it was not relevant for the optimization so we never
           // created a requestInfo for it.
@@ -459,7 +459,7 @@ struct Checker
 
   void visitExpression(Expression* curr) {
     // This is the first time we encounter this expression.
-    assert(!activeOriginals.count(curr));
+    assert(!activeOriginals.contains(curr));
 
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
@@ -612,7 +612,7 @@ struct Applier
       if (originalInfo.requests) {
         // This is a valid request of an original value. Get the value from the
         // local.
-        assert(originalLocalMap.count(info.original));
+        assert(originalLocalMap.contains(info.original));
         replaceCurrent(
           Builder(*getModule())
             .makeLocalGet(originalLocalMap[info.original], curr->type));

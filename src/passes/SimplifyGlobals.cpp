@@ -148,7 +148,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   //  if (global % 17 < 4) { global = 1 }
   //
   // What we want to disallow is using the global to actually do something that
-  // is noticeeable *aside* from writing the global, like this:
+  // is noticeable *aside* from writing the global, like this:
   //
   //  if (global ? foo() : bar()) { .. }
   //
@@ -191,7 +191,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
     // See if we read that global in the condition expression.
     EffectAnalyzer conditionEffects(getPassOptions(), *getModule(), condition);
-    if (!conditionEffects.mutableGlobalsRead.count(writtenGlobal)) {
+    if (!conditionEffects.mutableGlobalsRead.contains(writtenGlobal)) {
       return Name();
     }
     // As above, confirm we see an actual global.get, and not a call to one with
@@ -582,7 +582,7 @@ struct SimplifyGlobals : public Pass {
       }
 
       if (info.imported || info.exported) {
-        // If the global is observable from the outside, we can't do anythng
+        // If the global is observable from the outside, we can't do anything
         // here.
         //
         // TODO: optimize the case of an imported but immutable global, etc.
@@ -666,8 +666,8 @@ struct SimplifyGlobals : public Pass {
       // Go all the way back.
       for (auto& global : module->globals) {
         auto child = global->name;
-        if (copiedParentMap.count(child)) {
-          while (copiedParentMap.count(copiedParentMap[child])) {
+        if (copiedParentMap.contains(child)) {
+          while (copiedParentMap.contains(copiedParentMap[child])) {
             copiedParentMap[child] = copiedParentMap[copiedParentMap[child]];
           }
         }

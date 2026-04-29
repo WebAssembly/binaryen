@@ -5,13 +5,13 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 128)
+project(binaryen LANGUAGES C CXX VERSION 129)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with scripts/test/shared.py cxx_standard
 # The if condition allows embedding in a project with a higher default C++ standard set
-set(REQUIRED_CXX_STANDARD 17)
+set(REQUIRED_CXX_STANDARD 20)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD ${REQUIRED_CXX_STANDARD})
 elseif(CMAKE_CXX_STANDARD LESS ${REQUIRED_CXX_STANDARD})
@@ -550,8 +550,8 @@ if(EMSCRIPTEN)
   if(JS_OF_OCAML)
     # js_of_ocaml needs a specified variable with special comment to provide the library to consumer
     target_link_libraries(binaryen_js PRIVATE "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
-    # Currently, js_of_ocaml can only process ES5 code
-    target_link_libraries(binaryen_js PRIVATE optimized "--closure-args=\"--language_out=ECMASCRIPT5\"")
+    # js_of_ocaml does not support top level await
+    target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
   else()
     target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6")
   endif()

@@ -127,7 +127,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --func-metrics                                reports function metrics
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall fuctions used
+;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall functions used
 ;; CHECK-NEXT:                                                 by emscripten ABI
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-global-effects                     generate global effect info
@@ -311,7 +311,7 @@
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
 ;; CHECK-NEXT:                                                 uses
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --poppify                                     Tranform Binaryen IR into Poppy
+;; CHECK-NEXT:   --poppify                                     Transform Binaryen IR into Poppy
 ;; CHECK-NEXT:                                                 IR
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for
@@ -777,6 +777,10 @@
 ;; CHECK-NEXT:   --enable-custom-page-sizes                    Enable custom page sizes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-page-sizes                   Disable custom page sizes
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-wide-arithmetic                      Enable wide arithmetic
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-wide-arithmetic                     Disable wide arithmetic
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

@@ -723,6 +723,9 @@ public:
   Literal truncSatZeroUToI32x4() const;
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
+  Literal promoteLowF16x8ToF32x4() const;
+  Literal demoteZeroF32x4ToF16x8() const;
+  Literal demoteZeroF64x2ToF16x8() const;
   Literal truncSatToSI16x8() const;
   Literal truncSatToUI16x8() const;
   Literal convertSToF16x8() const;

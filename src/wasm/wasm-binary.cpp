@@ -1019,7 +1019,7 @@ void WasmBinaryWriter::writeNames() {
   {
     std::vector<HeapType> namedTypes;
     for (auto type : indexedTypes.types) {
-      if (wasm->typeNames.count(type) && wasm->typeNames[type].name.is()) {
+      if (wasm->typeNames.contains(type) && wasm->typeNames[type].name.is()) {
         namedTypes.push_back(type);
       }
     }
@@ -1170,7 +1170,7 @@ void WasmBinaryWriter::writeNames() {
   if (wasm->features.hasGC()) {
     std::vector<HeapType> relevantTypes;
     for (auto& type : indexedTypes.types) {
-      if (type.isStruct() && wasm->typeNames.count(type) &&
+      if (type.isStruct() && wasm->typeNames.contains(type) &&
           !wasm->typeNames[type].fieldNames.empty()) {
         relevantTypes.push_back(type);
       }
@@ -1486,6 +1486,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::RelaxedAtomicsFeature;
       case FeatureSet::CustomPageSizes:
         return BinaryConsts::CustomSections::CustomPageSizesFeature;
+      case FeatureSet::WideArithmetic:
+        return BinaryConsts::CustomSections::WideArithmeticFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -1613,7 +1615,7 @@ void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
   // track locations of instructions that have code annotations, as their binary
   // location goes in the custom section.
   if (func && (!func->expressionLocations.empty() ||
-               func->codeAnnotations.count(curr))) {
+               func->codeAnnotations.contains(curr))) {
     binaryLocations.expressions[curr] =
       BinaryLocations::Span{BinaryLocation(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
@@ -3996,6 +3998,10 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::MemoryFill:
           return builder.makeMemoryFill(getMemoryName(getU32LEB()));
+        case BinaryConsts::I64Add128:
+          return builder.makeWideIntAddSub(AddInt128);
+        case BinaryConsts::I64Sub128:
+          return builder.makeWideIntAddSub(SubInt128);
         case BinaryConsts::TableSize:
           return builder.makeTableSize(getTableName(getU32LEB()));
         case BinaryConsts::TableGrow:
@@ -4474,6 +4480,12 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeUnary(ConvertSVecI16x8ToVecF16x8);
         case BinaryConsts::F16x8ConvertI16x8U:
           return builder.makeUnary(ConvertUVecI16x8ToVecF16x8);
+        case BinaryConsts::F16x8DemoteF32x4Zero:
+          return builder.makeUnary(DemoteZeroVecF32x4ToVecF16x8);
+        case BinaryConsts::F16x8DemoteF64x2Zero:
+          return builder.makeUnary(DemoteZeroVecF64x2ToVecF16x8);
+        case BinaryConsts::F32x4PromoteLowF16x8:
+          return builder.makeUnary(PromoteLowVecF16x8ToVecF32x4);
         case BinaryConsts::I8x16ExtractLaneS:
           return builder.makeSIMDExtract(ExtractLaneSVecI8x16,
                                          getLaneIndex(16));
@@ -5444,6 +5456,8 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
       feature = FeatureSet::RelaxedAtomics;
     } else if (name == BinaryConsts::CustomSections::CustomPageSizesFeature) {
       feature = FeatureSet::CustomPageSizes;
+    } else if (name == BinaryConsts::CustomSections::WideArithmeticFeature) {
+      feature = FeatureSet::WideArithmetic;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).

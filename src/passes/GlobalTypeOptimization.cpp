@@ -217,7 +217,7 @@ struct GlobalTypeOptimization : public Pass {
     // fixed, and then subtypes can decide how to sort fields that they append.
     for (auto type :
          HeapTypeOrdering::supertypesFirst(propagator.subTypes.types)) {
-      if (!type.isStruct() || publicTypesSet.count(type)) {
+      if (!type.isStruct() || publicTypesSet.contains(type)) {
         continue;
       }
       auto& fields = type.getStruct().fields;
@@ -295,7 +295,7 @@ struct GlobalTypeOptimization : public Pass {
       // reordered fields even if we ourselves are not removing anything, and we
       // must update to match the parent's order.
       auto super = type.getDeclaredSuperType();
-      auto superHasUpdates = super && indexesAfterRemovals.count(*super);
+      auto superHasUpdates = super && indexesAfterRemovals.contains(*super);
       if (!removableIndexes.empty() || superHasUpdates) {
         // We are removing fields. Reorder them to allow that, as in the general
         // case we can only remove fields from the end, so that if our subtypes
@@ -354,7 +354,7 @@ struct GlobalTypeOptimization : public Pass {
           for (Index i = 0; i < superIndexes.size(); ++i) {
             auto superIndex = superIndexes[i];
             if (superIndex == RemovedField) {
-              if (removableIndexes.count(i)) {
+              if (removableIndexes.contains(i)) {
                 // This was removed in the super, and in us as well.
                 indexesAfterRemoval[i] = RemovedField;
               } else {
@@ -385,7 +385,7 @@ struct GlobalTypeOptimization : public Pass {
 
         // Go over the fields only defined in us, and not in any super.
         for (Index i = numSuperFields; i < fields.size(); ++i) {
-          if (removableIndexes.count(i)) {
+          if (removableIndexes.contains(i)) {
             indexesAfterRemoval[i] = RemovedField;
           } else {
             indexesAfterRemoval[i] = next++;
@@ -424,7 +424,7 @@ struct GlobalTypeOptimization : public Pass {
     std::unordered_set<HeapType> subtypesExposed;
 
     // Mark the relevant prototype field as read and return true iff we newly
-    // know we have to propate the exposure to subtypes.
+    // know we have to propagate the exposure to subtypes.
     auto noteExposed = [&](HeapType type, Exactness exact = Inexact) -> bool {
       if (auto desc = type.getDescriptorType();
           desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {

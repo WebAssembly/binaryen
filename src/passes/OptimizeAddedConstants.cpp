@@ -355,7 +355,7 @@ struct OptimizeAddedConstants
              Builder(*getModule()).addVar(getFunction(), Type::i32);
   }
 
-  bool isPropagatable(LocalSet* set) { return propagatable.count(set); }
+  bool isPropagatable(LocalSet* set) { return propagatable.contains(set); }
 
 private:
   bool propagated;

@@ -288,7 +288,7 @@ struct TypeRefining : public Pass {
         work.push(subType);
       }
 
-      if (publicTypesSet.count(type)) {
+      if (publicTypesSet.contains(type)) {
         continue;
       }
 
@@ -315,7 +315,7 @@ struct TypeRefining : public Pass {
           // The super's new type is either what we propagated, or, if it is
           // public, unchanged since we cannot optimize it
           Type newSuperType;
-          if (!publicTypesSet.count(*super)) {
+          if (!publicTypesSet.contains(*super)) {
             newSuperType = finalInfos[{*super, Inexact}][i].getLUB();
           } else {
             newSuperType = superFields[i].type;

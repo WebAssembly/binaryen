@@ -107,12 +107,12 @@ templates = [
 
 def all_combinations() -> Iterator[(Template, (int, ValueType), Ordering)]:
     """Yield tuples covering all possible combinations of atomic memory operations.
+
     (template, (idx, memory_ptr_type), ordering)
     where idx is a memory index or None representing an implicit 0 index
       and memory_ptr_type is i32 or i64 based on the memory being indexed
       and ordering is an `Ordering` enum or None representing an implicit seqcst ordering.
     """
-
     # See the memory section defined in `binary_test`
     memories = [(None, ValueType.i32), (0, ValueType.i32), (1, ValueType.i64)]
 
@@ -120,7 +120,7 @@ def all_combinations() -> Iterator[(Template, (int, ValueType), Ordering)]:
 
 
 def statement(template, mem_idx: int | None, mem_ptr_type: ValueType, ordering: Ordering | None):
-    """Return a statement exercising the op in `template` e.g. (i32.atomic.store 1 acqrel (i64.const 42) (i32.const 42))"""
+    """Return a statement exercising the op in `template` e.g. (i32.atomic.store 1 acqrel (i64.const 42) (i32.const 42))."""
     memargs = []
     if mem_idx is not None:
         memargs.append(str(mem_idx))
@@ -139,15 +139,17 @@ def statement(template, mem_idx: int | None, mem_ptr_type: ValueType, ordering: 
 
 
 def func():
-    """Return a func exercising all ops in `templates` e.g.
-      (func $test-all-ops
-        (drop (i32.atomic.load (i32.const 42)))
-        (drop (i32.atomic.load acqrel (i32.const 42)))
-        ...
-      )
+    """Return a func exercising all ops in `templates`.
+
+    e.g.
+    (func $test-all-ops
+      (drop (i32.atomic.load (i32.const 42)))
+      (drop (i32.atomic.load acqrel (i32.const 42)))
+      ...
+    )
     """
     return f''';; Memory index must come before memory ordering if present.
-;; Both immediates are optional; an ommitted memory ordering will be treated as seqcst.
+;; Both immediates are optional; an omitted memory ordering will be treated as seqcst.
 (func $test-all-ops
 {indent(newline.join(statement(template, mem_idx, mem_ptr_type, ordering) for template, (mem_idx, mem_ptr_type), ordering in all_combinations()))}
 )'''
@@ -172,7 +174,7 @@ def invalid_text_test():
 
 
 def bin_to_str(bin: bytes) -> str:
-    """Return binary formatted for .wast format e.g. \00\61\73\6d\01\00\00\00"""
+    r"""Return binary formatted for .wast format e.g. \00\61\73\6d\01\00\00\00."""
     return ''.join(f'{backslash}{byte:02x}' for byte in bin)
 
 
@@ -185,7 +187,9 @@ I32CONST = b"\x41\x00"
 
 
 def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueType, ordering: Ordering) -> Iterator[(bytes, str)]:
-    """Yield (b, comment) where `b` is a part of the statement using `template`, and `comment` explains that part, e.g.
+    r"""Yield (b, comment) where `b` is a part of the statement using `template`, and `comment` explains that part.
+
+    e.g.
         (b"\xfe\x11", "i64.atomic.load")
     The entire iterator represents a complete expression using the `template`. e.g.
         (drop (i32.atomic.load (i32.const 42)))
@@ -226,17 +230,18 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
 
 
 def bin_statement(template: Template, mem_idx: int, mem_ptr_type: ValueType, ordering: Ordering) -> (bytes, str):
-    """Return (b, s) where `b` is the binary exercising an instruction, e.g.
-        (drop (i32.atomic.load (i32.const 42)))
-       and `s` is a str containing the binary along with comments explaining it, e.g.
-        "\41\33" ;; (i32.const 51)
-        "\fe\10" ;; i32.atomic.load
-        "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
-        "\00" ;; memory index
-        "\00" ;; offset
-        "\1a" ;; drop
-    """
+    r"""Return (b, s) where `b` is the binary exercising an instruction.
 
+    e.g:
+     (drop (i32.atomic.load (i32.const 42)))
+    and `s` is a str containing the binary along with comments explaining it, e.g.
+     "\41\33" ;; (i32.const 51)
+     "\fe\10" ;; i32.atomic.load
+     "\42" ;; Alignment of 2 with bit 6 set indicating that a memory index immediate follows
+     "\00" ;; memory index
+     "\00" ;; offset
+     "\1a" ;; drop
+    """
     bins = []
     strs = []
 

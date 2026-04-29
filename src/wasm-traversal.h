@@ -36,7 +36,10 @@ namespace wasm {
 
 // A generic visitor, defaulting to doing nothing on each visit
 
-template<typename SubType, typename ReturnType = void> struct Visitor {
+template<typename SubType, typename ReturnType_ = void> struct Visitor {
+  // Capture the parameter in something we can access later.
+  using ReturnType = ReturnType_;
+
   // Expression visitors
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
@@ -115,7 +118,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
 //
 template<typename SubType, typename VisitorType>
 struct Walker : public VisitorType {
-  // Useful methods for visitor implementions
+  // Useful methods for visitor implementations
 
   // Replace the current node. You can call this in your visit*() methods.
   // Note that the visit*() for the result node is not called for you (i.e.,
@@ -340,6 +343,27 @@ private:
   Module* currModule = nullptr;     // current module being processed
 };
 
+// Define which expression classes are leaves. We can handle them more
+// optimally below. The accuracy of this list is tested in leaves.cpp.
+template<typename T> struct IsLeaf : std::false_type {};
+
+template<> struct IsLeaf<LocalGet> : std::true_type {};
+template<> struct IsLeaf<GlobalGet> : std::true_type {};
+template<> struct IsLeaf<AtomicFence> : std::true_type {};
+template<> struct IsLeaf<Pause> : std::true_type {};
+template<> struct IsLeaf<DataDrop> : std::true_type {};
+template<> struct IsLeaf<Const> : std::true_type {};
+template<> struct IsLeaf<MemorySize> : std::true_type {};
+template<> struct IsLeaf<RefNull> : std::true_type {};
+template<> struct IsLeaf<RefFunc> : std::true_type {};
+template<> struct IsLeaf<TableSize> : std::true_type {};
+template<> struct IsLeaf<ElemDrop> : std::true_type {};
+template<> struct IsLeaf<Rethrow> : std::true_type {};
+template<> struct IsLeaf<Nop> : std::true_type {};
+template<> struct IsLeaf<Unreachable> : std::true_type {};
+template<> struct IsLeaf<Pop> : std::true_type {};
+template<> struct IsLeaf<StringConst> : std::true_type {};
+
 // Walks in post-order, i.e., children first. When there isn't an obvious
 // order to operands, we follow them in order of execution.
 
@@ -351,9 +375,49 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 #define DELEGATE_ID curr->_id
 
+    // Don't push empty tasks, that is, functions that we just push to the
+    // stack, pop, and then nothing happens when we call the empty function. The
+    // default visitFoo() in Visitor is empty, and the static doVisitFoo() in
+    // Walker just calls it, so if neither have been changed, we know that
+    // nothing will run.
+    //
+    // Note that we check Visitor<..> and not VisitorType. Only Visitor is the
+    // actual top type we know has empty visitors, while VisitorType could be
+    // anything.
+    //
+    // Unfortunately we must avoid this in gcc 11 and earlier, as they error on
+    // these function pointers not being constexpr. Remove the constexpr there.
+    // Note that even if this ends up being a runtime check, it should be faster
+    // than pushing empty tasks, as the check is much faster than the push/pop/
+    // call, and a large number of our calls (most, perhaps) are not overridden.
+    //
+    // If we do *not* have an empty visitor, we can still optimize in the case
+    // of a leaf: leaves have no children, so we can just call doVisit* rather
+    // than push that task, pop it later, and call that.
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 11
 #define DELEGATE_START(id)                                                     \
-  self->pushTask(SubType::doVisit##id, currp);                                 \
+  if (&SubType::visit##id !=                                                   \
+        &Visitor<SubType, typename SubType::ReturnType>::visit##id ||          \
+      &SubType::doVisit##id != &Walker<SubType, VisitorType>::doVisit##id) {   \
+    self->pushTask(SubType::doVisit##id, currp);                               \
+  }                                                                            \
   [[maybe_unused]] auto* cast = curr->cast<id>();
+#else // constexpr
+#define DELEGATE_START(id)                                                     \
+  if constexpr (&SubType::visit##id !=                                         \
+                  &Visitor<SubType,                                            \
+                           typename SubType::ReturnType>::visit##id ||         \
+                &SubType::doVisit##id !=                                       \
+                  &Walker<SubType, VisitorType>::doVisit##id) {                \
+    if constexpr (IsLeaf<id>::value &&                                         \
+                  &SubType::scan == &PostWalker<SubType, VisitorType>::scan) { \
+      SubType::doVisit##id(self, currp);                                       \
+      return;                                                                  \
+    }                                                                          \
+    self->pushTask(SubType::doVisit##id, currp);                               \
+  }                                                                            \
+  [[maybe_unused]] auto* cast = curr->cast<id>();
+#endif // constexpr
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 

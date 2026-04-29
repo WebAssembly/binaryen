@@ -476,6 +476,11 @@ struct NullInstrParserCtx {
   Result<> makeBinary(Index, const std::vector<Annotation>&, BinaryOp) {
     return Ok{};
   }
+  Result<>
+  makeWideIntAddSub(Index, const std::vector<Annotation>&, WideIntAddSubOp) {
+    return Ok{};
+  }
+
   Result<> makeUnary(Index, const std::vector<Annotation>&, UnaryOp) {
     return Ok{};
   }
@@ -1073,6 +1078,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     // TODO: type annotations
     recTypeDefs.push_back({{}, pos, Index(recTypeDefs.size()), {}});
   }
+
+  bool skipFunctionBody();
 
   Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
     return Limits{n, m};
@@ -1985,7 +1992,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   void setSrcLoc(const std::vector<Annotation>& annotations) {
     const Annotation* annotation = nullptr;
     for (auto& a : annotations) {
-      if (a.kind == srcAnnotationKind) {
+      if (a.kind.str == std::string_view("src")) {
         annotation = &a;
       }
     }
@@ -2155,6 +2162,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                       const std::vector<Annotation>& annotations,
                       BinaryOp op) {
     return withLoc(pos, irBuilder.makeBinary(op));
+  }
+
+  Result<> makeWideIntAddSub(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             WideIntAddSubOp op) {
+    return withLoc(pos, irBuilder.makeWideIntAddSub(op));
   }
 
   Result<>

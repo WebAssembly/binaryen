@@ -284,6 +284,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case TruncSatUVecF16x8ToVecI16x8:
       case ConvertSVecI16x8ToVecF16x8:
       case ConvertUVecI16x8ToVecF16x8:
+      case PromoteLowVecF16x8ToVecF32x4:
+      case DemoteZeroVecF32x4ToVecF16x8:
+      case DemoteZeroVecF64x2ToVecF16x8:
         ret = 1;
         break;
       case InvalidUnary:
@@ -571,6 +574,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
         WASM_UNREACHABLE("invalid binary op");
     }
     return ret + visit(curr->left) + visit(curr->right);
+  }
+  CostType visitWideIntAddSub(WideIntAddSub* curr) {
+    return 1 + visit(curr->leftLow) + visit(curr->leftHigh) +
+           visit(curr->rightLow) + visit(curr->rightHigh);
   }
   CostType visitSelect(Select* curr) {
     return 1 + visit(curr->condition) + visit(curr->ifTrue) +

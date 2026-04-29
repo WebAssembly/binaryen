@@ -26,7 +26,7 @@ template<typename InputType, typename OutputType>
 inline OutputType* convert(InputType* input) {
   static_assert(sizeof(OutputType) <= sizeof(InputType),
                 "Can only convert to a smaller size Expression node");
-  input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
+  input->~InputType(); // arena-allocated, so no destructor, but avoid UB.
   OutputType* output = (OutputType*)(input);
   new (output) OutputType;
   return output;
@@ -57,7 +57,7 @@ inline Unreachable* unreachable(InputType* target) {
 template<typename InputType, typename OutputType>
 inline OutputType* convert(InputType* input, MixedArena& allocator) {
   assert(sizeof(OutputType) <= sizeof(InputType));
-  input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
+  input->~InputType(); // arena-allocated, so no destructor, but avoid UB.
   OutputType* output = (OutputType*)(input);
   new (output) OutputType(allocator);
   return output;

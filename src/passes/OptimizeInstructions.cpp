@@ -783,7 +783,7 @@ struct OptimizeInstructions
             curr->op == DivUInt32) {
           // u32(x) / C   ==>   u32(x) >= C  iff C > 2^31
           // We avoid applying this for C == 2^31 due to conflict
-          // with other rule which transform to more prefereble
+          // with other rule which transform to more preferable
           // right shift operation.
           curr->op = c == -1 ? EqInt32 : GeUInt32;
           return replaceCurrent(curr);
@@ -813,7 +813,7 @@ struct OptimizeInstructions
             c > std::numeric_limits<int64_t>::min() && curr->op == DivUInt64) {
           // u64(x) / C   ==>   u64(u64(x) >= C)  iff C > 2^63
           // We avoid applying this for C == 2^31 due to conflict
-          // with other rule which transform to more prefereble
+          // with other rule which transform to more preferable
           // right shift operation.
           // And apply this only for shrinkLevel == 0 due to it
           // increasing size by one byte.
@@ -1478,7 +1478,7 @@ struct OptimizeInstructions
   // To avoid such risks we should keep in mind the following:
   //
   //  * Before removing a cast we should use its type information in the best
-  //    way we can. Only after doing so should a cast be removed. In the exmaple
+  //    way we can. Only after doing so should a cast be removed. In the example
   //    above, that means first seeing that the ref.test must return 1, and only
   //    then possibly removing the ref.cast.
   //  * Do not remove a cast if removing it might remove useful information for
@@ -1673,7 +1673,7 @@ struct OptimizeInstructions
       //
       // TODO We could recurse here.
       // TODO We could do similar things for casts (rule out an impossible arm).
-      // TODO Worth thinking about an 'assume' instrinsic of some form that
+      // TODO Worth thinking about an 'assume' intrinsic of some form that
       //      annotates knowledge about a value, or another mechanism to allow
       //      that information to be passed around.
 
@@ -2783,7 +2783,7 @@ private:
   }
 
   // Check if two consecutive inputs to an instruction are equal. As they are
-  // consecutive, no code can execeute in between them, which simplies the
+  // consecutive, no code can execute in between them, which simplifies the
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
@@ -3463,7 +3463,8 @@ private:
     }
     // remove added/subbed zeros
     struct ZeroRemover : public PostWalker<ZeroRemover> {
-      // TODO: we could save the binarys and costs we drop, and reuse them later
+      // TODO: we could save the Binary and Const nodes we drop, and reuse them
+      // later
 
       PassOptions& passOptions;
 
@@ -4586,7 +4587,7 @@ private:
             c1->value = Literal::makeFromInt32(total, c1->type);
             return inner;
           } else {
-            // overflow. Handle different scenarious
+            // overflow. Handle different scenarios
             if (hasAnyRotateShift(op)) {
               // overflow always accepted in rotation shifts
               c1->value = Literal::makeFromInt32(effectiveTotal, c1->type);
@@ -5025,7 +5026,7 @@ private:
     switch (curr->op) {
       case TruncSFloat64ToInt32:
       case TruncSatSFloat64ToInt32: {
-        // i32 -> f64 -> i32 rountripping optimization:
+        // i32 -> f64 -> i32 roundtripping optimization:
         //   i32.trunc(_sat)_f64_s(f64.convert_i32_s(x))  ==>  x
         Expression* x;
         if (matches(curr->value, unary(ConvertSInt32ToFloat64, any(&x)))) {
@@ -5035,7 +5036,7 @@ private:
       }
       case TruncUFloat64ToInt32:
       case TruncSatUFloat64ToInt32: {
-        // u32 -> f64 -> u32 rountripping optimization:
+        // u32 -> f64 -> u32 roundtripping optimization:
         //   i32.trunc(_sat)_f64_u(f64.convert_i32_u(x))  ==>  x
         Expression* x;
         if (matches(curr->value, unary(ConvertUInt32ToFloat64, any(&x)))) {
@@ -5850,7 +5851,7 @@ private:
             if (validTypes && validEffects && validChildren) {
               // Replace ifTrue with its child.
               curr->ifTrue = ifTrueChild;
-              // Relace ifFalse with its child, and reuse that node outside.
+              // Replace ifFalse with its child, and reuse that node outside.
               auto* reuse = curr->ifFalse;
               curr->ifFalse = ifFalseChild;
               // curr's type may have changed, if the instructions we moved out

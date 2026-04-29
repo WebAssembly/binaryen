@@ -18,6 +18,8 @@ import sys
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
+# ruff: noqa: E241
+
 instructions = [
     ("unreachable",    "makeUnreachable()"),
     ("nop",            "makeNop()"),
@@ -146,6 +148,8 @@ instructions = [
     ("i64.shr_u",      "makeBinary(BinaryOp::ShrUInt64)"),
     ("i64.rotl",       "makeBinary(BinaryOp::RotLInt64)"),
     ("i64.rotr",       "makeBinary(BinaryOp::RotRInt64)"),
+    ("i64.add128",     "makeWideIntAddSub(WideIntAddSubOp::AddInt128)"),
+    ("i64.sub128",     "makeWideIntAddSub(WideIntAddSubOp::SubInt128)"),
     ("f32.abs",        "makeUnary(UnaryOp::AbsFloat32)"),
     ("f32.neg",        "makeUnary(UnaryOp::NegFloat32)"),
     ("f32.ceil",       "makeUnary(UnaryOp::CeilFloat32)"),
@@ -549,6 +553,9 @@ instructions = [
     ("i16x8.trunc_sat_f16x8_u",  "makeUnary(UnaryOp::TruncSatUVecF16x8ToVecI16x8)"),
     ("f16x8.convert_i16x8_s",    "makeUnary(UnaryOp::ConvertSVecI16x8ToVecF16x8)"),
     ("f16x8.convert_i16x8_u",    "makeUnary(UnaryOp::ConvertUVecI16x8ToVecF16x8)"),
+    ("f32x4.promote_low_f16x8",  "makeUnary(UnaryOp::PromoteLowVecF16x8ToVecF32x4)"),
+    ("f16x8.demote_f32x4_zero",  "makeUnary(UnaryOp::DemoteZeroVecF32x4ToVecF16x8)"),
+    ("f16x8.demote_f64x2_zero",  "makeUnary(UnaryOp::DemoteZeroVecF64x2ToVecF16x8)"),
     ("f16x8.madd",               "makeSIMDTernary(SIMDTernaryOp::MaddVecF16x8)"),
     ("f16x8.nmadd",              "makeSIMDTernary(SIMDTernaryOp::NmaddVecF16x8)"),
 
@@ -710,7 +717,8 @@ class CodePrinter:
         # call in a 'with' statement
         return self
 
-    def print_line(self, line):
+    @staticmethod
+    def print_line(line):
         print("  " * CodePrinter.indents + line)
 
 

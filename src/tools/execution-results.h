@@ -144,7 +144,7 @@ public:
   }
 
   Literal getImportedFunction(Function* import) override {
-    if (linkedInstances.count(import->module)) {
+    if (linkedInstances.contains(import->module)) {
       return getImportInstance(import)->getExportedFunction(import->base);
     }
     auto f = [import, this](const Literals& arguments) -> Flow {
@@ -180,6 +180,9 @@ public:
             }
           }
           std::cout << "]\n";
+          if (import->base == "log-branch") {
+            return arguments[0];
+          }
           return {};
         } else if (import->base == "throw") {
           // Throw something, depending on the value of the argument. 0 means

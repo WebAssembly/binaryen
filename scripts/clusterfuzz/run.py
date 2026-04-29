@@ -13,15 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-ClusterFuzz run.py script: when run by ClusterFuzz, it uses wasm-opt to generate
-a fixed number of testcases. This is a "blackbox fuzzer", see
+"""ClusterFuzz run.py script.
+
+When run by ClusterFuzz, it uses wasm-opt to generate a fixed number of
+testcases. This is a "blackbox fuzzer", see
 
 https://google.github.io/clusterfuzz/setting-up-fuzzing/blackbox-fuzzing/
 
 This file should be bundled up together with the other files it needs, see
 bundle_clusterfuzz.py.
-'''
+"""
 
 import getopt
 import math
@@ -87,7 +88,7 @@ FUZZER_ARGS = [
     # Enable all features but disable ones not yet ready for fuzzing. This may
     # be a smaller set than fuzz_opt.py, as that enables a few experimental
     # flags, while here we just fuzz with d8's --wasm-staging. This should be
-    # synchonized with bundle_clusterfuzz.
+    # synchronized with bundle_clusterfuzz.
     '-all',
     '--disable-shared-everything',
     '--disable-fp16',

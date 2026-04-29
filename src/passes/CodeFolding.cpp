@@ -56,6 +56,8 @@
 //
 
 #include <iterator>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
@@ -74,9 +76,9 @@ static const Index WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH = 3;
 struct ExpressionMarker
   : public PostWalker<ExpressionMarker,
                       UnifiedExpressionVisitor<ExpressionMarker>> {
-  std::set<Expression*>& marked;
+  std::unordered_set<Expression*>& marked;
 
-  ExpressionMarker(std::set<Expression*>& marked, Expression* expr)
+  ExpressionMarker(std::unordered_set<Expression*>& marked, Expression* expr)
     : marked(marked) {
     walk(expr);
   }
@@ -122,13 +124,16 @@ struct CodeFolding
 
   // pass state
 
-  std::map<Name, std::vector<Tail>> breakTails; // break target name => tails
-                                                // that reach it
+  std::unordered_map<Name, std::vector<Tail>>
+    breakTails;                       // break target name => tails
+                                      // that reach it
   std::vector<Tail> unreachableTails; // tails leading to (unreachable)
   std::vector<Tail> returnTails;      // tails leading to (return)
-  std::set<Name> unoptimizables;      // break target names that we can't handle
-  std::set<Expression*> modifieds;    // modified code should not be processed
-                                      // again, wait for next pass
+  std::unordered_set<Name>
+    unoptimizables; // break target names that we can't handle
+  std::unordered_set<Expression*>
+    modifieds; // modified code should not be processed
+               // again, wait for next pass
 
   // walking
 
@@ -209,7 +214,7 @@ struct CodeFolding
     if (!curr->name.is()) {
       return;
     }
-    if (unoptimizables.count(curr->name) > 0) {
+    if (unoptimizables.contains(curr->name)) {
       return;
     }
     auto iter = breakTails.find(curr->name);
@@ -246,7 +251,7 @@ struct CodeFolding
     auto* right = curr->ifFalse->dynCast<Block>();
     // If one is a block and the other isn't, and the non-block is a tail of the
     // other, we can fold that - for our convenience, we just add a block and
-    // run the rest of the optimization mormally.
+    // run the rest of the optimization normally.
     auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
       // If other is a suffix of the block, wrap it in a block.
       //
@@ -356,10 +361,10 @@ private:
     }
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
-      if (tail.expr && modifieds.count(tail.expr) > 0) {
+      if (tail.expr && modifieds.contains(tail.expr)) {
         return;
       }
-      if (modifieds.count(tail.block) > 0) {
+      if (modifieds.contains(tail.block)) {
         return;
       }
       // if we were not modified, then we should be valid for processing
@@ -549,10 +554,10 @@ private:
       std::remove_if(tails.begin(),
                      tails.end(),
                      [&](Tail& tail) {
-                       if (tail.expr && modifieds.count(tail.expr) > 0) {
+                       if (tail.expr && modifieds.contains(tail.expr)) {
                          return true;
                        }
-                       if (tail.block && modifieds.count(tail.block) > 0) {
+                       if (tail.block && modifieds.contains(tail.block)) {
                          return true;
                        }
                        return false;
@@ -594,10 +599,10 @@ private:
       for (auto* item : items) {
         saved += Measurer::measure(item) * (tails.size() - 1);
       }
-      // compure the cost: in non-fallthroughs, we are replacing the final
+      // compute the cost: in non-fallthroughs, we are replacing the final
       // element with a br; for a fallthrough, if there is one, we must
       // add a return element (for the function body, so it doesn't reach us)
-      // TODO: handle fallthroughts for return
+      // TODO: handle fallthroughs for return
       Index cost = tails.size();
       // we also need to add two blocks: for us to break to, and to contain
       // that block and the merged code. very possibly one of the blocks
@@ -644,9 +649,10 @@ private:
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a
       // subset
-      std::map<Expression*, size_t> hashes; // expression => hash value
+      std::unordered_map<Expression*, size_t>
+        hashes; // expression => hash value
       // hash value => expressions with that hash
-      std::map<size_t, std::vector<Expression*>> hashed;
+      std::unordered_map<size_t, std::vector<Expression*>> hashed;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto hash = hashes[item] = ExpressionAnalyzer::hash(item);
@@ -654,7 +660,7 @@ private:
       }
       // look at each hash value exactly once. we do this in a deterministic
       // order by iterating over a vector retaining insertion order.
-      std::set<size_t> seen;
+      std::unordered_set<size_t> seen;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto digest = hashes[item];

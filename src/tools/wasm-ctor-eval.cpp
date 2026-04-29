@@ -213,6 +213,13 @@ public:
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
 
+  Flow visitGlobalSet(GlobalSet* curr) {
+    if (curr->value->type.isContinuation()) {
+      throw FailToEvalException("cannot serialize continuations to globals");
+    }
+    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalSet(curr);
+  }
+
   Flow visitTableGet(TableGet* curr) {
     // We support tableLoad, below, so that call_indirect works (it calls it
     // internally), but we want to disable table.get for now.
@@ -764,7 +771,7 @@ private:
           }
 
           if (auto* get = child->dynCast<GlobalGet>()) {
-            if (!readableGlobals.count(get->name)) {
+            if (!readableGlobals.contains(get->name)) {
               // This get cannot be read - it is a global that appears after
               // us - and so we must fix it up, using the method mentioned
               // before (setting it to null now, and later in the start
@@ -1107,7 +1114,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   // the locals here. That is, we need to save the local state in the function,
   // which we do by setting up at the entry. We update this list of expressions
   // at the same time as applyToModule() - we must only do it after an entire
-  // atomic "chunk" has been processed succesfully, we do not want partial
+  // atomic "chunk" has been processed successfully, we do not want partial
   // updates from an item in the block that we only partially evalled. When we
   // construct the (partially) evalled function, we will create local.sets of
   // these expressions at the beginning.
@@ -1173,6 +1180,14 @@ start_eval:
           std::cout << "  ...stopping due to non-constant flow\n";
         }
         break;
+      } else if (flow.suspendTag) {
+        // A suspend reached the exit of the function, so it is unhandled in
+        // it. TODO: We could support the case of the calling function
+        // handling it.
+        if (!quiet) {
+          std::cout << "  ...stopping due to unhandled suspend\n";
+        }
+        break;
       }
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
@@ -1205,7 +1220,7 @@ start_eval:
       // module. Note that we must serialize the locals now as doing so may
       // cause changes that must be applied to the module (e.g. GC data may
       // cause globals to be added). And we must apply to the module now, and
-      // not later, as we must do so right after a successfull partial eval
+      // not later, as we must do so right after a successful partial eval
       // (after any failure to eval, the global state is no long valid to be
       // applied to the module, as incomplete changes may have occurred).
       //
@@ -1235,18 +1250,8 @@ start_eval:
       results = flow.values;
 
       if (flow.breaking()) {
-        if (flow.suspendTag) {
-          // A suspend reached the exit of the function, so it is unhandled in
-          // it. TODO: We could support the case of the calling function
-          // handling it.
-          if (!quiet) {
-            std::cout << "  ...stopping due to unhandled suspend\n";
-          }
-          return EvalCtorOutcome();
-        }
-
         // We are returning out of the function (either via a return, or via a
-        // break to |block|, which has the same outcome. That means we don't
+        // break to |block|, which has the same outcome). That means we don't
         // need to execute any more lines, and can consider them to be
         // executed.
         if (!quiet) {
@@ -1417,7 +1422,7 @@ void evalCtors(Module& wasm,
       // time and undo any side effects here. Instead, if we will need the
       // export, disallow things that can block serialization, if we may end up
       // needing to serialize.
-      bool keeping = keptExportsSet.count(ctor);
+      bool keeping = keptExportsSet.contains(ctor);
       if (!keeping) {
         instance.allowContNew = true;
       } else {
@@ -1631,7 +1636,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.contains("output")) {
     if (options.debug) {
       std::cout << "writing..." << std::endl;
     }

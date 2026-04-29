@@ -394,7 +394,7 @@ struct Trace {
         for (auto* use : uses) {
           // A non-set use (a drop or return etc.) is definitely external.
           // Otherwise, check if internal or external.
-          if (use == nullptr || origins.count(use) == 0) {
+          if (use == nullptr || !origins.contains(use)) {
             if (debug() >= 2) {
               std::cout << "found external use for\n";
               dump(node, std::cout);
@@ -506,7 +506,7 @@ struct Printer {
     }
     if (node->isExpr() || node->isPhi()) {
       if (node->origin != trace.toInfer->origin &&
-          trace.hasExternalUses.count(node) > 0) {
+          trace.hasExternalUses.contains(node)) {
         std::cout << " (hasExternalUses)";
         printedHasExternalUses = true;
       }
@@ -662,7 +662,7 @@ struct Printer {
       std::cout << ", ";
       printInternal(node->getValue(2));
     } else {
-      WASM_UNREACHABLE("unexecpted node type");
+      WASM_UNREACHABLE("unexpected node type");
     }
   }
 

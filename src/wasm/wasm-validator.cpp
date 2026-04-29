@@ -173,9 +173,9 @@ struct ValidationInfo {
     return true;
   }
 
-  template<typename T, typename S>
+  template<typename T>
   bool shouldBeEqualOrFirstIsUnreachable(
-    S left, S right, T curr, const char* text, Function* func = nullptr) {
+    Type left, Type right, T curr, const char* text, Function* func = nullptr) {
     if (left != Type::unreachable && left != right) {
       std::ostringstream ss;
       ss << left << " != " << right << ": " << text;
@@ -508,6 +508,7 @@ public:
   void visitMemoryCopy(MemoryCopy* curr);
   void visitMemoryFill(MemoryFill* curr);
   void visitBinary(Binary* curr);
+  void visitWideIntAddSub(WideIntAddSub* curr);
   void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
@@ -607,9 +608,11 @@ private:
     return info.shouldBeEqual(left, right, curr, text, getFunction());
   }
 
-  template<typename T, typename S>
-  bool
-  shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
+  template<typename T>
+  bool shouldBeEqualOrFirstIsUnreachable(Type left,
+                                         Type right,
+                                         T curr,
+                                         const char* text) {
     return info.shouldBeEqualOrFirstIsUnreachable(
       left, right, curr, text, getFunction());
   }
@@ -2380,6 +2383,9 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncSatZeroUVecF64x2ToVecI32x4:
     case DemoteZeroVecF64x2ToVecF32x4:
     case PromoteLowVecF32x4ToVecF64x2:
+    case PromoteLowVecF16x8ToVecF32x4:
+    case DemoteZeroVecF32x4ToVecF16x8:
+    case DemoteZeroVecF64x2ToVecF16x8:
     case RelaxedTruncSVecF32x4ToVecI32x4:
     case RelaxedTruncUVecF32x4ToVecI32x4:
     case RelaxedTruncZeroSVecF64x2ToVecI32x4:
@@ -2437,6 +2443,21 @@ void FunctionValidator::visitSelect(Select* curr) {
     shouldBeTrue(Type::isSubType(curr->ifFalse->type, curr->type),
                  curr,
                  "select's right expression must be subtype of select's type");
+  }
+}
+
+void FunctionValidator::visitWideIntAddSub(WideIntAddSub* curr) {
+  shouldBeTrue(getModule()->features.hasWideArithmetic(),
+               curr,
+               "i64.add128 / i64.sub128 require wide arithmetic "
+               "[--enable-wide-arithmetic]");
+
+  for (auto* operand :
+       {curr->leftLow, curr->leftHigh, curr->rightLow, curr->rightHigh}) {
+    shouldBeEqualOrFirstIsUnreachable(operand->type,
+                                      Type(Type::i64),
+                                      curr,
+                                      "wide binary child types must be i64");
   }
 }
 
@@ -2768,14 +2789,14 @@ void FunctionValidator::visitElemDrop(ElemDrop* curr) {
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
-    shouldBeTrue(delegateTargetNames.count(name) != 0,
+    shouldBeTrue(delegateTargetNames.contains(name),
                  curr,
                  "all delegate targets must be valid");
   }
 }
 
 void FunctionValidator::noteRethrow(Name name, Expression* curr) {
-  shouldBeTrue(rethrowTargetNames.count(name) != 0,
+  shouldBeTrue(rethrowTargetNames.contains(name),
                curr,
                "all rethrow targets must be valid");
 }
@@ -3574,6 +3595,10 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
   } else if (field.type.isRef()) {
     expectedExpectedType = Type(
       HeapTypes::eq.getBasic(field.type.getHeapType().getShared()), Nullable);
+    shouldBeSubType(field.type,
+                    expectedExpectedType,
+                    curr,
+                    "struct.atomic.rmw field type invalid for operation");
   } else {
     shouldBeTrue(
       false, curr, "struct.atomic.rmw field type invalid for operation");
@@ -4127,6 +4152,10 @@ void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
   } else if (element.type.isRef()) {
     expectedExpectedType = Type(
       HeapTypes::eq.getBasic(element.type.getHeapType().getShared()), Nullable);
+    shouldBeSubType(element.type,
+                    expectedExpectedType,
+                    curr,
+                    "array.atomic.rmw element type invalid for operation");
   } else {
     shouldBeTrue(
       false, curr, "array.atomic.rmw element type invalid for operation");
@@ -4447,7 +4476,7 @@ void FunctionValidator::validateResumeHandlers(
       // But we cannot check this here because we do not know what type the
       // block named $label expects. Save the tag to check when we visit the
       // block later.
-      if (!shouldBeTrue(breakTypes.count(labels[i]) != 0,
+      if (!shouldBeTrue(breakTypes.contains(labels[i]),
                         curr,
                         "all resume targets must be valid")) {
         return;
@@ -4989,7 +5018,7 @@ void validateExports(Module& module, ValidationInfo& info) {
       WASM_UNREACHABLE("invalid ExternalKind");
     }
     Name exportName = exp->name;
-    info.shouldBeFalse(exportNames.count(exportName) > 0,
+    info.shouldBeFalse(exportNames.contains(exportName),
                        exportName,
                        "module exports must be unique");
     exportNames.insert(exportName);
@@ -5023,7 +5052,7 @@ void validateGlobals(Module& module, ValidationInfo& info) {
       for (auto* get : FindAll<GlobalGet>(curr->init).list) {
         auto* global = module.getGlobalOrNull(get->name);
         info.shouldBeTrue(
-          global && (seen.count(global) || global->imported()),
+          global && (seen.contains(global) || global->imported()),
           curr->init,
           "global initializer should only refer to previous globals");
       }

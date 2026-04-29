@@ -102,6 +102,7 @@ function test_features() {
   console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
   console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
   console.log("Features.CustomPageSizes: " + binaryen.Features.CustomPageSizes);
+  console.log("Features.WideArithmetic: " + binaryen.Features.WideArithmetic);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -1020,6 +1021,55 @@ function test_binaries() {
   module.dispose();
 }
 
+function test_binaries_with_features() {
+  var builder = new binaryen.TypeBuilder(1);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+    { type: binaryen.f64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [structHeapType] = builder.buildAndDispose();
+  var structType = binaryen.getTypeFromHeapType(structHeapType, true);
+
+  var features = binaryen.Features.ReferenceTypes | binaryen.Features.GC;
+  module = new binaryen.Module();
+  module.setFeatures(features);
+
+  module.addGlobal("struct-global",
+    structType,
+    true,
+    module.struct.new(
+      [module.i32.const(42), module.f64.const(3.14)],
+      binaryen.getHeapType(structType)
+    )
+  );
+
+  module.addFunction("get-field", binaryen.none, binaryen.i32, [],
+    module.struct.get(
+      0,
+      module.global.get("struct-global", structType),
+      binaryen.i32,
+      false
+    )
+  );
+
+  assert(module.validate());
+  binaryen.setDebugInfo(true);
+  var buffer = module.emitBinary();
+  binaryen.setDebugInfo(false);
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, features);
+
+  assert(module.validate());
+  console.log("module loaded from binary with features:");
+  console.log(module.emitText());
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, binaryen.Features.MVP);
+  assert(!module.validate());
+  module.dispose();
+}
+
 function test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
   module = new binaryen.Module();
@@ -1144,13 +1194,17 @@ function test_for_each() {
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
-  for (i = 0; i < module.getNumMemorySegments(); i++) {
-    var segment = module.getMemorySegmentInfo(expected_names[i]);
-    assert(expected_offsets[i] === segment.offset);
-    var data8 = new Uint8Array(segment.data);
+  assert(module.getDataSegment(expected_names[0]) !== 0);
+  assert(module.getDataSegment("NonExistantSegment") === 0);
+  for (i = 0; i < module.getNumDataSegments(); i++) {
+    var segment = module.getDataSegmentByIndex(i);
+    var info = module.getDataSegmentInfo(segment);
+    assert(expected_names[i] === info.name);
+    assert(expected_offsets[i] === info.offset);
+    var data8 = new Uint8Array(info.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);
-    assert(expected_passive[i] === segment.passive);
+    assert(expected_passive[i] === info.passive);
   }
 
   module.addTable("t0", 1, 0xffffffff);
@@ -1230,6 +1284,7 @@ test_ids();
 test_core();
 test_relooper();
 test_binaries();
+test_binaries_with_features();
 test_interpret();
 test_nonvalid();
 test_parsing();

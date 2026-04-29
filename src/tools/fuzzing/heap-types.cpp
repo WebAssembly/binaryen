@@ -1000,8 +1000,10 @@ void Inhabitator::markNullable(FieldPos field) {
       // this extra `index` variable once we have C++20. It's a workaround for
       // lambdas being unable to capture structured bindings.
       const size_t index = idx;
-      subtypes.iterSubTypes(
-        curr, [&](HeapType type, Index) { nullables.insert({type, index}); });
+      subtypes.iterSubTypes(curr, [&](HeapType type, Index) {
+        nullables.insert({type, index});
+        return true;
+      });
       break;
   }
 }
@@ -1095,7 +1097,7 @@ void Inhabitator::breakNonNullableCycles() {
   };
 
   for (auto root : types) {
-    if (visited.count(root)) {
+    if (visited.contains(root)) {
       continue;
     }
     assert(visiting.size() == 0);
@@ -1106,7 +1108,7 @@ void Inhabitator::breakNonNullableCycles() {
       // We may have visited this type again after searching through a
       // descriptor backedge. If we've already finished visiting this type on
       // that later visit, we don't need to continue this earlier visit.
-      if (visited.count(curr)) {
+      if (visited.contains(curr)) {
         finishType();
         continue;
       }
@@ -1126,7 +1128,7 @@ void Inhabitator::breakNonNullableCycles() {
         }
         // Skip references that we have already marked nullable to satisfy
         // subtyping constraints.
-        if (nullables.count({curr, index})) {
+        if (nullables.contains({curr, index})) {
           ++index;
           continue;
         }
@@ -1134,7 +1136,7 @@ void Inhabitator::breakNonNullableCycles() {
         // visited the full graph reachable from such references, so we know
         // they cannot cycle back to anything we are currently visiting.
         auto heapType = children[index].getHeapType();
-        if (visited.count(heapType)) {
+        if (visited.contains(heapType)) {
           ++index;
           continue;
         }
@@ -1196,7 +1198,7 @@ std::vector<HeapType> Inhabitator::build() {
     if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
       heapType = builder[it->second];
     }
-    if (nullables.count(pos)) {
+    if (nullables.contains(pos)) {
       nullability = Nullable;
     }
     type = builder.getTempRefType(heapType, nullability, exactness);
@@ -1352,7 +1354,7 @@ bool isUninhabitable(HeapType type,
     case HeapTypeKind::Array:
       break;
   }
-  if (visited.count(type)) {
+  if (visited.contains(type)) {
     return false;
   }
   auto [it, inserted] = visiting.insert(type);

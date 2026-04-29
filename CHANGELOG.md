@@ -15,11 +15,34 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
-- Add support for non-nullable table types and initialization expressions for
+ - Rename `MemorySegment` functions to `DataSegment` in the c and js apis
+   - Rename `BinaryenGetNumMemorySegments` to `BinaryenGetNumDataSegments` in c api.
+   - Rename `BinaryenGetMemorySegmentByteOffset` to `BinaryenGetDataSegmentByteOffset` in c api.
+   - Rename `BinaryenGetMemorySegmentByteLength` to `BinaryenGetDataSegmentByteLength` in c api.
+   - Rename `BinaryenGetMemorySegmentPassive` to `BinaryenGetDataSegmentPassive` in c api.
+   - Rename `BinaryenCopyMemorySegmentData` to `BinaryenCopyDataSegmentData` in c api.
+   - Rename `module.getNumMemorySegments` to `module.getNumDataSegments` in js api.
+   - Rename `module.getMemorySegmentInfo` to `module.getDataSegmentInfo` in js api.
+
+v129
+----
+
+ - Add a `BinaryenDataSegmentRef` type to the C API. (#8286)
+   - Add `BinaryenGetDataSegment` and `BinaryenGetDataSegmentByIndex` to the C API, which allow looking up a data segment by name or index.
+   - Add `BinaryenDataSegmentGetName` to the C API, which allows looking up a data segment's name.
+   - Convert `BinaryenGetMemorySegmentByteOffset`, `BinaryenGetMemorySegmentByteLength`, `BinaryenGetMemorySegmentPassive` and `BinaryenCopyMemorySegmentData` to take a `BinaryenDataSegmentRef` instead of a name.
+   - Add `module.getDataSegment`, `module.getDataSegmentByIndex` to the JS API, which allows looking up a data segment by name or index.
+   - Convert `module.getMemorySegmentInfo` to take a data segment reference instead of a name, and return the name as part of the info.
+ - Add support for non-nullable table types and initialization expressions for
    tables. This comes with a breaking change to C API: `BinaryenAddTable` takes
    an additional `BinaryenExpressionRef` parameter to provide an initialization
    expression. This may be set to NULL for tables without an initializer. In JS
    this parameter is optional and so is not breaking. (#8405)
+ - [multibyte] Add multibyte array store and load instructions. (#8059, #8504)
+ - MinifyImportsAndExports now has a new output format using JSON. This was
+   changed while fixing bugs with colliding module names (to avoid two breaking
+   changes to the output). (#8550)
+ - Update from C++17 to C++20 (#8218)
 
 v128
 ----

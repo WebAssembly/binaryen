@@ -400,8 +400,9 @@ var baseImports = {
       });
     },
 
-    'log-branch': (id, expected, actual) => {
-      console.log(`[LoggingExternalInterface log-branch ${id} ${expected} ${actual}]`);
+    'log-branch': (actual, expected, id) => {
+      console.log(`[LoggingExternalInterface log-branch ${actual} ${expected} ${id}]`);
+      return actual;
     },
   },
   // Emscripten support.

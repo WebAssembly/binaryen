@@ -38,7 +38,7 @@ struct CycleException {};
 
 // An adjacency list containing edges from vertices to their successors. Uses
 // `Index` because we are primarily sorting elements of Wasm modules. If we ever
-// need to sort signficantly larger objects, we might need to switch to
+// need to sort significantly larger objects, we might need to switch to
 // `size_t` or make this a template parameter.
 using Graph = std::vector<std::vector<Index>>;
 

@@ -461,40 +461,31 @@ struct EscapeAnalyzer {
         }
       }
       void visitArraySet(ArraySet* curr) {
-        if (!curr->index->is<Const>()) {
-          // Array operations on nonconstant indexes do not escape in the normal
-          // sense, but they do escape from our being able to analyze them, so
-          // stop as soon as we see one.
-          return;
-        }
-
-        // As StructGet.
-        if (curr->ref == child) {
+        // Arrays flowing into array operations on nonconstant indexes do not
+        // escape in the normal sense, but they do escape from our being able to
+        // analyze them, so stop as soon as we see one.
+        if (child == curr->ref && curr->index->is<Const>()) {
           escapes = false;
           fullyConsumes = true;
         }
       }
       void visitArrayGet(ArrayGet* curr) {
-        if (!curr->index->is<Const>()) {
-          return;
+        if (child == curr->ref && curr->index->is<Const>()) {
+          escapes = false;
+          fullyConsumes = true;
         }
-        escapes = false;
-        fullyConsumes = true;
       }
       void visitArrayRMW(ArrayRMW* curr) {
-        if (!curr->index->is<Const>()) {
-          return;
-        }
-        if (curr->ref == child) {
+        if (child == curr->ref && curr->index->is<Const>()) {
           escapes = false;
           fullyConsumes = true;
         }
       }
       void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-        if (!curr->index->is<Const>()) {
-          return;
-        }
-        if (curr->ref == child || curr->expected == child) {
+        // Allocations flowing into `expected` are fully consumed and
+        // optimizable even if the index is not constant.
+        if (child == curr->expected ||
+            (child == curr->ref && curr->index->is<Const>())) {
           escapes = false;
           fullyConsumes = true;
         }
@@ -573,7 +564,7 @@ struct EscapeAnalyzer {
     // Check that the gets can only read from the specific known sets.
     for (auto* get : gets) {
       for (auto* set : localGraph.getSets(get)) {
-        if (sets.count(set) == 0) {
+        if (!sets.contains(set)) {
           return false;
         }
       }
@@ -589,7 +580,7 @@ struct EscapeAnalyzer {
     // We can only replace something relevant that we found in the analysis.
     // (Not only would anything else be invalid to process, but also we wouldn't
     // know what interaction to give the replacement.)
-    assert(reachedInteractions.count(old));
+    assert(reachedInteractions.contains(old));
 
     // The replacement should have the same interaction as the thing it
     // replaces, since it is a drop-in replacement for it. The one exception is
@@ -871,6 +862,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // We must not modify unreachable code here, as we will replace it with a
+      // const, which has a concrete type (similar to the situation with
+      // local.get in other cases in this pass).
+      return;
+    }
+
     // This test operates on the allocation, which means we can compute whether
     // it will succeed statically. We do not even need
     // GCTypeUtils::evaluateCastCheck because we know the allocation's type
@@ -1137,83 +1135,121 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // The allocation might flow into `ref` or `expected`, but not
     // `replacement`, because then it would be considered to have escaped.
-    if (analyzer.getInteraction(curr->expected) ==
-        ParentChildInteraction::Flows) {
-      // Since the allocation does not escape, it cannot possibly match the
-      // value already in the struct. The cmpxchg will just do a read. Drop the
-      // other arguments and do the atomic read at the end, when the cmpxchg
-      // would have happened. Use a nullable scratch local in case we also
-      // optimize `ref` later and need to replace it with a null.
-      auto refType = curr->ref->type.with(Nullable);
-      auto refScratch = builder.addVar(func, refType);
-      auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
-      auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
-      auto* structGet = builder.makeStructGet(
-        curr->index, getRefScratch, curr->order, curr->type);
-      auto* block = builder.makeBlock({setRefScratch,
-                                       builder.makeDrop(curr->expected),
-                                       builder.makeDrop(curr->replacement),
-                                       structGet});
+    if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
+      [[maybe_unused]] auto& field = fields[curr->index];
+      auto type = curr->type;
+      assert(type == field.type);
+      assert(!field.isPacked());
+
+      // Hold everything in scratch locals, just like for other RMW ops and
+      // struct.new. Use a nullable (shared) eqref local for `expected` to
+      // accommodate any allowed optimized or unoptimized value there.
+      auto expectedType = type;
+      if (type.isRef()) {
+        expectedType = Type(
+          HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
+      }
+      auto oldScratch = builder.addVar(func, type);
+      auto expectedScratch = builder.addVar(func, expectedType);
+      auto replacementScratch = builder.addVar(func, type);
+      auto local = localIndexes[curr->index];
+
+      auto* block = builder.makeBlock(
+        {builder.makeDrop(curr->ref),
+         builder.makeLocalSet(expectedScratch, curr->expected),
+         builder.makeLocalSet(replacementScratch, curr->replacement),
+         builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type))});
+
+      // Create the check for whether we should do the exchange.
+      auto* lhs = builder.makeLocalGet(local, type);
+      auto* rhs = builder.makeLocalGet(expectedScratch, expectedType);
+      Expression* pred;
+      if (type.isRef()) {
+        pred = builder.makeRefEq(lhs, rhs);
+      } else {
+        pred =
+          builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), lhs, rhs);
+      }
+
+      // The conditional exchange.
+      block->list.push_back(builder.makeIf(
+        pred,
+        builder.makeLocalSet(local,
+                             builder.makeLocalGet(replacementScratch, type))));
+
+      // Unstash the old value.
+      block->list.push_back(builder.makeLocalGet(oldScratch, type));
+      block->type = type;
       replaceCurrent(block);
-      // Record the new data flow into and out of the new scratch local. This is
-      // necessary in case `ref` gets processed later so we can detect that it
-      // flows to the new struct.atomic.get, which may need to be replaced.
-      analyzer.parents.setParent(curr->ref, setRefScratch);
-      analyzer.scratchInfo.insert({setRefScratch, getRefScratch});
-      analyzer.parents.setParent(getRefScratch, structGet);
       return;
     }
-    if (analyzer.getInteraction(curr->ref) != ParentChildInteraction::Flows) {
+    if (analyzer.getInteraction(curr->expected) !=
+        ParentChildInteraction::Flows) {
       // Since the allocation does not flow from `ref`, it must not flow through
       // this cmpxchg at all.
       return;
     }
 
-    [[maybe_unused]] auto& field = fields[curr->index];
-    auto type = curr->type;
-    assert(type == field.type);
-    assert(!field.isPacked());
-
-    // Hold everything in scratch locals, just like for other RMW ops and
-    // struct.new. Use a nullable (shared) eqref local for `expected` to
-    // accommodate any allowed optimized or unoptimized value there.
-    auto expectedType = type;
-    if (type.isRef()) {
-      expectedType =
-        Type(HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
-    }
-    auto oldScratch = builder.addVar(func, type);
-    auto expectedScratch = builder.addVar(func, expectedType);
-    auto replacementScratch = builder.addVar(func, type);
-    auto local = localIndexes[curr->index];
-
-    auto* block = builder.makeBlock(
-      {builder.makeDrop(curr->ref),
-       builder.makeLocalSet(expectedScratch, curr->expected),
-       builder.makeLocalSet(replacementScratch, curr->replacement),
-       builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type))});
-
-    // Create the check for whether we should do the exchange.
-    auto* lhs = builder.makeLocalGet(local, type);
-    auto* rhs = builder.makeLocalGet(expectedScratch, expectedType);
-    Expression* pred;
-    if (type.isRef()) {
-      pred = builder.makeRefEq(lhs, rhs);
-    } else {
-      pred =
-        builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), lhs, rhs);
-    }
-
-    // The conditional exchange.
-    block->list.push_back(
-      builder.makeIf(pred,
-                     builder.makeLocalSet(
-                       local, builder.makeLocalGet(replacementScratch, type))));
-
-    // Unstash the old value.
-    block->list.push_back(builder.makeLocalGet(oldScratch, type));
-    block->type = type;
+    // Since the allocation does not escape, it cannot possibly match the value
+    // already in the struct. The cmpxchg will just do a read. Drop the other
+    // arguments and do the atomic read at the end, when the cmpxchg would have
+    // happened. Use a nullable scratch local in case we also optimize `ref`
+    // later and need to replace it with a null.
+    auto refType = curr->ref->type.with(Nullable);
+    auto refScratch = builder.addVar(func, refType);
+    auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
+    auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
+    auto* structGet = builder.makeStructGet(
+      curr->index, getRefScratch, curr->order, curr->type);
+    auto* block = builder.makeBlock({setRefScratch,
+                                     builder.makeDrop(curr->expected),
+                                     builder.makeDrop(curr->replacement),
+                                     structGet});
     replaceCurrent(block);
+    // Record the new data flow into and out of the new scratch local. This is
+    // necessary in case `ref` gets processed later so we can detect that it
+    // flows to the new struct.atomic.get, which may need to be replaced.
+    analyzer.parents.setParent(curr->ref, setRefScratch);
+    analyzer.scratchInfo.insert({setRefScratch, getRefScratch});
+    analyzer.parents.setParent(getRefScratch, structGet);
+    return;
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+    // Array2Struct would have replaced this operation if the optimized
+    // allocation were flowing into the `ref` field, but not if it is flowing
+    // into the `expected` field.
+    if (analyzer.getInteraction(curr->expected) ==
+        ParentChildInteraction::Flows) {
+      // See the equivalent handling of allocations flowing through the
+      // `expected` field of StructCmpxchg.
+      auto refType = curr->ref->type.with(Nullable);
+      auto refScratch = builder.addVar(func, refType);
+      auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
+      auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
+
+      auto indexScratch = builder.addVar(func, Type::i32);
+      auto* setIndexScratch = builder.makeLocalSet(indexScratch, curr->index);
+      auto* getIndexScratch = builder.makeLocalGet(indexScratch, Type::i32);
+
+      auto* arrayGet = builder.makeArrayGet(
+        getRefScratch, getIndexScratch, curr->order, curr->type);
+      auto* block = builder.makeBlock({setRefScratch,
+                                       setIndexScratch,
+                                       builder.makeDrop(curr->expected),
+                                       builder.makeDrop(curr->replacement),
+                                       arrayGet});
+      replaceCurrent(block);
+      // Since `ref` must be an array and arrays are processed before structs,
+      // it is not possible that `ref` will be processed later. We therefore do
+      // not need to do the extra bookkeeping that we needed to do for
+      // StructCmpxchg.
+      return;
+    }
   }
 };
 
@@ -1387,9 +1423,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // Convert the ArraySet into a StructSet.
-    // TODO: Handle atomic array accesses.
-    replaceCurrent(builder.makeStructSet(
-      index, curr->ref, curr->value, MemoryOrder::Unordered));
+    replaceCurrent(
+      builder.makeStructSet(index, curr->ref, curr->value, curr->order));
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -1408,9 +1443,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // Convert the ArrayGet into a StructGet.
-    // TODO: Handle atomic array accesses.
     replaceCurrent(builder.makeStructGet(
-      index, curr->ref, MemoryOrder::Unordered, curr->type, curr->signed_));
+      index, curr->ref, curr->order, curr->type, curr->signed_));
   }
 
   void visitArrayRMW(ArrayRMW* curr) {
@@ -1437,19 +1471,30 @@ struct Array2Struct : PostWalker<Array2Struct> {
       return;
     }
 
-    auto index = getIndex(curr->index);
-    if (index >= numFields) {
-      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->expected),
-                                        builder.makeDrop(curr->replacement),
-                                        builder.makeUnreachable()}));
-      refinalize = true;
+    // The allocation might flow into `ref` or `expected`, but not
+    // `replacement`, because then it would be considered to have escaped.
+    if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
+      auto index = getIndex(curr->index);
+      if (index >= numFields) {
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->expected),
+                                          builder.makeDrop(curr->replacement),
+                                          builder.makeUnreachable()}));
+        refinalize = true;
+        return;
+      }
+
+      // The accessed array is being optimized. Convert the ArrayCmpxchg into a
+      // StructCmpxchg.
+      replaceCurrent(builder.makeStructCmpxchg(
+        index, curr->ref, curr->expected, curr->replacement, curr->order));
       return;
     }
 
-    // Convert the ArrayCmpxchg into a StructCmpxchg.
-    replaceCurrent(builder.makeStructCmpxchg(
-      index, curr->ref, curr->expected, curr->replacement, curr->order));
+    // The `expected` value must be getting optimized. Since the accessed object
+    // is remaining an array for now, do not change anything. The ArrayCmpxchg
+    // will be optimized later by Struct2Local.
+    return;
   }
 
   // Some additional operations need special handling

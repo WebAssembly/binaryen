@@ -23,7 +23,7 @@
 // A risk here is that we extend live ranges, e.g. we may use the default
 // value at the very end of a function, keeping that local alive throughout.
 // For that reason it is probably better to run this near the end of
-// optimization, and especially after coalesce-locals. A final vaccum
+// optimization, and especially after coalesce-locals. A final vacuum
 // should be done after it, as this pass can leave around drop()s of
 // values no longer necessary.
 //
@@ -123,7 +123,7 @@ struct RedundantSetElimination
   // Use a value numbering for the values of expressions.
   ValueNumbering valueNumbering;
 
-  // In additon to valueNumbering, each block has values for each merge.
+  // In addition to valueNumbering, each block has values for each merge.
   std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>>
     blockMergeValues;
 

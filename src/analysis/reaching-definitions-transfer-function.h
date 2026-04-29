@@ -26,7 +26,7 @@ namespace wasm::analysis {
 
 // When collecting results, the transfer function takes the states and converts
 // it into a map of LocalGets to LocalSets which affect it. The fictitious
-// inital value LocalSetes will be converted to nullptrs.
+// initial value LocalSetes will be converted to nullptrs.
 
 class ReachingDefinitionsTransferFunction
   : public VisitorTransferFunc<ReachingDefinitionsTransferFunction,
@@ -44,7 +44,7 @@ class ReachingDefinitionsTransferFunction
   // LocalGraph members we need to update.
   LocalGraph::GetSetsMap& getSetsMap;
 
-  // Fictitious LocalSet objects to reprsent a local index obtaining its value
+  // Fictitious LocalSet objects to represent a local index obtaining its value
   // from its default initial value or parameter value.
   std::vector<LocalSet> fakeInitialValueSets;
 
@@ -54,7 +54,7 @@ class ReachingDefinitionsTransferFunction
   // Helper function which creates fictitious LocalSets for a function,
   // inserts them into fakeInitialValueSets and fakeSetPtrs. It returns a
   // vector of actual LocalSets in the function and fictitious LocalSets for
-  // use when instatitating the lattice.
+  // use when instantiating the lattice.
   static std::vector<LocalSet*>
   listLocalSets(Function* func,
                 std::vector<LocalSet>& fakeInitialValueSets,

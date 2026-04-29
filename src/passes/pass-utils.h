@@ -47,7 +47,7 @@ struct FilteredPass : public Pass {
   }
 
   void runOnFunction(Module* module, Function* func) override {
-    if (!relevantFuncs.count(func)) {
+    if (!relevantFuncs.contains(func)) {
       return;
     }
 

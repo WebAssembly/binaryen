@@ -379,6 +379,8 @@ void test_features() {
   printf("BinaryenFeatureCustomPageSizes: %d\n",
          BinaryenFeatureCustomPageSizes());
   printf("BinaryenFeatureMultibyte: %d\n", BinaryenFeatureMultibyte());
+  printf("BinaryenFeatureWideArithmetic: %d\n",
+         BinaryenFeatureWideArithmetic());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -2019,14 +2021,18 @@ void test_for_each() {
                       BinaryenTypeInt32(),
                       0,
                       makeInt32(module, expected_offsets[1]));
-
-    for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
+    assert(BinaryenGetDataSegment(module, segmentNames[0]) != NULL);
+    assert(BinaryenGetDataSegment(module, "NonExistentSegment") == NULL);
+    for (i = 0; i < BinaryenGetNumDataSegments(module); i++) {
       char out[15] = {};
-      assert(BinaryenGetMemorySegmentByteOffset(module, segmentNames[i]) ==
+      BinaryenDataSegmentRef segment = BinaryenGetDataSegmentByIndex(module, i);
+      assert(segment != NULL);
+      assert(BinaryenDataSegmentGetName(segment) != NULL);
+      assert(BinaryenGetDataSegmentByteOffset(module, segment) ==
              expected_offsets[i]);
-      assert(BinaryenGetMemorySegmentByteLength(module, segmentNames[i]) ==
-             segmentSizes[i]);
-      BinaryenCopyMemorySegmentData(module, segmentNames[i], out);
+      assert(BinaryenGetDataSegmentByteLength(segment) == segmentSizes[i]);
+      assert(BinaryenGetDataSegmentPassive(segment) == segmentPassives[i]);
+      BinaryenCopyDataSegmentData(segment, out);
       assert(0 == strcmp(segmentDatas[i], out));
     }
   }
