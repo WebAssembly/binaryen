@@ -2513,9 +2513,13 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       for (Index i = 0; i < call->operands.size(); i++) {
         auto type = call->operands[i]->type;
         if (type == Type::unreachable) {
-          // Nothing sent here, so use the declared type - what we refine to
-          // must still validate even though this call is unreachable.
+          // Nothing sent here. What we refine to must still validate, even
+          // though this call is unreachable. Using the non-nullable bottom type
+          // is valid, and has the fewest restrictions.
           type = declaredParams[i];
+          if (type.isRef()) {
+            type = Type(type.getHeapType().getBottom(), NonNullable);
+          }
         }
         sent.push_back(type);
       }
