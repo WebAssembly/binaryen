@@ -25,6 +25,8 @@
 // an out-of-bounds trap.
 //
 
+#include <bit>
+
 #include "pass.h"
 #include "support/stdckdint.h"
 #include "wasm-builder.h"
