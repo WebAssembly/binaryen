@@ -19,21 +19,21 @@ export enum ExpressionRunnerFlag {
 
 
 export class ExpressionRunner {
-	readonly ptr: ExpressionRunnerRef;
+	readonly #ptr: ExpressionRunnerRef;
 
 	constructor(mod: Module, flags: ExpressionRunnerFlag, maxDepth: number, maxLoopIterations: number) {
-		this.ptr = BinaryenObj["_ExpressionRunnerCreate"](mod.ptr, flags, maxDepth, maxLoopIterations);
+		this.#ptr = BinaryenObj["_ExpressionRunnerCreate"](mod.ptr, flags, maxDepth, maxLoopIterations);
 	}
 
 	setLocalValue(index: number, valueExpr: ExpressionRef): boolean {
-		return Boolean(BinaryenObj["_ExpressionRunnerSetLocalValue"](this.ptr, index, valueExpr));
+		return Boolean(BinaryenObj["_ExpressionRunnerSetLocalValue"](this.#ptr, index, valueExpr));
 	}
 
 	setGlobalValue(name: string, valueExpr: ExpressionRef): boolean {
-		return preserveStack(() => Boolean(BinaryenObj["_ExpressionRunnerSetGlobalValue"](this.ptr, strToStack(name), valueExpr)));
+		return preserveStack(() => Boolean(BinaryenObj["_ExpressionRunnerSetGlobalValue"](this.#ptr, strToStack(name), valueExpr)));
 	}
 
 	runAndDispose(expr: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_ExpressionRunnerRunAndDispose"](this.ptr, expr);
+		return BinaryenObj["_ExpressionRunnerRunAndDispose"](this.#ptr, expr);
 	}
 }

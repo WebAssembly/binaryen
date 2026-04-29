@@ -4,10 +4,10 @@ import type {Module} from "./Module.ts";
 
 
 export class Relooper {
-	readonly ptr: number;
+	readonly #ptr: number;
 
 	constructor(mod: Module) {
-		this.ptr = BinaryenObj["_RelooperCreate"](mod.ptr)
+		this.#ptr = BinaryenObj["_RelooperCreate"](mod.ptr);
 	}
 
 	addBlock() {}
