@@ -33,8 +33,8 @@ namespace wasm {
 
 struct Name : public IString {
   Name() : IString() {}
-  Name(std::string_view str) : IString(str, false) {}
-  Name(const char* str) : IString(str, false) {}
+  Name(std::string_view str) : IString(str) {}
+  Name(const char* str) : IString(str) {}
   Name(IString str) : IString(str) {}
   Name(IString::View str) : IString(str) {}
   Name(const std::string& str) : IString(str) {}
@@ -52,7 +52,7 @@ struct Name : public IString {
   }
 
   static Name fromInt(size_t i) {
-    return IString(std::to_string(i).c_str(), false);
+    return IString(std::to_string(i).c_str());
   }
 
   bool hasSubstring(IString substring) {

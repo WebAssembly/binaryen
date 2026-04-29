@@ -55,7 +55,7 @@ public:
     const char* internal = nullptr;
     const char* data() const { return internal; }
     size_t size() const {
-      return internal ? *static_cast<const uint32_t*>)(internal - 4) : 0;
+      return internal ? *(const uint32_t*)(internal - 4) : 0;
     }
     char operator[](size_t x) const { return internal[x]; }
     operator std::string_view() const { return {internal, size()}; }

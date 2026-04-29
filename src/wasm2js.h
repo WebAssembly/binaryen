@@ -126,7 +126,7 @@ bool needsBufferView(Module& wasm) {
   return need;
 }
 
-IString stringToIString(std::string str) { return IString(str.c_str(), false); }
+IString stringToIString(std::string str) { return IString(str.c_str()); }
 
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
@@ -1587,7 +1587,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           std::ostringstream out;
           out << lo << "," << hi;
           std::string os = out.str();
-          IString name(os.c_str(), false);
+          IString name(os.c_str());
           return ValueBuilder::makeName(name);
         }
         case Type::f32: {

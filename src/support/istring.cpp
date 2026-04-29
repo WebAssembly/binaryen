@@ -29,12 +29,12 @@ const char* IString::interned(std::string_view s) {
   // modified, wrap the string_views in a container that provides mutability
   // even through a const reference.
   struct MutStringView {
-    mutable IString::View str;
-    MutStringView(IString::View str) : str(str) {}
+    mutable std::string_view str;
+    MutStringView(std::string_view str) : str(str) {}
   };
   struct MutStringViewHash {
     size_t operator()(const MutStringView& mut) const {
-      return std::hash<IString::View>{}(mut.str);
+      return std::hash<std::string_view>{}(mut.str);
     }
   };
   struct MutStringViewEqual {
@@ -81,13 +81,16 @@ const char* IString::interned(std::string_view s) {
   assert(size < std::numeric_limits<uint32_t>::max());
   char* buffer =
     (char*)arena.allocSpace(sizeof(uint32_t) + size + 1, alignof(uint32_t));
-  *static_cast<uint32_t*>(buffer) = size;
+  *(uint32_t*)(buffer) = size;
   char* data = buffer + sizeof(uint32_t);
   std::copy(s.begin(), s.end(), data);
   data[size] = '\0';
+  // TODO: We store the size twice, once in the string_view and once in the
+  //       data (right before it). A special wrapper could avoid that.
+  s = std::string_view(data, size);
 
   // Intern our new string.
-  localIt->str = globalIt->str = IString::View(buffer);
+  localIt->str = globalIt->str = s;
   return data;
 }
 
