@@ -16,7 +16,9 @@
   "type": "module",
   "main": "./dist/binaryen.js",
   "scripts": {
-    "compile": "tsc"
+    "compile": "tsc",
+    "lint": "eslint ./",
+    "build": "npm run compile && npm run lint"
   },
   "files": [
     "package.json",
@@ -25,9 +27,14 @@
     "./dist/*.js"
   ],
   "devDependencies": {
-    "typescript": "~6.0.0"
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "eslint": "^10.2.1",
+    "globals": "^17.5.0",
+    "typescript": "~6.0.0",
+    "typescript-eslint": "^8.59.1"
   },
   "engines": {
-    "node": "^22 || ^24"
+    "node": "^22.6 || ^24"
   }
 }
