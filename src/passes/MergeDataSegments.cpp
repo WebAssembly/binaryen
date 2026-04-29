@@ -132,6 +132,14 @@ struct SegmentEntry {
 
 using SegmentMap = std::set<SegmentEntry, SegmentEntry::CompareStart>;
 
+// Information about the bounds check that triggered the previous flush. The
+// segment name is used as a hint when synthesizing an empty segment.
+struct BoundsCheck {
+  Name mem;
+  Name seg;
+  Address lastPageStart;
+};
+
 // Bytes needed to represent a nonnegative integer in the unsigned LEB encoding.
 size_t ulebSize(uint64_t x) { return (std::bit_width(x) + 6) / 7; }
 // Bytes needed to represent a nonnegative integer in the signed LEB encoding.
@@ -278,19 +286,18 @@ struct MergeInfo {
   }
 
   void flushBoundsCheck(Module* module,
-                        std::optional<Name>& boundsCheckSeg,
+                        const BoundsCheck& boundsCheck,
                         bool clearFlushed) {
-    // Flush the first merged segment that overlaps the last known page, so that
-    // we hit the bounds check before adding any other segments.
+    // Flush the first merged segment that overlaps the bounds-check page, so
+    // that the bounds check is triggered before any other segments are added.
     assert(knownSize != 0);
-    Address lastPageStart = (knownSize - 1) << mem->pageSizeLog2;
-    auto it = newSegments.upper_bound(lastPageStart);
+    auto it = newSegments.upper_bound(boundsCheck.lastPageStart);
     bool hasEntry = false;
     SegmentEntry entry;
     if (it != newSegments.begin()) {
       auto preIt = it;
       --preIt;
-      if (lastPageStart < preIt->end()) {
+      if (boundsCheck.lastPageStart < preIt->end()) {
         hasEntry = true;
         entry = std::move(newSegments.extract(preIt).value());
       }
@@ -305,10 +312,8 @@ struct MergeInfo {
     // If the last known page has no nonempty segments, synthesize a new empty
     // segment.
     if (!hasEntry) {
-      assert(boundsCheckSeg);
-      entry.start = lastPageStart + 1;
-      entry.name = *boundsCheckSeg;
-      boundsCheckSeg.reset();
+      entry.start = boundsCheck.lastPageStart + 1;
+      entry.name = boundsCheck.seg;
     }
     flushEntry(module, std::move(entry));
   }
@@ -342,16 +347,15 @@ struct MergeInfo {
 
 void flushAll(Module* module,
               std::unordered_map<Name, MergeInfo>& infos,
-              std::optional<Name>& boundsCheckMem,
-              std::optional<Name>& boundsCheckSeg,
+              std::optional<BoundsCheck>& boundsCheck,
               std::optional<Name> clearFlushedMem) {
   for (const auto& mem : module->memories) {
     infos[mem->name].mergeNearAdjacent();
   }
-  if (boundsCheckMem) {
-    infos[*boundsCheckMem].flushBoundsCheck(
-      module, boundsCheckSeg, boundsCheckMem == clearFlushedMem);
-    boundsCheckMem.reset();
+  if (boundsCheck) {
+    infos[boundsCheck->mem].flushBoundsCheck(
+      module, *boundsCheck, boundsCheck->mem == clearFlushedMem);
+    boundsCheck.reset();
   }
   for (const auto& mem : module->memories) {
     infos[mem->name].flush(module, mem->name == clearFlushedMem);
@@ -395,13 +399,10 @@ struct MergeDataSegments : public Pass {
 
     // To avoid changing observable behavior, we flush all existing data before
     // adding a new data segment that may be out-of-bounds. Between flushes, we
-    // use boundsCheckMem to lazily keep track of which memory last triggered a
+    // use boundsCheck to lazily keep track of which memory last triggered a
     // bounds check, so that we can flush a corresponding bounds-check segment
-    // before flushing any other data. If an empty segment triggers a bounds
-    // check, then it will not show up in boundsCheckMem, so we keep track of
-    // its name in boundsCheckSeg in case we need to synthesize it again.
-    std::optional<Name> boundsCheckMem = std::nullopt;
-    std::optional<Name> boundsCheckSeg = std::nullopt;
+    // before flushing any other data.
+    std::optional<BoundsCheck> boundsCheck = std::nullopt;
     // Retain an emptySegment in case we need a target for the renaming step,
     // but no active segments remain after removing empty segments.
     std::unique_ptr<DataSegment> emptySegment = nullptr;
@@ -429,23 +430,27 @@ struct MergeDataSegments : public Pass {
           emptySegment = std::move(seg);
         }
 
-        // If a constant-offset segment is statically in-bounds, we simply merge
-        // it into its appropriate memory; otherwise, we flush all memories,
-        // then mark its own memory as needing a bounds check next flush.
+        // If a constant-offset segment is not statically in-bounds, flush all
+        // memories and mark its page as the next bounds-check page.
         if (!trapsNeverHappen && inBounds != InBounds::Yes) {
-          flushAll(module, infos, boundsCheckMem, boundsCheckSeg, std::nullopt);
-          boundsCheckMem = info.mem->name;
-          boundsCheckSeg = entry.name;
+          auto neededSize = info.knownSize;
+          assert(neededSize != 0);
+          flushAll(module, infos, boundsCheck, std::nullopt);
+          boundsCheck = BoundsCheck();
+          boundsCheck->mem = info.mem->name;
+          boundsCheck->seg = entry.name;
+          boundsCheck->lastPageStart = (neededSize - 1)
+                                       << info.mem->pageSizeLog2;
         }
 
         // As a special fallback, flush the memory early if the merged segment
         // would not respect MAX_SEG_SIZE.
         if (!entry.canMergeInto(info.newSegments)) {
-          if (boundsCheckMem) {
-            infos[*boundsCheckMem].mergeNearAdjacent();
-            infos[*boundsCheckMem].flushBoundsCheck(
-              module, boundsCheckSeg, boundsCheckMem == seg->memory);
-            boundsCheckMem.reset();
+          if (boundsCheck) {
+            infos[boundsCheck->mem].mergeNearAdjacent();
+            infos[boundsCheck->mem].flushBoundsCheck(
+              module, *boundsCheck, boundsCheck->mem == seg->memory);
+            boundsCheck.reset();
           }
           info.mergeNearAdjacent();
           info.flush(module, false);
@@ -459,24 +464,22 @@ struct MergeDataSegments : public Pass {
           // also requires all other memories to be flushed due to the bounds
           // check.
           if (trapsNeverHappen) {
-            if (boundsCheckMem) {
-              infos[*boundsCheckMem].mergeNearAdjacent();
-              infos[*boundsCheckMem].flushBoundsCheck(
-                module, boundsCheckSeg, boundsCheckMem == seg->memory);
-              boundsCheckMem.reset();
+            if (boundsCheck) {
+              infos[boundsCheck->mem].mergeNearAdjacent();
+              infos[boundsCheck->mem].flushBoundsCheck(
+                module, *boundsCheck, boundsCheck->mem == seg->memory);
+              boundsCheck.reset();
             }
             info.mergeNearAdjacent();
             info.flush(module, true);
           } else {
-            flushAll(
-              module, infos, boundsCheckMem, boundsCheckSeg, seg->memory);
+            flushAll(module, infos, boundsCheck, seg->memory);
           }
           info.zeroFilled = false;
         } else {
           // An empty non-constant-offset segment only triggers a bounds check.
           if (!trapsNeverHappen) {
-            flushAll(
-              module, infos, boundsCheckMem, boundsCheckSeg, std::nullopt);
+            flushAll(module, infos, boundsCheck, std::nullopt);
           }
         }
 
@@ -497,7 +500,7 @@ struct MergeDataSegments : public Pass {
     }
 
     // Flush all remaining segments, then copy any trap segment.
-    flushAll(module, infos, boundsCheckMem, boundsCheckSeg, std::nullopt);
+    flushAll(module, infos, boundsCheck, std::nullopt);
     if (trapSegment) {
       module->dataSegments.push_back(std::move(trapSegment));
     }
