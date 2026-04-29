@@ -190,4 +190,3 @@ class FuzzAgainstJSVarietyTester(FuzzerVarietyTester):
 class PreserveFuzzTest(utils.BinaryenTestCase):
     def test_against_js(self):
         FuzzAgainstJSVarietyTester(self.input_path('fuzz.wat')).test()
-
