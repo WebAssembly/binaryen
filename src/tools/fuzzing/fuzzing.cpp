@@ -2490,7 +2490,13 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       // TODO: once getExactness() is fixed (see there), use that
       newExactness = oneIn(2) ? Exact : Inexact;
     }
-    if (newHeapType.isBasic()) {
+    // We can only be exact if we are using the new heap type: that type is
+    // exactly what is sent here, and no intermediate heap type would be valid.
+    // For example, given $A :> $B :> $C, then maybeRefine($A, exact $C) can
+    // return exact $C, but cannot return exact $B.
+    //
+    // Also, basic heap types cannot be exact.
+    if (newHeapType != new_.getHeapType() || newHeapType.isBasic()) {
       newExactness = Inexact;
     }
 
