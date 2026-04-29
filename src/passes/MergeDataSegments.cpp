@@ -207,13 +207,14 @@ struct MergeInfo {
     if (it != flushedSegments.begin()) {
       auto preIt = it;
       --preIt;
-      if (start < it->end()) {
-        if (end <= it->end()) {
-          dest.assign(it->data.begin() + (start - it->start),
-                      it->data.begin() + (end - it->start));
+      if (start < preIt->end()) {
+        if (end <= preIt->end()) {
+          dest.assign(preIt->data.begin() + (start - preIt->start),
+                      preIt->data.begin() + (end - preIt->start));
           return true;
         }
-        dest.assign(it->data.begin() + (start - it->start), it->data.end());
+        dest.assign(preIt->data.begin() + (start - preIt->start),
+                    preIt->data.end());
       }
     }
 
