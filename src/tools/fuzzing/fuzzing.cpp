@@ -2531,8 +2531,8 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     if (!func->imported()) {
       continue;
     }
-    // TODO: In the reffed cast, we could consider using import/export wrappers
-    //       and refining just there.
+    // TODO: In the referenced case, we could consider using import/export
+    //       wrappers and refining just there.
     if (map[func->name].reffed) {
       continue;
     }
