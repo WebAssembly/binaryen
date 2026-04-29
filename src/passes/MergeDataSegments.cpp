@@ -156,21 +156,34 @@ struct MergeInfo {
     if (size > MAX_SEG_SIZE) {
       return InBounds::No;
     }
-    uint64_t end;
+    bool end64 = false;
+    uint64_t end, lastAddr = std::numeric_limits<uint64_t>::max();
     if (std::ckd_add<uint64_t>(&end, start, size)) {
-      return InBounds::No;
+      // The spec permits a segment to end at address 2^64 exactly, but we
+      // cannot handle it, so either return No or throw an error.
+      if (end != 0) {
+        return InBounds::No;
+      }
+      end64 = true;
+    } else {
+      if (end == 0) {
+        return InBounds::Yes;
+      }
+      lastAddr = end - 1;
     }
-    if (end == 0) {
+    uint64_t lastPage = lastAddr >> mem->pageSizeLog2;
+    if (lastPage < knownSize) {
+      if (end64) {
+        Fatal() << "MergeDataSegments does not support offset 2^64-1";
+      }
       return InBounds::Yes;
-    }
-
-    auto neededSize = ((end - 1) >> mem->pageSizeLog2) + 1;
-    if (neededSize <= knownSize) {
-      return InBounds::Yes;
-    } else if (!mem->imported() || (mem->hasMax() && neededSize > mem->max)) {
+    } else if (!mem->imported() || (mem->hasMax() && lastPage >= mem->max)) {
       return InBounds::No;
     } else {
-      knownSize = neededSize;
+      if (end64) {
+        Fatal() << "MergeDataSegments does not support offset 2^64-1";
+      }
+      knownSize = lastPage + 1;
       return InBounds::Maybe;
     }
   }
