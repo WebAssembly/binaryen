@@ -7,6 +7,7 @@ import {
 	_free,
 	_malloc,
 	BinaryenObj,
+	UTF8ToString,
 	getExceptionMessage,
 	stackAlloc,
 	stringToAscii,
@@ -30,6 +31,7 @@ import {
 	HEAPU32,
 	i32sToStack,
 	preserveStack,
+	strToStack,
 } from "./utils.ts";
 
 
@@ -198,71 +200,199 @@ export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
 
 
 
-// ## Global Getters & Setters ## //
-export function getOptimizeLevel() {};
+// ## Getters & Setters for Settings ## //
+// TODO: These should all be moved to a `Settings` class with getter and setter methods.
+/** Gets the currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc. */
+export function getOptimizeLevel(): number {
+	return BinaryenObj["_BinaryenGetOptimizeLevel"]();
+};
 
-export function setOptimizeLevel() {};
+/** Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc. */
+export function setOptimizeLevel(level: number): void {
+	BinaryenObj["_BinaryenSetOptimizeLevel"](level);
+};
 
-export function getShrinkLevel() {};
+/** Gets the currently set shrink level. 0, 1, 2 correspond to -O0, -Os, -Oz. */
+export function getShrinkLevel(): number {
+	return BinaryenObj["_BinaryenGetShrinkLevel"]();
+};
 
-export function setShrinkLevel() {};
+/** Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz. */
+export function setShrinkLevel(level: number): void {
+	BinaryenObj["_BinaryenSetShrinkLevel"](level);
+};
 
-export function getDebugInfo() {};
+/** Gets whether generating debug information is currently enabled or not. */
+export function getDebugInfo(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetDebugInfo"]());
+};
 
-export function setDebugInfo() {};
+/** Enables or disables debug information in emitted binaries. */
+export function setDebugInfo(on: boolean) {
+	BinaryenObj["_BinaryenSetDebugInfo"](on);
+};
 
-export function getTrapsNeverHappen() {};
+/** Gets whether no traps can be considered reached at runtime when optimizing. */
+export function getTrapsNeverHappen(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetTrapsNeverHappen"]());
+};
 
-export function setTrapsNeverHappen() {};
+/** Enables or disables whether no traps can be considered reached at runtime when optimizing. */
+export function setTrapsNeverHappen(on: boolean) {
+	BinaryenObj["_BinaryenSetTrapsNeverHappen"](on);
+};
 
-export function getClosedWorld() {};
+/**
+ * Gets whether considering that the code outside of the module does
+ * not inspect or interact with GC and function references.
+ */
+export function getClosedWorld(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetClosedWorld"]());
+};
 
-export function setClosedWorld() {};
+/**
+ * Enables or disables whether considering that the code outside of
+ * the module does not inspect or interact with GC and function references.
+ */
+export function setClosedWorld(on: boolean) {
+	BinaryenObj["_BinaryenSetClosedWorld"](on);
+};
 
-export function getLowMemoryUnused() {};
+/** Gets whether the low 1K of memory can be considered unused when optimizing. */
+export function getLowMemoryUnused(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetLowMemoryUnused"]());
+};
 
-export function setLowMemoryUnused() {};
+/** Enables or disables whether the low 1K of memory can be considered unused when optimizing. */
+export function setLowMemoryUnused(on: boolean) {
+	BinaryenObj["_BinaryenSetLowMemoryUnused"](on);
+};
 
-export function getZeroFilledMemory() {};
+/** Gets whether that an imported memory will be zero-initialized speculation. */
+export function getZeroFilledMemory(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetZeroFilledMemory"]());
+};
 
-export function setZeroFilledMemory() {};
+/** Enables or disables whether that an imported memory will be zero-initialized speculation. */
+export function setZeroFilledMemory(on: boolean) {
+	BinaryenObj["_BinaryenSetZeroFilledMemory"](on);
+};
 
-export function getFastMath() {};
+/**
+ * Gets whether fast math optimizations are enabled, ignoring for example
+ * corner cases of floating-point math like NaN changes.
+ */
+export function getFastMath(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetFastMath"]());
+};
 
-export function setFastMath() {};
+/**
+ * Enables or disables fast math optimizations, ignoring for example
+ * corner cases of floating-point math like NaN changes.
+ */
+export function setFastMath(on: boolean) {
+	BinaryenObj["_BinaryenSetFastMath"](on);
+};
 
-export function getGenerateStackIR() {};
+/** Gets whether to generate StackIR during binary writing. */
+export function getGenerateStackIR(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetGenerateStackIR"]());
+};
 
-export function setGenerateStackIR() {};
+/** Enable or disable StackIR generation during binary writing. */
+export function setGenerateStackIR(on: boolean) {
+	BinaryenObj["_BinaryenSetGenerateStackIR"](on);
+};
 
-export function getOptimizeStackIR() {};
+/** Gets whether to optimize StackIR during binary writing. */
+export function getOptimizeStackIR(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetOptimizeStackIR"]());
+};
 
-export function setOptimizeStackIR() {};
+/** Enable or disable StackIR optimisation during binary writing. */
+export function setOptimizeStackIR(on: boolean) {
+	BinaryenObj["_BinaryenSetOptimizeStackIR"](on);
+};
 
-export function getPassArgument() {};
+/** Gets the function size at which we always inline. */
+export function getAlwaysInlineMaxSize(): number {
+	return BinaryenObj["_BinaryenGetAlwaysInlineMaxSize"]();
+};
 
-export function setPassArgument() {};
+/** Sets the function size at which we always inline. */
+export function setAlwaysInlineMaxSize(size: number) {
+	BinaryenObj["_BinaryenSetAlwaysInlineMaxSize"](size);
+};
 
-export function clearPassArguments() {};
+/** Gets the function size which we inline when functions are lightweight. */
+export function getFlexibleInlineMaxSize(): number {
+	return BinaryenObj["_BinaryenGetFlexibleInlineMaxSize"]();
+};
 
-export function hasPassToSkip() {};
+/** Sets the function size which we inline when functions are lightweight. */
+export function setFlexibleInlineMaxSize(size: number) {
+	BinaryenObj["_BinaryenSetFlexibleInlineMaxSize"](size);
+};
 
-export function addPassToSkip() {};
+/** Gets the function size which we inline when there is only one caller. */
+export function getOneCallerInlineMaxSize(): number {
+	return BinaryenObj["_BinaryenGetOneCallerInlineMaxSize"]();
+};
 
-export function clearPassesToSkip() {};
+/** Sets the function size which we inline when there is only one caller. */
+export function setOneCallerInlineMaxSize(size: number) {
+	BinaryenObj["_BinaryenSetOneCallerInlineMaxSize"](size);
+};
 
-export function getAlwaysInlineMaxSize() {};
+/** Gets whether functions with loops are allowed to be inlined. */
+export function getAllowInliningFunctionsWithLoops(): boolean {
+	return Boolean(BinaryenObj["_BinaryenGetAllowInliningFunctionsWithLoops"]());
+};
 
-export function setAlwaysInlineMaxSize() {};
+/** Sets whether functions with loops are allowed to be inlined. */
+export function setAllowInliningFunctionsWithLoops(on: boolean) {
+	BinaryenObj["_BinaryenSetAllowInliningFunctionsWithLoops"](on);
+};
 
-export function getFlexibleInlineMaxSize() {};
 
-export function setFlexibleInlineMaxSize() {};
 
-export function getOneCallerInlineMaxSize() {};
+// ## Pass Settings ## //
+/** Gets the value of the specified arbitrary pass argument. */
+export function getPassArgument(key: string): string | undefined {
+	return preserveStack(() => {
+		const returned = BinaryenObj["_BinaryenGetPassArgument"](strToStack(key));
+		return returned ? UTF8ToString(returned) : undefined;
+	});
+};
 
-export function setOneCallerInlineMaxSize() {};
+/**
+ * Sets the value of the specified arbitrary pass argument.
+ * Removes the respective argument if `value` is NULL.
+ */
+export function setPassArgument(key: string, value: string): void {
+	return preserveStack(() => {
+		BinaryenObj["_BinaryenSetPassArgument"](strToStack(key), strToStack(value));
+	});
+};
 
-export function getAllowInliningFunctionsWithLoops() {};
+/** Clears all arbitrary pass arguments. */
+export function clearPassArguments(): void {
+	BinaryenObj["_BinaryenClearPassArguments"]();
+};
 
-export function setAllowInliningFunctionsWithLoops() {};
+/** Gets whether a pass is in the set of passes to skip. */
+export function hasPassToSkip(pass: string): boolean {
+	return preserveStack(() => Boolean(BinaryenObj["_BinaryenHasPassToSkip"](strToStack(pass))));
+};
+
+/** Add a pass to the set of passes to skip. */
+export function addPassToSkip(pass: string): void {
+	return preserveStack(() => {
+		BinaryenObj["_BinaryenAddPassToSkip"](strToStack(pass));
+	});
+};
+
+/** Clears the set of passes to skip. */
+export function clearPassesToSkip(): void {
+	BinaryenObj["_BinaryenClearPassesToSkip"]();
+};
