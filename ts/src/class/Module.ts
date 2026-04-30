@@ -4,6 +4,12 @@ import {
 	UTF8ToString,
 } from "../-pre.ts";
 import {
+	Function as BinaryenFunction,
+} from "./Function.ts";
+import {
+	Table,
+} from "./Table.ts";
+import {
 	block,
 } from "./expression/Block.ts";
 import {
@@ -62,6 +68,10 @@ export const Features = Feature;
 
 
 export class Module {
+	static Table = Table;
+	static Function = BinaryenFunction;
+
+
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	// ## Expression Creation ## //

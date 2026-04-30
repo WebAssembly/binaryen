@@ -11,3 +11,4 @@ export {
 export {Relooper} from "./class/Relooper.ts";
 export {TypeBuilder} from "./class/TypeBuilder.ts";
 export * from "./class/expression/index.ts";
+export * from "./-deprecations.ts";

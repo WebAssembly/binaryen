@@ -192,8 +192,6 @@ export enum ExpressionId {
 	StringWTF16Get = BinaryenObj["_BinaryenStringWTF16GetId"](),
 	StringSliceWTF = BinaryenObj["_BinaryenStringSliceWTFId"](),
 }
-/** @deprecated Enum name is now singular. */
-export const ExpressionIds = ExpressionId;
 
 
 
@@ -653,8 +651,6 @@ export enum Operation {
 	StringEqEqual = BinaryenObj["_BinaryenStringEqEqual"](),
 	StringEqCompare = BinaryenObj["_BinaryenStringEqCompare"](),
 }
-/** @deprecated Enum name is now singular. */
-export const Operations = Operation;
 
 
 
@@ -667,8 +663,6 @@ export enum ExternalKind {
 	ExternalTable = BinaryenObj["_BinaryenExternalTable"](),
 	ExternalFunction = BinaryenObj["_BinaryenExternalFunction"](),
 }
-/** @deprecated Enum name is now singular. */
-export const ExternalKinds = ExternalKind;
 
 
 
@@ -699,5 +693,3 @@ export enum SideEffect {
 	TrapsNeverHappen = BinaryenObj["_BinaryenSideEffectTrapsNeverHappen"](),
 	Any = BinaryenObj["_BinaryenSideEffectAny"](),
 }
-/** @deprecated Enum name is now singular. */
-export const SideEffects = SideEffect;
