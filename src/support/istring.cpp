@@ -33,6 +33,7 @@ const char* IString::interned(std::string_view s) {
   // make sure we do them using a string_view.
 
   struct InternedHash {
+    using is_transparent = void;
     size_t operator()(View v) const { return std::hash<std::string_view>{}(std::string_view(v)); }
     size_t operator()(std::string_view sv) const {
       return std::hash<std::string_view>{}(sv);
@@ -60,19 +61,17 @@ const char* IString::interned(std::string_view s) {
   // A thread-local cache of strings to reduce contention.
   thread_local static StringSet localStrings;
 
-  auto [localIt, localInserted] = localStrings.insert(s);
-  if (!localInserted) {
+  if (auto it = localStrings.find(s); it != localStrings.end()) {
     // We already had a local copy of this string.
-    return localIt->str.data();
+    return it->internal;
   }
- 
+
   // No copy yet in the local cache. Check the global cache.
   std::unique_lock<std::mutex> lock(mutex);
-  auto [globalIt, globalInserted] = globalStrings.insert(s);
-  if (!globalInserted) {
+  if (auto it = globalStrings.find(s); it != globalStrings.end()) {
     // We already had a global copy of this string. Cache it locally.
-    localIt->str = globalIt->str;
-    return localIt->str.data();
+    localStrings.insert(*it);
+    return it->internal;
   }
 
   // We have a new string. Create a copy of the data at a stable address with a
@@ -90,7 +89,8 @@ const char* IString::interned(std::string_view s) {
 
   // Intern our new string.
   View v{data};
-  localIt->str = globalIt->str = s;
+  globalStrings.insert(v);
+  localStrings.insert(v);
   return data;
 }
 
