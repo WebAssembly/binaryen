@@ -109,7 +109,6 @@ features = [
     '--disable-fp16',
     '--disable-strings',
     '--disable-stack-switching',
-    '--disable-relaxed-atomics',
     '--disable-multibyte',
     '--disable-wide-arithmetic',
 ]

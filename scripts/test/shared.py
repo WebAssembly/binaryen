@@ -254,6 +254,7 @@ V8_OPTS = [
     '--experimental-wasm-fp16',
     '--experimental-wasm-custom-descriptors',
     '--experimental-wasm-js-interop',
+    '--experimental-wasm-acquire-release',
 ]
 
 # external tools
