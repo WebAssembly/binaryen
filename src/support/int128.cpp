@@ -1,4 +1,4 @@
-// Copyright 2024 WebAssembly Community Group participants
+// Copyright 2026 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,6 +47,18 @@ namespace detail {
 Int128 mul_wide_s_fallback(uint64_t lhs, uint64_t rhs) {
   auto [high, low] = mul_wide_u_fallback(lhs, rhs);
 
+  // If lhs is negative, then it looks like 2**64 is added to its unsigned value
+  // so we computed
+  //   (lhs + 2**64) * rhs
+  // = lhs * rhs + 2**64 * rhs
+  // We need to subtract 2**64 * rhs, so just subtract rhs directly from the
+  // high bits.
+  //
+  // If lhs AND rhs are negative then we computed
+  //   (lhs + 2**64) * (rhs + 2**64)
+  // = lhs * rhs + 2**64 * rhs + 2**64 * lhs + 2**128
+  // The last term overflowed and had no effect, so it's enough to do the two
+  // subtractions in the two different branches.
   if (static_cast<int64_t>(lhs) < 0) {
     high -= rhs;
   }
@@ -58,30 +70,49 @@ Int128 mul_wide_s_fallback(uint64_t lhs, uint64_t rhs) {
 }
 
 Int128 mul_wide_u_fallback(uint64_t lhs, uint64_t rhs) {
-  uint32_t lhsLow = lhs & 0xffffffff;
-  uint32_t lhsHigh = lhs >> 32;
-  uint32_t rhsLow = rhs & 0xffffffff;
-  uint32_t rhsHigh = rhs >> 32;
-
-  uint64_t mulLowLow = static_cast<uint64_t>(lhsLow) * rhsLow;
-  uint64_t mulLowHigh = static_cast<uint64_t>(lhsLow) * rhsHigh;
-  uint64_t mulHighLow = static_cast<uint64_t>(lhsHigh) * rhsLow;
-  uint64_t mulHighHigh = static_cast<uint64_t>(lhsHigh) * rhsHigh;
-
-  uint64_t cross = mulLowHigh + (mulLowLow >> 32);
-  uint64_t carry = cross >> 32;
-  cross = (cross & 0xffffffff) + mulHighLow;
-
-  // The lower 64 bits of the 128-bit result are formed by:
-  //   (low * low) + ((low * high) << 32) + ((high * low) << 32)
+  // Decompose lhs and rhs into 4 32-bit numbers and distribute to compute:
+  // (lhsHigh * 2^32 + lhsLow) * (rhsHigh * 2^32 + rhsLow)
   //
-  // The upper 64 bits of the 128-bit result are formed by:
-  //   (high * high) + the upper 32-bits of (low * high) + the upper 32-bits of
-  //   (high * low) + carries from the lower 64 bits
-  uint64_t lowResult = (cross << 32) | (mulLowLow & 0xffffffff);
-  uint64_t highResult = mulHighHigh + carry + (cross >> 32);
+  // (lhsHigh * rhsHigh) * 2^64                     [Upper 64 bits]
+  // (lhsHigh * rhsLow + lhsLow * rhsHigh) * 2^32   [Middle 64 bits]
+  // (lhsLow * rhsLow)                              [Lower 64 bits]
 
-  return {highResult, lowResult};
+  uint64_t lhsLow = lhs & 0xffffffff;
+  uint64_t lhsHigh = lhs >> 32;
+  uint64_t rhsLow = rhs & 0xffffffff;
+  uint64_t rhsHigh = rhs >> 32;
+
+  uint64_t lowLow = lhsLow * rhsLow;
+  uint64_t lowHigh = lhsLow * rhsHigh;
+  uint64_t highLow = lhsHigh * rhsLow;
+  uint64_t highHigh = lhsHigh * rhsHigh;
+
+  // The lowest 32 bits consist only of lowLow (without its carry)
+  //
+  // The next 32 bits consist of `lowHigh + highLow + the carry of lowlow`
+  // (again this may carry to the next 32) Start by adding the carry which is
+  // guaranteed to not overflow 64 bits. Overflow can't happen because lowHigh
+  // is max (2**32 - 1)**2 and lowLow is no more than 32 bits, (2**32 - 1)**2 +
+  // (2**32 -1) < 2**64 - 1
+  uint64_t highOfLow = (lowLow >> 32) + lowHigh;
+
+  // We might have a carry into the next 32 (the low of the high), mask it out
+  // now so we can add highLow.
+  uint64_t carry = highOfLow >> 32;
+
+  // This is also guaranteed to not overflow by the same logic.
+  highOfLow = (highOfLow & 0xffffffff) + highLow;
+
+  // highOfLow might have exceeded 32 bits again, carry it again
+  uint64_t carry2 = highOfLow >> 32;
+
+  uint64_t lower = (lowLow & 0xffffffff) | (highOfLow << 32);
+
+  // No need to worry about overflow here, since 128 bits is always enough to
+  // store the product of two 64-bit ints.
+  uint64_t higher = carry + carry2 + highHigh;
+
+  return {higher, lower};
 }
 
 } // namespace detail

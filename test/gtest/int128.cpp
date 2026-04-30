@@ -1,4 +1,4 @@
-// Copyright 2024 WebAssembly Community Group participants
+// Copyright 2026 WebAssembly Community Group participants
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,10 +48,16 @@ TEST_P(Int128MulWideSTest, Basic) {
   EXPECT_EQ(mul_s(minInt, minInt), (Int128{0x4000000000000000ULL, 0}));
 }
 
+// Test that our fallback implementation is commutative
+Int128 mul_wide_s_fallback_reversed(uint64_t lhs, uint64_t rhs) {
+  return detail::mul_wide_s_fallback(rhs, lhs);
+}
+
 INSTANTIATE_TEST_SUITE_P(Int128,
                          Int128MulWideSTest,
                          ::testing::Values(mul_wide_s,
-                                           detail::mul_wide_s_fallback));
+                                           detail::mul_wide_s_fallback,
+                                           mul_wide_s_fallback_reversed));
 
 class Int128MulWideUTest
   : public ::testing::TestWithParam<Int128 (*)(uint64_t, uint64_t)> {};
@@ -89,7 +95,13 @@ TEST_P(Int128MulWideUTest, Basic) {
   EXPECT_EQ(mul_u(lowOnly, lowOnly), (Int128{0, 0xfffffffe00000001ULL}));
 }
 
+// Test that our fallback implementation is commutative
+Int128 mul_wide_u_fallback_reversed(uint64_t lhs, uint64_t rhs) {
+  return detail::mul_wide_u_fallback(rhs, lhs);
+}
+
 INSTANTIATE_TEST_SUITE_P(Int128,
                          Int128MulWideUTest,
                          ::testing::Values(mul_wide_u,
-                                           detail::mul_wide_u_fallback));
+                                           detail::mul_wide_u_fallback,
+                                           mul_wide_u_fallback_reversed));
