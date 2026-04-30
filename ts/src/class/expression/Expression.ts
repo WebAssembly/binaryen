@@ -22,11 +22,11 @@ import {
 /** Base class of all expression wrappers. */
 export class Expression {
 	/* eslint-disable @stylistic/brace-style */
-	@replacedBy("`instance.getId`") static getId(expr: ExpressionRef) { return Expression.prototype.getId.call({[THIS_PTR]: expr}); }
-	@replacedBy("`instance.getType`") static getType(expr: ExpressionRef) { return Expression.prototype.getType.call({[THIS_PTR]: expr}); }
-	@replacedBy("`instance.setType`") static setType(expr: ExpressionRef, typ: Type) { return Expression.prototype.setType.call({[THIS_PTR]: expr}, typ); }
-	@replacedBy("`instance.finalize`") static finalize(expr: ExpressionRef) { return Expression.prototype.finalize.call({[THIS_PTR]: expr}); }
-	@replacedBy("`instance.toText`") static toText(expr: ExpressionRef): string { return Expression.prototype.toText.call({[THIS_PTR]: expr}); }
+	/** @deprecated */ @replacedBy("`instance.getId`") static getId(expr: ExpressionRef) { return Expression.prototype.getId.call({[THIS_PTR]: expr}); }
+	/** @deprecated */ @replacedBy("`instance.getType`") static getType(expr: ExpressionRef) { return Expression.prototype.getType.call({[THIS_PTR]: expr}); }
+	/** @deprecated */ @replacedBy("`instance.setType`") static setType(expr: ExpressionRef, typ: Type) { return Expression.prototype.setType.call({[THIS_PTR]: expr}, typ); }
+	/** @deprecated */ @replacedBy("`instance.finalize`") static finalize(expr: ExpressionRef) { return Expression.prototype.finalize.call({[THIS_PTR]: expr}); }
+	/** @deprecated */ @replacedBy("`instance.toText`") static toText(expr: ExpressionRef): string { return Expression.prototype.toText.call({[THIS_PTR]: expr}); }
 	/* eslint-enable @stylistic/brace-style */
 
 

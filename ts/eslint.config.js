@@ -155,6 +155,7 @@ export default [
 
 			/* ## Strictness */
 			"@typescript-eslint/explicit-member-accessibility": ["error", {accessibility: "no-public"}],
+			"@typescript-eslint/no-deprecated": "warn",
 		},
 	},
 ];

@@ -20,18 +20,18 @@ import {
 
 class BinaryenFunction {
 	/* eslint-disable @stylistic/brace-style */
-	@replacedBy("`instance.getName`") static getName(func: FunctionRef) { return BinaryenFunction.prototype.getName.call({[THIS_PTR]: func}); }
-	@replacedBy("`instance.getType`") static getType(func: FunctionRef) { return BinaryenFunction.prototype.getType.call({[THIS_PTR]: func}); }
-	@replacedBy("`instance.getParams`") static getParams(func: FunctionRef) { return BinaryenFunction.prototype.getParams.call({[THIS_PTR]: func}); }
-	@replacedBy("`instance.getResults`") static getResults(func: FunctionRef) { return BinaryenFunction.prototype.getResults.call({[THIS_PTR]: func}); }
-	@replacedBy("`instance.getNumVars`") static getNumVars(func: FunctionRef) { return BinaryenFunction.prototype.getNumVars.call({[THIS_PTR]: func}); }
-	@replacedBy("`instance.getVar`") static getVar(func: FunctionRef, index: number) { return BinaryenFunction.prototype.getVar.call({[THIS_PTR]: func}, index); }
-	@replacedBy("`instance.getNumLocals`") static getNumLocals(func: FunctionRef) { return BinaryenFunction.prototype.getNumLocals.call({[THIS_PTR]: func}); }
-	@replacedBy("`instance.hasLocalName`") static hasLocalName(func: FunctionRef, index: number) { return BinaryenFunction.prototype.hasLocalName.call({[THIS_PTR]: func}, index); }
-	@replacedBy("`instance.getLocalName`") static getLocalName(func: FunctionRef, index: number) { return BinaryenFunction.prototype.getLocalName.call({[THIS_PTR]: func}, index); }
-	@replacedBy("`instance.setLocalName`") static setLocalName(func: FunctionRef, index: number, name: string) { return BinaryenFunction.prototype.setLocalName.call({[THIS_PTR]: func}, index, name); }
-	@replacedBy("`instance.getBody`") static getBody(func: FunctionRef) { return BinaryenFunction.prototype.getBody.call({[THIS_PTR]: func}); }
-	@replacedBy("`instance.setBody`") static setBody(func: FunctionRef, bodyExpr: ExpressionRef) { return BinaryenFunction.prototype.setBody.call({[THIS_PTR]: func}, bodyExpr); }
+	/** @deprecated */ @replacedBy("`instance.getName`") static getName(func: FunctionRef) { return BinaryenFunction.prototype.getName.call({[THIS_PTR]: func}); }
+	/** @deprecated */ @replacedBy("`instance.getType`") static getType(func: FunctionRef) { return BinaryenFunction.prototype.getType.call({[THIS_PTR]: func}); }
+	/** @deprecated */ @replacedBy("`instance.getParams`") static getParams(func: FunctionRef) { return BinaryenFunction.prototype.getParams.call({[THIS_PTR]: func}); }
+	/** @deprecated */ @replacedBy("`instance.getResults`") static getResults(func: FunctionRef) { return BinaryenFunction.prototype.getResults.call({[THIS_PTR]: func}); }
+	/** @deprecated */ @replacedBy("`instance.getNumVars`") static getNumVars(func: FunctionRef) { return BinaryenFunction.prototype.getNumVars.call({[THIS_PTR]: func}); }
+	/** @deprecated */ @replacedBy("`instance.getVar`") static getVar(func: FunctionRef, index: number) { return BinaryenFunction.prototype.getVar.call({[THIS_PTR]: func}, index); }
+	/** @deprecated */ @replacedBy("`instance.getNumLocals`") static getNumLocals(func: FunctionRef) { return BinaryenFunction.prototype.getNumLocals.call({[THIS_PTR]: func}); }
+	/** @deprecated */ @replacedBy("`instance.hasLocalName`") static hasLocalName(func: FunctionRef, index: number) { return BinaryenFunction.prototype.hasLocalName.call({[THIS_PTR]: func}, index); }
+	/** @deprecated */ @replacedBy("`instance.getLocalName`") static getLocalName(func: FunctionRef, index: number) { return BinaryenFunction.prototype.getLocalName.call({[THIS_PTR]: func}, index); }
+	/** @deprecated */ @replacedBy("`instance.setLocalName`") static setLocalName(func: FunctionRef, index: number, name: string) { return BinaryenFunction.prototype.setLocalName.call({[THIS_PTR]: func}, index, name); }
+	/** @deprecated */ @replacedBy("`instance.getBody`") static getBody(func: FunctionRef) { return BinaryenFunction.prototype.getBody.call({[THIS_PTR]: func}); }
+	/** @deprecated */ @replacedBy("`instance.setBody`") static setBody(func: FunctionRef, bodyExpr: ExpressionRef) { return BinaryenFunction.prototype.setBody.call({[THIS_PTR]: func}, bodyExpr); }
 	/* eslint-enable @stylistic/brace-style */
 
 
