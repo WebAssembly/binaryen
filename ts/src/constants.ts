@@ -21,6 +21,7 @@ export type TagRef = number;
 export type GlobalRef = number;
 export type TableRef = number;
 export type FunctionRef = number;
+export type DataSegmentRef = number;
 export type ElementSegmentRef = number;
 export type ExportRef = number;
 

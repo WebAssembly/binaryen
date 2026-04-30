@@ -3,6 +3,9 @@ import {
 	BinaryenObj,
 	UTF8ToString,
 } from "../../-pre.ts";
+import type {
+	DataSegmentRef,
+} from "../../constants.ts";
 import {
 	block,
 } from "../expression/Block.ts";
@@ -13,6 +16,9 @@ import {
 	localSet,
 	localTee,
 } from "../expression/LocalSet.ts";
+import {
+	DataSegment,
+} from "./DataSegment.ts";
 import {
 	ElementSegment,
 } from "./ElementSegment.ts";
@@ -25,6 +31,9 @@ import {
 import {
 	Global,
 } from "./Global.ts";
+import {
+	Memory,
+} from "./Memory.ts";
 import {
 	Table,
 } from "./Table.ts";
@@ -82,8 +91,10 @@ export const Features = Feature;
 export class Module {
 	static Tag = Tag;
 	static Global = Global;
+	static Memory = Memory;
 	static Table = Table;
 	static Function = BinaryenFunction;
+	static DataSegment = DataSegment;
 	static ElementSegment = ElementSegment;
 	static Export = Export;
 
@@ -131,7 +142,9 @@ export class Module {
 
 	hasMemory() {}
 
-	getMemoryInfo() {}
+	getMemoryInfo(name: string): Memory {
+		return new Memory(this, name);
+	}
 
 	// ### Tables ### //
 	// TODO: move these to the Table class
@@ -166,7 +179,9 @@ export class Module {
 
 	getDataSegmentByIndex() {}
 
-	getDataSegmentInfo() {}
+	getDataSegmentInfo(segment: DataSegmentRef): DataSegment {
+		return new DataSegment(this, segment);
+	}
 
 	// ### Element Segments ### //
 	// TODO: move these to the ElementSegment class
