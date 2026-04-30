@@ -4,15 +4,30 @@
 
 
 import {
+	_free,
+	_malloc,
 	BinaryenObj,
 	getExceptionMessage,
 	stackAlloc,
+	stringToAscii,
 } from "./-pre.ts";
+import {
+	Feature,
+	Module,
+} from "./class/Module.ts";
+import {
+	EXPR_WRAPPERS,
+	Expression,
+} from "./class/expression/Expression.ts";
 import type {
+	ExpressionId,
+	ExpressionRef,
 	HeapType,
+	SideEffect,
 	Type,
 } from "./constants.ts";
 import {
+	HEAP8,
 	HEAPU32,
 	i32sToStack,
 	preserveStack,
@@ -21,14 +36,24 @@ import {
 
 
 /**
+ * Private utility to create a Module from a given pointer.
+ * Users don’t have access to this.
+ */
+function wrapModule(ptr: number): Module {
+	const returned = new Module();
+	// @ts-expect-error -- warning: reassigning a readonly field
+	returned.ptr = ptr;
+	return returned;
+}
+
+/**
  * Calls a function, wrapping it in error handling code so that if it hits a
  * fatal error, we throw a JS exception (which JS can handle) rather than
  * abort the entire process (which would not be a friendly behavior).
  * @param func the function to call
  * @return the return value of the given function
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function handleFatalError(func: () => number): number {
+function handleFatalError<T>(func: () => T): T {
 	try {
 		return func();
 	} catch (e) {
@@ -60,15 +85,49 @@ function handleFatalError(func: () => number): number {
 
 
 // ## General Binaryen Functions ## //
-export function emitText() {};
+/** Probably used in `BinaryenObj["_BinaryenExpressionPrint"]`. */
+declare let out: any;
+export function emitText(expr: ExpressionRef): string {
+	let returned = "";
+	const saved = out;
+	out = (x: string) => {
+		returned += `${ x }\n`;
+	};
+	BinaryenObj["_BinaryenExpressionPrint"](expr);
+	out = saved;
+	return returned;
+}
 
-export function readBinary() {};
+export function readBinary(data: Uint8Array): Module {
+	const buffer = _malloc(data.length);
+	HEAP8.set(data, buffer);
+	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleRead"](buffer, data.length));
+	_free(buffer);
+	return wrapModule(ptr);
+}
 
-export function readBinaryWithFeatures() {};
+export function readBinaryWithFeatures(data: Uint8Array, features: Feature) {
+	const buffer = _malloc(data.length);
+	HEAP8.set(data, buffer);
+	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleReadWithFeatures"](buffer, data.length, features));
+	_free(buffer);
+	return wrapModule(ptr);
+}
 
-export function parseText() {};
+export function parseText(text: string): Module {
+	const buffer = _malloc(text.length + 1);
+	stringToAscii(text, buffer);
+	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleParse"](buffer));
+	_free(buffer);
+	return wrapModule(ptr);
+}
 
-export function exit() {};
+export function exit(status: number): void {
+	// Instead of exiting silently on errors, always show an error with a stack trace, for debuggability.
+	if (status !== 0) {
+		throw new Error(`exiting due to error: ${ status }`);
+	}
+}
 
 
 
@@ -119,13 +178,22 @@ export function getHeapType(typ: Type): HeapType {
 	return BinaryenObj["_BinaryenTypeGetHeapType"](typ);
 }
 
-export function getExpressionId() {}
+export function getExpressionId(expr: ExpressionRef): ExpressionId {
+	return BinaryenObj["_BinaryenExpressionGetId"](expr);
+}
 
-export function getExpressionType() {}
+export function getExpressionType(expr: ExpressionRef): Type {
+	return BinaryenObj["_BinaryenExpressionGetType"](expr);
+}
 
-export function getExpressionInfo() {}
+export function getExpressionInfo(expr: ExpressionRef): Expression {
+	const id = getExpressionId(expr);
+	return EXPR_WRAPPERS.get(id) ?? new Expression(id, expr);
+}
 
-export function getSideEffects() {}
+export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
+	return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, mod.ptr);
+}
 
 
 

@@ -1,5 +1,7 @@
 import {
+	_free,
 	BinaryenObj,
+	UTF8ToString,
 } from "../-pre.ts";
 import {
 	block,
@@ -183,7 +185,14 @@ export class Module {
 	removeExport() {}
 
 	// ## Binaryen Operations ## //
-	emitText() {}
+	emitText(): string {
+		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteText"](this.ptr);
+		const text = UTF8ToString(textPtr);
+		if (textPtr) {
+			_free(textPtr);
+		}
+		return text;
+	}
 
 	emitStackIR() {}
 
