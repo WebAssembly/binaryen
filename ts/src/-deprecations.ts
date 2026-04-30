@@ -16,13 +16,13 @@ import {
 } from "./constants.ts";
 import {
 	Function as BinaryenFunction,
-} from "./class/Function.ts";
+} from "./class/module/Function.ts";
 import {
 	Module,
-} from "./class/Module.ts";
+} from "./class/module/Module.ts";
 import {
 	Table as BinaryenTable,
-} from "./class/Table.ts";
+} from "./class/module/Table.ts";
 import {
 	consoleWarn,
 } from "./lib.ts";

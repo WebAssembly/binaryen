@@ -2,7 +2,17 @@ import {
 	_free,
 	BinaryenObj,
 	UTF8ToString,
-} from "../-pre.ts";
+} from "../../-pre.ts";
+import {
+	block,
+} from "../expression/Block.ts";
+import {
+	localGet,
+} from "../expression/LocalGet.ts";
+import {
+	localSet,
+	localTee,
+} from "../expression/LocalSet.ts";
 import {
 	ElementSegment,
 } from "./ElementSegment.ts";
@@ -21,16 +31,6 @@ import {
 import {
 	Tag,
 } from "./Tag.ts";
-import {
-	block,
-} from "./expression/Block.ts";
-import {
-	localGet,
-} from "./expression/LocalGet.ts";
-import {
-	localSet,
-	localTee,
-} from "./expression/LocalSet.ts";
 
 
 

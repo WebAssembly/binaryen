@@ -1,12 +1,12 @@
 import {
 	BinaryenObj,
 	UTF8ToString,
-} from "../-pre.ts";
+} from "../../-pre.ts";
 import type {
 	ExpressionRef,
 	GlobalRef,
 	Type,
-} from "../constants.ts";
+} from "../../constants.ts";
 
 
 

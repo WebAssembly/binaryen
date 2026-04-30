@@ -1,11 +1,11 @@
 import {
 	BinaryenObj,
 	UTF8ToString,
-} from "../-pre.ts";
+} from "../../-pre.ts";
 import type {
 	ExportRef,
 	ExternalKind,
-} from "../constants.ts";
+} from "../../constants.ts";
 
 
 

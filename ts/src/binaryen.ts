@@ -7,7 +7,7 @@ export {
 export {
 	Feature,
 	Module,
-} from "./class/Module.ts";
+} from "./class/module/Module.ts";
 export {Relooper} from "./class/Relooper.ts";
 export {TypeBuilder} from "./class/TypeBuilder.ts";
 export * from "./class/expression/index.ts";

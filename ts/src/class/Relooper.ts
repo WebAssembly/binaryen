@@ -11,7 +11,7 @@ import {
 } from "../utils.ts";
 import type {
 	Module,
-} from "./Module.ts";
+} from "./module/Module.ts";
 
 
 

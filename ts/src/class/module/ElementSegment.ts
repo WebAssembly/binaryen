@@ -1,10 +1,10 @@
 import {
 	BinaryenObj,
 	UTF8ToString,
-} from "../-pre.ts";
+} from "../../-pre.ts";
 import type {
 	ElementSegmentRef,
-} from "../constants.ts";
+} from "../../constants.ts";
 
 
 

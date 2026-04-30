@@ -15,7 +15,7 @@ import {
 import {
 	type Feature,
 	Module,
-} from "./class/Module.ts";
+} from "./class/module/Module.ts";
 import {
 	Expression,
 } from "./class/expression/Expression.ts";

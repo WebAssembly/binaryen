@@ -1,21 +1,21 @@
 import {
 	BinaryenObj,
 	UTF8ToString,
-} from "../-pre.ts";
+} from "../../-pre.ts";
 import type {
 	ExpressionRef,
 	FunctionRef,
 	Type,
-} from "../constants.ts";
+} from "../../constants.ts";
 import {
 	replacedBy,
-} from "../lib.ts";
+} from "../../lib.ts";
 import {
 	THIS_PTR,
 	getAllNested,
 	preserveStack,
 	strToStack,
-} from "../utils.ts";
+} from "../../utils.ts";
 
 
 
