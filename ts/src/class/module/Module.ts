@@ -1,11 +1,27 @@
 import {
 	_free,
+	_malloc,
 	BinaryenObj,
 	UTF8ToString,
 } from "../../-pre.ts";
-import type {
-	DataSegmentRef,
+import {
+	type DataSegmentRef,
+	type ElementSegmentRef,
+	type ExportRef,
+	type ExpressionRef,
+	type FunctionRef,
+	type GlobalRef,
+	type TableRef,
+	type TagRef,
+	type Type,
+	funcref,
 } from "../../constants.ts";
+import {
+	HEAP8,
+	i32sToStack,
+	preserveStack,
+	strToStack,
+} from "../../utils.ts";
 import {
 	block,
 } from "../expression/Block.ts";
@@ -40,6 +56,16 @@ import {
 import {
 	Tag,
 } from "./Tag.ts";
+
+
+
+/** Similar to a `DataSegment` but with some minor differences. */
+interface MemorySegment {
+	name?: string;
+	offset: ExpressionRef;
+	data: Uint8Array;
+	passive: boolean;
+}
 
 
 
@@ -119,28 +145,93 @@ export class Module {
 
 	// ### Tags ### //
 	// TODO: move these to the Tag class
-	addTag() {}
+	addTag(name: string, params: Type, results: Type): TagRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddTag"](this.ptr, strToStack(name), params, results));
+	}
 
-	getTag() {}
+	getTag(name: string): TagRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetTag"](this.ptr, strToStack(name)));
+	}
 
-	removeTag() {}
+	removeTag(name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveTag"](this.ptr, strToStack(name));
+		});
+	}
 
 	// ### Globals ### //
 	// TODO: move these to the Global class
-	addGlobal() {}
+	addGlobal(name: string, type: Type, mutable: boolean, init: ExpressionRef): GlobalRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddGlobal"](this.ptr, strToStack(name), type, mutable, init));
+	}
 
-	getGlobal() {}
+	getGlobal(name: string): GlobalRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetGlobal"](this.ptr, strToStack(name)));
+	}
 
-	getGlobalByIndex() {}
+	getGlobalByIndex(index: number): GlobalRef {
+		return BinaryenObj["_BinaryenGetGlobalByIndex"](this.ptr, index);
+	}
 
-	getNumGlobals() {}
+	getNumGlobals(): number {
+		return BinaryenObj["_BinaryenGetNumGlobals"](this.ptr);
+	}
 
-	removeGlobal() {}
+	removeGlobal(name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveGlobal"](this.ptr, strToStack(name));
+		});
+	}
 
 	// ### Memories ### //
-	setMemory() {}
+	setMemory(
+		initial: number,
+		maximum: number,
+		exportName: string,
+		segments: readonly MemorySegment[] = [],
+		shared: boolean = false,
+		memory64: boolean = false,
+		internalName?: string,
+	): void {
+		return preserveStack(() => {
+			const names: number[] = [];
+			const datas: number[] = [];
+			const passives: number[] = [];
+			const offsets: number[] = [];
+			const lengths: number[] = [];
+			for (let i = 0; i < segments.length; i++) {
+				const {name, data, passive, offset} = segments[i];
+				names[i] = strToStack(name);
+				datas[i] = _malloc(data.length);
+				passives[i] = Number(passive);
+				offsets[i] = offset;
+				HEAP8.set(data, datas[i]);
+				lengths[i] = data.length;
+			}
+			BinaryenObj["_BinaryenSetMemory"](
+				this.ptr,
+				initial,
+				maximum,
+				strToStack(exportName),
+				i32sToStack(names),
+				i32sToStack(datas),
+				i32sToStack(passives),
+				i32sToStack(offsets),
+				i32sToStack(lengths),
+				segments.length,
+				shared,
+				memory64,
+				strToStack(internalName),
+			);
+			for (const dataptr of datas) {
+				_free(dataptr);
+			}
+		});
+	}
 
-	hasMemory() {}
+	hasMemory(): boolean {
+		return Boolean(BinaryenObj["_BinaryenHasMemory"](this.ptr));
+	}
 
 	getMemoryInfo(name: string): Memory {
 		return new Memory(this, name);
@@ -148,36 +239,86 @@ export class Module {
 
 	// ### Tables ### //
 	// TODO: move these to the Table class
-	addTable() {}
+	addTable(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef): TableRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddTable"](this.ptr, strToStack(name), initial, maximum, type, init ?? 0));
+	}
 
-	getTable() {}
+	getTable(name: string): TableRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetTable"](this.ptr, strToStack(name)));
+	}
 
-	getTableByIndex() {}
+	getTableByIndex(index: number): TableRef {
+		return BinaryenObj["_BinaryenGetTableByIndex"](this.ptr, index);
+	}
 
-	getNumTables() {}
+	getNumTables(): number {
+		return BinaryenObj["_BinaryenGetNumTables"](this.ptr);
+	}
 
-	getTableSegments() {}
+	getTableSegments(table: TableRef): ElementSegmentRef[] {
+		const numElementSegments = BinaryenObj["_BinaryenGetNumElementSegments"](this.ptr);
+		const tableName = UTF8ToString(BinaryenObj["_BinaryenTableGetName"](table));
+		const ret = [];
+		for (let i = 0; i < numElementSegments; i++) {
+			const segment = BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.ptr, i);
+			const elemTableName = UTF8ToString(BinaryenObj["_BinaryenElementSegmentGetTable"](segment));
+			if (tableName === elemTableName) {
+				ret.push(segment);
+			}
+		}
+		return ret;
+	}
 
-	removeTable() {}
+	removeTable(name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveTable"](this.ptr, strToStack(name));
+		});
+	}
 
 	// ### Functions ### //
 	// TODO: move these to the Function class
-	addFunction() {}
+	addFunction(name: string, params: Type, results: Type, varTypes: readonly Type[], body: ExpressionRef): FunctionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddFunction"](
+			this.ptr,
+			strToStack(name),
+			params,
+			results,
+			i32sToStack(varTypes),
+			varTypes.length,
+			body,
+		));
+	}
 
-	getFunction() {}
+	getFunction(name: string): FunctionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetFunction"](this.ptr, strToStack(name)));
+	}
 
-	removeFunction() {}
+	removeFunction(name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveFunction"](this.ptr, strToStack(name));
+		});
+	}
 
-	getNumFunctions() {}
+	getNumFunctions(): number {
+		return BinaryenObj["_BinaryenGetNumFunctions"](this.ptr);
+	}
 
-	getFunctionByIndex() {}
+	getFunctionByIndex(index: number): FunctionRef {
+		return BinaryenObj["_BinaryenGetFunctionByIndex"](this.ptr, index);
+	}
 
 	// ### Data Segments ### //
-	getNumDataSegments() {}
+	getDataSegment(name: string): DataSegmentRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetDataSegment"](this.ptr, strToStack(name)));
+	}
 
-	getDataSegment() {}
+	getDataSegmentByIndex(index: number): DataSegmentRef {
+		return BinaryenObj["_BinaryenGetDataSegmentByIndex"](this.ptr, index);
+	}
 
-	getDataSegmentByIndex() {}
+	getNumDataSegments(): number {
+		return BinaryenObj["_BinaryenGetNumDataSegments"](this.ptr);
+	}
 
 	getDataSegmentInfo(segment: DataSegmentRef): DataSegment {
 		return new DataSegment(this, segment);
@@ -185,51 +326,150 @@ export class Module {
 
 	// ### Element Segments ### //
 	// TODO: move these to the ElementSegment class
-	addActiveElementSegment() {}
+	addActiveElementSegment(table: string, name: string, funcNames: readonly string[], offset: ExpressionRef): ElementSegmentRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddActiveElementSegment"](
+			this.ptr,
+			strToStack(table),
+			strToStack(name),
+			i32sToStack(funcNames.map(strToStack)),
+			funcNames.length,
+			offset,
+		));
+	}
 
-	addPassiveElementSegment() {}
+	addPassiveElementSegment(name: string, funcNames: readonly string[]): ElementSegmentRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddPassiveElementSegment"](
+			this.ptr,
+			strToStack(name),
+			i32sToStack(funcNames.map(strToStack)),
+			funcNames.length,
+		));
+	}
 
-	getElementSegment() {}
+	getElementSegment(name: string): ElementSegmentRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetElementSegment"](this.ptr, strToStack(name)));
+	}
 
-	getElementSegmentByIndex() {}
+	getElementSegmentByIndex(index: number): ElementSegmentRef {
+		return BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.ptr, index);
+	}
 
-	getNumElementSegments() {}
+	getNumElementSegments(): number {
+		return BinaryenObj["_BinaryenGetNumElementSegments"](this.ptr);
+	}
 
-	removeElementSegment() {}
+	removeElementSegment(name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveElementSegment"](this.ptr, strToStack(name));
+		});
+	}
 
 	// ### Start Function ### //
-	getStart() {}
+	getStart(): FunctionRef {
+		return BinaryenObj["_BinaryenGetStart"](this.ptr);
+	}
 
 	// ### Imports ### //
-	addTagImport() {}
+	addTagImport(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddTagImport"](
+				this.ptr,
+				strToStack(internalName),
+				strToStack(externalModuleName),
+				strToStack(externalBaseName),
+				params,
+				results,
+			);
+		});
+	}
 
-	addGlobalImport() {}
+	addGlobalImport(internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddGlobalImport"](
+				this.ptr,
+				strToStack(internalName),
+				strToStack(externalModuleName),
+				strToStack(externalBaseName),
+				globalType,
+				mutable,
+			);
+		});
+	}
 
-	addMemoryImport() {}
+	addMemoryImport(internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddMemoryImport"](
+				this.ptr,
+				strToStack(internalName),
+				strToStack(externalModuleName),
+				strToStack(externalBaseName),
+				shared,
+			);
+		});
+	}
 
-	addTableImport() {}
+	addTableImport(internalName: string, externalModuleName: string, externalBaseName: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddTableImport"](
+				this.ptr,
+				strToStack(internalName),
+				strToStack(externalModuleName),
+				strToStack(externalBaseName),
+			);
+		});
+	}
 
-	addFunctionImport() {}
+	addFunctionImport(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddFunctionImport"](
+				this.ptr,
+				strToStack(internalName),
+				strToStack(externalModuleName),
+				strToStack(externalBaseName),
+				params,
+				results,
+			);
+		});
+	}
 
 	// ### Exports ### //
-	// TODO: move these to the Export class
-	addTagExport() {}
+	addTagExport(internalName: string, externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddTagExport"](this.ptr, strToStack(internalName), strToStack(externalName)));
+	}
 
-	addGlobalExport() {}
+	addGlobalExport(internalName: string, externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddGlobalExport"](this.ptr, strToStack(internalName), strToStack(externalName)));
+	}
 
-	addMemoryExport() {}
+	addMemoryExport(internalName: string, externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddMemoryExport"](this.ptr, strToStack(internalName), strToStack(externalName)));
+	}
 
-	addTableExport() {}
+	addTableExport(internalName: string, externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddTableExport"](this.ptr, strToStack(internalName), strToStack(externalName)));
+	}
 
-	addFunctionExport() {}
+	addFunctionExport(internalName: string, externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddFunctionExport"](this.ptr, strToStack(internalName), strToStack(externalName)));
+	}
 
-	getExport() {}
+	getExport(externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetExport"](this.ptr, strToStack(externalName)));
+	}
 
-	getNumExports() {}
+	getNumExports(): number {
+		return BinaryenObj["_BinaryenGetNumExports"](this.ptr);
+	}
 
-	getExportByIndex() {}
+	getExportByIndex(index: number): ExportRef {
+		return BinaryenObj["_BinaryenGetExportByIndex"](this.ptr, index);
+	}
 
-	removeExport() {}
+	removeExport(externalName: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveExport"](this.ptr, strToStack(externalName));
+		});
+	}
 
 	// ## Binaryen Operations ## //
 	emitText(): string {
