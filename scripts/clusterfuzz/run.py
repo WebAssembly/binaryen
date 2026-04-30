@@ -95,6 +95,7 @@ FUZZER_ARGS = [
     '--disable-strings',
     '--disable-stack-switching',
     '--disable-relaxed-atomics',
+    '--disable-wide-arithmetic',
 ]
 
 
