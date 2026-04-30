@@ -121,6 +121,8 @@ unfuzzable = [
     'js_interop_counter.wat',
     'js_interop_cases.wat',
     'js_interop_corners.wat',
+    # Requires --enable-wide-arithmetic and not yet ready in V8.
+    'wide-arithmetic.wast',
 ]
 
 
