@@ -27,11 +27,11 @@ const char* IString::interned(std::string_view s) {
     return nullptr;
   }
 
-  // A set of interned Views. The ones in the set are already interned, while
-  // we will compare it to a View constructed "manually", which is not yet
-  // interned. This requires us to be careful with hashing and equality, and
-  // make sure we do them using a string_view.
-
+  // A set of interned Views, i.e., that contains our pascal-style strings. We
+  // need to query this using a std::string_view, as that is what we receive as
+  // input (turning it into pascal-style storage would add overhead). To do so,
+  // use overloading in the hash and equality functions (which works thanks to
+  // `is_transparent`).
   struct InternedHash {
     using is_transparent = void;
     size_t operator()(View v) const {
@@ -88,8 +88,8 @@ const char* IString::interned(std::string_view s) {
   // header we can use. Make sure it is null terminated so legacy uses that get
   // a C string still work.
   size_t size = s.size();
-  // The string must fit in 32 bits, including the null terminator.
-  assert(size < std::numeric_limits<uint32_t>::max());
+  // The string must fit in 32 bits, including the null terminator and size.
+  assert(size < uint64_t(std::numeric_limits<uint32_t>::max()) + sizeof(uint32_t));
   char* buffer =
     (char*)arena.allocSpace(sizeof(uint32_t) + size + 1, alignof(uint32_t));
   *(uint32_t*)(buffer) = size;
