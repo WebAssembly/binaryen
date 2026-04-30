@@ -2524,7 +2524,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-    # Split(), # https://github.com/WebAssembly/binaryen/issues/8510
+    Split(),
     RoundtripText(),
     ClusterFuzz(),
     Two(),
