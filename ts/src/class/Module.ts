@@ -234,17 +234,3 @@ export class Module {
 
 	copyExpression() {}
 }
-
-
-
-export function getTagInfo() {}
-
-export function getGlobalInfo() {}
-
-export function getTableInfo() {}
-
-export function getFunctionInfo() {}
-
-export function getElementSegmentInfo() {}
-
-export function getExportInfo() {}

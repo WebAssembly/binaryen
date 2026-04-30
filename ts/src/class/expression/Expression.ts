@@ -9,7 +9,7 @@ import type {
 import {
 	emitText,
 	getExpressionType,
-} from "../../global.ts";
+} from "../../globals.ts";
 import {
 	replacedBy,
 } from "../../lib.ts";

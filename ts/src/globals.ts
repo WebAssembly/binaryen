@@ -198,6 +198,13 @@ export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
 	return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, mod.ptr);
 }
 
+export function getTagInfo() {}
+export function getGlobalInfo() {}
+export function getTableInfo() {}
+export function getFunctionInfo() {}
+export function getElementSegmentInfo() {}
+export function getExportInfo() {}
+
 
 
 // ## Getters & Setters for Settings ## //

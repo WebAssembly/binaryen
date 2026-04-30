@@ -1,5 +1,5 @@
 export * from "./constants.ts";
-export * from "./global.ts";
+export * from "./globals.ts";
 export {
 	ExpressionRunner,
 	ExpressionRunnerFlag,
