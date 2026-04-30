@@ -88,8 +88,8 @@ const char* IString::interned(std::string_view s) {
   // header we can use. Make sure it is null terminated so legacy uses that get
   // a C string still work.
   size_t size = s.size();
-  // The string must fit in 32 bits, including the null terminator.
-  assert(size < std::numeric_limits<uint32_t>::max());
+  // The string's size must fit in 32 bits.
+  assert(size <= std::numeric_limits<uint32_t>::max());
   char* buffer =
     (char*)arena.allocSpace(sizeof(uint32_t) + size + 1, alignof(uint32_t));
   *(uint32_t*)(buffer) = size;
