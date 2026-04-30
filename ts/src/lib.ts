@@ -3,6 +3,12 @@
 
 
 
+export function consoleWarn(...args: any[]): void {
+	return (console?.warn ?? console?.log)?.call(undefined, ...args);
+}
+
+
+
 /**
  * Mark a method as deprecated by logging a warning in the console.
  * @example
@@ -22,7 +28,7 @@ export function replacedBy<This, Params extends unknown[], Return>(replacement: 
 ) => (typeof method) | void {
 	return (method, context) => function (...args) {
 		const message = `WARNING: ${ context.static ? "Static" : "Instance" } method \`${ String(context.name) }\` is deprecated${ replacement && `; use ${ replacement } instead` }.`;
-		(console?.warn ?? console?.log)?.(message);
+		consoleWarn(message);
 		return method.call(this, ...args);
 	};
 }

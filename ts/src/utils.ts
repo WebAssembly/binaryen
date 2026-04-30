@@ -69,3 +69,59 @@ export function i8sToStack(i8s: readonly number[]): number {
 	HEAP8.set(i8s, ret);
 	return ret;
 }
+
+
+
+/**
+ * [description]
+ * @param ref [description]
+ * @param numFn [description]
+ * @param getFn [description]
+ * @return [description]
+ */
+export function getAllNested<T, U>(
+	ref: T,
+	numFn: (ref: T) => number,
+	getFn: (ref: T, i: number) => U,
+): U[] {
+	const num = numFn.call(undefined, ref);
+	const ret: U[] = [];
+	for (let i = 0; i < num; ++i) {
+		ret[i] = getFn.call(undefined, ref, i);
+	}
+	return ret;
+}
+
+/**
+ * [description]
+ * @param ref [description]
+ * @param values [description]
+ * @param numFn [description]
+ * @param setFn [description]
+ * @param appendFn [description]
+ * @param removeFn [description]
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function setAllNested<T, U>(
+	ref: T,
+	values: readonly U[],
+	numFn: (ref: T) => number,
+	setFn: (ref: T, i: number, val: U) => void,
+	appendFn: (ef: T, val: U) => void,
+	removeFn: (ef: T, num: number) => void,
+): void {
+	const num = values.length;
+	let prevNum = numFn(ref);
+	let index = 0;
+	while (index < num) {
+		if (index < prevNum) {
+			setFn(ref, index, values[index]);
+		} else {
+			appendFn(ref, values[index]);
+		}
+		++index;
+	}
+	while (prevNum > index) {
+		removeFn(ref, --prevNum);
+	}
+}

@@ -12,6 +12,7 @@ import {
 } from "../lib.ts";
 import {
 	THIS_PTR,
+	getAllNested,
 	preserveStack,
 	strToStack,
 } from "../utils.ts";
@@ -37,9 +38,18 @@ class BinaryenFunction {
 
 	private readonly [THIS_PTR]: FunctionRef;
 
+	readonly module: string;
+	readonly base: string;
+	readonly vars: readonly Type[];
+
+
 	constructor(func: FunctionRef) {
 		this[THIS_PTR] = func;
+		this.module = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetModule"](this[THIS_PTR]));
+		this.base = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetBase"](this[THIS_PTR]));
+		this.vars = getAllNested(func, BinaryenObj["_BinaryenFunctionGetNumVars"], BinaryenObj["_BinaryenFunctionGetVar"]);
 	}
+
 
 	valueOf() {
 		return this[THIS_PTR];
@@ -50,7 +60,7 @@ class BinaryenFunction {
 		return UTF8ToString(BinaryenObj["_BinaryenFunctionGetName"](this[THIS_PTR]));
 	}
 
-	getType() {
+	getType(): Type {
 		return BinaryenObj["_BinaryenFunctionGetType"](this[THIS_PTR]);
 	}
 

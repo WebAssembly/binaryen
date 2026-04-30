@@ -33,9 +33,16 @@ export class Table {
 
 	private readonly [THIS_PTR]: TableRef;
 
+	readonly module: string;
+	readonly base: string;
+
+
 	constructor(table: TableRef) {
 		this[THIS_PTR] = table;
+		this.module = UTF8ToString(BinaryenObj["_BinaryenTableImportGetModule"](this[THIS_PTR]));
+		this.base = UTF8ToString(BinaryenObj["_BinaryenTableImportGetBase"](this[THIS_PTR]));
 	}
+
 
 	valueOf() {
 		return this[THIS_PTR];

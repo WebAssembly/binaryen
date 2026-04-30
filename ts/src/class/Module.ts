@@ -4,11 +4,23 @@ import {
 	UTF8ToString,
 } from "../-pre.ts";
 import {
+	ElementSegment,
+} from "./ElementSegment.ts";
+import {
+	Export,
+} from "./Export.ts";
+import {
 	Function as BinaryenFunction,
 } from "./Function.ts";
 import {
+	Global,
+} from "./Global.ts";
+import {
 	Table,
 } from "./Table.ts";
+import {
+	Tag,
+} from "./Tag.ts";
 import {
 	block,
 } from "./expression/Block.ts";
@@ -68,8 +80,12 @@ export const Features = Feature;
 
 
 export class Module {
+	static Tag = Tag;
+	static Global = Global;
 	static Table = Table;
 	static Function = BinaryenFunction;
+	static ElementSegment = ElementSegment;
+	static Export = Export;
 
 
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
@@ -91,6 +107,7 @@ export class Module {
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
 
 	// ### Tags ### //
+	// TODO: move these to the Tag class
 	addTag() {}
 
 	getTag() {}
@@ -98,6 +115,7 @@ export class Module {
 	removeTag() {}
 
 	// ### Globals ### //
+	// TODO: move these to the Global class
 	addGlobal() {}
 
 	getGlobal() {}
@@ -116,6 +134,7 @@ export class Module {
 	getMemoryInfo() {}
 
 	// ### Tables ### //
+	// TODO: move these to the Table class
 	addTable() {}
 
 	getTable() {}
@@ -129,6 +148,7 @@ export class Module {
 	removeTable() {}
 
 	// ### Functions ### //
+	// TODO: move these to the Function class
 	addFunction() {}
 
 	getFunction() {}
@@ -149,6 +169,7 @@ export class Module {
 	getDataSegmentInfo() {}
 
 	// ### Element Segments ### //
+	// TODO: move these to the ElementSegment class
 	addActiveElementSegment() {}
 
 	addPassiveElementSegment() {}
@@ -176,6 +197,7 @@ export class Module {
 	addFunctionImport() {}
 
 	// ### Exports ### //
+	// TODO: move these to the Export class
 	addTagExport() {}
 
 	addGlobalExport() {}

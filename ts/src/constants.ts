@@ -10,18 +10,23 @@ import {
 
 
 // ## Static Types ## //
+// ### Expressions ### //
 export type Type = number;
 export type HeapType = number;
 export type PackedType = number;
-export type ElementSegmentRef = number;
 export type ExpressionRef = number;
-export type FunctionRef = number;
-export type GlobalRef = number;
-export type ExportRef = number;
-export type TableRef = number;
+
+// ### Module Components ### //
 export type TagRef = number;
-export type RelooperBlockRef = number;
+export type GlobalRef = number;
+export type TableRef = number;
+export type FunctionRef = number;
+export type ElementSegmentRef = number;
+export type ExportRef = number;
+
+// ### Binaryen Tools ### //
 export type ExpressionRunnerRef = number;
+export type RelooperBlockRef = number;
 export type TypeBuilderRef = number;
 
 
