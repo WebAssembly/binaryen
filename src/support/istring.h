@@ -41,13 +41,12 @@ public:
   // computing the size, which is more rare, requires looking back and doing a
   // load.
   //
-  // The size is limited to 4 bytes, so the maximum string we support is 4GB-1.
+  // The size is limited to 4 bytes, so the maximum string we support is 4GB.
   //
   // The alternative approach of using a string_view here, i.e., keeping the
-  // pointer and size in the IString, uses 4% more memory. That is, this
+  // pointer and size in the IString, uses more more memory. That is, this
   // optimization saves a lot of space, because while it adds 4 bytes to each
-  // interned string itself, we tend to have many views on each (e.g. a single
-  // interned name of a function, and a view in every Call of it).
+  // interned string itself, we tend to have many views on each.
   //
   // We provide a View here, which is a string_view-like interface that hides
   // those internal details.
