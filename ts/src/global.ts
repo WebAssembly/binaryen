@@ -12,7 +12,7 @@ import {
 	stringToAscii,
 } from "./-pre.ts";
 import {
-	Feature,
+	type Feature,
 	Module,
 } from "./class/Module.ts";
 import {

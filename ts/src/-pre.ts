@@ -4,7 +4,7 @@
 
 
 /** The main object provided by Emscripten. This is what gets wrapped. */
-export declare const BinaryenObj: Readonly<Record<string, (...args: readonly (number | boolean)[]) => number>>;
+export declare const BinaryenObj: Readonly<Record<string, (...args: readonly (number | bigint | boolean)[]) => number>>;
 
 
 

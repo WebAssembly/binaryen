@@ -149,6 +149,7 @@ export default [
 			"@typescript-eslint/no-use-before-define": "error",
 
 			/* ## Function & Module Design */
+			"@typescript-eslint/consistent-type-imports": "error",
 			"default-param-last": "off",
 			"@typescript-eslint/default-param-last": "error",
 			"@typescript-eslint/no-import-type-side-effects": "error",
