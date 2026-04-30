@@ -824,6 +824,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
+  addIfNoDWARFIssues("merge-data-segments");
   addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
     // Gather strings to globals right before reorder-globals, which will then
