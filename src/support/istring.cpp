@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <limits>
+#include <mutex>
+
 #include "istring.h"
 #include "mixed_arena.h"
 
@@ -24,26 +27,25 @@ const char* IString::interned(std::string_view s) {
     return nullptr;
   }
 
-  // We need a set of string_views that can be modified in-place to minimize
-  // the number of lookups we do. Since set elements cannot normally be
-  // modified, wrap the string_views in a container that provides mutability
-  // even through a const reference.
-  struct MutStringView {
-    mutable std::string_view str;
-    MutStringView(std::string_view str) : str(str) {}
-  };
-  struct MutStringViewHash {
-    size_t operator()(const MutStringView& mut) const {
-      return std::hash<std::string_view>{}(mut.str);
+  // A set of interned Views. The ones in the set are already interned, while
+  // we will compare it to a View constructed "manually", which is not yet
+  // interned. This requires us to be careful with hashing and equality, and
+  // make sure we do them using a string_view.
+
+  struct InternedHash {
+    size_t operator()(View v) const { return std::hash<std::string_view>{}(std::string_view(v)); }
+    size_t operator()(std::string_view sv) const {
+      return std::hash<std::string_view>{}(sv);
     }
   };
-  struct MutStringViewEqual {
-    bool operator()(const MutStringView& a, const MutStringView& b) const {
-      return a.str == b.str;
-    }
+  struct InternedEqual {
+    using is_transparent = void;
+    bool operator()(View a, View b) const { return std::string_view(a) == std::string_view(b); }
+    bool operator()(std::string_view a, View b) const { return a == std::string_view(b); }
+    bool operator()(View a, std::string_view b) const { return std::string_view(a) == b; }
+    bool operator()(std::string_view a, std::string_view b) const { return a == b; }
   };
-  using StringSet =
-    std::unordered_set<MutStringView, MutStringViewHash, MutStringViewEqual>;
+  using StringSet = std::unordered_set<View, InternedHash, InternedEqual>;
 
   // The authoritative global set of interned string views.
   static StringSet globalStrings;
@@ -63,7 +65,7 @@ const char* IString::interned(std::string_view s) {
     // We already had a local copy of this string.
     return localIt->str.data();
   }
-
+ 
   // No copy yet in the local cache. Check the global cache.
   std::unique_lock<std::mutex> lock(mutex);
   auto [globalIt, globalInserted] = globalStrings.insert(s);
@@ -85,11 +87,9 @@ const char* IString::interned(std::string_view s) {
   char* data = buffer + sizeof(uint32_t);
   std::copy(s.begin(), s.end(), data);
   data[size] = '\0';
-  // TODO: We store the size twice, once in the string_view and once in the
-  //       data (right before it). A special wrapper could avoid that.
-  s = std::string_view(data, size);
 
   // Intern our new string.
+  View v{data};
   localIt->str = globalIt->str = s;
   return data;
 }
