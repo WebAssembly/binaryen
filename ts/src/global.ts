@@ -16,7 +16,6 @@ import {
 	Module,
 } from "./class/Module.ts";
 import {
-	EXPR_WRAPPERS,
 	Expression,
 } from "./class/expression/Expression.ts";
 import type {
@@ -178,6 +177,9 @@ export function getHeapType(typ: Type): HeapType {
 	return BinaryenObj["_BinaryenTypeGetHeapType"](typ);
 }
 
+/**
+ * A misnomer — returns not a unique “ID”, but the “kind” of the expression.
+ */
 export function getExpressionId(expr: ExpressionRef): ExpressionId {
 	return BinaryenObj["_BinaryenExpressionGetId"](expr);
 }
@@ -187,8 +189,7 @@ export function getExpressionType(expr: ExpressionRef): Type {
 }
 
 export function getExpressionInfo(expr: ExpressionRef): Expression {
-	const id = getExpressionId(expr);
-	return EXPR_WRAPPERS.get(id) ?? new Expression(id, expr);
+	return new Expression(getExpressionId(expr), expr);
 }
 
 export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {

@@ -8,6 +8,7 @@ import type {
 } from "../../constants.ts";
 import {
 	emitText,
+	getExpressionType,
 } from "../../global.ts";
 import {
 	replacedBy,
@@ -15,11 +16,6 @@ import {
 import {
 	THIS_PTR,
 } from "../../utils.ts";
-
-
-
-/** Expression ID-to-wrapper map. */
-export const EXPR_WRAPPERS = new Map<ExpressionId, Expression>();
 
 
 
@@ -34,11 +30,22 @@ export class Expression {
 	/* eslint-enable @stylistic/brace-style */
 
 
-	protected readonly [THIS_PTR]: number;
+	protected readonly [THIS_PTR]: ExpressionRef;
 
+	/** Not really an “ID”, just the “kind” of expression. */
+	readonly #id: ExpressionId;
+
+	/**
+	 * Construct a new Expression object given an ID and reference.
+	 *
+	 * Without an ID, you can still call `binaryen.getExpressionInfo(expr)`,
+	 * which will compute the ID and construct an Expression object from there.
+	 * @param exprId the expression “kind” id
+	 * @param expr the expression reference
+	 */
 	constructor(exprId: ExpressionId, expr: ExpressionRef) {
 		this[THIS_PTR] = expr;
-		EXPR_WRAPPERS.set(exprId, this);
+		this.#id = exprId;
 	}
 
 	valueOf() {
@@ -47,11 +54,11 @@ export class Expression {
 
 	// TODO: post.js has converted all methods starting with `get` to getters and `set` to setters
 	getId(): ExpressionId {
-		return BinaryenObj["_BinaryenExpressionGetId"](this[THIS_PTR]);
+		return this.#id;
 	}
 
 	getType(): Type {
-		return BinaryenObj["_BinaryenExpressionGetType"](this[THIS_PTR]);
+		return getExpressionType(this[THIS_PTR]);
 	}
 
 	setType(typ: Type): void {

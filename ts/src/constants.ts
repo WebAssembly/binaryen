@@ -84,6 +84,7 @@ export const stringref: Type = BinaryenObj["_BinaryenTypeStringref"]();
 
 // ## Instructions ## //
 // see https://webassembly.github.io/spec/core/syntax/instructions.html
+/** An enumeration of all the “kinds” of expressions. */
 export enum ExpressionId {
 	// ### Binaryen-Only Instruction Ids ### //
 	Invalid = BinaryenObj["_BinaryenInvalidId"](),
