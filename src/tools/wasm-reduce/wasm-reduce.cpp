@@ -918,78 +918,68 @@ struct Reducer
       }
       nontrivialFuncIndices.push_back(i);
     }
-    // TODO: Use something other than an exception to implement early return.
-    struct EarlyReturn {};
-    try {
-      deltaDebugging(
-        nontrivialFuncIndices,
-        [&](Index partitionIndex,
-            Index numPartitions,
-            const std::vector<Index>& partition) {
-          // Stop early if the partition size is less than the square root of
-          // the remaining set. We don't want to waste time on very fine-grained
-          // partitions when we could switch to another reduction strategy
-          // instead.
-          if (size_t sqrtRemaining = std::sqrt(nontrivialFuncIndices.size());
-              partition.size() > 0 && partition.size() < sqrtRemaining) {
-            throw EarlyReturn{};
+    DeltaDebugger<Index> dd(std::move(nontrivialFuncIndices));
+    while (!dd.finished()) {
+      // Stop early if the partition size is less than the square root of
+      // the remaining set. We don't want to waste time on very fine-grained
+      // partitions when we could switch to another reduction strategy
+      // instead.
+      if (size_t sqrtRemaining = std::sqrt(dd.working().size());
+          dd.test().size() > 0 && dd.test().size() < sqrtRemaining) {
+        break;
+      }
+
+      std::cerr << "|     try partition " << dd.partitionIndex() + 1 << " / "
+                << dd.partitionCount() << " (size " << dd.test().size()
+                << ")\n";
+      Index removedSize = dd.working().size() - dd.test().size();
+      std::vector<Expression*> oldBodies(removedSize);
+
+      // We first need to remove each non-kept function body, and later we
+      // might need to restore the same function bodies. Abstract the logic
+      // for iterating over these function bodies. `f` takes a Function* and
+      // Expression*& for the stashed body.
+      auto forEachRemovedFuncBody = [&](auto f) {
+        Index bodyIndex = 0;
+        Index workingIndex = 0;
+        Index testIndex = 0;
+        while (workingIndex < dd.working().size()) {
+          if (testIndex < dd.test().size() &&
+              dd.working()[workingIndex] == dd.test()[testIndex]) {
+            // Kept, skip it.
+            workingIndex++;
+            testIndex++;
+          } else {
+            // Removed, process it
+            Index funcIndex = dd.working()[workingIndex++];
+            f(module->functions[funcIndex].get(), oldBodies[bodyIndex++]);
           }
+        }
+        assert(bodyIndex == removedSize);
+        assert(testIndex == dd.test().size());
+      };
 
-          std::cerr << "|     try partition " << partitionIndex + 1 << " / "
-                    << numPartitions << " (size " << partition.size() << ")\n";
-          Index removedSize = nontrivialFuncIndices.size() - partition.size();
-          std::vector<Expression*> oldBodies(removedSize);
+      // Stash the bodies.
+      forEachRemovedFuncBody([&](Function* func, Expression*& oldBody) {
+        oldBody = func->body;
+        Builder builder(*module);
+        if (func->getResults() == Type::none) {
+          func->body = builder.makeNop();
+        } else {
+          func->body = builder.makeUnreachable();
+        }
+      });
 
-          // We first need to remove each non-kept function body, and later we
-          // might need to restore the same function bodies. Abstract the logic
-          // for iterating over these function bodies. `f` takes a Function* and
-          // Expression*& for the stashed body.
-          auto forEachRemovedFuncBody = [&](auto f) {
-            Index bodyIndex = 0;
-            Index nontrivialIndex = 0;
-            Index partitionIndex = 0;
-            while (nontrivialIndex < nontrivialFuncIndices.size()) {
-              if (partitionIndex < partition.size() &&
-                  nontrivialFuncIndices[nontrivialIndex] ==
-                    partition[partitionIndex]) {
-                // Kept, skip it.
-                nontrivialIndex++;
-                partitionIndex++;
-              } else {
-                // Removed, process it
-                Index funcIndex = nontrivialFuncIndices[nontrivialIndex++];
-                f(module->functions[funcIndex].get(), oldBodies[bodyIndex++]);
-              }
-            }
-            assert(bodyIndex == removedSize);
-            assert(partitionIndex == partition.size());
-          };
-
-          // Stash the bodies.
-          forEachRemovedFuncBody([&](Function* func, Expression*& oldBody) {
-            oldBody = func->body;
-            Builder builder(*module);
-            if (func->getResults() == Type::none) {
-              func->body = builder.makeNop();
-            } else {
-              func->body = builder.makeUnreachable();
-            }
-          });
-
-          if (!writeAndTestReduction()) {
-            // Failure. Restore the bodies.
-            forEachRemovedFuncBody([](Function* func, Expression*& oldBody) {
-              func->body = oldBody;
-            });
-            return false;
-          }
-
-          // Success!
-          noteReduction(removedSize);
-          nontrivialFuncIndices = partition;
-          return true;
-        });
-    } catch (EarlyReturn) {
+      if (!writeAndTestReduction()) {
+        // Failure. Restore the bodies.
+        forEachRemovedFuncBody(
+          [](Function* func, Expression*& oldBody) { func->body = oldBody; });
+        dd.reject();
+      } else {
+        // Success!
+        noteReduction(removedSize);
+        dd.accept();
+      }
     }
   }
 

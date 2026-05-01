@@ -21,100 +21,156 @@
 #include <cassert>
 #include <vector>
 
+#include "support/coroutine.h"
+
 namespace wasm {
 
-// Use the delta debugging algorithm (Zeller 1999,
-// https://dl.acm.org/doi/10.1109/32.988498) to find the minimal set of
-// items necessary to preserve some property. Returns that minimal set of
-// items, preserving their input order. `tryPartition` should have this
-// signature:
-//
-//   bool tryPartition(size_t partitionIndex,
-//                     size_t numPartitions,
-//                     const std::vector<T>& partition)
-//
-// It should return true iff the property is preserved while keeping only
-// `partition` items.
-template<typename T, typename F>
-std::vector<T> deltaDebugging(std::vector<T> items, const F& tryPartition) {
-  if (items.empty()) {
-    return items;
+// Use the delta debugging algorithm (Zeller 2002,
+// https://dl.acm.org/doi/10.1109/32.988498) to find the minimal set of items
+// necessary to preserve some property. `working` is the minimal set of items
+// found so far and `test` is the smaller set of items that should be tested
+// next. After testing, call `accept()`, `reject()`, or `resolve(bool accepted)`
+// to update the working and test sets appropriately.
+template<typename T> struct DeltaDebugger {
+  DeltaDebugger(std::vector<T> items) : task(run(std::move(items))) {
+    task.handle.resume();
   }
-  // First try removing everything.
-  if (tryPartition(0, 1, {})) {
-    return {};
+
+  bool finished() const { return task.get()->finished; }
+
+  const std::vector<T>& working() const { return task.get()->working; }
+  std::vector<T>& test() { return task.get()->test; }
+
+  size_t partitionCount() const { return task.get()->numPartitions; }
+  size_t partitionIndex() const { return task.get()->currPartition; }
+
+  void resolve(bool success) {
+    // If the algorithm is finished, do not resume the coroutine and let it
+    // return; we depend on its local state remaining live.
+    if (finished()) {
+      return;
+    }
+    task.resume(success);
   }
-  size_t numPartitions = 2;
-  while (numPartitions <= items.size()) {
-    // Partition the items.
-    std::vector<std::vector<T>> partitions;
-    size_t size = items.size();
-    size_t basePartitionSize = size / numPartitions;
-    size_t rem = size % numPartitions;
-    size_t idx = 0;
-    for (size_t i = 0; i < numPartitions; ++i) {
-      size_t partitionSize = basePartitionSize + (i < rem ? 1 : 0);
-      if (partitionSize > 0) {
-        std::vector<T> partition;
-        partition.reserve(partitionSize);
-        for (size_t j = 0; j < partitionSize; ++j) {
-          partition.push_back(items[idx++]);
-        }
-        partitions.emplace_back(std::move(partition));
-      }
-    }
-    assert(numPartitions == partitions.size());
 
-    bool reduced = false;
+  void accept() { resolve(true); }
+  void reject() { resolve(false); }
 
-    // Try keeping only one partition. Try each partition in turn.
-    for (size_t i = 0; i < numPartitions; ++i) {
-      if (tryPartition(i, numPartitions, partitions[i])) {
-        items = std::move(partitions[i]);
-        numPartitions = 2;
-        reduced = true;
-        break;
-      }
-    }
-    if (reduced) {
-      continue;
+private:
+  struct State {
+    std::vector<T> working;
+    std::vector<T> test;
+    size_t numPartitions = 1;
+    size_t currPartition = 0;
+    bool finished = false;
+  };
+
+  Generator<State*, bool> task;
+
+  static Generator<State*, bool> run(std::vector<T> items) {
+    State state;
+    auto& [working, test, numPartitions, currPartition, finished] = state;
+
+    working = std::move(items);
+
+    if (working.empty()) {
+      finished = true;
+      co_yield &state;
+      co_return;
     }
 
-    // Otherwise, try keeping the complement of a partition. Do not do this with
-    // only two partitions because that would be no different from what we
-    // already tried.
-    if (numPartitions > 2) {
+    // First try removing everything.
+    if (co_yield &state) {
+      working = {};
+      finished = true;
+      // Yield the final results rather than returning because we need the local
+      // state to remain live for the lifetime of the DeltaDebugger.
+      co_yield &state;
+      co_return;
+    }
+
+    numPartitions = 2;
+    while (numPartitions <= working.size()) {
+      // Partition the items.
+      std::vector<std::vector<T>> partitions;
+      size_t size = working.size();
+      size_t basePartitionSize = size / numPartitions;
+      size_t rem = size % numPartitions;
+      size_t idx = 0;
       for (size_t i = 0; i < numPartitions; ++i) {
-        std::vector<T> complement;
-        complement.reserve(items.size() - partitions[i].size());
-        for (size_t j = 0; j < numPartitions; ++j) {
-          if (j != i) {
-            complement.insert(
-              complement.end(), partitions[j].begin(), partitions[j].end());
+        size_t partitionSize = basePartitionSize + (i < rem ? 1 : 0);
+        if (partitionSize > 0) {
+          std::vector<T> partition;
+          partition.reserve(partitionSize);
+          for (size_t j = 0; j < partitionSize; ++j) {
+            partition.push_back(working[idx++]);
           }
+          partitions.emplace_back(std::move(partition));
         }
-        if (tryPartition(i, numPartitions, complement)) {
-          items = std::move(complement);
-          numPartitions = std::max(numPartitions - 1, size_t(2));
+      }
+      assert(numPartitions == partitions.size());
+
+      bool reduced = false;
+
+      // Try keeping only one partition. Try each partition in turn.
+      for (currPartition = 0; currPartition < numPartitions; ++currPartition) {
+        test = std::move(partitions[currPartition]);
+        if (co_yield &state) {
+          working = std::move(test);
+          numPartitions = 2;
           reduced = true;
           break;
+        } else {
+          // Restore the partition since we failed and might need it for
+          // complement testing.
+          partitions[currPartition] = std::move(test);
         }
       }
       if (reduced) {
         continue;
       }
+
+      // Otherwise, try keeping the complement of a partition. Do not do this
+      // with only two partitions because that would be no different from what
+      // we already tried.
+      if (numPartitions > 2) {
+        for (currPartition = 0; currPartition < numPartitions;
+             ++currPartition) {
+          test.clear();
+          test.reserve(working.size() - partitions[currPartition].size());
+          for (size_t i = 0; i < numPartitions; ++i) {
+            if (i != currPartition) {
+              test.insert(
+                test.end(), partitions[i].begin(), partitions[i].end());
+            }
+          }
+          if (co_yield &state) {
+            working = std::move(test);
+            numPartitions = std::max(numPartitions - 1, size_t(2));
+            reduced = true;
+            break;
+          }
+        }
+        if (reduced) {
+          continue;
+        }
+      }
+
+      if (numPartitions == working.size()) {
+        // Cannot further refine the partitions. We're done.
+        break;
+      }
+
+      // Otherwise, make the partitions finer grained.
+      numPartitions = std::min(working.size(), 2 * numPartitions);
     }
 
-    if (numPartitions == items.size()) {
-      // Cannot further refine the partitions. We're done.
-      break;
-    }
-
-    // Otherwise, make the partitions finer grained.
-    numPartitions = std::min(items.size(), 2 * numPartitions);
+    // Yield final state
+    test = {};
+    finished = true;
+    co_yield &state;
   }
-  return items;
-}
+};
 
 } // namespace wasm
 
