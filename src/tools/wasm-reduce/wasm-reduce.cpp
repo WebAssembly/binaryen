@@ -351,7 +351,7 @@ struct Reducer
   // @param factor how much to ignore. starting with a high factor skips through
   //               most of the file, which is often faster than going one by one
   //               from the start
-  size_t reduceDestructively(int factor_) {
+  size_t reduceDestructively(uint64_t factor_) {
     factor = factor_;
     // prepare
     loadWorking();
@@ -400,7 +400,7 @@ struct Reducer
   std::unique_ptr<Module> module;
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
-  int factor;
+  uint64_t factor;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -822,7 +822,7 @@ struct Reducer
 
     auto& data = segment->data;
     // when we succeed, try to shrink by more and more, similar to bisection
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < data.size() && !data.empty(); i++) {
       if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
@@ -838,7 +838,7 @@ struct Reducer
           std::cerr << "|      shrank segment from " << save.size() << " => "
                     << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
-          skip = std::min(size_t(factor), 2 * skip);
+          skip = std::min(factor, 2 * skip);
         } else {
           data = std::move(save);
           return false;
@@ -1003,8 +1003,8 @@ struct Reducer
     if (numFuncs == 0) {
       return false;
     }
-    size_t skip = 1;
-    size_t maxSkip = 1;
+    uint64_t skip = 1;
+    uint64_t maxSkip = 1;
     // If we just removed some functions in the previous iteration, keep trying
     // to remove more as this is one of the most efficient ways to reduce.
     bool justReduced = true;
@@ -1016,7 +1016,7 @@ struct Reducer
     for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
       if (!justReduced && functionsWeTriedToRemove.contains(functionNames[i]) &&
-          !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
+          !shouldTryToReduce(std::max((factor / 5) + 1, uint64_t(20000)))) {
         continue;
       }
       std::vector<Name> names;
@@ -1040,10 +1040,10 @@ struct Reducer
         // Subtract 1 since the loop increments us anyhow by one: we want to
         // skip over the skipped functions, and not any more.
         x += skip - 1;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(factor, 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, uint64_t(1)); // or 1?
         x += factor / 100;
       }
     }
@@ -1078,9 +1078,9 @@ struct Reducer
     for (auto& exp : module->exports) {
       exports.push_back(*exp);
     }
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, uint64_t(1000)))) {
         continue;
       }
       std::vector<Export> currExports;
@@ -1097,12 +1097,12 @@ struct Reducer
         for (auto exp : currExports) {
           module->addExport(new Export(exp));
         }
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, uint64_t(1)); // or 1?
       } else {
         std::cerr << "|      removed " << currExports.size() << " exports\n";
         noteReduction(currExports.size());
         i += skip;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(factor, 2 * skip);
       }
     }
     // If we are left with a single function that is not exported or used in
@@ -1560,7 +1560,7 @@ More documentation can be found at
 
   std::cerr << "|starting reduction!\n";
 
-  int factor = binary ? workingSize * 2 : workingSize / 10;
+  uint64_t factor = binary ? uint64_t(workingSize) * 2 : workingSize / 10;
 
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
@@ -1623,7 +1623,7 @@ More documentation can be found at
       // we get "stuck" cycling through them. In that case we simply need to do
       // more destructive reductions to make real progress. For that reason,
       // decrease the factor by some small percentage.
-      factor = std::max(1, (factor * 9) / 10);
+      factor = std::max(uint64_t(1), uint64_t(factor * 0.9));
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;
@@ -1634,7 +1634,7 @@ More documentation can be found at
 
     // no point in a factor larger than the size
     assert(newSize > 4); // wasm modules are >4 bytes anyhow
-    factor = std::min(factor, int(newSize) / 4);
+    factor = std::min(factor, uint64_t(newSize / 4));
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
@@ -1650,8 +1650,8 @@ More documentation can be found at
         stopping = true;
         break;
       }
-      factor = std::max(
-        1, factor / 4); // quickly now, try to find *something* we can reduce
+      // Quickly try to find *something* we can reduce.
+      factor = std::max(uint64_t(1), factor / 4);
     }
 
     std::cerr << "|  destructive reduction led to size: " << file_size(working)
