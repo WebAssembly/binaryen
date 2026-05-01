@@ -12,9 +12,6 @@ import {
 	v128,
 } from "../../constants.ts";
 import {
-	replacedBy,
-} from "../../lib.ts";
-import {
 	HEAPU8,
 	THIS_PTR,
 	preserveStack,
@@ -26,20 +23,6 @@ import {
 
 
 export class Const extends Expression {
-	/* eslint-disable @stylistic/brace-style */
-	/** @deprecated */ @replacedBy("`instance.getValueI32`") static getValueI32(expr: ExpressionRef) { return Const.prototype.getValueI32.call({[THIS_PTR]: expr}); }
-	/** @deprecated */ @replacedBy("`instance.setValueI32`") static setValueI32(expr: ExpressionRef, value: number) { return Const.prototype.setValueI32.call({[THIS_PTR]: expr}, value); }
-	/** @deprecated */ @replacedBy("`instance.getValueI64`") static getValueI64(expr: ExpressionRef) { return Const.prototype.getValueI64.call({[THIS_PTR]: expr}); }
-	/** @deprecated */ @replacedBy("`instance.setValueI64`") static setValueI64(expr: ExpressionRef, value: number) { return Const.prototype.setValueI64.call({[THIS_PTR]: expr}, value); }
-	/** @deprecated */ @replacedBy("`instance.getValueF32`") static getValueF32(expr: ExpressionRef) { return Const.prototype.getValueF32.call({[THIS_PTR]: expr}); }
-	/** @deprecated */ @replacedBy("`instance.setValueF32`") static setValueF32(expr: ExpressionRef, value: number) { return Const.prototype.setValueF32.call({[THIS_PTR]: expr}, value); }
-	/** @deprecated */ @replacedBy("`instance.getValueF64`") static getValueF64(expr: ExpressionRef) { return Const.prototype.getValueF64.call({[THIS_PTR]: expr}); }
-	/** @deprecated */ @replacedBy("`instance.setValueF64`") static setValueF64(expr: ExpressionRef, value: number) { return Const.prototype.setValueF64.call({[THIS_PTR]: expr}, value); }
-	/** @deprecated */ @replacedBy("`instance.getValueV128`") static getValueV128(expr: ExpressionRef) { return Const.prototype.getValueV128.call({[THIS_PTR]: expr}); }
-	/** @deprecated */ @replacedBy("`instance.setValueV128`") static setValueV128(expr: ExpressionRef, value: readonly number[]) { return Const.prototype.setValueV128.call({[THIS_PTR]: expr}, value); }
-	/* eslint-enable @stylistic/brace-style */
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Const, expr);
 	}
@@ -56,6 +39,7 @@ export class Const extends Expression {
 		throw new Error(`Unexpected type: ${ this_type }.`);
 	}
 
+	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
 	getValueI32(): number {
 		return BinaryenObj["_BinaryenConstGetValueI32"](this[THIS_PTR]);
 	}

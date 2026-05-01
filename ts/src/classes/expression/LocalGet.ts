@@ -16,14 +16,14 @@ import {
 
 
 export class LocalGet extends Expression {
-	// TODO: static methods are deprecated; convert to instance and log warnings
-	static getIndex() {}
-	static setIndex() {}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.LocalGet, expr);
 	}
+
+
+	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
+	getIndex() {}
+	setIndex() {}
 }
 
 

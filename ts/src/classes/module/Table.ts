@@ -10,9 +10,6 @@ import {
 	funcref,
 } from "../../constants.ts";
 import {
-	replacedBy,
-} from "../../lib.ts";
-import {
 	THIS_PTR,
 	preserveStack,
 	strToStack,
@@ -24,19 +21,6 @@ import type {
 
 
 export class Table {
-	/* eslint-disable @stylistic/brace-style */
-	/** @deprecated */ @replacedBy("`instance.getName`") static getName(table: TableRef) { return Table.prototype.getName.call({[THIS_PTR]: table}); }
-	/** @deprecated */ @replacedBy("`instance.setName`") static setName(table: TableRef, name: string) { return Table.prototype.setName.call({[THIS_PTR]: table}, name); }
-	/** @deprecated */ @replacedBy("`instance.getInitial`") static getInitial(table: TableRef) { return Table.prototype.getInitial.call({[THIS_PTR]: table}); }
-	/** @deprecated */ @replacedBy("`instance.setInitial`") static setInitial(table: TableRef, initial: number) { return Table.prototype.setInitial.call({[THIS_PTR]: table}, initial); }
-	/** @deprecated */ @replacedBy("`instance.hasMax`") static hasMax(table: TableRef) { return Table.prototype.hasMax.call({[THIS_PTR]: table}); }
-	/** @deprecated */ @replacedBy("`instance.getMax`") static getMax(table: TableRef) { return Table.prototype.getMax.call({[THIS_PTR]: table}); }
-	/** @deprecated */ @replacedBy("`instance.setMax`") static setMax(table: TableRef, max: number) { return Table.prototype.setMax.call({[THIS_PTR]: table}, max); }
-	/** @deprecated */ @replacedBy("`instance.getType`") static getType(table: TableRef) { return Table.prototype.getType.call({[THIS_PTR]: table}); }
-	/** @deprecated */ @replacedBy("`instance.setType`") static setType(table: TableRef, tableType: Type) { return Table.prototype.setType.call({[THIS_PTR]: table}, tableType); }
-	/* eslint-enable @stylistic/brace-style */
-
-
 	private readonly [THIS_PTR]: TableRef;
 
 	readonly module: string;
@@ -54,7 +38,7 @@ export class Table {
 		return this[THIS_PTR];
 	}
 
-	// TODO: post.js has converted all methods starting with `get` to getters and `set` to setters
+	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
 	/**
 	 * @return the name of this table
 	 */

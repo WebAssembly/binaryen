@@ -22,22 +22,22 @@ import {
 
 
 export class Block extends Expression {
-	// TODO: static methods are deprecated; convert to instance and log warnings
-	static getName() {}
-	static setName() {}
-	static getNumChildren() {}
-	static getChildren() {}
-	static setChildren() {}
-	static getChildAt() {}
-	static setChildAt() {}
-	static appendChild() {}
-	static insertChildAt() {}
-	static removeChildAt() {}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Block, expr);
 	}
+
+
+	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
+	getName() {}
+	setName() {}
+	getNumChildren() {}
+	getChildren() {}
+	setChildren() {}
+	getChildAt() {}
+	setChildAt() {}
+	appendChild() {}
+	insertChildAt() {}
+	removeChildAt() {}
 }
 
 
