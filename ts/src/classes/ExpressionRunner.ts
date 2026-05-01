@@ -23,6 +23,10 @@ export enum ExpressionRunnerFlag {
 
 
 export class ExpressionRunner {
+	/** @deprecated Static field `ExpressionRunner.Flags` is now a standalone enum `ExpressionRunnerFlag`. */
+	static Flags = ExpressionRunnerFlag;
+
+
 	readonly #ptr: ExpressionRunnerRef;
 
 	constructor(mod: Module, flags: ExpressionRunnerFlag, maxDepth: number, maxLoopIterations: number) {
