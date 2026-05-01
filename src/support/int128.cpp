@@ -92,8 +92,8 @@ Int128 mul_wide_u_fallback(uint64_t lhs, uint64_t rhs) {
   // The next 32 bits consist of `lowHigh + highLow + the carry of lowlow`
   // (again this may carry to the next 32) Start by adding the carry which is
   // guaranteed to not overflow 64 bits. Overflow can't happen because lowHigh
-  // is max (2**32 - 1)**2 and lowLow is no more than 32 bits, (2**32 - 1)**2 +
-  // (2**32 -1) < 2**64 - 1
+  // is max (2**32 - 1)**2 and `lowLow >> 32` is no more than 32 bits, (2**32 -
+  // 1)**2 + (2**32 -1) < 2**64 - 1
   uint64_t highOfLow = (lowLow >> 32) + lowHigh;
 
   // We might have a carry into the next 32 (the low of the high), mask it out
