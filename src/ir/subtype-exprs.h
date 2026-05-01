@@ -214,6 +214,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitUnary(Unary* curr) {}
   void visitBinary(Binary* curr) {}
   void visitWideIntAddSub(WideIntAddSub* curr) {}
+  void visitWideIntMul(WideIntMul* curr) {}
   void visitSelect(Select* curr) {
     self()->noteSubtype(curr->ifTrue, curr);
     self()->noteSubtype(curr->ifFalse, curr);

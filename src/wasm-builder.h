@@ -674,6 +674,16 @@ public:
     ret->finalize();
     return ret;
   }
+
+  WideIntMul*
+  makeWideIntMul(WideIntMulOp op, Expression* left, Expression* right) {
+    auto* ret = wasm.allocator.alloc<WideIntMul>();
+    ret->op = op;
+    ret->left = left;
+    ret->right = right;
+    ret->finalize();
+    return ret;
+  }
   Select*
   makeSelect(Expression* condition, Expression* ifTrue, Expression* ifFalse) {
     auto* ret = wasm.allocator.alloc<Select>();

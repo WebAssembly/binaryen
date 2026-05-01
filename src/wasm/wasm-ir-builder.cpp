@@ -1766,6 +1766,14 @@ Result<> IRBuilder::makeWideIntAddSub(WideIntAddSubOp op) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeWideIntMul(WideIntMulOp op) {
+  WideIntMul curr;
+  curr.op = op;
+  CHECK_ERR(visitWideIntMul(&curr));
+  push(builder.makeWideIntMul(op, curr.left, curr.right));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeSelect(std::optional<Type> type) {
   Select curr;
   CHECK_ERR(visitSelect(&curr));
