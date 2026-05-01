@@ -129,8 +129,13 @@ export default [
 		rules: {
 			/* # Layout & Formatting */
 			/* ## Operator Style */
+			"@typescript-eslint/array-type": ["error", {
+				default: "array-simple",
+				readonly: "array",
+			}],
 			"dot-notation": "off",
 			"@typescript-eslint/dot-notation": "error",
+			"@typescript-eslint/no-unnecessary-condition": "error",
 
 			/* # Best Practices */
 			/* ## Variable Declarations */
@@ -157,6 +162,7 @@ export default [
 			/* ## Strictness */
 			"@typescript-eslint/explicit-member-accessibility": ["error", {accessibility: "no-public"}],
 			"@typescript-eslint/no-deprecated": "warn",
+			"@typescript-eslint/prefer-readonly": "error",
 		},
 	},
 ];

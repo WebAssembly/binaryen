@@ -4,6 +4,7 @@
 
 
 export function consoleWarn(...args: any[]): void {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	return (console?.warn ?? console?.log)?.call(undefined, ...args);
 }
 

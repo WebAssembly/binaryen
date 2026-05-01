@@ -1,3 +1,5 @@
+export {Expression} from "./Expression.ts";
+
 // ## Control ## //
 export {Block} from "./Block.ts";
 

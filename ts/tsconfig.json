@@ -2,18 +2,18 @@
 	// TSConfig: https://www.typescriptlang.org/tsconfig/
 	"compilerOptions": {
 		// Type Checking
-		"exactOptionalPropertyTypes":         true,
-		"noImplicitOverride":                 true,
-		"noImplicitReturns":                  true,
+		"exactOptionalPropertyTypes": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
 		"noPropertyAccessFromIndexSignature": true,
 
 		// Modules
 		"rewriteRelativeImportExtensions": true,
-		"rootDir":                         "./src/",
+		"rootDir": "./src/",
 
 		// Emit
 		"declaration": true,
-		"outDir":      "./dist/",
+		"outDir": "./dist/",
 
 		// Interop Constraints
 		"verbatimModuleSyntax": true,

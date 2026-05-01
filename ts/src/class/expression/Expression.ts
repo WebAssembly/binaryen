@@ -26,7 +26,7 @@ export class Expression {
 	/** @deprecated */ @replacedBy("`instance.getType`") static getType(expr: ExpressionRef) { return Expression.prototype.getType.call({[THIS_PTR]: expr}); }
 	/** @deprecated */ @replacedBy("`instance.setType`") static setType(expr: ExpressionRef, typ: Type) { return Expression.prototype.setType.call({[THIS_PTR]: expr}, typ); }
 	/** @deprecated */ @replacedBy("`instance.finalize`") static finalize(expr: ExpressionRef) { return Expression.prototype.finalize.call({[THIS_PTR]: expr}); }
-	/** @deprecated */ @replacedBy("`instance.toText`") static toText(expr: ExpressionRef): string { return Expression.prototype.toText.call({[THIS_PTR]: expr}); }
+	/** @deprecated */ @replacedBy("`instance.toText`") static toText(expr: ExpressionRef) { return Expression.prototype.toText.call({[THIS_PTR]: expr}); }
 	/* eslint-enable @stylistic/brace-style */
 
 
@@ -48,7 +48,7 @@ export class Expression {
 		this.#id = exprId;
 	}
 
-	valueOf() {
+	valueOf(): ExpressionRef {
 		return this[THIS_PTR];
 	}
 

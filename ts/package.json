@@ -16,7 +16,7 @@
   "type": "module",
   "main": "./dist/binaryen.js",
   "scripts": {
-    "compile": "tsc",
+    "compile": "rm -r ./dist/ && tsc",
     "lint": "eslint ./",
     "build": "npm run compile && npm run lint"
   },

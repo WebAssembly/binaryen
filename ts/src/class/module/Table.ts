@@ -50,7 +50,7 @@ export class Table {
 	}
 
 
-	valueOf() {
+	valueOf(): TableRef {
 		return this[THIS_PTR];
 	}
 

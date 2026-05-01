@@ -55,7 +55,7 @@ class BinaryenFunction {
 	}
 
 
-	valueOf() {
+	valueOf(): FunctionRef {
 		return this[THIS_PTR];
 	}
 
