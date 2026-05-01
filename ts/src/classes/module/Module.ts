@@ -133,14 +133,14 @@ export enum Feature {
 
 
 export class Module {
-	static Tag = Tag;
-	static Global = Global;
-	static Memory = Memory;
-	static Table = Table;
-	static Function = BinaryenFunction;
-	static DataSegment = DataSegment;
-	static ElementSegment = ElementSegment;
-	static Export = Export;
+	static readonly Tag = Tag;
+	static readonly Global = Global;
+	static readonly Memory = Memory;
+	static readonly Table = Table;
+	static readonly Function = BinaryenFunction;
+	static readonly DataSegment = DataSegment;
+	static readonly ElementSegment = ElementSegment;
+	static readonly Export = Export;
 
 
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
@@ -160,14 +160,14 @@ export class Module {
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
-	tags = new ModuleTags(this);
-	globals = new ModuleGlobals(this);
-	tables = new ModuleTables(this);
-	functions = new ModuleFunctions(this);
-	dataSegments = new ModuleDataSegments(this);
-	elementSegments = new ModuleElementSegments(this);
-	imports = new ModuleImports(this);
-	exports = new ModuleExports(this);
+	readonly tags = new ModuleTags(this);
+	readonly globals = new ModuleGlobals(this);
+	readonly tables = new ModuleTables(this);
+	readonly functions = new ModuleFunctions(this);
+	readonly dataSegments = new ModuleDataSegments(this);
+	readonly elementSegments = new ModuleElementSegments(this);
+	readonly imports = new ModuleImports(this);
+	readonly exports = new ModuleExports(this);
 
 	/* eslint-disable @stylistic/brace-style */
 	/** @deprecated Use `this.tags.add` instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
