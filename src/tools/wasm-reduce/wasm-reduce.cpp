@@ -822,7 +822,7 @@ struct Reducer
 
     auto& data = segment->data;
     // when we succeed, try to shrink by more and more, similar to bisection
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < data.size() && !data.empty(); i++) {
       if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
@@ -1003,8 +1003,8 @@ struct Reducer
     if (numFuncs == 0) {
       return false;
     }
-    size_t skip = 1;
-    size_t maxSkip = 1;
+    uint64_t skip = 1;
+    uint64_t maxSkip = 1;
     // If we just removed some functions in the previous iteration, keep trying
     // to remove more as this is one of the most efficient ways to reduce.
     bool justReduced = true;
@@ -1078,7 +1078,7 @@ struct Reducer
     for (auto& exp : module->exports) {
       exports.push_back(*exp);
     }
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
       if (!shouldTryToReduce(std::max((factor / 100) + 1, uint64_t(1000)))) {
         continue;
@@ -1097,7 +1097,7 @@ struct Reducer
         for (auto exp : currExports) {
           module->addExport(new Export(exp));
         }
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, uint64_t(1)); // or 1?
       } else {
         std::cerr << "|      removed " << currExports.size() << " exports\n";
         noteReduction(currExports.size());
@@ -1634,7 +1634,7 @@ More documentation can be found at
 
     // no point in a factor larger than the size
     assert(newSize > 4); // wasm modules are >4 bytes anyhow
-    factor = std::min(factor, newSize / 4);
+    factor = std::min(factor, uint64_t(newSize / 4));
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
