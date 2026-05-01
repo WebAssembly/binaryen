@@ -1867,3 +1867,89 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (type $ii (func (param i32) (result i32)))
+ ;; IMMUT:      (type $0 (func (param i32)))
+
+ ;; IMMUT:      (type $ii (func (param i32) (result i32)))
+ (type $ii (func (param i32) (result i32)))
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 0) $0)
+
+ ;; CHECK:      (tag $e (type $0) (param i32))
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 0) $0)
+
+ ;; IMMUT:      (tag $e (type $0) (param i32))
+ (tag $e (param i32))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 0) $0)
+
+ ;; CHECK:      (func $0 (type $ii) (param $0 i32) (result i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $0 (type $ii) (param $0 i32) (result i32)
+ ;; IMMUT-NEXT:  (local $1 i32)
+ ;; IMMUT-NEXT:  (try
+ ;; IMMUT-NEXT:   (do
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (catch $e
+ ;; IMMUT-NEXT:    (local.set $1
+ ;; IMMUT-NEXT:     (pop i32)
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:    (drop
+ ;; IMMUT-NEXT:     (block
+ ;; IMMUT-NEXT:      (drop
+ ;; IMMUT-NEXT:       (local.get $1)
+ ;; IMMUT-NEXT:      )
+ ;; IMMUT-NEXT:      (unreachable)
+ ;; IMMUT-NEXT:     )
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (i32.const 42)
+ ;; IMMUT-NEXT: )
+ (func $0 (param i32) (result i32)
+  (try
+   (do)
+   (catch $e
+    ;; This is out of bounds (100 is far too large), so this will trap. We emit
+    ;; a block with the pop, and must handle that properly.
+    (drop
+     (call_indirect (type $ii)
+      (pop i32)
+      (i32.const 100)
+     )
+    )
+   )
+  )
+  (i32.const 42)
+ )
+)
+

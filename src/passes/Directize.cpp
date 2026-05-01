@@ -31,6 +31,7 @@
 
 #include "call-utils.h"
 #include "ir/drop.h"
+#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
@@ -52,6 +53,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   FunctionDirectizer(const TableUtils::TableInfoMap& tables) : tables(tables) {}
 
+  bool optimized = false;
+
   void visitCallIndirect(CallIndirect* curr) {
     auto& table = tables.at(curr->table);
     if (!table.canOptimizeByEntry()) {
@@ -62,6 +65,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       std::vector<Expression*> operands(curr->operands.begin(),
                                         curr->operands.end());
       makeDirectCall(operands, curr->target, table, curr);
+      optimized = true;
       return;
     }
 
@@ -74,6 +78,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
           *getFunction(),
           *getModule())) {
       replaceCurrent(calls);
+      optimized = true;
       // Note that types may have changed, as the utility here can add locals
       // which require fixups if they are non-nullable, for example.
       changedTypes = true;
@@ -81,8 +86,17 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     }
   }
 
+  bool hasTry = false;
+
+  void visitTry(Try* curr) { hasTry = true; }
+
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
+
+    if (optimized && hasTry) {
+      EHUtils::handleBlockNestedPops(func, *getModule());
+    }
+
     if (changedTypes) {
       ReFinalize().walkFunctionInModule(func, getModule());
     }
