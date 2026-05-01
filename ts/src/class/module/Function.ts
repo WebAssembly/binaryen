@@ -13,9 +13,13 @@ import {
 import {
 	THIS_PTR,
 	getAllNested,
+	i32sToStack,
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
+import type {
+	Module,
+} from "./Module.ts";
 
 
 
@@ -107,3 +111,39 @@ class BinaryenFunction {
 	}
 }
 export {BinaryenFunction as Function};
+
+
+
+export class ModuleFunctions {
+	constructor(private readonly mod: Module) {}
+
+	add(name: string, params: Type, results: Type, varTypes: readonly Type[], body: ExpressionRef): FunctionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddFunction"](
+			this.mod.ptr,
+			strToStack(name),
+			params,
+			results,
+			i32sToStack(varTypes),
+			varTypes.length,
+			body,
+		));
+	}
+
+	get(name: string): FunctionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetFunction"](this.mod.ptr, strToStack(name)));
+	}
+
+	getByIndex(index: number): FunctionRef {
+		return BinaryenObj["_BinaryenGetFunctionByIndex"](this.mod.ptr, index);
+	}
+
+	count(): number {
+		return BinaryenObj["_BinaryenGetNumFunctions"](this.mod.ptr);
+	}
+
+	remove(name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveFunction"](this.mod.ptr, strToStack(name));
+		});
+	}
+}

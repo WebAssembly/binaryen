@@ -9,6 +9,8 @@ import type {
 } from "../../constants.ts";
 import {
 	HEAP8,
+	preserveStack,
+	strToStack,
 } from "../../utils.ts";
 import type {
 	Module,
@@ -38,5 +40,23 @@ export class DataSegment {
 		_free(ptr);
 
 		this.data = res.buffer;
+	}
+}
+
+
+
+export class ModuleDataSegments {
+	constructor(private readonly mod: Module) {}
+
+	get(name: string): DataSegmentRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetDataSegment"](this.mod.ptr, strToStack(name)));
+	}
+
+	getByIndex(index: number): DataSegmentRef {
+		return BinaryenObj["_BinaryenGetDataSegmentByIndex"](this.mod.ptr, index);
+	}
+
+	count(): number {
+		return BinaryenObj["_BinaryenGetNumDataSegments"](this.mod.ptr);
 	}
 }

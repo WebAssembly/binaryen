@@ -2,9 +2,12 @@ import {
 	BinaryenObj,
 	UTF8ToString,
 } from "../../-pre.ts";
-import type {
-	TableRef,
-	Type,
+import {
+	type ElementSegmentRef,
+	type ExpressionRef,
+	type TableRef,
+	type Type,
+	funcref,
 } from "../../constants.ts";
 import {
 	replacedBy,
@@ -14,6 +17,9 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
+import type {
+	Module,
+} from "./Module.ts";
 
 
 
@@ -112,5 +118,47 @@ export class Table {
 	 */
 	setType(tableType: Type): void {
 		BinaryenObj["_BinaryenTableSetType"](this[THIS_PTR], tableType);
+	}
+}
+
+
+
+export class ModuleTables {
+	constructor(private readonly mod: Module) {}
+
+	add(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef): TableRef {
+		return preserveStack(() => BinaryenObj["_BinaryenAddTable"](this.mod.ptr, strToStack(name), initial, maximum, type, init ?? 0));
+	}
+
+	get(name: string): TableRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetTable"](this.mod.ptr, strToStack(name)));
+	}
+
+	getByIndex(index: number): TableRef {
+		return BinaryenObj["_BinaryenGetTableByIndex"](this.mod.ptr, index);
+	}
+
+	getSegments(table: TableRef): ElementSegmentRef[] {
+		const numElementSegments = BinaryenObj["_BinaryenGetNumElementSegments"](this.mod.ptr);
+		const tableName = UTF8ToString(BinaryenObj["_BinaryenTableGetName"](table));
+		const ret = [];
+		for (let i = 0; i < numElementSegments; i++) {
+			const segment = BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.mod.ptr, i);
+			const elemTableName = UTF8ToString(BinaryenObj["_BinaryenElementSegmentGetTable"](segment));
+			if (tableName === elemTableName) {
+				ret.push(segment);
+			}
+		}
+		return ret;
+	}
+
+	count(): number {
+		return BinaryenObj["_BinaryenGetNumTables"](this.mod.ptr);
+	}
+
+	remove(name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveTable"](this.mod.ptr, strToStack(name));
+		});
 	}
 }
