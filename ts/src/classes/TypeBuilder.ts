@@ -66,15 +66,14 @@ export class TypeBuilder {
 	 */
 	setStructType(index: number, fields: readonly Field[]): void {
 		preserveStack(() => {
-			const numFields = fields.length;
-			const types = new Array(numFields);
-			const packedTypes = new Array(numFields);
-			const mutables = new Array(numFields);
-			for (let i = 0; i < numFields; i++) {
+			const types = [];
+			const packedTypes = [];
+			const mutables = [];
+			for (let i = 0; i < fields.length; i++) {
 				const {type: typ, packedType, mutable} = fields[i];
 				types[i] = typ;
 				packedTypes[i] = packedType;
-				mutables[i] = mutable;
+				mutables[i] = +mutable;
 			}
 			BinaryenObj["_TypeBuilderSetStructType"](
 				this.#ptr,
@@ -82,7 +81,7 @@ export class TypeBuilder {
 				i32sToStack(types),
 				i32sToStack(packedTypes),
 				i8sToStack(mutables),
-				numFields,
+				fields.length,
 			);
 		});
 	}
