@@ -1588,7 +1588,7 @@ More documentation can be found at
     std::cerr << "|  reduce using passes...\n";
     auto oldSize = file_size(working);
     reducer.reduceUsingPasses();
-    size_t newSize = file_size(working);
+    auto newSize = file_size(working);
     auto passProgress = oldSize - newSize;
     std::cerr << "|  after pass reduction: " << newSize << "\n";
 
