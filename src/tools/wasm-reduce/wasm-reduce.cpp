@@ -1016,7 +1016,7 @@ struct Reducer
     for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
       if (!justReduced && functionsWeTriedToRemove.contains(functionNames[i]) &&
-          !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
+          !shouldTryToReduce(std::max((factor / 5) + 1, size_t(20000)))) {
         continue;
       }
       std::vector<Name> names;
@@ -1080,7 +1080,7 @@ struct Reducer
     }
     size_t skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, size_t(1000)))) {
         continue;
       }
       std::vector<Export> currExports;
@@ -1588,7 +1588,7 @@ More documentation can be found at
     std::cerr << "|  reduce using passes...\n";
     auto oldSize = file_size(working);
     reducer.reduceUsingPasses();
-    auto newSize = file_size(working);
+    size_t newSize = file_size(working);
     auto passProgress = oldSize - newSize;
     std::cerr << "|  after pass reduction: " << newSize << "\n";
 
@@ -1623,7 +1623,7 @@ More documentation can be found at
       // we get "stuck" cycling through them. In that case we simply need to do
       // more destructive reductions to make real progress. For that reason,
       // decrease the factor by some small percentage.
-      factor = std::max(1, size_t(factor * 0.9));
+      factor = std::max(size_t(1), size_t(factor * 0.9));
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;
@@ -1634,7 +1634,7 @@ More documentation can be found at
 
     // no point in a factor larger than the size
     assert(newSize > 4); // wasm modules are >4 bytes anyhow
-    factor = std::min(factor, int(newSize) / 4);
+    factor = std::min(factor, newSize / 4);
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
@@ -1650,8 +1650,8 @@ More documentation can be found at
         stopping = true;
         break;
       }
-      factor = std::max(
-        1, factor / 4); // quickly now, try to find *something* we can reduce
+      // Quickly try to find *something* we can reduce.
+      factor = std::max(size_t(1), factor / 4);
     }
 
     std::cerr << "|  destructive reduction led to size: " << file_size(working)
