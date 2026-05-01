@@ -351,7 +351,7 @@ struct Reducer
   // @param factor how much to ignore. starting with a high factor skips through
   //               most of the file, which is often faster than going one by one
   //               from the start
-  size_t reduceDestructively(int factor_) {
+  size_t reduceDestructively(size_t factor_) {
     factor = factor_;
     // prepare
     loadWorking();
@@ -400,7 +400,7 @@ struct Reducer
   std::unique_ptr<Module> module;
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
-  int factor;
+  size_t factor;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -838,7 +838,7 @@ struct Reducer
           std::cerr << "|      shrank segment from " << save.size() << " => "
                     << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
-          skip = std::min(size_t(factor), 2 * skip);
+          skip = std::min(factor, 2 * skip);
         } else {
           data = std::move(save);
           return false;
@@ -1040,7 +1040,7 @@ struct Reducer
         // Subtract 1 since the loop increments us anyhow by one: we want to
         // skip over the skipped functions, and not any more.
         x += skip - 1;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(factor, 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
@@ -1102,7 +1102,7 @@ struct Reducer
         std::cerr << "|      removed " << currExports.size() << " exports\n";
         noteReduction(currExports.size());
         i += skip;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(factor, 2 * skip);
       }
     }
     // If we are left with a single function that is not exported or used in
@@ -1560,7 +1560,7 @@ More documentation can be found at
 
   std::cerr << "|starting reduction!\n";
 
-  int factor = binary ? workingSize * 2 : workingSize / 10;
+  size_t factor = binary ? workingSize * 2 : workingSize / 10;
 
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
@@ -1623,7 +1623,7 @@ More documentation can be found at
       // we get "stuck" cycling through them. In that case we simply need to do
       // more destructive reductions to make real progress. For that reason,
       // decrease the factor by some small percentage.
-      factor = std::max(1, (factor * 9) / 10);
+      factor = std::max(1, size_t(factor * 0.9));
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;
