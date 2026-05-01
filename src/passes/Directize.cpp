@@ -88,9 +88,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   bool hasTry = false;
 
-  void visitTry(Try* curr) {
-    hasTry = true;
-  }
+  void visitTry(Try* curr) { hasTry = true; }
 
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
