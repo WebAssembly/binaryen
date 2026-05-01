@@ -10,5 +10,6 @@ export {
 	ExpressionRunnerFlag,
 } from "./class/ExpressionRunner.ts";
 export {Relooper} from "./class/Relooper.ts";
+export {settings} from "./service/SettingsService.ts";
 export * from "./class/expression/index.ts";
 export * from "./-deprecations.ts";
