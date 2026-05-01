@@ -226,3 +226,36 @@ export function setAllowInliningFunctionsWithLoops(enabled: boolean) {
 	consoleWarn("Global function `setAllowInliningFunctionsWithLoops` is deprecated; use `settings.allowInliningFunctionsWithLoops = enabled` instead.");
 	settings.allowInliningFunctionsWithLoops = enabled;
 }
+
+
+
+/** @deprecated Use `settings.getPassArgument(key)` instead. */
+export function getPassArgument(key: string) {
+	consoleWarn("Global function `getPassArgument` is deprecated; use `settings.getPassArgument(key)` instead.");
+	return settings.getPassArgument(key);
+}
+/** @deprecated Use `settings.setPassArgument(key, value)` instead. */
+export function setPassArgument(key: string, value?: string) {
+	consoleWarn("Global function `setPassArgument` is deprecated; use `settings.setPassArgument(key, value)` instead.");
+	return settings.setPassArgument(key, value);
+}
+/** @deprecated Use `settings.clearPassArguments()` instead. */
+export function clearPassArguments() {
+	consoleWarn("Global function `clearPassArguments` is deprecated; use `settings.clearPassArguments()` instead.");
+	return settings.clearPassArguments();
+}
+/** @deprecated Use `settings.hasPassToSkip(pass)` instead. */
+export function hasPassToSkip(pass: string) {
+	consoleWarn("Global function `hasPassToSkip` is deprecated; use `settings.hasPassToSkip(pass)` instead.");
+	return settings.hasPassToSkip(pass);
+}
+/** @deprecated Use `settings.addPassToSkip(pass)` instead. */
+export function addPassToSkip(pass: string) {
+	consoleWarn("Global function `addPassToSkip` is deprecated; use `settings.addPassToSkip(pass)` instead.");
+	return settings.addPassToSkip(pass);
+}
+/** @deprecated Use `settings.clearPassesToSkip()` instead. */
+export function clearPassesToSkip() {
+	consoleWarn("Global function `clearPassesToSkip` is deprecated; use `settings.clearPassesToSkip()` instead.");
+	return settings.clearPassesToSkip();
+}

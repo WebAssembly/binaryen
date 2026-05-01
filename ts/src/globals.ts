@@ -7,7 +7,6 @@ import {
 	_free,
 	_malloc,
 	BinaryenObj,
-	UTF8ToString,
 	getExceptionMessage,
 	stackAlloc,
 	stringToAscii,
@@ -31,7 +30,6 @@ import {
 	HEAPU32,
 	i32sToStack,
 	preserveStack,
-	strToStack,
 } from "./utils.ts";
 
 
@@ -196,47 +194,4 @@ export function getExpressionInfo(expr: ExpressionRef): Expression {
 
 export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
 	return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, mod.ptr);
-}
-
-
-
-// ## Pass Settings ## //
-/** Gets the value of the specified arbitrary pass argument. */
-export function getPassArgument(key: string): string | undefined {
-	return preserveStack(() => {
-		const returned = BinaryenObj["_BinaryenGetPassArgument"](strToStack(key));
-		return returned ? UTF8ToString(returned) : undefined;
-	});
-}
-
-/**
- * Sets the value of the specified arbitrary pass argument.
- * Removes the respective argument if `value` is NULL.
- */
-export function setPassArgument(key: string, value: string): void {
-	return preserveStack(() => {
-		BinaryenObj["_BinaryenSetPassArgument"](strToStack(key), strToStack(value));
-	});
-}
-
-/** Clears all arbitrary pass arguments. */
-export function clearPassArguments(): void {
-	BinaryenObj["_BinaryenClearPassArguments"]();
-}
-
-/** Gets whether a pass is in the set of passes to skip. */
-export function hasPassToSkip(pass: string): boolean {
-	return preserveStack(() => Boolean(BinaryenObj["_BinaryenHasPassToSkip"](strToStack(pass))));
-}
-
-/** Add a pass to the set of passes to skip. */
-export function addPassToSkip(pass: string): void {
-	return preserveStack(() => {
-		BinaryenObj["_BinaryenAddPassToSkip"](strToStack(pass));
-	});
-}
-
-/** Clears the set of passes to skip. */
-export function clearPassesToSkip(): void {
-	BinaryenObj["_BinaryenClearPassesToSkip"]();
 }

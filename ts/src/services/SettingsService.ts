@@ -1,6 +1,11 @@
 import {
 	BinaryenObj,
+	UTF8ToString,
 } from "../-pre.ts";
+import {
+	preserveStack,
+	strToStack,
+} from "../utils.ts";
 
 
 
@@ -62,6 +67,47 @@ class SettingsService {
 	get allowInliningFunctionsWithLoops(): boolean { return Boolean(BinaryenObj["_BinaryenGetAllowInliningFunctionsWithLoops"]()); }
 	set allowInliningFunctionsWithLoops(enabled: boolean) { BinaryenObj["_BinaryenSetAllowInliningFunctionsWithLoops"](enabled); }
 	/* eslint-enable @stylistic/brace-style */
+
+
+	/** Gets the value of the specified arbitrary pass argument. */
+	getPassArgument(key: string): string | undefined {
+		return preserveStack(() => {
+			const returned = BinaryenObj["_BinaryenGetPassArgument"](strToStack(key));
+			return returned ? UTF8ToString(returned) : undefined;
+		});
+	}
+
+	/**
+	 * Sets the value of the specified arbitrary pass argument.
+	 * Removes the respective argument if `value` is `undefined` or an empty string.
+	 */
+	setPassArgument(key: string, value?: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenSetPassArgument"](strToStack(key), strToStack(value));
+		});
+	}
+
+	/** Clears all arbitrary pass arguments. */
+	clearPassArguments(): void {
+		BinaryenObj["_BinaryenClearPassArguments"]();
+	}
+
+	/** Gets whether a pass is in the set of passes to skip. */
+	hasPassToSkip(pass: string): boolean {
+		return preserveStack(() => Boolean(BinaryenObj["_BinaryenHasPassToSkip"](strToStack(pass))));
+	}
+
+	/** Add a pass to the set of passes to skip. */
+	addPassToSkip(pass: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddPassToSkip"](strToStack(pass));
+		});
+	}
+
+	/** Clears the set of passes to skip. */
+	clearPassesToSkip(): void {
+		BinaryenObj["_BinaryenClearPassesToSkip"]();
+	}
 }
 
 
