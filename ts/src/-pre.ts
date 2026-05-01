@@ -17,3 +17,4 @@ export declare function stringToUTF8OnStack(str: string): number;
 export declare function UTF8ToString(n: number): string;
 export declare function stringToAscii(text: string, buffer: number): void;
 export declare function getExceptionMessage(e: number | Error): [string, string]; // https://emscripten.org/docs/porting/exceptions.html#handling-c-exceptions-from-javascript
+export declare function _BinaryenSizeofAllocateAndWriteResult(): number;

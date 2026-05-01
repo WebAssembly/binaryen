@@ -1,13 +1,16 @@
 import {
+	_BinaryenSizeofAllocateAndWriteResult,
 	_free,
 	_malloc,
 	BinaryenObj,
 	UTF8ToString,
+	stackAlloc,
 } from "../../-pre.ts";
 import {
 	type DataSegmentRef,
 	type ExpressionRef,
 	type FunctionRef,
+	type HeapType,
 	type TableRef,
 	type Type,
 	funcref,
@@ -17,6 +20,9 @@ import {
 } from "../../lib.ts";
 import {
 	HEAP8,
+	HEAPU8,
+	HEAPU32,
+	i8sToStack,
 	i32sToStack,
 	preserveStack,
 	strToStack,
@@ -65,6 +71,11 @@ import {
 	Tag,
 	ModuleTags,
 } from "./Tag.ts";
+
+
+
+/** Probably used in `BinaryenObj["_BinaryenModulePrintAsmjs"]`. */
+declare let out: any;
 
 
 
@@ -283,43 +294,131 @@ export class Module {
 		return text;
 	}
 
-	emitStackIR() {}
+	emitStackIR(): string {
+		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteStackIR"](this.ptr);
+		const text = UTF8ToString(textPtr);
+		if (textPtr) {
+			_free(textPtr);
+		}
+		return text;
+	}
 
-	emitAsmjs() {}
+	emitAsmjs(): string {
+		let returned = "";
+		const saved = out;
+		out = (x: string) => {
+			returned += `${ x }\n`;
+		};
+		BinaryenObj["_BinaryenModulePrintAsmjs"](this.ptr);
+		out = saved;
+		return returned;
+	}
 
-	emitBinary() {}
+	emitBinary(): Uint8Array;
+	emitBinary(sourceMapUrl: string): {binary: Uint8Array, sourceMap: string};
+	emitBinary(sourceMapUrl?: string): Uint8Array | {binary: Uint8Array, sourceMap: string} {
+		return preserveStack(() => {
+			const tempBuffer = stackAlloc(_BinaryenSizeofAllocateAndWriteResult());
+			BinaryenObj["_BinaryenModuleAllocateAndWrite"](tempBuffer, this.ptr, strToStack(sourceMapUrl));
+			const binaryPtr = HEAPU32[tempBuffer >>> 2];
+			const binaryBytes = HEAPU32[(tempBuffer >>> 2) + 1];
+			const sourceMapPtr = HEAPU32[(tempBuffer >>> 2) + 2];
+			try {
+				const buffer = new Uint8Array(binaryBytes);
+				buffer.set(HEAPU8.subarray(binaryPtr, binaryPtr + binaryBytes));
+				return typeof sourceMapUrl === "undefined"
+					? buffer
+					: {binary: buffer, sourceMap: UTF8ToString(sourceMapPtr)};
+			} finally {
+				_free(binaryPtr);
+				if (sourceMapPtr) {
+					_free(sourceMapPtr);
+				}
+			}
+		});
+	}
 
-	getFeatures() {}
+	getFeatures(): Feature {
+		return BinaryenObj["_BinaryenModuleGetFeatures"](this.ptr);
+	}
 
-	setFeatures() {}
+	setFeatures(features: Feature): void {
+		BinaryenObj["_BinaryenModuleSetFeatures"](this.ptr, features);
+	}
 
-	setTypeName() {}
+	setTypeName(heapType: HeapType, name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenModuleSetTypeName"](this.ptr, heapType, strToStack(name));
+		});
+	}
 
-	setFieldName() {}
+	setFieldName(heapType: HeapType, index: number, name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenModuleSetFieldName"](this.ptr, heapType, index, strToStack(name));
+		});
+	}
 
-	addCustomSection() {}
+	addCustomSection(name: string, contents: Uint8Array): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length);
+		});
+	}
 
-	interpret() {}
+	interpret(): void {
+		BinaryenObj["_BinaryenModuleInterpret"](this.ptr);
+	}
 
-	validate() {}
+	validate(): number {
+		return BinaryenObj["_BinaryenModuleValidate"](this.ptr);
+	}
 
-	optimize() {}
+	optimize(): void {
+		BinaryenObj["_BinaryenModuleOptimize"](this.ptr);
+	}
 
-	optimizeFunction() {}
+	optimizeFunction(func: FunctionRef | string): void {
+		if (typeof func === "string") {
+			func = this.functions.get(func);
+		}
+		BinaryenObj["_BinaryenFunctionOptimize"](func, this.ptr);
+	}
 
-	updateMaps() {}
+	updateMaps(): void {
+		BinaryenObj["_BinaryenModuleUpdateMaps"](this.ptr);
+	}
 
-	runPasses() {}
+	runPasses(passes: readonly string[]): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenModuleRunPasses"](this.ptr, i32sToStack(passes.map(strToStack)), passes.length);
+		});
+	}
 
-	runPassesOnFunction() {}
+	runPassesOnFunction(func: string | FunctionRef, passes: readonly string[]): void {
+		if (typeof func === "string") {
+			func = this.functions.get(func);
+		}
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenFunctionRunPasses"](func, this.ptr, i32sToStack(passes.map(strToStack)), passes.length);
+		});
+	}
 
-	dispose() {}
+	dispose(): void {
+		BinaryenObj["_BinaryenModuleDispose"](this.ptr);
+	}
 
-	addDebugInfoFileName() {}
+	addDebugInfoFileName(filename: string): number {
+		return preserveStack(() => BinaryenObj["_BinaryenModuleAddDebugInfoFileName"](this.ptr, strToStack(filename)));
+	}
 
-	getDebugInfoFileName() {}
+	getDebugInfoFileName(index: number): string {
+		return UTF8ToString(BinaryenObj["_BinaryenModuleGetDebugInfoFileName"](this.ptr, index));
+	}
 
-	setDebugLocation() {}
+	setDebugLocation(func: FunctionRef, expr: ExpressionRef, fileIndex: number, lineNumber: number, columnNumber: number): void {
+		BinaryenObj["_BinaryenFunctionSetDebugLocation"](func, expr, fileIndex, lineNumber, columnNumber);
+	}
 
-	copyExpression() {}
+	copyExpression(expr: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenExpressionCopy"](expr, this.ptr);
+	}
 }
