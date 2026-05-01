@@ -1560,7 +1560,7 @@ More documentation can be found at
 
   std::cerr << "|starting reduction!\n";
 
-  uint64_t factor = binary ? workingSize * 2 : workingSize / 10;
+  uint64_t factor = binary ? uint64_t(workingSize) * 2 : workingSize / 10;
 
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
