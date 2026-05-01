@@ -317,20 +317,21 @@ private:
     if (it != exitingBranchCache.end()) {
       return !it->second.empty();
     }
-    return populateExitingBranchCache(expr);
+    return !populateExitingBranchCache(expr).empty();
   }
 
   // Walk |root| bottom-up computing exiting branches. Name sets are kept
   // transiently (moved from children, erased after merge). Only the root's
   // name set is persisted. Already-cached subtrees are skipped via scan(),
   // and their cached names are merged in precisely.
-  bool populateExitingBranchCache(Expression* root) {
+  // Returns a reference to the root's cached set (which may be empty).
+  const std::unordered_set<Name>& populateExitingBranchCache(Expression* root) {
     struct CachePopulator
       : public PostWalker<CachePopulator,
                           UnifiedExpressionVisitor<CachePopulator>> {
       std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache;
       Expression* root;
-      bool rootResult = false;
+      const std::unordered_set<Name>* rootResult = nullptr;
       std::unordered_map<Expression*, std::unordered_set<Name>> nameSets;
 
       CachePopulator(
@@ -388,17 +389,16 @@ private:
         if (curr == root) {
           auto it = nameSets.find(curr);
           if (it != nameSets.end()) {
-            resultCache[curr] = std::move(it->second);
-            rootResult = true;
+            rootResult = &(resultCache[curr] = std::move(it->second));
           } else {
-            resultCache[curr] = {};
+            rootResult = &(resultCache[curr] = {});
           }
         }
       }
     };
     CachePopulator populator(exitingBranchCache, root);
     populator.walk(root);
-    return populator.rootResult;
+    return *populator.rootResult;
   }
 
   // check if we can move a list of items out of another item. we can't do so
