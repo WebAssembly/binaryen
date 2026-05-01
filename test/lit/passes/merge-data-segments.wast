@@ -2,8 +2,15 @@
 ;; RUN: foreach %s %t wasm-opt -all --merge-data-segments -S -o - | filecheck %s
 
 ;; Basic tests for the merge algorithm: it should merge adjacent and overlapping
-;; segments in their order of appearance.
+;; segments in their order of appearance. The name of the merged segment should
+;; be the name of an input segment with the lowest start address. As a
+;; tiebreaker, when multiple input segments have the same start address, the
+;; name is taken from the first-appearing input segment with the lowest start
+;; address.
 
+;; A typical forward merge of adjacent segments. Segments that are directly
+;; adjacent can always be merged, except in the edge case that the merged data
+;; would be too long for a single data segment.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -14,6 +21,10 @@
   (data $3 (i32.const 12) "qux")
 )
 
+;; The same merge, but with the segments appearing in reverse order. The
+;; resulting data should be the same, since adjacent merge respects address
+;; order instead of appearance order. Even though segment $3 appears last, the
+;; merged segment takes its name since it has the lowest start address.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -24,6 +35,13 @@
   (data $3 (i32.const 3) "foo")
 )
 
+;; The following tests cover overlapping merge cases. Per the spec, active data
+;; segments are written to their memories in order of appearance, so when they
+;; overlap, we should take the data from the last-appearing segment for each
+;; address.
+
+;; Growing segments with a common start address. We take the name of segment $0
+;; since it is the first-appearing segment at address 0.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -34,6 +52,7 @@
   (data $3 (i32.const 0) "quuuux")
 )
 
+;; Growing segments with a common end address.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -44,6 +63,7 @@
   (data $3 (i32.const 0) "quuuux")
 )
 
+;; Growing segments with differing start and end addresses.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -54,6 +74,8 @@
   (data $3 (i32.const 0) "quuuuuuux")
 )
 
+;; Shrinking segments with a common start address. Again, we take the name of
+;; segment $0 since it is the first-appearing segment at address 0.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -64,6 +86,7 @@
   (data $3 (i32.const 0) "foo")
 )
 
+;; Shrinking segments with a common end address.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -74,6 +97,7 @@
   (data $3 (i32.const 3) "foo")
 )
 
+;; Shrinking segments with differing start and end addresses.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -84,6 +108,7 @@
   (data $3 (i32.const 3) "foo")
 )
 
+;; Long forward chain of partially overlapping merges.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -98,6 +123,8 @@
   (data $7 (i32.const 14) "QUX")
 )
 
+;; Long reverse chain of partially overlapping merges. We take the name of
+;; segment $7 since it has the lowest start address.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -112,6 +139,7 @@
   (data $7 (i32.const 0) "foo")
 )
 
+;; Repeatedly overwriting different parts of a merged segment.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -126,6 +154,8 @@
   (data $7 (i32.const 0) "QUX")
 )
 
+;; Overwriting a merged segment while expanding it on both sides. We use the
+;; name of segment $2 since it has the lowest start address.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -137,6 +167,8 @@
   (data $4 (i32.const 7) "foo")
 )
 
+;; Interleaving merges between two different merged segments, in forward and
+;; reverse.
 (module
   ;; CHECK:      (memory $0 1 1)
   (memory $0 1 1)
@@ -197,9 +229,9 @@
 
 ;; Tests for passive segments and instruction rewriting.
 
-;; Basic rewriting: Passive segments are output before anything else, and
+;; Basic rewriting: All passive segments appear first in the output, and
 ;; references to them are unmodified; references to active segments are renamed
-;; to the first active segment.
+;; to the first-appearing active segment in the output.
 (module
   ;; CHECK:      (type $1 (array (mut i8)))
 
@@ -284,12 +316,12 @@
   )
 )
 
-;; Usage of the empty target segment. Again, passive segments are output before
-;; anything else, and references to them are left unmodified. But in this case,
+;; Usage of the empty target segment. Again, all passive segments appear first
+;; in the output, and references to them are left unmodified. But in this case,
 ;; no active segments are left in the output to act as the target segment to
 ;; rename into. So if the renamer detects a reference to an active segment, we
-;; add back the first empty active segment from the input to act as the target,
-;; in this case segment $1.
+;; add back the first-appearing empty active segment in the input to act as the
+;; target, in this case segment $1.
 (module
   ;; CHECK:      (type $1 (array (mut i8)))
 
@@ -374,6 +406,13 @@
   )
 )
 
+;; Tests for guaranteed traps. A "trap segment" is an active segment which is
+;; statically out-of-bounds and whose initialization will always raise a trap
+;; during module instantiation. After a trap segment, all remaining active
+;; segments should be dropped. In most of these tests, we use a second memory
+;; for the dead segment to distinguish between the trap behavior and the drop
+;; behavior, since dropping should not depend on the memory.
+
 ;; Passive segments following a trap segment should be retained, and references
 ;; to dead active segments should be renamed to a live segment.
 (module
@@ -401,10 +440,6 @@
     (data.drop $3)
   )
 )
-
-;; Tests for guaranteed traps: remaining active segments should be dropped. We
-;; use a second memory for the dead segment to distinguish between the trap
-;; behavior and the drop behavior.
 
 ;; Segment $1 ends outside memory $0's max size.
 (module
@@ -447,8 +482,8 @@
 
 ;; Not a guaranteed trap: the initial size of an imported memory may be greater
 ;; than its initial size. When simulating bounds-check behavior, we use the
-;; "known size" of a memory to track how large it must be, for all previous
-;; initializations to have succeeded.
+;; "known size" of a memory to track how large it must presently be, for all
+;; previous initializations to have succeeded.
 (module
   ;; CHECK:      (import "" "" (memory $0 0))
   (import "" "" (memory $0 0))
@@ -461,7 +496,7 @@
   (data $2 (memory $1) (i32.const 0) "dead")
 )
 
-;; Two in-bounds segments and an out-of-bounds segment.
+;; Two in-bounds segments and an out-of-bounds segment for a small memory.
 (module
   ;; CHECK:      (global $0 i32 (i32.const 64))
   (global $0 i32 (i32.const 64))
@@ -492,8 +527,8 @@
 )
 
 ;; Test for address overflow. Note that a module may validly contain a 2^64-byte
-;; memory and a data segment ending at offset 2^64 exactly, but the pass rejects
-;; that particular edge case as a fatal error.
+;; memory and active data segments ending at offset 2^64 exactly, but the pass
+;; rejects that particular edge case as a fatal error.
 (module
   ;; CHECK:      (import "" "" (memory $0 i64 0))
   (import "" "" (memory $0 i64 0))
@@ -509,12 +544,14 @@
 )
 
 ;; Tests for bounds checks and flushing. We use a separate memory to distinguish
-;; between bounds-check behavior and flushing behavior.
+;; between bounds-check behavior and flushing behavior, since after a potential
+;; bounds-check trap, all memories should be flushed at once.
 
 ;; Before each point that a bounds-check trap may occur, all merged segments in
 ;; all memories should be flushed. After a trap, the embedder can observe any
-;; prior modifications to imported memories, but to be conservative we simply
-;; flush all memories.
+;; prior modifications to imported memories, and all of these modifications
+;; should be preserved to avoid differences in behavior. To simplify the logic,
+;; we flush all memories, not just imported memories.
 (module
   ;; CHECK:      (import "" "" (memory $0 0))
   (import "" "" (memory $0 0))

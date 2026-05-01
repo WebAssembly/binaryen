@@ -5,6 +5,7 @@
 ;; non-TNH case. We use a second memory for the dead segment to distinguish
 ;; between the trap behavior and the drop behavior.
 
+;; Segment $1 ends outside memory $0's max size.
 (module
   ;; CHECK:      (memory $0 0 0)
   (memory $0 0 0)
@@ -16,6 +17,7 @@
   (data $2 (memory $1) (i32.const 0) "dead")
 )
 
+;; Segment $1 ends outside memory $0's max size.
 (module
   ;; CHECK:      (import "" "" (memory $0 0 0))
   (import "" "" (memory $0 0 0))
@@ -27,6 +29,8 @@
   (data $2 (memory $1) (i32.const 0) "dead")
 )
 
+;; Segment $1 ends outside memory $0's initial size, and the memory cannot be
+;; any larger since it is not imported.
 (module
   ;; CHECK:      (memory $0 0)
   (memory $0 0)
@@ -51,7 +55,8 @@
 )
 
 ;; Nonempty non-constant-offset segments trigger no bounds checks under TNH:
-;; segment $1 does not cause memory $0 to be flushed.
+;; segment $1 overwriting memory $1 does not cause memory $0 to be flushed, so
+;; the other segments are merged freely.
 (module
   ;; CHECK:      (global $0 i32 (i32.const 0))
   (global $0 i32 (i32.const 0))
@@ -127,7 +132,8 @@
   (data $9 (memory $1) (i32.const 0) "post")
 )
 
-;; In this case, reordering input segments does not change flushing behavior.
+;; Since no flushes occur, reordering input segments in the previous test does
+;; not change the shape of the final data segments, only their contents.
 (module
   ;; CHECK:      (import "" "" (memory $0 0))
   (import "" "" (memory $0 0))
