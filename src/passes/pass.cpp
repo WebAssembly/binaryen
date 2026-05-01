@@ -293,6 +293,9 @@ void PassRegistry::registerPasses() {
                createMemoryPackingPass);
   registerPass(
     "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
+  registerPass("merge-data-segments",
+               "merges adjacent active data segments into a single segment",
+               createMergeDataSegmentsPass);
   registerPass("merge-similar-functions",
                "merges similar functions when benefical",
                createMergeSimilarFunctionsPass);
@@ -821,6 +824,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
+  addIfNoDWARFIssues("merge-data-segments");
   addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
     // Gather strings to globals right before reorder-globals, which will then
