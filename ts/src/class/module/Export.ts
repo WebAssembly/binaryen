@@ -34,24 +34,28 @@ export class Export {
 export class ModuleExports {
 	constructor(private readonly mod: Module) {}
 
+	#addComponent(binaryenFuncName: string, internalName: string, externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj[binaryenFuncName](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+	}
+
 	addTag(internalName: string, externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAddTagExport"](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+		return this.#addComponent("_BinaryenAddTagExport", internalName, externalName);
 	}
 
 	addGlobal(internalName: string, externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAddGlobalExport"](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+		return this.#addComponent("_BinaryenAddGlobalExport", internalName, externalName);
 	}
 
 	addMemory(internalName: string, externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAddMemoryExport"](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+		return this.#addComponent("_BinaryenAddMemoryExport", internalName, externalName);
 	}
 
 	addTable(internalName: string, externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAddTableExport"](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+		return this.#addComponent("_BinaryenAddTableExport", internalName, externalName);
 	}
 
 	addFunction(internalName: string, externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAddFunctionExport"](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+		return this.#addComponent("_BinaryenAddFunctionExport", internalName, externalName);
 	}
 
 	get(externalName: string): ExportRef {

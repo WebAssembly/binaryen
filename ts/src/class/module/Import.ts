@@ -17,65 +17,35 @@ import type {
 export class ModuleImports {
 	constructor(private readonly mod: Module) {}
 
-	addTag(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void {
+	#addComponent(binaryenFuncName: string, internalName: string, externalModuleName: string, externalBaseName: string, ...rest: any[]): void {
 		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddTagImport"](
+			BinaryenObj[binaryenFuncName](
 				this.mod.ptr,
 				strToStack(internalName),
 				strToStack(externalModuleName),
 				strToStack(externalBaseName),
-				params,
-				results,
+				...rest,
 			);
 		});
+	}
+
+	addTag(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void {
+		return this.#addComponent("_BinaryenAddTagImport", internalName, externalModuleName, externalBaseName, params, results);
 	}
 
 	addGlobal(internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddGlobalImport"](
-				this.mod.ptr,
-				strToStack(internalName),
-				strToStack(externalModuleName),
-				strToStack(externalBaseName),
-				globalType,
-				mutable,
-			);
-		});
+		return this.#addComponent("_BinaryenAddGlobalImport", internalName, externalModuleName, externalBaseName, globalType, mutable);
 	}
 
 	addMemory(internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddMemoryImport"](
-				this.mod.ptr,
-				strToStack(internalName),
-				strToStack(externalModuleName),
-				strToStack(externalBaseName),
-				shared,
-			);
-		});
+		return this.#addComponent("_BinaryenAddMemoryImport", internalName, externalModuleName, externalBaseName, shared);
 	}
 
 	addTable(internalName: string, externalModuleName: string, externalBaseName: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddTableImport"](
-				this.mod.ptr,
-				strToStack(internalName),
-				strToStack(externalModuleName),
-				strToStack(externalBaseName),
-			);
-		});
+		return this.#addComponent("_BinaryenAddTableImport", internalName, externalModuleName, externalBaseName);
 	}
 
 	addFunction(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddFunctionImport"](
-				this.mod.ptr,
-				strToStack(internalName),
-				strToStack(externalModuleName),
-				strToStack(externalBaseName),
-				params,
-				results,
-			);
-		});
+		return this.#addComponent("_BinaryenAddFunctionImport", internalName, externalModuleName, externalBaseName, params, results);
 	}
 }
