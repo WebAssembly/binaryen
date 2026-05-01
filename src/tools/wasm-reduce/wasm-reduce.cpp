@@ -351,7 +351,7 @@ struct Reducer
   // @param factor how much to ignore. starting with a high factor skips through
   //               most of the file, which is often faster than going one by one
   //               from the start
-  size_t reduceDestructively(size_t factor_) {
+  size_t reduceDestructively(uint64_t factor_) {
     factor = factor_;
     // prepare
     loadWorking();
@@ -400,7 +400,7 @@ struct Reducer
   std::unique_ptr<Module> module;
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
-  size_t factor;
+  uint64_t factor;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -1016,7 +1016,7 @@ struct Reducer
     for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
       if (!justReduced && functionsWeTriedToRemove.contains(functionNames[i]) &&
-          !shouldTryToReduce(std::max((factor / 5) + 1, size_t(20000)))) {
+          !shouldTryToReduce(std::max((factor / 5) + 1, uint64_t(20000)))) {
         continue;
       }
       std::vector<Name> names;
@@ -1080,7 +1080,7 @@ struct Reducer
     }
     size_t skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, size_t(1000)))) {
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, uint64_t(1000)))) {
         continue;
       }
       std::vector<Export> currExports;
@@ -1560,7 +1560,7 @@ More documentation can be found at
 
   std::cerr << "|starting reduction!\n";
 
-  size_t factor = binary ? workingSize * 2 : workingSize / 10;
+  uint64_t factor = binary ? workingSize * 2 : workingSize / 10;
 
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
@@ -1623,7 +1623,7 @@ More documentation can be found at
       // we get "stuck" cycling through them. In that case we simply need to do
       // more destructive reductions to make real progress. For that reason,
       // decrease the factor by some small percentage.
-      factor = std::max(size_t(1), size_t(factor * 0.9));
+      factor = std::max(uint64_t(1), uint64_t(factor * 0.9));
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;
@@ -1651,7 +1651,7 @@ More documentation can be found at
         break;
       }
       // Quickly try to find *something* we can reduce.
-      factor = std::max(size_t(1), factor / 4);
+      factor = std::max(uint64_t(1), factor / 4);
     }
 
     std::cerr << "|  destructive reduction led to size: " << file_size(working)
