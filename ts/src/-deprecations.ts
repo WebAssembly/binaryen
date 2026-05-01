@@ -16,19 +16,19 @@ import {
 } from "./constants.ts";
 import {
 	Function as BinaryenFunction,
-} from "./class/module/Function.ts";
+} from "./classes/module/Function.ts";
 import {
 	Module,
-} from "./class/module/Module.ts";
+} from "./classes/module/Module.ts";
 import {
 	Table as BinaryenTable,
-} from "./class/module/Table.ts";
+} from "./classes/module/Table.ts";
 import {
 	consoleWarn,
 } from "./lib.ts";
 import {
 	settings,
-} from "./service/SettingsService.ts";
+} from "./services/SettingsService.ts";
 
 
 

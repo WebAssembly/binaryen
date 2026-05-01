@@ -15,10 +15,10 @@ import {
 import {
 	type Feature,
 	Module,
-} from "./class/module/Module.ts";
+} from "./classes/module/Module.ts";
 import {
 	Expression,
-} from "./class/expression/Expression.ts";
+} from "./classes/expression/Expression.ts";
 import type {
 	ExpressionId,
 	ExpressionRef,

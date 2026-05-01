@@ -3,13 +3,13 @@ export * from "./globals.ts";
 export {
 	Feature,
 	Module,
-} from "./class/module/Module.ts";
-export {TypeBuilder} from "./class/TypeBuilder.ts";
+} from "./classes/module/Module.ts";
+export {TypeBuilder} from "./classes/TypeBuilder.ts";
 export {
 	ExpressionRunner,
 	ExpressionRunnerFlag,
-} from "./class/ExpressionRunner.ts";
-export {Relooper} from "./class/Relooper.ts";
-export {settings} from "./service/SettingsService.ts";
-export * from "./class/expression/index.ts";
+} from "./classes/ExpressionRunner.ts";
+export {Relooper} from "./classes/Relooper.ts";
+export {settings} from "./services/SettingsService.ts";
+export * from "./classes/expression/index.ts";
 export * from "./-deprecations.ts";
