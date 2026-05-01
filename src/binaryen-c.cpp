@@ -690,6 +690,10 @@ BinaryenOp BinaryenLtFloat64(void) { return LtFloat64; }
 BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
 BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
 BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
+BinaryenOp BinaryenAddInt128(void) { return AddInt128; }
+BinaryenOp BinaryenSubInt128(void) { return SubInt128; }
+BinaryenOp BinaryenMulWideSInt64(void) { return MulWideSInt64; }
+BinaryenOp BinaryenMulWideUInt64(void) { return MulWideUInt64; }
 BinaryenOp BinaryenAtomicRMWAdd(void) { return RMWAdd; }
 BinaryenOp BinaryenAtomicRMWSub(void) { return RMWSub; }
 BinaryenOp BinaryenAtomicRMWAnd(void) { return RMWAnd; }
@@ -1314,6 +1318,26 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right));
+}
+BinaryenExpressionRef BinaryenWideIntAddSub(BinaryenModuleRef module,
+                                            BinaryenOp op,
+                                            BinaryenExpressionRef leftLow,
+                                            BinaryenExpressionRef leftHigh,
+                                            BinaryenExpressionRef rightLow,
+                                            BinaryenExpressionRef rightHigh) {
+  return Builder(*(Module*)module)
+    .makeWideIntAddSub(WideIntAddSubOp(op),
+                       (Expression*)leftLow,
+                       (Expression*)leftHigh,
+                       (Expression*)rightLow,
+                       (Expression*)rightHigh);
+}
+BinaryenExpressionRef BinaryenWideIntMul(BinaryenModuleRef module,
+                                         BinaryenOp op,
+                                         BinaryenExpressionRef left,
+                                         BinaryenExpressionRef right) {
+  return Builder(*(Module*)module)
+    .makeWideIntMul(WideIntMulOp(op), (Expression*)left, (Expression*)right);
 }
 BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
                                      BinaryenExpressionRef condition,
@@ -2945,6 +2969,105 @@ void BinaryenBinarySetRight(BinaryenExpressionRef expr,
   assert(expression->is<Binary>());
   assert(rightExpr);
   static_cast<Binary*>(expression)->right = (Expression*)rightExpr;
+}
+// WideIntAddSub
+BinaryenOp BinaryenWideIntAddSubGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->op;
+}
+void BinaryenWideIntAddSubSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  static_cast<WideIntAddSub*>(expression)->op = WideIntAddSubOp(op);
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftLow(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->leftLow;
+}
+void BinaryenWideIntAddSubSetLeftLow(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef leftLowExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(leftLowExpr);
+  static_cast<WideIntAddSub*>(expression)->leftLow = (Expression*)leftLowExpr;
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftHigh(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->leftHigh;
+}
+void BinaryenWideIntAddSubSetLeftHigh(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef leftHighExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(leftHighExpr);
+  static_cast<WideIntAddSub*>(expression)->leftHigh = (Expression*)leftHighExpr;
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightLow(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->rightLow;
+}
+void BinaryenWideIntAddSubSetRightLow(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef rightLowExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(rightLowExpr);
+  static_cast<WideIntAddSub*>(expression)->rightLow = (Expression*)rightLowExpr;
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightHigh(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->rightHigh;
+}
+void BinaryenWideIntAddSubSetRightHigh(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef rightHighExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(rightHighExpr);
+  static_cast<WideIntAddSub*>(expression)->rightHigh =
+    (Expression*)rightHighExpr;
+}
+// WideIntMul
+BinaryenOp BinaryenWideIntMulGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  return static_cast<WideIntMul*>(expression)->op;
+}
+void BinaryenWideIntMulSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  static_cast<WideIntMul*>(expression)->op = WideIntMulOp(op);
+}
+BinaryenExpressionRef BinaryenWideIntMulGetLeft(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  return static_cast<WideIntMul*>(expression)->left;
+}
+void BinaryenWideIntMulSetLeft(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef leftExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  assert(leftExpr);
+  static_cast<WideIntMul*>(expression)->left = (Expression*)leftExpr;
+}
+BinaryenExpressionRef BinaryenWideIntMulGetRight(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  return static_cast<WideIntMul*>(expression)->right;
+}
+void BinaryenWideIntMulSetRight(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef rightExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  assert(rightExpr);
+  static_cast<WideIntMul*>(expression)->right = (Expression*)rightExpr;
 }
 // Select
 BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr) {

@@ -15,6 +15,7 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Add C and JS APIs for wide arithmetic instructions (`add128`, `sub128`, `mul_wide_s`, `mul_wide_u`).
  - Rename `MemorySegment` functions to `DataSegment` in the c and js apis
    - Rename `BinaryenGetNumMemorySegments` to `BinaryenGetNumDataSegments` in c api.
    - Rename `BinaryenGetMemorySegmentByteOffset` to `BinaryenGetDataSegmentByteOffset` in c api.
@@ -171,6 +172,11 @@ v123
    instead of a Type.
  - MergeSimilarFunctions: Do a return_call when possible (necessary for
    correctness in wasm files that depend on calls for control flow). (#7350)
+
+v123
+----
+
+ - Add C and JS APIs for wide arithmetic instructions (`add128`, `sub128`, `mul_wide_s`, `mul_wide_u`).
 
 v122
 ----
