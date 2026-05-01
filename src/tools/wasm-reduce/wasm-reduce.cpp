@@ -1043,7 +1043,7 @@ struct Reducer
         skip = std::min(factor, 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, uint64_t(1)); // or 1?
         x += factor / 100;
       }
     }
