@@ -15,6 +15,9 @@ import {
 	funcref,
 } from "../../constants.ts";
 import {
+	copyExpression,
+} from "../../globals.ts";
+import {
 	replacedBy,
 } from "../../lib.ts";
 import {
@@ -386,9 +389,10 @@ export class Module {
 		BinaryenObj["_BinaryenFunctionSetDebugLocation"](func, expr, fileIndex, lineNumber, columnNumber);
 	}
 
-	/** Creates a deep copy of an expression. */
-	copyExpression(expr: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_BinaryenExpressionCopy"](expr, this.ptr);
+	/** @deprecated Use global `copyExpression(expr, this)` instead. */
+	@replacedBy("global `copyExpression(expr, this)`")
+	copyExpression(expr: ExpressionRef) {
+		return copyExpression(expr, this);
 	}
 }
 

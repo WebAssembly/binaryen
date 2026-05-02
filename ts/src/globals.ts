@@ -203,3 +203,8 @@ export function getExpressionInfo(expr: ExpressionRef): Expression {
 export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
 	return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, mod.ptr);
 }
+
+/** Creates a deep copy of an expression. */
+export function copyExpression(expr: ExpressionRef, mod: Module): ExpressionRef {
+	return BinaryenObj["_BinaryenExpressionCopy"](expr, mod.ptr);
+}
