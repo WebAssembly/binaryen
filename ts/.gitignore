@@ -3,3 +3,6 @@ node_modules/
 
 # compiling TypeScript
 dist/
+
+# generating documentation
+docs/out/

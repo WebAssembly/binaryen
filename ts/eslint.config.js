@@ -6,12 +6,12 @@ import tseslint from "typescript-eslint";
 
 
 export default [
-	{ignores: ["./dist/"]},
+	{ignores: ["./dist/", "./docs/out/"]},
 
 	eslint.configs.recommended, // https://github.com/eslint/eslint/blob/v10.2.1/packages/js/src/configs/eslint-recommended.js
 	{
 		name: "All", // all JS and TS files
-		files: ["./eslint.config.js", "./src/**/*.{js,ts}"],
+		files: ["./{eslint,typedoc}.config.js", "./src/**/*.{js,ts}"],
 		languageOptions: {globals: {...globals.node}},
 		linterOptions: {reportUnusedDisableDirectives: "error"},
 		plugins: {"@stylistic": stylistic},

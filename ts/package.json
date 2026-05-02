@@ -16,9 +16,10 @@
   "type": "module",
   "main": "./dist/binaryen.js",
   "scripts": {
-    "compile": "rm -r ./dist/ && tsc",
+    "compile": "rm -rf ./dist/ && tsc",
     "lint": "eslint ./",
-    "build": "npm run compile && npm run lint"
+    "docs": "rm -rf ./docs/out/ && typedoc",
+    "build": "npm run compile && npm run lint && npm run docs"
   },
   "files": [
     "package.json",
