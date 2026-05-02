@@ -63,6 +63,7 @@
 #include "ir/effects.h"
 #include "ir/eh-utils.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -299,6 +300,7 @@ struct CodeFolding
       returnTails.clear();
       unoptimizables.clear();
       modifieds.clear();
+      exitingBranchCache.clear();
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
@@ -306,6 +308,99 @@ struct CodeFolding
   }
 
 private:
+  // Cache of exiting branch names, populated on demand. Only queried roots
+  // are stored. An empty set means no exiting branches.
+  std::unordered_map<Expression*, std::unordered_set<Name>> exitingBranchCache;
+
+  bool hasExitingBranches(Expression* expr) {
+    auto it = exitingBranchCache.find(expr);
+    if (it != exitingBranchCache.end()) {
+      return !it->second.empty();
+    }
+    return !populateExitingBranchCache(expr).empty();
+  }
+
+  // Walk |root| bottom-up computing exiting branches. Name sets are kept
+  // transiently (moved from children, erased after merge). Only the root's
+  // name set is persisted. Already-cached subtrees are skipped via scan(),
+  // and their cached names are merged in precisely.
+  // Returns a reference to the root's cached set (which may be empty).
+  const std::unordered_set<Name>& populateExitingBranchCache(Expression* root) {
+    struct CachePopulator
+      : public PostWalker<CachePopulator,
+                          UnifiedExpressionVisitor<CachePopulator>> {
+      std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache;
+      Expression* root;
+      const std::unordered_set<Name>* rootResult = nullptr;
+      std::unordered_map<Expression*, std::unordered_set<Name>> nameSets;
+
+      CachePopulator(
+        std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache,
+        Expression* root)
+        : resultCache(resultCache), root(root) {}
+
+      static void scan(CachePopulator* self, Expression** currp) {
+        auto* curr = *currp;
+        if (self->resultCache.count(curr)) {
+          return;
+        }
+        PostWalker<CachePopulator,
+                   UnifiedExpressionVisitor<CachePopulator>>::scan(self, currp);
+      }
+
+      void visitExpression(Expression* curr) {
+        std::unordered_set<Name> targets;
+
+        ChildIterator children(curr);
+        for (auto* child : children) {
+          auto it = nameSets.find(child);
+          if (it != nameSets.end()) {
+            if (targets.empty()) {
+              targets = std::move(it->second);
+            } else {
+              targets.merge(it->second);
+            }
+            nameSets.erase(it);
+          } else {
+            // Child was skipped by scan() — merge its cached names.
+            auto cacheIt = resultCache.find(child);
+            if (cacheIt != resultCache.end() && !cacheIt->second.empty()) {
+              if (targets.empty()) {
+                targets = cacheIt->second;
+              } else {
+                targets.insert(cacheIt->second.begin(), cacheIt->second.end());
+              }
+            }
+          }
+        }
+
+        BranchUtils::operateOnScopeNameUses(
+          curr, [&](Name& name) { targets.insert(name); });
+
+        BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
+          if (name.is()) {
+            targets.erase(name);
+          }
+        });
+
+        if (!targets.empty()) {
+          nameSets[curr] = std::move(targets);
+        }
+        if (curr == root) {
+          auto it = nameSets.find(curr);
+          if (it != nameSets.end()) {
+            rootResult = &(resultCache[curr] = std::move(it->second));
+          } else {
+            rootResult = &(resultCache[curr] = {});
+          }
+        }
+      }
+    };
+    CachePopulator populator(exitingBranchCache, root);
+    populator.walk(root);
+    return *populator.rootResult;
+  }
+
   // check if we can move a list of items out of another item. we can't do so
   // if one of the items has a branch to something inside outOf that is not
   // inside that item
@@ -637,9 +732,7 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(
-                                      getPassOptions(), *getModule(), newItem)
-                                      .hasExternalBreakTargets()) {
+                                if (hasExitingBranches(newItem)) {
                                   return true;
                                 }
                                 return false;
