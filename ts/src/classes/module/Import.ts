@@ -25,18 +25,6 @@ export class Import {
 export class ModuleImports {
 	constructor(private readonly mod: Module) {}
 
-	#addComponent(binaryenFuncName: string, internalName: string, externalModuleName: string, externalBaseName: string, ...rest: any[]): void {
-		return preserveStack(() => {
-			BinaryenObj[binaryenFuncName](
-				this.mod.ptr,
-				strToStack(internalName),
-				strToStack(externalModuleName),
-				strToStack(externalBaseName),
-				...rest,
-			);
-		});
-	}
-
 	addTag(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void {
 		return this.#addComponent("_BinaryenAddTagImport", internalName, externalModuleName, externalBaseName, params, results);
 	}
@@ -55,5 +43,17 @@ export class ModuleImports {
 
 	addFunction(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void {
 		return this.#addComponent("_BinaryenAddFunctionImport", internalName, externalModuleName, externalBaseName, params, results);
+	}
+
+	#addComponent(binaryenFuncName: string, internalName: string, externalModuleName: string, externalBaseName: string, ...rest: any[]): void {
+		return preserveStack(() => {
+			BinaryenObj[binaryenFuncName](
+				this.mod.ptr,
+				strToStack(internalName),
+				strToStack(externalModuleName),
+				strToStack(externalBaseName),
+				...rest,
+			);
+		});
 	}
 }

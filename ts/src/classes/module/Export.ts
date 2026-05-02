@@ -36,8 +36,22 @@ export class Export {
 export class ModuleExports {
 	constructor(private readonly mod: Module) {}
 
-	#addComponent(binaryenFuncName: string, internalName: string, externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj[binaryenFuncName](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+	get(externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj["_BinaryenGetExport"](this.mod.ptr, strToStack(externalName)));
+	}
+
+	getByIndex(index: number): ExportRef {
+		return BinaryenObj["_BinaryenGetExportByIndex"](this.mod.ptr, index);
+	}
+
+	count(): number {
+		return BinaryenObj["_BinaryenGetNumExports"](this.mod.ptr);
+	}
+
+	remove(externalName: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenRemoveExport"](this.mod.ptr, strToStack(externalName));
+		});
 	}
 
 	addTag(internalName: string, externalName: string): ExportRef {
@@ -60,21 +74,7 @@ export class ModuleExports {
 		return this.#addComponent("_BinaryenAddFunctionExport", internalName, externalName);
 	}
 
-	get(externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj["_BinaryenGetExport"](this.mod.ptr, strToStack(externalName)));
-	}
-
-	getByIndex(index: number): ExportRef {
-		return BinaryenObj["_BinaryenGetExportByIndex"](this.mod.ptr, index);
-	}
-
-	count(): number {
-		return BinaryenObj["_BinaryenGetNumExports"](this.mod.ptr);
-	}
-
-	remove(externalName: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenRemoveExport"](this.mod.ptr, strToStack(externalName));
-		});
+	#addComponent(binaryenFuncName: string, internalName: string, externalName: string): ExportRef {
+		return preserveStack(() => BinaryenObj[binaryenFuncName](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
 	}
 }
