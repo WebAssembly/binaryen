@@ -7,6 +7,7 @@ export {Select} from "./Select.ts";
 // ## Control ## //
 export {Block} from "./Block.ts";
 export {Loop} from "./Loop.ts";
+export {Break} from "./Break.ts";
 
 // ## Variable ## //
 export {LocalGet} from "./LocalGet.ts";

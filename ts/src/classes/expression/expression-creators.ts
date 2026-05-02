@@ -6,6 +6,7 @@ import type {
 } from "../module/Module.ts";
 import {
 	Block,
+	Break,
 	Drop,
 	LocalGet,
 	LocalSet,
@@ -36,6 +37,10 @@ function control(mod: Module) {
 		block: Block.block.bind(mod),
 		/** Creates a loop. */
 		loop: Loop.loop.bind(mod),
+		/** Creates an unconditional branch `(br)` to a label. */
+		br: Break.br.bind(mod),
+		/** Creates a conditional branch `(br_if)` to a label. */
+		br_if: Break.br_if.bind(mod),
 	} as const;
 }
 
