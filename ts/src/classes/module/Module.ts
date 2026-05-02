@@ -153,6 +153,34 @@ export class Module {
 	readonly exports = new EXPORT.ModuleExports(this);
 
 	/* eslint-disable @stylistic/brace-style */
+	/** @deprecated Use `this.start` instead. */ @replacedBy("`this.start`") getStart() { return this.start; }
+	/** @deprecated Use `this.start` instead. */ @replacedBy("`this.start`") setStart(start: FunctionRef) { this.start = start; }
+	/** @deprecated Use `this.features` instead. */ @replacedBy("`this.features`") getFeatures() { return this.features; }
+	/** @deprecated Use `this.features` instead. */ @replacedBy("`this.features`") setFeatures(features: Feature) { return this.features = features; }
+	/* eslint-enable @stylistic/brace-style */
+
+	/** The start function. */
+	get start(): FunctionRef {
+		return BinaryenObj["_BinaryenGetStart"](this.ptr);
+	}
+
+	set start(start: FunctionRef) {
+		BinaryenObj["_BinaryenSetStart"](this.ptr, start);
+	}
+
+	/**
+	 * The WebAssembly features enabled for this module.
+	 * Features are a bitmask of `Feature` enum members.
+	 */
+	get features(): Feature {
+		return BinaryenObj["_BinaryenModuleGetFeatures"](this.ptr);
+	}
+
+	set features(features: Feature) {
+		BinaryenObj["_BinaryenModuleSetFeatures"](this.ptr, features);
+	}
+
+	/* eslint-disable @stylistic/brace-style */
 	/** @deprecated Use `this.tags.add` instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
 	/** @deprecated Use `this.tags.get` instead. */ @replacedBy("`this.tags.get`") getTag(name: string) { return this.tags.get(name); }
 	/** @deprecated Use `this.tags.remove` instead. */ @replacedBy("`this.tags.remove`") removeTag(name: string) { return this.tags.remove(name); }
@@ -215,17 +243,6 @@ export class Module {
 		return new DATA_SEGMENT.DataSegment(this, segment);
 	}
 
-	// TODO: turn this into a getter/setter
-	/** Gets the start function, if any. */
-	getStart(): FunctionRef {
-		return BinaryenObj["_BinaryenGetStart"](this.ptr);
-	}
-
-	/** Sets the start function. */
-	setStart(start: FunctionRef): void {
-		BinaryenObj["_BinaryenSetStart"](this.ptr, start);
-	}
-
 	// ## Binaryen Operations ## //
 	/** Returns the module in Binaryen’s s-expression text format (not official stack-style text format). */
 	emitText(): string {
@@ -283,23 +300,6 @@ export class Module {
 				}
 			}
 		});
-	}
-
-	// TODO: turn this into a getter/setter
-	/**
-	 * Gets the WebAssembly features enabled for this module.
-	 * Features are a bitmask of `Feature` enum members.
-	 */
-	getFeatures(): Feature {
-		return BinaryenObj["_BinaryenModuleGetFeatures"](this.ptr);
-	}
-
-	/**
-	 * Sets the WebAssembly features enabled for this module.
-	 * Features are a bitmask of `Feature` enum members.
-	 */
-	setFeatures(features: Feature): void {
-		BinaryenObj["_BinaryenModuleSetFeatures"](this.ptr, features);
 	}
 
 	setTypeName(heapType: HeapType, name: string): void {
