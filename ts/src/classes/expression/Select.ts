@@ -18,9 +18,9 @@ import {
 
 
 export class Select extends Expression {
-	static select = function (this: Module, ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_BinaryenSelect"](this.ptr, ifTrue, ifFalse);
-	};
+	static select(mod: Module, ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenSelect"](mod.ptr, ifTrue, ifFalse);
+	}
 
 
 	constructor(expr: ExpressionRef) {

@@ -21,13 +21,13 @@ import {
 
 
 export class Break extends Expression {
-	static br = function (this: Module, label: string, condition?: ExpressionRef, value?: ExpressionRef): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenBreak"](this.ptr, strToStack(label), condition!, value!));
-	};
+	static br(mod: Module, label: string, condition?: ExpressionRef, value?: ExpressionRef): ExpressionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenBreak"](mod.ptr, strToStack(label), condition!, value!));
+	}
 
-	static br_if = function (this: Module, label: string, condition: ExpressionRef, value?: ExpressionRef): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenBreak"](this.ptr, strToStack(label), condition, value!));
-	};
+	static br_if(mod: Module, label: string, condition: ExpressionRef, value?: ExpressionRef): ExpressionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenBreak"](mod.ptr, strToStack(label), condition, value!));
+	}
 
 
 	constructor(expr: ExpressionRef) {

@@ -18,9 +18,9 @@ import {
 
 
 export class Drop extends Expression {
-	static drop = function (this: Module, value: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_BinaryenDrop"](this.ptr, value);
-	};
+	static drop(mod: Module, value: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenDrop"](mod.ptr, value);
+	}
 
 
 	constructor(expr: ExpressionRef) {

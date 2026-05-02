@@ -19,13 +19,13 @@ import {
 
 
 export class LocalSet extends Expression {
-	static localSet = function (this: Module, index: number, value: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_BinaryenLocalSet"](this.ptr, index, value);
-	};
+	static localSet(mod: Module, index: number, value: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenLocalSet"](mod.ptr, index, value);
+	}
 
-	static localTee = function (this: Module, index: number, value: ExpressionRef, typ: Type): ExpressionRef {
-		return BinaryenObj["_BinaryenLocalTee"](this.ptr, index, value, typ);
-	};
+	static localTee(mod: Module, index: number, value: ExpressionRef, typ: Type): ExpressionRef {
+		return BinaryenObj["_BinaryenLocalTee"](mod.ptr, index, value, typ);
+	}
 
 
 	constructor(expr: ExpressionRef) {

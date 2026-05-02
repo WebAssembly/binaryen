@@ -19,9 +19,9 @@ import {
 
 
 export class LocalGet extends Expression {
-	static localGet = function (this: Module, index: number, typ: Type): ExpressionRef {
-		return BinaryenObj["_BinaryenLocalGet"](this.ptr, index, typ);
-	};
+	static localGet(mod: Module, index: number, typ: Type): ExpressionRef {
+		return BinaryenObj["_BinaryenLocalGet"](mod.ptr, index, typ);
+	}
 
 
 	constructor(expr: ExpressionRef) {

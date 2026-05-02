@@ -16,6 +16,12 @@ import {
 
 
 
+function extractParam<First, Rest extends unknown[], Return>(a: First, fn: (a: First, ...rest: Rest) => Return): (...rest: Rest) => Return {
+	return (...args) => fn(a, ...args);
+}
+
+
+
 function parametric(mod: Module) {
 	return {
 		/** Creates a no-operation `(nop)` instruction. */
@@ -23,9 +29,9 @@ function parametric(mod: Module) {
 		/** Creates an unreachable instruction that will always trap. */
 		unreachable: () => BinaryenObj["_BinaryenUnreachable"](mod.ptr),
 		/** Creates a `(drop)` of a value. */
-		drop: Drop.drop.bind(mod),
+		drop: extractParam(mod, Drop.drop),
 		/** Creates a `(select)` of one of two values. */
-		select: Select.select.bind(mod),
+		select: extractParam(mod, Select.select),
 	} as const;
 }
 
@@ -34,13 +40,13 @@ function parametric(mod: Module) {
 function control(mod: Module) {
 	return {
 		/** Creates a `(block)`. */
-		block: Block.block.bind(mod),
+		block: extractParam(mod, Block.block),
 		/** Creates a loop. */
-		loop: Loop.loop.bind(mod),
+		loop: extractParam(mod, Loop.loop),
 		/** Creates an unconditional branch `(br)` to a label. */
-		br: Break.br.bind(mod),
+		br: extractParam(mod, Break.br),
 		/** Creates a conditional branch `(br_if)` to a label. */
-		br_if: Break.br_if.bind(mod),
+		br_if: extractParam(mod, Break.br_if),
 	} as const;
 }
 
@@ -53,14 +59,14 @@ function variables(mod: Module) {
 			 * Creates a `(local.get)` for the local at the specified index.
 			 * Note that we must specify the type here as we may not have created the local being accessed yet.
 			 */
-			get: LocalGet.localGet.bind(mod),
+			get: extractParam(mod, LocalGet.localGet),
 			/** Creates a `(local.set)` for the local at the specified index. */
-			set: LocalSet.localSet.bind(mod),
+			set: extractParam(mod, LocalSet.localSet),
 			/**
 			 * Creates a `(local.tee)` for the local at the specified index.
 			 * Note that we must specify the type here as we may not have created the local being accessed yet.
 			 */
-			tee: LocalSet.localTee.bind(mod),
+			tee: extractParam(mod, LocalSet.localTee),
 		},
 	} as const;
 }

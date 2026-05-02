@@ -26,15 +26,15 @@ import {
 
 
 export class Block extends Expression {
-	static block = function (this: Module, name: string | null | undefined, children: readonly ExpressionRef[], resultType: Type = none): ExpressionRef {
+	static block(mod: Module, name: string | null | undefined, children: readonly ExpressionRef[], resultType: Type = none): ExpressionRef {
 		return preserveStack(() => BinaryenObj["_BinaryenBlock"](
-			this.ptr,
+			mod.ptr,
 			name ? strToStack(name) : 0,
 			i32sToStack(children),
 			children.length,
 			resultType,
 		));
-	};
+	}
 
 
 	constructor(expr: ExpressionRef) {
