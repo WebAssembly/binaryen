@@ -108,7 +108,7 @@ export enum Feature {
  * 	- {@link Function}
  * 	- {@link DataSegment}
  * 	- {@link ElementSegment}
- * 	- (no `Import`)
+ * 	- {@link Import}
  * 	- {@link Export}
  *
  * Each instance of `Module` is:
@@ -369,6 +369,7 @@ export namespace Module {
 	export type Function = FUNCTION.Function;
 	export type DataSegment = DATA_SEGMENT.DataSegment;
 	export type ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	export type Import = IMPORT.Import;
 	export type Export = EXPORT.Export;
 
 	export const Tag = TAG.Tag;
@@ -378,5 +379,6 @@ export namespace Module {
 	export const Function = FUNCTION.Function;
 	export const DataSegment = DATA_SEGMENT.DataSegment;
 	export const ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	export const Import = IMPORT.Import;
 	export const Export = EXPORT.Export;
 }

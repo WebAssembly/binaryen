@@ -14,6 +14,13 @@ import type {
 
 
 
+/** Information about an import in a WASM module. */
+export class Import {
+	constructor() {}
+}
+
+
+
 /** Methods for manipulating imports in a WASM module. */
 export class ModuleImports {
 	constructor(private readonly mod: Module) {}
