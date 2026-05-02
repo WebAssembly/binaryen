@@ -1,0 +1,5 @@
+# dependency directories
+node_modules/
+
+# compiling TypeScript
+dist/
