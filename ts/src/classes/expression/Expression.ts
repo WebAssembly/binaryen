@@ -36,21 +36,20 @@ export class Expression {
 		this.#id = exprId;
 	}
 
-	valueOf(): ExpressionRef {
-		return this[THIS_PTR];
-	}
-
-	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	getId(): ExpressionId {
+	get id(): ExpressionId {
 		return this.#id;
 	}
 
-	getType(): Type {
+	get type(): Type {
 		return getExpressionType(this[THIS_PTR]);
 	}
 
-	setType(typ: Type): void {
+	set type(typ: Type) {
 		BinaryenObj["_BinaryenExpressionSetType"](this[THIS_PTR], typ);
+	}
+
+	valueOf(): ExpressionRef {
+		return this[THIS_PTR];
 	}
 
 	finalize(): void {

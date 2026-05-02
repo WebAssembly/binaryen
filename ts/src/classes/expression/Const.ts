@@ -28,51 +28,32 @@ export class Const extends Expression {
 	}
 
 	get value(): number | number[] {
-		const this_type = this.getType();
-		switch (this.getType()) {
-			case i32: { return this.getValueI32(); }
-			case i64: { return this.getValueI64(); }
-			case f32: { return this.getValueF32(); }
-			case f64: { return this.getValueF64(); }
-			case v128: { return this.getValueV128(); }
+		const this_type = this.type;
+		switch (this_type) {
+			case i32: { return this.valueI32; }
+			case i64: { return this.valueI64; }
+			case f32: { return this.valueF32; }
+			case f64: { return this.valueF64; }
+			case v128: { return this.valueV128; }
 		}
 		throw new Error(`Unexpected type: ${ this_type }.`);
 	}
 
-	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	getValueI32(): number {
-		return BinaryenObj["_BinaryenConstGetValueI32"](this[THIS_PTR]);
-	}
+	/* eslint-disable @stylistic/brace-style */
+	get valueI32(): number { return BinaryenObj["_BinaryenConstGetValueI32"](this[THIS_PTR]); }
+	set valueI32(value: number) { BinaryenObj["_BinaryenConstSetValueI32"](this[THIS_PTR], value); }
 
-	setValueI32(value: number): void {
-		BinaryenObj["_BinaryenConstSetValueI32"](this[THIS_PTR], value);
-	}
+	get valueI64(): number { return BinaryenObj["_BinaryenConstGetValueI64"](this[THIS_PTR]); }
+	set valueI64(value: number) { BinaryenObj["_BinaryenConstSetValueI64"](this[THIS_PTR], BigInt(value)); }
 
-	getValueI64(): number {
-		return BinaryenObj["_BinaryenConstGetValueI64"](this[THIS_PTR]);
-	}
+	get valueF32(): number { return BinaryenObj["_BinaryenConstGetValueF32"](this[THIS_PTR]); }
+	set valueF32(value: number) { BinaryenObj["_BinaryenConstSetValueF32"](this[THIS_PTR], value); }
 
-	setValueI64(value: number): void {
-		BinaryenObj["_BinaryenConstSetValueI64"](this[THIS_PTR], BigInt(value));
-	}
+	get valueF64(): number { return BinaryenObj["_BinaryenConstGetValueF64"](this[THIS_PTR]); }
+	set valueF64(value: number) { BinaryenObj["_BinaryenConstSetValueF64"](this[THIS_PTR], value); }
+	/* eslint-enable @stylistic/brace-style */
 
-	getValueF32(): number {
-		return BinaryenObj["_BinaryenConstGetValueF32"](this[THIS_PTR]);
-	}
-
-	setValueF32(value: number): void {
-		BinaryenObj["_BinaryenConstSetValueF32"](this[THIS_PTR], value);
-	}
-
-	getValueF64(): number {
-		return BinaryenObj["_BinaryenConstGetValueF64"](this[THIS_PTR]);
-	}
-
-	setValueF64(value: number): void {
-		BinaryenObj["_BinaryenConstSetValueF64"](this[THIS_PTR], value);
-	}
-
-	getValueV128(): number[] {
+	get valueV128(): number[] {
 		const value: number[] = [];
 		preserveStack(() => {
 			const tempBuffer = stackAlloc(16);
@@ -84,7 +65,7 @@ export class Const extends Expression {
 		return value;
 	}
 
-	setValueV128(value: readonly number[]): void {
+	set valueV128(value: readonly number[]) {
 		preserveStack(() => {
 			const tempBuffer = stackAlloc(16);
 			for (let i = 0; i < 16; ++i) {

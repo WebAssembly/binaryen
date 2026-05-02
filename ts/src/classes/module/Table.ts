@@ -35,39 +35,26 @@ export class Table {
 	}
 
 
+	/* eslint-disable @stylistic/brace-style */
+	/** The name of this table */
+	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenTableGetName"](this[THIS_PTR])); }
+	set name(name: string) { preserveStack(() => { BinaryenObj["_BinaryenTableSetName"](this[THIS_PTR], strToStack(name)); }); }
+
+	/** The initial number of pages of this table. */
+	get initial(): number { return BinaryenObj["_BinaryenTableGetInitial"](this[THIS_PTR]); }
+	set initial(initial: number) { BinaryenObj["_BinaryenTableSetInitial"](this[THIS_PTR], initial); }
+
+	/** The maximum number of pages of this table. */
+	get max(): number { return BinaryenObj["_BinaryenTableGetMax"](this[THIS_PTR]); }
+	set max(max: number) { BinaryenObj["_BinaryenTableSetMax"](this[THIS_PTR], max); }
+
+	/** The type of this table. */
+	get type(): Type { return BinaryenObj["_BinaryenTableGetType"](this[THIS_PTR]); }
+	set type(tableType: Type) { BinaryenObj["_BinaryenTableSetType"](this[THIS_PTR], tableType); }
+	/* eslint-enable @stylistic/brace-style */
+
 	valueOf(): TableRef {
 		return this[THIS_PTR];
-	}
-
-	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	/**
-	 * @return the name of this table
-	 */
-	getName(): string {
-		return UTF8ToString(BinaryenObj["_BinaryenTableGetName"](this[THIS_PTR]));
-	}
-
-	/**
-	 * @param name the new name for the this table
-	 */
-	setName(name: string): void {
-		preserveStack(() => {
-			BinaryenObj["_BinaryenTableSetName"](this[THIS_PTR], strToStack(name));
-		});
-	}
-
-	/**
-	 * @return the initial number of pages of the `Table`
-	 */
-	getInitial(): number {
-		return BinaryenObj["_BinaryenTableGetInitial"](this[THIS_PTR]);
-	}
-
-	/**
-	 * @param initial the new initial number of pages for this table
-	 */
-	setInitial(initial: number): void {
-		BinaryenObj["_BinaryenTableSetInitial"](this[THIS_PTR], initial);
 	}
 
 	/**
@@ -75,34 +62,6 @@ export class Table {
 	 */
 	hasMax(): boolean {
 		return Boolean(BinaryenObj["_BinaryenTableHasMax"](this[THIS_PTR]));
-	}
-
-	/**
-	 * @return the maximum number of pages of this table
-	 */
-	getMax(): number {
-		return BinaryenObj["_BinaryenTableGetMax"](this[THIS_PTR]);
-	}
-
-	/**
-	 * @param max the maximum number of pages of this table
-	 */
-	setMax(max: number): void {
-		BinaryenObj["_BinaryenTableSetMax"](this[THIS_PTR], max);
-	}
-
-	/**
-	 * @return the type of this table
-	 */
-	getType(): Type {
-		return BinaryenObj["_BinaryenTableGetType"](this[THIS_PTR]);
-	}
-
-	/**
-	 * @param tableType the new type for this table
-	 */
-	setType(tableType: Type): void {
-		BinaryenObj["_BinaryenTableSetType"](this[THIS_PTR], tableType);
 	}
 }
 

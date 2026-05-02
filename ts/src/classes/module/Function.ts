@@ -37,37 +37,45 @@ class BinaryenFunction {
 	}
 
 
+	get name(): string {
+		return UTF8ToString(BinaryenObj["_BinaryenFunctionGetName"](this[THIS_PTR]));
+	}
+
+	get type(): Type {
+		return BinaryenObj["_BinaryenFunctionGetType"](this[THIS_PTR]);
+	}
+
+	get params(): Type {
+		return BinaryenObj["_BinaryenFunctionGetParams"](this[THIS_PTR]);
+	}
+
+	get results(): Type {
+		return BinaryenObj["_BinaryenFunctionGetResults"](this[THIS_PTR]);
+	}
+
+	get numVars(): number {
+		return BinaryenObj["_BinaryenFunctionGetNumVars"](this[THIS_PTR]);
+	}
+
+	get numLocals(): number {
+		return BinaryenObj["_BinaryenFunctionGetNumLocals"](this[THIS_PTR]);
+	}
+
+	get body(): ExpressionRef {
+		return BinaryenObj["_BinaryenFunctionGetBody"](this[THIS_PTR]);
+	}
+
+	set body(bodyExpr: ExpressionRef) {
+		BinaryenObj["_BinaryenFunctionSetBody"](this[THIS_PTR], bodyExpr);
+	}
+
+
 	valueOf(): FunctionRef {
 		return this[THIS_PTR];
 	}
 
-	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	getName(): string {
-		return UTF8ToString(BinaryenObj["_BinaryenFunctionGetName"](this[THIS_PTR]));
-	}
-
-	getType(): Type {
-		return BinaryenObj["_BinaryenFunctionGetType"](this[THIS_PTR]);
-	}
-
-	getParams(): Type {
-		return BinaryenObj["_BinaryenFunctionGetParams"](this[THIS_PTR]);
-	}
-
-	getResults(): Type {
-		return BinaryenObj["_BinaryenFunctionGetResults"](this[THIS_PTR]);
-	}
-
-	getNumVars(): number {
-		return BinaryenObj["_BinaryenFunctionGetNumVars"](this[THIS_PTR]);
-	}
-
 	getVar(index: number): Type {
 		return BinaryenObj["_BinaryenFunctionGetVar"](this[THIS_PTR], index);
-	}
-
-	getNumLocals(): number {
-		return BinaryenObj["_BinaryenFunctionGetNumLocals"](this[THIS_PTR]);
 	}
 
 	hasLocalName(index: number): boolean {
@@ -82,14 +90,6 @@ class BinaryenFunction {
 		preserveStack(() => {
 			BinaryenObj["_BinaryenFunctionSetLocalName"](this[THIS_PTR], index, strToStack(name));
 		});
-	}
-
-	getBody(): ExpressionRef {
-		return BinaryenObj["_BinaryenFunctionGetBody"](this[THIS_PTR]);
-	}
-
-	setBody(bodyExpr: ExpressionRef): void {
-		BinaryenObj["_BinaryenFunctionSetBody"](this[THIS_PTR], bodyExpr);
 	}
 }
 export {BinaryenFunction as Function};
