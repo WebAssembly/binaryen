@@ -9,7 +9,7 @@ import {
 
 
 
-class SettingsService {
+export class SettingsService {
 	/** The currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc. */
 	get optimizeLevel(): number { return BinaryenObj["_BinaryenGetOptimizeLevel"](); }
 	set optimizeLevel(level: number) { BinaryenObj["_BinaryenSetOptimizeLevel"](level); }

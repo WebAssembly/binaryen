@@ -20,7 +20,7 @@ import type {
 
 
 /** Similar to a `DataSegment` but with some minor differences. */
-interface MemorySegment {
+export interface MemorySegment {
 	name?: string;
 	offset: ExpressionRef;
 	data: Uint8Array;
@@ -29,7 +29,10 @@ interface MemorySegment {
 
 
 
-/** Information about a memory in a WASM module. */
+/**
+ * Information about a memory in a WASM module.
+ * @see {@link ModuleMemories}
+ */
 export class Memory {
 	readonly module: string;
 	readonly base: string;
@@ -53,7 +56,7 @@ export class Memory {
 
 
 
-/** Methods for manipulating memories in a WASM module. */
+/** Methods for manipulating {@link Memory | memories} in a WASM module. */
 export class ModuleMemories {
 	constructor(private readonly mod: Module) {}
 

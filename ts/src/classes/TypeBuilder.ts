@@ -16,7 +16,7 @@ import {
 
 
 
-type Field = {
+export type Field = {
 	/** The type of the struct field. */
 	type: Type,
 	/** The field’s packed type. */

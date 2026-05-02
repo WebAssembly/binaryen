@@ -16,7 +16,6 @@ import {
 
 
 
-/** Base class of all expression wrappers. */
 export class Expression {
 	protected readonly [THIS_PTR]: ExpressionRef;
 
@@ -26,7 +25,7 @@ export class Expression {
 	/**
 	 * Construct a new Expression object given an ID and reference.
 	 *
-	 * Without an ID, you can still call `binaryen.getExpressionInfo(expr)`,
+	 * Without an ID, you can still call {@link getExpressionInfo | `getExpressionInfo(expr)`},
 	 * which will compute the ID and construct an Expression object from there.
 	 * @param exprId the expression “kind” id
 	 * @param expr the expression reference

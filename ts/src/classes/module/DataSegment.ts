@@ -18,7 +18,10 @@ import type {
 
 
 
-/** Information about a data segment in a WASM module. */
+/**
+ * Information about a data segment in a WASM module.
+ * @see {@link ModuleDataSegments}
+ */
 export class DataSegment {
 	readonly name: string;
 	readonly offset?: number;
@@ -46,7 +49,7 @@ export class DataSegment {
 
 
 
-/** Methods for manipulating data segments in a WASM module. */
+/** Methods for manipulating {@link DataSegment | data segments} in a WASM module. */
 export class ModuleDataSegments {
 	constructor(private readonly mod: Module) {}
 

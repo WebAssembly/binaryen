@@ -16,7 +16,10 @@ import type {
 
 
 
-/** Information about a tag in a WASM module. */
+/**
+ * Information about a tag in a WASM module.
+ * @see {@link ModuleTags}
+ */
 export class Tag {
 	readonly name: string;
 	readonly module: string;
@@ -36,7 +39,7 @@ export class Tag {
 
 
 
-/** Methods for manipulating tags in a WASM module. */
+/** Methods for manipulating {@link Tag | tags} in a WASM module. */
 export class ModuleTags {
 	constructor(private readonly mod: Module) {}
 

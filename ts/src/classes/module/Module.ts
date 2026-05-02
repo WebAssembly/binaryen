@@ -110,15 +110,15 @@ export enum Feature {
  * Each instance of `Module` is:
  * - a WASM module with module manipulation methods (`.emitText()`, `.validate()`, etc.).
  * - an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
- * 	- {@link TAG.ModuleTags|tags}
- * 	- {@link GLOBAL.ModuleGlobals|globals}
- * 	- {@link MEMORY.ModuleMemories|memories}
- * 	- {@link TABLE.ModuleTables|tables}
- * 	- {@link FUNCTION.ModuleFunctions|functions}
- * 	- {@link DATA_SEGMENT.ModuleDataSegments|dataSegments}
- * 	- {@link ELEMENT_SEGMENT.ModuleElementSegments|elementSegments}
- * 	- {@link IMPORT.ModuleImports|imports}
- * 	- {@link EXPORT.ModuleExports|exports}
+ * 	- {@link TAG.ModuleTags | tags}
+ * 	- {@link GLOBAL.ModuleGlobals | globals}
+ * 	- {@link MEMORY.ModuleMemories | memories}
+ * 	- {@link TABLE.ModuleTables | tables}
+ * 	- {@link FUNCTION.ModuleFunctions | functions}
+ * 	- {@link DATA_SEGMENT.ModuleDataSegments | dataSegments}
+ * 	- {@link ELEMENT_SEGMENT.ModuleElementSegments | elementSegments}
+ * 	- {@link IMPORT.ModuleImports | imports}
+ * 	- {@link EXPORT.ModuleExports | exports}
  */
 export class Module {
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();

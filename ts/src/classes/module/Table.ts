@@ -20,7 +20,10 @@ import type {
 
 
 
-/** Information about a table in a WASM module. */
+/**
+ * Information about a table in a WASM module.
+ * @see {@link ModuleTables}
+ */
 export class Table {
 	private readonly [THIS_PTR]: TableRef;
 
@@ -65,7 +68,7 @@ export class Table {
 
 
 
-/** Methods for manipulating tables in a WASM module. */
+/** Methods for manipulating {@link Table | tables} in a WASM module. */
 export class ModuleTables {
 	constructor(private readonly mod: Module) {}
 
