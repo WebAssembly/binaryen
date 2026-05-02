@@ -247,6 +247,7 @@ export class Module {
 	}
 
 	// ## Binaryen Operations ## //
+	// ### Emission & Execution ### //
 	/** Returns the module in Binaryen’s s-expression text format (not official stack-style text format). */
 	emitText(): string {
 		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteText"](this.ptr);
@@ -305,30 +306,17 @@ export class Module {
 		});
 	}
 
-	setTypeName(heapType: HeapType, name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenModuleSetTypeName"](this.ptr, heapType, strToStack(name));
-		});
-	}
-
-	setFieldName(heapType: HeapType, index: number, name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenModuleSetFieldName"](this.ptr, heapType, index, strToStack(name));
-		});
-	}
-
-	/** Adds a custom section to the binary */
-	addCustomSection(name: string, contents: Uint8Array): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length);
-		});
-	}
-
 	/** Runs the module in the interpreter, calling the start function. */
 	interpret(): void {
 		BinaryenObj["_BinaryenModuleInterpret"](this.ptr);
 	}
 
+	/** Releases the resources held by the module once it isn't needed anymore. */
+	dispose(): void {
+		BinaryenObj["_BinaryenModuleDispose"](this.ptr);
+	}
+
+	// ### Validation & Optimization ### //
 	/** Validates the module. Returns `true` if valid, otherwise prints validation errors and returns `false`. */
 	validate(): number {
 		return BinaryenObj["_BinaryenModuleValidate"](this.ptr);
@@ -345,11 +333,6 @@ export class Module {
 			func = this.functions.get(func);
 		}
 		BinaryenObj["_BinaryenFunctionOptimize"](func, this.ptr);
-	}
-
-	/** [description] */
-	updateMaps(): void {
-		BinaryenObj["_BinaryenModuleUpdateMaps"](this.ptr);
 	}
 
 	/** Runs the specified passes on the module. */
@@ -369,11 +352,7 @@ export class Module {
 		});
 	}
 
-	/** Releases the resources held by the module once it isn't needed anymore. */
-	dispose(): void {
-		BinaryenObj["_BinaryenModuleDispose"](this.ptr);
-	}
-
+	// ### Debugging ### //
 	/** Adds a debug info file name to the module and returns its index. */
 	addDebugInfoFileName(filename: string): number {
 		return preserveStack(() => BinaryenObj["_BinaryenModuleAddDebugInfoFileName"](this.ptr, strToStack(filename)));
@@ -387,6 +366,33 @@ export class Module {
 	/** Sets the debug location of the specified `ExpressionRef` within the specified `FunctionRef`. */
 	setDebugLocation(func: FunctionRef, expr: ExpressionRef, fileIndex: number, lineNumber: number, columnNumber: number): void {
 		BinaryenObj["_BinaryenFunctionSetDebugLocation"](func, expr, fileIndex, lineNumber, columnNumber);
+	}
+
+	// ### Other ### //
+	/** [description] */
+	setTypeName(heapType: HeapType, name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenModuleSetTypeName"](this.ptr, heapType, strToStack(name));
+		});
+	}
+
+	/** [description] */
+	setFieldName(heapType: HeapType, index: number, name: string): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenModuleSetFieldName"](this.ptr, heapType, index, strToStack(name));
+		});
+	}
+
+	/** Adds a custom section to the binary. */
+	addCustomSection(name: string, contents: Uint8Array): void {
+		return preserveStack(() => {
+			BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length);
+		});
+	}
+
+	/** [description] */
+	updateMaps(): void {
+		BinaryenObj["_BinaryenModuleUpdateMaps"](this.ptr);
 	}
 
 	/** @deprecated Use global `copyExpression(expr, this)` instead. */
