@@ -6,16 +6,11 @@ import type {
 } from "../module/Module.ts";
 import {
 	Block,
-} from "./Block.ts";
-import {
 	Drop,
-} from "./Drop.ts";
-import {
 	LocalGet,
-} from "./LocalGet.ts";
-import {
 	LocalSet,
-} from "./LocalSet.ts";
+	Select,
+} from "./index.ts";
 
 
 
@@ -27,6 +22,8 @@ function parametric(mod: Module) {
 		unreachable: () => BinaryenObj["_BinaryenUnreachable"](mod.ptr),
 		/** Creates a `(drop)` of a value. */
 		drop: Drop.drop.bind(mod),
+		/** Creates a `(select)` of one of two values. */
+		select: Select.select.bind(mod),
 	} as const;
 }
 

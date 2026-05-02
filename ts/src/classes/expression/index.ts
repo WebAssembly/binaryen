@@ -2,6 +2,7 @@ export {Expression} from "./Expression.ts";
 
 // ## Parametric ## //
 export {Drop} from "./Drop.ts";
+export {Select} from "./Select.ts";
 
 // ## Control ## //
 export {Block} from "./Block.ts";
