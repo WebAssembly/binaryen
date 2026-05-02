@@ -3,7 +3,6 @@ import {
 } from "../-pre.ts";
 import type {
 	ExpressionRef,
-	ExpressionRunnerRef,
 } from "../constants.ts";
 import {
 	preserveStack,
@@ -27,7 +26,7 @@ export class ExpressionRunner {
 	static Flags = ExpressionRunnerFlag;
 
 
-	readonly #ptr: ExpressionRunnerRef;
+	readonly #ptr: number;
 
 	constructor(mod: Module, flags: ExpressionRunnerFlag, maxDepth: number, maxLoopIterations: number) {
 		this.#ptr = BinaryenObj["_ExpressionRunnerCreate"](mod.ptr, flags, maxDepth, maxLoopIterations);

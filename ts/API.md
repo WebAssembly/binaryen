@@ -173,7 +173,6 @@ Enum names have been singularized.
 - `SideEffects`   &rarr; `SideEffect`
 - `ExternalKinds` &rarr; `ExternalKind`
 - `Features`      &rarr; `Feature`
-- `Operations`    &rarr; `Operation`
 
 `*Info` types have been merged with their respective classes in the `Module` namespace.
 - `TagInfo`            &rarr; `Module.Tag`

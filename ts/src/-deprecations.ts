@@ -14,9 +14,6 @@ import {
 	type TagRef,
 } from "./constants.ts";
 import {
-	Operation,
-} from "./classes/expression/Operation.ts";
-import {
 	Feature,
 	Module,
 } from "./classes/module/Module.ts";
@@ -37,8 +34,6 @@ export const SideEffects = SideEffect;
 export const ExternalKinds = ExternalKind;
 /** @deprecated The `Features` enum has been renamed to {@link Feature}. */
 export const Features = Feature;
-/** @deprecated The `Operations` enum has been renamed to {@link Operation}. */
-export const Operations = Operation;
 
 
 

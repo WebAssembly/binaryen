@@ -3,7 +3,6 @@ import {
 } from "../-pre.ts";
 import type {
 	ExpressionRef,
-	RelooperBlockRef,
 } from "../constants.ts";
 import {
 	i32sToStack,
@@ -12,6 +11,10 @@ import {
 import type {
 	Module,
 } from "./module/Module.ts";
+
+
+
+export type RelooperBlockRef = number;
 
 
 

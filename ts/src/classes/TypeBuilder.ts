@@ -16,6 +16,7 @@ import {
 
 
 
+/** A field in a struct/array. */
 export type Field = {
 	/** The type of the struct field. */
 	type: Type,

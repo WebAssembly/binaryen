@@ -34,11 +34,6 @@ export type ElementSegmentRef = number;
 /** Reference to an {@link Export}. */
 export type ExportRef = number;
 
-// ### Binaryen Tools ### //
-export type TypeBuilderRef = number;
-export type ExpressionRunnerRef = number;
-export type RelooperBlockRef = number;
-
 
 
 // ## Expression Types ## //
