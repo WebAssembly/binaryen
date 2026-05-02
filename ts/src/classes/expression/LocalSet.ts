@@ -6,6 +6,9 @@ import {
 	type ExpressionRef,
 	type Type,
 } from "../../constants.ts";
+import {
+	THIS_PTR,
+} from "../../utils.ts";
 import type {
 	Module,
 } from "../module/Module.ts";
@@ -30,10 +33,15 @@ export class LocalSet extends Expression {
 	}
 
 
-	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	getIndex() {}
-	setIndex() {}
-	isTee() {}
-	getValue() {}
-	setValue() {}
+	/* eslint-disable @stylistic/brace-style */
+	get index(): number { return BinaryenObj["_BinaryenLocalSetGetIndex"](this[THIS_PTR]); }
+	set index(index: number) { BinaryenObj["_BinaryenLocalSetSetIndex"](this[THIS_PTR], index); }
+
+	get value(): ExpressionRef { return BinaryenObj["_BinaryenLocalSetGetValue"](this[THIS_PTR]); }
+	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenLocalSetSetValue"](this[THIS_PTR], valueExpr); }
+	/* eslint-enable @stylistic/brace-style */
+
+	get isTee(): boolean {
+		return Boolean(BinaryenObj["_BinaryenLocalSetIsTee"](this[THIS_PTR]));
+	}
 }

@@ -6,6 +6,9 @@ import {
 	type ExpressionRef,
 	type Type,
 } from "../../constants.ts";
+import {
+	THIS_PTR,
+} from "../../utils.ts";
 import type {
 	Module,
 } from "../module/Module.ts";
@@ -26,7 +29,11 @@ export class LocalGet extends Expression {
 	}
 
 
-	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	getIndex() {}
-	setIndex() {}
+	get index(): number {
+		return BinaryenObj["_BinaryenLocalGetGetIndex"](this[THIS_PTR]);
+	}
+
+	set index(index: number) {
+		BinaryenObj["_BinaryenLocalGetSetIndex"](this[THIS_PTR], index);
+	}
 }

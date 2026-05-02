@@ -5,6 +5,9 @@ import {
 	ExpressionId,
 	type ExpressionRef,
 } from "../../constants.ts";
+import {
+	THIS_PTR,
+} from "../../utils.ts";
 import type {
 	Module,
 } from "../module/Module.ts";
@@ -25,7 +28,11 @@ export class Drop extends Expression {
 	}
 
 
-	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	getValue() {}
-	setValue() {}
+	get value(): ExpressionRef {
+		return BinaryenObj["_BinaryenDropGetValue"](this[THIS_PTR]);
+	}
+
+	set value(valueExpr: ExpressionRef) {
+		BinaryenObj["_BinaryenDropSetValue"](this[THIS_PTR], valueExpr);
+	}
 }

@@ -101,8 +101,7 @@ export function getAllNested<T, U>(
  * @param appendFn [description]
  * @param removeFn [description]
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function setAllNested<T, U>(
+export function setAllNested<T, U>(
 	ref: T,
 	values: readonly U[],
 	numFn: (ref: T) => number,
