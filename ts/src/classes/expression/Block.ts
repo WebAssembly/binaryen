@@ -26,7 +26,7 @@ import {
 
 
 export class Block extends Expression {
-	static block(mod: Module, name: string | null | undefined, children: readonly ExpressionRef[], resultType: Type = none): ExpressionRef {
+	static block(mod: Module, name: string | null, children: readonly ExpressionRef[], resultType: Type = none): ExpressionRef {
 		return preserveStack(() => BinaryenObj["_BinaryenBlock"](
 			mod.ptr,
 			name ? strToStack(name) : 0,

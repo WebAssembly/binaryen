@@ -21,8 +21,8 @@ import {
 
 
 export class Loop extends Expression {
-	static loop(mod: Module, label: string, body: ExpressionRef): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenLoop"](mod.ptr, strToStack(label), body));
+	static loop(mod: Module, name: string, body: ExpressionRef): ExpressionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenLoop"](mod.ptr, strToStack(name), body));
 	}
 
 

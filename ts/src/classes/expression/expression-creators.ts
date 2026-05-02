@@ -2,6 +2,9 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import type {
+	ExpressionRef,
+} from "../../constants.ts";
+import type {
 	Module,
 } from "../module/Module.ts";
 import {
@@ -25,9 +28,9 @@ function extractParam<First, Rest extends unknown[], Return>(a: First, fn: (a: F
 function parametric(mod: Module) {
 	return {
 		/** Creates a no-operation `(nop)` instruction. */
-		nop: () => BinaryenObj["_BinaryenNop"](mod.ptr),
+		nop: (): ExpressionRef => BinaryenObj["_BinaryenNop"](mod.ptr),
 		/** Creates an unreachable instruction that will always trap. */
-		unreachable: () => BinaryenObj["_BinaryenUnreachable"](mod.ptr),
+		unreachable: (): ExpressionRef => BinaryenObj["_BinaryenUnreachable"](mod.ptr),
 		/** Creates a `(drop)` of a value. */
 		drop: extractParam(mod, Drop.drop),
 		/** Creates a `(select)` of one of two values. */

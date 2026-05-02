@@ -133,17 +133,27 @@ Objects:
 
 
 ## Expression Construction
+Each of these methods returns an `ExpressionRef`.
+
 ### Parametric Instructions
+- `Module#x.nop()`
+- `Module#x.unreachable()`
+- `Module#x.drop(value: ExpressionRef)`
+- `Module#x.select(ifTrue: ExpressionRef, ifFalse: ExpressionRef)`
+
 ### Control Instructions
-- `Module#x.block()`
-- `Module#x.if()`
+- `Module#x.block(name: string | null, children: readonly ExpressionRef[], resultType?: Type)`
+- `Module#x.loop(name: string, body: ExpressionRef)`
+- TODO: `Module#x.if()`
+- `Module#x.br(label: string, condition?: ExpressionRef, value?: ExpressionRef)`
+- `Module#x.br_if(label: string, condition: ExpressionRef, value?: ExpressionRef)`
 
 ### Variable Instructions
-- `Module#x.local.get()`
-- `Module#x.local.set()`
-- `Module#x.local.tee()`
-- `Module#x.global.get()`
-- `Module#x.global.set()`
+- `Module#x.local.get(index: number, typ: Type)`
+- `Module#x.local.set(index: number, value: ExpressionRef)`
+- `Module#x.local.tee(index: number, value: ExpressionRef, typ: Type)`
+- TODO: `Module#x.global.get()`
+- TODO: `Module#x.global.set()`
 
 ### Table Instructions
 ### Memory Instructions
