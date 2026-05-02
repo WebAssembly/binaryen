@@ -1,3 +1,14 @@
+/**
+ * A collection of classes related to WASM expression manipulation.
+ *
+ * The {@link Expression} class is the root class in the hierarchy;
+ * all other classes in this module extend it and describe specific kinds of expressions.
+ * Each expression type corresponds to an {@link ExpressionId}.
+ * @module
+ */
+
+
+
 export {Expression} from "./Expression.ts";
 
 // ## Parametric ## //

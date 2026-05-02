@@ -2,6 +2,11 @@
 
 
 
+import type * as X from "./classes/expression/index.ts";
+import {
+	Feature,
+	Module,
+} from "./classes/module/Module.ts";
 import {
 	type ElementSegmentRef,
 	type ExportRef,
@@ -13,10 +18,6 @@ import {
 	type TableRef,
 	type TagRef,
 } from "./constants.ts";
-import {
-	Feature,
-	Module,
-} from "./classes/module/Module.ts";
 import {
 	consoleWarn,
 } from "./lib.ts";
@@ -54,6 +55,25 @@ export type ElementSegmentInfo = Module.ElementSegment;
 /** @deprecated The `ExportInfo` object type is now called {@link Module.Export}. */
 export type ExportInfo = Module.Export;
 
+
+/** @deprecated The `ExpressionInfo` object type is now called {@link X.Expression}. */
+export type ExpressionInfo = X.Expression;
+/** @deprecated The `DropInfo` object type is now called {@link X.Drop}. */
+export type DropInfo = X.Drop;
+/** @deprecated The `SelectInfo` object type is now called {@link X.Select}. */
+export type SelectInfo = X.Select;
+/** @deprecated The `BlockInfo` object type is now called {@link X.Block}. */
+export type BlockInfo = X.Block;
+/** @deprecated The `LoopInfo` object type is now called {@link X.Loop}. */
+export type LoopInfo = X.Loop;
+/** @deprecated The `BreakInfo` object type is now called {@link X.Break}. */
+export type BreakInfo = X.Break;
+/** @deprecated The `LocalGetInfo` object type is now called {@link X.LocalGet}. */
+export type LocalGetInfo = X.LocalGet;
+/** @deprecated The `LocalSetInfo` object type is now called {@link X.LocalSet}. */
+export type LocalSetInfo = X.LocalSet;
+/** @deprecated The `ConstInfo` object type is now called {@link X.Const}. */
+export type ConstInfo = X.Const;
 
 /** @deprecated The `Function` class now lives under the `Module` namespace. Use {@link Module.Function}. */
 export const Function = Module.Function;

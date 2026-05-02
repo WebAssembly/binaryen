@@ -383,6 +383,12 @@ export class Module {
 
 
 
+/**
+ * A collection of types and classes related to WASM module manipulation.
+ *
+ * Each class represents a component of a WASM module,
+ * and its corresponding type is included for documentation.
+ */
 // eslint-disable-next-line no-redeclare
 export namespace Module {
 	export type Tag = TAG.Tag;

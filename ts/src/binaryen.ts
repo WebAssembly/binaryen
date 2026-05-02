@@ -14,7 +14,7 @@ export type {DataSegment, ModuleDataSegments} from "./classes/module/DataSegment
 export type {ElementSegment, ModuleElementSegments} from "./classes/module/ElementSegment.ts";
 export type {Import, ModuleImports} from "./classes/module/Import.ts";
 export type {Export, ModuleExports} from "./classes/module/Export.ts";
-export * from "./classes/expression/index.ts";
+export * as X from "./classes/expression/index.ts";
 export {TypeBuilder, type Field} from "./classes/TypeBuilder.ts";
 export {
 	ExpressionRunner,

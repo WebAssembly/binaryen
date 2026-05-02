@@ -166,6 +166,27 @@ Each of these methods returns an `ExpressionRef`.
 
 
 
+## Expression Manipulation
+Expression info classes all live under the global `X` namespace. (“X” for “Expression”).
+They can be used to inspect and manipulate expressions.
+See generated docs for fields, methods, and descriptions of each.
+
+- `X.Expression` (root class)
+- parametric instructions
+	- `X.Drop`
+	- `X.Select`
+- control instructions
+	- `X.Block`
+	- `X.Loop`
+	- `X.Break`
+- variable instructions
+	- `X.LocalGet`
+	- `X.LocalSet`
+- numeric instructions
+	- `X.Const`
+
+
+
 ## ⚠️ Deprecations, Renames, and Moves
 ### Enums and Types
 Enum names have been singularized.
@@ -183,11 +204,11 @@ Enum names have been singularized.
 - `ElementSegmentInfo` &rarr; `Module.ElementSegment`
 - `ExportInfo`         &rarr; `Module.Export`
 
-`ExpressionInfo` and related types are now classes without the `Info` suffix:
-- `ExpressionInfo` &rarr; `Expression`
-- `BlockInfo`      &rarr; `Block`
-- `LoopInfo`       &rarr; `Loop`
-- `IfInfo`         &rarr; `If`
+`ExpressionInfo` and related types are now classes in the `X` namespace:
+- `ExpressionInfo` &rarr; `X.Expression`
+- `BlockInfo`      &rarr; `X.Block`
+- `LoopInfo`       &rarr; `X.Loop`
+- `IfInfo`         &rarr; `X.If`
 - etc.
 
 ~~`MemorySegmentInfo`~~ ❌ has been removed.
