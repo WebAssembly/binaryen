@@ -33,13 +33,11 @@ export class LocalSet extends Expression {
 	}
 
 
-	/* eslint-disable @stylistic/brace-style */
 	get index(): number { return BinaryenObj["_BinaryenLocalSetGetIndex"](this[THIS_PTR]); }
 	set index(index: number) { BinaryenObj["_BinaryenLocalSetSetIndex"](this[THIS_PTR], index); }
 
 	get value(): ExpressionRef { return BinaryenObj["_BinaryenLocalSetGetValue"](this[THIS_PTR]); }
 	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenLocalSetSetValue"](this[THIS_PTR], valueExpr); }
-	/* eslint-enable @stylistic/brace-style */
 
 	get isTee(): boolean {
 		return Boolean(BinaryenObj["_BinaryenLocalSetIsTee"](this[THIS_PTR]));

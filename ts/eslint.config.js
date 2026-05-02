@@ -48,7 +48,7 @@ export default [
 			"@stylistic/array-bracket-spacing": "error",
 			"@stylistic/array-element-newline": ["error", "consistent"],
 			"arrow-body-style": "error",
-			"@stylistic/brace-style": "error",
+			"@stylistic/brace-style": ["error", "1tbs", {allowSingleLine: true}],
 			"@stylistic/computed-property-spacing": "error",
 			curly: "error",
 			"@stylistic/function-call-argument-newline": ["error", "consistent"],

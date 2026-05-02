@@ -39,7 +39,6 @@ export class Const extends Expression {
 		throw new Error(`Unexpected type: ${ this_type }.`);
 	}
 
-	/* eslint-disable @stylistic/brace-style */
 	get valueI32(): number { return BinaryenObj["_BinaryenConstGetValueI32"](this[THIS_PTR]); }
 	set valueI32(value: number) { BinaryenObj["_BinaryenConstSetValueI32"](this[THIS_PTR], value); }
 
@@ -51,7 +50,6 @@ export class Const extends Expression {
 
 	get valueF64(): number { return BinaryenObj["_BinaryenConstGetValueF64"](this[THIS_PTR]); }
 	set valueF64(value: number) { BinaryenObj["_BinaryenConstSetValueF64"](this[THIS_PTR], value); }
-	/* eslint-enable @stylistic/brace-style */
 
 	get valueV128(): number[] {
 		const value: number[] = [];

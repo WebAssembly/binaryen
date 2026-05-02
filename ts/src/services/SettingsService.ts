@@ -10,7 +10,6 @@ import {
 
 
 class SettingsService {
-	/* eslint-disable @stylistic/brace-style */
 	/** The currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc. */
 	get optimizeLevel(): number { return BinaryenObj["_BinaryenGetOptimizeLevel"](); }
 	set optimizeLevel(level: number) { BinaryenObj["_BinaryenSetOptimizeLevel"](level); }
@@ -66,7 +65,6 @@ class SettingsService {
 	/** Are functions with loops allowed to be inlined? */
 	get allowInliningFunctionsWithLoops(): boolean { return Boolean(BinaryenObj["_BinaryenGetAllowInliningFunctionsWithLoops"]()); }
 	set allowInliningFunctionsWithLoops(enabled: boolean) { BinaryenObj["_BinaryenSetAllowInliningFunctionsWithLoops"](enabled); }
-	/* eslint-enable @stylistic/brace-style */
 
 
 	/** Gets the value of the specified arbitrary pass argument. */

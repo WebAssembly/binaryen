@@ -35,7 +35,6 @@ export class Table {
 	}
 
 
-	/* eslint-disable @stylistic/brace-style */
 	/** The name of this table */
 	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenTableGetName"](this[THIS_PTR])); }
 	set name(name: string) { preserveStack(() => { BinaryenObj["_BinaryenTableSetName"](this[THIS_PTR], strToStack(name)); }); }
@@ -51,7 +50,6 @@ export class Table {
 	/** The type of this table. */
 	get type(): Type { return BinaryenObj["_BinaryenTableGetType"](this[THIS_PTR]); }
 	set type(tableType: Type) { BinaryenObj["_BinaryenTableSetType"](this[THIS_PTR], tableType); }
-	/* eslint-enable @stylistic/brace-style */
 
 	valueOf(): TableRef {
 		return this[THIS_PTR];

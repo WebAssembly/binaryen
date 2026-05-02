@@ -138,12 +138,10 @@ export class Module {
 	readonly imports = new IMPORT.ModuleImports(this);
 	readonly exports = new EXPORT.ModuleExports(this);
 
-	/* eslint-disable @stylistic/brace-style */
 	/** @deprecated Use `this.start` instead. */ @replacedBy("`this.start`") getStart() { return this.start; }
 	/** @deprecated Use `this.start` instead. */ @replacedBy("`this.start`") setStart(start: FunctionRef) { this.start = start; }
 	/** @deprecated Use `this.features` instead. */ @replacedBy("`this.features`") getFeatures() { return this.features; }
 	/** @deprecated Use `this.features` instead. */ @replacedBy("`this.features`") setFeatures(features: Feature) { return this.features = features; }
-	/* eslint-enable @stylistic/brace-style */
 
 	/** The start function. */
 	get start(): FunctionRef {
@@ -166,7 +164,6 @@ export class Module {
 		BinaryenObj["_BinaryenModuleSetFeatures"](this.ptr, features);
 	}
 
-	/* eslint-disable @stylistic/brace-style */
 	/** @deprecated Use `this.tags.add` instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
 	/** @deprecated Use `this.tags.get` instead. */ @replacedBy("`this.tags.get`") getTag(name: string) { return this.tags.get(name); }
 	/** @deprecated Use `this.tags.remove` instead. */ @replacedBy("`this.tags.remove`") removeTag(name: string) { return this.tags.remove(name); }
@@ -219,7 +216,6 @@ export class Module {
 	/** @deprecated Use `this.exports.getByIndex` instead. */ @replacedBy("`this.exports.getByIndex`") getExportByIndex(index: number) { return this.exports.getByIndex(index); }
 	/** @deprecated Use `this.exports.count` instead. */ @replacedBy("`this.exports.count`") getNumExports() { return this.exports.count(); }
 	/** @deprecated Use `this.exports.remove` instead. */ @replacedBy("`this.exports.remove`") removeExport(externalName: string) { return this.exports.remove(externalName); }
-	/* eslint-enable @stylistic/brace-style */
 
 	getMemoryInfo(name: string): MEMORY.Memory {
 		return new MEMORY.Memory(this, name);

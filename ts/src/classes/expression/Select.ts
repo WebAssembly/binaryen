@@ -28,7 +28,6 @@ export class Select extends Expression {
 	}
 
 
-	/* eslint-disable @stylistic/brace-style */
 	get ifTrue(): ExpressionRef { return BinaryenObj["_BinaryenSelectGetIfTrue"](this[THIS_PTR]); }
 	set ifTrue(ifTrueExpr: ExpressionRef) { BinaryenObj["_BinaryenSelectSetIfTrue"](this[THIS_PTR], ifTrueExpr); }
 
@@ -37,5 +36,4 @@ export class Select extends Expression {
 
 	get condition(): ExpressionRef { return BinaryenObj["_BinaryenSelectGetCondition"](this[THIS_PTR]); }
 	set condition(condExpr: ExpressionRef) { BinaryenObj["_BinaryenSelectSetCondition"](this[THIS_PTR], condExpr); }
-	/* eslint-enable @stylistic/brace-style */
 }
