@@ -9,11 +9,13 @@ import {
 	ExternalKind,
 	type FunctionRef,
 	type GlobalRef,
-	Operation,
 	SideEffect,
 	type TableRef,
 	type TagRef,
 } from "./constants.ts";
+import {
+	Operation,
+} from "./classes/expression/Operation.ts";
 import {
 	Feature,
 	Module,
@@ -29,14 +31,14 @@ import {
 
 /** @deprecated The `ExpressionIds` enum has been renamed to `ExpressionId`. */
 export const ExpressionIds = ExpressionId;
-/** @deprecated The `Operations` enum has been renamed to `Operation`. */
-export const Operations = Operation;
-/** @deprecated The `ExternalKinds` enum has been renamed to `ExternalKind`. */
-export const ExternalKinds = ExternalKind;
 /** @deprecated The `SideEffects` enum has been renamed to `SideEffect`. */
 export const SideEffects = SideEffect;
+/** @deprecated The `ExternalKinds` enum has been renamed to `ExternalKind`. */
+export const ExternalKinds = ExternalKind;
 /** @deprecated The `Features` enum has been renamed to `Feature`. */
 export const Features = Feature;
+/** @deprecated The `Operations` enum has been renamed to `Operation`. */
+export const Operations = Operation;
 
 
 
