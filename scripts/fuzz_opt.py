@@ -2202,6 +2202,7 @@ class PreserveImportsExportsJS(TestCaseHandler):
             input,
             '-ttf',
             '--fuzz-preserve-imports-exports',
+            '--fuzz-against-js',
             '--initial-fuzz=' + wat_file,
             '-o', pre_wasm,
             '-g',
