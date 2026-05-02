@@ -11,6 +11,7 @@ import type {
 
 
 
+/** Information about a memory in a WASM module. */
 export class Memory {
 	readonly module: string;
 	readonly base: string;

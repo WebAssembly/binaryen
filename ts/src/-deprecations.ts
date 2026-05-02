@@ -3,27 +3,21 @@
 
 
 import {
-	ExpressionId,
-	ExternalKind,
-	Operation,
-	SideEffect,
-	type TagRef,
-	type GlobalRef,
-	type TableRef,
-	type FunctionRef,
 	type ElementSegmentRef,
 	type ExportRef,
+	ExpressionId,
+	ExternalKind,
+	type FunctionRef,
+	type GlobalRef,
+	Operation,
+	SideEffect,
+	type TableRef,
+	type TagRef,
 } from "./constants.ts";
-import {
-	Function as BinaryenFunction,
-} from "./classes/module/Function.ts";
 import {
 	Feature,
 	Module,
 } from "./classes/module/Module.ts";
-import {
-	Table as BinaryenTable,
-} from "./classes/module/Table.ts";
 import {
 	consoleWarn,
 } from "./lib.ts";
@@ -46,10 +40,28 @@ export const Features = Feature;
 
 
 
-/** @deprecated The `Function` class now lives as a static member of the `Module` class. Use `Module.Function`. */
-export const Function = BinaryenFunction;
-/** @deprecated The `Table` class now lives as a static member of the `Module` class. Use `Module.Table`. */
-export const Table = BinaryenTable;
+/** @deprecated The `TagInfo` object type is now called `Module.Tag`. */
+export type TagInfo = Module.Tag;
+/** @deprecated The `GlobalInfo` object type is now called `Module.Global`. */
+export type GlobalInfo = Module.Global;
+/** @deprecated The `MemoryInfo` object type is now called `Module.Memory`*/
+export type MemoryInfo = Module.Memory;
+/** @deprecated The `TableInfo` object type is now called `Module.Table`. */
+export type TableInfo = Module.Table;
+/** @deprecated The `FunctionInfo` object type is now called `Module.Function`. */
+export type FunctionInfo = Module.Function;
+// type `DataSegmentInfo` never existed
+/** @deprecated The `ElementSegmentInfo` object type is now called `Module.ElementSegment`. */
+export type ElementSegmentInfo = Module.ElementSegment;
+// type `ImportInfo` never existed
+/** @deprecated The `ExportInfo` object type is now called `Module.Export`. */
+export type ExportInfo = Module.Export;
+
+
+/** @deprecated The `Function` class now lives under the `Module` namespace. Use `Module.Function`. */
+export const Function = Module.Function;
+/** @deprecated The `Table` class now lives under the `Module` namespace. Use `Module.Table`. */
+export const Table = Module.Table;
 
 
 
@@ -63,6 +75,7 @@ export function getGlobalInfo(global: GlobalRef) {
 	consoleWarn("Global function `getGlobalInfo` is deprecated; use `new Module.Global(globalref)` instead.");
 	return new Module.Global(global);
 }
+// function `getMemoryInfo` always existed in `Module`
 /** @deprecated Use `new Module.Table(tableref)` instead. */
 export function getTableInfo(table: TableRef) {
 	consoleWarn("Global function `getTableInfo` is deprecated; use `new Module.Table(tableref)` instead.");
@@ -73,11 +86,13 @@ export function getFunctionInfo(func: FunctionRef) {
 	consoleWarn("Global function `getFunctionInfo` is deprecated; use `new Module.Function(funcref)` instead.");
 	return new Module.Function(func);
 }
+// function `getDataSegmentInfo` always existed in `Module`
 /** @deprecated Use `new Module.ElementSegment(segmentref)` instead. */
 export function getElementSegmentInfo(segment: ElementSegmentRef) {
 	consoleWarn("Global function `getElementSegmentInfo` is deprecated; use `new Module.ElementSegment(segmentref)` instead.");
 	return new Module.ElementSegment(segment);
 }
+// no function `getImportInfo` ever existed
 /** @deprecated Use `new Module.Export(exportref)` instead. */
 export function getExportInfo(xport: ExportRef) {
 	consoleWarn("Global function `getExportInfo` is deprecated; use `new Module.Export(exportref)` instead.");

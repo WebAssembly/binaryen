@@ -20,6 +20,7 @@ import type {
 
 
 
+/** Information about a function in a WASM module. */
 class BinaryenFunction {
 	private readonly [THIS_PTR]: FunctionRef;
 
@@ -95,6 +96,7 @@ export {BinaryenFunction as Function};
 
 
 
+/** Methods for manipulating functions in a WASM module. */
 export class ModuleFunctions {
 	constructor(private readonly mod: Module) {}
 

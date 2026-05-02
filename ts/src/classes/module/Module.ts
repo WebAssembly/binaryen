@@ -37,40 +37,15 @@ import {
 	localSet,
 	localTee,
 } from "../expression/LocalSet.ts";
-import {
-	DataSegment,
-	ModuleDataSegments,
-} from "./DataSegment.ts";
-import {
-	ElementSegment,
-	ModuleElementSegments,
-} from "./ElementSegment.ts";
-import {
-	Export,
-	ModuleExports,
-} from "./Export.ts";
-import {
-	Function as BinaryenFunction,
-	ModuleFunctions,
-} from "./Function.ts";
-import {
-	Global,
-	ModuleGlobals,
-} from "./Global.ts";
-import {
-	ModuleImports,
-} from "./Import.ts";
-import {
-	Memory,
-} from "./Memory.ts";
-import {
-	Table,
-	ModuleTables,
-} from "./Table.ts";
-import {
-	Tag,
-	ModuleTags,
-} from "./Tag.ts";
+import * as DATA_SEGMENT from "./DataSegment.ts";
+import * as ELEMENT_SEGMENT from "./ElementSegment.ts";
+import * as EXPORT from "./Export.ts";
+import * as FUNCTION from "./Function.ts";
+import * as GLOBAL from "./Global.ts";
+import * as IMPORT from "./Import.ts";
+import * as MEMORY from "./Memory.ts";
+import * as TABLE from "./Table.ts";
+import * as TAG from "./Tag.ts";
 
 
 
@@ -132,17 +107,36 @@ export enum Feature {
 
 
 
+/**
+ * A WASM module.
+ *
+ * `Module` itself is:
+ * - an instantiable class (via `new Module()`)
+ * - a namespace containing the following members, which themselves are classes (see related documentation):
+ * 	- {@link Tag}
+ * 	- {@link Global}
+ * 	- {@link Memory}
+ * 	- {@link Table}
+ * 	- {@link Function}
+ * 	- {@link DataSegment}
+ * 	- {@link ElementSegment}
+ * 	- (no `Import`)
+ * 	- {@link Export}
+ *
+ * Each instance of `Module` is:
+ * - a WASM module with module manipulation methods (`.emitText()`, `.validate()`, etc.).
+ * - an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
+ * 	- {@link TAG.ModuleTags|tags}
+ * 	- {@link GLOBAL.ModuleGlobals|globals}
+ * 	- (no `memories`)
+ * 	- {@link TABLE.ModuleTables|tables}
+ * 	- {@link FUNCTION.ModuleFunctions|functions}
+ * 	- {@link DATA_SEGMENT.ModuleDataSegments|dataSegments}
+ * 	- {@link ELEMENT_SEGMENT.ModuleElementSegments|elementSegments}
+ * 	- {@link IMPORT.ModuleImports|imports}
+ * 	- {@link EXPORT.ModuleExports|exports}
+ */
 export class Module {
-	static readonly Tag = Tag;
-	static readonly Global = Global;
-	static readonly Memory = Memory;
-	static readonly Table = Table;
-	static readonly Function = BinaryenFunction;
-	static readonly DataSegment = DataSegment;
-	static readonly ElementSegment = ElementSegment;
-	static readonly Export = Export;
-
-
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	// ## Expression Creation ## //
@@ -160,14 +154,14 @@ export class Module {
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
-	readonly tags = new ModuleTags(this);
-	readonly globals = new ModuleGlobals(this);
-	readonly tables = new ModuleTables(this);
-	readonly functions = new ModuleFunctions(this);
-	readonly dataSegments = new ModuleDataSegments(this);
-	readonly elementSegments = new ModuleElementSegments(this);
-	readonly imports = new ModuleImports(this);
-	readonly exports = new ModuleExports(this);
+	readonly tags = new TAG.ModuleTags(this);
+	readonly globals = new GLOBAL.ModuleGlobals(this);
+	readonly tables = new TABLE.ModuleTables(this);
+	readonly functions = new FUNCTION.ModuleFunctions(this);
+	readonly dataSegments = new DATA_SEGMENT.ModuleDataSegments(this);
+	readonly elementSegments = new ELEMENT_SEGMENT.ModuleElementSegments(this);
+	readonly imports = new IMPORT.ModuleImports(this);
+	readonly exports = new EXPORT.ModuleExports(this);
 
 	/* eslint-disable @stylistic/brace-style */
 	/** @deprecated Use `this.tags.add` instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
@@ -270,12 +264,12 @@ export class Module {
 		return Boolean(BinaryenObj["_BinaryenHasMemory"](this.ptr));
 	}
 
-	getMemoryInfo(name: string): Memory {
-		return new Memory(this, name);
+	getMemoryInfo(name: string): MEMORY.Memory {
+		return new MEMORY.Memory(this, name);
 	}
 
-	getDataSegmentInfo(segment: DataSegmentRef): DataSegment {
-		return new DataSegment(this, segment);
+	getDataSegmentInfo(segment: DataSegmentRef): DATA_SEGMENT.DataSegment {
+		return new DATA_SEGMENT.DataSegment(this, segment);
 	}
 
 	getStart(): FunctionRef {
@@ -419,4 +413,27 @@ export class Module {
 	copyExpression(expr: ExpressionRef): ExpressionRef {
 		return BinaryenObj["_BinaryenExpressionCopy"](expr, this.ptr);
 	}
+}
+
+
+
+// eslint-disable-next-line no-redeclare
+export namespace Module {
+	export type Tag = TAG.Tag;
+	export type Global = GLOBAL.Global;
+	export type Memory = MEMORY.Memory;
+	export type Table = TABLE.Table;
+	export type Function = FUNCTION.Function;
+	export type DataSegment = DATA_SEGMENT.DataSegment;
+	export type ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	export type Export = EXPORT.Export;
+
+	export const Tag = TAG.Tag;
+	export const Global = GLOBAL.Global;
+	export const Memory = MEMORY.Memory;
+	export const Table = TABLE.Table;
+	export const Function = FUNCTION.Function;
+	export const DataSegment = DATA_SEGMENT.DataSegment;
+	export const ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	export const Export = EXPORT.Export;
 }
