@@ -1,5 +1,8 @@
 export {Expression} from "./Expression.ts";
 
+// ## Parametric ## //
+export {Drop} from "./Drop.ts";
+
 // ## Control ## //
 export {Block} from "./Block.ts";
 

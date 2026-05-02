@@ -4,7 +4,6 @@ import {
 import {
 	ExpressionId,
 	type ExpressionRef,
-	type Type,
 } from "../../constants.ts";
 import type {
 	Module,
@@ -15,18 +14,18 @@ import {
 
 
 
-export class LocalGet extends Expression {
-	static localGet = function (this: Module, index: number, typ: Type): ExpressionRef {
-		return BinaryenObj["_BinaryenLocalGet"](this.ptr, index, typ);
+export class Drop extends Expression {
+	static drop = function (this: Module, value: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenDrop"](this.ptr, value);
 	};
 
 
 	constructor(expr: ExpressionRef) {
-		super(ExpressionId.LocalGet, expr);
+		super(ExpressionId.Drop, expr);
 	}
 
 
 	// FIXME: post.js has converted all methods starting with `get` to getters and `set` to setters
-	getIndex() {}
-	setIndex() {}
+	getValue() {}
+	setValue() {}
 }

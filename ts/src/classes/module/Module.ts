@@ -29,15 +29,8 @@ import {
 	strToStack,
 } from "../../utils.ts";
 import {
-	block,
-} from "../expression/Block.ts";
-import {
-	localGet,
-} from "../expression/LocalGet.ts";
-import {
-	localSet,
-	localTee,
-} from "../expression/LocalSet.ts";
+	expressionCreator,
+} from "../expression/expression-creators.ts";
 import * as DATA_SEGMENT from "./DataSegment.ts";
 import * as ELEMENT_SEGMENT from "./ElementSegment.ts";
 import * as EXPORT from "./Export.ts";
@@ -130,18 +123,8 @@ export enum Feature {
 export class Module {
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
-	// ## Expression Creation ## //
-	// ### Control Instructions ### //
-	block = block;
-
-	// ### Variable Instructions ### //
-	get local() {
-		return {
-			get: localGet.bind(this),
-			set: localSet.bind(this),
-			tee: localTee.bind(this),
-		};
-	}
+	/** This module’s expression creator. */
+	readonly x = expressionCreator(this); // “x” for “expression”
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html

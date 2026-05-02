@@ -16,6 +16,15 @@ import {
 
 
 export class LocalSet extends Expression {
+	static localSet = function (this: Module, index: number, value: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenLocalSet"](this.ptr, index, value);
+	};
+
+	static localTee = function (this: Module, index: number, value: ExpressionRef, typ: Type): ExpressionRef {
+		return BinaryenObj["_BinaryenLocalTee"](this.ptr, index, value, typ);
+	};
+
+
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.LocalSet, expr);
 	}
@@ -27,14 +36,4 @@ export class LocalSet extends Expression {
 	isTee() {}
 	getValue() {}
 	setValue() {}
-}
-
-
-
-export function localSet(this: Module, index: number, value: ExpressionRef): ExpressionRef {
-	return BinaryenObj["_BinaryenLocalSet"](this.ptr, index, value);
-}
-
-export function localTee(this: Module, index: number, value: ExpressionRef, type: Type): ExpressionRef {
-	return BinaryenObj["_BinaryenLocalTee"](this.ptr, index, value, type);
 }
