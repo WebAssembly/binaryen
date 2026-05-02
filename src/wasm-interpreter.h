@@ -120,7 +120,9 @@ public:
   }
 
   friend std::ostream& operator<<(std::ostream& o, const Flow& flow) {
-    o << "(flow " << (flow.breakTo.is() ? flow.breakTo.str : "-") << " : {";
+    o << "(flow "
+      << (flow.breakTo.is() ? std::string_view(flow.breakTo.str) : "-")
+      << " : {";
     for (size_t i = 0; i < flow.values.size(); ++i) {
       if (i > 0) {
         o << ", ";
