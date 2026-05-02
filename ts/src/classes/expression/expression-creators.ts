@@ -9,6 +9,7 @@ import {
 	Drop,
 	LocalGet,
 	LocalSet,
+	Loop,
 	Select,
 } from "./index.ts";
 
@@ -33,6 +34,8 @@ function control(mod: Module) {
 	return {
 		/** Creates a `(block)`. */
 		block: Block.block.bind(mod),
+		/** Creates a loop. */
+		loop: Loop.loop.bind(mod),
 	} as const;
 }
 
