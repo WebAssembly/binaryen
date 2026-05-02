@@ -103,6 +103,7 @@ export class ModuleMemories {
 		});
 	}
 
+	/** Returns whether the module has a memory. */
 	has(): boolean {
 		return Boolean(BinaryenObj["_BinaryenHasMemory"](this.mod.ptr));
 	}

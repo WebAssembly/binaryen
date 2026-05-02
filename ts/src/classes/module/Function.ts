@@ -100,6 +100,7 @@ export {BinaryenFunction as Function};
 export class ModuleFunctions {
 	constructor(private readonly mod: Module) {}
 
+	/** Adds a function. `varTypes` indicate additional locals, in the given order. */
 	add(name: string, params: Type, results: Type, varTypes: readonly Type[], body: ExpressionRef): FunctionRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddFunction"](
 			this.mod.ptr,
@@ -112,18 +113,22 @@ export class ModuleFunctions {
 		));
 	}
 
+	/** Gets a function by name. */
 	get(name: string): FunctionRef {
 		return preserveStack(() => BinaryenObj["_BinaryenGetFunction"](this.mod.ptr, strToStack(name)));
 	}
 
+	/** Gets a function by index. */
 	getByIndex(index: number): FunctionRef {
 		return BinaryenObj["_BinaryenGetFunctionByIndex"](this.mod.ptr, index);
 	}
 
+	/** Gets the number of functions within the module. */
 	count(): number {
 		return BinaryenObj["_BinaryenGetNumFunctions"](this.mod.ptr);
 	}
 
+	/** Removes a function by name. */
 	remove(name: string): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenRemoveFunction"](this.mod.ptr, strToStack(name));

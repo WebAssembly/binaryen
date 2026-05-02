@@ -46,6 +46,7 @@ export class ElementSegment {
 export class ModuleElementSegments {
 	constructor(private readonly mod: Module) {}
 
+	/** Adds an active element segment. */
 	addActive(table: string, name: string, funcNames: readonly string[], offset: ExpressionRef): ElementSegmentRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddActiveElementSegment"](
 			this.mod.ptr,
@@ -57,6 +58,7 @@ export class ModuleElementSegments {
 		));
 	}
 
+	/** Adds a passive element segment. */
 	addPassive(name: string, funcNames: readonly string[]): ElementSegmentRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddPassiveElementSegment"](
 			this.mod.ptr,
@@ -66,18 +68,22 @@ export class ModuleElementSegments {
 		));
 	}
 
+	/** Gets an element segment by name. */
 	get(name: string): ElementSegmentRef {
 		return preserveStack(() => BinaryenObj["_BinaryenGetElementSegment"](this.mod.ptr, strToStack(name)));
 	}
 
+	/** Gets an element segment by index. */
 	getByIndex(index: number): ElementSegmentRef {
 		return BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.mod.ptr, index);
 	}
 
+	/** Gets the number of element segments within the module. */
 	count(): number {
 		return BinaryenObj["_BinaryenGetNumElementSegments"](this.mod.ptr);
 	}
 
+	/** Removes an element segment by name. */
 	remove(name: string): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenRemoveElementSegment"](this.mod.ptr, strToStack(name));

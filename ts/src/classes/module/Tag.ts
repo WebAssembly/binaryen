@@ -40,14 +40,17 @@ export class Tag {
 export class ModuleTags {
 	constructor(private readonly mod: Module) {}
 
+	/** Adds a tag. */
 	add(name: string, params: Type, results: Type): TagRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddTag"](this.mod.ptr, strToStack(name), params, results));
 	}
 
+	/** Gets a tag by name. */
 	get(name: string): TagRef {
 		return preserveStack(() => BinaryenObj["_BinaryenGetTag"](this.mod.ptr, strToStack(name)));
 	}
 
+	/** Removes a tag by name. */
 	remove(name: string): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenRemoveTag"](this.mod.ptr, strToStack(name));

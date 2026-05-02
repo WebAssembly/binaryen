@@ -43,22 +43,27 @@ export class Global {
 export class ModuleGlobals {
 	constructor(private readonly mod: Module) {}
 
+	/** Adds a global instance variable. */
 	add(name: string, type: Type, mutable: boolean, init: ExpressionRef): GlobalRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddGlobal"](this.mod.ptr, strToStack(name), type, mutable, init));
 	}
 
+	/** Gets a global by name. */
 	get(name: string): GlobalRef {
 		return preserveStack(() => BinaryenObj["_BinaryenGetGlobal"](this.mod.ptr, strToStack(name)));
 	}
 
+	/** Gets a global by index. */
 	getByIndex(index: number): GlobalRef {
 		return BinaryenObj["_BinaryenGetGlobalByIndex"](this.mod.ptr, index);
 	}
 
+	/** Gets the number of globals within the module. */
 	count(): number {
 		return BinaryenObj["_BinaryenGetNumGlobals"](this.mod.ptr);
 	}
 
+	/** Removes a global by name. */
 	remove(name: string): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenRemoveGlobal"](this.mod.ptr, strToStack(name));

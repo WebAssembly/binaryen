@@ -215,11 +215,19 @@ export class Module {
 		return new DATA_SEGMENT.DataSegment(this, segment);
 	}
 
+	// TODO: turn this into a getter/setter
+	/** Gets the start function, if any. */
 	getStart(): FunctionRef {
 		return BinaryenObj["_BinaryenGetStart"](this.ptr);
 	}
 
+	/** Sets the start function. */
+	setStart(start: FunctionRef): void {
+		BinaryenObj["_BinaryenSetStart"](this.ptr, start);
+	}
+
 	// ## Binaryen Operations ## //
+	/** Returns the module in Binaryen’s s-expression text format (not official stack-style text format). */
 	emitText(): string {
 		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteText"](this.ptr);
 		const text = UTF8ToString(textPtr);
@@ -229,6 +237,7 @@ export class Module {
 		return text;
 	}
 
+	/** Returns the module in official stack-style text format. */
 	emitStackIR(): string {
 		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteStackIR"](this.ptr);
 		const text = UTF8ToString(textPtr);
@@ -238,6 +247,7 @@ export class Module {
 		return text;
 	}
 
+	/** Returns the [asm.js](http://asmjs.org/) representation of the module. */
 	emitAsmjs(): string {
 		let returned = "";
 		const saved = out;
@@ -249,7 +259,9 @@ export class Module {
 		return returned;
 	}
 
+	/** Returns the module in binary format. */
 	emitBinary(): Uint8Array;
+	/** Returns the module in binary format with a given source map. */
 	emitBinary(sourceMapUrl: string): {binary: Uint8Array, sourceMap: string};
 	emitBinary(sourceMapUrl?: string): Uint8Array | {binary: Uint8Array, sourceMap: string} {
 		return preserveStack(() => {
@@ -273,10 +285,19 @@ export class Module {
 		});
 	}
 
+	// TODO: turn this into a getter/setter
+	/**
+	 * Gets the WebAssembly features enabled for this module.
+	 * Features are a bitmask of `Feature` enum members.
+	 */
 	getFeatures(): Feature {
 		return BinaryenObj["_BinaryenModuleGetFeatures"](this.ptr);
 	}
 
+	/**
+	 * Sets the WebAssembly features enabled for this module.
+	 * Features are a bitmask of `Feature` enum members.
+	 */
 	setFeatures(features: Feature): void {
 		BinaryenObj["_BinaryenModuleSetFeatures"](this.ptr, features);
 	}
@@ -293,24 +314,29 @@ export class Module {
 		});
 	}
 
+	/** Adds a custom section to the binary */
 	addCustomSection(name: string, contents: Uint8Array): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length);
 		});
 	}
 
+	/** Runs the module in the interpreter, calling the start function. */
 	interpret(): void {
 		BinaryenObj["_BinaryenModuleInterpret"](this.ptr);
 	}
 
+	/** Validates the module. Returns `true` if valid, otherwise prints validation errors and returns `false`. */
 	validate(): number {
 		return BinaryenObj["_BinaryenModuleValidate"](this.ptr);
 	}
 
+	/** Optimizes the module using the default optimization passes. */
 	optimize(): void {
 		BinaryenObj["_BinaryenModuleOptimize"](this.ptr);
 	}
 
+	/** Optimizes a single function using the default optimization passes. */
 	optimizeFunction(func: FunctionRef | string): void {
 		if (typeof func === "string") {
 			func = this.functions.get(func);
@@ -318,16 +344,19 @@ export class Module {
 		BinaryenObj["_BinaryenFunctionOptimize"](func, this.ptr);
 	}
 
+	/** [description] */
 	updateMaps(): void {
 		BinaryenObj["_BinaryenModuleUpdateMaps"](this.ptr);
 	}
 
+	/** Runs the specified passes on the module. */
 	runPasses(passes: readonly string[]): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenModuleRunPasses"](this.ptr, i32sToStack(passes.map(strToStack)), passes.length);
 		});
 	}
 
+	/** Runs the specified passes on a single function. */
 	runPassesOnFunction(func: string | FunctionRef, passes: readonly string[]): void {
 		if (typeof func === "string") {
 			func = this.functions.get(func);
@@ -337,22 +366,27 @@ export class Module {
 		});
 	}
 
+	/** Releases the resources held by the module once it isn't needed anymore. */
 	dispose(): void {
 		BinaryenObj["_BinaryenModuleDispose"](this.ptr);
 	}
 
+	/** Adds a debug info file name to the module and returns its index. */
 	addDebugInfoFileName(filename: string): number {
 		return preserveStack(() => BinaryenObj["_BinaryenModuleAddDebugInfoFileName"](this.ptr, strToStack(filename)));
 	}
 
+	/** Gets the name of the debug info file at the specified index. */
 	getDebugInfoFileName(index: number): string {
 		return UTF8ToString(BinaryenObj["_BinaryenModuleGetDebugInfoFileName"](this.ptr, index));
 	}
 
+	/** Sets the debug location of the specified `ExpressionRef` within the specified `FunctionRef`. */
 	setDebugLocation(func: FunctionRef, expr: ExpressionRef, fileIndex: number, lineNumber: number, columnNumber: number): void {
 		BinaryenObj["_BinaryenFunctionSetDebugLocation"](func, expr, fileIndex, lineNumber, columnNumber);
 	}
 
+	/** Creates a deep copy of an expression. */
 	copyExpression(expr: ExpressionRef): ExpressionRef {
 		return BinaryenObj["_BinaryenExpressionCopy"](expr, this.ptr);
 	}

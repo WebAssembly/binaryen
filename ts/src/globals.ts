@@ -86,6 +86,7 @@ function handleFatalError<T>(func: () => T): T {
 // ## General Binaryen Functions ## //
 /** Probably used in `BinaryenObj["_BinaryenExpressionPrint"]`. */
 declare let out: any;
+/** Emits the expression in Binaryen’s s-expression text format (not official stack-style text format). */
 export function emitText(expr: ExpressionRef): string {
 	let returned = "";
 	const saved = out;
@@ -97,6 +98,7 @@ export function emitText(expr: ExpressionRef): string {
 	return returned;
 }
 
+/** Creates a module from binary data. */
 export function readBinary(data: Uint8Array): Module {
 	const buffer = _malloc(data.length);
 	HEAP8.set(data, buffer);
@@ -113,6 +115,7 @@ export function readBinaryWithFeatures(data: Uint8Array, features: Feature): Mod
 	return wrapModule(ptr);
 }
 
+/** Creates a module from Binaryen’s s-expression text format (not official stack-style text format). */
 export function parseText(text: string): Module {
 	const buffer = _malloc(text.length + 1);
 	stringToAscii(text, buffer);
@@ -177,21 +180,26 @@ export function getHeapType(typ: Type): HeapType {
 	return BinaryenObj["_BinaryenTypeGetHeapType"](typ);
 }
 
-/**
- * A misnomer — returns not a unique “ID”, but the “kind” of the expression.
- */
+/** A misnomer — returns not a unique “ID”, but the “kind” of the expression. */
 export function getExpressionId(expr: ExpressionRef): ExpressionId {
 	return BinaryenObj["_BinaryenExpressionGetId"](expr);
 }
 
+/** Gets the type of the specified expression. */
 export function getExpressionType(expr: ExpressionRef): Type {
 	return BinaryenObj["_BinaryenExpressionGetType"](expr);
 }
 
+/**
+ * Obtains information about an expression.
+ * Additional properties depend on the expression’s ID
+ * and are usually equivalent to the respective parameters when creating such an expression.
+ */
 export function getExpressionInfo(expr: ExpressionRef): Expression {
 	return new Expression(getExpressionId(expr), expr);
 }
 
+/** Gets the side effects of the specified expression. */
 export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
 	return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, mod.ptr);
 }

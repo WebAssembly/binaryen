@@ -19,10 +19,12 @@ export type ExpressionRef = number;
 // ### Module Components ### //
 export type TagRef = number;
 export type GlobalRef = number;
+// no `MemoryRef`
 export type TableRef = number;
 export type FunctionRef = number;
 export type DataSegmentRef = number;
 export type ElementSegmentRef = number;
+// no `ImportRef`
 export type ExportRef = number;
 
 // ### Binaryen Tools ### //
@@ -44,10 +46,15 @@ export const none: Type = BinaryenObj["_BinaryenTypeNone"]();
 export const auto: Type = BinaryenObj["_BinaryenTypeAuto"]();
 
 // ### Number & Vector Types ### //
+/** 32-bit integer. */
 export const i32: Type = BinaryenObj["_BinaryenTypeInt32"]();
+/** 64-bit integer. */
 export const i64: Type = BinaryenObj["_BinaryenTypeInt64"]();
+/** 64-bit float. */
 export const f32: Type = BinaryenObj["_BinaryenTypeFloat32"]();
+/** 64-bit float. */
 export const f64: Type = BinaryenObj["_BinaryenTypeFloat64"]();
+/** 128-bit vector (SIMD). */
 export const v128: Type = BinaryenObj["_BinaryenTypeVec128"]();
 
 // ### Reference Types ### //
@@ -77,9 +84,9 @@ export const nullfuncref: Type = BinaryenObj["_BinaryenTypeNullFuncref"]();
 export const nullexternref: Type = BinaryenObj["_BinaryenTypeNullExternref"]();
 
 // ### Packed Types ### //
-export const notPacked: Type = BinaryenObj["_BinaryenPackedTypeNotPacked"]();
-export const i8: Type = BinaryenObj["_BinaryenPackedTypeInt8"]();
-export const i16: Type = BinaryenObj["_BinaryenPackedTypeInt16"]();
+export const notPacked: PackedType = BinaryenObj["_BinaryenPackedTypeNotPacked"]();
+export const i8: PackedType = BinaryenObj["_BinaryenPackedTypeInt8"]();
+export const i16: PackedType = BinaryenObj["_BinaryenPackedTypeInt16"]();
 
 // ### Proposed Types ### //
 // These types are not yet in the WASM spec. Move them to their respective sections once finalized.
@@ -680,6 +687,7 @@ export enum MemoryOrder {
 
 
 
+/** Expression side-effects. */
 export enum SideEffect {
 	None = BinaryenObj["_BinaryenSideEffectNone"](),
 	Branches = BinaryenObj["_BinaryenSideEffectBranches"](),

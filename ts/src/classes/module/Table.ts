@@ -112,18 +112,22 @@ export class Table {
 export class ModuleTables {
 	constructor(private readonly mod: Module) {}
 
+	/** Adds a table. */
 	add(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef): TableRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddTable"](this.mod.ptr, strToStack(name), initial, maximum, type, init ?? 0));
 	}
 
+	/** Gets a table by name. */
 	get(name: string): TableRef {
 		return preserveStack(() => BinaryenObj["_BinaryenGetTable"](this.mod.ptr, strToStack(name)));
 	}
 
+	/** Gets a table by index. */
 	getByIndex(index: number): TableRef {
 		return BinaryenObj["_BinaryenGetTableByIndex"](this.mod.ptr, index);
 	}
 
+	/** Gets the number of table segments within the module. */
 	getSegments(table: TableRef): ElementSegmentRef[] {
 		const numElementSegments = BinaryenObj["_BinaryenGetNumElementSegments"](this.mod.ptr);
 		const tableName = UTF8ToString(BinaryenObj["_BinaryenTableGetName"](table));
@@ -138,10 +142,12 @@ export class ModuleTables {
 		return ret;
 	}
 
+	/** Gets the number of tables within the module. */
 	count(): number {
 		return BinaryenObj["_BinaryenGetNumTables"](this.mod.ptr);
 	}
 
+	/** Removes a table by name. */
 	remove(name: string): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenRemoveTable"](this.mod.ptr, strToStack(name));

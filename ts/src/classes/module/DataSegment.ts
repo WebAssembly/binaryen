@@ -50,14 +50,17 @@ export class DataSegment {
 export class ModuleDataSegments {
 	constructor(private readonly mod: Module) {}
 
+	/** Gets a data segment by name. */
 	get(name: string): DataSegmentRef {
 		return preserveStack(() => BinaryenObj["_BinaryenGetDataSegment"](this.mod.ptr, strToStack(name)));
 	}
 
+	/** Gets a data segment by index. */
 	getByIndex(index: number): DataSegmentRef {
 		return BinaryenObj["_BinaryenGetDataSegmentByIndex"](this.mod.ptr, index);
 	}
 
+	/** Gets the number of data segments within the module. */
 	count(): number {
 		return BinaryenObj["_BinaryenGetNumDataSegments"](this.mod.ptr);
 	}
