@@ -1,13 +1,31 @@
 import {
+	_free,
+	_malloc,
 	BinaryenObj,
 	UTF8ToString,
 } from "../../-pre.ts";
+import type {
+	ExpressionRef,
+} from "../../constants.ts";
 import {
+	HEAP8,
+	i32sToStack,
+	preserveStack,
 	strToStack,
 } from "../../utils.ts";
 import type {
 	Module,
 } from "./Module.ts";
+
+
+
+/** Similar to a `DataSegment` but with some minor differences. */
+interface MemorySegment {
+	name?: string;
+	offset: ExpressionRef;
+	data: Uint8Array;
+	passive: boolean;
+}
 
 
 
@@ -30,5 +48,62 @@ export class Memory {
 		if (BinaryenObj["_BinaryenMemoryHasMax"](mod.ptr, strToStack(name))) {
 			this.max = BinaryenObj["_BinaryenMemoryGetMax"](mod.ptr, strToStack(name));
 		}
+	}
+}
+
+
+
+/** Methods for manipulating memories in a WASM module. */
+export class ModuleMemories {
+	constructor(private readonly mod: Module) {}
+
+	/** Sets the memory. There’s just one memory for now, using name "0". Providing `exportName` also creates a memory export. */
+	set(
+		initial: number,
+		maximum: number,
+		exportName: string,
+		segments: readonly MemorySegment[] = [],
+		shared: boolean = false,
+		memory64: boolean = false,
+		internalName?: string,
+	): void {
+		return preserveStack(() => {
+			const names: number[] = [];
+			const datas: number[] = [];
+			const passives: number[] = [];
+			const offsets: number[] = [];
+			const lengths: number[] = [];
+			for (let i = 0; i < segments.length; i++) {
+				const {name, data, passive, offset} = segments[i];
+				names[i] = strToStack(name);
+				datas[i] = _malloc(data.length);
+				passives[i] = Number(passive);
+				offsets[i] = offset;
+				HEAP8.set(data, datas[i]);
+				lengths[i] = data.length;
+			}
+			BinaryenObj["_BinaryenSetMemory"](
+				this.mod.ptr,
+				initial,
+				maximum,
+				strToStack(exportName),
+				i32sToStack(names),
+				i32sToStack(datas),
+				i32sToStack(passives),
+				i32sToStack(offsets),
+				i32sToStack(lengths),
+				segments.length,
+				shared,
+				memory64,
+				strToStack(internalName),
+			);
+			for (const dataptr of datas) {
+				_free(dataptr);
+			}
+		});
+	}
+
+	has(): boolean {
+		return Boolean(BinaryenObj["_BinaryenHasMemory"](this.mod.ptr));
 	}
 }

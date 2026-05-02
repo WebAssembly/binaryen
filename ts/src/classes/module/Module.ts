@@ -1,7 +1,6 @@
 import {
 	_BinaryenSizeofAllocateAndWriteResult,
 	_free,
-	_malloc,
 	BinaryenObj,
 	UTF8ToString,
 	stackAlloc,
@@ -19,7 +18,6 @@ import {
 	replacedBy,
 } from "../../lib.ts";
 import {
-	HEAP8,
 	HEAPU8,
 	HEAPU32,
 	i8sToStack,
@@ -51,16 +49,6 @@ import * as TAG from "./Tag.ts";
 
 /** Probably used in `BinaryenObj["_BinaryenModulePrintAsmjs"]`. */
 declare let out: any;
-
-
-
-/** Similar to a `DataSegment` but with some minor differences. */
-interface MemorySegment {
-	name?: string;
-	offset: ExpressionRef;
-	data: Uint8Array;
-	passive: boolean;
-}
 
 
 
@@ -128,7 +116,7 @@ export enum Feature {
  * - an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
  * 	- {@link TAG.ModuleTags|tags}
  * 	- {@link GLOBAL.ModuleGlobals|globals}
- * 	- (no `memories`)
+ * 	- {@link MEMORY.ModuleMemories|memories}
  * 	- {@link TABLE.ModuleTables|tables}
  * 	- {@link FUNCTION.ModuleFunctions|functions}
  * 	- {@link DATA_SEGMENT.ModuleDataSegments|dataSegments}
@@ -156,6 +144,7 @@ export class Module {
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
 	readonly tags = new TAG.ModuleTags(this);
 	readonly globals = new GLOBAL.ModuleGlobals(this);
+	readonly memories = new MEMORY.ModuleMemories(this);
 	readonly tables = new TABLE.ModuleTables(this);
 	readonly functions = new FUNCTION.ModuleFunctions(this);
 	readonly dataSegments = new DATA_SEGMENT.ModuleDataSegments(this);
@@ -173,6 +162,9 @@ export class Module {
 	/** @deprecated Use `this.globals.getByIndex` instead. */ @replacedBy("`this.globals.getByIndex`") getGlobalByIndex(index: number) { return this.globals.getByIndex(index); }
 	/** @deprecated Use `this.globals.count` instead. */ @replacedBy("`this.globals.count`") getNumGlobals() { return this.globals.count(); }
 	/** @deprecated Use `this.globals.remove` instead. */ @replacedBy("`this.globals.remove`") removeGlobal(name: string) { return this.globals.remove(name); }
+
+	/** @deprecated Use `this.memories.set` instead. */ @replacedBy("`this.memories.set`") setMemory(initial: number, maximum: number, exportName: string, segments?: readonly any[], shared?: boolean, memory64?: boolean, internalName?: string) { return this.memories.set(initial, maximum, exportName, segments, shared, memory64, internalName); }
+	/** @deprecated Use `this.memories.has` instead. */ @replacedBy("`this.memories.has`") hasMemory() { return this.memories.has(); }
 
 	/** @deprecated Use `this.tables.add` instead. */ @replacedBy("`this.tables.add`") addTable(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef) { return this.tables.add(name, initial, maximum, type, init); }
 	/** @deprecated Use `this.tables.get` instead. */ @replacedBy("`this.tables.get`") getTable(name: string) { return this.tables.get(name); }
@@ -214,55 +206,6 @@ export class Module {
 	/** @deprecated Use `this.exports.count` instead. */ @replacedBy("`this.exports.count`") getNumExports() { return this.exports.count(); }
 	/** @deprecated Use `this.exports.remove` instead. */ @replacedBy("`this.exports.remove`") removeExport(externalName: string) { return this.exports.remove(externalName); }
 	/* eslint-enable @stylistic/brace-style */
-
-	setMemory(
-		initial: number,
-		maximum: number,
-		exportName: string,
-		segments: readonly MemorySegment[] = [],
-		shared: boolean = false,
-		memory64: boolean = false,
-		internalName?: string,
-	): void {
-		return preserveStack(() => {
-			const names: number[] = [];
-			const datas: number[] = [];
-			const passives: number[] = [];
-			const offsets: number[] = [];
-			const lengths: number[] = [];
-			for (let i = 0; i < segments.length; i++) {
-				const {name, data, passive, offset} = segments[i];
-				names[i] = strToStack(name);
-				datas[i] = _malloc(data.length);
-				passives[i] = Number(passive);
-				offsets[i] = offset;
-				HEAP8.set(data, datas[i]);
-				lengths[i] = data.length;
-			}
-			BinaryenObj["_BinaryenSetMemory"](
-				this.ptr,
-				initial,
-				maximum,
-				strToStack(exportName),
-				i32sToStack(names),
-				i32sToStack(datas),
-				i32sToStack(passives),
-				i32sToStack(offsets),
-				i32sToStack(lengths),
-				segments.length,
-				shared,
-				memory64,
-				strToStack(internalName),
-			);
-			for (const dataptr of datas) {
-				_free(dataptr);
-			}
-		});
-	}
-
-	hasMemory(): boolean {
-		return Boolean(BinaryenObj["_BinaryenHasMemory"](this.ptr));
-	}
 
 	getMemoryInfo(name: string): MEMORY.Memory {
 		return new MEMORY.Memory(this, name);
