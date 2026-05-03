@@ -22,7 +22,7 @@ export enum ExpressionRunnerFlag {
 
 
 export class ExpressionRunner {
-	/** @deprecated Static field `ExpressionRunner.Flags` is now a standalone enum `ExpressionRunnerFlag`. */
+	/** @deprecated Static field `ExpressionRunner.Flags` is now a standalone enum {@link ExpressionRunnerFlag}. */
 	static Flags = ExpressionRunnerFlag;
 
 
