@@ -6,7 +6,8 @@ If you rely on Binaryen.TS and spot an issue, please consider sending a PR our w
 ### Contents
 - [Top-Level Symbols](#top-level-symbols)
 - [Module Manipulation](#module-manipulation)
-- [Expression Construction](#expression-construction)
+- [Expression Building](#expression-building)
+- [Expression Manipulation](#expression-manipulation)
 - [Deprecations](#️-deprecations-renames-and-moves)
 
 
