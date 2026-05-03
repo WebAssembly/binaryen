@@ -1,6 +1,6 @@
 import {
 	BinaryenObj,
-} from "../../-pre.ts";
+} from "../../-pre";
 import type {
 	ExpressionRef,
 } from "../../constants.ts";
@@ -32,7 +32,7 @@ function parametric(mod: Module) {
 	} as const;
 }
 /** @useDeclaredType */
-export type ExpressionCreatorParametric = ReturnType<typeof parametric>;
+export type ExpressionBuilderParametric = ReturnType<typeof parametric>;
 
 
 
@@ -49,7 +49,7 @@ function control(mod: Module) {
 	} as const;
 }
 /** @useDeclaredType */
-export type ExpressionCreatorControl = ReturnType<typeof control>;
+export type ExpressionBuilderControl = ReturnType<typeof control>;
 
 
 
@@ -66,22 +66,22 @@ function variable(mod: Module) {
 	} as const;
 }
 /** @useDeclaredType */
-export type ExpressionCreatorVariable = ReturnType<typeof variable>;
+export type ExpressionBuilderVariable = ReturnType<typeof variable>;
 
 
 
 /**
- * @expandType ExpressionCreatorParametric
- * @expandType ExpressionCreatorControl
- * @expandType ExpressionCreatorVariable
+ * @expandType ExpressionBuilderParametric
+ * @expandType ExpressionBuilderControl
+ * @expandType ExpressionBuilderVariable
  */
-export type ExpressionCreator = (
-	& ExpressionCreatorParametric
-	& ExpressionCreatorControl
-	& ExpressionCreatorVariable
+export type ExpressionBuilder = (
+	& ExpressionBuilderParametric
+	& ExpressionBuilderControl
+	& ExpressionBuilderVariable
 );
 /** Methods for creating expressions in a WASM module. */
-export function expressionCreator(mod: Module): ExpressionCreator {
+export function expressionBuilder(mod: Module): ExpressionBuilder {
 	return {
 		...parametric(mod),
 		...control(mod),

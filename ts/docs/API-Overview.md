@@ -119,7 +119,7 @@ Objects:
 	- `new Module.Export(ref: ExportRef)`:                        an object containing information about an **Export**
 
 - Properties of `Module` instances (see full list of methods in generated docs):
-	- `Module#x`:               [create expressions](#expression-construction) (“x” for “expression”)
+	- `Module#x`:               [build expressions](#expression-building) (“x” for “expression”)
 	- `Module#tags`:            **Tag** manipulation
 	- `Module#globals`:         **Global** manipulation
 	- `Module#memories`:        **Memory** manipulation
@@ -132,7 +132,7 @@ Objects:
 
 
 
-## Expression Construction
+## Expression Building
 Each of these methods returns an `ExpressionRef`.
 
 ### Parametric Instructions

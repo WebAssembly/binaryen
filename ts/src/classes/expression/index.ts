@@ -30,8 +30,8 @@ export {Const} from "./Const.ts";
 
 
 export type {
-	ExpressionCreator,
-	ExpressionCreatorParametric,
-	ExpressionCreatorControl,
-	ExpressionCreatorVariable,
-} from "./expression-creators.ts";
+	ExpressionBuilder,
+	ExpressionBuilderParametric,
+	ExpressionBuilderControl,
+	ExpressionBuilderVariable,
+} from "./expression-builders.ts";

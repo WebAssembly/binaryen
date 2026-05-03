@@ -29,8 +29,8 @@ import {
 	strToStack,
 } from "../../utils.ts";
 import {
-	expressionCreator,
-} from "../expression/expression-creators.ts";
+	expressionBuilder,
+} from "../expression/expression-builders.ts";
 import * as DATA_SEGMENT from "./DataSegment.ts";
 import * as ELEMENT_SEGMENT from "./ElementSegment.ts";
 import * as EXPORT from "./Export.ts";
@@ -136,7 +136,7 @@ export class Module {
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	/**
-	 * This module’s expression creator.
+	 * This module’s expression builder.
 	 *
 	 * N.B.: For convenience, developers may want to destructure the module to free `x`:
 	 * ```ts
@@ -145,7 +145,7 @@ export class Module {
 	 * x.i32.add();
 	 * ```
 	 */
-	readonly x = expressionCreator(this);
+	readonly x = expressionBuilder(this);
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
