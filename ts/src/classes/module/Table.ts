@@ -59,7 +59,7 @@ export class Table {
 	}
 
 	/**
-	 * @return does this table have a maximum number of pages?
+	 * @returns does this table have a maximum number of pages?
 	 */
 	hasMax(): boolean {
 		return Boolean(BinaryenObj["_BinaryenTableHasMax"](this[THIS_PTR]));

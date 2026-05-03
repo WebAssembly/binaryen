@@ -33,7 +33,7 @@ export class Relooper {
 	/**
 	 * Adds a new block to the CFG, containing the provided code as its body.
 	 * @param code the block expression
-	 * @return a reference to the block
+	 * @returns a reference to the block
 	 */
 	addBlock(code: ExpressionRef): RelooperBlockRef {
 		return BinaryenObj["_RelooperAddBlock"](this.#ptr, code);

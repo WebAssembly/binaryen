@@ -28,7 +28,7 @@ export const THIS_PTR: unique symbol = Symbol();
 /**
  * Exports friendly API methods.
  * @param func [description]
- * @return [description]
+ * @returns [description]
  */
 export function preserveStack<T>(func: () => T): T {
 	try {
@@ -42,7 +42,7 @@ export function preserveStack<T>(func: () => T): T {
 /**
  * [description]
  * @param str [description]
- * @return [description]
+ * @returns [description]
  */
 export function strToStack(str?: string): number {
 	return str ? stringToUTF8OnStack(str) : 0;
@@ -51,7 +51,7 @@ export function strToStack(str?: string): number {
 /**
  * [description]
  * @param i32s [description]
- * @return [description]
+ * @returns [description]
  */
 export function i32sToStack(i32s: readonly number[]): number {
 	const ret = stackAlloc(i32s.length << 2);
@@ -62,7 +62,7 @@ export function i32sToStack(i32s: readonly number[]): number {
 /**
  * [description]
  * @param i8s [description]
- * @return [description]
+ * @returns [description]
  */
 export function i8sToStack(i8s: readonly number[]): number {
 	const ret = stackAlloc(i8s.length);
@@ -77,7 +77,7 @@ export function i8sToStack(i8s: readonly number[]): number {
  * @param ref [description]
  * @param numFn [description]
  * @param getFn [description]
- * @return [description]
+ * @returns [description]
  */
 export function getAllNested<T, U>(
 	ref: T,

@@ -47,7 +47,7 @@ export class TypeBuilder {
 	}
 
 	/**
-	 * @return the number of types in the builder
+	 * @returns the number of types in the builder
 	 */
 	getSize(): number {
 		return BinaryenObj["_TypeBuilderGetSize"](this.#ptr);
@@ -104,7 +104,7 @@ export class TypeBuilder {
 	/**
 	 * Retrieve a heap type from the builder, before disposal.
 	 * @param index index of the type to get
-	 * @return the heap type at the given index
+	 * @returns the heap type at the given index
 	 */
 	getTempHeapType(index: number): HeapType {
 		return BinaryenObj["_TypeBuilderGetTempHeapType"](this.#ptr, index);
@@ -113,7 +113,7 @@ export class TypeBuilder {
 	/**
 	 * Retrieve a tuple type.
 	 * @param types types in the tuple
-	 * @return the tuple type
+	 * @returns the tuple type
 	 */
 	getTempTupleType(types: readonly Type[]): Type {
 		return preserveStack(() => BinaryenObj["_TypeBuilderGetTempTupleType"](this.#ptr, i32sToStack(types), types.length));
@@ -123,7 +123,7 @@ export class TypeBuilder {
 	 * Generate a refence type from the given temporary heap type.
 	 * @param heapType the heap type in the type builder to use
 	 * @param nullable is the reference type nullable?
-	 * @return the reference type
+	 * @returns the reference type
 	 */
 	getTempRefType(heapType: HeapType, nullable: boolean): Type {
 		return BinaryenObj["_TypeBuilderGetTempRefType"](this.#ptr, heapType, nullable);
@@ -157,7 +157,7 @@ export class TypeBuilder {
 
 	/**
 	 * Resolve any and all recursive types in the TypeBuilder and return their finalized forms.
-	 * @return list of finalized heap types in the builder
+	 * @returns list of finalized heap types in the builder
 	 */
 	buildAndDispose(): HeapType[] {
 		return preserveStack(() => {

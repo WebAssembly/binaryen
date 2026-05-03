@@ -21,7 +21,7 @@ export function consoleWarn(...args: any[]): void {
  * }
  *
  * @param replacement the name or signature of the new method replacing the deprecated one
- * @return a method decorator
+ * @returns a method decorator
  */
 export function replacedBy<This, Params extends unknown[], Return>(replacement: string = ""): (
 	method: (this: This, ...args: Params) => Return,
