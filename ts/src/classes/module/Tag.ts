@@ -39,7 +39,9 @@ export class Tag {
 
 
 
-/** Methods for manipulating {@link Tag | tags} in a WASM module. */
+/**
+ * Methods for manipulating {@link Tag | tags} in a WASM module.
+ */
 export class ModuleTags {
 	constructor(private readonly mod: Module) {}
 

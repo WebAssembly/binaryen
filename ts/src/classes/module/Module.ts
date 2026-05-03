@@ -97,31 +97,42 @@ export enum Feature {
  * `Module` itself is:
  * - an instantiable class (via `new Module()`)
  * - a namespace containing the following members, which themselves are classes (see related documentation):
- * 	- {@link Tag}
- * 	- {@link Global}
- * 	- {@link Memory}
- * 	- {@link Table}
- * 	- {@link Function}
- * 	- {@link DataSegment}
- * 	- {@link ElementSegment}
- * 	- {@link Import}
- * 	- {@link Export}
+ * 	- {@link Module.Tag}
+ * 	- {@link Module.Global}
+ * 	- {@link Module.Memory}
+ * 	- {@link Module.Table}
+ * 	- {@link Module.Function}
+ * 	- {@link Module.DataSegment}
+ * 	- {@link Module.ElementSegment}
+ * 	- {@link Module.Import}
+ * 	- {@link Module.Export}
  *
  * Each instance of `Module`:
  * - is a WASM module with module manipulation methods (`.emitText()`, `.validate()`, etc.).
  * - is an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
- * 	- {@link TAG.ModuleTags | tags}
- * 	- {@link GLOBAL.ModuleGlobals | globals}
- * 	- {@link MEMORY.ModuleMemories | memories}
- * 	- {@link TABLE.ModuleTables | tables}
- * 	- {@link FUNCTION.ModuleFunctions | functions}
- * 	- {@link DATA_SEGMENT.ModuleDataSegments | dataSegments}
- * 	- {@link ELEMENT_SEGMENT.ModuleElementSegments | elementSegments}
- * 	- {@link IMPORT.ModuleImports | imports}
- * 	- {@link EXPORT.ModuleExports | exports}
+ * 	- {@link Module#tags}
+ * 	- {@link Module#globals}
+ * 	- {@link Module#memories}
+ * 	- {@link Module#tables}
+ * 	- {@link Module#functions}
+ * 	- {@link Module#dataSegments}
+ * 	- {@link Module#elementSegments}
+ * 	- {@link Module#imports}
+ * 	- {@link Module#exports}
  * - has a property `.x`, a namespace for creating expressions in the module (`.x.nop()`, `.x.i32.add()`, etc.)
  */
 export class Module {
+	static readonly Tag = TAG.Tag;
+	static readonly Global = GLOBAL.Global;
+	static readonly Memory = MEMORY.Memory;
+	static readonly Table = TABLE.Table;
+	static readonly Function = FUNCTION.Function;
+	static readonly DataSegment = DATA_SEGMENT.DataSegment;
+	static readonly ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	static readonly Import = IMPORT.Import;
+	static readonly Export = EXPORT.Export;
+
+
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	/**
@@ -410,14 +421,4 @@ export namespace Module {
 	export type ElementSegment = ELEMENT_SEGMENT.ElementSegment;
 	export type Import = IMPORT.Import;
 	export type Export = EXPORT.Export;
-
-	export const Tag = TAG.Tag;
-	export const Global = GLOBAL.Global;
-	export const Memory = MEMORY.Memory;
-	export const Table = TABLE.Table;
-	export const Function = FUNCTION.Function;
-	export const DataSegment = DATA_SEGMENT.DataSegment;
-	export const ElementSegment = ELEMENT_SEGMENT.ElementSegment;
-	export const Import = IMPORT.Import;
-	export const Export = EXPORT.Export;
 }

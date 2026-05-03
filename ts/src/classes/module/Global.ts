@@ -42,7 +42,9 @@ export class Global {
 
 
 
-/** Methods for manipulating {@link Global | globals} in a WASM module. */
+/**
+ * Methods for manipulating {@link Global | globals} in a WASM module.
+ */
 export class ModuleGlobals {
 	constructor(private readonly mod: Module) {}
 

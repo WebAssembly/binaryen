@@ -24,7 +24,9 @@ export class Import {
 
 
 
-/** Methods for manipulating {@link Import | imports} in a WASM module. */
+/**
+ * Methods for manipulating {@link Import | imports} in a WASM module.
+ */
 export class ModuleImports {
 	constructor(private readonly mod: Module) {}
 

@@ -56,6 +56,7 @@ export type ElementSegmentInfo = Module.ElementSegment;
 export type ExportInfo = Module.Export;
 
 
+
 /** @deprecated The `ExpressionInfo` object type is now called {@link X.Expression}. */
 export type ExpressionInfo = X.Expression;
 /** @deprecated The `DropInfo` object type is now called {@link X.Drop}. */

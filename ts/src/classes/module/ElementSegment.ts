@@ -45,7 +45,9 @@ export class ElementSegment {
 
 
 
-/** Methods for manipulating {@link ElementSegment | element segments} in a WASM module. */
+/**
+ * Methods for manipulating {@link ElementSegment | element segments} in a WASM module.
+ */
 export class ModuleElementSegments {
 	constructor(private readonly mod: Module) {}
 
