@@ -11,7 +11,7 @@ export default [
 	eslint.configs.recommended, // https://github.com/eslint/eslint/blob/v10.2.1/packages/js/src/configs/eslint-recommended.js
 	{
 		name: "All", // all JS and TS files
-		files: ["./{eslint,typedoc}.config.js", "./src/**/*.{js,ts}"],
+		files: ["./{eslint,typedoc}.config.js", "./{src,test}/**/*.{js,ts}"],
 		languageOptions: {globals: {...globals.node}},
 		linterOptions: {reportUnusedDisableDirectives: "error"},
 		plugins: {"@stylistic": stylistic},
@@ -118,11 +118,11 @@ export default [
 	},
 	{
 		name: "TypeScript Only", // rules that break on JS files, and rules that need TSConfig to work
-		files: ["./src/**/*.ts"],
+		files: ["./{src,test}/**/*.ts"],
 		languageOptions: {
 			globals: {...globals.node},
 			parser: tseslint.parser,
-			parserOptions: {project: ["./tsconfig.json"]},
+			parserOptions: {project: ["./tsconfig.json", "./test/tsconfig.json"]},
 		},
 		plugins: {"@typescript-eslint": tseslint.plugin},
 

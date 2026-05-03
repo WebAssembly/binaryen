@@ -19,7 +19,8 @@
     "compile": "rm -rf ./dist/ && tsc",
     "lint": "eslint ./",
     "docs": "rm -rf ./docs/out/ && typedoc",
-    "build": "npm run compile && npm run lint && npm run docs"
+    "test": "tsx --test --test-isolation=none -- './test/**/*.test.ts'",
+    "build": "npm run compile && npm run lint && npm run docs && npm run test"
   },
   "files": [
     "package.json",
