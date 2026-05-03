@@ -4,4 +4,5 @@ export default {
 	projectDocuments: ["./docs/API-Overview.md"],
 	useFirstParagraphOfCommentAsSummary: true,
 	out: "./docs/out/",
+	customCss: "./docs/styles.css",
 };
