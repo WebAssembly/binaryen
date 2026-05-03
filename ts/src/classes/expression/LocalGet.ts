@@ -19,6 +19,10 @@ import {
 
 
 export class LocalGet extends Expression {
+	/**
+	 * Creates a `(local.get)` for the local at the specified index.
+	 * Note that we must specify the type here as we may not have created the local being accessed yet.
+	 */
 	static localGet(mod: Module, index: number, typ: Type): ExpressionRef {
 		return BinaryenObj["_BinaryenLocalGet"](mod.ptr, index, typ);
 	}

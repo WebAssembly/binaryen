@@ -107,9 +107,9 @@ export enum Feature {
  * 	- {@link Import}
  * 	- {@link Export}
  *
- * Each instance of `Module` is:
- * - a WASM module with module manipulation methods (`.emitText()`, `.validate()`, etc.).
- * - an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
+ * Each instance of `Module`:
+ * - is a WASM module with module manipulation methods (`.emitText()`, `.validate()`, etc.).
+ * - is an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
  * 	- {@link TAG.ModuleTags | tags}
  * 	- {@link GLOBAL.ModuleGlobals | globals}
  * 	- {@link MEMORY.ModuleMemories | memories}
@@ -119,12 +119,22 @@ export enum Feature {
  * 	- {@link ELEMENT_SEGMENT.ModuleElementSegments | elementSegments}
  * 	- {@link IMPORT.ModuleImports | imports}
  * 	- {@link EXPORT.ModuleExports | exports}
+ * - has a property `.x`, a namespace for creating expressions in the module (`.x.nop()`, `.x.i32.add()`, etc.)
  */
 export class Module {
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
-	/** This module’s expression creator. */
-	readonly x = expressionCreator(this); // “x” for “expression”
+	/**
+	 * This module’s expression creator.
+	 *
+	 * N.B.: For convenience, developers may want to destructure the module to free `x`:
+	 * ```ts
+	 * const mod = new Module();
+	 * const {x} = mod;
+	 * x.i32.add();
+	 * ```
+	 */
+	readonly x = expressionCreator(this);
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html

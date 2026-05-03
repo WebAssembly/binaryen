@@ -119,7 +119,7 @@ Objects:
 	- `new Module.Export(ref: ExportRef)`:                        an object containing information about an **Export**
 
 - Properties of `Module` instances (see full list of methods in generated docs):
-	- `Module#x`:               [create expressions](#expression-construction)
+	- `Module#x`:               [create expressions](#expression-construction) (“x” for “expression”)
 	- `Module#tags`:            **Tag** manipulation
 	- `Module#globals`:         **Global** manipulation
 	- `Module#memories`:        **Memory** manipulation
@@ -167,7 +167,7 @@ Each of these methods returns an `ExpressionRef`.
 
 
 ## Expression Manipulation
-Expression info classes all live under the global `X` namespace. (“X” for “Expression”).
+Expression info classes all live under the global `X` namespace (“X” for “Expression”).
 They can be used to inspect and manipulate expressions.
 See generated docs for fields, methods, and descriptions of each.
 

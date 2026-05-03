@@ -18,6 +18,7 @@ import {
 
 
 export class Drop extends Expression {
+	/** Creates a `(drop)` of a value. */
 	static drop(mod: Module, value: ExpressionRef): ExpressionRef {
 		return BinaryenObj["_BinaryenDrop"](mod.ptr, value);
 	}
