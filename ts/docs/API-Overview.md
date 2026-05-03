@@ -1,4 +1,4 @@
-# API Documentation
+# API Overview
 Please note that the Binaryen API is evolving fast.
 Definitions and documentation provided by the C++ codebase don’t always immediately find their way here into TypeScript.
 If you rely on Binaryen.TS and spot an issue, please consider sending a PR our way. Thank you!

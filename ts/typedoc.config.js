@@ -1,7 +1,7 @@
 export default {
 	name: "Binaryen.TS",
 	entryPoints: ["./src/binaryen.ts"],
-	projectDocuments: ["./API.md"],
+	projectDocuments: ["./docs/API-Overview.md"],
 	useFirstParagraphOfCommentAsSummary: true,
 	out: "./docs/out/",
 };
