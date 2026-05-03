@@ -26,3 +26,12 @@ export {LocalSet} from "./LocalSet.ts";
 
 // ## Numeric & Vector ## //
 export {Const} from "./Const.ts";
+
+
+
+export type {
+	ExpressionCreator,
+	ExpressionCreatorParametric,
+	ExpressionCreatorControl,
+	ExpressionCreatorVariable,
+} from "./expression-creators.ts";

@@ -31,6 +31,8 @@ function parametric(mod: Module) {
 		select: Select.select.bind(null, mod),
 	} as const;
 }
+/** @useDeclaredType */
+export type ExpressionCreatorParametric = ReturnType<typeof parametric>;
 
 
 
@@ -46,6 +48,8 @@ function control(mod: Module) {
 		br_if: Break.br_if.bind(null, mod),
 	} as const;
 }
+/** @useDeclaredType */
+export type ExpressionCreatorControl = ReturnType<typeof control>;
 
 
 
@@ -61,11 +65,23 @@ function variable(mod: Module) {
 		},
 	} as const;
 }
+/** @useDeclaredType */
+export type ExpressionCreatorVariable = ReturnType<typeof variable>;
 
 
 
+/**
+ * @expandType ExpressionCreatorParametric
+ * @expandType ExpressionCreatorControl
+ * @expandType ExpressionCreatorVariable
+ */
+export type ExpressionCreator = (
+	& ExpressionCreatorParametric
+	& ExpressionCreatorControl
+	& ExpressionCreatorVariable
+);
 /** Methods for creating expressions in a WASM module. */
-export function expressionCreator(mod: Module) {
+export function expressionCreator(mod: Module): ExpressionCreator {
 	return {
 		...parametric(mod),
 		...control(mod),
