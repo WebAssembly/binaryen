@@ -19,13 +19,16 @@ import type {
 
 
 
-/** Similar to a `DataSegment` but with some minor differences. */
-export interface MemorySegment {
-	name?: string;
-	offset: ExpressionRef;
-	data: Uint8Array;
-	passive: boolean;
-}
+/**
+ * Similar to a {@link DataSegment} but with some minor differences.
+ * @inline
+ */
+type MemorySegment = {
+	name?: string,
+	offset: ExpressionRef,
+	data: Uint8Array,
+	passive: boolean,
+};
 
 
 

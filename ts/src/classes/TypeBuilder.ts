@@ -16,8 +16,11 @@ import {
 
 
 
-/** A field in a struct/array. */
-export type Field = {
+/**
+ * A field in a struct/array.
+ * @inline
+ */
+type Field = {
 	/** The type of the struct field. */
 	type: Type,
 	/** The field’s packed type. */
