@@ -30,13 +30,15 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^24.12.2",
     "eslint": "^10.2.1",
     "globals": "^17.5.0",
+    "tsx": "^4.21.0",
     "typedoc": "^0.28.19",
     "typescript": "~6.0.0",
     "typescript-eslint": "^8.59.1"
   },
   "engines": {
-    "node": "^22.6 || ^24"
+    "node": "^24.12"
   }
 }
