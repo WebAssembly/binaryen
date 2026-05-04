@@ -20,14 +20,14 @@ const STUB = (..._args: readonly number[]): number => 0;
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
 export function control(mod: Module) {
 	return {
-		/** @inheritdoc X.Block.block */
+		/** @inheritdoc EXPR.Block.block */
 		block: Block.block.bind(null, mod),
-		/** @inheritdoc X.Loop.loop */
+		/** @inheritdoc EXPR.Loop.loop */
 		loop: Loop.loop.bind(null, mod),
 		if: STUB,
-		/** @inheritdoc X.Break.br */
+		/** @inheritdoc EXPR.Break.br */
 		br: Break.br.bind(null, mod),
-		/** @inheritdoc X.Break.br_if */
+		/** @inheritdoc EXPR.Break.br_if */
 		br_if: Break.br_if.bind(null, mod),
 		br_table: STUB,
 		br_on_null: STUB,

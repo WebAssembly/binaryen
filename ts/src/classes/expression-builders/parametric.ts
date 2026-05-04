@@ -21,9 +21,9 @@ export function parametric(mod: Module) {
 		nop: (): ExpressionRef => BinaryenObj["_BinaryenNop"](mod.ptr),
 		/** Creates an unreachable instruction that will always trap. */
 		unreachable: (): ExpressionRef => BinaryenObj["_BinaryenUnreachable"](mod.ptr),
-		/** @inheritDoc X.Drop.drop */
+		/** @inheritDoc EXPR.Drop.drop */
 		drop: Drop.drop.bind(null, mod),
-		/** @inheritDoc X.Select.select */
+		/** @inheritDoc EXPR.Select.select */
 		select: Select.select.bind(null, mod),
 	} as const;
 }

@@ -2,7 +2,7 @@
 
 
 
-import type * as X from "./classes/expression/index.ts";
+import type * as EXPR from "./classes/expression/index.ts";
 import {
 	Feature,
 	Module,
@@ -57,24 +57,24 @@ export type ExportInfo = Module.Export;
 
 
 
-/** @deprecated The `ExpressionInfo` object type is now called {@link X.Expression}. */
-export type ExpressionInfo = X.Expression;
-/** @deprecated The `DropInfo` object type is now called {@link X.Drop}. */
-export type DropInfo = X.Drop;
-/** @deprecated The `SelectInfo` object type is now called {@link X.Select}. */
-export type SelectInfo = X.Select;
-/** @deprecated The `BlockInfo` object type is now called {@link X.Block}. */
-export type BlockInfo = X.Block;
-/** @deprecated The `LoopInfo` object type is now called {@link X.Loop}. */
-export type LoopInfo = X.Loop;
-/** @deprecated The `BreakInfo` object type is now called {@link X.Break}. */
-export type BreakInfo = X.Break;
-/** @deprecated The `LocalGetInfo` object type is now called {@link X.LocalGet}. */
-export type LocalGetInfo = X.LocalGet;
-/** @deprecated The `LocalSetInfo` object type is now called {@link X.LocalSet}. */
-export type LocalSetInfo = X.LocalSet;
-/** @deprecated The `ConstInfo` object type is now called {@link X.Const}. */
-export type ConstInfo = X.Const;
+/** @deprecated The `ExpressionInfo` object type is now called {@link EXPR.Expression}. */
+export type ExpressionInfo = EXPR.Expression;
+/** @deprecated The `DropInfo` object type is now called {@link EXPR.Drop}. */
+export type DropInfo = EXPR.Drop;
+/** @deprecated The `SelectInfo` object type is now called {@link EXPR.Select}. */
+export type SelectInfo = EXPR.Select;
+/** @deprecated The `BlockInfo` object type is now called {@link EXPR.Block}. */
+export type BlockInfo = EXPR.Block;
+/** @deprecated The `LoopInfo` object type is now called {@link EXPR.Loop}. */
+export type LoopInfo = EXPR.Loop;
+/** @deprecated The `BreakInfo` object type is now called {@link EXPR.Break}. */
+export type BreakInfo = EXPR.Break;
+/** @deprecated The `LocalGetInfo` object type is now called {@link EXPR.LocalGet}. */
+export type LocalGetInfo = EXPR.LocalGet;
+/** @deprecated The `LocalSetInfo` object type is now called {@link EXPR.LocalSet}. */
+export type LocalSetInfo = EXPR.LocalSet;
+/** @deprecated The `ConstInfo` object type is now called {@link EXPR.Const}. */
+export type ConstInfo = EXPR.Const;
 
 /** @deprecated The `Function` class now lives under the `Module` namespace. Use {@link Module.Function}. */
 export const Function = Module.Function;

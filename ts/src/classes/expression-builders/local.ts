@@ -11,11 +11,11 @@ import {
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#variable-instructions */
 export function local(mod: Module) {
 	return {
-		/** @inheritDoc X.LocalGet.localGet */
+		/** @inheritDoc EXPR.LocalGet.localGet */
 		get: LocalGet.localGet.bind(null, mod),
-		/** @inheritDoc X.LocalSet.localSet */
+		/** @inheritDoc EXPR.LocalSet.localSet */
 		set: LocalSet.localSet.bind(null, mod),
-		/** @inheritDoc X.LocalSet.localTee */
+		/** @inheritDoc EXPR.LocalSet.localTee */
 		tee: LocalSet.localTee.bind(null, mod),
 	} as const;
 }
