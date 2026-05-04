@@ -12,7 +12,19 @@ import {
 	type HeapType,
 	type TableRef,
 	type Type,
+	i32,
+	i64,
+	f32,
+	f64,
+	v128,
+	anyref,
+	eqref,
+	i31ref,
+	structref,
+	arrayref,
 	funcref,
+	externref,
+	stringref,
 } from "../../constants.ts";
 import {
 	copyExpression,
@@ -153,6 +165,29 @@ export class Module {
 	 * @see {@link ExpressionBuilder}
 	 */
 	readonly x: ExpressionBuilder = expressionBuilder(this);
+
+	/** Pseudo-instruction enabling Binaryen to reason about multiple values on the stack. */
+	pop(typ: Type): ExpressionRef {
+		if ([
+			i32,
+			i64,
+			f32,
+			f64,
+			v128,
+			anyref,
+			eqref,
+			i31ref,
+			structref,
+			arrayref,
+			funcref,
+			externref,
+			stringref,
+		].includes(typ)) {
+			return BinaryenObj["_BinaryenPop"](this.ptr, typ);
+		} else {
+			throw new Error(`Unexpected type ${ typ }.`);
+		}
+	}
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html

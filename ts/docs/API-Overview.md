@@ -295,6 +295,13 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 
 `Module#copyExpression(expr)` has been moved to the global function `copyExpression(expr, mod)` where it lives alongside `getExpressionInfo` et al.
 
+All “type” properties (`.i32`, `.i64`, etc) on `Module` previously served as namespaces containing functions for building expressions.
+(E.g., `Module#i32.add()` produced an `(i32.add)` WASM instruction.)
+These have all migrated to `Module#x`, an [Expression Builder](#expression-building).
+These properties also each contained its own `.pop()` method, which didn’t build a WASM expression,
+but was a pseudo-instruction enabling Binaryen to reason about multiple values on the stack.
+They have been combined into one method on Module, `Module#pop(t: Type)`, where `t` is one of the corresponding type namespaces.
+
 
 ### Expression Builders
 Note: To improve readability, assume all methods written in this section are bound to an Expression Builder (an object returned by `Module#x`).
