@@ -57,7 +57,13 @@ public:
       return internal ? *(const uint32_t*)(internal - 4) : 0;
     }
     char operator[](size_t x) const { return internal[x]; }
-    operator std::string_view() const { return {internal, size()}; }
+    operator std::string_view() const {
+      if (!internal) {
+        // No size to read, just return an empty view.
+        return std::string_view();
+      }
+      return {internal, size()};
+    }
   };
   const View str;
 
