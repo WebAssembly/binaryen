@@ -1953,6 +1953,7 @@
  )
 )
 
+;; table.grow inhibits some optimizations.
 (module
  ;; CHECK:      (type $func (func))
  ;; IMMUT:      (type $func (func))
