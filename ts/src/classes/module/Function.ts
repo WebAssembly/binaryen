@@ -29,6 +29,12 @@ class BinaryenFunction {
 
 	readonly module: string;
 	readonly base: string;
+	readonly name: string;
+	readonly type: Type;
+	readonly params: Type;
+	readonly results: Type;
+	readonly numVars: number;
+	readonly numLocals: number;
 	readonly vars: readonly Type[];
 
 
@@ -36,33 +42,15 @@ class BinaryenFunction {
 		this[THIS_PTR] = func;
 		this.module = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetModule"](this[THIS_PTR]));
 		this.base = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetBase"](this[THIS_PTR]));
+		this.name = UTF8ToString(BinaryenObj["_BinaryenFunctionGetName"](this[THIS_PTR]));
+		this.type = BinaryenObj["_BinaryenFunctionGetType"](this[THIS_PTR]);
+		this.params = BinaryenObj["_BinaryenFunctionGetParams"](this[THIS_PTR]);
+		this.results = BinaryenObj["_BinaryenFunctionGetResults"](this[THIS_PTR]);
+		this.numVars = BinaryenObj["_BinaryenFunctionGetNumVars"](this[THIS_PTR]);
+		this.numLocals = BinaryenObj["_BinaryenFunctionGetNumLocals"](this[THIS_PTR]);
 		this.vars = getAllNested(func, BinaryenObj["_BinaryenFunctionGetNumVars"], BinaryenObj["_BinaryenFunctionGetVar"]);
 	}
 
-
-	get name(): string {
-		return UTF8ToString(BinaryenObj["_BinaryenFunctionGetName"](this[THIS_PTR]));
-	}
-
-	get type(): Type {
-		return BinaryenObj["_BinaryenFunctionGetType"](this[THIS_PTR]);
-	}
-
-	get params(): Type {
-		return BinaryenObj["_BinaryenFunctionGetParams"](this[THIS_PTR]);
-	}
-
-	get results(): Type {
-		return BinaryenObj["_BinaryenFunctionGetResults"](this[THIS_PTR]);
-	}
-
-	get numVars(): number {
-		return BinaryenObj["_BinaryenFunctionGetNumVars"](this[THIS_PTR]);
-	}
-
-	get numLocals(): number {
-		return BinaryenObj["_BinaryenFunctionGetNumLocals"](this[THIS_PTR]);
-	}
 
 	get body(): ExpressionRef {
 		return BinaryenObj["_BinaryenFunctionGetBody"](this[THIS_PTR]);
