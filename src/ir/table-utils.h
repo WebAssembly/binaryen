@@ -127,7 +127,7 @@ struct TableInfo {
   bool mayBeModified = false;
 
   // Whether the table may grow. Growing does modify the table, but it only
-  // appends, so we track this separately from mayBeModified, which allows more
+  // appends, so we track this separately from mayBeModified. This allows more
   // optimizations in tables that grow but have no other sets.
   bool mayGrow = false;
 
