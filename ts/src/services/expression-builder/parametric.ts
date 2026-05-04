@@ -1,13 +1,13 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
-import type {
-	Module,
-} from "../../classes/module/Module.ts";
 import {
 	Drop,
 	Select,
 } from "../../classes/expression/index.ts";
+import type {
+	Module,
+} from "../../classes/module/Module.ts";
 import type {
 	ExpressionRef,
 } from "../../constants.ts";

@@ -1,10 +1,10 @@
-import type {
-	Module,
-} from "../../classes/module/Module.ts";
 import {
 	LocalGet,
 	LocalSet,
 } from "../../classes/expression/index.ts";
+import type {
+	Module,
+} from "../../classes/module/Module.ts";
 
 
 

@@ -17,7 +17,7 @@ import {
 } from "./classes/module/Module.ts";
 import {
 	Expression,
-} from "./classes/expression/Expression.ts";
+} from "./classes/expression/index.ts";
 import type {
 	ExpressionId,
 	ExpressionRef,

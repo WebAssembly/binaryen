@@ -1,14 +1,14 @@
 import {
 	consoleWarn,
 } from "../../lib.ts";
-import type {
-	Module,
-} from "../../classes/module/Module.ts";
 import {
 	Block,
 	Break,
 	Loop,
 } from "../../classes/expression/index.ts";
+import type {
+	Module,
+} from "../../classes/module/Module.ts";
 
 
 
