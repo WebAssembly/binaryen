@@ -434,6 +434,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitUnary(Unary* curr) {}
   void visitBinary(Binary* curr) {}
   void visitWideIntAddSub(WideIntAddSub* curr) {}
+  void visitWideIntMul(WideIntMul* curr) {}
 
   void visitSelect(Select* curr) {
     if (curr->type.isRef()) {

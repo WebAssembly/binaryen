@@ -509,6 +509,7 @@ public:
   void visitMemoryFill(MemoryFill* curr);
   void visitBinary(Binary* curr);
   void visitWideIntAddSub(WideIntAddSub* curr);
+  void visitWideIntMul(WideIntMul* curr);
   void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
@@ -2454,6 +2455,20 @@ void FunctionValidator::visitWideIntAddSub(WideIntAddSub* curr) {
 
   for (auto* operand :
        {curr->leftLow, curr->leftHigh, curr->rightLow, curr->rightHigh}) {
+    shouldBeEqualOrFirstIsUnreachable(operand->type,
+                                      Type(Type::i64),
+                                      curr,
+                                      "wide binary child types must be i64");
+  }
+}
+
+void FunctionValidator::visitWideIntMul(WideIntMul* curr) {
+  shouldBeTrue(getModule()->features.hasWideArithmetic(),
+               curr,
+               "i64.mul_wide_s / i64.mul_wide_u require wide arithmetic "
+               "[--enable-wide-arithmetic]");
+
+  for (auto* operand : {curr->left, curr->right}) {
     shouldBeEqualOrFirstIsUnreachable(operand->type,
                                       Type(Type::i64),
                                       curr,

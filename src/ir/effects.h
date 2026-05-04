@@ -946,6 +946,7 @@ private:
       }
     }
     void visitWideIntAddSub(WideIntAddSub* curr) {}
+    void visitWideIntMul(WideIntMul* curr) {}
     void visitSelect(Select* curr) {}
     void visitDrop(Drop* curr) {}
     void visitReturn(Return* curr) { parent.branchesOut = true; }

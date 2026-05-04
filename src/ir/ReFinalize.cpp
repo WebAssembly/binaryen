@@ -110,6 +110,7 @@ void ReFinalize::visitConst(Const* curr) { curr->finalize(); }
 void ReFinalize::visitUnary(Unary* curr) { curr->finalize(); }
 void ReFinalize::visitBinary(Binary* curr) { curr->finalize(); }
 void ReFinalize::visitWideIntAddSub(WideIntAddSub* curr) { curr->finalize(); }
+void ReFinalize::visitWideIntMul(WideIntMul* curr) { curr->finalize(); }
 void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }

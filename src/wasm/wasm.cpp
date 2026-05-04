@@ -815,6 +815,15 @@ void WideIntAddSub::finalize() {
   }
 }
 
+void WideIntMul::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    static Type i64Pair = Types::getI64Pair();
+    type = i64Pair;
+  }
+}
+
 void Select::finalize() {
   assert(ifTrue && ifFalse);
   if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||

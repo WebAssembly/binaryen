@@ -404,7 +404,6 @@ SPEC_TESTS_TO_SKIP = [
     'threads/atomic.wast',
 ]
 SPEC_TESTSUITE_PROPOSALS_TO_SKIP = [
-    'wide-arithmetic',
 ]
 
 # Paths are relative to the test/spec/testsuite directory
