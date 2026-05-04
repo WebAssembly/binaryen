@@ -95,13 +95,13 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
 
   for (auto& table : wasm.tables) {
     if (table->imported()) {
-      tables[table->name].mayBeModified = true;
+      tables[table->name].hasSet = true;
     }
   }
 
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Table) {
-      tables[*ex->getInternalName()].mayBeModified = true;
+      tables[*ex->getInternalName()].hasSet = true;
     }
   }
 
@@ -109,7 +109,7 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
   // might learn anything new.
   auto hasUnmodifiableTable = false;
   for (auto& [_, info] : tables) {
-    if (!info.mayBeModified) {
+    if (!info.hasSet) {
       hasUnmodifiableTable = true;
       break;
     }
@@ -121,8 +121,8 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
   // Miniature form of TableInfo, without things we don't need (some of which
   // cause compilation errors on the copies below).
   struct MiniTableInfo {
-    bool mayBeModified = false;
-    bool mayGrow = false;
+    bool hasSet = false;
+    bool hasGrow = false;
   };
 
   using MiniTableInfoMap = std::unordered_map<Name, MiniTableInfo>;
@@ -139,19 +139,19 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
         Finder(MiniTableInfoMap& tableInfoMap) : tableInfoMap(tableInfoMap) {}
 
         void visitTableSet(TableSet* curr) {
-          tableInfoMap[curr->table].mayBeModified = true;
+          tableInfoMap[curr->table].hasSet = true;
         }
         void visitTableFill(TableFill* curr) {
-          tableInfoMap[curr->table].mayBeModified = true;
+          tableInfoMap[curr->table].hasSet = true;
         }
         void visitTableCopy(TableCopy* curr) {
-          tableInfoMap[curr->destTable].mayBeModified = true;
+          tableInfoMap[curr->destTable].hasSet = true;
         }
         void visitTableInit(TableInit* curr) {
-          tableInfoMap[curr->table].mayBeModified = true;
+          tableInfoMap[curr->table].hasSet = true;
         }
         void visitTableGrow(TableGrow* curr) {
-          tableInfoMap[curr->table].mayGrow = true;
+          tableInfoMap[curr->table].hasGrow = true;
         }
       };
 
@@ -160,11 +160,11 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
 
   for (auto& [_, tableInfoMap] : analysis.map) {
     for (auto& [tableName, info] : tableInfoMap) {
-      if (info.mayBeModified) {
-        tables[tableName].mayBeModified = true;
+      if (info.hasSet) {
+        tables[tableName].hasSet = true;
       }
-      if (info.mayGrow) {
-        tables[tableName].mayGrow = true;
+      if (info.hasGrow) {
+        tables[tableName].hasGrow = true;
       }
     }
   }

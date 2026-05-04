@@ -432,11 +432,13 @@ struct Analyzer {
 
     // Note a possible call of a function reference as well, if something else
     // might be written into the table during runtime.
-    // TODO: Add an option for immutable initial content like Directize?
+    // TODO: Add an option for immutable initial content like Directize? Can
+    //       also check for grow without set, which leaves initial entries
+    //       fixed.
     if (!tableInfoMap) {
       tableInfoMap = TableUtils::computeTableInfo(*module);
     }
-    if ((*tableInfoMap)[table].mayBeModified) {
+    if ((*tableInfoMap)[table].mayBeModified()) {
       useCallRefType(type);
     }
   }

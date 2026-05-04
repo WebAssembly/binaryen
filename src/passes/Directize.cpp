@@ -127,13 +127,13 @@ private:
       // The index is out of bounds for the initial table's content. This may
       // trap, but it may also not trap if the table is modified later (if a
       // function is appended to it).
-      if (!table.mayBeModified && !table.mayGrow) {
+      if (!table.mayBeModified()) {
         return CallUtils::Trap{};
       } else {
         // The table may be modified, so it might be appended to. We should only
         // get here in the case that the initial contents are immutable, or the
         // table can grow, as otherwise we have nothing to optimize at all.
-        assert(table.initialContentsImmutable || table.mayGrow);
+        assert(table.initialContentsImmutable || table.hasGrow);
         return CallUtils::Unknown{};
       }
     }
@@ -143,7 +143,7 @@ private:
       // This must trap, as we only get here if we can optimize such cases,
       // relying on the fact that the table cannot be modified, or at least the
       // initial contents cannot be.
-      assert(!table.mayBeModified || table.initialContentsImmutable);
+      assert(!table.hasSet || table.initialContentsImmutable);
       return CallUtils::Trap{};
     }
     auto* func = getModule()->getFunction(name);
