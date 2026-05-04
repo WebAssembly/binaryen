@@ -1,0 +1,12 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		// Modules
+		"rootDir": "../",
+		"types": ["node"],
+
+		// Emit
+		"noEmit": true,
+	},
+	"include": ["./"],
+}
