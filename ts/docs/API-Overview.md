@@ -316,6 +316,7 @@ Note: To improve readability, assume all methods written in this section are bou
 
 `.{struct,array}.get()` no longer take the `isSigned` argument. For packed signed/unsigned types, use `.{struct,array}.get_{s,u}()` respectively.
 
+Many numeric methods have been renamed:
 - `.i32.wrap()`            &rarr; `.i32.wrap_i64()`
 - `.i32.trunc_s.f32()`     &rarr; `.i32.trunc_f32_s()`
 - `.i32.trunc_s.f64()`     &rarr; `.i32.trunc_f64_s()`
@@ -326,7 +327,7 @@ Note: To improve readability, assume all methods written in this section are bou
 - `.i32.trunc_u_sat.f32()` &rarr; `.i32.trunc_sat_f32_u()`
 - `.i32.trunc_u_sat.f64()` &rarr; `.i32.trunc_sat_f64_u()`
 - `.reinterpret()`         &rarr; `.reinterpret_f32()`
-
+>
 - `.i64.extend_s()`        &rarr; `.i64.extend_i32_s()`
 - `.i64.extend_u()`        &rarr; `.i64.extend_i32_u()`
 - `.i64.trunc_s.f32()`     &rarr; `.i64.trunc_f32_s()`
@@ -338,14 +339,14 @@ Note: To improve readability, assume all methods written in this section are bou
 - `.i64.trunc_u_sat.f32()` &rarr; `.i64.trunc_sat_f32_u()`
 - `.i64.trunc_u_sat.f64()` &rarr; `.i64.trunc_sat_f64_u()`
 - `.reinterpret()`         &rarr; `.reinterpret_f64()`
-
+>
 - `.f32.convert_s.i32()` &rarr; `.f32.convert_i32_s()`
 - `.f32.convert_s.i64()` &rarr; `.f32.convert_i64_s()`
 - `.f32.convert_u.i32()` &rarr; `.f32.convert_i32_u()`
 - `.f32.convert_u.i64()` &rarr; `.f32.convert_i64_u()`
 - `.f32.reinterpret()`   &rarr; `.f32.reinterpret_i32()`
 - `.f32.demote()`        &rarr; `.f32.demote_f64()`
-
+>
 - `.f64.convert_s.i32()` &rarr; `.f64.convert_i32_s()`
 - `.f64.convert_s.i64()` &rarr; `.f64.convert_i64_s()`
 - `.f64.convert_u.i32()` &rarr; `.f64.convert_i32_u()`
