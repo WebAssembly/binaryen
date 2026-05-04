@@ -216,6 +216,8 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
         WASM_UNREACHABLE("TODO");
     }
   }
+  Flow visitWideIntAddSub(WideIntAddSub* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitWideIntMul(WideIntMul* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitSelect(Select* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitDrop(Drop* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitReturn(Return* curr) { WASM_UNREACHABLE("TODO"); }

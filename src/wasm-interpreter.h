@@ -45,6 +45,7 @@
 #include "ir/runtime-table.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
+#include "support/int128.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
@@ -1800,6 +1801,61 @@ public:
     VISIT(ifFalse, curr->ifFalse)
     VISIT(condition, curr->condition)
     return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
+  }
+  Flow visitWideIntAddSub(WideIntAddSub* curr) {
+    VISIT(leftLow, curr->leftLow);
+    VISIT(leftHigh, curr->leftHigh);
+    VISIT(rightLow, curr->rightLow);
+    VISIT(rightHigh, curr->rightHigh);
+
+    uint64_t lowLHS = leftLow.getSingleValue().geti64();
+    uint64_t highLHS = leftHigh.getSingleValue().geti64();
+    uint64_t lowRHS = rightLow.getSingleValue().geti64();
+    uint64_t highRHS = rightHigh.getSingleValue().geti64();
+
+    uint64_t lowResult = 0;
+    uint64_t highResult = 0;
+
+    switch (curr->op) {
+      case AddInt128: {
+        bool overflowed = std::ckd_add(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS + highRHS + overflowed;
+        break;
+      }
+      case SubInt128: {
+        bool overflowed = std::ckd_sub(&lowResult, lowLHS, lowRHS);
+        highResult = highLHS - highRHS - overflowed;
+        break;
+      }
+    }
+
+    Literals results;
+    results.push_back(Literal(lowResult));
+    results.push_back(Literal(highResult));
+    return results;
+  }
+  Flow visitWideIntMul(WideIntMul* curr) {
+    VISIT(left, curr->left);
+    VISIT(right, curr->right);
+    uint64_t lhs = left.getSingleValue().geti64();
+    uint64_t rhs = right.getSingleValue().geti64();
+
+    Int128 result;
+    switch (curr->op) {
+      case MulWideSInt64: {
+        result = mul_wide_s(lhs, rhs);
+        break;
+      }
+      case MulWideUInt64: {
+        result = mul_wide_u(lhs, rhs);
+        break;
+      }
+    }
+
+    Literals results;
+    results.push_back(Literal(result.low));
+    results.push_back(Literal(result.high));
+    return results;
   }
   Flow visitDrop(Drop* curr) {
     VISIT(value, curr->value)

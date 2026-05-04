@@ -1757,6 +1757,23 @@ Result<> IRBuilder::makeBinary(BinaryOp op) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeWideIntAddSub(WideIntAddSubOp op) {
+  WideIntAddSub curr;
+  curr.op = op;
+  CHECK_ERR(visitWideIntAddSub(&curr));
+  push(builder.makeWideIntAddSub(
+    op, curr.leftLow, curr.leftHigh, curr.rightLow, curr.rightHigh));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeWideIntMul(WideIntMulOp op) {
+  WideIntMul curr;
+  curr.op = op;
+  CHECK_ERR(visitWideIntMul(&curr));
+  push(builder.makeWideIntMul(op, curr.left, curr.right));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeSelect(std::optional<Type> type) {
   Select curr;
   CHECK_ERR(visitSelect(&curr));

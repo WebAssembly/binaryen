@@ -2834,9 +2834,7 @@ std::unordered_set<HeapType> getIgnorablePublicTypes() {
   return set;
 }
 
-} // namespace wasm
-
-namespace wasm::HeapTypes {
+namespace HeapTypes {
 
 HeapType getMutI8Array() {
   static HeapType i8Array = Array(Field(Field::i8, Mutable));
@@ -2848,7 +2846,18 @@ HeapType getMutI16Array() {
   return i16Array;
 }
 
-} // namespace wasm::HeapTypes
+} // namespace HeapTypes
+
+namespace Types {
+
+Type getI64Pair() {
+  static Type i64Pair({Type::i64, Type::i64});
+  return i64Pair;
+}
+
+} // namespace Types
+
+} // namespace wasm
 
 namespace std {
 

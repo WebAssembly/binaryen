@@ -91,6 +91,14 @@ Result<> makeNop(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeBinary(Ctx&, Index, const std::vector<Annotation>&, BinaryOp op);
 template<typename Ctx>
+Result<> makeWideIntAddSub(Ctx&,
+                           Index,
+                           const std::vector<Annotation>&,
+                           WideIntAddSubOp op);
+template<typename Ctx>
+Result<>
+makeWideIntMul(Ctx&, Index, const std::vector<Annotation>&, WideIntMulOp op);
+template<typename Ctx>
 Result<> makeUnary(Ctx&, Index, const std::vector<Annotation>&, UnaryOp op);
 template<typename Ctx>
 Result<> makeSelect(Ctx&, Index, const std::vector<Annotation>&);
@@ -1590,6 +1598,22 @@ Result<> makeBinary(Ctx& ctx,
                     const std::vector<Annotation>& annotations,
                     BinaryOp op) {
   return ctx.makeBinary(pos, annotations, op);
+}
+
+template<typename Ctx>
+Result<> makeWideIntAddSub(Ctx& ctx,
+                           Index pos,
+                           const std::vector<Annotation>& annotations,
+                           WideIntAddSubOp op) {
+  return ctx.makeWideIntAddSub(pos, annotations, op);
+}
+
+template<typename Ctx>
+Result<> makeWideIntMul(Ctx& ctx,
+                        Index pos,
+                        const std::vector<Annotation>& annotations,
+                        WideIntMulOp op) {
+  return ctx.makeWideIntMul(pos, annotations, op);
 }
 
 template<typename Ctx>

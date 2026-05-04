@@ -293,4 +293,56 @@
       (catch_all)
     )
   )
+
+  ;; CHECK:      (func $add-block-in-catch-pop (type $void)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (call $add-block-in-catch-pop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.tee $temp
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $add-block-in-catch-pop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-block-in-catch-pop
+    (local $temp i32)
+    (try
+      (do
+        ;; We need a call so the try does not vanish entirely.
+        (call $add-block-in-catch-pop)
+      )
+      (catch $e
+        (drop
+          ;; This select will be removed, and a block appear, which must be handled
+          ;; for the pop.
+          (select
+            (pop i32)
+            (local.tee $temp
+              (i32.const 0)
+            )
+            (i32.const 0)
+          )
+        )
+        ;; Needed to avoid the catch being trivial.
+        (call $add-block-in-catch-pop)
+      )
+    )
+  )
 )

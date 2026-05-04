@@ -1,6 +1,8 @@
 
-"""Removes local names. When you don't care about local names but do want
-to diff for structural changes, this can help.
+"""Removes local names.
+
+When you don't care about local names but do want to diff for structural
+changes, this can help.
 """
 
 import sys
