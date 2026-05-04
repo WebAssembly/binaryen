@@ -1,3 +1,6 @@
+import {
+	consoleWarn,
+} from "../../lib.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -46,26 +49,19 @@ export function control(mod: Module) {
 		// TODO: catch_all
 		// TODO: catch_all_ref
 
-		/** @deprecated Use {@link ExpressionBuilder#br} instead. */
 		// @ts-expect-error
-		break(...args) { return this.br(...args); },
-		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#br} instead. */ break(...args) { consoleWarn("`.break()` is deprecated; use `.br()` instead."); return this.br(...args); },
 		// @ts-expect-error
-		switch(...args) { return this.br_table(...args); },
-		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */ switch(...args) { consoleWarn("`.switch()` is deprecated; use `.br_table()` instead."); return this.br_table(...args); },
 		// @ts-expect-error
-		callIndirect(...args) { return this.call_indirect(...args); },
-		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */ callIndirect(...args) { consoleWarn("`.callIndirect()` is deprecated; use `.call_indirect()` instead."); return this.call_indirect(...args); },
 		// @ts-expect-error
-		returnCall(...args) { return this.return_call(...args); },
-		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */ returnCall(...args) { consoleWarn("`.returnCall()` is deprecated; use `.return_call()` instead."); return this.return_call(...args); },
 		// @ts-expect-error
-		returnCallIndirect(...args) { return this.return_call_indirect(...args); },
-		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */ returnCallIndirect(...args) { consoleWarn("`.returnCallIndirect()` is deprecated; use `.return_call_indirect()` instead."); return this.return_call_indirect(...args); },
 		// @ts-expect-error
-		rethrow(...args) { return this.throw_ref(...args); },
-		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */ rethrow(...args) { consoleWarn("`.rethrow()` is deprecated; use `.throw_ref()` instead."); return this.throw_ref(...args); },
 		// @ts-expect-error
-		try(...args) { return this.try_table(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */ try(...args) { consoleWarn("`.try()` is deprecated; use `.try_table()` instead."); return this.try_table(...args); },
 	} as const;
 }
