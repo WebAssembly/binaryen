@@ -144,18 +144,17 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.unreachable()`
 	- `.drop()`
 	- `.select()`
-- Control Instructions
-	- conditionals, blocks, loops, and breaking (“branching”)
-		- `.if()`
-		- `.block()`
-		- `.loop()`
-		- `.br()`, `.br_if()`, `.br_table()`
-		- `.br_on_null()`, `.br_on_non_null()`, `.br_on_cast()`, `.br_on_cast_fail()`
-	- function calls, returns, throws, and catching
-		- `.call()`, `.call_ref()`, `.call_indirect()`
-		- `.return()`, `.return_call()`, `.return_call_ref()`, `.return_call_indirect()`
-		- `.throw()`, `.throw_ref()`, `.try_table()`
-		- ~~`.catch()`, `.catch_ref()`, `.catch_all()`, `.catch_all_ref()`~~; ⛔️ not yet supported
+- conditionals, blocks, loops, and breaking (“branching”)
+	- `.if()`
+	- `.block()`
+	- `.loop()`
+	- `.br()`, `.br_if()`, `.br_table()`
+	- `.br_on_null()`, `.br_on_non_null()`, `.br_on_cast()`, `.br_on_cast_fail()`
+- function calls, returns, throws, and catching
+	- `.call()`, `.call_ref()`, `.call_indirect()`
+	- `.return()`, `.return_call()`, `.return_call_ref()`, `.return_call_indirect()`
+	- `.throw()`, `.throw_ref()`, `.try_table()`
+	- ~~`.catch()`, `.catch_ref()`, `.catch_all()`, `.catch_all_ref()`~~; ⛔️ not yet supported
 - local and global variables
 	- `.local.get()`
 	- `.local.set()`
@@ -181,6 +180,31 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.array.fill()`
 	- `.array.copy()`
 	- `.array.init_data()`, `.array.init_elem()`
+- integers
+	- `.{i32,i64}.const`
+	- `.{i31,i32}.clz`, `.{i32,i64}.ctz`, `.{i32,i64}.popcnt`
+	- `.{i32,i64}.extend8_s`, `.{i32,i64}.extend16_s`, `.i64.extend32_s`
+	- `.{i31,i32}.add`, `.{i32,i64}.sub`, `.{i32,i64}.mul`, `.{i31,i32}.div_{s,u}`, `.{i32,i64}.rem_{s,u}`
+	- `.{i31,i32}.and`, `.{i32,i64}.or`, `.{i32,i64}.xor`, `.{i31,i32}.shl`, `.{i31,i32}.shr{s,u}`, `.{i32,i64}.rotl`, `.{i32,i64}.rotr`
+	- `.{i32,i64}.eqz`
+	- `.{i32,i64}.eq`, `.{i32,i64}.ne`
+	- `.{i32,i64}.lt_{s,u}`, `.{i32,i64}.gt_{s,u}`, `.{i32,i64}.le_{s,u}`, `.{i32,i64}.ge_{s,u}`
+	- `.i32.wrap_i64()`, `.i64.extend_i32_{s,u}()`
+	- `.i32.trunc_f32_{s,u}()`, `.i32.trunc_f64_{s,u}()`
+	- `.i64.trunc_f32_{s,u}()`, `.i64.trunc_f64_{s,u}()`
+	- `.i32.trunc_sat_f32_{s,u}()`, `.i32.trunc_sat_f64_{s,u}()`
+	- `.i64.trunc_sat_f32_{s,u}()`, `.i64.trunc_sat_f64_{s,u}()`
+	- `.i32.reinterpret_f32()`, `.i64.reinterpret_f64()`
+- floats
+	- `.{f32,f64}.const`
+	- `.{f32,f64}.abs`, `.{f32,f64}.neg`, `.{f32,f64}.sqrt`, `.{f32,f64}.ceil`, `.{f32,f64}.floor`, `.{f32,f64}.trunc`, `.{f32,f64}.nearest`
+	- `.{f32,f64}.add`, `.{f32,f64}.sub`, `.{f32,f64}.mul`, `.{f32,f64}.div`, `.{f32,f64}.min`, `.{f32,f64}.max`, `.{f32,f64}.copysign`
+	- `.{f32,f64}.eq`, `.{f32,f64}.lt`, `.{f32,f64}.gt`, `.{f32,f64}.le`, `.{f32,f64}.ge`
+	- `.{f32,f64}.convert_i32_s`, `.{f32,f64}.convert_i32_u`, `.{f32,f64}.convert_i64_s`, `.{f32,f64}.convert_i64_u`
+	- `.f32.demote_f64`, `.f64.promote_f32`
+- tuples 🌱 (Binaryen-specific)
+	- `.tuple.make()`
+	- `.tuple.extract()`
 
 
 
@@ -273,15 +297,54 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 
 
 ### Expression Builders
-- `ExpressionBuilder#break()`              &rarr; `ExpressionBuilder#br()`
-- `ExpressionBuilder#switch()`             &rarr; `ExpressionBuilder#br_table()`
-- `ExpressionBuilder#callIndirect()`       &rarr; `ExpressionBuilder#call_indirect()`
-- `ExpressionBuilder#returnCall()`         &rarr; `ExpressionBuilder#return_call()`
-- `ExpressionBuilder#returnCallIndirect()` &rarr; `ExpressionBuilder#return_call_indirect()`
-- `ExpressionBuilder#rethrow()`            &rarr; `ExpressionBuilder#throw_ref()`
-- `ExpressionBuilder#try()`                &rarr; `ExpressionBuilder#try_table()`
+Note: To improve readability, assume all methods written in this section are bound to an Expression Builder (an object returned by `Module#x`).
+
+- `.break()`              &rarr; `.br()`
+- `.switch()`             &rarr; `.br_table()`
+- `.callIndirect()`       &rarr; `.call_indirect()`
+- `.returnCall()`         &rarr; `.return_call()`
+- `.returnCallIndirect()` &rarr; `.return_call_indirect()`
+- `.rethrow()`            &rarr; `.throw_ref()`
+- `.try()`                &rarr; `.try_table()`
 
 `.{struct,array}.get()` no longer take the `isSigned` argument. For packed signed/unsigned types, use `.{struct,array}.get_{s,u}()` respectively.
+
+- `.i32.wrap()`            &rarr; `.i32.wrap_i64()`
+- `.i32.trunc_s.f32()`     &rarr; `.i32.trunc_f32_s()`
+- `.i32.trunc_s.f64()`     &rarr; `.i32.trunc_f64_s()`
+- `.i32.trunc_u.f32()`     &rarr; `.i32.trunc_f32_u()`
+- `.i32.trunc_u.f64()`     &rarr; `.i32.trunc_f64_u()`
+- `.i32.trunc_s_sat.f32()` &rarr; `.i32.trunc_sat_f32_s()`
+- `.i32.trunc_s_sat.f64()` &rarr; `.i32.trunc_sat_f64_s()`
+- `.i32.trunc_u_sat.f32()` &rarr; `.i32.trunc_sat_f32_u()`
+- `.i32.trunc_u_sat.f64()` &rarr; `.i32.trunc_sat_f64_u()`
+- `.reinterpret()`         &rarr; `.reinterpret_f32()`
+
+- `.i64.extend_s()`        &rarr; `.i64.extend_i32_s()`
+- `.i64.extend_u()`        &rarr; `.i64.extend_i32_u()`
+- `.i64.trunc_s.f32()`     &rarr; `.i64.trunc_f32_s()`
+- `.i64.trunc_s.f64()`     &rarr; `.i64.trunc_f64_s()`
+- `.i64.trunc_u.f32()`     &rarr; `.i64.trunc_f32_u()`
+- `.i64.trunc_u.f64()`     &rarr; `.i64.trunc_f64_u()`
+- `.i64.trunc_s_sat.f32()` &rarr; `.i64.trunc_sat_f32_s()`
+- `.i64.trunc_s_sat.f64()` &rarr; `.i64.trunc_sat_f64_s()`
+- `.i64.trunc_u_sat.f32()` &rarr; `.i64.trunc_sat_f32_u()`
+- `.i64.trunc_u_sat.f64()` &rarr; `.i64.trunc_sat_f64_u()`
+- `.reinterpret()`         &rarr; `.reinterpret_f64()`
+
+- `.f32.convert_s.i32()` &rarr; `.f32.convert_i32_s()`
+- `.f32.convert_s.i64()` &rarr; `.f32.convert_i64_s()`
+- `.f32.convert_u.i32()` &rarr; `.f32.convert_i32_u()`
+- `.f32.convert_u.i64()` &rarr; `.f32.convert_i64_u()`
+- `.f32.reinterpret()`   &rarr; `.f32.reinterpret_i32()`
+- `.f32.demote()`        &rarr; `.f32.demote_f64()`
+
+- `.f64.convert_s.i32()` &rarr; `.f64.convert_i32_s()`
+- `.f64.convert_s.i64()` &rarr; `.f64.convert_i64_s()`
+- `.f64.convert_u.i32()` &rarr; `.f64.convert_i32_u()`
+- `.f64.convert_u.i64()` &rarr; `.f64.convert_i64_u()`
+- `.f64.reinterpret()`   &rarr; `.f64.reinterpret_i64()`
+- `.f64.promote()`       &rarr; `.f64.promote_f32()`
 
 
 ### Settings

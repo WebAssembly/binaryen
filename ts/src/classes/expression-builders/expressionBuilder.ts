@@ -8,11 +8,23 @@ import {
 	control,
 } from "./control.ts";
 import {
+	f32,
+} from "./f32.ts";
+import {
+	f64,
+} from "./f64.ts";
+import {
 	global,
 } from "./global.ts";
 import {
 	i31,
 } from "./i31.ts";
+import {
+	i32,
+} from "./i32.ts";
+import {
+	i64,
+} from "./i64.ts";
 import {
 	local,
 } from "./local.ts";
@@ -31,6 +43,9 @@ import {
 import {
 	table,
 } from "./table.ts";
+import {
+	tuple,
+} from "./tuple.ts";
 
 
 
@@ -69,6 +84,11 @@ export function expressionBuilder(mod: Module) {
 		i31: i31(mod),
 		// TODO: extern
 		// TODO: any
+		i32: i32(mod),
+		i64: i64(mod),
+		f32: f32(mod),
+		f64: f64(mod),
+		tuple: tuple(mod),
 	} as const;
 }
 
