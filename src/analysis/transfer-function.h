@@ -19,7 +19,9 @@
 
 #if __cplusplus >= 202002L
 #include <concepts>
+#if __has_include(<ranges>)
 #include <ranges>
+#endif
 #endif
 
 #if defined(__cpp_lib_concepts) && defined(__cpp_lib_ranges)
