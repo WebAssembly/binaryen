@@ -227,7 +227,12 @@
   (data $7 (memory $3) (i32.const 3) "foo")
 )
 
-;; Tests for passive segments and instruction rewriting.
+;; Tests for passive segments and instruction rewriting. The spec demands that
+;; every active segment effectively go through data.drop after initialization,
+;; so every time an explicit instruction refers to an active segment, it has the
+;; same effect as referring to an empty passive segment. When manipulating
+;; segments, we just have to find some active segment name in the output to
+;; replace all active segment names appearing in instructions in the input.
 
 ;; Basic rewriting: All passive segments appear first in the output, and
 ;; references to them are unmodified; references to active segments are renamed
