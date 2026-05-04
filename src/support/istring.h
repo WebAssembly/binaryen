@@ -48,8 +48,8 @@ public:
   // optimization saves a lot of space, because while it adds 4 bytes to each
   // interned string itself, we tend to have many views on each.
   //
-  // We provide a View here, which is a string_view-like interface that hides
-  // those internal details.
+  // We provide a View here, which is a simple interface. Users that need more
+  // convert to a std::string_view with .view() or a cast.
   struct View {
     const char* internal = nullptr;
     const char* data() const { return internal; }
@@ -58,64 +58,10 @@ public:
     }
     char operator[](size_t x) const { return internal[x]; }
     operator std::string_view() const { return {internal, size()}; }
-
-    bool operator==(std::string_view other) const {
-      return std::string_view(*this) == other;
-    }
-    bool operator!=(std::string_view other) const { return !(*this == other); }
-    bool operator<(std::string_view other) const {
-      return std::string_view(*this) < other;
-    }
-    bool operator<=(std::string_view other) const {
-      return std::string_view(*this) <= other;
-    }
-    bool operator>(std::string_view other) const {
-      return std::string_view(*this) > other;
-    }
-    bool operator>=(std::string_view other) const {
-      return std::string_view(*this) >= other;
-    }
-
-    friend bool operator==(const View& a, const std::string& b) {
-      return std::string_view(a) == b;
-    }
-    friend bool operator!=(const View& a, const std::string& b) {
-      return !(a == b);
-    }
-    friend bool operator==(const std::string& a, const View& b) {
-      return a == std::string_view(b);
-    }
-    friend bool operator!=(const std::string& a, const View& b) {
-      return !(a == b);
-    }
-
-    friend bool operator==(const View& a, const char* b) {
-      return std::string_view(a) == b;
-    }
-    friend bool operator!=(const View& a, const char* b) { return !(a == b); }
-    friend bool operator==(const char* a, const View& b) {
-      return a == std::string_view(b);
-    }
-    friend bool operator!=(const char* a, const View& b) { return !(a == b); }
-
-    std::string_view substr(size_t pos,
-                            size_t len = std::string_view::npos) const {
-      return std::string_view(*this).substr(pos, len);
-    }
-    size_t find(std::string_view s, size_t pos = 0) const {
-      return std::string_view(*this).find(s, pos);
-    }
-    size_t find_last_of(char c, size_t pos = std::string_view::npos) const {
-      return std::string_view(*this).find_last_of(c, pos);
-    }
-    const char* begin() const { return data(); }
-    const char* end() const { return data() + size(); }
-
-    friend std::ostream& operator<<(std::ostream& os, const View& view) {
-      return os << std::string_view(view);
-    }
   };
   const View str;
+
+  std::string_view view() const { return std::string_view(str); }
 
   IString() = default;
 
@@ -140,7 +86,7 @@ public:
     if (str.internal == other.str.internal) {
       return false;
     }
-    return std::string_view(str) < std::string_view(other.str);
+    return view() < other.view();
   }
   bool operator<=(const IString& other) const {
     return *this == other || *this < other;
@@ -162,15 +108,13 @@ public:
 
   bool startsWith(std::string_view prefix) const {
     // TODO: Use C++20 `starts_with`.
-    return str.substr(0, prefix.size()) == prefix;
+    return view().substr(0, prefix.size()) == prefix;
   }
-  bool startsWith(IString other) const {
-    return startsWith(std::string_view(other.str));
-  }
+  bool startsWith(IString other) const { return startsWith(other.view()); }
 
   // Disambiguate for string literals.
   template<int N> bool startsWith(const char (&str)[N]) const {
-    return startsWith(std::string_view(str));
+    return startsWith(view());
   }
 
   bool endsWith(std::string_view suffix) const {
@@ -178,19 +122,17 @@ public:
     if (suffix.size() > str.size()) {
       return false;
     }
-    return str.substr(str.size() - suffix.size()) == suffix;
+    return view().substr(str.size() - suffix.size()) == suffix;
   }
-  bool endsWith(IString other) const {
-    return endsWith(std::string_view(other.str));
-  }
+  bool endsWith(IString other) const { return endsWith(other.view()); }
 
   // Disambiguate for string literals.
   template<int N> bool endsWith(const char (&str)[N]) const {
-    return endsWith(std::string_view(str));
+    return endsWith(view());
   }
 
   IString substr(size_t pos, size_t len = std::string_view::npos) const {
-    return IString(str.substr(pos, len));
+    return IString(view().substr(pos, len));
   }
 
   size_t size() const { return str.size(); }
@@ -207,7 +149,7 @@ template<> struct hash<wasm::IString> {
 };
 
 inline std::ostream& operator<<(std::ostream& os, const wasm::IString& str) {
-  return os << str.str;
+  return os << str.view();
 }
 
 } // namespace std

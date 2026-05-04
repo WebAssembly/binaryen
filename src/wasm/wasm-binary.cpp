@@ -5208,7 +5208,7 @@ static char formatNibble(int nibble) {
 
 Name WasmBinaryReader::escape(Name name) {
   bool allIdChars = true;
-  for (char c : name.str) {
+  for (char c : name.view()) {
     if (!(allIdChars = isIdChar(c))) {
       break;
     }
@@ -5218,7 +5218,7 @@ Name WasmBinaryReader::escape(Name name) {
   }
   // encode name, if at least one non-idchar (per WebAssembly spec) was found
   std::string escaped;
-  for (char c : name.str) {
+  for (char c : name.view()) {
     if (isIdChar(c)) {
       escaped.push_back(c);
       continue;

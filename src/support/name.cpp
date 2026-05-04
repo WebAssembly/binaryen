@@ -46,6 +46,7 @@ std::ostream& Name::print(std::ostream& o) const {
   // TODO: This is not spec-compliant since the spec does not yet support
   // quoted identifiers and has a limited set of valid idchars.
   o << '$';
+  auto str = view();
   if (size() >= 1 && std::all_of(str.begin(), str.end(), isIDChar)) {
     return o << str;
   } else {

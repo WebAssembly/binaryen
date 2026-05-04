@@ -55,7 +55,7 @@ struct Name : public IString {
 
   bool hasSubstring(IString substring) {
     // TODO: Use C++23 `contains`.
-    return str.find(substring.str) != std::string_view::npos;
+    return view().find(substring.str) != std::string_view::npos;
   }
 
   std::ostream& print(std::ostream& o) const;
