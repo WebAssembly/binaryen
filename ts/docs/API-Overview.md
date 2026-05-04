@@ -134,36 +134,32 @@ Objects:
 
 
 ## Expression Building
-Each of these methods returns an `ExpressionRef`.
+Each of these functions is bound to `Module#x` (of type `ExpressionBuilder`) and returns an `ExpressionRef`.
+See the generated **ExpressionBuilder** docs for all available functions and details.
 
-### Parametric Instructions
-- `Module#x.nop()`
-- `Module#x.unreachable()`
-- `Module#x.drop(value: ExpressionRef)`
-- `Module#x.select(ifTrue: ExpressionRef, ifFalse: ExpressionRef)`
-
-### Control Instructions
-- `Module#x.block(name: string | null, children: readonly ExpressionRef[], resultType?: Type)`
-- `Module#x.loop(name: string, body: ExpressionRef)`
-- TODO: `Module#x.if()`
-- `Module#x.br(label: string, condition?: ExpressionRef, value?: ExpressionRef)`
-- `Module#x.br_if(label: string, condition: ExpressionRef, value?: ExpressionRef)`
-
-### Variable Instructions
-- `Module#x.local.get(index: number, typ: Type)`
-- `Module#x.local.set(index: number, value: ExpressionRef)`
-- `Module#x.local.tee(index: number, value: ExpressionRef, typ: Type)`
-- TODO: `Module#x.global.get()`
-- TODO: `Module#x.global.set()`
-
-### Table Instructions
-### Memory Instructions
-### Reference Instructions
-### Aggregate Instructions
-### Numeric Instructions
-### Vector Instructions
-### Atomic Instructions
-### String Instructions
+- Parametric Instructions
+	- `.nop()`
+	- `.unreachable()`
+	- `.drop()`
+	- `.select()`
+- Control Instructions
+	- conditionals, blocks, loops, and breaking (“branching”)
+		- `.if()`
+		- `.block()`
+		- `.loop()`
+		- `.br()`, `.br_if()`, `.br_table()`
+		- `.br_on_null()`, `.br_on_non_null()`, `.br_on_cast()`, `.br_on_cast_fail()`
+	- function calls, returns, throws, and catching
+		- `.call()`, `.call_ref()`, `.call_indirect()`
+		- `.return()`, `.return_call()`, `.return_call_ref()`, `.return_call_indirect()`
+		- `.throw()`, `.throw_ref()`, `.try_table()`
+		- ~~`.catch()`, `.catch_ref()`, `.catch_all()`, `.catch_all_ref()`~~; ⛔️ not yet supported
+- local and global variables
+	- `.local.get()`
+	- `.local.set()`
+	- `.local.tee()`
+	- `.global.get()`
+	- `.global.set()`
 
 
 
@@ -253,6 +249,16 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 - `Module#setFeatures()`        &rarr; `Module#features`
 
 `Module#copyExpression(expr)` has been moved to the global function `copyExpression(expr, mod)` where it lives alongside `getExpressionInfo` et al.
+
+
+### Expression Builders
+- `ExpressionBuilder#break()`              &rarr; `ExpressionBuilder#br()`
+- `ExpressionBuilder#switch()`             &rarr; `ExpressionBuilder#br_table()`
+- `ExpressionBuilder#callIndirect()`       &rarr; `ExpressionBuilder#call_indirect()`
+- `ExpressionBuilder#returnCall()`         &rarr; `ExpressionBuilder#return_call()`
+- `ExpressionBuilder#returnCallIndirect()` &rarr; `ExpressionBuilder#return_call_indirect()`
+- `ExpressionBuilder#rethrow()`            &rarr; `ExpressionBuilder#throw_ref()`
+- `ExpressionBuilder#try()`                &rarr; `ExpressionBuilder#try_table()`
 
 
 ### Settings
