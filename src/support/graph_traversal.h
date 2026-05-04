@@ -41,7 +41,8 @@ public:
   template<typename It, typename Sen>
 #endif
   Graph(It rootsBegin, Sen rootsEnd, SuccessorFunction successors)
-    : roots(rootsBegin, rootsEnd), successors(std::move(successors)) {}
+    : roots(rootsBegin, rootsEnd), successors(std::move(successors)) {
+  }
 
   // Traverse the graph depth-first, calling `successors` exactly once for each
   // node (unless the node appears multiple times in `roots`). Return the set of
