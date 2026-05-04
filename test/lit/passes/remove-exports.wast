@@ -5,22 +5,59 @@
 
 ;; foo and bar will be kept as exports, but __foo, __bar, and __ will not.
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (export "__foo" (func $__foo))
+
+  ;; CHECK:      (export "bar" (func $bar))
+
+  ;; CHECK:      (export "__bar" (func $__bar))
+
+  ;; CHECK:      (export "__" (func $__))
+
+  ;; CHECK:      (func $foo (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $foo (export "foo")
     (drop (i32.const 1))
   )
 
+  ;; CHECK:      (func $__foo (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $__foo (export "__foo")
     (drop (i32.const 2))
   )
 
+  ;; CHECK:      (func $bar (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $bar (export "bar")
     (drop (i32.const 3))
   )
 
+  ;; CHECK:      (func $__bar (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $__bar (export "__bar")
     (drop (i32.const 4))
   )
 
+  ;; CHECK:      (func $__ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $__ (export "__")
     (drop (i32.const 4))
   )
@@ -28,15 +65,21 @@
 
 ;; Test non-function exports. The prefixed __mem and __table exports vanish.
 (module
+  ;; CHECK:      (memory $memory 10 20)
   (memory $memory 10 20)
 
+  ;; CHECK:      (table $table 10 20 funcref)
   (table $table 10 20 funcref)
 
+  ;; CHECK:      (export "mem" (memory $memory))
   (export "mem" (memory $memory))
 
+  ;; CHECK:      (export "__mem" (memory $memory))
   (export "__mem" (memory $memory))
 
+  ;; CHECK:      (export "tab" (table $table))
   (export "tab" (table $table))
 
+  ;; CHECK:      (export "__tab" (table $table))
   (export "__tab" (table $table))
 )
