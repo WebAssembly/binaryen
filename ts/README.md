@@ -35,7 +35,9 @@ console.log(instance.exports.add(41, 1)); // 42
 ```
 
 ## How to Contribute
-Make sure you have Git and Node (and NPM) installed on your machine, and have already cloned the **WebAssembly/binaryen** repo.
+Contributions are welcome!
+Make sure you have [Git](https://git-scm.com/) and [Node (and NPM)](https://nodejs.org/) installed on your machine,
+and have already cloned the **WebAssembly/binaryen** repo.
 
 From the repo’s root:
 ```zsh
@@ -44,10 +46,77 @@ $ npm ci
 $ npm run build
 ```
 
-File Inventory:
+### Pipeline
+#### Develop in TypeScript
+The core of this project is written in [TS](https://www.typescriptlang.org/), best paired with a powerful editor and some nice extensions.
+```zsh
+$ npm run compile # emits javascript output to ./dist/
+```
+Don’t put anything important in `./dist/`, as it gets deleted and rebuilt each time.
+
+Before committing, ensure only the best code quality by running [ESLint](https://eslint.org/).
+```zsh
+$ npm run lint # reports linter errors & warnings
+$ npm run lint -- --fix # tries to auto-fix problems (some may need manual fixing)
+```
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) commit message format.
+Messages should be in the present tense / command tense.
+```zsh
+$ git commit -m "feat: add a new feature"
+$ git commit -m "feat!: add a new breaking feature" # API consumers need to know about these
+$ git commit -m "fix: fix a bug"
+$ git commit -m "refactor: reorganize code"
+$ git commit -m "lint: fix a coding style issue"
+$ git commit -m "docs: update documentation"
+$ git commit -m "test: add/update tests"
+$ git commit -m "build: make a change related to the package build system"
+```
+
+#### Read the Docs
+Generated documentation is built with [TypeDoc](https://typedoc.org/), a tool that parses comments in the TS source files and produces beautiful HTML.
+
+After developing and updating doc-comments, regenerate docs and view them in your browser.
+```zsh
+$ npm run docs # builds a static site to ./docs/out/
+$ open ./docs/out/index.html
+```
+Don’t put anything important in `./docs/out/`, as it gets deleted and rebuilt each time.
+
+TODO: Docs will be hosted publicly online somewhere soon.
+
+#### Run Tests
+The test suite is empty for now, but you can still run it.
+Node v24+ required.
+```zsh
+$ npm run test
+```
+
+#### Bundle
+TypeScript only compiles the source files to `./dist/`.
+After that we need a bundler to optimize and minify it into one giant JS file,
+which will then get processed with Emscripten’s build so that it can be used by consumers.
+This will look a lot like AssemblyScript’s build process.
+
+TODO: more details
+
+#### Build and Push
+Before pushing, rebuild the entire project to catch any errors.
+```zsh
+$ npm run build
+
+# if all goes well…
+
+$ git push
+```
+
+#### Publish
+TODO: this section
+
+### File Inventory
 - `README.md`: *you are here*
 
-- `{.editorconfig,.gitignore}`: standard repo files
+- `.editorconfig`, `.gitignore`: standard repo files
 
 - `package{,-lock}.json`: Node package & npm registry details
 
@@ -63,7 +132,7 @@ File Inventory:
 
 	- `binaryen.ts`: the entrypoint; exports everything available to consumers
 
-	- `-pre.d.ts`: artifacts provided by Emscripten
+	- `-pre.ts`: artifacts provided by Emscripten
 
 	- `{lib,utils}.ts`: internal tools
 
@@ -87,4 +156,4 @@ File Inventory:
 
 - `docs/`: documentation
 
-	- `out/` *(gitignored)*: output of **typedoc**; gitignored
+	- `out/` *(gitignored)*: output of **typedoc**; this will probably be hosted online
