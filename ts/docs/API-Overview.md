@@ -108,28 +108,51 @@ Objects:
 
 
 ## Module Manipulation
-- Properties of `Module` as a namespace:
-	- `new Module.Tag(ref: TagRef)`:                              an object containing information about a **Tag**
-	- `new Module.Global(ref: GlobalRef)`:                        an object containing information about a **Global**
-	- `new Module.Memory(mod: Module, name: string)`:             an object containing information about a **Memory**
-	- `new Module.Table(ref: TableRef)`:                          an object containing information about a **Table**
-	- `new Module.Function(ref: FunctionRef)`:                    an object containing information about a **Function**
-	- `new Module.DataSegment(mod: Module, ref: DataSegmentRef)`: an object containing information about a **Data Segment**
-	- `new Module.ElementSegment(ref: ElementSegmentRef)`:        an object containing information about an **Element Segment**
-	- `new Module.Import()`:                                      an object containing information about an **Import** (🌱 empty for now)
-	- `new Module.Export(ref: ExportRef)`:                        an object containing information about an **Export**
+Properties of `Module` as a namespace:
+- `new Module.Tag(ref: TagRef)`:                              an object containing information about a **Tag**
+- `new Module.Global(ref: GlobalRef)`:                        an object containing information about a **Global**
+- `new Module.Memory(mod: Module, name: string)`:             an object containing information about a **Memory**
+- `new Module.Table(ref: TableRef)`:                          an object containing information about a **Table**
+- `new Module.Function(ref: FunctionRef)`:                    an object containing information about a **Function**
+- `new Module.DataSegment(mod: Module, ref: DataSegmentRef)`: an object containing information about a **Data Segment**
+- `new Module.ElementSegment(ref: ElementSegmentRef)`:        an object containing information about an **Element Segment**
+- `new Module.Import()`:                                      an object containing information about an **Import** (🌱 empty for now)
+- `new Module.Export(ref: ExportRef)`:                        an object containing information about an **Export**
 
-- Properties of `Module` instances (see full list of methods in generated docs):
-	- `Module#wasm`:            [build WASM expressions](#expression-building)
-	- `Module#tags`:            **Tag** manipulation
-	- `Module#globals`:         **Global** manipulation
-	- `Module#memories`:        **Memory** manipulation
-	- `Module#tables`:          **Table** manipulation
-	- `Module#functions`:       **Function** manipulation
-	- `Module#dataSegments`:    **Data Segment** manipulation
-	- `Module#elementSegments`: **Element Segment** manipulation
-	- `Module#imports`:         **Import** manipulation
-	- `Module#exports`:         **Export** manipulation
+Properties of `Module` instances (see full list of methods in generated docs):
+- `Module#wasm`:            [build WASM expressions](#expression-building)
+- `Module#tags`:            **Tag** manipulation
+- `Module#globals`:         **Global** manipulation
+- `Module#memories`:        **Memory** manipulation
+- `Module#tables`:          **Table** manipulation
+- `Module#functions`:       **Function** manipulation
+- `Module#dataSegments`:    **Data Segment** manipulation
+- `Module#elementSegments`: **Element Segment** manipulation
+- `Module#imports`:         **Import** manipulation
+- `Module#exports`:         **Export** manipulation
+
+Module methods (see signatures and descriptions in generated docs):
+- Emission & Execution
+	- `.emitText()`
+	- `.emitStackIR()`
+	- `.emitAsmjs()`
+	- `.emitBinary()`
+	- `.interpret()`
+	- `.dispose()`
+- Validation & Optimization
+	- `.validate()`
+	- `.optimize()`
+	- `.optimizeFunction()`
+	- `.runPasses()`
+	- `.runPassesOnFunction()`
+- Debugging
+	- `.addDebugInfoFileName()`
+	- `.getDebugInfoFileName()`
+	- `.setDebugLocation()`
+	- `.setTypeName()`
+	- `.setFieldName()`
+	- `.addCustomSection()`
+	- `.updateMaps()`
 
 
 
@@ -326,7 +349,7 @@ Many numeric methods have been renamed:
 - `.i32.trunc_s_sat.f64()` &rarr; `.i32.trunc_sat_f64_s()`
 - `.i32.trunc_u_sat.f32()` &rarr; `.i32.trunc_sat_f32_u()`
 - `.i32.trunc_u_sat.f64()` &rarr; `.i32.trunc_sat_f64_u()`
-- `.reinterpret()`         &rarr; `.reinterpret_f32()`
+- `.i32.reinterpret()`     &rarr; `.i32.reinterpret_f32()`
 >
 - `.i64.extend_s()`        &rarr; `.i64.extend_i32_s()`
 - `.i64.extend_u()`        &rarr; `.i64.extend_i32_u()`
@@ -338,7 +361,7 @@ Many numeric methods have been renamed:
 - `.i64.trunc_s_sat.f64()` &rarr; `.i64.trunc_sat_f64_s()`
 - `.i64.trunc_u_sat.f32()` &rarr; `.i64.trunc_sat_f32_u()`
 - `.i64.trunc_u_sat.f64()` &rarr; `.i64.trunc_sat_f64_u()`
-- `.reinterpret()`         &rarr; `.reinterpret_f64()`
+- `.i64.reinterpret()`     &rarr; `.i64.reinterpret_f64()`
 >
 - `.f32.convert_s.i32()` &rarr; `.f32.convert_i32_s()`
 - `.f32.convert_s.i64()` &rarr; `.f32.convert_i64_s()`
