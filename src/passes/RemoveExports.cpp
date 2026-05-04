@@ -37,7 +37,7 @@ struct RemoveExports : public Pass {
 
     std::vector<Name> toRemove;
     for (auto& exp : module->exports) {
-      if (String::wildcardMatch(pattern, exp->name.str)) {
+      if (String::wildcardMatch(pattern, exp->name.toString())) {
         toRemove.push_back(exp->name);
       }
     }
