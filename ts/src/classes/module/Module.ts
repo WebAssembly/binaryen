@@ -30,7 +30,7 @@ import {
 } from "../../utils.ts";
 import {
 	expressionBuilder,
-} from "../expression/expression-builders.ts";
+} from "../../classes/expression-builders/expressionBuilder.ts";
 import * as DATA_SEGMENT from "./DataSegment.ts";
 import * as ELEMENT_SEGMENT from "./ElementSegment.ts";
 import * as EXPORT from "./Export.ts";

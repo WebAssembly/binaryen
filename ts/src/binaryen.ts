@@ -15,6 +15,7 @@ export type {ElementSegment, ModuleElementSegments} from "./classes/module/Eleme
 export type {Import, ModuleImports} from "./classes/module/Import.ts";
 export type {Export, ModuleExports} from "./classes/module/Export.ts";
 export * as X from "./classes/expression/index.ts";
+export * as ExpressionBuilder from "./classes/expression-builders/index.ts";
 export {TypeBuilder} from "./classes/TypeBuilder.ts";
 export {
 	ExpressionRunner,
