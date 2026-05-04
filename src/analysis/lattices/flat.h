@@ -30,7 +30,7 @@
 
 namespace wasm::analysis {
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 
 template<typename T>
 concept Flattenable = std::copyable<T> && std::equality_comparable<T>;
@@ -118,7 +118,7 @@ public:
   }
 };
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(Lattice<Flat<int>>);
 #endif
 
