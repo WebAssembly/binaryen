@@ -181,14 +181,14 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.array.copy()`
 	- `.array.init_data()`, `.array.init_elem()`
 - integers
-	- `.{i32,i64}.const`
-	- `.{i31,i32}.clz`, `.{i32,i64}.ctz`, `.{i32,i64}.popcnt`
-	- `.{i32,i64}.extend8_s`, `.{i32,i64}.extend16_s`, `.i64.extend32_s`
-	- `.{i31,i32}.add`, `.{i32,i64}.sub`, `.{i32,i64}.mul`, `.{i31,i32}.div_{s,u}`, `.{i32,i64}.rem_{s,u}`
-	- `.{i31,i32}.and`, `.{i32,i64}.or`, `.{i32,i64}.xor`, `.{i31,i32}.shl`, `.{i31,i32}.shr{s,u}`, `.{i32,i64}.rotl`, `.{i32,i64}.rotr`
-	- `.{i32,i64}.eqz`
-	- `.{i32,i64}.eq`, `.{i32,i64}.ne`
-	- `.{i32,i64}.lt_{s,u}`, `.{i32,i64}.gt_{s,u}`, `.{i32,i64}.le_{s,u}`, `.{i32,i64}.ge_{s,u}`
+	- `.{i32,i64}.const()`
+	- `.{i31,i32}.clz()`, `.{i32,i64}.ctz()`, `.{i32,i64}.popcnt()`
+	- `.{i32,i64}.extend8_s()`, `.{i32,i64}.extend16_s()`, `.i64.extend32_s()`
+	- `.{i31,i32}.add()`, `.{i32,i64}.sub()`, `.{i32,i64}.mul()`, `.{i31,i32}.div_{s,u}()`, `.{i32,i64}.rem_{s,u}()`
+	- `.{i31,i32}.and()`, `.{i32,i64}.or()`, `.{i32,i64}.xor()`, `.{i31,i32}.shl()`, `.{i31,i32}.shr{s,u}()`, `.{i32,i64}.rotl()`, `.{i32,i64}.rotr()`
+	- `.{i32,i64}.eqz()`
+	- `.{i32,i64}.eq()`, `.{i32,i64}.ne()`
+	- `.{i32,i64}.lt_{s,u}()`, `.{i32,i64}.gt_{s,u}()`, `.{i32,i64}.le_{s,u}()`, `.{i32,i64}.ge_{s,u}()`
 	- `.i32.wrap_i64()`, `.i64.extend_i32_{s,u}()`
 	- `.i32.trunc_f32_{s,u}()`, `.i32.trunc_f64_{s,u}()`
 	- `.i64.trunc_f32_{s,u}()`, `.i64.trunc_f64_{s,u}()`
@@ -196,12 +196,12 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.i64.trunc_sat_f32_{s,u}()`, `.i64.trunc_sat_f64_{s,u}()`
 	- `.i32.reinterpret_f32()`, `.i64.reinterpret_f64()`
 - floats
-	- `.{f32,f64}.const`
-	- `.{f32,f64}.abs`, `.{f32,f64}.neg`, `.{f32,f64}.sqrt`, `.{f32,f64}.ceil`, `.{f32,f64}.floor`, `.{f32,f64}.trunc`, `.{f32,f64}.nearest`
-	- `.{f32,f64}.add`, `.{f32,f64}.sub`, `.{f32,f64}.mul`, `.{f32,f64}.div`, `.{f32,f64}.min`, `.{f32,f64}.max`, `.{f32,f64}.copysign`
-	- `.{f32,f64}.eq`, `.{f32,f64}.lt`, `.{f32,f64}.gt`, `.{f32,f64}.le`, `.{f32,f64}.ge`
-	- `.{f32,f64}.convert_i32_s`, `.{f32,f64}.convert_i32_u`, `.{f32,f64}.convert_i64_s`, `.{f32,f64}.convert_i64_u`
-	- `.f32.demote_f64`, `.f64.promote_f32`
+	- `.{f32,f64}.const()`
+	- `.{f32,f64}.abs()`, `.{f32,f64}.neg()`, `.{f32,f64}.sqrt()`, `.{f32,f64}.ceil()`, `.{f32,f64}.floor()`, `.{f32,f64}.trunc()`, `.{f32,f64}.nearest()`
+	- `.{f32,f64}.add()`, `.{f32,f64}.sub()`, `.{f32,f64}.mul()`, `.{f32,f64}.div()`, `.{f32,f64}.min()`, `.{f32,f64}.max()`, `.{f32,f64}.copysign()`
+	- `.{f32,f64}.eq()`, `.{f32,f64}.lt()`, `.{f32,f64}.gt()`, `.{f32,f64}.le()`, `.{f32,f64}.ge()`
+	- `.{f32,f64}.convert_i32_s()`, `.{f32,f64}.convert_i32_u()`, `.{f32,f64}.convert_i64_s()`, `.{f32,f64}.convert_i64_u()`
+	- `.f32.demote_f64()`, `.f64.promote_f32()`
 - tuples 🌱 (Binaryen-specific)
 	- `.tuple.make()`
 	- `.tuple.extract()`
@@ -303,7 +303,7 @@ but was a pseudo-instruction enabling Binaryen to reason about multiple values o
 They have been combined into one method on Module, `Module#pop(t: Type)`, where `t` is one of the corresponding type namespaces.
 
 
-### Expression Builders
+### Expression Builder Methods
 Note: To improve readability, assume all methods written in this section are bound to an Expression Builder (an object returned by `Module#wasm`).
 
 - `.break()`              &rarr; `.br()`
