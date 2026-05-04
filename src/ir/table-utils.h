@@ -126,6 +126,11 @@ struct TableInfo {
   // or exported, or table.set operations exist for it in the code.
   bool mayBeModified = false;
 
+  // Whether the table may grow. Growing does modify the table, but it only
+  // appends, so we track this separately from mayBeModified, which allows more
+  // optimizations in tables that grow but have no other sets.
+  bool mayGrow = false;
+
   // Whether we can assume that the initial contents are immutable. That is, if
   // a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
   // will assume it must call b. It is possible that the table is appended to,

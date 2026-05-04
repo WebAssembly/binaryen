@@ -118,39 +118,60 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
     return tables;
   }
 
-  using TablesWithSet = std::unordered_set<Name>;
+  // Miniature form of TableInfo, without things we don't need (some of which
+  // cause compilation errors on the copies below).
+  struct MiniTableInfo {
+    // Whether the table may be modified at runtime, either because it is imported
+    // or exported, or table.set operations exist for it in the code.
+    bool mayBeModified = false;
 
-  ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
-    wasm, [&](Function* func, TablesWithSet& tablesWithSet) {
+    // Whether the table may grow. Growing does modify the table, but it only
+    // appends, so we track this separately from mayBeModified, which allows more
+    // optimizations in tables that grow but have no other sets.
+    bool mayGrow = false;
+  };
+
+  using MiniTableInfoMap = std::unordered_map<Name, MiniTableInfo>;
+
+  ModuleUtils::ParallelFunctionAnalysis<MiniTableInfoMap> analysis(
+    wasm, [&](Function* func, MiniTableInfoMap& tableInfoMap) {
       if (func->imported()) {
         return;
       }
 
       struct Finder : public PostWalker<Finder> {
-        TablesWithSet& tablesWithSet;
+        MiniTableInfoMap& tableInfoMap;
 
-        Finder(TablesWithSet& tablesWithSet) : tablesWithSet(tablesWithSet) {}
+        Finder(MiniTableInfoMap& tableInfoMap) : tableInfoMap(tableInfoMap) {}
 
         void visitTableSet(TableSet* curr) {
-          tablesWithSet.insert(curr->table);
+          tableInfoMap[curr->table].mayBeModified = true;
         }
         void visitTableFill(TableFill* curr) {
-          tablesWithSet.insert(curr->table);
+          tableInfoMap[curr->table].mayBeModified = true;
         }
         void visitTableCopy(TableCopy* curr) {
-          tablesWithSet.insert(curr->destTable);
+          tableInfoMap[curr->destTable].mayBeModified = true;
         }
         void visitTableInit(TableInit* curr) {
-          tablesWithSet.insert(curr->table);
+          tableInfoMap[curr->table].mayBeModified = true;
+        }
+        void visitTableGrow(TableGrow* curr) {
+          tableInfoMap[curr->table].mayGrow = true;
         }
       };
 
-      Finder(tablesWithSet).walkFunction(func);
+      Finder(tableInfoMap).walkFunction(func);
     });
 
-  for (auto& [_, names] : analysis.map) {
-    for (auto name : names) {
-      tables[name].mayBeModified = true;
+  for (auto& [_, tableInfoMap] : analysis.map) {
+    for (auto& [tableName, info] : tableInfoMap) {
+      if (info.mayBeModified) {
+        tables[tableName].mayBeModified = true;
+      }
+      if (info.mayGrow) {
+        tables[tableName].mayGrow = true;
+      }
     }
   }
 
