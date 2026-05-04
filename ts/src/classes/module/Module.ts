@@ -132,7 +132,7 @@ export enum Feature {
  * 	- {@link Module#elementSegments}
  * 	- {@link Module#imports}
  * 	- {@link Module#exports}
- * - has a property `.x`, a namespace for creating expressions in the module (`.x.nop()`, `.x.i32.add()`, etc.)
+ * - has a property `.wasm`, a namespace for creating expressions in the module (`.wasm.nop()`, `.wasm.i32.add()`, etc.)
  */
 export class Module {
 	static readonly Tag = TAG.Tag;
@@ -149,22 +149,21 @@ export class Module {
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	/**
-	 * This module’s expression builder.
+	 * This module’s {@link ExpressionBuilder | WASM expression builder}.
 	 *
-	 * N.B.: For convenience, developers may want to destructure the module to free `x`:
+	 * N.B.: For convenience, developers may want to destructure the module to free `wasm`:
 	 * ```ts
 	 * const mod = new Module();
-	 * const {x} = mod;
-	 * x.drop(x.i32.add(x.i32.const(3), x.i32.const(5)));
+	 * const {wasm} = mod;
+	 * wasm.drop(wasm.i32.add(wasm.i32.const(3), wasm.i32.const(5)));
 	 * ```
 	 * or to free its properties:
 	 * ```ts
-	 * const {i32, drop} = mod.x;
+	 * const {i32, drop} = mod.wasm;
 	 * drop(i32.add(i32.const(3), i32.const(5)));
 	 * ```
-	 * @see {@link ExpressionBuilder}
 	 */
-	readonly x: ExpressionBuilder = expressionBuilder(this);
+	readonly wasm: ExpressionBuilder = expressionBuilder(this);
 
 	/** Pseudo-instruction enabling Binaryen to reason about multiple values on the stack. */
 	pop(typ: Type): ExpressionRef {

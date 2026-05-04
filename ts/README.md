@@ -10,16 +10,17 @@ import * as binaryen from "binaryen.ts";
 
 const mod: binaryen.Module = new binaryen.Module();
 
-mod.addFunction("add", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.i32, [binaryen.i32], (() => {
-	const param0: binaryen.ExpressionRef = mod.local.get(0, binaryen.i32);
-	const param1: binaryen.ExpressionRef = mod.local.get(1, binaryen.i32);
-	const result: binaryen.ExpressionRef = mod.i32.add(param0, param1);
-	return mod.block(null, [
-		mod.local.set(2, result),
-		mod.local.get(2, binaryen.i32),
+mod.functions.add("add", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.i32, [binaryen.i32], (() => {
+	const {block, local, i32} = mod.wasm;
+	const param0: binaryen.ExpressionRef = local.get(0, binaryen.i32);
+	const param1: binaryen.ExpressionRef = local.get(1, binaryen.i32);
+	const result: binaryen.ExpressionRef = i32.add(param0, param1);
+	return block(null, [
+		local.set(2, result),
+		local.get(2, binaryen.i32),
 	], binaryen.i32);
 })());
-mod.addFunctionExport("add", "add");
+mod.exports.addFunction("add", "add");
 mod.optimize();
 if (!mod.validate()) {
 	throw new Error("Invalid WebAssembly module.");
@@ -77,6 +78,8 @@ File Inventory:
 		- `module/`: Module and related classes
 
 		- `expression/`: Expression info classes, and source for WASM expression generation
+
+		- `expression-builders/`: internal functions for ultimately construting an `ExpressionBuilder` object
 
 	- `services/`: namespace-like, stateless classes
 

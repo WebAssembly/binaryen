@@ -50,7 +50,7 @@ import {type Type, type ExpressionRef, i32} from "binaryen.ts";
 ### Constants
 - `unreachable`: type of an unreachable instruction (stack effect *[t\*] -> [t\*]*)
 - `none`: void type (stack effect *[t\*] -> []*); not to be confused with WASM’s heap type called *none*
-- `auto`: special type used in `Module#x.block()` exclusively; automatically detects a block’s result type based on its contents
+- `auto`: special type used in [`ExpressionBuilder#block()`](#expression-building) exclusively; automatically detects a block’s result type based on its contents
 >
 - `i32`: 32-bit integer
 - `i64`: 64-bit integer
@@ -120,7 +120,7 @@ Objects:
 	- `new Module.Export(ref: ExportRef)`:                        an object containing information about an **Export**
 
 - Properties of `Module` instances (see full list of methods in generated docs):
-	- `Module#x`:               [build expressions](#expression-building) (“x” for “expression”)
+	- `Module#wasm`:            [build WASM expressions](#expression-building)
 	- `Module#tags`:            **Tag** manipulation
 	- `Module#globals`:         **Global** manipulation
 	- `Module#memories`:        **Memory** manipulation
@@ -134,7 +134,7 @@ Objects:
 
 
 ## Expression Building
-Each of these functions is bound to `Module#x` (of type `ExpressionBuilder`) and returns an `ExpressionRef`.
+Each of these functions is bound to `Module#wasm` (of type `ExpressionBuilder`) and returns an `ExpressionRef`.
 See the generated **ExpressionBuilder** docs for all available functions and details.
 
 Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”.
@@ -297,14 +297,14 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 
 All “type” properties (`.i32`, `.i64`, etc) on `Module` previously served as namespaces containing functions for building expressions.
 (E.g., `Module#i32.add()` produced an `(i32.add)` WASM instruction.)
-These have all migrated to `Module#x`, an [Expression Builder](#expression-building).
+These have all migrated to `Module#wasm`, an [Expression Builder](#expression-building).
 These properties also each contained its own `.pop()` method, which didn’t build a WASM expression,
 but was a pseudo-instruction enabling Binaryen to reason about multiple values on the stack.
 They have been combined into one method on Module, `Module#pop(t: Type)`, where `t` is one of the corresponding type namespaces.
 
 
 ### Expression Builders
-Note: To improve readability, assume all methods written in this section are bound to an Expression Builder (an object returned by `Module#x`).
+Note: To improve readability, assume all methods written in this section are bound to an Expression Builder (an object returned by `Module#wasm`).
 
 - `.break()`              &rarr; `.br()`
 - `.switch()`             &rarr; `.br_table()`

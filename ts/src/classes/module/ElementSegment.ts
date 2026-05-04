@@ -52,7 +52,7 @@ export class ModuleElementSegments {
 	constructor(private readonly mod: Module) {}
 
 	/** Adds an active element segment. */
-	addActive(table: string, name: string, funcNames: readonly string[], offset: ExpressionRef = this.mod.x.i32.const(0)): ElementSegmentRef {
+	addActive(table: string, name: string, funcNames: readonly string[], offset: ExpressionRef = this.mod.wasm.i32.const(0)): ElementSegmentRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddActiveElementSegment"](
 			this.mod.ptr,
 			strToStack(table),

@@ -94,5 +94,9 @@ export function expressionBuilder(mod: Module) {
 
 
 
-/** @useDeclaredType */
+/**
+ * An namespace of functions for building WASM expressions.
+ * @see https://webassembly.github.io/spec/core/syntax/instructions.html
+ * @useDeclaredType
+ */
 export type ExpressionBuilder = ReturnType<typeof expressionBuilder>;
