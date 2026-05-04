@@ -12,7 +12,19 @@ import {
 	type HeapType,
 	type TableRef,
 	type Type,
+	i32,
+	i64,
+	f32,
+	f64,
+	v128,
+	anyref,
+	eqref,
+	i31ref,
+	structref,
+	arrayref,
 	funcref,
+	externref,
+	stringref,
 } from "../../constants.ts";
 import {
 	copyExpression,
@@ -29,8 +41,9 @@ import {
 	strToStack,
 } from "../../utils.ts";
 import {
+	type ExpressionBuilder,
 	expressionBuilder,
-} from "../expression/expression-builders.ts";
+} from "../../classes/expression-builders/expressionBuilder.ts";
 import * as DATA_SEGMENT from "./DataSegment.ts";
 import * as ELEMENT_SEGMENT from "./ElementSegment.ts";
 import * as EXPORT from "./Export.ts";
@@ -142,10 +155,39 @@ export class Module {
 	 * ```ts
 	 * const mod = new Module();
 	 * const {x} = mod;
-	 * x.i32.add();
+	 * x.drop(x.i32.add(x.i32.const(3), x.i32.const(5)));
 	 * ```
+	 * or to free its properties:
+	 * ```ts
+	 * const {i32, drop} = mod.x;
+	 * drop(i32.add(i32.const(3), i32.const(5)));
+	 * ```
+	 * @see {@link ExpressionBuilder}
 	 */
-	readonly x = expressionBuilder(this);
+	readonly x: ExpressionBuilder = expressionBuilder(this);
+
+	/** Pseudo-instruction enabling Binaryen to reason about multiple values on the stack. */
+	pop(typ: Type): ExpressionRef {
+		if ([
+			i32,
+			i64,
+			f32,
+			f64,
+			v128,
+			anyref,
+			eqref,
+			i31ref,
+			structref,
+			arrayref,
+			funcref,
+			externref,
+			stringref,
+		].includes(typ)) {
+			return BinaryenObj["_BinaryenPop"](this.ptr, typ);
+		} else {
+			throw new Error(`Unexpected type ${ typ }.`);
+		}
+	}
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
