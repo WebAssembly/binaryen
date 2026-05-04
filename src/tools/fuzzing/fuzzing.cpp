@@ -2564,6 +2564,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    if (type == Types::getI64Pair()) {
+      options.add(FeatureSet::WideArithmetic, &Self::makeWideIntAddSub);
+      options.add(FeatureSet::WideArithmetic, &Self::makeWideIntMul);
+    }
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
@@ -3244,6 +3248,26 @@ Expression* TranslateToFuzzReader::makeTupleMake(Type type) {
     elements.push_back(make(t));
   }
   return builder.makeTupleMake(std::move(elements));
+}
+
+Expression* TranslateToFuzzReader::makeWideIntAddSub(Type type) {
+  assert(wasm.features.hasWideArithmetic());
+  assert(type == Types::getI64Pair());
+  auto op = upTo(2) == 0 ? AddInt128 : SubInt128;
+  auto* leftLow = make(Type::i64);
+  auto* leftHigh = make(Type::i64);
+  auto* rightLow = make(Type::i64);
+  auto* rightHigh = make(Type::i64);
+  return builder.makeWideIntAddSub(op, leftLow, leftHigh, rightLow, rightHigh);
+}
+
+Expression* TranslateToFuzzReader::makeWideIntMul(Type type) {
+  assert(wasm.features.hasWideArithmetic());
+  assert(type == Types::getI64Pair());
+  auto op = upTo(2) == 0 ? MulWideSInt64 : MulWideUInt64;
+  auto* left = make(Type::i64);
+  auto* right = make(Type::i64);
+  return builder.makeWideIntMul(op, left, right);
 }
 
 Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
