@@ -139,6 +139,11 @@ private:
     }
     auto name = flatTable.names[index];
     if (!name.is()) {
+      // No segment wrote to this part of the initial contents of the table.
+      // This must trap, as we only get here if we can optimize such cases,
+      // relying on the fact that the table cannot be modified, or at least the
+      // initial contents cannot be.
+      assert(!table.mayBeModified || table.initialContentsImmutable);
       return CallUtils::Trap{};
     }
     auto* func = getModule()->getFunction(name);
