@@ -137,6 +137,8 @@ Objects:
 Each of these functions is bound to `Module#x` (of type `ExpressionBuilder`) and returns an `ExpressionRef`.
 See the generated **ExpressionBuilder** docs for all available functions and details.
 
+Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”.
+
 - Parametric Instructions
 	- `.nop()`
 	- `.unreachable()`
@@ -160,6 +162,25 @@ See the generated **ExpressionBuilder** docs for all available functions and det
 	- `.local.tee()`
 	- `.global.get()`
 	- `.global.set()`
+- tables and memories
+	- `.table.get()`, `.table.set()`, `.table.size()`, `.table.grow()`
+	- `.memory.size()`, `.memory.grow()`, `.memory.fill()`, `.memory.copy()`, `.memory.init()`,
+	- `.elem.drop()`, `.data.drop()`
+- references
+	- `.ref.func()`, `.ref.null()`, `.ref.is_null()`, `.ref.as_non_null()`, `.ref.eq()`, `.ref.test()`, `.ref.cast()`
+	- `.ref.i31()`, `i31.get_{s,u}()`
+	- ~~`.extern.convert_any()`, `.any.convert_extern()`~~; ⛔️ not yet supported
+- structs and arrays
+	- `.struct.new()`, `.struct.new_default()`
+	- `.struct.get()`, `.struct.get_{s,u}()`
+	- `.struct.set()`
+	- `.array.new()`, `.array.new_default()`, `.array.new_fixed()`, `.array.new_data()`, `.array.new_elem()`
+	- `.array.get()`, `.array.get_{s,u}()`
+	- `.array.set()`
+	- `.array.len()`
+	- `.array.fill()`
+	- `.array.copy()`
+	- `.array.init_data()`, `.array.init_elem()`
 
 
 
@@ -259,6 +280,8 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 - `ExpressionBuilder#returnCallIndirect()` &rarr; `ExpressionBuilder#return_call_indirect()`
 - `ExpressionBuilder#rethrow()`            &rarr; `ExpressionBuilder#throw_ref()`
 - `ExpressionBuilder#try()`                &rarr; `ExpressionBuilder#try_table()`
+
+`.{struct,array}.get()` no longer take the `isSigned` argument. For packed signed/unsigned types, use `.{struct,array}.get_{s,u}()` respectively.
 
 
 ### Settings
