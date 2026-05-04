@@ -67,18 +67,22 @@ export function i32(_mod: Module) {
 
 		// @ts-expect-error
 		/** @deprecated Use `.wrap_i64()` instead. */ wrap(...args) { consoleWarn("`.wrap()` is deprecated; use `.wrap_i64()` instead."); return this.wrap_i64(...args); },
+		/** @deprecated */
 		trunc_s: {
 			/** @deprecated Use `.trunc_f32_s()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_f64_s()` instead. */ f64: STUB,
 		},
+		/** @deprecated */
 		trunc_u: {
 			/** @deprecated Use `.trunc_f32_u()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_f64_u()` instead. */ f64: STUB,
 		},
+		/** @deprecated */
 		trunc_s_sat: {
 			/** @deprecated Use `.trunc_sat_f32_s()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_sat_f64_s()` instead. */ f64: STUB,
 		},
+		/** @deprecated */
 		trunc_u_sat: {
 			/** @deprecated Use `.trunc_sat_f32_u()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_sat_f64_u()` instead. */ f64: STUB,

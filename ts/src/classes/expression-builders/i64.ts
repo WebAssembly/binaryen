@@ -71,18 +71,22 @@ export function i64(_mod: Module) {
 		/** @deprecated Use `.extend_i32_s()` instead. */ extend_s(...args) { consoleWarn("`.extend_s()` is deprecated; use `.extend_i32_s()` instead."); return this.extend_i32_s(...args); },
 		// @ts-expect-error
 		/** @deprecated Use `.extend_i32_u()` instead. */ extend_u(...args) { consoleWarn("`.extend_u()` is deprecated; use `.extend_i32_u()` instead."); return this.extend_i32_u(...args); },
+		/** @deprecated */
 		trunc_s: {
 			/** @deprecated Use `.trunc_f32_s()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_f64_s()` instead. */ f64: STUB,
 		},
+		/** @deprecated */
 		trunc_u: {
 			/** @deprecated Use `.trunc_f32_u()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_f64_u()` instead. */ f64: STUB,
 		},
+		/** @deprecated */
 		trunc_s_sat: {
 			/** @deprecated Use `.trunc_sat_f32_s()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_sat_f64_s()` instead. */ f64: STUB,
 		},
+		/** @deprecated */
 		trunc_u_sat: {
 			/** @deprecated Use `.trunc_sat_f32_u()` instead. */ f32: STUB,
 			/** @deprecated Use `.trunc_sat_f64_u()` instead. */ f64: STUB,

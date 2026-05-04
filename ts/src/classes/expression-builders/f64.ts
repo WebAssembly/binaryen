@@ -48,10 +48,12 @@ export function f64(_mod: Module) {
 
 		prmote_f32: STUB,
 
+		/** @deprecated */
 		convert_s: {
 			/** @deprecated Use `.convert_i32_s()` instead. */ i32: STUB,
 			/** @deprecated Use `.convert_i64_s()` instead. */ i64: STUB,
 		},
+		/** @deprecated */
 		convert_u: {
 			/** @deprecated Use `.convert_i32_u()` instead. */ i32: STUB,
 			/** @deprecated Use `.convert_i64_u()` instead. */ i64: STUB,
