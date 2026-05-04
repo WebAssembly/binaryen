@@ -16,7 +16,7 @@
   "type": "module",
   "main": "./dist/binaryen.js",
   "scripts": {
-    "compile": "rm -rf ./dist/ && tsc",
+    "compile": "rm -rf ./dist/ && tsc && tsc --project ./test/tsconfig.json",
     "lint": "eslint ./",
     "docs": "rm -rf ./docs/out/ && typedoc",
     "test": "tsx --test --test-isolation=none -- './test/**/*.test.ts'",
