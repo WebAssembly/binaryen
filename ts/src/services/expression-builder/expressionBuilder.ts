@@ -54,9 +54,6 @@ const STUB = (..._args: readonly number[]): number => 0;
 
 
 
-
-
-
 /** Methods for building expressions in a WASM module. */
 export function expressionBuilder(mod: Module) {
 	/*

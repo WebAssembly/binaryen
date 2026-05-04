@@ -3,7 +3,7 @@ import {
 } from "../../lib.ts";
 import type {
 	Module,
-} from "../module/Module.ts";
+} from "../../classes/module/Module.ts";
 
 
 

@@ -148,8 +148,6 @@ TODO: this section
 
 		- `expression/`: Expression info classes, and source for WASM expression generation
 
-		- `expression-builders/`: internal functions for ultimately construting an `ExpressionBuilder` object
-
 	- `services/`: namespace-like, stateless classes
 
 - `dist/` *(gitignored)*: output of **tsc**; this gets published to npm for consumers

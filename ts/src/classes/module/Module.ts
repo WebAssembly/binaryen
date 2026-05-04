@@ -33,6 +33,10 @@ import {
 	replacedBy,
 } from "../../lib.ts";
 import {
+	type ExpressionBuilder,
+	expressionBuilder,
+} from "../../services/expression-builder/expressionBuilder.ts";
+import {
 	HEAPU8,
 	HEAPU32,
 	i8sToStack,
@@ -40,10 +44,6 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
-import {
-	type ExpressionBuilder,
-	expressionBuilder,
-} from "../../classes/expression-builders/expressionBuilder.ts";
 import * as DATA_SEGMENT from "./DataSegment.ts";
 import * as ELEMENT_SEGMENT from "./ElementSegment.ts";
 import * as EXPORT from "./Export.ts";

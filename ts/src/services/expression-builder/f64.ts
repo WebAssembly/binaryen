@@ -3,7 +3,7 @@ import {
 } from "../../lib.ts";
 import type {
 	Module,
-} from "../module/Module.ts";
+} from "../../classes/module/Module.ts";
 
 
 
@@ -13,7 +13,7 @@ const STUB = (..._args: readonly number[]): number => 0;
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions */
-export function f32(_mod: Module) {
+export function f64(_mod: Module) {
 	return {
 		const: STUB,
 
@@ -44,9 +44,9 @@ export function f32(_mod: Module) {
 		convert_i32_u: STUB,
 		convert_i64_s: STUB,
 		convert_i64_u: STUB,
-		reinterpret_i32: STUB,
+		reinterpret_f64: STUB,
 
-		demote_f64: STUB,
+		prmote_f32: STUB,
 
 		/** @deprecated */
 		convert_s: {
@@ -59,8 +59,8 @@ export function f32(_mod: Module) {
 			/** @deprecated Use `.convert_i64_u()` instead. */ i64: STUB,
 		},
 		// @ts-expect-error
-		/** @deprecated Use `.reinterpret_i32()` instead. */ reinterpret(...args) { consoleWarn("`.reinterpret()` is deprecated; use `.reinterpret_i32()` instead."); return this.reinterpret_i32(...args); },
+		/** @deprecated Use `.reinterpret_i64()` instead. */ reinterpret(...args) { consoleWarn("`.reinterpret()` is deprecated; use `.reinterpret_i64()` instead."); return this.reinterpret_i64(...args); },
 		// @ts-expect-error
-		/** @deprecated Use `.demote_f64()` instead. */ demote(...args) { consoleWarn("`.demote()` is deprecated; use `.demote_f64()` instead."); return this.demote_f64(...args); },
+		/** @deprecated Use `.promote_f32()` instead. */ promote(...args) { consoleWarn("`.promote()` is deprecated; use `.promote_f32()` instead."); return this.promote_f32(...args); },
 	} as const;
 }
