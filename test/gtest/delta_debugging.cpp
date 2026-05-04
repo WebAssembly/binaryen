@@ -165,3 +165,24 @@ TEST(DeltaDebuggingTest, HierarchicalExample) {
   std::vector<std::vector<int>> expected = {{10}, {10}};
   EXPECT_EQ(currentLists, expected);
 }
+
+TEST(DeltaDebuggingTest, ResolveAfterFinished) {
+  std::vector<int> items = {0, 1, 2, 3};
+  DeltaDebugger<int> dd(items);
+  while (!dd.finished()) {
+    dd.resolve(false);
+  }
+
+  std::vector<int> expected = {0, 1, 2, 3};
+  EXPECT_EQ(dd.working, expected);
+  EXPECT_TRUE(dd.finished());
+
+  // Call resolve again
+  dd.resolve(true);
+  EXPECT_EQ(dd.working, expected);
+  EXPECT_TRUE(dd.finished());
+
+  dd.resolve(false);
+  EXPECT_EQ(dd.working, expected);
+  EXPECT_TRUE(dd.finished());
+}

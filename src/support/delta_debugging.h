@@ -52,12 +52,17 @@ public:
   Index partitionIndex() { return currentPartition; }
 
   void accept() {
+    if (finished()) {
+      return;
+    }
+
     if (test.empty()) {
       triedEmpty = true;
     }
 
     working = std::move(test);
 
+    // We might be finished now even if we weren't before.
     if (finished()) {
       return;
     }
