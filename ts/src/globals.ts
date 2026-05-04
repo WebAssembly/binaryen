@@ -15,15 +15,13 @@ import {
 	type Feature,
 	Module,
 } from "./classes/module/Module.ts";
+import * as EXPR from "./classes/expression/index.ts";
 import {
-	Expression,
-} from "./classes/expression/index.ts";
-import type {
 	ExpressionId,
-	ExpressionRef,
-	HeapType,
-	SideEffect,
-	Type,
+	type ExpressionRef,
+	type HeapType,
+	type SideEffect,
+	type Type,
 } from "./constants.ts";
 import {
 	HEAP8,
@@ -31,6 +29,19 @@ import {
 	i32sToStack,
 	preserveStack,
 } from "./utils.ts";
+
+
+
+const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression> = new Map<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression>([
+	[ExpressionId.Drop, EXPR.Drop],
+	[ExpressionId.Select, EXPR.Select],
+	[ExpressionId.Block, EXPR.Block],
+	[ExpressionId.Loop, EXPR.Loop],
+	[ExpressionId.Break, EXPR.Break],
+	[ExpressionId.LocalGet, EXPR.LocalGet],
+	[ExpressionId.LocalSet, EXPR.LocalSet],
+	[ExpressionId.Const, EXPR.Const],
+]);
 
 
 
@@ -195,8 +206,10 @@ export function getExpressionType(expr: ExpressionRef): Type {
  * Additional properties depend on the expression’s ID
  * and are usually equivalent to the respective parameters when creating such an expression.
  */
-export function getExpressionInfo(expr: ExpressionRef): Expression {
-	return new Expression(getExpressionId(expr), expr);
+export function getExpressionInfo(expr: ExpressionRef): EXPR.Expression {
+	const id = getExpressionId(expr);
+	const specificExpression = EXPRESSION_TYPE_REGISTRY.get(id);
+	return specificExpression ? new specificExpression(expr) : new EXPR.Expression(id, expr);
 }
 
 /** Gets the side effects of the specified expression. */
