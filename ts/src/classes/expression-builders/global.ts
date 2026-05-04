@@ -9,14 +9,10 @@ const STUB = (..._args: readonly number[]): number => 0;
 
 
 
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#variable-instructions */
 export function global(_mod: Module) {
 	return {
 		get: STUB,
 		set: STUB,
 	} as const;
 }
-
-
-
-/** @useDeclaredType */
-export type ExpressionBuilderGlobal = ReturnType<typeof global>;

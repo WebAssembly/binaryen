@@ -14,6 +14,7 @@ import type {
 
 
 
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#parametric-instructions */
 export function parametric(mod: Module) {
 	return {
 		/** Creates a no-operation `(nop)` instruction. */
@@ -26,8 +27,3 @@ export function parametric(mod: Module) {
 		select: Select.select.bind(null, mod),
 	} as const;
 }
-
-
-
-/** @useDeclaredType */
-export type ExpressionBuilderParametric = ReturnType<typeof parametric>;

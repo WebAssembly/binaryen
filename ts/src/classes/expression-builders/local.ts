@@ -8,6 +8,7 @@ import {
 
 
 
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#variable-instructions */
 export function local(mod: Module) {
 	return {
 		/** @inheritDoc X.LocalGet.localGet */
@@ -18,8 +19,3 @@ export function local(mod: Module) {
 		tee: LocalSet.localTee.bind(null, mod),
 	} as const;
 }
-
-
-
-/** @useDeclaredType */
-export type ExpressionBuilderLocal = ReturnType<typeof local>;

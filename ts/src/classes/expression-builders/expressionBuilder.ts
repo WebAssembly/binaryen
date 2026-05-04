@@ -2,38 +2,17 @@ import type {
 	Module,
 } from "../../classes/module/Module.ts";
 import {
-	type ExpressionBuilderControl,
 	control,
 } from "./control.ts";
 import {
-	type ExpressionBuilderGlobal,
 	global,
 } from "./global.ts";
 import {
-	type ExpressionBuilderLocal,
 	local,
 } from "./local.ts";
 import {
-	type ExpressionBuilderParametric,
 	parametric,
 } from "./parametric.ts";
-
-
-
-/**
- * @expandType ExpressionBuilderParametric
- * @expandType ExpressionBuilderControl
- * @expandType ExpressionBuilderLocal
- * @expandType ExpressionBuilderGlobal
- */
-export type ExpressionBuilder = (
-	& ExpressionBuilderParametric
-	& ExpressionBuilderControl
-	& {
-		local: ExpressionBuilderLocal,
-		global: ExpressionBuilderGlobal,
-	}
-);
 
 
 
@@ -46,3 +25,8 @@ export function expressionBuilder(mod: Module) {
 		global: global(mod),
 	} as const;
 }
+
+
+
+/** @useDeclaredType */
+export type ExpressionBuilder = ReturnType<typeof expressionBuilder>;

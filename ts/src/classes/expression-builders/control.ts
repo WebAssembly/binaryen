@@ -14,6 +14,7 @@ const STUB = (..._args: readonly number[]): number => 0;
 
 
 
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
 export function control(mod: Module) {
 	return {
 		/** @inheritdoc X.Block.block */
@@ -45,31 +46,26 @@ export function control(mod: Module) {
 		// TODO: catch_all
 		// TODO: catch_all_ref
 
-		/** @deprecated Use {@link ExpressionBuilderControl#br} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#br} instead. */
 		// @ts-expect-error
 		break(...args) { return this.br(...args); },
-		/** @deprecated Use {@link ExpressionBuilderControl#br_table} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */
 		// @ts-expect-error
 		switch(...args) { return this.br_table(...args); },
-		/** @deprecated Use {@link ExpressionBuilderControl#call_indirect} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */
 		// @ts-expect-error
 		callIndirect(...args) { return this.call_indirect(...args); },
-		/** @deprecated Use {@link ExpressionBuilderControl#return_call} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */
 		// @ts-expect-error
 		returnCall(...args) { return this.return_call(...args); },
-		/** @deprecated Use {@link ExpressionBuilderControl#return_call_indirect} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */
 		// @ts-expect-error
 		returnCallIndirect(...args) { return this.return_call_indirect(...args); },
-		/** @deprecated Use {@link ExpressionBuilderControl#throw_ref} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */
 		// @ts-expect-error
 		rethrow(...args) { return this.throw_ref(...args); },
-		/** @deprecated Use {@link ExpressionBuilderControl#try_table} instead. */
+		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */
 		// @ts-expect-error
 		try(...args) { return this.try_table(...args); },
 	} as const;
 }
-
-
-
-/** @useDeclaredType */
-export type ExpressionBuilderControl = ReturnType<typeof control>;

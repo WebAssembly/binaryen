@@ -29,6 +29,7 @@ import {
 	strToStack,
 } from "../../utils.ts";
 import {
+	type ExpressionBuilder,
 	expressionBuilder,
 } from "../../classes/expression-builders/expressionBuilder.ts";
 import * as DATA_SEGMENT from "./DataSegment.ts";
@@ -142,10 +143,16 @@ export class Module {
 	 * ```ts
 	 * const mod = new Module();
 	 * const {x} = mod;
-	 * x.i32.add();
+	 * x.drop(x.i32.add(x.i32.const(3), x.i32.const(5)));
 	 * ```
+	 * or to free its properties:
+	 * ```ts
+	 * const {i32, drop} = mod.x;
+	 * drop(i32.add(i32.const(3), i32.const(5)));
+	 * ```
+	 * @see {@link ExpressionBuilder}
 	 */
-	readonly x = expressionBuilder(this);
+	readonly x: ExpressionBuilder = expressionBuilder(this);
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
