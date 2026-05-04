@@ -121,13 +121,13 @@ TableInfoMap computeTableInfo(Module& wasm, bool initialContentsImmutable) {
   // Miniature form of TableInfo, without things we don't need (some of which
   // cause compilation errors on the copies below).
   struct MiniTableInfo {
-    // Whether the table may be modified at runtime, either because it is imported
-    // or exported, or table.set operations exist for it in the code.
+    // Whether the table may be modified at runtime, either because it is
+    // imported or exported, or table.set operations exist for it in the code.
     bool mayBeModified = false;
 
     // Whether the table may grow. Growing does modify the table, but it only
-    // appends, so we track this separately from mayBeModified, which allows more
-    // optimizations in tables that grow but have no other sets.
+    // appends, so we track this separately from mayBeModified, which allows
+    // more optimizations in tables that grow but have no other sets.
     bool mayGrow = false;
   };
 
