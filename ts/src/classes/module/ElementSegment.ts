@@ -19,7 +19,6 @@ import type {
 
 /**
  * Information about an element segment in a WASM module.
- * @see {@link ModuleElementSegments}
  */
 export class ElementSegment {
 	readonly name: string;
@@ -46,7 +45,8 @@ export class ElementSegment {
 
 
 /**
- * Methods for manipulating {@link ElementSegment | element segments} in a WASM module.
+ * Methods for manipulating element segments in a WASM module.
+ * @inline
  */
 export class ModuleElementSegments {
 	constructor(private readonly mod: Module) {}

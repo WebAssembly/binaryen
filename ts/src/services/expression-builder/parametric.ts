@@ -1,10 +1,7 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
-import {
-	Drop,
-	Select,
-} from "../../classes/expression/index.ts";
+import * as expressions from "../../classes/expression/index.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -21,9 +18,9 @@ export function parametric(mod: Module) {
 		nop: (): ExpressionRef => BinaryenObj["_BinaryenNop"](mod.ptr),
 		/** Creates an unreachable instruction that will always trap. */
 		unreachable: (): ExpressionRef => BinaryenObj["_BinaryenUnreachable"](mod.ptr),
-		/** @inheritDoc EXPR.Drop.drop */
-		drop: Drop.drop.bind(null, mod),
-		/** @inheritDoc EXPR.Select.select */
-		select: Select.select.bind(null, mod),
+		/** @inheritDoc expressions.Drop.drop */
+		drop: expressions.Drop.drop.bind(null, mod),
+		/** @inheritDoc expressions.Select.select */
+		select: expressions.Select.select.bind(null, mod),
 	} as const;
 }

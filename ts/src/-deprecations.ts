@@ -2,15 +2,16 @@
 
 
 
-import type * as EXPR from "./classes/expression/index.ts";
-import * as MOD from "./classes/module/index.ts";
+import type * as expressions from "./classes/expression/index.ts";
 import {
 	Feature,
+	Module,
 } from "./classes/module/Module.ts";
 import {
 	type ElementSegmentRef,
 	type ExportRef,
 	ExpressionId,
+	type ExpressionRef,
 	ExternalKind,
 	type FunctionRef,
 	type GlobalRef,
@@ -38,83 +39,91 @@ export const Features = Feature;
 
 
 
-/** @deprecated The `TagInfo` object type is now called {@link MOD.Tag}. */
-export type TagInfo = MOD.Tag;
-/** @deprecated The `GlobalInfo` object type is now called {@link MOD.Global}. */
-export type GlobalInfo = MOD.Global;
-/** @deprecated The `MemoryInfo` object type is now called {@link MOD.Memory}*/
-export type MemoryInfo = MOD.Memory;
-/** @deprecated The `TableInfo` object type is now called {@link MOD.Table}. */
-export type TableInfo = MOD.Table;
-/** @deprecated The `FunctionInfo` object type is now called {@link MOD.Function}. */
-export type FunctionInfo = MOD.Function;
+/** @deprecated The `TagInfo` object type is now called {@link Module.Tag}. */
+export type TagInfo = Module.Tag;
+/** @deprecated The `GlobalInfo` object type is now called {@link Module.Global}. */
+export type GlobalInfo = Module.Global;
+/** @deprecated The `MemoryInfo` object type is now called {@link Module.Memory}*/
+export type MemoryInfo = Module.Memory;
+/** @deprecated The `TableInfo` object type is now called {@link Module.Table}. */
+export type TableInfo = Module.Table;
+/** @deprecated The `FunctionInfo` object type is now called {@link Module.Function}. */
+export type FunctionInfo = Module.Function;
 // type `DataSegmentInfo` never existed
-/** @deprecated The `ElementSegmentInfo` object type is now called {@link MOD.ElementSegment}. */
-export type ElementSegmentInfo = MOD.ElementSegment;
+/** @deprecated The `ElementSegmentInfo` object type is now called {@link Module.ElementSegment}. */
+export type ElementSegmentInfo = Module.ElementSegment;
 // type `ImportInfo` never existed
-/** @deprecated The `ExportInfo` object type is now called {@link MOD.Export}. */
-export type ExportInfo = MOD.Export;
+/** @deprecated The `ExportInfo` object type is now called {@link Module.Export}. */
+export type ExportInfo = Module.Export;
 
 
 
-/** @deprecated The `ExpressionInfo` object type is now called {@link EXPR.Expression}. */
-export type ExpressionInfo = EXPR.Expression;
-/** @deprecated The `DropInfo` object type is now called {@link EXPR.Drop}. */
-export type DropInfo = EXPR.Drop;
-/** @deprecated The `SelectInfo` object type is now called {@link EXPR.Select}. */
-export type SelectInfo = EXPR.Select;
-/** @deprecated The `BlockInfo` object type is now called {@link EXPR.Block}. */
-export type BlockInfo = EXPR.Block;
-/** @deprecated The `LoopInfo` object type is now called {@link EXPR.Loop}. */
-export type LoopInfo = EXPR.Loop;
-/** @deprecated The `BreakInfo` object type is now called {@link EXPR.Break}. */
-export type BreakInfo = EXPR.Break;
-/** @deprecated The `LocalGetInfo` object type is now called {@link EXPR.LocalGet}. */
-export type LocalGetInfo = EXPR.LocalGet;
-/** @deprecated The `LocalSetInfo` object type is now called {@link EXPR.LocalSet}. */
-export type LocalSetInfo = EXPR.LocalSet;
-/** @deprecated The `ConstInfo` object type is now called {@link EXPR.Const}. */
-export type ConstInfo = EXPR.Const;
+/** @deprecated The `ExpressionInfo` object type is now called {@link expressions.Expression}. */
+export type ExpressionInfo = expressions.Expression;
+/** @deprecated The `DropInfo` object type is now called {@link expressions.Drop}. */
+export type DropInfo = expressions.Drop;
+/** @deprecated The `SelectInfo` object type is now called {@link expressions.Select}. */
+export type SelectInfo = expressions.Select;
+/** @deprecated The `BlockInfo` object type is now called {@link expressions.Block}. */
+export type BlockInfo = expressions.Block;
+/** @deprecated The `LoopInfo` object type is now called {@link expressions.Loop}. */
+export type LoopInfo = expressions.Loop;
+/** @deprecated The `BreakInfo` object type is now called {@link expressions.Break}. */
+export type BreakInfo = expressions.Break;
+/** @deprecated The `LocalGetInfo` object type is now called {@link expressions.LocalGet}. */
+export type LocalGetInfo = expressions.LocalGet;
+/** @deprecated The `LocalSetInfo` object type is now called {@link expressions.LocalSet}. */
+export type LocalSetInfo = expressions.LocalSet;
+/** @deprecated The `ConstInfo` object type is now called {@link expressions.Const}. */
+export type ConstInfo = expressions.Const;
 
-/** @deprecated The `Function` class now lives under the `MOD` namespace. Use {@link MOD.Function}. */
-export const Function = MOD.Function;
-/** @deprecated The `Table` class now lives under the `MOD` namespace. Use {@link MOD.Table}. */
-export const Table = MOD.Table;
+/** @deprecated The `Function` class now lives under the `Module` namespace. Use {@link Module.Function}. */
+export const Function = Module.Function;
+/** @deprecated The `Table` class now lives under the `Module` namespace. Use {@link Module.Table}. */
+export const Table = Module.Table;
 
 
 
-/** @deprecated Use {@link MOD.Tag | `new MOD.Tag(tagref)`} instead. */
-export function getTagInfo(tag: TagRef) {
-	consoleWarn("Global function `getTagInfo` is deprecated; use `new MOD.Tag(tagref)` instead.");
-	return new MOD.Tag(tag);
+/** @deprecated Use {@link Module#getSideEffects} instead. */
+export function getSideEffects(expr: ExpressionRef, mod: Module) {
+	consoleWarn("Global function `getSideEffects(expr, mod)` is deprecated; use `mod.getSideEffects(expr)` instead.");
+	return mod.getSideEffects(expr);
 }
-/** @deprecated Use {@link MOD.Global | `new MOD.Global(globalref)`} instead. */
+
+
+
+/** @deprecated Use {@link Module.Tag | `new Module.Tag(tagref)`} instead. */
+export function getTagInfo(tag: TagRef) {
+	consoleWarn("Global function `getTagInfo` is deprecated; use `new Module.Tag(tagref)` instead.");
+	return new Module.Tag(tag);
+}
+/** @deprecated Use {@link Module.Global | `new Module.Global(globalref)`} instead. */
 export function getGlobalInfo(global: GlobalRef) {
-	consoleWarn("Global function `getGlobalInfo` is deprecated; use `new MOD.Global(globalref)` instead.");
-	return new MOD.Global(global);
+	consoleWarn("Global function `getGlobalInfo` is deprecated; use `new Module.Global(globalref)` instead.");
+	return new Module.Global(global);
 }
 // function `getMemoryInfo` always existed in `Module`
-/** @deprecated Use {@link MOD.Table | `new MOD.Table(tableref)`} instead. */
+/** @deprecated Use {@link Module.Table | `new Module.Table(tableref)`} instead. */
 export function getTableInfo(table: TableRef) {
-	consoleWarn("Global function `getTableInfo` is deprecated; use `new MOD.Table(tableref)` instead.");
-	return new MOD.Table(table);
+	consoleWarn("Global function `getTableInfo` is deprecated; use `new Module.Table(tableref)` instead.");
+	return new Module.Table(table);
 }
-/** @deprecated Use {@link MOD.Function | `new MOD.Function(funcref)`} instead. */
+/** @deprecated Use {@link Module.Function | `new Module.Function(funcref)`} instead. */
 export function getFunctionInfo(func: FunctionRef) {
-	consoleWarn("Global function `getFunctionInfo` is deprecated; use `new MOD.Function(funcref)` instead.");
-	return new MOD.Function(func);
+	consoleWarn("Global function `getFunctionInfo` is deprecated; use `new Module.Function(funcref)` instead.");
+	return new Module.Function(func);
 }
 // function `getDataSegmentInfo` always existed in `Module`
-/** @deprecated Use {@link MOD.ElementSegment | `new MOD.ElementSegment(segmentref)`} instead. */
+/** @deprecated Use {@link Module.ElementSegment | `new Module.ElementSegment(segmentref)`} instead. */
 export function getElementSegmentInfo(segment: ElementSegmentRef) {
-	consoleWarn("Global function `getElementSegmentInfo` is deprecated; use `new MOD.ElementSegment(segmentref)` instead.");
-	return new MOD.ElementSegment(segment);
+	consoleWarn("Global function `getElementSegmentInfo` is deprecated; use `new Module.ElementSegment(segmentref)` instead.");
+	return new Module.ElementSegment(segment);
 }
 // no function `getImportInfo` ever existed
-/** @deprecated Use {@link MOD.Export | `new MOD.Export(exportref)`} instead. */
+/** @deprecated Use {@link Module.Export | `new Module.Export(exportref)`} instead. */
 export function getExportInfo(xport: ExportRef) {
-	consoleWarn("Global function `getExportInfo` is deprecated; use `new MOD.Export(exportref)` instead.");
-	return new MOD.Export(xport);
+	consoleWarn("Global function `getExportInfo` is deprecated; use `new Module.Export(exportref)` instead.");
+	return new Module.Export(xport);
 }
 
 

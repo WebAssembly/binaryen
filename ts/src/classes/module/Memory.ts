@@ -20,7 +20,7 @@ import type {
 
 
 /**
- * Similar to a {@link DataSegment} but with some minor differences.
+ * Similar to a {@link Module.DataSegment} but with some minor differences.
  * @inline
  */
 type MemorySegment = {
@@ -34,7 +34,6 @@ type MemorySegment = {
 
 /**
  * Information about a memory in a WASM module.
- * @see {@link ModuleMemories}
  */
 export class Memory {
 	readonly module: string;
@@ -60,7 +59,8 @@ export class Memory {
 
 
 /**
- * Methods for manipulating {@link Memory | memories} in a WASM module.
+ * Methods for manipulating memories in a WASM module.
+ * @inline
  */
 export class ModuleMemories {
 	constructor(private readonly mod: Module) {}
