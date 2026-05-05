@@ -91,7 +91,7 @@
     (drop (f64x2.relaxed_min (local.get 0) (local.get 1)))
     (drop (f64x2.relaxed_max (local.get 0) (local.get 1)))
     (drop (i16x8.relaxed_q15mulr_s (local.get 0) (local.get 1)))
-    (drop (i16x8.dot_i8x16_i7x16_s (local.get 0) (local.get 1)))
+    (drop (i16x8.relaxed_dot_i8x16_i7x16_s (local.get 0) (local.get 1)))
     ;; Normal SIMD instruction
     (drop (v128.xor (local.get 0) (local.get 1)))
   )
@@ -131,7 +131,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ternary (param v128 v128 v128)
-    (drop (i32x4.dot_i8x16_i7x16_add_s (local.get 0) (local.get 1) (local.get 2)))
+    (drop (i32x4.relaxed_dot_i8x16_i7x16_add_s (local.get 0) (local.get 1) (local.get 2)))
     (drop (f32x4.relaxed_madd (local.get 0) (local.get 1) (local.get 2)))
     (drop (f32x4.relaxed_nmadd (local.get 0) (local.get 1) (local.get 2)))
     (drop (f64x2.relaxed_madd (local.get 0) (local.get 1) (local.get 2)))

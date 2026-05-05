@@ -722,17 +722,17 @@ struct PrintExpressionContents
       case Bitselect:
         o << "v128.bitselect";
         break;
-      case LaneselectI8x16:
-        o << "i8x16.laneselect";
+      case RelaxedLaneselectI8x16:
+        o << "i8x16.relaxed_laneselect";
         break;
-      case LaneselectI16x8:
-        o << "i16x8.laneselect";
+      case RelaxedLaneselectI16x8:
+        o << "i16x8.relaxed_laneselect";
         break;
-      case LaneselectI32x4:
-        o << "i32x4.laneselect";
+      case RelaxedLaneselectI32x4:
+        o << "i32x4.relaxed_laneselect";
         break;
-      case LaneselectI64x2:
-        o << "i64x2.laneselect";
+      case RelaxedLaneselectI64x2:
+        o << "i64x2.relaxed_laneselect";
         break;
       case MaddVecF16x8:
         o << "f16x8.madd";
@@ -752,8 +752,8 @@ struct PrintExpressionContents
       case RelaxedNmaddVecF64x2:
         o << "f64x2.relaxed_nmadd";
         break;
-      case DotI8x16I7x16AddSToVecI32x4:
-        o << "i32x4.dot_i8x16_i7x16_add_s";
+      case RelaxedDotI8x16I7x16AddSToVecI32x4:
+        o << "i32x4.relaxed_dot_i8x16_i7x16_add_s";
         break;
     }
     restoreNormalColor(o);
@@ -2022,8 +2022,8 @@ struct PrintExpressionContents
       case RelaxedQ15MulrSVecI16x8:
         o << "i16x8.relaxed_q15mulr_s";
         break;
-      case DotI8x16I7x16SToVecI16x8:
-        o << "i16x8.dot_i8x16_i7x16_s";
+      case RelaxedDotI8x16I7x16SToVecI16x8:
+        o << "i16x8.relaxed_dot_i8x16_i7x16_s";
         break;
 
       case InvalidBinary:
