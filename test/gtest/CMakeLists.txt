@@ -19,6 +19,7 @@ set(unittest_SOURCES
   glbs.cpp
   interpreter.cpp
   intervals.cpp
+  istring.cpp
   json.cpp
   lattices.cpp
   local-graph.cpp

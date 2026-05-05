@@ -1,0 +1,51 @@
+// Copyright 2026 WebAssembly Community Group participants
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "support/istring.h"
+#include "gtest/gtest.h"
+
+using namespace wasm;
+
+using IStringTest = ::testing::Test;
+
+TEST_F(IStringTest, Empty) {
+  // Null and empty strings differ.
+  auto null = IString();
+  auto empty = IString("");
+  EXPECT_NE(null, empty);
+
+  // But they are equal to themselves.
+  EXPECT_EQ(null, null);
+  EXPECT_EQ(empty, empty);
+}
+
+TEST_F(IStringTest, Interning) {
+  // The same string interned twice is equal.
+  auto foo1 = IString("foo");
+  auto foo2 = IString("foo");
+  EXPECT_EQ(foo1, foo2);
+
+  // The internal pointers are equal too.
+  EXPECT_EQ(foo1.str.data(), foo2.str.data());
+
+  // Other things are different.
+  auto bar = IString("bar");
+  EXPECT_NE(foo1, bar);
+  EXPECT_NE(foo2, bar);
+
+  // Things are equal to themselves.
+  EXPECT_EQ(foo1, foo1);
+  EXPECT_EQ(foo2, foo2);
+  EXPECT_EQ(bar, bar);
+}
