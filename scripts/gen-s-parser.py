@@ -18,6 +18,8 @@ import sys
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
+# ruff: noqa: E241
+
 instructions = [
     ("unreachable",    "makeUnreachable()"),
     ("nop",            "makeNop()"),
@@ -146,6 +148,10 @@ instructions = [
     ("i64.shr_u",      "makeBinary(BinaryOp::ShrUInt64)"),
     ("i64.rotl",       "makeBinary(BinaryOp::RotLInt64)"),
     ("i64.rotr",       "makeBinary(BinaryOp::RotRInt64)"),
+    ("i64.add128",     "makeWideIntAddSub(WideIntAddSubOp::AddInt128)"),
+    ("i64.sub128",     "makeWideIntAddSub(WideIntAddSubOp::SubInt128)"),
+    ("i64.mul_wide_s", "makeWideIntMul(WideIntMulOp::MulWideSInt64)"),
+    ("i64.mul_wide_u", "makeWideIntMul(WideIntMulOp::MulWideUInt64)"),
     ("f32.abs",        "makeUnary(UnaryOp::AbsFloat32)"),
     ("f32.neg",        "makeUnary(UnaryOp::NegFloat32)"),
     ("f32.ceil",       "makeUnary(UnaryOp::CeilFloat32)"),
@@ -713,7 +719,8 @@ class CodePrinter:
         # call in a 'with' statement
         return self
 
-    def print_line(self, line):
+    @staticmethod
+    def print_line(line):
         print("  " * CodePrinter.indents + line)
 
 

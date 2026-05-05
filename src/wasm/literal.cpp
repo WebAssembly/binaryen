@@ -864,7 +864,7 @@ Literal Literal::extendToUI64() const {
 
 Literal Literal::extendToF64() const {
   assert(type == Type::f32);
-  return Literal(double(getf32()));
+  return standardizeNaN(Literal(static_cast<double>(getf32())));
 }
 
 Literal Literal::extendS8() const {
@@ -1164,7 +1164,7 @@ Literal Literal::sqrt() const {
 Literal Literal::demote() const {
   auto f64 = getf64();
   if (std::isnan(f64)) {
-    return Literal(float(f64));
+    return standardizeNaN(Literal(static_cast<float>(f64)));
   }
   if (std::isinf(f64)) {
     return Literal(float(f64));
@@ -2786,7 +2786,8 @@ template<LaneOrder Side> Literal extendF32(const Literal& vec) {
   LaneArray<2> result;
   for (size_t i = 0; i < 2; ++i) {
     size_t idx = (Side == LaneOrder::Low) ? i : i + 2;
-    result[i] = Literal((double)lanes[idx].getf32());
+    result[i] = Literal::standardizeNaN(
+      Literal(static_cast<double>(lanes[idx].getf32())));
   }
   return Literal(result);
 }

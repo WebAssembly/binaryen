@@ -18,7 +18,7 @@ import os
 import subprocess
 import sys
 
-from test import binaryenjs, lld, shared, support, wasm2js, wasm_opt
+from test import binaryenjs, finalize, shared, support, wasm2js, wasm_opt
 
 
 def update_example_tests():
@@ -166,7 +166,7 @@ TEST_SUITES = {
     'wasm-metadce': update_metadce_tests,
     'wasm-reduce': update_reduce_tests,
     'spec': update_spec_tests,
-    'lld': lld.update_lld_tests,
+    'finalize': finalize.update_finalize_tests,
     'wasm2js': wasm2js.update_wasm2js_tests,
     'binaryenjs': binaryenjs.update_binaryen_js_tests,
     'lit': update_lit_tests,

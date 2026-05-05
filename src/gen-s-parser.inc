@@ -3427,12 +3427,23 @@ switch (buf[0]) {
             switch (buf[4]) {
               case 'a': {
                 switch (buf[5]) {
-                  case 'd':
-                    if (op == "i64.add"sv) {
-                      CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AddInt64));
-                      return Ok{};
+                  case 'd': {
+                    switch (buf[7]) {
+                      case '\0':
+                        if (op == "i64.add"sv) {
+                          CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AddInt64));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '1':
+                        if (op == "i64.add128"sv) {
+                          CHECK_ERR(makeWideIntAddSub(ctx, pos, annotations, WideIntAddSubOp::AddInt128));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   case 'n':
                     if (op == "i64.and"sv) {
                       CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AndInt64));
@@ -3980,12 +3991,34 @@ switch (buf[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'm':
-                if (op == "i64.mul"sv) {
-                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MulInt64));
-                  return Ok{};
+              case 'm': {
+                switch (buf[7]) {
+                  case '\0':
+                    if (op == "i64.mul"sv) {
+                      CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MulInt64));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case '_': {
+                    switch (buf[13]) {
+                      case 's':
+                        if (op == "i64.mul_wide_s"sv) {
+                          CHECK_ERR(makeWideIntMul(ctx, pos, annotations, WideIntMulOp::MulWideSInt64));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 'u':
+                        if (op == "i64.mul_wide_u"sv) {
+                          CHECK_ERR(makeWideIntMul(ctx, pos, annotations, WideIntMulOp::MulWideUInt64));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  default: goto parse_error;
                 }
-                goto parse_error;
+              }
               case 'n':
                 if (op == "i64.ne"sv) {
                   CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::NeInt64));
@@ -4113,12 +4146,23 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'u':
-                    if (op == "i64.sub"sv) {
-                      CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubInt64));
-                      return Ok{};
+                  case 'u': {
+                    switch (buf[7]) {
+                      case '\0':
+                        if (op == "i64.sub"sv) {
+                          CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubInt64));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '1':
+                        if (op == "i64.sub128"sv) {
+                          CHECK_ERR(makeWideIntAddSub(ctx, pos, annotations, WideIntAddSubOp::SubInt128));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   default: goto parse_error;
                 }
               }

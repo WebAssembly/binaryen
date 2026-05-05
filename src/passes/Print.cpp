@@ -2031,6 +2031,34 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
   }
+  void visitWideIntAddSub(WideIntAddSub* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case AddInt128: {
+        o << "i64.add128";
+        break;
+      }
+      case SubInt128: {
+        o << "i64.sub128";
+        break;
+      }
+    }
+    restoreNormalColor(o);
+  }
+  void visitWideIntMul(WideIntMul* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case MulWideSInt64: {
+        o << "i64.mul_wide_s";
+        break;
+      }
+      case MulWideUInt64: {
+        o << "i64.mul_wide_u";
+        break;
+      }
+    }
+    restoreNormalColor(o);
+  }
   void visitSelect(Select* curr) {
     prepareColor(o) << "select";
     restoreNormalColor(o);

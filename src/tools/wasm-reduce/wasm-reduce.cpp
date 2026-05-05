@@ -29,12 +29,12 @@
 
 #include "ir/branch-utils.h"
 #include "ir/iteration.h"
-#include "ir/literal-utils.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
+#include "support/delta_debugging.h"
 #include "support/file.h"
 #include "support/hash.h"
 #include "support/path.h"
@@ -351,7 +351,7 @@ struct Reducer
   // @param factor how much to ignore. starting with a high factor skips through
   //               most of the file, which is often faster than going one by one
   //               from the start
-  size_t reduceDestructively(int factor_) {
+  size_t reduceDestructively(uint64_t factor_) {
     factor = factor_;
     // prepare
     loadWorking();
@@ -400,7 +400,7 @@ struct Reducer
   std::unique_ptr<Module> module;
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
-  int factor;
+  uint64_t factor;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -822,7 +822,7 @@ struct Reducer
 
     auto& data = segment->data;
     // when we succeed, try to shrink by more and more, similar to bisection
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < data.size() && !data.empty(); i++) {
       if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
@@ -838,7 +838,7 @@ struct Reducer
           std::cerr << "|      shrank segment from " << save.size() << " => "
                     << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
-          skip = std::min(size_t(factor), 2 * skip);
+          skip = std::min(factor, 2 * skip);
         } else {
           data = std::move(save);
           return false;
@@ -894,8 +894,94 @@ struct Reducer
     }
   }
 
-  // Reduces entire functions at a time. Returns whether we did a significant
-  // amount of reduction that justifies doing even more.
+  bool isEmptyBody(Expression* body) {
+    if (body->is<Nop>() || body->is<Unreachable>()) {
+      return true;
+    }
+    if (auto* block = body->dynCast<Block>()) {
+      return block->list.empty();
+    }
+    return false;
+  }
+
+  void reduceFunctionBodies() {
+    std::cerr << "|    try to remove function bodies\n";
+    // Use function indices to speed up finding the complement of the kept
+    // partition.
+    std::vector<Index> nontrivialFuncIndices;
+    nontrivialFuncIndices.reserve(module->functions.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      auto& func = module->functions[i];
+      // Skip functions that already have trivial bodies.
+      if (func->imported() || isEmptyBody(func->body)) {
+        continue;
+      }
+      nontrivialFuncIndices.push_back(i);
+    }
+    DeltaDebugger<Index> dd(std::move(nontrivialFuncIndices));
+    while (!dd.finished()) {
+      // Stop early if the partition size is less than the square root of
+      // the remaining set. We don't want to waste time on very fine-grained
+      // partitions when we could switch to another reduction strategy
+      // instead.
+      if (size_t sqrtRemaining = std::sqrt(dd.working.size());
+          dd.test.size() > 0 && dd.test.size() < sqrtRemaining) {
+        break;
+      }
+
+      std::cerr << "|     try partition " << dd.partitionIndex() + 1 << " / "
+                << dd.partitionCount() << " (size " << dd.test.size() << ")\n";
+      Index removedSize = dd.working.size() - dd.test.size();
+      std::vector<Expression*> oldBodies(removedSize);
+
+      // We first need to remove each non-kept function body, and later we
+      // might need to restore the same function bodies. Abstract the logic
+      // for iterating over these function bodies. `f` takes a Function* and
+      // Expression*& for the stashed body.
+      auto forEachRemovedFuncBody = [&](auto f) {
+        Index bodyIndex = 0;
+        Index workingIndex = 0;
+        Index testIndex = 0;
+        while (workingIndex < dd.working.size()) {
+          if (testIndex < dd.test.size() &&
+              dd.working[workingIndex] == dd.test[testIndex]) {
+            // Kept, skip it.
+            workingIndex++;
+            testIndex++;
+          } else {
+            // Removed, process it
+            Index funcIndex = dd.working[workingIndex++];
+            f(module->functions[funcIndex].get(), oldBodies[bodyIndex++]);
+          }
+        }
+        assert(bodyIndex == removedSize);
+        assert(testIndex == dd.test.size());
+      };
+
+      // Stash the bodies.
+      forEachRemovedFuncBody([&](Function* func, Expression*& oldBody) {
+        oldBody = func->body;
+        Builder builder(*module);
+        if (func->getResults() == Type::none) {
+          func->body = builder.makeNop();
+        } else {
+          func->body = builder.makeUnreachable();
+        }
+      });
+
+      if (!writeAndTestReduction()) {
+        // Failure. Restore the bodies.
+        forEachRemovedFuncBody(
+          [](Function* func, Expression*& oldBody) { func->body = oldBody; });
+        dd.reject();
+      } else {
+        // Success!
+        noteReduction(removedSize);
+        dd.accept();
+      }
+    }
+  }
+
   bool reduceFunctions() {
     // try to remove functions
     std::vector<Name> functionNames;
@@ -906,8 +992,8 @@ struct Reducer
     if (numFuncs == 0) {
       return false;
     }
-    size_t skip = 1;
-    size_t maxSkip = 1;
+    uint64_t skip = 1;
+    uint64_t maxSkip = 1;
     // If we just removed some functions in the previous iteration, keep trying
     // to remove more as this is one of the most efficient ways to reduce.
     bool justReduced = true;
@@ -919,7 +1005,7 @@ struct Reducer
     for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
       if (!justReduced && functionsWeTriedToRemove.contains(functionNames[i]) &&
-          !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
+          !shouldTryToReduce(std::max((factor / 5) + 1, uint64_t(20000)))) {
         continue;
       }
       std::vector<Name> names;
@@ -936,19 +1022,17 @@ struct Reducer
       }
       std::cerr << "|     trying at i=" << i << " of size " << names.size()
                 << "\n";
-      // Try to remove functions and/or empty them. Note that
-      // tryToRemoveFunctions() will reload the module if it fails, which means
-      // function names may change - for that reason, run it second.
-      justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
-      if (justReduced) {
+      // Note that tryToRemoveFunctions() will reload the module if it fails,
+      // which means function names may change.
+      if (tryToRemoveFunctions(names)) {
         noteReduction(names.size());
         // Subtract 1 since the loop increments us anyhow by one: we want to
         // skip over the skipped functions, and not any more.
         x += skip - 1;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(factor, 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, uint64_t(1)); // or 1?
         x += factor / 100;
       }
     }
@@ -967,8 +1051,11 @@ struct Reducer
     assert(curr == module.get());
     curr = nullptr;
 
+    reduceFunctionBodies();
+
     // Reduction of entire functions at a time is very effective, and we do it
     // with exponential growth and backoff, so keep doing it while it works.
+    // TODO: Figure out how to use delta debugging for this as well.
     while (reduceFunctions()) {
     }
 
@@ -980,9 +1067,9 @@ struct Reducer
     for (auto& exp : module->exports) {
       exports.push_back(*exp);
     }
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, uint64_t(1000)))) {
         continue;
       }
       std::vector<Export> currExports;
@@ -999,12 +1086,12 @@ struct Reducer
         for (auto exp : currExports) {
           module->addExport(new Export(exp));
         }
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, uint64_t(1)); // or 1?
       } else {
         std::cerr << "|      removed " << currExports.size() << " exports\n";
         noteReduction(currExports.size());
         i += skip;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(factor, 2 * skip);
       }
     }
     // If we are left with a single function that is not exported or used in
@@ -1044,41 +1131,6 @@ struct Reducer
           func->body = funcBody;
         }
       }
-    }
-  }
-
-  // Try to empty out the bodies of some functions.
-  bool tryToEmptyFunctions(std::vector<Name> names) {
-    std::vector<Expression*> oldBodies;
-    size_t actuallyEmptied = 0;
-    for (auto name : names) {
-      auto* func = module->getFunction(name);
-      auto* oldBody = func->body;
-      oldBodies.push_back(oldBody);
-      // Nothing to do for imported functions (body is nullptr) or for bodies
-      // that have already been as reduced as we can make them.
-      if (func->imported() || oldBody->is<Unreachable>() ||
-          oldBody->is<Nop>()) {
-        continue;
-      }
-      actuallyEmptied++;
-      bool useUnreachable = func->getResults() != Type::none;
-      if (useUnreachable) {
-        func->body = builder->makeUnreachable();
-      } else {
-        func->body = builder->makeNop();
-      }
-    }
-    if (actuallyEmptied > 0 && writeAndTestReduction()) {
-      std::cerr << "|        emptied " << actuallyEmptied << " / "
-                << names.size() << " functions\n";
-      return true;
-    } else {
-      // Restore the bodies.
-      for (size_t i = 0; i < names.size(); i++) {
-        module->getFunction(names[i])->body = oldBodies[i];
-      }
-      return false;
     }
   }
 
@@ -1497,16 +1549,26 @@ More documentation can be found at
 
   std::cerr << "|starting reduction!\n";
 
-  int factor = binary ? workingSize * 2 : workingSize / 10;
+  uint64_t factor = binary ? uint64_t(workingSize) * 2 : workingSize / 10;
 
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
 
   bool stopping = false;
 
+  bool first = true;
   while (1) {
     Reducer reducer(
       command, test, working, binary, deNan, verbose, debugInfo, options);
+
+    // For extremely large modules with slow reproduction commands, reducing
+    // function bodies first can be more effective than running passes. TODO:
+    // clean this up and reconsider the order of reducers.
+    if (first) {
+      reducer.loadWorking();
+      reducer.reduceFunctionBodies();
+      first = false;
+    }
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
@@ -1550,7 +1612,7 @@ More documentation can be found at
       // we get "stuck" cycling through them. In that case we simply need to do
       // more destructive reductions to make real progress. For that reason,
       // decrease the factor by some small percentage.
-      factor = std::max(1, (factor * 9) / 10);
+      factor = std::max(uint64_t(1), uint64_t(factor * 0.9));
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;
@@ -1561,7 +1623,7 @@ More documentation can be found at
 
     // no point in a factor larger than the size
     assert(newSize > 4); // wasm modules are >4 bytes anyhow
-    factor = std::min(factor, int(newSize) / 4);
+    factor = std::min(factor, uint64_t(newSize / 4));
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
@@ -1577,8 +1639,8 @@ More documentation can be found at
         stopping = true;
         break;
       }
-      factor = std::max(
-        1, factor / 4); // quickly now, try to find *something* we can reduce
+      // Quickly try to find *something* we can reduce.
+      factor = std::max(uint64_t(1), factor / 4);
     }
 
     std::cerr << "|  destructive reduction led to size: " << file_size(working)

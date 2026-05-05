@@ -1,4 +1,5 @@
 target-version = "py310"
+preview = true
 
 exclude = [
   'third_party',
@@ -6,11 +7,19 @@ exclude = [
   'test/spec/testsuite',
 ]
 
+[lint.pylint]
+max-locals = 30
+max-positional-args = 7
+
+[lint.per-file-ignores]
+"test/**.py" = ["PLR6301", "PLW1514", "PLR0914"]
+
 [lint]
 select = [
   "ARG",
   "ASYNC",
   "B",
+  "D",
   "C4",
   "C90",
   "COM",
@@ -27,17 +36,29 @@ select = [
 
 ignore = [
   "C901", # https://docs.astral.sh/ruff/rules/complex-structure/
+  "D100", # https://docs.astral.sh/ruff/rules/undocumented-public-module/
+  "D101", # https://docs.astral.sh/ruff/rules/undocumented-public-class/
+  "D102", # https://docs.astral.sh/ruff/rules/undocumented-public-method/
+  "D103", # https://docs.astral.sh/ruff/rules/undocumented-public-function/
+  "D104", # https://docs.astral.sh/ruff/rules/undocumented-public-package/
+  "D105", # https://docs.astral.sh/ruff/rules/undocumented-magic-method/
+  "D203", # https://docs.astral.sh/ruff/rules/incorrect-blank-line-before-class/
+  "D213", # https://docs.astral.sh/ruff/rules/multi-line-summary-second-line/
+  "D107", # https://docs.astral.sh/ruff/rules/undocumented-public-init/
   "B006", # https://docs.astral.sh/ruff/rules/mutable-argument-default/
   "B011", # https://docs.astral.sh/ruff/rules/assert-false/
   "B023", # https://docs.astral.sh/ruff/rules/function-uses-loop-variable/
   "E501", # https://docs.astral.sh/ruff/rules/line-too-long/
   "E741", # https://docs.astral.sh/ruff/rules/ambiguous-variable-name/
   "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
+  "PLR0904", # https://docs.astral.sh/ruff/rules/too-many-public-methods/
   "PLR0912", # https://docs.astral.sh/ruff/rules/too-many-branches/
   "PLR0913", # https://docs.astral.sh/ruff/rules/too-many-arguments/
   "PLR0915", # https://docs.astral.sh/ruff/rules/too-many-statements/
+  "PLR1702", # https://docs.astral.sh/ruff/rules/too-many-nested-blocks/
   "PLR2004", # https://docs.astral.sh/ruff/rules/magic-value-comparison/
   "PLW0603", # https://docs.astral.sh/ruff/rules/global-statement/
   "PLW1510", # https://docs.astral.sh/ruff/rules/subprocess-run-without-check/
   "PLW2901", # https://docs.astral.sh/ruff/rules/redefined-loop-name/
+  "PLW1514", # https://docs.astral.sh/ruff/rules/unspecified-encoding/
 ]
