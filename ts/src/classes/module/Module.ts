@@ -44,15 +44,42 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
-import * as DATA_SEGMENT from "./DataSegment.ts";
-import * as ELEMENT_SEGMENT from "./ElementSegment.ts";
-import * as EXPORT from "./Export.ts";
-import * as FUNCTION from "./Function.ts";
-import * as GLOBAL from "./Global.ts";
-import * as IMPORT from "./Import.ts";
-import * as MEMORY from "./Memory.ts";
-import * as TABLE from "./Table.ts";
-import * as TAG from "./Tag.ts";
+import {
+	DataSegment as DataSegment_,
+	ModuleDataSegments,
+} from "./DataSegment.ts";
+import {
+	ElementSegment as ElementSegment_,
+	ModuleElementSegments,
+} from "./ElementSegment.ts";
+import {
+	Export as Export_,
+	ModuleExports,
+} from "./Export.ts";
+import {
+	Function as Function_,
+	ModuleFunctions,
+} from "./Function.ts";
+import {
+	Global as Global_,
+	ModuleGlobals,
+} from "./Global.ts";
+import {
+	Import as Import_,
+	ModuleImports,
+} from "./Import.ts";
+import {
+	Memory as Memory_,
+	ModuleMemories,
+} from "./Memory.ts";
+import {
+	ModuleTables,
+	Table as Table_,
+} from "./Table.ts";
+import {
+	ModuleTags,
+	Tag as Tag_,
+} from "./Tag.ts";
 
 
 
@@ -135,15 +162,15 @@ export enum Feature {
  * - has a property `.wasm`, a namespace for creating expressions in the module (`.wasm.nop()`, `.wasm.i32.add()`, etc.)
  */
 export class Module {
-	/** @class */ static readonly Tag = TAG.Tag;
-	/** @class */ static readonly Global = GLOBAL.Global;
-	/** @class */ static readonly Memory = MEMORY.Memory;
-	/** @class */ static readonly Table = TABLE.Table;
-	/** @class */ static readonly Function = FUNCTION.Function;
-	/** @class */ static readonly DataSegment = DATA_SEGMENT.DataSegment;
-	/** @class */ static readonly ElementSegment = ELEMENT_SEGMENT.ElementSegment;
-	/** @class */ static readonly Import = IMPORT.Import;
-	/** @class */ static readonly Export = EXPORT.Export;
+	/** @class */ static readonly Tag = Tag_;
+	/** @class */ static readonly Global = Global_;
+	/** @class */ static readonly Memory = Memory_;
+	/** @class */ static readonly Table = Table_;
+	/** @class */ static readonly Function = Function_;
+	/** @class */ static readonly DataSegment = DataSegment_;
+	/** @class */ static readonly ElementSegment = ElementSegment_;
+	/** @class */ static readonly Import = Import_;
+	/** @class */ static readonly Export = Export_;
 
 
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
@@ -190,15 +217,15 @@ export class Module {
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
-	readonly tags = new TAG.ModuleTags(this);
-	readonly globals = new GLOBAL.ModuleGlobals(this);
-	readonly memories = new MEMORY.ModuleMemories(this);
-	readonly tables = new TABLE.ModuleTables(this);
-	readonly functions = new FUNCTION.ModuleFunctions(this);
-	readonly dataSegments = new DATA_SEGMENT.ModuleDataSegments(this);
-	readonly elementSegments = new ELEMENT_SEGMENT.ModuleElementSegments(this);
-	readonly imports = new IMPORT.ModuleImports(this);
-	readonly exports = new EXPORT.ModuleExports(this);
+	readonly tags = new ModuleTags(this);
+	readonly globals = new ModuleGlobals(this);
+	readonly memories = new ModuleMemories(this);
+	readonly tables = new ModuleTables(this);
+	readonly functions = new ModuleFunctions(this);
+	readonly dataSegments = new ModuleDataSegments(this);
+	readonly elementSegments = new ModuleElementSegments(this);
+	readonly imports = new ModuleImports(this);
+	readonly exports = new ModuleExports(this);
 
 	/** @deprecated Use {@link Module#start | `this.start`} instead. */ @replacedBy("`this.start`") getStart() { return this.start; }
 	/** @deprecated Use {@link Module#start | `this.start`} instead. */ @replacedBy("`this.start`") setStart(start: FunctionRef) { this.start = start; }
@@ -279,12 +306,12 @@ export class Module {
 	/** @deprecated Use {@link Module#exports | `this.exports.addTable`} instead. */ @replacedBy("`this.exports.addTable`") addTableExport(internalName: string, externalName: string) { return this.exports.addTable(internalName, externalName); }
 	/** @deprecated Use {@link Module#exports | `this.exports.addFunction`} instead. */ @replacedBy("`this.exports.addFunction`") addFunctionExport(internalName: string, externalName: string) { return this.exports.addFunction(internalName, externalName); }
 
-	getMemoryInfo(name: string): MEMORY.Memory {
-		return new MEMORY.Memory(this, name);
+	getMemoryInfo(name: string): Memory_ {
+		return new Memory_(this, name);
 	}
 
-	getDataSegmentInfo(segment: DataSegmentRef): DATA_SEGMENT.DataSegment {
-		return new DATA_SEGMENT.DataSegment(this, segment);
+	getDataSegmentInfo(segment: DataSegmentRef): DataSegment_ {
+		return new DataSegment_(this, segment);
 	}
 
 	// ## Binaryen Operations ## //
@@ -453,13 +480,13 @@ export class Module {
  */
 // eslint-disable-next-line no-redeclare
 export namespace Module {
-	export type Tag = TAG.Tag;
-	export type Global = GLOBAL.Global;
-	export type Memory = MEMORY.Memory;
-	export type Table = TABLE.Table;
-	export type Function = FUNCTION.Function;
-	export type DataSegment = DATA_SEGMENT.DataSegment;
-	export type ElementSegment = ELEMENT_SEGMENT.ElementSegment;
-	export type Import = IMPORT.Import;
-	export type Export = EXPORT.Export;
+	export type Tag = Tag_;
+	export type Global = Global_;
+	export type Memory = Memory_;
+	export type Table = Table_;
+	export type Function = Function_;
+	export type DataSegment = DataSegment_;
+	export type ElementSegment = ElementSegment_;
+	export type Import = Import_;
+	export type Export = Export_;
 }
