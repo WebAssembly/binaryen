@@ -7,31 +7,29 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (export "foo" (func $foo))
-
-  ;; CHECK:      (export "bar" (func $bar))
+  ;; CHECK:      (export "keep" (func $keep))
 
   ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo<x,y> (export "foo<x,y>")
+  (func $foo (export "foo")
     (drop (i32.const 1))
   )
 
   ;; CHECK:      (func $bar (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $bar (export "bar")
     (drop (i32.const 2))
   )
 
-  ;; CHECK:      (func $__bar (type $0)
+  ;; CHECK:      (func $keep (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $keep (export "keep")
