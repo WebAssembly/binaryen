@@ -171,8 +171,10 @@ export class Module {
 	/** @class */ static readonly Export = Export_;
 
 
+	/** @internal */
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
+	// ## Expression Manipulation ## //
 	/**
 	 * This module’s {@link ExpressionBuilder | WASM expression builder}.
 	 *
@@ -187,10 +189,14 @@ export class Module {
 	 * const {i32, drop} = mod.wasm;
 	 * drop(i32.add(i32.const(3), i32.const(5)));
 	 * ```
+	 * @category Expression Manipulation
 	 */
 	readonly wasm: ExpressionBuilder = expressionBuilder(this);
 
-	/** Pseudo-instruction enabling Binaryen to reason about multiple values on the stack. */
+	/**
+	 * Pseudo-instruction enabling Binaryen to reason about multiple values on the stack.
+	 * @category Expression Manipulation
+	 */
 	pop(typ: Type): ExpressionRef {
 		if ([
 			i32,
@@ -213,34 +219,43 @@ export class Module {
 		}
 	}
 
-	/** Gets the side effects of the specified expression. */
+	/**
+	 * Gets the side effects of the specified expression.
+	 * @category Expression Manipulation
+	 */
 	getSideEffects(expr: ExpressionRef): SideEffect {
 		return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, this.ptr);
 	}
 
-	/** Creates a deep copy of an expression. */
+	/**
+	 * Creates a deep copy of an expression.
+	 * @category Expression Manipulation
+	 */
 	copyExpression(expr: ExpressionRef): ExpressionRef {
 		return BinaryenObj["_BinaryenExpressionCopy"](expr, this.ptr);
 	}
 
 	// ## Module Component Operations ## //
 	// see https://webassembly.github.io/spec/core/syntax/modules.html
-	readonly tags = new ModuleTags(this);
-	readonly globals = new ModuleGlobals(this);
-	readonly memories = new ModuleMemories(this);
-	readonly tables = new ModuleTables(this);
-	readonly functions = new ModuleFunctions(this);
-	readonly dataSegments = new ModuleDataSegments(this);
-	readonly elementSegments = new ModuleElementSegments(this);
-	readonly imports = new ModuleImports(this);
-	readonly exports = new ModuleExports(this);
+	/** @category Module Component Operations */ readonly tags = new ModuleTags(this);
+	/** @category Module Component Operations */ readonly globals = new ModuleGlobals(this);
+	/** @category Module Component Operations */ readonly memories = new ModuleMemories(this);
+	/** @category Module Component Operations */ readonly tables = new ModuleTables(this);
+	/** @category Module Component Operations */ readonly functions = new ModuleFunctions(this);
+	/** @category Module Component Operations */ readonly dataSegments = new ModuleDataSegments(this);
+	/** @category Module Component Operations */ readonly elementSegments = new ModuleElementSegments(this);
+	/** @category Module Component Operations */ readonly imports = new ModuleImports(this);
+	/** @category Module Component Operations */ readonly exports = new ModuleExports(this);
 
 	/** @deprecated Use {@link Module#start | `this.start`} instead. */ @replacedBy("`this.start`") getStart() { return this.start; }
 	/** @deprecated Use {@link Module#start | `this.start`} instead. */ @replacedBy("`this.start`") setStart(start: FunctionRef) { this.start = start; }
 	/** @deprecated Use {@link Module#features | `this.features`} instead. */ @replacedBy("`this.features`") getFeatures() { return this.features; }
 	/** @deprecated Use {@link Module#features | `this.features`} instead. */ @replacedBy("`this.features`") setFeatures(features: Feature) { return this.features = features; }
 
-	/** The start function. */
+	/**
+	 * The start function.
+	 * @category Module Component Operations
+	 */
 	get start(): FunctionRef {
 		return BinaryenObj["_BinaryenGetStart"](this.ptr);
 	}
@@ -252,6 +267,7 @@ export class Module {
 	/**
 	 * The WebAssembly features enabled for this module.
 	 * Features are a bitmask of `Feature` enum members.
+	 * @category Module Component Operations
 	 */
 	get features(): Feature {
 		return BinaryenObj["_BinaryenModuleGetFeatures"](this.ptr);
@@ -314,17 +330,22 @@ export class Module {
 	/** @deprecated Use {@link Module#exports | `this.exports.addTable`} instead. */ @replacedBy("`this.exports.addTable`") addTableExport(internalName: string, externalName: string) { return this.exports.addTable(internalName, externalName); }
 	/** @deprecated Use {@link Module#exports | `this.exports.addFunction`} instead. */ @replacedBy("`this.exports.addFunction`") addFunctionExport(internalName: string, externalName: string) { return this.exports.addFunction(internalName, externalName); }
 
+	/** @category Module Component Operations */
 	getMemoryInfo(name: string): Memory_ {
 		return new Memory_(this, name);
 	}
 
+	/** @category Module Component Operations */
 	getDataSegmentInfo(segment: DataSegmentRef): DataSegment_ {
 		return new DataSegment_(this, segment);
 	}
 
 	// ## Binaryen Operations ## //
 	// ### Emission & Execution ### //
-	/** Returns the module in Binaryen’s s-expression text format (not official stack-style text format). */
+	/**
+	 * Returns the module in Binaryen’s s-expression text format (not official stack-style text format).
+	 * @category Emission & Execution
+	 */
 	emitText(): string {
 		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteText"](this.ptr);
 		const text = UTF8ToString(textPtr);
@@ -334,7 +355,10 @@ export class Module {
 		return text;
 	}
 
-	/** Returns the module in official stack-style text format. */
+	/**
+	 * Returns the module in official stack-style text format.
+	 * @category Emission & Execution
+	 */
 	emitStackIR(): string {
 		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteStackIR"](this.ptr);
 		const text = UTF8ToString(textPtr);
@@ -344,7 +368,10 @@ export class Module {
 		return text;
 	}
 
-	/** Returns the [asm.js](http://asmjs.org/) representation of the module. */
+	/**
+	 * Returns the [asm.js](http://asmjs.org/) representation of the module.
+	 * @category Emission & Execution
+	 */
 	emitAsmjs(): string {
 		let returned = "";
 		const saved = out;
@@ -356,9 +383,15 @@ export class Module {
 		return returned;
 	}
 
-	/** Returns the module in binary format. */
+	/**
+	 * Returns the module in binary format.
+	 * @category Emission & Execution
+	 */
 	emitBinary(): Uint8Array;
-	/** Returns the module in binary format with a given source map. */
+	/**
+	 * Returns the module in binary format with a given source map.
+	 * @category Emission & Execution
+	 */
 	emitBinary(sourceMapUrl: string): {binary: Uint8Array, sourceMap: string};
 	emitBinary(sourceMapUrl?: string): Uint8Array | {binary: Uint8Array, sourceMap: string} {
 		return preserveStack(() => {
@@ -382,28 +415,43 @@ export class Module {
 		});
 	}
 
-	/** Runs the module in the interpreter, calling the start function. */
+	/**
+	 * Runs the module in the interpreter, calling the start function.
+	 * @category Emission & Execution
+	 */
 	interpret(): void {
 		BinaryenObj["_BinaryenModuleInterpret"](this.ptr);
 	}
 
-	/** Releases the resources held by the module once it isn't needed anymore. */
+	/**
+	 * Releases the resources held by the module once it isn't needed anymore.
+	 * @category Emission & Execution
+	 */
 	dispose(): void {
 		BinaryenObj["_BinaryenModuleDispose"](this.ptr);
 	}
 
 	// ### Validation & Optimization ### //
-	/** Validates the module. Returns `true` if valid, otherwise prints validation errors and returns `false`. */
+	/**
+	 * Validates the module. Returns `true` if valid, otherwise prints validation errors and returns `false`.
+	 * @category Validation & Optimization
+	 */
 	validate(): number {
 		return BinaryenObj["_BinaryenModuleValidate"](this.ptr);
 	}
 
-	/** Optimizes the module using the default optimization passes. */
+	/**
+	 * Optimizes the module using the default optimization passes.
+	 * @category Validation & Optimization
+	 */
 	optimize(): void {
 		BinaryenObj["_BinaryenModuleOptimize"](this.ptr);
 	}
 
-	/** Optimizes a single function using the default optimization passes. */
+	/**
+	 * Optimizes a single function using the default optimization passes.
+	 * @category Validation & Optimization
+	 */
 	optimizeFunction(func: FunctionRef | string): void {
 		if (typeof func === "string") {
 			func = this.functions.get(func);
@@ -411,14 +459,20 @@ export class Module {
 		BinaryenObj["_BinaryenFunctionOptimize"](func, this.ptr);
 	}
 
-	/** Runs the specified passes on the module. */
+	/**
+	 * Runs the specified passes on the module.
+	 * @category Validation & Optimization
+	 */
 	runPasses(passes: readonly string[]): void {
 		return preserveStack(() => {
 			BinaryenObj["_BinaryenModuleRunPasses"](this.ptr, i32sToStack(passes.map(strToStack)), passes.length);
 		});
 	}
 
-	/** Runs the specified passes on a single function. */
+	/**
+	 * Runs the specified passes on a single function.
+	 * @category Validation & Optimization
+	 */
 	runPassesOnFunction(func: string | FunctionRef, passes: readonly string[]): void {
 		if (typeof func === "string") {
 			func = this.functions.get(func);
@@ -429,17 +483,26 @@ export class Module {
 	}
 
 	// ### Debugging ### //
-	/** Adds a debug info file name to the module and returns its index. */
+	/**
+	 * Adds a debug info file name to the module and returns its index.
+	 * @category Debugging
+	 */
 	addDebugInfoFileName(filename: string): number {
 		return preserveStack(() => BinaryenObj["_BinaryenModuleAddDebugInfoFileName"](this.ptr, strToStack(filename)));
 	}
 
-	/** Gets the name of the debug info file at the specified index. */
+	/**
+	 * Gets the name of the debug info file at the specified index.
+	 * @category Debugging
+	 */
 	getDebugInfoFileName(index: number): string {
 		return UTF8ToString(BinaryenObj["_BinaryenModuleGetDebugInfoFileName"](this.ptr, index));
 	}
 
-	/** Sets the debug location of the specified `ExpressionRef` within the specified `FunctionRef`. */
+	/**
+	 * Sets the debug location of the specified `ExpressionRef` within the specified `FunctionRef`.
+	 * @category Debugging
+	 */
 	setDebugLocation(func: FunctionRef, expr: ExpressionRef, fileIndex: number, lineNumber: number, columnNumber: number): void {
 		BinaryenObj["_BinaryenFunctionSetDebugLocation"](func, expr, fileIndex, lineNumber, columnNumber);
 	}
