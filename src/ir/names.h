@@ -56,7 +56,7 @@ inline Name getValidName(Name root,
   if (check(root)) {
     return root;
   }
-  auto prefixed = std::string(root.str) + separator;
+  auto prefixed = std::string(root.view()) + separator;
   Index num = hint;
   while (1) {
     auto name = prefixed + std::to_string(num);

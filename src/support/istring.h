@@ -57,17 +57,17 @@ public:
       return internal ? *(const uint32_t*)(internal - 4) : 0;
     }
     char operator[](size_t x) const { return internal[x]; }
-    operator std::string_view() const {
+    std::string_view view() const {
       if (!internal) {
-        // No size to read, just return an empty view.
-        return std::string_view();
+        // No size to read.
+        return {};
       }
       return {internal, size()};
     }
   };
   const View str;
 
-  std::string_view view() const { return std::string_view(str); }
+  std::string_view view() const { return str.view(); }
 
   IString() = default;
 
@@ -110,7 +110,7 @@ public:
 
   std::string toString() const { return {str.data(), str.size()}; }
 
-  bool equals(std::string_view other) const { return str == other; }
+  bool equals(std::string_view other) const { return str.view() == other; }
 
   bool startsWith(std::string_view prefix) const {
     // TODO: Use C++20 `starts_with`.

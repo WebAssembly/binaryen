@@ -2566,7 +2566,7 @@ struct PrintExpressionContents
     // Re-encode from WTF-16 to WTF-8.
     std::stringstream wtf8;
     [[maybe_unused]] bool valid =
-      String::convertWTF16ToWTF8(wtf8, curr->string.str);
+      String::convertWTF16ToWTF8(wtf8, curr->string.view());
     assert(valid);
     // TODO: Use wtf8.view() once we have C++20.
     String::printEscaped(o, wtf8.str());
@@ -3190,7 +3190,7 @@ void PrintSExpression::visitExport(Export* curr) {
   o << '(';
   printMedium(o, "export ");
   std::stringstream escaped;
-  String::printEscaped(escaped, curr->name.str);
+  String::printEscaped(escaped, curr->name.view());
   printText(o, escaped.str(), false) << " (";
   switch (curr->kind) {
     case ExternalKind::Function:
@@ -3219,8 +3219,8 @@ void PrintSExpression::visitExport(Export* curr) {
 void PrintSExpression::emitImportHeader(Importable* curr) {
   printMedium(o, "import ");
   std::stringstream escapedModule, escapedBase;
-  String::printEscaped(escapedModule, curr->module.str);
-  String::printEscaped(escapedBase, curr->base.str);
+  String::printEscaped(escapedModule, curr->module.view());
+  String::printEscaped(escapedBase, curr->base.view());
   printText(o, escapedModule.str(), false) << ' ';
   printText(o, escapedBase.str(), false) << ' ';
 }

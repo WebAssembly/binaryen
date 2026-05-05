@@ -35,7 +35,7 @@ const char* IString::interned(std::string_view s) {
   struct InternedHash {
     using is_transparent = void;
     size_t operator()(View v) const {
-      return std::hash<std::string_view>{}(std::string_view(v));
+      return std::hash<std::string_view>{}(v.view());
     }
     size_t operator()(std::string_view sv) const {
       return std::hash<std::string_view>{}(sv);
@@ -43,15 +43,9 @@ const char* IString::interned(std::string_view s) {
   };
   struct InternedEqual {
     using is_transparent = void;
-    bool operator()(View a, View b) const {
-      return std::string_view(a) == std::string_view(b);
-    }
-    bool operator()(std::string_view a, View b) const {
-      return a == std::string_view(b);
-    }
-    bool operator()(View a, std::string_view b) const {
-      return std::string_view(a) == b;
-    }
+    bool operator()(View a, View b) const { return a.view() == b.view(); }
+    bool operator()(std::string_view a, View b) const { return a == b.view(); }
+    bool operator()(View a, std::string_view b) const { return a.view() == b; }
     bool operator()(std::string_view a, std::string_view b) const {
       return a == b;
     }
