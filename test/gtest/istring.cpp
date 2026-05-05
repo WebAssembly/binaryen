@@ -49,3 +49,29 @@ TEST_F(IStringTest, Interning) {
   EXPECT_EQ(foo2, foo2);
   EXPECT_EQ(bar, bar);
 }
+
+TEST_F(IStringTest, StartsWith) {
+  auto foo = IString("foo");
+  EXPECT_TRUE(foo.startsWith("f"));
+  EXPECT_TRUE(foo.startsWith("fo"));
+  EXPECT_TRUE(foo.startsWith("foo"));
+
+  EXPECT_FALSE(foo.startsWith("oo"));
+  EXPECT_FALSE(foo.startsWith("o"));
+
+  EXPECT_FALSE(foo.startsWith("foobar"));
+  EXPECT_FALSE(foo.startsWith("bar"));
+}
+
+TEST_F(IStringTest, EndsWith) {
+  auto foo = IString("foo");
+  EXPECT_TRUE(foo.endsWith("o"));
+  EXPECT_TRUE(foo.endsWith("oo"));
+  EXPECT_TRUE(foo.endsWith("foo"));
+
+  EXPECT_FALSE(foo.endsWith("f"));
+  EXPECT_FALSE(foo.endsWith("fo"));
+
+  EXPECT_FALSE(foo.endsWith("foobar"));
+  EXPECT_FALSE(foo.endsWith("bar"));
+}

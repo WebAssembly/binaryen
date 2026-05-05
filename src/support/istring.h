@@ -120,7 +120,7 @@ public:
 
   // Disambiguate for string literals.
   template<int N> bool startsWith(const char (&str)[N]) const {
-    return startsWith(view());
+    return startsWith(std::string_view(str));
   }
 
   bool endsWith(std::string_view suffix) const {
@@ -134,7 +134,7 @@ public:
 
   // Disambiguate for string literals.
   template<int N> bool endsWith(const char (&str)[N]) const {
-    return endsWith(view());
+    return endsWith(std::string_view(str));
   }
 
   IString substr(size_t pos, size_t len = std::string_view::npos) const {
