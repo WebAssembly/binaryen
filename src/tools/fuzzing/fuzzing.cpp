@@ -2461,10 +2461,12 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     while (1) {
       options.push_back(newHeapType);
       // We cannot look at a bottom type's supers (there can be many, and the
-      // getSuperType() API doesn't return them).
-      // TODO: handle all possible supers.
+      // getSuperType() API doesn't return them), but can use
+      // interestingHeapSubTypes on the top.
       if (newHeapType.isBottom()) {
-        options.push_back(oldHeapType);
+        for (auto type : interestingHeapSubTypes[newHeapType.getTop()]) {
+          options.push_back(type);
+        }
         break;
       }
       // Continue until we reach the old type.
