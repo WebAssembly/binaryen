@@ -76,6 +76,7 @@ export function expressionBuilder(mod: Module) {
 		memory: memory(mod),
 		data: {drop: STUB},
 		ref: ref(mod),
+		tuple: tuple(mod),
 		struct: struct(mod),
 		array: array(mod),
 		i31: i31(mod),
@@ -85,7 +86,6 @@ export function expressionBuilder(mod: Module) {
 		i64: i64(mod),
 		f32: f32(mod),
 		f64: f64(mod),
-		tuple: tuple(mod),
 	} as const;
 }
 

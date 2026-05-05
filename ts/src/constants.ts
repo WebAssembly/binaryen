@@ -106,8 +106,6 @@ export enum ExpressionId {
 	// ### Binaryen-Only Instruction Ids ### //
 	Invalid = BinaryenObj["_BinaryenInvalidId"](),
 	Pop = BinaryenObj["_BinaryenPopId"](),
-	TupleMake = BinaryenObj["_BinaryenTupleMakeId"](),
-	TupleExtract = BinaryenObj["_BinaryenTupleExtractId"](),
 
 	// ### Parametric Instruction Ids ### //
 	Nop = BinaryenObj["_BinaryenNopId"](),
@@ -162,8 +160,12 @@ export enum ExpressionId {
 	RefEq = BinaryenObj["_BinaryenRefEqId"](),
 	RefTest = BinaryenObj["_BinaryenRefTestId"](),
 	RefCast = BinaryenObj["_BinaryenRefCastId"](),
+	RefI31 = BinaryenObj["_BinaryenRefI31Id"](),
+	I31Get = BinaryenObj["_BinaryenI31GetId"](),
 
 	// ### Aggregate Instruction Ids ### //
+	TupleMake = BinaryenObj["_BinaryenTupleMakeId"](),
+	TupleExtract = BinaryenObj["_BinaryenTupleExtractId"](),
 	StructNew = BinaryenObj["_BinaryenStructNewId"](),
 	StructGet = BinaryenObj["_BinaryenStructGetId"](),
 	StructSet = BinaryenObj["_BinaryenStructSetId"](),
@@ -178,8 +180,6 @@ export enum ExpressionId {
 	ArrayCopy = BinaryenObj["_BinaryenArrayCopyId"](),
 	ArrayInitData = BinaryenObj["_BinaryenArrayInitDataId"](),
 	ArrayInitElem = BinaryenObj["_BinaryenArrayInitElemId"](),
-	RefI31 = BinaryenObj["_BinaryenRefI31Id"](),
-	I31Get = BinaryenObj["_BinaryenI31GetId"](),
 
 	// ### Numeric & Vector Instruction Ids ### //
 	Const = BinaryenObj["_BinaryenConstId"](),

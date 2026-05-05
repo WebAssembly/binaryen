@@ -168,9 +168,9 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.drop()`
 	- `.select()`
 - conditionals, blocks, loops, and breaking (“branching”)
-	- `.if()`
 	- `.block()`
 	- `.loop()`
+	- `.if()`
 	- `.br()`, `.br_if()`, `.br_table()`
 	- `.br_on_null()`, `.br_on_non_null()`, `.br_on_cast()`, `.br_on_cast_fail()`
 - function calls, returns, throws, and catching
@@ -192,6 +192,9 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.ref.func()`, `.ref.null()`, `.ref.is_null()`, `.ref.as_non_null()`, `.ref.eq()`, `.ref.test()`, `.ref.cast()`
 	- `.ref.i31()`, `i31.get_{s,u}()`
 	- ~~`.extern.convert_any()`, `.any.convert_extern()`~~; ⛔️ not yet supported
+- tuples 🌱 (Binaryen-specific)
+	- `.tuple.make()`
+	- `.tuple.extract()`
 - structs and arrays
 	- `.struct.new()`, `.struct.new_default()`
 	- `.struct.get()`, `.struct.get_{s,u}()`
@@ -225,9 +228,6 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.{f32,f64}.eq()`, `.{f32,f64}.lt()`, `.{f32,f64}.gt()`, `.{f32,f64}.le()`, `.{f32,f64}.ge()`
 	- `.{f32,f64}.convert_i32_s()`, `.{f32,f64}.convert_i32_u()`, `.{f32,f64}.convert_i64_s()`, `.{f32,f64}.convert_i64_u()`
 	- `.f32.demote_f64()`, `.f64.promote_f32()`
-- tuples 🌱 (Binaryen-specific)
-	- `.tuple.make()`
-	- `.tuple.extract()`
 
 
 

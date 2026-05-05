@@ -33,7 +33,7 @@ export class Break extends Expression {
 
 
 	constructor(expr: ExpressionRef) {
-		super(ExpressionId.Loop, expr);
+		super(ExpressionId.Break, expr);
 	}
 
 
