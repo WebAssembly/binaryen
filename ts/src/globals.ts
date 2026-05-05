@@ -33,13 +33,30 @@ import {
 
 
 const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression> = new Map<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression>([
+	// Parametric Instructions
 	[ExpressionId.Drop, EXPR.Drop],
 	[ExpressionId.Select, EXPR.Select],
+
+	// Control Instructions
 	[ExpressionId.Block, EXPR.Block],
 	[ExpressionId.Loop, EXPR.Loop],
+	[ExpressionId.If, EXPR.If],
 	[ExpressionId.Break, EXPR.Break],
+	[ExpressionId.Switch, EXPR.Switch],
+	[ExpressionId.BrOn, EXPR.BrOn],
+	[ExpressionId.Call, EXPR.Call],
+	[ExpressionId.CallRef, EXPR.CallRef],
+	[ExpressionId.CallIndirect, EXPR.CallIndirect],
+	[ExpressionId.Return, EXPR.Return],
+	[ExpressionId.Throw, EXPR.Throw],
+	[ExpressionId.Rethrow, EXPR.Rethrow],
+	[ExpressionId.Try, EXPR.Try],
+
+	// Variable Instructions
 	[ExpressionId.LocalGet, EXPR.LocalGet],
 	[ExpressionId.LocalSet, EXPR.LocalSet],
+
+	// Numeric & Vector Instructions
 	[ExpressionId.Const, EXPR.Const],
 ]);
 
