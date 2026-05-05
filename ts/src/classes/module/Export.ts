@@ -36,7 +36,7 @@ export class Export {
 
 
 /**
- * Methods for manipulating {@link Export | exports} in a WASM module.
+ * Methods for manipulating {@link Module.Export | exports} in a WASM module.
  */
 export class ModuleExports {
 	constructor(private readonly mod: Module) {}

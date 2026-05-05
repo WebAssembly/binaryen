@@ -50,7 +50,7 @@ export class DataSegment {
 
 
 /**
- * Methods for manipulating {@link DataSegment | data segments} in a WASM module.
+ * Methods for manipulating {@link Module.DataSegment | data segments} in a WASM module.
  */
 export class ModuleDataSegments {
 	constructor(private readonly mod: Module) {}

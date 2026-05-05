@@ -107,6 +107,19 @@ export enum Feature {
 /**
  * A WASM module.
  *
+ * `Module` itself is:
+ * - an instantiable class (via `new Module()`)
+ * - a namespace containing the following members, which themselves are classes (see related documentation):
+ * 	- {@link Module.Tag}
+ * 	- {@link Module.Global}
+ * 	- {@link Module.Memory}
+ * 	- {@link Module.Table}
+ * 	- {@link Module.Function}
+ * 	- {@link Module.DataSegment}
+ * 	- {@link Module.ElementSegment}
+ * 	- {@link Module.Import}
+ * 	- {@link Module.Export}
+ *
  * Each instance of `Module`:
  * - is a WASM module with module manipulation methods (`.emitText()`, `.validate()`, etc.).
  * - is an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
@@ -122,6 +135,17 @@ export enum Feature {
  * - has a property `.wasm`, a namespace for creating expressions in the module (`.wasm.nop()`, `.wasm.i32.add()`, etc.)
  */
 export class Module {
+	static readonly Tag = TAG.Tag;
+	static readonly Global = GLOBAL.Global;
+	static readonly Memory = MEMORY.Memory;
+	static readonly Table = TABLE.Table;
+	static readonly Function = FUNCTION.Function;
+	static readonly DataSegment = DATA_SEGMENT.DataSegment;
+	static readonly ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	static readonly Import = IMPORT.Import;
+	static readonly Export = EXPORT.Export;
+
+
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	/**
@@ -202,58 +226,58 @@ export class Module {
 		BinaryenObj["_BinaryenModuleSetFeatures"](this.ptr, features);
 	}
 
-	/** @deprecated Use {@link MOD.ModuleTags#add | `this.tags.add`} instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
-	/** @deprecated Use {@link MOD.ModuleTags#add | `this.tags.get`} instead. */ @replacedBy("`this.tags.get`") getTag(name: string) { return this.tags.get(name); }
-	/** @deprecated Use {@link MOD.ModuleTags#add | `this.tags.remove`} instead. */ @replacedBy("`this.tags.remove`") removeTag(name: string) { return this.tags.remove(name); }
+	/** @deprecated Use {@link ModuleTags#add | `this.tags.add`} instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
+	/** @deprecated Use {@link ModuleTags#add | `this.tags.get`} instead. */ @replacedBy("`this.tags.get`") getTag(name: string) { return this.tags.get(name); }
+	/** @deprecated Use {@link ModuleTags#add | `this.tags.remove`} instead. */ @replacedBy("`this.tags.remove`") removeTag(name: string) { return this.tags.remove(name); }
 
-	/** @deprecated Use {@link MOD.ModuleGlobals#add | `this.globals.add`} instead. */ @replacedBy("`this.globals.add`") addGlobal(name: string, type: Type, mutable: boolean, init: ExpressionRef) { return this.globals.add(name, type, mutable, init); }
-	/** @deprecated Use {@link MOD.ModuleGlobals#get | `this.globals.get`} instead. */ @replacedBy("`this.globals.get`") getGlobal(name: string) { return this.globals.get(name); }
-	/** @deprecated Use {@link MOD.ModuleGlobals#getByIndex | `this.globals.getByIndex`} instead. */ @replacedBy("`this.globals.getByIndex`") getGlobalByIndex(index: number) { return this.globals.getByIndex(index); }
-	/** @deprecated Use {@link MOD.ModuleGlobals#count | `this.globals.count`} instead. */ @replacedBy("`this.globals.count`") getNumGlobals() { return this.globals.count(); }
-	/** @deprecated Use {@link MOD.ModuleGlobals#remove | `this.globals.remove`} instead. */ @replacedBy("`this.globals.remove`") removeGlobal(name: string) { return this.globals.remove(name); }
+	/** @deprecated Use {@link ModuleGlobals#add | `this.globals.add`} instead. */ @replacedBy("`this.globals.add`") addGlobal(name: string, type: Type, mutable: boolean, init: ExpressionRef) { return this.globals.add(name, type, mutable, init); }
+	/** @deprecated Use {@link ModuleGlobals#get | `this.globals.get`} instead. */ @replacedBy("`this.globals.get`") getGlobal(name: string) { return this.globals.get(name); }
+	/** @deprecated Use {@link ModuleGlobals#getByIndex | `this.globals.getByIndex`} instead. */ @replacedBy("`this.globals.getByIndex`") getGlobalByIndex(index: number) { return this.globals.getByIndex(index); }
+	/** @deprecated Use {@link ModuleGlobals#count | `this.globals.count`} instead. */ @replacedBy("`this.globals.count`") getNumGlobals() { return this.globals.count(); }
+	/** @deprecated Use {@link ModuleGlobals#remove | `this.globals.remove`} instead. */ @replacedBy("`this.globals.remove`") removeGlobal(name: string) { return this.globals.remove(name); }
 
-	/** @deprecated Use {@link MOD.ModuleMemories#set | `this.memories.set`} instead. */ @replacedBy("`this.memories.set`") setMemory(initial: number, maximum: number, exportName: string, segments?: readonly any[], shared?: boolean, memory64?: boolean, internalName?: string) { return this.memories.set(initial, maximum, exportName, segments, shared, memory64, internalName); }
-	/** @deprecated Use {@link MOD.ModuleMemories#has | `this.memories.has`} instead. */ @replacedBy("`this.memories.has`") hasMemory() { return this.memories.has(); }
+	/** @deprecated Use {@link ModuleMemories#set | `this.memories.set`} instead. */ @replacedBy("`this.memories.set`") setMemory(initial: number, maximum: number, exportName: string, segments?: readonly any[], shared?: boolean, memory64?: boolean, internalName?: string) { return this.memories.set(initial, maximum, exportName, segments, shared, memory64, internalName); }
+	/** @deprecated Use {@link ModuleMemories#has | `this.memories.has`} instead. */ @replacedBy("`this.memories.has`") hasMemory() { return this.memories.has(); }
 
-	/** @deprecated Use {@link MOD.ModuleTables#add | `this.tables.add`} instead. */ @replacedBy("`this.tables.add`") addTable(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef) { return this.tables.add(name, initial, maximum, type, init); }
-	/** @deprecated Use {@link MOD.ModuleTables#get | `this.tables.get`} instead. */ @replacedBy("`this.tables.get`") getTable(name: string) { return this.tables.get(name); }
-	/** @deprecated Use {@link MOD.ModuleTables#getByIndex | `this.tables.getByIndex`} instead. */ @replacedBy("`this.tables.getByIndex`") getTableByIndex(index: number) { return this.tables.getByIndex(index); }
-	/** @deprecated Use {@link MOD.ModuleTables#getSegments | `this.tables.getSegments`} instead. */ @replacedBy("`this.tables.getSegments`") getTableSegments(table: TableRef) { return this.tables.getSegments(table); }
-	/** @deprecated Use {@link MOD.ModuleTables#count | `this.tables.count`} instead. */ @replacedBy("`this.tables.count`") getNumTables() { return this.tables.count(); }
-	/** @deprecated Use {@link MOD.ModuleTables#remove | `this.tables.remove`} instead. */ @replacedBy("`this.tables.remove`") removeTable(name: string) { return this.tables.remove(name); }
+	/** @deprecated Use {@link ModuleTables#add | `this.tables.add`} instead. */ @replacedBy("`this.tables.add`") addTable(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef) { return this.tables.add(name, initial, maximum, type, init); }
+	/** @deprecated Use {@link ModuleTables#get | `this.tables.get`} instead. */ @replacedBy("`this.tables.get`") getTable(name: string) { return this.tables.get(name); }
+	/** @deprecated Use {@link ModuleTables#getByIndex | `this.tables.getByIndex`} instead. */ @replacedBy("`this.tables.getByIndex`") getTableByIndex(index: number) { return this.tables.getByIndex(index); }
+	/** @deprecated Use {@link ModuleTables#getSegments | `this.tables.getSegments`} instead. */ @replacedBy("`this.tables.getSegments`") getTableSegments(table: TableRef) { return this.tables.getSegments(table); }
+	/** @deprecated Use {@link ModuleTables#count | `this.tables.count`} instead. */ @replacedBy("`this.tables.count`") getNumTables() { return this.tables.count(); }
+	/** @deprecated Use {@link ModuleTables#remove | `this.tables.remove`} instead. */ @replacedBy("`this.tables.remove`") removeTable(name: string) { return this.tables.remove(name); }
 
-	/** @deprecated Use {@link MOD.ModuleFunctions#add | `this.functions.add`} instead. */ @replacedBy("`this.functions.add`") addFunction(name: string, params: Type, results: Type, varTypes: readonly Type[], body: ExpressionRef) { return this.functions.add(name, params, results, varTypes, body); }
-	/** @deprecated Use {@link MOD.ModuleFunctions#get | `this.functions.get`} instead. */ @replacedBy("`this.functions.get`") getFunction(name: string) { return this.functions.get(name); }
-	/** @deprecated Use {@link MOD.ModuleFunctions#getByIndex | `this.functions.getByIndex`} instead. */ @replacedBy("`this.functions.getByIndex`") getFunctionByIndex(index: number) { return this.functions.getByIndex(index); }
-	/** @deprecated Use {@link MOD.ModuleFunctions#count | `this.functions.count`} instead. */ @replacedBy("`this.functions.count`") getNumFunctions() { return this.functions.count(); }
-	/** @deprecated Use {@link MOD.ModuleFunctions#remove | `this.functions.remove`} instead. */ @replacedBy("`this.functions.remove`") removeFunction(name: string) { return this.functions.remove(name); }
+	/** @deprecated Use {@link ModuleFunctions#add | `this.functions.add`} instead. */ @replacedBy("`this.functions.add`") addFunction(name: string, params: Type, results: Type, varTypes: readonly Type[], body: ExpressionRef) { return this.functions.add(name, params, results, varTypes, body); }
+	/** @deprecated Use {@link ModuleFunctions#get | `this.functions.get`} instead. */ @replacedBy("`this.functions.get`") getFunction(name: string) { return this.functions.get(name); }
+	/** @deprecated Use {@link ModuleFunctions#getByIndex | `this.functions.getByIndex`} instead. */ @replacedBy("`this.functions.getByIndex`") getFunctionByIndex(index: number) { return this.functions.getByIndex(index); }
+	/** @deprecated Use {@link ModuleFunctions#count | `this.functions.count`} instead. */ @replacedBy("`this.functions.count`") getNumFunctions() { return this.functions.count(); }
+	/** @deprecated Use {@link ModuleFunctions#remove | `this.functions.remove`} instead. */ @replacedBy("`this.functions.remove`") removeFunction(name: string) { return this.functions.remove(name); }
 
-	/** @deprecated Use {@link MOD.ModuleDataSegments#get | `this.dataSegments.get`} instead. */ @replacedBy("`this.dataSegments.get`") getDataSegment(name: string) { return this.dataSegments.get(name); }
-	/** @deprecated Use {@link MOD.ModuleDataSegments#getByIndex | `this.dataSegments.getByIndex`} instead. */ @replacedBy("`this.dataSegments.getByIndex`") getDataSegmentByIndex(index: number) { return this.dataSegments.getByIndex(index); }
-	/** @deprecated Use {@link MOD.ModuleDataSegments#count | `this.dataSegments.count`} instead. */ @replacedBy("`this.dataSegments.count`") getNumDataSegments() { return this.dataSegments.count(); }
+	/** @deprecated Use {@link ModuleDataSegments#get | `this.dataSegments.get`} instead. */ @replacedBy("`this.dataSegments.get`") getDataSegment(name: string) { return this.dataSegments.get(name); }
+	/** @deprecated Use {@link ModuleDataSegments#getByIndex | `this.dataSegments.getByIndex`} instead. */ @replacedBy("`this.dataSegments.getByIndex`") getDataSegmentByIndex(index: number) { return this.dataSegments.getByIndex(index); }
+	/** @deprecated Use {@link ModuleDataSegments#count | `this.dataSegments.count`} instead. */ @replacedBy("`this.dataSegments.count`") getNumDataSegments() { return this.dataSegments.count(); }
 
-	/** @deprecated Use {@link MOD.ModuleElementSegments#addActive | `this.elementSegments.addActive`} instead. */ @replacedBy("`this.elementSegments.addActive`") addActiveElementSegment(table: string, name: string, funcNames: readonly string[], offset: ExpressionRef) { return this.elementSegments.addActive(table, name, funcNames, offset); }
-	/** @deprecated Use {@link MOD.ModuleElementSegments#addPassive | `this.elementSegments.addPassive`} instead. */ @replacedBy("`this.elementSegments.addPassive`") addPassiveElementSegment(name: string, funcNames: readonly string[]) { return this.elementSegments.addPassive(name, funcNames); }
-	/** @deprecated Use {@link MOD.ModuleElementSegments#get | `this.elementSegments.get`} instead. */ @replacedBy("`this.elementSegments.get`") getElementSegment(name: string) { return this.elementSegments.get(name); }
-	/** @deprecated Use {@link MOD.ModuleElementSegments#getByIndex | `this.elementSegments.getByIndex`} instead. */ @replacedBy("`this.elementSegments.getByIndex`") getElementSegmentByIndex(index: number) { return this.elementSegments.getByIndex(index); }
-	/** @deprecated Use {@link MOD.ModuleElementSegments#count | `this.elementSegments.count`} instead. */ @replacedBy("`this.elementSegments.count`") getNumElementSegments() { return this.elementSegments.count(); }
-	/** @deprecated Use {@link MOD.ModuleElementSegments#remove | `this.elementSegments.remove`} instead. */ @replacedBy("`this.elementSegments.remove`") removeElementSegment(name: string) { return this.elementSegments.remove(name); }
+	/** @deprecated Use {@link ModuleElementSegments#addActive | `this.elementSegments.addActive`} instead. */ @replacedBy("`this.elementSegments.addActive`") addActiveElementSegment(table: string, name: string, funcNames: readonly string[], offset: ExpressionRef) { return this.elementSegments.addActive(table, name, funcNames, offset); }
+	/** @deprecated Use {@link ModuleElementSegments#addPassive | `this.elementSegments.addPassive`} instead. */ @replacedBy("`this.elementSegments.addPassive`") addPassiveElementSegment(name: string, funcNames: readonly string[]) { return this.elementSegments.addPassive(name, funcNames); }
+	/** @deprecated Use {@link ModuleElementSegments#get | `this.elementSegments.get`} instead. */ @replacedBy("`this.elementSegments.get`") getElementSegment(name: string) { return this.elementSegments.get(name); }
+	/** @deprecated Use {@link ModuleElementSegments#getByIndex | `this.elementSegments.getByIndex`} instead. */ @replacedBy("`this.elementSegments.getByIndex`") getElementSegmentByIndex(index: number) { return this.elementSegments.getByIndex(index); }
+	/** @deprecated Use {@link ModuleElementSegments#count | `this.elementSegments.count`} instead. */ @replacedBy("`this.elementSegments.count`") getNumElementSegments() { return this.elementSegments.count(); }
+	/** @deprecated Use {@link ModuleElementSegments#remove | `this.elementSegments.remove`} instead. */ @replacedBy("`this.elementSegments.remove`") removeElementSegment(name: string) { return this.elementSegments.remove(name); }
 
-	/** @deprecated Use {@link MOD.ModuleImports#addTag | `this.imports.addTag`} instead. */ @replacedBy("`this.imports.addTag`") addTagImport(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) { return this.imports.addTag(internalName, externalModuleName, externalBaseName, params, results); }
-	/** @deprecated Use {@link MOD.ModuleImports#addGlobal | `this.imports.addGlobal`} instead. */ @replacedBy("`this.imports.addGlobal`") addGlobalImport(internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean) { return this.imports.addGlobal(internalName, externalModuleName, externalBaseName, globalType, mutable); }
-	/** @deprecated Use {@link MOD.ModuleImports#addMemory | `this.imports.addMemory`} instead. */ @replacedBy("`this.imports.addMemory`") addMemoryImport(internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean) { return this.imports.addMemory(internalName, externalModuleName, externalBaseName, shared); }
-	/** @deprecated Use {@link MOD.ModuleImports#addTable | `this.imports.addTable`} instead. */ @replacedBy("`this.imports.addTable`") addTableImport(internalName: string, externalModuleName: string, externalBaseName: string) { return this.imports.addTable(internalName, externalModuleName, externalBaseName); }
-	/** @deprecated Use {@link MOD.ModuleImports#addFunction | `this.imports.addFunction`} instead. */ @replacedBy("`this.imports.addFunction`") addFunctionImport(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) { return this.imports.addFunction(internalName, externalModuleName, externalBaseName, params, results); }
+	/** @deprecated Use {@link ModuleImports#addTag | `this.imports.addTag`} instead. */ @replacedBy("`this.imports.addTag`") addTagImport(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) { return this.imports.addTag(internalName, externalModuleName, externalBaseName, params, results); }
+	/** @deprecated Use {@link ModuleImports#addGlobal | `this.imports.addGlobal`} instead. */ @replacedBy("`this.imports.addGlobal`") addGlobalImport(internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean) { return this.imports.addGlobal(internalName, externalModuleName, externalBaseName, globalType, mutable); }
+	/** @deprecated Use {@link ModuleImports#addMemory | `this.imports.addMemory`} instead. */ @replacedBy("`this.imports.addMemory`") addMemoryImport(internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean) { return this.imports.addMemory(internalName, externalModuleName, externalBaseName, shared); }
+	/** @deprecated Use {@link ModuleImports#addTable | `this.imports.addTable`} instead. */ @replacedBy("`this.imports.addTable`") addTableImport(internalName: string, externalModuleName: string, externalBaseName: string) { return this.imports.addTable(internalName, externalModuleName, externalBaseName); }
+	/** @deprecated Use {@link ModuleImports#addFunction | `this.imports.addFunction`} instead. */ @replacedBy("`this.imports.addFunction`") addFunctionImport(internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) { return this.imports.addFunction(internalName, externalModuleName, externalBaseName, params, results); }
 
-	/** @deprecated Use {@link MOD.ModuleExports#get | `this.exports.get`} instead. */ @replacedBy("`this.exports.get`") getExport(externalName: string) { return this.exports.get(externalName); }
-	/** @deprecated Use {@link MOD.ModuleExports#getByIndex | `this.exports.getByIndex`} instead. */ @replacedBy("`this.exports.getByIndex`") getExportByIndex(index: number) { return this.exports.getByIndex(index); }
-	/** @deprecated Use {@link MOD.ModuleExports#count | `this.exports.count`} instead. */ @replacedBy("`this.exports.count`") getNumExports() { return this.exports.count(); }
-	/** @deprecated Use {@link MOD.ModuleExports#remove | `this.exports.remove`} instead. */ @replacedBy("`this.exports.remove`") removeExport(externalName: string) { return this.exports.remove(externalName); }
-	/** @deprecated Use {@link MOD.ModuleExports#addTag | `this.exports.addTag`} instead. */ @replacedBy("`this.exports.addTag`") addTagExport(internalName: string, externalName: string) { return this.exports.addTag(internalName, externalName); }
-	/** @deprecated Use {@link MOD.ModuleExports#addGlobal | `this.exports.addGlobal`} instead. */ @replacedBy("`this.exports.addGlobal`") addGlobalExport(internalName: string, externalName: string) { return this.exports.addGlobal(internalName, externalName); }
-	/** @deprecated Use {@link MOD.ModuleExports#addMemory | `this.exports.addMemory`} instead. */ @replacedBy("`this.exports.addMemory`") addMemoryExport(internalName: string, externalName: string) { return this.exports.addMemory(internalName, externalName); }
-	/** @deprecated Use {@link MOD.ModuleExports#addTable | `this.exports.addTable`} instead. */ @replacedBy("`this.exports.addTable`") addTableExport(internalName: string, externalName: string) { return this.exports.addTable(internalName, externalName); }
-	/** @deprecated Use {@link MOD.ModuleExports#addFunction | `this.exports.addFunction`} instead. */ @replacedBy("`this.exports.addFunction`") addFunctionExport(internalName: string, externalName: string) { return this.exports.addFunction(internalName, externalName); }
+	/** @deprecated Use {@link ModuleExports#get | `this.exports.get`} instead. */ @replacedBy("`this.exports.get`") getExport(externalName: string) { return this.exports.get(externalName); }
+	/** @deprecated Use {@link ModuleExports#getByIndex | `this.exports.getByIndex`} instead. */ @replacedBy("`this.exports.getByIndex`") getExportByIndex(index: number) { return this.exports.getByIndex(index); }
+	/** @deprecated Use {@link ModuleExports#count | `this.exports.count`} instead. */ @replacedBy("`this.exports.count`") getNumExports() { return this.exports.count(); }
+	/** @deprecated Use {@link ModuleExports#remove | `this.exports.remove`} instead. */ @replacedBy("`this.exports.remove`") removeExport(externalName: string) { return this.exports.remove(externalName); }
+	/** @deprecated Use {@link ModuleExports#addTag | `this.exports.addTag`} instead. */ @replacedBy("`this.exports.addTag`") addTagExport(internalName: string, externalName: string) { return this.exports.addTag(internalName, externalName); }
+	/** @deprecated Use {@link ModuleExports#addGlobal | `this.exports.addGlobal`} instead. */ @replacedBy("`this.exports.addGlobal`") addGlobalExport(internalName: string, externalName: string) { return this.exports.addGlobal(internalName, externalName); }
+	/** @deprecated Use {@link ModuleExports#addMemory | `this.exports.addMemory`} instead. */ @replacedBy("`this.exports.addMemory`") addMemoryExport(internalName: string, externalName: string) { return this.exports.addMemory(internalName, externalName); }
+	/** @deprecated Use {@link ModuleExports#addTable | `this.exports.addTable`} instead. */ @replacedBy("`this.exports.addTable`") addTableExport(internalName: string, externalName: string) { return this.exports.addTable(internalName, externalName); }
+	/** @deprecated Use {@link ModuleExports#addFunction | `this.exports.addFunction`} instead. */ @replacedBy("`this.exports.addFunction`") addFunctionExport(internalName: string, externalName: string) { return this.exports.addFunction(internalName, externalName); }
 
 	getMemoryInfo(name: string): MEMORY.Memory {
 		return new MEMORY.Memory(this, name);
@@ -417,4 +441,25 @@ export class Module {
 	copyExpression(expr: ExpressionRef) {
 		return copyExpression(expr, this);
 	}
+}
+
+
+
+/**
+ * A collection of types and classes related to WASM module manipulation.
+ *
+ * Each class represents a component of a WASM module,
+ * and its corresponding type is included for documentation.
+ */
+// eslint-disable-next-line no-redeclare
+export namespace Module {
+	export type Tag = TAG.Tag;
+	export type Global = GLOBAL.Global;
+	export type Memory = MEMORY.Memory;
+	export type Table = TABLE.Table;
+	export type Function = FUNCTION.Function;
+	export type DataSegment = DATA_SEGMENT.DataSegment;
+	export type ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	export type Import = IMPORT.Import;
+	export type Export = EXPORT.Export;
 }

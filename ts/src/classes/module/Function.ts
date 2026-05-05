@@ -88,7 +88,7 @@ export {BinaryenFunction as Function};
 
 
 /**
- * Methods for manipulating {@link BinaryenFunction | functions} in a WASM module.
+ * Methods for manipulating {@link Module.Function | functions} in a WASM module.
  */
 export class ModuleFunctions {
 	constructor(private readonly mod: Module) {}

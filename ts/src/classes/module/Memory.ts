@@ -60,7 +60,7 @@ export class Memory {
 
 
 /**
- * Methods for manipulating {@link Memory | memories} in a WASM module.
+ * Methods for manipulating {@link Module.Memory | memories} in a WASM module.
  */
 export class ModuleMemories {
 	constructor(private readonly mod: Module) {}

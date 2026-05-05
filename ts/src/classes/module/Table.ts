@@ -69,7 +69,7 @@ export class Table {
 
 
 /**
- * Methods for manipulating {@link Table | tables} in a WASM module.
+ * Methods for manipulating {@link Module.Table | tables} in a WASM module.
  */
 export class ModuleTables {
 	constructor(private readonly mod: Module) {}
