@@ -5,4 +5,16 @@ export default {
 	useFirstParagraphOfCommentAsSummary: true,
 	out: "./docs/out/",
 	customCss: "./docs/styles.css",
+
+	intentionallyNotExported: [
+		"Tag",
+		"Global",
+		"Memory",
+		"Table",
+		"BinaryenFunction",
+		"DataSegment",
+		"ElementSegment",
+		"Import",
+		"Export",
+	],
 };

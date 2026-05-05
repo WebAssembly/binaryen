@@ -135,15 +135,15 @@ export enum Feature {
  * - has a property `.wasm`, a namespace for creating expressions in the module (`.wasm.nop()`, `.wasm.i32.add()`, etc.)
  */
 export class Module {
-	static readonly Tag = TAG.Tag;
-	static readonly Global = GLOBAL.Global;
-	static readonly Memory = MEMORY.Memory;
-	static readonly Table = TABLE.Table;
-	static readonly Function = FUNCTION.Function;
-	static readonly DataSegment = DATA_SEGMENT.DataSegment;
-	static readonly ElementSegment = ELEMENT_SEGMENT.ElementSegment;
-	static readonly Import = IMPORT.Import;
-	static readonly Export = EXPORT.Export;
+	/** @class */ static readonly Tag = TAG.Tag;
+	/** @class */ static readonly Global = GLOBAL.Global;
+	/** @class */ static readonly Memory = MEMORY.Memory;
+	/** @class */ static readonly Table = TABLE.Table;
+	/** @class */ static readonly Function = FUNCTION.Function;
+	/** @class */ static readonly DataSegment = DATA_SEGMENT.DataSegment;
+	/** @class */ static readonly ElementSegment = ELEMENT_SEGMENT.ElementSegment;
+	/** @class */ static readonly Import = IMPORT.Import;
+	/** @class */ static readonly Export = EXPORT.Export;
 
 
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();

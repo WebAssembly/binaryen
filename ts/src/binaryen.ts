@@ -8,15 +8,6 @@ export {
 	Feature,
 	Module,
 } from "./classes/module/Module.ts";
-export {Tag} from "./classes/module/Tag.ts";
-export {Global} from "./classes/module/Global.ts";
-export {Memory} from "./classes/module/Memory.ts";
-export {Table} from "./classes/module/Table.ts";
-export {Function} from "./classes/module/Function.ts";
-export {DataSegment} from "./classes/module/DataSegment.ts";
-export {ElementSegment} from "./classes/module/ElementSegment.ts";
-export {Import} from "./classes/module/Import.ts";
-export {Export} from "./classes/module/Export.ts";
 export {TypeBuilder} from "./classes/TypeBuilder.ts";
 export {
 	ExpressionRunner,
