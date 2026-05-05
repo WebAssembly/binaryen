@@ -13,7 +13,7 @@ const STUB = (..._args: readonly number[]): number => 0;
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions */
-export function i64(_mod: Module) {
+export function i64(mod: Module) {
 	return {
 		const: STUB,
 
@@ -73,23 +73,31 @@ export function i64(_mod: Module) {
 		/** @deprecated Use `.extend_i32_u()` instead. */ extend_u(...args) { consoleWarn("`.extend_u()` is deprecated; use `.extend_i32_u()` instead."); return this.extend_i32_u(...args); },
 		/** @deprecated */
 		trunc_s: {
-			/** @deprecated Use `.trunc_f32_s()` instead. */ f32: STUB,
-			/** @deprecated Use `.trunc_f64_s()` instead. */ f64: STUB,
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_f32_s()` instead. */ f32: (...args) => { consoleWarn("`.trunc_s.f32()` is deprecated; use `.trunc_f32_s()` instead."); return i64(mod).trunc_f32_s(...args); },
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_f64_s()` instead. */ f64: (...args) => { consoleWarn("`.trunc_s.f64()` is deprecated; use `.trunc_f64_s()` instead."); return i64(mod).trunc_f64_s(...args); },
 		},
 		/** @deprecated */
 		trunc_u: {
-			/** @deprecated Use `.trunc_f32_u()` instead. */ f32: STUB,
-			/** @deprecated Use `.trunc_f64_u()` instead. */ f64: STUB,
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_f32_u()` instead. */ f32: (...args) => { consoleWarn("`.trunc_u.f32()` is deprecated; use `.trunc_f32_u()` instead."); return i64(mod).trunc_f32_u(...args); },
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_f64_u()` instead. */ f64: (...args) => { consoleWarn("`.trunc_u.f64()` is deprecated; use `.trunc_f64_u()` instead."); return i64(mod).trunc_f64_u(...args); },
 		},
 		/** @deprecated */
 		trunc_s_sat: {
-			/** @deprecated Use `.trunc_sat_f32_s()` instead. */ f32: STUB,
-			/** @deprecated Use `.trunc_sat_f64_s()` instead. */ f64: STUB,
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_sat_f32_s()` instead. */ f32: (...args) => { consoleWarn("`.trunc_s_sat.f32()` is deprecated; use `.trunc_sat_f32_s()` instead."); return i64(mod).trunc_sat_f32_s(...args); },
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_sat_f64_s()` instead. */ f64: (...args) => { consoleWarn("`.trunc_s_sat.f64()` is deprecated; use `.trunc_sat_f64_s()` instead."); return i64(mod).trunc_sat_f64_s(...args); },
 		},
 		/** @deprecated */
 		trunc_u_sat: {
-			/** @deprecated Use `.trunc_sat_f32_u()` instead. */ f32: STUB,
-			/** @deprecated Use `.trunc_sat_f64_u()` instead. */ f64: STUB,
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_sat_f32_u()` instead. */ f32: (...args) => { consoleWarn("`.trunc_u_sat.f32()` is deprecated; use `.trunc_sat_f32_u()` instead."); return i64(mod).trunc_sat_f32_u(...args); },
+			// @ts-expect-error
+			/** @deprecated Use `.trunc_sat_f64_u()` instead. */ f64: (...args) => { consoleWarn("`.trunc_u_sat.f64()` is deprecated; use `.trunc_sat_f64_u()` instead."); return i64(mod).trunc_sat_f64_u(...args); },
 		},
 		// @ts-expect-error
 		/** @deprecated Use `.reinterpret_f64()` instead. */ reinterpret(...args) { consoleWarn("`.reinterpret()` is deprecated; use `.reinterpret_f64()` instead."); return this.reinterpret_f64(...args); },

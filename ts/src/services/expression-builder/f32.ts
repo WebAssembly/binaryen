@@ -13,7 +13,7 @@ const STUB = (..._args: readonly number[]): number => 0;
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions */
-export function f32(_mod: Module) {
+export function f32(mod: Module) {
 	return {
 		const: STUB,
 
@@ -50,13 +50,17 @@ export function f32(_mod: Module) {
 
 		/** @deprecated */
 		convert_s: {
-			/** @deprecated Use `.convert_i32_s()` instead. */ i32: STUB,
-			/** @deprecated Use `.convert_i64_s()` instead. */ i64: STUB,
+			// @ts-expect-error
+			/** @deprecated Use `.convert_i32_s()` instead. */ i32: (...args) => { consoleWarn("`.convert_s.i32()` is deprecated; use `.convert_i32_s()` instead."); return f32(mod).convert_i32_s(...args); },
+			// @ts-expect-error
+			/** @deprecated Use `.convert_i64_s()` instead. */ i64: (...args) => { consoleWarn("`.convert_s.i64()` is deprecated; use `.convert_i64_s()` instead."); return f32(mod).convert_i64_s(...args); },
 		},
 		/** @deprecated */
 		convert_u: {
-			/** @deprecated Use `.convert_i32_u()` instead. */ i32: STUB,
-			/** @deprecated Use `.convert_i64_u()` instead. */ i64: STUB,
+			// @ts-expect-error
+			/** @deprecated Use `.convert_i32_u()` instead. */ i32: (...args) => { consoleWarn("`.convert_u.i32()` is deprecated; use `.convert_i32_u()` instead."); return f32(mod).convert_i32_u(...args); },
+			// @ts-expect-error
+			/** @deprecated Use `.convert_i64_u()` instead. */ i64: (...args) => { consoleWarn("`.convert_u.i64()` is deprecated; use `.convert_i64_u()` instead."); return f32(mod).convert_i64_u(...args); },
 		},
 		// @ts-expect-error
 		/** @deprecated Use `.reinterpret_i32()` instead. */ reinterpret(...args) { consoleWarn("`.reinterpret()` is deprecated; use `.reinterpret_i32()` instead."); return this.reinterpret_i32(...args); },
