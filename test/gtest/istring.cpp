@@ -28,6 +28,15 @@ TEST_F(IStringTest, Empty) {
   // But they are equal to themselves.
   EXPECT_EQ(null, null);
   EXPECT_EQ(empty, empty);
+
+  // A default string_view is a null.
+  auto default1 = std::string_view();
+  EXPECT_EQ(default1.data(), nullptr);
+  auto default2 = std::string_view{};
+  EXPECT_EQ(default2.data(), nullptr);
+
+  EXPECT_EQ(null, default1);
+  EXPECT_EQ(null, default2);
 }
 
 TEST_F(IStringTest, Interning) {
