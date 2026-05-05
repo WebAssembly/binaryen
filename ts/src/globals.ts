@@ -15,7 +15,7 @@ import {
 	type Feature,
 	Module,
 } from "./classes/module/Module.ts";
-import * as EXPR from "./classes/expression/index.ts";
+import * as expressions from "./classes/expression/index.ts";
 import {
 	ExpressionId,
 	type ExpressionRef,
@@ -32,15 +32,15 @@ import {
 
 
 
-const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression> = new Map<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression>([
-	[ExpressionId.Drop, EXPR.Drop],
-	[ExpressionId.Select, EXPR.Select],
-	[ExpressionId.Block, EXPR.Block],
-	[ExpressionId.Loop, EXPR.Loop],
-	[ExpressionId.Break, EXPR.Break],
-	[ExpressionId.LocalGet, EXPR.LocalGet],
-	[ExpressionId.LocalSet, EXPR.LocalSet],
-	[ExpressionId.Const, EXPR.Const],
+const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionRef) => expressions.Expression> = new Map<ExpressionId, new (expr: ExpressionRef) => expressions.Expression>([
+	[ExpressionId.Drop, expressions.Drop],
+	[ExpressionId.Select, expressions.Select],
+	[ExpressionId.Block, expressions.Block],
+	[ExpressionId.Loop, expressions.Loop],
+	[ExpressionId.Break, expressions.Break],
+	[ExpressionId.LocalGet, expressions.LocalGet],
+	[ExpressionId.LocalSet, expressions.LocalSet],
+	[ExpressionId.Const, expressions.Const],
 ]);
 
 
@@ -206,10 +206,10 @@ export function getExpressionType(expr: ExpressionRef): Type {
  * Additional properties depend on the expression’s ID
  * and are usually equivalent to the respective parameters when creating such an expression.
  */
-export function getExpressionInfo(expr: ExpressionRef): EXPR.Expression {
+export function getExpressionInfo(expr: ExpressionRef): expressions.Expression {
 	const id = getExpressionId(expr);
 	const specificExpression = EXPRESSION_TYPE_REGISTRY.get(id);
-	return specificExpression ? new specificExpression(expr) : new EXPR.Expression(id, expr);
+	return specificExpression ? new specificExpression(expr) : new expressions.Expression(id, expr);
 }
 
 /** Gets the side effects of the specified expression. */

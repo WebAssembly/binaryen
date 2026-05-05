@@ -2,7 +2,7 @@
 export * from "./constants.ts";
 export * from "./globals.ts";
 export {type SettingsService, settings} from "./services/SettingsService.ts";
-export * as EXPR from "./classes/expression/index.ts";
+export * as expressions from "./classes/expression/index.ts";
 export type {ExpressionBuilder} from "./services/expression-builder/expressionBuilder.ts";
 export {
 	Feature,

@@ -1,11 +1,7 @@
 import {
 	consoleWarn,
 } from "../../lib.ts";
-import {
-	Block,
-	Break,
-	Loop,
-} from "../../classes/expression/index.ts";
+import * as expressions from "../../classes/expression/index.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -20,15 +16,15 @@ const STUB = (..._args: readonly number[]): number => 0;
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
 export function control(mod: Module) {
 	return {
-		/** @inheritDoc EXPR.Block.block */
-		block: Block.block.bind(null, mod),
-		/** @inheritDoc EXPR.Loop.loop */
-		loop: Loop.loop.bind(null, mod),
+		/** @inheritDoc expressions.Block.block */
+		block: expressions.Block.block.bind(null, mod),
+		/** @inheritDoc expressions.Loop.loop */
+		loop: expressions.Loop.loop.bind(null, mod),
 		if: STUB,
-		/** @inheritDoc EXPR.Break.br */
-		br: Break.br.bind(null, mod),
-		/** @inheritDoc EXPR.Break.br_if */
-		br_if: Break.br_if.bind(null, mod),
+		/** @inheritDoc expressions.Break.br */
+		br: expressions.Break.br.bind(null, mod),
+		/** @inheritDoc expressions.Break.br_if */
+		br_if: expressions.Break.br_if.bind(null, mod),
 		br_table: STUB,
 		br_on_null: STUB,
 		br_on_non_null: STUB,

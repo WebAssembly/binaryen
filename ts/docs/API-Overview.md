@@ -232,23 +232,23 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 
 
 ## Expression Manipulation
-Expression info classes all live under the global `EXPR` namespace.
+Expression info classes all live under the global `expressions` namespace.
 They can be used to inspect and manipulate expressions.
 See generated docs for fields, methods, and descriptions of each.
 
-- `EXPR.Expression` (root class)
+- `expressions.Expression` (root class)
 - parametric instructions
-	- `EXPR.Drop`
-	- `EXPR.Select`
+	- `expressions.Drop`
+	- `expressions.Select`
 - control instructions
-	- `EXPR.Block`
-	- `EXPR.Loop`
-	- `EXPR.Break`
+	- `expressions.Block`
+	- `expressions.Loop`
+	- `expressions.Break`
 - variable instructions
-	- `EXPR.LocalGet`
-	- `EXPR.LocalSet`
+	- `expressions.LocalGet`
+	- `expressions.LocalSet`
 - numeric instructions
-	- `EXPR.Const`
+	- `expressions.Const`
 
 
 
@@ -269,11 +269,11 @@ Enum names have been singularized.
 - `ElementSegmentInfo` &rarr; `Module.ElementSegment`
 - `ExportInfo`         &rarr; `Module.Export`
 
-`ExpressionInfo` and related types are now classes in the `EXPR` namespace:
-- `ExpressionInfo` &rarr; `EXPR.Expression`
-- `BlockInfo`      &rarr; `EXPR.Block`
-- `LoopInfo`       &rarr; `EXPR.Loop`
-- `IfInfo`         &rarr; `EXPR.If`
+`ExpressionInfo` and related types are now classes in the `expressions` namespace:
+- `ExpressionInfo` &rarr; `expressions.Expression`
+- `BlockInfo`      &rarr; `expressions.Block`
+- `LoopInfo`       &rarr; `expressions.Loop`
+- `IfInfo`         &rarr; `expressions.If`
 - etc.
 
 ~~`MemorySegmentInfo`~~ ❌ has been removed.
