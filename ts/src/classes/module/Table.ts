@@ -111,8 +111,6 @@ export class ModuleTables {
 
 	/** Removes a table by name. */
 	remove(name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenRemoveTable"](this.mod.ptr, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenRemoveTable"](this.mod.ptr, strToStack(name)));
 	}
 }

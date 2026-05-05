@@ -70,8 +70,6 @@ export class ModuleGlobals {
 
 	/** Removes a global by name. */
 	remove(name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenRemoveGlobal"](this.mod.ptr, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenRemoveGlobal"](this.mod.ptr, strToStack(name)));
 	}
 }

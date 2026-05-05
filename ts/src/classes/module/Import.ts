@@ -56,14 +56,12 @@ export class ModuleImports {
 	}
 
 	#addComponent(binaryenFuncName: string, internalName: string, externalModuleName: string, externalBaseName: string, ...rest: any[]): void {
-		return preserveStack(() => {
-			BinaryenObj[binaryenFuncName](
-				this.mod.ptr,
-				strToStack(internalName),
-				strToStack(externalModuleName),
-				strToStack(externalBaseName),
-				...rest,
-			);
-		});
+		preserveStack(() => BinaryenObj[binaryenFuncName](
+			this.mod.ptr,
+			strToStack(internalName),
+			strToStack(externalModuleName),
+			strToStack(externalBaseName),
+			...rest,
+		));
 	}
 }

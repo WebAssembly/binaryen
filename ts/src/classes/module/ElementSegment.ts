@@ -90,8 +90,6 @@ export class ModuleElementSegments {
 
 	/** Removes an element segment by name. */
 	remove(name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenRemoveElementSegment"](this.mod.ptr, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenRemoveElementSegment"](this.mod.ptr, strToStack(name)));
 	}
 }

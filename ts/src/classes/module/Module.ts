@@ -354,9 +354,7 @@ export class Module {
 
 	/** Runs the specified passes on the module. */
 	runPasses(passes: readonly string[]): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenModuleRunPasses"](this.ptr, i32sToStack(passes.map(strToStack)), passes.length);
-		});
+		preserveStack(() => BinaryenObj["_BinaryenModuleRunPasses"](this.ptr, i32sToStack(passes.map(strToStack)), passes.length));
 	}
 
 	/** Runs the specified passes on a single function. */
@@ -364,9 +362,7 @@ export class Module {
 		if (typeof func === "string") {
 			func = this.functions.get(func);
 		}
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenFunctionRunPasses"](func, this.ptr, i32sToStack(passes.map(strToStack)), passes.length);
-		});
+		preserveStack(() => BinaryenObj["_BinaryenFunctionRunPasses"](func, this.ptr, i32sToStack(passes.map(strToStack)), passes.length));
 	}
 
 	// ### Debugging ### //
@@ -388,23 +384,17 @@ export class Module {
 	// ### Other ### //
 	/** [description] */
 	setTypeName(heapType: HeapType, name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenModuleSetTypeName"](this.ptr, heapType, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenModuleSetTypeName"](this.ptr, heapType, strToStack(name)));
 	}
 
 	/** [description] */
 	setFieldName(heapType: HeapType, index: number, name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenModuleSetFieldName"](this.ptr, heapType, index, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenModuleSetFieldName"](this.ptr, heapType, index, strToStack(name)));
 	}
 
 	/** Adds a custom section to the binary. */
 	addCustomSection(name: string, contents: Uint8Array): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length);
-		});
+		preserveStack(() => BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length));
 	}
 
 	/** [description] */

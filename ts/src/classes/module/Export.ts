@@ -58,9 +58,7 @@ export class ModuleExports {
 
 	/** Removes an export, by external name. */
 	remove(externalName: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenRemoveExport"](this.mod.ptr, strToStack(externalName));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenRemoveExport"](this.mod.ptr, strToStack(externalName)));
 	}
 
 	/** Adds a tag export. */

@@ -123,8 +123,6 @@ export class ModuleFunctions {
 
 	/** Removes a function by name. */
 	remove(name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenRemoveFunction"](this.mod.ptr, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenRemoveFunction"](this.mod.ptr, strToStack(name)));
 	}
 }

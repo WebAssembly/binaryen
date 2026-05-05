@@ -80,9 +80,7 @@ export class SettingsService {
 	 * Removes the respective argument if `value` is `undefined` or an empty string.
 	 */
 	setPassArgument(key: string, value?: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenSetPassArgument"](strToStack(key), strToStack(value));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenSetPassArgument"](strToStack(key), strToStack(value)));
 	}
 
 	/** Clears all arbitrary pass arguments. */
@@ -97,9 +95,7 @@ export class SettingsService {
 
 	/** Add a pass to the set of passes to skip. */
 	addPassToSkip(pass: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenAddPassToSkip"](strToStack(pass));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenAddPassToSkip"](strToStack(pass)));
 	}
 
 	/** Clears the set of passes to skip. */

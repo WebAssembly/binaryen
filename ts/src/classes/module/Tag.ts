@@ -57,8 +57,6 @@ export class ModuleTags {
 
 	/** Removes a tag by name. */
 	remove(name: string): void {
-		return preserveStack(() => {
-			BinaryenObj["_BinaryenRemoveTag"](this.mod.ptr, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenRemoveTag"](this.mod.ptr, strToStack(name)));
 	}
 }
