@@ -18,7 +18,6 @@ import type {
 
 /**
  * Information about an export in a WASM module.
- * @see {@link ModuleExports}
  */
 export class Export {
 	readonly kind: ExternalKind;
@@ -36,7 +35,8 @@ export class Export {
 
 
 /**
- * Methods for manipulating {@link Export | exports} in a WASM module.
+ * Methods for manipulating exports in a WASM module.
+ * @inline
  */
 export class ModuleExports {
 	constructor(private readonly mod: Module) {}

@@ -15,12 +15,11 @@ import {
 	type Feature,
 	Module,
 } from "./classes/module/Module.ts";
-import * as EXPR from "./classes/expression/index.ts";
+import * as expressions from "./classes/expression/index.ts";
 import {
 	ExpressionId,
 	type ExpressionRef,
 	type HeapType,
-	type SideEffect,
 	type Type,
 } from "./constants.ts";
 import {
@@ -32,32 +31,32 @@ import {
 
 
 
-const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression> = new Map<ExpressionId, new (expr: ExpressionRef) => EXPR.Expression>([
+const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionRef) => expressions.Expression> = new Map<ExpressionId, new (expr: ExpressionRef) => expressions.Expression>([
 	// Parametric Instructions
-	[ExpressionId.Drop, EXPR.Drop],
-	[ExpressionId.Select, EXPR.Select],
+	[ExpressionId.Drop, expressions.Drop],
+	[ExpressionId.Select, expressions.Select],
 
 	// Control Instructions
-	[ExpressionId.Block, EXPR.Block],
-	[ExpressionId.Loop, EXPR.Loop],
-	[ExpressionId.If, EXPR.If],
-	[ExpressionId.Break, EXPR.Break],
-	[ExpressionId.Switch, EXPR.Switch],
-	[ExpressionId.BrOn, EXPR.BrOn],
-	[ExpressionId.Call, EXPR.Call],
-	[ExpressionId.CallRef, EXPR.CallRef],
-	[ExpressionId.CallIndirect, EXPR.CallIndirect],
-	[ExpressionId.Return, EXPR.Return],
-	[ExpressionId.Throw, EXPR.Throw],
-	[ExpressionId.Rethrow, EXPR.Rethrow],
-	[ExpressionId.Try, EXPR.Try],
+	[ExpressionId.Block, expressions.Block],
+	[ExpressionId.Loop, expressions.Loop],
+	[ExpressionId.If, expressions.If],
+	[ExpressionId.Break, expressions.Break],
+	[ExpressionId.Switch, expressions.Switch],
+	[ExpressionId.BrOn, expressions.BrOn],
+	[ExpressionId.Call, expressions.Call],
+	[ExpressionId.CallRef, expressions.CallRef],
+	[ExpressionId.CallIndirect, expressions.CallIndirect],
+	[ExpressionId.Return, expressions.Return],
+	[ExpressionId.Throw, expressions.Throw],
+	[ExpressionId.Rethrow, expressions.Rethrow],
+	[ExpressionId.Try, expressions.Try],
 
 	// Variable Instructions
-	[ExpressionId.LocalGet, EXPR.LocalGet],
-	[ExpressionId.LocalSet, EXPR.LocalSet],
+	[ExpressionId.LocalGet, expressions.LocalGet],
+	[ExpressionId.LocalSet, expressions.LocalSet],
 
 	// Numeric & Vector Instructions
-	[ExpressionId.Const, EXPR.Const],
+	[ExpressionId.Const, expressions.Const],
 ]);
 
 
@@ -223,18 +222,8 @@ export function getExpressionType(expr: ExpressionRef): Type {
  * Additional properties depend on the expression’s ID
  * and are usually equivalent to the respective parameters when creating such an expression.
  */
-export function getExpressionInfo(expr: ExpressionRef): EXPR.Expression {
+export function getExpressionInfo(expr: ExpressionRef): expressions.Expression {
 	const id = getExpressionId(expr);
 	const specificExpression = EXPRESSION_TYPE_REGISTRY.get(id);
-	return specificExpression ? new specificExpression(expr) : new EXPR.Expression(id, expr);
-}
-
-/** Gets the side effects of the specified expression. */
-export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
-	return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, mod.ptr);
-}
-
-/** Creates a deep copy of an expression. */
-export function copyExpression(expr: ExpressionRef, mod: Module): ExpressionRef {
-	return BinaryenObj["_BinaryenExpressionCopy"](expr, mod.ptr);
+	return specificExpression ? new specificExpression(expr) : new expressions.Expression(id, expr);
 }

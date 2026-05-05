@@ -81,7 +81,7 @@ import {type Type, type ExpressionRef, i32} from "binaryen.ts";
 - `ExpressionId`: an enumeration of values returned by `getExpressionId()`
 	- a slight misnomer, as these are not unique IDs per expression, but different IDs for the “kinds” of expression
 - `SideEffect`: an enumeration of values returend by `getSideEffects()`
-- `ExternalKind`: an enumeration of kinds of exports; serves as type of the `MOD.Export#kind` field
+- `ExternalKind`: an enumeration of kinds of exports; serves as type of the `Module.Export#kind` field
 - `MemoryOrder`: an enumeration of values used in atomic expression methods
 
 
@@ -108,16 +108,16 @@ Objects:
 
 
 ## Module Manipulation
-Classes in the `MOD` namespace:
-- `new MOD.Tag(ref: TagRef)`:                              an object containing information about a **Tag**
-- `new MOD.Global(ref: GlobalRef)`:                        an object containing information about a **Global**
-- `new MOD.Memory(mod: Module, name: string)`:             an object containing information about a **Memory**
-- `new MOD.Table(ref: TableRef)`:                          an object containing information about a **Table**
-- `new MOD.Function(ref: FunctionRef)`:                    an object containing information about a **Function**
-- `new MOD.DataSegment(mod: Module, ref: DataSegmentRef)`: an object containing information about a **Data Segment**
-- `new MOD.ElementSegment(ref: ElementSegmentRef)`:        an object containing information about an **Element Segment**
-- `new MOD.Import()`:                                      an object containing information about an **Import** (🌱 empty for now)
-- `new MOD.Export(ref: ExportRef)`:                        an object containing information about an **Export**
+Properties of `Module` as a namespace:
+- `new Module.Tag(ref: TagRef)`:                              an object containing information about a **Tag**
+- `new Module.Global(ref: GlobalRef)`:                        an object containing information about a **Global**
+- `new Module.Memory(mod: Module, name: string)`:             an object containing information about a **Memory**
+- `new Module.Table(ref: TableRef)`:                          an object containing information about a **Table**
+- `new Module.Function(ref: FunctionRef)`:                    an object containing information about a **Function**
+- `new Module.DataSegment(mod: Module, ref: DataSegmentRef)`: an object containing information about a **Data Segment**
+- `new Module.ElementSegment(ref: ElementSegmentRef)`:        an object containing information about an **Element Segment**
+- `new Module.Import()`:                                      an object containing information about an **Import** (🌱 empty for now)
+- `new Module.Export(ref: ExportRef)`:                        an object containing information about an **Export**
 
 Properties of `Module` instances (see full list of methods in generated docs):
 - `Module#wasm`:            [build WASM expressions](#expression-building)
@@ -232,23 +232,23 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 
 
 ## Expression Manipulation
-Expression info classes all live under the global `EXPR` namespace.
+Expression info classes all live under the global `expressions` namespace.
 They can be used to inspect and manipulate expressions.
 See generated docs for fields, methods, and descriptions of each.
 
-- `EXPR.Expression` (root class)
+- `expressions.Expression` (root class)
 - parametric instructions
-	- `EXPR.Drop`
-	- `EXPR.Select`
+	- `expressions.Drop`
+	- `expressions.Select`
 - control instructions
-	- `EXPR.Block`
-	- `EXPR.Loop`
-	- `EXPR.Break`
+	- `expressions.Block`
+	- `expressions.Loop`
+	- `expressions.Break`
 - variable instructions
-	- `EXPR.LocalGet`
-	- `EXPR.LocalSet`
+	- `expressions.LocalGet`
+	- `expressions.LocalSet`
 - numeric instructions
-	- `EXPR.Const`
+	- `expressions.Const`
 
 
 
@@ -260,37 +260,37 @@ Enum names have been singularized.
 - `ExternalKinds` &rarr; `ExternalKind`
 - `Features`      &rarr; `Feature`
 
-`*Info` types have been merged with their respective classes in the `MOD` namespace.
-- `TagInfo`            &rarr; `MOD.Tag`
-- `GlobalInfo`         &rarr; `MOD.Global`
-- `MemoryInfo`         &rarr; `MOD.Memory`
-- `TableInfo`          &rarr; `MOD.Table`
-- `FunctionInfo`       &rarr; `MOD.Function`
-- `ElementSegmentInfo` &rarr; `MOD.ElementSegment`
-- `ExportInfo`         &rarr; `MOD.Export`
+`*Info` types have been merged with their respective classes in the `Module` namespace.
+- `TagInfo`            &rarr; `Module.Tag`
+- `GlobalInfo`         &rarr; `Module.Global`
+- `MemoryInfo`         &rarr; `Module.Memory`
+- `TableInfo`          &rarr; `Module.Table`
+- `FunctionInfo`       &rarr; `Module.Function`
+- `ElementSegmentInfo` &rarr; `Module.ElementSegment`
+- `ExportInfo`         &rarr; `Module.Export`
 
-`ExpressionInfo` and related types are now classes in the `EXPR` namespace:
-- `ExpressionInfo` &rarr; `EXPR.Expression`
-- `BlockInfo`      &rarr; `EXPR.Block`
-- `LoopInfo`       &rarr; `EXPR.Loop`
-- `IfInfo`         &rarr; `EXPR.If`
+`ExpressionInfo` and related types are now classes in the `expressions` namespace:
+- `ExpressionInfo` &rarr; `expressions.Expression`
+- `BlockInfo`      &rarr; `expressions.Block`
+- `LoopInfo`       &rarr; `expressions.Loop`
+- `IfInfo`         &rarr; `expressions.If`
 - etc.
 
 ~~`MemorySegmentInfo`~~ ❌ has been removed.
 
 
 ### Modules
-Module components previously at the top level have been moved under the `MOD` namespace.
-- `Function` &rarr; `MOD.Function`
-- `Table`    &rarr; `MOD.Table`
+Module components previously at the top level have been moved under the `Module` namespace.
+- `Function` &rarr; `Module.Function`
+- `Table`    &rarr; `Module.Table`
 
 Most `get*Info()` functions have been replaced by their corresponding class constructors.
-- `getTagInfo(tag)`                &rarr; `new MOD.Tag(tag)`;
-- `getGlobalInfo(global)`          &rarr; `new MOD.Global(global)`
-- `getTableInfo(table)`            &rarr; `new MOD.Table(table)`
-- `getFunctionInfo(func)`          &rarr; `new MOD.Function(func)`
-- `getElementSegmentInfo(segment)` &rarr; `new MOD.ElementSegment(segment)`
-- `getExportInfo(xport)`           &rarr; `new MOD.Export(xport)`
+- `getTagInfo(tag)`                &rarr; `new Module.Tag(tag)`;
+- `getGlobalInfo(global)`          &rarr; `new Module.Global(global)`
+- `getTableInfo(table)`            &rarr; `new Module.Table(table)`
+- `getFunctionInfo(func)`          &rarr; `new Module.Function(func)`
+- `getElementSegmentInfo(segment)` &rarr; `new Module.ElementSegment(segment)`
+- `getExportInfo(xport)`           &rarr; `new Module.Export(xport)`
 >
 - `Module#getMemoryInfo(name)` has not changed.
 - `Module#getDataSegmentInfo(name)` has not changed.
@@ -316,7 +316,7 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 - `Module#getFeatures()`        &rarr; `Module#features`
 - `Module#setFeatures()`        &rarr; `Module#features`
 
-`Module#copyExpression(expr)` has been moved to the global function `copyExpression(expr, mod)` where it lives alongside `getExpressionInfo` et al.
+Global `getSideEffects(expr, mod)` has been moved to `Module#getSideEffects()` where it lives alongside `Module#copyExpression()`.
 
 All “type” properties (`.i32`, `.i64`, etc) on `Module` previously served as namespaces containing functions for building expressions.
 (E.g., `Module#i32.add()` produced an `(i32.add)` WASM instruction.)

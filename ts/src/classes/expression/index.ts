@@ -4,7 +4,7 @@
  * The {@link Expression} class is the root class in the hierarchy;
  * all other classes in this module extend it and describe specific kinds of expressions.
  * Each expression type corresponds to an {@link ExpressionId}.
- * @module EXPR
+ * @module expressions
  */
 
 
