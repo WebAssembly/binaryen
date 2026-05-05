@@ -415,7 +415,6 @@ void TranslateToFuzzReader::build() {
   ReFinalize().run(&runner, &wasm);
   ReFinalize().walkModuleCode(&wasm);
 
-  // If fuzzing against JS, we can refine
   if (againstJS) {
     mutateJSBoundary();
   }
@@ -2403,7 +2402,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
   struct FunctionInfo {
     // Whether there are references to this function itself.
-    std::atomic<bool> reffed = false;
+    bool reffed = false;
 
     // Calls to imports from this function.
     std::vector<Call*> callImports;
@@ -2502,7 +2501,13 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     // Pick the exactness.
     auto oldExactness = old.getExactness();
     auto newExactness = new_.getExactness();
-    if (newHeapType.isBasic()) {
+    // We can only be exact if we are using the new heap type: that type is
+    // exactly what is sent here, and no intermediate heap type would be valid.
+    // For example, given $A :> $B :> $C, then maybeRefine($A, exact $C) can
+    // return exact $C, but cannot return exact $B.
+    //
+    // Also, basic heap types cannot be exact.
+    if (newHeapType != new_.getHeapType() || newHeapType.isBasic()) {
       newExactness = Inexact;
     } else if (newExactness != oldExactness) {
       // TODO: once getExactness() is fixed (see there), use that
@@ -2522,9 +2527,13 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       for (Index i = 0; i < call->operands.size(); i++) {
         auto type = call->operands[i]->type;
         if (type == Type::unreachable) {
-          // Nothing sent here, so use the declared type - what we refine to
-          // must still validate even though this call is unreachable.
+          // Nothing sent here. What we refine to must still validate, even
+          // though this call is unreachable. Using the non-nullable bottom type
+          // is valid, and has the fewest restrictions.
           type = declaredParams[i];
+          if (type.isRef()) {
+            type = Type(type.getHeapType().getBottom(), NonNullable);
+          }
         }
         sent.push_back(type);
       }
@@ -2536,7 +2545,15 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     if (!func->imported()) {
       continue;
     }
+    // TODO: In the referenced case, we could consider using import/export
+    //       wrappers and refining just there.
     if (map[func->name].reffed) {
+      continue;
+    }
+    // Do not alter the signature of configureAll or other VM builtins. Changing
+    // these to something the VM does not expect will just cause it to
+    // immediately reject the module by trapping.
+    if (func->module.startsWith("wasm:")) {
       continue;
     }
 
