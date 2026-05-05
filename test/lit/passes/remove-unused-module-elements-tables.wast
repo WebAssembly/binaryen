@@ -333,7 +333,7 @@
   )
 )
 
-;; As above, but now the table has an initialistion expression
+;; As above, but now the table has an initialization expression
 (module
   (rec
     ;; CHECK:      (rec
@@ -447,3 +447,116 @@
     (drop (i32.const 30))
   )
 )
+
+;; As above, but now the table has a table.grow. Like table.set, this prevents
+;; optimization.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $foo (func))
+    ;; OPEN_WORLD:      (rec
+    ;; OPEN_WORLD-NEXT:  (type $foo (func))
+    (type $foo (func))
+    ;; CHECK:       (type $bar (func))
+    ;; OPEN_WORLD:       (type $bar (func))
+    (type $bar (func))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (table $table 10 funcref)
+  ;; OPEN_WORLD:      (type $2 (func))
+
+  ;; OPEN_WORLD:      (table $table 10 funcref)
+  (table $table 10 funcref)
+  ;; CHECK:      (elem $table (i32.const 0) $foo-in-table $bar)
+  ;; OPEN_WORLD:      (elem $table (i32.const 0) $foo-in-table $bar)
+  (elem $table (i32.const 0) $foo-in-table $bar)
+
+  ;; CHECK:      (elem declare func $foo-not-in-table)
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $2)
+  ;; CHECK-NEXT:  (call_indirect $table (type $foo)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.grow $table
+  ;; CHECK-NEXT:    (ref.func $foo-not-in-table)
+  ;; CHECK-NEXT:    (i32.const 7)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $foo-not-in-table)
+
+  ;; OPEN_WORLD:      (export "export" (func $export))
+
+  ;; OPEN_WORLD:      (func $export (type $2)
+  ;; OPEN_WORLD-NEXT:  (call_indirect $table (type $foo)
+  ;; OPEN_WORLD-NEXT:   (i32.const 5)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (table.grow $table
+  ;; OPEN_WORLD-NEXT:    (ref.func $foo-not-in-table)
+  ;; OPEN_WORLD-NEXT:    (i32.const 7)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $export (export "export")
+    (call_indirect $table (type $foo)
+      (i32.const 5)
+    )
+    (drop
+      (table.grow $table
+        (ref.func $foo-not-in-table)
+        (i32.const 7)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $foo-in-table (type $foo)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $foo-in-table (type $foo)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (i32.const 10)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $foo-in-table (type $foo)
+    ;; This is in the table, and might be reached.
+    (drop (i32.const 10))
+  )
+
+  ;; CHECK:      (func $foo-not-in-table (type $foo)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $foo-not-in-table (type $foo)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (i32.const 20)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $foo-not-in-table (type $foo)
+    ;; The reference taken of this function might be added to the table using
+    ;; table.grow, so we can do nothing here.
+    (drop (i32.const 20))
+  )
+
+  ;; CHECK:      (func $bar (type $bar)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $bar (type $bar)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (i32.const 30)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $bar (type $bar)
+    ;; Not even references, so this is unreachable in closed world.
+    (drop (i32.const 30))
+  )
+)
+

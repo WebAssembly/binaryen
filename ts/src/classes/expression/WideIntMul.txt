@@ -1,0 +1,20 @@
+Module['WideIntMul'] = makeExpressionWrapper(Module['_BinaryenWideIntMulId'](), {
+  'getOp'(expr) {
+    return Module['_BinaryenWideIntMulGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenWideIntMulSetOp'](expr, op);
+  },
+  'getLeft'(expr) {
+    return Module['_BinaryenWideIntMulGetLeft'](expr);
+  },
+  'setLeft'(expr, leftExpr) {
+    Module['_BinaryenWideIntMulSetLeft'](expr, leftExpr);
+  },
+  'getRight'(expr) {
+    return Module['_BinaryenWideIntMulGetRight'](expr);
+  },
+  'setRight'(expr, rightExpr) {
+    Module['_BinaryenWideIntMulSetRight'](expr, rightExpr);
+  }
+});

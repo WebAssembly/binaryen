@@ -968,6 +968,70 @@ console.log("# Binary");
   module.dispose();
 })();
 
+console.log("# WideIntAddSub");
+(function testWideIntAddSub() {
+  const module = new binaryen.Module();
+
+  var leftLow = module.i64.const(1);
+  var leftHigh = module.i64.const(2);
+  var rightLow = module.i64.const(3);
+  var rightHigh = module.i64.const(4);
+  const theWideAdd = binaryen.WideIntAddSub(module.i64.add128(leftLow, leftHigh, rightLow, rightHigh));
+  assert(theWideAdd instanceof binaryen.WideIntAddSub);
+  assert(theWideAdd instanceof binaryen.Expression);
+  assert(theWideAdd.op === binaryen.Operations.AddInt128);
+  assert(theWideAdd.leftLow === leftLow);
+  assert(theWideAdd.leftHigh === leftHigh);
+  assert(theWideAdd.rightLow === rightLow);
+  assert(theWideAdd.rightHigh === rightHigh);
+
+  theWideAdd.op = binaryen.Operations.SubInt128;
+  assert(theWideAdd.op === binaryen.Operations.SubInt128);
+  theWideAdd.leftLow = module.i64.const(5);
+  theWideAdd.leftHigh = module.i64.const(6);
+  theWideAdd.rightLow = module.i64.const(7);
+  theWideAdd.rightHigh = module.i64.const(8);
+  theWideAdd.finalize();
+
+  console.log(theWideAdd.toText());
+  assert(
+    theWideAdd.toText()
+    ==
+    "(i64.sub128\n (i64.const 5)\n (i64.const 6)\n (i64.const 7)\n (i64.const 8)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# WideIntMul");
+(function testWideIntMul() {
+  const module = new binaryen.Module();
+
+  var left = module.i64.const(1);
+  var right = module.i64.const(2);
+  const theWideMul = binaryen.WideIntMul(module.i64.mul_wide_s(left, right));
+  assert(theWideMul instanceof binaryen.WideIntMul);
+  assert(theWideMul instanceof binaryen.Expression);
+  assert(theWideMul.op === binaryen.Operations.MulWideSInt64);
+  assert(theWideMul.left === left);
+  assert(theWideMul.right === right);
+
+  theWideMul.op = binaryen.Operations.MulWideUInt64;
+  assert(theWideMul.op === binaryen.Operations.MulWideUInt64);
+  theWideMul.left = module.i64.const(3);
+  theWideMul.right = module.i64.const(4);
+  theWideMul.finalize();
+
+  console.log(theWideMul.toText());
+  assert(
+    theWideMul.toText()
+    ==
+    "(i64.mul_wide_u\n (i64.const 3)\n (i64.const 4)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Select");
 (function testSelect() {
   const module = new binaryen.Module();

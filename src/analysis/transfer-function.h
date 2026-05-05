@@ -17,11 +17,16 @@
 #ifndef wasm_analysis_transfer_function_h
 #define wasm_analysis_transfer_function_h
 
-#if __cplusplus >= 202002L
-
+#if __has_include(<concepts>)
 #include <concepts>
-#include <iterator>
+#endif
+#if __has_include(<ranges>)
 #include <ranges>
+#endif
+
+#if defined(__cpp_lib_concepts) && defined(__cpp_lib_ranges)
+
+#include <iterator>
 
 #include "cfg.h"
 #include "lattice.h"
@@ -47,10 +52,10 @@ concept TransferFunctionImpl = requires(
 
 } // namespace wasm::analysis
 
-#else // __cplusplus >= 202002L
+#else // defined(__cpp_lib_concepts) && defined(__cpp_lib_ranges)
 
 #define TransferFunction typename
 
-#endif // __cplusplus >= 202002L
+#endif // defined(__cpp_lib_concepts) && defined(__cpp_lib_ranges)
 
 #endif // wasm_analysis_transfer_function_h

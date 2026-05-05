@@ -32,6 +32,11 @@ export function i64(mod: Module) {
 		rem_s: STUB,
 		rem_u: STUB,
 
+		add128: STUB,
+		sub128: STUB,
+		mul_wide_s: STUB,
+		mul_wide_u: STUB,
+
 		and: STUB,
 		or: STUB,
 		xor: STUB,

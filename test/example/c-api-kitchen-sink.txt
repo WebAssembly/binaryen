@@ -3131,3 +3131,38 @@ Cmpxchg memory order: 2
   )
  )
 )
+(module
+ (type $0 (func))
+ (func $wide-arithmetic-test
+  (block $body
+   (tuple.drop 2
+    (i64.add128
+     (i64.const 1)
+     (i64.const 2)
+     (i64.const 3)
+     (i64.const 4)
+    )
+   )
+   (tuple.drop 2
+    (i64.sub128
+     (i64.const 1)
+     (i64.const 2)
+     (i64.const 3)
+     (i64.const 4)
+    )
+   )
+   (tuple.drop 2
+    (i64.mul_wide_s
+     (i64.const 5)
+     (i64.const 6)
+    )
+   )
+   (tuple.drop 2
+    (i64.mul_wide_u
+     (i64.const 5)
+     (i64.const 6)
+    )
+   )
+  )
+ )
+)

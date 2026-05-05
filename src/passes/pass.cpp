@@ -412,6 +412,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
+  registerPass("remove-exports",
+               "removes exports using a wildcard",
+               createRemoveExportsPass);
   registerPass("remove-imports",
                "removes imports and replaces them with nops",
                createRemoveImportsPass);

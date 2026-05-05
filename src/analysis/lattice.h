@@ -17,9 +17,9 @@
 #ifndef wasm_analysis_lattice_h
 #define wasm_analysis_lattice_h
 
-#if __cplusplus >= 202002L
+#if __has_include(<concepts>)
 #include <concepts>
-#endif // __cplusplus >= 202002L
+#endif
 
 namespace wasm::analysis {
 
@@ -37,7 +37,7 @@ inline LatticeComparison reverseComparison(LatticeComparison comparison) {
   }
 }
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 
 template<typename L>
 concept Lattice = requires(const L& lattice,
@@ -78,12 +78,12 @@ concept FullLattice =
     { lattice.meet(elem, constElem) } noexcept -> std::same_as<bool>;
   };
 
-#else // __cplusplus >= 202002L
+#else // defined(__cpp_lib_concepts)
 
 #define Lattice typename
 #define FullLattice typename
 
-#endif // __cplusplus >= 202002L
+#endif // defined(__cpp_lib_concepts)
 
 } // namespace wasm::analysis
 

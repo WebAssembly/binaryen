@@ -30,3 +30,7 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] JS API tested in test/binaryen.js/kitchen-sink.js
  - [ ] Tests added in test/spec
  - [ ] Tests added in test/lit
+    - [ ] Tests are used as seeds for the fuzzer. If V8 doesn't support the
+    test, or if the new instruction isn't guarded by a wasm-validator check,
+    then either add the corresponding feature to DISALLOWED_FEATURES_IN_V8 or 
+    mark the test as unfuzzable.

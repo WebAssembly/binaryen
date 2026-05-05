@@ -190,6 +190,8 @@ public:
   Result<> makeConst(Literal val);
   Result<> makeUnary(UnaryOp op);
   Result<> makeBinary(BinaryOp op);
+  Result<> makeWideIntAddSub(WideIntAddSubOp op);
+  Result<> makeWideIntMul(WideIntMulOp op);
   Result<> makeSelect(std::optional<Type> type = std::nullopt);
   Result<> makeDrop();
   Result<> makeReturn();
