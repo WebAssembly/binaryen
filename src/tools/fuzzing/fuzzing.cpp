@@ -2502,12 +2502,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     // Pick the exactness.
     auto oldExactness = old.getExactness();
     auto newExactness = new_.getExactness();
-    if (newExactness != oldExactness) {
-      // TODO: once getExactness() is fixed (see there), use that
-      newExactness = oneIn(2) ? Exact : Inexact;
-    }
     if (newHeapType.isBasic()) {
       newExactness = Inexact;
+    } else if (newExactness != oldExactness) {
+      // TODO: once getExactness() is fixed (see there), use that
+      newExactness = oneIn(2) ? Exact : Inexact;
     }
 
     return Type(newHeapType, newNullability, newExactness);
