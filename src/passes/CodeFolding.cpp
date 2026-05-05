@@ -330,14 +330,11 @@ private:
       : public PostWalker<CachePopulator,
                           UnifiedExpressionVisitor<CachePopulator>> {
       std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache;
-      Expression* root;
-      const std::unordered_set<Name>* rootResult = nullptr;
       std::unordered_map<Expression*, std::unordered_set<Name>> nameSets;
 
       CachePopulator(
-        std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache,
-        Expression* root)
-        : resultCache(resultCache), root(root) {}
+        std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache)
+        : resultCache(resultCache) {}
 
       static void scan(CachePopulator* self, Expression** currp) {
         auto* curr = *currp;
@@ -386,19 +383,15 @@ private:
         if (!targets.empty()) {
           nameSets[curr] = std::move(targets);
         }
-        if (curr == root) {
-          auto it = nameSets.find(curr);
-          if (it != nameSets.end()) {
-            rootResult = &(resultCache[curr] = std::move(it->second));
-          } else {
-            rootResult = &(resultCache[curr] = {});
-          }
-        }
       }
     };
-    CachePopulator populator(exitingBranchCache, root);
+    CachePopulator populator(exitingBranchCache);
     populator.walk(root);
-    return *populator.rootResult;
+    auto it = populator.nameSets.find(root);
+    if (it != populator.nameSets.end()) {
+      return exitingBranchCache[root] = std::move(it->second);
+    }
+    return exitingBranchCache[root] = {};
   }
 
   // check if we can move a list of items out of another item. we can't do so
