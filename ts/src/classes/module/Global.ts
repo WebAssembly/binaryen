@@ -19,7 +19,6 @@ import type {
 
 /**
  * Information about a global in a WASM module.
- * @see {@link ModuleGlobals}
  */
 export class Global {
 	readonly name: string;
@@ -43,7 +42,8 @@ export class Global {
 
 
 /**
- * Methods for manipulating {@link Module.Global | globals} in a WASM module.
+ * Methods for manipulating globals in a WASM module.
+ * @inline
  */
 export class ModuleGlobals {
 	constructor(private readonly mod: Module) {}

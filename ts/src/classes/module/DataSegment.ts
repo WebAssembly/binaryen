@@ -20,7 +20,6 @@ import type {
 
 /**
  * Information about a data segment in a WASM module.
- * @see {@link ModuleDataSegments}
  */
 export class DataSegment {
 	readonly name: string;
@@ -50,7 +49,8 @@ export class DataSegment {
 
 
 /**
- * Methods for manipulating {@link Module.DataSegment | data segments} in a WASM module.
+ * Methods for manipulating data segments in a WASM module.
+ * @inline
  */
 export class ModuleDataSegments {
 	constructor(private readonly mod: Module) {}

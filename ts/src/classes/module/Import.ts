@@ -16,7 +16,6 @@ import type {
 
 /**
  * Information about an import in a WASM module.
- * @see {@link ModuleImports}
  */
 export class Import {
 	constructor() {}
@@ -25,7 +24,8 @@ export class Import {
 
 
 /**
- * Methods for manipulating {@link Module.Import | imports} in a WASM module.
+ * Methods for manipulating imports in a WASM module.
+ * @inline
  */
 export class ModuleImports {
 	constructor(private readonly mod: Module) {}
