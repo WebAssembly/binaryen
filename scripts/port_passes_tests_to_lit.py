@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Automatically port legacy passes tests to be lit tests
-"""
+"""Automatically port legacy passes tests to be lit tests."""
 
 import argparse
 import glob

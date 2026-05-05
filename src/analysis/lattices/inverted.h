@@ -52,7 +52,7 @@ template<FullLattice L> struct Inverted {
 // Deduction guide.
 template<typename L> Inverted(L&&) -> Inverted<L>;
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(Lattice<Inverted<Bool>>);
 #endif
 

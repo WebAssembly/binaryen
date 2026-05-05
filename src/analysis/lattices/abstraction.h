@@ -22,7 +22,7 @@
 #include "../lattice.h"
 #include "support/utilities.h"
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 #include "analysis/lattices/bool.h"
 #endif
 
@@ -218,7 +218,7 @@ private:
   }
 };
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(Lattice<Abstraction<Bool, Bool, Bool>>);
 #endif
 

@@ -31,6 +31,7 @@
 
 #include "call-utils.h"
 #include "ir/drop.h"
+#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
@@ -52,6 +53,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   FunctionDirectizer(const TableUtils::TableInfoMap& tables) : tables(tables) {}
 
+  bool optimized = false;
+
   void visitCallIndirect(CallIndirect* curr) {
     auto& table = tables.at(curr->table);
     if (!table.canOptimizeByEntry()) {
@@ -62,6 +65,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       std::vector<Expression*> operands(curr->operands.begin(),
                                         curr->operands.end());
       makeDirectCall(operands, curr->target, table, curr);
+      optimized = true;
       return;
     }
 
@@ -74,6 +78,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
           *getFunction(),
           *getModule())) {
       replaceCurrent(calls);
+      optimized = true;
       // Note that types may have changed, as the utility here can add locals
       // which require fixups if they are non-nullable, for example.
       changedTypes = true;
@@ -81,8 +86,17 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     }
   }
 
+  bool hasTry = false;
+
+  void visitTry(Try* curr) { hasTry = true; }
+
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
+
+    if (optimized && hasTry) {
+      EHUtils::handleBlockNestedPops(func, *getModule());
+    }
+
     if (changedTypes) {
       ReFinalize().walkFunctionInModule(func, getModule());
     }
@@ -113,18 +127,23 @@ private:
       // The index is out of bounds for the initial table's content. This may
       // trap, but it may also not trap if the table is modified later (if a
       // function is appended to it).
-      if (!table.mayBeModified) {
+      if (!table.mayBeModified()) {
         return CallUtils::Trap{};
       } else {
         // The table may be modified, so it might be appended to. We should only
-        // get here in the case that the initial contents are immutable, as
-        // otherwise we have nothing to optimize at all.
-        assert(table.initialContentsImmutable);
+        // get here in the case that the initial contents are immutable, or the
+        // table can grow, as otherwise we have nothing to optimize at all.
+        assert(table.initialContentsImmutable || table.hasGrow);
         return CallUtils::Unknown{};
       }
     }
     auto name = flatTable.names[index];
     if (!name.is()) {
+      // No segment wrote to this part of the initial contents of the table.
+      // This must trap, as we only get here if we can optimize such cases,
+      // relying on the fact that the table cannot be modified, or at least the
+      // initial contents cannot be.
+      assert(!table.hasSet || table.initialContentsImmutable);
       return CallUtils::Trap{};
     }
     auto* func = getModule()->getFunction(name);

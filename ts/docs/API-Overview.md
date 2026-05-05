@@ -221,6 +221,7 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.i32.trunc_sat_f32_{s,u}()`, `.i32.trunc_sat_f64_{s,u}()`
 	- `.i64.trunc_sat_f32_{s,u}()`, `.i64.trunc_sat_f64_{s,u}()`
 	- `.i32.reinterpret_f32()`, `.i64.reinterpret_f64()`
+	- 🌱 WideInt proposal: `.add128()`, `.sub128()`, `.mul_wide_{s,u}()`
 - floats
 	- `.{f32,f64}.const()`
 	- `.{f32,f64}.abs()`, `.{f32,f64}.neg()`, `.{f32,f64}.sqrt()`, `.{f32,f64}.ceil()`, `.{f32,f64}.floor()`, `.{f32,f64}.trunc()`, `.{f32,f64}.nearest()`

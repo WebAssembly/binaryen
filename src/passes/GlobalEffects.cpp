@@ -19,8 +19,6 @@
 // PassOptions structure; see more details there.
 //
 
-#include <ranges>
-
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
@@ -234,26 +232,26 @@ void propagateEffects(const Module& module,
   // We only care about Functions that are roots, not types.
   // A type would be a root if a function exists with that type, but no-one
   // indirect calls the type.
-  auto funcNodes = std::views::keys(callGraph) |
-                   std::views::filter([](auto node) {
-                     return std::holds_alternative<Function*>(node);
-                   }) |
-                   std::views::common;
-  using funcNodesType = decltype(funcNodes);
+  std::vector<CallGraphNode> funcNodes;
+  for (const auto& [node, _] : callGraph) {
+    if (std::holds_alternative<Function*>(node)) {
+      funcNodes.push_back(node);
+    }
+  }
 
   struct CallGraphSCCs
-    : SCCs<std::ranges::iterator_t<funcNodesType>, CallGraphSCCs> {
+    : SCCs<std::vector<CallGraphNode>::iterator, CallGraphSCCs> {
 
     const std::map<Function*, FuncInfo>& funcInfos;
     const CallGraph& callGraph;
     const Module& module;
 
-    CallGraphSCCs(funcNodesType&& nodes,
+    CallGraphSCCs(std::vector<CallGraphNode>& nodes,
                   const std::map<Function*, FuncInfo>& funcInfos,
                   const CallGraph& callGraph,
                   const Module& module)
-      : SCCs<std::ranges::iterator_t<funcNodesType>, CallGraphSCCs>(
-          std::ranges::begin(nodes), std::ranges::end(nodes)),
+      : SCCs<std::vector<CallGraphNode>::iterator, CallGraphSCCs>(nodes.begin(),
+                                                                  nodes.end()),
         funcInfos(funcInfos), callGraph(callGraph), module(module) {}
 
     void pushChildren(CallGraphNode node) {
@@ -262,7 +260,7 @@ void propagateEffects(const Module& module,
       }
     }
   };
-  CallGraphSCCs sccs(std::move(funcNodes), funcInfos, callGraph, module);
+  CallGraphSCCs sccs(funcNodes, funcInfos, callGraph, module);
 
   std::vector<std::optional<EffectAnalyzer>> componentEffects;
   // Points to an index in componentEffects

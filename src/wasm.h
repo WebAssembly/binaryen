@@ -640,6 +640,16 @@ enum StringEqOp {
   StringEqCompare,
 };
 
+enum WideIntAddSubOp {
+  AddInt128,
+  SubInt128,
+};
+
+enum WideIntMulOp {
+  MulWideSInt64,
+  MulWideUInt64,
+};
+
 //
 // Expressions
 //
@@ -769,6 +779,8 @@ public:
     StackSwitchId,
     StructWaitId,
     StructNotifyId,
+    WideIntAddSubId,
+    WideIntMulId,
     NumExpressionIds
   };
   Id _id;
@@ -1296,6 +1308,32 @@ public:
   // except for relationals
 
   bool isRelational();
+
+  void finalize();
+};
+
+class WideIntAddSub : public SpecificExpression<Expression::WideIntAddSubId> {
+public:
+  WideIntAddSub() = default;
+  WideIntAddSub(MixedArena& allocator) {}
+
+  WideIntAddSubOp op;
+  Expression* leftLow;
+  Expression* leftHigh;
+  Expression* rightLow;
+  Expression* rightHigh;
+
+  void finalize();
+};
+
+class WideIntMul : public SpecificExpression<Expression::WideIntMulId> {
+public:
+  WideIntMul() = default;
+  WideIntMul(MixedArena& allocator) {}
+
+  WideIntMulOp op;
+  Expression* left;
+  Expression* right;
 
   void finalize();
 };

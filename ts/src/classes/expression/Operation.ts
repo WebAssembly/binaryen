@@ -468,6 +468,12 @@ export enum Operation {
 	StringEncodeWTF16Array = BinaryenObj["_BinaryenStringEncodeWTF16Array"](),
 	StringEqEqual = BinaryenObj["_BinaryenStringEqEqual"](),
 	StringEqCompare = BinaryenObj["_BinaryenStringEqCompare"](),
+
+	// ### WideInt Operations ### //
+	AddInt128 = BinaryenObj["_BinaryenAddInt128"](),
+	SubInt128 = BinaryenObj["_BinaryenSubInt128"](),
+	MulWideSInt64 = BinaryenObj["_BinaryenMulWideSInt64"](),
+	MulWideUInt64 = BinaryenObj["_BinaryenMulWideUInt64"](),
 }
 
 

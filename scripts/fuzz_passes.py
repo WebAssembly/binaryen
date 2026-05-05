@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-This fuzzes passes, by starting with a working program, then running
+"""Script for fuzzing passes.
+
+Fuzzes passes by starting with a working program, then running
 random passes on the wast, and seeing if they break something
 
 Usage: Provide a base filename for a runnable program, e.g. a.out.js.
@@ -23,7 +24,7 @@ Usage: Provide a base filename for a runnable program, e.g. a.out.js.
        be built to run using that wast (BINARYEN_METHOD=interpret-s-expr)
 
        Other parameters after the first are used when calling the program.
-'''
+"""
 
 
 import os
