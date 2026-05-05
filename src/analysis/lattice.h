@@ -17,9 +17,9 @@
 #ifndef wasm_analysis_lattice_h
 #define wasm_analysis_lattice_h
 
-#if __cplusplus >= 202002L
+#if __has_include(<concepts>)
 #include <concepts>
-#endif // __cplusplus >= 202002L
+#endif
 
 namespace wasm::analysis {
 

@@ -17,11 +17,11 @@
 #ifndef wasm_analysis_transfer_function_h
 #define wasm_analysis_transfer_function_h
 
-#if __cplusplus >= 202002L
+#if __has_include(<concepts>)
 #include <concepts>
+#endif
 #if __has_include(<ranges>)
 #include <ranges>
-#endif
 #endif
 
 #if defined(__cpp_lib_concepts) && defined(__cpp_lib_ranges)

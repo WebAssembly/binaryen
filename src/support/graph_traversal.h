@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#if __cplusplus >= 202002L
+#if __has_include(<concepts>)
 #include <concepts>
 #endif
 #include <functional>

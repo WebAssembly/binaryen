@@ -21,7 +21,7 @@
 #include <type_traits>
 #include <variant>
 
-#if __cplusplus >= 202002L
+#if __has_include(<concepts>)
 #include <concepts>
 #endif
 
