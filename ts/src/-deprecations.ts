@@ -3,9 +3,9 @@
 
 
 import type * as EXPR from "./classes/expression/index.ts";
+import * as MOD from "./classes/module/index.ts";
 import {
 	Feature,
-	Module,
 } from "./classes/module/Module.ts";
 import {
 	type ElementSegmentRef,
@@ -38,22 +38,22 @@ export const Features = Feature;
 
 
 
-/** @deprecated The `TagInfo` object type is now called {@link Module.Tag}. */
-export type TagInfo = Module.Tag;
-/** @deprecated The `GlobalInfo` object type is now called {@link Module.Global}. */
-export type GlobalInfo = Module.Global;
-/** @deprecated The `MemoryInfo` object type is now called {@link Module.Memory}*/
-export type MemoryInfo = Module.Memory;
-/** @deprecated The `TableInfo` object type is now called {@link Module.Table}. */
-export type TableInfo = Module.Table;
-/** @deprecated The `FunctionInfo` object type is now called {@link Module.Function}. */
-export type FunctionInfo = Module.Function;
+/** @deprecated The `TagInfo` object type is now called {@link MOD.Tag}. */
+export type TagInfo = MOD.Tag;
+/** @deprecated The `GlobalInfo` object type is now called {@link MOD.Global}. */
+export type GlobalInfo = MOD.Global;
+/** @deprecated The `MemoryInfo` object type is now called {@link MOD.Memory}*/
+export type MemoryInfo = MOD.Memory;
+/** @deprecated The `TableInfo` object type is now called {@link MOD.Table}. */
+export type TableInfo = MOD.Table;
+/** @deprecated The `FunctionInfo` object type is now called {@link MOD.Function}. */
+export type FunctionInfo = MOD.Function;
 // type `DataSegmentInfo` never existed
-/** @deprecated The `ElementSegmentInfo` object type is now called {@link Module.ElementSegment}. */
-export type ElementSegmentInfo = Module.ElementSegment;
+/** @deprecated The `ElementSegmentInfo` object type is now called {@link MOD.ElementSegment}. */
+export type ElementSegmentInfo = MOD.ElementSegment;
 // type `ImportInfo` never existed
-/** @deprecated The `ExportInfo` object type is now called {@link Module.Export}. */
-export type ExportInfo = Module.Export;
+/** @deprecated The `ExportInfo` object type is now called {@link MOD.Export}. */
+export type ExportInfo = MOD.Export;
 
 
 
@@ -76,45 +76,45 @@ export type LocalSetInfo = EXPR.LocalSet;
 /** @deprecated The `ConstInfo` object type is now called {@link EXPR.Const}. */
 export type ConstInfo = EXPR.Const;
 
-/** @deprecated The `Function` class now lives under the `Module` namespace. Use {@link Module.Function}. */
-export const Function = Module.Function;
-/** @deprecated The `Table` class now lives under the `Module` namespace. Use {@link Module.Table}. */
-export const Table = Module.Table;
+/** @deprecated The `Function` class now lives under the `MOD` namespace. Use {@link MOD.Function}. */
+export const Function = MOD.Function;
+/** @deprecated The `Table` class now lives under the `MOD` namespace. Use {@link MOD.Table}. */
+export const Table = MOD.Table;
 
 
 
-/** @deprecated Use {@link Module.Tag | `new Module.Tag(tagref)`} instead. */
+/** @deprecated Use {@link MOD.Tag | `new MOD.Tag(tagref)`} instead. */
 export function getTagInfo(tag: TagRef) {
-	consoleWarn("Global function `getTagInfo` is deprecated; use `new Module.Tag(tagref)` instead.");
-	return new Module.Tag(tag);
+	consoleWarn("Global function `getTagInfo` is deprecated; use `new MOD.Tag(tagref)` instead.");
+	return new MOD.Tag(tag);
 }
-/** @deprecated Use {@link Module.Global | `new Module.Global(globalref)`} instead. */
+/** @deprecated Use {@link MOD.Global | `new MOD.Global(globalref)`} instead. */
 export function getGlobalInfo(global: GlobalRef) {
-	consoleWarn("Global function `getGlobalInfo` is deprecated; use `new Module.Global(globalref)` instead.");
-	return new Module.Global(global);
+	consoleWarn("Global function `getGlobalInfo` is deprecated; use `new MOD.Global(globalref)` instead.");
+	return new MOD.Global(global);
 }
 // function `getMemoryInfo` always existed in `Module`
-/** @deprecated Use {@link Module.Table | `new Module.Table(tableref)`} instead. */
+/** @deprecated Use {@link MOD.Table | `new MOD.Table(tableref)`} instead. */
 export function getTableInfo(table: TableRef) {
-	consoleWarn("Global function `getTableInfo` is deprecated; use `new Module.Table(tableref)` instead.");
-	return new Module.Table(table);
+	consoleWarn("Global function `getTableInfo` is deprecated; use `new MOD.Table(tableref)` instead.");
+	return new MOD.Table(table);
 }
-/** @deprecated Use {@link Module.Function | `new Module.Function(funcref)`} instead. */
+/** @deprecated Use {@link MOD.Function | `new MOD.Function(funcref)`} instead. */
 export function getFunctionInfo(func: FunctionRef) {
-	consoleWarn("Global function `getFunctionInfo` is deprecated; use `new Module.Function(funcref)` instead.");
-	return new Module.Function(func);
+	consoleWarn("Global function `getFunctionInfo` is deprecated; use `new MOD.Function(funcref)` instead.");
+	return new MOD.Function(func);
 }
 // function `getDataSegmentInfo` always existed in `Module`
-/** @deprecated Use {@link Module.ElementSegment | `new Module.ElementSegment(segmentref)`} instead. */
+/** @deprecated Use {@link MOD.ElementSegment | `new MOD.ElementSegment(segmentref)`} instead. */
 export function getElementSegmentInfo(segment: ElementSegmentRef) {
-	consoleWarn("Global function `getElementSegmentInfo` is deprecated; use `new Module.ElementSegment(segmentref)` instead.");
-	return new Module.ElementSegment(segment);
+	consoleWarn("Global function `getElementSegmentInfo` is deprecated; use `new MOD.ElementSegment(segmentref)` instead.");
+	return new MOD.ElementSegment(segment);
 }
 // no function `getImportInfo` ever existed
-/** @deprecated Use {@link Module.Export | `new Module.Export(exportref)`} instead. */
+/** @deprecated Use {@link MOD.Export | `new MOD.Export(exportref)`} instead. */
 export function getExportInfo(xport: ExportRef) {
-	consoleWarn("Global function `getExportInfo` is deprecated; use `new Module.Export(exportref)` instead.");
-	return new Module.Export(xport);
+	consoleWarn("Global function `getExportInfo` is deprecated; use `new MOD.Export(exportref)` instead.");
+	return new MOD.Export(xport);
 }
 
 

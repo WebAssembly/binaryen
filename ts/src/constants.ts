@@ -17,21 +17,21 @@ export type PackedType = number;
 export type ExpressionRef = number;
 
 // ### Module Components ### //
-/** Reference to a {@link Tag}. */
+/** Reference to a {@link MOD.Tag}. */
 export type TagRef = number;
-/** Reference to a {@link Global}. */
+/** Reference to a {@link MOD.Global}. */
 export type GlobalRef = number;
 // no `MemoryRef`
-/** Reference to a {@link Table}. */
+/** Reference to a {@link MOD.Table}. */
 export type TableRef = number;
-/** Reference to a {@link BinaryenFunction}. */
+/** Reference to a {@link MOD.Function}. */
 export type FunctionRef = number;
-/** Reference to a {@link DataSegment}. */
+/** Reference to a {@link MOD.DataSegment}. */
 export type DataSegmentRef = number;
-/** Reference to an {@link ElementSegment}. */
+/** Reference to an {@link MOD.ElementSegment}. */
 export type ElementSegmentRef = number;
 // no `ImportRef`
-/** Reference to an {@link Export}. */
+/** Reference to an {@link MOD.Export}. */
 export type ExportRef = number;
 
 
