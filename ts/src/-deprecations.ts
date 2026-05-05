@@ -11,6 +11,7 @@ import {
 	type ElementSegmentRef,
 	type ExportRef,
 	ExpressionId,
+	type ExpressionRef,
 	ExternalKind,
 	type FunctionRef,
 	type GlobalRef,
@@ -80,6 +81,14 @@ export type ConstInfo = expressions.Const;
 export const Function = Module.Function;
 /** @deprecated The `Table` class now lives under the `Module` namespace. Use {@link Module.Table}. */
 export const Table = Module.Table;
+
+
+
+/** @deprecated Use {@link Module#getSideEffects} instead. */
+export function getSideEffects(expr: ExpressionRef, mod: Module) {
+	consoleWarn("Global function `getSideEffects(expr, mod)` is deprecated; use `mod.getSideEffects(expr)` instead.");
+	return mod.getSideEffects(expr);
+}
 
 
 

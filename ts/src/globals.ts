@@ -20,7 +20,6 @@ import {
 	ExpressionId,
 	type ExpressionRef,
 	type HeapType,
-	type SideEffect,
 	type Type,
 } from "./constants.ts";
 import {
@@ -210,14 +209,4 @@ export function getExpressionInfo(expr: ExpressionRef): expressions.Expression {
 	const id = getExpressionId(expr);
 	const specificExpression = EXPRESSION_TYPE_REGISTRY.get(id);
 	return specificExpression ? new specificExpression(expr) : new expressions.Expression(id, expr);
-}
-
-/** Gets the side effects of the specified expression. */
-export function getSideEffects(expr: ExpressionRef, mod: Module): SideEffect {
-	return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, mod.ptr);
-}
-
-/** Creates a deep copy of an expression. */
-export function copyExpression(expr: ExpressionRef, mod: Module): ExpressionRef {
-	return BinaryenObj["_BinaryenExpressionCopy"](expr, mod.ptr);
 }

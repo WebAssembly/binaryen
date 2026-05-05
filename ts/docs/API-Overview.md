@@ -316,7 +316,7 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 - `Module#getFeatures()`        &rarr; `Module#features`
 - `Module#setFeatures()`        &rarr; `Module#features`
 
-`Module#copyExpression(expr)` has been moved to the global function `copyExpression(expr, mod)` where it lives alongside `getExpressionInfo` et al.
+Global `getSideEffects(expr, mod)` has been moved to `Module#getSideEffects()` where it lives alongside `Module#copyExpression()`.
 
 All “type” properties (`.i32`, `.i64`, etc) on `Module` previously served as namespaces containing functions for building expressions.
 (E.g., `Module#i32.add()` produced an `(i32.add)` WASM instruction.)

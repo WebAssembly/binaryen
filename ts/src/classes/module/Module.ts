@@ -10,6 +10,7 @@ import {
 	type ExpressionRef,
 	type FunctionRef,
 	type HeapType,
+	type SideEffect,
 	type TableRef,
 	type Type,
 	i32,
@@ -26,9 +27,6 @@ import {
 	externref,
 	stringref,
 } from "../../constants.ts";
-import {
-	copyExpression,
-} from "../../globals.ts";
 import {
 	replacedBy,
 } from "../../lib.ts";
@@ -213,6 +211,16 @@ export class Module {
 		} else {
 			throw new Error(`Unexpected type ${ typ }.`);
 		}
+	}
+
+	/** Gets the side effects of the specified expression. */
+	getSideEffects(expr: ExpressionRef): SideEffect {
+		return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, this.ptr);
+	}
+
+	/** Creates a deep copy of an expression. */
+	copyExpression(expr: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenExpressionCopy"](expr, this.ptr);
 	}
 
 	// ## Module Component Operations ## //
@@ -461,12 +469,6 @@ export class Module {
 	/** [description] */
 	updateMaps(): void {
 		BinaryenObj["_BinaryenModuleUpdateMaps"](this.ptr);
-	}
-
-	/** @deprecated Use {@link copyExpression | `copyExpression(expr, this)`} instead. */
-	@replacedBy("global `copyExpression(expr, this)`")
-	copyExpression(expr: ExpressionRef) {
-		return copyExpression(expr, this);
 	}
 }
 
