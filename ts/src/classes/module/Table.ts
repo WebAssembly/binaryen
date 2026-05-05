@@ -40,7 +40,7 @@ export class Table {
 
 	/** The name of this table */
 	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenTableGetName"](this[THIS_PTR])); }
-	set name(name: string) { preserveStack(() => { BinaryenObj["_BinaryenTableSetName"](this[THIS_PTR], strToStack(name)); }); }
+	set name(name: string) { preserveStack(() => BinaryenObj["_BinaryenTableSetName"](this[THIS_PTR], strToStack(name))); }
 
 	/** The initial number of pages of this table. */
 	get initial(): number { return BinaryenObj["_BinaryenTableGetInitial"](this[THIS_PTR]); }
