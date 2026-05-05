@@ -2446,15 +2446,28 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // are not changing the arity, which JS might notice). Each place we may
   // refine, we are given the maximum refinement and pick a random type between
   // it and the old type.
-  auto maybeRefine = [&](Type old, Type new_) {
-    if (!new_.isRef()) {
+  //
+  // We receive the new type, computed as a LUBFinder, and the index in that
+  // LUB.
+  auto maybeRefine = [&](Type old, LUBFinder newLUB, Index lubIndex) {
+    if (!old.isRef()) {
       // A non-reference like i32, or unreachable (no values reach this place),
       // so it does not matter.
       return old;
     }
+    auto oldHeapType = old.getHeapType();
+
+    Type new_;
+    if (newLUB.noted()) {
+      new_ = newLUB.getLUB()[lubIndex];
+      assert(new_.isRef());
+    } else {
+      // Nothing was noted, so this is unreachable code. We can still refine to
+      // the bottom.
+      new_ = Type(oldHeapType.getBottom(), NonNullable);
+    }
 
     // Find all heap types between the old and new, starting from new.
-    auto oldHeapType = old.getHeapType();
     auto newHeapType = new_.getHeapType();
     assert(HeapType::isSubType(newHeapType, oldHeapType));
     std::vector<HeapType> options;
@@ -2528,19 +2541,16 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       continue;
     }
 
-    // Find the LUB, which is the most we can refine.
-    auto lub = paramLUBs[func->name];
-    if (!lub.noted()) {
-      continue;
-    }
-
     // Refine.
+    auto lub = paramLUBs[func->name];
     auto oldParams = func->getParams();
     auto lubType = lub.getLUB();
-    assert(oldParams.size() == lubType.size());
+    // Either the LUB has the right data shape, or nothing was noted (this is
+    // unreachable).
+    assert(oldParams.size() == lubType.size() || !lub.noted());
     std::vector<Type> newParams;
     for (Index i = 0; i < lubType.size(); i++) {
-      newParams.push_back(maybeRefine(oldParams[i], lubType[i]));
+      newParams.push_back(maybeRefine(oldParams[i], lub, i));
     }
     func->setParams(Type(newParams));
   }
@@ -2555,20 +2565,15 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       continue;
     }
 
-    // Find the LUB.
+    // Refine.
     auto* func = wasm.getFunction(name);
     auto lub = LUB::getResultsLUB(func, wasm);
-    if (!lub.noted()) {
-      continue;
-    }
-
-    // Refine.
     auto oldResults = func->getResults();
     auto lubType = lub.getLUB();
-    assert(oldResults.size() == lubType.size());
+    assert(oldResults.size() == lubType.size() || !lub.noted());
     std::vector<Type> newResults;
     for (Index i = 0; i < lubType.size(); i++) {
-      newResults.push_back(maybeRefine(oldResults[i], lubType[i]));
+      newResults.push_back(maybeRefine(oldResults[i], lub, i));
     }
     func->setResults(Type(newResults));
   }
