@@ -757,7 +757,7 @@ private:
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
-      auto* table = getModule()->getTable(curr->table);
+      auto* table = parent.module.getTable(curr->table);
       if (!Type::isSubType(Type(curr->heapType, Nullability::Nullable), table->type)) {
         parent.trap = true;
         return;
