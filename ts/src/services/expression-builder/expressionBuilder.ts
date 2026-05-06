@@ -17,9 +17,6 @@ import {
 	f64,
 } from "./f64.ts";
 import {
-	global,
-} from "./global.ts";
-import {
 	i31,
 } from "./i31.ts";
 import {
@@ -28,9 +25,6 @@ import {
 import {
 	i64,
 } from "./i64.ts";
-import {
-	local,
-} from "./local.ts";
 import {
 	memory,
 } from "./memory.ts";
@@ -49,6 +43,10 @@ import {
 import {
 	tuple,
 } from "./tuple.ts";
+import {
+	global,
+	local,
+} from "./variable.ts";
 
 
 

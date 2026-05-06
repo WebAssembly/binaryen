@@ -8,6 +8,10 @@ import type {
 	ExpressionRef,
 	Type,
 } from "../../constants.ts";
+import {
+	preserveStack,
+	strToStack,
+} from "../../utils.ts";
 
 
 
@@ -33,6 +37,26 @@ export function local(mod: Module) {
 		 */
 		tee: (index: number, value: ExpressionRef, typ: Type): ExpressionRef => (
 			BinaryenObj["_BinaryenLocalTee"](mod.ptr, index, value, typ)
+		),
+	} as const;
+}
+
+
+
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#variable-instructions */
+export function global(mod: Module) {
+	return {
+		/**
+		 * Creates a `(global.get)` for the global with the specified name.
+		 * Note that we must specify the type here as we may not have created the global being accessed yet.
+		 */
+		get: (name: string, typ: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenGlobalGet"](mod.ptr, strToStack(name), typ))
+		),
+
+		/** Creates a `(global.set)` for the global with the specified name. */
+		set: (name: string, value: ExpressionRef): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenGlobalSet"](mod.ptr, strToStack(name), value))
 		),
 	} as const;
 }
