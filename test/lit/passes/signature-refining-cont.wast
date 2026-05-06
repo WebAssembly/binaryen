@@ -4,15 +4,29 @@
 ;; cont.bind places restrictions on signature refining.
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (func (result (ref null $cont-A))))
   (type $A (func (result (ref null $cont-A))))
 
+  ;; CHECK:       (type $B (func (result (ref null $cont-A))))
   (type $B (func (result (ref null $cont-A))))
 
+  ;; CHECK:       (type $cont-A (cont $A))
   (type $cont-A (cont $A))
 
+  ;; CHECK:       (type $cont-B (cont $B))
   (type $cont-B (cont $B))
  )
 
+ ;; CHECK:      (elem declare func $0)
+
+ ;; CHECK:      (func $1 (type $A) (result (ref null $cont-A))
+ ;; CHECK-NEXT:  (cont.bind $cont-B $cont-A
+ ;; CHECK-NEXT:   (cont.new $cont-B
+ ;; CHECK-NEXT:    (ref.func $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $1 (type $A) (result (ref null $cont-A))
   ;; cont.bind requires that the continuation type's results match, so we
   ;; cannot refine the type $A: if we make it return an exact result, we would
@@ -24,6 +38,9 @@
   )
  )
 
+ ;; CHECK:      (func $0 (type $B) (result (ref null $cont-A))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
  (func $0 (type $B) (result (ref null $cont-A))
   (unreachable)
  )
