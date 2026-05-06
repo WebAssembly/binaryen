@@ -1730,7 +1730,7 @@ private:
 } // anonymous namespace
 
 static std::string getFullImportName(Name module, Name base) {
-  return std::string(module.str) + '.' + base.toString();
+  return module.toString() + '.' + base.toString();
 }
 
 struct Asyncify : public Pass {

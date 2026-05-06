@@ -23,7 +23,7 @@ void Value::stringify(std::ostream& os, bool pretty) {
   if (isString()) {
     std::stringstream wtf16;
     [[maybe_unused]] bool valid =
-      wasm::String::convertWTF8ToWTF16(wtf16, getIString().str);
+      wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
     assert(valid);
     // TODO: Use wtf16.view() once we have C++20.
     wasm::String::printEscapedJSON(os, wtf16.str());

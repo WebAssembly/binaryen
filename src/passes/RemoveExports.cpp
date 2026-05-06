@@ -19,10 +19,14 @@
 //
 //  --remove-exports=__*
 //
-// That will remove all exports with names like "__foo" and "__bar".
+// In this case we will remove all exports with names like "__foo" and "__bar".
+//
+// Exports can also be specified as a comma-separated list, and can be a
+// response file.
 //
 
 #include "pass.h"
+#include "support/file.h"
 #include "support/string.h"
 #include "wasm.h"
 
@@ -32,13 +36,21 @@ namespace {
 
 struct RemoveExports : public Pass {
   void run(Module* module) override {
-    std::string pattern =
+    std::string param =
       getArgument(name, "Usage usage:  wasm-opt --" + name + "=WILDCARD");
+
+    param = String::trim(read_possible_response_file(param));
+
+    String::Split patterns(param, String::Split::NewLineOr(","));
+    patterns = handleBracketingOperators(patterns);
 
     std::vector<Name> toRemove;
     for (auto& exp : module->exports) {
-      if (String::wildcardMatch(pattern, exp->name.toString())) {
-        toRemove.push_back(exp->name);
+      for (auto& pattern : patterns) {
+        if (String::wildcardMatch(pattern, exp->name.toString())) {
+          toRemove.push_back(exp->name);
+          break;
+        }
       }
     }
 

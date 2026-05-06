@@ -30,7 +30,7 @@ namespace wasm {
 inline std::string wasm2cMangle(Name name, Signature sig) {
   const char escapePrefix = 'Z';
   std::string mangled = "Z_";
-  for (unsigned char c : name.str) {
+  for (unsigned char c : name.view()) {
     if ((isalnum(c) && c != escapePrefix) || c == '_') {
       // This character is ok to emit as it is.
       mangled += c;

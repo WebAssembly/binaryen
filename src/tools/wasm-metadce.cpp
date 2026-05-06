@@ -78,7 +78,7 @@ struct MetaDCEGraph {
       // to be kept alive.
       module = ENV;
     }
-    return std::string(module.str) + " (*) " + std::string(base.str);
+    return std::string(module.view()) + " (*) " + std::string(base.view());
   }
 
   ImportId getImportId(ModuleItemKind kind, Name name) {

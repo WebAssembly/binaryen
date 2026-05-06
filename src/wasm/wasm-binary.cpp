@@ -207,7 +207,7 @@ void WasmBinaryWriter::writeStart() {
     return;
   }
   auto start = startSection(BinaryConsts::Section::Start);
-  o << U32LEB(getFunctionIndex(wasm->start.str));
+  o << U32LEB(getFunctionIndex(wasm->start.view()));
   finishSection(start);
 }
 
@@ -339,8 +339,8 @@ void WasmBinaryWriter::writeImports() {
   auto start = startSection(BinaryConsts::Section::Import);
   o << U32LEB(num);
   auto writeImportHeader = [&](Importable* import) {
-    writeInlineString(import->module.str);
-    writeInlineString(import->base.str);
+    writeInlineString(import->module.view());
+    writeInlineString(import->base.view());
   };
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
     writeImportHeader(func);
@@ -581,7 +581,8 @@ void WasmBinaryWriter::writeStrings() {
   for (auto& string : sorted) {
     // Re-encode from WTF-16 to WTF-8.
     std::stringstream wtf8;
-    [[maybe_unused]] bool valid = String::convertWTF16ToWTF8(wtf8, string.str);
+    [[maybe_unused]] bool valid =
+      String::convertWTF16ToWTF8(wtf8, string.view());
     assert(valid);
     // TODO: Use wtf8.view() once we have C++20.
     writeInlineString(wtf8.str());
@@ -640,7 +641,7 @@ void WasmBinaryWriter::writeExports() {
   auto start = startSection(BinaryConsts::Section::Export);
   o << U32LEB(wasm->exports.size());
   for (auto& curr : wasm->exports) {
-    writeInlineString(curr->name.str);
+    writeInlineString(curr->name.view());
     o << U32LEB(int32_t(curr->kind));
     switch (curr->kind) {
       case ExternalKind::Function:
@@ -917,7 +918,7 @@ void WasmBinaryWriter::writeNames() {
   if (emitModuleName && wasm->name.is()) {
     auto substart =
       startSubsection(BinaryConsts::CustomSections::Subsection::NameModule);
-    writeEscapedName(wasm->name.str);
+    writeEscapedName(wasm->name.view());
     finishSubsection(substart);
   }
 
@@ -946,7 +947,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(functionsWithNames.size());
       for (auto& [index, global] : functionsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.str);
+        writeEscapedName(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1006,7 +1007,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(localsWithNames.size());
         for (auto& [indexInBinary, name] : localsWithNames) {
           o << U32LEB(indexInBinary);
-          writeEscapedName(name.str);
+          writeEscapedName(name.view());
         }
         emitted++;
       }
@@ -1029,7 +1030,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(namedTypes.size());
       for (auto type : namedTypes) {
         o << U32LEB(indexedTypes.indices[type]);
-        writeEscapedName(wasm->typeNames[type].name.str);
+        writeEscapedName(wasm->typeNames[type].name.view());
       }
       finishSubsection(substart);
     }
@@ -1056,7 +1057,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, table] : tablesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(table->name.str);
+        writeEscapedName(table->name.view());
       }
 
       finishSubsection(substart);
@@ -1082,7 +1083,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(memoriesWithNames.size());
       for (auto& [index, memory] : memoriesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(memory->name.str);
+        writeEscapedName(memory->name.view());
       }
       finishSubsection(substart);
     }
@@ -1107,7 +1108,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(globalsWithNames.size());
       for (auto& [index, global] : globalsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.str);
+        writeEscapedName(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1132,7 +1133,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, elem] : elemsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(elem->name.str);
+        writeEscapedName(elem->name.view());
       }
 
       finishSubsection(substart);
@@ -1156,7 +1157,7 @@ void WasmBinaryWriter::writeNames() {
         auto& seg = wasm->dataSegments[i];
         if (seg->hasExplicitName) {
           o << U32LEB(i);
-          writeEscapedName(seg->name.str);
+          writeEscapedName(seg->name.view());
         }
       }
       finishSubsection(substart);
@@ -1187,7 +1188,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(fieldNames.size());
         for (auto& [index, name] : fieldNames) {
           o << U32LEB(index);
-          writeEscapedName(name.str);
+          writeEscapedName(name.view());
         }
       }
       finishSubsection(substart);
@@ -1213,7 +1214,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(tagsWithNames.size());
       for (auto& [index, tag] : tagsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(tag->name.str);
+        writeEscapedName(tag->name.view());
       }
       finishSubsection(substart);
     }
@@ -1232,7 +1233,8 @@ void WasmBinaryWriter::writeSourceMapUrl() {
 void WasmBinaryWriter::writeSymbolMap() {
   std::ofstream file(symbolMap);
   auto write = [&](Function* func) {
-    file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
+    file << getFunctionIndex(func->name) << ":" << func->name.view()
+         << std::endl;
   };
   ModuleUtils::iterImportedFunctions(*wasm, write);
   ModuleUtils::iterDefinedFunctions(*wasm, write);
@@ -1523,7 +1525,7 @@ void WasmBinaryWriter::writeLegacyDylinkSection() {
   o << U32LEB(wasm->dylinkSection->tableAlignment);
   o << U32LEB(wasm->dylinkSection->neededDynlibs.size());
   for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
-    writeInlineString(neededDynlib.str);
+    writeInlineString(neededDynlib.view());
   }
   finishSection(start);
 }
@@ -1554,7 +1556,7 @@ void WasmBinaryWriter::writeDylinkSection() {
       startSubsection(BinaryConsts::CustomSections::Subsection::DylinkNeeded);
     o << U32LEB(wasm->dylinkSection->neededDynlibs.size());
     for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
-      writeInlineString(neededDynlib.str);
+      writeInlineString(neededDynlib.view());
     }
     finishSubsection(substart);
   }
@@ -1744,7 +1746,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
   // We found data: emit the section.
   buffer << uint8_t(BinaryConsts::Custom);
   auto lebPos = buffer.writeU32LEBPlaceholder();
-  buffer.writeInlineString(sectionName.str);
+  buffer.writeInlineString(sectionName.view());
 
   buffer << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
@@ -2279,7 +2281,7 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     }
     wasm.customSections.resize(wasm.customSections.size() + 1);
     auto& section = wasm.customSections.back();
-    section.name = sectionName.str;
+    section.name = sectionName.view();
     auto data = getByteView(payloadLen);
     section.data = {data.begin(), data.end()};
   }
@@ -4926,7 +4928,7 @@ void WasmBinaryReader::readStrings() {
     auto string = getInlineString(false);
     // Re-encode from WTF-8 to WTF-16.
     std::stringstream wtf16;
-    if (!String::convertWTF8ToWTF16(wtf16, string.str)) {
+    if (!String::convertWTF8ToWTF16(wtf16, string.view())) {
       throwError("invalid string constant");
     }
     // TODO: Use wtf16.view() once we have C++20.
@@ -5208,7 +5210,7 @@ static char formatNibble(int nibble) {
 
 Name WasmBinaryReader::escape(Name name) {
   bool allIdChars = true;
-  for (char c : name.str) {
+  for (char c : name.view()) {
     if (!(allIdChars = isIdChar(c))) {
       break;
     }
@@ -5218,7 +5220,7 @@ Name WasmBinaryReader::escape(Name name) {
   }
   // encode name, if at least one non-idchar (per WebAssembly spec) was found
   std::string escaped;
-  for (char c : name.str) {
+  for (char c : name.view()) {
     if (isIdChar(c)) {
       escaped.push_back(c);
       continue;

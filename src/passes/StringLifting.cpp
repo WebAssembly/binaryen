@@ -70,11 +70,11 @@ struct StringLifting : public Pass {
         // Encode from WTF-8 to WTF-16.
         auto wtf8 = global->base;
         std::stringstream wtf16;
-        bool valid = String::convertWTF8ToWTF16(wtf16, wtf8.str);
+        bool valid = String::convertWTF8ToWTF16(wtf16, wtf8.view());
         if (!valid) {
           Fatal() << "Bad string to lift: " << wtf8;
         }
-        importedStrings[global->name] = wtf16.str();
+        importedStrings[global->name] = wtf16.view();
         found = true;
       }
     }
@@ -101,7 +101,7 @@ struct StringLifting : public Pass {
           continue;
         }
         // The index in the array is the basename.
-        Index index = std::stoi(std::string(global->base.str));
+        Index index = std::stoi(std::string(global->base.view()));
         if (index >= array.size()) {
           Fatal() << "StringLifting: bad index in string.const section";
         }
@@ -222,7 +222,7 @@ struct StringLifting : public Pass {
         auto iter = parent.importedStrings.find(curr->name);
         if (iter != parent.importedStrings.end()) {
           auto wtf16 = iter->second;
-          replaceCurrent(Builder(*getModule()).makeStringConst(wtf16.str));
+          replaceCurrent(Builder(*getModule()).makeStringConst(wtf16.view()));
           modified = true;
         }
       }

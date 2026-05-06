@@ -412,7 +412,7 @@ class FuzzerImportResolver
     // fuzz_shell.js.
     Index payload = 0;
     for (auto name : {name.module, name.name}) {
-      for (auto c : name.str) {
+      for (auto c : name.view()) {
         payload = (payload + static_cast<Index>(c)) % 251;
       }
     }

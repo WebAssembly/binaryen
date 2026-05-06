@@ -121,7 +121,7 @@ public:
   }
 
   friend std::ostream& operator<<(std::ostream& o, const Flow& flow) {
-    o << "(flow " << (flow.breakTo.is() ? flow.breakTo.str : "-") << " : {";
+    o << "(flow " << (flow.breakTo.is() ? flow.breakTo.view() : "-") << " : {";
     for (size_t i = 0; i < flow.values.size(); ++i) {
       if (i > 0) {
         o << ", ";
@@ -2727,7 +2727,9 @@ public:
         return Flow(NONCONSTANT_FLOW);
     }
   }
-  Flow visitStringConst(StringConst* curr) { return Literal(curr->string.str); }
+  Flow visitStringConst(StringConst* curr) {
+    return Literal(curr->string.view());
+  }
 
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
