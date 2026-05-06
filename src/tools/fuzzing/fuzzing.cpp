@@ -2511,6 +2511,10 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // refine that index if we can. It is possible that no new types exist at all,
   // if the code was unreachable and we noted nothing.
   auto maybeRefineIndex = [&](Type oldTypes, LUBFinder newLUB, Index index) {
+    if (oldTypes == Type::none) {
+      return oldTypes;
+    }
+
     auto lub =
       newLUB.noted() ? newLUB.getLUB()[index] : Type(Type::unreachable);
     return maybeRefine(oldTypes[index], lub);
