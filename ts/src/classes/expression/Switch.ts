@@ -9,10 +9,14 @@ import {
 import {
 	THIS_PTR,
 	getAllNested,
+	i32sToStack,
 	preserveStack,
 	setAllNested,
 	strToStack,
 } from "../../utils.ts";
+import type {
+	Module,
+} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -20,6 +24,19 @@ import {
 
 
 export class Switch extends Expression {
+	/** Creates a switch. */
+	static brTable(mod: Module, labels: readonly string[], defaultLabel: string, condition: ExpressionRef, value?: ExpressionRef): ExpressionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenSwitch"](
+			mod.ptr,
+			i32sToStack(labels.map(strToStack)),
+			labels.length,
+			strToStack(defaultLabel),
+			condition,
+			value!,
+		));
+	}
+
+
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Switch, expr);
 	}

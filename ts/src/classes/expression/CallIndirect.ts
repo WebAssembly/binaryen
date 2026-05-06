@@ -10,10 +10,14 @@ import {
 import {
 	THIS_PTR,
 	getAllNested,
+	i32sToStack,
 	preserveStack,
 	setAllNested,
 	strToStack,
 } from "../../utils.ts";
+import type {
+	Module,
+} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -21,6 +25,12 @@ import {
 
 
 export class CallIndirect extends Expression {
+	/** Similar to `call_ref`, but indexes into a table to find the function to call. */
+	static callIndirect(mod: Module, table: string, target: ExpressionRef, operands: readonly ExpressionRef[], paramsType: Type, resultsType: Type): ExpressionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenCallIndirect"](mod.ptr, strToStack(table), target, i32sToStack(operands), operands.length, paramsType, resultsType));
+	}
+
+
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.CallIndirect, expr);
 	}

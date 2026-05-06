@@ -11,6 +11,9 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
+import type {
+	Module,
+} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -18,6 +21,12 @@ import {
 
 
 export class Rethrow extends Expression {
+	/** Reraise an exception. */
+	static throwRef(mod: Module, target: string): ExpressionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenRethrow"](mod.ptr, strToStack(target)));
+	}
+
+
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Rethrow, expr);
 	}

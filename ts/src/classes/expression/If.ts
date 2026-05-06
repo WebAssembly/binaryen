@@ -8,6 +8,9 @@ import {
 import {
 	THIS_PTR,
 } from "../../utils.ts";
+import type {
+	Module,
+} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -15,6 +18,12 @@ import {
 
 
 export class If extends Expression {
+	/** Creates an ‘if’ or ‘if/else’ combination. */
+	static if(mod: Module, ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef {
+		return BinaryenObj["_BinaryenIf"](mod.ptr, ifTrue, ifFalse);
+	}
+
+
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.If, expr);
 	}

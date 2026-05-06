@@ -8,11 +8,6 @@ import type {
 
 
 
-/** Placeholder. */
-const STUB = (..._args: readonly number[]): number => 0;
-
-
-
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
 export function control(mod: Module) {
 	return {
@@ -20,26 +15,42 @@ export function control(mod: Module) {
 		block: expressions.Block.block.bind(null, mod),
 		/** @inheritDoc expressions.Loop.loop */
 		loop: expressions.Loop.loop.bind(null, mod),
-		if: STUB,
+		/** @inheritDoc expressions.If.if */
+		if: expressions.If.if.bind(null, mod),
 		/** @inheritDoc expressions.Break.br */
 		br: expressions.Break.br.bind(null, mod),
 		/** @inheritDoc expressions.Break.br_if */
 		br_if: expressions.Break.br_if.bind(null, mod),
-		br_table: STUB,
-		br_on_null: STUB,
-		br_on_non_null: STUB,
-		br_on_cast: STUB,
-		br_on_cast_fail: STUB,
-		call: STUB,
-		call_ref: STUB,
-		call_indirect: STUB,
-		return: STUB,
-		return_call: STUB,
-		return_call_ref: STUB,
-		return_call_indirect: STUB,
-		throw: STUB,
-		throw_ref: STUB,
-		try_table: STUB,
+		/** @inheritDoc expressions.Switch.brTable */
+		br_table: expressions.Switch.brTable.bind(null, mod),
+		/** @inheritDoc expressions.BrOn.brOnNull */
+		br_on_null: expressions.BrOn.brOnNull.bind(null, mod),
+		/** @inheritDoc expressions.BrOn.brOnNonNull */
+		br_on_non_null: expressions.BrOn.brOnNonNull.bind(null, mod),
+		/** @inheritDoc expressions.BrOn.brOnCast */
+		br_on_cast: expressions.BrOn.brOnCast.bind(null, mod),
+		/** @inheritDoc expressions.BrOn.brOnCastFail */
+		br_on_cast_fail: expressions.BrOn.brOnCastFail.bind(null, mod),
+		/** @inheritDoc expressions.Call.call */
+		call: expressions.Call.call.bind(null, mod),
+		/** @inheritDoc expressions.CallRef.callRef */
+		call_ref: expressions.CallRef.callRef.bind(null, mod),
+		/** @inheritDoc expressions.CallIndirect.callIndirect */
+		call_indirect: expressions.CallIndirect.callIndirect.bind(null, mod),
+		/** @inheritDoc expressions.Return.return */
+		return: expressions.Return.return.bind(null, mod),
+		/** @inheritDoc expressions.Return.returnCall */
+		return_call: expressions.Return.returnCall.bind(null, mod),
+		/** @inheritDoc expressions.Return.returnCallRef */
+		return_call_ref: expressions.Return.returnCallRef.bind(null, mod),
+		/** @inheritDoc expressions.Return.returnCallIndirect */
+		return_call_indirect: expressions.Return.returnCallIndirect.bind(null, mod),
+		/** @inheritDoc expressions.Throw.throw */
+		throw: expressions.Throw.throw.bind(null, mod),
+		/** @inheritDoc expressions.Rethrow.throwRef */
+		throw_ref: expressions.Rethrow.throwRef.bind(null, mod),
+		/** @inheritDoc expressions.Try.tryTable */
+		try_table: expressions.Try.tryTable.bind(null, mod),
 		// TODO: catch
 		// TODO: catch_ref
 		// TODO: catch_all
