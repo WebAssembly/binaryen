@@ -25,18 +25,29 @@ TEST_F(IStringTest, Empty) {
   auto empty = IString("");
   EXPECT_NE(null, empty);
 
+  EXPECT_FALSE(null.is());
+  EXPECT_TRUE(empty.is());
+
   // But they are equal to themselves.
   EXPECT_EQ(null, null);
   EXPECT_EQ(empty, empty);
 
-  // A default string_view is a null.
-  auto default1 = std::string_view();
-  EXPECT_EQ(default1.data(), nullptr);
-  auto default2 = std::string_view{};
-  EXPECT_EQ(default2.data(), nullptr);
+  // A default string_view is the empty string, and has data == nullptr.
+  auto stdViewDefault1 = std::string_view();
+  EXPECT_EQ(stdViewDefault1.data(), nullptr);
+  auto stdViewDefault2 = std::string_view{};
+  EXPECT_EQ(stdViewDefault2.data(), nullptr);
 
-  EXPECT_EQ(null, default1);
-  EXPECT_EQ(null, default2);
+  EXPECT_EQ(empty, stdViewDefault1);
+  EXPECT_EQ(empty, stdViewDefault2);
+
+  // The same when going through the IString constructor.
+  EXPECT_EQ(empty, IString(std::string_view{}));
+
+  // An empty string_view is equal to those, even though its data != nullptr.
+  auto stdViewEmpty = std::string_view("");
+  EXPECT_NE(stdViewEmpty.data(), nullptr);
+  EXPECT_EQ(empty, stdViewEmpty);
 }
 
 TEST_F(IStringTest, Interning) {

@@ -23,10 +23,6 @@
 namespace wasm {
 
 const char* IString::interned(std::string_view s) {
-  if (s.data() == nullptr) {
-    return nullptr;
-  }
-
   // A set of interned Views, i.e., that contains our pascal-style strings. We
   // need to query this using a std::string_view, as that is what we receive as
   // input (turning it into pascal-style storage would add overhead). To do so,
