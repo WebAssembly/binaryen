@@ -8,9 +8,6 @@ import {
 import {
 	THIS_PTR,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -18,12 +15,6 @@ import {
 
 
 export class Drop extends Expression {
-	/** Creates a `(drop)` of a value. */
-	static drop(mod: Module, value: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_BinaryenDrop"](mod.ptr, value);
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Drop, expr);
 	}

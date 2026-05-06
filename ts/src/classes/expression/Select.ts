@@ -8,9 +8,6 @@ import {
 import {
 	THIS_PTR,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -18,12 +15,6 @@ import {
 
 
 export class Select extends Expression {
-	/** Creates a `(select)` of one of two values. */
-	static select(mod: Module, ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_BinaryenSelect"](mod.ptr, ifTrue, ifFalse);
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Select, expr);
 	}
