@@ -19,7 +19,7 @@
 //
 //  --remove-exports=__*
 //
-// That will remove all exports with names like "__foo" and "__bar".
+// In this case we will remove all exports with names like "__foo" and "__bar".
 //
 // Exports can also be specified as a comma-separated list, and can be a
 // response file.
