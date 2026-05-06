@@ -17,9 +17,6 @@ import {
 	f64,
 } from "./f64.ts";
 import {
-	i31,
-} from "./i31.ts";
-import {
 	i32,
 } from "./i32.ts";
 import {
@@ -32,6 +29,7 @@ import {
 	parametric,
 } from "./parametric.ts";
 import {
+	i31,
 	ref,
 } from "./ref.ts";
 import {
@@ -80,10 +78,10 @@ export function expressionBuilder(mod: Module) {
 		memory: memory(mod),
 		data: {drop: STUB},
 		ref: ref(mod),
+		i31: i31(mod),
 		tuple: tuple(mod),
 		struct: struct(mod),
 		array: array(mod),
-		i31: i31(mod),
 		// TODO: extern
 		// TODO: any
 		i32: i32(mod),
