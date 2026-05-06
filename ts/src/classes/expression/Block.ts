@@ -5,20 +5,14 @@ import {
 import {
 	ExpressionId,
 	type ExpressionRef,
-	type Type,
-	none,
 } from "../../constants.ts";
 import {
 	THIS_PTR,
-	i32sToStack,
 	getAllNested,
 	preserveStack,
 	setAllNested,
 	strToStack,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -26,18 +20,6 @@ import {
 
 
 export class Block extends Expression {
-	/** Creates a `(block)`. */
-	static block(mod: Module, name: string | null, children: readonly ExpressionRef[], resultType: Type = none): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenBlock"](
-			mod.ptr,
-			name ? strToStack(name) : 0,
-			i32sToStack(children),
-			children.length,
-			resultType,
-		));
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Block, expr);
 	}

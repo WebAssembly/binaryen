@@ -5,7 +5,10 @@ import {
 	array,
 } from "./array.ts";
 import {
-	control,
+	blocks,
+	breaks,
+	calls,
+	throws,
 } from "./control.ts";
 import {
 	f32,
@@ -68,7 +71,10 @@ export function expressionBuilder(mod: Module) {
 	 */
 	return {
 		...parametric(mod),
-		...control(mod),
+		...blocks(mod),
+		...breaks(mod),
+		...calls(mod),
+		...throws(mod),
 		local: local(mod),
 		global: global(mod),
 		table: table(mod),

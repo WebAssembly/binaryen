@@ -1,71 +1,203 @@
 import {
+	BinaryenObj,
+} from "../../-pre.ts";
+import {
 	consoleWarn,
 } from "../../lib.ts";
-import * as expressions from "../../classes/expression/index.ts";
+import {
+	Operation,
+} from "../../classes/expression/Operation.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
+import {
+	type ExpressionRef,
+	type Type,
+	none,
+	unreachable,
+} from "../../constants.ts";
+import {
+	i32sToStack,
+	preserveStack,
+	strToStack,
+} from "../../utils.ts";
 
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
-export function control(mod: Module) {
+export function blocks(mod: Module) {
 	return {
-		/** @inheritDoc expressions.Block.block */
-		block: expressions.Block.block.bind(null, mod),
-		/** @inheritDoc expressions.Loop.loop */
-		loop: expressions.Loop.loop.bind(null, mod),
-		/** @inheritDoc expressions.If.if */
-		if: expressions.If.if.bind(null, mod),
-		/** @inheritDoc expressions.Break.br */
-		br: expressions.Break.br.bind(null, mod),
-		/** @inheritDoc expressions.Break.br_if */
-		br_if: expressions.Break.br_if.bind(null, mod),
-		/** @inheritDoc expressions.Switch.brTable */
-		br_table: expressions.Switch.brTable.bind(null, mod),
-		/** @inheritDoc expressions.BrOn.brOnNull */
-		br_on_null: expressions.BrOn.brOnNull.bind(null, mod),
-		/** @inheritDoc expressions.BrOn.brOnNonNull */
-		br_on_non_null: expressions.BrOn.brOnNonNull.bind(null, mod),
-		/** @inheritDoc expressions.BrOn.brOnCast */
-		br_on_cast: expressions.BrOn.brOnCast.bind(null, mod),
-		/** @inheritDoc expressions.BrOn.brOnCastFail */
-		br_on_cast_fail: expressions.BrOn.brOnCastFail.bind(null, mod),
-		/** @inheritDoc expressions.Call.call */
-		call: expressions.Call.call.bind(null, mod),
-		/** @inheritDoc expressions.CallRef.callRef */
-		call_ref: expressions.CallRef.callRef.bind(null, mod),
-		/** @inheritDoc expressions.CallIndirect.callIndirect */
-		call_indirect: expressions.CallIndirect.callIndirect.bind(null, mod),
-		/** @inheritDoc expressions.Return.return */
-		return: expressions.Return.return.bind(null, mod),
-		/** @inheritDoc expressions.Return.returnCall */
-		return_call: expressions.Return.returnCall.bind(null, mod),
-		/** @inheritDoc expressions.Return.returnCallRef */
-		return_call_ref: expressions.Return.returnCallRef.bind(null, mod),
-		/** @inheritDoc expressions.Return.returnCallIndirect */
-		return_call_indirect: expressions.Return.returnCallIndirect.bind(null, mod),
-		/** @inheritDoc expressions.Throw.throw */
-		throw: expressions.Throw.throw.bind(null, mod),
-		/** @inheritDoc expressions.Rethrow.throwRef */
-		throw_ref: expressions.Rethrow.throwRef.bind(null, mod),
-		/** @inheritDoc expressions.Try.tryTable */
-		try_table: expressions.Try.tryTable.bind(null, mod),
-		// TODO: catch
-		// TODO: catch_ref
-		// TODO: catch_all
-		// TODO: catch_all_ref
+		/** Creates a `(block)`. */
+		block: (name: string | null, children: readonly ExpressionRef[], resultType: Type = none): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenBlock"](
+				mod.ptr,
+				name ? strToStack(name) : 0,
+				i32sToStack(children),
+				children.length,
+				resultType,
+			))
+		),
+
+		/** Creates a `(loop)`. */
+		loop: (name: string, body: ExpressionRef): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenLoop"](mod.ptr, strToStack(name), body))
+		),
+
+		/** Creates an ‘if’ or ‘if/else’ combination. */
+		if: (ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenIf"](mod.ptr, ifTrue, ifFalse)
+		),
+	} as const;
+}
+
+
+
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
+export function breaks(mod: Module) {
+	function brOn(op: Operation, label: string, value: ExpressionRef, castType: Type): ExpressionRef {
+		return preserveStack(() => BinaryenObj["_BinaryenBrOn"](mod.ptr, op, strToStack(label), value, castType));
+	}
+
+	return {
+		/** Creates an unconditional branch `(br)` to a label. */
+		br: (label: string, condition?: ExpressionRef, value?: ExpressionRef): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenBreak"](mod.ptr, strToStack(label), condition!, value!))
+		),
+
+		/** Creates a conditional branch `(br_if)` to a label. */
+		br_if: (label: string, condition: ExpressionRef, value?: ExpressionRef): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenBreak"](mod.ptr, strToStack(label), condition, value!))
+		),
+
+		/** Creates a switch. */
+		br_table: (labels: readonly string[], defaultLabel: string, condition: ExpressionRef, value?: ExpressionRef): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenSwitch"](
+				mod.ptr,
+				i32sToStack(labels.map(strToStack)),
+				labels.length,
+				strToStack(defaultLabel),
+				condition,
+				value!,
+			))
+		),
+
+		/** Branches if the reference operand is null. */
+		br_on_null: (label: string, value: ExpressionRef): ExpressionRef => (
+			brOn(Operation.BrOnNull, label, value, unreachable)
+		),
+
+		/** Branches if the reference operand is not null. */
+		br_on_non_null: (label: string, value: ExpressionRef): ExpressionRef => (
+			brOn(Operation.BrOnNonNull, label, value, unreachable)
+		),
+
+		/** Branches if the reference operand is successfully downcast to the given type. */
+		br_on_cast: (label: string, value: ExpressionRef, castType: Type): ExpressionRef => (
+			brOn(Operation.BrOnCast, label, value, castType)
+		),
+
+		/** Branches if the reference operand fails to downcast to the given type. */
+		br_on_cast_fail: (label: string, value: ExpressionRef, castType: Type): ExpressionRef => (
+			brOn(Operation.BrOnCastFail, label, value, castType)
+		),
 
 		// @ts-expect-error
 		/** @deprecated Use {@link ExpressionBuilder#br} instead. */ break(...args) { consoleWarn("`.break()` is deprecated; use `.br()` instead."); return this.br(...args); },
 		// @ts-expect-error
 		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */ switch(...args) { consoleWarn("`.switch()` is deprecated; use `.br_table()` instead."); return this.br_table(...args); },
+	} as const;
+}
+
+
+
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
+export function calls(mod: Module) {
+	return {
+		/**
+		 * Creates a call to a function.
+		 * Note that we must specify the return type here as we may not have created the function being called yet.
+		 */
+		call: (name: string, operands: readonly ExpressionRef[], resultsType: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenCall"](mod.ptr, strToStack(name), i32sToStack(operands), operands.length, resultsType))
+		),
+
+		/** Similar to `call`, but takes a function reference operand instead of a name as the called value. */
+		call_ref: (target: ExpressionRef, operands: readonly ExpressionRef[], resultsType: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenCallRef"](mod.ptr, target, i32sToStack(operands), operands.length, resultsType))
+		),
+
+		/** Similar to `call_ref`, but indexes into a table to find the function to call. */
+		call_indirect: (table: string, target: ExpressionRef, operands: readonly ExpressionRef[], paramsType: Type, resultsType: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenCallIndirect"](mod.ptr, strToStack(table), target, i32sToStack(operands), operands.length, paramsType, resultsType))
+		),
+
+		/** Unconditional branch to the body of the current function. */
+		return: (value: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenReturn"](mod.ptr, value)
+		),
+
+		/** Tail-call variant of `call`. */
+		return_call: (name: string, operands: readonly ExpressionRef[], resultsType: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenReturnCall"](mod.ptr, strToStack(name), i32sToStack(operands), operands.length, resultsType))
+		),
+
+		/** Tail-call variant of `call_ref`. */
+		return_call_ref: (target: ExpressionRef, operands: readonly ExpressionRef[], resultsType: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenReturnCallRef"](mod.ptr, target, i32sToStack(operands), operands.length, resultsType))
+		),
+
+		/** Tail-call variant of `call_indirect`. */
+		return_call_indirect: (table: string, target: ExpressionRef, operands: readonly ExpressionRef[], paramsType: Type, resultsType: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenReturnCallIndirect"](mod.ptr, strToStack(table), target, i32sToStack(operands), operands.length, paramsType, resultsType))
+		),
+
 		// @ts-expect-error
 		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */ callIndirect(...args) { consoleWarn("`.callIndirect()` is deprecated; use `.call_indirect()` instead."); return this.call_indirect(...args); },
 		// @ts-expect-error
 		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */ returnCall(...args) { consoleWarn("`.returnCall()` is deprecated; use `.return_call()` instead."); return this.return_call(...args); },
 		// @ts-expect-error
 		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */ returnCallIndirect(...args) { consoleWarn("`.returnCallIndirect()` is deprecated; use `.return_call_indirect()` instead."); return this.return_call_indirect(...args); },
+	} as const;
+}
+
+
+
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#control-instructions */
+export function throws(mod: Module) {
+	return {
+		/** Raise an exception. */
+		throw: (tag: string, operands: readonly ExpressionRef[]): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenThrow"](mod.ptr, strToStack(tag), i32sToStack(operands), operands.length))
+		),
+
+		/** Reraise an exception. */
+		throw_ref: (target: string): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenRethrow"](mod.ptr, strToStack(target)))
+		),
+
+		/** Installs an exception handler that handles exceptions as specified by its catch clauses. */
+		try_table: (
+			name: string,
+			body: ExpressionRef,
+			catchTags: readonly string[],
+			catchBodies: readonly ExpressionRef[],
+			delegateTarget: string,
+		): ExpressionRef => preserveStack(() => BinaryenObj["_BinaryenTry"](
+			mod.ptr,
+			strToStack(name),
+			body,
+			i32sToStack(catchTags.map(strToStack)),
+			catchTags.length,
+			i32sToStack(catchBodies),
+			catchBodies.length,
+			strToStack(delegateTarget),
+		)),
+
+		// TODO: catch
+		// TODO: catch_ref
+		// TODO: catch_all
+		// TODO: catch_all_ref
+
 		// @ts-expect-error
 		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */ rethrow(...args) { consoleWarn("`.rethrow()` is deprecated; use `.throw_ref()` instead."); return this.throw_ref(...args); },
 		// @ts-expect-error

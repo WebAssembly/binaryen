@@ -11,9 +11,6 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -21,17 +18,6 @@ import {
 
 
 export class Break extends Expression {
-	/** Creates an unconditional branch `(br)` to a label. */
-	static br(mod: Module, label: string, condition?: ExpressionRef, value?: ExpressionRef): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenBreak"](mod.ptr, strToStack(label), condition!, value!));
-	}
-
-	/** Creates a conditional branch `(br_if)` to a label. */
-	static br_if(mod: Module, label: string, condition: ExpressionRef, value?: ExpressionRef): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenBreak"](mod.ptr, strToStack(label), condition, value!));
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Break, expr);
 	}

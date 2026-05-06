@@ -4,16 +4,10 @@ import {
 import {
 	ExpressionId,
 	type ExpressionRef,
-	type Type,
 } from "../../constants.ts";
 import {
 	THIS_PTR,
-	i32sToStack,
-	preserveStack,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -21,12 +15,6 @@ import {
 
 
 export class CallRef extends Expression {
-	/** Similar to `call`, but takes a function reference operand instead of a name as the called value. */
-	static callRef(mod: Module, target: ExpressionRef, operands: readonly ExpressionRef[], resultsType: Type): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenCallRef"](mod.ptr, target, i32sToStack(operands), operands.length, resultsType));
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.CallRef, expr);
 	}

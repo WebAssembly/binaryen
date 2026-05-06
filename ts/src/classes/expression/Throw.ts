@@ -9,14 +9,10 @@ import {
 import {
 	THIS_PTR,
 	getAllNested,
-	i32sToStack,
 	preserveStack,
 	setAllNested,
 	strToStack,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -24,12 +20,6 @@ import {
 
 
 export class Throw extends Expression {
-	/** Raise an exception. */
-	static throw(mod: Module, tag: string, operands: readonly ExpressionRef[]): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenThrow"](mod.ptr, strToStack(tag), i32sToStack(operands), operands.length));
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Throw, expr);
 	}

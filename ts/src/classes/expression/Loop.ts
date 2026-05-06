@@ -11,9 +11,6 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -21,12 +18,6 @@ import {
 
 
 export class Loop extends Expression {
-	/** Creates a `(loop)`. */
-	static loop(mod: Module, name: string, body: ExpressionRef): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenLoop"](mod.ptr, strToStack(name), body));
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Loop, expr);
 	}

@@ -6,52 +6,19 @@ import {
 	ExpressionId,
 	type ExpressionRef,
 	type Type,
-	unreachable,
 } from "../../constants.ts";
 import {
 	THIS_PTR,
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
-import {
-	Operation,
-} from "./Operation.ts";
 
 
 
 export class BrOn extends Expression {
-	static #brOn(mod: Module, op: Operation, label: string, value: ExpressionRef, castType: Type): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenBrOn"](mod.ptr, op, strToStack(label), value, castType));
-	}
-
-	/** Branches if the reference operand is null. */
-	static brOnNull(mod: Module, label: string, value: ExpressionRef): ExpressionRef {
-		return this.#brOn(mod, Operation.BrOnNull, label, value, unreachable);
-	}
-
-	/** Branches if the reference operand is not null. */
-	static brOnNonNull(mod: Module, label: string, value: ExpressionRef): ExpressionRef {
-		return this.#brOn(mod, Operation.BrOnNonNull, label, value, unreachable);
-	}
-
-	/** Branches if the reference operand is successfully downcast to the given type. */
-	static brOnCast(mod: Module, label: string, value: ExpressionRef, castType: Type): ExpressionRef {
-		return this.#brOn(mod, Operation.BrOnCast, label, value, castType);
-	}
-
-	/** Branches if the reference operand fails to downcast to the given type. */
-	static brOnCastFail(mod: Module, label: string, value: ExpressionRef, castType: Type): ExpressionRef {
-		return this.#brOn(mod, Operation.BrOnCastFail, label, value, castType);
-	}
-
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.BrOn, expr);
 	}

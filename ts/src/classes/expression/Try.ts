@@ -9,14 +9,10 @@ import {
 import {
 	THIS_PTR,
 	getAllNested,
-	i32sToStack,
 	preserveStack,
 	strToStack,
 	setAllNested,
 } from "../../utils.ts";
-import type {
-	Module,
-} from "../module/Module.ts";
 import {
 	Expression,
 } from "./Expression.ts";
@@ -24,28 +20,6 @@ import {
 
 
 export class Try extends Expression {
-	/** Installs an exception handler that handles exceptions as specified by its catch clauses. */
-	static tryTable(
-		mod: Module,
-		name: string,
-		body: ExpressionRef,
-		catchTags: readonly string[],
-		catchBodies: readonly ExpressionRef[],
-		delegateTarget: string,
-	): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenTry"](
-			mod.ptr,
-			strToStack(name),
-			body,
-			i32sToStack(catchTags.map(strToStack)),
-			catchTags.length,
-			i32sToStack(catchBodies),
-			catchBodies.length,
-			strToStack(delegateTarget),
-		));
-	}
-
-
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Try, expr);
 	}
