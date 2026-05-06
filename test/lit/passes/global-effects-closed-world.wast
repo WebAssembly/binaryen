@@ -21,6 +21,8 @@
   ;; CHECK-NEXT: )
   (func $calls-nop-via-ref (param $ref (ref $nopType))
     ;; This can only possibly be a nop in closed-world.
+    ;; The equivalent for call_indirect is tested in
+    ;; test/lit/passes/global-effects-closed-world-tnh.wast.
     (call_ref $nopType (i32.const 1) (local.get $ref))
   )
 
@@ -32,28 +34,6 @@
   ;; CHECK-NEXT: )
   (func $calls-nop-via-nullable-ref (param $ref (ref null $nopType))
     (call_ref $nopType (i32.const 1) (local.get $ref))
-  )
-)
-
-;; Same as the above but with call_indirect
-(module
-  ;; CHECK:      (type $nopType (func (param i32)))
-  (type $nopType (func (param i32)))
-
-  (table 1 1 funcref)
-
-  ;; CHECK:      (func $nop (type $nopType) (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $nop (export "nop") (type $nopType)
-    (nop)
-  )
-
-  ;; CHECK:      (func $calls-nop-via-ref (type $1)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $calls-nop-via-ref
-    (call_indirect (type $nopType) (i32.const 1) (i32.const 0))
   )
 )
 
@@ -215,7 +195,8 @@
   (func $calls-type-with-effects-but-not-addressable (param $ref (ref $only-has-effects-in-not-addressable-function))
     ;; The type $has-effects-but-not-exported doesn't have an address because
     ;; it's not exported and it's never the target of a ref.func.
-    ;; So the call_ref has no potential targets and thus no effects.
+    ;; We should be able to determine that $ref can only point to $nop.
+    ;; TODO: Only aggregate effects from functions that are addressed.
      (call_ref $only-has-effects-in-not-addressable-function (i32.const 1) (local.get $ref))
    )
 )
@@ -284,7 +265,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $indirect-calls (param $ref (ref $t))
-    ;; $indirect-calls might end up calling an imported function,
+    ;; This might end up calling an imported function,
     ;; so we don't know anything about effects here
     (call_ref $t (i32.const 1) (local.get $ref))
   )

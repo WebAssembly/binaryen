@@ -716,69 +716,64 @@ private:
     }
 
     void visitCall(Call* curr) {
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
       // call.without.effects has no effects.
       if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
         return;
       }
 
-      // Get the target's effects, if they exist. Note that we must handle the
-      // case of the function not yet existing (we may be executed in the middle
-      // of a pass, which may have built up calls but not the targets of those
-      // calls; in such a case, we do not find the targets and therefore assume
-      // we know nothing about the effects, which is safe).
-      const EffectAnalyzer* targetEffects = nullptr;
-      if (auto* target = parent.module.getFunctionOrNull(curr->target)) {
-        targetEffects = target->effects.get();
-      }
-      if (targetEffects) {
-        populateEffectsFromGlobalEffects(*targetEffects, curr);
+      if (auto* target = parent.module.getFunctionOrNull(curr->target);
+          target && target->effects) {
+        populateEffectsFromGlobalEffects(*target->effects, curr);
         return;
       }
 
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-        // When EH is enabled, any call can throw.
-        if (parent.features.hasExceptionHandling()) {
+      parent.calls = true;
+      // If EH is enabled and we don't have global effects information,
+      // assume that the call body may throw.
+      if (parent.features.hasExceptionHandling()) {
+        if (curr->isReturn) {
           parent.hasReturnCallThrow = true;
         }
-      }
 
-      parent.calls = true;
-      // When EH is enabled, any call can throw. Skip this for return calls
-      // because the throw is already more precisely captured by the combination
-      // of `hasReturnCallThrow` and `branchesOut`.
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0 &&
-          !curr->isReturn) {
-        parent.throws_ = true;
+        if (parent.tryDepth == 0 && !curr->isReturn) {
+          parent.throws_ = true;
+        }
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
-      auto* table = getModule()->getTable(curr->table);
-      if (!Type::isSubType(Type(curr->heapType, Nullability::Nullable), table->type)) {
+      auto* table = parent.module.getTable(curr->table);
+      if (!Type::isSubType(Type(curr->heapType, Nullability::Nullable),
+                           table->type)) {
         parent.trap = true;
         return;
       }
+      if (table->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
 
       if (auto it = parent.module.typeEffects.find(curr->heapType);
-          it != parent.module.typeEffects.end()) {
-        parent.mergeIn(*it->second);
-
-        if (table->type.isNullable()) {
-          parent.implicitTrap = true;
-        }
+          it != parent.module.typeEffects.end() && it->second) {
+        populateEffectsFromGlobalEffects(*it->second, curr);
         return;
       }
 
       parent.calls = true;
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-        if (parent.features.hasExceptionHandling()) {
+      // If EH is enabled and we don't have global effects information,
+      // assume that the call body may throw.
+      if (parent.features.hasExceptionHandling()) {
+        if (curr->isReturn) {
           parent.hasReturnCallThrow = true;
         }
-      }
-      if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 && !curr->isReturn)) {
-        parent.throws_ = true;
+        if (parent.tryDepth == 0 && !curr->isReturn) {
+          parent.throws_ = true;
+        }
       }
     }
     void visitLocalGet(LocalGet* curr) {
@@ -1042,37 +1037,28 @@ private:
         return;
       }
 
-      const EffectAnalyzer* targetEffects = nullptr;
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
       if (auto it =
             parent.module.typeEffects.find(curr->target->type.getHeapType());
-          it != parent.module.typeEffects.end()) {
-        targetEffects = it->second.get();
-        parent.mergeIn(*it->second);
-      }
-
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-        // When EH is enabled, any call can throw.
-        if (parent.features.hasExceptionHandling() &&
-            (!targetEffects || targetEffects->throws())) {
-          parent.hasReturnCallThrow = true;
-        }
-      }
-
-      if (targetEffects) {
+          it != parent.module.typeEffects.end() && it->second) {
+        populateEffectsFromGlobalEffects(*it->second, curr);
         return;
       }
+      parent.calls = true;
 
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-        if (parent.features.hasExceptionHandling()) {
+      // If EH is enabled and we don't have global effects information,
+      // assume that the call body may throw.
+      if (parent.features.hasExceptionHandling()) {
+        if (curr->isReturn) {
           parent.hasReturnCallThrow = true;
         }
-      }
-      parent.calls = true;
-      if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 && !curr->isReturn)) {
-        parent.throws_ = true;
+
+        if (parent.tryDepth == 0 && !curr->isReturn) {
+          parent.throws_ = true;
+        }
       }
     }
     void visitRefTest(RefTest* curr) {}
@@ -1357,11 +1343,11 @@ private:
       }
     }
 
-    private:
-    template <typename Call>
-    bool populateEffectsFromGlobalEffects(const EffectAnalyzer& effects, const Call* curr) {
+  private:
+    template<typename CallType>
+    void populateEffectsFromGlobalEffects(const EffectAnalyzer& effects,
+                                          const CallType* curr) {
       if (curr->isReturn) {
-        parent.branchesOut = true;
         if (effects.throws()) {
           parent.hasReturnCallThrow = true;
         }
@@ -1372,7 +1358,6 @@ private:
         filteredEffects.throws_ = false;
         parent.mergeIn(filteredEffects);
       } else {
-        // Just merge in all the effects.
         parent.mergeIn(effects);
       }
     }

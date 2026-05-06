@@ -19,6 +19,31 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $calls-nop-via-nullable-ref (param $ref (ref null $nopType))
+    ;; We would trap if $ref is null, but otherwise this has no effects.
     (call_ref $nopType (i32.const 1) (local.get $ref))
+  )
+)
+
+(module
+  ;; CHECK:      (type $nopType (func (param i32)))
+  (type $nopType (func (param i32)))
+
+  ;; (table 1 1 (ref $nopType))
+  (table 1 1 funcref)
+
+  ;; CHECK:      (func $nop (type $nopType) (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $nop (export "nop") (type $nopType)
+    (nop)
+  )
+
+  ;; CHECK:      (func $calls-nop-via-ref (type $1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $calls-nop-via-ref
+    ;; We may trap due to index out of bounds or the function type not matching
+    ;; the table, but otherwise this has no possible effects.
+    (call_indirect (type $nopType) (i32.const 1) (i32.const 0))
   )
 )
