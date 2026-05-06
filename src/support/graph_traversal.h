@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#if __has_include(<concepts>)
 #include <concepts>
+#endif
 #include <functional>
 #include <iterator>
 #include <unordered_set>
@@ -32,10 +34,15 @@ namespace wasm {
 // successors([](const T&) { }, t); }
 template<typename T, typename SuccessorFunction> class Graph {
 public:
+#if defined(__cpp_lib_concepts)
   template<std::input_iterator It, std::sentinel_for<It> Sen>
     requires std::convertible_to<std::iter_reference_t<It>, T>
+#else
+  template<typename It, typename Sen>
+#endif
   Graph(It rootsBegin, Sen rootsEnd, SuccessorFunction successors)
-    : roots(rootsBegin, rootsEnd), successors(std::move(successors)) {}
+    : roots(rootsBegin, rootsEnd), successors(std::move(successors)) {
+  }
 
   // Traverse the graph depth-first, calling `successors` exactly once for each
   // node (unless the node appears multiple times in `roots`). Return the set of
@@ -66,10 +73,17 @@ private:
   SuccessorFunction successors;
 };
 
+#if defined(__cpp_lib_concepts)
 template<std::input_iterator It,
          std::sentinel_for<It> Sen,
          typename SuccessorFunction>
 Graph(It, Sen, SuccessorFunction)
   -> Graph<std::iter_value_t<It>, std::decay_t<SuccessorFunction>>;
+#else
+template<typename It, typename Sen, typename SuccessorFunction>
+Graph(It, Sen, SuccessorFunction)
+  -> Graph<typename std::iterator_traits<It>::value_type,
+           std::decay_t<SuccessorFunction>>;
+#endif
 
 } // namespace wasm

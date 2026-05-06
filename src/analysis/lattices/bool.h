@@ -75,9 +75,9 @@ struct Bool {
   }
 };
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(Lattice<Bool>);
-#endif // __cplusplus >= 202002L
+#endif // defined(__cpp_lib_concepts)
 
 } // namespace wasm::analysis
 

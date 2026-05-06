@@ -122,9 +122,14 @@ bool usesExpressions(ElementSegment* curr, Module* module);
 
 // Information about a table's optimizability.
 struct TableInfo {
-  // Whether the table may be modified at runtime, either because it is imported
-  // or exported, or table.set operations exist for it in the code.
-  bool mayBeModified = false;
+  // Whether the table has writes to it (anything but a grow, see below). The
+  // writes may be internal, or through imports and exports.
+  bool hasSet = false;
+
+  // Whether the table may grow. Growing does modify the table, but it only
+  // appends, so we track this separately from mayBeModified. This allows more
+  // optimizations in tables that grow but have no other sets.
+  bool hasGrow = false;
 
   // Whether we can assume that the initial contents are immutable. That is, if
   // a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
@@ -144,6 +149,9 @@ struct TableInfo {
 
   std::unique_ptr<TableUtils::FlatTable> flatTable;
 
+  // Whether the contents may change.
+  bool mayBeModified() const { return hasSet || hasGrow; }
+
   // Whether we can optimize using this table's data on the entry level, that
   // is, individual entries in the table are known to us, so calls through the
   // table with known indexes can be inferred, etc.
@@ -154,7 +162,10 @@ struct TableInfo {
     //    contents, even if other things might be appended later, which we
     //    cannot infer).
     //  * The table is flat (so we can see what is in it, by index).
-    return (!mayBeModified || initialContentsImmutable) && flatTable->valid;
+    //
+    // Note that we do not check hasGrow, as we can optimize at least *some*
+    // entries in that case (growth only appends).
+    return (!hasSet || initialContentsImmutable) && flatTable->valid;
   }
 };
 

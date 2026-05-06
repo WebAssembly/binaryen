@@ -23,6 +23,7 @@ Current Trunk
    - Rename `BinaryenCopyMemorySegmentData` to `BinaryenCopyDataSegmentData` in c api.
    - Rename `module.getNumMemorySegments` to `module.getNumDataSegments` in js api.
    - Rename `module.getMemorySegmentInfo` to `module.getDataSegmentInfo` in js api.
+ - Add C and JS APIs for the Wide Arithmetic proposal (#8660).
 
 v129
 ----

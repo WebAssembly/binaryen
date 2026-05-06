@@ -148,7 +148,7 @@ struct RandomLattice {
   bool join(Element& a, const Element& b) const noexcept;
 };
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(FullLattice<RandomFullLattice>);
 static_assert(Lattice<RandomLattice>);
 #endif

@@ -1953,3 +1953,92 @@
  )
 )
 
+;; table.grow inhibits some optimizations.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; IMMUT:      (type $func (func))
+ (type $func (func))
+
+ ;; CHECK:      (table $table 5 funcref)
+ ;; IMMUT:      (table $table 5 funcref)
+ (table $table 5 funcref)
+
+ ;; CHECK:      (elem $table (i32.const 1) $target)
+ ;; IMMUT:      (elem $table (i32.const 1) $target)
+ (elem $table (i32.const 1) $target)
+
+ ;; CHECK:      (elem declare func $grow)
+
+ ;; CHECK:      (export "caller" (func $caller))
+
+ ;; CHECK:      (func $grow (type $func)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $table
+ ;; CHECK-NEXT:    (ref.func $grow)
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (elem declare func $grow)
+
+ ;; IMMUT:      (export "caller" (func $caller))
+
+ ;; IMMUT:      (func $grow (type $func)
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (table.grow $table
+ ;; IMMUT-NEXT:    (ref.func $grow)
+ ;; IMMUT-NEXT:    (i32.const 42)
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $grow
+  (drop
+   (table.grow $table
+    (ref.func $grow)
+    (i32.const 42)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $caller (type $func)
+ ;; CHECK-NEXT:  (call $target)
+ ;; CHECK-NEXT:  (call_indirect $table (type $func)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $func)
+ ;; CHECK-NEXT:   (i32.const 1000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $caller (type $func)
+ ;; IMMUT-NEXT:  (call $target)
+ ;; IMMUT-NEXT:  (call_indirect $table (type $func)
+ ;; IMMUT-NEXT:   (i32.const 10)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $table (type $func)
+ ;; IMMUT-NEXT:   (i32.const 1000)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $caller (export "caller")
+  ;; This is in the elem segment, so we can optimize it. Growth can only append.
+  (call_indirect (type $func)
+   (i32.const 1)
+  )
+  ;; This is in the range that we grow to, if grow() is called, but we don't
+  ;; know if it will, so we don't optimize.
+  (call_indirect (type $func)
+   (i32.const 10)
+  )
+  ;; This is in the range that we grow to, if grow() is called multiple times,
+  ;; but again we can't optimize.
+  (call_indirect (type $func)
+   (i32.const 1000)
+  )
+ )
+
+ ;; CHECK:      (func $target (type $func)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $target (type $func)
+ ;; IMMUT-NEXT: )
+ (func $target
+ )
+)
