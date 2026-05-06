@@ -15,6 +15,14 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Rename relaxed SIMD instructions to prepend the `relaxed_` prefix.
+   - Rename C and JS API operations to prepend the `Relaxed` prefix:
+     - `LaneselectI8x16` to `RelaxedLaneselectI8x16`
+     - `LaneselectI16x8` to `RelaxedLaneselectI16x8`
+     - `LaneselectI32x4` to `RelaxedLaneselectI32x4`
+     - `LaneselectI64x2` to `RelaxedLaneselectI64x2`
+     - `DotI8x16I7x16AddSToVecI32x4` to `RelaxedDotI8x16I7x16AddSToVecI32x4`
+     - `DotI8x16I7x16SToVecI16x8` to `RelaxedDotI8x16I7x16SToVecI16x8`
  - Rename `MemorySegment` functions to `DataSegment` in the c and js apis
    - Rename `BinaryenGetNumMemorySegments` to `BinaryenGetNumDataSegments` in c api.
    - Rename `BinaryenGetMemorySegmentByteOffset` to `BinaryenGetDataSegmentByteOffset` in c api.

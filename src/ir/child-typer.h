@@ -696,7 +696,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case SwizzleVecI8x16:
       case RelaxedSwizzleVecI8x16:
       case RelaxedQ15MulrSVecI16x8:
-      case DotI8x16I7x16SToVecI16x8:
+      case RelaxedDotI8x16I7x16SToVecI16x8:
         note(&curr->left, Type::v128);
         note(&curr->right, Type::v128);
         break;

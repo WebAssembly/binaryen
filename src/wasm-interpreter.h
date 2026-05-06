@@ -1653,7 +1653,7 @@ public:
       case SwizzleVecI8x16:
         return left.swizzleI8x16(right);
 
-      case DotI8x16I7x16SToVecI16x8:
+      case RelaxedDotI8x16I7x16SToVecI16x8:
         return left.dotSI8x16toI16x8(right);
 
       case InvalidBinary:
@@ -1725,10 +1725,10 @@ public:
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
-      case LaneselectI8x16:
-      case LaneselectI16x8:
-      case LaneselectI32x4:
-      case LaneselectI64x2:
+      case RelaxedLaneselectI8x16:
+      case RelaxedLaneselectI16x8:
+      case RelaxedLaneselectI32x4:
+      case RelaxedLaneselectI64x2:
         return c.bitselectV128(a, b);
 
       case MaddVecF16x8:
@@ -1755,7 +1755,7 @@ public:
           return NONCONSTANT_FLOW;
         }
         return a.relaxedNmaddF64x2(b, c);
-      case DotI8x16I7x16AddSToVecI32x4:
+      case RelaxedDotI8x16I7x16AddSToVecI32x4:
         if (relaxedBehavior == RelaxedBehavior::NonConstant) {
           return NONCONSTANT_FLOW;
         }
