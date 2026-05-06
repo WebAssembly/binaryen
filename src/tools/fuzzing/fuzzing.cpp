@@ -2445,28 +2445,13 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // are not changing the arity, which JS might notice). Each place we may
   // refine, we are given the maximum refinement and pick a random type between
   // it and the old type.
-  //
-  // We receive the new type, computed as a LUBFinder, and the index in that
-  // LUB.
-  auto maybeRefine = [&](Type old, LUBFinder newLUB, Index lubIndex) {
+  auto maybeRefine = [&](Type old, Type new_) {
     if (!old.isRef()) {
-      // A non-reference like i32, or unreachable (no values reach this place),
-      // so it does not matter.
       return old;
-    }
-    auto oldHeapType = old.getHeapType();
-
-    Type new_;
-    if (newLUB.noted()) {
-      new_ = newLUB.getLUB()[lubIndex];
-      assert(new_.isRef());
-    } else {
-      // Nothing was noted, so this is unreachable code. We can still refine to
-      // the bottom.
-      new_ = Type(oldHeapType.getBottom(), NonNullable);
     }
 
     // Find all heap types between the old and new, starting from new.
+    auto oldHeapType = old.getHeapType();
     auto newHeapType = new_.getHeapType();
     assert(HeapType::isSubType(newHeapType, oldHeapType));
     std::vector<HeapType> options;
@@ -2515,6 +2500,23 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     }
 
     return Type(newHeapType, newNullability, newExactness);
+  };
+
+  // Given a set of types (all params or all results), and an index among them,
+  // refine that index if we can. It is possible that no new types exist at all,
+  // if the code was unreachable and we noted nothing.
+  auto maybeRefineIndex = [&](Type oldTypes, LUBFinder newLUB, Index index) {
+    auto old = oldTypes[index];
+    if (newLUB.noted()) {
+      return maybeRefine(old, newLUB.getLUB()[index]);
+    }
+
+    // Nothing was noted, so this is unreachable code. We can still refine to
+    // the bottom in some cases.
+    if (!old.isRef()) {
+      return old;
+    }
+    return maybeRefine(old, Type(old.getHeapType().getBottom(), NonNullable));
   };
 
   // First, refine params sent to imports. Gather the LUB sent to each import,
@@ -2566,7 +2568,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     assert(oldParams.size() == lubType.size() || !lub.noted());
     std::vector<Type> newParams;
     for (Index i = 0; i < lubType.size(); i++) {
-      newParams.push_back(maybeRefine(oldParams[i], lub, i));
+      newParams.push_back(maybeRefineIndex(oldParams, lub, i));
     }
     func->setParams(Type(newParams));
   }
@@ -2589,7 +2591,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     assert(oldResults.size() == lubType.size() || !lub.noted());
     std::vector<Type> newResults;
     for (Index i = 0; i < lubType.size(); i++) {
-      newResults.push_back(maybeRefine(oldResults[i], lub, i));
+      newResults.push_back(maybeRefineIndex(oldResults, lub, i));
     }
     func->setResults(Type(newResults));
   }
