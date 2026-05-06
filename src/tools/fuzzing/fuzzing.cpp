@@ -2450,6 +2450,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       return old;
     }
 
+    // If this is unreachable code, we can still refine to the bottom.
+    if (new_ == Type::unreachable) {
+      new_ = Type(old.getHeapType().getBottom(), NonNullable);
+    }
+
     // Find all heap types between the old and new, starting from new.
     auto oldHeapType = old.getHeapType();
     auto newHeapType = new_.getHeapType();
@@ -2506,17 +2511,8 @@ void TranslateToFuzzReader::mutateJSBoundary() {
   // refine that index if we can. It is possible that no new types exist at all,
   // if the code was unreachable and we noted nothing.
   auto maybeRefineIndex = [&](Type oldTypes, LUBFinder newLUB, Index index) {
-    auto old = oldTypes[index];
-    if (newLUB.noted()) {
-      return maybeRefine(old, newLUB.getLUB()[index]);
-    }
-
-    // Nothing was noted, so this is unreachable code. We can still refine to
-    // the bottom in some cases.
-    if (!old.isRef()) {
-      return old;
-    }
-    return maybeRefine(old, Type(old.getHeapType().getBottom(), NonNullable));
+    auto lub = newLUB.noted() ? newLUB.getLUB()[index] : Type(Type::unreachable);
+    return maybeRefine(oldTypes[index], lub);
   };
 
   // First, refine params sent to imports. Gather the LUB sent to each import,
