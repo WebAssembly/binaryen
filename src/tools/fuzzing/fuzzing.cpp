@@ -2584,13 +2584,13 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       continue;
     }
 
+    auto* func = wasm.getFunction(name);
     auto oldResults = func->getResults();
     if (oldResults == Type::none) {
       continue;
     }
 
     // Refine.
-    auto* func = wasm.getFunction(name);
     auto lub = LUB::getResultsLUB(func, wasm);
     auto lubType = lub.getLUB();
     assert(oldResults.size() == lubType.size() || !lub.noted());
