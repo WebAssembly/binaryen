@@ -18,6 +18,7 @@ import {
 
 
 
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#reference-instructions */
 export function ref(mod: Module) {
 	return {
 		/** Produces a reference to a given function. */

@@ -3,7 +3,9 @@ import type {
 } from "../../classes/module/Module.ts";
 import {
 	array,
-} from "./array.ts";
+	struct,
+	tuple,
+} from "./aggregate.ts";
 import {
 	blocks,
 	breaks,
@@ -31,16 +33,10 @@ import {
 import {
 	i31,
 	ref,
-} from "./ref.ts";
-import {
-	struct,
-} from "./struct.ts";
+} from "./reference.ts";
 import {
 	table,
 } from "./table.ts";
-import {
-	tuple,
-} from "./tuple.ts";
 import {
 	global,
 	local,
@@ -79,11 +75,11 @@ export function expressionBuilder(mod: Module) {
 		data: {drop: STUB},
 		ref: ref(mod),
 		i31: i31(mod),
+		// TODO: extern
+		// TODO: any
 		tuple: tuple(mod),
 		struct: struct(mod),
 		array: array(mod),
-		// TODO: extern
-		// TODO: any
 		i32: i32(mod),
 		i64: i64(mod),
 		f32: f32(mod),

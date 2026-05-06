@@ -5,8 +5,8 @@ import type {
 	Module,
 } from "../../classes/module/Module.ts";
 import type {
-	ExpressionRef,
 	HeapType,
+	ExpressionRef,
 	Type,
 } from "../../constants.ts";
 import {
@@ -17,6 +17,76 @@ import {
 
 
 
+export function tuple(mod: Module) {
+	return {
+		/**
+		 * A Binaryen-specific operation that combines values into a virtual tuple.
+		 * A virtual tuple is simply a set of locals treated together as one unit,
+		 * not an actual object stored in the heap.
+		 */
+		make: (elements: readonly ExpressionRef[]): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenTupleMake"](mod.ptr, i32sToStack(elements), elements.length))
+		),
+
+		/** Extracts a value from a Binaryen virtual tuple. */
+		extract: (tupl: ExpressionRef, index: number): ExpressionRef => (
+			BinaryenObj["_BinaryenTupleExtract"](mod.ptr, tupl, index)
+		),
+	} as const;
+}
+
+
+
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#aggregate-instructions */
+export function struct(mod: Module) {
+	return {
+		/**
+		 * Allocates a new struct and initializes it with the given operands.
+		 * Passing in an empty array for `operands` returns `(struct.new_default)`.
+		 */
+		new: (operands: readonly ExpressionRef[], heapType: HeapType): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenStructNew"](mod.ptr, i32sToStack(operands), operands.length, heapType))
+		),
+
+		/** Allocate a new struct and initializes it with default values. */
+		new_default: (heapType: HeapType): ExpressionRef => (
+			BinaryenObj["_BinaryenStructNew"](mod.ptr, 0, 0, heapType)
+		),
+
+		/**
+		 * Gets a struct entry with an unpacked type at an index.
+		 *
+		 * **Warning:** `.get()` no longer takes the boolean `isSigned` argument, and assumes an unpacked type.
+		 * For packed types, use `.get_s()` for signed and `.get_u()` for unsigned.
+		 */
+		get: function (index: number, ref: number, type: number, deprecated_isSigned?: boolean) {
+			return deprecated_isSigned === undefined
+				? BinaryenObj["_BinaryenStructGet"](mod.ptr, index, ref, type)
+				: deprecated_isSigned
+					? this.get_s(index, ref, type)
+					: this.get_u(index, ref, type);
+		},
+
+		/** Gets a struct entry with a signed packed type at an index. */
+		get_s: (index: number, ref: ExpressionRef, type: Type): ExpressionRef => (
+			BinaryenObj["_BinaryenStructGet"](mod.ptr, index, ref, type, true)
+		),
+
+		/** Gets a struct entry with an unsigned packed type at an index. */
+		get_u: (index: number, ref: ExpressionRef, type: Type): ExpressionRef => (
+			BinaryenObj["_BinaryenStructGet"](mod.ptr, index, ref, type, false)
+		),
+
+		/** Sets a struct entry at an index. */
+		set: (index: number, ref: ExpressionRef, value: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenStructSet"](mod.ptr, index, ref, value)
+		),
+	} as const;
+}
+
+
+
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#aggregate-instructions */
 export function array(mod: Module) {
 	return {
 		/** Allocates a new array and initializes it with the given operand (repeated). */
