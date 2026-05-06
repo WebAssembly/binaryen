@@ -4321,7 +4321,7 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::I16x8RelaxedQ15MulrS:
           return builder.makeBinary(RelaxedQ15MulrSVecI16x8);
         case BinaryConsts::I16x8DotI8x16I7x16S:
-          return builder.makeBinary(DotI8x16I7x16SToVecI16x8);
+          return builder.makeBinary(RelaxedDotI8x16I7x16SToVecI16x8);
         case BinaryConsts::I8x16Splat:
           return builder.makeUnary(SplatVecI8x16);
         case BinaryConsts::I16x8Splat:
@@ -4534,13 +4534,13 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::V128Bitselect:
           return builder.makeSIMDTernary(Bitselect);
         case BinaryConsts::I8x16Laneselect:
-          return builder.makeSIMDTernary(LaneselectI8x16);
+          return builder.makeSIMDTernary(RelaxedLaneselectI8x16);
         case BinaryConsts::I16x8Laneselect:
-          return builder.makeSIMDTernary(LaneselectI16x8);
+          return builder.makeSIMDTernary(RelaxedLaneselectI16x8);
         case BinaryConsts::I32x4Laneselect:
-          return builder.makeSIMDTernary(LaneselectI32x4);
+          return builder.makeSIMDTernary(RelaxedLaneselectI32x4);
         case BinaryConsts::I64x2Laneselect:
-          return builder.makeSIMDTernary(LaneselectI64x2);
+          return builder.makeSIMDTernary(RelaxedLaneselectI64x2);
         case BinaryConsts::F16x8Madd:
           return builder.makeSIMDTernary(MaddVecF16x8);
         case BinaryConsts::F16x8Nmadd:
@@ -4554,7 +4554,7 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::F64x2RelaxedNmadd:
           return builder.makeSIMDTernary(RelaxedNmaddVecF64x2);
         case BinaryConsts::I32x4DotI8x16I7x16AddS:
-          return builder.makeSIMDTernary(DotI8x16I7x16AddSToVecI32x4);
+          return builder.makeSIMDTernary(RelaxedDotI8x16I7x16AddSToVecI32x4);
         case BinaryConsts::I8x16Shl:
           return builder.makeSIMDShift(ShlVecI8x16);
         case BinaryConsts::I8x16ShrS:

@@ -64,7 +64,7 @@ struct RemoveRelaxedSIMD : WalkerPass<PostWalker<RemoveRelaxedSIMD>> {
       case RelaxedMinVecF64x2:
       case RelaxedMaxVecF64x2:
       case RelaxedQ15MulrSVecI16x8:
-      case DotI8x16I7x16SToVecI16x8:
+      case RelaxedDotI8x16I7x16SToVecI16x8:
         replace(curr);
         return;
       default:
@@ -78,11 +78,11 @@ struct RemoveRelaxedSIMD : WalkerPass<PostWalker<RemoveRelaxedSIMD>> {
       case RelaxedNmaddVecF32x4:
       case RelaxedMaddVecF64x2:
       case RelaxedNmaddVecF64x2:
-      case LaneselectI8x16:
-      case LaneselectI16x8:
-      case LaneselectI32x4:
-      case LaneselectI64x2:
-      case DotI8x16I7x16AddSToVecI32x4:
+      case RelaxedLaneselectI8x16:
+      case RelaxedLaneselectI16x8:
+      case RelaxedLaneselectI32x4:
+      case RelaxedLaneselectI64x2:
+      case RelaxedDotI8x16I7x16AddSToVecI32x4:
         replace(curr);
         return;
       default:

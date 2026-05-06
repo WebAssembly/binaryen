@@ -422,11 +422,11 @@ function initializeConstants() {
     'RelaxedNmaddVecF32x4',
     'RelaxedMaddVecF64x2',
     'RelaxedNmaddVecF64x2',
-    'LaneselectI8x16',
-    'LaneselectI16x8',
-    'LaneselectI32x4',
-    'LaneselectI64x2',
-    'DotI8x16I7x16AddSToVecI32x4',
+    'RelaxedLaneselectI8x16',
+    'RelaxedLaneselectI16x8',
+    'RelaxedLaneselectI32x4',
+    'RelaxedLaneselectI64x2',
+    'RelaxedDotI8x16I7x16AddSToVecI32x4',
     'AnyTrueVec128',
     'PopcntVecI8x16',
     'AbsVecI8x16',
@@ -595,7 +595,7 @@ function initializeConstants() {
     'RelaxedMinVecF64x2',
     'RelaxedMaxVecF64x2',
     'RelaxedQ15MulrSVecI16x8',
-    'DotI8x16I7x16SToVecI16x8',
+    'RelaxedDotI8x16I7x16SToVecI16x8',
     'RefAsNonNull',
     'RefAsExternInternalize',
     'RefAsExternExternalize',
@@ -613,7 +613,11 @@ function initializeConstants() {
     'StringEncodeLossyUTF8Array',
     'StringEncodeWTF16Array',
     'StringEqEqual',
-    'StringEqCompare'
+    'StringEqCompare',
+    'AddInt128',
+    'SubInt128',
+    'MulWideSInt64',
+    'MulWideUInt64'
   ].forEach(name => {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
@@ -1183,6 +1187,18 @@ function wrapModule(module, self = {}) {
     },
     'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddInt64'], left, right);
+    },
+    'add128'(leftLow, leftHigh, rightLow, rightHigh) {
+      return Module['_BinaryenWideIntAddSub'](module, Module['AddInt128'], leftLow, leftHigh, rightLow, rightHigh);
+    },
+    'sub128'(leftLow, leftHigh, rightLow, rightHigh) {
+      return Module['_BinaryenWideIntAddSub'](module, Module['SubInt128'], leftLow, leftHigh, rightLow, rightHigh);
+    },
+    'mul_wide_s'(left, right) {
+      return Module['_BinaryenWideIntMul'](module, Module['MulWideSInt64'], left, right);
+    },
+    'mul_wide_u'(left, right) {
+      return Module['_BinaryenWideIntMul'](module, Module['MulWideUInt64'], left, right);
     },
     'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubInt64'], left, right);
@@ -4194,6 +4210,60 @@ Module['Binary'] = makeExpressionWrapper(Module['_BinaryenBinaryId'](), {
   },
   'setRight'(expr, rightExpr) {
     Module['_BinaryenBinarySetRight'](expr, rightExpr);
+  }
+});
+
+Module['WideIntAddSub'] = makeExpressionWrapper(Module['_BinaryenWideIntAddSubId'](), {
+  'getOp'(expr) {
+    return Module['_BinaryenWideIntAddSubGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenWideIntAddSubSetOp'](expr, op);
+  },
+  'getLeftLow'(expr) {
+    return Module['_BinaryenWideIntAddSubGetLeftLow'](expr);
+  },
+  'setLeftLow'(expr, leftLowExpr) {
+    Module['_BinaryenWideIntAddSubSetLeftLow'](expr, leftLowExpr);
+  },
+  'getLeftHigh'(expr) {
+    return Module['_BinaryenWideIntAddSubGetLeftHigh'](expr);
+  },
+  'setLeftHigh'(expr, leftHighExpr) {
+    Module['_BinaryenWideIntAddSubSetLeftHigh'](expr, leftHighExpr);
+  },
+  'getRightLow'(expr) {
+    return Module['_BinaryenWideIntAddSubGetRightLow'](expr);
+  },
+  'setRightLow'(expr, rightLowExpr) {
+    Module['_BinaryenWideIntAddSubSetRightLow'](expr, rightLowExpr);
+  },
+  'getRightHigh'(expr) {
+    return Module['_BinaryenWideIntAddSubGetRightHigh'](expr);
+  },
+  'setRightHigh'(expr, rightHighExpr) {
+    Module['_BinaryenWideIntAddSubSetRightHigh'](expr, rightHighExpr);
+  }
+});
+
+Module['WideIntMul'] = makeExpressionWrapper(Module['_BinaryenWideIntMulId'](), {
+  'getOp'(expr) {
+    return Module['_BinaryenWideIntMulGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenWideIntMulSetOp'](expr, op);
+  },
+  'getLeft'(expr) {
+    return Module['_BinaryenWideIntMulGetLeft'](expr);
+  },
+  'setLeft'(expr, leftExpr) {
+    Module['_BinaryenWideIntMulSetLeft'](expr, leftExpr);
+  },
+  'getRight'(expr) {
+    return Module['_BinaryenWideIntMulGetRight'](expr);
+  },
+  'setRight'(expr, rightExpr) {
+    Module['_BinaryenWideIntMulSetRight'](expr, rightExpr);
   }
 });
 

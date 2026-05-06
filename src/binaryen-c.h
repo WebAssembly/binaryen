@@ -431,6 +431,10 @@ BINARYEN_API BinaryenOp BinaryenLtFloat64(void);
 BINARYEN_API BinaryenOp BinaryenLeFloat64(void);
 BINARYEN_API BinaryenOp BinaryenGtFloat64(void);
 BINARYEN_API BinaryenOp BinaryenGeFloat64(void);
+BINARYEN_API BinaryenOp BinaryenAddInt128(void);
+BINARYEN_API BinaryenOp BinaryenSubInt128(void);
+BINARYEN_API BinaryenOp BinaryenMulWideSInt64(void);
+BINARYEN_API BinaryenOp BinaryenMulWideUInt64(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWAdd(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWSub(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWAnd(void);
@@ -523,11 +527,11 @@ BINARYEN_API BinaryenOp BinaryenRelaxedMaddVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedNmaddVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedMaddVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedNmaddVecF64x2(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI8x16(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI16x8(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI32x4(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI64x2(void);
-BINARYEN_API BinaryenOp BinaryenDotI8x16I7x16AddSToVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI8x16(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI16x8(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI32x4(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI64x2(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVec128(void);
 BINARYEN_API BinaryenOp BinaryenPopcntVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecI8x16(void);
@@ -697,7 +701,7 @@ BINARYEN_API BinaryenOp BinaryenRelaxedMaxVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedMinVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedMaxVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedQ15MulrSVecI16x8(void);
-BINARYEN_API BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedDotI8x16I7x16SToVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenRefAsNonNull(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternInternalize(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternExternalize(void);
@@ -840,6 +844,18 @@ BINARYEN_API BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
                                                   BinaryenOp op,
                                                   BinaryenExpressionRef left,
                                                   BinaryenExpressionRef right);
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSub(BinaryenModuleRef module,
+                      BinaryenOp op,
+                      BinaryenExpressionRef leftLow,
+                      BinaryenExpressionRef leftHigh,
+                      BinaryenExpressionRef rightLow,
+                      BinaryenExpressionRef rightHigh);
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntMul(BinaryenModuleRef module,
+                   BinaryenOp op,
+                   BinaryenExpressionRef left,
+                   BinaryenExpressionRef right);
 BINARYEN_API BinaryenExpressionRef
 BinaryenSelect(BinaryenModuleRef module,
                BinaryenExpressionRef condition,
@@ -1703,6 +1719,62 @@ BinaryenBinaryGetRight(BinaryenExpressionRef expr);
 // Sets the right expression of a binary expression.
 BINARYEN_API void BinaryenBinarySetRight(BinaryenExpressionRef expr,
                                          BinaryenExpressionRef rightExpr);
+
+// WideIntAddSub
+
+// Gets the operation being performed by a wide int add/sub expression.
+BINARYEN_API BinaryenOp BinaryenWideIntAddSubGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a wide int add/sub expression.
+BINARYEN_API void BinaryenWideIntAddSubSetOp(BinaryenExpressionRef expr,
+                                             BinaryenOp op);
+// Gets the left low expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftLow(BinaryenExpressionRef expr);
+// Sets the left low expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetLeftLow(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef leftLowExpr);
+// Gets the left high expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftHigh(BinaryenExpressionRef expr);
+// Sets the left high expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetLeftHigh(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef leftHighExpr);
+// Gets the right low expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightLow(BinaryenExpressionRef expr);
+// Sets the right low expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetRightLow(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef rightLowExpr);
+// Gets the right high expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightHigh(BinaryenExpressionRef expr);
+// Sets the right high expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetRightHigh(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef rightHighExpr);
+
+// WideIntMul
+
+// Gets the operation being performed by a wide int mul expression.
+BINARYEN_API BinaryenOp BinaryenWideIntMulGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a wide int mul expression.
+BINARYEN_API void BinaryenWideIntMulSetOp(BinaryenExpressionRef expr,
+                                          BinaryenOp op);
+// Gets the left expression of a wide int mul expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntMulGetLeft(BinaryenExpressionRef expr);
+// Sets the left expression of a wide int mul expression.
+BINARYEN_API void BinaryenWideIntMulSetLeft(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef leftExpr);
+// Gets the right expression of a wide int mul expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntMulGetRight(BinaryenExpressionRef expr);
+// Sets the right expression of a wide int mul expression.
+BINARYEN_API void BinaryenWideIntMulSetRight(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef rightExpr);
 
 // Select
 

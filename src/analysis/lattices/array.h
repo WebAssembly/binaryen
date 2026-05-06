@@ -54,7 +54,7 @@ public:
   }
 
   Element getTop() const noexcept
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
     requires FullLattice<L>
 #endif
   {
@@ -101,7 +101,7 @@ public:
 
   // Pairwise meet on the elements.
   bool meet(Element& meetee, const Element& meeter) const noexcept
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
     requires FullLattice<L>
 #endif
   {
@@ -113,7 +113,7 @@ public:
   }
 };
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(FullLattice<Array<Bool, 1>>);
 static_assert(Lattice<Array<Flat<bool>, 1>>);
 #endif

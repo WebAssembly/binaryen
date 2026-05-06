@@ -856,7 +856,7 @@ void test_core() {
     makeBinary(module, BinaryenRelaxedMinVecF64x2(), v128),
     makeBinary(module, BinaryenRelaxedMaxVecF64x2(), v128),
     makeBinary(module, BinaryenRelaxedQ15MulrSVecI16x8(), v128),
-    makeBinary(module, BinaryenDotI8x16I7x16SToVecI16x8(), v128),
+    makeBinary(module, BinaryenRelaxedDotI8x16I7x16SToVecI16x8(), v128),
     // SIMD lane manipulation
     makeSIMDExtract(module, BinaryenExtractLaneSVecI8x16()),
     makeSIMDExtract(module, BinaryenExtractLaneUVecI8x16()),
@@ -982,11 +982,11 @@ void test_core() {
     makeSIMDTernary(module, BinaryenRelaxedNmaddVecF32x4()),
     makeSIMDTernary(module, BinaryenRelaxedMaddVecF64x2()),
     makeSIMDTernary(module, BinaryenRelaxedNmaddVecF64x2()),
-    makeSIMDTernary(module, BinaryenLaneselectI8x16()),
-    makeSIMDTernary(module, BinaryenLaneselectI16x8()),
-    makeSIMDTernary(module, BinaryenLaneselectI32x4()),
-    makeSIMDTernary(module, BinaryenLaneselectI64x2()),
-    makeSIMDTernary(module, BinaryenDotI8x16I7x16AddSToVecI32x4()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI8x16()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI16x8()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI32x4()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI64x2()),
+    makeSIMDTernary(module, BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4()),
     // Bulk memory
     makeMemoryInit(module),
     makeDataDrop(module),
@@ -2377,6 +2377,48 @@ void test_relaxed_atomics() {
   BinaryenModulePrint(module);
   BinaryenModuleDispose(module);
 }
+
+void test_wide_arithmetic() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureWideArithmetic());
+
+  BinaryenExpressionRef ll = BinaryenConst(module, BinaryenLiteralInt64(1));
+  BinaryenExpressionRef lh = BinaryenConst(module, BinaryenLiteralInt64(2));
+  BinaryenExpressionRef rl = BinaryenConst(module, BinaryenLiteralInt64(3));
+  BinaryenExpressionRef rh = BinaryenConst(module, BinaryenLiteralInt64(4));
+
+  BinaryenExpressionRef wideAdd =
+    BinaryenWideIntAddSub(module, BinaryenAddInt128(), ll, lh, rl, rh);
+  BinaryenExpressionRef wideSub =
+    BinaryenWideIntAddSub(module, BinaryenSubInt128(), ll, lh, rl, rh);
+
+  BinaryenExpressionRef ml = BinaryenConst(module, BinaryenLiteralInt64(5));
+  BinaryenExpressionRef mr = BinaryenConst(module, BinaryenLiteralInt64(6));
+  BinaryenExpressionRef wideMulS =
+    BinaryenWideIntMul(module, BinaryenMulWideSInt64(), ml, mr);
+  BinaryenExpressionRef wideMulU =
+    BinaryenWideIntMul(module, BinaryenMulWideUInt64(), ml, mr);
+
+  BinaryenExpressionRef statements[] = {BinaryenDrop(module, wideAdd),
+                                        BinaryenDrop(module, wideSub),
+                                        BinaryenDrop(module, wideMulS),
+                                        BinaryenDrop(module, wideMulU)};
+
+  BinaryenExpressionRef body =
+    BinaryenBlock(module, "body", statements, 4, BinaryenTypeAuto());
+
+  BinaryenAddFunction(module,
+                      "wide-arithmetic-test",
+                      BinaryenTypeNone(),
+                      BinaryenTypeNone(),
+                      NULL,
+                      0,
+                      body);
+
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_types();
   test_features();
@@ -2392,6 +2434,7 @@ int main() {
   test_typebuilder();
   test_callref_and_types();
   test_relaxed_atomics();
+  test_wide_arithmetic();
 
   return 0;
 }
