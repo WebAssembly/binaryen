@@ -236,12 +236,12 @@ CallGraph buildCallGraph(const Module& module,
   }
 
   // Type -> Type
-  // Do a DFS up the type heirarchy for all function implementations.
+  // Do a DFS up the type hierarchy for all function implementations.
   // We are essentially walking up each supertype chain and adding edges from
   // super -> subtype, but doing it via DFS to avoid repeated work.
   Graph superTypeGraph(allFunctionTypes.begin(),
                        allFunctionTypes.end(),
-                       [&callGraph](auto&& push, HeapType t) {
+                       [&callGraph](const auto& push, HeapType t) {
                          // Not needed except that during lookup we expect the
                          // key to exist.
                          callGraph[t];
