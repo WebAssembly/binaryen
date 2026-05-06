@@ -4458,7 +4458,10 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case 1:
           return buildUnary({SplatVecI64x2, make(Type::i64)});
         case 2:
-          return buildUnary({SplatVecF32x4, make(Type::f32)});
+          return buildUnary({pick(FeatureOptions<UnaryOp>()
+                                    .add(FeatureSet::SIMD, SplatVecF32x4)
+                                    .add(FeatureSet::FP16, SplatVecF16x8)),
+                             make(Type::f32)});
         case 3:
           return buildUnary({SplatVecF64x2, make(Type::f64)});
         case 4:
@@ -4531,7 +4534,9 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
                                          TruncSatUVecF16x8ToVecI16x8,
                                          ConvertSVecI16x8ToVecF16x8,
                                          ConvertUVecI16x8ToVecF16x8,
-                                         PromoteLowVecF16x8ToVecF32x4)),
+                                         PromoteLowVecF16x8ToVecF32x4,
+                                         DemoteZeroVecF32x4ToVecF16x8,
+                                         DemoteZeroVecF64x2ToVecF16x8)),
                              make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
@@ -5121,18 +5126,20 @@ Expression* TranslateToFuzzReader::makeSIMDShuffle() {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDTernary() {
-  SIMDTernaryOp op = pick(FeatureOptions<SIMDTernaryOp>()
-                            .add(FeatureSet::SIMD, Bitselect)
-                            .add(FeatureSet::RelaxedSIMD,
-                                 RelaxedMaddVecF32x4,
-                                 RelaxedNmaddVecF32x4,
-                                 RelaxedMaddVecF64x2,
-                                 RelaxedNmaddVecF64x2,
-                                 RelaxedLaneselectI8x16,
-                                 RelaxedLaneselectI16x8,
-                                 RelaxedLaneselectI32x4,
-                                 RelaxedLaneselectI64x2,
-                                 RelaxedDotI8x16I7x16AddSToVecI32x4));
+  SIMDTernaryOp op =
+    pick(FeatureOptions<SIMDTernaryOp>()
+           .add(FeatureSet::SIMD, Bitselect)
+           .add(FeatureSet::RelaxedSIMD,
+                RelaxedMaddVecF32x4,
+                RelaxedNmaddVecF32x4,
+                RelaxedMaddVecF64x2,
+                RelaxedNmaddVecF64x2,
+                RelaxedLaneselectI8x16,
+                RelaxedLaneselectI16x8,
+                RelaxedLaneselectI32x4,
+                RelaxedLaneselectI64x2,
+                RelaxedDotI8x16I7x16AddSToVecI32x4)
+           .add(FeatureSet::FP16, MaddVecF16x8, NmaddVecF16x8));
   Expression* a = make(Type::v128);
   Expression* b = make(Type::v128);
   Expression* c = make(Type::v128);
