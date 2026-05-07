@@ -14,6 +14,10 @@ import {
 	stringToAscii,
 } from "./-pre.ts";
 import {
+	i32sToStack,
+	preserveStack,
+} from "./-utils.ts";
+import {
 	type Feature,
 	Module,
 } from "./classes/module/Module.ts";
@@ -24,10 +28,6 @@ import {
 	type HeapType,
 	type Type,
 } from "./constants.ts";
-import {
-	i32sToStack,
-	preserveStack,
-} from "./utils.ts";
 
 
 

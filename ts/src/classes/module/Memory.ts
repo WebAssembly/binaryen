@@ -5,14 +5,14 @@ import {
 	HEAP8,
 	UTF8ToString,
 } from "../../-pre.ts";
-import type {
-	ExpressionRef,
-} from "../../constants.ts";
 import {
 	i32sToStack,
 	preserveStack,
 	strToStack,
-} from "../../utils.ts";
+} from "../../-utils.ts";
+import type {
+	ExpressionRef,
+} from "../../constants.ts";
 import type {
 	Module,
 } from "./Module.ts";

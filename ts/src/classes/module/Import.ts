@@ -1,13 +1,13 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
-import type {
-	Type,
-} from "../../constants.ts";
 import {
 	preserveStack,
 	strToStack,
-} from "../../utils.ts";
+} from "../../-utils.ts";
+import type {
+	Type,
+} from "../../constants.ts";
 import type {
 	Module,
 } from "./Module.ts";

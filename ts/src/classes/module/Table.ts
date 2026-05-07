@@ -3,17 +3,17 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	THIS_PTR,
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
+import {
 	type ElementSegmentRef,
 	type ExpressionRef,
 	type TableRef,
 	type Type,
 	funcref,
 } from "../../constants.ts";
-import {
-	THIS_PTR,
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 import type {
 	Module,
 } from "./Module.ts";

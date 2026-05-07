@@ -3,16 +3,16 @@ import {
 	HEAPU32,
 	stackAlloc,
 } from "../-pre.ts";
+import {
+	i8sToStack,
+	i32sToStack,
+	preserveStack,
+} from "../-utils.ts";
 import type {
 	HeapType,
 	PackedType,
 	Type,
 } from "../constants.ts";
-import {
-	i8sToStack,
-	i32sToStack,
-	preserveStack,
-} from "../utils.ts";
 
 
 

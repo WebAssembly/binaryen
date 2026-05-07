@@ -2,6 +2,11 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	i32sToStack,
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
+import {
 	consoleWarn,
 } from "../../lib.ts";
 import {
@@ -16,11 +21,6 @@ import {
 	none,
 	unreachable,
 } from "../../constants.ts";
-import {
-	i32sToStack,
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 
 
 

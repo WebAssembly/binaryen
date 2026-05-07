@@ -2,14 +2,14 @@ import {
 	BinaryenObj,
 	UTF8ToString,
 } from "../../-pre.ts";
+import {
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
 import type {
 	TagRef,
 	Type,
 } from "../../constants.ts";
-import {
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 import type {
 	Module,
 } from "./Module.ts";

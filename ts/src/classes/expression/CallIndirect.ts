@@ -3,17 +3,17 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
-	ExpressionId,
-	type ExpressionRef,
-	type Type,
-} from "../../constants.ts";
-import {
 	THIS_PTR,
 	getAllNested,
 	preserveStack,
 	setAllNested,
 	strToStack,
-} from "../../utils.ts";
+} from "../../-utils.ts";
+import {
+	ExpressionId,
+	type ExpressionRef,
+	type Type,
+} from "../../constants.ts";
 import {
 	Expression,
 } from "./Expression.ts";

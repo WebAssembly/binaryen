@@ -3,15 +3,15 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	THIS_PTR,
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
+import {
 	ExpressionId,
 	type ExpressionRef,
 	type Type,
 } from "../../constants.ts";
-import {
-	THIS_PTR,
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 import {
 	Expression,
 } from "./Expression.ts";

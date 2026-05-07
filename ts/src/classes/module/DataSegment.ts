@@ -5,13 +5,13 @@ import {
 	HEAP8,
 	UTF8ToString,
 } from "../../-pre.ts";
-import type {
-	DataSegmentRef,
-} from "../../constants.ts";
 import {
 	preserveStack,
 	strToStack,
-} from "../../utils.ts";
+} from "../../-utils.ts";
+import type {
+	DataSegmentRef,
+} from "../../constants.ts";
 import type {
 	Module,
 } from "./Module.ts";

@@ -4,6 +4,10 @@ import {
 	stackAlloc,
 } from "../../-pre.ts";
 import {
+	THIS_PTR,
+	preserveStack,
+} from "../../-utils.ts";
+import {
 	ExpressionId,
 	type ExpressionRef,
 	i32,
@@ -12,10 +16,6 @@ import {
 	f64,
 	v128,
 } from "../../constants.ts";
-import {
-	THIS_PTR,
-	preserveStack,
-} from "../../utils.ts";
 import {
 	Expression,
 } from "./Expression.ts";

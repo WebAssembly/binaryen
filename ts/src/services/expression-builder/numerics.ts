@@ -2,6 +2,10 @@ import {
 	BinaryenObj,
 	stackAlloc,
 } from "../../-pre.ts";
+import {
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
 import type {
 	Operation,
 } from "../../classes/expression/Operation.ts";
@@ -12,10 +16,6 @@ import type {
 	ExpressionRef,
 	Type,
 } from "../../constants.ts";
-import {
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 
 
 

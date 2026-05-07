@@ -2,15 +2,15 @@ import {
 	BinaryenObj,
 	UTF8ToString,
 } from "../../-pre.ts";
-import type {
-	ExpressionRef,
-	ElementSegmentRef,
-} from "../../constants.ts";
 import {
 	i32sToStack,
 	preserveStack,
 	strToStack,
-} from "../../utils.ts";
+} from "../../-utils.ts";
+import type {
+	ExpressionRef,
+	ElementSegmentRef,
+} from "../../constants.ts";
 import type {
 	Module,
 } from "./Module.ts";

@@ -2,12 +2,12 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	THIS_PTR,
+} from "../../-utils.ts";
+import {
 	ExpressionId,
 	type ExpressionRef,
 } from "../../constants.ts";
-import {
-	THIS_PTR,
-} from "../../utils.ts";
 import {
 	Expression,
 } from "./Expression.ts";

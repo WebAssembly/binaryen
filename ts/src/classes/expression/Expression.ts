@@ -1,6 +1,9 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
+import {
+	THIS_PTR,
+} from "../../-utils.ts";
 import type {
 	ExpressionId,
 	ExpressionRef,
@@ -10,9 +13,6 @@ import {
 	emitText,
 	getExpressionType,
 } from "../../globals.ts";
-import {
-	THIS_PTR,
-} from "../../utils.ts";
 
 
 

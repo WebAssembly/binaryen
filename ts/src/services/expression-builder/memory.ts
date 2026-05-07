@@ -1,6 +1,10 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
+import {
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -10,10 +14,6 @@ import {
 	i32,
 	i64,
 } from "../../constants.ts";
-import {
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 
 
 

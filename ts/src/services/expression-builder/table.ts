@@ -1,6 +1,10 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
+import {
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -8,10 +12,6 @@ import type {
 	ExpressionRef,
 	Type,
 } from "../../constants.ts";
-import {
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 
 
 

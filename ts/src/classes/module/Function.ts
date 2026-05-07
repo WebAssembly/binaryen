@@ -2,18 +2,18 @@ import {
 	BinaryenObj,
 	UTF8ToString,
 } from "../../-pre.ts";
-import type {
-	ExpressionRef,
-	FunctionRef,
-	Type,
-} from "../../constants.ts";
 import {
 	THIS_PTR,
 	getAllNested,
 	i32sToStack,
 	preserveStack,
 	strToStack,
-} from "../../utils.ts";
+} from "../../-utils.ts";
+import type {
+	ExpressionRef,
+	FunctionRef,
+	Type,
+} from "../../constants.ts";
 import type {
 	Module,
 } from "./Module.ts";

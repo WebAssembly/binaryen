@@ -7,6 +7,12 @@ import {
 	stackAlloc,
 } from "../../-pre.ts";
 import {
+	i8sToStack,
+	i32sToStack,
+	preserveStack,
+	strToStack,
+} from "../../-utils.ts";
+import {
 	type DataSegmentRef,
 	type ExpressionRef,
 	type FunctionRef,
@@ -35,12 +41,6 @@ import {
 	type ExpressionBuilder,
 	expressionBuilder,
 } from "../../services/expression-builder/expressionBuilder.ts";
-import {
-	i8sToStack,
-	i32sToStack,
-	preserveStack,
-	strToStack,
-} from "../../utils.ts";
 import {
 	DataSegment as DataSegment_,
 	ModuleDataSegments,
