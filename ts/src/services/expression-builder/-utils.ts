@@ -30,6 +30,25 @@ const SIZE_OF_LITERAL = BinaryenObj["_BinaryenSizeofLiteral"]();
 
 
 
+export function constant(
+	mod: Module,
+	binFuncName: (
+		| "_BinaryenLiteralInt32"
+		| "_BinaryenLiteralFloat32"
+		| "_BinaryenLiteralFloat64"
+		| "_BinaryenLiteralVec128"
+		| "_BinaryenLiteralFloat32Bits"
+	),
+	value: number,
+): ExpressionRef;
+export function constant(
+	mod: Module,
+	binFuncName: (
+		| "_BinaryenLiteralInt64"
+		| "_BinaryenLiteralFloat64Bits"
+	),
+	value: bigint,
+): ExpressionRef;
 export function constant(mod: Module, binFuncName: string, value: number | bigint): ExpressionRef {
 	return preserveStack(() => {
 		// Weird C stuff happening here…
