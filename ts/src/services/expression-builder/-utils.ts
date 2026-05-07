@@ -47,5 +47,5 @@ export function loadFn(mod: Module, typ: Type, bytes: number, isSigned: boolean)
 }
 
 export function storeFn(mod: Module, typ: Type, bytes: number): (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name: string) => ExpressionRef {
-	return (offset, align, ptr, value, name) => preserveStack(() => BinaryenObj["_BinaryenLoad"](mod.ptr, bytes, offset, align, ptr, value, typ, strToStack(name)));
+	return (offset, align, ptr, value, name) => preserveStack(() => BinaryenObj["_BinaryenStore"](mod.ptr, bytes, offset, align, ptr, value, typ, strToStack(name)));
 }

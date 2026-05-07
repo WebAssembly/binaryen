@@ -20,7 +20,7 @@ import {
 	loadFn,
 	storeFn,
 	unaryFn,
-} from "./numerics.ts";
+} from "./-utils.ts";
 
 
 
