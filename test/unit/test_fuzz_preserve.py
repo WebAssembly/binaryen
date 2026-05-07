@@ -46,10 +46,16 @@ class FuzzerVarietyTester:
             if i > self.min_iters and time.time() > stop_time:
                 raise Exception('looked too long and still failed')
 
-            # Generate raw random data
+            # Generate raw random data. Note we do not open() the file multiple
+            # times as that fails on windows; instead, seek to the start and
+            # write from there, then later resize and flush. (We do all this to
+            # avoid the slowdown of securely creating many tiny temp files, as
+            # this loop may go on for a long time.)
+            temp_dat.seek(0)
             size = random.randint(1, self.max_size)
-            with open(temp_dat.name, 'wb') as f:
-                f.write(bytes([random.randint(0, 255) for x in range(size)]))
+            temp_dat.write(bytes([random.randint(0, 255) for x in range(size)]))
+            temp_dat.truncate()
+            temp_dat.flush()
 
             # Generate the fuzz testcase from the random data + the initial
             # contents.
