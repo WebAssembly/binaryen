@@ -38,6 +38,8 @@ namespace wasm {
 
 namespace {
 
+// Helper for finding the equirecursive least upper bound of two types.
+// Helper for printing types.
 struct TypePrinter {
   // The stream we are printing to.
   std::ostream& os;

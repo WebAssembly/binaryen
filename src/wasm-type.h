@@ -1115,12 +1115,19 @@ using RecGroupInfo = std::vector<HeapType>;
 
 struct HeapTypeInfo {
   using type_t = HeapType;
+  // Used in assertions to ensure that temporary types don't leak into the
+  // global store.
   bool isTemp = false;
   bool isOpen = false;
   Shareability share = Unshared;
+  // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
+  // The descriptor of this HeapType, if it exists.
   HeapTypeInfo* descriptor = nullptr;
+  // The HeapType described by this one, if it exists.
   HeapTypeInfo* described = nullptr;
+  // The recursion group of this type or null if the recursion group is trivial
+  // (i.e. contains only this type).
   RecGroupInfo* recGroup = nullptr;
   size_t recGroupIndex = 0;
   HeapTypeKind kind;
