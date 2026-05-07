@@ -301,7 +301,6 @@ struct CodeFolding
       unoptimizables.clear();
       modifieds.clear();
       exitingBranchCache.clear();
-      bodyCachePopulated = false;
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
@@ -400,41 +399,6 @@ private:
   // inside that item
   bool canMove(const std::vector<Expression*>& items, Expression* outOf) {
     auto allTargets = BranchUtils::getBranchTargets(outOf);
-    bool hasTry = false;
-    bool hasTryTable = false;
-    if (getModule()->features.hasExceptionHandling()) {
-      hasTry = FindAll<Try>(outOf).has();
-      hasTryTable = FindAll<TryTable>(outOf).has();
-    }
-    return canMoveImpl(items, allTargets, hasTry, hasTryTable);
-  }
-
-  // Cached data for the function body, computed on demand to avoid repeated
-  // O(N) tree walks in optimizeTerminatingTails.
-  BranchUtils::NameSet bodyBranchTargets;
-  bool bodyHasTry = false;
-  bool bodyHasTryTable = false;
-  bool bodyCachePopulated = false;
-
-  // Like canMove, but uses precomputed branch targets and Try/TryTable
-  // presence. This avoids repeated O(N) tree walks when outOf is the
-  // function body and canMove is called multiple times.
-  bool canMoveWithCachedBodyInfo(const std::vector<Expression*>& items) {
-    if (!bodyCachePopulated) {
-      bodyBranchTargets = BranchUtils::getBranchTargets(getFunction()->body);
-      if (getModule()->features.hasExceptionHandling()) {
-        bodyHasTry = FindAll<Try>(getFunction()->body).has();
-        bodyHasTryTable = FindAll<TryTable>(getFunction()->body).has();
-      }
-      bodyCachePopulated = true;
-    }
-    return canMoveImpl(items, bodyBranchTargets, bodyHasTry, bodyHasTryTable);
-  }
-
-  bool canMoveImpl(const std::vector<Expression*>& items,
-                   const BranchUtils::NameSet& allTargets,
-                   bool hasTry,
-                   bool hasTryTable) {
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
       std::vector<Name> intersection;
@@ -465,7 +429,8 @@ private:
         // conservative approximation because there can be cases that
         // 'try'/'try_table' is within the expression that may throw so it is
         // safe to take the expression out.
-        if (effects.throws() && (hasTry || hasTryTable)) {
+        if (effects.throws() &&
+            (FindAll<Try>(outOf).has() || FindAll<TryTable>(outOf).has())) {
           return false;
         }
       }
@@ -667,9 +632,18 @@ private:
   // equal in the last num items, so we can merge there, but we look for
   // deeper merges first.
   // returns whether we optimized something.
-  bool optimizeTerminatingTails(std::vector<Tail>& tails, Index num = 0) {
+  bool optimizeTerminatingTails(std::vector<Tail>& tails,
+                                Index num = 0,
+                                BranchUtils::NameSet* bodyTargets = nullptr) {
     if (tails.size() < 2) {
       return false;
+    }
+    // Compute body branch targets once and share across recursive calls to
+    // avoid repeated O(N) tree walks.
+    BranchUtils::NameSet localBodyTargets;
+    if (!bodyTargets) {
+      localBodyTargets = BranchUtils::getBranchTargets(getFunction()->body);
+      bodyTargets = &localBodyTargets;
     }
     // remove things that are untoward and cannot be optimized
     tails.erase(
@@ -731,8 +705,36 @@ private:
       // can be removed, though
       cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
       // if we cannot merge to the end, then we definitely need 2 blocks,
-      // and a branch
-      if (!canMoveWithCachedBodyInfo(items)) {
+      // and a branch. Use the pre-computed bodyTargets to avoid repeated
+      // O(N) getBranchTargets calls.
+      auto* body = getFunction()->body;
+      bool canMoveItems = [&]() {
+        for (auto* item : items) {
+          auto exiting = BranchUtils::getExitingBranches(item);
+          std::vector<Name> intersection;
+          std::set_intersection(bodyTargets->begin(),
+                                bodyTargets->end(),
+                                exiting.begin(),
+                                exiting.end(),
+                                std::back_inserter(intersection));
+          if (intersection.size() > 0) {
+            return false;
+          }
+          if (getModule()->features.hasExceptionHandling()) {
+            EffectAnalyzer effects(getPassOptions(), *getModule(), item);
+            if (effects.danglingPop) {
+              return false;
+            }
+            if (effects.throws() &&
+                (FindAll<Try>(body).has() ||
+                 FindAll<TryTable>(body).has())) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }();
+      if (!canMoveItems) {
         cost += 1 + WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
         // TODO: to do this, we need to maintain a map of element=>parent,
         //       so that we can insert the new blocks in the right place
@@ -828,7 +830,7 @@ private:
             // as the changes may influence us. we leave further opts to further
             // passes (as this is rare in practice, it's generally not a perf
             // issue, but TODO optimize)
-            if (optimizeTerminatingTails(explore, num + 1)) {
+            if (optimizeTerminatingTails(explore, num + 1, bodyTargets)) {
               return true;
             }
           }
