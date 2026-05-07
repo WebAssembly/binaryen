@@ -1,0 +1,41 @@
+import {
+	BinaryenObj,
+	stackAlloc,
+} from "../../-pre.ts";
+import type {
+	Operation,
+} from "../../classes/expression/Operation.ts";
+import type {
+	Module,
+} from "../../classes/module/Module.ts";
+import type {
+	ExpressionRef,
+} from "../../constants.ts";
+import {
+	preserveStack,
+} from "../../utils.ts";
+
+
+
+/**
+ * The size of a single literal in memory as used in Const creation,
+ * which is a little different: we don’t want users to need to make
+ * their own Literals, as the C API handles them by value, which means
+ * we would leak them. Instead, Const creation is fused together with
+ * an intermediate stack allocation of this size to pass the value.
+ */
+const SIZE_OF_LITERAL = BinaryenObj["_BinaryenSizeofLiteral"]();
+
+
+
+export function constant(mod: Module, binFuncName: string, value: number | bigint): ExpressionRef {
+	return preserveStack(() => BinaryenObj["_BinaryenConst"](mod.ptr, BinaryenObj[binFuncName](stackAlloc(SIZE_OF_LITERAL), value)));
+}
+
+export function unaryFn(mod: Module, op: Operation): (value: ExpressionRef) => ExpressionRef {
+	return (value) => BinaryenObj["_BinaryenUnary"](mod.ptr, op, value);
+}
+
+export function binaryFn(mod: Module, op: Operation): (left: ExpressionRef, right: ExpressionRef) => ExpressionRef {
+	return (left, right) => BinaryenObj["_BinaryenBinary"](mod.ptr, op, left, right);
+}

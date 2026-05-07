@@ -1,69 +1,78 @@
 import {
 	consoleWarn,
 } from "../../lib.ts";
+import {
+	Operation,
+} from "../../classes/expression/Operation.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
-
-
-
-/** Placeholder. */
-const STUB = (..._args: readonly number[]): number => 0;
+import type {
+	ExpressionRef,
+} from "../../constants.ts";
+import {
+	binaryFn,
+	constant,
+	unaryFn,
+} from "./numerics.ts";
 
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions */
 export function i32(mod: Module) {
 	return {
-		const: STUB,
+		/** Return a static constant i32. */
+		const: (value: number): ExpressionRef => (
+			constant(mod, "_BinaryenLiteralInt32", value)
+		),
 
-		clz: STUB,
-		ctz: STUB,
-		popcnt: STUB,
-		extend8_s: STUB,
-		extend16_s: STUB,
+		clz: unaryFn(mod, Operation.ClzInt32),
+		ctz: unaryFn(mod, Operation.CtzInt32),
+		popcnt: unaryFn(mod, Operation.PopcntInt32),
+		extend8_s: unaryFn(mod, Operation.ExtendS8Int32),
+		extend16_s: unaryFn(mod, Operation.ExtendS16Int32),
 
-		add: STUB,
-		sub: STUB,
-		mul: STUB,
-		div_s: STUB,
-		div_u: STUB,
-		rem_s: STUB,
-		rem_u: STUB,
+		add: binaryFn(mod, Operation.AddInt32),
+		sub: binaryFn(mod, Operation.SubInt32),
+		mul: binaryFn(mod, Operation.MulInt32),
+		div_s: binaryFn(mod, Operation.DivSInt32),
+		div_u: binaryFn(mod, Operation.DivUInt32),
+		rem_s: binaryFn(mod, Operation.RemSInt32),
+		rem_u: binaryFn(mod, Operation.RemUInt32),
 
-		and: STUB,
-		or: STUB,
-		xor: STUB,
-		shl: STUB,
-		shr_s: STUB,
-		shr_u: STUB,
-		rotl: STUB,
-		rotr: STUB,
+		and: binaryFn(mod, Operation.AndInt32),
+		or: binaryFn(mod, Operation.OrInt32),
+		xor: binaryFn(mod, Operation.XorInt32),
+		shl: binaryFn(mod, Operation.ShlInt32),
+		shr_s: binaryFn(mod, Operation.ShrSInt32),
+		shr_u: binaryFn(mod, Operation.ShrUInt32),
+		rotl: binaryFn(mod, Operation.RotLInt32),
+		rotr: binaryFn(mod, Operation.RotRInt32),
 
-		eqz: STUB,
+		eqz: unaryFn(mod, Operation.EqZInt32),
 
-		eq: STUB,
-		ne: STUB,
-		lt_s: STUB,
-		lt_u: STUB,
-		gt_s: STUB,
-		gt_u: STUB,
-		le_s: STUB,
-		le_u: STUB,
-		ge_s: STUB,
-		ge_u: STUB,
+		eq: binaryFn(mod, Operation.EqInt32),
+		ne: binaryFn(mod, Operation.NeInt32),
+		lt_s: binaryFn(mod, Operation.LtSInt32),
+		lt_u: binaryFn(mod, Operation.LtUInt32),
+		gt_s: binaryFn(mod, Operation.GtSInt32),
+		gt_u: binaryFn(mod, Operation.GtUInt32),
+		le_s: binaryFn(mod, Operation.LeSInt32),
+		le_u: binaryFn(mod, Operation.LeUInt32),
+		ge_s: binaryFn(mod, Operation.GeSInt32),
+		ge_u: binaryFn(mod, Operation.GeUInt32),
 
-		wrap_i64: STUB,
+		wrap_i64: unaryFn(mod, Operation.WrapInt64),
 
-		trunc_f32_s: STUB,
-		trunc_f32_u: STUB,
-		trunc_f64_s: STUB,
-		trunc_f64_u: STUB,
-		trunc_sat_f32_s: STUB,
-		trunc_sat_f32_u: STUB,
-		trunc_sat_f64_s: STUB,
-		trunc_sat_f64_u: STUB,
-		reinterpret_f32: STUB,
+		trunc_f32_s: unaryFn(mod, Operation.TruncSFloat32ToInt32),
+		trunc_f32_u: unaryFn(mod, Operation.TruncUFloat32ToInt32),
+		trunc_f64_s: unaryFn(mod, Operation.TruncSFloat64ToInt32),
+		trunc_f64_u: unaryFn(mod, Operation.TruncUFloat64ToInt32),
+		trunc_sat_f32_s: unaryFn(mod, Operation.TruncSatSFloat32ToInt32),
+		trunc_sat_f32_u: unaryFn(mod, Operation.TruncSatUFloat32ToInt32),
+		trunc_sat_f64_s: unaryFn(mod, Operation.TruncSatSFloat64ToInt32),
+		trunc_sat_f64_u: unaryFn(mod, Operation.TruncSatUFloat64ToInt32),
+		reinterpret_f32: unaryFn(mod, Operation.ReinterpretFloat32),
 
 		// @ts-expect-error
 		/** @deprecated Use `.wrap_i64()` instead. */ wrap(...args) { consoleWarn("`.wrap()` is deprecated; use `.wrap_i64()` instead."); return this.wrap_i64(...args); },

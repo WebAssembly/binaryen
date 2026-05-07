@@ -1,52 +1,65 @@
 import {
 	consoleWarn,
 } from "../../lib.ts";
+import {
+	Operation,
+} from "../../classes/expression/Operation.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
-
-
-
-/** Placeholder. */
-const STUB = (..._args: readonly number[]): number => 0;
+import type {
+	ExpressionRef,
+} from "../../constants.ts";
+import {
+	binaryFn,
+	constant,
+	unaryFn,
+} from "./numerics.ts";
 
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions */
 export function f32(mod: Module) {
 	return {
-		const: STUB,
+		/** Return a static constant f32. */
+		const: (value: number): ExpressionRef => (
+			constant(mod, "_BinaryenLiteralFloat32", value)
+		),
 
-		abs: STUB,
-		neg: STUB,
-		sqrt: STUB,
-		ceil: STUB,
-		floor: STUB,
-		trunc: STUB,
-		nearest: STUB,
+		const_bits: (value: number): ExpressionRef => (
+			constant(mod, "_BinaryenLiteralFloat32Bits", value)
+		),
 
-		add: STUB,
-		sub: STUB,
-		mul: STUB,
-		div: STUB,
-		min: STUB,
-		max: STUB,
-		copysign: STUB,
+		abs: unaryFn(mod, Operation.AbsFloat32),
+		neg: unaryFn(mod, Operation.NegFloat32),
+		sqrt: unaryFn(mod, Operation.SqrtFloat32),
+		ceil: unaryFn(mod, Operation.CeilFloat32),
+		floor: unaryFn(mod, Operation.FloorFloat32),
+		trunc: unaryFn(mod, Operation.TruncFloat32),
+		nearest: unaryFn(mod, Operation.NearestFloat32),
 
-		eq: STUB,
-		ne: STUB,
-		lt: STUB,
-		gt: STUB,
-		le: STUB,
-		ge: STUB,
+		add: binaryFn(mod, Operation.AddFloat32),
+		sub: binaryFn(mod, Operation.SubFloat32),
+		mul: binaryFn(mod, Operation.MulFloat32),
+		div: binaryFn(mod, Operation.DivFloat32),
+		min: binaryFn(mod, Operation.MinFloat32),
+		max: binaryFn(mod, Operation.MaxFloat32),
+		copysign: binaryFn(mod, Operation.CopySignFloat32),
 
-		convert_i32_s: STUB,
-		convert_i32_u: STUB,
-		convert_i64_s: STUB,
-		convert_i64_u: STUB,
-		reinterpret_i32: STUB,
+		eq: binaryFn(mod, Operation.EqFloat32),
+		ne: binaryFn(mod, Operation.NeFloat32),
+		lt: binaryFn(mod, Operation.LtFloat32),
+		gt: binaryFn(mod, Operation.GtFloat32),
+		le: binaryFn(mod, Operation.LeFloat32),
+		ge: binaryFn(mod, Operation.GeFloat32),
 
-		demote_f64: STUB,
+		convert_i32_s: unaryFn(mod, Operation.ConvertSInt32ToFloat32),
+		convert_i32_u: unaryFn(mod, Operation.ConvertUInt32ToFloat32),
+		convert_i64_s: unaryFn(mod, Operation.ConvertSInt64ToFloat32),
+		convert_i64_u: unaryFn(mod, Operation.ConvertUInt64ToFloat32),
+		reinterpret_i32: unaryFn(mod, Operation.ReinterpretInt32),
+
+		demote_f64: unaryFn(mod, Operation.DemoteFloat64),
 
 		/** @deprecated */
 		convert_s: {

@@ -85,18 +85,6 @@ declare let out: any;
 
 
 
-/**
- * The size of a single literal in memory as used in Const creation,
- * which is a little different: we don’t want users to need to make
- * their own Literals, as the C API handles them by value, which means
- * we would leak them. Instead, Const creation is fused together with
- * an intermediate stack allocation of this size to pass the value.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const SIZE_OF_LITERAL = BinaryenObj["_BinaryenSizeofLiteral"]();
-
-
-
 export enum Feature {
 	MVP = BinaryenObj["_BinaryenFeatureMVP"](),
 	Atomics = BinaryenObj["_BinaryenFeatureAtomics"](),
