@@ -436,6 +436,7 @@ private:
         // conservative approximation because there can be cases that
         // 'try'/'try_table' is within the expression that may throw so it is
         // safe to take the expression out.
+        // TODO: optimize this check to avoid two FindAlls.
         if (effects.throws() &&
             (FindAll<Try>(outOf).has() || FindAll<TryTable>(outOf).has())) {
           return false;
@@ -645,6 +646,8 @@ private:
     if (tails.size() < 2) {
       return false;
     }
+    // Storage for lazily-computed body branch targets. Must be declared at
+    // function scope so it outlives the pointer stored in bodyTargets.
     BranchUtils::NameSet localBodyTargets;
     // remove things that are untoward and cannot be optimized
     tails.erase(
@@ -708,6 +711,7 @@ private:
       // if we cannot merge to the end, then we definitely need 2 blocks,
       // and a branch. Use the pre-computed bodyTargets to avoid repeated
       // O(N) getBranchTargets calls.
+      assert(bodyTargets);
       bool canMoveItems = canMove(items, getFunction()->body, *bodyTargets);
       if (!canMoveItems) {
         cost += 1 + WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
