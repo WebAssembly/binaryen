@@ -1,20 +1,22 @@
 // # Preprocess # //
-// Artifacts provided by the Emscripten build.
+import Binaryen from "binaryen-raw";
 
 
 
-/** The main object provided by Emscripten. This is what gets wrapped. */
-export declare const BinaryenObj: Readonly<Record<string, (...args: readonly (number | bigint | boolean)[]) => number>>;
+/** The main object provided by Emscripten. This is what gets wrapped. It is not exposed to the consumer. */
+export const BinaryenObj = await Binaryen();
 
 
 
-export declare function _free(ptr: number): void;
-export declare function _malloc(ptr: number): number;
-export declare function stackSave(): unknown;
-export declare function stackRestore(stack: unknown): unknown;
-export declare function stackAlloc(length: number): number;
-export declare function stringToUTF8OnStack(str: string): number;
-export declare function UTF8ToString(n: number): string;
-export declare function stringToAscii(text: string, buffer: number): void;
-export declare function getExceptionMessage(e: number | Error): [string, string]; // https://emscripten.org/docs/porting/exceptions.html#handling-c-exceptions-from-javascript
-export declare function _BinaryenSizeofAllocateAndWriteResult(): number;
+export const {
+	_free,
+	_malloc,
+	stackSave,
+	stackRestore,
+	stackAlloc,
+	stringToUTF8OnStack,
+	UTF8ToString,
+	stringToAscii,
+	getExceptionMessage,
+	_BinaryenSizeofAllocateAndWriteResult,
+} = BinaryenObj;

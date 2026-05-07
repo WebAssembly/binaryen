@@ -9,6 +9,9 @@
 
 		// Modules
 		"module": "esnext",
+		"paths": {
+			"binaryen-raw": ["./src/types/binaryen_js.d.ts"],
+		},
 		"rewriteRelativeImportExtensions": true,
 		"rootDir": "./src/",
 
