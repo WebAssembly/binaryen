@@ -240,6 +240,10 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.v128.load{8,16,32,64}_lane()`
 	- `.v128.store()`
 	- `.v128.store{8,16,32,64}_lane()`
+	- `.v128.not()`
+	- `.v128.and()`, `.v128.andnot()`, `.v128.or()`, `.v128.xor()`
+	- `.v128.bitselect()`
+	- `.v128.anytrue()`
 
 
 
