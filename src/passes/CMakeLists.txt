@@ -104,6 +104,7 @@ set(passes_SOURCES
   StripToolchainAnnotations.cpp
   TraceCalls.cpp
   RandomizeBranchHints.cpp
+  RangeAnalysis.cpp
   RedundantSetElimination.cpp
   RemoveExports.cpp
   RemoveImports.cpp

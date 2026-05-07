@@ -406,6 +406,9 @@ void PassRegistry::registerPasses() {
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
+  registerPass("range-analysis",
+               "finds and uses value ranges for locals",
+               createRangeAnalysisPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
