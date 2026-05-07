@@ -26,6 +26,7 @@
 
 #include "cfg/cfg-traversal.h"
 #include "ir/local-graph.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -42,7 +43,7 @@ struct Info {
 
 struct RangeAnalysis
   : public WalkerPass<
-      CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>> {
+      CFGWalker<RangeAnalysis, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -51,6 +52,8 @@ struct RangeAnalysis
   std::unique_ptr<Pass> create() override {
     return std::make_unique<RangeAnalysis>();
   }
+
+  using Super = WalkerPass<CFGWalker<RangeAnalysis, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
@@ -62,8 +65,32 @@ struct RangeAnalysis
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
   }
-  void visitStructSet(StructSet* curr) { addAction(); }
-  void visitBlock(Block* curr) { addAction(); }
+
+  // Track the branches we reason about. CFGWalker builds a CFG, and we want to
+  // add information on top of that about which branch is due to which
+  // instruction. For example, if block A branches to B and C, we want to know
+  // if A ends in a br_if, so we can apply its condition to the branches to B
+  // (if the condition is true) and C (if false).
+
+  // Maps each branching instruction to the basic block right before the
+  // branchings. For example, for an If, this is the block that branches to the
+  // ifTrue and ifFalse blocks.
+  std::unordered_map<If*, BasicBlock*> brancherBlocks;
+
+  static void doStartIfTrue(SubType* self, Expression** currp) {
+    // We are right after the condition, so we are in the block before the If's
+    // branching.
+    self->brancherBlocks[*currp] = self->currBasicBlock;
+
+    Super::doStartIfTrue(self, currp);
+  }
+
+  static void doEndBranch(SubType* self, Expression** currp) {
+    // We are right after the condition, so we are in the block before the If's
+    // branching.
+    XXX maybe leave for laterself->brancherBlocks[*currp] = self->currBasicBlock;
+    Super::doEndBranch(self, currp);
+  }
 
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
