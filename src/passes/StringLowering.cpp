@@ -153,7 +153,7 @@ struct StringGathering : public Pass {
       // Re-encode from WTF-16 to WTF-8 to make the name easier to read.
       std::stringstream wtf8;
       [[maybe_unused]] bool valid =
-        String::convertWTF16ToWTF8(wtf8, string.str);
+        String::convertWTF16ToWTF8(wtf8, string.view());
       assert(valid);
       // Then escape it because identifiers must be valid UTF-8.
       // TODO: Use wtf8.view() and escaped.view() once we have C++20.
@@ -246,7 +246,7 @@ struct StringLowering : public StringGathering {
         if (auto* c = global->init->dynCast<StringConst>()) {
           std::stringstream utf8;
           if (useMagicImports &&
-              String::convertUTF16ToUTF8(utf8, c->string.str)) {
+              String::convertUTF16ToUTF8(utf8, c->string.view())) {
             global->module = stringConstsModule;
             global->base = Name(utf8.str());
           } else {
@@ -263,7 +263,7 @@ struct StringLowering : public StringGathering {
             } else {
               json << ',';
             }
-            String::printEscapedJSON(json, c->string.str);
+            String::printEscapedJSON(json, c->string.view());
             jsonImportIndex++;
           }
           global->init = nullptr;

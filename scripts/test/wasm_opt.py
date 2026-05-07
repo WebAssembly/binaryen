@@ -15,6 +15,7 @@
 import os
 import shutil
 import subprocess
+import sys
 
 from . import shared, support
 
@@ -60,6 +61,12 @@ def test_wasm_opt():
         opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
         actual = ''
         for module, asserts in support.split_wast(t):
+            # Flush stdout/stderr between each test.  This prevent confusing
+            # interleaving in output of github CI
+            # TODO: Find a better, more systematic way to achieve this that
+            # works for all test suites.
+            sys.stdout.flush()
+            sys.stderr.flush()
             assert len(asserts) == 0
             support.write_wast('split.wast', module)
             cmd = shared.WASM_OPT + opts + ['split.wast', '-q']

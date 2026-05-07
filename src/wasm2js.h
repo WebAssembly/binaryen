@@ -126,7 +126,7 @@ bool needsBufferView(Module& wasm) {
   return need;
 }
 
-IString stringToIString(std::string str) { return IString(str.c_str(), false); }
+IString stringToIString(std::string str) { return IString(str.c_str()); }
 
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
@@ -215,8 +215,7 @@ public:
       auto index = temps[type]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
-                      .c_str(),
-                    false);
+                      .c_str());
       ret = fromName(ret, NameScope::Local);
     }
     if (func->localIndices.find(ret) == func->localIndices.end()) {
@@ -427,7 +426,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     Output out(flags.symbolsFile, wasm::Flags::Text);
     Index i = 0;
     for (auto& func : wasm->functions) {
-      out.getStream() << i++ << ':' << func->name.str << '\n';
+      out.getStream() << i++ << ':' << func->name.view() << '\n';
     }
   }
 
@@ -600,7 +599,7 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
 
 static bool needsQuoting(Name name) {
   auto mangled = asmangle(name.toString());
-  return mangled != name.str;
+  return mangled != name.view();
 }
 
 void Wasm2JSBuilder::ensureModuleVar(Ref ast, const Importable& imp) {
@@ -1587,7 +1586,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           std::ostringstream out;
           out << lo << "," << hi;
           std::string os = out.str();
-          IString name(os.c_str(), false);
+          IString name(os.c_str());
           return ValueBuilder::makeName(name);
         }
         case Type::f32: {

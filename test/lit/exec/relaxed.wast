@@ -5,15 +5,15 @@
 (module
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
- ;; CHECK:      [fuzz-exec] export i32x4.dot_i8x16_i7x16_add_s
+ ;; CHECK:      [fuzz-exec] export i32x4.relaxed_dot_i8x16_i7x16_add_s
  ;; CHECK-NEXT: [LoggingExternalInterface logging 8]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 14]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 22]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 32]
- (func $i32x4.dot_i8x16_i7x16_add_s (export "i32x4.dot_i8x16_i7x16_add_s")
+ (func $i32x4.relaxed_dot_i8x16_i7x16_add_s (export "i32x4.relaxed_dot_i8x16_i7x16_add_s")
   (local $v v128)
   (local.set $v
-   (i32x4.dot_i8x16_i7x16_add_s
+   (i32x4.relaxed_dot_i8x16_i7x16_add_s
     (v128.const i32x4 0 1 2 3)
     (v128.const i32x4 4 5 6 7)
     (v128.const i32x4 8 9 10 11)

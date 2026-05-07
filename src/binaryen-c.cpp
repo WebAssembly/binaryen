@@ -802,12 +802,20 @@ BinaryenOp BinaryenRelaxedMaddVecF32x4(void) { return RelaxedMaddVecF32x4; }
 BinaryenOp BinaryenRelaxedNmaddVecF32x4(void) { return RelaxedNmaddVecF32x4; }
 BinaryenOp BinaryenRelaxedMaddVecF64x2(void) { return RelaxedMaddVecF64x2; }
 BinaryenOp BinaryenRelaxedNmaddVecF64x2(void) { return RelaxedNmaddVecF64x2; }
-BinaryenOp BinaryenLaneselectI8x16(void) { return LaneselectI8x16; }
-BinaryenOp BinaryenLaneselectI16x8(void) { return LaneselectI16x8; }
-BinaryenOp BinaryenLaneselectI32x4(void) { return LaneselectI32x4; }
-BinaryenOp BinaryenLaneselectI64x2(void) { return LaneselectI64x2; }
-BinaryenOp BinaryenDotI8x16I7x16AddSToVecI32x4(void) {
-  return DotI8x16I7x16AddSToVecI32x4;
+BinaryenOp BinaryenRelaxedLaneselectI8x16(void) {
+  return RelaxedLaneselectI8x16;
+}
+BinaryenOp BinaryenRelaxedLaneselectI16x8(void) {
+  return RelaxedLaneselectI16x8;
+}
+BinaryenOp BinaryenRelaxedLaneselectI32x4(void) {
+  return RelaxedLaneselectI32x4;
+}
+BinaryenOp BinaryenRelaxedLaneselectI64x2(void) {
+  return RelaxedLaneselectI64x2;
+}
+BinaryenOp BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4(void) {
+  return RelaxedDotI8x16I7x16AddSToVecI32x4;
 }
 BinaryenOp BinaryenAnyTrueVec128(void) { return AnyTrueVec128; }
 BinaryenOp BinaryenAbsVecI8x16(void) { return AbsVecI8x16; }
@@ -1054,8 +1062,8 @@ BinaryenOp BinaryenRelaxedMaxVecF64x2(void) { return RelaxedMaxVecF64x2; }
 BinaryenOp BinaryenRelaxedQ15MulrSVecI16x8(void) {
   return RelaxedQ15MulrSVecI16x8;
 }
-BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void) {
-  return DotI8x16I7x16SToVecI16x8;
+BinaryenOp BinaryenRelaxedDotI8x16I7x16SToVecI16x8(void) {
+  return RelaxedDotI8x16I7x16SToVecI16x8;
 }
 BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
 BinaryenOp BinaryenRefAsExternInternalize(void) { return AnyConvertExtern; }

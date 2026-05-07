@@ -288,10 +288,10 @@ export enum Operation {
 	RelaxedMaxVecF32x4 = BinaryenObj["_BinaryenRelaxedMaxVecF32x4"](),
 	RelaxedMaxVecF64x2 = BinaryenObj["_BinaryenRelaxedMaxVecF64x2"](),
 	// #### vternop_i #### //
-	LaneselectI8x16 = BinaryenObj["_BinaryenLaneselectI8x16"](),
-	LaneselectI16x8 = BinaryenObj["_BinaryenLaneselectI16x8"](),
-	LaneselectI32x4 = BinaryenObj["_BinaryenLaneselectI32x4"](),
-	LaneselectI64x2 = BinaryenObj["_BinaryenLaneselectI64x2"](),
+	RelaxedLaneselectI8x16 = BinaryenObj["_BinaryenRelaxedLaneselectI8x16"](),
+	RelaxedLaneselectI16x8 = BinaryenObj["_BinaryenRelaxedLaneselectI16x8"](),
+	RelaxedLaneselectI32x4 = BinaryenObj["_BinaryenRelaxedLaneselectI32x4"](),
+	RelaxedLaneselectI64x2 = BinaryenObj["_BinaryenRelaxedLaneselectI64x2"](),
 	// #### vternop_f #### //
 	RelaxedMaddVecF32x4 = BinaryenObj["_BinaryenRelaxedMaddVecF32x4"](),
 	RelaxedMaddVecF64x2 = BinaryenObj["_BinaryenRelaxedMaddVecF64x2"](),
@@ -391,8 +391,8 @@ export enum Operation {
 	ExtMulHighUVecI16x8 = BinaryenObj["_BinaryenExtMulHighUVecI16x8"](),
 	ExtMulHighUVecI32x4 = BinaryenObj["_BinaryenExtMulHighUVecI32x4"](),
 	ExtMulHighUVecI64x2 = BinaryenObj["_BinaryenExtMulHighUVecI64x2"](),
-	DotI8x16I7x16AddSToVecI32x4 = BinaryenObj["_BinaryenDotI8x16I7x16AddSToVecI32x4"](),
-	DotI8x16I7x16SToVecI16x8 = BinaryenObj["_BinaryenDotI8x16I7x16SToVecI16x8"](),
+	RelaxedDotI8x16I7x16AddSToVecI32x4 = BinaryenObj["_BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4"](),
+	RelaxedDotI8x16I7x16SToVecI16x8 = BinaryenObj["_BinaryenRelaxedDotI8x16I7x16SToVecI16x8"](),
 	DotSVecI16x8ToVecI32x4 = BinaryenObj["_BinaryenDotSVecI16x8ToVecI32x4"](),
 	// #### narrow #### //
 	NarrowSVecI16x8ToVecI8x16 = BinaryenObj["_BinaryenNarrowSVecI16x8ToVecI8x16"](),
