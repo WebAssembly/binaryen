@@ -16,10 +16,6 @@ export enum Operation {
 	BrOnCastFail = BinaryenObj["_BinaryenBrOnCastFail"](),
 
 	// ### Memory Operations ### //
-	Load8LaneVec128 = BinaryenObj["_BinaryenLoad8LaneVec128"](),
-	Load16LaneVec128 = BinaryenObj["_BinaryenLoad16LaneVec128"](),
-	Load32LaneVec128 = BinaryenObj["_BinaryenLoad32LaneVec128"](),
-	Load64LaneVec128 = BinaryenObj["_BinaryenLoad64LaneVec128"](),
 	Load8x8SVec128 = BinaryenObj["_BinaryenLoad8x8SVec128"](),
 	Load8x8UVec128 = BinaryenObj["_BinaryenLoad8x8UVec128"](),
 	Load16x4SVec128 = BinaryenObj["_BinaryenLoad16x4SVec128"](),
@@ -32,6 +28,10 @@ export enum Operation {
 	Load64SplatVec128 = BinaryenObj["_BinaryenLoad64SplatVec128"](),
 	Load32ZeroVec128 = BinaryenObj["_BinaryenLoad32ZeroVec128"](),
 	Load64ZeroVec128 = BinaryenObj["_BinaryenLoad64ZeroVec128"](),
+	Load8LaneVec128 = BinaryenObj["_BinaryenLoad8LaneVec128"](),
+	Load16LaneVec128 = BinaryenObj["_BinaryenLoad16LaneVec128"](),
+	Load32LaneVec128 = BinaryenObj["_BinaryenLoad32LaneVec128"](),
+	Load64LaneVec128 = BinaryenObj["_BinaryenLoad64LaneVec128"](),
 	Store8LaneVec128 = BinaryenObj["_BinaryenStore8LaneVec128"](),
 	Store16LaneVec128 = BinaryenObj["_BinaryenStore16LaneVec128"](),
 	Store32LaneVec128 = BinaryenObj["_BinaryenStore32LaneVec128"](),

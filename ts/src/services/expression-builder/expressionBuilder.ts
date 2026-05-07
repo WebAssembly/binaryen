@@ -39,6 +39,9 @@ import {
 	table,
 } from "./table.ts";
 import {
+	v128,
+} from "./v128.ts";
+import {
 	global,
 	local,
 } from "./variable.ts";
@@ -80,6 +83,7 @@ export function expressionBuilder(mod: Module) {
 		i64: i64(mod),
 		f32: f32(mod),
 		f64: f64(mod),
+		v128: v128(mod),
 	} as const;
 }
 

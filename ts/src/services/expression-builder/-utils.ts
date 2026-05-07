@@ -49,3 +49,11 @@ export function loadFn(mod: Module, typ: Type, bytes: number, isSigned: boolean)
 export function storeFn(mod: Module, typ: Type, bytes: number): (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name: string) => ExpressionRef {
 	return (offset, align, ptr, value, name) => preserveStack(() => BinaryenObj["_BinaryenStore"](mod.ptr, bytes, offset, align, ptr, value, typ, strToStack(name)));
 }
+
+export function simdLoadFn(mod: Module, op: Operation): (offset: number, align: number, ptr: ExpressionRef, name: string) => ExpressionRef {
+	return (offset, align, ptr, name) => preserveStack(() => BinaryenObj["_BinaryenSIMDLoad"](mod.ptr, op, offset, align, ptr, strToStack(name)));
+}
+
+export function simdLoadStoreLaneFn(mod: Module, op: Operation): (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name: string) => ExpressionRef {
+	return (offset, align, index, ptr, vec, name) => preserveStack(() => BinaryenObj["_BinaryenSIMDLoadStoreLane"](mod.ptr, op, offset, align, index, ptr, vec, strToStack(name)));
+}

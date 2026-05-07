@@ -232,6 +232,14 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.{f32,f64}.eq()`, `.{f32,f64}.lt()`, `.{f32,f64}.gt()`, `.{f32,f64}.le()`, `.{f32,f64}.ge()`
 	- `.{f32,f64}.convert_i32_s()`, `.{f32,f64}.convert_i32_u()`, `.{f32,f64}.convert_i64_s()`, `.{f32,f64}.convert_i64_u()`
 	- `.f32.demote_f64()`, `.f64.promote_f32()`
+- vectors
+	- `.v128.load()`
+	- `.v128.load{8x8,16x4,32x2}_{s,u}()`
+	- `.v128.load{8,16,32,64}_splat()`
+	- `.v128.load{32,64}_zero()`
+	- `.v128.load{8,16,32,64}_lane()`
+	- `.v128.store()`
+	- `.v128.store{8,16,32,64}_lane()`
 
 
 
