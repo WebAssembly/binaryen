@@ -1,3 +1,4 @@
+import os
 import random
 import subprocess
 import tempfile
@@ -46,7 +47,7 @@ class FuzzerVarietyTester:
 
             # Generate raw random data.
             size = random.randint(1, self.max_size)
-            temp_dat = tempfile.NamedTemporaryFile(suffix='.dat')
+            temp_dat = tempfile.NamedTemporaryFile(suffix='.dat', delete=False)
             temp_dat.write(bytes([random.randint(0, 255) for x in range(size)]))
             temp_dat.truncate()
             temp_dat.flush()
@@ -58,6 +59,7 @@ class FuzzerVarietyTester:
             args += ['--print']
             wat = shared.run_process(shared.WASM_OPT + args,
                                    stdout=subprocess.PIPE).stdout
+            os.remove(temp_dat.name)
 
             self.process_wat(wat)
 
