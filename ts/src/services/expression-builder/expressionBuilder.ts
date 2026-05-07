@@ -25,6 +25,7 @@ import {
 	i64,
 } from "./i64.ts";
 import {
+	data,
 	memory,
 } from "./memory.ts";
 import {
@@ -41,11 +42,6 @@ import {
 	global,
 	local,
 } from "./variable.ts";
-
-
-
-/** Placeholder. */
-const STUB = (..._args: readonly number[]): number => 0;
 
 
 
@@ -70,13 +66,13 @@ export function expressionBuilder(mod: Module) {
 		local: local(mod),
 		global: global(mod),
 		table: table(mod),
-		elem: {drop: STUB},
+		// TODO: elem.drop
 		memory: memory(mod),
-		data: {drop: STUB},
+		data: data(mod),
 		ref: ref(mod),
 		i31: i31(mod),
-		// TODO: extern
-		// TODO: any
+		// TODO: extern.convert_any
+		// TODO: any.convert_extern
 		tuple: tuple(mod),
 		struct: struct(mod),
 		array: array(mod),

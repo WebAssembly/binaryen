@@ -77,3 +77,15 @@ export function memory(mod: Module) {
 		atomic: atomic(mod),
 	} as const;
 }
+
+
+
+/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#memory-instructions */
+export function data(mod: Module) {
+	return {
+		/** Prevents further use of a passive data segment. */
+		drop: (segment: string): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenDataDrop"](mod.ptr, strToStack(segment)))
+		),
+	} as const;
+}
