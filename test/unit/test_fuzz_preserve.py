@@ -31,6 +31,8 @@ class FuzzerVarietyTester:
         start_time = time.time()
         stop_time = start_time + self.max_time
 
+        self.temp_dir = tempfile.TemporaryDirectory()
+
         i = 0
         while True:
             i += 1
@@ -47,19 +49,17 @@ class FuzzerVarietyTester:
 
             # Generate raw random data.
             size = random.randint(1, self.max_size)
-            temp_dat = tempfile.NamedTemporaryFile(suffix='.dat', delete=False)
-            temp_dat.write(bytes([random.randint(0, 255) for x in range(size)]))
-            temp_dat.truncate()
-            temp_dat.flush()
+            temp_dat = os.path.join(self.temp_dir.name, f'temp_{i}.dat')
+            with open(temp_dat, 'wb') as f:
+                f.write(bytes([random.randint(0, 255) for x in range(size)]))
 
             # Generate the fuzz testcase from the random data + the initial
             # contents.
-            args = ['-ttf', temp_dat.name, '--initial-fuzz=' + self.initial, '-all']
+            args = ['-ttf', temp_dat, '--initial-fuzz=' + self.initial, '-all']
             args += self.ttf_args
             args += ['--print']
             wat = shared.run_process(shared.WASM_OPT + args,
                                    stdout=subprocess.PIPE).stdout
-            os.remove(temp_dat.name)
 
             self.process_wat(wat)
 
