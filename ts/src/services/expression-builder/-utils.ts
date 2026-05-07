@@ -31,7 +31,15 @@ const SIZE_OF_LITERAL = BinaryenObj["_BinaryenSizeofLiteral"]();
 
 
 export function constant(mod: Module, binFuncName: string, value: number | bigint): ExpressionRef {
-	return preserveStack(() => BinaryenObj["_BinaryenConst"](mod.ptr, BinaryenObj[binFuncName](stackAlloc(SIZE_OF_LITERAL), value)));
+	return preserveStack(() => {
+		// Weird C stuff happening here…
+		// `tempLiteral` is a pointer whose reference gets mutated by the call to `binFuncName`.
+		// Emscripten applies the ‘sret’ convention here, converting `BinaryenObj[binFuncName]`
+		// (e.g `BinaryenLiteralInt32`) to a function with 2 params.
+		const tempLiteral = stackAlloc(SIZE_OF_LITERAL);
+		BinaryenObj[binFuncName](tempLiteral, value);
+		return BinaryenObj["_BinaryenConst"](mod.ptr, tempLiteral);
+	});
 }
 
 export function unaryFn(mod: Module, op: Operation): (value: ExpressionRef) => ExpressionRef {
