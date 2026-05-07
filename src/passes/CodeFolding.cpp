@@ -398,7 +398,14 @@ private:
   // if one of the items has a branch to something inside outOf that is not
   // inside that item
   bool canMove(const std::vector<Expression*>& items, Expression* outOf) {
-    auto allTargets = BranchUtils::getBranchTargets(outOf);
+    return canMove(items, outOf, BranchUtils::getBranchTargets(outOf));
+  }
+
+  // Overload that accepts pre-computed branch targets to avoid redundant
+  // O(N) getBranchTargets calls.
+  bool canMove(const std::vector<Expression*>& items,
+               Expression* outOf,
+               const BranchUtils::NameSet& allTargets) {
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
       std::vector<Name> intersection;
@@ -707,33 +714,7 @@ private:
       // if we cannot merge to the end, then we definitely need 2 blocks,
       // and a branch. Use the pre-computed bodyTargets to avoid repeated
       // O(N) getBranchTargets calls.
-      auto* body = getFunction()->body;
-      bool canMoveItems = [&]() {
-        for (auto* item : items) {
-          auto exiting = BranchUtils::getExitingBranches(item);
-          std::vector<Name> intersection;
-          std::set_intersection(bodyTargets->begin(),
-                                bodyTargets->end(),
-                                exiting.begin(),
-                                exiting.end(),
-                                std::back_inserter(intersection));
-          if (intersection.size() > 0) {
-            return false;
-          }
-          if (getModule()->features.hasExceptionHandling()) {
-            EffectAnalyzer effects(getPassOptions(), *getModule(), item);
-            if (effects.danglingPop) {
-              return false;
-            }
-            if (effects.throws() &&
-                (FindAll<Try>(body).has() ||
-                 FindAll<TryTable>(body).has())) {
-              return false;
-            }
-          }
-        }
-        return true;
-      }();
+      bool canMoveItems = canMove(items, getFunction()->body, *bodyTargets);
       if (!canMoveItems) {
         cost += 1 + WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
         // TODO: to do this, we need to maintain a map of element=>parent,
