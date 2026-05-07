@@ -2428,6 +2428,12 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       if (getModule()->getFunction(curr->target)->imported()) {
         map[curr->target].callImports.push_back(curr);
       }
+
+      // Return calls add a dependency similar to references: we cannot refine
+      // the callee without coordination with the caller.
+      if (curr->isReturn) {
+        map[curr->target].reffed = true;
+      }
     }
 
     void visitRefFunc(RefFunc* curr) { map[curr->func].reffed = true; }

@@ -45,4 +45,25 @@
   (func $export-reffed (export "export-reffed") (param $0 i32) (param $1 anyref) (result eqref)
     (struct.new $A)
   )
+
+  ;; An export without a ref.func but that has a tail call, which also prevents
+  ;; us from refining its results. The called function and the caller both
+  ;; return nullref initially, and each might be refined to a conflicting type,
+  ;; if we are not careful here.
+
+  (func $tail-called (export "tail-called") (result nullref)
+    (ref.null $A)
+  )
+
+  (func $tail-caller (export "tail-caller") (param $x i32) (result nullref)
+    (if
+      (local.get $x)
+      (then
+        (return
+          (ref.null $B)
+        )
+      )
+    )
+    (return_call $tail-called)
+  )
 )
