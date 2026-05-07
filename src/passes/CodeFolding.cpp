@@ -645,13 +645,7 @@ private:
     if (tails.size() < 2) {
       return false;
     }
-    // Compute body branch targets once and share across recursive calls to
-    // avoid repeated O(N) tree walks.
     BranchUtils::NameSet localBodyTargets;
-    if (!bodyTargets) {
-      localBodyTargets = BranchUtils::getBranchTargets(getFunction()->body);
-      bodyTargets = &localBodyTargets;
-    }
     // remove things that are untoward and cannot be optimized
     tails.erase(
       std::remove_if(tails.begin(),
@@ -811,6 +805,13 @@ private:
             // as the changes may influence us. we leave further opts to further
             // passes (as this is rare in practice, it's generally not a perf
             // issue, but TODO optimize)
+            // Compute body branch targets once and share across recursive
+            // calls to avoid repeated O(N) tree walks.
+            if (!bodyTargets) {
+              localBodyTargets =
+                BranchUtils::getBranchTargets(getFunction()->body);
+              bodyTargets = &localBodyTargets;
+            }
             if (optimizeTerminatingTails(explore, num + 1, bodyTargets)) {
               return true;
             }
