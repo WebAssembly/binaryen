@@ -1,5 +1,6 @@
 import {
 	BinaryenObj,
+	HEAPU32,
 	stackAlloc,
 } from "../-pre.ts";
 import type {
@@ -8,7 +9,6 @@ import type {
 	Type,
 } from "../constants.ts";
 import {
-	HEAPU32,
 	i8sToStack,
 	i32sToStack,
 	preserveStack,

@@ -4,17 +4,28 @@
 
 declare module "binaryen-raw" {
 	interface BinaryenObjType {
+		// https://github.com/emscripten-core/emscripten/blob/main/src/preamble.js
 		_free(ptr: number): void;
 		_malloc(ptr: number): number;
+
+		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libcore.js
+		HEAP8: Int8Array;
+		HEAPU8: Uint8Array;
+		HEAP32: Int32Array;
+		HEAPU32: Uint32Array;
 		stackSave(): unknown;
 		stackRestore(stack: unknown): unknown;
 		stackAlloc(length: number): number;
-		stringToUTF8OnStack(str: string): number;
+
+		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libstrings.js
 		UTF8ToString(n: number): string;
 		stringToAscii(text: string, buffer: number): void;
-		getExceptionMessage(e: number | Error): [string, string]; // https://emscripten.org/docs/porting/exceptions.html#handling-c-exceptions-from-javascript
-		_BinaryenSizeofAllocateAndWriteResult(): number;
+		stringToUTF8OnStack(str: string): number;
 
+		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libexceptions.js
+		getExceptionMessage(e: number | Error): [string, string];
+
+		// C-defined functions
 		[key: string]: (...args: readonly (number | bigint | boolean)[]) => number;
 	}
 

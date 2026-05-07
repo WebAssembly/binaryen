@@ -1,7 +1,8 @@
 import {
-	_BinaryenSizeofAllocateAndWriteResult,
 	_free,
 	BinaryenObj,
+	HEAPU8,
+	HEAPU32,
 	UTF8ToString,
 	stackAlloc,
 } from "../../-pre.ts";
@@ -35,8 +36,6 @@ import {
 	expressionBuilder,
 } from "../../services/expression-builder/expressionBuilder.ts";
 import {
-	HEAPU8,
-	HEAPU32,
 	i8sToStack,
 	i32sToStack,
 	preserveStack,
@@ -395,7 +394,7 @@ export class Module {
 	emitBinary(sourceMapUrl: string): {binary: Uint8Array, sourceMap: string};
 	emitBinary(sourceMapUrl?: string): Uint8Array | {binary: Uint8Array, sourceMap: string} {
 		return preserveStack(() => {
-			const tempBuffer = stackAlloc(_BinaryenSizeofAllocateAndWriteResult());
+			const tempBuffer = stackAlloc(BinaryenObj["_BinaryenSizeofAllocateAndWriteResult"]());
 			BinaryenObj["_BinaryenModuleAllocateAndWrite"](tempBuffer, this.ptr, strToStack(sourceMapUrl));
 			const binaryPtr = HEAPU32[tempBuffer >>> 2];
 			const binaryBytes = HEAPU32[(tempBuffer >>> 2) + 1];
@@ -424,7 +423,7 @@ export class Module {
 	}
 
 	/**
-	 * Releases the resources held by the module once it isn't needed anymore.
+	 * Releases the resources held by the module once it isn’t needed anymore.
 	 * @category Emission & Execution
 	 */
 	dispose(): void {

@@ -1,5 +1,6 @@
 import {
 	BinaryenObj,
+	HEAPU8,
 	stackAlloc,
 } from "../../-pre.ts";
 import {
@@ -12,7 +13,6 @@ import {
 	v128,
 } from "../../constants.ts";
 import {
-	HEAPU8,
 	THIS_PTR,
 	preserveStack,
 } from "../../utils.ts";

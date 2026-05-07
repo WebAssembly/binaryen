@@ -6,6 +6,8 @@
 import {
 	_free,
 	_malloc,
+	HEAP8,
+	HEAPU32,
 	BinaryenObj,
 	getExceptionMessage,
 	stackAlloc,
@@ -23,8 +25,6 @@ import {
 	type Type,
 } from "./constants.ts";
 import {
-	HEAP8,
-	HEAPU32,
 	i32sToStack,
 	preserveStack,
 } from "./utils.ts";

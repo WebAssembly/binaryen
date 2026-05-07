@@ -2,13 +2,13 @@ import {
 	_free,
 	_malloc,
 	BinaryenObj,
+	HEAP8,
 	UTF8ToString,
 } from "../../-pre.ts";
 import type {
 	DataSegmentRef,
 } from "../../constants.ts";
 import {
-	HEAP8,
 	preserveStack,
 	strToStack,
 } from "../../utils.ts";

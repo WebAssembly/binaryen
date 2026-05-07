@@ -4,19 +4,13 @@
 
 
 import {
-	BinaryenObj,
+	HEAP8,
+	HEAP32,
 	stackAlloc,
 	stackRestore,
 	stackSave,
 	stringToUTF8OnStack,
 } from "./-pre.ts";
-
-
-
-export const HEAP8: Int8Array = BinaryenObj["HEAP8"] as any;
-export const HEAPU8: Uint8Array = BinaryenObj["HEAPU8"] as any;
-export const HEAP32: Int32Array = BinaryenObj["HEAP32"] as any;
-export const HEAPU32: Uint32Array = BinaryenObj["HEAPU32"] as any;
 
 
 

@@ -2,13 +2,13 @@ import {
 	_free,
 	_malloc,
 	BinaryenObj,
+	HEAP8,
 	UTF8ToString,
 } from "../../-pre.ts";
 import type {
 	ExpressionRef,
 } from "../../constants.ts";
 import {
-	HEAP8,
 	i32sToStack,
 	preserveStack,
 	strToStack,
