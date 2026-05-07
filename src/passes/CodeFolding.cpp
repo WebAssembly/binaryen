@@ -301,6 +301,7 @@ struct CodeFolding
       unoptimizables.clear();
       modifieds.clear();
       exitingBranchCache.clear();
+      bodyCachePopulated = false;
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
