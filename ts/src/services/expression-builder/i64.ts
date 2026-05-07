@@ -4,9 +4,6 @@ import {
 import {
 	consoleWarn,
 } from "../../lib.ts";
-import {
-	Operation,
-} from "../../classes/expression/Operation.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -21,6 +18,9 @@ import {
 	storeFn,
 	unaryFn,
 } from "./-utils.ts";
+import {
+	Operation,
+} from "./Operation.ts";
 
 
 

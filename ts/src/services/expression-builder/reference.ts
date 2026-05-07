@@ -5,9 +5,6 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
-import {
-	Operation,
-} from "../../classes/expression/Operation.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -15,6 +12,9 @@ import type {
 	ExpressionRef,
 	Type,
 } from "../../constants.ts";
+import {
+	Operation,
+} from "./Operation.ts";
 
 
 
