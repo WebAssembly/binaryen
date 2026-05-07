@@ -117,6 +117,10 @@ export default [
 		},
 	},
 	{
+		...tseslint.configs.eslintRecommended, // https://github.com/typescript-eslint/typescript-eslint/blob/v8.59.1/packages/eslint-plugin/src/configs/flat/eslint-recommended.ts
+		files: ["./{src,test}/**/*.ts"],
+	},
+	{
 		name: "TypeScript Only", // rules that break on JS files, and rules that need TSConfig to work
 		files: ["./{src,test}/**/*.ts"],
 		languageOptions: {
@@ -127,6 +131,8 @@ export default [
 		plugins: {"@typescript-eslint": tseslint.plugin},
 
 		rules: {
+			"@typescript-eslint/ban-ts-comment": ["error", {"ts-expect-error": false}],
+
 			/* # Layout & Formatting */
 			/* ## Operator Style */
 			"@typescript-eslint/array-type": ["error", {

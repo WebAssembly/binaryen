@@ -13,8 +13,8 @@ declare module "binaryen-raw" {
 		HEAPU8: Uint8Array;
 		HEAP32: Int32Array;
 		HEAPU32: Uint32Array;
-		stackSave(): unknown;
-		stackRestore(stack: unknown): unknown;
+		stackSave(): number;
+		stackRestore(stack: number): number;
 		stackAlloc(length: number): number;
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libstrings.js

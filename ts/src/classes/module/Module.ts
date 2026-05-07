@@ -520,7 +520,6 @@ export class Module {
  * Each class represents a component of a WASM module,
  * and its corresponding type is included for documentation.
  */
-// eslint-disable-next-line no-redeclare
 export namespace Module {
 	export type Tag = Tag_;
 	export type Global = Global_;

@@ -25,8 +25,9 @@ export const THIS_PTR: unique symbol = Symbol();
  * @returns [description]
  */
 export function preserveStack<T>(func: () => T): T {
+	let stack: number = 0;
 	try {
-		var stack = stackSave();
+		stack = stackSave();
 		return func();
 	} finally {
 		stackRestore(stack);

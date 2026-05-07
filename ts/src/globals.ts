@@ -89,7 +89,7 @@ function handleFatalError<T>(func: () => T): T {
 			const [_, message] = getExceptionMessage(e);
 			if (message.startsWith("Fatal: ")) {
 				// eslint-disable-next-line preserve-caught-error
-				throw new Error(message.substr(7).trim());
+				throw new Error(message.slice(7).trim());
 			}
 		} else {
 			const err = e as Error;
