@@ -27,8 +27,6 @@ class FuzzerVarietyTester:
         self.initial = initial
 
     def test(self):
-        temp_dat = tempfile.NamedTemporaryFile(suffix='.dat')
-
         start_time = time.time()
         stop_time = start_time + self.max_time
 
@@ -46,13 +44,9 @@ class FuzzerVarietyTester:
             if i > self.min_iters and time.time() > stop_time:
                 raise Exception('looked too long and still failed')
 
-            # Generate raw random data. Note we do not open() the file multiple
-            # times as that fails on windows; instead, seek to the start and
-            # write from there, then later resize and flush. (We do all this to
-            # avoid the slowdown of securely creating many tiny temp files, as
-            # this loop may go on for a long time.)
-            temp_dat.seek(0)
+            # Generate raw random data.
             size = random.randint(1, self.max_size)
+            temp_dat = tempfile.NamedTemporaryFile(suffix='.dat')
             temp_dat.write(bytes([random.randint(0, 255) for x in range(size)]))
             temp_dat.truncate()
             temp_dat.flush()
