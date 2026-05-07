@@ -10,9 +10,11 @@ import type {
 } from "../../classes/module/Module.ts";
 import type {
 	ExpressionRef,
+	Type,
 } from "../../constants.ts";
 import {
 	preserveStack,
+	strToStack,
 } from "../../utils.ts";
 
 
@@ -38,4 +40,12 @@ export function unaryFn(mod: Module, op: Operation): (value: ExpressionRef) => E
 
 export function binaryFn(mod: Module, op: Operation): (left: ExpressionRef, right: ExpressionRef) => ExpressionRef {
 	return (left, right) => BinaryenObj["_BinaryenBinary"](mod.ptr, op, left, right);
+}
+
+export function loadFn(mod: Module, typ: Type, bytes: number, isSigned: boolean): (offset: number, align: number, ptr: ExpressionRef, name: string) => ExpressionRef {
+	return (offset, align, ptr, name) => preserveStack(() => BinaryenObj["_BinaryenLoad"](mod.ptr, bytes, isSigned, offset, align, typ, ptr, strToStack(name)));
+}
+
+export function storeFn(mod: Module, typ: Type, bytes: number): (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name: string) => ExpressionRef {
+	return (offset, align, ptr, value, name) => preserveStack(() => BinaryenObj["_BinaryenLoad"](mod.ptr, bytes, offset, align, ptr, value, typ, strToStack(name)));
 }

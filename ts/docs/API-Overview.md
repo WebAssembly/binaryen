@@ -207,6 +207,8 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.array.copy()`
 	- `.array.init_data()`, `.array.init_elem()`
 - integers
+	- `.{i32,i64}.load()`, `.{i32,i64}.load8_{s,u}()`, `.{i32,i64}.load16_{s,u}()`, `.i64.load32_{s,u}()`
+	- `.{i32,i64}.store()`, `.{i32,i64}.store8()`, `.{i32,i64}.store16()`, `.i64.store32()`
 	- `.{i32,i64}.const()`
 	- `.{i31,i32}.clz()`, `.{i32,i64}.ctz()`, `.{i32,i64}.popcnt()`
 	- `.{i32,i64}.extend8_s()`, `.{i32,i64}.extend16_s()`, `.i64.extend32_s()`
@@ -223,6 +225,7 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.i32.reinterpret_f32()`, `.i64.reinterpret_f64()`
 	- 🌱 WideInt proposal: `.add128()`, `.sub128()`, `.mul_wide_{s,u}()`
 - floats
+	- `.{f32,f64}.load()`, `.{f32,f64}.store()`
 	- `.{f32,f64}.const()`
 	- `.{f32,f64}.abs()`, `.{f32,f64}.neg()`, `.{f32,f64}.sqrt()`, `.{f32,f64}.ceil()`, `.{f32,f64}.floor()`, `.{f32,f64}.trunc()`, `.{f32,f64}.nearest()`
 	- `.{f32,f64}.add()`, `.{f32,f64}.sub()`, `.{f32,f64}.mul()`, `.{f32,f64}.div()`, `.{f32,f64}.min()`, `.{f32,f64}.max()`, `.{f32,f64}.copysign()`

@@ -7,20 +7,29 @@ import {
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
-import type {
-	ExpressionRef,
+import {
+	type ExpressionRef,
+	f32 as f32_t,
 } from "../../constants.ts";
 import {
 	binaryFn,
 	constant,
+	loadFn,
+	storeFn,
 	unaryFn,
 } from "./numerics.ts";
 
 
 
-/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions */
+/**
+ * @see https://webassembly.github.io/spec/core/syntax/instructions.html#memory-instructions
+ * @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions
+ */
 export function f32(mod: Module) {
 	return {
+		load: loadFn(mod, f32_t, 4, true),
+		store: storeFn(mod, f32_t, 4),
+
 		/** Return a static constant f32. */
 		const: (value: number): ExpressionRef => (
 			constant(mod, "_BinaryenLiteralFloat32", value)

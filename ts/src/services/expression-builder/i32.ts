@@ -7,20 +7,36 @@ import {
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
-import type {
-	ExpressionRef,
+import {
+	type ExpressionRef,
+	i32 as i32_t,
 } from "../../constants.ts";
 import {
 	binaryFn,
 	constant,
+	loadFn,
+	storeFn,
 	unaryFn,
 } from "./numerics.ts";
 
 
 
-/** @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions */
+/**
+ * @see https://webassembly.github.io/spec/core/syntax/instructions.html#memory-instructions
+ * @see https://webassembly.github.io/spec/core/syntax/instructions.html#numeric-instructions
+ */
 export function i32(mod: Module) {
 	return {
+		load: loadFn(mod, i32_t, 4, true),
+		load8_s: loadFn(mod, i32_t, 1, true),
+		load8_u: loadFn(mod, i32_t, 1, false),
+		load16_s: loadFn(mod, i32_t, 2, true),
+		load16_u: loadFn(mod, i32_t, 2, false),
+
+		store: storeFn(mod, i32_t, 4),
+		store8: storeFn(mod, i32_t, 1),
+		store16: storeFn(mod, i32_t, 2),
+
 		/** Return a static constant i32. */
 		const: (value: number): ExpressionRef => (
 			constant(mod, "_BinaryenLiteralInt32", value)
