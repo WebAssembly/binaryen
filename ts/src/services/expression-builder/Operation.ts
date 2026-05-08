@@ -318,6 +318,7 @@ export enum Operation {
 	LtUVecI8x16 = BinaryenObj["_BinaryenLtUVecI8x16"](),
 	LtUVecI16x8 = BinaryenObj["_BinaryenLtUVecI16x8"](),
 	LtUVecI32x4 = BinaryenObj["_BinaryenLtUVecI32x4"](),
+	// LtUVecI64x2 // not supported; see #414
 	GtSVecI8x16 = BinaryenObj["_BinaryenGtSVecI8x16"](),
 	GtSVecI16x8 = BinaryenObj["_BinaryenGtSVecI16x8"](),
 	GtSVecI32x4 = BinaryenObj["_BinaryenGtSVecI32x4"](),
@@ -325,6 +326,7 @@ export enum Operation {
 	GtUVecI8x16 = BinaryenObj["_BinaryenGtUVecI8x16"](),
 	GtUVecI16x8 = BinaryenObj["_BinaryenGtUVecI16x8"](),
 	GtUVecI32x4 = BinaryenObj["_BinaryenGtUVecI32x4"](),
+	// GtUVecI64x2 // not supported; see #414
 	LeSVecI8x16 = BinaryenObj["_BinaryenLeSVecI8x16"](),
 	LeSVecI16x8 = BinaryenObj["_BinaryenLeSVecI16x8"](),
 	LeSVecI32x4 = BinaryenObj["_BinaryenLeSVecI32x4"](),
@@ -332,6 +334,7 @@ export enum Operation {
 	LeUVecI8x16 = BinaryenObj["_BinaryenLeUVecI8x16"](),
 	LeUVecI16x8 = BinaryenObj["_BinaryenLeUVecI16x8"](),
 	LeUVecI32x4 = BinaryenObj["_BinaryenLeUVecI32x4"](),
+	// LeUVecI64x2 // not supported; see #414
 	GeSVecI8x16 = BinaryenObj["_BinaryenGeSVecI8x16"](),
 	GeSVecI16x8 = BinaryenObj["_BinaryenGeSVecI16x8"](),
 	GeSVecI32x4 = BinaryenObj["_BinaryenGeSVecI32x4"](),
@@ -339,6 +342,7 @@ export enum Operation {
 	GeUVecI8x16 = BinaryenObj["_BinaryenGeUVecI8x16"](),
 	GeUVecI16x8 = BinaryenObj["_BinaryenGeUVecI16x8"](),
 	GeUVecI32x4 = BinaryenObj["_BinaryenGeUVecI32x4"](),
+	// GeUVecI64x2 // not supported; see #414
 	// #### vrelop_f #### //
 	EqVecF32x4 = BinaryenObj["_BinaryenEqVecF32x4"](),
 	EqVecF64x2 = BinaryenObj["_BinaryenEqVecF64x2"](),
@@ -391,13 +395,13 @@ export enum Operation {
 	ExtMulHighUVecI16x8 = BinaryenObj["_BinaryenExtMulHighUVecI16x8"](),
 	ExtMulHighUVecI32x4 = BinaryenObj["_BinaryenExtMulHighUVecI32x4"](),
 	ExtMulHighUVecI64x2 = BinaryenObj["_BinaryenExtMulHighUVecI64x2"](),
-	RelaxedDotI8x16I7x16AddSToVecI32x4 = BinaryenObj["_BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4"](),
-	RelaxedDotI8x16I7x16SToVecI16x8 = BinaryenObj["_BinaryenRelaxedDotI8x16I7x16SToVecI16x8"](),
 	DotSVecI16x8ToVecI32x4 = BinaryenObj["_BinaryenDotSVecI16x8ToVecI32x4"](),
+	RelaxedDotI8x16I7x16SToVecI16x8 = BinaryenObj["_BinaryenRelaxedDotI8x16I7x16SToVecI16x8"](),
+	RelaxedDotI8x16I7x16AddSToVecI32x4 = BinaryenObj["_BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4"](),
 	// #### narrow #### //
 	NarrowSVecI16x8ToVecI8x16 = BinaryenObj["_BinaryenNarrowSVecI16x8ToVecI8x16"](),
-	NarrowUVecI16x8ToVecI8x16 = BinaryenObj["_BinaryenNarrowUVecI16x8ToVecI8x16"](),
 	NarrowSVecI32x4ToVecI16x8 = BinaryenObj["_BinaryenNarrowSVecI32x4ToVecI16x8"](),
+	NarrowUVecI16x8ToVecI8x16 = BinaryenObj["_BinaryenNarrowUVecI16x8ToVecI8x16"](),
 	NarrowUVecI32x4ToVecI16x8 = BinaryenObj["_BinaryenNarrowUVecI32x4ToVecI16x8"](),
 	// #### vcvtop #### //
 	ExtendLowSVecI8x16ToVecI16x8 = BinaryenObj["_BinaryenExtendLowSVecI8x16ToVecI16x8"](),

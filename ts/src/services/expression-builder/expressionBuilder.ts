@@ -12,18 +12,18 @@ import {
 	calls,
 	throws,
 } from "./control.ts";
-import {
-	f32,
-} from "./f32.ts";
-import {
-	f64,
-} from "./f64.ts";
-import {
-	i32,
-} from "./i32.ts";
-import {
-	i64,
-} from "./i64.ts";
+/* eslint-disable @stylistic/object-curly-newline */
+import {f32} from "./f32.ts";
+import {f32x4} from "./f32x4.ts";
+import {f64} from "./f64.ts";
+import {f64x2} from "./f64x2.ts";
+import {i8x16} from "./i8x16.ts";
+import {i16x8} from "./i16x8.ts";
+import {i32} from "./i32.ts";
+import {i32x4} from "./i32x4.ts";
+import {i64} from "./i64.ts";
+import {i64x2} from "./i64x2.ts";
+/* eslint-enable @stylistic/object-curly-newline */
 import {
 	data,
 	memory,
@@ -84,6 +84,12 @@ export function expressionBuilder(mod: Module) {
 		f32: f32(mod),
 		f64: f64(mod),
 		v128: v128(mod),
+		i8x16: i8x16(mod),
+		i16x8: i16x8(mod),
+		i32x4: i32x4(mod),
+		i64x2: i64x2(mod),
+		f32x4: f32x4(mod),
+		f64x2: f64x2(mod),
 	} as const;
 }
 
