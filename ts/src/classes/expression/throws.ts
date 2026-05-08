@@ -24,12 +24,12 @@ export class Throw extends Expression {
 		super(ExpressionId.Throw, expr);
 	}
 
-	getTag(): string { return UTF8ToString(BinaryenObj["_BinaryenThrowGetTag"](this[THIS_PTR])); }
-	setTag(tagName: string) { preserveStack(() => BinaryenObj["_BinaryenThrowSetTag"](this[THIS_PTR], strToStack(tagName))); }
+	get tag(): string { return UTF8ToString(BinaryenObj["_BinaryenThrowGetTag"](this[THIS_PTR])); }
+	set tag(tagName: string) { preserveStack(() => BinaryenObj["_BinaryenThrowSetTag"](this[THIS_PTR], strToStack(tagName))); }
 
 	getNumOperands(): number { return BinaryenObj["_BinaryenThrowGetNumOperands"](this[THIS_PTR]); }
 
-	getOperands(): ExpressionRef[] {
+	get operands(): ExpressionRef[] {
 		return getAllNested(
 			this[THIS_PTR],
 			BinaryenObj["_BinaryenThrowGetNumOperands"],
@@ -37,7 +37,7 @@ export class Throw extends Expression {
 		);
 	}
 
-	setOperands(operands: readonly ExpressionRef[]) {
+	set operands(operands: readonly ExpressionRef[]) {
 		setAllNested(
 			this[THIS_PTR],
 			operands,
