@@ -508,7 +508,10 @@ export class Module {
 		preserveStack(() => BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length));
 	}
 
-	/** [description] */
+	/**
+	 * Updates the internal name mapping logic in a module.
+	 * This must be called after renaming module elements.
+	 */
 	updateMaps(): void {
 		BinaryenObj["_BinaryenModuleUpdateMaps"](this.ptr);
 	}

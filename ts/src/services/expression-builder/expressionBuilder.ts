@@ -1,3 +1,6 @@
+import {
+	BinaryenObj,
+} from "../../-pre.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -90,6 +93,7 @@ export function expressionBuilder(mod: Module) {
 		i64x2: i64x2(mod),
 		f32x4: f32x4(mod),
 		f64x2: f64x2(mod),
+		atomic: {fence: () => BinaryenObj["_BinaryenAtomicFence"](mod.ptr)},
 	} as const;
 }
 
