@@ -14,11 +14,21 @@ import {
 
 
 
+export class Drop extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.Drop, expr);
+	}
+
+	get value(): ExpressionRef { return BinaryenObj["_BinaryenDropGetValue"](this[THIS_PTR]); }
+	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenDropSetValue"](this[THIS_PTR], valueExpr); }
+}
+
+
+
 export class Select extends Expression {
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.Select, expr);
 	}
-
 
 	get condition(): ExpressionRef { return BinaryenObj["_BinaryenSelectGetCondition"](this[THIS_PTR]); }
 	set condition(condExpr: ExpressionRef) { BinaryenObj["_BinaryenSelectSetCondition"](this[THIS_PTR], condExpr); }

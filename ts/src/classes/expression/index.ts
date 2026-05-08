@@ -11,34 +11,40 @@
 
 export {Expression} from "./Expression.ts";
 
-// ## Parametric ## //
-export {Drop} from "./Drop.ts";
-export {Select} from "./Select.ts";
+export {
+	Drop,
+	Select,
+} from "./parametrics.ts";
+export {
+	Block,
+	Loop,
+	If,
+} from "./blocks.ts";
+export {
+	Break,
+	Switch,
+	BrOn,
+} from "./breaks.ts";
+export {
+	Call,
+	CallRef,
+	CallIndirect,
+	Return,
+} from "./calls.ts";
+export {
+	Throw,
+	Rethrow,
+	Try,
+} from "./throws.ts";
+export {
+	LocalGet,
+	LocalSet,
+	GlobalGet,
+	GlobalSet,
+} from "./variables.ts";
+export {
+	TableGet,
+	TableSet,
+} from "./tables.ts";
 
-// ## Control ## //
-export {Block} from "./Block.ts";
-export {Loop} from "./Loop.ts";
-export {If} from "./If.ts";
-export {Break} from "./Break.ts";
-export {Switch} from "./Switch.ts";
-export {BrOn} from "./BrOn.ts";
-export {Call} from "./Call.ts";
-export {CallRef} from "./CallRef.ts";
-export {CallIndirect} from "./CallIndirect.ts";
-export {Return} from "./Return.ts";
-export {Throw} from "./Throw.ts";
-export {Rethrow} from "./Rethrow.ts";
-export {Try} from "./Try.ts";
-
-// ## Variable ## //
-export {LocalGet} from "./LocalGet.ts";
-export {LocalSet} from "./LocalSet.ts";
-export {GlobalGet} from "./GlobalGet.ts";
-export {GlobalSet} from "./GlobalSet.ts";
-
-// ## Table ## //
-export {TableGet} from "./TableGet.ts";
-export {TableSet} from "./TableSet.ts";
-
-// ## Numeric & Vector ## //
 export {Const} from "./Const.ts";
