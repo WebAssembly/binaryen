@@ -20,11 +20,6 @@ export class LocalGet extends Expression {
 	}
 
 
-	get index(): number {
-		return BinaryenObj["_BinaryenLocalGetGetIndex"](this[THIS_PTR]);
-	}
-
-	set index(index: number) {
-		BinaryenObj["_BinaryenLocalGetSetIndex"](this[THIS_PTR], index);
-	}
+	get index(): number { return BinaryenObj["_BinaryenLocalGetGetIndex"](this[THIS_PTR]); }
+	set index(index: number) { BinaryenObj["_BinaryenLocalGetSetIndex"](this[THIS_PTR], index); }
 }

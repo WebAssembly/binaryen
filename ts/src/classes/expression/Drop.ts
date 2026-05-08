@@ -20,11 +20,6 @@ export class Drop extends Expression {
 	}
 
 
-	get value(): ExpressionRef {
-		return BinaryenObj["_BinaryenDropGetValue"](this[THIS_PTR]);
-	}
-
-	set value(valueExpr: ExpressionRef) {
-		BinaryenObj["_BinaryenDropSetValue"](this[THIS_PTR], valueExpr);
-	}
+	get value(): ExpressionRef { return BinaryenObj["_BinaryenDropGetValue"](this[THIS_PTR]); }
+	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenDropSetValue"](this[THIS_PTR], valueExpr); }
 }
