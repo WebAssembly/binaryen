@@ -14,8 +14,15 @@ import {
 
 
 
-/** Private symbol used to store the underlying C-API pointer of a wrapped object. */
-export const THIS_PTR: unique symbol = Symbol();
+/**
+ * “Secret” symbol used to store the underlying C-API pointer of an object.
+ *
+ * Sometimes an object’s underlying pointer value needs to be visible outside its class
+ * so that other classes in this codebase can access it,
+ * but using a regular public field would expose it to the world.
+ * Therefore this unique symbol is used as a key, which only we have access to.
+ */
+export const PTR: unique symbol = Symbol();
 
 
 

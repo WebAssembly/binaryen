@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../-utils.ts";
@@ -29,7 +30,7 @@ export class ExpressionRunner {
 	readonly #ptr: number;
 
 	constructor(mod: Module, flags: ExpressionRunnerFlag, maxDepth: number, maxLoopIterations: number) {
-		this.#ptr = BinaryenObj["_ExpressionRunnerCreate"](mod.ptr, flags, maxDepth, maxLoopIterations);
+		this.#ptr = BinaryenObj["_ExpressionRunnerCreate"](mod[PTR], flags, maxDepth, maxLoopIterations);
 	}
 
 	setLocalValue(index: number, valueExpr: ExpressionRef): boolean {

@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../-pre.ts";
 import {
+	PTR,
 	i32sToStack,
 	preserveStack,
 } from "../-utils.ts";
@@ -27,7 +28,7 @@ export class Relooper {
 	 * @param mod the binaryen Module
 	 */
 	constructor(mod: Module) {
-		this.#ptr = BinaryenObj["_RelooperCreate"](mod.ptr);
+		this.#ptr = BinaryenObj["_RelooperCreate"](mod[PTR]);
 	}
 
 	/**

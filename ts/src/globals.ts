@@ -14,6 +14,7 @@ import {
 	stringToAscii,
 } from "./-pre.ts";
 import {
+	PTR,
 	i32sToStack,
 	preserveStack,
 } from "./-utils.ts";
@@ -88,7 +89,7 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 function wrapModule(ptr: number): Module {
 	const returned = new Module();
 	// @ts-expect-error -- warning: reassigning a readonly field
-	returned.ptr = ptr;
+	returned[PTR] = ptr;
 	return returned;
 }
 

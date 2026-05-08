@@ -3,6 +3,7 @@ import {
 	stackAlloc,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -56,63 +57,63 @@ export function constant(mod: Module, binFuncName: string, value: number | bigin
 		// (e.g `BinaryenLiteralInt32`) to a function with 2 params.
 		const tempLiteral = stackAlloc(SIZE_OF_LITERAL);
 		BinaryenObj[binFuncName](tempLiteral, value);
-		return BinaryenObj["_BinaryenConst"](mod.ptr, tempLiteral);
+		return BinaryenObj["_BinaryenConst"](mod[PTR], tempLiteral);
 	});
 }
 
 export function unaryFn(mod: Module, op: Operation): (value: ExpressionRef) => ExpressionRef {
-	return (value) => BinaryenObj["_BinaryenUnary"](mod.ptr, op, value);
+	return (value) => BinaryenObj["_BinaryenUnary"](mod[PTR], op, value);
 }
 
 export function binaryFn(mod: Module, op: Operation): (left: ExpressionRef, right: ExpressionRef) => ExpressionRef {
-	return (left, right) => BinaryenObj["_BinaryenBinary"](mod.ptr, op, left, right);
+	return (left, right) => BinaryenObj["_BinaryenBinary"](mod[PTR], op, left, right);
 }
 
 export function loadFn(mod: Module, typ: Type, bytes: number, isSigned: boolean): (offset: number, align: number, ptr: ExpressionRef, name?: string) => ExpressionRef {
 	return (offset, align, ptr, name) => (
-		preserveStack(() => BinaryenObj["_BinaryenLoad"](mod.ptr, bytes, isSigned, offset, align, typ, ptr, strToStack(name)))
+		preserveStack(() => BinaryenObj["_BinaryenLoad"](mod[PTR], bytes, isSigned, offset, align, typ, ptr, strToStack(name)))
 	);
 }
 
 export function storeFn(mod: Module, typ: Type, bytes: number): (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => ExpressionRef {
 	return (offset, align, ptr, value, name) => (
-		preserveStack(() => BinaryenObj["_BinaryenStore"](mod.ptr, bytes, offset, align, ptr, value, typ, strToStack(name)))
+		preserveStack(() => BinaryenObj["_BinaryenStore"](mod[PTR], bytes, offset, align, ptr, value, typ, strToStack(name)))
 	);
 }
 
 export function simdLoadFn(mod: Module, op: Operation): (offset: number, align: number, ptr: ExpressionRef, name?: string) => ExpressionRef {
 	return (offset, align, ptr, name) => (
-		preserveStack(() => BinaryenObj["_BinaryenSIMDLoad"](mod.ptr, op, offset, align, ptr, strToStack(name)))
+		preserveStack(() => BinaryenObj["_BinaryenSIMDLoad"](mod[PTR], op, offset, align, ptr, strToStack(name)))
 	);
 }
 
 export function simdLoadStoreLaneFn(mod: Module, op: Operation): (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) => ExpressionRef {
 	return (offset, align, index, ptr, vec, name) => (
-		preserveStack(() => BinaryenObj["_BinaryenSIMDLoadStoreLane"](mod.ptr, op, offset, align, index, ptr, vec, strToStack(name)))
+		preserveStack(() => BinaryenObj["_BinaryenSIMDLoadStoreLane"](mod[PTR], op, offset, align, index, ptr, vec, strToStack(name)))
 	);
 }
 
 export function simdShiftFn(mod: Module, op: Operation): (vec: ExpressionRef, shift: ExpressionRef) => ExpressionRef {
-	return (vec, shift) => BinaryenObj["_BinaryenSIMDShift"](mod.ptr, op, vec, shift);
+	return (vec, shift) => BinaryenObj["_BinaryenSIMDShift"](mod[PTR], op, vec, shift);
 }
 
 export function simdExtractFn(mod: Module, op: Operation): (vec: ExpressionRef, index: number) => ExpressionRef {
-	return (vec, index) => BinaryenObj["_BinaryenSIMDExtract"](mod.ptr, op, vec, index);
+	return (vec, index) => BinaryenObj["_BinaryenSIMDExtract"](mod[PTR], op, vec, index);
 }
 
 export function simdReplaceFn(mod: Module, op: Operation): (vec: ExpressionRef, index: number, value: ExpressionRef) => ExpressionRef {
-	return (vec, index, value) => BinaryenObj["_BinaryenSIMDReplace"](mod.ptr, op, vec, index, value);
+	return (vec, index, value) => BinaryenObj["_BinaryenSIMDReplace"](mod[PTR], op, vec, index, value);
 }
 
 export function atomicLoadFn(mod: Module, typ: Type, bytes: number): (offset: number, ptr: ExpressionRef, name?: string, order?: MemoryOrder) => ExpressionRef {
 	return (offset, ptr, name, order = MemoryOrder.SeqCst) => (
-		preserveStack(() => BinaryenObj["_BinaryenAtomicLoad"](mod.ptr, bytes, offset, typ, ptr, strToStack(name), order))
+		preserveStack(() => BinaryenObj["_BinaryenAtomicLoad"](mod[PTR], bytes, offset, typ, ptr, strToStack(name), order))
 	);
 }
 
 export function atomicStoreFn(mod: Module, typ: Type, bytes: number): (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string, order?: MemoryOrder) => ExpressionRef {
 	return (offset, ptr, value, name, order = MemoryOrder.SeqCst) => (
-		preserveStack(() => BinaryenObj["_BinaryenAtomicStore"](mod.ptr, bytes, offset, ptr, value, typ, strToStack(name), order))
+		preserveStack(() => BinaryenObj["_BinaryenAtomicStore"](mod[PTR], bytes, offset, ptr, value, typ, strToStack(name), order))
 	);
 }
 
@@ -120,7 +121,7 @@ export function atomicStoreFn(mod: Module, typ: Type, bytes: number): (offset: n
 
 function atomicRmwFn(mod: Module, op: Operation, typ: Type, bytes: number): (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string, order?: MemoryOrder) => ExpressionRef {
 	return (offset, ptr, value, name, order = MemoryOrder.SeqCst) => (
-		preserveStack(() => BinaryenObj["_BinaryenAtomicRMW"](mod.ptr, op, bytes, offset, ptr, value, typ, strToStack(name), order))
+		preserveStack(() => BinaryenObj["_BinaryenAtomicRMW"](mod[PTR], op, bytes, offset, ptr, value, typ, strToStack(name), order))
 	);
 }
 
@@ -134,7 +135,7 @@ export function atomicRmwOps(mod: Module, typ: Type, bytes: number) {
 		xchg: atomicRmwFn(mod, Operation.AtomicRMWXchg, typ, bytes),
 
 		cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string, order: MemoryOrder = MemoryOrder.SeqCst): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenAtomicCmpxchg"](mod.ptr, bytes, offset, ptr, expected, replacement, typ, strToStack(name), order))
+			preserveStack(() => BinaryenObj["_BinaryenAtomicCmpxchg"](mod[PTR], bytes, offset, ptr, expected, replacement, typ, strToStack(name), order))
 		),
 	} as const;
 }

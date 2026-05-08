@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -23,12 +24,12 @@ export function local(mod: Module) {
 		 * Note that we must specify the type here as we may not have created the local being accessed yet.
 		 */
 		get: (index: number, typ: Type): ExpressionRef => (
-			BinaryenObj["_BinaryenLocalGet"](mod.ptr, index, typ)
+			BinaryenObj["_BinaryenLocalGet"](mod[PTR], index, typ)
 		),
 
 		/** Creates a `(local.set)` for the local at the specified index. */
 		set: (index: number, value: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenLocalSet"](mod.ptr, index, value)
+			BinaryenObj["_BinaryenLocalSet"](mod[PTR], index, value)
 		),
 
 		/**
@@ -36,7 +37,7 @@ export function local(mod: Module) {
 		 * Note that we must specify the type here as we may not have created the local being accessed yet.
 		 */
 		tee: (index: number, value: ExpressionRef, typ: Type): ExpressionRef => (
-			BinaryenObj["_BinaryenLocalTee"](mod.ptr, index, value, typ)
+			BinaryenObj["_BinaryenLocalTee"](mod[PTR], index, value, typ)
 		),
 	} as const;
 }
@@ -51,12 +52,12 @@ export function global(mod: Module) {
 		 * Note that we must specify the type here as we may not have created the global being accessed yet.
 		 */
 		get: (name: string, typ: Type): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenGlobalGet"](mod.ptr, strToStack(name), typ))
+			preserveStack(() => BinaryenObj["_BinaryenGlobalGet"](mod[PTR], strToStack(name), typ))
 		),
 
 		/** Creates a `(global.set)` for the global with the specified name. */
 		set: (name: string, value: ExpressionRef): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenGlobalSet"](mod.ptr, strToStack(name), value))
+			preserveStack(() => BinaryenObj["_BinaryenGlobalSet"](mod[PTR], strToStack(name), value))
 		),
 	} as const;
 }

@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -57,7 +58,7 @@ export class ModuleImports {
 
 	#addComponent(binaryenFuncName: string, internalName: string, externalModuleName: string, externalBaseName: string, ...rest: any[]): void {
 		preserveStack(() => BinaryenObj[binaryenFuncName](
-			this.mod.ptr,
+			this.mod[PTR],
 			strToStack(internalName),
 			strToStack(externalModuleName),
 			strToStack(externalBaseName),

@@ -3,6 +3,7 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -47,16 +48,16 @@ export class ModuleTags {
 
 	/** Adds a tag. */
 	add(name: string, params: Type, results: Type): TagRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAddTag"](this.mod.ptr, strToStack(name), params, results));
+		return preserveStack(() => BinaryenObj["_BinaryenAddTag"](this.mod[PTR], strToStack(name), params, results));
 	}
 
 	/** Gets a tag by name. */
 	get(name: string): TagRef {
-		return preserveStack(() => BinaryenObj["_BinaryenGetTag"](this.mod.ptr, strToStack(name)));
+		return preserveStack(() => BinaryenObj["_BinaryenGetTag"](this.mod[PTR], strToStack(name)));
 	}
 
 	/** Removes a tag by name. */
 	remove(name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenRemoveTag"](this.mod.ptr, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenRemoveTag"](this.mod[PTR], strToStack(name)));
 	}
 }

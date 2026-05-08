@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -19,13 +20,13 @@ import {
 
 function atomic(mod: Module) {
 	function wait(typ: Type, ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name: string): ExpressionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAtomicWait"](mod.ptr, ptr, expected, timeout, typ, strToStack(name)));
+		return preserveStack(() => BinaryenObj["_BinaryenAtomicWait"](mod[PTR], ptr, expected, timeout, typ, strToStack(name)));
 	}
 
 	return {
 		/** @experimental */
 		notify: (ptr: ExpressionRef, notifyCount: ExpressionRef, name: string): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenAtomicNotify"](mod.ptr, ptr, notifyCount, strToStack(name)))
+			preserveStack(() => BinaryenObj["_BinaryenAtomicNotify"](mod[PTR], ptr, notifyCount, strToStack(name)))
 		),
 
 		/** @experimental */
@@ -47,17 +48,17 @@ export function memory(mod: Module) {
 	return {
 		/** Returns the current size of a memory. */
 		size: (name: string, memory64: boolean = false): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenMemorySize"](mod.ptr, strToStack(name), memory64))
+			preserveStack(() => BinaryenObj["_BinaryenMemorySize"](mod[PTR], strToStack(name), memory64))
 		),
 
 		/** Grows memory by a given delta and returns the previous size, or -1 if not enough space can be allocated. */
 		grow: (delta: ExpressionRef, name: string, memory64: boolean = false): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenMemoryGrow"](mod.ptr, delta, strToStack(name), memory64))
+			preserveStack(() => BinaryenObj["_BinaryenMemoryGrow"](mod[PTR], delta, strToStack(name), memory64))
 		),
 
 		/** Sets all values in a region of memory to a given byte. */
 		fill: (dest: ExpressionRef, value: ExpressionRef, size: ExpressionRef, name: string): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenMemoryFill"](mod.ptr, dest, value, size, strToStack(name)))
+			preserveStack(() => BinaryenObj["_BinaryenMemoryFill"](mod[PTR], dest, value, size, strToStack(name)))
 		),
 
 		/**
@@ -65,12 +66,12 @@ export function memory(mod: Module) {
 		 * The first index denotes the destination.
 		 */
 		copy: (dest: ExpressionRef, source: ExpressionRef, size: ExpressionRef, destMemory: string, sourceMemory: string): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenMemoryCopy"](mod.ptr, dest, source, size, strToStack(destMemory), strToStack(sourceMemory)))
+			preserveStack(() => BinaryenObj["_BinaryenMemoryCopy"](mod[PTR], dest, source, size, strToStack(destMemory), strToStack(sourceMemory)))
 		),
 
 		/** Copies data from a passive data segment into a memory. */
 		init: (segment: string, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name: string): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenMemoryInit"](mod.ptr, strToStack(segment), dest, offset, size, strToStack(name)))
+			preserveStack(() => BinaryenObj["_BinaryenMemoryInit"](mod[PTR], strToStack(segment), dest, offset, size, strToStack(name)))
 		),
 
 		/** @experimental */
@@ -85,7 +86,7 @@ export function data(mod: Module) {
 	return {
 		/** Prevents further use of a passive data segment. */
 		drop: (segment: string): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenDataDrop"](mod.ptr, strToStack(segment)))
+			preserveStack(() => BinaryenObj["_BinaryenDataDrop"](mod[PTR], strToStack(segment)))
 		),
 	} as const;
 }

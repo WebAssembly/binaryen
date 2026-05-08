@@ -7,6 +7,7 @@ import {
 	stackAlloc,
 } from "../../-pre.ts";
 import {
+	PTR,
 	i8sToStack,
 	i32sToStack,
 	preserveStack,
@@ -161,9 +162,9 @@ export class Module {
 
 	/**
 	 * The underlying C-API pointer of the wrapped module.
-	 * @internal
+	 * @hidden
 	 */
-	readonly ptr: ModuleRef = BinaryenObj["_BinaryenModuleCreate"]();
+	readonly [PTR]: ModuleRef = BinaryenObj["_BinaryenModuleCreate"]();
 
 	// ## Expression Manipulation ## //
 	/**
@@ -206,7 +207,7 @@ export class Module {
 			externref,
 			stringref,
 		].includes(typ)) {
-			return BinaryenObj["_BinaryenPop"](this.ptr, typ);
+			return BinaryenObj["_BinaryenPop"](this[PTR], typ);
 		} else {
 			throw new Error(`Unexpected type ${ typ }.`);
 		}
@@ -217,7 +218,7 @@ export class Module {
 	 * @category Expression Manipulation
 	 */
 	getSideEffects(expr: ExpressionRef): SideEffect {
-		return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, this.ptr);
+		return BinaryenObj["_BinaryenExpressionGetSideEffects"](expr, this[PTR]);
 	}
 
 	/**
@@ -225,7 +226,7 @@ export class Module {
 	 * @category Expression Manipulation
 	 */
 	copyExpression(expr: ExpressionRef): ExpressionRef {
-		return BinaryenObj["_BinaryenExpressionCopy"](expr, this.ptr);
+		return BinaryenObj["_BinaryenExpressionCopy"](expr, this[PTR]);
 	}
 
 	// ## Module Component Operations ## //
@@ -250,11 +251,11 @@ export class Module {
 	 * @category Module Component Operations
 	 */
 	get start(): FunctionRef {
-		return BinaryenObj["_BinaryenGetStart"](this.ptr);
+		return BinaryenObj["_BinaryenGetStart"](this[PTR]);
 	}
 
 	set start(start: FunctionRef) {
-		BinaryenObj["_BinaryenSetStart"](this.ptr, start);
+		BinaryenObj["_BinaryenSetStart"](this[PTR], start);
 	}
 
 	/**
@@ -263,11 +264,11 @@ export class Module {
 	 * @category Module Component Operations
 	 */
 	get features(): Feature {
-		return BinaryenObj["_BinaryenModuleGetFeatures"](this.ptr);
+		return BinaryenObj["_BinaryenModuleGetFeatures"](this[PTR]);
 	}
 
 	set features(features: Feature) {
-		BinaryenObj["_BinaryenModuleSetFeatures"](this.ptr, features);
+		BinaryenObj["_BinaryenModuleSetFeatures"](this[PTR], features);
 	}
 
 	/** @deprecated Use {@link Module#tags | `this.tags.add`} instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
@@ -340,7 +341,7 @@ export class Module {
 	 * @category Emission & Execution
 	 */
 	emitText(): string {
-		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteText"](this.ptr);
+		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteText"](this[PTR]);
 		const text = UTF8ToString(textPtr);
 		if (textPtr) {
 			_free(textPtr);
@@ -353,7 +354,7 @@ export class Module {
 	 * @category Emission & Execution
 	 */
 	emitStackIR(): string {
-		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteStackIR"](this.ptr);
+		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteStackIR"](this[PTR]);
 		const text = UTF8ToString(textPtr);
 		if (textPtr) {
 			_free(textPtr);
@@ -371,7 +372,7 @@ export class Module {
 		out = (x: string) => {
 			returned += `${ x }\n`;
 		};
-		BinaryenObj["_BinaryenModulePrintAsmjs"](this.ptr);
+		BinaryenObj["_BinaryenModulePrintAsmjs"](this[PTR]);
 		out = saved;
 		return returned;
 	}
@@ -389,7 +390,7 @@ export class Module {
 	emitBinary(sourceMapUrl?: string): Uint8Array | {binary: Uint8Array, sourceMap: string} {
 		return preserveStack(() => {
 			const tempBuffer = stackAlloc(BinaryenObj["_BinaryenSizeofAllocateAndWriteResult"]());
-			BinaryenObj["_BinaryenModuleAllocateAndWrite"](tempBuffer, this.ptr, strToStack(sourceMapUrl));
+			BinaryenObj["_BinaryenModuleAllocateAndWrite"](tempBuffer, this[PTR], strToStack(sourceMapUrl));
 			const binaryPtr = HEAPU32[tempBuffer >>> 2];
 			const binaryBytes = HEAPU32[(tempBuffer >>> 2) + 1];
 			const sourceMapPtr = HEAPU32[(tempBuffer >>> 2) + 2];
@@ -413,7 +414,7 @@ export class Module {
 	 * @category Emission & Execution
 	 */
 	interpret(): void {
-		BinaryenObj["_BinaryenModuleInterpret"](this.ptr);
+		BinaryenObj["_BinaryenModuleInterpret"](this[PTR]);
 	}
 
 	/**
@@ -421,7 +422,7 @@ export class Module {
 	 * @category Emission & Execution
 	 */
 	dispose(): void {
-		BinaryenObj["_BinaryenModuleDispose"](this.ptr);
+		BinaryenObj["_BinaryenModuleDispose"](this[PTR]);
 	}
 
 	// ### Validation & Optimization ### //
@@ -430,7 +431,7 @@ export class Module {
 	 * @category Validation & Optimization
 	 */
 	validate(): number {
-		return BinaryenObj["_BinaryenModuleValidate"](this.ptr);
+		return BinaryenObj["_BinaryenModuleValidate"](this[PTR]);
 	}
 
 	/**
@@ -438,7 +439,7 @@ export class Module {
 	 * @category Validation & Optimization
 	 */
 	optimize(): void {
-		BinaryenObj["_BinaryenModuleOptimize"](this.ptr);
+		BinaryenObj["_BinaryenModuleOptimize"](this[PTR]);
 	}
 
 	/**
@@ -449,7 +450,7 @@ export class Module {
 		if (typeof func === "string") {
 			func = this.functions.get(func);
 		}
-		BinaryenObj["_BinaryenFunctionOptimize"](func, this.ptr);
+		BinaryenObj["_BinaryenFunctionOptimize"](func, this[PTR]);
 	}
 
 	/**
@@ -457,7 +458,7 @@ export class Module {
 	 * @category Validation & Optimization
 	 */
 	runPasses(passes: readonly string[]): void {
-		preserveStack(() => BinaryenObj["_BinaryenModuleRunPasses"](this.ptr, i32sToStack(passes.map(strToStack)), passes.length));
+		preserveStack(() => BinaryenObj["_BinaryenModuleRunPasses"](this[PTR], i32sToStack(passes.map(strToStack)), passes.length));
 	}
 
 	/**
@@ -468,7 +469,7 @@ export class Module {
 		if (typeof func === "string") {
 			func = this.functions.get(func);
 		}
-		preserveStack(() => BinaryenObj["_BinaryenFunctionRunPasses"](func, this.ptr, i32sToStack(passes.map(strToStack)), passes.length));
+		preserveStack(() => BinaryenObj["_BinaryenFunctionRunPasses"](func, this[PTR], i32sToStack(passes.map(strToStack)), passes.length));
 	}
 
 	// ### Debugging ### //
@@ -477,7 +478,7 @@ export class Module {
 	 * @category Debugging
 	 */
 	addDebugInfoFileName(filename: string): number {
-		return preserveStack(() => BinaryenObj["_BinaryenModuleAddDebugInfoFileName"](this.ptr, strToStack(filename)));
+		return preserveStack(() => BinaryenObj["_BinaryenModuleAddDebugInfoFileName"](this[PTR], strToStack(filename)));
 	}
 
 	/**
@@ -485,7 +486,7 @@ export class Module {
 	 * @category Debugging
 	 */
 	getDebugInfoFileName(index: number): string {
-		return UTF8ToString(BinaryenObj["_BinaryenModuleGetDebugInfoFileName"](this.ptr, index));
+		return UTF8ToString(BinaryenObj["_BinaryenModuleGetDebugInfoFileName"](this[PTR], index));
 	}
 
 	/**
@@ -499,17 +500,17 @@ export class Module {
 	// ### Other ### //
 	/** [description] */
 	setTypeName(heapType: HeapType, name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenModuleSetTypeName"](this.ptr, heapType, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenModuleSetTypeName"](this[PTR], heapType, strToStack(name)));
 	}
 
 	/** [description] */
 	setFieldName(heapType: HeapType, index: number, name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenModuleSetFieldName"](this.ptr, heapType, index, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenModuleSetFieldName"](this[PTR], heapType, index, strToStack(name)));
 	}
 
 	/** Adds a custom section to the binary. */
 	addCustomSection(name: string, contents: Uint8Array): void {
-		preserveStack(() => BinaryenObj["_BinaryenAddCustomSection"](this.ptr, strToStack(name), i8sToStack([...contents]), contents.length));
+		preserveStack(() => BinaryenObj["_BinaryenAddCustomSection"](this[PTR], strToStack(name), i8sToStack([...contents]), contents.length));
 	}
 
 	/**
@@ -517,7 +518,7 @@ export class Module {
 	 * This must be called after renaming module elements.
 	 */
 	updateMaps(): void {
-		BinaryenObj["_BinaryenModuleUpdateMaps"](this.ptr);
+		BinaryenObj["_BinaryenModuleUpdateMaps"](this[PTR]);
 	}
 }
 

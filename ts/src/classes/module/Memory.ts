@@ -6,6 +6,7 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	PTR,
 	i32sToStack,
 	preserveStack,
 	strToStack,
@@ -45,13 +46,13 @@ export class Memory {
 
 
 	constructor(mod: Module, name: string) {
-		this.module = UTF8ToString(BinaryenObj["_BinaryenMemoryImportGetModule"](mod.ptr, strToStack(name)));
-		this.base = UTF8ToString(BinaryenObj["_BinaryenMemoryImportGetBase"](mod.ptr, strToStack(name)));
-		this.initial = BinaryenObj["_BinaryenMemoryGetInitial"](mod.ptr, strToStack(name));
-		this.shared = Boolean(BinaryenObj["_BinaryenMemoryIsShared"](mod.ptr, strToStack(name)));
-		this.is64 = Boolean(BinaryenObj["_BinaryenMemoryIs64"](mod.ptr, strToStack(name)));
-		if (BinaryenObj["_BinaryenMemoryHasMax"](mod.ptr, strToStack(name))) {
-			this.max = BinaryenObj["_BinaryenMemoryGetMax"](mod.ptr, strToStack(name));
+		this.module = UTF8ToString(BinaryenObj["_BinaryenMemoryImportGetModule"](mod[PTR], strToStack(name)));
+		this.base = UTF8ToString(BinaryenObj["_BinaryenMemoryImportGetBase"](mod[PTR], strToStack(name)));
+		this.initial = BinaryenObj["_BinaryenMemoryGetInitial"](mod[PTR], strToStack(name));
+		this.shared = Boolean(BinaryenObj["_BinaryenMemoryIsShared"](mod[PTR], strToStack(name)));
+		this.is64 = Boolean(BinaryenObj["_BinaryenMemoryIs64"](mod[PTR], strToStack(name)));
+		if (BinaryenObj["_BinaryenMemoryHasMax"](mod[PTR], strToStack(name))) {
+			this.max = BinaryenObj["_BinaryenMemoryGetMax"](mod[PTR], strToStack(name));
 		}
 	}
 }
@@ -91,7 +92,7 @@ export class ModuleMemories {
 				lengths[i] = data.length;
 			}
 			BinaryenObj["_BinaryenSetMemory"](
-				this.mod.ptr,
+				this.mod[PTR],
 				initial,
 				maximum,
 				strToStack(exportName),
@@ -113,6 +114,6 @@ export class ModuleMemories {
 
 	/** Returns whether the module has a memory. */
 	has(): boolean {
-		return Boolean(BinaryenObj["_BinaryenHasMemory"](this.mod.ptr));
+		return Boolean(BinaryenObj["_BinaryenHasMemory"](this.mod[PTR]));
 	}
 }

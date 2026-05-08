@@ -6,6 +6,7 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -32,7 +33,7 @@ export class DataSegment {
 		this.name = UTF8ToString(BinaryenObj["_BinaryenDataSegmentGetName"](segment));
 		this.passive = Boolean(BinaryenObj["_BinaryenGetDataSegmentPassive"](segment));
 		if (!this.passive) {
-			this.offset = BinaryenObj["_BinaryenGetDataSegmentByteOffset"](mod.ptr, segment);
+			this.offset = BinaryenObj["_BinaryenGetDataSegmentByteOffset"](mod[PTR], segment);
 		}
 
 		const size = BinaryenObj["_BinaryenGetDataSegmentByteLength"](segment);
@@ -57,16 +58,16 @@ export class ModuleDataSegments {
 
 	/** Gets a data segment by name. */
 	get(name: string): DataSegmentRef {
-		return preserveStack(() => BinaryenObj["_BinaryenGetDataSegment"](this.mod.ptr, strToStack(name)));
+		return preserveStack(() => BinaryenObj["_BinaryenGetDataSegment"](this.mod[PTR], strToStack(name)));
 	}
 
 	/** Gets a data segment by index. */
 	getByIndex(index: number): DataSegmentRef {
-		return BinaryenObj["_BinaryenGetDataSegmentByIndex"](this.mod.ptr, index);
+		return BinaryenObj["_BinaryenGetDataSegmentByIndex"](this.mod[PTR], index);
 	}
 
 	/** Gets the number of data segments within the module. */
 	count(): number {
-		return BinaryenObj["_BinaryenGetNumDataSegments"](this.mod.ptr);
+		return BinaryenObj["_BinaryenGetNumDataSegments"](this.mod[PTR]);
 	}
 }

@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -21,42 +22,42 @@ export function ref(mod: Module) {
 	return {
 		/** Produces a reference to a given function. */
 		func: (name: string, type: Type) => (
-			preserveStack(() => BinaryenObj["_BinaryenRefFunc"](mod.ptr, strToStack(name), type))
+			preserveStack(() => BinaryenObj["_BinaryenRefFunc"](mod[PTR], strToStack(name), type))
 		),
 
 		/** Produces a null reference. */
 		null: (typ: Type): ExpressionRef => (
-			BinaryenObj["_BinaryenRefNull"](mod.ptr, typ)
+			BinaryenObj["_BinaryenRefNull"](mod[PTR], typ)
 		),
 
 		/** Checks for null. */
 		is_null: (value: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenRefIsNull"](mod.ptr, value)
+			BinaryenObj["_BinaryenRefIsNull"](mod[PTR], value)
 		),
 
 		/** Converts a nullible reference to a non-null one, or traps. */
 		as_non_null: (value: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenRefAs"](mod.ptr, Operation.RefAsNonNull, value)
+			BinaryenObj["_BinaryenRefAs"](mod[PTR], Operation.RefAsNonNull, value)
 		),
 
 		/** Compares two references. */
 		eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenRefEq"](mod.ptr, left, right)
+			BinaryenObj["_BinaryenRefEq"](mod[PTR], left, right)
 		),
 
 		/** Tests the dynamic type of a reference, and returns boolean. */
 		test: (value: ExpressionRef, castType: Type): ExpressionRef => (
-			BinaryenObj["_BinaryenRefTest"](mod.ptr, value, castType)
+			BinaryenObj["_BinaryenRefTest"](mod[PTR], value, castType)
 		),
 
 		/** Tests the dynamic type of a reference, and performs a downcast or traps. */
 		cast: (value: ExpressionRef, castType: Type): ExpressionRef => (
-			BinaryenObj["_BinaryenRefCast"](mod.ptr, value, castType)
+			BinaryenObj["_BinaryenRefCast"](mod[PTR], value, castType)
 		),
 
 		/** Converts type i32 to an unboxed scalar. */
 		i31: (value: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenRefI31"](mod.ptr, value)
+			BinaryenObj["_BinaryenRefI31"](mod[PTR], value)
 		),
 	} as const;
 }
@@ -68,12 +69,12 @@ export function i31(mod: Module) {
 	return {
 		/** Converts an unboxed scalar to type i32, signed. */
 		get_s: (value: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenI31Get"](mod.ptr, value, true)
+			BinaryenObj["_BinaryenI31Get"](mod[PTR], value, true)
 		),
 
 		/** Converts an unboxed scalar to type i32, unsigned. */
 		get_u: (value: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenI31Get"](mod.ptr, value, false)
+			BinaryenObj["_BinaryenI31Get"](mod[PTR], value, false)
 		),
 	} as const;
 }

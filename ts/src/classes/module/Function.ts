@@ -3,6 +3,7 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	PTR,
 	getAllNested,
 	i32sToStack,
 	preserveStack,
@@ -96,7 +97,7 @@ export class ModuleFunctions {
 	/** Adds a function. `varTypes` indicate additional locals, in the given order. */
 	add(name: string, params: Type, results: Type, varTypes: readonly Type[], body: ExpressionRef): FunctionRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddFunction"](
-			this.mod.ptr,
+			this.mod[PTR],
 			strToStack(name),
 			params,
 			results,
@@ -108,21 +109,21 @@ export class ModuleFunctions {
 
 	/** Gets a function by name. */
 	get(name: string): FunctionRef {
-		return preserveStack(() => BinaryenObj["_BinaryenGetFunction"](this.mod.ptr, strToStack(name)));
+		return preserveStack(() => BinaryenObj["_BinaryenGetFunction"](this.mod[PTR], strToStack(name)));
 	}
 
 	/** Gets a function by index. */
 	getByIndex(index: number): FunctionRef {
-		return BinaryenObj["_BinaryenGetFunctionByIndex"](this.mod.ptr, index);
+		return BinaryenObj["_BinaryenGetFunctionByIndex"](this.mod[PTR], index);
 	}
 
 	/** Gets the number of functions within the module. */
 	count(): number {
-		return BinaryenObj["_BinaryenGetNumFunctions"](this.mod.ptr);
+		return BinaryenObj["_BinaryenGetNumFunctions"](this.mod[PTR]);
 	}
 
 	/** Removes a function by name. */
 	remove(name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenRemoveFunction"](this.mod.ptr, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenRemoveFunction"](this.mod[PTR], strToStack(name)));
 	}
 }

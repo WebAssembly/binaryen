@@ -3,6 +3,7 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -76,26 +77,26 @@ export class ModuleTables {
 
 	/** Adds a table. */
 	add(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef): TableRef {
-		return preserveStack(() => BinaryenObj["_BinaryenAddTable"](this.mod.ptr, strToStack(name), initial, maximum, type, init ?? 0));
+		return preserveStack(() => BinaryenObj["_BinaryenAddTable"](this.mod[PTR], strToStack(name), initial, maximum, type, init ?? 0));
 	}
 
 	/** Gets a table by name. */
 	get(name: string): TableRef {
-		return preserveStack(() => BinaryenObj["_BinaryenGetTable"](this.mod.ptr, strToStack(name)));
+		return preserveStack(() => BinaryenObj["_BinaryenGetTable"](this.mod[PTR], strToStack(name)));
 	}
 
 	/** Gets a table by index. */
 	getByIndex(index: number): TableRef {
-		return BinaryenObj["_BinaryenGetTableByIndex"](this.mod.ptr, index);
+		return BinaryenObj["_BinaryenGetTableByIndex"](this.mod[PTR], index);
 	}
 
 	/** Gets the number of table segments within the module. */
 	getSegments(table: TableRef): ElementSegmentRef[] {
-		const numElementSegments = BinaryenObj["_BinaryenGetNumElementSegments"](this.mod.ptr);
+		const numElementSegments = BinaryenObj["_BinaryenGetNumElementSegments"](this.mod[PTR]);
 		const tableName = UTF8ToString(BinaryenObj["_BinaryenTableGetName"](table));
 		const ret = [];
 		for (let i = 0; i < numElementSegments; i++) {
-			const segment = BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.mod.ptr, i);
+			const segment = BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.mod[PTR], i);
 			const elemTableName = UTF8ToString(BinaryenObj["_BinaryenElementSegmentGetTable"](segment));
 			if (tableName === elemTableName) {
 				ret.push(segment);
@@ -106,11 +107,11 @@ export class ModuleTables {
 
 	/** Gets the number of tables within the module. */
 	count(): number {
-		return BinaryenObj["_BinaryenGetNumTables"](this.mod.ptr);
+		return BinaryenObj["_BinaryenGetNumTables"](this.mod[PTR]);
 	}
 
 	/** Removes a table by name. */
 	remove(name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenRemoveTable"](this.mod.ptr, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenRemoveTable"](this.mod[PTR], strToStack(name)));
 	}
 }

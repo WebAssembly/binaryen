@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	PTR,
 	i8sToStack,
 } from "../../-utils.ts";
 import type {
@@ -67,7 +68,7 @@ export function v128(mod: Module) {
 		xor: binaryFn(mod, Operation.XorVec128),
 
 		bitselect: (left: ExpressionRef, right: ExpressionRef, cond: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenSIMDTernary"](mod.ptr, Operation.BitselectVec128, left, right, cond)
+			BinaryenObj["_BinaryenSIMDTernary"](mod[PTR], Operation.BitselectVec128, left, right, cond)
 		),
 
 		anytrue: unaryFn(mod, Operation.AnyTrueVec128),

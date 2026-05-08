@@ -3,6 +3,7 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -43,22 +44,22 @@ export class ModuleExports {
 
 	/** Gets an export by name. */
 	get(externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj["_BinaryenGetExport"](this.mod.ptr, strToStack(externalName)));
+		return preserveStack(() => BinaryenObj["_BinaryenGetExport"](this.mod[PTR], strToStack(externalName)));
 	}
 
 	/** Gets an export by index. */
 	getByIndex(index: number): ExportRef {
-		return BinaryenObj["_BinaryenGetExportByIndex"](this.mod.ptr, index);
+		return BinaryenObj["_BinaryenGetExportByIndex"](this.mod[PTR], index);
 	}
 
 	/** Gets the number of exports witin the module. */
 	count(): number {
-		return BinaryenObj["_BinaryenGetNumExports"](this.mod.ptr);
+		return BinaryenObj["_BinaryenGetNumExports"](this.mod[PTR]);
 	}
 
 	/** Removes an export, by external name. */
 	remove(externalName: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenRemoveExport"](this.mod.ptr, strToStack(externalName)));
+		preserveStack(() => BinaryenObj["_BinaryenRemoveExport"](this.mod[PTR], strToStack(externalName)));
 	}
 
 	/** Adds a tag export. */
@@ -87,6 +88,6 @@ export class ModuleExports {
 	}
 
 	#addComponent(binaryenFuncName: string, internalName: string, externalName: string): ExportRef {
-		return preserveStack(() => BinaryenObj[binaryenFuncName](this.mod.ptr, strToStack(internalName), strToStack(externalName)));
+		return preserveStack(() => BinaryenObj[binaryenFuncName](this.mod[PTR], strToStack(internalName), strToStack(externalName)));
 	}
 }

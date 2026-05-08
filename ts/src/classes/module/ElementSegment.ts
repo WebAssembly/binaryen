@@ -3,6 +3,7 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
+	PTR,
 	i32sToStack,
 	preserveStack,
 	strToStack,
@@ -54,7 +55,7 @@ export class ModuleElementSegments {
 	/** Adds an active element segment. */
 	addActive(table: string, name: string, funcNames: readonly string[], offset: ExpressionRef = this.mod.wasm.i32.const(0)): ElementSegmentRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddActiveElementSegment"](
-			this.mod.ptr,
+			this.mod[PTR],
 			strToStack(table),
 			strToStack(name),
 			i32sToStack(funcNames.map(strToStack)),
@@ -66,7 +67,7 @@ export class ModuleElementSegments {
 	/** Adds a passive element segment. */
 	addPassive(name: string, funcNames: readonly string[]): ElementSegmentRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddPassiveElementSegment"](
-			this.mod.ptr,
+			this.mod[PTR],
 			strToStack(name),
 			i32sToStack(funcNames.map(strToStack)),
 			funcNames.length,
@@ -75,21 +76,21 @@ export class ModuleElementSegments {
 
 	/** Gets an element segment by name. */
 	get(name: string): ElementSegmentRef {
-		return preserveStack(() => BinaryenObj["_BinaryenGetElementSegment"](this.mod.ptr, strToStack(name)));
+		return preserveStack(() => BinaryenObj["_BinaryenGetElementSegment"](this.mod[PTR], strToStack(name)));
 	}
 
 	/** Gets an element segment by index. */
 	getByIndex(index: number): ElementSegmentRef {
-		return BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.mod.ptr, index);
+		return BinaryenObj["_BinaryenGetElementSegmentByIndex"](this.mod[PTR], index);
 	}
 
 	/** Gets the number of element segments within the module. */
 	count(): number {
-		return BinaryenObj["_BinaryenGetNumElementSegments"](this.mod.ptr);
+		return BinaryenObj["_BinaryenGetNumElementSegments"](this.mod[PTR]);
 	}
 
 	/** Removes an element segment by name. */
 	remove(name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenRemoveElementSegment"](this.mod.ptr, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenRemoveElementSegment"](this.mod[PTR], strToStack(name)));
 	}
 }

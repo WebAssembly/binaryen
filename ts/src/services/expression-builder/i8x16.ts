@@ -2,6 +2,7 @@ import {
 	BinaryenObj,
 } from "../../-pre.ts";
 import {
+	PTR,
 	i8sToStack,
 	preserveStack,
 } from "../../-utils.ts";
@@ -69,7 +70,7 @@ export function i8x16(mod: Module) {
 		// TODO: relaxed_swizzle
 
 		shuffle: (left: ExpressionRef, right: ExpressionRef, mask: readonly number[]): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenSIMDShuffle"](mod.ptr, left, right, i8sToStack(mask)))
+			preserveStack(() => BinaryenObj["_BinaryenSIMDShuffle"](mod[PTR], left, right, i8sToStack(mask)))
 		),
 
 		narrow_i16x8_s: binaryFn(mod, Operation.NarrowSVecI16x8ToVecI8x16),
