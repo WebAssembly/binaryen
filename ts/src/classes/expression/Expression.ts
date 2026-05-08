@@ -37,13 +37,8 @@ export class Expression {
 		return this.#id;
 	}
 
-	get type(): Type {
-		return getExpressionType(this._ptr);
-	}
-
-	set type(typ: Type) {
-		BinaryenObj["_BinaryenExpressionSetType"](this._ptr, typ);
-	}
+	get type(): Type { return getExpressionType(this._ptr); }
+	set type(typ: Type) { BinaryenObj["_BinaryenExpressionSetType"](this._ptr, typ); }
 
 	valueOf(): ExpressionRef {
 		return this._ptr;

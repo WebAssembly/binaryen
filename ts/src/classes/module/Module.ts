@@ -250,26 +250,16 @@ export class Module {
 	 * The start function.
 	 * @category Module Component Operations
 	 */
-	get start(): FunctionRef {
-		return BinaryenObj["_BinaryenGetStart"](this[PTR]);
-	}
-
-	set start(start: FunctionRef) {
-		BinaryenObj["_BinaryenSetStart"](this[PTR], start);
-	}
+	get start(): FunctionRef { return BinaryenObj["_BinaryenGetStart"](this[PTR]); }
+	set start(start: FunctionRef) { BinaryenObj["_BinaryenSetStart"](this[PTR], start); }
 
 	/**
 	 * The WebAssembly features enabled for this module.
 	 * Features are a bitmask of `Feature` enum members.
 	 * @category Module Component Operations
 	 */
-	get features(): Feature {
-		return BinaryenObj["_BinaryenModuleGetFeatures"](this[PTR]);
-	}
-
-	set features(features: Feature) {
-		BinaryenObj["_BinaryenModuleSetFeatures"](this[PTR], features);
-	}
+	get features(): Feature { return BinaryenObj["_BinaryenModuleGetFeatures"](this[PTR]); }
+	set features(features: Feature) { BinaryenObj["_BinaryenModuleSetFeatures"](this[PTR], features); }
 
 	/** @deprecated Use {@link Module#tags | `this.tags.add`} instead. */ @replacedBy("`this.tags.add`") addTag(name: string, params: Type, results: Type) { return this.tags.add(name, params, results); }
 	/** @deprecated Use {@link Module#tags | `this.tags.get`} instead. */ @replacedBy("`this.tags.get`") getTag(name: string) { return this.tags.get(name); }
