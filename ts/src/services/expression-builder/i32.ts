@@ -9,6 +9,9 @@ import {
 	i32 as i32_t,
 } from "../../constants.ts";
 import {
+	atomicLoadFn,
+	atomicRmwOps,
+	atomicStoreFn,
 	binaryFn,
 	constant,
 	loadFn,
@@ -18,6 +21,24 @@ import {
 import {
 	Operation,
 } from "./Operation.ts";
+
+
+
+function atomic(mod: Module) {
+	return {
+		load: atomicLoadFn(mod, i32_t, 4),
+		load8_u: atomicLoadFn(mod, i32_t, 1),
+		load16_u: atomicLoadFn(mod, i32_t, 2),
+
+		store: atomicStoreFn(mod, i32_t, 4),
+		store8: atomicStoreFn(mod, i32_t, 1),
+		store16: atomicStoreFn(mod, i32_t, 2),
+
+		rmw: atomicRmwOps(mod, i32_t, 4),
+		rmw8_u: atomicRmwOps(mod, i32_t, 1),
+		rmw16_u: atomicRmwOps(mod, i32_t, 2),
+	} as const;
+}
 
 
 
@@ -89,6 +110,9 @@ export function i32(mod: Module) {
 		trunc_sat_f64_s: unaryFn(mod, Operation.TruncSatSFloat64ToInt32),
 		trunc_sat_f64_u: unaryFn(mod, Operation.TruncSatUFloat64ToInt32),
 		reinterpret_f32: unaryFn(mod, Operation.ReinterpretFloat32),
+
+		/** @experimental */
+		atomic: atomic(mod),
 
 		// @ts-expect-error
 		/** @deprecated Use `.wrap_i64()` instead. */ wrap(...args) { consoleWarn("`.wrap()` is deprecated; use `.wrap_i64()` instead."); return this.wrap_i64(...args); },

@@ -9,11 +9,12 @@ import {
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
-import type {
-	ExpressionRef,
-	Type,
+import {
+	type ExpressionRef,
+	MemoryOrder,
+	type Type,
 } from "../../constants.ts";
-import type {
+import {
 	Operation,
 } from "./Operation.ts";
 
@@ -103,4 +104,39 @@ export function simdExtractFn(mod: Module, op: Operation): (vec: ExpressionRef, 
 
 export function simdReplaceFn(mod: Module, op: Operation): (vec: ExpressionRef, index: number, value: ExpressionRef) => ExpressionRef {
 	return (vec, index, value) => BinaryenObj["_BinaryenSIMDReplace"](mod.ptr, op, vec, index, value);
+}
+
+export function atomicLoadFn(mod: Module, typ: Type, bytes: number): (offset: number, ptr: ExpressionRef, name?: string, order?: MemoryOrder) => ExpressionRef {
+	return (offset, ptr, name, order = MemoryOrder.SeqCst) => (
+		preserveStack(() => BinaryenObj["_BinaryenAtomicLoad"](mod.ptr, bytes, offset, typ, ptr, strToStack(name), order))
+	);
+}
+
+export function atomicStoreFn(mod: Module, typ: Type, bytes: number): (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string, order?: MemoryOrder) => ExpressionRef {
+	return (offset, ptr, value, name, order = MemoryOrder.SeqCst) => (
+		preserveStack(() => BinaryenObj["_BinaryenAtomicStore"](mod.ptr, bytes, offset, ptr, value, typ, strToStack(name), order))
+	);
+}
+
+
+
+function atomicRmwFn(mod: Module, op: Operation, typ: Type, bytes: number): (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string, order?: MemoryOrder) => ExpressionRef {
+	return (offset, ptr, value, name, order = MemoryOrder.SeqCst) => (
+		preserveStack(() => BinaryenObj["_BinaryenAtomicRMW"](mod.ptr, op, bytes, offset, ptr, value, typ, strToStack(name), order))
+	);
+}
+
+export function atomicRmwOps(mod: Module, typ: Type, bytes: number) {
+	return {
+		add: atomicRmwFn(mod, Operation.AtomicRMWAdd, typ, bytes),
+		sub: atomicRmwFn(mod, Operation.AtomicRMWSub, typ, bytes),
+		and: atomicRmwFn(mod, Operation.AtomicRMWAnd, typ, bytes),
+		or: atomicRmwFn(mod, Operation.AtomicRMWOr, typ, bytes),
+		xor: atomicRmwFn(mod, Operation.AtomicRMWXor, typ, bytes),
+		xchg: atomicRmwFn(mod, Operation.AtomicRMWXchg, typ, bytes),
+
+		cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string, order: MemoryOrder = MemoryOrder.SeqCst): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenAtomicCmpxchg"](mod.ptr, bytes, offset, ptr, expected, replacement, typ, strToStack(name), order))
+		),
+	} as const;
 }

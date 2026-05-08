@@ -12,6 +12,9 @@ import {
 	i64 as i64_t,
 } from "../../constants.ts";
 import {
+	atomicLoadFn,
+	atomicRmwOps,
+	atomicStoreFn,
 	binaryFn,
 	constant,
 	loadFn,
@@ -21,6 +24,27 @@ import {
 import {
 	Operation,
 } from "./Operation.ts";
+
+
+
+function atomic(mod: Module) {
+	return {
+		load: atomicLoadFn(mod, i64_t, 8),
+		load8_u: atomicLoadFn(mod, i64_t, 1),
+		load16_u: atomicLoadFn(mod, i64_t, 2),
+		load32_u: atomicLoadFn(mod, i64_t, 4),
+
+		store: atomicStoreFn(mod, i64_t, 8),
+		store8: atomicStoreFn(mod, i64_t, 1),
+		store16: atomicStoreFn(mod, i64_t, 2),
+		store32: atomicStoreFn(mod, i64_t, 4),
+
+		rmw: atomicRmwOps(mod, i64_t, 8),
+		rmw8_u: atomicRmwOps(mod, i64_t, 1),
+		rmw16_u: atomicRmwOps(mod, i64_t, 2),
+		rmw32_u: atomicRmwOps(mod, i64_t, 4),
+	} as const;
+}
 
 
 
@@ -113,6 +137,9 @@ export function i64(mod: Module) {
 		trunc_sat_f64_s: unaryFn(mod, Operation.TruncSatSFloat64ToInt64),
 		trunc_sat_f64_u: unaryFn(mod, Operation.TruncSatUFloat64ToInt64),
 		reinterpret_f64: unaryFn(mod, Operation.ReinterpretFloat64),
+
+		/** @experimental */
+		atomic: atomic(mod),
 
 		// @ts-expect-error
 		/** @deprecated Use `.extend_i32_s()` instead. */ extend_s(...args) { consoleWarn("`.extend_s()` is deprecated; use `.extend_i32_s()` instead."); return this.extend_i32_s(...args); },
