@@ -17,11 +17,14 @@ export type PackedType = number;
 export type ExpressionRef = number;
 
 // ### Module Components ### //
+/** Reference to a {@link Module}. */
+export type ModuleRef = number;
 /** Reference to a {@link Module.Tag}. */
 export type TagRef = number;
 /** Reference to a {@link Module.Global}. */
 export type GlobalRef = number;
-// no `MemoryRef`
+/** Reference to a {@link Module.Memory}. */
+export type MemoryRef = number;
 /** Reference to a {@link Module.Table}. */
 export type TableRef = number;
 /** Reference to a {@link Module.Function}. */

@@ -17,6 +17,7 @@ import {
 	type ExpressionRef,
 	type FunctionRef,
 	type HeapType,
+	type ModuleRef,
 	type SideEffect,
 	type TableRef,
 	type Type,
@@ -162,7 +163,7 @@ export class Module {
 	 * The underlying C-API pointer of the wrapped module.
 	 * @internal
 	 */
-	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
+	readonly ptr: ModuleRef = BinaryenObj["_BinaryenModuleCreate"]();
 
 	// ## Expression Manipulation ## //
 	/**
