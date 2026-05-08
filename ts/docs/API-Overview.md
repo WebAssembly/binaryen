@@ -314,6 +314,8 @@ See generated docs for fields, methods, and descriptions of each.
 - variable instructions
 	- `expressions.LocalGet`
 	- `expressions.LocalSet`
+	- `expressions.GlobalGet`
+	- `expressions.GlobalSet`
 - numeric instructions
 	- `expressions.Const`
 

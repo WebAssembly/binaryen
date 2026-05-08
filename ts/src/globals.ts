@@ -54,6 +54,8 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	// Variable Instructions
 	[ExpressionId.LocalGet, expressions.LocalGet],
 	[ExpressionId.LocalSet, expressions.LocalSet],
+	[ExpressionId.GlobalGet, expressions.GlobalGet],
+	[ExpressionId.GlobalSet, expressions.GlobalSet],
 
 	// Numeric & Vector Instructions
 	[ExpressionId.Const, expressions.Const],

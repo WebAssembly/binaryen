@@ -33,6 +33,8 @@ export {Try} from "./Try.ts";
 // ## Variable ## //
 export {LocalGet} from "./LocalGet.ts";
 export {LocalSet} from "./LocalSet.ts";
+export {GlobalGet} from "./GlobalGet.ts";
+export {GlobalSet} from "./GlobalSet.ts";
 
 // ## Numeric & Vector ## //
 export {Const} from "./Const.ts";
