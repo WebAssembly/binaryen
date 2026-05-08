@@ -4,7 +4,6 @@ import {
 	stackAlloc,
 } from "../../-pre.ts";
 import {
-	THIS_PTR,
 	preserveStack,
 } from "../../-utils.ts";
 import {
@@ -39,23 +38,23 @@ export class Const extends Expression {
 		throw new Error(`Unexpected type: ${ this_type }.`);
 	}
 
-	get valueI32(): number { return BinaryenObj["_BinaryenConstGetValueI32"](this[THIS_PTR]); }
-	set valueI32(value: number) { BinaryenObj["_BinaryenConstSetValueI32"](this[THIS_PTR], value); }
+	get valueI32(): number { return BinaryenObj["_BinaryenConstGetValueI32"](this._ptr); }
+	set valueI32(value: number) { BinaryenObj["_BinaryenConstSetValueI32"](this._ptr, value); }
 
-	get valueI64(): number { return BinaryenObj["_BinaryenConstGetValueI64"](this[THIS_PTR]); }
-	set valueI64(value: number) { BinaryenObj["_BinaryenConstSetValueI64"](this[THIS_PTR], BigInt(value)); }
+	get valueI64(): number { return BinaryenObj["_BinaryenConstGetValueI64"](this._ptr); }
+	set valueI64(value: number) { BinaryenObj["_BinaryenConstSetValueI64"](this._ptr, BigInt(value)); }
 
-	get valueF32(): number { return BinaryenObj["_BinaryenConstGetValueF32"](this[THIS_PTR]); }
-	set valueF32(value: number) { BinaryenObj["_BinaryenConstSetValueF32"](this[THIS_PTR], value); }
+	get valueF32(): number { return BinaryenObj["_BinaryenConstGetValueF32"](this._ptr); }
+	set valueF32(value: number) { BinaryenObj["_BinaryenConstSetValueF32"](this._ptr, value); }
 
-	get valueF64(): number { return BinaryenObj["_BinaryenConstGetValueF64"](this[THIS_PTR]); }
-	set valueF64(value: number) { BinaryenObj["_BinaryenConstSetValueF64"](this[THIS_PTR], value); }
+	get valueF64(): number { return BinaryenObj["_BinaryenConstGetValueF64"](this._ptr); }
+	set valueF64(value: number) { BinaryenObj["_BinaryenConstSetValueF64"](this._ptr, value); }
 
 	get valueV128(): number[] {
 		const value: number[] = [];
 		preserveStack(() => {
 			const tempBuffer = stackAlloc(16);
-			BinaryenObj["_BinaryenConstGetValueV128"](this[THIS_PTR], tempBuffer);
+			BinaryenObj["_BinaryenConstGetValueV128"](this._ptr, tempBuffer);
 			for (let i = 0; i < 16; ++i) {
 				value[i] = HEAPU8[tempBuffer + i];
 			}
@@ -69,7 +68,7 @@ export class Const extends Expression {
 			for (let i = 0; i < 16; ++i) {
 				HEAPU8[tempBuffer + i] = value[i];
 			}
-			BinaryenObj["_BinaryenConstSetValueV128"](this[THIS_PTR], tempBuffer);
+			BinaryenObj["_BinaryenConstSetValueV128"](this._ptr, tempBuffer);
 		});
 	}
 }

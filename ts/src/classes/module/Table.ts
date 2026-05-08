@@ -3,7 +3,6 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
-	THIS_PTR,
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
@@ -24,44 +23,45 @@ import type {
  * Information about a table in a WASM module.
  */
 export class Table {
-	private readonly [THIS_PTR]: TableRef;
+	/** The underlying C-API pointer of the wrapped table. */
+	readonly #ptr: TableRef;
 
 	readonly module: string;
 	readonly base: string;
 
 
 	constructor(table: TableRef) {
-		this[THIS_PTR] = table;
-		this.module = UTF8ToString(BinaryenObj["_BinaryenTableImportGetModule"](this[THIS_PTR]));
-		this.base = UTF8ToString(BinaryenObj["_BinaryenTableImportGetBase"](this[THIS_PTR]));
+		this.#ptr = table;
+		this.module = UTF8ToString(BinaryenObj["_BinaryenTableImportGetModule"](this.#ptr));
+		this.base = UTF8ToString(BinaryenObj["_BinaryenTableImportGetBase"](this.#ptr));
 	}
 
 
 	/** The name of this table */
-	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenTableGetName"](this[THIS_PTR])); }
-	set name(name: string) { preserveStack(() => BinaryenObj["_BinaryenTableSetName"](this[THIS_PTR], strToStack(name))); }
+	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenTableGetName"](this.#ptr)); }
+	set name(name: string) { preserveStack(() => BinaryenObj["_BinaryenTableSetName"](this.#ptr, strToStack(name))); }
 
 	/** The initial number of pages of this table. */
-	get initial(): number { return BinaryenObj["_BinaryenTableGetInitial"](this[THIS_PTR]); }
-	set initial(initial: number) { BinaryenObj["_BinaryenTableSetInitial"](this[THIS_PTR], initial); }
+	get initial(): number { return BinaryenObj["_BinaryenTableGetInitial"](this.#ptr); }
+	set initial(initial: number) { BinaryenObj["_BinaryenTableSetInitial"](this.#ptr, initial); }
 
 	/** The maximum number of pages of this table. */
-	get max(): number { return BinaryenObj["_BinaryenTableGetMax"](this[THIS_PTR]); }
-	set max(max: number) { BinaryenObj["_BinaryenTableSetMax"](this[THIS_PTR], max); }
+	get max(): number { return BinaryenObj["_BinaryenTableGetMax"](this.#ptr); }
+	set max(max: number) { BinaryenObj["_BinaryenTableSetMax"](this.#ptr, max); }
 
 	/** The type of this table. */
-	get type(): Type { return BinaryenObj["_BinaryenTableGetType"](this[THIS_PTR]); }
-	set type(tableType: Type) { BinaryenObj["_BinaryenTableSetType"](this[THIS_PTR], tableType); }
+	get type(): Type { return BinaryenObj["_BinaryenTableGetType"](this.#ptr); }
+	set type(tableType: Type) { BinaryenObj["_BinaryenTableSetType"](this.#ptr, tableType); }
 
 	valueOf(): TableRef {
-		return this[THIS_PTR];
+		return this.#ptr;
 	}
 
 	/**
 	 * @returns does this table have a maximum number of pages?
 	 */
 	hasMax(): boolean {
-		return Boolean(BinaryenObj["_BinaryenTableHasMax"](this[THIS_PTR]));
+		return Boolean(BinaryenObj["_BinaryenTableHasMax"](this.#ptr));
 	}
 }
 

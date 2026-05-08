@@ -3,7 +3,6 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
-	THIS_PTR,
 	getAllNested,
 	i32sToStack,
 	preserveStack,
@@ -24,7 +23,8 @@ import type {
  * Information about a function in a WASM module.
  */
 class BinaryenFunction {
-	private readonly [THIS_PTR]: FunctionRef;
+	/** The underlying C-API pointer of the wrapped function. */
+	readonly #ptr: FunctionRef;
 
 	readonly module: string;
 	readonly base: string;
@@ -38,47 +38,47 @@ class BinaryenFunction {
 
 
 	constructor(func: FunctionRef) {
-		this[THIS_PTR] = func;
-		this.module = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetModule"](this[THIS_PTR]));
-		this.base = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetBase"](this[THIS_PTR]));
-		this.name = UTF8ToString(BinaryenObj["_BinaryenFunctionGetName"](this[THIS_PTR]));
-		this.type = BinaryenObj["_BinaryenFunctionGetType"](this[THIS_PTR]);
-		this.params = BinaryenObj["_BinaryenFunctionGetParams"](this[THIS_PTR]);
-		this.results = BinaryenObj["_BinaryenFunctionGetResults"](this[THIS_PTR]);
-		this.numVars = BinaryenObj["_BinaryenFunctionGetNumVars"](this[THIS_PTR]);
-		this.numLocals = BinaryenObj["_BinaryenFunctionGetNumLocals"](this[THIS_PTR]);
+		this.#ptr = func;
+		this.module = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetModule"](this.#ptr));
+		this.base = UTF8ToString(BinaryenObj["_BinaryenFunctionImportGetBase"](this.#ptr));
+		this.name = UTF8ToString(BinaryenObj["_BinaryenFunctionGetName"](this.#ptr));
+		this.type = BinaryenObj["_BinaryenFunctionGetType"](this.#ptr);
+		this.params = BinaryenObj["_BinaryenFunctionGetParams"](this.#ptr);
+		this.results = BinaryenObj["_BinaryenFunctionGetResults"](this.#ptr);
+		this.numVars = BinaryenObj["_BinaryenFunctionGetNumVars"](this.#ptr);
+		this.numLocals = BinaryenObj["_BinaryenFunctionGetNumLocals"](this.#ptr);
 		this.vars = getAllNested(func, BinaryenObj["_BinaryenFunctionGetNumVars"], BinaryenObj["_BinaryenFunctionGetVar"]);
 	}
 
 
 	get body(): ExpressionRef {
-		return BinaryenObj["_BinaryenFunctionGetBody"](this[THIS_PTR]);
+		return BinaryenObj["_BinaryenFunctionGetBody"](this.#ptr);
 	}
 
 	set body(bodyExpr: ExpressionRef) {
-		BinaryenObj["_BinaryenFunctionSetBody"](this[THIS_PTR], bodyExpr);
+		BinaryenObj["_BinaryenFunctionSetBody"](this.#ptr, bodyExpr);
 	}
 
 
 	valueOf(): FunctionRef {
-		return this[THIS_PTR];
+		return this.#ptr;
 	}
 
 	getVar(index: number): Type {
-		return BinaryenObj["_BinaryenFunctionGetVar"](this[THIS_PTR], index);
+		return BinaryenObj["_BinaryenFunctionGetVar"](this.#ptr, index);
 	}
 
 	hasLocalName(index: number): boolean {
-		return Boolean(BinaryenObj["_BinaryenFunctionHasLocalName"](this[THIS_PTR], index));
+		return Boolean(BinaryenObj["_BinaryenFunctionHasLocalName"](this.#ptr, index));
 	}
 
 	getLocalName(index: number): string {
-		return UTF8ToString(BinaryenObj["_BinaryenFunctionGetLocalName"](this[THIS_PTR], index));
+		return UTF8ToString(BinaryenObj["_BinaryenFunctionGetLocalName"](this.#ptr, index));
 	}
 
 	setLocalName(index: number, name: string): void {
 		preserveStack(() => {
-			BinaryenObj["_BinaryenFunctionSetLocalName"](this[THIS_PTR], index, strToStack(name));
+			BinaryenObj["_BinaryenFunctionSetLocalName"](this.#ptr, index, strToStack(name));
 		});
 	}
 }

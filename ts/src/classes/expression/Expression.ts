@@ -1,9 +1,6 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
-import {
-	THIS_PTR,
-} from "../../-utils.ts";
 import type {
 	ExpressionId,
 	ExpressionRef,
@@ -17,7 +14,8 @@ import {
 
 
 export class Expression {
-	protected readonly [THIS_PTR]: ExpressionRef;
+	/** The underlying C-API pointer of the wrapped expression. */
+	protected readonly _ptr: ExpressionRef;
 
 	/** Not really an “ID”, just the “kind” of expression. */
 	readonly #id: ExpressionId;
@@ -31,7 +29,7 @@ export class Expression {
 	 * @param expr the expression reference
 	 */
 	constructor(exprId: ExpressionId, expr: ExpressionRef) {
-		this[THIS_PTR] = expr;
+		this._ptr = expr;
 		this.#id = exprId;
 	}
 
@@ -40,22 +38,22 @@ export class Expression {
 	}
 
 	get type(): Type {
-		return getExpressionType(this[THIS_PTR]);
+		return getExpressionType(this._ptr);
 	}
 
 	set type(typ: Type) {
-		BinaryenObj["_BinaryenExpressionSetType"](this[THIS_PTR], typ);
+		BinaryenObj["_BinaryenExpressionSetType"](this._ptr, typ);
 	}
 
 	valueOf(): ExpressionRef {
-		return this[THIS_PTR];
+		return this._ptr;
 	}
 
 	finalize(): void {
-		BinaryenObj["_BinaryenExpressionFinalize"](this[THIS_PTR]);
+		BinaryenObj["_BinaryenExpressionFinalize"](this._ptr);
 	}
 
 	toText(): string {
-		return emitText(this[THIS_PTR]);
+		return emitText(this._ptr);
 	}
 }

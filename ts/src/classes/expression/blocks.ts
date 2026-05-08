@@ -3,7 +3,6 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
-	THIS_PTR,
 	getAllNested,
 	preserveStack,
 	setAllNested,
@@ -25,25 +24,25 @@ export class Block extends Expression {
 	}
 
 	get name(): string | null {
-		const name = BinaryenObj["_BinaryenBlockGetName"](this[THIS_PTR]);
+		const name = BinaryenObj["_BinaryenBlockGetName"](this._ptr);
 		return name ? UTF8ToString(name) : null;
 	}
 
 	set name(name: string) {
-		preserveStack(() => BinaryenObj["_BinaryenBlockSetName"](this[THIS_PTR], strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenBlockSetName"](this._ptr, strToStack(name)));
 	}
 
 	get numChildren(): number {
-		return BinaryenObj["_BinaryenBlockGetNumChildren"](this[THIS_PTR]);
+		return BinaryenObj["_BinaryenBlockGetNumChildren"](this._ptr);
 	}
 
 	get children() {
-		return getAllNested(this[THIS_PTR], BinaryenObj["_BinaryenBlockGetNumChildren"], BinaryenObj["_BinaryenBlockGetChildAt"]);
+		return getAllNested(this._ptr, BinaryenObj["_BinaryenBlockGetNumChildren"], BinaryenObj["_BinaryenBlockGetChildAt"]);
 	}
 
 	set children(children: readonly ExpressionRef[]) {
 		setAllNested(
-			this[THIS_PTR],
+			this._ptr,
 			children,
 			BinaryenObj["_BinaryenBlockGetNumChildren"],
 			BinaryenObj["_BinaryenBlockSetChildAt"],
@@ -53,23 +52,23 @@ export class Block extends Expression {
 	}
 
 	getChildAt(index: number): ExpressionRef {
-		return BinaryenObj["_BinaryenBlockGetChildAt"](this[THIS_PTR], index);
+		return BinaryenObj["_BinaryenBlockGetChildAt"](this._ptr, index);
 	}
 
 	setChildAt(index: number, childExpr: ExpressionRef): void {
-		BinaryenObj["_BinaryenBlockSetChildAt"](this[THIS_PTR], index, childExpr);
+		BinaryenObj["_BinaryenBlockSetChildAt"](this._ptr, index, childExpr);
 	}
 
 	appendChild(childExpr: ExpressionRef): number {
-		return BinaryenObj["_BinaryenBlockAppendChild"](this[THIS_PTR], childExpr);
+		return BinaryenObj["_BinaryenBlockAppendChild"](this._ptr, childExpr);
 	}
 
 	insertChildAt(index: number, childExpr: ExpressionRef): void {
-		BinaryenObj["_BinaryenBlockInsertChildAt"](this[THIS_PTR], index, childExpr);
+		BinaryenObj["_BinaryenBlockInsertChildAt"](this._ptr, index, childExpr);
 	}
 
 	removeChildAt(index: number): ExpressionRef {
-		return BinaryenObj["_BinaryenBlockRemoveChildAt"](this[THIS_PTR], index);
+		return BinaryenObj["_BinaryenBlockRemoveChildAt"](this._ptr, index);
 	}
 }
 
@@ -81,16 +80,16 @@ export class Loop extends Expression {
 	}
 
 	get name(): string | null {
-		const name = BinaryenObj["_BinaryenLoopGetName"](this[THIS_PTR]);
+		const name = BinaryenObj["_BinaryenLoopGetName"](this._ptr);
 		return name ? UTF8ToString(name) : null;
 	}
 
 	set name(name: string) {
-		preserveStack(() => BinaryenObj["_BinaryenLoopSetName"](this[THIS_PTR], strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenLoopSetName"](this._ptr, strToStack(name)));
 	}
 
-	get body(): ExpressionRef { return BinaryenObj["_BinaryenLoopGetBody"](this[THIS_PTR]); }
-	set body(bodyExpr: ExpressionRef) { BinaryenObj["_BinaryenLoopSetBody"](this[THIS_PTR], bodyExpr); }
+	get body(): ExpressionRef { return BinaryenObj["_BinaryenLoopGetBody"](this._ptr); }
+	set body(bodyExpr: ExpressionRef) { BinaryenObj["_BinaryenLoopSetBody"](this._ptr, bodyExpr); }
 }
 
 
@@ -100,12 +99,12 @@ export class If extends Expression {
 		super(ExpressionId.If, expr);
 	}
 
-	get condition(): ExpressionRef { return BinaryenObj["_BinaryenIfGetCondition"](this[THIS_PTR]); }
+	get condition(): ExpressionRef { return BinaryenObj["_BinaryenIfGetCondition"](this._ptr); }
 	set condition(condExpr: ExpressionRef) { BinaryenObj["_BinaryenIfSetCondition"](condExpr); }
 
-	get ifTrue(): ExpressionRef { return BinaryenObj["_BinaryenIfGetIfTrue"](this[THIS_PTR]); }
-	set ifTrue(ifTrueExpr: ExpressionRef) { BinaryenObj["_BinaryenIfSetIfTrue"](this[THIS_PTR], ifTrueExpr); }
+	get ifTrue(): ExpressionRef { return BinaryenObj["_BinaryenIfGetIfTrue"](this._ptr); }
+	set ifTrue(ifTrueExpr: ExpressionRef) { BinaryenObj["_BinaryenIfSetIfTrue"](this._ptr, ifTrueExpr); }
 
-	get ifFalse(): ExpressionRef { return BinaryenObj["_BinaryenIfGetIfFalse"](this[THIS_PTR]); }
-	set ifFalse(ifFalseExpr: ExpressionRef) { BinaryenObj["_BinaryenIfSetIfFalse"](this[THIS_PTR], ifFalseExpr); }
+	get ifFalse(): ExpressionRef { return BinaryenObj["_BinaryenIfGetIfFalse"](this._ptr); }
+	set ifFalse(ifFalseExpr: ExpressionRef) { BinaryenObj["_BinaryenIfSetIfFalse"](this._ptr, ifFalseExpr); }
 }

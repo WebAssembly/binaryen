@@ -3,7 +3,6 @@ import {
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
-	THIS_PTR,
 	getAllNested,
 	preserveStack,
 	setAllNested,
@@ -26,19 +25,19 @@ export class Break extends Expression {
 	}
 
 	get name(): string | null {
-		const name = BinaryenObj["_BinaryenBreakGetName"](this[THIS_PTR]);
+		const name = BinaryenObj["_BinaryenBreakGetName"](this._ptr);
 		return name ? UTF8ToString(name) : null;
 	}
 
 	set name(name: string) {
-		preserveStack(() => BinaryenObj["_BinaryenBreakSetName"](this[THIS_PTR], strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenBreakSetName"](this._ptr, strToStack(name)));
 	}
 
-	get condition(): ExpressionRef { return BinaryenObj["_BinaryenBreakGetCondition"](this[THIS_PTR]); }
-	set condition(condExpr: ExpressionRef) {BinaryenObj["_BinaryenBreakSetCondition"](this[THIS_PTR], condExpr);}
+	get condition(): ExpressionRef { return BinaryenObj["_BinaryenBreakGetCondition"](this._ptr); }
+	set condition(condExpr: ExpressionRef) {BinaryenObj["_BinaryenBreakSetCondition"](this._ptr, condExpr);}
 
-	get value(): ExpressionRef { return BinaryenObj["_BinaryenBreakGetValue"](this[THIS_PTR]); }
-	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenBreakSetValue"](this[THIS_PTR], valueExpr); }
+	get value(): ExpressionRef { return BinaryenObj["_BinaryenBreakGetValue"](this._ptr); }
+	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenBreakSetValue"](this._ptr, valueExpr); }
 }
 
 
@@ -48,17 +47,17 @@ export class Switch extends Expression {
 		super(ExpressionId.Switch, expr);
 	}
 
-	get condition(): ExpressionRef { return BinaryenObj["_BinaryenSwitchGetCondition"](this[THIS_PTR]); }
+	get condition(): ExpressionRef { return BinaryenObj["_BinaryenSwitchGetCondition"](this._ptr); }
 	set condition(condExpr: ExpressionRef) { BinaryenObj["_BinaryenSwitchSetCondition"](condExpr); }
 
-	get value(): ExpressionRef { return BinaryenObj["_BinaryenSwitchGetValue"](this[THIS_PTR]); }
+	get value(): ExpressionRef { return BinaryenObj["_BinaryenSwitchGetValue"](this._ptr); }
 	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenSwitchSetValue"](valueExpr); }
 
-	get numNames(): number { return BinaryenObj["_BinaryenSwitchGetNumNames"](this[THIS_PTR]); }
+	get numNames(): number { return BinaryenObj["_BinaryenSwitchGetNumNames"](this._ptr); }
 
 	get names(): string[] {
 		return getAllNested(
-			this[THIS_PTR],
+			this._ptr,
 			BinaryenObj["_BinaryenSwitchGetNumNames"],
 			BinaryenObj["_BinaryenSwitchGetNameAt"],
 		).map((p) => UTF8ToString(p));
@@ -66,7 +65,7 @@ export class Switch extends Expression {
 
 	set names(names: readonly string[]) {
 		preserveStack(() => setAllNested(
-			this[THIS_PTR],
+			this._ptr,
 			names.map(strToStack),
 			BinaryenObj["_BinaryenSwitchGetNumNames"],
 			BinaryenObj["_BinaryenSwitchSetNameAt"],
@@ -76,32 +75,32 @@ export class Switch extends Expression {
 	}
 
 	get defaultName(): string | null {
-		const name = BinaryenObj["_BinaryenSwitchGetDefaultName"](this[THIS_PTR]);
+		const name = BinaryenObj["_BinaryenSwitchGetDefaultName"](this._ptr);
 		return name ? UTF8ToString(name) : null;
 	}
 
 	set defaultName(defaultName: string) {
-		preserveStack(() => BinaryenObj["_BinaryenSwitchSetDefaultName"](this[THIS_PTR], strToStack(defaultName)));
+		preserveStack(() => BinaryenObj["_BinaryenSwitchSetDefaultName"](this._ptr, strToStack(defaultName)));
 	}
 
 	getNameAt(index: number): string {
-		return UTF8ToString(BinaryenObj["_BinaryenSwitchGetNameAt"](this[THIS_PTR], index));
+		return UTF8ToString(BinaryenObj["_BinaryenSwitchGetNameAt"](this._ptr, index));
 	}
 
 	setNameAt(index: number, name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenSwitchSetNameAt"](this[THIS_PTR], index, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenSwitchSetNameAt"](this._ptr, index, strToStack(name)));
 	}
 
 	appendName(name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenSwitchAppendName"](this[THIS_PTR], strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenSwitchAppendName"](this._ptr, strToStack(name)));
 	}
 
 	insertNameAt(index: number, name: string): void {
-		preserveStack(() => BinaryenObj["_BinaryenSwitchInsertNameAt"](this[THIS_PTR], index, strToStack(name)));
+		preserveStack(() => BinaryenObj["_BinaryenSwitchInsertNameAt"](this._ptr, index, strToStack(name)));
 	}
 
 	removeNameAt(index: number): string {
-		return UTF8ToString(BinaryenObj["_BinaryenSwitchRemoveNameAt"](this[THIS_PTR], index));
+		return UTF8ToString(BinaryenObj["_BinaryenSwitchRemoveNameAt"](this._ptr, index));
 	}
 }
 
@@ -112,15 +111,15 @@ export class BrOn extends Expression {
 		super(ExpressionId.BrOn, expr);
 	}
 
-	get op(): number { return BinaryenObj["_BinaryenBrOnGetOp"](this[THIS_PTR]); }
-	set op(op: number) { BinaryenObj["_BinaryenBrOnSetOp"](this[THIS_PTR], op); }
+	get op(): number { return BinaryenObj["_BinaryenBrOnGetOp"](this._ptr); }
+	set op(op: number) { BinaryenObj["_BinaryenBrOnSetOp"](this._ptr, op); }
 
-	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenBrOnGetName"](this[THIS_PTR])); }
-	set name(name: string) { preserveStack(() => BinaryenObj["_BinaryenBrOnSetName"](this[THIS_PTR], strToStack(name))); }
+	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenBrOnGetName"](this._ptr)); }
+	set name(name: string) { preserveStack(() => BinaryenObj["_BinaryenBrOnSetName"](this._ptr, strToStack(name))); }
 
-	get ref(): ExpressionRef { return BinaryenObj["_BinaryenBrOnGetRef"](this[THIS_PTR]); }
-	set ref(ref: ExpressionRef) { BinaryenObj["_BinaryenBrOnSetRef"](this[THIS_PTR], ref); }
+	get ref(): ExpressionRef { return BinaryenObj["_BinaryenBrOnGetRef"](this._ptr); }
+	set ref(ref: ExpressionRef) { BinaryenObj["_BinaryenBrOnSetRef"](this._ptr, ref); }
 
-	get castType(): Type { return BinaryenObj["_BinaryenBrOnGetCastType"](this[THIS_PTR]); }
-	set castType(castType: Type) { BinaryenObj["_BinaryenBrOnSetCastType"](this[THIS_PTR], castType); }
+	get castType(): Type { return BinaryenObj["_BinaryenBrOnGetCastType"](this._ptr); }
+	set castType(castType: Type) { BinaryenObj["_BinaryenBrOnSetCastType"](this._ptr, castType); }
 }

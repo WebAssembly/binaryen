@@ -158,7 +158,10 @@ export class Module {
 	/** @class */ static readonly Export = Export_;
 
 
-	/** @internal */
+	/**
+	 * The underlying C-API pointer of the wrapped module.
+	 * @internal
+	 */
 	readonly ptr: number = BinaryenObj["_BinaryenModuleCreate"]();
 
 	// ## Expression Manipulation ## //
