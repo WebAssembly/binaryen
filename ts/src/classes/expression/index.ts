@@ -48,5 +48,17 @@ export {
 	TableSize,
 	TableGrow,
 } from "./tables.ts";
+export {
+	Load,
+	Store,
+	SIMDLoad,
+	SIMDLoadStoreLane,
+	MemorySize,
+	MemoryGrow,
+	MemoryFill,
+	MemoryCopy,
+	MemoryInit,
+	DataDrop,
+} from "./memories.ts";
 
 export {Const} from "./Const.ts";
