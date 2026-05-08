@@ -480,16 +480,16 @@ def binary_format_check(wast, verify_final_result=True, base_name=None, stdout=N
     as_file = f"{base_name}-a.wasm" if base_name is not None else "a.wasm"
     disassembled_file = f"{base_name}-ab.wast" if base_name is not None else "ab.wast"
 
-    verbose_log('         (binary format check)', file=stdout)
+    verbose_log('         (binary format check)')
     cmd = WASM_AS + [wast, '-o', as_file, '-all', '-g']
-    verbose_log('            ', ' '.join(cmd), file=stdout)
+    verbose_log('            ', ' '.join(cmd))
     if os.path.exists(as_file):
         os.unlink(as_file)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
     assert os.path.exists(as_file)
 
     cmd = WASM_DIS + [as_file, '-o', disassembled_file, '-all']
-    verbose_log('            ', ' '.join(cmd), file=stdout)
+    verbose_log('            ', ' '.join(cmd))
     if os.path.exists(disassembled_file):
         os.unlink(disassembled_file)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
@@ -497,7 +497,7 @@ def binary_format_check(wast, verify_final_result=True, base_name=None, stdout=N
 
     # make sure it is a valid wast
     cmd = WASM_OPT + [disassembled_file, '-all', '-q']
-    verbose_log('            ', ' '.join(cmd), file=stdout)
+    verbose_log('            ', ' '.join(cmd))
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
     if verify_final_result:
