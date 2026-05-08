@@ -2473,7 +2473,9 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       // interestingHeapSubTypes on the top.
       if (newHeapType.isBottom()) {
         for (auto type : interestingHeapSubTypes[newHeapType.getTop()]) {
-          options.push_back(type);
+          if (HeapType::isSubType(type, oldHeapType)) {
+            options.push_back(type);
+          }
         }
         break;
       }
