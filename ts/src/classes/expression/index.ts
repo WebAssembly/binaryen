@@ -60,5 +60,16 @@ export {
 	MemoryInit,
 	DataDrop,
 } from "./memories.ts";
+export {
+	RefFunc,
+	// TODO: RefNull,
+	RefIsNull,
+	RefAs,
+	RefEq,
+	RefTest,
+	RefCast,
+	RefI31,
+	I31Get,
+} from "./references.ts";
 
 export {Const} from "./Const.ts";

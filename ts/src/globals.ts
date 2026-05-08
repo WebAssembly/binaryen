@@ -76,6 +76,17 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	[ExpressionId.MemoryInit, expressions.MemoryInit],
 	[ExpressionId.DataDrop, expressions.DataDrop],
 
+	// Reference Instructions
+	[ExpressionId.RefFunc, expressions.RefFunc],
+	// TODO: [ExpressionId.RefNull, expressions.RefNull],
+	[ExpressionId.RefIsNull, expressions.RefIsNull],
+	[ExpressionId.RefAs, expressions.RefAs],
+	[ExpressionId.RefEq, expressions.RefEq],
+	[ExpressionId.RefTest, expressions.RefTest],
+	[ExpressionId.RefCast, expressions.RefCast],
+	[ExpressionId.RefI31, expressions.RefI31],
+	[ExpressionId.I31Get, expressions.I31Get],
+
 	// Numeric & Vector Instructions
 	[ExpressionId.Const, expressions.Const],
 ]);
