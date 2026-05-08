@@ -242,3 +242,13 @@ export enum ExternalKind {
 	ExternalTable = BinaryenObj["_BinaryenExternalTable"](),
 	ExternalFunction = BinaryenObj["_BinaryenExternalFunction"](),
 }
+
+/**
+ * [description]
+ * @experimental
+ */
+export enum MemoryOrder {
+	Unordered = BinaryenObj["_BinaryenMemoryOrderUnordered"](),
+	SeqCst = BinaryenObj["_BinaryenMemoryOrderSeqCst"](),
+	AcqRel = BinaryenObj["_BinaryenMemoryOrderAcqRel"](),
+}

@@ -479,11 +479,3 @@ export enum Operation {
 	MulWideSInt64 = BinaryenObj["_BinaryenMulWideSInt64"](),
 	MulWideUInt64 = BinaryenObj["_BinaryenMulWideUInt64"](),
 }
-
-
-
-export enum MemoryOrder {
-	Unordered = BinaryenObj["_BinaryenMemoryOrderUnordered"](),
-	SeqCst = BinaryenObj["_BinaryenMemoryOrderSeqCst"](),
-	AcqRel = BinaryenObj["_BinaryenMemoryOrderAcqRel"](),
-}
