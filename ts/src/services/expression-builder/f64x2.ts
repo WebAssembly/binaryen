@@ -1,48 +1,57 @@
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
+import {
+	binaryFn,
+	simdExtractFn,
+	simdReplaceFn,
+	unaryFn,
+} from "./-utils.ts";
+import {
+	Operation,
+} from "./Operation.ts";
 
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#vector-instructions */
-export function f64x2(_mod: Module) {
+export function f64x2(mod: Module) {
 	return {
-		abs: null,
-		neg: null,
-		sqrt: null,
-		ceil: null,
-		floor: null,
-		trunc: null,
-		nearest: null,
+		abs: unaryFn(mod, Operation.AbsVecF64x2),
+		neg: unaryFn(mod, Operation.NegVecF64x2),
+		sqrt: unaryFn(mod, Operation.SqrtVecF64x2),
+		ceil: unaryFn(mod, Operation.CeilVecF64x2),
+		floor: unaryFn(mod, Operation.FloorVecF64x2),
+		trunc: unaryFn(mod, Operation.TruncVecF64x2),
+		nearest: unaryFn(mod, Operation.NearestVecF64x2),
 
-		add: null,
-		sub: null,
-		mul: null,
-		div: null,
-		min: null,
-		max: null,
-		pmin: null,
-		pmax: null,
-		relaxed_min: null,
-		relaxed_max: null,
+		add: binaryFn(mod, Operation.AddVecF64x2),
+		sub: binaryFn(mod, Operation.SubVecF64x2),
+		mul: binaryFn(mod, Operation.MulVecF64x2),
+		div: binaryFn(mod, Operation.DivVecF64x2),
+		min: binaryFn(mod, Operation.MinVecF64x2),
+		max: binaryFn(mod, Operation.MaxVecF64x2),
+		pmin: binaryFn(mod, Operation.PMinVecF64x2),
+		pmax: binaryFn(mod, Operation.PMaxVecF64x2),
+		// TODO: relaxed_min
+		// TODO: relaxed_max
 
-		relaxed_madd: null,
-		relaxed_nmadd: null,
+		// TODO: relaxed_madd
+		// TODO: relaxed_nmadd
 
-		eq: null,
-		ne: null,
-		lt: null,
-		gt: null,
-		le: null,
-		ge: null,
+		eq: binaryFn(mod, Operation.EqVecF64x2),
+		ne: binaryFn(mod, Operation.NeVecF64x2),
+		lt: binaryFn(mod, Operation.LtVecF64x2),
+		gt: binaryFn(mod, Operation.GtVecF64x2),
+		le: binaryFn(mod, Operation.LeVecF64x2),
+		ge: binaryFn(mod, Operation.GeVecF64x2),
 
-		convert_low_i32x4_s: null,
-		convert_low_i32x4_u: null,
+		convert_low_i32x4_s: unaryFn(mod, Operation.ConvertLowSVecI32x4ToVecF64x2),
+		convert_low_i32x4_u: unaryFn(mod, Operation.ConvertLowUVecI32x4ToVecF64x2),
 
-		promote_low_f32x4: null,
+		promote_low_f32x4: unaryFn(mod, Operation.PromoteLowVecF32x4ToVecF64x2),
 
-		splat: null,
-		extract_lane: null,
-		replace_lane: null,
+		splat: unaryFn(mod, Operation.SplatVecF64x2),
+		extract_lane: simdExtractFn(mod, Operation.ExtractLaneVecF64x2),
+		replace_lane: simdReplaceFn(mod, Operation.ReplaceLaneVecF64x2),
 	} as const;
 }

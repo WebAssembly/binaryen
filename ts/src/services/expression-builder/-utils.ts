@@ -84,3 +84,15 @@ export function simdLoadFn(mod: Module, op: Operation): (offset: number, align: 
 export function simdLoadStoreLaneFn(mod: Module, op: Operation): (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name: string) => ExpressionRef {
 	return (offset, align, index, ptr, vec, name) => preserveStack(() => BinaryenObj["_BinaryenSIMDLoadStoreLane"](mod.ptr, op, offset, align, index, ptr, vec, strToStack(name)));
 }
+
+export function simdShiftFn(mod: Module, op: Operation): (vec: ExpressionRef, shift: ExpressionRef) => ExpressionRef {
+	return (vec, shift) => BinaryenObj["_BinaryenSIMDShift"](mod.ptr, op, vec, shift);
+}
+
+export function simdExtractFn(mod: Module, op: Operation): (vec: ExpressionRef, index: number) => ExpressionRef {
+	return (vec, index) => BinaryenObj["_BinaryenSIMDExtract"](mod.ptr, op, vec, index);
+}
+
+export function simdReplaceFn(mod: Module, op: Operation): (vec: ExpressionRef, index: number, value: ExpressionRef) => ExpressionRef {
+	return (vec, index, value) => BinaryenObj["_BinaryenSIMDReplace"](mod.ptr, op, vec, index, value);
+}

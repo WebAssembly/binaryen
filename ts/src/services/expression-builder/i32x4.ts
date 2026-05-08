@@ -1,71 +1,82 @@
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
+import {
+	binaryFn,
+	simdExtractFn,
+	simdReplaceFn,
+	simdShiftFn,
+	unaryFn,
+} from "./-utils.ts";
+import {
+	Operation,
+} from "./Operation.ts";
 
 
 
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#vector-instructions */
-export function i32x4(_mod: Module) {
+export function i32x4(mod: Module) {
 	return {
-		abs: null,
-		neg: null,
+		abs: unaryFn(mod, Operation.AbsVecI32x4),
+		neg: unaryFn(mod, Operation.NegVecI32x4),
 
-		add: null,
-		sub: null,
-		mul: null,
-		min_s: null,
-		min_u: null,
-		max_s: null,
-		max_u: null,
+		add: binaryFn(mod, Operation.AddVecI32x4),
+		sub: binaryFn(mod, Operation.SubVecI32x4),
+		mul: binaryFn(mod, Operation.MulVecI32x4),
+		min_s: binaryFn(mod, Operation.MinSVecI32x4),
+		min_u: binaryFn(mod, Operation.MinUVecI32x4),
+		max_s: binaryFn(mod, Operation.MaxSVecI32x4),
+		max_u: binaryFn(mod, Operation.MaxUVecI32x4),
 
-		relaxed_laneselect: null,
+		// TODO: relaxed_laneselect
 
-		all_true: null,
+		all_true: unaryFn(mod, Operation.AllTrueVecI32x4),
 
-		eq: null,
-		ne: null,
-		lt_s: null,
-		lt_u: null,
-		gt_s: null,
-		gt_u: null,
-		le_s: null,
-		le_u: null,
-		ge_s: null,
-		ge_u: null,
+		eq: binaryFn(mod, Operation.EqVecI32x4),
+		ne: binaryFn(mod, Operation.NeVecI32x4),
+		lt_s: binaryFn(mod, Operation.LtSVecI32x4),
+		lt_u: binaryFn(mod, Operation.LtUVecI32x4),
+		gt_s: binaryFn(mod, Operation.GtSVecI32x4),
+		gt_u: binaryFn(mod, Operation.GtUVecI32x4),
+		le_s: binaryFn(mod, Operation.LeSVecI32x4),
+		le_u: binaryFn(mod, Operation.LeUVecI32x4),
+		ge_s: binaryFn(mod, Operation.GeSVecI32x4),
+		ge_u: binaryFn(mod, Operation.GeUVecI32x4),
 
-		shl: null,
-		shr_s: null,
-		shr_u: null,
+		shl: simdShiftFn(mod, Operation.ShlVecI32x4),
+		shr_s: simdShiftFn(mod, Operation.ShrSVecI32x4),
+		shr_u: simdShiftFn(mod, Operation.ShrUVecI32x4),
 
-		bitmask: null,
+		bitmask: unaryFn(mod, Operation.BitmaskVecI32x4),
 
-		extadd_pairwise_i16x8_s: null,
-		extadd_pairwise_i16x8_u: null,
+		extadd_pairwise_i16x8_s: unaryFn(mod, Operation.ExtAddPairwiseSVecI16x8ToI32x4),
+		extadd_pairwise_i16x8_u: unaryFn(mod, Operation.ExtAddPairwiseUVecI16x8ToI32x4),
 
-		extmul_low_i16x8_s: null,
-		extmul_low_i16x8_u: null,
-		extmul_high_i16x8_s: null,
-		extmul_high_i16x8_u: null,
+		// NOTE: operation names correspond to “this” object, not instruction names
+		extmul_low_i16x8_s: binaryFn(mod, Operation.ExtMulLowSVecI32x4),
+		extmul_low_i16x8_u: binaryFn(mod, Operation.ExtMulLowUVecI32x4),
+		extmul_high_i16x8_s: binaryFn(mod, Operation.ExtMulHighSVecI32x4),
+		extmul_high_i16x8_u: binaryFn(mod, Operation.ExtMulHighUVecI32x4),
 
-		dot_i16x8_s: null,
-		relaxed_dot_i8x16_i7x16_add_s: null,
+		dot_i16x8_s: binaryFn(mod, Operation.DotSVecI16x8ToVecI32x4),
+		// TODO: relaxed_dot_i8x16_i7x16_add_s
 
-		extend_low_i16x8_s: null,
-		extend_low_i16x8_u: null,
-		extend_high_i16x8_s: null,
-		extend_high_i16x8_u: null,
+		extend_low_i16x8_s: unaryFn(mod, Operation.ExtendLowSVecI16x8ToVecI32x4),
+		extend_low_i16x8_u: unaryFn(mod, Operation.ExtendLowUVecI16x8ToVecI32x4),
+		extend_high_i16x8_s: unaryFn(mod, Operation.ExtendHighSVecI16x8ToVecI32x4),
+		extend_high_i16x8_u: unaryFn(mod, Operation.ExtendHighUVecI16x8ToVecI32x4),
 
-		trunc_sat_f32x4_s: null,
-		trunc_sat_f32x4_u: null,
-		trunc_sat_f64x2_s_zero: null,
-		trunc_sat_f64x2_u_zero: null,
-		relaxed_trunc_f32x4_s: null,
-		relaxed_trunc_f32x4_u: null,
-		relaxed_trunc_f64x2_s_zero: null,
-		relaxed_trunc_f64x2_u_zero: null,
+		trunc_sat_f32x4_s: unaryFn(mod, Operation.TruncSatSVecF32x4ToVecI32x4),
+		trunc_sat_f32x4_u: unaryFn(mod, Operation.TruncSatUVecF32x4ToVecI32x4),
+		trunc_sat_f64x2_s_zero: unaryFn(mod, Operation.TruncSatZeroSVecF64x2ToVecI32x4),
+		trunc_sat_f64x2_u_zero: unaryFn(mod, Operation.TruncSatZeroUVecF64x2ToVecI32x4),
+		// TODO: relaxed_trunc_f32x4_s
+		// TODO: relaxed_trunc_f32x4_u
+		// TODO: relaxed_trunc_f64x2_s_zero
+		// TODO: relaxed_trunc_f64x2_u_zero
 
-		splat: null,
-		extract_lane: null,
-		replace_lane: null,
+		splat: unaryFn(mod, Operation.SplatVecI32x4),
+		extract_lane: simdExtractFn(mod, Operation.ExtractLaneVecI32x4),
+		replace_lane: simdReplaceFn(mod, Operation.ReplaceLaneVecI32x4),
 	} as const;
 }
