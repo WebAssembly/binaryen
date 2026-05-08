@@ -60,6 +60,8 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	// Table Instructions
 	[ExpressionId.TableGet, expressions.TableGet],
 	[ExpressionId.TableSet, expressions.TableSet],
+	[ExpressionId.TableSize, expressions.TableSize],
+	[ExpressionId.TableGrow, expressions.TableGrow],
 
 	// Numeric & Vector Instructions
 	[ExpressionId.Const, expressions.Const],

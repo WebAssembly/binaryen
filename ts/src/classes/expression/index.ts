@@ -45,6 +45,8 @@ export {
 export {
 	TableGet,
 	TableSet,
+	TableSize,
+	TableGrow,
 } from "./tables.ts";
 
 export {Const} from "./Const.ts";

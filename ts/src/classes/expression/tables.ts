@@ -45,3 +45,31 @@ export class TableSet extends Expression {
 	get value(): ExpressionRef { return BinaryenObj["_BinaryenTableSetGetValue"](this[THIS_PTR]); }
 	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenTableSetSetValue"](this[THIS_PTR], valueExpr); }
 }
+
+
+
+export class TableSize extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.TableSize, expr);
+	}
+
+	get table(): string { return UTF8ToString(BinaryenObj["_BinaryenTableSizeGetTable"](this[THIS_PTR])); }
+	set table(name: string) { preserveStack(() => BinaryenObj["_BinaryenTableSizeSetTable"](this[THIS_PTR], strToStack(name))); }
+}
+
+
+
+export class TableGrow extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.TableSize, expr);
+	}
+
+	get table(): string { return UTF8ToString(BinaryenObj["_BinaryenTableGrowGetTable"](this[THIS_PTR])); }
+	set table(name: string) { preserveStack(() => BinaryenObj["_BinaryenTableGrowSetTable"](this[THIS_PTR], strToStack(name))); }
+
+	get value(): ExpressionRef { return BinaryenObj["_BinaryenTableGrowGetValue"](this[THIS_PTR]); }
+	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenTableGrowSetValue"](this[THIS_PTR], valueExpr); }
+
+	get delta(): ExpressionRef { return BinaryenObj["_BinaryenTableGrowGetDelta"](this[THIS_PTR]); }
+	set delta(deltaExpr: ExpressionRef) { BinaryenObj["_BinaryenTableGrowSetDelta"](this[THIS_PTR], deltaExpr); }
+}
