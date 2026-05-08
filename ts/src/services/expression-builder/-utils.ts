@@ -69,20 +69,28 @@ export function binaryFn(mod: Module, op: Operation): (left: ExpressionRef, righ
 	return (left, right) => BinaryenObj["_BinaryenBinary"](mod.ptr, op, left, right);
 }
 
-export function loadFn(mod: Module, typ: Type, bytes: number, isSigned: boolean): (offset: number, align: number, ptr: ExpressionRef, name: string) => ExpressionRef {
-	return (offset, align, ptr, name) => preserveStack(() => BinaryenObj["_BinaryenLoad"](mod.ptr, bytes, isSigned, offset, align, typ, ptr, strToStack(name)));
+export function loadFn(mod: Module, typ: Type, bytes: number, isSigned: boolean): (offset: number, align: number, ptr: ExpressionRef, name?: string) => ExpressionRef {
+	return (offset, align, ptr, name) => (
+		preserveStack(() => BinaryenObj["_BinaryenLoad"](mod.ptr, bytes, isSigned, offset, align, typ, ptr, strToStack(name)))
+	);
 }
 
-export function storeFn(mod: Module, typ: Type, bytes: number): (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name: string) => ExpressionRef {
-	return (offset, align, ptr, value, name) => preserveStack(() => BinaryenObj["_BinaryenStore"](mod.ptr, bytes, offset, align, ptr, value, typ, strToStack(name)));
+export function storeFn(mod: Module, typ: Type, bytes: number): (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => ExpressionRef {
+	return (offset, align, ptr, value, name) => (
+		preserveStack(() => BinaryenObj["_BinaryenStore"](mod.ptr, bytes, offset, align, ptr, value, typ, strToStack(name)))
+	);
 }
 
-export function simdLoadFn(mod: Module, op: Operation): (offset: number, align: number, ptr: ExpressionRef, name: string) => ExpressionRef {
-	return (offset, align, ptr, name) => preserveStack(() => BinaryenObj["_BinaryenSIMDLoad"](mod.ptr, op, offset, align, ptr, strToStack(name)));
+export function simdLoadFn(mod: Module, op: Operation): (offset: number, align: number, ptr: ExpressionRef, name?: string) => ExpressionRef {
+	return (offset, align, ptr, name) => (
+		preserveStack(() => BinaryenObj["_BinaryenSIMDLoad"](mod.ptr, op, offset, align, ptr, strToStack(name)))
+	);
 }
 
-export function simdLoadStoreLaneFn(mod: Module, op: Operation): (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name: string) => ExpressionRef {
-	return (offset, align, index, ptr, vec, name) => preserveStack(() => BinaryenObj["_BinaryenSIMDLoadStoreLane"](mod.ptr, op, offset, align, index, ptr, vec, strToStack(name)));
+export function simdLoadStoreLaneFn(mod: Module, op: Operation): (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) => ExpressionRef {
+	return (offset, align, index, ptr, vec, name) => (
+		preserveStack(() => BinaryenObj["_BinaryenSIMDLoadStoreLane"](mod.ptr, op, offset, align, index, ptr, vec, strToStack(name)))
+	);
 }
 
 export function simdShiftFn(mod: Module, op: Operation): (vec: ExpressionRef, shift: ExpressionRef) => ExpressionRef {
