@@ -189,7 +189,7 @@ def run_opt_test(wast, stdout=None):
     support.run_command(cmd, stdout=stdout)
 
 
-def check_expected(actual, expected, stdout=None):
+def check_expected(actual, expected):
     if expected and os.path.exists(expected):
         expected = open(expected).read()
         shared.verbose_log('       (using expected output)')
@@ -254,7 +254,7 @@ def run_one_spec_test(wast: Path, stdout=None):
             support.write_wast(split_name, module)
             run_opt_test(split_name, stdout=stdout)    # also that our optimizer doesn't break on it
 
-            result_wast_file = shared.binary_format_check(split_name, verify_final_result=False, base_name=base_name, stdout=stdout)
+            result_wast_file = shared.binary_format_check(split_name, verify_final_result=False, base_name=base_name)
             with open(result_wast_file) as f:
                 result_wast = f.read()
                 # add the asserts, and verify that the test still passes

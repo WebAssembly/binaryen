@@ -474,7 +474,7 @@ options.spec_tests = [t for t in options.spec_tests if _can_run_spec_test(t)]
 # check utilities
 
 
-def binary_format_check(wast, verify_final_result=True, base_name=None, stdout=None):
+def binary_format_check(wast, verify_final_result=True, base_name=None):
     # checks we can convert the wast to binary and back
 
     as_file = f"{base_name}-a.wasm" if base_name is not None else "a.wasm"
