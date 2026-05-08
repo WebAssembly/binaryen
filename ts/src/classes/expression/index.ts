@@ -36,5 +36,9 @@ export {LocalSet} from "./LocalSet.ts";
 export {GlobalGet} from "./GlobalGet.ts";
 export {GlobalSet} from "./GlobalSet.ts";
 
+// ## Table ## //
+export {TableGet} from "./TableGet.ts";
+export {TableSet} from "./TableSet.ts";
+
 // ## Numeric & Vector ## //
 export {Const} from "./Const.ts";
