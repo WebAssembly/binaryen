@@ -1,3 +1,4 @@
+/* eslint-disable @stylistic/object-curly-newline */
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
@@ -9,31 +10,27 @@ import {
 	struct,
 	tuple,
 } from "./aggregate.ts";
-import {
-	blocks,
-	breaks,
-	calls,
-	throws,
-} from "./control.ts";
-/* eslint-disable @stylistic/object-curly-newline */
 import {f32} from "./f32.ts";
 import {f32x4} from "./f32x4.ts";
 import {f64} from "./f64.ts";
 import {f64x2} from "./f64x2.ts";
+import {
+	blocks,
+	breaks,
+	calls,
+	parametrics,
+	throws,
+} from "./generic.ts";
 import {i8x16} from "./i8x16.ts";
 import {i16x8} from "./i16x8.ts";
 import {i32} from "./i32.ts";
 import {i32x4} from "./i32x4.ts";
 import {i64} from "./i64.ts";
 import {i64x2} from "./i64x2.ts";
-/* eslint-enable @stylistic/object-curly-newline */
 import {
 	data,
 	memory,
 } from "./memory.ts";
-import {
-	parametric,
-} from "./parametric.ts";
 import {
 	i31,
 	ref,
@@ -41,13 +38,12 @@ import {
 import {
 	table,
 } from "./table.ts";
-import {
-	v128,
-} from "./v128.ts";
+import {v128} from "./v128.ts";
 import {
 	global,
 	local,
 } from "./variable.ts";
+/* eslint-enable @stylistic/object-curly-newline */
 
 
 
@@ -64,7 +60,7 @@ export function expressionBuilder(mod: Module) {
 	 * If any object literal has more than one property, move it out into a separate function.
 	 */
 	return {
-		...parametric(mod),
+		...parametrics(mod),
 		...blocks(mod),
 		...breaks(mod),
 		...calls(mod),
