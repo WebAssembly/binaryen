@@ -311,10 +311,10 @@ struct MinimizeRecGroups : Pass {
     // generate new groups with the same shape.
     std::unordered_set<RecGroup> publicGroups;
     for (auto& [type, info] : typeInfo) {
+      typeIndices.insert({type, typeIndices.size()});
       if (info.visibility == ModuleUtils::Visibility::Private) {
         // We can optimize private types.
         types.push_back(type);
-        typeIndices.insert({type, typeIndices.size()});
       } else {
         publicGroups.insert(type.getRecGroup());
       }
