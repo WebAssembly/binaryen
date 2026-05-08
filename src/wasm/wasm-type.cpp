@@ -38,50 +38,6 @@ namespace wasm {
 
 namespace {
 
-using RecGroupInfo = std::vector<HeapType>;
-
-struct HeapTypeInfo {
-  using type_t = HeapType;
-  // Used in assertions to ensure that temporary types don't leak into the
-  // global store.
-  bool isTemp = false;
-  bool isOpen = false;
-  Shareability share = Unshared;
-  // The supertype of this HeapType, if it exists.
-  HeapTypeInfo* supertype = nullptr;
-  // The descriptor of this HeapType, if it exists.
-  HeapTypeInfo* descriptor = nullptr;
-  // The HeapType described by this one, if it exists.
-  HeapTypeInfo* described = nullptr;
-  // The recursion group of this type or null if the recursion group is trivial
-  // (i.e. contains only this type).
-  RecGroupInfo* recGroup = nullptr;
-  size_t recGroupIndex = 0;
-  HeapTypeKind kind;
-  union {
-    Signature signature;
-    Continuation continuation;
-    Struct struct_;
-    Array array;
-  };
-
-  HeapTypeInfo(Signature sig) : kind(HeapTypeKind::Func), signature(sig) {}
-  HeapTypeInfo(Continuation continuation)
-    : kind(HeapTypeKind::Cont), continuation(continuation) {}
-  HeapTypeInfo(const Struct& struct_)
-    : kind(HeapTypeKind::Struct), struct_(struct_) {}
-  HeapTypeInfo(Struct&& struct_)
-    : kind(HeapTypeKind::Struct), struct_(std::move(struct_)) {}
-  HeapTypeInfo(Array array) : kind(HeapTypeKind::Array), array(array) {}
-  ~HeapTypeInfo();
-
-  constexpr bool isSignature() const { return kind == HeapTypeKind::Func; }
-  constexpr bool isContinuation() const { return kind == HeapTypeKind::Cont; }
-  constexpr bool isStruct() const { return kind == HeapTypeKind::Struct; }
-  constexpr bool isArray() const { return kind == HeapTypeKind::Array; }
-  constexpr bool isData() const { return isStruct() || isArray(); }
-};
-
 // Helper for finding the equirecursive least upper bound of two types.
 // Helper for printing types.
 struct TypePrinter {
@@ -209,11 +165,6 @@ public:
 
 namespace wasm {
 namespace {
-
-HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
-  assert(!ht.isBasic());
-  return (HeapTypeInfo*)ht.getID();
-}
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
   return HeapType(uintptr_t(info.get()));
@@ -879,29 +830,6 @@ HeapType::HeapType(Struct&& struct_) {
 HeapType::HeapType(Array array) {
   new (this)
     HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
-}
-
-HeapTypeKind HeapType::getKind() const {
-  if (isBasic()) {
-    return HeapTypeKind::Basic;
-  }
-  return getHeapTypeInfo(*this)->kind;
-}
-
-bool HeapType::isOpen() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getHeapTypeInfo(*this)->isOpen;
-  }
-}
-
-Shareability HeapType::getShared() const {
-  if (isBasic()) {
-    return (id & SharedMask) != 0 ? Shared : Unshared;
-  } else {
-    return getHeapTypeInfo(*this)->share;
-  }
 }
 
 bool HeapType::isCastable() {
