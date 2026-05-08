@@ -16,6 +16,8 @@ import io
 import re
 import subprocess
 
+from . import shared
+
 QUOTED = re.compile(r'\(module\s*(\$\S*)?\s+(quote|binary)')
 
 MODULE_DEFINITION_OR_INSTANCE = re.compile(r'(?m)\(module\s+(instance|definition)')
@@ -147,7 +149,7 @@ def run_command(cmd, expected_status=0, stdout=None, stderr=None,
         assert stderr == subprocess.PIPE or stderr is None, \
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
-    print('executing: ', ' '.join(cmd), file=stdout)
+    shared.verbose_log('executing: ', ' '.join(cmd), file=stdout)
 
     out, err, code = _subprocess_run(cmd, stdout=subprocess.PIPE, stderr=stderr, encoding='UTF-8')
 
