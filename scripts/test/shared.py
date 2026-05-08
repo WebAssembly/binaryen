@@ -120,6 +120,7 @@ def warn(text):
 def print_heading(msg):
     print(f'[ {msg} ]')
 
+
 def verbose_log(*args, **kwargs):
     if options.verbose:
         print(*args, **kwargs)
