@@ -163,7 +163,9 @@ export class Module {
 
 	// ## Expression Manipulation ## //
 	/**
-	 * This module’s {@link ExpressionBuilder | WASM expression builder}.
+	 * This module’s WASM expression builder.
+	 *
+	 * See {@link ExpressionBuilder} for its type signature.
 	 *
 	 * N.B.: For convenience, developers may want to destructure the module to free `wasm`:
 	 * ```ts

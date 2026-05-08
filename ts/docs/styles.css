@@ -2,3 +2,7 @@
 	--color-text: gray;
 	color: var(--color-text);
 }
+
+#wasm ~ :is(.tsd-signature, .tsd-type-declaration) {
+	display: none;
+}
