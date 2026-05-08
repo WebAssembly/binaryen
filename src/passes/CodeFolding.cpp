@@ -639,6 +639,8 @@ private:
   // we are just starting; num > 0 means that tails is guaranteed to be
   // equal in the last num items, so we can merge there, but we look for
   // deeper merges first.
+  // bodyTargets is lazily computed on first need and then passed to recursive
+  // calls to avoid repeated O(N) getBranchTargets walks over the function body.
   // returns whether we optimized something.
   bool optimizeTerminatingTails(std::vector<Tail>& tails,
                                 Index num = 0,
@@ -646,8 +648,8 @@ private:
     if (tails.size() < 2) {
       return false;
     }
-    // Storage for lazily-computed body branch targets. Must be declared at
-    // function scope so it outlives the pointer stored in bodyTargets.
+    // Storage for body branch targets, declared here so it outlives the
+    // pointer stored in bodyTargets.
     BranchUtils::NameSet localBodyTargets;
     // remove things that are untoward and cannot be optimized
     tails.erase(
