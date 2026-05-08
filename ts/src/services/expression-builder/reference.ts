@@ -8,13 +8,11 @@ import {
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
-import type {
-	ExpressionRef,
-	Type,
-} from "../../constants.ts";
 import {
+	type ExpressionRef,
 	Operation,
-} from "./Operation.ts";
+	type Type,
+} from "../../constants.ts";
 
 
 

@@ -14,13 +14,11 @@ import type {
 } from "../../classes/module/Module.ts";
 import {
 	type ExpressionRef,
+	Operation,
 	type Type,
 	none,
 	unreachable,
 } from "../../constants.ts";
-import {
-	Operation,
-} from "./Operation.ts";
 
 
 

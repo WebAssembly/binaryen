@@ -2,14 +2,14 @@ import type {
 	Module,
 } from "../../classes/module/Module.ts";
 import {
+	Operation,
+} from "../../constants.ts";
+import {
 	binaryFn,
 	simdExtractFn,
 	simdReplaceFn,
 	unaryFn,
 } from "./-utils.ts";
-import {
-	Operation,
-} from "./Operation.ts";
 
 
 

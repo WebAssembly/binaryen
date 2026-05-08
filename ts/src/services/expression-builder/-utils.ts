@@ -12,11 +12,9 @@ import type {
 import {
 	type ExpressionRef,
 	MemoryOrder,
+	Operation,
 	type Type,
 } from "../../constants.ts";
-import {
-	Operation,
-} from "./Operation.ts";
 
 
 

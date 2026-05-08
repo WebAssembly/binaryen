@@ -11,11 +11,9 @@ import {
 	ExpressionId,
 	type ExpressionRef,
 	type MemoryOrder,
+	type Operation,
 	type Type,
 } from "../../constants.ts";
-import type {
-	Operation,
-} from "../../services/expression-builder/Operation.ts";
 import {
 	Expression,
 } from "./Expression.ts";

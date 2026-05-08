@@ -8,8 +8,9 @@ import {
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
-import type {
-	ExpressionRef,
+import {
+	type ExpressionRef,
+	Operation,
 } from "../../constants.ts";
 import {
 	consoleWarn,
@@ -21,9 +22,6 @@ import {
 	simdShiftFn,
 	unaryFn,
 } from "./-utils.ts";
-import {
-	Operation,
-} from "./Operation.ts";
 
 
 

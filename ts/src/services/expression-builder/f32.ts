@@ -6,6 +6,7 @@ import type {
 } from "../../classes/module/Module.ts";
 import {
 	type ExpressionRef,
+	Operation,
 	f32 as f32_t,
 } from "../../constants.ts";
 import {
@@ -15,9 +16,6 @@ import {
 	storeFn,
 	unaryFn,
 } from "./-utils.ts";
-import {
-	Operation,
-} from "./Operation.ts";
 
 
 
