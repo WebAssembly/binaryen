@@ -1195,8 +1195,15 @@ struct OptimizeInstructions
       }
       // (i32.and X 1) as if-else condition =>  (i32.ctz X) with swapped arms,
       // since ctz(X) == 0  iff  LSB(X) == 1  (saves one instruction).
+      //
+      // Gated on shrinkLevel >= 1 (i.e. -Os or -Oz) only: TZCNT can cost
+      // 1-2 cycles more than AND on common JIT VMs (per Agner Fog's
+      // tables), and JIT-less interpreters (wasm3, smart-contract
+      // runtimes) lack a fast path for ctz at all. The byte-saving is the
+      // win we want under shrink modes; under speed modes the AND form
+      // stays. See WebAssembly/binaryen#8562.
       if (auto* binary = curr->condition->dynCast<Binary>()) {
-        if (binary->op == AndInt32) {
+        if (binary->op == AndInt32 && getPassOptions().shrinkLevel >= 1) {
           Expression* other = nullptr;
           if (auto* c = binary->right->dynCast<Const>()) {
             if (c->value.geti32() == 1) {
@@ -3138,7 +3145,10 @@ private:
             }
             // eqz(and X 1) ==> ctz X  in boolean context:
             // both are truthy iff LSB(X) == 0, saving one instruction.
-            if (binary->op == AndInt32) {
+            // Gated on shrinkLevel >= 1 (-Os, -Oz) — see the matching
+            // comment in visitIf and WebAssembly/binaryen#8562.
+            if (binary->op == AndInt32 &&
+                getPassOptions().shrinkLevel >= 1) {
               Expression* other = nullptr;
               if (auto* c = binary->right->dynCast<Const>()) {
                 if (c->value.geti32() == 1) {
