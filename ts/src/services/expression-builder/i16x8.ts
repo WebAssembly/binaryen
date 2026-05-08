@@ -2,6 +2,9 @@ import type {
 	Module,
 } from "../../classes/module/Module.ts";
 import {
+	consoleWarn,
+} from "../../lib.ts";
+import {
 	binaryFn,
 	simdExtractFn,
 	simdReplaceFn,
@@ -22,10 +25,10 @@ export function i16x8(mod: Module) {
 
 		add: binaryFn(mod, Operation.AddVecI16x8),
 		sub: binaryFn(mod, Operation.SubVecI16x8),
-		add_sat_s: binaryFn(mod, Operation.AddSatSVecI16x8), // TODO: deprecate `add_saturate_s`
-		add_sat_u: binaryFn(mod, Operation.AddSatUVecI16x8), // TODO: deprecate `add_saturate_u`
-		sub_sat_s: binaryFn(mod, Operation.SubSatSVecI16x8), // TODO: deprecate `sub_saturate_s`
-		sub_sat_u: binaryFn(mod, Operation.SubSatUVecI16x8), // TODO: deprecate `sub_saturate_u`
+		add_sat_s: binaryFn(mod, Operation.AddSatSVecI16x8),
+		add_sat_u: binaryFn(mod, Operation.AddSatUVecI16x8),
+		sub_sat_s: binaryFn(mod, Operation.SubSatSVecI16x8),
+		sub_sat_u: binaryFn(mod, Operation.SubSatUVecI16x8),
 		mul: binaryFn(mod, Operation.MulVecI16x8),
 		avgr_u: binaryFn(mod, Operation.AvgrUVecI16x8),
 		q15mulr_sat_s: binaryFn(mod, Operation.Q15MulrSatSVecI16x8),
@@ -79,5 +82,14 @@ export function i16x8(mod: Module) {
 		extract_lane_s: simdExtractFn(mod, Operation.ExtractLaneSVecI16x8),
 		extract_lane_u: simdExtractFn(mod, Operation.ExtractLaneUVecI16x8),
 		replace_lane: simdReplaceFn(mod, Operation.ReplaceLaneVecI16x8),
+
+		// @ts-expect-error
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_s} instead. */ add_saturate_s(...args) { consoleWarn("`.i16x8.add_saturate_s()` is deprecated; use `.i16x8.add_sat_s()` instead."); return this.add_sat_s(...args); },
+		// @ts-expect-error
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_u} instead. */ add_saturate_u(...args) { consoleWarn("`.i16x8.add_saturate_u()` is deprecated; use `.i16x8.add_sat_u()` instead."); return this.add_sat_u(...args); },
+		// @ts-expect-error
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_s} instead. */ sub_saturate_s(...args) { consoleWarn("`.i16x8.sub_saturate_s()` is deprecated; use `.i16x8.sub_sat_s()` instead."); return this.sub_sat_s(...args); },
+		// @ts-expect-error
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_u} instead. */ sub_saturate_u(...args) { consoleWarn("`.i16x8.sub_saturate_u()` is deprecated; use `.i16x8.sub_sat_u()` instead."); return this.sub_sat_u(...args); },
 	} as const;
 }
