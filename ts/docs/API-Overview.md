@@ -387,15 +387,21 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 
 Global `getSideEffects(expr, mod)` has been moved to `Module#getSideEffects()` where it lives alongside `Module#copyExpression()`.
 
-All “type” properties (`.i32`, `.i64`, etc) on `Module` previously served as namespaces containing functions for building expressions.
-(E.g., `Module#i32.add()` produced an `(i32.add)` WASM instruction.)
-These have all migrated to `Module#wasm`, an [Expression Builder](#expression-building).
-These properties also each contained its own `.pop()` method, which didn’t build a WASM expression,
+All expression creation methods (`.nop()`, `.drop()`, `.block()`, `.call()`, etc.) directly on `Module`
+were functions for building expressions, and have migrated to `Module#wasm`, an [Expression Builder](#expression-building).
+
+All “type” properties (`.i32`, `.i64`, etc) on `Module` previously served as namespaces containing similar functions.
+(E.g., `Module#i32.add()` produced an `(i32.add)` WASM instruction.) These also have all migrated to `Module#wasm`.
+
+These “type” properties also each contained its own `.pop()` method, which didn’t build a WASM expression,
 but was a pseudo-instruction enabling Binaryen to reason about multiple values on the stack.
 They have been combined into one method on Module, `Module#pop(t: Type)`, where `t` is one of the corresponding type namespaces.
 
 
 ### Expression Builder Methods
+These methods were previously directly on the `Module` class, and have been moved to `Module#wasm`.
+Some of them have also been renamed to align with the WASM spec.
+
 Note: To improve readability, assume all methods written in this section are bound to an Expression Builder (an object returned by `Module#wasm`).
 
 - `.break()`              &rarr; `.br()`
