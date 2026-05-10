@@ -107,6 +107,10 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 
 	// Numeric & Vector Instructions
 	[ExpressionId.Const, expressions.Const],
+	[ExpressionId.Unary, expressions.Unary],
+	[ExpressionId.Binary, expressions.Binary],
+	[ExpressionId.WideIntAddSub, expressions.WideIntAddSub],
+	[ExpressionId.WideIntMul, expressions.WideIntMul],
 ]);
 
 

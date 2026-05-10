@@ -203,6 +203,7 @@ export enum ExpressionId {
 
 	// ### Proposed Instruction Ids ### //
 	// These insructions are not yet in the WASM spec. Move them to their respective sections once finalized.
+	// #### Strings #### //
 	StringNew = BinaryenObj["_BinaryenStringNewId"](),
 	StringConst = BinaryenObj["_BinaryenStringConstId"](),
 	StringMeasure = BinaryenObj["_BinaryenStringMeasureId"](),
@@ -211,6 +212,9 @@ export enum ExpressionId {
 	StringEq = BinaryenObj["_BinaryenStringEqId"](),
 	StringWTF16Get = BinaryenObj["_BinaryenStringWTF16GetId"](),
 	StringSliceWTF = BinaryenObj["_BinaryenStringSliceWTFId"](),
+	// #### Wide Arithmetic #### //
+	WideIntAddSub = BinaryenObj["_BinaryenWideIntAddSubId"](),
+	WideIntMul = BinaryenObj["_BinaryenWideIntMulId"](),
 }
 
 /** Expression side-effects. */
@@ -715,7 +719,7 @@ export enum Operation {
 	StringEqEqual = BinaryenObj["_BinaryenStringEqEqual"](),
 	StringEqCompare = BinaryenObj["_BinaryenStringEqCompare"](),
 
-	// ### WideInt Operations ### //
+	// ### Wide Arithmetic Operations ### //
 	AddInt128 = BinaryenObj["_BinaryenAddInt128"](),
 	SubInt128 = BinaryenObj["_BinaryenSubInt128"](),
 	MulWideSInt64 = BinaryenObj["_BinaryenMulWideSInt64"](),

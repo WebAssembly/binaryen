@@ -89,5 +89,10 @@ export {
 	ArrayInitData,
 	ArrayInitElem,
 } from "./aggregates.ts";
-
-export {Const} from "./Const.ts";
+export {
+	Const,
+	Unary,
+	Binary,
+	WideIntAddSub,
+	WideIntMul,
+} from "./numerics.ts";
