@@ -86,10 +86,10 @@ export function getAllNested<T, U>(
 	numFn: (ref: T) => number,
 	getFn: (ref: T, i: number) => U,
 ): U[] {
-	const num = numFn.call(undefined, ref);
+	const num = numFn(ref);
 	const ret: U[] = [];
 	for (let i = 0; i < num; ++i) {
-		ret[i] = getFn.call(undefined, ref, i);
+		ret[i] = getFn(ref, i);
 	}
 	return ret;
 }

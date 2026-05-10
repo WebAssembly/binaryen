@@ -87,6 +87,24 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	[ExpressionId.RefI31, expressions.RefI31],
 	[ExpressionId.I31Get, expressions.I31Get],
 
+	// Aggregate Instructions
+	[ExpressionId.TupleMake, expressions.TupleMake],
+	[ExpressionId.TupleExtract, expressions.TupleExtract],
+	[ExpressionId.StructNew, expressions.StructNew],
+	[ExpressionId.StructGet, expressions.StructGet],
+	[ExpressionId.StructSet, expressions.StructSet],
+	[ExpressionId.ArrayNew, expressions.ArrayNew],
+	[ExpressionId.ArrayNewFixed, expressions.ArrayNewFixed],
+	[ExpressionId.ArrayNewData, expressions.ArrayNewData],
+	[ExpressionId.ArrayNewElem, expressions.ArrayNewElem],
+	[ExpressionId.ArrayGet, expressions.ArrayGet],
+	[ExpressionId.ArraySet, expressions.ArraySet],
+	[ExpressionId.ArrayLen, expressions.ArrayLen],
+	[ExpressionId.ArrayFill, expressions.ArrayFill],
+	[ExpressionId.ArrayCopy, expressions.ArrayCopy],
+	[ExpressionId.ArrayInitData, expressions.ArrayInitData],
+	[ExpressionId.ArrayInitElem, expressions.ArrayInitElem],
+
 	// Numeric & Vector Instructions
 	[ExpressionId.Const, expressions.Const],
 ]);

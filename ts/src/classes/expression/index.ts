@@ -71,5 +71,23 @@ export {
 	RefI31,
 	I31Get,
 } from "./references.ts";
+export {
+	TupleMake,
+	TupleExtract,
+	StructNew,
+	StructGet,
+	StructSet,
+	ArrayNew,
+	ArrayNewFixed,
+	ArrayNewData,
+	ArrayNewElem,
+	ArrayGet,
+	ArraySet,
+	ArrayLen,
+	ArrayFill,
+	ArrayCopy,
+	ArrayInitData,
+	ArrayInitElem,
+} from "./aggregates.ts";
 
 export {Const} from "./Const.ts";
