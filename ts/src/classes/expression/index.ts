@@ -96,3 +96,10 @@ export {
 	WideIntAddSub,
 	WideIntMul,
 } from "./numerics.ts";
+export {
+	SIMDTernary,
+	SIMDShift,
+	SIMDShuffle,
+	SIMDExtract,
+	SIMDReplace,
+} from "./vectors.ts";

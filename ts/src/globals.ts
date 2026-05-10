@@ -111,6 +111,11 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	[ExpressionId.Binary, expressions.Binary],
 	[ExpressionId.WideIntAddSub, expressions.WideIntAddSub],
 	[ExpressionId.WideIntMul, expressions.WideIntMul],
+	[ExpressionId.SIMDTernary, expressions.SIMDTernary],
+	[ExpressionId.SIMDShift, expressions.SIMDShift],
+	[ExpressionId.SIMDShuffle, expressions.SIMDShuffle],
+	[ExpressionId.SIMDExtract, expressions.SIMDExtract],
+	[ExpressionId.SIMDReplace, expressions.SIMDReplace],
 ]);
 
 
