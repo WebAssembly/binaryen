@@ -235,7 +235,7 @@ def run_one_spec_test(wast: Path, stdout=None):
             shared.fail_with_error(str(e))
             raise
 
-    check_expected(actual, expected)
+    check_expected(actual, expected, stdout=stdout)
 
     if not is_splittable(wast):
         return
@@ -262,7 +262,7 @@ def run_one_spec_test(wast: Path, stdout=None):
 
     # compare all the outputs to the expected output
     actual = run_spec_test(transformed_path, stdout=stdout)
-    check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'))
+    check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'), stdout=stdout)
 
 
 def run_spec_test_with_wrapped_stdout(wast: Path):
