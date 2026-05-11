@@ -123,6 +123,16 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	[ExpressionId.AtomicWait, expressions.AtomicWait],
 	[ExpressionId.AtomicNotify, expressions.AtomicNotify],
 	[ExpressionId.AtomicFence, expressions.AtomicFence],
+
+	// String Instructions
+	[ExpressionId.StringNew, expressions.StringNew],
+	[ExpressionId.StringConst, expressions.StringConst],
+	[ExpressionId.StringMeasure, expressions.StringMeasure],
+	[ExpressionId.StringEncode, expressions.StringEncode],
+	[ExpressionId.StringConcat, expressions.StringConcat],
+	[ExpressionId.StringEq, expressions.StringEq],
+	[ExpressionId.StringWTF16Get, expressions.StringWTF16Get],
+	[ExpressionId.StringSliceWTF, expressions.StringSliceWTF],
 ]);
 
 

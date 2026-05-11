@@ -110,3 +110,13 @@ export {
 	AtomicNotify,
 	AtomicFence,
 } from "./atomics.ts";
+export {
+	StringNew,
+	StringConst,
+	StringMeasure,
+	StringEncode,
+	StringConcat,
+	StringEq,
+	StringWTF16Get,
+	StringSliceWTF,
+} from "./strings.ts";
