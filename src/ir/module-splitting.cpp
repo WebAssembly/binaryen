@@ -1030,9 +1030,6 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
     ModuleUtils::ParallelFunctionAnalysis<CalledPrimaryToModules> callCollector(
       *secondary,
       [&](Function* func, CalledPrimaryToModules& calledPrimaryToModules) {
-        if (func->imported()) {
-          return;
-        }
         CallCollector(primaryFuncs, calledPrimaryToModules)
           .walkFunctionInModule(func, secondary);
       });
