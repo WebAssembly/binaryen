@@ -103,3 +103,10 @@ export {
 	SIMDExtract,
 	SIMDReplace,
 } from "./vectors.ts";
+export {
+	AtomicRMW,
+	AtomicCmpxchg,
+	AtomicWait,
+	AtomicNotify,
+	AtomicFence,
+} from "./atomics.ts";

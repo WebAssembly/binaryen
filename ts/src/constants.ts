@@ -195,8 +195,8 @@ export enum ExpressionId {
 	SIMDReplace = BinaryenObj["_BinaryenSIMDReplaceId"](),
 
 	// ### Atomic Instruction Ids ### //
-	AtomicCmpxchg = BinaryenObj["_BinaryenAtomicCmpxchgId"](),
 	AtomicRMW = BinaryenObj["_BinaryenAtomicRMWId"](),
+	AtomicCmpxchg = BinaryenObj["_BinaryenAtomicCmpxchgId"](),
 	AtomicWait = BinaryenObj["_BinaryenAtomicWaitId"](),
 	AtomicNotify = BinaryenObj["_BinaryenAtomicNotifyId"](),
 	AtomicFence = BinaryenObj["_BinaryenAtomicFenceId"](),

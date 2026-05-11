@@ -116,6 +116,13 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	[ExpressionId.SIMDShuffle, expressions.SIMDShuffle],
 	[ExpressionId.SIMDExtract, expressions.SIMDExtract],
 	[ExpressionId.SIMDReplace, expressions.SIMDReplace],
+
+	// Atomic Instructions
+	[ExpressionId.AtomicRMW, expressions.AtomicRMW],
+	[ExpressionId.AtomicCmpxchg, expressions.AtomicCmpxchg],
+	[ExpressionId.AtomicWait, expressions.AtomicWait],
+	[ExpressionId.AtomicNotify, expressions.AtomicNotify],
+	[ExpressionId.AtomicFence, expressions.AtomicFence],
 ]);
 
 
