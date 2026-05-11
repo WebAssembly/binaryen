@@ -59,6 +59,7 @@ Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateGlobalEffectsPass();
+Pass* createGenerateCallGraphPass();
 Pass* createGlobalRefiningPass();
 Pass* createGlobalStructInferencePass();
 Pass* createGlobalStructInferenceDescCastPass();

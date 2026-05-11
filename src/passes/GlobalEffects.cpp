@@ -27,6 +27,9 @@
 #include "support/utilities.h"
 #include "wasm.h"
 
+#include <iostream>
+#include <sstream>
+
 namespace wasm {
 
 namespace {
@@ -369,10 +372,86 @@ struct DiscardGlobalEffects : public Pass {
   }
 };
 
+struct GenerateCallGraph : public Pass {
+  bool modifiesBinaryenIR() override { return false; }
+
+  void run(Module* module) override {
+    std::map<Function*, FuncInfo> funcInfos =
+      analyzeFuncs(*module, getPassOptions());
+
+    auto callGraph =
+      buildCallGraph(*module, funcInfos, getPassOptions().closedWorld);
+
+    std::map<std::string, std::string> nodeTypes;
+    std::map<std::string, std::map<std::string, std::string>> sortedGraph;
+
+    auto getNodeType = [](const CallGraphNode& node) {
+      return std::visit(overloaded{[](Function*) { return "function"; },
+                                   [](HeapType) { return "type"; }},
+                        node);
+    };
+
+    for (const auto& [caller, callees] : callGraph) {
+      std::string callerName = nodeToString(caller);
+      nodeTypes[callerName] = getNodeType(caller);
+
+      for (const auto& callee : callees) {
+        std::string calleeName = nodeToString(callee);
+        nodeTypes[calleeName] = getNodeType(callee);
+
+        std::string style = std::visit(
+          overloaded{
+            [](Function*, Function*) {
+              return " [style=\"solid\", color=\"black\", kind=\"direct\"]";
+            },
+            [](Function*, HeapType) {
+              return " [style=\"dotted\", color=\"black\", kind=\"indirect\"]";
+            },
+            [](HeapType, HeapType) {
+              return " [style=\"solid\", color=\"blue\", kind=\"subtyping\"]";
+            },
+            [](HeapType, Function*) {
+              return " [style=\"dashed\", color=\"green\", "
+                     "kind=\"implementation\"]";
+            }},
+          caller,
+          callee);
+
+        sortedGraph[callerName][calleeName] = style;
+      }
+    }
+
+    std::cout << "digraph CallGraph {\n";
+    for (const auto& [nodeName, nodeType] : nodeTypes) {
+      std::cout << "  \"" << nodeName << "\" [kind=\"" << nodeType << "\"];\n";
+    }
+    for (const auto& [callerName, callees] : sortedGraph) {
+      for (const auto& [calleeName, style] : callees) {
+        std::cout << "  \"" << callerName << "\" -> \"" << calleeName << "\""
+                  << style << ";\n";
+      }
+    }
+    std::cout << "}\n";
+  }
+
+  std::string nodeToString(const CallGraphNode& node) {
+    return std::visit(
+      overloaded{[](Function* func) { return func->name.toString(); },
+                 [](HeapType type) {
+                   std::stringstream ss;
+                   ss << type;
+                   return ss.str();
+                 }},
+      node);
+  }
+};
+
 } // namespace
 
 Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }
 
 Pass* createDiscardGlobalEffectsPass() { return new DiscardGlobalEffects(); }
+
+Pass* createGenerateCallGraphPass() { return new GenerateCallGraph(); }
 
 } // namespace wasm
