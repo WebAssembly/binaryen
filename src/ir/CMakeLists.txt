@@ -23,6 +23,7 @@ set(ir_SOURCES
   runtime-global.cpp
   runtime-table.cpp
   stack-utils.cpp
+  string-builtin-names.cpp
   table-utils.cpp
   type-updating.cpp
   module-splitting.cpp
