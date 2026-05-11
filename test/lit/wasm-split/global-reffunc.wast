@@ -24,10 +24,6 @@
 
 ;; PRIMARY:      (module
 ;; PRIMARY-NEXT:  (type $0 (func))
-;; PRIMARY-NEXT:  (import "placeholder.deferred" "0" (func $placeholder_0))
-;; PRIMARY-NEXT:  (table $0 1 funcref)
-;; PRIMARY-NEXT:  (elem $0 (i32.const 0) $placeholder_0)
-;; PRIMARY-NEXT:  (export "table" (table $0))
 ;; PRIMARY-NEXT:  (export "keep" (func $keep))
 ;; PRIMARY-NEXT:  (func $keep
 ;; PRIMARY-NEXT:  )
@@ -35,11 +31,9 @@
 
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:  (type $0 (func))
-;; SECONDARY-NEXT:  (import "primary" "table" (table $timport$0 1 funcref))
 ;; SECONDARY-NEXT:  (import "primary" "keep" (func $keep (exact)))
 ;; SECONDARY-NEXT:  (global $a funcref (ref.func $split))
 ;; SECONDARY-NEXT:  (global $b funcref (ref.func $keep))
-;; SECONDARY-NEXT:  (elem $0 (i32.const 0) $split)
 ;; SECONDARY-NEXT:  (func $split
 ;; SECONDARY-NEXT:   (drop
 ;; SECONDARY-NEXT:    (global.get $a)

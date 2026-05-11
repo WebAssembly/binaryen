@@ -21,13 +21,12 @@
   )
 )
 
-;; PRIMARY-NEXT: (module
+;; PRIMARY:      (module
 ;; PRIMARY-NEXT:  (type $0 (func))
 ;; PRIMARY-NEXT:  (import "placeholder.deferred" "0" (func $placeholder_0))
-;; PRIMARY-NEXT:  (import "placeholder.deferred" "1" (func $placeholder_1))
 ;; PRIMARY-NEXT:  (global $g1 funcref (ref.func $trampoline_split1))
-;; PRIMARY-NEXT:  (table $0 2 funcref)
-;; PRIMARY-NEXT:  (elem $0 (i32.const 0) $placeholder_0 $placeholder_1)
+;; PRIMARY-NEXT:  (table $0 1 funcref)
+;; PRIMARY-NEXT:  (elem $0 (i32.const 0) $placeholder_0)
 ;; PRIMARY-NEXT:  (export "g1" (global $g1))
 ;; PRIMARY-NEXT:  (export "table" (table $0))
 ;; PRIMARY-NEXT:  (func $trampoline_split1
@@ -37,11 +36,11 @@
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; SECONDARY-NEXT: (module
+;; SECONDARY:      (module
 ;; SECONDARY-NEXT:  (type $0 (func))
-;; SECONDARY-NEXT:  (import "primary" "table" (table $timport$0 2 funcref))
+;; SECONDARY-NEXT:  (import "primary" "table" (table $timport$0 1 funcref))
 ;; SECONDARY-NEXT:  (global $g2 funcref (ref.func $split2))
-;; SECONDARY-NEXT:  (elem $0 (i32.const 0) $split1 $split2)
+;; SECONDARY-NEXT:  (elem $0 (i32.const 0) $split1)
 ;; SECONDARY-NEXT:  (func $split1
 ;; SECONDARY-NEXT:   (unreachable)
 ;; SECONDARY-NEXT:  )
