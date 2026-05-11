@@ -563,4 +563,44 @@
   ;; CHECK:      (global $privateB (ref null $privateB) (ref.null none))
   (global $privateB (ref null $privateB) (ref.null none))
 )
+
+;; Regression test for a bug where we crashed when comparing rec groups with
+;; references to public types because we did not store type indices for public
+;; types.
 ;; CHECK:      (export "g" (global $public))
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $public (sub (descriptor $desc) (struct)))
+    (type $public (sub (descriptor $desc) (struct)))
+    ;; CHECK:       (type $desc (sub (describes $public) (struct)))
+    (type $desc (sub (describes $public) (struct)))
+  )
+
+  ;; We should not crash when comparing these identical connected components.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $private1 (sub $public (descriptor $desc1) (struct)))
+    (type $private1 (sub $public (descriptor $desc1) (struct)))
+    ;; CHECK:       (type $desc1 (sub $desc (describes $private1) (struct)))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $4 (struct))
+
+    ;; CHECK:       (type $private2 (sub $public (descriptor $desc2) (struct)))
+    (type $private2 (sub $public (descriptor $desc2) (struct)))
+    (type $desc1 (sub $desc (describes $private1) (struct)))
+    ;; CHECK:       (type $desc2 (sub $desc (describes $private2) (struct)))
+    (type $desc2 (sub $desc (describes $private2) (struct)))
+  )
+
+  ;; CHECK:      (global $use1 (ref null $private1) (ref.null none))
+  (global $use1 (ref null $private1) (ref.null none))
+  ;; CHECK:      (global $use2 (ref null $private2) (ref.null none))
+  (global $use2 (ref null $private2) (ref.null none))
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (ref null $public) (ref.null none))
+  ;; CHECK:      (export "public" (global $public))
+  (export "public" (global $public))
+)
+

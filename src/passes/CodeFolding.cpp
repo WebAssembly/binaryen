@@ -398,7 +398,14 @@ private:
   // if one of the items has a branch to something inside outOf that is not
   // inside that item
   bool canMove(const std::vector<Expression*>& items, Expression* outOf) {
-    auto allTargets = BranchUtils::getBranchTargets(outOf);
+    return canMove(items, outOf, BranchUtils::getBranchTargets(outOf));
+  }
+
+  // Overload that accepts pre-computed branch targets to avoid redundant
+  // O(N) getBranchTargets calls.
+  bool canMove(const std::vector<Expression*>& items,
+               Expression* outOf,
+               const BranchUtils::NameSet& allTargets) {
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
       std::vector<Name> intersection;
@@ -632,11 +639,18 @@ private:
   // we are just starting; num > 0 means that tails is guaranteed to be
   // equal in the last num items, so we can merge there, but we look for
   // deeper merges first.
+  // bodyTargets is lazily computed on first need and then passed to recursive
+  // calls to avoid repeated O(N) getBranchTargets walks over the function body.
   // returns whether we optimized something.
-  bool optimizeTerminatingTails(std::vector<Tail>& tails, Index num = 0) {
+  bool optimizeTerminatingTails(std::vector<Tail>& tails,
+                                Index num = 0,
+                                BranchUtils::NameSet* bodyTargets = nullptr) {
     if (tails.size() < 2) {
       return false;
     }
+    // Storage for body branch targets, declared here so it outlives the
+    // pointer stored in bodyTargets.
+    BranchUtils::NameSet localBodyTargets;
     // remove things that are untoward and cannot be optimized
     tails.erase(
       std::remove_if(tails.begin(),
@@ -697,9 +711,11 @@ private:
       // can be removed, though
       cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
       // if we cannot merge to the end, then we definitely need 2 blocks,
-      // and a branch
-      // TODO: efficiency, entire body
-      if (!canMove(items, getFunction()->body)) {
+      // and a branch. Use the pre-computed bodyTargets to avoid repeated
+      // O(N) getBranchTargets calls.
+      assert(bodyTargets);
+      bool canMoveItems = canMove(items, getFunction()->body, *bodyTargets);
+      if (!canMoveItems) {
         cost += 1 + WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
         // TODO: to do this, we need to maintain a map of element=>parent,
         //       so that we can insert the new blocks in the right place
@@ -795,7 +811,14 @@ private:
             // as the changes may influence us. we leave further opts to further
             // passes (as this is rare in practice, it's generally not a perf
             // issue, but TODO optimize)
-            if (optimizeTerminatingTails(explore, num + 1)) {
+            // Compute body branch targets once and share across recursive
+            // calls to avoid repeated O(N) tree walks.
+            if (!bodyTargets) {
+              localBodyTargets =
+                BranchUtils::getBranchTargets(getFunction()->body);
+              bodyTargets = &localBodyTargets;
+            }
+            if (optimizeTerminatingTails(explore, num + 1, bodyTargets)) {
               return true;
             }
           }

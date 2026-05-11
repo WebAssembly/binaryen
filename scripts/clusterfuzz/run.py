@@ -33,7 +33,7 @@ import sys
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
 # run V8. By default we apply all staging flags.
-FUZZER_FLAGS = '--wasm-staging --experimental-wasm-custom-descriptors --experimental-wasm-js-interop'
+FUZZER_FLAGS = '--wasm-staging --experimental-wasm-custom-descriptors --experimental-wasm-js-interop --experimental-wasm-acquire-release'
 
 # Optional V8 flags to add to FUZZER_FLAGS, some of the time.
 OPTIONAL_FUZZER_FLAGS = [
@@ -94,7 +94,6 @@ FUZZER_ARGS = [
     '--disable-fp16',
     '--disable-strings',
     '--disable-stack-switching',
-    '--disable-relaxed-atomics',
     '--disable-wide-arithmetic',
 ]
 

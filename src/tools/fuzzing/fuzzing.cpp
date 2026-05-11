@@ -19,6 +19,7 @@
 #include "ir/glbs.h"
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
+#include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/subtype-exprs.h"
@@ -413,6 +414,10 @@ void TranslateToFuzzReader::build() {
   PassRunner runner(&wasm);
   ReFinalize().run(&runner, &wasm);
   ReFinalize().walkModuleCode(&wasm);
+
+  if (againstJS) {
+    mutateJSBoundary();
+  }
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -2387,6 +2392,240 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   if (!preserveImportsAndExports) {
     wasm.start = Name();
   }
+}
+
+void TranslateToFuzzReader::mutateJSBoundary() {
+  assert(againstJS);
+
+  // Scan to find functions whose address is taken. We cannot modify their
+  // signatures at all.
+
+  struct FunctionInfo {
+    // Whether there are references to this function itself.
+    bool reffed = false;
+
+    // Calls to imports from this function.
+    std::vector<Call*> callImports;
+  };
+
+  using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
+
+  struct FunctionInfoScanner
+    : public WalkerPass<PostWalker<FunctionInfoScanner>> {
+    // Not parallel for simplicity, see the map update below.
+
+    bool modifiesBinaryenIR() override { return false; }
+
+    NameInfoMap& map;
+
+    FunctionInfoScanner(NameInfoMap& map) : map(map) {}
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<FunctionInfoScanner>(map);
+    }
+
+    void visitCall(Call* curr) {
+      if (getModule()->getFunction(curr->target)->imported()) {
+        map[curr->target].callImports.push_back(curr);
+      }
+
+      // Return calls add a dependency similar to references: we cannot refine
+      // the callee without coordination with the caller.
+      if (curr->isReturn) {
+        map[curr->target].reffed = true;
+      }
+    }
+
+    void visitRefFunc(RefFunc* curr) { map[curr->func].reffed = true; }
+  };
+
+  NameInfoMap map;
+  FunctionInfoScanner scanner(map);
+  PassRunner runner(&wasm);
+  scanner.setModule(&wasm);
+  scanner.run(&runner, &wasm);
+  scanner.walkModuleCode(&wasm);
+
+  // If a function does not have its address taken, we can refine types. This is
+  // safe because we will still send and receive the right number of values (we
+  // are not changing the arity, which JS might notice). Each place we may
+  // refine, we are given the maximum refinement and pick a random type between
+  // it and the old type.
+  auto maybeRefine = [&](Type old, Type new_) {
+    if (!old.isRef()) {
+      return old;
+    }
+
+    // If this is unreachable code, we can still refine to the bottom.
+    if (new_ == Type::unreachable) {
+      new_ = Type(old.getHeapType().getBottom(), NonNullable);
+    }
+
+    // Find all heap types between the old and new, starting from new.
+    auto oldHeapType = old.getHeapType();
+    auto newHeapType = new_.getHeapType();
+    assert(HeapType::isSubType(newHeapType, oldHeapType));
+    std::vector<HeapType> options;
+    while (1) {
+      options.push_back(newHeapType);
+      // We cannot look at a bottom type's supers (there can be many, and the
+      // getSuperType() API doesn't return them), but can use
+      // interestingHeapSubTypes: any subtype of old is valid.
+      if (newHeapType.isBottom()) {
+        for (auto type : interestingHeapSubTypes[oldHeapType]) {
+          options.push_back(type);
+        }
+        break;
+      }
+      // Continue until we reach the old type.
+      if (newHeapType == oldHeapType) {
+        break;
+      }
+      auto next = newHeapType.getSuperType();
+      assert(next);
+      newHeapType = *next;
+    }
+    newHeapType = pick(options);
+
+    // Pick the nullability.
+    auto oldNullability = old.getNullability();
+    auto newNullability = new_.getNullability();
+    if (newNullability != oldNullability) {
+      newNullability = getNullability();
+    }
+
+    // Pick the exactness.
+    auto oldExactness = old.getExactness();
+    auto newExactness = new_.getExactness();
+    // We can only be exact if we are using the new heap type: that type is
+    // exactly what is sent here, and no intermediate heap type would be valid.
+    // For example, given $A :> $B :> $C, then maybeRefine($A, exact $C) can
+    // return exact $C, but cannot return exact $B.
+    //
+    // Also, basic heap types cannot be exact.
+    if (newHeapType != new_.getHeapType() || newHeapType.isBasic()) {
+      newExactness = Inexact;
+    } else if (newExactness != oldExactness) {
+      // TODO: once getExactness() is fixed (see there), use that
+      newExactness = oneIn(2) ? Exact : Inexact;
+    }
+
+    return Type(newHeapType, newNullability, newExactness);
+  };
+
+  // Given a set of types (all params or all results), and an index among them,
+  // refine that index if we can. It is possible that no new types exist at all,
+  // if the code was unreachable and we noted nothing.
+  auto maybeRefineIndex = [&](Type oldTypes, LUBFinder newLUB, Index index) {
+    auto lub =
+      newLUB.noted() ? newLUB.getLUB()[index] : Type(Type::unreachable);
+    return maybeRefine(oldTypes[index], lub);
+  };
+
+  // First, refine params sent to imports. Gather the LUB sent to each import,
+  // and then refine.
+  std::unordered_map<Name, LUBFinder> paramLUBs;
+  for (auto& [_, info] : map) {
+    for (auto* call : info.callImports) {
+      auto declaredParams = wasm.getFunction(call->target)->getParams();
+      std::vector<Type> sent;
+      for (Index i = 0; i < call->operands.size(); i++) {
+        auto type = call->operands[i]->type;
+        if (type == Type::unreachable) {
+          // Nothing sent here. What we refine to must still validate, even
+          // though this call is unreachable. Using the non-nullable bottom type
+          // is valid, and has the fewest restrictions.
+          type = declaredParams[i];
+          if (type.isRef()) {
+            type = Type(type.getHeapType().getBottom(), NonNullable);
+          }
+        }
+        sent.push_back(type);
+      }
+      paramLUBs[call->target].note(Type(sent));
+    }
+  }
+
+  for (auto& func : wasm.functions) {
+    if (!func->imported()) {
+      continue;
+    }
+    // TODO: In the referenced case, we could consider using import/export
+    //       wrappers and refining just there.
+    if (map[func->name].reffed) {
+      continue;
+    }
+    // Do not alter the signature of configureAll or other VM builtins. Changing
+    // these to something the VM does not expect will just cause it to
+    // immediately reject the module by trapping.
+    if (func->module.startsWith("wasm:")) {
+      continue;
+    }
+
+    auto oldParams = func->getParams();
+    if (oldParams == Type::none) {
+      continue;
+    }
+
+    // Refine.
+    auto lub = paramLUBs[func->name];
+    auto lubType = lub.getLUB();
+    // Either the LUB has the right data shape, or nothing was noted (this is
+    // unreachable).
+    assert(oldParams.size() == lubType.size() || !lub.noted());
+    std::vector<Type> newParams;
+    for (Index i = 0; i < lubType.size(); i++) {
+      newParams.push_back(maybeRefineIndex(oldParams, lub, i));
+    }
+    func->setParams(Type(newParams));
+  }
+
+  // Second, refine results sent from exports.
+  for (auto& exp : wasm.exports) {
+    if (exp->kind != ExternalKind::Function) {
+      continue;
+    }
+    auto name = *exp->getInternalName();
+    if (map[name].reffed) {
+      continue;
+    }
+
+    auto* func = wasm.getFunction(name);
+    auto oldResults = func->getResults();
+    if (oldResults == Type::none) {
+      continue;
+    }
+
+    // Refine.
+    auto lub = LUB::getResultsLUB(func, wasm);
+    auto lubType = lub.getLUB();
+    assert(oldResults.size() == lubType.size() || !lub.noted());
+    std::vector<Type> newResults;
+    for (Index i = 0; i < lubType.size(); i++) {
+      newResults.push_back(maybeRefineIndex(oldResults, lub, i));
+    }
+    func->setResults(Type(newResults));
+  }
+
+  // Update return types from calls to exports whose results we refined.
+  struct CallUpdater : public WalkerPass<PostWalker<CallUpdater>> {
+    bool isFunctionParallel() override { return true; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<CallUpdater>();
+    }
+
+    void visitCall(Call* curr) {
+      if (curr->type != Type::unreachable) {
+        curr->type = getModule()->getFunction(curr->target)->getResults();
+      }
+    }
+  } updater;
+  updater.setModule(&wasm);
+  updater.run(&runner, &wasm);
+
+  // Propagate after our changes.
+  ReFinalize().run(&runner, &wasm);
 }
 
 void TranslateToFuzzReader::dropToLog(Function* func) {

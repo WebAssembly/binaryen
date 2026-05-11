@@ -114,6 +114,10 @@ def warn(text):
     print('warning:', text, file=sys.stderr)
 
 
+def print_heading(msg):
+    print(f'[ {msg} ]')
+
+
 # setup
 
 # Locate Binaryen build artifacts directory (bin/ by default)
@@ -254,6 +258,7 @@ V8_OPTS = [
     '--experimental-wasm-fp16',
     '--experimental-wasm-custom-descriptors',
     '--experimental-wasm-js-interop',
+    '--experimental-wasm-acquire-release',
 ]
 
 # external tools

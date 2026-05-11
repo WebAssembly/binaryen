@@ -9,8 +9,8 @@
 
  ;; CHECK:      (type $1 (func (param i64 i64)))
 
- ;; CHECK:      (global $sp (mut i64) (i64.const 0))
- (global $sp (mut i64) (i64.const 0))
+ ;; CHECK:      (global $__stack_pointer (mut i64) (i64.const 0))
+ (global $__stack_pointer (mut i64) (i64.const 0))
  ;; CHECK:      (global $__stack_base (mut i64) (i64.const 0))
 
  ;; CHECK:      (global $__stack_limit (mut i64) (i64.const 0))
@@ -41,15 +41,15 @@
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (global.set $sp
+ ;; CHECK-NEXT:   (global.set $__stack_pointer
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (global.get $sp)
+ ;; CHECK-NEXT:  (global.get $__stack_pointer)
  ;; CHECK-NEXT: )
  (func $use_stack (export "use_stack") (result i64)
-  (global.set $sp (i64.const 42))
-  (global.get $sp)
+  (global.set $__stack_pointer (i64.const 42))
+  (global.get $__stack_pointer)
  )
 )
 ;; CHECK:      (func $__set_stack_limits (param $0 i64) (param $1 i64)
@@ -67,8 +67,8 @@
 
  ;; CHECK:      (type $1 (func (param i64 i64)))
 
- ;; CHECK:      (global $sp (mut i64) (i64.const 0))
- (global $sp (mut i64) (i64.const 0))
+ ;; CHECK:      (global $__stack_pointer (mut i64) (i64.const 0))
+ (global $__stack_pointer (mut i64) (i64.const 0))
  ;; CHECK:      (global $__stack_base (mut i64) (i64.const 0))
  (global $__stack_base (mut i64) (i64.const 0))
  ;; CHECK:      (global $__stack_limit (mut i64) (i64.const 0))

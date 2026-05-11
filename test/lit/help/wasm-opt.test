@@ -72,6 +72,10 @@
 ;; CHECK-NEXT:   --fuzz-preserve-imports-exports               don't add imports and exports in
 ;; CHECK-NEXT:                                                 -ttf mode, and keep the start
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-against-js                             modify the wasm in valid ways
+;; CHECK-NEXT:                                                 that assume it is used only from
+;; CHECK-NEXT:                                                 JS
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in
 ;; CHECK-NEXT:                                                 -ttf mode
 ;; CHECK-NEXT:

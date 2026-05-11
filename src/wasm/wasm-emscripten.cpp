@@ -40,17 +40,10 @@ void addExportedFunction(Module& wasm, Function* function) {
 }
 
 Global* getStackPointerGlobal(Module& wasm) {
-  // Assumption: The stack pointer is either imported as __stack_pointer or
-  // we just assume it's the first non-imported global.
-  // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
-  // linker could export it by name?
+  // Assumption: The stack pointer is either be an imported global called
+  // __stack_pointer or a defined global with that name.
   for (auto& g : wasm.globals) {
-    if (g->imported() && g->base == STACK_POINTER) {
-      return g.get();
-    }
-  }
-  for (auto& g : wasm.globals) {
-    if (!g->imported()) {
+    if (g->base == STACK_POINTER || g->name == STACK_POINTER) {
       return g.get();
     }
   }
