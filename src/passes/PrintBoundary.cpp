@@ -85,7 +85,7 @@ struct PrintBoundary : public Pass {
     for (auto& exp : module->exports) {
       auto item = json::Value::make();
       item["name"] = json::Value::make(exp->name.view());
-      const char* kind;
+      const char* kind = nullptr;
       switch (exp->kind) {
         case ExternalKind::Function:
           kind = "func";
