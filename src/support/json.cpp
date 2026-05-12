@@ -74,7 +74,10 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
           os << '\n';
           doIndent();
         }
-        os << "\"" << key << "\": ";
+        os << "\"" << key << "\":";
+        if (pretty) {
+          os << ' ';
+        }
         value->stringify(os, pretty, indent + 1);
       }
       indent--;
@@ -82,7 +85,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         os << '\n';
         doIndent();
       }
-      os << ']';
+      os << '}';
       return;
     }
     case Number:

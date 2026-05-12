@@ -37,3 +37,14 @@ TEST_F(JSONTest, StringifyArray) {
  null
 ])");
 }
+
+TEST_F(JSONTest, StringifyObject) {
+  auto object = json::Value::makeObject();
+  object["foo"] = json::Value::make(42);
+  object["bar"] = json::Value::make("1337");
+  checkOutput(object, "{\"foo\":42,\"bar\":\"1337\"}");
+  checkPrettyOutput(object, R"({
+ "foo": 42,
+ "bar": "1337"
+})");
+}
