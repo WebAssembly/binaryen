@@ -19,7 +19,13 @@
 
 namespace json {
 
-void Value::stringify(std::ostream& os, bool pretty) {
+void Value::stringify(std::ostream& os, bool pretty, int indent) {
+  auto doIndent = [&]() {
+    for (int i = 0; i < indent; i++) {
+      os << ' ';
+    }
+  };
+
   switch (type) {
     case String: {
       std::stringstream wtf16;
@@ -32,31 +38,55 @@ void Value::stringify(std::ostream& os, bool pretty) {
     }
     case Array: {
       os << '[';
+      indent++;
       auto first = true;
       for (auto& item : getArray()) {
         if (first) {
           first = false;
         } else {
-          // TODO pretty whitespace
           os << ',';
+          if (pretty) {
+            os << ' ';
+          }
         }
-        item->stringify(os, pretty);
+        if (pretty) {
+          os << '\n';
+          doIndent();
+        }
+        item->stringify(os, pretty, indent + 1);
+      }
+      indent--;
+      if (pretty) {
+        os << '\n';
+        doIndent();
       }
       os << ']';
       return;
     }
     case Object: {
       os << '{';
+      indent++;
       auto first = true;
       for (auto& [key, value] : getObject()) {
         if (first) {
           first = false;
         } else {
-          // TODO pretty whitespace
           os << ',';
+          if (pretty) {
+            os << ' ';
+          }
+        }
+        if (pretty) {
+          os << '\n';
+          doIndent();
         }
         os << "\"" << key << "\": ";
-        value->stringify(os, pretty);
+        value->stringify(os, pretty, indent + 1);
+      }
+      indent--;
+      if (pretty) {
+        os << '\n';
+        doIndent();
       }
       os << ']';
       return;

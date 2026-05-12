@@ -66,8 +66,7 @@ struct PrintBoundary : public Pass {
     std::string target = getArgumentOrDefault("print-boundary", "");
 
     // Imports.
-    auto imports = json::Value::makeObject();
-    imports->setArray();
+    auto imports = json::Value::makeArray();
 
     ModuleUtils::iterImportable(*module, [&](ExternalKind kind, Importable* import) {
       auto item = json::Value::makeObject();
@@ -79,8 +78,7 @@ struct PrintBoundary : public Pass {
     });
 
     // Exports.
-    auto exports = json::Value::makeObject();
-    exports->setArray();
+    auto exports = json::Value::makeArray();
 
     for (auto& exp : module->exports) {
       auto item = json::Value::makeObject();
@@ -134,8 +132,7 @@ struct PrintBoundary : public Pass {
       }
     }
 
-    auto ret = json::Value::makeObject();
-    ret->setArray();
+    auto ret = json::Value::makeArray();
     for (auto t : type) {
       ret->push_back(json::Value::make(t.toString()));
     }

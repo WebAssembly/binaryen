@@ -68,8 +68,13 @@ struct Value {
     Ref& operator[](IString x) { return (*this->get())[x]; }
   };
 
+  static Ref make() { return Ref(new Value); }
   template<typename T> static Ref make(T t) { return Ref(new Value(t)); }
-
+  static Ref makeArray() {
+    Ref ret(new Value);
+    ret->setArray();
+    return ret;
+  }
   static Ref makeObject() {
     Ref ret(new Value);
     ret->setObject();
@@ -391,7 +396,7 @@ struct Value {
     return curr;
   }
 
-  void stringify(std::ostream& os, bool pretty = false);
+  void stringify(std::ostream& os, bool pretty = false, int indent = 0);
 
   // String operations
 
