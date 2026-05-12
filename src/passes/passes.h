@@ -128,6 +128,7 @@ Pass* createPostEmscriptenPass();
 Pass* createPrecomputePass();
 Pass* createPrecomputePropagatePass();
 Pass* createPrinterPass();
+Pass* createprintBoundaryPass();
 Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();
 Pass* createPrintFunctionMapPass();
