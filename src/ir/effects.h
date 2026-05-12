@@ -23,6 +23,7 @@
 #include "ir/intrinsics.h"
 #include "pass.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -716,33 +717,19 @@ private:
     }
 
     void visitCall(Call* curr) {
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-      }
-
-      // call.without.effects has no effects.
       if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
+        if (curr->isReturn) {
+          parent.branchesOut = true;
+        }
         return;
       }
 
+      const EffectAnalyzer* bodyEffects = nullptr;
       if (auto* target = parent.module.getFunctionOrNull(curr->target);
           target && target->effects) {
-        populateEffectsFromGlobalEffects(*target->effects, curr);
-        return;
+        bodyEffects = target->effects.get();
       }
-
-      parent.calls = true;
-      // If EH is enabled and we don't have global effects information,
-      // assume that the call body may throw.
-      if (parent.features.hasExceptionHandling()) {
-        if (curr->isReturn) {
-          parent.hasReturnCallThrow = true;
-        }
-
-        if (parent.tryDepth == 0 && !curr->isReturn) {
-          parent.throws_ = true;
-        }
-      }
+      populateEffectsForCall(curr, bodyEffects);
     }
     void visitCallIndirect(CallIndirect* curr) {
       auto* table = parent.module.getTable(curr->table);
@@ -754,27 +741,26 @@ private:
       if (table->type.isNullable()) {
         parent.implicitTrap = true;
       }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-      }
 
+      const EffectAnalyzer* bodyEffects = nullptr;
       if (auto it = parent.module.typeEffects.find(curr->heapType);
           it != parent.module.typeEffects.end() && it->second) {
-        populateEffectsFromGlobalEffects(*it->second, curr);
+        bodyEffects = it->second.get();
+      }
+      populateEffectsForCall(curr, bodyEffects);
+    }
+    void visitCallRef(CallRef* curr) {
+      if (trapOnNull(curr->target)) {
         return;
       }
 
-      parent.calls = true;
-      // If EH is enabled and we don't have global effects information,
-      // assume that the call body may throw.
-      if (parent.features.hasExceptionHandling()) {
-        if (curr->isReturn) {
-          parent.hasReturnCallThrow = true;
-        }
-        if (parent.tryDepth == 0 && !curr->isReturn) {
-          parent.throws_ = true;
-        }
+      const EffectAnalyzer* bodyEffects = nullptr;
+      if (auto it =
+            parent.module.typeEffects.find(curr->target->type.getHeapType());
+          it != parent.module.typeEffects.end() && it->second) {
+        bodyEffects = it->second.get();
       }
+      populateEffectsForCall(curr, bodyEffects);
     }
     void visitLocalGet(LocalGet* curr) {
       parent.localsRead.insert(curr->index);
@@ -1032,35 +1018,6 @@ private:
     void visitTupleExtract(TupleExtract* curr) {}
     void visitRefI31(RefI31* curr) {}
     void visitI31Get(I31Get* curr) { trapOnNull(curr->i31); }
-    void visitCallRef(CallRef* curr) {
-      if (trapOnNull(curr->target)) {
-        return;
-      }
-
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-      }
-
-      if (auto it =
-            parent.module.typeEffects.find(curr->target->type.getHeapType());
-          it != parent.module.typeEffects.end() && it->second) {
-        populateEffectsFromGlobalEffects(*it->second, curr);
-        return;
-      }
-      parent.calls = true;
-
-      // If EH is enabled and we don't have global effects information,
-      // assume that the call body may throw.
-      if (parent.features.hasExceptionHandling()) {
-        if (curr->isReturn) {
-          parent.hasReturnCallThrow = true;
-        }
-
-        if (parent.tryDepth == 0 && !curr->isReturn) {
-          parent.throws_ = true;
-        }
-      }
-    }
     void visitRefTest(RefTest* curr) {}
 
     void visitRefCast(RefCast* curr) {
@@ -1344,21 +1301,51 @@ private:
     }
 
   private:
+    // Populate effects of the function's body that were computed from
+    // GlobalEffects. Note that calls may have other effects that aren't
+    // captured by the function body of the target (e.g. a call_ref may trap on
+    // null refs).
     template<typename CallType>
-    void populateEffectsFromGlobalEffects(const EffectAnalyzer& effects,
-                                          const CallType* curr) {
+    void populateFunctionBodyEffects(const CallType* curr,
+                                     const EffectAnalyzer& funcEffects) {
       if (curr->isReturn) {
-        if (effects.throws()) {
+        if (funcEffects.throws()) {
           parent.hasReturnCallThrow = true;
         }
       }
 
-      if (effects.throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
-        auto filteredEffects = effects;
+      if (funcEffects.throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
+        auto filteredEffects = funcEffects;
         filteredEffects.throws_ = false;
         parent.mergeIn(filteredEffects);
       } else {
-        parent.mergeIn(effects);
+        parent.mergeIn(funcEffects);
+      }
+    }
+
+    template<typename CallType>
+    void
+    populateEffectsForCall(const CallType* curr,
+                           NullablePtr<const EffectAnalyzer*> bodyEffects) {
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
+      if (bodyEffects) {
+        populateFunctionBodyEffects(curr, *bodyEffects);
+        return;
+      }
+
+      parent.calls = true;
+      // If EH is enabled and we don't have global effects information,
+      // assume that the call body may throw.
+      if (parent.features.hasExceptionHandling()) {
+        if (curr->isReturn) {
+          parent.hasReturnCallThrow = true;
+        }
+        if (parent.tryDepth == 0 && !curr->isReturn) {
+          parent.throws_ = true;
+        }
       }
     }
   };
