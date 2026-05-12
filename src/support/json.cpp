@@ -20,29 +20,57 @@
 namespace json {
 
 void Value::stringify(std::ostream& os, bool pretty) {
-  if (isString()) {
-    std::stringstream wtf16;
-    [[maybe_unused]] bool valid =
-      wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
-    assert(valid);
-    // TODO: Use wtf16.view() once we have C++20.
-    wasm::String::printEscapedJSON(os, wtf16.str());
-  } else if (isArray()) {
-    os << '[';
-    auto first = true;
-    for (auto& item : getArray()) {
-      if (first) {
-        first = false;
-      } else {
-        // TODO pretty whitespace
-        os << ',';
-      }
-      item->stringify(os, pretty);
+  switch (type) {
+    case String: {
+      std::stringstream wtf16;
+      [[maybe_unused]] bool valid =
+        wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
+      assert(valid);
+      // TODO: Use wtf16.view() once we have C++20.
+      wasm::String::printEscapedJSON(os, wtf16.str());
+      return;
     }
-    os << ']';
-  } else {
-    WASM_UNREACHABLE("TODO: stringify all of JSON");
-  }
+    case Array: {
+      os << '[';
+      auto first = true;
+      for (auto& item : getArray()) {
+        if (first) {
+          first = false;
+        } else {
+          // TODO pretty whitespace
+          os << ',';
+        }
+        item->stringify(os, pretty);
+      }
+      os << ']';
+      return;
+    }
+    case Object: {
+      os << '{';
+      auto first = true;
+      for (auto& [key, value] : getObject()) {
+        if (first) {
+          first = false;
+        } else {
+          // TODO pretty whitespace
+          os << ',';
+        }
+        os << "\"" << key << "\": ";
+        value->stringify(os, pretty);
+      }
+      os << ']';
+      return;
+    }
+    case Number:
+      os << getNumber();
+      return;
+    case Null:
+      os << "null";
+      return;
+    case Bool:
+      os << (getBool() ? "true" : "false");
+      return;
+  };
 }
 
 } // namespace json

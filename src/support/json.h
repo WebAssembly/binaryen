@@ -37,6 +37,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "support/insert_ordered.h"
 #include "support/istring.h"
 #include "support/safe_integer.h"
 #include "support/string.h"
@@ -87,7 +88,7 @@ struct Value {
   Type type = Null;
 
   using ArrayStorage = std::vector<Ref>;
-  using ObjectStorage = std::unordered_map<IString, Ref>;
+  using ObjectStorage = wasm::InsertOrderedMap<IString, Ref>;
 
   // MSVC does not allow unrestricted unions:
   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
@@ -209,6 +210,10 @@ struct Value {
   ArrayStorage& getArray() {
     assert(isArray());
     return *arr;
+  }
+  ObjectStorage& getObject() {
+    assert(isObject());
+    return *obj;
   }
   bool& getBool() {
     assert(isBool());

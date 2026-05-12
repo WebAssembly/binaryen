@@ -74,7 +74,7 @@ struct PrintBoundary : public Pass {
       item["module"] = json::Value::make(import->module.view());
       item["base"] = json::Value::make(import->base.view());
       item["kind"] = json::Value::make(kind);
-      item["type"] = getExternalType(kind, name, *module);
+      item["type"] = getExternalType(kind, import->name, *module);
       imports->push_back(item);
     });
 
@@ -112,9 +112,9 @@ struct PrintBoundary : public Pass {
 
     // Emit the final structure
     json::Value root;
-    root.setArray(2);
-    root[0] = imports;
-    root[1] = exports;
+    root.setArray();
+    root.push_back(imports);
+    root.push_back(exports);
 
     Output output(target, Flags::BinaryOption::Text);
     root.stringify(output.getStream(), true /* pretty */);
