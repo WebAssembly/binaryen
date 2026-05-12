@@ -156,6 +156,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-ref-with-supertype (param $func (ref $super))
+    ;; Check that we account for subtyping correctly.
+    ;; $super has no effects (i.e. the union of all effects of functions with
+    ;; this type is empty). However, $sub does have effects, and we can call_ref
+    ;; with that subtype, so we need to include the unreachable effect and we
+    ;; can't optimize out this call.
     (call_ref $super (local.get $func))
   )
 
@@ -165,6 +170,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-ref-with-exact-supertype (param $func (ref (exact $super)))
+    ;; Same as above but this time our reference is the exact supertype
+    ;; so we know not to aggregate effects from the subtype.
+    ;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
     (call_ref $super (local.get $func))
   )
 )
