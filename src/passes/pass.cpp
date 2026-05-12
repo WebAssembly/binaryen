@@ -442,6 +442,9 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions-by-name",
                "sorts functions by name (useful for debugging)",
                createReorderFunctionsByNamePass);
+  registerPass("reorder-functions-by-similarity",
+               "sorts functions by similarity to improve compression",
+               createReorderFunctionsBySimilarityPass);
   registerPass("reorder-functions",
                "sorts functions by access frequency",
                createReorderFunctionsPass);
