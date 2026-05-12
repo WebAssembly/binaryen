@@ -62,10 +62,10 @@ TEST_F(JSONTest, StringifyNesting) {
  {
   "body": [
    {
-    "
- 42,
- "1337",
- null
+    "value": 42
+   }
+  ]
+ }
 ])");
 }
 

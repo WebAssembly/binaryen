@@ -50,7 +50,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
           os << '\n';
           doIndent();
         }
-        item->stringify(os, pretty, indent + 1);
+        item->stringify(os, pretty, indent);
       }
       indent--;
       if (pretty) {
@@ -78,7 +78,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         if (pretty) {
           os << ' ';
         }
-        value->stringify(os, pretty, indent + 1);
+        value->stringify(os, pretty, indent);
       }
       indent--;
       if (pretty) {
