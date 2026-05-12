@@ -3285,6 +3285,73 @@ console.log("# Try");
   module.dispose();
 })();
 
+console.log("# TryTable");
+(function testTryTable() {
+  const module = new binaryen.Module();
+  module.addTag("tag1", 0, binaryen.none, binaryen.none);
+  module.addTag("tag2", 0, binaryen.none, binaryen.none);
+
+  var body = module.nop();
+  var catches = [
+    { tag: "tag1", dest: "dest1", ref: false },
+    { tag: null,   dest: "dest_all", ref: true }
+  ];
+  const theTryTable = binaryen.TryTable(module.try_table(body, catches));
+  assert(theTryTable instanceof binaryen.TryTable);
+  assert(theTryTable instanceof binaryen.Expression);
+  assert(theTryTable.body === body);
+  assert(theTryTable.getNumCatches() == 2);
+  assertDeepEqual(theTryTable.catches, catches);
+  assertDeepEqual(theTryTable.getCatches(), catches);
+  assertDeepEqual(theTryTable.getCatchAt(0), catches[0]);
+  assert(theTryTable.hasCatchAll() == true);
+  console.log(theTryTable.toText());
+
+  var info = binaryen.getExpressionInfo(theTryTable);
+  assert(info.id === theTryTable.id);
+  assert(info.type === theTryTable.type);
+  assert(info.body === theTryTable.body);
+  assertDeepEqual(info.catches, theTryTable.catches);
+  assert(info.hasCatchAll === theTryTable.hasCatchAll());
+
+  theTryTable.body = body = module.unreachable();
+  assert(theTryTable.body === body);
+
+  theTryTable.setCatchAt(0, { tag: "tag2", dest: "new_dest1", ref: true });
+  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag2", dest: "new_dest1", ref: true });
+  console.log(theTryTable.toText());
+
+  theTryTable.insertCatchAt(0, { tag: "tag1", dest: "first_dest", ref: false });
+  assert(theTryTable.getNumCatches() == 3);
+  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag1", dest: "first_dest", ref: false });
+  console.log(theTryTable.toText());
+
+  assert(theTryTable.removeCatchAt(0) == "first_dest");
+  assert(theTryTable.getNumCatches() == 2);
+  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag2", dest: "new_dest1", ref: true });
+
+  theTryTable.appendCatch({ tag: "tag1", dest: "appended_dest", ref: true });
+  assert(theTryTable.getNumCatches() == 3);
+  assertDeepEqual(theTryTable.getCatchAt(2), { tag: "tag1", dest: "appended_dest", ref: true });
+  console.log(theTryTable.toText());
+
+  var newCatches = [
+    { tag: "tag1", dest: "only_dest", ref: false } // set
+    // remove
+    // remove
+  ];
+  theTryTable.catches = newCatches;
+  assert(theTryTable.getNumCatches() == 1);
+  assertDeepEqual(theTryTable.catches, newCatches);
+  console.log(theTryTable.toText());
+
+  theTryTable.type = binaryen.f64;
+  theTryTable.finalize();
+  console.log(theTryTable.toText());
+
+  module.dispose();
+})();
+
 console.log("# Throw");
 (function testThrow() {
   const module = new binaryen.Module();
@@ -3374,6 +3441,35 @@ console.log("# Rethrow");
     ==
     "(rethrow $l1)\n"
   );
+
+  module.dispose();
+})();
+
+console.log("# ThrowRef");
+(function testThrowRef() {
+  const module = new binaryen.Module();
+
+  var exnref = module.ref.null(binaryen.noexn);
+  const theThrowRef = binaryen.ThrowRef(module.throw_ref(exnref));
+  assert(theThrowRef instanceof binaryen.ThrowRef);
+  assert(theThrowRef instanceof binaryen.Expression);
+  assert(theThrowRef.exnref === exnref);
+  assert(theThrowRef.type === binaryen.unreachable);
+
+  var info = binaryen.getExpressionInfo(theThrowRef);
+  assert(info.id === theThrowRef.id);
+  assert(info.type === theThrowRef.type);
+  assert(info.exnref === theThrowRef.exnref);
+
+  var newExnref = module.ref.null(binaryen.noexn);
+  theThrowRef.exnref = newExnref;
+  assert(theThrowRef.exnref === newExnref);
+
+  theThrowRef.type = binaryen.f64;
+  theThrowRef.finalize();
+  assert(theThrowRef.type === binaryen.unreachable);
+
+  console.log(theThrowRef.toText());
 
   module.dispose();
 })();
