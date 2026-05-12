@@ -33,8 +33,10 @@
 //        'module': 'foo', // foo.bar
 //        'base': 'bar',
 //        'kind': 'func',
-//        'params': ['i32', '(ref func)'],
-//        'results': ['f64']
+//        'type': {
+//          'params': ['i32', '(ref func)'],
+//          'results': ['f64']
+//        },
 //      },
 //      [..]
 //    ],
@@ -49,6 +51,7 @@
 //  }
 //
 
+#include "ir/module-utils.h"
 #include "pass.h"
 #include "support/file.h"
 #include "support/json.h"
@@ -66,28 +69,22 @@ struct PrintBoundary : public Pass {
     auto imports = json::Value::make();
     imports->setArray();
 
-    for (auto& func : module->functions) {
-      if (!func->imported()) {
-        continue;
-      }
-
-      auto import = json::Value::make();
-      import["module"] = json::Value::make(func->module.view());
-      import["base"] = json::Value::make(func->base.view());
-      import["kind"] = json::Value::make("func");
-      import["params"] = getTypes(func->getParams());
-      import["results"] = getTypes(func->getResults());
-
-      imports->push_back(import);
-    }
+    ModuleUtils::iterImportable(*module, [&](ExternalKind kind, Importable* import) {
+      auto item = json::Value::make();
+      item["module"] = json::Value::make(import->module.view());
+      item["base"] = json::Value::make(import->base.view());
+      item["kind"] = json::Value::make(kind);
+      item["type"] = getTypes(ModuleUtils::getType(kind, import->name));
+      imports->push_back(item);
+    });
 
     // Exports.
     auto exports = json::Value::make();
     exports->setArray();
 
     for (auto& exp : module->exports) {
-      auto export_ = json::Value::make();
-      export_["name"] = json::Value::make(exp->name.view());
+      auto item = json::Value::make();
+      item["name"] = json::Value::make(exp->name.view());
       const char* kind;
       switch (exp->kind) {
         case ExternalKind::Function:
@@ -108,10 +105,10 @@ struct PrintBoundary : public Pass {
         case ExternalKind::Invalid:
           WASM_UNREACHABLE("invalid ExternalKind");
       }
-      export_["kind"] = json::Value::make(kind);
-      export_["type"] = getTypes(exp->type);
+      item["kind"] = json::Value::make(kind);
+      item["type"] = getTypes(ModuleUtils::getType(kind, exp->getInternalName()));
 
-      exports->push_back(export_);
+      exports->push_back(item);
     }
 
     // Emit the final structure
@@ -124,7 +121,17 @@ struct PrintBoundary : public Pass {
     root.stringify(output.getStream(), true /* pretty */);
   }
 
+  // Emits an array of multivalue types. For a signature, emits params and
+  // results.
   json::Value::Ref getTypes(Type type) {
+    if (type.isSignature()) {
+      auto sig = type.getSignature();
+      auto ret= json::Value::make();
+      import["params"] = getTypes(sig.params);
+      import["results"] = getTypes(sig.results);
+      return ret;
+    }
+
     auto ret = json::Value::make();
     ret->setArray();
     for (auto t : type) {
