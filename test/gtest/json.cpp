@@ -48,3 +48,24 @@ TEST_F(JSONTest, StringifyObject) {
  "bar": "1337"
 })");
 }
+
+TEST_F(JSONTest, StringifyNesting) {
+  auto array = json::Value::makeArray();
+  auto object = json::Value::makeObject();
+  auto array1 = json::Value::makeArray();
+  auto object1 = json::Value::makeObject();
+  array->push_back(object);
+  object["body"] = array1;
+  array1->push_back(object1);
+  object1["value"] = json::Value::make(42);
+  checkPrettyOutput(array, R"([
+ {
+  "body": [
+   {
+    "
+ 42,
+ "1337",
+ null
+])");
+}
+
