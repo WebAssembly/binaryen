@@ -72,8 +72,8 @@ struct PrintBoundary : public Pass {
       }
 
       auto import = json::Value::make();
-      import["module"] = json::Value::make(func->module.toString());
-      import["base"] = json::Value::make(func->base.toString());
+      import["module"] = json::Value::make(func->module.view());
+      import["base"] = json::Value::make(func->base.view());
       import["kind"] = json::Value::make("func");
       import["params"] = getTypes(func->getParams());
       import["results"] = getTypes(func->getResults());
@@ -82,12 +82,43 @@ struct PrintBoundary : public Pass {
     }
 
     // Exports.
+    auto exports = json::Value::make();
+    exports->setArray();
+
+    for (auto& exp : module->exports) {
+      auto export_ = json::Value::make();
+      export_["name"] = json::Value::make(exp->name.view());
+      const char* kind;
+      switch (exp->kind) {
+        case ExternalKind::Function:
+          kind = "func";
+          break;
+        case ExternalKind::Table:
+          kind = "table";
+          break;
+        case ExternalKind::Memory:
+          kind = "memory";
+          break;
+        case ExternalKind::Global:
+          kind = "global";
+          break;
+        case ExternalKind::Tag:
+          kind = "tag";
+          break;
+        case ExternalKind::Invalid:
+          WASM_UNREACHABLE("invalid ExternalKind");
+      }
+      export_["kind"] = json::Value::make(kind);
+      export_["type"] = getTypes(exp->type);
+
+      exports->push_back(export_);
+    }
 
     // Emit the final structure
     json::Value root;
     root.setArray(2);
     root[0] = imports;
-    //root[1] = exports;
+    root[1] = exports;
 
     Output output(target, Flags::BinaryOption::Text);
     root.stringify(output.getStream(), true /* pretty */);
