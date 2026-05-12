@@ -12,7 +12,7 @@
   )
 )
 
-;; RUN: wasm-opt %s -all --print-boundary -S -o - | filecheck
+;; RUN: wasm-opt %s -all --print-boundary -S -o - | filecheck %s
 
 ;; CHECK: [
 ;; CHECK-NEXT:  [
