@@ -718,9 +718,6 @@ private:
 
     void visitCall(Call* curr) {
       if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
-        if (curr->isReturn) {
-          parent.branchesOut = true;
-        }
         return;
       }
 
