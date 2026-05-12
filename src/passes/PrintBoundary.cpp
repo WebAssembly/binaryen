@@ -74,7 +74,7 @@ struct PrintBoundary : public Pass {
       item["module"] = json::Value::make(import->module.view());
       item["base"] = json::Value::make(import->base.view());
       item["kind"] = json::Value::make(kind);
-      item["type"] = getExternalType(kind, name);
+      item["type"] = getExternalType(kind, name, *module);
       imports->push_back(item);
     });
 
@@ -106,7 +106,7 @@ struct PrintBoundary : public Pass {
           WASM_UNREACHABLE("invalid ExternalKind");
       }
       item["kind"] = json::Value::make(kind);
-      item["type"] = getExternalType(kind, exp->getInternalName());
+      item["type"] = getExternalType(exp->kind, *exp->getInternalName(), *module);
       exports->push_back(item);
     }
 
@@ -123,12 +123,15 @@ struct PrintBoundary : public Pass {
   // Emits an array of multivalue types. For a signature, emits params and
   // results.
   json::Value::Ref getTypes(Type type) {
-    if (type.isSignature()) {
-      auto sig = type.getSignature();
-      auto ret= json::Value::make();
-      import["params"] = getTypes(sig.params);
-      import["results"] = getTypes(sig.results);
-      return ret;
+    if (type.isRef()) {
+      auto heapType = type.getHeapType();
+      if (heapType.isSignature()) {
+        auto sig = heapType.getSignature();
+        auto ret= json::Value::make();
+        ret["params"] = getTypes(sig.params);
+        ret["results"] = getTypes(sig.results);
+        return ret;
+      }
     }
 
     auto ret = json::Value::make();
@@ -141,7 +144,7 @@ struct PrintBoundary : public Pass {
 
   // For an imported or exported thing (something external), and its name,
   // return the type info we report for it.
-  json::Value::Ref getExternalType(ExternalKind kind, Name name) {
+  json::Value::Ref getExternalType(ExternalKind kind, Name name, Module& wasm) {
     switch (kind) {
       case ExternalKind::Function:
         return getTypes(wasm.getFunction(name)->type);
