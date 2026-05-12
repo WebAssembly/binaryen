@@ -66,11 +66,11 @@ struct PrintBoundary : public Pass {
     std::string target = getArgumentOrDefault("print-boundary", "");
 
     // Imports.
-    auto imports = json::Value::make();
+    auto imports = json::Value::makeObject();
     imports->setArray();
 
     ModuleUtils::iterImportable(*module, [&](ExternalKind kind, Importable* import) {
-      auto item = json::Value::make();
+      auto item = json::Value::makeObject();
       item["module"] = json::Value::make(import->module.view());
       item["base"] = json::Value::make(import->base.view());
       item["kind"] = json::Value::make(kind);
@@ -79,11 +79,11 @@ struct PrintBoundary : public Pass {
     });
 
     // Exports.
-    auto exports = json::Value::make();
+    auto exports = json::Value::makeObject();
     exports->setArray();
 
     for (auto& exp : module->exports) {
-      auto item = json::Value::make();
+      auto item = json::Value::makeObject();
       item["name"] = json::Value::make(exp->name.view());
       const char* kind = nullptr;
       switch (exp->kind) {
@@ -127,14 +127,14 @@ struct PrintBoundary : public Pass {
       auto heapType = type.getHeapType();
       if (heapType.isSignature()) {
         auto sig = heapType.getSignature();
-        auto ret= json::Value::make();
+        auto ret= json::Value::makeObject();
         ret["params"] = getTypes(sig.params);
         ret["results"] = getTypes(sig.results);
         return ret;
       }
     }
 
-    auto ret = json::Value::make();
+    auto ret = json::Value::makeObject();
     ret->setArray();
     for (auto t : type) {
       ret->push_back(json::Value::make(t.toString()));
