@@ -30,7 +30,8 @@
 //  {
 //    'imports': [
 //      {
-//        'name': 'foo',
+//        'module': 'foo', // foo.bar
+//        'base': 'bar',
 //        'kind': 'func',
 //        'params': ['i32', '(ref func)'],
 //        'results': ['f64']
@@ -50,89 +51,58 @@
 
 #include "pass.h"
 #include "support/file.h"
+#include "support/json.h"
 #include "wasm.h"
 
 namespace wasm {
 
-struct PrintCallGraph : public Pass {
+struct PrintBoundary : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(Module* module) override {
     std::string target = getArgumentOrDefault("print-boundary", "");
 
-    Output out(target, Flags::BinaryOption::Text);
+    // Imports.
+    auto imports = json::Value::make();
+    imports->setArray();
 
-    std::ostream& o = std::cout;
-    o << "digraph call {\n"
-         "  rankdir = LR;\n"
-         "  subgraph cluster_key {\n"
-         "    node [shape=box, fontname=courier, fontsize=10];\n"
-         "    edge [fontname=courier, fontsize=10];\n"
-         "    label = \"Key\";\n"
-         "    \"Import\" [style=\"filled\", fillcolor=\"turquoise\"];\n"
-         "    \"Export\" [style=\"filled\", fillcolor=\"gray\"];\n"
-         "    \"Indirect Target\" [style=\"filled, rounded\", "
-         "fillcolor=\"white\"];\n"
-         "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct "
-         "Call\"];\n"
-         "  }\n\n"
-         "  node [shape=box, fontname=courier, fontsize=10];\n";
-
-    // Defined functions
-    ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
-      std::cout << "  \"" << curr->name
-                << "\" [style=\"filled\", fillcolor=\"white\"];\n";
-    });
-
-    // Imported functions
-    ModuleUtils::iterImportedFunctions(*module, [&](Function* curr) {
-      o << "  \"" << curr->name
-        << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
-    });
-
-    // Exports
-    for (auto& curr : module->exports) {
-      if (curr->kind == ExternalKind::Function) {
-        Function* func = module->getFunction(*curr->getInternalName());
-        o << "  \"" << func->name
-          << "\" [style=\"filled\", fillcolor=\"gray\"];\n";
+    for (auto& func : module->functions) {
+      if (!func->imported()) {
+        continue;
       }
+
+      auto import = json::Value::make();
+      import["module"] = json::Value::make(func->module.toString());
+      import["base"] = json::Value::make(func->base.toString());
+      import["kind"] = json::Value::make("func");
+      import["params"] = getTypes(func->getParams());
+      import["results"] = getTypes(func->getResults());
+
+      imports->push_back(import);
     }
 
-    struct CallPrinter : public PostWalker<CallPrinter> {
-      Module* module;
-      Function* currFunction;
-      std::set<Name> visitedTargets; // Used to avoid printing duplicate edges.
-      std::vector<Function*> allIndirectTargets;
-      CallPrinter(Module* module) : module(module) {
-        // Walk function bodies.
-        ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
-          currFunction = curr;
-          visitedTargets.clear();
-          walk(curr->body);
-        });
-      }
-      void visitCall(Call* curr) {
-        auto* target = module->getFunction(curr->target);
-        if (!visitedTargets.emplace(target->name).second) {
-          return;
-        }
-        std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name
-                  << "\"; // call\n";
-      }
-    };
-    CallPrinter printer(module);
+    // Exports.
 
-    // Indirect Targets
-    ElementUtils::iterAllElementFunctionNames(module, [&](Name name) {
-      auto* func = module->getFunction(name);
-      o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
-    });
+    // Emit the final structure
+    json::Value root;
+    root.setArray(2);
+    root[0] = imports;
+    //root[1] = exports;
 
-    o << "}\n";
+    Output output(target, Flags::BinaryOption::Text);
+    root.stringify(output.getStream(), true /* pretty */);
+  }
+
+  json::Value::Ref getTypes(Type type) {
+    auto ret = json::Value::make();
+    ret->setArray();
+    for (auto t : type) {
+      ret->push_back(json::Value::make(t.toString()));
+    }
+    return ret;
   }
 };
 
-Pass* createPrintCallGraphPass() { return new PrintCallGraph(); }
+Pass* createPrintBoundaryPass() { return new PrintBoundary(); }
 
 } // namespace wasm

@@ -67,6 +67,7 @@ struct Value {
     Ref& operator[](IString x) { return (*this->get())[x]; }
   };
 
+  static Ref make() { return Ref(new Value); }
   template<typename T> static Ref make(T t) { return Ref(new Value(t)); }
 
   enum Type {
@@ -102,6 +103,7 @@ struct Value {
   // constructors all copy their input
   Value() {}
   explicit Value(const char* s) : type(Null) { setString(s); }
+  explicit Value(const std::string& s) : type(Null) { setString(s.c_str()); }
   explicit Value(double n) : type(Null) { setNumber(n); }
   explicit Value(ArrayStorage& a) : type(Null) {
     setArray();
