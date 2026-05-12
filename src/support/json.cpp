@@ -45,9 +45,6 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
           first = false;
         } else {
           os << ',';
-          if (pretty) {
-            os << ' ';
-          }
         }
         if (pretty) {
           os << '\n';
@@ -72,9 +69,6 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
           first = false;
         } else {
           os << ',';
-          if (pretty) {
-            os << ' ';
-          }
         }
         if (pretty) {
           os << '\n';
