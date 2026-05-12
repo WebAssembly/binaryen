@@ -29,9 +29,11 @@ TEST_F(JSONTest, StringifyArray) {
   auto array = json::Value::makeArray();
   array->push_back(json::Value::make(42));
   array->push_back(json::Value::make("1337"));
-  checkOutput(array, "[42,\"1337\"]");
+  array->push_back(json::Value::make()); // null
+  checkOutput(array, "[42,\"1337\",null]");
   checkPrettyOutput(array, R"([
  42,
- "1337"
+ "1337",
+ null
 ])");
 }
