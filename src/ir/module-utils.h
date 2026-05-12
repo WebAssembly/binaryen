@@ -261,9 +261,6 @@ template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
   }
 }
 
-// Generic type finding of any import/export, similar to the iteration above.
-Type getType(Module& wasm, ExternalKind kind, Name name);
-
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.

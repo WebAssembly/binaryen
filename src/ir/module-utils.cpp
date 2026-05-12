@@ -293,23 +293,6 @@ void clearModule(Module& wasm) {
   new (&wasm) Module;
 }
 
-Type getType(Module& wasm, ExternalKind kind, Name name) {
-  switch (kind) {
-    case ExternalKind::Function:
-      return wasm.getFunction(name)->type;
-    case ExternalKind::Table:
-      return wasm.getTable(name)->type;
-    case ExternalKind::Memory:
-      return wasm.getMemory(name)->type;
-    case ExternalKind::Global:
-      return wasm.getGlobal(name)->type;
-    case ExternalKind::Tag:
-      return wasm.getTag(name)->type;
-    case ExternalKind::Invalid:
-      WASM_UNREACHABLE("invalid ExternalKind");
-  }
-}
-
 // Renaming
 
 // Rename functions along with all their uses.

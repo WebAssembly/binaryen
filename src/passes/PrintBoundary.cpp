@@ -74,7 +74,7 @@ struct PrintBoundary : public Pass {
       item["module"] = json::Value::make(import->module.view());
       item["base"] = json::Value::make(import->base.view());
       item["kind"] = json::Value::make(kind);
-      item["type"] = getTypes(ModuleUtils::getType(kind, import->name));
+      item["type"] = getExternalType(kind, name);
       imports->push_back(item);
     });
 
@@ -106,8 +106,7 @@ struct PrintBoundary : public Pass {
           WASM_UNREACHABLE("invalid ExternalKind");
       }
       item["kind"] = json::Value::make(kind);
-      item["type"] = getTypes(ModuleUtils::getType(kind, exp->getInternalName()));
-
+      item["type"] = getExternalType(kind, exp->getInternalName());
       exports->push_back(item);
     }
 
@@ -138,6 +137,27 @@ struct PrintBoundary : public Pass {
       ret->push_back(json::Value::make(t.toString()));
     }
     return ret;
+  }
+
+  // For an imported or exported thing (something external), and its name,
+  // return the type info we report for it.
+  json::Value::Ref getExternalType(ExternalKind kind, Name name) {
+    switch (kind) {
+      case ExternalKind::Function:
+        return getTypes(wasm.getFunction(name)->type);
+        break;
+      case ExternalKind::Table:
+        break;
+      case ExternalKind::Memory:
+        break;
+      case ExternalKind::Global:
+        return getTypes(wasm.getGlobal(name)->type);
+      case ExternalKind::Tag:
+        break;
+      case ExternalKind::Invalid:
+        WASM_UNREACHABLE("invalid ExternalKind");
+    }
+    return {};
   }
 };
 
