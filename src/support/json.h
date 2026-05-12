@@ -115,7 +115,9 @@ struct Value {
   Value() {}
   explicit Value(const char* s) : type(Null) { setString(s); }
   explicit Value(const std::string& s) : type(Null) { setString(s.c_str()); }
-  explicit Value(const std::string_view& s) : type(Null) { setString(std::string(s)); }
+  explicit Value(const std::string_view& s) : type(Null) {
+    setString(std::string(s));
+  }
   explicit Value(double n) : type(Null) { setNumber(n); }
   explicit Value(ArrayStorage& a) : type(Null) {
     setArray();

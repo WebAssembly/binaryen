@@ -68,14 +68,15 @@ struct PrintBoundary : public Pass {
     // Imports.
     auto imports = json::Value::makeArray();
 
-    ModuleUtils::iterImportable(*module, [&](ExternalKind kind, Importable* import) {
-      auto item = json::Value::makeObject();
-      item["module"] = json::Value::make(import->module.view());
-      item["base"] = json::Value::make(import->base.view());
-      item["kind"] = json::Value::make(kind);
-      item["type"] = getExternalType(kind, import->name, *module);
-      imports->push_back(item);
-    });
+    ModuleUtils::iterImportable(
+      *module, [&](ExternalKind kind, Importable* import) {
+        auto item = json::Value::makeObject();
+        item["module"] = json::Value::make(import->module.view());
+        item["base"] = json::Value::make(import->base.view());
+        item["kind"] = json::Value::make(kind);
+        item["type"] = getExternalType(kind, import->name, *module);
+        imports->push_back(item);
+      });
 
     // Exports.
     auto exports = json::Value::makeArray();
@@ -104,7 +105,8 @@ struct PrintBoundary : public Pass {
           WASM_UNREACHABLE("invalid ExternalKind");
       }
       item["kind"] = json::Value::make(kind);
-      item["type"] = getExternalType(exp->kind, *exp->getInternalName(), *module);
+      item["type"] =
+        getExternalType(exp->kind, *exp->getInternalName(), *module);
       exports->push_back(item);
     }
 
@@ -125,7 +127,7 @@ struct PrintBoundary : public Pass {
       auto heapType = type.getHeapType();
       if (heapType.isSignature()) {
         auto sig = heapType.getSignature();
-        auto ret= json::Value::makeObject();
+        auto ret = json::Value::makeObject();
         ret["params"] = getTypes(sig.params);
         ret["results"] = getTypes(sig.results);
         return ret;

@@ -15,7 +15,8 @@ TEST_F(JSONTest, RoundtripString) {
   free(copy);
 }
 
-static void checkOutput(json::Value::Ref ref, std::string expected, bool pretty=false) {
+static void
+checkOutput(json::Value::Ref ref, std::string expected, bool pretty = false) {
   std::stringstream ss;
   ref->stringify(ss, pretty);
   EXPECT_EQ(ss.str(), expected);
@@ -68,4 +69,3 @@ TEST_F(JSONTest, StringifyNesting) {
  }
 ])");
 }
-
