@@ -6773,7 +6773,7 @@ void TranslateToFuzzReader::fixStart() {
   fixer.walk(start->body);
 
   // Added blocks may require fixups.
-  EHUtils::handleBlockNestedPops(func, wasm);
+  EHUtils::handleBlockNestedPops(start, wasm);
 }
 
 } // namespace wasm
