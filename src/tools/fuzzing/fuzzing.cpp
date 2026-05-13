@@ -1675,7 +1675,7 @@ void TranslateToFuzzReader::processFunctions() {
       wasm.start = pickStart();
       break;
   }
-  fixStart(wasm.start);
+  fixStart();
 
   // At the very end, add hang limit checks (so no modding can override them).
   if (fuzzParams->HANG_LIMIT > 0) {
