@@ -287,7 +287,7 @@ private:
   NameInfoMap& infos;
 };
 
-using InliningAction = Inlining::InliningAction;
+using InliningAction = InliningUtils::InliningAction;
 
 struct InliningState {
   // Maps functions worth inlining to the mode with which we can inline them.
@@ -506,9 +506,9 @@ struct DoInlining : public Pass {
     // Inline all the code first, then update func once at the end (which saves
     // e.g. running ReFinalize after each action, of which there might be many).
     for (auto action : actions) {
-      Inlining::doCodeInlining(module, func, action, getPassOptions());
+      InliningUtils::doCodeInlining(module, func, action, getPassOptions());
     }
-    Inlining::updateAfterInlining(module, func);
+    InliningUtils::updateAfterInlining(module, func);
   }
 
 private:
@@ -1356,7 +1356,7 @@ struct InlineMainPass : public Pass {
       // No call at all.
       return;
     }
-    Inlining::doInlining(module,
+    InliningUtils::doInlining(module,
                main,
                InliningAction(callSite, originalMain, true),
                getPassOptions());

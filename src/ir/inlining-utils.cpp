@@ -17,7 +17,7 @@
 #include "ir/inlining.h"
 #include "wasm.h"
 
-namespace wasm::Inlining {
+namespace wasm::InliningUtils {
 
 void doCodeInlining(Module* module,
                            Function* into,
@@ -222,4 +222,4 @@ void doInlining(Module* module,
   updateAfterInlining(module, into);
 }
 
-} // namespace wasm::Inlining
+} // namespace wasm::InliningUtils

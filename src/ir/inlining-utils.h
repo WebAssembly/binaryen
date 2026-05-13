@@ -20,7 +20,7 @@
 #include "pass.h"
 #include "wasm.h"
 
-namespace wasm::Inlining {
+namespace wasm::InliningUtils {
 
 struct InliningAction {
   // The call to inline into.
@@ -67,6 +67,6 @@ void doInlining(Module* module,
                 const InliningAction& action,
                 PassOptions& options);
 
-} // namespace wasm::Inlining
+} // namespace wasm::InliningUtils
 
 #endif // wasm_ir_inlining_h
