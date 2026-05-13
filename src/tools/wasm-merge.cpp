@@ -388,10 +388,8 @@ void copyModuleContents(Module& input, Name inputName) {
       auto* callOld = builder.makeCall(copiedOldName, {}, Type::none);
       auto* callNew = builder.makeCall(copiedNewName, {}, Type::none);
       auto* body = builder.makeSequence(callOld, callNew);
-      auto combinedStart = builder.makeFunction(combinedName,
-                                                Signature(Type::none, Type::none),
-                                                {},
-                                                calls);
+      auto combinedStart = builder.makeFunction(
+        combinedName, Signature(Type::none, Type::none), {}, calls);
       merged.start = combinedName;
     }
   }
