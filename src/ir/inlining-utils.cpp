@@ -14,10 +14,162 @@
  * limitations under the License.
  */
 
-#include "ir/inlining.h"
+#include "ir/branch-utils.h"
+#include "ir/inlining-utils.h"
+#include "ir/metadata.h"
+#include "ir/names.h"
+#include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "wasm.h"
+#include "wasm-builder.h"
 
 namespace wasm::InliningUtils {
+
+namespace {
+
+// Process code after inlining, updating everything we need to.
+struct Updater : public TryDepthWalker<Updater> {
+  Module* module;
+  std::map<Index, Index> localMapping;
+  Name returnName;
+  Type resultType;
+  bool isReturn;
+  Builder* builder;
+  PassOptions& options;
+
+  struct ReturnCallInfo {
+    // The original `return_call` or `return_call_indirect` or `return_call_ref`
+    // with its operands replaced with `local.get`s.
+    Expression* call;
+    // The branch that is serving as the "return" part of the original
+    // `return_call`.
+    Break* branch;
+  };
+
+  // Collect information on return_calls in the inlined body. Each will be
+  // turned into branches out of the original inlined body followed by
+  // non-return version of the original `return_call`, followed by a branch out
+  // to the caller. The branch labels will be filled in at the end of the walk.
+  std::vector<ReturnCallInfo> returnCallInfos;
+
+  Updater(PassOptions& options) : options(options) {}
+
+  void visitReturn(Return* curr) {
+    replaceCurrent(builder->makeBreak(returnName, curr->value));
+  }
+
+  template<typename T> void handleReturnCall(T* curr, Signature sig) {
+    if (isReturn || !curr->isReturn) {
+      // If the inlined callsite was already a return_call, then we can keep
+      // return_calls in the inlined function rather than downgrading them.
+      // That is, if A->B and B->C and both those calls are return_calls
+      // then after inlining A->B we want to now have A->C be a
+      // return_call.
+      return;
+    }
+
+    if (tryDepth == 0) {
+      // Return calls in inlined functions should only break out of
+      // the scope of the inlined code, not the entire function they
+      // are being inlined into. To achieve this, make the call a
+      // non-return call and add a break. This does not cause
+      // unbounded stack growth because inlining and return calling
+      // both avoid creating a new stack frame.
+      curr->isReturn = false;
+      curr->type = sig.results;
+      // There might still be unreachable children causing this to be
+      // unreachable.
+      curr->finalize();
+      if (sig.results.isConcrete()) {
+        replaceCurrent(builder->makeBreak(returnName, curr));
+      } else {
+        replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
+      }
+    } else {
+      // Set the children to locals as necessary, then add a branch out of the
+      // inlined body. The branch label will be set later when we create branch
+      // targets for the calls.
+      Block* childBlock = ChildLocalizer(curr, getFunction(), *module, options)
+                            .getChildrenReplacement();
+      Break* branch = builder->makeBreak(Name());
+      childBlock->list.push_back(branch);
+      childBlock->type = Type::unreachable;
+      replaceCurrent(childBlock);
+
+      curr->isReturn = false;
+      curr->type = sig.results;
+      returnCallInfos.push_back({curr, branch});
+    }
+  }
+
+  void visitCall(Call* curr) {
+    handleReturnCall(curr, module->getFunction(curr->target)->getSig());
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    handleReturnCall(curr, curr->heapType.getSignature());
+  }
+
+  void visitCallRef(CallRef* curr) {
+    Type targetType = curr->target->type;
+    if (!targetType.isSignature()) {
+      // We don't know what type the call should return, but it will also never
+      // be reached, so we don't need to do anything here.
+      return;
+    }
+    handleReturnCall(curr, targetType.getHeapType().getSignature());
+  }
+
+  void visitLocalGet(LocalGet* curr) {
+    curr->index = localMapping[curr->index];
+  }
+
+  void visitLocalSet(LocalSet* curr) {
+    curr->index = localMapping[curr->index];
+  }
+
+  void walk(Expression*& curr) {
+    PostWalker<Updater>::walk(curr);
+    if (returnCallInfos.empty()) {
+      return;
+    }
+
+    Block* body = builder->blockify(curr);
+    curr = body;
+    auto blockNames = BranchUtils::BranchAccumulator::get(body);
+
+    for (Index i = 0; i < returnCallInfos.size(); ++i) {
+      auto& info = returnCallInfos[i];
+
+      // Add a block containing the previous body and a branch up to the caller.
+      // Give the block a name that will allow this return_call's original
+      // callsite to branch out of it then execute the call before returning to
+      // the caller.
+      auto name = Names::getValidName(
+        "__return_call",
+        [&](Name test) { return !blockNames.contains(test); },
+        i);
+      blockNames.insert(name);
+      info.branch->name = name;
+      Block* oldBody = builder->makeBlock(body->list, body->type);
+      body->list.clear();
+
+      if (resultType.isConcrete()) {
+        body->list.push_back(builder->makeBlock(
+          name, {builder->makeBreak(returnName, oldBody)}, Type::none));
+      } else {
+        oldBody->list.push_back(builder->makeBreak(returnName));
+        oldBody->name = name;
+        oldBody->type = Type::none;
+        body->list.push_back(oldBody);
+      }
+      body->list.push_back(info.call);
+      body->finalize(resultType);
+    }
+  }
+};
+
+} // anonymous namespace
 
 void doCodeInlining(Module* module,
                     Function* into,
