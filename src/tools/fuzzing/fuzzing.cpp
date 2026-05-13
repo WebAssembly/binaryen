@@ -1661,6 +1661,23 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
+  // Decide what to do with the start function.
+  switch (upTo(3)) {
+    case 0:
+      // Do not modify the start.
+      break;
+    case 1:
+      // Remove it.
+      wasm.start = Name();
+    case 2:
+      // Pick it.
+      wasm.start = pickStart();
+      break;
+  }
+  if (wasm.start) {
+    fixStart(wasm.start);
+  }
+
   // At the very end, add hang limit checks (so no modding can override them).
   if (fuzzParams->HANG_LIMIT > 0) {
     for (auto& func : wasm.functions) {
@@ -2383,14 +2400,6 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       func->type = func->type.with(Exact);
       func->body = make(func->getResults());
     }
-  }
-
-  // Remove a start function - the fuzzing harness expects code to run only
-  // from exports. When preserving imports and exports, however, we need to
-  // keep any start method, as it may be important to keep the contract between
-  // the wasm and the outside.
-  if (!preserveImportsAndExports) {
-    wasm.start = Name();
   }
 }
 
@@ -6707,6 +6716,48 @@ bool TranslateToFuzzReader::isCallRefImport(Name target) {
   }
   return func->imported() && func->module == "fuzzing-support" &&
          func->base.startsWith("call-ref");
+}
+
+Name TranslateToFuzzReader::pickStart() {
+  // Any none-none function is an option.
+  std::vector<Name> options;
+  for (auto& func : wasm.functions) {
+    if (func->getParams() == Type::none && func->getResults() == Type::none) {
+      options.push_back(func->name);
+    }
+  }
+  return options.empty() ? Name() : pick(options);
+}
+
+void TranslateToFuzzReader::fixStart(Name name) {
+  // Fuzz the start function. This is tricky, as if it calls imports that could
+  // cause reentrancy issues (the module is not yet returned to the JS/VM side,
+  // yet, so things are not ready for calls to happen yet). Still, fuzzing the
+  // start is important, so just remove all calls, which still leaves a chance
+  // for interesting things like modifying globals and memory etc.
+  struct Fixer : public PostWalker<Fixer> {
+    Module& wasm;
+    TranslateToFuzzReader& parent;
+
+    Fixer(Module& wasm, TranslateToFuzzReader& parent)
+      : wasm(wasm), parent(parent) {}
+
+    void visitCall(Call* curr) {
+      replace();
+    }
+    void visitCallIndirect(CallIndirect* curr) {
+      replace();
+    }
+    void visitCallRef(CallRef* curr) {
+      replace();
+    }
+
+    void replace() {
+      replaceCurrent(parent.makeTrivial(getCurrent()->type));
+    }
+  };
+  Fixer fixer(wasm, *this);
+  fixer.walk(func->body);
 }
 
 } // namespace wasm
