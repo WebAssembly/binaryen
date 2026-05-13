@@ -287,6 +287,8 @@ private:
   NameInfoMap& infos;
 };
 
+using InliningAction = Inlining::InliningAction;
+
 struct InliningState {
   // Maps functions worth inlining to the mode with which we can inline them.
   std::unordered_map<Name, InliningMode> inlinableFunctions;
@@ -504,9 +506,9 @@ struct DoInlining : public Pass {
     // Inline all the code first, then update func once at the end (which saves
     // e.g. running ReFinalize after each action, of which there might be many).
     for (auto action : actions) {
-      doCodeInlining(module, func, action, getPassOptions());
+      Inlining::doCodeInlining(module, func, action, getPassOptions());
     }
-    updateAfterInlining(module, func);
+    Inlining::updateAfterInlining(module, func);
   }
 
 private:
@@ -1354,7 +1356,7 @@ struct InlineMainPass : public Pass {
       // No call at all.
       return;
     }
-    doInlining(module,
+    Inlining::doInlining(module,
                main,
                InliningAction(callSite, originalMain, true),
                getPassOptions());

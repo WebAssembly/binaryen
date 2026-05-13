@@ -17,6 +17,7 @@
 #ifndef wasm_ir_inlining_h
 #define wasm_ir_inlining_h
 
+#include "pass.h"
 #include "wasm.h"
 
 namespace wasm::Inlining {
@@ -46,7 +47,21 @@ struct InliningAction {
       nameHint(nameHint) {}
 };
 
-// Inline into a function.
+// Core inlining logic. Modifies the outside function (adding locals as
+// needed) by copying the inlined code into it. updateAfterInlining must be
+// called after this (but it can be called after several inlinings to the same
+// function, for efficiency).
+void doCodeInlining(Module* module,
+                           Function* into,
+                           const InliningAction& action,
+                           PassOptions& options);
+
+// Updates the outer function after we inline into it. This is a general
+// operation that does not depend on what we inlined, it just makes sure that we
+// refinalize everything, have no duplicate break labels, etc.
+void updateAfterInlining(Module* module, Function* into);
+
+// Inline into a function, calling both doCodeInlining and updateAfterInlining.
 void doInlining(Module* module,
                 Function* into,
                 const InliningAction& action,
