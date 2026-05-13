@@ -671,25 +671,30 @@ private:
       }
     }
 
+    // Handle effects due to an explicit null check on the given type.
+    // Returns true iff there is no need to consider further effects.
+    bool trapOnNull(Type type) {
+      if (type == Type::unreachable) {
+        return true;
+      }
+      assert(type.isRef());
+      if (type.isNull()) {
+        parent.trap = true;
+        return true;
+      }
+      if (type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+
+      return false;
+    }
+
     // Handle effects due to an explicit null check of the operands in `exprs`.
     // Returns true iff there is no need to consider further effects.
     bool trapOnNull(std::initializer_list<Expression*> exprs) {
       for (auto* expr : exprs) {
-        if (expr && expr->type == Type::unreachable) {
+        if (expr && trapOnNull(expr->type)) {
           return true;
-        }
-      }
-      for (auto* expr : exprs) {
-        assert(!expr || expr->type.isRef());
-        if (expr && expr->type.isNull()) {
-          parent.trap = true;
-          return true;
-        }
-      }
-      for (auto* expr : exprs) {
-        if (expr && expr->type.isNullable()) {
-          parent.implicitTrap = true;
-          break;
         }
       }
       return false;
@@ -726,25 +731,25 @@ private:
           target && target->effects) {
         bodyEffects = target->effects.get();
       }
-      populateEffectsForCall(curr, bodyEffects);
+      addCallEffects(curr, bodyEffects);
     }
     void visitCallIndirect(CallIndirect* curr) {
       auto* table = parent.module.getTable(curr->table);
+      if (trapOnNull(table->type)) {
+        return;
+      }
       if (!Type::isSubType(Type(curr->heapType, Nullability::Nullable),
                            table->type)) {
         parent.trap = true;
         return;
       }
-      if (table->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
 
       const EffectAnalyzer* bodyEffects = nullptr;
       if (auto it = parent.module.typeEffects.find(curr->heapType);
-          it != parent.module.typeEffects.end() && it->second) {
+          it != parent.module.typeEffects.end()) {
         bodyEffects = it->second.get();
       }
-      populateEffectsForCall(curr, bodyEffects);
+      addCallEffects(curr, bodyEffects);
     }
     void visitCallRef(CallRef* curr) {
       if (trapOnNull(curr->target)) {
@@ -754,10 +759,10 @@ private:
       const EffectAnalyzer* bodyEffects = nullptr;
       if (auto it =
             parent.module.typeEffects.find(curr->target->type.getHeapType());
-          it != parent.module.typeEffects.end() && it->second) {
+          it != parent.module.typeEffects.end()) {
         bodyEffects = it->second.get();
       }
-      populateEffectsForCall(curr, bodyEffects);
+      addCallEffects(curr, bodyEffects);
     }
     void visitLocalGet(LocalGet* curr) {
       parent.localsRead.insert(curr->index);
@@ -1303,7 +1308,7 @@ private:
     // captured by the function body of the target (e.g. a call_ref may trap on
     // null refs).
     template<typename CallType>
-    void populateFunctionBodyEffects(const CallType* curr,
+    void addCallEffectsFromGlobalEffects(const CallType* curr,
                                      const EffectAnalyzer& funcEffects) {
       if (curr->isReturn) {
         if (funcEffects.throws()) {
@@ -1320,16 +1325,18 @@ private:
       }
     }
 
+    // Common effects logic for the 3 types of call: `call`, `call_indirect`,
+    // and `call_ref`.
     template<typename CallType>
     void
-    populateEffectsForCall(const CallType* curr,
-                           NullablePtr<const EffectAnalyzer*> bodyEffects) {
+    addCallEffects(const CallType* curr,
+                   const EffectAnalyzer* bodyEffects) {
       if (curr->isReturn) {
         parent.branchesOut = true;
       }
 
       if (bodyEffects) {
-        populateFunctionBodyEffects(curr, *bodyEffects);
+        addCallEffectsFromGlobalEffects(curr, *bodyEffects);
         return;
       }
 

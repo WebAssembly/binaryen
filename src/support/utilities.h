@@ -105,8 +105,6 @@ template<class... Ts> struct overloaded : Ts... {
   using Ts::operator()...;
 };
 
-template<typename T> using NullablePtr = T;
-
 } // namespace wasm
 
 #endif // wasm_support_utilities_h

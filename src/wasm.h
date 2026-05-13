@@ -2722,7 +2722,17 @@ public:
   std::unordered_map<HeapType, TypeNames> typeNames;
   std::unordered_map<HeapType, Index> typeIndices;
 
-  // Potential effects for bodies of indirect calls to this type.
+  // Potential effects for bodies of indirect calls to this type. Populated by
+  // GlobalEffects when --closed-world is enabled. e.g. when we have a call to
+  // HeapType $A and functions $foo and $bar have types that are subtypes of $A,
+  // then an indirect call to $A has effects equal to the union of $foo and $bar.
+  //
+  // When types are rewritten globally, the target type inherits the effects of
+  // source type (see type-updating.cpp). If the type of just one function is
+  // rewritten, we don't update this, because such a rewrite is only valid
+  // if the function is not the target of an indirect call (otherwise the
+  // indirect call would have to be rewritten too).
+  //
   // TODO: Use Type instead of HeapType to account for nullability and
   // exactness.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
