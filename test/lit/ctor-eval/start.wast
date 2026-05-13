@@ -7,15 +7,16 @@
 ;;  * test sets global1.
 ;;
 ;; We must eval away the start function, when we eval away the other. That is,
-;; there should be no start function afterwards (though $start remains,
-;; uncalled). Otherwise, if it remains as the start, it will trap when it reads
-;; the modified global.
+;; there should be no start function afterwards. Otherwise, if it remains as the
+;; start, it will trap when it reads the modified global.
 ;;
 ;; While doing so we must apply the changes of the start function, to global2.
+;; So both globals end up modified.
 
 (module
+ ;; CHECK:      (type $0 (func (result i32)))
 
- ;; CHECK:      (type $0 (func))
+ ;; CHECK:      (type $1 (func))
 
  ;; CHECK:      (global $global1 (mut i32) (i32.const 1337))
  (global $global1 (mut i32) (i32.const 0))
@@ -23,22 +24,8 @@
  ;; CHECK:      (global $global2 (mut i32) (i32.const 42))
  (global $global2 (mut i32) (i32.const 0))
 
- ;; CHECK:      (export "test" (func $test_2))
-
- ;; CHECK:      (start $start)
  (start $start)
 
- ;; CHECK:      (func $start (type $0)
- ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (global.get $global1)
- ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (global.set $global2
- ;; CHECK-NEXT:   (i32.const 42)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $start
   (if
    (global.get $global1)
@@ -56,8 +43,26 @@
    (i32.const 1337)
   )
  )
+
+ ;; CHECK:      (export "test" (func $test_3))
+
+ ;; CHECK:      (export "keepalive" (func $keepalive))
+
+ ;; CHECK:      (func $keepalive (type $0) (result i32)
+ ;; CHECK-NEXT:  (i32.add
+ ;; CHECK-NEXT:   (global.get $global1)
+ ;; CHECK-NEXT:   (global.get $global2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $keepalive (export "keepalive") (result i32)
+  ;; Keep the globals alive to show changes.
+  (i32.add
+   (global.get $global1)
+   (global.get $global2)
+  )
+ )
 )
 
-;; CHECK:      (func $test_2 (type $0)
+;; CHECK:      (func $test_3 (type $1)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
