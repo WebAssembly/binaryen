@@ -378,8 +378,9 @@ void copyModuleContents(Module& input, Name inputName) {
       auto* callOld = builder.makeCall(merged.start, {}, Type::none);
       auto* callNew = builder.makeCall(input.start, {}, Type::none);
       auto* body = builder.makeSequence(callOld, callNew);
-      auto combinedStart = builder.makeFunction(
+      auto combined = builder.makeFunction(
         combinedName, Signature(Type::none, Type::none), {}, body);
+      merged.addFunction(std::move(combined));
       merged.start = combinedName;
     }
   }

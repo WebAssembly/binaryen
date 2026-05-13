@@ -7,6 +7,16 @@
 (module
   (start $start-a)
 
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (start $merged.start.combined)
+
+  ;; CHECK:      (func $start-a (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return)
+  ;; CHECK-NEXT: )
   (func $start-a
     (drop
       (i32.const 0)
@@ -15,23 +25,14 @@
   )
 )
 
-;; CHECK:      (type $0 (func))
-
-;; CHECK:      (start $merged.start.old)
-
-;; CHECK:      (func $merged.start.old (type $0)
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (drop
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (call $merged.start.new)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $merged.start.new (type $0)
+;; CHECK:      (func $start-b (type $0)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (return)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $merged.start.combined (type $0)
+;; CHECK-NEXT:  (call $start-a)
+;; CHECK-NEXT:  (call $start-b)
 ;; CHECK-NEXT: )
