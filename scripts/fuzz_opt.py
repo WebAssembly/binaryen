@@ -1491,8 +1491,13 @@ def traps_in_instantiation(output):
     if trap_index == -1:
         # In "fixed" output, traps are replaced with *exception*.
         trap_index = output.find('*exception*')
-        if trap_index == -1:
-            return False
+    # An exception can occur during the start function.
+    exception_index = output.find(EXCEPTION_PREFIX)
+    # Look at the first of a trap or an exception.
+    if exception_index >= 0 and (trap_index == -1 or exception_index < trap_index):
+        trap_index = exception_index
+    if trap_index == -1:
+        return False
     export_index = output.find(FUZZ_EXEC_EXPORT_PREFIX)
     if export_index == -1:
         return True
