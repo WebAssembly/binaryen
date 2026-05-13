@@ -2,8 +2,9 @@
 
 ;; RUN: foreach %s %t wasm-opt -all --fuzz-exec-before | filecheck %s
 
+;; $start runs before the first export, so we print 1 here.
 (module
-  (global $global (mut i32) (i32.const 0)
+  (global $global (mut i32) (i32.const 0))
 
   (start $start)
 
@@ -13,7 +14,38 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] export run
+  ;; CHECK-NEXT: [fuzz-exec] note result: run => 1
+  ;; CHECK-NEXT: [trap unreachable]
   (func $run (export "run") (result i32)
     (global.get $global)
+  )
+)
+
+;; A trapping start prevents any export from running.
+(module
+  (start $trap)
+
+  (func $trap
+    (unreachable)
+  )
+
+  (func $run (export "run") (result i32)
+    (i32.const 42)
+  )
+)
+
+;; A throwing start prevents any export from running.
+(module
+  (tag $tag)
+
+  (start $throw)
+
+  (func $throw
+    (throw $tag)
+  )
+
+  (func $run (export "run") (result i32)
+    (i32.const 42)
   )
 )
