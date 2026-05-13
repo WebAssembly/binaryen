@@ -369,27 +369,17 @@ void copyModuleContents(Module& input, Name inputName) {
       // No previous start; just refer to the new one.
       merged.start = input.start;
     } else {
-      // Merge them, keeping the order. We copy both functions to avoid issues
-      // with other references to them, and then add a new function that calls
-      // the two (we leave proper inlining, including handling of control flow
-      // etc., to the optimizer).
-      auto copiedOldName =
-        Names::getValidFunctionName(merged, "merged.start.old");
-      auto copiedNewName =
-        Names::getValidFunctionName(merged, "merged.start.new");
-      auto* copiedOld = ModuleUtils::copyFunction(
-        merged.getFunction(merged.start), merged, copiedOldName);
-      ModuleUtils::copyFunction(
-        merged.getFunction(input.start), merged, copiedNewName);
-
+      // Merge them, keeping the order. We add a new function that calls the two
+      // (leaving proper inlining, including handling of control flow etc., to
+      // the optimizer).
       auto combinedName =
         Names::getValidFunctionName(merged, "merged.start.combined");
       Builder builder(merged);
-      auto* callOld = builder.makeCall(copiedOldName, {}, Type::none);
-      auto* callNew = builder.makeCall(copiedNewName, {}, Type::none);
+      auto* callOld = builder.makeCall(merged.start, {}, Type::none);
+      auto* callNew = builder.makeCall(input.start, {}, Type::none);
       auto* body = builder.makeSequence(callOld, callNew);
       auto combinedStart = builder.makeFunction(
-        combinedName, Signature(Type::none, Type::none), {}, calls);
+        combinedName, Signature(Type::none, Type::none), {}, body);
       merged.start = combinedName;
     }
   }
