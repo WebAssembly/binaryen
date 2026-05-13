@@ -17,7 +17,11 @@
   ;; CHECK:      [fuzz-exec] export run
   ;; CHECK-NEXT: [fuzz-exec] note result: run => 1
   ;; CHECK-NEXT: [trap unreachable]
+  ;; CHECK-NEXT: [exception thrown]
   (func $run (export "run") (result i32)
+    ;; Due to limitations of the auto-updater, the trap and exception from the
+    ;; following two modules gets logged here. (There is at least no
+    ;; ambiguity: we first see that we finished ok and returned a value.)
     (global.get $global)
   )
 )
