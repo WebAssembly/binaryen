@@ -6760,6 +6760,8 @@ void TranslateToFuzzReader::fixStart() {
 
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
   } fixer(wasm, *this);
+
+  FunctionCreationContext context(*this, start);
   fixer.walk(start->body);
 }
 
