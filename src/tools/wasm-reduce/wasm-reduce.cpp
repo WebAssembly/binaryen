@@ -1069,6 +1069,7 @@ struct Reducer
       module->functions = std::move(newFuncs);
       module->updateFunctionsMap();
 
+      // Remove exports for functions we have removed.
       std::vector<Name> exportsToRemove;
       for (auto& exp : module->exports) {
         if (exp->kind == ExternalKind::Function &&
@@ -1080,6 +1081,11 @@ struct Reducer
         module->removeExport(expName);
       }
 
+      // We may have removed the start function.
+      if (module->start && !module->getFunctionOrNull(module->start)) {
+        module->start = Name();
+      }
+
       struct FunctionReplacer
         : public WalkerPass<PostWalker<FunctionReplacer>> {
         bool isFunctionParallel() override { return true; }
@@ -1088,6 +1094,7 @@ struct Reducer
           return std::make_unique<FunctionReplacer>();
         };
         void visitCall(Call* curr) {
+          // Replace calls to functions we have removed.
           if (getModule()->getFunctionOrNull(curr->target)) {
             return;
           }
@@ -1096,6 +1103,9 @@ struct Reducer
             ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
               .getChildrenReplacement();
           auto* replacement = builder.replaceWithIdenticalType(curr);
+          // We may have failed to come up with a replacement (e.g. for
+          // non-nullable references), so manually add an `unreachable` in that
+          // case.
           if (replacement == curr) {
             replacement = builder.makeUnreachable();
           }
@@ -1104,6 +1114,7 @@ struct Reducer
           replaceCurrent(block);
         }
         void visitRefFunc(RefFunc* curr) {
+          // Replace references to functions we have removed.
           if (getModule()->getFunctionOrNull(curr->func)) {
             return;
           }
