@@ -1225,61 +1225,6 @@ struct Reducer
     }
   }
 
-  // Try to actually remove functions. If they are somehow referred to, we will
-  // get a validation error and undo it.
-  bool tryToRemoveFunctions(std::vector<Name> names) {
-    for (auto name : names) {
-      module->removeFunction(name);
-    }
-
-    // remove all references to them
-    struct FunctionReferenceRemover
-      : public PostWalker<FunctionReferenceRemover> {
-      std::unordered_set<Name> names;
-      std::vector<Name> exportsToRemove;
-
-      FunctionReferenceRemover(std::vector<Name>& vec) {
-        for (auto name : vec) {
-          names.insert(name);
-        }
-      }
-      void visitCall(Call* curr) {
-        if (names.contains(curr->target)) {
-          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
-        }
-      }
-      void visitRefFunc(RefFunc* curr) {
-        if (names.contains(curr->func)) {
-          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
-        }
-      }
-      void visitExport(Export* curr) {
-        if (auto* name = curr->getInternalName();
-            name && names.contains(*name)) {
-          exportsToRemove.push_back(curr->name);
-        }
-      }
-      void doWalkModule(Module* module) {
-        PostWalker<FunctionReferenceRemover>::doWalkModule(module);
-        for (auto name : exportsToRemove) {
-          module->removeExport(name);
-        }
-      }
-    };
-    FunctionReferenceRemover referenceRemover(names);
-    referenceRemover.walkModule(module.get());
-
-    if (WasmValidator().validate(
-          *module, WasmValidator::Globally | WasmValidator::Quiet) &&
-        writeAndTestReduction()) {
-      std::cerr << "|        removed " << names.size() << " functions\n";
-      return true;
-    } else {
-      loadWorking(); // restore it from orbit
-      return false;
-    }
-  }
-
   // helpers
 
   // try to replace condition with always true and always false
