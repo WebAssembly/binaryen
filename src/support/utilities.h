@@ -105,6 +105,11 @@ template<class... Ts> struct overloaded : Ts... {
   using Ts::operator()...;
 };
 
+// Used to annotate (for human readers) that a pointer may be null.
+// e.g. NullablePtr<int*>
+template<typename T>
+using NullablePtr = T;
+
 } // namespace wasm
 
 #endif // wasm_support_utilities_h

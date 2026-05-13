@@ -1330,7 +1330,7 @@ private:
     template<typename CallType>
     void
     addCallEffects(const CallType* curr,
-                   const EffectAnalyzer* bodyEffects) {
+                   NullablePtr<const EffectAnalyzer*> bodyEffects) {
       if (curr->isReturn) {
         parent.branchesOut = true;
       }
