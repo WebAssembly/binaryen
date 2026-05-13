@@ -605,7 +605,7 @@ private:
   // Pick a start function.
   Name pickStart();
   // Fix the start function so it is valid for the fuzzer.
-  void fixStart(Name name);
+  void fixStart();
 
   // statistical distributions
 

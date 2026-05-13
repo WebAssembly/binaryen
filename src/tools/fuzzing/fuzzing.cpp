@@ -1675,9 +1675,7 @@ void TranslateToFuzzReader::processFunctions() {
       wasm.start = pickStart();
       break;
   }
-  if (wasm.start) {
-    fixStart(wasm.start);
-  }
+  fixStart(wasm.start);
 
   // At the very end, add hang limit checks (so no modding can override them).
   if (fuzzParams->HANG_LIMIT > 0) {
@@ -6730,8 +6728,8 @@ Name TranslateToFuzzReader::pickStart() {
   return options.empty() ? Name() : pick(options);
 }
 
-void TranslateToFuzzReader::fixStart(Name name) {
-  if (!name) {
+void TranslateToFuzzReader::fixStart() {
+  if (!wasm.start) {
     return;
   }
 
@@ -6740,6 +6738,15 @@ void TranslateToFuzzReader::fixStart(Name name) {
   // yet, so things are not ready for calls to happen yet). Still, fuzzing the
   // start is important, so just remove all calls, which still leaves a chance
   // for interesting things like modifying globals and memory etc.
+
+  auto* start = wasm.getFunction(wasm.start);
+  if (start->imported()) {
+    // We definitely can't call an import here in the fuzzer, for the above
+    // reasons.
+    wasm.start = Name();
+    return;
+  }
+
   struct Fixer : public PostWalker<Fixer> {
     Module& wasm;
     TranslateToFuzzReader& parent;
@@ -6753,7 +6760,7 @@ void TranslateToFuzzReader::fixStart(Name name) {
 
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
   } fixer(wasm, *this);
-  fixer.walk(wasm.getFunction(name)->body);
+  fixer.walk(start->body);
 }
 
 } // namespace wasm
