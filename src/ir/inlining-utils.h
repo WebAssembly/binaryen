@@ -52,9 +52,9 @@ struct InliningAction {
 // called after this (but it can be called after several inlinings to the same
 // function, for efficiency).
 void doCodeInlining(Module* module,
-                           Function* into,
-                           const InliningAction& action,
-                           PassOptions& options);
+                    Function* into,
+                    const InliningAction& action,
+                    PassOptions& options);
 
 // Updates the outer function after we inline into it. This is a general
 // operation that does not depend on what we inlined, it just makes sure that we

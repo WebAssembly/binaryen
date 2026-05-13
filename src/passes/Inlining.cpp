@@ -36,7 +36,7 @@
 #include "ir/eh-utils.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
-#include "ir/inlining.h"
+#include "ir/inlining-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/localize.h"
 #include "ir/metadata.h"
@@ -1357,9 +1357,9 @@ struct InlineMainPass : public Pass {
       return;
     }
     InliningUtils::doInlining(module,
-               main,
-               InliningAction(callSite, originalMain, true),
-               getPassOptions());
+                              main,
+                              InliningAction(callSite, originalMain, true),
+                              getPassOptions());
   }
 };
 

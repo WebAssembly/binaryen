@@ -20,9 +20,9 @@
 namespace wasm::InliningUtils {
 
 void doCodeInlining(Module* module,
-                           Function* into,
-                           const InliningAction& action,
-                           PassOptions& options) {
+                    Function* into,
+                    const InliningAction& action,
+                    PassOptions& options) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
 
