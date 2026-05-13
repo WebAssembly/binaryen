@@ -1669,6 +1669,7 @@ void TranslateToFuzzReader::processFunctions() {
     case 1:
       // Remove it.
       wasm.start = Name();
+      break;
     case 2:
       // Pick it.
       wasm.start = pickStart();
@@ -6730,7 +6731,11 @@ Name TranslateToFuzzReader::pickStart() {
 }
 
 void TranslateToFuzzReader::fixStart(Name name) {
-  // Fuzz the start function. This is tricky, as if it calls imports that could
+  if (!name) {
+    return;
+  }
+
+  // Fuzzing with a start function is tricky, as if it calls imports that could
   // cause reentrancy issues (the module is not yet returned to the JS/VM side,
   // yet, so things are not ready for calls to happen yet). Still, fuzzing the
   // start is important, so just remove all calls, which still leaves a chance
@@ -6747,9 +6752,8 @@ void TranslateToFuzzReader::fixStart(Name name) {
     void visitCallRef(CallRef* curr) { replace(); }
 
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
-  };
-  Fixer fixer(wasm, *this);
-  fixer.walk(func->body);
+  } fixer(wasm, *this);
+  fixer.walk(wasm.getFunction(name)->body);
 }
 
 } // namespace wasm
