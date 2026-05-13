@@ -6758,7 +6758,14 @@ void TranslateToFuzzReader::fixStart() {
     void visitCallIndirect(CallIndirect* curr) { replace(); }
     void visitCallRef(CallRef* curr) { replace(); }
 
-    void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
+    void replace() {
+      std::vector<Expression*> list;
+      for (auto* child : ChildIterator(getCurrent())) {
+        list.push_back(parent.builder.makeDrop(child));
+      }
+      list.push_back(parent.makeTrivial(getCurrent()->type));
+      replaceCurrent(parent.builder.makeBlock(list));
+    }
   } fixer(wasm, *this);
 
   FunctionCreationContext context(*this, start);
