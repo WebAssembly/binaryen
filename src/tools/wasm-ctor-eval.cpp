@@ -323,6 +323,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     }
 
     applyGlobalsToModule();
+
+    // If we got to the point of applying things to the module, then we evalled
+    // a ctor, which means we evalled the start function. Wipe it out, as it
+    // must not run again (just like a ctor that runs before all others).
+    wasm->start = Name();
   }
 
   void init(Module& wasm_, EvallingModuleRunner& instance_) override {
