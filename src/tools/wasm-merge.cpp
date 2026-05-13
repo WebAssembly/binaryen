@@ -370,8 +370,9 @@ void copyModuleContents(Module& input, Name inputName) {
       merged.start = input.start;
     } else {
       // Merge them, keeping the order. We copy both functions to avoid issues
-      // with other references to them, and just call the second one, leaving
-      // inlining to the optimizer if that makes sense to do.
+      // with other references to them, and then add a new function that calls
+      // the two (we leave proper inlining, including handling of control flow
+      // etc., to the optimizer).
       auto copiedOldName =
         Names::getValidFunctionName(merged, "merged.start.old");
       auto copiedNewName =
@@ -380,10 +381,18 @@ void copyModuleContents(Module& input, Name inputName) {
         merged.getFunction(merged.start), merged, copiedOldName);
       ModuleUtils::copyFunction(
         merged.getFunction(input.start), merged, copiedNewName);
+
+      auto combinedName =
+        Names::getValidFunctionName(merged, "merged.start.combined");
       Builder builder(merged);
-      copiedOld->body = builder.makeSequence(
-        copiedOld->body, builder.makeCall(copiedNewName, {}, Type::none));
-      merged.start = copiedOldName;
+      auto* callOld = builder.makeCall(copiedOldName, {}, Type::none);
+      auto* callNew = builder.makeCall(copiedNewName, {}, Type::none);
+      auto* body = builder.makeSequence(callOld, callNew);
+      auto combinedStart = builder.makeFunction(combinedName,
+                                                Signature(Type::none, Type::none),
+                                                {},
+                                                calls);
+      merged.start = combinedName;
     }
   }
 
