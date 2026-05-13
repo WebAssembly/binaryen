@@ -6742,19 +6742,11 @@ void TranslateToFuzzReader::fixStart(Name name) {
     Fixer(Module& wasm, TranslateToFuzzReader& parent)
       : wasm(wasm), parent(parent) {}
 
-    void visitCall(Call* curr) {
-      replace();
-    }
-    void visitCallIndirect(CallIndirect* curr) {
-      replace();
-    }
-    void visitCallRef(CallRef* curr) {
-      replace();
-    }
+    void visitCall(Call* curr) { replace(); }
+    void visitCallIndirect(CallIndirect* curr) { replace(); }
+    void visitCallRef(CallRef* curr) { replace(); }
 
-    void replace() {
-      replaceCurrent(parent.makeTrivial(getCurrent()->type));
-    }
+    void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
   };
   Fixer fixer(wasm, *this);
   fixer.walk(func->body);
