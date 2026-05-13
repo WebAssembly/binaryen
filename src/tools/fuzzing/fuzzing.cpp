@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
 #include "ir/glbs.h"
 #include "ir/iteration.h"
@@ -6770,6 +6771,9 @@ void TranslateToFuzzReader::fixStart() {
 
   FunctionCreationContext context(*this, start);
   fixer.walk(start->body);
+
+  // Added blocks may require fixups.
+  EHUtils::handleBlockNestedPops(func, *getModule())
 }
 
 } // namespace wasm
