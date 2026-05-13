@@ -3,7 +3,7 @@
 
 ;; This code does the following:
 ;;
-;;  * start checks if global1 is set, then writes global2.
+;;  * start writes global2, and traps if global1 is set.
 ;;  * test sets global1.
 ;;
 ;; We must eval away the start function, when we eval away the other. That is,
@@ -27,14 +27,14 @@
  (start $start)
 
  (func $start
+  (global.set $global2
+   (i32.const 42)
+  )
   (if
    (global.get $global1)
    (then
     (unreachable)
    )
-  )
-  (global.set $global2
-   (i32.const 42)
   )
  )
 
