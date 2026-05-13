@@ -809,7 +809,7 @@ Input source maps can be specified by adding an -ism option right after the modu
         exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
 
-      // Start functions are accumulated til the end.
+      // Start functions are accumulated till the end.
       if (merged.start) {
         startFunctions.push_back(merged.start);
         merged.start = Name();
