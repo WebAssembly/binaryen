@@ -368,7 +368,7 @@ void copyModuleContents(Module& input, Name inputName) {
     merged.addExport(std::move(copy));
   }
 
-  // Start functions are accumulated til the end.
+  // Start functions are accumulated till the end.
   if (input.start) {
     startFunctions.push_back(input.start);
   }
