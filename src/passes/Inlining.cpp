@@ -38,7 +38,6 @@
 #include "ir/find_all.h"
 #include "ir/inlining-utils.h"
 #include "ir/literal-utils.h"
-#include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/properties.h"
