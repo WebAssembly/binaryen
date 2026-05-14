@@ -92,9 +92,9 @@ struct PrintBoundary : public Pass {
 
     // Emit the final structure
     json::Value root;
-    root.setArray();
-    root.push_back(imports);
-    root.push_back(exports);
+    root.setObject();
+    root["imports"] = imports;
+    root["exports"] = exports;
 
     Output output(target, Flags::BinaryOption::Text);
     root.stringify(output.getStream(), true /* pretty */);

@@ -18,8 +18,8 @@
 
 ;; RUN: wasm-opt %s -all --print-boundary -S -o - | filecheck %s
 
-;; CHECK: [
-;; CHECK-NEXT:  [
+;; CHECK: {
+;; CHECK-NEXT:  "imports":
 ;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "module": "module",
 ;; CHECK-NEXT:    "base": "base",
@@ -48,7 +48,7 @@
 ;; CHECK-NEXT:    }
 ;; CHECK-NEXT:   }
 ;; CHECK-NEXT:  ],
-;; CHECK-NEXT:  [
+;; CHECK-NEXT:  "exports": [
 ;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "name": "one",
 ;; CHECK-NEXT:    "kind": "func",
@@ -71,4 +71,4 @@
 ;; CHECK-NEXT:    ]
 ;; CHECK-NEXT:   }
 ;; CHECK-NEXT:  ]
-;; CHECK-NEXT: ]
+;; CHECK-NEXT: }
