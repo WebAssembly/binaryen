@@ -1,5 +1,5 @@
 ;; `reorder-functions-by-similarity=0` disables the size threshold, forcing the compiler to reorder functions.
-;; RUN: foreach %s %t wasm-opt -all --reorder-functions-by-similarity=0 -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt -all --reorder-functions-by-similarity -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (type $0 (func (result i32)))

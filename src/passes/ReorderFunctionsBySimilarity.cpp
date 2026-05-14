@@ -71,23 +71,6 @@ struct ReorderFunctionsBySimilarity : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
-    // If the number of defined functions is small, similarity-based reordering
-    // does not help and can regress size due to increasing LEB size.
-    size_t numDefined = 0;
-    for (const auto& func : module->functions) {
-      if (!func->imported()) {
-        numDefined++;
-      }
-    }
-    size_t minFunctions = 150;
-    auto arg = getArgumentOrDefault("reorder-functions-by-similarity", "");
-    if (!arg.empty()) {
-      minFunctions = std::stoul(arg);
-    }
-    if (numDefined < minFunctions) {
-      return;
-    }
-
     struct FunctionSimilarityInfo {
       std::string typeStr;
       std::vector<std::string> varsStrs;
