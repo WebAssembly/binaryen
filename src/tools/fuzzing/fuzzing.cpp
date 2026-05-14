@@ -1662,19 +1662,20 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
-  // Decide what to do with the start function.
-  switch (upTo(3)) {
+  // Decide what to do with the start function. Most of the time we remove it,
+  // as that is the least risky for fuzzing - any trap in the start will make
+  // the entire module not execute.
+  switch (upTo(3)) { // TODO 10
     case 0:
-      // Do not modify the start.
+      // Do not modify the start, potentially leaving the existing one.
       break;
     case 1:
-      // Remove it.
-      wasm.start = Name();
-      break;
-    case 2:
-      // Pick it.
+      // Pick a new start.
       wasm.start = pickStart();
       break;
+    default:
+      // Remove it.
+      wasm.start = Name();
   }
   fixStart();
 
