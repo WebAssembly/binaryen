@@ -5,7 +5,11 @@
 
   (import "module2" "other" (func $bar (result i32 f32)))
 
+  (global $g (mut i32) (i32.const 42))
+
   (export "one" (func $one))
+
+  (export "glob" (global $g))
 
   (func $one (param $x (ref $struct)) (result i32 i32 i32)
     (unreachable)
@@ -19,7 +23,7 @@
 ;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "module": "module",
 ;; CHECK-NEXT:    "base": "base",
-;; CHECK-NEXT:    "kind": 0,
+;; CHECK-NEXT:    "kind": "func",
 ;; CHECK-NEXT:    "type": {
 ;; CHECK-NEXT:     "params": [
 ;; CHECK-NEXT:      "i32",
@@ -33,7 +37,7 @@
 ;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "module": "module2",
 ;; CHECK-NEXT:    "base": "other",
-;; CHECK-NEXT:    "kind": 0,
+;; CHECK-NEXT:    "kind": "func",
 ;; CHECK-NEXT:    "type": {
 ;; CHECK-NEXT:     "params": [
 ;; CHECK-NEXT:     ],
@@ -58,6 +62,13 @@
 ;; CHECK-NEXT:      "i32"
 ;; CHECK-NEXT:     ]
 ;; CHECK-NEXT:    }
+;; CHECK-NEXT:   },
+;; CHECK-NEXT:   {
+;; CHECK-NEXT:    "name": "glob",
+;; CHECK-NEXT:    "kind": "global",
+;; CHECK-NEXT:    "type": [
+;; CHECK-NEXT:     "i32"
+;; CHECK-NEXT:    ]
 ;; CHECK-NEXT:   }
 ;; CHECK-NEXT:  ]
 ;; CHECK-NEXT: ]

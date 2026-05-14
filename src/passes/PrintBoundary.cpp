@@ -73,7 +73,7 @@ struct PrintBoundary : public Pass {
         auto item = json::Value::makeObject();
         item["module"] = json::Value::make(import->module.view());
         item["base"] = json::Value::make(import->base.view());
-        item["kind"] = json::Value::make(kind);
+        item["kind"] = getKindName(kind);
         item["type"] = getExternalType(kind, import->name, *module);
         imports->push_back(item);
       });
@@ -84,27 +84,7 @@ struct PrintBoundary : public Pass {
     for (auto& exp : module->exports) {
       auto item = json::Value::makeObject();
       item["name"] = json::Value::make(exp->name.view());
-      const char* kind = nullptr;
-      switch (exp->kind) {
-        case ExternalKind::Function:
-          kind = "func";
-          break;
-        case ExternalKind::Table:
-          kind = "table";
-          break;
-        case ExternalKind::Memory:
-          kind = "memory";
-          break;
-        case ExternalKind::Global:
-          kind = "global";
-          break;
-        case ExternalKind::Tag:
-          kind = "tag";
-          break;
-        case ExternalKind::Invalid:
-          WASM_UNREACHABLE("invalid ExternalKind");
-      }
-      item["kind"] = json::Value::make(kind);
+      item["kind"] = getKindName(exp->kind);
       item["type"] =
         getExternalType(exp->kind, *exp->getInternalName(), *module);
       exports->push_back(item);
@@ -160,6 +140,30 @@ struct PrintBoundary : public Pass {
         WASM_UNREACHABLE("invalid ExternalKind");
     }
     return {};
+  }
+
+  json::Value::Ref getKindName(ExternalKind kind) {
+    const char* name = nullptr;
+    switch (kind) {
+      case ExternalKind::Function:
+        name = "func";
+        break;
+      case ExternalKind::Table:
+        name = "table";
+        break;
+      case ExternalKind::Memory:
+        name = "memory";
+        break;
+      case ExternalKind::Global:
+        name = "global";
+        break;
+      case ExternalKind::Tag:
+        name = "tag";
+        break;
+      case ExternalKind::Invalid:
+        WASM_UNREACHABLE("invalid ExternalKind");
+    }
+    return json::Value::make(name);
   }
 };
 
