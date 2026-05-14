@@ -481,7 +481,8 @@ void ModuleSplitter::makeImportExport(Importable& primaryItem,
       config.newExportPrefix +
       (config.minimizeNewExportNames ? minified.getName() : genericExportName);
     Name exportName = Names::getValidExportName(primary, baseName);
-    primary.addExport(std::make_unique<Export>(exportName, kind, primaryItem.name));
+    primary.addExport(
+      std::make_unique<Export>(exportName, kind, primaryItem.name));
     secondaryItem.base = exportName;
     exportedPrimaryItems[{kind, primaryItem.name}] = exportName;
   }
