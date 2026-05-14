@@ -26,6 +26,13 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
     }
   };
 
+  auto maybeNewline = [&]() {
+    if (pretty) {
+      os << '\n';
+      doIndent();
+    }
+  };
+
   switch (type) {
     case String: {
       std::stringstream wtf16;
@@ -45,17 +52,11 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         } else {
           os << ',';
         }
-        if (pretty) {
-          os << '\n';
-          doIndent();
-        }
+        maybeNewline();
         item->stringify(os, pretty, indent);
       }
       indent--;
-      if (pretty) {
-        os << '\n';
-        doIndent();
-      }
+      maybeNewline();
       os << ']';
       return;
     }
@@ -69,10 +70,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         } else {
           os << ',';
         }
-        if (pretty) {
-          os << '\n';
-          doIndent();
-        }
+        maybeNewline();
         os << "\"" << key << "\":";
         if (pretty) {
           os << ' ';
@@ -80,10 +78,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         value->stringify(os, pretty, indent);
       }
       indent--;
-      if (pretty) {
-        os << '\n';
-        doIndent();
-      }
+      maybeNewline();
       os << '}';
       return;
     }
