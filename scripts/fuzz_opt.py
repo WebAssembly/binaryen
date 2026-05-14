@@ -1209,7 +1209,7 @@ class Wasm2JS(TestCaseHandler):
                 compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     @override
-    def run(self, wasm):
+    def run(self, wasm, checked=True):
         with open(get_fuzz_shell_js()) as f:
             wrapper = f.read()
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
@@ -1233,7 +1233,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        return run_vm([shared.NODEJS, js_file, abspath('a.wasm')])
+        return run_vm([shared.NODEJS, js_file, abspath('a.wasm')], checked)
 
     @override
     def can_run_on_wasm(self, wasm):
