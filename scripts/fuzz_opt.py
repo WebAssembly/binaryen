@@ -1115,10 +1115,11 @@ class Wasm2JS(TestCaseHandler):
         # run before and after
         try:
             before = self.run(before_wasm_temp)
-        except Exception as e:
+        except:
             # If the module traps during instantiation, there is nothing
             # important to test here.
-            if INSTANTIATE_ERROR in str(e):
+            error = self.run(before_wasm_temp, checked=False)
+            if INSTANTIATE_ERROR in error:
                 note_ignored_vm_run('wasm2js instantiation trap')
                 return
 
