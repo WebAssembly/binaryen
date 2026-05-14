@@ -1,0 +1,17 @@
+wasm-rt-impl.o
+wasm-rt-mem-impl.o
+wasm-rt-exceptions-impl.o
+examples/**/*.o
+examples/fac/fac
+examples/rot13/rot13
+examples/rot13/rot13.c
+examples/rot13/rot13.h
+examples/rot13/rot13.wasm
+examples/callback/callback
+examples/callback/callback.c
+examples/callback/callback.h
+examples/callback/callback.wasm
+examples/threads/threads
+examples/threads/sample.c
+examples/threads/sample.h
+examples/threads/sample.wasm

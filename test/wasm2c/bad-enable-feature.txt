@@ -1,0 +1,6 @@
+;;; RUN: %(wasm2c)s
+;;; ARGS: --enable-gc %(in_file)s
+;;; ERROR: 1
+(;; STDERR ;;;
+wasm2c currently only supports a limited set of features.
+;;; STDERR ;;)

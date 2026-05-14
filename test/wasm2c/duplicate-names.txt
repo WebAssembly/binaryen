@@ -1,0 +1,11 @@
+;;; TOOL: run-spec-wasm2c
+;;; ARGS: --debug-names
+(module
+ (func $B0 (export "$B0") (param $B0 i32)
+       (block
+	(br 0))))
+
+(assert_return (invoke "$B0" (i32.const 5)))
+(;; STDOUT ;;;
+1/1 tests passed.
+;;; STDOUT ;;)

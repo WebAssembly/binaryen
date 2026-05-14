@@ -1,0 +1,12 @@
+;;; TOOL: run-spec-wasm2c
+(module
+  (memory 1)
+  (func (export "test") (param i32)
+    local.get 0
+    i32.load8_u offset=1
+    drop)
+)
+(assert_trap (invoke "test" (i32.const -1)) "out of bounds memory access")
+(;; STDOUT ;;;
+1/1 tests passed.
+;;; STDOUT ;;)
