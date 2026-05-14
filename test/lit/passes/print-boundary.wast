@@ -19,7 +19,7 @@
 ;; RUN: wasm-opt %s -all --print-boundary -S -o - | filecheck %s
 
 ;; CHECK:      {
-;; CHECK-NEXT:  "imports":
+;; CHECK-NEXT:  "imports": [
 ;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "module": "module",
 ;; CHECK-NEXT:    "base": "base",
