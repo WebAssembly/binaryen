@@ -192,7 +192,7 @@ def run_opt_test(wast, stdout=None):
 def check_expected(actual, expected, stdout=None):
     if expected and os.path.exists(expected):
         expected = open(expected).read()
-        print('       (using expected output)', file=stdout)
+        shared.verbose_log('       (using expected output)', file=stdout)
         actual = actual.strip()
         expected = expected.strip()
         if actual != expected:
@@ -229,7 +229,7 @@ def run_one_spec_test(wast: Path, stdout=None):
         actual = run_spec_test(str(wast), stdout=stdout)
     except Exception as e:
         if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in test_name:
-            print('<< test failed as expected >>', file=stdout)
+            shared.verbose_log('<< test failed as expected >>', file=stdout)
             return  # don't try all the binary format stuff TODO
         else:
             shared.fail_with_error(str(e))
@@ -249,7 +249,7 @@ def run_one_spec_test(wast: Path, stdout=None):
             if not module:
                 # Skip any initial assertions that don't have a module
                 continue
-            print(f'        testing split module {i}', file=stdout)
+            shared.verbose_log(f'        testing split module {i}', file=stdout)
             split_name = base_name + f'_split{i}.wast'
             support.write_wast(split_name, module)
             run_opt_test(split_name, stdout=stdout)    # also that our optimizer doesn't break on it
