@@ -36,10 +36,10 @@ struct OpcodeSequenceBuilder
   : public PostWalker<OpcodeSequenceBuilder,
                       UnifiedExpressionVisitor<OpcodeSequenceBuilder>> {
   std::vector<uint32_t> sequence;
-  const size_t max_len = 512;
+  static const size_t MaxLen = 512;
 
   void visitExpression(Expression* curr) {
-    if (sequence.size() >= max_len) {
+    if (sequence.size() >= MaxLen) {
       return;
     }
     // Append the core expression ID
