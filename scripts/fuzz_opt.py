@@ -1111,9 +1111,19 @@ class Wasm2JS(TestCaseHandler):
             run([in_bin('wasm-opt'), before_wasm_temp, '-o', before_wasm_temp] + simplification_passes + FEATURE_OPTS)
         # now that the before wasm is fixed up, generate a proper after wasm
         run([in_bin('wasm-opt'), before_wasm_temp, '-o', after_wasm_temp] + opts + FEATURE_OPTS)
-        # always check for compiler crashes
-        before = self.run(before_wasm_temp)
+
+        # run before and after
+        try:
+            before = self.run(before_wasm_temp)
+        except Exception as e:
+            # If the module traps during instantiation, there is nothing
+            # important to test here.
+            if INSTANTIATE_ERROR in str(e):
+                note_ignored_vm_run('wasm2js instantiation trap')
+                return
+
         after = self.run(after_wasm_temp)
+
         if NANS:
             # with NaNs we can't compare the output, as a reinterpret through
             # memory might end up different in JS than wasm
@@ -1167,15 +1177,7 @@ class Wasm2JS(TestCaseHandler):
             # a floating-point result that may need to be fixed up
             return re.sub(r' => (-?[\d+-.e\-+]+)', fix_number, x)
 
-        try:
-            before = fix_output_for_js(before)
-        except Exception as e:
-            # If the module traps during instantiation, there is nothing
-            # important to test here.
-            if INSTANTIATE_ERROR in str(e):
-                note_ignored_vm_run('wasm2js instantiation trap')
-                return
-
+        before = fix_output_for_js(before)
         after = fix_output_for_js(after)
 
         # we must not compare if the wasm hits a trap, as wasm2js does not
