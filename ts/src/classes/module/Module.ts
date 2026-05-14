@@ -37,6 +37,7 @@ import {
 	stringref,
 } from "../../constants.ts";
 import {
+	consoleWarn,
 	replacedBy,
 } from "../../lib.ts";
 import {
@@ -531,3 +532,21 @@ export namespace Module {
 	export type Import = Import_;
 	export type Export = Export_;
 }
+
+
+
+/*
+ * The relocation of all `ExpressionBuilder` props from `Module` to `Module#wasm` is a breaking change,
+ * so we want to let users access it the old way but with deprecation warnings.
+ * This function delegates any accesses to those properties.
+ */
+Object.keys(new Module().wasm).forEach((key) => {
+	if (!Reflect.has(Module.prototype, key)) {
+		Reflect.defineProperty(Module.prototype, key, {
+			get() {
+				consoleWarn(`Module property \`.${ key }\` is deprecated; use \`.wasm.${ key }\` instead.`);
+				return (this as Module).wasm[key as keyof ExpressionBuilder];
+			},
+		});
+	}
+});
