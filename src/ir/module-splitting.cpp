@@ -1100,15 +1100,13 @@ void ModuleSplitter::setupTablePatching() {
 
   for (auto& [secondaryPtr, replacedElems] : moduleToReplacedElems) {
     Module& secondary = *secondaryPtr;
-    // Import and export the active table. This was not done previously in
-    // shareImportableItems because the active table was not being used by
-    // secondaries yet.
+    // Import and export the active table if necessary. Unless we use an
+    // existing table as an active table (e.g. because reference-types is
+    // disabled) and that table was already being used by an existing indirect
+    // call, shareImportableItems wasn't able to mark it as used in secondaries,
+    // so we should export and import the active table here.
     auto secondaryTable =
       secondary.getTableOrNull(tableManager.activeTable->name);
-    // If we use an existing table as the active table (e.g. because
-    // reference-types is disabled) and that table was already being used by an
-    // existing indirect call (not created by wasm-split), the active table may
-    // already exist, so we need to check.
     if (!secondaryTable) {
       secondaryTable =
         ModuleUtils::copyTable(tableManager.activeTable, secondary);
@@ -1119,15 +1117,13 @@ void ModuleSplitter::setupTablePatching() {
     }
 
     if (tableManager.activeBase.global.size()) {
-      // Import and export the active table's base global. This was not done
-      // previously in shareImportableItems because the active table and its
-      // base global were not being used by secondaries yet.
+      // Import and export the active table's base global if necessary. Unless
+      // the base global was already being used elsewhere in secondaries,
+      // shareImportableItems wasn't able to mark it as used in secondaries, so
+      // we should export and import it here.
       auto* primaryGlobal = primary.getGlobal(tableManager.activeBase.global);
       auto* secondaryGlobal =
         secondary.getGlobalOrNull(tableManager.activeBase.global);
-      // If the base global is also used elsewhere in the secondary module, like
-      // in functions, this global may already have moved to the secondary, so
-      // we need to check.
       if (!secondaryGlobal) {
         secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, secondary);
       }
