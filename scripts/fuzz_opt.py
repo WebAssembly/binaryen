@@ -661,14 +661,15 @@ def run_vm(cmd, checked=True):
         # Other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
         raw = run_unchecked(cmd)
-        if filter_known_issues(raw) == IGNORE:
+        filtered = filter_known_issues
+        if filtered == IGNORE:
             return IGNORE
 
         # If we trap during instantiation, we do not need to ignore this run
         # (we can see that all VMs have the same behavior), but we do need to
         # not raise an error here
         if INSTANTIATE_ERROR in raw:
-            return
+            return filtered
 
         # Otherwise, raise an error.
         raise
