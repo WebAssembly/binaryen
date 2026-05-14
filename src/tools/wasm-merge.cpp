@@ -117,6 +117,11 @@ namespace {
 // have it as a global rather than pass it around all the time.
 Module merged;
 
+// Everything we merge is accumulated into |merged|, aside from the start
+// functions. To avoid incrementally adding a call each time, which can end up
+// nested, we add them here and generate a series of flat calls at the end.
+std::vector<Name> startFunctions;
+
 // Name conflicts on functions etc. are resolved by renaming things in a way
 // that only matters internally. Conflicting export names, however, are
 // observable, and so the user must decide how they want wasm-merge to handle
@@ -363,28 +368,9 @@ void copyModuleContents(Module& input, Name inputName) {
     merged.addExport(std::move(copy));
   }
 
-  // Start functions must be merged.
-  if (input.start.is()) {
-    if (!merged.start.is()) {
-      // No previous start; just refer to the new one.
-      merged.start = input.start;
-    } else {
-      // Merge them, keeping the order. We copy both functions to avoid issues
-      // with other references to them, and just call the second one, leaving
-      // inlining to the optimizer if that makes sense to do.
-      auto copiedOldName =
-        Names::getValidFunctionName(merged, "merged.start.old");
-      auto copiedNewName =
-        Names::getValidFunctionName(merged, "merged.start.new");
-      auto* copiedOld = ModuleUtils::copyFunction(
-        merged.getFunction(merged.start), merged, copiedOldName);
-      ModuleUtils::copyFunction(
-        merged.getFunction(input.start), merged, copiedNewName);
-      Builder builder(merged);
-      copiedOld->body = builder.makeSequence(
-        copiedOld->body, builder.makeCall(copiedNewName, {}, Type::none));
-      merged.start = copiedOldName;
-    }
+  // Start functions are accumulated till the end.
+  if (input.start) {
+    startFunctions.push_back(input.start);
   }
 
   // TODO: type names, features, debug info, custom sections, dylink info, etc.
@@ -596,6 +582,34 @@ void updateTypes(Module& wasm) {
   updater.runOnModuleCode(&runner, &wasm);
 }
 
+// Merge the start functions, keeping the order. We add a new function that
+// calls them in sequence (leaving proper inlining, including handling of
+// control flow etc., to the optimizer).
+void mergeStartFunctions() {
+  if (startFunctions.empty()) {
+    return;
+  }
+
+  if (startFunctions.size() == 1) {
+    // Avoid adding a call here.
+    merged.start = startFunctions[0];
+    return;
+  }
+
+  auto combinedName =
+    Names::getValidFunctionName(merged, "merged.start.combined");
+  Builder builder(merged);
+  std::vector<Expression*> calls;
+  for (auto start : startFunctions) {
+    calls.push_back(builder.makeCall(start, {}, Type::none));
+  }
+  auto* body = builder.makeBlock(calls);
+  auto combined = builder.makeFunction(
+    combinedName, Signature(Type::none, Type::none), {}, body);
+  merged.addFunction(std::move(combined));
+  merged.start = combinedName;
+}
+
 // Merges an input module into an existing target module. The input module can
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
@@ -794,6 +808,13 @@ Input source maps can be specified by adding an -ism option right after the modu
       for (auto& curr : merged.exports) {
         exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
+
+      // Start functions are accumulated till the end.
+      if (merged.start) {
+        startFunctions.push_back(merged.start);
+        merged.start = Name();
+      }
+
     } else {
       // This is a later module: do a full merge.
       mergeInto(*currModule, inputFileName);
@@ -826,6 +847,9 @@ Input source maps can be specified by adding an -ism option right after the modu
 
   // Update types after combing and linking everything.
   updateTypes(merged);
+
+  // Merge the start functions, after everything else is set up.
+  mergeStartFunctions();
 
   {
     PassRunner passRunner(&merged);
