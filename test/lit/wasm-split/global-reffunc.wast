@@ -4,7 +4,7 @@
 
 ;; When a split global ($a here)'s initializer contains a ref.func of a split
 ;; function, we should NOT create any trampolines, and the split global should
-;; direclty refer to the function.
+;; directly refer to the function.
 
 (module
   (global $a funcref (ref.func $split))

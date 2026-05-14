@@ -473,8 +473,7 @@ void ModuleSplitter::makeImportExport(Importable& primaryItem,
   secondaryItem.name = primaryItem.name;
   secondaryItem.hasExplicitName = primaryItem.hasExplicitName;
   secondaryItem.module = config.importNamespace;
-  auto exportIt =
-    exportedPrimaryItems.find(std::make_pair(kind, primaryItem.name));
+  auto exportIt = exportedPrimaryItems.find({kind, primaryItem.name});
   if (exportIt != exportedPrimaryItems.end()) {
     secondaryItem.base = exportIt->second;
   } else {
@@ -482,9 +481,9 @@ void ModuleSplitter::makeImportExport(Importable& primaryItem,
       config.newExportPrefix +
       (config.minimizeNewExportNames ? minified.getName() : genericExportName);
     Name exportName = Names::getValidExportName(primary, baseName);
-    primary.addExport(new Export(exportName, kind, primaryItem.name));
+    primary.addExport(std::make_unique<Export>(exportName, kind, primaryItem.name));
     secondaryItem.base = exportName;
-    exportedPrimaryItems[std::make_pair(kind, primaryItem.name)] = exportName;
+    exportedPrimaryItems[{kind, primaryItem.name}] = exportName;
   }
 }
 
@@ -733,7 +732,7 @@ void ModuleSplitter::shareImportableItems() {
   }
 
   // We need to assume the active table and its base global are used in the
-  // primary module, because we will create segments there later
+  // primary module, because we will create segments there later.
   if (tableManager.activeTable) {
     primaryUsed.tables.insert(tableManager.activeTable->name);
   }
