@@ -515,8 +515,7 @@ function build(binary, isSecond) {
   try {
     instance = new WebAssembly.Instance(module, imports);
   } catch (e) {
-    console.log('exception thrown: failed to instantiate module: ' + e);
-    quit();
+    throw new Error('exception thrown: failed to instantiate module: ' + e);
   }
 
   // Do not add the second instance's exports to the list, as that would be

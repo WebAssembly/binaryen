@@ -1167,7 +1167,15 @@ class Wasm2JS(TestCaseHandler):
             # a floating-point result that may need to be fixed up
             return re.sub(r' => (-?[\d+-.e\-+]+)', fix_number, x)
 
-        before = fix_output_for_js(before)
+        try:
+            before = fix_output_for_js(before)
+        except Exception as e:
+            # If the module traps during instantiation, there is nothing
+            # important to test here.
+            if INSTANTIATE_ERROR in str(e):
+                note_ignored_vm_run('wasm2js instantiation trap')
+                return
+
         after = fix_output_for_js(after)
 
         # we must not compare if the wasm hits a trap, as wasm2js does not
