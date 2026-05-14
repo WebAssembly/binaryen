@@ -658,10 +658,19 @@ def run_vm(cmd, checked=True):
             ret = run_unchecked(cmd)
         return filter_known_issues(ret)
     except subprocess.CalledProcessError:
-        # other known issues do make it fail, so re-run without checking for
+        # Other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
-        if filter_known_issues(run_unchecked(cmd)) == IGNORE:
+        raw = run_unchecked(cmd)
+        if filter_known_issues(raw) == IGNORE:
             return IGNORE
+
+        # If we trap during instantiation, we do not need to ignore this run
+        # (we can see that all VMs have the same behavior), but we do need to
+        # not raise an error here
+        if INSTANTIATE_ERROR in raw:
+            return
+
+        # Otherwise, raise an error.
         raise
 
 
@@ -1113,16 +1122,7 @@ class Wasm2JS(TestCaseHandler):
         run([in_bin('wasm-opt'), before_wasm_temp, '-o', after_wasm_temp] + opts + FEATURE_OPTS)
 
         # run before and after
-        try:
-            before = self.run(before_wasm_temp)
-        except:
-            # If the module traps during instantiation, there is nothing
-            # important to test here.
-            error = self.run(before_wasm_temp, checked=False)
-            if INSTANTIATE_ERROR in error:
-                note_ignored_vm_run('wasm2js instantiation trap')
-                return
-
+        before = self.run(before_wasm_temp)
         after = self.run(after_wasm_temp)
 
         if NANS:
@@ -1209,7 +1209,7 @@ class Wasm2JS(TestCaseHandler):
                 compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     @override
-    def run(self, wasm, checked=True):
+    def run(self, wasm):
         with open(get_fuzz_shell_js()) as f:
             wrapper = f.read()
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
@@ -1233,7 +1233,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        return run_vm([shared.NODEJS, js_file, abspath('a.wasm')], checked)
+        return run_vm([shared.NODEJS, js_file, abspath('a.wasm')])
 
     @override
     def can_run_on_wasm(self, wasm):
