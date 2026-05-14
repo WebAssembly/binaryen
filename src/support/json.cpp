@@ -32,8 +32,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
       [[maybe_unused]] bool valid =
         wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
       assert(valid);
-      // TODO: Use wtf16.view() once we have C++20.
-      wasm::String::printEscapedJSON(os, wtf16.str());
+      wasm::String::printEscapedJSON(os, wtf16.view());
       return;
     }
     case Array: {
