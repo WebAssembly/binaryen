@@ -1,0 +1,10 @@
+(module
+  (start $start-b)
+
+  (func $start-b
+    (drop
+      (i32.const 1)
+    )
+    (return)
+  )
+)

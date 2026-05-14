@@ -26,14 +26,20 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
     }
   };
 
+  auto maybeNewline = [&]() {
+    if (pretty) {
+      os << '\n';
+      doIndent();
+    }
+  };
+
   switch (type) {
     case String: {
       std::stringstream wtf16;
       [[maybe_unused]] bool valid =
         wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
       assert(valid);
-      // TODO: Use wtf16.view() once we have C++20.
-      wasm::String::printEscapedJSON(os, wtf16.str());
+      wasm::String::printEscapedJSON(os, wtf16.view());
       return;
     }
     case Array: {
@@ -46,17 +52,11 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         } else {
           os << ',';
         }
-        if (pretty) {
-          os << '\n';
-          doIndent();
-        }
+        maybeNewline();
         item->stringify(os, pretty, indent);
       }
       indent--;
-      if (pretty) {
-        os << '\n';
-        doIndent();
-      }
+      maybeNewline();
       os << ']';
       return;
     }
@@ -70,10 +70,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         } else {
           os << ',';
         }
-        if (pretty) {
-          os << '\n';
-          doIndent();
-        }
+        maybeNewline();
         os << "\"" << key << "\":";
         if (pretty) {
           os << ' ';
@@ -81,10 +78,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
         value->stringify(os, pretty, indent);
       }
       indent--;
-      if (pretty) {
-        os << '\n';
-        doIndent();
-      }
+      maybeNewline();
       os << '}';
       return;
     }
