@@ -87,7 +87,7 @@ namespace {
 
 template<class F> void forEachElement(Module& module, F f) {
   ModuleUtils::iterActiveElementSegments(module, [&](ElementSegment* segment) {
-    Name base = "";
+    Name base;
     Index offset = 0;
     if (auto* c = segment->offset->dynCast<Const>()) {
       offset = c->value.getInteger();
@@ -134,7 +134,7 @@ Expression* TableSlotManager::Slot::makeExpr(Module& module) {
   auto makeIndex = [&]() {
     return builder.makeConst(Literal::makeFromInt32(index, table->addressType));
   };
-  if (global.size()) {
+  if (global) {
     Expression* getBase = builder.makeGlobalGet(global, table->addressType);
     auto addOp = table->is64() ? AddInt64 : AddInt32;
     return index == 0 ? getBase
@@ -191,7 +191,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   if (activeTableSegments.empty()) {
     // There are no active segments, so we will lazily create one and start
     // filling it at index 0.
-    activeBase = {activeTable->name, "", 0};
+    activeBase = {activeTable->name, Name(), 0};
   } else if (activeTableSegments.size() == 1 &&
              activeTableSegments[0]->type == funcref &&
              !activeTableSegments[0]->offset->is<Const>()) {
@@ -218,7 +218,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
       if (segmentBase + segment->data.size() >= maxIndex) {
         maxIndex = segmentBase + segment->data.size();
         activeSegment = segment;
-        activeBase = {activeTable->name, "", segmentBase};
+        activeBase = {activeTable->name, Name(), segmentBase};
       }
     }
   }
@@ -257,7 +257,7 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
   if (activeSegment == nullptr) {
     if (activeTable == nullptr) {
       activeTable = makeTable();
-      activeBase = {activeTable->name, "", 0};
+      activeBase = {activeTable->name, Name(), 0};
     }
 
     // None of the existing segments should refer to the active table
@@ -737,7 +737,7 @@ void ModuleSplitter::shareImportableItems() {
   if (tableManager.activeTable) {
     primaryUsed.tables.insert(tableManager.activeTable->name);
   }
-  if (tableManager.activeBase.global.size()) {
+  if (tableManager.activeBase.global) {
     primaryUsed.globals.insert(tableManager.activeBase.global);
   }
 
@@ -1116,7 +1116,7 @@ void ModuleSplitter::setupTablePatching() {
                        ExternalKind::Table);
     }
 
-    if (tableManager.activeBase.global.size()) {
+    if (tableManager.activeBase.global) {
       // Import and export the active table's base global if necessary. Unless
       // the base global was already being used elsewhere in secondaries,
       // shareImportableItems wasn't able to mark it as used in secondaries, so
