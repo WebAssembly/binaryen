@@ -315,6 +315,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
+    // If we got to the point of applying things to the module, then we evalled
+    // a ctor, which means we evalled the start function. Wipe it out, as it
+    // must not run again (just like a ctor that runs before all others).
+    wasm->start = Name();
+
     clearApplyState();
 
     // If nothing was ever written to memories then there is nothing to update.
@@ -323,11 +328,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     }
 
     applyGlobalsToModule();
-
-    // If we got to the point of applying things to the module, then we evalled
-    // a ctor, which means we evalled the start function. Wipe it out, as it
-    // must not run again (just like a ctor that runs before all others).
-    wasm->start = Name();
   }
 
   void init(Module& wasm_, EvallingModuleRunner& instance_) override {
@@ -1034,17 +1034,14 @@ public:
   void createStartBlock() {
     Builder builder(*wasm);
     startBlock = builder.makeBlock();
-    if (wasm->start.is()) {
-      // Put our block before any user start code.
-      auto* existingStart = wasm->getFunction(wasm->start);
-      existingStart->body =
-        builder.makeSequence(*startBlock, existingStart->body);
-    } else {
-      // Make a new start function.
-      wasm->start = Names::getValidFunctionName(*wasm, "start");
-      wasm->addFunction(builder.makeFunction(
-        wasm->start, Signature{Type::none, Type::none}, {}, *startBlock));
-    }
+    // There is no existing start, because each time we apply changes, we
+    // evalled away the old one.
+    assert(!wasm->start);
+
+    // Make a new start function.
+    wasm->start = Names::getValidFunctionName(*wasm, "start");
+    wasm->addFunction(builder.makeFunction(
+      wasm->start, Signature{Type::none, Type::none}, {}, *startBlock));
   }
 
   void clearStartBlock() {
