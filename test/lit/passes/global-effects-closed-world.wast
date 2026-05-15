@@ -6,6 +6,8 @@
 ;; global-effects-closed-world-simplify-locals.wast.
 
 (module
+  (table 1 1 funcref)
+
   ;; CHECK:      (type $nopType (func (param i32)))
   (type $nopType (func (param i32)))
 
@@ -35,9 +37,28 @@
   (func $calls-nop-via-nullable-ref (param $ref (ref null $nopType))
     (call_ref $nopType (i32.const 1) (local.get $ref))
   )
+
+  ;; CHECK:      (func $call-indirect-nop (type $3)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $nopType)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-indirect-nop
+    ;; The call body is guaranteed to have no effects, however the call_indirect
+    ;; itself may trap if the index is out of bounds or if the function we
+    ;; lookup doesn't match $nopType. The call can't be optimized out.
+    ;; This could be optimized out if --traps-never-happens or
+    ;; --ignore-implicit-traps (in fewer cases) is set. See
+    ;; global-effects-closed-world-tnh.wast and
+    ;; global-effects-closed-world-ignore-implicit-traps.wast.
+    (call_indirect (type $nopType) (i32.const 1) (i32.const 0))
+  )
 )
 
 (module
+  (table 1 1 funcref)
+
   ;; CHECK:      (type $maybe-has-effects (func (param i32)))
   (type $maybe-has-effects (func (param i32)))
 
@@ -48,10 +69,10 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $nop2 (type $maybe-has-effects) (param $0 i32)
+  ;; CHECK:      (func $nop (type $maybe-has-effects) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $nop2 (export "nop2") (type $maybe-has-effects) (param i32)
+  (func $nop (export "nop") (type $maybe-has-effects) (param i32)
     (nop)
   )
 
@@ -66,38 +87,17 @@
     ;; We don't know so don't optimize it out.
     (call_ref $maybe-has-effects (i32.const 1) (local.get $ref))
   )
-)
 
-;; Same as above but with call_indirect
-(module
-  (table 1 1 funcref)
-
-  ;; CHECK:      (type $maybe-has-effects (func (param i32)))
-  (type $maybe-has-effects (func (param i32)))
-
-  ;; CHECK:      (func $unreachable (type $maybe-has-effects) (param $0 i32)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $unreachable (export "unreachable") (type $maybe-has-effects) (param i32)
-    (unreachable)
-  )
-
-  ;; CHECK:      (func $nop2 (type $maybe-has-effects) (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $nop2 (export "nop2") (type $maybe-has-effects) (param i32)
-    (nop)
-  )
-
-  ;; CHECK:      (func $calls-effectful-function-via-ref (type $1)
+  ;; CHECK:      (func $call-indirect-effectful-function (type $2)
   ;; CHECK-NEXT:  (call_indirect $0 (type $maybe-has-effects)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $calls-effectful-function-via-ref
-    ;; This may be a nop or it may trap depending on the ref.
-    ;; We don't know so don't optimize it out.
+  (func $call-indirect-effectful-function
+    ;; As above, this may trap or be a nop depending on what's in the table.
+    ;; In addition, this may trap due to a type mismatch of index out of bounds.
+    ;; Since we don't know any of these things, don't optimize the call out.
     (call_indirect (type $maybe-has-effects) (i32.const 1) (i32.const 1))
   )
 )

@@ -736,6 +736,21 @@ private:
       addCallEffects(curr, bodyEffects);
     }
     void visitCallIndirect(CallIndirect* curr) {
+      auto* table = parent.module.getTable(curr->table);
+      if (trapOnNull(table->type)) {
+        return;
+      }
+
+      if (!Type::isSubType(Type(curr->heapType, Nullability::NonNullable),
+                           table->type)) {
+        parent.trap = true;
+        return;
+      }
+
+      // Due to index out of bounds. Type-related traps are handled above and
+      // may set either implicitTrap or trap (or neither).
+      parent.implicitTrap = true;
+
       const EffectAnalyzer* bodyEffects = nullptr;
       if (auto it = parent.module.typeEffects.find(curr->heapType);
           it != parent.module.typeEffects.end()) {
