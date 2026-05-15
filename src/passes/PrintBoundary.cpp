@@ -104,7 +104,7 @@ struct PrintBoundary : public Pass {
   // results.
   //
   // We emit an array only when needed, unless forceArray is set.
-  json::Value::Ref getTypes(Type type, bool forceArray=false) {
+  json::Value::Ref getTypes(Type type, bool forceArray = false) {
     if (type.isRef()) {
       auto heapType = type.getHeapType();
       if (heapType.isSignature()) {
