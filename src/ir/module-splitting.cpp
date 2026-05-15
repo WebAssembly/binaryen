@@ -112,13 +112,15 @@ struct TableSlotManager {
     Expression* makeExpr(Module& module);
   };
   Module& module;
+  const std::vector<std::unique_ptr<Module>>& secondaries;
   Table* activeTable = nullptr;
   ElementSegment* activeSegment = nullptr;
   Slot activeBase;
   std::map<Name, Slot> funcIndices;
   std::vector<ElementSegment*> activeTableSegments;
 
-  TableSlotManager(Module& module);
+  TableSlotManager(Module& module,
+                   const std::vector<std::unique_ptr<Module>>& secondaries);
 
   Table* makeTable();
   ElementSegment* makeElementSegment();
@@ -149,7 +151,9 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
   funcIndices.insert({func, slot});
 }
 
-TableSlotManager::TableSlotManager(Module& module) : module(module) {
+TableSlotManager::TableSlotManager(
+  Module& module, const std::vector<std::unique_ptr<Module>>& secondaries)
+  : module(module), secondaries(secondaries) {
   // If possible, just create a new table to manage all primary-to-secondary
   // calls lazily. Do not re-use slots for functions that will already be in
   // existing tables, since that is not correct in the face of table mutations.
@@ -233,8 +237,18 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
 }
 
 Table* TableSlotManager::makeTable() {
-  return module.addTable(
-    Builder::makeTable(Names::getValidTableName(module, Name::fromInt(0))));
+  Name name = Names::getValidName("0", [&](Name test) {
+    if (module.getTableOrNull(test)) {
+      return false;
+    }
+    for (auto& secondary : secondaries) {
+      if (secondary->getTableOrNull(test)) {
+        return false;
+      }
+    }
+    return true;
+  });
+  return module.addTable(Builder::makeTable(name));
 }
 
 ElementSegment* TableSlotManager::makeElementSegment() {
@@ -347,7 +361,7 @@ struct ModuleSplitter {
   void setupTablePatching();
 
   ModuleSplitter(Module& primary, const Config& config)
-    : config(config), primary(primary), tableManager(primary),
+    : config(config), primary(primary), tableManager(primary, secondaries),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)),
       exportedPrimaryItems(initExportedPrimaryItems(primary)) {
     classifyFunctions();
