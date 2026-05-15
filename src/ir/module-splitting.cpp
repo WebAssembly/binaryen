@@ -250,7 +250,7 @@ Table* TableSlotManager::makeTable() {
     if (module.getTableOrNull(test)) {
       return false;
     }
-    if (secondaryTableNames.count(test)) {
+    if (secondaryTableNames.contains(test)) {
       return false;
     }
     return true;
