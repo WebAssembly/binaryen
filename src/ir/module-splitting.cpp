@@ -1107,7 +1107,11 @@ void ModuleSplitter::setupTablePatching() {
     // so we should export and import the active table here.
     auto secondaryTable =
       secondary.getTableOrNull(tableManager.activeTable->name);
-    if (!secondaryTable) {
+    if (secondaryTable) {
+      // In case it's already in the secondary module, sync the initial/max
+      secondaryTable->initial = tableManager.activeTable->initial;
+      secondaryTable->max = tableManager.activeTable->max;
+    } else {
       secondaryTable =
         ModuleUtils::copyTable(tableManager.activeTable, secondary);
       makeImportExport(*tableManager.activeTable,

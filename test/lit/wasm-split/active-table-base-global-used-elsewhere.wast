@@ -18,8 +18,8 @@
 
  ;; PRIMARY:      (import "placeholder.deferred" "1" (func $placeholder_1))
 
- ;; PRIMARY:      (table $table 2 funcref)
- (table $table 1 funcref)
+ ;; PRIMARY:      (table $table 2 2 funcref)
+ (table $table 1 1 funcref)
  (elem (global.get $base) $keep)
  ;; PRIMARY:      (elem $0 (global.get $base) $keep $placeholder_1)
 
@@ -40,7 +40,7 @@
  (func $keep
   (call $split)
  )
- ;; SECONDARY:      (import "primary" "table" (table $table 1 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $table 2 2 funcref))
 
  ;; SECONDARY:      (import "primary" "global" (global $base i32))
 
