@@ -70,4 +70,17 @@
    (i32.const 1337)
   )
  )
+
+ ;; MOD3:      (type $0 (func))
+
+ ;; MOD3:      (func $D
+ ;; MOD3-NEXT:  (drop
+ ;; MOD3-NEXT:   (i32.const 999999)
+ ;; MOD3-NEXT:  )
+ ;; MOD3-NEXT: )
+ (func $D
+  (drop
+   (i32.const 999999)
+  )
+ )
 )
