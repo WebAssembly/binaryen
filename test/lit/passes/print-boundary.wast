@@ -66,9 +66,7 @@
 ;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "name": "glob",
 ;; CHECK-NEXT:    "kind": "global",
-;; CHECK-NEXT:    "type": [
-;; CHECK-NEXT:     "i32"
-;; CHECK-NEXT:    ]
+;; CHECK-NEXT:    "type": "i32"
 ;; CHECK-NEXT:   }
 ;; CHECK-NEXT:  ]
 ;; CHECK-NEXT: }

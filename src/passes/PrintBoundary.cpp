@@ -102,16 +102,24 @@ struct PrintBoundary : public Pass {
 
   // Emits an array of multivalue types. For a signature, emits params and
   // results.
-  json::Value::Ref getTypes(Type type) {
+  //
+  // We emit an array only when needed, unless forceArray is set.
+  json::Value::Ref getTypes(Type type, bool forceArray=false) {
     if (type.isRef()) {
       auto heapType = type.getHeapType();
       if (heapType.isSignature()) {
         auto sig = heapType.getSignature();
         auto ret = json::Value::makeObject();
-        ret["params"] = getTypes(sig.params);
-        ret["results"] = getTypes(sig.results);
+        // Always emit arrays for params and results.
+        ret["params"] = getTypes(sig.params, true);
+        ret["results"] = getTypes(sig.results, true);
         return ret;
       }
+    }
+
+    // Simplify the output, avoiding an array for a single value.
+    if (!forceArray && type.size() == 1) {
+      return json::Value::make(type.toString());
     }
 
     auto ret = json::Value::makeArray();
