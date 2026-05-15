@@ -17,7 +17,7 @@
   "main": "./dist/binaryen.js",
   "scripts": {
     "make": "mkdir -p ../build/ && (cd ../build/ && emcmake cmake ../ && emmake make binaryen_js)",
-    "postmake": "rm -rf ./build/ && mkdir -p ./build/ && cp -r ../build/bin/* ./build/",
+    "postmake": "rm -rf ./build/ && mkdir -p ./build/ && cp -R ../build/bin/* ./build/",
     "compile": "rm -rf ./dist/ && tsc && tsc --project ./test/tsconfig.json",
     "lint": "eslint ./",
     "docs": "rm -rf ./docs/out/ && typedoc",
