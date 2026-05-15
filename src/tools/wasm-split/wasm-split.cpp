@@ -296,6 +296,13 @@ void splitModule(const WasmSplitOptions& options) {
       }
       continue;
     }
+    if (function->name == wasm.start) {
+      if (!options.quiet) {
+        std::cerr << "warning: cannot split out start function " << func
+                  << "\n";
+      }
+      continue;
+    }
     if (!options.quiet && options.keepFuncs.contains(func)) {
       std::cerr << "warning: function " << func
                 << " was to be both kept and split. It will be split.\n";
