@@ -11,6 +11,10 @@ declare module "#binaryen-raw" {
 
 
 		// Helper tools defined in Emscripten’s codebase needed in TS. Listed in `EXPORTED_RUNTIME_METHODS`.
+		// https://github.com/emscripten-core/emscripten/blob/main/src/shell_minimal.js
+		out(x: unknown): void; // alias of `console.log`
+		err(x: unknown): void; // alias of `console.error`
+
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libcore.js
 		HEAP8: Int8Array;
 		HEAPU8: Uint8Array;

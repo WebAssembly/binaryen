@@ -11,6 +11,8 @@ export const BinaryenObj = await Binaryen();
 export const {
 	_malloc,
 	_free,
+	out,
+	err,
 	HEAP8,
 	HEAPU8,
 	HEAP32,

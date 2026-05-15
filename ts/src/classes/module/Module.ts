@@ -83,11 +83,6 @@ import {
 
 
 
-/** Probably used in `BinaryenObj["_BinaryenModulePrintAsmjs"]`. */
-declare let out: any;
-
-
-
 export enum Feature {
 	MVP = BinaryenObj["_BinaryenFeatureMVP"](),
 	Atomics = BinaryenObj["_BinaryenFeatureAtomics"](),
@@ -360,13 +355,14 @@ export class Module {
 	 * @category Emission & Execution
 	 */
 	emitAsmjs(): string {
+		/* See comment in the `emitText()` global function (`../../globals.ts`) for what’s going on here. */
 		let returned = "";
-		const saved = out;
-		out = (x: string) => {
+		const temp_out = BinaryenObj.out;
+		BinaryenObj.out = (x: string): void => {
 			returned += `${ x }\n`;
 		};
 		BinaryenObj["_BinaryenModulePrintAsmjs"](this[PTR]);
-		out = saved;
+		BinaryenObj.out = temp_out;
 		return returned;
 	}
 

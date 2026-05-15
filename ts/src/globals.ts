@@ -187,17 +187,25 @@ function handleFatalError<T>(func: () => T): T {
 
 
 // ## General Binaryen Functions ## //
-/** Probably used in `BinaryenObj["_BinaryenExpressionPrint"]`. */
-declare let out: any;
 /** Emits the expression in Binaryen’s s-expression text format (not official stack-style text format). */
 export function emitText(expr: ExpressionRef): string {
+	/*
+	 * `out` is Emscripten's `stdout` function (an alias of `console.log`),
+	 * called internally by `BinaryenExpressionPrint()` to print its output.
+	 * We have to temporarily swap out the function itself
+	 * so that when `BinaryenExpressionPrint()` calls it,
+	 * it calls our capturing function instead.
+	 *
+	 * We can’t use `import {out} from "./-pre.ts";` because ES Module imports can’t be reassigned.
+	 * Instead, we reassign directly on `BinaryenObj`.
+	 */
 	let returned = "";
-	const saved = out;
-	out = (x: string) => {
+	const temp_out = BinaryenObj.out;
+	BinaryenObj.out = (x: string): void => {
 		returned += `${ x }\n`;
 	};
 	BinaryenObj["_BinaryenExpressionPrint"](expr);
-	out = saved;
+	BinaryenObj.out = temp_out;
 	return returned;
 }
 
