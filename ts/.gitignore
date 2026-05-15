@@ -6,6 +6,3 @@ build/
 
 # compiled TypeScript
 dist/
-
-# generated documentation
-docs/out/

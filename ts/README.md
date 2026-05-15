@@ -78,10 +78,10 @@ Generated documentation is built with [TypeDoc](https://typedoc.org/), a tool th
 
 After developing and updating doc-comments, regenerate docs and view them in your browser.
 ```zsh
-$ npm run docs # builds a static site to ./docs/out/
-$ open ./docs/out/index.html
+$ npm run docs # builds a static site to ../docs/binaryen.ts/
+$ open ../docs/binaryen.ts/index.html
 ```
-Don’t put anything important in `./docs/out/`, as it gets deleted and rebuilt each time.
+Don’t put anything important in `../docs/`.
 
 TODO: Docs will be hosted publicly online somewhere soon.
 
@@ -152,6 +152,6 @@ TODO: this section
 
 - `dist/` *(gitignored)*: output of **tsc**; this gets published to npm for consumers
 
-- `docs/`: documentation
+- `docs/`: documentation assets
 
-	- `out/` *(gitignored)*: output of **typedoc**; this will probably be hosted online
+- `../docs/binaryen.ts/` *(gitignored)*: output of **typedoc**; this will probably be hosted online

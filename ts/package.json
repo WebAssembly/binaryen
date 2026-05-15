@@ -20,7 +20,7 @@
     "postmake": "rm -rf ./build/ && mkdir -p ./build/ && cp -R ../build/bin/* ./build/",
     "compile": "rm -rf ./dist/ && tsc && tsc --project ./test/tsconfig.json",
     "lint": "eslint ./",
-    "docs": "rm -rf ./docs/out/ && typedoc",
+    "docs": "rm -rf ../docs/binaryen.ts/ && typedoc",
     "test": "tsx --test --test-isolation=none -- './test/**/*.test.ts'",
     "build": "npm run compile && npm run lint && npm run docs && npm run test"
   },
