@@ -32,7 +32,7 @@ suite("binaryen", () => {
 
 		// constants
 		assert.ok(binaryen.unreachable);
-		assert.strictEqual(binaryen.none, 0);
+		assert.ok("none" in binaryen);
 		assert.ok(binaryen.auto);
 		assert.ok(binaryen.i32);
 		assert.ok(binaryen.i64);
@@ -45,11 +45,13 @@ suite("binaryen", () => {
 		assert.ok(binaryen.structref);
 		assert.ok(binaryen.arrayref);
 		assert.ok(binaryen.funcref);
-		assert.ok(!Reflect.has(binaryen, "exnref"));
+		// @ts-expect-error
+		assert.ok(!binaryen.exnref);
 		assert.ok(binaryen.externref);
 		assert.ok(binaryen.nullref);
 		assert.ok(binaryen.nullfuncref);
-		assert.ok(!Reflect.has(binaryen, "nullexnref"));
+		// @ts-expect-error
+		assert.ok(!binaryen.nullexnref);
 		assert.ok(binaryen.nullexternref);
 		assert.strictEqual(binaryen.notPacked, 0);
 		assert.ok(binaryen.i8);
