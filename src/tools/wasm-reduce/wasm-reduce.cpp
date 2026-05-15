@@ -1102,6 +1102,7 @@ struct Reducer
           auto* block =
             ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
               .getChildrenReplacement();
+          auto originalType = curr->type;
           auto* replacement = builder.replaceWithIdenticalType(curr);
           // We may have failed to come up with a replacement (e.g. for
           // non-nullable references), so manually add an `unreachable` in that
@@ -1110,7 +1111,7 @@ struct Reducer
             replacement = builder.makeUnreachable();
           }
           block->list.push_back(replacement);
-          block->type = curr->type;
+          block->type = originalType;
           replaceCurrent(block);
         }
         void visitRefFunc(RefFunc* curr) {
