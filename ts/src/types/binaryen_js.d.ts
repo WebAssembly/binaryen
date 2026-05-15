@@ -1,4 +1,4 @@
-// Artifacts provided by the Emscripten build, located at `/build/bin/binaryen_js.js`.
+// Artifacts provided by the Emscripten build, located at `./build/binaryen_js.js`.
 
 
 
