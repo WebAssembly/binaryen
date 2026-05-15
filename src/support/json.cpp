@@ -19,30 +19,79 @@
 
 namespace json {
 
-void Value::stringify(std::ostream& os, bool pretty) {
-  if (isString()) {
-    std::stringstream wtf16;
-    [[maybe_unused]] bool valid =
-      wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
-    assert(valid);
-    // TODO: Use wtf16.view() once we have C++20.
-    wasm::String::printEscapedJSON(os, wtf16.str());
-  } else if (isArray()) {
-    os << '[';
-    auto first = true;
-    for (auto& item : getArray()) {
-      if (first) {
-        first = false;
-      } else {
-        // TODO pretty whitespace
-        os << ',';
-      }
-      item->stringify(os, pretty);
+void Value::stringify(std::ostream& os, bool pretty, int indent) {
+  auto doIndent = [&]() {
+    for (int i = 0; i < indent; i++) {
+      os << ' ';
     }
-    os << ']';
-  } else {
-    WASM_UNREACHABLE("TODO: stringify all of JSON");
-  }
+  };
+
+  auto maybeNewline = [&]() {
+    if (pretty) {
+      os << '\n';
+      doIndent();
+    }
+  };
+
+  switch (type) {
+    case String: {
+      std::stringstream wtf16;
+      [[maybe_unused]] bool valid =
+        wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
+      assert(valid);
+      wasm::String::printEscapedJSON(os, wtf16.view());
+      return;
+    }
+    case Array: {
+      os << '[';
+      indent++;
+      auto first = true;
+      for (auto& item : getArray()) {
+        if (first) {
+          first = false;
+        } else {
+          os << ',';
+        }
+        maybeNewline();
+        item->stringify(os, pretty, indent);
+      }
+      indent--;
+      maybeNewline();
+      os << ']';
+      return;
+    }
+    case Object: {
+      os << '{';
+      indent++;
+      auto first = true;
+      for (auto& [key, value] : getObject()) {
+        if (first) {
+          first = false;
+        } else {
+          os << ',';
+        }
+        maybeNewline();
+        os << "\"" << key << "\":";
+        if (pretty) {
+          os << ' ';
+        }
+        value->stringify(os, pretty, indent);
+      }
+      indent--;
+      maybeNewline();
+      os << '}';
+      return;
+    }
+    case Number:
+      os << getNumber();
+      return;
+    case Null:
+      os << "null";
+      return;
+    case Bool:
+      os << (getBool() ? "true" : "false");
+      return;
+  };
 }
 
 } // namespace json
