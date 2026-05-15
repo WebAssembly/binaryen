@@ -111,8 +111,10 @@ export enum Feature {
 	FP16 = BinaryenObj["_BinaryenFeatureFP16"](),
 	BulkMemoryOpt = BinaryenObj["_BinaryenFeatureBulkMemoryOpt"](),
 	CallIndirectOverlong = BinaryenObj["_BinaryenFeatureCallIndirectOverlong"](),
+	// TODO: CustomDescriptors
 	RelaxedAtomics = BinaryenObj["_BinaryenFeatureRelaxedAtomics"](),
 	CustomPageSizes = BinaryenObj["_BinaryenFeatureCustomPageSizes"](),
+	// TODO: Multibyte
 	WideArithmetic = BinaryenObj["_BinaryenFeatureWideArithmetic"](),
 	All = BinaryenObj["_BinaryenFeatureAll"](),
 }

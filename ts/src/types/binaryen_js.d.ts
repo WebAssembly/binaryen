@@ -4,10 +4,13 @@
 
 declare module "#binaryen-raw" {
 	interface BinaryenObjType {
+		// Standard C functions listed in `EXPORTED_FUNCTIONS`.
 		// https://github.com/emscripten-core/emscripten/blob/main/src/preamble.js
-		_free(ptr: number): void;
 		_malloc(ptr: number): number;
+		_free(ptr: number): void;
 
+
+		// Helper tools defined in Emscripten’s codebase needed in TS. Listed in `EXPORTED_RUNTIME_METHODS`.
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libcore.js
 		HEAP8: Int8Array;
 		HEAPU8: Uint8Array;
@@ -19,13 +22,15 @@ declare module "#binaryen-raw" {
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libstrings.js
 		UTF8ToString(n: number): string;
-		stringToAscii(text: string, buffer: number): void;
-		stringToUTF8OnStack(str: string): number;
+		stringToAscii(text: string, buffer: number): void; // yes
+		stringToUTF8OnStack(str: string): number; // yes
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libexceptions.js
-		getExceptionMessage(e: number | Error): [string, string];
+		getExceptionMessage(e: number | Error): [string, string]; // yes
 
-		// C-defined functions
+
+		// Binaryen’s functions in the C++ codebase, e.g. `_BinaryenTypeUnreachable`.
+		// These are exposed via `-sEXPORT_NAME=Binaryen` in the makelists.
 		[key: string]: (...args: readonly (number | bigint | boolean)[]) => number;
 	}
 
