@@ -9,20 +9,62 @@
 ;; The start function, $C, cannot be split it, and will remain in the primary.
 
 (module
+ ;; PRIMARY:      (type $0 (func))
+
+ ;; PRIMARY:      (import "placeholder.2" "0" (func $placeholder_0))
+
+ ;; PRIMARY:      (table $0 1 funcref)
+
+ ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
+
+ ;; PRIMARY:      (export "C" (func $C))
+
+ ;; PRIMARY:      (export "table" (table $0))
+
+ ;; PRIMARY:      (start $C)
  (start $C)
 
+ ;; MOD1:      (type $0 (func))
+
+ ;; MOD1:      (import "primary" "table" (table $timport$0 1 funcref))
+
+ ;; MOD1:      (import "primary" "C" (func $C (exact)))
+
+ ;; MOD1:      (func $A
+ ;; MOD1-NEXT:  (call $A)
+ ;; MOD1-NEXT:  (call_indirect (type $0)
+ ;; MOD1-NEXT:   (i32.const 0)
+ ;; MOD1-NEXT:  )
+ ;; MOD1-NEXT:  (call $C)
+ ;; MOD1-NEXT: )
  (func $A
   (call $A)
   (call $B)
   (call $C)
  )
 
+ ;; MOD2:      (type $0 (func))
+
+ ;; MOD2:      (import "primary" "table" (table $timport$0 1 funcref))
+
+ ;; MOD2:      (elem $0 (i32.const 0) $B)
+
+ ;; MOD2:      (func $B
+ ;; MOD2-NEXT:  (drop
+ ;; MOD2-NEXT:   (i32.const 42)
+ ;; MOD2-NEXT:  )
+ ;; MOD2-NEXT: )
  (func $B
   (drop
    (i32.const 42)
   )
  )
 
+ ;; PRIMARY:      (func $C
+ ;; PRIMARY-NEXT:  (drop
+ ;; PRIMARY-NEXT:   (i32.const 1337)
+ ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT: )
  (func $C
   (drop
    (i32.const 1337)

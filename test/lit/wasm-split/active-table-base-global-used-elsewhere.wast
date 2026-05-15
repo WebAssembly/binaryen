@@ -40,7 +40,7 @@
  (func $keep
   (call $split)
  )
- ;; SECONDARY:      (import "primary" "table" (table $table 1 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $table 2 funcref))
 
  ;; SECONDARY:      (import "primary" "global" (global $base i32))
 
