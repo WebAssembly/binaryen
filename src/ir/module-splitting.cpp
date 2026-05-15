@@ -237,14 +237,18 @@ TableSlotManager::TableSlotManager(
 }
 
 Table* TableSlotManager::makeTable() {
+  std::unordered_set<Name> secondaryTableNames;
+  for (auto& secondary : secondaries) {
+    for (auto& table : secondary->tables) {
+      secondaryTableNames.insert(table->name);
+    }
+  }
   Name name = Names::getValidName("0", [&](Name test) {
     if (module.getTableOrNull(test)) {
       return false;
     }
-    for (auto& secondary : secondaries) {
-      if (secondary->getTableOrNull(test)) {
-        return false;
-      }
+    if (secondaryTableNames.count(test)) {
+      return false;
     }
     return true;
   });
