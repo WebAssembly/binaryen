@@ -129,7 +129,9 @@ export enum ExpressionId {
 	Return = BinaryenObj["_BinaryenReturnId"](),
 	Throw = BinaryenObj["_BinaryenThrowId"](),
 	Rethrow = BinaryenObj["_BinaryenRethrowId"](),
+	// TODO: ThrowRef
 	Try = BinaryenObj["_BinaryenTryId"](),
+	// TODO: TryTable
 
 	// ### Variable Instruction Ids ### //
 	LocalGet = BinaryenObj["_BinaryenLocalGetId"](),
@@ -142,6 +144,10 @@ export enum ExpressionId {
 	TableSet = BinaryenObj["_BinaryenTableSetId"](),
 	TableSize = BinaryenObj["_BinaryenTableSizeId"](),
 	TableGrow = BinaryenObj["_BinaryenTableGrowId"](),
+	// TODO: TableFill
+	// TODO: TableCopy
+	// TODO: TableInit
+	// TODO: ElemDrop
 
 	// ### Memory Instruction Ids ### //
 	Load = BinaryenObj["_BinaryenLoadId"](),
@@ -163,6 +169,7 @@ export enum ExpressionId {
 	RefEq = BinaryenObj["_BinaryenRefEqId"](),
 	RefTest = BinaryenObj["_BinaryenRefTestId"](),
 	RefCast = BinaryenObj["_BinaryenRefCastId"](),
+	// TODO: RefGetDesc
 	RefI31 = BinaryenObj["_BinaryenRefI31Id"](),
 	I31Get = BinaryenObj["_BinaryenI31GetId"](),
 
@@ -172,17 +179,23 @@ export enum ExpressionId {
 	StructNew = BinaryenObj["_BinaryenStructNewId"](),
 	StructGet = BinaryenObj["_BinaryenStructGetId"](),
 	StructSet = BinaryenObj["_BinaryenStructSetId"](),
+	// TODO: StructRMW
+	// TODO: StructCmpxchg
 	ArrayNew = BinaryenObj["_BinaryenArrayNewId"](),
 	ArrayNewFixed = BinaryenObj["_BinaryenArrayNewFixedId"](),
 	ArrayNewData = BinaryenObj["_BinaryenArrayNewDataId"](),
 	ArrayNewElem = BinaryenObj["_BinaryenArrayNewElemId"](),
 	ArrayGet = BinaryenObj["_BinaryenArrayGetId"](),
 	ArraySet = BinaryenObj["_BinaryenArraySetId"](),
+	// TODO: ArrayLoadId
+	// TODO: ArrayStoreId
 	ArrayLen = BinaryenObj["_BinaryenArrayLenId"](),
 	ArrayFill = BinaryenObj["_BinaryenArrayFillId"](),
 	ArrayCopy = BinaryenObj["_BinaryenArrayCopyId"](),
 	ArrayInitData = BinaryenObj["_BinaryenArrayInitDataId"](),
 	ArrayInitElem = BinaryenObj["_BinaryenArrayInitElemId"](),
+	// TODO: ArrayRMWId
+	// TODO: ArrayCmpxchgId
 
 	// ### Numeric & Vector Instruction Ids ### //
 	Const = BinaryenObj["_BinaryenConstId"](),
@@ -210,6 +223,7 @@ export enum ExpressionId {
 	StringEncode = BinaryenObj["_BinaryenStringEncodeId"](),
 	StringConcat = BinaryenObj["_BinaryenStringConcatId"](),
 	StringEq = BinaryenObj["_BinaryenStringEqId"](),
+	// TODO: StringTest
 	StringWTF16Get = BinaryenObj["_BinaryenStringWTF16GetId"](),
 	StringSliceWTF = BinaryenObj["_BinaryenStringSliceWTFId"](),
 	// #### Wide Arithmetic #### //
