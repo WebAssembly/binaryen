@@ -487,6 +487,8 @@ struct ExecutionResults {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
+    } catch (const WasmException&) {
+      std::cout << "[exception thrown: start]\n";
     }
   }
 

@@ -29,6 +29,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/iteration.h"
+#include "ir/localize.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -930,7 +931,8 @@ struct Reducer
       }
 
       std::cerr << "|     try partition " << dd.partitionIndex() + 1 << " / "
-                << dd.partitionCount() << " (size " << dd.test.size() << ")\n";
+                << dd.partitionCount() << " (size " << dd.test.size() << " / "
+                << dd.working.size() << ")\n";
       Index removedSize = dd.working.size() - dd.test.size();
       std::vector<Expression*> oldBodies(removedSize);
 
@@ -982,66 +984,160 @@ struct Reducer
     }
   }
 
-  bool reduceFunctions() {
-    // try to remove functions
-    std::vector<Name> functionNames;
-    for (auto& func : module->functions) {
-      functionNames.push_back(func->name);
-    }
-    auto numFuncs = functionNames.size();
-    if (numFuncs == 0) {
-      return false;
-    }
-    uint64_t skip = 1;
-    uint64_t maxSkip = 1;
-    // If we just removed some functions in the previous iteration, keep trying
-    // to remove more as this is one of the most efficient ways to reduce.
-    bool justReduced = true;
-    // Start from a new place each time.
-    size_t base = deterministicRandom(numFuncs);
-    std::cerr << "|    try to remove functions (base: " << base
-              << ", decisionCounter: " << decisionCounter << ", numFuncs "
-              << numFuncs << ")\n";
-    for (size_t x = 0; x < functionNames.size(); x++) {
-      size_t i = (base + x) % numFuncs;
-      if (!justReduced && functionsWeTriedToRemove.contains(functionNames[i]) &&
-          !shouldTryToReduce(std::max((factor / 5) + 1, uint64_t(20000)))) {
-        continue;
+  void reduceFunctions() {
+    std::cerr << "|    try to remove functions\n";
+
+    // Find functions referenced from module code (i.e. global initializers). We
+    // will not attempt to remove these functions because we cannot generally
+    // replace their references with something valid.
+    // TODO: Look at how the function references are used. If they can be
+    // nullable, we can still consider deleting the functions.
+    struct UnremovableFinder : public PostWalker<UnremovableFinder> {
+      std::unordered_set<Name> unremovable;
+      void visitRefFunc(RefFunc* curr) { unremovable.insert(curr->func); }
+    };
+    UnremovableFinder finder;
+    finder.walkModuleCode(module.get());
+
+    // Find the indices of functions we can consider removing or must not
+    // remove.
+    std::vector<Index> unremovableIndices;
+    std::vector<Index> initialCandidates;
+    initialCandidates.reserve(module->functions.size() -
+                              finder.unremovable.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      if (finder.unremovable.contains(module->functions[i]->name)) {
+        unremovableIndices.push_back(i);
+      } else {
+        initialCandidates.push_back(i);
       }
-      std::vector<Name> names;
-      for (size_t j = 0; names.size() < skip && i + j < functionNames.size();
-           j++) {
-        auto name = functionNames[i + j];
-        if (module->getFunctionOrNull(name)) {
-          names.push_back(name);
-          functionsWeTriedToRemove.insert(name);
+    }
+
+    if (initialCandidates.empty()) {
+      return;
+    }
+
+    // Indices will change as we remove functions. Map the original indices to
+    // the present indices so we can use the original indices as stable
+    // identifiers. (Function names are not necessarily preserved through
+    // round-tripping.)
+    std::vector<std::optional<Index>> currentIndices;
+    currentIndices.reserve(module->functions.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      currentIndices.push_back(i);
+    }
+
+    DeltaDebugger<Index> dd(std::move(initialCandidates));
+    while (!dd.finished()) {
+      // Exit early if the test set size is less than the square root of the
+      // working set size. We don't want to waste time on very fine-grained
+      // partitions when we could switch to a different reduction strategy
+      // instead.
+      if (size_t sqrtRemaining = std::sqrt(dd.working.size());
+          dd.test.size() > 0 && dd.test.size() < sqrtRemaining) {
+        break;
+      }
+
+      std::cerr << "|     try partition " << dd.partitionIndex() + 1 << " / "
+                << dd.partitionCount() << " (size " << dd.test.size() << " / "
+                << dd.working.size() << ")\n";
+
+      std::unordered_set<Index> keptIndices;
+      for (Index i : unremovableIndices) {
+        keptIndices.insert(*currentIndices[i]);
+      }
+      for (Index i : dd.test) {
+        keptIndices.insert(*currentIndices[i]);
+      }
+
+      // Get the list of kept functions and the new index mapping we will have
+      // to use if this reduction works.
+      std::vector<std::unique_ptr<Function>> newFuncs;
+      newFuncs.reserve(keptIndices.size());
+      std::vector<std::optional<Index>> newCurrentIndices;
+      newCurrentIndices.reserve(currentIndices.size());
+      for (size_t i = 0; i < currentIndices.size(); ++i) {
+        if (auto currIndex = currentIndices[i];
+            currIndex && keptIndices.contains(*currIndex)) {
+          newCurrentIndices.push_back(newFuncs.size());
+          newFuncs.emplace_back(std::move(module->functions[*currIndex]));
+        } else {
+          newCurrentIndices.push_back(std::nullopt);
         }
       }
-      if (names.size() == 0) {
-        continue;
+
+      module->functions = std::move(newFuncs);
+      module->updateFunctionsMap();
+
+      // Remove exports for functions we have removed.
+      std::vector<Name> exportsToRemove;
+      for (auto& exp : module->exports) {
+        if (exp->kind == ExternalKind::Function &&
+            !module->getFunctionOrNull(*exp->getInternalName())) {
+          exportsToRemove.push_back(exp->name);
+        }
       }
-      std::cerr << "|     trying at i=" << i << " of size " << names.size()
-                << "\n";
-      // Note that tryToRemoveFunctions() will reload the module if it fails,
-      // which means function names may change.
-      if (tryToRemoveFunctions(names)) {
-        noteReduction(names.size());
-        // Subtract 1 since the loop increments us anyhow by one: we want to
-        // skip over the skipped functions, and not any more.
-        x += skip - 1;
-        skip = std::min(factor, 2 * skip);
-        maxSkip = std::max(skip, maxSkip);
+      for (auto expName : exportsToRemove) {
+        module->removeExport(expName);
+      }
+
+      // We may have removed the start function.
+      if (module->start && !module->getFunctionOrNull(module->start)) {
+        module->start = Name();
+      }
+
+      struct FunctionReplacer
+        : public WalkerPass<PostWalker<FunctionReplacer>> {
+        bool isFunctionParallel() override { return true; }
+        bool requiresNonNullableLocalFixups() override { return false; }
+        std::unique_ptr<Pass> create() override {
+          return std::make_unique<FunctionReplacer>();
+        };
+        void visitCall(Call* curr) {
+          // Replace calls to functions we have removed.
+          if (getModule()->getFunctionOrNull(curr->target)) {
+            return;
+          }
+          Builder builder(*getModule());
+          auto* block =
+            ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+              .getChildrenReplacement();
+          auto* replacement = builder.replaceWithIdenticalType(curr);
+          // We may have failed to come up with a replacement (e.g. for
+          // non-nullable references), so manually add an `unreachable` in that
+          // case.
+          if (replacement == curr) {
+            replacement = builder.makeUnreachable();
+          }
+          block->list.push_back(replacement);
+          block->type = curr->type;
+          replaceCurrent(block);
+        }
+        void visitRefFunc(RefFunc* curr) {
+          // Replace references to functions we have removed.
+          if (getModule()->getFunctionOrNull(curr->func)) {
+            return;
+          }
+          Builder builder(*getModule());
+          replaceCurrent(
+            builder.makeBlock({builder.makeUnreachable()}, curr->type));
+        }
+      };
+      PassRunner runner(module.get());
+      runner.add(std::make_unique<FunctionReplacer>());
+      runner.run();
+
+      assert(WasmValidator().validate(
+        *module, WasmValidator::Globally | WasmValidator::Quiet));
+      if (writeAndTestReduction()) {
+        noteReduction(dd.working.size() - dd.test.size());
+        currentIndices = std::move(newCurrentIndices);
+        dd.accept();
       } else {
-        skip = std::max(skip / 2, uint64_t(1)); // or 1?
-        x += factor / 100;
+        loadWorking();
+        dd.reject();
       }
     }
-    // If maxSkip is 1 then we never reduced at all. If it is 2 then we did
-    // manage to reduce individual functions, but all our attempts at
-    // exponential growth failed. Only suggest doing a new iteration of this
-    // function if we did in fact manage to grow, which indicated there are lots
-    // of opportunities here, and it is worth focusing on this.
-    return maxSkip > 2;
   }
 
   void visitModule([[maybe_unused]] Module* curr) {
@@ -1052,12 +1148,7 @@ struct Reducer
     curr = nullptr;
 
     reduceFunctionBodies();
-
-    // Reduction of entire functions at a time is very effective, and we do it
-    // with exponential growth and backoff, so keep doing it while it works.
-    // TODO: Figure out how to use delta debugging for this as well.
-    while (reduceFunctions()) {
-    }
+    reduceFunctions();
 
     shrinkElementSegments();
 
@@ -1131,61 +1222,6 @@ struct Reducer
           func->body = funcBody;
         }
       }
-    }
-  }
-
-  // Try to actually remove functions. If they are somehow referred to, we will
-  // get a validation error and undo it.
-  bool tryToRemoveFunctions(std::vector<Name> names) {
-    for (auto name : names) {
-      module->removeFunction(name);
-    }
-
-    // remove all references to them
-    struct FunctionReferenceRemover
-      : public PostWalker<FunctionReferenceRemover> {
-      std::unordered_set<Name> names;
-      std::vector<Name> exportsToRemove;
-
-      FunctionReferenceRemover(std::vector<Name>& vec) {
-        for (auto name : vec) {
-          names.insert(name);
-        }
-      }
-      void visitCall(Call* curr) {
-        if (names.contains(curr->target)) {
-          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
-        }
-      }
-      void visitRefFunc(RefFunc* curr) {
-        if (names.contains(curr->func)) {
-          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
-        }
-      }
-      void visitExport(Export* curr) {
-        if (auto* name = curr->getInternalName();
-            name && names.contains(*name)) {
-          exportsToRemove.push_back(curr->name);
-        }
-      }
-      void doWalkModule(Module* module) {
-        PostWalker<FunctionReferenceRemover>::doWalkModule(module);
-        for (auto name : exportsToRemove) {
-          module->removeExport(name);
-        }
-      }
-    };
-    FunctionReferenceRemover referenceRemover(names);
-    referenceRemover.walkModule(module.get());
-
-    if (WasmValidator().validate(
-          *module, WasmValidator::Globally | WasmValidator::Quiet) &&
-        writeAndTestReduction()) {
-      std::cerr << "|        removed " << names.size() << " functions\n";
-      return true;
-    } else {
-      loadWorking(); // restore it from orbit
-      return false;
     }
   }
 
@@ -1567,6 +1603,7 @@ More documentation can be found at
     if (first) {
       reducer.loadWorking();
       reducer.reduceFunctionBodies();
+      reducer.reduceFunctions();
       first = false;
     }
 
