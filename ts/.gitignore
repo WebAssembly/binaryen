@@ -1,11 +1,11 @@
 # dependency directories
 node_modules/
 
-# build files
+# built files
 build/
 
-# compiling TypeScript
+# compiled TypeScript
 dist/
 
-# generating documentation
+# generated documentation
 docs/out/
