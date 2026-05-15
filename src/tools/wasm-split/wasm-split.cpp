@@ -52,7 +52,8 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
 
   options.applyOptionsAfterParse(wasm);
 
-  if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
+  if (options.passOptions.validate &&
+      !WasmValidator().validate(wasm, options.passOptions)) {
     Fatal() << "error validating input";
   }
 }
@@ -100,6 +101,12 @@ void writeModule(Module& wasm,
     runner.add("strip-debug");
     runner.run();
   }
+
+  if (options.passOptions.validate &&
+      !WasmValidator().validate(wasm, options.passOptions)) {
+    Fatal() << "error validating output module";
+  }
+
   ModuleWriter writer(options.passOptions);
   writer.setBinary(options.emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo && !options.stripDebug);

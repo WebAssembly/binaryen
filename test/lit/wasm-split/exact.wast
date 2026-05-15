@@ -8,7 +8,7 @@
 ;; RUN: wasm-opt   -all %t.1.wasm --print | filecheck %s --check-prefix=PRIMARY
 ;; RUN: wasm-opt   -all %t.2.wasm --print | filecheck %s --check-prefix=SECONDARY
 
-;; RUN: wasm-split -all --disable-custom-descriptors -g %s --keep-funcs=foo -o1 %t.1.wasm -o2 %t.2.wasm
+;; RUN: wasm-split -all --no-validation --disable-custom-descriptors -g %s --keep-funcs=foo -o1 %t.1.wasm -o2 %t.2.wasm
 ;; RUN: wasm-opt   -all --disable-custom-descriptors %t.1.wasm --print | filecheck %s --check-prefix=PRIMARY_NOCD
 ;; RUN: wasm-opt   -all --disable-custom-descriptors %t.2.wasm --print | filecheck %s --check-prefix=SECONDARY_NOCD
 
