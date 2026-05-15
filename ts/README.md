@@ -73,18 +73,29 @@ $ git commit -m "test: add/update tests"
 $ git commit -m "build: make a change related to the package build system"
 ```
 
-#### Read the Docs
+#### Update Docs
 Generated documentation is built with [TypeDoc](https://typedoc.org/), a tool that parses comments in the TS source files and produces beautiful HTML.
 
-After developing and updating doc-comments, regenerate docs and view them in your browser.
+After developing and updating doc-comments, regenerate docs and view them locally in your browser.
 ```zsh
 $ npm run docs # builds a static site to ../docs/binaryen.ts/
 $ open ../docs/binaryen.ts/index.html
 ```
 Don’t put anything important in `../docs/`.
 
-Docs are hosted online at <https://chharvey.github.io/binaryen/binaryen.ts/>,
+Documentation is hosted online via GitHub Pages at <https://chharvey.github.io/binaryen/binaryen.ts/>,
 and will be moved to <https://webassembly.github.io/binaryen/binaryen.ts/> once this fork is merged in.
+
+Upon every release, public docs should be redeployed via updating the `gh-pages` branch. On that branch, the `../docs/` folder is checked in.
+You need to switch to that branch, merge in your changes, rebuild the docs, then commit and push.
+```zsh
+$ git switch gh-pages
+$ git merge --no-commit main
+$ npm run docs
+$ git add ../docs/binaryen.ts/
+$ git merge --continue
+$ git push
+```
 
 #### Run Tests
 The test suite is still in progress, migrating from `../test/binaryen.js/`.
