@@ -21,6 +21,7 @@
 
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "ir/string-builtin-names.h"
 #include "pass.h"
 #include "support/graph_traversal.h"
 #include "support/strongly_connected_components.h"
@@ -50,6 +51,14 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     module, [&](Function* func, FuncInfo& funcInfo) {
       if (func->imported()) {
+        ImportNames importName{func->module, func->base};
+        auto& allBuiltins = StringBuiltins::allBuiltins;
+        if (std::find(allBuiltins.begin(), allBuiltins.end(), importName) !=
+            allBuiltins.end()) {
+          funcInfo.effects.emplace(passOptions, module);
+          return;
+        }
+
         // Imports can do anything, so we need to assume the worst anyhow,
         // which is the same as not specifying any effects for them in the
         // map (which we do by not setting funcInfo.effects).

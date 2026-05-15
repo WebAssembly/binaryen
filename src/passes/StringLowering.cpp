@@ -37,6 +37,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/string-builtin-names.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -355,14 +356,15 @@ struct StringLowering : public StringGathering {
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).
-  Name addImport(Module* module, Name trueName, Type params, Type results) {
-    auto name = Names::getValidFunctionName(*module, trueName);
+  Name
+  addImport(Module* module, ImportNames importName, Type params, Type results) {
+    auto name = Names::getValidFunctionName(*module, importName.name);
     auto sig = Signature(params, results);
     Builder builder(*module);
     auto* func = module->addFunction(
       builder.makeFunction(name, Type(sig, NonNullable, Inexact), {}));
-    func->module = WasmStringsModule;
-    func->base = trueName;
+    func->module = importName.module;
+    func->base = importName.name;
     return name;
   }
 
@@ -371,31 +373,40 @@ struct StringLowering : public StringGathering {
     // parallel work. Optimizations can remove unneeded ones later.
 
     // string.fromCharCodeArray: array, start, end -> ext
-    fromCharCodeArrayImport = addImport(
-      module, "fromCharCodeArray", {nullArray16, Type::i32, Type::i32}, nnExt);
+    fromCharCodeArrayImport = addImport(module,
+                                        StringBuiltins::fromCharCodeArray,
+                                        {nullArray16, Type::i32, Type::i32},
+                                        nnExt);
     // string.fromCodePoint: codepoint -> ext
-    fromCodePointImport = addImport(module, "fromCodePoint", Type::i32, nnExt);
+    fromCodePointImport =
+      addImport(module, StringBuiltins::fromCodePoint, Type::i32, nnExt);
     // string.concat: string, string -> string
-    concatImport = addImport(module, "concat", {nullExt, nullExt}, nnExt);
+    concatImport =
+      addImport(module, StringBuiltins::concat, {nullExt, nullExt}, nnExt);
     // string.intoCharCodeArray: string, array, start -> num written
     intoCharCodeArrayImport = addImport(module,
-                                        "intoCharCodeArray",
+                                        StringBuiltins::intoCharCodeArray,
                                         {nullExt, nullArray16, Type::i32},
                                         Type::i32);
     // string.equals: string, string -> i32
-    equalsImport = addImport(module, "equals", {nullExt, nullExt}, Type::i32);
+    equalsImport =
+      addImport(module, StringBuiltins::equals, {nullExt, nullExt}, Type::i32);
     // string.test: externref -> i32
-    testImport = addImport(module, "test", {nullExt}, Type::i32);
+    testImport = addImport(module, StringBuiltins::test, {nullExt}, Type::i32);
     // string.compare: string, string -> i32
-    compareImport = addImport(module, "compare", {nullExt, nullExt}, Type::i32);
+    compareImport =
+      addImport(module, StringBuiltins::compare, {nullExt, nullExt}, Type::i32);
     // string.length: string -> i32
-    lengthImport = addImport(module, "length", nullExt, Type::i32);
+    lengthImport =
+      addImport(module, StringBuiltins::length, nullExt, Type::i32);
     // string.codePointAt: string, offset -> i32
-    charCodeAtImport =
-      addImport(module, "charCodeAt", {nullExt, Type::i32}, Type::i32);
+    charCodeAtImport = addImport(
+      module, StringBuiltins::charCodeAt, {nullExt, Type::i32}, Type::i32);
     // string.substring: string, start, end -> string
-    substringImport =
-      addImport(module, "substring", {nullExt, Type::i32, Type::i32}, nnExt);
+    substringImport = addImport(module,
+                                StringBuiltins::substring,
+                                {nullExt, Type::i32, Type::i32},
+                                nnExt);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
