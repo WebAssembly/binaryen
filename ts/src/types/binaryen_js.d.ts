@@ -2,7 +2,7 @@
 
 
 
-declare module "binaryen-raw" {
+declare module "#binaryen-raw" {
 	interface BinaryenObjType {
 		// https://github.com/emscripten-core/emscripten/blob/main/src/preamble.js
 		_free(ptr: number): void;

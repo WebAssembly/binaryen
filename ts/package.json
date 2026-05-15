@@ -30,6 +30,12 @@
     "./dist/*.d.ts",
     "./dist/*.js"
   ],
+  "imports": {
+    "#binaryen-raw": {
+      "types": "./src/types/binaryen_js.d.ts",
+      "default": "./build/binaryen_js.js"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
