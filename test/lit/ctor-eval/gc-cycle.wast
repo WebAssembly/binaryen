@@ -1158,7 +1158,9 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module
- ;; The start function already exists here. We must prepend to it.
+ ;; The start function already exists here. We must *not* prepend to it: it gets
+ ;; evalled away too (we execute it before the first ctor, and we should not
+ ;; eval those contents twice).
 
  ;; CHECK:      (type $A (struct (field (mut (ref null $A))) (field i32)))
  (type $A (struct (field (mut (ref null $A))) (field i32)))
