@@ -83,11 +83,12 @@ $ open ../docs/binaryen.ts/index.html
 ```
 Don’t put anything important in `../docs/`.
 
-TODO: Docs will be hosted publicly online somewhere soon.
+Docs are hosted online at <https://chharvey.github.io/binaryen/binaryen.ts/>,
+and will be moved to <https://webassembly.github.io/binaryen/binaryen.ts/> once this fork is merged in.
 
 #### Run Tests
-The test suite is empty for now, but you can still run it.
-Node v24+ required.
+The test suite is still in progress, migrating from `../test/binaryen.js/`.
+The new test suite uses the Node v26+ test runner.
 ```zsh
 $ npm run test
 ```
@@ -128,6 +129,8 @@ TODO: this section
 
 - `typedoc.config.js`: documentation generator configuration
 
+- `build/` *(gitignored)*: output of **Emscripten**; this is imported by the `src/` library
+
 - `src/`: human-written source code
 
 	- `binaryen.ts`: the entrypoint; exports everything available to consumers
@@ -150,8 +153,8 @@ TODO: this section
 
 	- `services/`: namespace-like, stateless classes
 
-- `dist/` *(gitignored)*: output of **tsc**; this gets published to npm for consumers
+- `dist/` *(gitignored)*: output of **tsc**; this gets bundled and published to NPM for consumers
 
 - `docs/`: documentation assets
 
-- `../docs/binaryen.ts/` *(gitignored)*: output of **typedoc**; this will probably be hosted online
+- `../docs/binaryen.ts/` *(gitignored)*: output of **typedoc**; hosted online
