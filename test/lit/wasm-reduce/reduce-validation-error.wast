@@ -4,7 +4,7 @@
 ;; to a validation error.
 
 ;; RUN: wasm-reduce %s -t %t.t.wast -w %t.w.wast \
-;; RUN:   --command=' wasm-opt %t.t.wast -all --fuzz-exec'
+;; RUN:   --command='wasm-opt %t.t.wast -all --fuzz-exec'
 
 (module
   (func $to_remove (result anyref)
