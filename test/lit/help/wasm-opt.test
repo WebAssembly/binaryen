@@ -398,6 +398,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print                                       print in s-expression format
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-boundary                              print boundary in JSON format
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-call-graph                            print call graph
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-features                              print options for enabled

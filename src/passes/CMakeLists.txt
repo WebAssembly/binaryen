@@ -89,6 +89,7 @@ set(passes_SOURCES
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
+  PrintBoundary.cpp
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
