@@ -1,5 +1,5 @@
 // # Preprocess # //
-import Binaryen from "binaryen-raw";
+import Binaryen from "#binaryen-raw";
 
 
 

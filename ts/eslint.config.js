@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 
 
 export default [
-	{ignores: ["./dist/", "./docs/out/"]},
+	{ignores: ["./build/", "./dist/", "./docs/out/"]},
 
 	eslint.configs.recommended, // https://github.com/eslint/eslint/blob/v10.2.1/packages/js/src/configs/eslint-recommended.js
 	{

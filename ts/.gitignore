@@ -1,6 +1,9 @@
 # dependency directories
 node_modules/
 
+# build files
+build/
+
 # compiling TypeScript
 dist/
 
