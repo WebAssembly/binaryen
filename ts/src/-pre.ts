@@ -9,17 +9,17 @@ export const BinaryenObj = await Binaryen();
 
 
 export const {
-	_free,
 	_malloc,
+	_free,
 	HEAP8,
 	HEAPU8,
 	HEAP32,
 	HEAPU32,
-	UTF8ToString,
-	getExceptionMessage,
-	stackAlloc,
-	stackRestore,
 	stackSave,
+	stackRestore,
+	stackAlloc,
+	UTF8ToString,
 	stringToAscii,
 	stringToUTF8OnStack,
+	getExceptionMessage,
 } = BinaryenObj;

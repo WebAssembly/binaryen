@@ -8,6 +8,25 @@ import * as binaryen from "../src/binaryen.ts";
 
 
 suite("binaryen", () => {
+	test("[internal] Emscripten artifacts exist.", async () => {
+		const __pre = await import("../src/-pre.ts");
+		assert.ok(__pre.BinaryenObj);
+		assert.ok(__pre._malloc);
+		assert.ok(__pre._free);
+		assert.ok(__pre.HEAP8);
+		assert.ok(__pre.HEAPU8);
+		assert.ok(__pre.HEAP32);
+		assert.ok(__pre.HEAPU32);
+		assert.ok(__pre.stackSave);
+		assert.ok(__pre.stackRestore);
+		assert.ok(__pre.stackAlloc);
+		assert.ok(__pre.UTF8ToString);
+		assert.ok(__pre.stringToAscii);
+		assert.ok(__pre.stringToUTF8OnStack);
+		assert.ok(__pre.getExceptionMessage);
+	});
+
+
 	test("namespace exists and has all the right top-level exports.", () => {
 		assert.ok(binaryen);
 
