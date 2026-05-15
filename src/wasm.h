@@ -2725,7 +2725,8 @@ public:
   // Potential effects for bodies of indirect calls to this type. Populated by
   // GlobalEffects when --closed-world is enabled. e.g. when we have a call to
   // HeapType $A and functions $foo and $bar have types that are subtypes of $A,
-  // then an indirect call to $A has effects equal to the union of $foo and $bar.
+  // then an indirect call to $A has effects equal to the union of $foo and
+  // $bar.
   //
   // When types are rewritten globally, the target type inherits the effects of
   // source type (see type-updating.cpp). If the type of just one function is

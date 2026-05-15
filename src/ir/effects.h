@@ -671,7 +671,9 @@ private:
       }
     }
 
-    // Handle effects due to an explicit null check on the given type.
+    // Handle effects due to a null type arriving in a place where a null input
+    // causes trapping. That is, handle the case of the type proving that the
+    // input is null.
     // Returns true iff there is no need to consider further effects.
     bool trapOnNull(Type type) {
       if (type == Type::unreachable) {
@@ -734,16 +736,6 @@ private:
       addCallEffects(curr, bodyEffects);
     }
     void visitCallIndirect(CallIndirect* curr) {
-      auto* table = parent.module.getTable(curr->table);
-      if (trapOnNull(table->type)) {
-        return;
-      }
-      if (!Type::isSubType(Type(curr->heapType, Nullability::Nullable),
-                           table->type)) {
-        parent.trap = true;
-        return;
-      }
-
       const EffectAnalyzer* bodyEffects = nullptr;
       if (auto it = parent.module.typeEffects.find(curr->heapType);
           it != parent.module.typeEffects.end()) {
@@ -1309,7 +1301,7 @@ private:
     // null refs).
     template<typename CallType>
     void addCallEffectsFromGlobalEffects(const CallType* curr,
-                                     const EffectAnalyzer& funcEffects) {
+                                         const EffectAnalyzer& funcEffects) {
       if (curr->isReturn) {
         if (funcEffects.throws()) {
           parent.hasReturnCallThrow = true;
@@ -1328,9 +1320,8 @@ private:
     // Common effects logic for the 3 types of call: `call`, `call_indirect`,
     // and `call_ref`.
     template<typename CallType>
-    void
-    addCallEffects(const CallType* curr,
-                   const EffectAnalyzer* bodyEffects) {
+    void addCallEffects(const CallType* curr,
+                        const EffectAnalyzer* bodyEffects) {
       if (curr->isReturn) {
         parent.branchesOut = true;
       }
