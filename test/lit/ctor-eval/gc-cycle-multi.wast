@@ -82,6 +82,8 @@
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
+ ;; CHECK:      (start $start)
+
  ;; CHECK:      (func $keepalive (type $2) (result i32)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (struct.get $A 1
@@ -113,6 +115,21 @@
   )
  )
 )
+;; CHECK:      (func $start (type $1)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_7)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_7)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_8)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_8)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $test1_6 (type $1)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )

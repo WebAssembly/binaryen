@@ -6,7 +6,10 @@
 
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (shared (struct (field (mut (ref null $B)))))))
   (type $A (sub (shared (struct (field (mut (ref null $B)))))))
+  ;; CHECK:       (type $B (sub (shared (struct (field (mut (ref null (shared any))))))))
   (type $B (sub (shared (struct (field (mut (ref null (shared any))))))))
  )
 
@@ -29,16 +32,33 @@
  )
 )
 
-;; CHECK:      (type $0 (func))
+;; CHECK:      (type $2 (func))
+
+;; CHECK:      (global $ctor-eval$global_3 (ref (exact $A)) (struct.new $A
+;; CHECK-NEXT:  (ref.null (shared none))
+;; CHECK-NEXT: ))
+
+;; CHECK:      (global $ctor-eval$global_4 (ref (exact $B)) (struct.new $B
+;; CHECK-NEXT:  (ref.null (shared none))
+;; CHECK-NEXT: ))
 
 ;; CHECK:      (export "s" (func $s_4))
 
 ;; CHECK:      (export "t" (func $t_3))
 
-;; CHECK:      (func $t_3 (type $0)
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $start (type $2)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_3)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_4)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $t_3 (type $2)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $s_4 (type $0)
+;; CHECK:      (func $s_4 (type $2)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
