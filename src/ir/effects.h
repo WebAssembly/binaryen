@@ -736,6 +736,16 @@ private:
       addCallEffects(curr, bodyEffects);
     }
     void visitCallIndirect(CallIndirect* curr) {
+      auto* table = parent.module.getTable(curr->table);
+      if (trapOnNull(table->type)) {
+        return;
+      }
+      if (!Type::isSubType(Type(curr->heapType, Nullability::Nullable),
+                           table->type)) {
+        parent.trap = true;
+        return;
+      }
+
       const EffectAnalyzer* bodyEffects = nullptr;
       if (auto it = parent.module.typeEffects.find(curr->heapType);
           it != parent.module.typeEffects.end()) {
