@@ -4,6 +4,7 @@ export default {
 	projectDocuments: ["./docs/API-Overview.md"],
 	useFirstParagraphOfCommentAsSummary: true,
 	out: "./docs/out/",
+	githubPages: false, // when `false`, does not generate a `.nojekyll` file to prevent GitHub Pages from using Jekyll
 	customCss: "./docs/styles.css",
 
 	intentionallyNotExported: [
