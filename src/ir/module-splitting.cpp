@@ -237,6 +237,9 @@ TableSlotManager::TableSlotManager(
 }
 
 Table* TableSlotManager::makeTable() {
+  // Because the active table will be imported in secondary modules, its name
+  // should not collide with any existing tables in primary and secondary
+  // modules.
   std::unordered_set<Name> secondaryTableNames;
   for (auto& secondary : secondaries) {
     for (auto& table : secondary->tables) {
