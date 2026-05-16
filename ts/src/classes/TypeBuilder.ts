@@ -22,11 +22,11 @@ import type {
  */
 type Field = {
 	/** The type of the struct field. */
-	type: Type,
+	readonly type: Type,
 	/** The field’s packed type. */
-	packedType: PackedType,
+	readonly packedType: PackedType,
 	/** Is the field mutable? */
-	mutable: boolean,
+	readonly mutable: boolean,
 };
 
 
