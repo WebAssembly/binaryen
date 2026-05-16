@@ -4,9 +4,6 @@ import {
 import {
 	PTR,
 } from "../../-utils.ts";
-import {
-	consoleWarn,
-} from "../../lib.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -143,38 +140,38 @@ export function i64(mod: Module) {
 		atomic: atomic(mod),
 
 		// @ts-expect-error
-		/** @deprecated Use `.extend_i32_s()` instead. */ extend_s(...args) { consoleWarn("`.extend_s()` is deprecated; use `.extend_i32_s()` instead."); return this.extend_i32_s(...args); },
+		/** @deprecated Use `.extend_i32_s()` instead. */ extend_s(...args) { BinaryenObj.printWarn("`.extend_s()` is deprecated; use `.extend_i32_s()` instead."); return this.extend_i32_s(...args); },
 		// @ts-expect-error
-		/** @deprecated Use `.extend_i32_u()` instead. */ extend_u(...args) { consoleWarn("`.extend_u()` is deprecated; use `.extend_i32_u()` instead."); return this.extend_i32_u(...args); },
+		/** @deprecated Use `.extend_i32_u()` instead. */ extend_u(...args) { BinaryenObj.printWarn("`.extend_u()` is deprecated; use `.extend_i32_u()` instead."); return this.extend_i32_u(...args); },
 		/** @deprecated */
 		trunc_s: {
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_f32_s()` instead. */ f32: (...args) => { consoleWarn("`.trunc_s.f32()` is deprecated; use `.trunc_f32_s()` instead."); return i64(mod).trunc_f32_s(...args); },
+			/** @deprecated Use `.trunc_f32_s()` instead. */ f32: (...args) => { BinaryenObj.printWarn("`.trunc_s.f32()` is deprecated; use `.trunc_f32_s()` instead."); return i64(mod).trunc_f32_s(...args); },
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_f64_s()` instead. */ f64: (...args) => { consoleWarn("`.trunc_s.f64()` is deprecated; use `.trunc_f64_s()` instead."); return i64(mod).trunc_f64_s(...args); },
+			/** @deprecated Use `.trunc_f64_s()` instead. */ f64: (...args) => { BinaryenObj.printWarn("`.trunc_s.f64()` is deprecated; use `.trunc_f64_s()` instead."); return i64(mod).trunc_f64_s(...args); },
 		},
 		/** @deprecated */
 		trunc_u: {
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_f32_u()` instead. */ f32: (...args) => { consoleWarn("`.trunc_u.f32()` is deprecated; use `.trunc_f32_u()` instead."); return i64(mod).trunc_f32_u(...args); },
+			/** @deprecated Use `.trunc_f32_u()` instead. */ f32: (...args) => { BinaryenObj.printWarn("`.trunc_u.f32()` is deprecated; use `.trunc_f32_u()` instead."); return i64(mod).trunc_f32_u(...args); },
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_f64_u()` instead. */ f64: (...args) => { consoleWarn("`.trunc_u.f64()` is deprecated; use `.trunc_f64_u()` instead."); return i64(mod).trunc_f64_u(...args); },
+			/** @deprecated Use `.trunc_f64_u()` instead. */ f64: (...args) => { BinaryenObj.printWarn("`.trunc_u.f64()` is deprecated; use `.trunc_f64_u()` instead."); return i64(mod).trunc_f64_u(...args); },
 		},
 		/** @deprecated */
 		trunc_s_sat: {
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_sat_f32_s()` instead. */ f32: (...args) => { consoleWarn("`.trunc_s_sat.f32()` is deprecated; use `.trunc_sat_f32_s()` instead."); return i64(mod).trunc_sat_f32_s(...args); },
+			/** @deprecated Use `.trunc_sat_f32_s()` instead. */ f32: (...args) => { BinaryenObj.printWarn("`.trunc_s_sat.f32()` is deprecated; use `.trunc_sat_f32_s()` instead."); return i64(mod).trunc_sat_f32_s(...args); },
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_sat_f64_s()` instead. */ f64: (...args) => { consoleWarn("`.trunc_s_sat.f64()` is deprecated; use `.trunc_sat_f64_s()` instead."); return i64(mod).trunc_sat_f64_s(...args); },
+			/** @deprecated Use `.trunc_sat_f64_s()` instead. */ f64: (...args) => { BinaryenObj.printWarn("`.trunc_s_sat.f64()` is deprecated; use `.trunc_sat_f64_s()` instead."); return i64(mod).trunc_sat_f64_s(...args); },
 		},
 		/** @deprecated */
 		trunc_u_sat: {
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_sat_f32_u()` instead. */ f32: (...args) => { consoleWarn("`.trunc_u_sat.f32()` is deprecated; use `.trunc_sat_f32_u()` instead."); return i64(mod).trunc_sat_f32_u(...args); },
+			/** @deprecated Use `.trunc_sat_f32_u()` instead. */ f32: (...args) => { BinaryenObj.printWarn("`.trunc_u_sat.f32()` is deprecated; use `.trunc_sat_f32_u()` instead."); return i64(mod).trunc_sat_f32_u(...args); },
 			// @ts-expect-error
-			/** @deprecated Use `.trunc_sat_f64_u()` instead. */ f64: (...args) => { consoleWarn("`.trunc_u_sat.f64()` is deprecated; use `.trunc_sat_f64_u()` instead."); return i64(mod).trunc_sat_f64_u(...args); },
+			/** @deprecated Use `.trunc_sat_f64_u()` instead. */ f64: (...args) => { BinaryenObj.printWarn("`.trunc_u_sat.f64()` is deprecated; use `.trunc_sat_f64_u()` instead."); return i64(mod).trunc_sat_f64_u(...args); },
 		},
 		// @ts-expect-error
-		/** @deprecated Use `.reinterpret_f64()` instead. */ reinterpret(...args) { consoleWarn("`.reinterpret()` is deprecated; use `.reinterpret_f64()` instead."); return this.reinterpret_f64(...args); },
+		/** @deprecated Use `.reinterpret_f64()` instead. */ reinterpret(...args) { BinaryenObj.printWarn("`.reinterpret()` is deprecated; use `.reinterpret_f64()` instead."); return this.reinterpret_f64(...args); },
 	} as const;
 }

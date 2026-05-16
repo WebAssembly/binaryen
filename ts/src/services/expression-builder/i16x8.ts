@@ -1,12 +1,12 @@
+import {
+	BinaryenObj,
+} from "../../-pre.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
 import {
 	Operation,
 } from "../../constants.ts";
-import {
-	consoleWarn,
-} from "../../lib.ts";
 import {
 	binaryFn,
 	simdExtractFn,
@@ -84,12 +84,12 @@ export function i16x8(mod: Module) {
 		replace_lane: simdReplaceFn(mod, Operation.ReplaceLaneVecI16x8),
 
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_s} instead. */ add_saturate_s(...args) { consoleWarn("`.i16x8.add_saturate_s()` is deprecated; use `.i16x8.add_sat_s()` instead."); return this.add_sat_s(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_s} instead. */ add_saturate_s(...args) { BinaryenObj.printWarn("`.i16x8.add_saturate_s()` is deprecated; use `.i16x8.add_sat_s()` instead."); return this.add_sat_s(...args); },
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_u} instead. */ add_saturate_u(...args) { consoleWarn("`.i16x8.add_saturate_u()` is deprecated; use `.i16x8.add_sat_u()` instead."); return this.add_sat_u(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_u} instead. */ add_saturate_u(...args) { BinaryenObj.printWarn("`.i16x8.add_saturate_u()` is deprecated; use `.i16x8.add_sat_u()` instead."); return this.add_sat_u(...args); },
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_s} instead. */ sub_saturate_s(...args) { consoleWarn("`.i16x8.sub_saturate_s()` is deprecated; use `.i16x8.sub_sat_s()` instead."); return this.sub_sat_s(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_s} instead. */ sub_saturate_s(...args) { BinaryenObj.printWarn("`.i16x8.sub_saturate_s()` is deprecated; use `.i16x8.sub_sat_s()` instead."); return this.sub_sat_s(...args); },
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_u} instead. */ sub_saturate_u(...args) { consoleWarn("`.i16x8.sub_saturate_u()` is deprecated; use `.i16x8.sub_sat_u()` instead."); return this.sub_sat_u(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_u} instead. */ sub_saturate_u(...args) { BinaryenObj.printWarn("`.i16x8.sub_saturate_u()` is deprecated; use `.i16x8.sub_sat_u()` instead."); return this.sub_sat_u(...args); },
 	} as const;
 }

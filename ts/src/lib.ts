@@ -3,11 +3,9 @@
 
 
 
-/** @deprecated use `BinaryenObj.printWarn`. */
-export function consoleWarn(...args: any[]): void {
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-	return (console?.warn ?? console?.log)?.call(undefined, ...args);
-}
+import {
+	BinaryenObj,
+} from "./-pre.ts";
 
 
 
@@ -30,7 +28,7 @@ export function replacedBy<This, Params extends unknown[], Return>(replacement: 
 ) => (typeof method) | void {
 	return (method, context) => function (...args) {
 		const message = `WARNING: ${ context.static ? "Static" : "Instance" } method \`${ String(context.name) }\` is deprecated${ replacement && `; use ${ replacement } instead` }.`;
-		consoleWarn(message);
+		BinaryenObj.printWarn(message);
 		return method.call(this, ...args);
 	};
 }

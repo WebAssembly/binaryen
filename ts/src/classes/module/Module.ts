@@ -37,7 +37,6 @@ import {
 	stringref,
 } from "../../constants.ts";
 import {
-	consoleWarn,
 	replacedBy,
 } from "../../lib.ts";
 import {
@@ -598,7 +597,7 @@ Object.keys(new Module().wasm).forEach((key) => {
 	if (!Reflect.has(Module.prototype, key)) {
 		Reflect.defineProperty(Module.prototype, key, {
 			get() {
-				consoleWarn(`Module property \`.${ key }\` is deprecated; use \`.wasm.${ key }\` instead.`);
+				BinaryenObj.printWarn(`Module property \`.${ key }\` is deprecated; use \`.wasm.${ key }\` instead.`);
 				return (this as Module).wasm[key as keyof ExpressionBuilder];
 			},
 		});
