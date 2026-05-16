@@ -73,8 +73,8 @@ export function blocks(mod: Module) {
 		),
 
 		/** Creates an ‘if’ or ‘if/else’ combination. */
-		if: (ifTrue: ExpressionRef, ifFalse: ExpressionRef = expressionBuilder(mod).nop()): ExpressionRef => (
-			BinaryenObj["_BinaryenIf"](mod[PTR], ifTrue, ifFalse)
+		if: (condition: ExpressionRef, ifTrue: ExpressionRef, ifFalse: ExpressionRef = expressionBuilder(mod).nop()): ExpressionRef => (
+			BinaryenObj["_BinaryenIf"](mod[PTR], condition, ifTrue, ifFalse)
 		),
 	} as const;
 }
