@@ -148,7 +148,7 @@ TODO: this section
 
 	- `-pre.ts`: artifacts provided by Emscripten
 
-	- `{lib,utils}.ts`: internal tools
+	- `-utils.ts`: internal tools
 
 	- `{constants,globals}.ts`: top-level exported globals
 
