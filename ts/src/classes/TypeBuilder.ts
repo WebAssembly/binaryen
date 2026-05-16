@@ -34,7 +34,7 @@ type Field = {
 export class TypeBuilder {
 	readonly #ptr: number;
 
-	constructor(size: number) {
+	constructor(size: number = 0) {
 		this.#ptr = BinaryenObj["_TypeBuilderCreate"](size);
 	}
 
