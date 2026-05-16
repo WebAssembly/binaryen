@@ -38,5 +38,5 @@ declare module "#binaryen-raw" {
 		[key: string]: (...args: readonly (number | bigint | boolean)[]) => number;
 	}
 
-	export default function Binaryen(): Promise<BinaryenObjType>;
+	export default function Binaryen<T extends object = object>(moduleArg?: T): Promise<BinaryenObjType & T>;
 }
