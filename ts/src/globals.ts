@@ -9,6 +9,7 @@ import {
 	HEAP8,
 	HEAPU32,
 	BinaryenObj,
+	UTF8ToString,
 	getExceptionMessage,
 	stackAlloc,
 	stringToAscii,
@@ -187,24 +188,12 @@ function handleFatalError<T>(func: () => T): T {
 // ## General Binaryen Functions ## //
 /** Emits the expression in Binaryen’s s-expression text format (not official stack-style text format). */
 export function emitText(expr: ExpressionRef): string {
-	/*
-	 * `out` is Emscripten's `stdout` function (an alias of `console.log`),
-	 * called internally by `BinaryenExpressionPrint()` to print its output.
-	 * We have to temporarily swap out the function itself
-	 * so that when `BinaryenExpressionPrint()` calls it,
-	 * it calls our capturing function instead.
-	 *
-	 * We can’t use `import {out} from "./-pre.ts";` because ES Module imports can’t be reassigned.
-	 * Instead, we reassign directly on `BinaryenObj`.
-	 */
-	let returned = "";
-	const temp_out = BinaryenObj.out;
-	BinaryenObj.out = (x: string): void => {
-		returned += `${ x }\n`;
-	};
-	BinaryenObj["_BinaryenExpressionPrint"](expr);
-	BinaryenObj.out = temp_out;
-	return returned;
+	const textPtr = BinaryenObj["_BinaryenExpressionAllocateAndWriteText"](expr);
+	const text = UTF8ToString(textPtr);
+	if (textPtr) {
+		_free(textPtr);
+	}
+	return text;
 }
 
 /** Creates a module from binary data. */

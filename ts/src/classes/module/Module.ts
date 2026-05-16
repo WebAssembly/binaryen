@@ -377,7 +377,16 @@ export class Module {
 	 * @category Emission & Execution
 	 */
 	emitAsmjs(): string {
-		/* See comment in the `emitText()` global function (`../../globals.ts`) for what’s going on here. */
+		/*
+		 * `out` is Emscripten's `stdout` function (an alias of `console.log`),
+		 * called internally by `BinaryenModulePrintAsmjs()` to print its output.
+		 * We have to temporarily swap out the function itself
+		 * so that when `BinaryenModulePrintAsmjs()` calls it,
+		 * it calls our capturing function instead.
+		 *
+		 * We can’t use `import {out} from "../../-pre.ts";` because ES Module imports can’t be reassigned.
+		 * Instead, we reassign directly on `BinaryenObj`.
+		 */
 		let returned = "";
 		const temp_out = BinaryenObj.out;
 		BinaryenObj.out = (x: string): void => {
