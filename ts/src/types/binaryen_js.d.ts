@@ -30,7 +30,7 @@ declare module "#binaryen-raw" {
 		stringToUTF8OnStack(str: string): number;
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libexceptions.js
-		getExceptionMessage(e: number | Error): [string, string];
+		getExceptionMessage(e: number | Error | object): [string, string];
 
 
 		// Binaryen’s functions in the C++ codebase, e.g. `_BinaryenTypeUnreachable`.

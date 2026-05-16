@@ -168,7 +168,7 @@ function handleFatalError<T>(func: () => T): T {
 				throw new Error(message.slice(7).trim());
 			}
 		} else {
-			const err = e as Error;
+			const err = e as Error | {message?: string};
 			// Newer version of emscripten always throw CppException object but don’t
 			// always populate the `.message` field.
 			// TODO: Set EXCEPTION_STACK_TRACES instead?
@@ -176,10 +176,8 @@ function handleFatalError<T>(func: () => T): T {
 				const [_, message] = getExceptionMessage(err);
 				err.message = message;
 			}
-			err.message = err.message.replace("Fatal:", "");
-			err.message = err.message.trim();
+			err.message = err.message.replace("Fatal:", "").trim();
 		}
-		// Rethrow anything else.
 		throw e;
 	}
 }
