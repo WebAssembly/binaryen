@@ -413,6 +413,23 @@ See generated docs for fields, methods, and descriptions of each.
 
 
 ## ⚠️ Deprecations, Renames, and Moves
+### Deprecation Roadmap
+This section lists all bindings that have been deprecated in favor of another binding name or its relocation.
+These deprecations are marked with `/** @deprecated */` doc-comments so they can be picked up by intellisense and linting tools.
+
+Additionally, most of these bindings log a warning to the console notifying their deprecation and what they should be replaced with.
+E.g., when running the code, you’ll see the following in standard output:
+> "`.returnCall()` is deprecated; use `.return_call()` instead."
+
+1. For the time being, we’ll leave these deprecations in place with their runtime warnings.
+2. In a future major version of Binaryen.TS, we’ll convert from logging strings to logging actual `Error` objects (with stacks),
+which are more verbose and should be more attention-grabbing.
+These messages will be sent to the ‘error’ output instead of ‘standard’.
+3. Then in another release we’ll resort to *throwing* the error instead of just logging it.
+This will be a breaking change; at this stage the deprecations should be considered **obsolete**
+and this serves as a final warning that they will be removed soon.
+4. Then in yet another release we’ll remove all deprecations.
+
 ### Enums and Types
 Enum names have been singularized.
 - `ExpressionIds` &rarr; `ExpressionId`
