@@ -34,7 +34,7 @@ export class Break extends Expression {
 	}
 
 	get condition(): ExpressionRef { return BinaryenObj["_BinaryenBreakGetCondition"](this._ptr); }
-	set condition(condExpr: ExpressionRef) {BinaryenObj["_BinaryenBreakSetCondition"](this._ptr, condExpr);}
+	set condition(condExpr: ExpressionRef) { BinaryenObj["_BinaryenBreakSetCondition"](this._ptr, condExpr); }
 
 	get value(): ExpressionRef { return BinaryenObj["_BinaryenBreakGetValue"](this._ptr); }
 	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenBreakSetValue"](this._ptr, valueExpr); }

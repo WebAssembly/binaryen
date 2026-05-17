@@ -25,6 +25,7 @@ export default [
 			/* # Layout & Formatting */
 			/* ## Indentation, Spacing, and Alignment */
 			"@stylistic/arrow-spacing": "error",
+			"@stylistic/block-spacing": "error",
 			"@stylistic/comma-spacing": "error",
 			"@stylistic/dot-location": ["error", "property"],
 			"@stylistic/function-call-spacing": "error",

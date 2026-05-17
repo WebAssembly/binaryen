@@ -120,7 +120,7 @@ export class CallIndirect extends Expression {
 	get table(): string { return UTF8ToString(BinaryenObj["_BinaryenCallIndirectGetTable"](this._ptr)); }
 	set table(table: string) { preserveStack(() => BinaryenObj["_BinaryenCallIndirectSetTable"](this._ptr, strToStack(table))); }
 
-	get params(): Type {return BinaryenObj["_BinaryenCallIndirectGetParams"](this._ptr);}
+	get params(): Type { return BinaryenObj["_BinaryenCallIndirectGetParams"](this._ptr); }
 	set params(params: Type) { BinaryenObj["_BinaryenCallIndirectSetParams"](this._ptr, params); }
 
 	get results(): Type { return BinaryenObj["_BinaryenCallIndirectGetResults"](this._ptr); }

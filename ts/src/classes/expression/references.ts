@@ -52,7 +52,7 @@ export class RefAs extends Expression {
 	get op(): Operation { return BinaryenObj["_BinaryenRefAsGetOp"](this._ptr); }
 	set op(op: Operation) { BinaryenObj["_BinaryenRefAsSetOp"](this._ptr, op); }
 
-	get value(): ExpressionRef {return BinaryenObj["_BinaryenRefAsGetValue"](this._ptr);}
+	get value(): ExpressionRef { return BinaryenObj["_BinaryenRefAsGetValue"](this._ptr); }
 	set value(valueExpr: ExpressionRef) { BinaryenObj["_BinaryenRefAsSetValue"](this._ptr, valueExpr); }
 }
 

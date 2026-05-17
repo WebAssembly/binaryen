@@ -71,7 +71,7 @@ export class Store extends Expression {
 	get valueType(): Type { return BinaryenObj["_BinaryenStoreGetValueType"](this._ptr); }
 	set valueType(valueType: Type) { BinaryenObj["_BinaryenStoreSetValueType"](this._ptr, valueType); }
 
-	get atomic(): boolean {return Boolean(BinaryenObj["_BinaryenStoreIsAtomic"](this._ptr));}
+	get atomic(): boolean { return Boolean(BinaryenObj["_BinaryenStoreIsAtomic"](this._ptr)); }
 	// TODO: set atomic
 
 	get memoryOrder(): MemoryOrder { return BinaryenObj["_BinaryenStoreGetMemoryOrder"](this._ptr); }
@@ -123,7 +123,7 @@ export class SIMDLoadStoreLane extends Expression {
 	get vec(): ExpressionRef { return BinaryenObj["_BinaryenSIMDLoadStoreLaneGetVec"](this._ptr); }
 	set vec(vecExpr: ExpressionRef) { BinaryenObj["_BinaryenSIMDLoadStoreLaneSetVec"](this._ptr, vecExpr); }
 
-	get store(): boolean {return Boolean(BinaryenObj["_BinaryenSIMDLoadStoreLaneIsStore"](this._ptr));}
+	get store(): boolean { return Boolean(BinaryenObj["_BinaryenSIMDLoadStoreLaneIsStore"](this._ptr)); }
 }
 
 
