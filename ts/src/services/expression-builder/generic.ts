@@ -7,9 +7,6 @@ import {
 	preserveStack,
 	strToStack,
 } from "../../-utils.ts";
-import {
-	consoleWarn,
-} from "../../lib.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -20,6 +17,9 @@ import {
 	none,
 	unreachable,
 } from "../../constants.ts";
+import {
+	expressionBuilder,
+} from "./expressionBuilder.ts";
 
 
 
@@ -70,8 +70,8 @@ export function blocks(mod: Module) {
 		),
 
 		/** Creates an ‘if’ or ‘if/else’ combination. */
-		if: (ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenIf"](mod[PTR], ifTrue, ifFalse)
+		if: (condition: ExpressionRef, ifTrue: ExpressionRef, ifFalse: ExpressionRef = expressionBuilder(mod).nop()): ExpressionRef => (
+			BinaryenObj["_BinaryenIf"](mod[PTR], condition, ifTrue, ifFalse)
 		),
 	} as const;
 }
@@ -128,9 +128,9 @@ export function breaks(mod: Module) {
 		),
 
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#br} instead. */ break(...args) { consoleWarn("`.break()` is deprecated; use `.br()` instead."); return this.br(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#br} instead. */ break(...args) { BinaryenObj.printWarn("`.break()` is deprecated; use `.br()` instead."); return this.br(...args); },
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */ switch(...args) { consoleWarn("`.switch()` is deprecated; use `.br_table()` instead."); return this.br_table(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */ switch(...args) { BinaryenObj.printWarn("`.switch()` is deprecated; use `.br_table()` instead."); return this.br_table(...args); },
 	} as const;
 }
 
@@ -178,11 +178,11 @@ export function calls(mod: Module) {
 		),
 
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */ callIndirect(...args) { consoleWarn("`.callIndirect()` is deprecated; use `.call_indirect()` instead."); return this.call_indirect(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */ callIndirect(...args) { BinaryenObj.printWarn("`.callIndirect()` is deprecated; use `.call_indirect()` instead."); return this.call_indirect(...args); },
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */ returnCall(...args) { consoleWarn("`.returnCall()` is deprecated; use `.return_call()` instead."); return this.return_call(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */ returnCall(...args) { BinaryenObj.printWarn("`.returnCall()` is deprecated; use `.return_call()` instead."); return this.return_call(...args); },
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */ returnCallIndirect(...args) { consoleWarn("`.returnCallIndirect()` is deprecated; use `.return_call_indirect()` instead."); return this.return_call_indirect(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */ returnCallIndirect(...args) { BinaryenObj.printWarn("`.returnCallIndirect()` is deprecated; use `.return_call_indirect()` instead."); return this.return_call_indirect(...args); },
 	} as const;
 }
 
@@ -225,8 +225,8 @@ export function throws(mod: Module) {
 		// TODO: catch_all_ref
 
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */ rethrow(...args) { consoleWarn("`.rethrow()` is deprecated; use `.throw_ref()` instead."); return this.throw_ref(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */ rethrow(...args) { BinaryenObj.printWarn("`.rethrow()` is deprecated; use `.throw_ref()` instead."); return this.throw_ref(...args); },
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */ try(...args) { consoleWarn("`.try()` is deprecated; use `.try_table()` instead."); return this.try_table(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */ try(...args) { BinaryenObj.printWarn("`.try()` is deprecated; use `.try_table()` instead."); return this.try_table(...args); },
 	} as const;
 }

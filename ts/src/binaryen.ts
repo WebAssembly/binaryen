@@ -13,5 +13,8 @@ export {
 	ExpressionRunner,
 	ExpressionRunnerFlag,
 } from "./classes/ExpressionRunner.ts";
-export {Relooper} from "./classes/Relooper.ts";
+export {
+	type RelooperBlockRef,
+	Relooper,
+} from "./classes/Relooper.ts";
 export * from "./-deprecations.ts";

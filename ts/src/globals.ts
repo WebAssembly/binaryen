@@ -9,6 +9,7 @@ import {
 	HEAP8,
 	HEAPU32,
 	BinaryenObj,
+	UTF8ToString,
 	getExceptionMessage,
 	stackAlloc,
 	stringToAscii,
@@ -168,7 +169,7 @@ function handleFatalError<T>(func: () => T): T {
 				throw new Error(message.slice(7).trim());
 			}
 		} else {
-			const err = e as Error;
+			const err = e as Error | {message?: string};
 			// Newer version of emscripten always throw CppException object but don’t
 			// always populate the `.message` field.
 			// TODO: Set EXCEPTION_STACK_TRACES instead?
@@ -176,10 +177,8 @@ function handleFatalError<T>(func: () => T): T {
 				const [_, message] = getExceptionMessage(err);
 				err.message = message;
 			}
-			err.message = err.message.replace("Fatal:", "");
-			err.message = err.message.trim();
+			err.message = err.message.replace("Fatal:", "").trim();
 		}
-		// Rethrow anything else.
 		throw e;
 	}
 }
@@ -187,18 +186,14 @@ function handleFatalError<T>(func: () => T): T {
 
 
 // ## General Binaryen Functions ## //
-/** Probably used in `BinaryenObj["_BinaryenExpressionPrint"]`. */
-declare let out: any;
 /** Emits the expression in Binaryen’s s-expression text format (not official stack-style text format). */
 export function emitText(expr: ExpressionRef): string {
-	let returned = "";
-	const saved = out;
-	out = (x: string) => {
-		returned += `${ x }\n`;
-	};
-	BinaryenObj["_BinaryenExpressionPrint"](expr);
-	out = saved;
-	return returned;
+	const textPtr = BinaryenObj["_BinaryenExpressionAllocateAndWriteText"](expr);
+	const text = UTF8ToString(textPtr);
+	if (textPtr) {
+		_free(textPtr);
+	}
+	return text;
 }
 
 /** Creates a module from binary data. */

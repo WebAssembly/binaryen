@@ -38,7 +38,7 @@ import {type Type, type ExpressionRef, i32} from "binaryen.ts";
 - module component ref types:
 	- `TagRef`
 	- `GlobalRef`
-	- ~~`MemoryRef`~~ ⛔️
+	- `MemoryRef`
 	- `TableRef`
 	- `FunctionRef`
 	- `DataSegmentRef`
@@ -82,10 +82,19 @@ import {type Type, type ExpressionRef, i32} from "binaryen.ts";
 	- a slight misnomer, as these are not unique IDs per expression, but different IDs for the “kinds” of expression
 - `SideEffect`: an enumeration of values returend by `getSideEffects()`
 - `ExternalKind`: an enumeration of kinds of exports; serves as type of the `Module.Export#kind` field
+- `Operation`: used in [manipulating expressions](#expression-manipulation)
 - `MemoryOrder`: an enumeration of values used in atomic expression methods
+- `Feature`: WASM Module features
+- `ExpressionRunnerFlag`: flags for the `ExpressionRunner` class
 
 
 ### Global Bindings
+Classes (see generated docs for descriptions):
+- `Module`
+- `TypeBuilder`
+- `ExpressionRunner`
+- `Relooper`
+
 Functions (see generated docs for descriptions):
 - `emitText(expr: ExpressionRef): string`
 - `readBinary(data: Uint8Array): Module`
@@ -99,8 +108,6 @@ Functions (see generated docs for descriptions):
 - `getExpressionId(expr: ExpressionRef): ExpressionId`
 - `getExpressionType(expr: ExpressionRef): Type`
 - `getExpressionInfo(expr: ExpressionRef): Expression`
-- `getSideEffects(expr: ExpressionRef, mod: Module): SideEffect`
-- `copyExpression(expr: ExpressionRef, mod: Module): ExpressionRef`
 
 Objects:
 - `settings`: global settings manager; see `SettingsService` docs
@@ -120,7 +127,10 @@ Properties of `Module` as a namespace:
 - `new Module.Export(ref: ExportRef)`:                        an object containing information about an **Export**
 
 Properties of `Module` instances (see full list of methods in generated docs):
-- `Module#wasm`:            [build WASM expressions](#expression-building)
+- `Module#wasm`:     [build WASM expressions](#expression-building)
+- `Module#start`:    get/set the start function
+- `Module#features`: get/set WASM features (a bitmask)
+>
 - `Module#tags`:            **Tag** manipulation
 - `Module#globals`:         **Global** manipulation
 - `Module#memories`:        **Memory** manipulation
@@ -132,6 +142,10 @@ Properties of `Module` instances (see full list of methods in generated docs):
 - `Module#exports`:         **Export** manipulation
 
 Module methods (see signatures and descriptions in generated docs):
+- Expression Manipulation
+	- `.pop()`
+	- `.getSideEffects()`
+	- `.copyExpression()`
 - Emission & Execution
 	- `.emitText()`
 	- `.emitStackIR()`

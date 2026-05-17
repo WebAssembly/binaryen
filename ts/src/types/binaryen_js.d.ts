@@ -11,6 +11,10 @@ declare module "#binaryen-raw" {
 
 
 		// Helper tools defined in Emscripten’s codebase needed in TS. Listed in `EXPORTED_RUNTIME_METHODS`.
+		// https://github.com/emscripten-core/emscripten/blob/main/src/shell_minimal.js
+		out(x: unknown): void; // alias of `console.log`
+		err(x: unknown): void; // alias of `console.error`
+
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libcore.js
 		HEAP8: Int8Array;
 		HEAPU8: Uint8Array;
@@ -22,11 +26,11 @@ declare module "#binaryen-raw" {
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libstrings.js
 		UTF8ToString(n: number): string;
-		stringToAscii(text: string, buffer: number): void; // yes
-		stringToUTF8OnStack(str: string): number; // yes
+		stringToAscii(text: string, buffer: number): void;
+		stringToUTF8OnStack(str: string): number;
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libexceptions.js
-		getExceptionMessage(e: number | Error): [string, string]; // yes
+		getExceptionMessage(e: number | Error | object): [string, string];
 
 
 		// Binaryen’s functions in the C++ codebase, e.g. `_BinaryenTypeUnreachable`.
@@ -34,5 +38,5 @@ declare module "#binaryen-raw" {
 		[key: string]: (...args: readonly (number | bigint | boolean)[]) => number;
 	}
 
-	export default function Binaryen(): Promise<BinaryenObjType>;
+	export default function Binaryen<T extends object = object>(moduleArg?: T): Promise<BinaryenObjType & T>;
 }

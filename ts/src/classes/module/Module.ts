@@ -37,10 +37,6 @@ import {
 	stringref,
 } from "../../constants.ts";
 import {
-	consoleWarn,
-	replacedBy,
-} from "../../lib.ts";
-import {
 	type ExpressionBuilder,
 	expressionBuilder,
 } from "../../services/expression-builder/expressionBuilder.ts";
@@ -83,11 +79,6 @@ import {
 
 
 
-/** Probably used in `BinaryenObj["_BinaryenModulePrintAsmjs"]`. */
-declare let out: any;
-
-
-
 export enum Feature {
 	MVP = BinaryenObj["_BinaryenFeatureMVP"](),
 	Atomics = BinaryenObj["_BinaryenFeatureAtomics"](),
@@ -117,6 +108,32 @@ export enum Feature {
 	// TODO: Multibyte
 	WideArithmetic = BinaryenObj["_BinaryenFeatureWideArithmetic"](),
 	All = BinaryenObj["_BinaryenFeatureAll"](),
+}
+
+
+
+/**
+ * Mark a method as deprecated by logging a warning in the console.
+ * @example
+ * class Module {
+ * 	\@replacedBy("`this.global.addExport`")
+ * 	addGlobalExport(...args) {
+ * 		return this.global.addExport(...args);
+ * 	}
+ * }
+ *
+ * @param replacement the name or signature of the new method replacing the deprecated one
+ * @returns a method decorator
+ */
+function replacedBy<This, Params extends unknown[], Return>(replacement: string = ""): (
+	method: (this: This, ...args: Params) => Return,
+	context: ClassMethodDecoratorContext<This, typeof method>,
+) => (typeof method) | void {
+	return (method, context) => function (...args) {
+		const message = `WARNING: ${ context.static ? "Static" : "Instance" } method \`${ String(context.name) }\` is deprecated${ replacement && `; use ${ replacement } instead` }.`;
+		BinaryenObj.printWarn(message);
+		return method.call(this, ...args);
+	};
 }
 
 
@@ -360,13 +377,23 @@ export class Module {
 	 * @category Emission & Execution
 	 */
 	emitAsmjs(): string {
+		/*
+		 * `out` is Emscripten's `stdout` function (an alias of `console.log`),
+		 * called internally by `BinaryenModulePrintAsmjs()` to print its output.
+		 * We have to temporarily swap out the function itself
+		 * so that when `BinaryenModulePrintAsmjs()` calls it,
+		 * it calls our capturing function instead.
+		 *
+		 * We can’t use `import {out} from "../../-pre.ts";` because ES Module imports can’t be reassigned.
+		 * Instead, we reassign directly on `BinaryenObj`.
+		 */
 		let returned = "";
-		const saved = out;
-		out = (x: string) => {
+		const temp_out = BinaryenObj.out;
+		BinaryenObj.out = (x: string): void => {
 			returned += `${ x }\n`;
 		};
 		BinaryenObj["_BinaryenModulePrintAsmjs"](this[PTR]);
-		out = saved;
+		BinaryenObj.out = temp_out;
 		return returned;
 	}
 
@@ -540,13 +567,69 @@ export namespace Module {
 /*
  * The relocation of all `ExpressionBuilder` props from `Module` to `Module#wasm` is a breaking change,
  * so we want to let users access it the old way but with deprecation warnings.
- * This function delegates any accesses to those properties.
+ * The following interface declares typings for TS support, and
+ * the function below delegates accesses to those properties at runtime.
  */
+export interface Module {
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ nop: ExpressionBuilder["nop"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ unreachable: ExpressionBuilder["unreachable"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ drop: ExpressionBuilder["drop"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ select: ExpressionBuilder["select"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ block: ExpressionBuilder["block"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ loop: ExpressionBuilder["loop"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ if: ExpressionBuilder["if"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ br: ExpressionBuilder["br"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ br_if: ExpressionBuilder["br_if"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ br_table: ExpressionBuilder["br_table"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ br_on_null: ExpressionBuilder["br_on_null"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ br_on_non_null: ExpressionBuilder["br_on_non_null"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ br_on_cast: ExpressionBuilder["br_on_cast"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ br_on_cast_fail: ExpressionBuilder["br_on_cast_fail"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ break: ExpressionBuilder["break"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ switch: ExpressionBuilder["switch"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ call: ExpressionBuilder["call"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ call_ref: ExpressionBuilder["call_ref"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ call_indirect: ExpressionBuilder["call_indirect"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ return: ExpressionBuilder["return"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ return_call: ExpressionBuilder["return_call"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ return_call_ref: ExpressionBuilder["return_call_ref"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ return_call_indirect: ExpressionBuilder["return_call_indirect"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ callIndirect: ExpressionBuilder["callIndirect"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ returnCall: ExpressionBuilder["returnCall"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ returnCallIndirect: ExpressionBuilder["returnCallIndirect"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ throw: ExpressionBuilder["throw"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ throw_ref: ExpressionBuilder["throw_ref"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ try_table: ExpressionBuilder["try_table"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ rethrow: ExpressionBuilder["rethrow"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ try: ExpressionBuilder["try"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ local: ExpressionBuilder["local"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ global: ExpressionBuilder["global"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ table: ExpressionBuilder["table"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ memory: ExpressionBuilder["memory"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ data: ExpressionBuilder["data"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ ref: ExpressionBuilder["ref"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ i31: ExpressionBuilder["i31"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ tuple: ExpressionBuilder["tuple"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ struct: ExpressionBuilder["struct"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ array: ExpressionBuilder["array"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ i32: ExpressionBuilder["i32"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ i64: ExpressionBuilder["i64"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ f32: ExpressionBuilder["f32"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ f64: ExpressionBuilder["f64"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ v128: ExpressionBuilder["v128"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ i8x16: ExpressionBuilder["i8x16"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ i16x8: ExpressionBuilder["i16x8"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ i32x4: ExpressionBuilder["i32x4"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ i64x2: ExpressionBuilder["i64x2"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ f32x4: ExpressionBuilder["f32x4"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ f64x2: ExpressionBuilder["f64x2"];
+	/** @deprecated This function moved to {@link Module#wasm}. @hidden */ atomic: ExpressionBuilder["atomic"];
+}
 Object.keys(new Module().wasm).forEach((key) => {
 	if (!Reflect.has(Module.prototype, key)) {
 		Reflect.defineProperty(Module.prototype, key, {
 			get() {
-				consoleWarn(`Module property \`.${ key }\` is deprecated; use \`.wasm.${ key }\` instead.`);
+				BinaryenObj.printWarn(`Module property \`.${ key }\` is deprecated; use \`.wasm.${ key }\` instead.`);
 				return (this as Module).wasm[key as keyof ExpressionBuilder];
 			},
 		});

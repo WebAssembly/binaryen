@@ -22,11 +22,11 @@ import type {
  */
 type Field = {
 	/** The type of the struct field. */
-	type: Type,
+	readonly type: Type,
 	/** The field’s packed type. */
-	packedType: PackedType,
+	readonly packedType: PackedType,
 	/** Is the field mutable? */
-	mutable: boolean,
+	readonly mutable: boolean,
 };
 
 
@@ -34,7 +34,7 @@ type Field = {
 export class TypeBuilder {
 	readonly #ptr: number;
 
-	constructor(size: number) {
+	constructor(size: number = 0) {
 		this.#ptr = BinaryenObj["_TypeBuilderCreate"](size);
 	}
 

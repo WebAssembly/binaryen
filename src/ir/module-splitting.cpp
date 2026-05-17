@@ -87,7 +87,7 @@ namespace {
 
 template<class F> void forEachElement(Module& module, F f) {
   ModuleUtils::iterActiveElementSegments(module, [&](ElementSegment* segment) {
-    Name base = "";
+    Name base;
     Index offset = 0;
     if (auto* c = segment->offset->dynCast<Const>()) {
       offset = c->value.getInteger();
@@ -112,13 +112,15 @@ struct TableSlotManager {
     Expression* makeExpr(Module& module);
   };
   Module& module;
+  const std::vector<std::unique_ptr<Module>>& secondaries;
   Table* activeTable = nullptr;
   ElementSegment* activeSegment = nullptr;
   Slot activeBase;
   std::map<Name, Slot> funcIndices;
   std::vector<ElementSegment*> activeTableSegments;
 
-  TableSlotManager(Module& module);
+  TableSlotManager(Module& module,
+                   const std::vector<std::unique_ptr<Module>>& secondaries);
 
   Table* makeTable();
   ElementSegment* makeElementSegment();
@@ -134,7 +136,7 @@ Expression* TableSlotManager::Slot::makeExpr(Module& module) {
   auto makeIndex = [&]() {
     return builder.makeConst(Literal::makeFromInt32(index, table->addressType));
   };
-  if (global.size()) {
+  if (global) {
     Expression* getBase = builder.makeGlobalGet(global, table->addressType);
     auto addOp = table->is64() ? AddInt64 : AddInt32;
     return index == 0 ? getBase
@@ -149,7 +151,9 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
   funcIndices.insert({func, slot});
 }
 
-TableSlotManager::TableSlotManager(Module& module) : module(module) {
+TableSlotManager::TableSlotManager(
+  Module& module, const std::vector<std::unique_ptr<Module>>& secondaries)
+  : module(module), secondaries(secondaries) {
   // If possible, just create a new table to manage all primary-to-secondary
   // calls lazily. Do not re-use slots for functions that will already be in
   // existing tables, since that is not correct in the face of table mutations.
@@ -191,7 +195,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   if (activeTableSegments.empty()) {
     // There are no active segments, so we will lazily create one and start
     // filling it at index 0.
-    activeBase = {activeTable->name, "", 0};
+    activeBase = {activeTable->name, Name(), 0};
   } else if (activeTableSegments.size() == 1 &&
              activeTableSegments[0]->type == funcref &&
              !activeTableSegments[0]->offset->is<Const>()) {
@@ -218,7 +222,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
       if (segmentBase + segment->data.size() >= maxIndex) {
         maxIndex = segmentBase + segment->data.size();
         activeSegment = segment;
-        activeBase = {activeTable->name, "", segmentBase};
+        activeBase = {activeTable->name, Name(), segmentBase};
       }
     }
   }
@@ -233,8 +237,25 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
 }
 
 Table* TableSlotManager::makeTable() {
-  return module.addTable(
-    Builder::makeTable(Names::getValidTableName(module, Name::fromInt(0))));
+  // Because the active table will be imported in secondary modules, its name
+  // should not collide with any existing tables in primary and secondary
+  // modules.
+  std::unordered_set<Name> secondaryTableNames;
+  for (auto& secondary : secondaries) {
+    for (auto& table : secondary->tables) {
+      secondaryTableNames.insert(table->name);
+    }
+  }
+  Name name = Names::getValidName("0", [&](Name test) {
+    if (module.getTableOrNull(test)) {
+      return false;
+    }
+    if (secondaryTableNames.contains(test)) {
+      return false;
+    }
+    return true;
+  });
+  return module.addTable(Builder::makeTable(name));
 }
 
 ElementSegment* TableSlotManager::makeElementSegment() {
@@ -257,7 +278,7 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
   if (activeSegment == nullptr) {
     if (activeTable == nullptr) {
       activeTable = makeTable();
-      activeBase = {activeTable->name, "", 0};
+      activeBase = {activeTable->name, Name(), 0};
     }
 
     // None of the existing segments should refer to the active table
@@ -347,7 +368,7 @@ struct ModuleSplitter {
   void setupTablePatching();
 
   ModuleSplitter(Module& primary, const Config& config)
-    : config(config), primary(primary), tableManager(primary),
+    : config(config), primary(primary), tableManager(primary, secondaries),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)),
       exportedPrimaryItems(initExportedPrimaryItems(primary)) {
     classifyFunctions();
@@ -737,7 +758,7 @@ void ModuleSplitter::shareImportableItems() {
   if (tableManager.activeTable) {
     primaryUsed.tables.insert(tableManager.activeTable->name);
   }
-  if (tableManager.activeBase.global.size()) {
+  if (tableManager.activeBase.global) {
     primaryUsed.globals.insert(tableManager.activeBase.global);
   }
 
@@ -1107,7 +1128,11 @@ void ModuleSplitter::setupTablePatching() {
     // so we should export and import the active table here.
     auto secondaryTable =
       secondary.getTableOrNull(tableManager.activeTable->name);
-    if (!secondaryTable) {
+    if (secondaryTable) {
+      // In case it's already in the secondary module, sync the initial/max
+      secondaryTable->initial = tableManager.activeTable->initial;
+      secondaryTable->max = tableManager.activeTable->max;
+    } else {
       secondaryTable =
         ModuleUtils::copyTable(tableManager.activeTable, secondary);
       makeImportExport(*tableManager.activeTable,
@@ -1116,7 +1141,7 @@ void ModuleSplitter::setupTablePatching() {
                        ExternalKind::Table);
     }
 
-    if (tableManager.activeBase.global.size()) {
+    if (tableManager.activeBase.global) {
       // Import and export the active table's base global if necessary. Unless
       // the base global was already being used elsewhere in secondaries,
       // shareImportableItems wasn't able to mark it as used in secondaries, so

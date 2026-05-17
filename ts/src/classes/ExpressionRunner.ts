@@ -24,7 +24,10 @@ export enum ExpressionRunnerFlag {
 
 export class ExpressionRunner {
 	/** @deprecated Static field `ExpressionRunner.Flags` is now a standalone enum {@link ExpressionRunnerFlag}. */
-	static Flags = ExpressionRunnerFlag;
+	static get Flags() {
+		BinaryenObj.printWarn("The enum `ExpressionRunner.Flags` has been renamed to `ExpressionRunnerFlag`.");
+		return ExpressionRunnerFlag;
+	}
 
 
 	readonly #ptr: number;

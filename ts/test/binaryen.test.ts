@@ -8,11 +8,13 @@ import * as binaryen from "../src/binaryen.ts";
 
 
 suite("binaryen", () => {
-	test("[internal] Emscripten artifacts exist.", async () => {
+	test("[internal] Emscripten artifacts and module arguments exist.", async () => {
 		const __pre = await import("../src/-pre.ts");
 		assert.ok(__pre.BinaryenObj);
 		assert.ok(__pre._malloc);
 		assert.ok(__pre._free);
+		assert.ok(__pre.out);
+		assert.ok(__pre.err);
 		assert.ok(__pre.HEAP8);
 		assert.ok(__pre.HEAPU8);
 		assert.ok(__pre.HEAP32);
@@ -24,6 +26,10 @@ suite("binaryen", () => {
 		assert.ok(__pre.stringToAscii);
 		assert.ok(__pre.stringToUTF8OnStack);
 		assert.ok(__pre.getExceptionMessage);
+
+		assert.ok(__pre.BinaryenObj.print);
+		assert.ok(__pre.BinaryenObj.printWarn);
+		assert.ok(__pre.BinaryenObj.printErr);
 	});
 
 

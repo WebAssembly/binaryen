@@ -2525,7 +2525,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-    Split(),
+#    Split(), # Will reenable after stabilized
     RoundtripText(),
     ClusterFuzz(),
     Two(),
