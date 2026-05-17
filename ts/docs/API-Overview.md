@@ -176,7 +176,7 @@ See the generated **ExpressionBuilder** docs for all available functions and det
 
 Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”.
 
-- Parametric Instructions
+- parametrics
 	- `.nop()`
 	- `.unreachable()`
 	- `.drop()`
@@ -318,20 +318,97 @@ They can be used to inspect and manipulate expressions.
 See generated docs for fields, methods, and descriptions of each.
 
 - `expressions.Expression` (root class)
-- parametric instructions
+- Parametric Expressions
 	- `expressions.Drop`
 	- `expressions.Select`
-- control instructions
+- Control Expressions
 	- `expressions.Block`
 	- `expressions.Loop`
+	- `expressions.If`
 	- `expressions.Break`
-- variable instructions
+	- `expressions.Switch`
+	- `expressions.BrOn`
+	- `expressions.Call`
+	- `expressions.CallRef`
+	- `expressions.CallIndirect`
+	- `expressions.Return`
+	- `expressions.Throw`
+	- `expressions.Rethrow`
+	- `expressions.Try`
+- Variable Expressions
 	- `expressions.LocalGet`
 	- `expressions.LocalSet`
 	- `expressions.GlobalGet`
 	- `expressions.GlobalSet`
-- numeric instructions
+- Table Expressions
+	- `expressions.TableGet`
+	- `expressions.TableSet`
+	- `expressions.TableSize`
+	- `expressions.TableGrow`
+- Memory Expressions
+	- `expressions.Load`
+	- `expressions.Store`
+	- `expressions.SIMDLoad`
+	- `expressions.SIMDLoadStoreLane`
+	- `expressions.MemorySize`
+	- `expressions.MemoryGrow`
+	- `expressions.MemoryFill`
+	- `expressions.MemoryCopy`
+	- `expressions.MemoryInit`
+	- `expressions.DataDrop`
+- Reference Expressions
+	- `expressions.RefFunc`
+	- `expressions.RefIsNull`
+	- `expressions.RefAs`
+	- `expressions.RefEq`
+	- `expressions.RefTest`
+	- `expressions.RefCast`
+	- `expressions.RefI31`
+	- `expressions.I31Get`
+- Aggregate Expressions
+	- `expressions.TupleMake`
+	- `expressions.TupleExtract`
+	- `expressions.StructNew`
+	- `expressions.StructGet`
+	- `expressions.StructSet`
+	- `expressions.ArrayNew`
+	- `expressions.ArrayNewFixed`
+	- `expressions.ArrayNewData`
+	- `expressions.ArrayNewElem`
+	- `expressions.ArrayGet`
+	- `expressions.ArraySet`
+	- `expressions.ArrayLen`
+	- `expressions.ArrayFill`
+	- `expressions.ArrayCopy`
+	- `expressions.ArrayInitData`
+	- `expressions.ArrayInitElem`
+- Numeric Expressions
 	- `expressions.Const`
+	- `expressions.Unary`
+	- `expressions.Binary`
+	- `expressions.WideIntAddSub`
+	- `expressions.WideIntMul`
+- Vector Expressions
+	- `expressions.SIMDTernary`
+	- `expressions.SIMDShift`
+	- `expressions.SIMDShuffle`
+	- `expressions.SIMDExtract`
+	- `expressions.SIMDReplace`
+- Atomic Expressions
+	- `expressions.AtomicRMW`
+	- `expressions.AtomicCmpxchg`
+	- `expressions.AtomicWait`
+	- `expressions.AtomicNotify`
+	- `expressions.AtomicFence`
+- String Expressions
+	- `expressions.StringNew`
+	- `expressions.StringConst`
+	- `expressions.StringMeasure`
+	- `expressions.StringEncode`
+	- `expressions.StringConcat`
+	- `expressions.StringEq`
+	- `expressions.StringWTF16Get`
+	- `expressions.StringSliceWTF`
 
 
 
