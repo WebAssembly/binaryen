@@ -39,7 +39,7 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
       [[maybe_unused]] bool valid =
         wasm::String::convertWTF8ToWTF16(wtf16, getIString().view());
       assert(valid);
-      wasm::String::printEscapedJSON(os, wtf16.view());
+      wasm::String::printEscapedJSON(os, wtf16.str());
       return;
     }
     case Array: {
