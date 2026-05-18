@@ -74,6 +74,7 @@ struct StringLifting : public Pass {
         if (!valid) {
           Fatal() << "Bad string to lift: " << wtf8;
         }
+        // TODO: Use wtf16.view() once we have C++20.
         importedStrings[global->name] = wtf16.str();
         found = true;
       }
