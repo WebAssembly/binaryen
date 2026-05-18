@@ -55,7 +55,7 @@ export const auto: Type = BinaryenObj["_BinaryenTypeAuto"]();
 export const i32: Type = BinaryenObj["_BinaryenTypeInt32"]();
 /** 64-bit integer. */
 export const i64: Type = BinaryenObj["_BinaryenTypeInt64"]();
-/** 64-bit float. */
+/** 32-bit float. */
 export const f32: Type = BinaryenObj["_BinaryenTypeFloat32"]();
 /** 64-bit float. */
 export const f64: Type = BinaryenObj["_BinaryenTypeFloat64"]();
