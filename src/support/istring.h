@@ -69,7 +69,13 @@ public:
 
   std::string_view view() const { return str.view(); }
 
-  IString() = default;
+  // Use an explicit constructor instead of `= default` because some older
+  // compilers (e.g. Apple Clang in older Xcode versions) delete the default
+  // constructor if there is a const member without an in-class initializer,
+  // even if that member's type has a default constructor.
+  // FIXME: Use `= default` once we bump the min clang/Xcode version that
+  // we support.
+  IString() : str({nullptr}) {}
 
   IString(View v) : str(v) {}
 
