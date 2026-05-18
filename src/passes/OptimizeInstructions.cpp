@@ -5761,7 +5761,7 @@ private:
       }
     }
 
-    if (!neverFold) {
+    if (!neverFold && curr->condition->type != Type::unreachable) {
       // Identical code on both arms can be folded out, e.g.
       //
       //  (select
