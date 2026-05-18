@@ -528,11 +528,15 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
       case HeapType::string:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::noext.getBasic(share))});
+      case HeapType::waitqueue:
+        return fuzztest::Just(
+          HeapTypePlan{HeapType(HeapTypes::nowaitqueue.getBasic(share))});
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
       case HeapType::nocont:
       case HeapType::noexn:
+      case HeapType::nowaitqueue:
         // No strict subtypes, so just return super.
         return fuzztest::Just(super);
     }
@@ -587,6 +591,7 @@ AvailableStrictSuperHeapType(TypeBuilderPlan plan, HeapTypePlan sub) {
       case HeapType::cont:
       case HeapType::any:
       case HeapType::exn:
+      case HeapType::waitqueue:
         // No strict supertypes, so just return sub.
         return fuzztest::Just(sub);
       case HeapType::eq:
@@ -622,6 +627,9 @@ AvailableStrictSuperHeapType(TypeBuilderPlan plan, HeapTypePlan sub) {
       case HeapType::noexn:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::exn.getBasic(share))});
+      case HeapType::nowaitqueue:
+        return fuzztest::Just(
+          HeapTypePlan{HeapType(HeapTypes::waitqueue.getBasic(share))});
     }
     WASM_UNREACHABLE("unexpected type");
   } else if (auto* index = sub.getIndex()) {

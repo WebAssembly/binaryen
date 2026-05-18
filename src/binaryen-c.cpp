@@ -92,6 +92,8 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::exn:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue:
         WASM_UNREACHABLE("TODO: string literals");
       case HeapType::none:
       case HeapType::noext:
@@ -146,6 +148,8 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::exn:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue:
         WASM_UNREACHABLE("TODO: string literals");
       case HeapType::none:
       case HeapType::noext:

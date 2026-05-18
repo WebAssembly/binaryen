@@ -2341,10 +2341,15 @@ public:
     return Literal(int32_t{2}); // Timed out
   }
 
-  Flow visitStructNotify(StructNotify* curr) {
-    VISIT(ref, curr->ref)
+  Flow visitWaitqueueNew(WaitqueueNew* curr) {
+    return self()->makeGCData(
+      {}, Type(HeapType(HeapType::waitqueue).getBasic(Shared), NonNullable));
+  }
+
+  Flow visitWaitqueueNotify(WaitqueueNotify* curr) {
+    VISIT(waitqueue, curr->waitqueue)
     VISIT(count, curr->count)
-    auto data = ref.getSingleValue().getGCData();
+    auto data = waitqueue.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
     }
@@ -2964,10 +2969,6 @@ protected:
         return truncateForPacking(Literal(int32_t(Bits::readLE<int16_t>(p))),
                                   field);
       }
-      case Field::WaitQueue: {
-        WASM_UNREACHABLE("waitqueue not implemented");
-        break;
-      }
     }
     WASM_UNREACHABLE("unexpected type");
   }
@@ -3112,7 +3113,10 @@ public:
   Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructWait(StructWait* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStructNotify(StructNotify* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitWaitqueueNew(WaitqueueNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitWaitqueueNotify(WaitqueueNotify* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
