@@ -119,8 +119,7 @@ public:
   bool equals(std::string_view other) const { return str.view() == other; }
 
   bool startsWith(std::string_view prefix) const {
-    // TODO: Use C++20 `starts_with`.
-    return view().substr(0, prefix.size()) == prefix;
+    return view().starts_with(prefix);
   }
   bool startsWith(IString other) const { return startsWith(other.view()); }
 
@@ -130,11 +129,7 @@ public:
   }
 
   bool endsWith(std::string_view suffix) const {
-    // TODO: Use C++20 `ends_with`.
-    if (suffix.size() > str.size()) {
-      return false;
-    }
-    return view().substr(str.size() - suffix.size()) == suffix;
+    return view().ends_with(suffix);
   }
   bool endsWith(IString other) const { return endsWith(other.view()); }
 
