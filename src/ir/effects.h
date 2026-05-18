@@ -1310,10 +1310,9 @@ private:
     }
 
   private:
-    // Populate effects of the function's body that were computed from
-    // GlobalEffects. Note that calls may have other effects that aren't
-    // captured by the function body of the target (e.g. a call_ref may trap on
-    // null refs).
+    // Populate a call's effects using effects computed from GlobalEffects. Note
+    // that calls may have other effects that aren't captured by the function
+    // body of the target (e.g. a call_ref may trap on null refs).
     template<typename CallType>
     void addCallEffectsFromGlobalEffects(const CallType* curr,
                                          const EffectAnalyzer& funcEffects) {
@@ -1324,6 +1323,17 @@ private:
       }
 
       if (funcEffects.throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
+        // We can ignore a throw here, as the parent catches it.
+        //
+        // Also, we can filter out throws for return calls because they are
+        // already more precisely captured by `branchesOut`, which models the
+        // return, and `hasReturnCallThrow`, which models the throw that will
+        // happen after the return.
+        //
+        // TODO: we check for throws_ here instead of throws() and only clear
+        // throws_. So throws() can remain true in the case that this expression
+        // is the target of a delegate statement. We should consider clearing
+        // filteredEffects.delegateTargets here.
         auto filteredEffects = funcEffects;
         filteredEffects.throws_ = false;
         parent.mergeIn(filteredEffects);

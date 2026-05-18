@@ -2729,10 +2729,26 @@ public:
   // $bar.
   //
   // When types are rewritten globally, the target type inherits the effects of
-  // source type (see type-updating.cpp). If the type of just one function is
-  // rewritten, we don't update this, because such a rewrite is only valid
-  // if the function is not the target of an indirect call (otherwise the
-  // indirect call would have to be rewritten too).
+  // the source type (see type-updating.cpp).
+  //
+  // When individual function types are rewritten, there's no need to update
+  // this map. Why?
+  // * Suppose $foo has type $A and is updated to type $B, and that $B is not a
+  //   subtype of $A. Then $foo must not be the target of an indirect call to
+  //   $A, otherwise this rewrite would be invalid (it would cause indirect
+  //   calls to have the wrong type). So we never would have considered $foo's
+  //   effects in $A to begin with (in GlobalEffects.cpp we filter out functions
+  //   that don't have an address (TODO: finish this in #8644)). We also don't
+  //   need to update $B's effects, because any indirect call targeting $B could
+  //   not have targeted $foo (it was a completely different type in the
+  //   source).
+  //
+  // * In the case that $B is a subtype of $A, the situation is similar, except
+  //   that $B's effects were already reflected in $A (GlobalEffects takes
+  //   subtyping into account). Indirect calls to $A could still land on
+  //   $foo, so $A's effects are still correct. And as in the previous case,
+  //   indirect calls to $B still never could have targeted $foo, so there's no
+  //   need to update $B's effects.
   //
   // TODO: Use Type instead of HeapType to account for nullability and
   // exactness.
