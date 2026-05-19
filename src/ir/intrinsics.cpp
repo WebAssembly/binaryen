@@ -15,6 +15,7 @@
  */
 
 #include "ir/intrinsics.h"
+#include "ir/module-utils.h"
 #include "ir/find_all.h"
 #include "wasm-builder.h"
 
@@ -102,28 +103,47 @@ std::vector<Name> Intrinsics::getConfigureAllFunctions(Call* call) {
 }
 
 std::vector<Name> Intrinsics::getJSCalledFunctions() {
-  std::vector<Name> ret;
+  using JSCalledSet = std::unordered_set<Name>;
+
+  // Gather the js.called functions, and find the configureAll, which can add
+  // more.
+  JSCalledSet jsCalled;
+  Function* configureAll = nullptr;
   for (auto& func : module.functions) {
     if (getAnnotations(func.get()).jsCalled) {
-      ret.push_back(func->name);
+      jsCalled.insert(func->name);
+    }
+
+    if (isConfigureAll(func.get())) {
+      configureAll = func.get();
     }
   }
 
-  // ConfigureAlls in a start function make their functions callable.
-  if (module.start) {
-    auto* start = module.getFunction(module.start);
-    if (!start->imported()) {
-      FindAll<Call> calls(start->body);
-      for (auto* call : calls.list) {
-        if (isConfigureAll(call)) {
-          for (auto name : getConfigureAllFunctions(call)) {
-            ret.push_back(name);
+  // ConfigureAlls make their functions callable. To avoid always scanning the
+  // the entire module, only do so when we saw the proper import.
+  if (configureAll) {
+    ModuleUtils::ParallelFunctionAnalysis<JSCalledSet> analysis(
+      module, [&](Function* func, JSCalledSet& jsCalled) {
+        if (func->imported()) {
+          return;
+        }
+
+        FindAll<Call> calls(func->body);
+        for (auto* call : calls.list) {
+          if (isConfigureAll(call)) {
+            for (auto name : getConfigureAllFunctions(call)) {
+              jsCalled.insert(name);
+            }
           }
         }
-      }
+      });
+
+    for (auto& [_, set] : analysis.map) {
+      jsCalled.insert(set.begin(), set.end());
     }
   }
-  return ret;
+
+  return std::vector<Name>(jsCalled.begin(), jsCalled.end());
 }
 
 } // namespace wasm
