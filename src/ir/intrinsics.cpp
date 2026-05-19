@@ -15,8 +15,8 @@
  */
 
 #include "ir/intrinsics.h"
-#include "ir/module-utils.h"
 #include "ir/find_all.h"
+#include "ir/module-utils.h"
 #include "wasm-builder.h"
 
 namespace wasm {
