@@ -997,18 +997,17 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       // Return if the current module is the same module as the call's target,
       // because we don't need a call_indirect within the same module.
       Module* currModule = getModule();
-      if (currModule != &parent.primary &&
-          parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->target))
-              .get() == currModule) {
+      Module* calleeModule =
+        parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->target))
+          .get();
+      if (currModule == calleeModule) {
         return;
       }
 
-      Builder builder(*getModule());
-      Index secIndex = parent.funcToSecondaryIndex.at(curr->target);
-      auto* func = parent.secondaries.at(secIndex)->getFunction(curr->target);
+      Builder builder(*currModule);
+      auto* func = calleeModule->getFunction(curr->target);
       auto tableSlot =
         parent.tableManager.getSlot(curr->target, func->type.getHeapType());
-
       replaceCurrent(
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
@@ -1151,9 +1150,9 @@ void ModuleSplitter::setupTablePatching() {
         secondary.getGlobalOrNull(tableManager.activeBase.global);
       if (!secondaryGlobal) {
         secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, secondary);
+        makeImportExport(
+          *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
       }
-      makeImportExport(
-        *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
 
       assert(tableManager.activeTableSegments.size() == 1 &&
              "Unexpected number of segments with non-const base");
