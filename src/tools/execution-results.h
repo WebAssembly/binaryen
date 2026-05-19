@@ -470,7 +470,10 @@ struct ExecutionResults {
         secondInterface = std::make_unique<LoggingExternalInterface>(
           loggings, *second, linkedInstances);
         secondInstance = std::make_shared<ModuleRunner>(
-          *second, secondInterface.get(), linkedInstances);
+          *second,
+          secondInterface.get(),
+          linkedInstances,
+          std::make_shared<FuzzerImportResolver>(linkedInstances));
         instantiate(*secondInstance, *secondInterface);
       }
 
@@ -487,6 +490,8 @@ struct ExecutionResults {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
+    } catch (const WasmException&) {
+      std::cout << "[exception thrown: start]\n";
     }
   }
 

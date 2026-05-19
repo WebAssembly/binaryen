@@ -391,6 +391,8 @@ void PassRegistry::registerPasses() {
   registerPass(
     "print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass(
+    "print-boundary", "print boundary in JSON format", createPrintBoundaryPass);
+  registerPass(
     "print-call-graph", "print call graph", createPrintCallGraphPass);
 
   // Register PrintFunctionMap using its normal name.
