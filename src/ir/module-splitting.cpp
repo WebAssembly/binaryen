@@ -1000,7 +1000,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       Module* calleeModule =
         parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->target))
           .get();
-      if (calleeModule == currModule) {
+      if (currModule == calleeModule) {
         return;
       }
 
