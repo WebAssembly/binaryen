@@ -3308,12 +3308,10 @@ Module['emitText'] = function(expr) {
   if (typeof expr === 'object') {
     return expr.emitText();
   }
-  const old = out;
-  let ret = '';
-  out = x => { ret += x + '\n' };
-  Module['_BinaryenExpressionPrint'](expr);
-  out = old;
-  return ret;
+  const textPtr = BinaryenObj["_BinaryenExpressionAllocateAndWriteText"](expr);
+  const text = UTF8ToString(textPtr);
+  if (textPtr) _free(textPtr);
+  return text;
 };
 
 // Calls a function, wrapping it in error handling code so that if it hits a
