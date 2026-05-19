@@ -2,7 +2,6 @@ import {
 	_free,
 	_malloc,
 	BinaryenObj,
-	HEAP8,
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
@@ -88,7 +87,7 @@ export class ModuleMemories {
 				datas[i] = _malloc(data.length);
 				passives[i] = Number(passive);
 				offsets[i] = offset;
-				HEAP8.set(data, datas[i]);
+				BinaryenObj.HEAP8.set(data, datas[i]);
 				lengths[i] = data.length;
 			}
 			BinaryenObj["_BinaryenSetMemory"](

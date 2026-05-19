@@ -1,6 +1,5 @@
 import {
 	BinaryenObj,
-	HEAPU8,
 	stackAlloc,
 } from "../../-pre.ts";
 import {
@@ -57,7 +56,7 @@ export class Const extends Expression {
 			const tempBuffer = stackAlloc(16);
 			BinaryenObj["_BinaryenConstGetValueV128"](this._ptr, tempBuffer);
 			for (let i = 0; i < 16; ++i) {
-				value[i] = HEAPU8[tempBuffer + i];
+				value[i] = BinaryenObj.HEAPU8[tempBuffer + i];
 			}
 		});
 		return value;
@@ -67,7 +66,7 @@ export class Const extends Expression {
 		preserveStack(() => {
 			const tempBuffer = stackAlloc(16);
 			for (let i = 0; i < 16; ++i) {
-				HEAPU8[tempBuffer + i] = value[i];
+				BinaryenObj.HEAPU8[tempBuffer + i] = value[i];
 			}
 			BinaryenObj["_BinaryenConstSetValueV128"](this._ptr, tempBuffer);
 		});

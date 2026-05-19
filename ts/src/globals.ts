@@ -6,8 +6,6 @@
 import {
 	_free,
 	_malloc,
-	HEAP8,
-	HEAPU32,
 	BinaryenObj,
 	UTF8ToString,
 	getExceptionMessage,
@@ -199,7 +197,7 @@ export function emitText(expr: ExpressionRef): string {
 /** Creates a module from binary data. */
 export function readBinary(data: Uint8Array): Module {
 	const buffer = _malloc(data.length);
-	HEAP8.set(data, buffer);
+	BinaryenObj.HEAP8.set(data, buffer);
 	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleRead"](buffer, data.length));
 	_free(buffer);
 	return wrapModule(ptr);
@@ -207,7 +205,7 @@ export function readBinary(data: Uint8Array): Module {
 
 export function readBinaryWithFeatures(data: Uint8Array, features: Feature): Module {
 	const buffer = _malloc(data.length);
-	HEAP8.set(data, buffer);
+	BinaryenObj.HEAP8.set(data, buffer);
 	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleReadWithFeatures"](buffer, data.length, features));
 	_free(buffer);
 	return wrapModule(ptr);
@@ -253,7 +251,7 @@ export function expandType(typ: Type): Type[] {
 		BinaryenObj["_BinaryenTypeExpand"](typ, array);
 		const types = new Array(numTypes);
 		for (let i = 0; i < numTypes; i++) {
-			types[i] = HEAPU32[(array >>> 2) + i];
+			types[i] = BinaryenObj.HEAPU32[(array >>> 2) + i];
 		}
 		return types;
 	});

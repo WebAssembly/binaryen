@@ -16,10 +16,10 @@ declare module "#binaryen-raw" {
 		err(x: unknown): void; // alias of `console.error`
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libcore.js
-		HEAP8: Int8Array;
-		HEAPU8: Uint8Array;
-		HEAP32: Int32Array;
-		HEAPU32: Uint32Array;
+		readonly HEAP8: Int8Array;
+		readonly HEAPU8: Uint8Array;
+		readonly HEAP32: Int32Array;
+		readonly HEAPU32: Uint32Array;
 		stackSave(): number;
 		stackRestore(stack: number): number;
 		stackAlloc(length: number): number;

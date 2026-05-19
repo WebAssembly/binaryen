@@ -2,7 +2,6 @@ import {
 	_free,
 	_malloc,
 	BinaryenObj,
-	HEAP8,
 	UTF8ToString,
 } from "../../-pre.ts";
 import {
@@ -40,7 +39,7 @@ export class DataSegment {
 		const ptr = _malloc(size);
 		BinaryenObj["_BinaryenCopyDataSegmentData"](segment, ptr);
 		const res = new Uint8Array(size);
-		res.set(HEAP8.subarray(ptr, ptr + size));
+		res.set(BinaryenObj.HEAP8.subarray(ptr, ptr + size));
 		_free(ptr);
 
 		this.data = res.buffer;

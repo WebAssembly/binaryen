@@ -15,10 +15,6 @@ suite("binaryen", () => {
 		assert.ok(__pre._free);
 		assert.ok(__pre.out);
 		assert.ok(__pre.err);
-		assert.ok(__pre.HEAP8);
-		assert.ok(__pre.HEAPU8);
-		assert.ok(__pre.HEAP32);
-		assert.ok(__pre.HEAPU32);
 		assert.ok(__pre.stackSave);
 		assert.ok(__pre.stackRestore);
 		assert.ok(__pre.stackAlloc);

@@ -4,8 +4,7 @@
 
 
 import {
-	HEAP8,
-	HEAP32,
+	BinaryenObj,
 	stackAlloc,
 	stackRestore,
 	stackSave,
@@ -57,7 +56,7 @@ export function strToStack(str?: string): number {
  */
 export function i32sToStack(i32s: readonly number[]): number {
 	const ret = stackAlloc(i32s.length << 2);
-	HEAP32.set(i32s, ret >>> 2);
+	BinaryenObj.HEAP32.set(i32s, ret >>> 2);
 	return ret;
 }
 
@@ -68,7 +67,7 @@ export function i32sToStack(i32s: readonly number[]): number {
  */
 export function i8sToStack(i8s: readonly number[]): number {
 	const ret = stackAlloc(i8s.length);
-	HEAP8.set(i8s, ret);
+	BinaryenObj.HEAP8.set(i8s, ret);
 	return ret;
 }
 

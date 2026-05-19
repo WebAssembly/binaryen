@@ -1,6 +1,5 @@
 import {
 	BinaryenObj,
-	HEAPU8,
 	stackAlloc,
 } from "../../-pre.ts";
 import {
@@ -71,7 +70,7 @@ export class SIMDShuffle extends Expression {
 			const tempBuffer = stackAlloc(16);
 			BinaryenObj["_BinaryenSIMDShuffleGetMask"](this._ptr, tempBuffer);
 			for (let i = 0; i < 16; ++i) {
-				mask[i] = HEAPU8[tempBuffer + i];
+				mask[i] = BinaryenObj.HEAPU8[tempBuffer + i];
 			}
 		});
 		return mask;
@@ -81,7 +80,7 @@ export class SIMDShuffle extends Expression {
 		preserveStack(() => {
 			const tempBuffer = stackAlloc(16);
 			for (let i = 0; i < 16; ++i) {
-				HEAPU8[tempBuffer + i] = mask[i];
+				BinaryenObj.HEAPU8[tempBuffer + i] = mask[i];
 			}
 			BinaryenObj["_BinaryenSIMDShuffleSetMask"](this._ptr, tempBuffer);
 		});
