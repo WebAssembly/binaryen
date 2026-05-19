@@ -342,6 +342,8 @@ struct ModuleSplitter {
   // Map from original secondary function name to its trampoline
   std::unordered_map<Name, Name> trampolineMap;
 
+  void shareActiveTable(Module* secondary);
+
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::unordered_map<Name, Name>
@@ -588,6 +590,32 @@ Name ModuleSplitter::getTrampoline(Name funcName) {
   primary.addFunction(std::move(func));
   primaryFuncs.insert(trampoline);
   return trampoline;
+}
+
+void ModuleSplitter::shareActiveTable(Module* secondary) {
+  assert(tableManager.activeTable);
+  auto secondaryTable =
+    secondary->getTableOrNull(tableManager.activeTable->name);
+  if (secondaryTable) {
+    // In case it's already in the secondary module, sync the initial/max
+    secondaryTable->initial = tableManager.activeTable->initial;
+    secondaryTable->max = tableManager.activeTable->max;
+  } else {
+    secondaryTable =
+      ModuleUtils::copyTable(tableManager.activeTable, *secondary);
+    makeImportExport(
+      *tableManager.activeTable, *secondaryTable, "table", ExternalKind::Table);
+  }
+  if (tableManager.activeBase.global) {
+    auto* primaryGlobal = primary.getGlobal(tableManager.activeBase.global);
+    auto* secondaryGlobal =
+      secondary->getGlobalOrNull(tableManager.activeBase.global);
+    if (!secondaryGlobal) {
+      secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, *secondary);
+      makeImportExport(
+        *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
+    }
+  }
 }
 
 void ModuleSplitter::thunkExportedSecondaryFunctions() {
@@ -986,9 +1014,14 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
+  std::set<Module*> activeTableUsingSecondaries;
   struct CallIndirector : public PostWalker<CallIndirector> {
     ModuleSplitter& parent;
-    CallIndirector(ModuleSplitter& parent) : parent(parent) {}
+    std::set<Module*>& activeTableUsingSecondaries;
+    CallIndirector(ModuleSplitter& parent,
+                   std::set<Module*>& activeTableUsingSecondaries)
+      : parent(parent),
+        activeTableUsingSecondaries(activeTableUsingSecondaries) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
       if (!parent.allSecondaryFuncs.contains(curr->target)) {
@@ -1014,12 +1047,22 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
                                  curr->operands,
                                  func->type.getHeapType(),
                                  curr->isReturn));
+
+      // Share the active table with the current module (caller). We share the
+      // active table with with calleeModule later in setupTablePathing.
+      if (currModule != &parent.primary) {
+        activeTableUsingSecondaries.insert(currModule);
+      }
     }
   };
-  CallIndirector callIndirector(*this);
+  CallIndirector callIndirector(*this, activeTableUsingSecondaries);
   callIndirector.walkModule(&primary);
   for (auto& secondaryPtr : secondaries) {
     callIndirector.walkModule(secondaryPtr.get());
+  }
+
+  for (auto* secondary : activeTableUsingSecondaries) {
+    shareActiveTable(secondary);
   }
 }
 
@@ -1120,40 +1163,10 @@ void ModuleSplitter::setupTablePatching() {
 
   for (auto& [secondaryPtr, replacedElems] : moduleToReplacedElems) {
     Module& secondary = *secondaryPtr;
-    // Import and export the active table if necessary. Unless we use an
-    // existing table as an active table (e.g. because reference-types is
-    // disabled) and that table was already being used by an existing indirect
-    // call, shareImportableItems wasn't able to mark it as used in secondaries,
-    // so we should export and import the active table here.
-    auto secondaryTable =
-      secondary.getTableOrNull(tableManager.activeTable->name);
-    if (secondaryTable) {
-      // In case it's already in the secondary module, sync the initial/max
-      secondaryTable->initial = tableManager.activeTable->initial;
-      secondaryTable->max = tableManager.activeTable->max;
-    } else {
-      secondaryTable =
-        ModuleUtils::copyTable(tableManager.activeTable, secondary);
-      makeImportExport(*tableManager.activeTable,
-                       *secondaryTable,
-                       "table",
-                       ExternalKind::Table);
-    }
+    shareActiveTable(&secondary);
+    auto* secondaryTable = secondary.getTable(tableManager.activeTable->name);
 
     if (tableManager.activeBase.global) {
-      // Import and export the active table's base global if necessary. Unless
-      // the base global was already being used elsewhere in secondaries,
-      // shareImportableItems wasn't able to mark it as used in secondaries, so
-      // we should export and import it here.
-      auto* primaryGlobal = primary.getGlobal(tableManager.activeBase.global);
-      auto* secondaryGlobal =
-        secondary.getGlobalOrNull(tableManager.activeBase.global);
-      if (!secondaryGlobal) {
-        secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, secondary);
-        makeImportExport(
-          *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
-      }
-
       assert(tableManager.activeTableSegments.size() == 1 &&
              "Unexpected number of segments with non-const base");
       assert(secondary.tables.size() == 1 && secondary.elementSegments.empty());
