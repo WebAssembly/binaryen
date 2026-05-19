@@ -101,9 +101,11 @@ public:
 //     [](const A& a) { ... },
 //     [](const B& b) { ... }},
 //   variant)
-template<class... Ts> struct overloaded : Ts... {
+template<typename... Ts> struct overloaded : Ts... {
   using Ts::operator()...;
 };
+
+template<typename... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 } // namespace wasm
 
