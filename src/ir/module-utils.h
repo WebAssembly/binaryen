@@ -280,7 +280,10 @@ struct ParallelFunctionAnalysis {
 
   using Func = std::function<void(Function*, T&)>;
 
-  ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
+  ParallelFunctionAnalysis(
+    std::conditional_t<Mut == Immutable, const Module, Module>& wasm,
+    Func work)
+    : wasm(const_cast<Module&>(wasm)) {
     // Fill in the map as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
