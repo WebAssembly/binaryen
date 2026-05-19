@@ -728,12 +728,12 @@ private:
         return;
       }
 
-      const EffectAnalyzer* bodyEffects = nullptr;
+      const EffectAnalyzer* callTargetEffects = nullptr;
       if (auto* target = parent.module.getFunctionOrNull(curr->target);
           target && target->effects) {
-        bodyEffects = target->effects.get();
+        callTargetEffects = target->effects.get();
       }
-      addCallEffects(curr, bodyEffects);
+      addCallEffects(curr, callTargetEffects);
     }
     void visitCallIndirect(CallIndirect* curr) {
       auto* table = parent.module.getTable(curr->table);
@@ -751,25 +751,25 @@ private:
       // may set either implicitTrap or trap (or neither).
       parent.implicitTrap = true;
 
-      const EffectAnalyzer* bodyEffects = nullptr;
+      const EffectAnalyzer* callTargetEffects = nullptr;
       if (auto it = parent.module.typeEffects.find(curr->heapType);
           it != parent.module.typeEffects.end()) {
-        bodyEffects = it->second.get();
+        callTargetEffects = it->second.get();
       }
-      addCallEffects(curr, bodyEffects);
+      addCallEffects(curr, callTargetEffects);
     }
     void visitCallRef(CallRef* curr) {
       if (trapOnNull(curr->target)) {
         return;
       }
 
-      const EffectAnalyzer* bodyEffects = nullptr;
+      const EffectAnalyzer* callTargetEffects = nullptr;
       if (auto it =
             parent.module.typeEffects.find(curr->target->type.getHeapType());
           it != parent.module.typeEffects.end()) {
-        bodyEffects = it->second.get();
+        callTargetEffects = it->second.get();
       }
-      addCallEffects(curr, bodyEffects);
+      addCallEffects(curr, callTargetEffects);
     }
     void visitLocalGet(LocalGet* curr) {
       parent.localsRead.insert(curr->index);
@@ -1346,19 +1346,19 @@ private:
     // and `call_ref`.
     template<typename CallType>
     void addCallEffects(const CallType* curr,
-                        const EffectAnalyzer* bodyEffects) {
+                        const EffectAnalyzer* callTargetEffects) {
       if (curr->isReturn) {
         parent.branchesOut = true;
       }
 
-      if (bodyEffects) {
-        addCallEffectsFromGlobalEffects(curr, *bodyEffects);
+      if (callTargetEffects) {
+        addCallEffectsFromGlobalEffects(curr, *callTargetEffects);
         return;
       }
 
       parent.calls = true;
       // If EH is enabled and we don't have global effects information,
-      // assume that the call body may throw.
+      // assume that the call target may throw.
       if (parent.features.hasExceptionHandling()) {
         if (curr->isReturn) {
           parent.hasReturnCallThrow = true;
