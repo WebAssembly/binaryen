@@ -6,7 +6,7 @@
 ;;  * start writes global2, and traps if global1 is set.
 ;;  * test sets global1.
 ;;
-;; We must eval away the start function, when we eval away the other. That is,
+;; We must eval away the start function when we eval away the other. That is,
 ;; there should be no start function afterwards. Otherwise, if it remains as the
 ;; start, it will trap when it reads the modified global.
 ;;
