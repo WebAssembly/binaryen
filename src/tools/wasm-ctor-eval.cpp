@@ -312,9 +312,22 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     linkedInstances.swap(linkedInstances_);
   }
 
+  bool firstApplication = true;
+
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
+    if (firstApplication) {
+      // The first time we apply things to the module, we can remove the start
+      // function: we evalled it successfully, if we got to here (and we must
+      // not execute it again later, which would mean it runs twice). We do not
+      // do this after the first application because we start to build up a new
+      // start function with the things we need, unrelated to the original one
+      // (see addStartFixup).
+      wasm->start = Name();
+      firstApplication = false;
+    }
+
     clearApplyState();
 
     // If nothing was ever written to memories then there is nothing to update.
@@ -323,11 +336,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     }
 
     applyGlobalsToModule();
-
-    // If we got to the point of applying things to the module, then we evalled
-    // a ctor, which means we evalled the start function. Wipe it out, as it
-    // must not run again (just like a ctor that runs before all others).
-    wasm->start = Name();
   }
 
   void init(Module& wasm_, EvallingModuleRunner& instance_) override {
