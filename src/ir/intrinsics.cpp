@@ -143,7 +143,10 @@ std::vector<Name> Intrinsics::getJSCalledFunctions() {
     }
   }
 
-  return std::vector<Name>(jsCalled.begin(), jsCalled.end());
+  // Return the set as a sorted vector to avoid nondeterminism.
+  std::vector<Name> ret(jsCalled.begin(), jsCalled.end());
+  std::sort(ret.begin(), ret.end());
+  return ret;
 }
 
 } // namespace wasm
