@@ -1150,9 +1150,9 @@ void ModuleSplitter::setupTablePatching() {
         secondary.getGlobalOrNull(tableManager.activeBase.global);
       if (!secondaryGlobal) {
         secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, secondary);
+        makeImportExport(
+          *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
       }
-      makeImportExport(
-        *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
 
       assert(tableManager.activeTableSegments.size() == 1 &&
              "Unexpected number of segments with non-const base");
