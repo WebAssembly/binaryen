@@ -2984,12 +2984,6 @@ fi
 
 echo "  " $?
 
-# Print the testcase handler. This is important as sometimes reduction modifies
-# a testcase so much that more handlers can handle it (e.g. removing exports
-# that prevent one from running). If more handles are possible, we might pick a
-# different one, leading to the wrong handler running.
-grep "running testcase handler:" o
-
 #
 # You may want to print out part of "o" or "e", if the output matters and not
 # just the return code. For example,
