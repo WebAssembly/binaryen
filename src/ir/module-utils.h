@@ -267,7 +267,8 @@ template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
 // The operation performed should not modify the wasm module in any way, by
 // default - otherwise, set the Mutability to Mutable. (This is not enforced at
 // compile time - TODO find a way - but at runtime in pass-debug mode it is
-// checked.)
+// checked. At compile time either const or non-const Module can be passed in,
+// depending on Mutability.)
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
 template<typename T,
          Mutability Mut = Immutable,
