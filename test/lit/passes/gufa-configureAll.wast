@@ -102,8 +102,10 @@
   )
 )
 
-;; As above, but now the configureAll is not in a start function. We should
-;; still optimize in the same way as before.
+;; As above, but now the configureAll is *not* in a start function. We should
+;; still optimize in the same way as before. (In theory we could scan to see if
+;; the configureAll is actually reached, but we assume if it was not optimized
+;; out that it is.)
 (module
   ;; CHECK:      (type $externs (array (mut externref)))
   (type $externs (array (mut externref)))
@@ -142,7 +144,7 @@
     (ref.func $unconfigured)
   )
 
-  ;; CHECK:      (func $start (type $5)
+  ;; CHECK:      (func $do-configure (type $5)
   ;; CHECK-NEXT:  (call $configureAll
   ;; CHECK-NEXT:   (array.new_elem $externs $externs
   ;; CHECK-NEXT:    (i32.const 0)
@@ -159,7 +161,7 @@
   ;; CHECK-NEXT:   (ref.null noextern)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $start
+  (func $do-configure
     (call $configureAll
       (array.new_elem $externs $externs
         (i32.const 0) (i32.const 1))
