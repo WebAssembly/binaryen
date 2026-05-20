@@ -146,9 +146,9 @@ struct PrintBoundary : public Pass {
         // params and results as we expect.
         return getTypes(Type(wasm.getTag(name)->type, NonNullable));
       case ExternalKind::Invalid:
-        WASM_UNREACHABLE("invalid ExternalKind");
+        break;
     }
-    return {};
+    WASM_UNREACHABLE("invalid ExternalKind");
   }
 
   json::Value::Ref getKindName(ExternalKind kind) {
