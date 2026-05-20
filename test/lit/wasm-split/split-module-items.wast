@@ -34,11 +34,11 @@
  ;; PRIMARY:      (tag $keep-tag (type $1) (param i32))
  ;; PRIMARY-NEXT: (tag $shared-tag (type $1) (param i32))
 
- ;; PRIMARY:      (export "keep" (func $keep))
- ;; PRIMARY-NEXT: (export "memory" (memory $shared-memory))
+ ;; PRIMARY:      (export "memory" (memory $shared-memory))
  ;; PRIMARY-NEXT: (export "table" (table $shared-table))
  ;; PRIMARY-NEXT: (export "global" (global $shared-global))
  ;; PRIMARY-NEXT: (export "tag" (tag $shared-tag))
+ ;; PRIMARY-NEXT: (export "keep" (func $keep))
  ;; PRIMARY-NEXT: (export "table_5" (table $2))
 
  ;; SECONDARY:      (import "primary" "memory" (memory $shared-memory 1 1))
