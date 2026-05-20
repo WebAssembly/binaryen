@@ -87,7 +87,7 @@ struct AbstractTypeRefining : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode != WorldMode::Closed) {
       Fatal() << "AbstractTypeRefining requires --closed-world";
     }
 
@@ -116,7 +116,8 @@ struct AbstractTypeRefining : public Pass {
     //       module, given closed world, but we'd also need to make sure that
     //       we don't need to make any changes to public types that refer to
     //       them.
-    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode)) {
       createdTypes.insert(type);
     }
 
@@ -289,8 +290,10 @@ struct AbstractTypeRefining : public Pass {
     // that for Unsubtyping.
     class AbstractTypeRefiningTypeMapper : public TypeMapper {
     public:
-      AbstractTypeRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
-        : TypeMapper(wasm, mapping) {}
+      AbstractTypeRefiningTypeMapper(Module& wasm,
+                                     const TypeUpdates& mapping,
+                                     WorldMode worldMode)
+        : TypeMapper(wasm, mapping, worldMode) {}
 
       std::optional<HeapType> getDeclaredSuperType(HeapType oldType) override {
         // We do not want to update subtype relationships.
@@ -298,7 +301,8 @@ struct AbstractTypeRefining : public Pass {
       }
     };
 
-    AbstractTypeRefiningTypeMapper(*module, mapping).map();
+    AbstractTypeRefiningTypeMapper(*module, mapping, getPassOptions().worldMode)
+      .map();
 
     // Refinalize to propagate the type changes we made. For example, a refined
     // cast may lead to a struct.get reading a more refined type using that

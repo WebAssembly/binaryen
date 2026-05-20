@@ -760,7 +760,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("once-reduction");
   }
   if (wasm->features.hasGC() && options.optimizeLevel >= 2) {
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("type-refining");
       addIfNoDWARFIssues("signature-pruning");
       addIfNoDWARFIssues("signature-refining");
@@ -770,11 +770,11 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,
     // constant field propagation can be more effective.
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("gto");
     }
     addIfNoDWARFIssues("remove-unused-module-elements");
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("remove-unused-types");
       // Allow ref.tests in cfp if we are aggressively optimizing for speed.
       if (options.optimizeLevel >= 3) {
@@ -784,7 +784,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       }
     }
     addIfNoDWARFIssues("gsi");
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("abstract-type-refining");
       addIfNoDWARFIssues("unsubtyping");
     }

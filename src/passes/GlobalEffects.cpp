@@ -87,7 +87,8 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
             if (auto* call = curr->dynCast<Call>()) {
               // Note the direct call.
               funcInfo.calledFunctions.insert(call->target);
-            } else if (effects.calls && options.closedWorld) {
+            } else if (effects.calls &&
+                       options.worldMode == WorldMode::Closed) {
               HeapType type;
               if (auto* callRef = curr->dynCast<CallRef>()) {
                 // call_ref on unreachable does not have a call effect,
@@ -102,7 +103,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
 
               funcInfo.indirectCalledTypes.insert(type);
             } else if (effects.calls) {
-              assert(!options.closedWorld);
+              assert(options.worldMode != WorldMode::Closed);
               funcInfo.effects = UnknownEffects;
             } else {
               // No call here, but update throwing if we see it. (Only do so,
@@ -144,9 +145,9 @@ using CallGraph =
 
 CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
-                         bool closedWorld) {
+                         WorldMode worldMode) {
   CallGraph callGraph;
-  if (!closedWorld) {
+  if (worldMode != WorldMode::Closed) {
     for (const auto& [caller, callerInfo] : funcInfos) {
       auto& callees = callGraph[caller];
 
@@ -344,7 +345,7 @@ struct GenerateGlobalEffects : public Pass {
       analyzeFuncs(*module, getPassOptions());
 
     auto callGraph =
-      buildCallGraph(*module, funcInfos, getPassOptions().closedWorld);
+      buildCallGraph(*module, funcInfos, getPassOptions().worldMode);
 
     propagateEffects(*module, getPassOptions(), funcInfos, callGraph);
 

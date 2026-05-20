@@ -65,7 +65,7 @@ struct SignaturePruning : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode != WorldMode::Closed) {
       Fatal() << "SignaturePruning requires --closed-world";
     }
 
@@ -187,7 +187,8 @@ struct SignaturePruning : public Pass {
     }
 
     // Find the public types, which cannot be modified.
-    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode)) {
       if (type.isFunction()) {
         allInfo[type].optimizable = false;
       }
@@ -339,7 +340,8 @@ struct SignaturePruning : public Pass {
     }
 
     // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+    GlobalTypeRewriter::updateSignatures(
+      newSignatures, *module, getPassOptions().worldMode);
 
     if (callTargetsToLocalize.empty()) {
       return false;

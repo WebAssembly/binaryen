@@ -684,7 +684,7 @@ struct InfoCollector
          SignatureResultLocation{func->type.getHeapType(), i}});
     }
 
-    if (!options.closedWorld) {
+    if (options.worldMode != WorldMode::Closed) {
       info.calledFromOutside.insert(curr->func);
     }
   }
@@ -1711,7 +1711,7 @@ void TNHOracle::scan(Function* func,
     void visitCallRef(CallRef* curr) {
       // We can only optimize call_ref in closed world, as otherwise the
       // call can go somewhere we can't see.
-      if (options.closedWorld) {
+      if (options.worldMode == WorldMode::Closed) {
         info.callRefs.push_back(curr);
       }
     }
@@ -1834,7 +1834,7 @@ void TNHOracle::infer() {
   // that type or a subtype, i.e., might be called when that type is seen in a
   // call_ref target.
   std::unordered_map<HeapType, std::vector<Function*>> typeFunctions;
-  if (options.closedWorld) {
+  if (options.worldMode == WorldMode::Closed) {
     for (auto& func : wasm.functions) {
       auto type = func->type;
       auto& info = map[wasm.getFunction(func->name)];
@@ -1895,7 +1895,7 @@ void TNHOracle::infer() {
       // We should only get here in a closed world, in which we know which
       // functions might be called (the scan phase only notes callRefs if we are
       // in fact in a closed world).
-      assert(options.closedWorld);
+      assert(options.worldMode == WorldMode::Closed);
 
       auto iter = typeFunctions.find(targetType.getHeapType());
       if (iter == typeFunctions.end()) {
@@ -2535,8 +2535,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
   // In open world, public heap types may be written to from the outside.
-  if (!options.closedWorld) {
-    for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
+  if (options.worldMode != WorldMode::Closed) {
+    for (auto type : ModuleUtils::getPublicHeapTypes(wasm, options.worldMode)) {
       if (type.isStruct()) {
         auto& fields = type.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {

@@ -481,12 +481,16 @@ struct CodeScanner : PostWalker<CodeScanner> {
 };
 
 void classifyTypeVisibility(Module& wasm,
-                            InsertOrderedMap<HeapType, HeapTypeInfo>& types);
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types,
+                            WorldMode worldMode);
 
 } // anonymous namespace
 
-InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
-  Module& wasm, TypeInclusion inclusion, VisibilityHandling visibility) {
+InsertOrderedMap<HeapType, HeapTypeInfo>
+collectHeapTypeInfo(Module& wasm,
+                    WorldMode worldMode,
+                    TypeInclusion inclusion,
+                    VisibilityHandling visibility) {
   // Collect module-level info.
   TypeInfos info;
   CodeScanner(wasm, info).walkModuleCode(&wasm);
@@ -593,7 +597,7 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   }
 
   if (visibility == VisibilityHandling::FindVisibility) {
-    classifyTypeVisibility(wasm, info.info);
+    classifyTypeVisibility(wasm, info.info, worldMode);
   }
 
   return std::move(info.info);
@@ -602,8 +606,9 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
 namespace {
 
 void classifyTypeVisibility(Module& wasm,
-                            InsertOrderedMap<HeapType, HeapTypeInfo>& types) {
-  for (auto type : getPublicHeapTypes(wasm)) {
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types,
+                            WorldMode worldMode) {
+  for (auto type : getPublicHeapTypes(wasm, worldMode)) {
     if (auto it = types.find(type); it != types.end()) {
       it->second.visibility = Visibility::Public;
     }
@@ -624,7 +629,7 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
 } // anonymous namespace
 
 std::vector<HeapType> collectHeapTypes(Module& wasm) {
-  auto info = collectHeapTypeInfo(wasm);
+  auto info = collectHeapTypeInfo(wasm, WorldMode::Open);
   std::vector<HeapType> types;
   types.reserve(info.size());
   for (auto& [type, _] : info) {
@@ -633,18 +638,22 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
+std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
   // Look at the types of imports as exports to get an initial set of public
   // types, then traverse the types used by public types and collect the
   // transitively reachable public types as well.
   std::vector<HeapType> workList;
   std::unordered_set<RecGroup> publicGroups;
+  std::unordered_set<HeapType> publicBasicTypes;
 
   // The collected types.
   std::vector<HeapType> publicTypes;
 
   auto notePublic = [&](HeapType type) {
     if (type.isBasic()) {
+      if (publicBasicTypes.insert(type).second) {
+        publicTypes.push_back(type);
+      }
       return;
     }
     auto group = type.getRecGroup();
@@ -725,9 +734,23 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
   return publicTypes;
 }
 
-std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
-  auto info = collectHeapTypeInfo(
-    wasm, TypeInclusion::UsedIRTypes, VisibilityHandling::FindVisibility);
+std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
+  auto exposed = getExposedPublicHeapTypes(wasm);
+  std::vector<HeapType> publicTypes;
+  publicTypes.reserve(exposed.size());
+  for (auto type : exposed) {
+    if (!type.isBasic()) {
+      publicTypes.push_back(type);
+    }
+  }
+  return publicTypes;
+}
+
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
+  auto info = collectHeapTypeInfo(wasm,
+                                  worldMode,
+                                  TypeInclusion::UsedIRTypes,
+                                  VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
   types.reserve(info.size());
   for (auto& [type, typeInfo] : info) {
@@ -739,7 +762,8 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
 }
 
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  auto counts = collectHeapTypeInfo(wasm, TypeInclusion::BinaryTypes);
+  auto counts =
+    collectHeapTypeInfo(wasm, WorldMode::Open, TypeInclusion::BinaryTypes);
 
   // Collect the rec groups.
   std::unordered_map<RecGroup, size_t> groupIndices;

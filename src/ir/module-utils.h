@@ -472,6 +472,7 @@ struct HeapTypeInfo {
 
 InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm,
+  WorldMode worldMode,
   TypeInclusion inclusion = TypeInclusion::AllTypes,
   VisibilityHandling visibility = VisibilityHandling::NoVisibility);
 
@@ -479,13 +480,14 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
 // module, i.e. the types that would appear in the type section.
 std::vector<HeapType> collectHeapTypes(Module& wasm);
 
+std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm);
+
 // Collect all the heap types visible on the module boundary that cannot be
-// changed. TODO: For open world use cases, this needs to include all subtypes
-// of public types as well.
-std::vector<HeapType> getPublicHeapTypes(Module& wasm);
+// changed.
+std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode);
 
 // getHeapTypes - getPublicHeapTypes
-std::vector<HeapType> getPrivateHeapTypes(Module& wasm);
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode);
 
 struct IndexedHeapTypes {
   std::vector<HeapType> types;
