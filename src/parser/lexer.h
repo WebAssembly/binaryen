@@ -856,6 +856,10 @@ inline std::optional<Lexer::StringOrView> Lexer::takeStr() {
       // Escape sequences
       ensureBuildingEscaped();
       take(1);
+      if (empty()) {
+        pos = startPos;
+        return std::nullopt;
+      }
       auto c = peek();
       if (!c) {
         pos = startPos;
