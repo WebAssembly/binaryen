@@ -624,6 +624,9 @@ inline std::optional<uint64_t> Lexer::takeHexnum(OverflowBehavior behavior) {
 }
 
 inline Lexer::Sign Lexer::takeSign() {
+  if (empty()) {
+    return NoSign;
+  }
   auto c = peek();
   if (c == '+') {
     take(1);
@@ -812,7 +815,8 @@ inline std::optional<Lexer::LexedFloat> Lexer::takeFloat() {
   // we need to strip any underscores since `std::strtod` does not understand
   // them.
   std::stringstream ss;
-  for (const char *curr = &buffer[startPos], *end = &buffer[pos]; curr != end;
+  for (const char *curr = buffer.data() + startPos, *end = buffer.data() + pos;
+       curr != end;
        ++curr) {
     if (*curr != '_') {
       ss << *curr;
@@ -853,6 +857,10 @@ inline std::optional<Lexer::StringOrView> Lexer::takeStr() {
       // Escape sequences
       ensureBuildingEscaped();
       take(1);
+      if (empty()) {
+        pos = startPos;
+        return std::nullopt;
+      }
       auto c = peek();
       take(1);
       switch (c) {
