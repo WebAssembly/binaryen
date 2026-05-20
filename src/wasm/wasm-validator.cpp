@@ -4340,7 +4340,8 @@ void FunctionValidator::visitContNew(ContNew* curr) {
   auto cont = curr->type.getHeapType().getContinuation();
   assert(cont.type.isSignature());
 
-  shouldBeTrue(HeapType::isSubType(curr->func->type.getHeapType(), cont.type),
+  shouldBeTrue(curr->func->type.isRef() &&
+                 HeapType::isSubType(curr->func->type.getHeapType(), cont.type),
                curr,
                "cont.new function reference must be a subtype");
 }

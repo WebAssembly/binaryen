@@ -847,6 +847,17 @@ void TranslateToFuzzReader::setupTags() {
     jsTag->base = "jstag";
     wasm.addTag(std::move(jsTag));
   }
+
+  // Export some tags, sometimes.
+  if (!preserveImportsAndExports) {
+    for (auto& tag : wasm.tags) {
+      if (isValidPublicType(tag->type) && oneIn(2)) {
+        auto exportName = Names::getValidExportName(wasm, tag->name);
+        wasm.addExport(
+          Builder::makeExport(exportName, tag->name, ExternalKind::Tag));
+      }
+    }
+  }
 }
 
 void TranslateToFuzzReader::addTag() {
