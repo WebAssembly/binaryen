@@ -20,7 +20,8 @@
 // find any configureAll calls and mark the functions referred to there.
 //
 
-#include "ir/find-all.h"
+#include "ir/find_all.h"
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "wasm.h"
@@ -33,7 +34,7 @@ struct MarkJSCalled : public Pass {
 
     // See if there even is a configureAll.
     auto hasConfigureAll = false;
-    for (auto& func : module.functions) {
+    for (auto& func : module->functions) {
       if (intrinsics.isConfigureAll(func.get())) {
         hasConfigureAll = true;
         break;
@@ -46,15 +47,15 @@ struct MarkJSCalled : public Pass {
     using JSCalledSet = std::unordered_set<Name>;
 
     ModuleUtils::ParallelFunctionAnalysis<JSCalledSet> analysis(
-      module, [&](Function* func, JSCalledSet& jsCalled) {
+      *module, [&](Function* func, JSCalledSet& jsCalled) {
         if (func->imported()) {
           return;
         }
 
         FindAll<Call> calls(func->body);
         for (auto* call : calls.list) {
-          if (isConfigureAll(call)) {
-            for (auto name : getConfigureAllFunctions(call)) {
+          if (intrinsics.isConfigureAll(call)) {
+            for (auto name : intrinsics.getConfigureAllFunctions(call)) {
               jsCalled.insert(name);
             }
           }
