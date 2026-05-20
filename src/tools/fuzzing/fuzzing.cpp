@@ -1674,9 +1674,9 @@ void TranslateToFuzzReader::processFunctions() {
   }
 
   // Decide what to do with the start function. Most of the time we remove it,
-  // as that is the least risky for fuzzing - any trap in the start will make
-  // the entire module not execute.
-  switch (upTo(3)) { // TODO 10
+  // as that is the least risky for fuzzing (any trap in the start will make
+  // the entire module not execute), but other cases are important too.
+  switch (upTo(10)) {
     case 0:
       // Do not modify the start, potentially leaving the existing one.
       break;
