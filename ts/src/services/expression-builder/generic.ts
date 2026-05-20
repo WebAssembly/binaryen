@@ -42,8 +42,8 @@ export function parametrics(mod: Module) {
 		),
 
 		/** Creates a `(select)` of one of two values. */
-		select: (ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef => (
-			BinaryenObj["_BinaryenSelect"](mod[PTR], ifTrue, ifFalse)
+		select: (condition: ExpressionRef, ifTrue: ExpressionRef, ifFalse: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenSelect"](mod[PTR], condition, ifTrue, ifFalse)
 		),
 	} as const;
 }
