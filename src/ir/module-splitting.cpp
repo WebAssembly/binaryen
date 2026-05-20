@@ -376,10 +376,10 @@ struct ModuleSplitter {
     classifyFunctions();
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
+    shareImportableItems();
     indirectReferencesToSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
     exportImportCalledPrimaryFunctions();
-    shareImportableItems();
     setupTablePatching();
   }
 };
