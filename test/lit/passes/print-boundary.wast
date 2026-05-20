@@ -5,9 +5,21 @@
 
   (import "module2" "other" (func $bar (result i32 f32)))
 
+  (memory $mem 10 20)
+
+  (table 10 20 funcref)
+
+  (tag $e (param i32))
+
   (global $g (mut i32) (i32.const 42))
 
   (export "one" (func $one))
+
+  (export "m" (memory $mem))
+
+  (export "tab" (table 0))
+
+  (export "tag" (tag $e))
 
   (export "glob" (global $g))
 
@@ -64,9 +76,31 @@
 ;; CHECK-NEXT:    }
 ;; CHECK-NEXT:   },
 ;; CHECK-NEXT:   {
+;; CHECK-NEXT:    "name": "m",
+;; CHECK-NEXT:    "kind": "memory",
+;; CHECK-NEXT:    "type": "i32"
+;; CHECK-NEXT:   },
+;; CHECK-NEXT:   {
+;; CHECK-NEXT:    "name": "tab",
+;; CHECK-NEXT:    "kind": "table",
+;; CHECK-NEXT:    "type": "funcref"
+;; CHECK-NEXT:   },
+;; CHECK-NEXT:   {
+;; CHECK-NEXT:    "name": "tag",
+;; CHECK-NEXT:    "kind": "tag",
+;; CHECK-NEXT:    "type": {
+;; CHECK-NEXT:     "params": [
+;; CHECK-NEXT:      "i32"
+;; CHECK-NEXT:     ],
+;; CHECK-NEXT:     "results": [
+;; CHECK-NEXT:     ]
+;; CHECK-NEXT:    }
+;; CHECK-NEXT:   },
+;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "name": "glob",
 ;; CHECK-NEXT:    "kind": "global",
 ;; CHECK-NEXT:    "type": "i32"
 ;; CHECK-NEXT:   }
 ;; CHECK-NEXT:  ]
 ;; CHECK-NEXT: }
+
