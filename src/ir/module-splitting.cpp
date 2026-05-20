@@ -455,11 +455,11 @@ void ModuleSplitter::classifyFunctions() {
     configSecondaryFuncs.insert(funcs.begin(), funcs.end());
   }
   for (auto& func : primary.functions) {
-    // The start function must always be kept in the primary module.
     if (func->imported() || !configSecondaryFuncs.contains(func->name) ||
-        segmentReferrers.contains(func->name) || func->name == primary.start) {
+        segmentReferrers.contains(func->name)) {
       primaryFuncs.insert(func->name);
     } else {
+      assert(func->name != primary.start && "The start function must be kept");
       allSecondaryFuncs.insert(func->name);
     }
   }
