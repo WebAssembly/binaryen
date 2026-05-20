@@ -1329,11 +1329,6 @@ private:
         // already more precisely captured by `branchesOut`, which models the
         // return, and `hasReturnCallThrow`, which models the throw that will
         // happen after the return.
-        //
-        // TODO: we check for throws_ here instead of throws() and only clear
-        // throws_. So throws() can remain true in the case that this expression
-        // is the target of a delegate statement. We should consider clearing
-        // filteredEffects.delegateTargets here.
         auto filteredEffects = funcEffects;
         filteredEffects.throws_ = false;
         parent.mergeIn(filteredEffects);
