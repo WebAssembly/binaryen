@@ -122,10 +122,15 @@ struct LoopInvariantCodeMotion
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
+        EffectAnalyzer loopGlobalEffects = loopEffects;
+        loopGlobalEffects.localsRead.clear();
+        loopGlobalEffects.localsWritten.clear();
+        EffectAnalyzer globalEffects = effects;
+        globalEffects.localsRead.clear();
+        globalEffects.localsWritten.clear();
         bool unsafeToMove = effects.writesGlobalState() ||
-                            effectsSoFar.invalidates(effects) ||
-                            (effects.readsMutableGlobalState() &&
-                             loopEffects.writesGlobalState());
+                            effectsSoFar.orderedBefore(effects) ||
+                            loopGlobalEffects.orderedBefore(globalEffects);
         // TODO: look into optimizing this with exceptions. for now, disallow
         if (effects.throws() || loopEffects.throws()) {
           unsafeToMove = true;
