@@ -243,7 +243,9 @@ void setCommonSplitConfigs(ModuleSplitting::Config& config,
 }
 
 // Returns whether it is valid to split a function out from the main module.
-bool canSplitFunc(Function* func, const Module& wasm, const WasmSplitOptions& options) {
+bool canSplitFunc(Function* func,
+                  const Module& wasm,
+                  const WasmSplitOptions& options) {
   if (!func) {
     if (!options.quiet) {
       std::cerr << "warning: function " << func << " does not exist\n";
@@ -259,8 +261,7 @@ bool canSplitFunc(Function* func, const Module& wasm, const WasmSplitOptions& op
   }
   if (func->name == wasm.start) {
     if (!options.quiet) {
-      std::cerr << "warning: cannot split out start function " << func
-                << "\n";
+      std::cerr << "warning: cannot split out start function " << func << "\n";
     }
     return false;
   }
