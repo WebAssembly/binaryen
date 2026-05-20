@@ -3316,7 +3316,7 @@ Module['emitText'] = function(expr) {
   if (typeof expr === 'object') {
     return expr.emitText();
   }
-  const textPtr = BinaryenObj["_BinaryenExpressionAllocateAndWriteText"](expr);
+  const textPtr = Module['_BinaryenExpressionAllocateAndWriteText'](expr);
   try {
     return UTF8ToString(textPtr);
   } finally {
