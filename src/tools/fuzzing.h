@@ -376,6 +376,9 @@ private:
   bool isValidPublicType(Type type) {
     return publicTypeValidator.isValidPublicType(type);
   }
+  bool isValidPublicType(HeapType type) {
+    return publicTypeValidator.isValidPublicType(type);
+  }
 
   // Function operations. The main processFunctions() loop will call addFunction
   // as well as modFunction().

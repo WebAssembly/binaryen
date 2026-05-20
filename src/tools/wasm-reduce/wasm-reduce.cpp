@@ -1089,7 +1089,6 @@ struct Reducer
       struct FunctionReplacer
         : public WalkerPass<PostWalker<FunctionReplacer>> {
         bool isFunctionParallel() override { return true; }
-        bool requiresNonNullableLocalFixups() override { return false; }
         std::unique_ptr<Pass> create() override {
           return std::make_unique<FunctionReplacer>();
         };

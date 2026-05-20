@@ -1158,7 +1158,9 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module
- ;; The start function already exists here. We must prepend to it.
+ ;; The start function already exists here. We must *not* prepend to it: it gets
+ ;; evalled away too (we execute it before the first ctor, and we should not
+ ;; eval those contents twice).
 
  ;; CHECK:      (type $A (struct (field (mut (ref null $A))) (field i32)))
  (type $A (struct (field (mut (ref null $A))) (field i32)))
@@ -1178,11 +1180,6 @@
  ;; CHECK:      (global $b (mut (ref null $A)) (ref.null none))
  (global $b (mut (ref null $A)) (ref.null $A))
 
- ;; CHECK:      (export "test" (func $test_3))
-
- ;; CHECK:      (export "keepalive" (func $keepalive))
-
- ;; CHECK:      (start $start)
  (start $start)
 
  (func $test (export "test")
@@ -1200,6 +1197,12 @@
    (local.get $a)
   )
  )
+
+ ;; CHECK:      (export "test" (func $test_4))
+
+ ;; CHECK:      (export "keepalive" (func $keepalive))
+
+ ;; CHECK:      (start $start_3)
 
  ;; CHECK:      (func $keepalive (type $2) (result i32)
  ;; CHECK-NEXT:  (i32.add
@@ -1222,15 +1225,6 @@
   )
  )
 
- ;; CHECK:      (func $start (type $1)
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (global.get $ctor-eval$global_4)
- ;; CHECK-NEXT:   (global.get $ctor-eval$global_4)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (global.set $b
- ;; CHECK-NEXT:   (global.get $a)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $start
   (global.set $b
    (global.get $a)
@@ -1238,7 +1232,14 @@
  )
 )
 
-;; CHECK:      (func $test_3 (type $1)
+;; CHECK:      (func $start_3 (type $1)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_4)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_4)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $test_4 (type $1)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
