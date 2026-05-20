@@ -19,6 +19,10 @@
 // helps by auto-marking them where possible. The main thing this does is to
 // find any configureAll calls and mark the functions referred to there.
 //
+// We do automatically handle configureAll in the start function (in
+// intrinsics.cpp), so this pass is only needed for other uses of configureAll,
+// like from an export.
+//
 
 #include "ir/find_all.h"
 #include "ir/intrinsics.h"

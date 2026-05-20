@@ -2232,6 +2232,13 @@ class PreserveImportsExportsJS(TestCaseHandler):
         pre_vm = random.choice(vms)
         pre = self.do_run(pre_vm, js_file, pre_wasm)
 
+        # We are about to optimize, and do not trust the given wasm file to
+        # have marked all js-called methods properly. In particular, it could
+        # have a configureAll that is not in the start function.
+        opts = opts + [
+            '--mark-js-called',
+        ]
+
         # Optimize.
         post_wasm = abspath('post.wasm')
         cmd = [in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS
