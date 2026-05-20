@@ -330,7 +330,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   // effects.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
-  for (auto& [oldType, oldEffects] : wasm.typeEffects) {
+  for (auto& [oldType, oldEffects] : wasm.indirectCallEffects) {
     if (!oldEffects) {
       continue;
     }
@@ -346,7 +346,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
       targetEffects = merged;
     }
   }
-  wasm.typeEffects = std::move(newTypeEffects);
+  wasm.indirectCallEffects = std::move(newTypeEffects);
 }
 
 void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {

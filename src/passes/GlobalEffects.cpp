@@ -359,8 +359,11 @@ struct GenerateGlobalEffects : public Pass {
     auto callGraph =
       buildCallGraph(*module, funcInfos, getPassOptions().closedWorld);
 
-    propagateEffects(
-      *module, getPassOptions(), funcInfos, module->typeEffects, callGraph);
+    propagateEffects(*module,
+                     getPassOptions(),
+                     funcInfos,
+                     module->indirectCallEffects,
+                     callGraph);
 
     copyEffectsToFunctions(funcInfos);
   }
