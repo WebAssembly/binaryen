@@ -8,8 +8,6 @@
 (module
   (export "get_i64" (func $get_i64))
   (import "env" "imported" (func $imported (result i64)))
-  (export "__set_temp_ret" (func $__set_temp_ret))
-  (export "__get_temp_ret" (func $__get_temp_ret))
   ;; CHECK:      (type $0 (func (result i32)))
 
   ;; CHECK:      (type $1 (func (result i64)))
@@ -20,6 +18,10 @@
 
   ;; CHECK:      (export "get_i64" (func $legalstub$get_i64))
 
+  ;; CHECK:      (export "__set_temp_ret" (func $__set_temp_ret))
+  (export "__set_temp_ret" (func $__set_temp_ret))
+  ;; CHECK:      (export "__get_temp_ret" (func $__get_temp_ret))
+  (export "__get_temp_ret" (func $__get_temp_ret))
   ;; CHECK:      (func $get_i64 (result i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $legalfunc$imported)
