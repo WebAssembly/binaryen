@@ -6734,6 +6734,10 @@ Name TranslateToFuzzReader::pickStart() {
   // Any none-none function is an option.
   std::vector<Name> options;
   for (auto& func : wasm.functions) {
+    // Avoid imports, see fixStart().
+    if (func->imported()) {
+      continue;
+    }
     if (func->getParams() == Type::none && func->getResults() == Type::none) {
       options.push_back(func->name);
     }
@@ -6751,14 +6755,13 @@ void TranslateToFuzzReader::fixStart() {
   // yet, so things are not ready for calls to happen yet). Still, fuzzing the
   // start is important, so just remove all calls, which still leaves a chance
   // for interesting things like modifying globals and memory etc.
+  // TODO: While confusing in VMs, fuzzing this might be useful there, but we
+  //       need to fix our own interpreter to not crash.
 
   auto* start = wasm.getFunction(wasm.start);
-  if (start->imported()) {
-    // We definitely can't call an import here in the fuzzer, for the above
-    // reasons.
-    wasm.start = Name();
-    return;
-  }
+  // We definitely can't call an import here in the fuzzer, for the above
+  // reasons, and should have only chosen something valid.
+  assert(!start->imported());
 
   struct Fixer : public PostWalker<Fixer> {
     Module& wasm;
