@@ -17,9 +17,9 @@
 
  ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
- ;; PRIMARY:      (export "C" (func $C))
-
  ;; PRIMARY:      (export "table" (table $0))
+
+ ;; PRIMARY:      (export "C" (func $C))
 
  ;; PRIMARY:      (start $C)
  (start $C)

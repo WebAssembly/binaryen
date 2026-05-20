@@ -248,20 +248,21 @@ bool canSplitFunc(Function* func,
                   const WasmSplitOptions& options) {
   if (!func) {
     if (!options.quiet) {
-      std::cerr << "warning: function " << func << " does not exist\n";
+      std::cerr << "warning: function " << func->name << " does not exist\n";
     }
     return false;
   }
   if (func->imported()) {
     if (!options.quiet) {
-      std::cerr << "warning: cannot split out imported function " << func
+      std::cerr << "warning: cannot split out imported function " << func->name
                 << "\n";
     }
     return false;
   }
   if (func->name == wasm.start) {
     if (!options.quiet) {
-      std::cerr << "warning: cannot split out start function " << func << "\n";
+      std::cerr << "warning: cannot split out start function " << func->name
+                << "\n";
     }
     return false;
   }
