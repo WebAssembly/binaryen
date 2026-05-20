@@ -1014,14 +1014,10 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
-  std::unordered_set<Module*> activeTableUsingSecondaries;
   struct CallIndirector : public PostWalker<CallIndirector> {
     ModuleSplitter& parent;
-    std::set<Module*>& activeTableUsingSecondaries;
-    CallIndirector(ModuleSplitter& parent,
-                   std::set<Module*>& activeTableUsingSecondaries)
-      : parent(parent),
-        activeTableUsingSecondaries(activeTableUsingSecondaries) {}
+    std::unordered_set<Module*> activeTableUsingSecondaries;
+    CallIndirector(ModuleSplitter& parent) : parent(parent) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
       if (!parent.allSecondaryFuncs.contains(curr->target)) {
@@ -1055,13 +1051,13 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       }
     }
   };
-  CallIndirector callIndirector(*this, activeTableUsingSecondaries);
+  CallIndirector callIndirector(*this);
   callIndirector.walkModule(&primary);
   for (auto& secondaryPtr : secondaries) {
     callIndirector.walkModule(secondaryPtr.get());
   }
 
-  for (auto* secondary : activeTableUsingSecondaries) {
+  for (auto* secondary : callIndirector.activeTableUsingSecondaries) {
     shareActiveTable(secondary);
   }
 }
