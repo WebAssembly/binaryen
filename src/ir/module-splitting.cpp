@@ -1014,7 +1014,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
-  std::set<Module*> activeTableUsingSecondaries;
+  std::unordered_set<Module*> activeTableUsingSecondaries;
   struct CallIndirector : public PostWalker<CallIndirector> {
     ModuleSplitter& parent;
     std::set<Module*>& activeTableUsingSecondaries;
