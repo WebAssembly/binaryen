@@ -497,7 +497,7 @@ struct Checker
           continue;
         }
         auto& originalInfo = kv.second;
-        if (effects.invalidates(originalInfo.effects)) {
+        if (effects.orderedBefore(originalInfo.effects)) {
           invalidated.push_back(original);
         }
       }
