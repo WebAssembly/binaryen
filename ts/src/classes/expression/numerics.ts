@@ -71,6 +71,15 @@ export class Const extends Expression {
 			BinaryenObj["_BinaryenConstSetValueV128"](this._ptr, tempBuffer);
 		});
 	}
+
+
+	/** Adds the `value` property. */
+	override toJson(): this {
+		return {
+			...super.toJson(),
+			value: typeof this.value === "bigint" ? String(this.value) : this.value,
+		};
+	}
 }
 
 

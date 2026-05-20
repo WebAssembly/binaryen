@@ -48,6 +48,22 @@ export class Expression {
 		BinaryenObj["_BinaryenExpressionFinalize"](this._ptr);
 	}
 
+	/**
+	 * Adds to this object enumerable own properties that are computed from getter methods.
+	 * Useful when calling `JSON.stringify`:
+	 * ```ts
+	 * JSON.stringify(exprInfo.toJson());
+	 * ```
+	 */
+	toJson(): this {
+		const returned = {
+			...this,
+			id: this.id,
+			type: this.type,
+		};
+		return returned;
+	}
+
 	toText(): string {
 		return emitText(this._ptr);
 	}
