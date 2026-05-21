@@ -31,11 +31,9 @@ namespace wasm {
 
 namespace {
 
-constexpr auto UnknownEffects = std::nullopt;
-
 struct FuncInfo {
-  // Effects in this function. nullopt / UnknownEffects means that we don't know
-  // what effects this function has, so we conservatively assume all effects.
+  // Effects in this function. nullopt means that we don't know what effects
+  // this function has, so we conservatively assume all effects.
   // Nullopt cases won't be copied to Function::effects.
   std::optional<EffectAnalyzer> effects;
 
@@ -97,14 +95,14 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
                 type = callIndirect->heapType;
               } else {
-                funcInfo.effects = UnknownEffects;
+                funcInfo.effects = std::nullopt;
                 return;
               }
 
               funcInfo.indirectCalledTypes.insert(type);
             } else if (effects.calls) {
               assert(!options.closedWorld);
-              funcInfo.effects = UnknownEffects;
+              funcInfo.effects = std::nullopt;
             } else {
               // No call here, but update throwing if we see it. (Only do so,
               // however, if we have effects; if we cleared it - see before -
@@ -204,12 +202,17 @@ CallGraph buildCallGraph(const Module& module,
   return callGraph;
 }
 
-void mergeMaybeEffects(std::optional<EffectAnalyzer>& dest,
-                       const std::optional<EffectAnalyzer>& src) {
+constexpr auto UnknownEffects = nullptr;
+
+// Merges effects from another connected component (const EffectAnalyzer*) or a
+// function (std::optional<EffectAnalyzer>&).
+template<typename EffectAnalyzerPtr>
+void mergeMaybeEffects(std::shared_ptr<EffectAnalyzer>& dest,
+                       const EffectAnalyzerPtr& src) {
   if (dest == UnknownEffects) {
     return;
   }
-  if (src == UnknownEffects) {
+  if (!src) {
     dest = UnknownEffects;
     return;
   }
@@ -266,13 +269,13 @@ void propagateEffects(
   };
   CallGraphSCCs sccs(funcNodes, funcInfos, callGraph, module);
 
-  std::vector<std::optional<EffectAnalyzer>> componentEffects;
+  std::vector<std::shared_ptr<EffectAnalyzer>> componentEffects;
   // Points to an index in componentEffects
   std::unordered_map<CallGraphNode, Index> nodeComponents;
 
   for (auto ccIterator : sccs) {
-    std::optional<EffectAnalyzer>& ccEffects =
-      componentEffects.emplace_back(std::in_place, passOptions, module);
+    auto& ccEffects = componentEffects.emplace_back(
+      std::make_shared<EffectAnalyzer>(passOptions, module));
     std::vector<CallGraphNode> cc(ccIterator.begin(), ccIterator.end());
 
     std::vector<Function*> ccFuncs;
@@ -293,7 +296,7 @@ void propagateEffects(
     // Merge in effects from callees
     for (int calleeScc : calleeSccs) {
       const auto& calleeComponentEffects = componentEffects.at(calleeScc);
-      mergeMaybeEffects(ccEffects, calleeComponentEffects);
+      mergeMaybeEffects(ccEffects, calleeComponentEffects.get());
     }
 
     // Add trap effects for potential cycles.
@@ -324,30 +327,12 @@ void propagateEffects(
     for (auto node : cc) {
       std::visit(overloaded{[&](HeapType type) {
                               if (ccEffects != UnknownEffects) {
-                                typeEffects[type] =
-                                  std::make_shared<EffectAnalyzer>(*ccEffects);
+                                typeEffects[type] = ccEffects;
                               }
                             },
-                            [&](Function* f) {
-                              if (!ccEffects) {
-                                funcInfos.at(f).effects = UnknownEffects;
-                              } else {
-                                funcInfos.at(f).effects.emplace(*ccEffects);
-                              }
-                            }},
+                            [&](Function* f) { f->effects = ccEffects; }},
                  node);
     }
-  }
-}
-
-void copyEffectsToFunctions(const std::map<Function*, FuncInfo>& funcInfos) {
-  for (auto& [func, info] : funcInfos) {
-    func->effects.reset();
-    if (!info.effects) {
-      continue;
-    }
-
-    func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
   }
 }
 
@@ -364,8 +349,6 @@ struct GenerateGlobalEffects : public Pass {
                      funcInfos,
                      module->indirectCallEffects,
                      callGraph);
-
-    copyEffectsToFunctions(funcInfos);
   }
 };
 
