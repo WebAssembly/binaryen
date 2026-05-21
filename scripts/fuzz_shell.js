@@ -57,12 +57,7 @@ var fuzzSplit = false;
 for (var i = 0; i < argv.length; i++) {
   var curr = argv[i];
   if (curr.startsWith('exports:')) {
-    var payload = curr.substr('exports:'.length);
-    if (payload.startsWith('[')) {
-      exportsToCall = JSON.parse(payload);
-    } else {
-      exportsToCall = payload ? payload.split(',') : [];
-    }
+    exportsToCall = curr.substr('exports:'.length).split(',');
     argv.splice(i, 1);
     i--;
   } else if (curr == '--fuzz-split') {
