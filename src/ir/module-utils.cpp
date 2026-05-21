@@ -620,6 +620,64 @@ void classifyTypeVisibility(Module& wasm,
   }
 }
 
+// Collects all heap types transitively reachable from a root set of types.
+// Options are provided to customize the traversal:
+// - `includeSupertypes`: if true, declared supertypes are also traversed.
+// - `includeRecGroups`: if true, all types in the same recursion group
+//                     are also traversed.
+std::vector<HeapType>
+getTransitivelyReachable(const std::vector<HeapType>& roots,
+                         bool includeSupertypes,
+                         bool includeRecGroups) {
+  std::vector<HeapType> result;
+  std::vector<HeapType> worklist;
+  std::unordered_set<HeapType> seen;
+  std::unordered_set<RecGroup> seenRecGroups;
+
+  auto note = [&](HeapType type) {
+    if (type.isBasic()) {
+      if (seen.insert(type).second) {
+        result.push_back(type);
+      }
+      return;
+    }
+
+    if (includeRecGroups) {
+      auto group = type.getRecGroup();
+      if (seenRecGroups.insert(group).second) {
+        for (auto member : group) {
+          result.push_back(member);
+          worklist.push_back(member);
+        }
+      }
+    } else {
+      if (seen.insert(type).second) {
+        result.push_back(type);
+        worklist.push_back(type);
+      }
+    }
+  };
+
+  for (auto type : roots) {
+    note(type);
+  }
+
+  while (!worklist.empty()) {
+    auto curr = worklist.back();
+    worklist.pop_back();
+    std::optional<HeapType> super =
+      includeSupertypes ? std::nullopt : curr.getDeclaredSuperType();
+    for (auto t : curr.getReferencedHeapTypes()) {
+      if (super && t == *super) {
+        continue;
+      }
+      note(t);
+    }
+  }
+
+  return result;
+}
+
 void setIndices(IndexedHeapTypes& indexedTypes) {
   for (Index i = 0; i < indexedTypes.types.size(); i++) {
     indexedTypes.indices[indexedTypes.types[i]] = i;
@@ -638,31 +696,29 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
+// Returns the directly "exposed" public heap types in the module. These are the
+// root types appearing on the module boundary: types of exported functions,
+// globals, tables, and tags, as well as imported ones.
+//
+// How it differs from getPublicHeapTypes:
+// - getExposedPublicHeapTypes returns ONLY the explicitly declared boundary
+//   types (roots). It does NOT traverse the type structure recursively to find
+//   transitively reachable types, nor does it filter out basic types.
+// - getPublicHeapTypes returns ALL public heap types in the module. Under
+//   closed-world mode, it transitively expands the exposed boundary types
+//   recursively to include all referenced types and their rec group siblings
+//   (filtering out basic types). Under open-world mode, it runs Unified
+//   Propagation to trace subtype and structural visibility.
 std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
-  // Look at the types of imports as exports to get an initial set of public
-  // types, then traverse the types used by public types and collect the
-  // transitively reachable public types as well.
-  std::vector<HeapType> workList;
-  std::unordered_set<RecGroup> publicGroups;
-  std::unordered_set<HeapType> publicBasicTypes;
-
-  // The collected types.
+  // Look at the types of imports and exports to get an initial set of public
+  // types.
   std::vector<HeapType> publicTypes;
+  std::unordered_set<HeapType> seenTypes;
 
   auto notePublic = [&](HeapType type) {
-    if (type.isBasic()) {
-      if (publicBasicTypes.insert(type).second) {
-        publicTypes.push_back(type);
-      }
-      return;
+    if (seenTypes.insert(type).second) {
+      publicTypes.push_back(type);
     }
-    auto group = type.getRecGroup();
-    if (!publicGroups.insert(group).second) {
-      // The groups in this type have already been marked public.
-      return;
-    }
-    publicTypes.insert(publicTypes.end(), group.begin(), group.end());
-    workList.insert(workList.end(), group.begin(), group.end());
   };
 
   ModuleUtils::iterImportedTags(wasm, [&](Tag* tag) { notePublic(tag->type); });
@@ -719,26 +775,16 @@ std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
     notePublic(type);
   }
 
-  // Find all the other public types reachable from directly publicized types.
-  while (!workList.empty()) {
-    auto curr = workList.back();
-    workList.pop_back();
-    for (auto t : curr.getReferencedHeapTypes()) {
-      notePublic(t);
-    }
-  }
-
-  // TODO: In an open world, we need to consider subtypes of public types public
-  // as well, or potentially even consider all types to be public unless
-  // otherwise annotated.
   return publicTypes;
 }
 
 std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
-  auto exposed = getExposedPublicHeapTypes(wasm);
+  auto directlyExposed = getExposedPublicHeapTypes(wasm);
+  auto transitivelyExposed = getTransitivelyReachable(
+    directlyExposed, /*includeSupertypes=*/true, /*includeRecGroups=*/true);
   std::vector<HeapType> publicTypes;
-  publicTypes.reserve(exposed.size());
-  for (auto type : exposed) {
+  publicTypes.reserve(transitivelyExposed.size());
+  for (auto type : transitivelyExposed) {
     if (!type.isBasic()) {
       publicTypes.push_back(type);
     }
