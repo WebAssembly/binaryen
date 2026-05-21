@@ -1125,6 +1125,8 @@ void ModuleSplitter::setupTablePatching() {
   }
 
   std::map<Module*, std::map<Index, Function*>> moduleToReplacedElems;
+  Name dummyName;
+  Type dummyType = Type(Signature(Type::none, Type::none), NonNullable, Exact);
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
@@ -1145,22 +1147,38 @@ void ModuleSplitter::setupTablePatching() {
       Name secondaryName = config.secondaryNames.at(secondaryIndex);
       auto* secondaryFunc = secondary.getFunction(ref->func);
       moduleToReplacedElems[&secondary][index] = secondaryFunc;
-      if (!config.usePlaceholders) {
-        // TODO: This can create active element segments with lots of nulls. We
-        // should optimize them like we do data segments with zeros.
-        elem = Builder(primary).makeRefNull(HeapType::nofunc);
-        return;
+
+      if (config.usePlaceholders) {
+        auto placeholder = std::make_unique<Function>();
+        placeholder->module = config.placeholderNamespacePrefix.toString() +
+                              "." + secondaryName.toString();
+        placeholder->base = std::to_string(index);
+        placeholder->name = Names::getValidFunctionName(
+          primary, std::string("placeholder_") + placeholder->base.toString());
+        placeholder->hasExplicitName = true;
+        placeholder->type = secondaryFunc->type.with(Inexact);
+        elem =
+          Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
+        primary.addFunction(std::move(placeholder));
+
+      } else { // !config.usePlaceholders
+        if (primary.features.hasReferenceTypes()) {
+          // TODO: This can create active element segments with lots of nulls.
+          // We should optimize them like we do data segments with zeros.
+          elem = Builder(primary).makeRefNull(HeapType::nofunc);
+          return;
+        }
+        // When reference-types is not enabled, we can't use a ref.null. Put a
+        // dummy function that contains an unreachable.
+        if (!dummyName) {
+          dummyName = Names::getValidFunctionName(primary, "dummy");
+          auto dummy = Builder::makeFunction(
+            dummyName, dummyType, {}, Builder(primary).makeUnreachable());
+          dummy->hasExplicitName = true;
+          primary.addFunction(std::move(dummy));
+        }
+        elem = Builder(primary).makeRefFunc(dummyName, dummyType);
       }
-      auto placeholder = std::make_unique<Function>();
-      placeholder->module = config.placeholderNamespacePrefix.toString() + "." +
-                            secondaryName.toString();
-      placeholder->base = std::to_string(index);
-      placeholder->name = Names::getValidFunctionName(
-        primary, std::string("placeholder_") + placeholder->base.toString());
-      placeholder->hasExplicitName = true;
-      placeholder->type = secondaryFunc->type.with(Inexact);
-      elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
-      primary.addFunction(std::move(placeholder));
     });
 
   if (moduleToReplacedElems.size() == 0) {
