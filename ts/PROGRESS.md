@@ -340,4 +340,9 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 
 
 ## Test Migration — `/test/binaryen.js/`
-TODO
+
+- Module Components
+	- `/test/binaryen.js/tag.js`         &rarr; `/ts/test/module/Tag.test.ts`
+	- `/test/binaryen.js/global.js`      &rarr; `/ts/test/module/Global.test.ts`
+	- `/test/binaryen.js/memory-info.js` &rarr; `/ts/test/module/Memory.test.ts`
+	- `/test/binaryen.js/tables.js`      &rarr; `/ts/test/module/Table.test.ts`
