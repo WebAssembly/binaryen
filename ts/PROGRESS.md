@@ -111,19 +111,19 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `removeGlobal`             |           | Global.ts         | [x] | [x] | [ ] |
 | `removeTable`              |           | Table.ts          | [x] | [x] | [ ] |
 | `removeElementSegment`     |           | ElementSegment.ts | [x] | [x] | [ ] |
-| `addTag`                   |           | Tag.ts            | [x] | [x] | [ ] |
-| `getTag`                   |           | Tag.ts            | [x] | [x] | [ ] |
-| `removeTag`                |           | Tag.ts            | [x] | [x] | [ ] |
+| `addTag`                   |           | Tag.ts            | [x] | [x] | [x] |
+| `getTag`                   |           | Tag.ts            | [x] | [x] | [x] |
+| `removeTag`                |           | Tag.ts            | [x] | [x] | [x] |
 | `addFunctionImport`        |           | Import.ts         | [x] | [x] | [ ] |
 | `addTableImport`           |           | Import.ts         | [x] | [x] | [ ] |
 | `addMemoryImport`          |           | Import.ts         | [x] | [x] | [ ] |
 | `addGlobalImport`          |           | Import.ts         | [x] | [x] | [ ] |
-| `addTagImport`             |           | Import.ts         | [x] | [x] | [ ] |
+| `addTagImport`             |           | Import.ts         | [x] | [x] | [x] |
 | `addFunctionExport`        |           | Export.ts         | [x] | [x] | [ ] |
 | `addTableExport`           |           | Export.ts         | [x] | [x] | [ ] |
 | `addMemoryExport`          |           | Export.ts         | [x] | [x] | [ ] |
 | `addGlobalExport`          |           | Export.ts         | [x] | [x] | [ ] |
-| `addTagExport`             |           | Export.ts         | [x] | [x] | [ ] |
+| `addTagExport`             |           | Export.ts         | [x] | [x] | [x] |
 | `removeExport`             |           | Export.ts         | [x] | [x] | [ ] |
 | `setMemory`                |           | Memory.ts         | [x] | [x] | [ ] |
 | `hasMemory`                |           | Memory.ts         | [x] | [x] | [ ] |
@@ -200,7 +200,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `getGlobalInfo`         |           | Function.ts       | [x] | [x] | [ ] |
 | `getTableInfo`          |           | Table.ts          | [x] | [x] | [ ] |
 | `getElementSegmentInfo` |           | ElementSegment.ts | [x] | [x] | [ ] |
-| `getTagInfo`            |           | Tag.ts            | [x] | [x] | [ ] |
+| `getTagInfo`            |           | Tag.ts            | [x] | [x] | [x] |
 | `getExportInfo`         |           | Export.ts         | [x] | [x] | [ ] |
 
 
