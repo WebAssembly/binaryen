@@ -1483,8 +1483,8 @@ Literal Literal::shl(const Literal& other) const {
       return Literal(uint32_t(i32)
                      << Bits::getEffectiveShifts(other.i32, Type::i32));
     case Type::i64:
-      return Literal(uint64_t(i64)
-                     << Bits::getEffectiveShifts(other.i64, Type::i64));
+      return Literal(uint64_t(i64) << Bits::getEffectiveShifts(
+                       other.getInteger(), Type::i64));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1495,7 +1495,8 @@ Literal Literal::shrS(const Literal& other) const {
     case Type::i32:
       return Literal(i32 >> Bits::getEffectiveShifts(other.i32, Type::i32));
     case Type::i64:
-      return Literal(i64 >> Bits::getEffectiveShifts(other.i64, Type::i64));
+      return Literal(i64 >>
+                     Bits::getEffectiveShifts(other.getInteger(), Type::i64));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1508,7 +1509,7 @@ Literal Literal::shrU(const Literal& other) const {
                      Bits::getEffectiveShifts(other.i32, Type::i32));
     case Type::i64:
       return Literal(uint64_t(i64) >>
-                     Bits::getEffectiveShifts(other.i64, Type::i64));
+                     Bits::getEffectiveShifts(other.getInteger(), Type::i64));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
