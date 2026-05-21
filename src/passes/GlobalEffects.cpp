@@ -103,7 +103,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
 
               funcInfo.indirectCalledTypes.insert(type);
             } else if (effects.calls) {
-              assert(options.worldMode != WorldMode::Closed);
+              assert(options.worldMode == WorldMode::Open);
               funcInfo.effects = UnknownEffects;
             } else {
               // No call here, but update throwing if we see it. (Only do so,
@@ -147,7 +147,7 @@ CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
                          WorldMode worldMode) {
   CallGraph callGraph;
-  if (worldMode != WorldMode::Closed) {
+  if (worldMode == WorldMode::Open) {
     for (const auto& [caller, callerInfo] : funcInfos) {
       auto& callees = callGraph[caller];
 

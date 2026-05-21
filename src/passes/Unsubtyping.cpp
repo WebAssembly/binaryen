@@ -567,7 +567,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     if (!wasm->features.hasGC()) {
       return;
     }
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "Unsubtyping requires --closed-world";
     }
 

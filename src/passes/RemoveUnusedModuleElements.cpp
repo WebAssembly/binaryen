@@ -444,7 +444,7 @@ struct Analyzer {
   }
 
   void useRefFunc(Name func) {
-    if (options.worldMode != WorldMode::Closed) {
+    if (options.worldMode == WorldMode::Open) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
       use({ModuleElementKind::Function, func});
@@ -610,7 +610,7 @@ struct Analyzer {
     // outside of the code we can see), and when it is reached (if it's
     // unreachable then we don't know the type, and can defer that to DCE to
     // remove).
-    if (options.worldMode != WorldMode::Closed ||
+    if (options.worldMode == WorldMode::Open ||
         curr->type == Type::unreachable || !curr->is<StructNew>()) {
       for (auto* child : ChildIterator(curr)) {
         use(child);

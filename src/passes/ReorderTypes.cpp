@@ -142,7 +142,7 @@ struct ReorderTypes : Pass {
     }
 
     // See note in RemoveUnusedTypes.
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "ReorderTypes requires --closed-world";
     }
 

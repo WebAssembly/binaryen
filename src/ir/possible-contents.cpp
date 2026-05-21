@@ -684,7 +684,7 @@ struct InfoCollector
          SignatureResultLocation{func->type.getHeapType(), i}});
     }
 
-    if (options.worldMode != WorldMode::Closed) {
+    if (options.worldMode == WorldMode::Open) {
       info.calledFromOutside.insert(curr->func);
     }
   }
@@ -2535,7 +2535,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
   // In open world, public heap types may be written to from the outside.
-  if (options.worldMode != WorldMode::Closed) {
+  if (options.worldMode == WorldMode::Open) {
     for (auto type : ModuleUtils::getPublicHeapTypes(wasm, options.worldMode)) {
       if (type.isStruct()) {
         auto& fields = type.getStruct().fields;

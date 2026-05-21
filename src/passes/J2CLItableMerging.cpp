@@ -72,7 +72,7 @@ struct J2CLItableMerging : public Pass {
       return;
     }
 
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "--merge-j2cl-itables requires --closed-world";
     }
 

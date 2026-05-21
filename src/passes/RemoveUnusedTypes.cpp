@@ -39,7 +39,7 @@ struct RemoveUnusedTypes : Pass {
     // would change the identity of $A. Currently we would incorrectly remove
     // $unused. To fix that, we need to fix our collection of public types to
     // consider $A (and $unused) public in an open world.
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "RemoveUnusedTypes requires --closed-world";
     }
 

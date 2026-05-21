@@ -342,7 +342,7 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
     options.passOptions.shrinkLevel = upTo(3);
   }
 
-  if (options.passOptions.worldMode != WorldMode::Closed && oneIn(2)) {
+  if (options.passOptions.worldMode == WorldMode::Open && oneIn(2)) {
     options.passOptions.worldMode = WorldMode::Closed;
   }
 
@@ -6698,7 +6698,7 @@ bool TranslateToFuzzReader::isValidRefFuncTarget(Name func) {
   // reference, but in that mode we must only pass in jsCalled functions. We
   // handle direct calls in fixClosedWorld, but cannot handle indirect ones
   // easily, so just disallow taking references of those functions.
-  if (worldMode != WorldMode::Closed) {
+  if (worldMode == WorldMode::Open) {
     return true;
   }
   return !isCallRefImport(func);

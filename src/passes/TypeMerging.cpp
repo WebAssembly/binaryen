@@ -243,7 +243,7 @@ void TypeMerging::run(Module* module_) {
     return;
   }
 
-  if (getPassOptions().worldMode != WorldMode::Closed) {
+  if (getPassOptions().worldMode == WorldMode::Open) {
     Fatal() << "TypeMerging requires --closed-world";
   }
 

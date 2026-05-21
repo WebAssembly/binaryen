@@ -65,7 +65,7 @@ struct SignaturePruning : public Pass {
       return;
     }
 
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "SignaturePruning requires --closed-world";
     }
 

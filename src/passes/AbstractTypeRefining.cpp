@@ -87,7 +87,7 @@ struct AbstractTypeRefining : public Pass {
       return;
     }
 
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "AbstractTypeRefining requires --closed-world";
     }
 

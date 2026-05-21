@@ -153,7 +153,7 @@ struct GlobalTypeOptimization : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "GTO requires --closed-world";
     }
 

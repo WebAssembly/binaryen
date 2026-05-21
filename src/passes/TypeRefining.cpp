@@ -145,7 +145,7 @@ struct TypeRefining : public Pass {
       return;
     }
 
-    if (getPassOptions().worldMode != WorldMode::Closed) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "TypeRefining requires --closed-world";
     }
 
