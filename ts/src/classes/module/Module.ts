@@ -333,7 +333,7 @@ export class Module {
 	/** @deprecated Use {@link Module#exports | `this.exports.addFunction`} instead. */ @replacedBy("`this.exports.addFunction`") addFunctionExport(internalName: string, externalName: string) { return this.exports.addFunction(internalName, externalName); }
 
 	/** @category Module Component Operations */
-	getMemoryInfo(name: string): Memory_ {
+	getMemoryInfo(name: string = ""): Memory_ {
 		return new Memory_(this, name);
 	}
 
