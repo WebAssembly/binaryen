@@ -164,6 +164,8 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         const EffectAnalyzer* effects = nullptr;
         if (self->getModule()) {
           auto* func = self->getModule()->getFunctionOrNull(call->target);
+          // TODO: `func` might not exist here because of #8753. Fix this
+          // and remove the null check.
           if (func) {
             effects = func->effects.get();
           }
@@ -183,13 +185,13 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
             return nullptr;
           }
 
-          auto* effects_ptr =
+          auto* effectsPtr =
             find_or_null(self->getModule()->indirectCallEffects,
                          callRef->target->type.getHeapType());
-          if (!effects_ptr) {
+          if (!effectsPtr) {
             return nullptr;
           }
-          return effects_ptr->get();
+          return effectsPtr->get();
         }();
 
         handleCall(callRef->isReturn, effects);
@@ -200,10 +202,10 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
 
         const EffectAnalyzer* effects = nullptr;
         if (self->getModule()) {
-          if (const auto& effects_ptr =
+          if (const auto& effectsPtr =
                 find_or_null(self->getModule()->indirectCallEffects,
                              callIndirect->heapType)) {
-            effects = effects_ptr->get();
+            effects = effectsPtr->get();
           }
         }
         handleCall(callIndirect->isReturn, effects);
