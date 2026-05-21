@@ -2235,9 +2235,9 @@ class PreserveImportsExportsJS(TestCaseHandler):
         # We are about to optimize, and do not trust the given wasm file to
         # have marked all js-called methods properly. In particular, it could
         # have a configureAll that is not in the start function.
-        full_opts = opts + [
+        full_opts = [
             '--mark-js-called',
-        ]
+        ] + opts
 
         # Optimize.
         post_wasm = abspath('post.wasm')
