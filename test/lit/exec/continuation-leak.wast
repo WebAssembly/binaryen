@@ -7,11 +7,11 @@
   (type $func_t (func))
   (type $cont_t (cont $func_t))
   (tag $tag)
-  
+
   (func $f_suspend
     (suspend $tag)
   )
-  
+
   (func $test1 (export "test1")
     (local $c (ref $cont_t))
     (local.set $c (cont.new $cont_t (ref.func $f_suspend)))
