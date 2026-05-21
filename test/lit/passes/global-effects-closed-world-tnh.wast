@@ -2,7 +2,8 @@
 ;; RUN: wasm-opt %s -all --closed-world --traps-never-happen --generate-global-effects --vacuum -S -o - | filecheck %s
 
 ;; Tests for aggregating effects from indirect calls in GlobalEffects when
-;; --closed-world is true. Continued from global-effects-closed-world.wast.
+;; --closed-world is true. Continued from global-effects-closed-world.wast, but
+;; adding traps-never-happen.
 
 (module
   ;; CHECK:      (type $nopType (func (param i32)))

@@ -27,7 +27,7 @@
   ;; CHECK-NEXT: )
   (func $indirect-call-correct-type
     ;; Only implicit traps are possible here since the type is correct.
-    ;; A trap will happen if the index if out of bounds or contains null.
+    ;; A trap will happen if the index is out of bounds or contains null.
     (call_indirect (type $nopType) (i32.const 1) (i32.const 0))
   )
 
@@ -71,7 +71,7 @@
   ;; CHECK-NEXT: )
   (func $call-indirect-effectful-function
     ;; This may be a nop or it may trap depending on the ref.
-    ;; We don't know so don't optimize it out.
+    ;; We don't know so we don't optimize it out.
     ;; Similar to the test in global-effects-closed-world.wast, but in this case
     ;; we don't optimize the call out solely because we don't know what effects
     ;; the target function will have and not because of potential implicit
