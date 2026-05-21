@@ -537,7 +537,8 @@ public:
 #if WASM_INTERPRETER_DEBUG
       std::cout << indent() << "clear continuations\n";
 #endif
-      continuationStore = std::make_shared<ContinuationStore>();
+      continuationStore->continuations.clear();
+      continuationStore->resuming = false;
     }
   }
 
