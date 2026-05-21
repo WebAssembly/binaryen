@@ -116,18 +116,18 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `removeTag`                |           | Tag.ts            | [x] | [x] | [x] |
 | `addFunctionImport`        |           | Import.ts         | [x] | [x] | [ ] |
 | `addTableImport`           |           | Import.ts         | [x] | [x] | [ ] |
-| `addMemoryImport`          |           | Import.ts         | [x] | [x] | [ ] |
+| `addMemoryImport`          |           | Import.ts         | [x] | [x] | [x] |
 | `addGlobalImport`          |           | Import.ts         | [x] | [x] | [x] |
 | `addTagImport`             |           | Import.ts         | [x] | [x] | [x] |
 | `addFunctionExport`        |           | Export.ts         | [x] | [x] | [ ] |
 | `addTableExport`           |           | Export.ts         | [x] | [x] | [ ] |
-| `addMemoryExport`          |           | Export.ts         | [x] | [x] | [ ] |
+| `addMemoryExport`          |           | Export.ts         | [x] | [x] | [x] |
 | `addGlobalExport`          |           | Export.ts         | [x] | [x] | [x] |
 | `addTagExport`             |           | Export.ts         | [x] | [x] | [x] |
 | `removeExport`             |           | Export.ts         | [x] | [x] | [ ] |
-| `setMemory`                |           | Memory.ts         | [x] | [x] | [ ] |
-| `hasMemory`                |           | Memory.ts         | [x] | [x] | [ ] |
-| `getMemoryInfo`            |           | Module.ts         | [x] | [x] | [ ] |
+| `setMemory`                |           | Memory.ts         | [x] | [x] | [x] |
+| `hasMemory`                |           | Memory.ts         | [x] | [x] | [x] |
+| `getMemoryInfo`            |           | Module.ts         | [x] | [x] | [x] |
 | `getNumDataSegments`       |           | DataSegment.ts    | [x] | [x] | [ ] |
 | `getDataSegmentByIndex`    |           | DataSegment.ts    | [x] | [x] | [ ] |
 | `getDataSegmentInfo`       |           | DataSegment.ts    | [x] | [x] | [ ] |
