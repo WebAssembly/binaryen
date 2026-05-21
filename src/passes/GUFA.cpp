@@ -239,6 +239,7 @@ struct GUFAOptimizer
       auto* result = Builder(*getModule()).makeConst(Literal(int32_t(0)));
       replaceCurrent(getDroppedChildrenAndAppend(
         curr, *getModule(), getPassOptions(), result));
+      optimized = true;
     }
   }
 
@@ -260,6 +261,7 @@ struct GUFAOptimizer
         auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
         replaceCurrent(getDroppedChildrenAndAppend(
           curr, *getModule(), getPassOptions(), last));
+        optimized = true;
       };
 
       if (!PossibleContents::haveIntersection(refContents, intendedContents)) {
