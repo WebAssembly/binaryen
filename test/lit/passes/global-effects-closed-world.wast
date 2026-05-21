@@ -107,13 +107,15 @@
   (type $uninhabited (func (param i32)))
 
   ;; CHECK:      (func $calls-uninhabited (type $1) (param $ref (ref $uninhabited))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call_ref $uninhabited
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-uninhabited (param $ref (ref $uninhabited))
     ;; There's no function with this type, so it's impossible to create a ref to
-    ;; call this function with and there are no effects to aggregate.
-    ;; Remove this call.
-    ;; TODO: Optimize this to (unreachable).
+    ;; call this function with. If this code is reached, it must trap.
+    ;; TODO: Optimize this to (unreachable) by creating a 'must trap' effect.
     (call_ref $uninhabited (i32.const 1) (local.get $ref))
   )
 
@@ -125,7 +127,7 @@
   ;; CHECK-NEXT: )
   (func $calls-nullable-uninhabited (param $ref (ref null $uninhabited))
     ;; This must be null, so it's guaranteed to trap and can't be optimized out.
-    ;; TODO: Optimize this to (unreachable).
+    ;; TODO: Optimize this to (unreachable) by creating a 'must trap' effect.
     (call_ref $uninhabited (i32.const 1) (local.get $ref))
   )
 )

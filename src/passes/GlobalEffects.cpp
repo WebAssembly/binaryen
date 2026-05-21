@@ -313,6 +313,14 @@ void propagateEffects(
           ccEffects->trap = true;
         }
       }
+    } else if (ccFuncs.empty() && calleeSccs.empty()) {
+      // This node came from an indirect call to an uninhabited type.
+      // This CC must consist of exactly one type, because an uninhabited type
+      // can't make any indirect calls to other types.
+      //
+      // Since the type is uninhabited, this call must trap.
+      assert(cc.size() == 1);
+      ccEffects->trap = true;
     }
 
     // Aggregate effects within this CC
