@@ -1693,9 +1693,9 @@ class Split(TestCaseHandler):
 
         # prepare the list of exports to call. the format is
         #
-        #  exports:A,B,C
+        #  exports:["A","B","C"]
         #
-        exports_to_call = 'exports:' + ','.join(exports)
+        exports_to_call = 'exports:' + json.dumps(exports)
 
         # get the output from the split modules, linking them using JS
         # TODO run liftoff/turboshaft/etc.
