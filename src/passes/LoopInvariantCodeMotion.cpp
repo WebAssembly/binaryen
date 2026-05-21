@@ -65,11 +65,14 @@ struct LoopInvariantCodeMotion
     // is ok to do so.
     EffectAnalyzer effectsSoFar(getPassOptions(), *getModule());
     // The loop's total effects also matter. For example, a store
-    // in the loop means we can't move a load outside.
+    // in the loop means we can't move a load outside. We discard the local
+    // reads and writes because we analyze them separately.
     // FIXME: we look at the loop "tail" area too, after the last
     //        possible branch back, which can cause false positives
     //        for bad effect interactions.
     EffectAnalyzer loopEffects(getPassOptions(), *getModule(), loop);
+    loopEffects.localsRead.clear();
+    loopEffects.localsWritten.clear();
     // Note all the sets in each loop, and how many per index. Currently
     // EffectAnalyzer can't do that, and we need it to know if we
     // can move a set out of the loop (if there is another set
@@ -122,15 +125,9 @@ struct LoopInvariantCodeMotion
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
-        EffectAnalyzer loopGlobalEffects = loopEffects;
-        loopGlobalEffects.localsRead.clear();
-        loopGlobalEffects.localsWritten.clear();
-        EffectAnalyzer globalEffects = effects;
-        globalEffects.localsRead.clear();
-        globalEffects.localsWritten.clear();
         bool unsafeToMove = effects.writesGlobalState() ||
                             effectsSoFar.orderedBefore(effects) ||
-                            loopGlobalEffects.orderedBefore(globalEffects);
+                            loopEffects.orderedBefore(effects);
         // TODO: look into optimizing this with exceptions. for now, disallow
         if (effects.throws() || loopEffects.throws()) {
           unsafeToMove = true;
