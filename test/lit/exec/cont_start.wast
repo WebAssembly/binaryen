@@ -18,6 +18,7 @@
 
  (start $start)
 
+ ;; CHECK:      [fuzz-exec] export suspend
  (func $suspend (type $void)
   (nop)
  )
