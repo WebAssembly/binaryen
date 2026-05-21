@@ -100,15 +100,15 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `addFunction`              | line 2616 | Function.ts       | [x] | [x] | [ ] |
 | `getFunction`              |           | Function.ts       | [x] | [x] | [ ] |
 | `removeFunction`           |           | Function.ts       | [x] | [x] | [ ] |
-| `addGlobal`                |           | Global.ts         | [x] | [x] | [ ] |
-| `getGlobal`                |           | Global.ts         | [x] | [x] | [ ] |
+| `addGlobal`                |           | Global.ts         | [x] | [x] | [x] |
+| `getGlobal`                |           | Global.ts         | [x] | [x] | [x] |
 | `addTable`                 |           | Table.ts          | [x] | [x] | [ ] |
 | `getTable`                 |           | Table.ts          | [x] | [x] | [ ] |
 | `addActiveElementSegment`  |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `addPassiveElementSegment` |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getElementSegment`        |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getTableSegments`         |           | Table.ts          | [x] | [x] | [ ] |
-| `removeGlobal`             |           | Global.ts         | [x] | [x] | [ ] |
+| `removeGlobal`             |           | Global.ts         | [x] | [x] | [x] |
 | `removeTable`              |           | Table.ts          | [x] | [x] | [ ] |
 | `removeElementSegment`     |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `addTag`                   |           | Tag.ts            | [x] | [x] | [x] |
@@ -117,12 +117,12 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `addFunctionImport`        |           | Import.ts         | [x] | [x] | [ ] |
 | `addTableImport`           |           | Import.ts         | [x] | [x] | [ ] |
 | `addMemoryImport`          |           | Import.ts         | [x] | [x] | [ ] |
-| `addGlobalImport`          |           | Import.ts         | [x] | [x] | [ ] |
+| `addGlobalImport`          |           | Import.ts         | [x] | [x] | [x] |
 | `addTagImport`             |           | Import.ts         | [x] | [x] | [x] |
 | `addFunctionExport`        |           | Export.ts         | [x] | [x] | [ ] |
 | `addTableExport`           |           | Export.ts         | [x] | [x] | [ ] |
 | `addMemoryExport`          |           | Export.ts         | [x] | [x] | [ ] |
-| `addGlobalExport`          |           | Export.ts         | [x] | [x] | [ ] |
+| `addGlobalExport`          |           | Export.ts         | [x] | [x] | [x] |
 | `addTagExport`             |           | Export.ts         | [x] | [x] | [x] |
 | `removeExport`             |           | Export.ts         | [x] | [x] | [ ] |
 | `setMemory`                |           | Memory.ts         | [x] | [x] | [ ] |
@@ -197,7 +197,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `createType`            | line 3210 | global.ts         | [x] | [x] | [ ] |
 | `expandType`            |           | global.ts         | [x] | [x] | [ ] |
 | `getFunctionInfo`       | line 3228 | Function.ts       | [x] | [x] | [ ] |
-| `getGlobalInfo`         |           | Function.ts       | [x] | [x] | [ ] |
+| `getGlobalInfo`         |           | Function.ts       | [x] | [x] | [x] |
 | `getTableInfo`          |           | Table.ts          | [x] | [x] | [ ] |
 | `getElementSegmentInfo` |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getTagInfo`            |           | Tag.ts            | [x] | [x] | [x] |
