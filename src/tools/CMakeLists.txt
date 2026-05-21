@@ -22,6 +22,7 @@ add_custom_command(
          ${PREBUILT_DIR}/wasm2c_source_declarations.cc
          ${PREBUILT_DIR}/wasm2c_simd_source_declarations.cc
          ${PREBUILT_DIR}/wasm2c_atomicops_source_declarations.cc
+         ${PREBUILT_DIR}/wasm2c_spec_top.cc
 
   COMMAND ${CMAKE_COMMAND} -D out="${PREBUILT_DIR}/wasm2c_header_top.cc" -D in="${TEMPLATE_DIR}/wasm2c.top.h" -D symbol="s_header_top" -P ${TEMPLATE_CMAKE}
   COMMAND ${CMAKE_COMMAND} -D out="${PREBUILT_DIR}/wasm2c_header_bottom.cc" -D in="${TEMPLATE_DIR}/wasm2c.bottom.h" -D symbol="s_header_bottom" -P ${TEMPLATE_CMAKE}
@@ -29,6 +30,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -D out="${PREBUILT_DIR}/wasm2c_source_declarations.cc" -D in="${TEMPLATE_DIR}/wasm2c.declarations.c" -D symbol="s_source_declarations" -P ${TEMPLATE_CMAKE}
   COMMAND ${CMAKE_COMMAND} -D out="${PREBUILT_DIR}/wasm2c_simd_source_declarations.cc" -D in="${TEMPLATE_DIR}/wasm2c_simd.declarations.c" -D symbol="s_simd_source_declarations" -P ${TEMPLATE_CMAKE}
   COMMAND ${CMAKE_COMMAND} -D out="${PREBUILT_DIR}/wasm2c_atomicops_source_declarations.cc" -D in="${TEMPLATE_DIR}/wasm2c_atomicops.declarations.c" -D symbol="s_atomicops_source_declarations" -P ${TEMPLATE_CMAKE}
+  COMMAND ${CMAKE_COMMAND} -D out="${PREBUILT_DIR}/wasm2c_spec_top.cc" -D in="${TEMPLATE_DIR}/wasm2c_spec.top.c" -D symbol="s_spec_top" -P ${TEMPLATE_CMAKE}
 
   DEPENDS ${TEMPLATE_DIR}/wasm2c.top.h
           ${TEMPLATE_DIR}/wasm2c.bottom.h
@@ -36,6 +38,7 @@ add_custom_command(
           ${TEMPLATE_DIR}/wasm2c.declarations.c
           ${TEMPLATE_DIR}/wasm2c_simd.declarations.c
           ${TEMPLATE_DIR}/wasm2c_atomicops.declarations.c
+          ${TEMPLATE_DIR}/wasm2c_spec.top.c
 )
 
 set(WASM2C_GENERATED_SOURCES
@@ -45,6 +48,7 @@ set(WASM2C_GENERATED_SOURCES
     ${PREBUILT_DIR}/wasm2c_source_declarations.cc
     ${PREBUILT_DIR}/wasm2c_simd_source_declarations.cc
     ${PREBUILT_DIR}/wasm2c_atomicops_source_declarations.cc
+    ${PREBUILT_DIR}/wasm2c_spec_top.cc
 )
 
 binaryen_add_executable(wasm2c "wasm2c.cpp;${WASM2C_GENERATED_SOURCES}")
