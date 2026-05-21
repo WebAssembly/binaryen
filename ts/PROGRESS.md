@@ -102,8 +102,8 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `removeFunction`           |           | Function.ts       | [x] | [x] | [ ] |
 | `addGlobal`                |           | Global.ts         | [x] | [x] | [x] |
 | `getGlobal`                |           | Global.ts         | [x] | [x] | [x] |
-| `addTable`                 |           | Table.ts          | [x] | [x] | [ ] |
-| `getTable`                 |           | Table.ts          | [x] | [x] | [ ] |
+| `addTable`                 |           | Table.ts          | [x] | [x] | [x] |
+| `getTable`                 |           | Table.ts          | [x] | [x] | [x] |
 | `addActiveElementSegment`  |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `addPassiveElementSegment` |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getElementSegment`        |           | ElementSegment.ts | [x] | [x] | [ ] |
@@ -198,7 +198,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `expandType`            |           | global.ts         | [x] | [x] | [ ] |
 | `getFunctionInfo`       | line 3228 | Function.ts       | [x] | [x] | [ ] |
 | `getGlobalInfo`         |           | Function.ts       | [x] | [x] | [x] |
-| `getTableInfo`          |           | Table.ts          | [x] | [x] | [ ] |
+| `getTableInfo`          |           | Table.ts          | [x] | [x] | [x] |
 | `getElementSegmentInfo` |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getTagInfo`            |           | Tag.ts            | [x] | [x] | [x] |
 | `getExportInfo`         |           | Export.ts         | [x] | [x] | [ ] |
@@ -329,7 +329,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | Name        | JS Loc    | TS Loc      | Code | API Overview | Tests |
 | ----------- | --------- | ----------- | ---- | ------------ | ----- |
 | `Function`  | line 5388 | Function.ts | [x] | [x] | [ ] |
-| `Table`     | line 5445 | Table.ts    | [x] | [x] | [ ] |
+| `Table`     | line 5445 | Table.ts    | [x] | [x] | [x] |
 
 
 ### Additional
