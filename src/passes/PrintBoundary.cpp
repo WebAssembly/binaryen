@@ -135,19 +135,20 @@ struct PrintBoundary : public Pass {
     switch (kind) {
       case ExternalKind::Function:
         return getTypes(wasm.getFunction(name)->type);
-        break;
       case ExternalKind::Table:
-        break;
+        return getTypes(wasm.getTable(name)->type);
       case ExternalKind::Memory:
-        break;
+        return getTypes(wasm.getMemory(name)->addressType);
       case ExternalKind::Global:
         return getTypes(wasm.getGlobal(name)->type);
       case ExternalKind::Tag:
-        break;
+        // Wrap it in a Type so that getTypes can handle it. That will print the
+        // params and results as we expect.
+        return getTypes(Type(wasm.getTag(name)->type, NonNullable));
       case ExternalKind::Invalid:
-        WASM_UNREACHABLE("invalid ExternalKind");
+        break;
     }
-    return {};
+    WASM_UNREACHABLE("invalid ExternalKind");
   }
 
   json::Value::Ref getKindName(ExternalKind kind) {

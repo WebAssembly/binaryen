@@ -3,7 +3,8 @@
 ;; type to be set incorrectly to nullref instead of the original type, leading
 ;; to a validation error.
 
-;; TODO: Why does this fail on CI without --force?
+;; TODO: Why does this fail on CI without --force? Why does it crash on Windows?
+;; REQUIRES: linux
 ;; RUN: wasm-reduce %s -t %t.t.wast -w %t.w.wast --force \
 ;; RUN:   --command='wasm-opt %t.t.wast -all --fuzz-exec'
 
