@@ -304,6 +304,13 @@ struct ContinuationStore {
 
   // Set when we are resuming execution, that is, re-winding the stack.
   bool resuming = false;
+
+  // On traps or other errors that unwind the stack, we reset the continuation
+  // store to return to a clean state ahead of further calls to exports.
+  void clear() {
+    continuations.clear();
+    resuming = false;
+  }
 };
 
 // Execute an expression
@@ -537,8 +544,7 @@ public:
 #if WASM_INTERPRETER_DEBUG
       std::cout << indent() << "clear continuations\n";
 #endif
-      continuationStore->continuations.clear();
-      continuationStore->resuming = false;
+      continuationStore->clear();
     }
   }
 
