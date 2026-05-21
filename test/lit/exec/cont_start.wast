@@ -9,19 +9,19 @@
  (type $void (func))
  (type $void_cont (cont $void))
  (type $i32_pair (func (param i32 i32)))
- 
+
  (import "fuzzing-support" "call-export" (func $call_export (type $i32_pair) (param i32 i32)))
- 
+
  (tag $susp_tag (type $void))
 
  (export "suspend" (func $suspend))
 
  (start $start)
- 
+
  (func $suspend (type $void)
   (nop)
  )
- 
+
  (func $start (type $void)
   (drop
    (block $handler (result (ref $void_cont))
@@ -34,7 +34,7 @@
    )
   )
  )
- 
+
  (func $run (type $void)
   (call $call_export
    (i32.const 0)
