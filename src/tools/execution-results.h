@@ -289,6 +289,12 @@ public:
   }
 
   Literals callExportAsJS(Index index) {
+    if (instance->inStart) {
+      // No exports are even available yet. JS throws on trying to call an
+      // undefined (which is what we get when we read from the un-populated list
+      // of exports).
+      throwJSException();
+    }
     if (index >= wasm.exports.size()) {
       // No export.
       throwJSException();
