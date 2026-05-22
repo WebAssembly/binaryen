@@ -2,7 +2,8 @@
 ;; RUN: foreach %s %t wasm-opt -all --closed-world --ignore-implicit-traps --generate-global-effects --vacuum -S -o - | filecheck %s
 
 ;; Tests for aggregating effects from indirect calls in GlobalEffects when
-;; --closed-world is true. Continued from global-effects-closed-world.wast.
+;; --closed-world is true. Continued from global-effects-closed-world.wast but
+;; adding --ignore-implicit-traps.
 
 (module
   (rec
