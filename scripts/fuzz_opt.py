@@ -1532,7 +1532,25 @@ class Merge(TestCaseHandler):
         second_input = abspath('second_input.dat')
         make_random_input(second_size, second_input)
         second_wasm = abspath('second.wasm')
-        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+
+        # Always remove the second module's start function. Before merge, we
+        # have this:
+        #
+        #  * call first's start
+        #  * call first's exports
+        #  * call second's start
+        #  * call second's exports
+        #
+        # After merge, the middle two lines are swapped, since the starts are
+        # merged, changing the behavior.
+        second_args = [
+            in_bin('wasm-opt'),
+            second_input,
+            '-ttf',
+            '-o', second_wasm
+            '--remove-start',
+        ]
+        run(second_args + GEN_ARGS + FEATURE_OPTS)
 
         # the second wasm file must not have an export that can influence our
         # execution. the JS exports have that behavior, as when "table-set" is
@@ -1552,22 +1570,9 @@ class Merge(TestCaseHandler):
             filter_exports(second_wasm, second_wasm, filtered, keep_defaults=False)
 
         # Sometimes also optimize the second module
-        second_opts = []
         if random.random() < 0.5:
-            second_opts = get_random_opts()
-
-        # Always remove the second module's start function. Before merge, we
-        # have this:
-        #
-        #  * call first's start
-        #  * call first's exports
-        #  * call second's start
-        #  * call second's exports
-        #
-        # After merge, the middle two lines are swapped, since the starts are
-        # merged, changing the behavior
-        second_opts += ['--remove-start']
-        run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + second_opts)
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + opts)
 
         # Merge the wasm files. note that we must pass -all, as even if the two
         # inputs are MVP, the output may have multiple tables and multiple
