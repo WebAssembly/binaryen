@@ -585,6 +585,9 @@ def fix_output(out):
             # developer can see it.
             print(line)
             lines[i] = None
+        elif 'V8 is running with experimental features enabled. Stability and security will suffer.':
+            # Ignore some boilerplate from VMs
+            lines[i] = None
         elif EXCEPTION_PREFIX in line:
             # exceptions may differ when optimizing, but an exception should
             # occur, so ignore their types (also js engines print them out
