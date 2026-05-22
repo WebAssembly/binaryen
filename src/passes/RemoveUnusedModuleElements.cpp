@@ -764,6 +764,9 @@ struct Analyzer {
     } else if (kind == ModuleElementKind::ElementSegment) {
       // TODO: We could empty out parts of the segment we don't need.
       auto* segment = module->getElementSegment(value);
+      if (segment->offset) {
+        addReferences(segment->offset);
+      }
       for (auto* item : segment->data) {
         addReferences(item);
       }
