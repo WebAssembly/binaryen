@@ -4,12 +4,25 @@
 
 ;; The start is removed, and we are not confused by similar names.
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (start $st)
   (start $st)
 
+  ;; CHECK:      (func $st (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $st
     (drop (i32.const 10))
   )
 
+  ;; CHECK:      (func $start (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $start
     (drop (i32.const 20))
   )
@@ -17,10 +30,22 @@
 
 ;; We do nothing and do not error when there is no start.
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $st (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $st
     (drop (i32.const 10))
   )
 
+  ;; CHECK:      (func $start (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $start
     (drop (i32.const 20))
   )
