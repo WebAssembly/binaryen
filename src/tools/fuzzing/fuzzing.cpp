@@ -846,6 +846,17 @@ void TranslateToFuzzReader::setupTags() {
     jsTag->base = "jstag";
     wasm.addTag(std::move(jsTag));
   }
+
+  // Export some tags, sometimes.
+  if (!preserveImportsAndExports) {
+    for (auto& tag : wasm.tags) {
+      if (isValidPublicType(tag->type) && oneIn(2)) {
+        auto exportName = Names::getValidExportName(wasm, tag->name);
+        wasm.addExport(
+          Builder::makeExport(exportName, tag->name, ExternalKind::Tag));
+      }
+    }
+  }
 }
 
 void TranslateToFuzzReader::addTag() {
@@ -4143,8 +4154,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::func: {
       // Rarely, emit a call to imported table.get (when nullable, unshared, and
       // where we can emit a call).
-      if (type.isNullable() && share == Unshared && funcContext &&
-          tableGetImportName && !oneIn(3)) {
+      if (!trivialNesting && type.isNullable() && share == Unshared &&
+          funcContext && tableGetImportName && !oneIn(3)) {
         return makeImportTableGet();
       }
       return makeRefFuncConst(type);

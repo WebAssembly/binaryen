@@ -16046,6 +16046,37 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms-if-unreachable (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-if-unreachable (param $x i32) (param $y i32)
+    (drop
+      ;; Leave this to DCE instead of optimizing.
+      (if (result i32)
+        (unreachable)
+        (then
+          (i32.eqz (local.get $x))
+        )
+        (else
+          (i32.eqz (local.get $y))
+        )
+      )
+    )
+  )
   ;; CHECK:      (func $ternary-identical-arms-type-change (param $x f64) (param $y f64) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.demote_f64

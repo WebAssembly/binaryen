@@ -277,6 +277,9 @@ void PassRegistry::registerPasses() {
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
                createLimitSegmentsPass);
+  registerPass("mark-js-called",
+               "mark js called functions (using configureAll) as doing so",
+               createMarkJSCalledPass);
   registerPass("memory64-lowering",
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
@@ -390,6 +393,8 @@ void PassRegistry::registerPasses() {
                createPrintFeaturesPass);
   registerPass(
     "print-full", "print in full s-expression format", createFullPrinterPass);
+  registerPass(
+    "print-boundary", "print boundary in JSON format", createPrintBoundaryPass);
   registerPass(
     "print-call-graph", "print call graph", createPrintCallGraphPass);
 

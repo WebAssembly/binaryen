@@ -2463,12 +2463,14 @@ public:
   // about the function-level annotations.
   CodeAnnotation funcAnnotations;
 
-  // The effects for this function, if they have been computed. We use a shared
-  // ptr here to avoid compilation errors with the forward-declared
-  // EffectAnalyzer.
+  // The effects for this function, if they have been computed.
+  // Effects are shared within connected components of the function call graph.
+  // e.g. if A calls B and B calls A, then A and B's effects are exactly the
+  // same and they share the same EffectAnalyzer. The same applies for indirect
+  // calls when --closed-world is enabled (see Module::indirectCallEffects).
   //
   // See addsEffects() in pass.h for more details.
-  std::shared_ptr<EffectAnalyzer> effects;
+  std::shared_ptr<const EffectAnalyzer> effects;
 
   // Inlining metadata: whether to disallow full and/or partial inlining. This
   // is a toolchain-level hint. For more details, see Inlining.cpp.
@@ -2721,6 +2723,24 @@ public:
 
   std::unordered_map<HeapType, TypeNames> typeNames;
   std::unordered_map<HeapType, Index> typeIndices;
+
+  // Potential effects for bodies of indirect calls to this type. Populated by
+  // GlobalEffects when --closed-world is enabled. e.g. when we have a call to
+  // HeapType $A and functions $foo and $bar have types that are subtypes of $A,
+  // then an indirect call to $A has effects equal to the union of $foo and
+  // $bar.
+  //
+  // This is stored as a shared_ptr because effects are always shared within
+  // each connected component in the module's call graph. e.g. if A calls B
+  // and B calls A (directly or indirectly), then A and B have the same effects
+  // and can share an EffectAnalyzer. Also see Function::effects.
+  //
+  // This data is only meaningful for indirect calls. If no indirect call
+  // exists to a function, the data can be out of date (no effort is made to
+  // clean up the data if e.g. all indirect calls to a function are removed).
+  // TODO: Account for exactness here.
+  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+    indirectCallEffects;
 
   MixedArena allocator;
 
