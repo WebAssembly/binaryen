@@ -726,6 +726,11 @@ private:
 
     void visitCall(Call* curr) {
       if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
+        // The only effect this can have is to branch (which is an effect of the
+        // return, not the call).
+        if (curr->isReturn) {
+          parent.branchesOut = true;
+        }
         return;
       }
 
