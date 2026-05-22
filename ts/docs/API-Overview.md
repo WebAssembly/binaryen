@@ -200,8 +200,10 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.global.set()`
 - tables and memories
 	- `.table.get()`, `.table.set()`, `.table.size()`, `.table.grow()`
+	- ~~`.table.fill()`, `.table.copy()`, `table.init()`~~; ⛔️ not yet supported
 	- `.memory.size()`, `.memory.grow()`, `.memory.fill()`, `.memory.copy()`, `.memory.init()`,
-	- `.elem.drop()`, `.data.drop()`
+	- ~~`.elem.drop()`~~; ⛔️ not yet supported
+	- `.data.drop()`
 - references
 	- `.ref.func()`, `.ref.null()`, `.ref.is_null()`, `.ref.as_non_null()`, `.ref.eq()`, `.ref.test()`, `.ref.cast()`
 	- `.ref.i31()`, `i31.get_{s,u}()`
@@ -269,11 +271,11 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.{i16x8,i32x4,i64x2}.mul()`
 	- `.{i8x16,i16x8}.avgr_u()`
 	- `.i16x8.q15mulr_sat_s()`
-	- `.i16x8.relaxed_q15mulr_s()`
+	- ~~`.i16x8.relaxed_q15mulr_s()`~~; ⛔️ not yet supported
 	- `.{i8x16,i16x8,i32x4}.min{s,u}()`
 	- `.{i8x16,i16x8,i32x4}.max{s,u}()`
 	>
-	- `.{i8x16,i16x8,i32x4,i64x2}.relaxed_laneselect()`
+	- ~~`.{i8x16,i16x8,i32x4,i64x2}.relaxed_laneselect()`~~; ⛔️ not yet supported
 	- `.{i8x16,i16x8,i32x4,i64x2}.all_true()`
 	- `.{i8x16,i16x8,i32x4,i64x2}.eq()`
 	- `.{i8x16,i16x8,i32x4,i64x2}.ne()`
@@ -285,23 +287,25 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.{i8x16,i16x8,i32x4,i64x2}.shl()`
 	- `.{i8x16,i16x8,i32x4,i64x2}.shr{s,u}()`
 	- `.{i8x16,i16x8,i32x4,i64x2}.bitmask()`
-	- `.i8x16.swizzle()`, `.i8x16.relaxed_swizzle()`
+	- `.i8x16.swizzle()`
+	- ~~`.i8x16.relaxed_swizzle()`~~; ⛔️ not yet supported
 	- `.i8x16.shuffle()`
 	>
 	- `.i16x8.extadd_pairwise_i8x16_{s,u}()`, `.i32x4.extadd_pairwise_i16x8_{s,u}()`
 	- `.i16x8.extmul_{low,high}_i8x16_{s,u}()`, `.i32x4.extmul_{low,high}_i16x8_{s,u}()`, `.i64x2.extmul_{low,high}_i32x4_{s,u}()`
 	- `.i32x4.dot_i16x8_s()`
-	- `.i16x8.relaxed_dot_i8x16_i7x16_s()`
-	- `.i32x4.relaxed_dot_i8x16_i7x16_add_s()`
+	- ~~`.i16x8.relaxed_dot_i8x16_i7x16_s()`~~; ⛔️ not yet supported
+	- ~~`.i32x4.relaxed_dot_i8x16_i7x16_add_s()`~~; ⛔️ not yet supported
 	- `.i8x16.narrow_i16x8_{s,u}()`, `.i16x8.narrow_i32x4_{s,u}()`
 	>
 	- `.i16x8.extend_{low,high}_i8x16_{s,u}()`, `.i32x4.extend_{low,high}_i16x8_{s,u}()`, `.i64x2.extend_{low,high}_i32x4_{s,u}()`
 	- `.i32x4.trunc_sat_f32x4_{s,u}()`, `.i32x4.trunc_sat_f64x2_{s,u}_zero()`
-	- `.i32x4.relaxed_trunc_f32x4_{s,u}()`, `.i32x4.relaxed_trunc_f64x2_{s,u}_zero()`
+	- ~~`.i32x4.relaxed_trunc_f32x4_{s,u}()`, `.i32x4.relaxed_trunc_f64x2_{s,u}_zero()`~~; ⛔️ not yet supported
 - SIMD floats
 	- `.{f32x4,f64x2}.abs()`, `.{f32x4,f64x2}.neg()`, `.{f32x4,f64x2}.sqrt()`, `.{f32x4,f64x2}.ceil()`, `.{f32x4,f64x2}.floor()`, `.{f32x4,f64x2}.trunc()`, `.{f32x4,f64x2}.nearest()`
-	- `.{f32x4,f64x2}.add()`, `.{f32x4,f64x2}.sub()`, `.{f32x4,f64x2}.mul()`, `.{f32x4,f64x2}.div()`, `.{f32x4,f64x2}.min()`, `.{f32x4,f64x2}.max()`, `.{f32x4,f64x2}.pmin()`, `.{f32x4,f64x2}.pmax()`, `.{f32x4,f64x2}.relaxed_min()`, `.{f32x4,f64x2}.relaxed_max()`
-	- `.{f32x4,f64x2}.relaxed_madd()`, `.{f32x4,f64x2}.relaxed_nmadd()`
+	- `.{f32x4,f64x2}.add()`, `.{f32x4,f64x2}.sub()`, `.{f32x4,f64x2}.mul()`, `.{f32x4,f64x2}.div()`, `.{f32x4,f64x2}.min()`, `.{f32x4,f64x2}.max()`, `.{f32x4,f64x2}.pmin()`, `.{f32x4,f64x2}.pmax()`
+	- ~~`.{f32x4,f64x2}.relaxed_min()`, `.{f32x4,f64x2}.relaxed_max()`~~; ⛔️ not yet supported
+	- ~~`.{f32x4,f64x2}.relaxed_madd()`, `.{f32x4,f64x2}.relaxed_nmadd()`~~; ⛔️ not yet supported
 	- `.{f32x4,f64x2}.eq()`, `.{f32x4,f64x2}.ne()`, `.{f32x4,f64x2}.lt()`, `.{f32x4,f64x2}.gt()`, `.{f32x4,f64x2}.le()`, `.{f32x4,f64x2}.ge()`
 	- `.f32x4.convert_i32x4_{s,u}()`, `.f64x2.convert_low_i32x4_{s,u}()`
 	- `.f32x4.demote_f64x2_zero()`, `.f64x2.promote_low_f32x4()`
