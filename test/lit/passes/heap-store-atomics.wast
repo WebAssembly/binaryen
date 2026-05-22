@@ -7,7 +7,7 @@
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $described (shared (descriptor $desc) (struct (field (mut i32)) (field (mut i32)))))
+    ;; CHECK-NEXT:  (type $described (shared (descriptor $desc) (struct (field (mut i32)))))
     (type $described (shared (descriptor $desc) (struct (field (mut i32)))))
     ;; CHECK:       (type $desc (shared (describes $described) (struct)))
     (type $desc (shared (describes $described) (struct)))
@@ -170,14 +170,13 @@
     )
   )
   ;; Test 5: GC read in struct.set value CAN move before release store in descriptor
-  ;; CHECK:      (func $desc_allowed (type $5) (param $other (ref $described)) (param $d (ref (exact $desc)))
+  ;; CHECK:      (func $desc_allowed (type $5) (param $other (ref $struct)) (param $d (ref (exact $desc)))
   ;; CHECK-NEXT:  (local $ref (ref $described))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_desc $described
-  ;; CHECK-NEXT:    (struct.get $described 1
+  ;; CHECK-NEXT:    (struct.get $struct 1
   ;; CHECK-NEXT:     (local.get $other)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (block (result (ref (exact $desc)))
   ;; CHECK-NEXT:     (i32.atomic.store acqrel
   ;; CHECK-NEXT:      (i32.const 0)
@@ -189,7 +188,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $desc_allowed (param $other (ref $strct)) (param $d (ref (exact $desc)))
+  (func $desc_allowed (param $other (ref $struct)) (param $d (ref (exact $desc)))
     (local $ref (ref $described))
     (local.set $ref
       (struct.new_desc $described
@@ -207,11 +206,10 @@
   )
 
   ;; Test 6: GC read in struct.set value CANNOT move before acquire load in descriptor
-  ;; CHECK:      (func $desc_disallowed (type $5) (param $other (ref $described)) (param $d (ref (exact $desc)))
+  ;; CHECK:      (func $desc_disallowed (type $5) (param $other (ref $struct)) (param $d (ref (exact $desc)))
   ;; CHECK-NEXT:  (local $ref (ref $described))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_desc $described
-  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (block (result (ref (exact $desc)))
   ;; CHECK-NEXT:     (drop
@@ -225,7 +223,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $described 0
   ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (struct.get $described 1
+  ;; CHECK-NEXT:   (struct.get $struct 1
   ;; CHECK-NEXT:    (local.get $other)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -234,7 +232,6 @@
     (local $ref (ref $described))
     (local.set $ref
       (struct.new_desc $described
-        (i32.const 0)
         (i32.const 0)
         (block (result (ref (exact $desc)))
           (drop (i32.atomic.load acqrel (i32.const 0)))
@@ -256,7 +253,6 @@
   ;; CHECK-NEXT:    (i32.load
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (ref.null (shared none))
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -266,7 +262,6 @@
     (local $ref (ref $described))
     (local.set $ref
       (struct.new_desc $described
-        (i32.const 0)
         (i32.const 0)
         (ref.null $desc)
       )
@@ -282,7 +277,6 @@
   ;; CHECK-NEXT:  (local $ref (ref $described))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_desc $described
-  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (ref.null (shared none))
   ;; CHECK-NEXT:   )
@@ -302,7 +296,6 @@
     (local $ref (ref $described))
     (local.set $ref
       (struct.new_desc $described
-        (i32.const 0)
         (i32.const 0)
         (ref.null $desc)
       )
