@@ -22,23 +22,13 @@
 #ifndef wasm_wasm2c_h
 #define wasm_wasm2c_h
 
-#include <algorithm>
-#include <cmath>
-#include <iomanip>
 #include <iostream>
-#include <map>
-#include <set>
-#include <sstream>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
-#include "ir/module-utils.h"
 #include "parser/wat-parser.h"
 #include "parsing.h"
 #include "pass.h"
-#include "picosha2.h"
-#include "support/file.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -184,10 +174,8 @@ public:
       << endl;
     h << "wasm_rt_func_type_t wasm2c_" << module_name
       << "_get_func_type(uint32_t param_count, uint32_t result_count, ...);"
-      << endl
       << endl;
     // Function declarations in header
-    h << "/* Exported functions */" << endl;
     for (auto& func : wasm->functions) {
       bool is_exported = false;
       std::string exported_name;
@@ -230,7 +218,6 @@ public:
     c << s_source_declarations << endl;
 
     // Forward declarations for all functions in source
-    c << "/* Forward declarations */" << endl;
     for (auto& func : wasm->functions) {
       bool is_exported = false;
       std::string exported_name;
@@ -261,7 +248,6 @@ public:
       }
       c << ");" << endl;
     }
-    c << endl;
 
     // Instantiate hooks
     c << "void wasm2c_" << module_name << "_instantiate(w2c_" << module_name
@@ -319,9 +305,6 @@ public:
         c << ", " << getCType(type) << " var" << param_idx++;
       }
       c << ") {" << endl;
-      c.indent();
-      processFunction(func.get(), c);
-      c.outdent();
       c << "}" << endl << endl;
     }
   }
@@ -329,88 +312,6 @@ public:
 private:
   Flags flags;
   Module* module = nullptr;
-
-  std::string translateLiteral(const Literal& lit) {
-    std::stringstream os;
-    switch (lit.type.getBasic()) {
-      case Type::i32:
-        os << lit.geti32() << "u";
-        break;
-      case Type::i64:
-        os << lit.geti64() << "ULL";
-        break;
-      case Type::f32:
-        os << "float_from_u32(0x" << std::hex << lit.reinterpreti32() << "u)"
-           << std::dec;
-        break;
-      case Type::f64:
-        os << "double_from_u64(0x" << std::hex << lit.reinterpreti64() << "ULL)"
-           << std::dec;
-        break;
-      default:
-        Fatal() << "Unsupported literal type: " << lit.type;
-    }
-    return os.str();
-  }
-
-  void processFunction(Function* func, CPrinter& c) {
-    processStatement(func->body, func, c);
-  }
-
-  void processStatement(Expression* expr, Function* func, CPrinter& c) {
-    if (!expr)
-      return;
-
-    if (expr->is<Nop>()) {
-      return;
-    }
-
-    if (auto* block = expr->dynCast<Block>()) {
-      for (auto* child : block->list) {
-        processStatement(child, func, c);
-      }
-      return;
-    }
-
-    std::string val = processExpression(expr, func, c);
-    if (!val.empty()) {
-      c << val << ";" << endl;
-    }
-  }
-
-  std::string processExpression(Expression* curr, Function* func, CPrinter& c) {
-    if (!curr)
-      return "";
-
-    if (curr->is<Unreachable>()) {
-      return "TRAP(UNREACHABLE)";
-    }
-
-    if (auto* const_node = curr->dynCast<Const>()) {
-      return translateLiteral(const_node->value);
-    }
-
-    if (auto* call = curr->dynCast<Call>()) {
-      std::string module_name =
-        flags.moduleName.empty() ? "test" : mangleName(flags.moduleName);
-      std::string expr = "w2c_" + module_name + "_" +
-                         mangleName(call->target.toString()) + "(instance";
-      for (auto* operand : call->operands) {
-        expr += ", " + processExpression(operand, func, c);
-      }
-      expr += ")";
-      return expr;
-    }
-
-    // Dynamic warning & dummy fallback to compile spec tests containing
-    // unsupported nodes
-    std::stringstream ss;
-    ss << *curr;
-    std::cerr
-      << "Warning: Unsupported expression node type (generating dummy C): "
-      << ss.str() << std::endl;
-    return "0";
-  }
 };
 
 static void optimizeWasm(Module& wasm, PassOptions options) {
@@ -457,9 +358,6 @@ public:
       output_c_path.empty() ? "spec" : strip_extension(output_c_path);
     std::string base_basename = get_basename(base_path);
 
-    std::vector<std::string> checks;
-    std::vector<std::string> prefixes;
-
     // Loop sequentially through WASTScript AST commands
     for (size_t i = 0; i < script.size(); i++) {
       auto& entry = script[i];
@@ -476,12 +374,6 @@ public:
         auto wasm = *w;
         size_t current_idx = module_counter++;
         std::string prefix = "spec_" + std::to_string(current_idx);
-
-        name_to_prefix[prefix] = prefix;
-        if (wasm->name.is()) {
-          name_to_prefix[Wasm2CBuilder::mangleName(wasm->name.toString())] =
-            prefix;
-        }
 
         // Generate separate files for this module
         std::string mod_h_filename =
@@ -508,189 +400,15 @@ public:
         c << "#include \"" << mod_h_filename << "\"" << endl;
         c << s_spec_top << endl << endl;
 
-        // Cache exported function return types and parameter types
-        for (auto& exp : wasm->exports) {
-          if (exp->kind == ExternalKind::Function) {
-            Function* func = wasm->getFunction(*exp->getInternalName());
-            std::string c_func_name =
-              "w2c_" + prefix + "_" +
-              Wasm2CBuilder::mangleName(exp->name.toString());
-            func_returns[c_func_name] = func->getResults();
-            func_params[c_func_name] = builder.getBasicTypes(func->getParams());
-          }
-        }
-
-        last_module_prefix = prefix;
-        prefixes.push_back(prefix);
-        wasm_modules_cache[prefix] = wasm;
-
-      } else if (auto* reg = std::get_if<WATParser::Register>(&cmd)) {
-        std::string mangled_instance_name =
-          reg->instanceName.has_value()
-            ? Wasm2CBuilder::mangleName(reg->instanceName->toString())
-            : "";
-
-        std::string target_prefix;
-        if (reg->instanceName.has_value()) {
-          if (!name_to_prefix.count(mangled_instance_name)) {
-            Fatal() << "Unregistered instance name mapping for alias register: "
-                    << mangled_instance_name;
-          }
-          target_prefix = name_to_prefix[mangled_instance_name];
-        } else {
-          target_prefix = last_module_prefix;
-        }
-
-        std::string alias = Wasm2CBuilder::mangleName(reg->name.toString());
-        name_to_prefix[alias] = target_prefix;
-
-        c << "#define w2c_" << alias << " w2c_" << target_prefix << endl;
-        c << "#define wasm2c_" << alias << "_instantiate wasm2c_"
-          << target_prefix << "_instantiate" << endl;
-        c << "#define wasm2c_" << alias << "_free wasm2c_" << target_prefix
-          << "_free" << endl;
-
-        // Redirect all exported symbols from the alias to the target provider
-        // prefix
-        if (wasm_modules_cache.count(target_prefix)) {
-          auto wasm = wasm_modules_cache[target_prefix];
-          for (auto& exp : wasm->exports) {
-            std::string exp_name =
-              Wasm2CBuilder::mangleName(exp->name.toString());
-            c << "#define w2c_" << alias << "_" << exp_name << " w2c_"
-              << target_prefix << "_" << exp_name << endl;
-          }
-        }
-        c << endl;
-
-      } else if (auto* assn = std::get_if<WATParser::Assertion>(&cmd)) {
-        if (auto* ret = std::get_if<WATParser::AssertReturn>(assn)) {
-          if (auto* inv = std::get_if<WATParser::InvokeAction>(&ret->action)) {
-            std::string expr_call = translateInvoke(*inv);
-            std::string field_name =
-              "w2c_" + getInvokePrefix(*inv) + "_" +
-              Wasm2CBuilder::mangleName(inv->name.toString());
-
-            std::string assert_macro;
-            auto& exp = ret->expected[0][0]; // Get first alternative
-            if (auto* lit = std::get_if<Literal>(&exp)) {
-              Type ret_type = func_returns[field_name];
-              if (ret_type == Type::i32) {
-                assert_macro = "ASSERT_RETURN_I32";
-              } else if (ret_type == Type::i64) {
-                assert_macro = "ASSERT_RETURN_I64";
-              } else if (ret_type == Type::f32) {
-                assert_macro = "ASSERT_RETURN_F32";
-              } else if (ret_type == Type::f64) {
-                assert_macro = "ASSERT_RETURN_F64";
-              } else {
-                Fatal() << "Unsupported return type: " << ret_type.toString();
-              }
-              checks.push_back(assert_macro + "(" + expr_call + ", " +
-                               translateLiteral(*lit) + ");");
-            } else if (auto* nan_val =
-                         std::get_if<WATParser::NaNResult>(&exp)) {
-              if (nan_val->type == Type::f32) {
-                switch (nan_val->kind) {
-                  case WATParser::NaNKind::Canonical:
-                    assert_macro = "ASSERT_RETURN_CANONICAL_NAN_F32";
-                    break;
-                  case WATParser::NaNKind::Arithmetic:
-                    assert_macro = "ASSERT_RETURN_ARITHMETIC_NAN_F32";
-                    break;
-                  default:
-                    Fatal() << "Unsupported NaN kind: "
-                            << static_cast<int>(nan_val->kind);
-                }
-              } else if (nan_val->type == Type::f64) {
-                switch (nan_val->kind) {
-                  case WATParser::NaNKind::Canonical:
-                    assert_macro = "ASSERT_RETURN_CANONICAL_NAN_F64";
-                    break;
-                  case WATParser::NaNKind::Arithmetic:
-                    assert_macro = "ASSERT_RETURN_ARITHMETIC_NAN_F64";
-                    break;
-                  default:
-                    Fatal() << "Unsupported NaN kind: "
-                            << static_cast<int>(nan_val->kind);
-                }
-              }
-              checks.push_back(assert_macro + "(" + expr_call + ");");
-            }
-          }
-        } else if (auto* act = std::get_if<WATParser::AssertAction>(assn)) {
-          if (act->type == WATParser::ActionAssertionType::Trap) {
-            if (auto* inv =
-                  std::get_if<WATParser::InvokeAction>(&act->action)) {
-              std::string expr_call = translateInvoke(*inv);
-              checks.push_back("ASSERT_TRAP(" + expr_call + ");");
-            }
-          }
-        }
+      } else if (std::get_if<WATParser::Register>(&cmd)) {
+        Fatal() << "register is not yet supported";
+      } else if (std::get_if<WATParser::Assertion>(&cmd)) {
+        Fatal() << "assertions are not yet supported";
       }
     }
 
     // Write main execution entry point
     c << "void run_spec_tests() {" << endl;
-    c.indent();
-
-    // Declare all module instances
-    for (auto& prefix : prefixes) {
-      c << "w2c_" << prefix << " inst_" << prefix << ";" << endl;
-    }
-    c << endl;
-
-    // Instantiate all module instances matching their imports metadata
-    for (auto& prefix : prefixes) {
-      c << "wasm2c_" << prefix << "_instantiate(&inst_" << prefix;
-
-      // Gather all unique imported modules namespaces
-      std::set<std::string> imported_namespaces;
-      for (auto& mem : wasm_modules_cache[prefix]->memories) {
-        if (mem->imported())
-          imported_namespaces.insert(
-            Wasm2CBuilder::mangleName(mem->module.toString()));
-      }
-      for (auto& table : wasm_modules_cache[prefix]->tables) {
-        if (table->imported())
-          imported_namespaces.insert(
-            Wasm2CBuilder::mangleName(table->module.toString()));
-      }
-      for (auto& global : wasm_modules_cache[prefix]->globals) {
-        if (global->imported())
-          imported_namespaces.insert(
-            Wasm2CBuilder::mangleName(global->module.toString()));
-      }
-      ModuleUtils::iterImportedFunctions(
-        *wasm_modules_cache[prefix], [&](Function* func) {
-          imported_namespaces.insert(
-            Wasm2CBuilder::mangleName(func->module.toString()));
-        });
-
-      for (auto& ns : imported_namespaces) {
-        if (ns == "spectest") {
-          c << ", w2c_spectest_instance";
-        } else {
-          std::string prov_prefix = name_to_prefix[ns];
-          c << ", (struct w2c_" << ns << "*)&inst_" << prov_prefix;
-        }
-      }
-      c << ");" << endl;
-    }
-    c << endl;
-
-    // Run all checks
-    for (auto& chk : checks) {
-      c << chk << endl;
-    }
-    c << endl;
-
-    // Free contexts in REVERSE order of instantiation
-    for (auto it = prefixes.rbegin(); it != prefixes.rend(); ++it) {
-      c << "wasm2c_" << *it << "_free(&inst_" << *it << ");" << endl;
-    }
-
-    c.outdent();
     c << "}" << endl;
   }
 
@@ -699,85 +417,7 @@ private:
   Wasm2CBuilder::Flags flags;
   PassOptions options;
 
-  std::map<std::string, std::string> name_to_prefix;
-  std::map<std::string, std::vector<Type>> func_params;
-  std::map<std::string, Type> func_returns;
-  std::map<std::string, std::shared_ptr<Module>> wasm_modules_cache;
-  std::string last_module_prefix = "";
   size_t module_counter = 0;
-
-  std::string getInvokePrefix(const WATParser::InvokeAction& invoke) {
-    if (invoke.base.has_value()) {
-      std::string base_mangled =
-        Wasm2CBuilder::mangleName(invoke.base->toString());
-      if (name_to_prefix.count(base_mangled)) {
-        return name_to_prefix[base_mangled];
-      }
-    }
-    return last_module_prefix;
-  }
-
-  std::string translateInvoke(const WATParser::InvokeAction& invoke) {
-    std::string prefix = getInvokePrefix(invoke);
-    std::string mangled_name =
-      Wasm2CBuilder::mangleName(invoke.name.toString());
-    std::string field_name = "w2c_" + prefix + "_" + mangled_name;
-
-    std::string expr = field_name + "(&inst_" + prefix;
-    for (auto& arg : invoke.args) {
-      expr += ", " + translateLiteral(arg);
-    }
-    expr += ")";
-    return expr;
-  }
-
-  std::string translateLiteral(const Literal& lit) {
-    std::stringstream os;
-    switch (lit.type.getBasic()) {
-      case Type::i32:
-        os << lit.geti32() << "u";
-        break;
-      case Type::i64:
-        os << lit.geti64() << "ULL";
-        break;
-      case Type::f32:
-        os << "float_from_u32(0x" << std::hex << lit.reinterpreti32() << "u)"
-           << std::dec;
-        break;
-      case Type::f64:
-        os << "double_from_u64(0x" << std::hex << lit.reinterpreti64() << "ULL)"
-           << std::dec;
-        break;
-      default:
-        Fatal() << "Unsupported literal type: " << lit.type;
-    }
-    return os.str();
-  }
-
-  std::string getTrapEnum(const std::string& msg) {
-    if (msg.find("out of bounds") != std::string::npos ||
-        msg.find("bounds") != std::string::npos)
-      return "WASM_RT_TRAP_OOB";
-    if (msg.find("overflow") != std::string::npos)
-      return "WASM_RT_TRAP_INT_OVERFLOW";
-    if (msg.find("divide") != std::string::npos ||
-        msg.find("zero") != std::string::npos)
-      return "WASM_RT_TRAP_DIV_BY_ZERO";
-    if (msg.find("invalid conversion") != std::string::npos)
-      return "WASM_RT_TRAP_INVALID_CONVERSION";
-    if (msg.find("unreachable") != std::string::npos)
-      return "WASM_RT_TRAP_UNREACHABLE";
-    if (msg.find("indirect call") != std::string::npos ||
-        msg.find("undefined") != std::string::npos ||
-        msg.find("uninitialized") != std::string::npos ||
-        msg.find("signature mismatch") != std::string::npos) {
-      return "WASM_RT_TRAP_CALL_INDIRECT";
-    }
-    if (msg.find("exhaustion") != std::string::npos ||
-        msg.find("exhausted") != std::string::npos)
-      return "WASM_RT_TRAP_EXHAUSTION";
-    return "WASM_RT_TRAP_NONE";
-  }
 };
 
 } // namespace wasm
