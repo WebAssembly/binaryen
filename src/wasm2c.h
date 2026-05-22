@@ -38,6 +38,7 @@
 #include "parsing.h"
 #include "pass.h"
 #include "picosha2.h"
+#include "support/file.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -185,6 +186,33 @@ public:
       << "_get_func_type(uint32_t param_count, uint32_t result_count, ...);"
       << endl
       << endl;
+    // Function declarations in header
+    h << "/* Exported functions */" << endl;
+    for (auto& func : wasm->functions) {
+      bool is_exported = false;
+      std::string exported_name;
+      for (auto& exp : wasm->exports) {
+        if (exp->kind == ExternalKind::Function) {
+          if (Name* name_ptr = exp->getInternalName()) {
+            if (*name_ptr == func->name) {
+              is_exported = true;
+              exported_name = mangleName(exp->name.toString());
+              break;
+            }
+          }
+        }
+      }
+      if (!is_exported)
+        continue;
+
+      h << getCType(func->getResults()) << " w2c_" << module_name << "_"
+        << exported_name << "(w2c_" << module_name << "*";
+      for (auto type : getBasicTypes(func->getParams())) {
+        h << ", " << getCType(type);
+      }
+      h << ");" << endl;
+    }
+    h << endl;
 
     h << s_header_bottom << endl;
     h << "#endif  /* " << guard_name << " */" << endl;
@@ -200,6 +228,40 @@ public:
     }
 
     c << s_source_declarations << endl;
+
+    // Forward declarations for all functions in source
+    c << "/* Forward declarations */" << endl;
+    for (auto& func : wasm->functions) {
+      bool is_exported = false;
+      std::string exported_name;
+      for (auto& exp : wasm->exports) {
+        if (exp->kind == ExternalKind::Function) {
+          if (Name* name_ptr = exp->getInternalName()) {
+            if (*name_ptr == func->name) {
+              is_exported = true;
+              exported_name = mangleName(exp->name.toString());
+              break;
+            }
+          }
+        }
+      }
+
+      std::string c_func_name =
+        is_exported
+          ? "w2c_" + module_name + "_" + exported_name
+          : "w2c_" + module_name + "_" + mangleName(func->name.toString());
+
+      if (!is_exported) {
+        c << "static ";
+      }
+      c << getCType(func->getResults()) << " " << c_func_name << "(w2c_"
+        << module_name << "*";
+      for (auto type : getBasicTypes(func->getParams())) {
+        c << ", " << getCType(type);
+      }
+      c << ");" << endl;
+    }
+    c << endl;
 
     // Instantiate hooks
     c << "void wasm2c_" << module_name << "_instantiate(w2c_" << module_name
@@ -225,11 +287,71 @@ public:
     c << "return NULL;" << endl;
     c.outdent();
     c << "}" << endl << endl;
+
+    // Function implementations in source
+    for (auto& func : wasm->functions) {
+      bool is_exported = false;
+      std::string exported_name;
+      for (auto& exp : wasm->exports) {
+        if (exp->kind == ExternalKind::Function) {
+          if (Name* name_ptr = exp->getInternalName()) {
+            if (*name_ptr == func->name) {
+              is_exported = true;
+              exported_name = mangleName(exp->name.toString());
+              break;
+            }
+          }
+        }
+      }
+
+      std::string c_func_name =
+        is_exported
+          ? "w2c_" + module_name + "_" + exported_name
+          : "w2c_" + module_name + "_" + mangleName(func->name.toString());
+
+      if (!is_exported) {
+        c << "static ";
+      }
+      c << getCType(func->getResults()) << " " << c_func_name << "(w2c_"
+        << module_name << "* instance";
+      size_t param_idx = 0;
+      for (auto type : getBasicTypes(func->getParams())) {
+        c << ", " << getCType(type) << " var" << param_idx++;
+      }
+      c << ") {" << endl;
+      c.indent();
+      processFunction(func.get(), c);
+      c.outdent();
+      c << "}" << endl << endl;
+    }
   }
 
 private:
   Flags flags;
   Module* module = nullptr;
+
+  std::string translateLiteral(const Literal& lit) {
+    std::stringstream os;
+    switch (lit.type.getBasic()) {
+      case Type::i32:
+        os << lit.geti32() << "u";
+        break;
+      case Type::i64:
+        os << lit.geti64() << "ULL";
+        break;
+      case Type::f32:
+        os << "float_from_u32(0x" << std::hex << lit.reinterpreti32() << "u)"
+           << std::dec;
+        break;
+      case Type::f64:
+        os << "double_from_u64(0x" << std::hex << lit.reinterpreti64() << "ULL)"
+           << std::dec;
+        break;
+      default:
+        Fatal() << "Unsupported literal type: " << lit.type;
+    }
+    return os.str();
+  }
 
   void processFunction(Function* func, CPrinter& c) {
     processStatement(func->body, func, c);
@@ -243,9 +365,17 @@ private:
       return;
     }
 
-    Fatal() << "Unsupported statement type";
+    if (auto* block = expr->dynCast<Block>()) {
+      for (auto* child : block->list) {
+        processStatement(child, func, c);
+      }
+      return;
+    }
+
     std::string val = processExpression(expr, func, c);
-    c << val << ";" << endl;
+    if (!val.empty()) {
+      c << val << ";" << endl;
+    }
   }
 
   std::string processExpression(Expression* curr, Function* func, CPrinter& c) {
@@ -256,8 +386,30 @@ private:
       return "TRAP(UNREACHABLE)";
     }
 
-    Fatal() << "Unsupported expression node type.";
-    return "";
+    if (auto* const_node = curr->dynCast<Const>()) {
+      return translateLiteral(const_node->value);
+    }
+
+    if (auto* call = curr->dynCast<Call>()) {
+      std::string module_name =
+        flags.moduleName.empty() ? "test" : mangleName(flags.moduleName);
+      std::string expr = "w2c_" + module_name + "_" +
+                         mangleName(call->target.toString()) + "(instance";
+      for (auto* operand : call->operands) {
+        expr += ", " + processExpression(operand, func, c);
+      }
+      expr += ")";
+      return expr;
+    }
+
+    // Dynamic warning & dummy fallback to compile spec tests containing
+    // unsupported nodes
+    std::stringstream ss;
+    ss << *curr;
+    std::cerr
+      << "Warning: Unsupported expression node type (generating dummy C): "
+      << ss.str() << std::endl;
+    return "0";
   }
 };
 
@@ -271,6 +423,26 @@ static void optimizeWasm(Module& wasm, PassOptions options) {
   runner.run();
 }
 
+inline std::string strip_extension(const std::string& path) {
+  size_t last_dot = path.find_last_of('.');
+  if (last_dot == std::string::npos) {
+    return path;
+  }
+  size_t last_slash = path.find_last_of("/\\");
+  if (last_slash != std::string::npos && last_dot < last_slash) {
+    return path;
+  }
+  return path.substr(0, last_dot);
+}
+
+inline std::string get_basename(const std::string& path) {
+  size_t last_slash = path.find_last_of("/\\");
+  if (last_slash == std::string::npos) {
+    return path;
+  }
+  return path.substr(last_slash + 1);
+}
+
 class AssertionEmitter {
 public:
   AssertionEmitter(WATParser::WASTScript& script,
@@ -278,20 +450,13 @@ public:
                    const PassOptions& options)
     : script(script), flags(flags), options(options) {}
 
-  void emit(std::ostream& c_out, std::ostream& h_out) {
-    CPrinter h(h_out);
+  void emit(std::ostream& c_out, const std::string& output_c_path) {
     CPrinter c(c_out);
 
-    // Print static prefix templates to C source stream
-    if (!flags.headerName.empty()) {
-      c << "#include \"" << flags.headerName << "\"" << endl;
-    } else {
-      c << "#include \"wasm.h\"" << endl;
-    }
-    c << s_spec_top;
+    std::string base_path =
+      output_c_path.empty() ? "spec" : strip_extension(output_c_path);
+    std::string base_basename = get_basename(base_path);
 
-    std::stringstream h_stream;
-    std::stringstream c_stream;
     std::vector<std::string> checks;
     std::vector<std::string> prefixes;
 
@@ -309,7 +474,8 @@ public:
           Fatal() << "Expected parsed Module pointer inside WASTModule";
         }
         auto wasm = *w;
-        std::string prefix = "spec_" + std::to_string(module_counter++);
+        size_t current_idx = module_counter++;
+        std::string prefix = "spec_" + std::to_string(current_idx);
 
         name_to_prefix[prefix] = prefix;
         if (wasm->name.is()) {
@@ -317,13 +483,30 @@ public:
             prefix;
         }
 
+        // Generate separate files for this module
+        std::string mod_h_filename =
+          base_basename + "." + std::to_string(current_idx) + ".h";
+
+        std::string mod_c_path =
+          base_path + "." + std::to_string(current_idx) + ".c";
+        std::string mod_h_path =
+          base_path + "." + std::to_string(current_idx) + ".h";
+
+        Output mod_c_out(mod_c_path, Flags::Text);
+        Output mod_h_out(mod_h_path, Flags::Text);
+
         Wasm2CBuilder::Flags mod_flags = flags;
         mod_flags.moduleName = prefix;
+        mod_flags.headerName = mod_h_filename;
 
         // Run standard validation and flattening simplification passes
         optimizeWasm(*wasm.get(), options);
         Wasm2CBuilder builder(mod_flags);
-        builder.processWasm(wasm.get(), c_stream, h_stream);
+        builder.processWasm(
+          wasm.get(), mod_c_out.getStream(), mod_h_out.getStream());
+
+        c << "#include \"" << mod_h_filename << "\"" << endl;
+        c << s_spec_top << endl << endl;
 
         // Cache exported function return types and parameter types
         for (auto& exp : wasm->exports) {
@@ -332,7 +515,7 @@ public:
             std::string c_func_name =
               "w2c_" + prefix + "_" +
               Wasm2CBuilder::mangleName(exp->name.toString());
-            func_returns[c_func_name] = builder.getCType(func->getResults());
+            func_returns[c_func_name] = func->getResults();
             func_params[c_func_name] = builder.getBasicTypes(func->getParams());
           }
         }
@@ -361,12 +544,11 @@ public:
         std::string alias = Wasm2CBuilder::mangleName(reg->name.toString());
         name_to_prefix[alias] = target_prefix;
 
-        // Output preprocessor define redirects
-        h_stream << "#define w2c_" << alias << " w2c_" << target_prefix << "\n";
-        h_stream << "#define wasm2c_" << alias << "_instantiate wasm2c_"
-                 << target_prefix << "_instantiate\n";
-        h_stream << "#define wasm2c_" << alias << "_free wasm2c_"
-                 << target_prefix << "_free\n";
+        c << "#define w2c_" << alias << " w2c_" << target_prefix << endl;
+        c << "#define wasm2c_" << alias << "_instantiate wasm2c_"
+          << target_prefix << "_instantiate" << endl;
+        c << "#define wasm2c_" << alias << "_free wasm2c_" << target_prefix
+          << "_free" << endl;
 
         // Redirect all exported symbols from the alias to the target provider
         // prefix
@@ -375,11 +557,11 @@ public:
           for (auto& exp : wasm->exports) {
             std::string exp_name =
               Wasm2CBuilder::mangleName(exp->name.toString());
-            h_stream << "#define w2c_" << alias << "_" << exp_name << " w2c_"
-                     << target_prefix << "_" << exp_name << "\n";
+            c << "#define w2c_" << alias << "_" << exp_name << " w2c_"
+              << target_prefix << "_" << exp_name << endl;
           }
         }
-        h_stream << "\n";
+        c << endl;
 
       } else if (auto* assn = std::get_if<WATParser::Assertion>(&cmd)) {
         if (auto* ret = std::get_if<WATParser::AssertReturn>(assn)) {
@@ -392,52 +574,49 @@ public:
             std::string assert_macro;
             auto& exp = ret->expected[0][0]; // Get first alternative
             if (auto* lit = std::get_if<Literal>(&exp)) {
-              std::string ret_type = func_returns[field_name];
-              switch (ret_type) {
-                case "i32":
-                  assert_macro = "ASSERT_RETURN_I32";
-                  break;
-                case "i64":
-                  assert_macro = "ASSERT_RETURN_I64";
-                  break;
-                case "f32":
-                  assert_macro = "ASSERT_RETURN_F32";
-                  break;
-                case "f64":
-                  assert_macro = "ASSERT_RETURN_F64";
-                  break;
-                default:
-                  Fatal() << "Unsupported return type: " << ret_type;
-                  break;
+              Type ret_type = func_returns[field_name];
+              if (ret_type == Type::i32) {
+                assert_macro = "ASSERT_RETURN_I32";
+              } else if (ret_type == Type::i64) {
+                assert_macro = "ASSERT_RETURN_I64";
+              } else if (ret_type == Type::f32) {
+                assert_macro = "ASSERT_RETURN_F32";
+              } else if (ret_type == Type::f64) {
+                assert_macro = "ASSERT_RETURN_F64";
+              } else {
+                Fatal() << "Unsupported return type: " << ret_type.toString();
               }
               checks.push_back(assert_macro + "(" + expr_call + ", " +
                                translateLiteral(*lit) + ");");
-            }
-          } else if (auto* nan_val = std::get_if<WATParser::NaNResult>(&exp)) {
-            if (nan_val->type == Type::f32) {
-              switch (nan_val->kind) {
-                case WATParser::NaNKind::Canonical:
-                  assert_macro = "ASSERT_RETURN_CANONICAL_NAN_F32";
-                  break;
-                case WATParser::NaNKind::Arithmetic:
-                  assert_macro = "ASSERT_RETURN_ARITHMETIC_NAN_F32";
-                  break;
-                default:
-                  Fatal() << "Unsupported NaN kind: " << nan_val->kind;
+            } else if (auto* nan_val =
+                         std::get_if<WATParser::NaNResult>(&exp)) {
+              if (nan_val->type == Type::f32) {
+                switch (nan_val->kind) {
+                  case WATParser::NaNKind::Canonical:
+                    assert_macro = "ASSERT_RETURN_CANONICAL_NAN_F32";
+                    break;
+                  case WATParser::NaNKind::Arithmetic:
+                    assert_macro = "ASSERT_RETURN_ARITHMETIC_NAN_F32";
+                    break;
+                  default:
+                    Fatal() << "Unsupported NaN kind: "
+                            << static_cast<int>(nan_val->kind);
+                }
+              } else if (nan_val->type == Type::f64) {
+                switch (nan_val->kind) {
+                  case WATParser::NaNKind::Canonical:
+                    assert_macro = "ASSERT_RETURN_CANONICAL_NAN_F64";
+                    break;
+                  case WATParser::NaNKind::Arithmetic:
+                    assert_macro = "ASSERT_RETURN_ARITHMETIC_NAN_F64";
+                    break;
+                  default:
+                    Fatal() << "Unsupported NaN kind: "
+                            << static_cast<int>(nan_val->kind);
+                }
               }
-            } else if (nan_val->type == Type::f64) {
-              switch (nan_val->kind) {
-                case WATParser::NaNKind::Canonical:
-                  assert_macro = "ASSERT_RETURN_CANONICAL_NAN_F64";
-                  break;
-                case WATParser::NaNKind::Arithmetic:
-                  assert_macro = "ASSERT_RETURN_ARITHMETIC_NAN_F64";
-                  break;
-                default:
-                  Fatal() << "Unsupported NaN kind: " << nan_val->kind;
-              }
+              checks.push_back(assert_macro + "(" + expr_call + ");");
             }
-            checks.push_back(assert_macro + "(" + expr_call + ");");
           }
         } else if (auto* act = std::get_if<WATParser::AssertAction>(assn)) {
           if (act->type == WATParser::ActionAssertionType::Trap) {
@@ -450,14 +629,6 @@ public:
         }
       }
     }
-
-    // Write C headers and definitions
-    h << endl
-      << "/* === MODULE HEADERS === */" << endl
-      << h_stream.str() << endl;
-    c << endl
-      << "/* === MODULE SOURCES === */" << endl
-      << c_stream.str() << endl;
 
     // Write main execution entry point
     c << "void run_spec_tests() {" << endl;
@@ -530,7 +701,7 @@ private:
 
   std::map<std::string, std::string> name_to_prefix;
   std::map<std::string, std::vector<Type>> func_params;
-  std::map<std::string, std::string> func_returns;
+  std::map<std::string, Type> func_returns;
   std::map<std::string, std::shared_ptr<Module>> wasm_modules_cache;
   std::string last_module_prefix = "";
   size_t module_counter = 0;

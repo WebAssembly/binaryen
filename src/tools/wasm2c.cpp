@@ -70,9 +70,6 @@ int main(int argc, const char* argv[]) {
                     });
 
   options.parse(argc, argv);
-  if (options.debug) {
-    flags.debug = true;
-  }
 
   std::optional<WASTScript> script;
   std::shared_ptr<Module> wasm;
@@ -142,10 +139,6 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.debug) {
-    std::cerr << "j-printing..." << std::endl;
-  }
-
   std::string output_c_path = options.extra["output"];
   if (!output_c_path.empty()) {
     // Derive output header file path (.h instead of .c)
@@ -165,12 +158,12 @@ int main(int argc, const char* argv[]) {
     flags.headerName = header_basename;
 
     Output c_out(output_c_path, Flags::Text);
-    Output h_out(output_h_path, Flags::Text);
 
     if (script && options.extra["asserts"] == "1") {
       AssertionEmitter emitter(*script, flags, options.passOptions);
-      emitter.emit(c_out.getStream(), h_out.getStream());
+      emitter.emit(c_out.getStream(), output_c_path);
     } else {
+      Output h_out(output_h_path, Flags::Text);
       optimizeWasm(*wasm, options.passOptions);
       Wasm2CBuilder builder(flags);
       builder.processWasm(wasm.get(), c_out.getStream(), h_out.getStream());
@@ -184,7 +177,7 @@ int main(int argc, const char* argv[]) {
     flags.headerName = "wasm.h"; // Default fallback
     if (script && options.extra["asserts"] == "1") {
       AssertionEmitter emitter(*script, flags, options.passOptions);
-      emitter.emit(c_stream, h_stream);
+      emitter.emit(c_stream, "");
     } else {
       optimizeWasm(*wasm, options.passOptions);
       Wasm2CBuilder builder(flags);
@@ -193,10 +186,6 @@ int main(int argc, const char* argv[]) {
     std::cout << h_stream.str();
     std::cout << "\n/* === SOURCE FILE === */\n";
     std::cout << c_stream.str();
-  }
-
-  if (options.debug) {
-    std::cerr << "done." << std::endl;
   }
 
   flush_and_quick_exit(0);
