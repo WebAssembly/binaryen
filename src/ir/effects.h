@@ -303,10 +303,8 @@ public:
   // (e.g., if we write, we must remain ordered before someone that reads).
   //
   // This assumes the things whose effects we are comparing will both execute,
-  // at least if neither of them transfers control flow away. That is, we assume
-  // that there is no transfer of control flow *between* them: we are comparing
-  // things appear after each other, perhaps with some other code in the middle,
-  // but that code does not transfer control flow. It is not valid to call this
+  // at least if neither of them transfers control flow away. We assume there is
+  // no transfer of control flow *between* them. It is not valid to call this
   // method in other situations, like this:
   //
   //   A
@@ -326,12 +324,15 @@ public:
   //                               ;; control flow transfer
   //   B
   //
-  // That the things being compared both execute only matters in the case of
-  // traps-never-happen: in that mode we can move traps but only if doing so
-  // would not make them start to appear when they did not. In the second
-  // example we can't reorder A and B if B traps, but in the first example we
-  // can reorder them even if B traps (even if A has a global effect like a
-  // global.set, since we assume B does not trap in traps-never-happen).
+  // (Note that if they appear in inside a loop, A and B may overlap or even be
+  // the same expression; this is fine because A still executes before B, even
+  // if also executes during and after B across different loop iterations.) That
+  // A and B both execute only matters in the case of traps-never-happen: in
+  // that mode we can move traps but only if doing so would not make them start
+  // to appear when they did not previously. In the example with the br_if we
+  // can't reorder A and B if B traps, but in the valid examples we can reorder
+  // them even if B traps (even if A has a global effect like a global.set,
+  // since we assume B does not trap in traps-never-happen).
   bool orderedBefore(const EffectAnalyzer& other) const {
     // Cannot reorder control flow and side effects.
     if ((transfersControlFlow() && other.hasSideEffects()) ||
