@@ -696,19 +696,6 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-// Returns the directly "exposed" public heap types in the module. These are the
-// root types appearing on the module boundary: types of exported functions,
-// globals, tables, and tags, as well as imported ones.
-//
-// How it differs from getPublicHeapTypes:
-// - getExposedPublicHeapTypes returns ONLY the explicitly declared boundary
-//   types (roots). It does NOT traverse the type structure recursively to find
-//   transitively reachable types, nor does it filter out basic types.
-// - getPublicHeapTypes returns ALL public heap types in the module. Under
-//   closed-world mode, it transitively expands the exposed boundary types
-//   recursively to include all referenced types and their rec group siblings
-//   (filtering out basic types). Under open-world mode, it runs Unified
-//   Propagation to trace subtype and structural visibility.
 std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
   // Look at the types of imports and exports to get an initial set of public
   // types.
