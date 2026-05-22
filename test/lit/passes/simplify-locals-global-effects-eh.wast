@@ -69,7 +69,7 @@
   ;; CHECK:      (table $t 2 2 funcref)
   (table $t 2 2 funcref)
 
-  ;; CHECK:      (tag $t (type $3))
+  ;; CHECK:      (tag $t (type $4))
   (tag $t)
 
   ;; CHECK:      (func $const (type $const-type) (result f32)
@@ -91,7 +91,7 @@
   )
   (elem declare $throws)
 
-  ;; CHECK:      (func $read-g-with-nop-call-ref (type $4) (param $ref (ref null $const-type)) (result i32)
+  ;; CHECK:      (func $read-g-with-nop-call-ref (type $5) (param $ref (ref null $const-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -112,7 +112,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $read-g-with-nop-call-indirect (type $5) (result i32)
+  ;; CHECK:      (func $read-g-with-nop-call-indirect (type $2) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -132,7 +132,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $read-g-with-effectful-call-ref (type $2) (param $ref (ref $throw-type)) (result i32)
+  ;; CHECK:      (func $read-g-with-effectful-call-ref (type $3) (param $ref (ref $throw-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (global.get $g)
@@ -155,7 +155,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $read-g-with-effectful-call-indirect (type $2) (param $ref (ref $throw-type)) (result i32)
+  ;; CHECK:      (func $read-g-with-effectful-call-indirect (type $3) (param $ref (ref $throw-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (global.get $g)
@@ -177,4 +177,32 @@
 
     (local.get $x)
   )
+
+  ;; CHECK:      (func $read-g-with-unreachable-call-ref (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (global.get $g)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable CallRef we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $read-g-with-unreachable-call-ref (result i32)
+    (local $x i32)
+    (local.set $x (global.get $g))
+
+    ;; This is guaranteed to trap, and the type immediate doesn't matter.
+    ;; TODO: we should be able to optimize this, but something is likely missing
+    ;; in SimplifyGlobals (LinearExecutionWalker handles this case correctly).
+    (drop (call_ref $throw-type (unreachable)))
+
+    (local.get $x)
+  )
+
 )

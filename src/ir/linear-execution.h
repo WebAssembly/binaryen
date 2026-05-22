@@ -80,8 +80,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
-    auto handleCall = [&](bool isReturn, const EffectAnalyzer* effects) {
-      bool refutesThrowEffect = effects && !effects->throws_;
+    auto handleCall = [&](bool isReturn, bool refutesThrowEffect) {
       bool mayThrow = !self->getModule() ||
                       self->getModule()->features.hasExceptionHandling();
       mayThrow = mayThrow && !refutesThrowEffect;
@@ -161,54 +160,54 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::CallId: {
         auto* call = curr->cast<Call>();
 
-        const EffectAnalyzer* effects = nullptr;
+        bool refutesThrowEffect = false;
         if (self->getModule()) {
           auto* func = self->getModule()->getFunctionOrNull(call->target);
           // TODO: `func` might not exist here because of #8753. Fix this
           // and remove the null check.
-          if (func) {
-            effects = func->effects.get();
+          if (func && func->effects) {
+            refutesThrowEffect = !func->effects->throws_;
           }
         }
 
-        handleCall(call->isReturn, effects);
+        handleCall(call->isReturn, refutesThrowEffect);
         break;
       }
       case Expression::Id::CallRefId: {
         auto* callRef = curr->cast<CallRef>();
 
-        const EffectAnalyzer* effects = [&]() -> const EffectAnalyzer* {
+        bool refutesThrowEffect = [&]() {
           if (!self->getModule()) {
-            return nullptr;
+            return false;
           }
           if (!callRef->target->type.isRef()) {
-            return nullptr;
+            // This is an unreachable, so no throws effect.
+            return true;
           }
 
-          auto* effectsPtr =
-            find_or_null(self->getModule()->indirectCallEffects,
-                         callRef->target->type.getHeapType());
-          if (!effectsPtr) {
-            return nullptr;
+          auto* effects = find_or_null(self->getModule()->indirectCallEffects,
+                                       callRef->target->type.getHeapType());
+          if (!effects) {
+            return false;
           }
-          return effectsPtr->get();
+          return !(*effects)->throws_;
         }();
 
-        handleCall(callRef->isReturn, effects);
+        handleCall(callRef->isReturn, refutesThrowEffect);
         break;
       }
       case Expression::Id::CallIndirectId: {
         auto* callIndirect = curr->cast<CallIndirect>();
 
-        const EffectAnalyzer* effects = nullptr;
+        bool refutesThrowEffect = false;
         if (self->getModule()) {
-          if (const auto& effectsPtr =
-                find_or_null(self->getModule()->indirectCallEffects,
-                             callIndirect->heapType)) {
-            effects = effectsPtr->get();
+          if (auto* effects = find_or_null(
+                self->getModule()->indirectCallEffects, callIndirect->heapType);
+              effects) {
+            refutesThrowEffect = !(*effects)->throws_;
           }
         }
-        handleCall(callIndirect->isReturn, effects);
+        handleCall(callIndirect->isReturn, refutesThrowEffect);
         break;
       }
       case Expression::Id::TryId: {
