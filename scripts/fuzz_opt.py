@@ -568,6 +568,14 @@ def fix_output(out):
     # Tag names may change due to opts, so canonicalize them.
     out = re.sub(r' tag\$\d+', ' tag', out)
 
+    # If we failed to instantiate, remove everything after it. VMs may print
+    # additional error info that cannot be compared between VMs, like a JS
+    # stack trace for where we tried to instantiate.
+    if INSTANTIATE_ERROR in out:
+        after = out.find(INSTANTIATE_ERROR)
+        after = out.find('\n', after)
+        out = out[:after + 1]
+
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
@@ -669,7 +677,7 @@ def run_vm(cmd, checked=True):
         # (we can see that all VMs have the same behavior), but we do need to
         # not raise an error here.
         if INSTANTIATE_ERROR in raw:
-            return INSTANTIATE_ERROR
+            return raw
 
         # Otherwise, raise an error.
         raise
