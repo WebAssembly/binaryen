@@ -3,7 +3,7 @@
 ;; RUN: foreach %s %t wasm-opt --mark-js-called -all -S -o - | filecheck %s
 
 ;; $configured will be marked as @binaryen.js.called. $already is already marked,
-;; and nothing changess. $unconfigured* are not in configureAll so they are left
+;; and nothing changes. $unconfigured* are not in configureAll so they are left
 ;; alone.
 
 (module
