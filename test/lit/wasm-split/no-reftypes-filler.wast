@@ -6,7 +6,7 @@
 
 (module
   ;; PRIMARY:      (table $table 4 4 funcref)
-  ;; PRIMARY:      (elem $0 (i32.const 0) $fillter $fillter $fillter $keep)
+  ;; PRIMARY:      (elem $0 (i32.const 0) $filler $filler $filler $keep)
   (table $table 4 4 funcref)
   (elem (i32.const 0) $split1 $split2 $split3 $keep)
 
