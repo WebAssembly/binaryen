@@ -1878,7 +1878,7 @@ class ClusterFuzz(TestCaseHandler):
         # (rarely, none might exist), unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say.
-        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
+        if output != IGNORE and not INSTANTIATE_ERROR in output:
             # Do the work to find if there were function exports: extract the
             # wasm from the JS, and process it.
             run([sys.executable,
@@ -2083,7 +2083,7 @@ class Two(TestCaseHandler):
         # We ruled out things we must ignore, like host limitations, and also
         # exited earlier on a deterministic instantiation error, so there should
         # be no such error in V8.
-        assert not output.startswith(INSTANTIATE_ERROR)
+        assert INSTANTIATE_ERROR not in output
 
         output = fix_output(output)
 
