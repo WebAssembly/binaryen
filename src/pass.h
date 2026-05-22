@@ -199,8 +199,8 @@ struct PassOptions {
   // Assume code outside of the module does not inspect or interact with GC and
   // function references, with the goal of being able to aggressively optimize
   // all user-defined types. The outside may hold on to references and pass them
-  // back in, but may not inspect their contents, call them, or reflect on their
-  // types in any way.
+  // back in, but may not inspect their contents, call them, construct them, or
+  // reflect on their types in any way.
   //
   // By default we do not make this assumption, and assume anything that escapes
   // to the outside may be inspected in detail, which prevents us from e.g.
