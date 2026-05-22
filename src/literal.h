@@ -266,11 +266,7 @@ public:
     lit.i32 = value | 0x80000000;
     return lit;
   }
-  static Literal makeExtern(int32_t payload, Shareability share) {
-    auto lit = Literal(Type(HeapTypes::ext.getBasic(share), NonNullable));
-    lit.i32 = (payload << 1) | 1;
-    return lit;
-  }
+  static Literal makeExtern(int32_t payload, Shareability share);
   // Wasm has nondeterministic rules for NaN propagation in some operations. For
   // example. f32.neg is deterministic and just flips the sign, even of a NaN,
   // but f32.add is nondeterministic, and if one or more of the inputs is a NaN,
@@ -308,14 +304,8 @@ public:
     // Cast to unsigned for the left shift to avoid undefined behavior.
     return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }
-  bool hasExternPayload() const {
-    assert(type.getHeapType().isMaybeShared(HeapType::ext));
-    return (i32 & 1) == 1;
-  }
-  int32_t getExternPayload() const {
-    assert(hasExternPayload());
-    return int32_t(uint32_t(i32) >> 1);
-  }
+  bool hasExternPayload() const;
+  int32_t getExternPayload() const;
   int64_t geti64() const {
     assert(type == Type::i64);
     return i64;
@@ -813,6 +803,19 @@ struct GCData {
     : values(std::move(values)), desc(desc) {}
 };
 
+inline bool Literal::hasExternPayload() const {
+  if (isNull()) {
+    return false;
+  }
+  assert(type.getHeapType().isMaybeShared(HeapType::ext));
+  return gcData->values[0].type == Type::i32;
+}
+
+inline int32_t Literal::getExternPayload() const {
+  assert(hasExternPayload());
+  return gcData->values[0].geti32();
+}
+
 } // namespace wasm
 
 namespace std {
@@ -855,6 +858,14 @@ template<> struct hash<wasm::Literal> {
       auto type = a.type.getHeapType();
       if (type.isMaybeShared(wasm::HeapType::i31)) {
         wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      if (type.isMaybeShared(wasm::HeapType::ext)) {
+        if (a.hasExternPayload()) {
+          wasm::rehash(digest, a.getExternPayload());
+          return digest;
+        }
+        wasm::rehash(digest, (*this)(a.internalize()));
         return digest;
       }
       if (type.isMaybeShared(wasm::HeapType::any)) {
