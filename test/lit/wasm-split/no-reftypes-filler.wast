@@ -2,15 +2,15 @@
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY
 
 ;; When --no-placeholder is given and reference-types is disabled, we cannot
-;; fill the table with ref.nulls. Use a dummy function.
+;; fill the table with ref.nulls. Use a filler function.
 
 (module
   ;; PRIMARY:      (table $table 4 4 funcref)
-  ;; PRIMARY:      (elem $0 (i32.const 0) $dummy $dummy $dummy $keep)
+  ;; PRIMARY:      (elem $0 (i32.const 0) $fillter $fillter $fillter $keep)
   (table $table 4 4 funcref)
   (elem (i32.const 0) $split1 $split2 $split3 $keep)
 
-  ;; PRIMARY:      (func $dummy
+  ;; PRIMARY:      (func $filler
   ;; PRIMARY-NEXT:  (unreachable)
   ;; PRIMARY-NEXT: )
 

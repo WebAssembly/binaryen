@@ -1125,8 +1125,8 @@ void ModuleSplitter::setupTablePatching() {
   }
 
   std::map<Module*, std::map<Index, Function*>> moduleToReplacedElems;
-  Name dummyName;
-  Type dummyType = Type(Signature(Type::none, Type::none), NonNullable, Exact);
+  Name fillerName;
+  Type fillerType = Type(Signature(Type::none, Type::none), NonNullable, Exact);
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
@@ -1169,15 +1169,15 @@ void ModuleSplitter::setupTablePatching() {
           return;
         }
         // When reference-types is not enabled, we can't use a ref.null. Put a
-        // dummy function that contains an unreachable.
-        if (!dummyName) {
-          dummyName = Names::getValidFunctionName(primary, "dummy");
-          auto dummy = Builder::makeFunction(
-            dummyName, dummyType, {}, Builder(primary).makeUnreachable());
-          dummy->hasExplicitName = true;
-          primary.addFunction(std::move(dummy));
+        // filler function that contains an unreachable.
+        if (!fillerName) {
+          fillerName = Names::getValidFunctionName(primary, "filler");
+          auto filler = Builder::makeFunction(
+            fillerName, fillerType, {}, Builder(primary).makeUnreachable());
+          filler->hasExplicitName = true;
+          primary.addFunction(std::move(filler));
         }
-        elem = Builder(primary).makeRefFunc(dummyName, dummyType);
+        elem = Builder(primary).makeRefFunc(fillerName, fillerType);
       }
     });
 
