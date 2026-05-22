@@ -143,6 +143,11 @@ public:
     }
   }
 
+  void init(Module& wasm, ModuleRunner& instance_) override {
+    ShellExternalInterface::init(wasm, instance_);
+    instance = &instance_;
+  }
+
   Literal getImportedFunction(Function* import) override {
     if (linkedInstances.contains(import->module)) {
       return getImportInstance(import)->getExportedFunction(import->base);
@@ -366,8 +371,6 @@ public:
     }
     return false;
   }
-
-  void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
 };
 
 class FuzzerImportResolver
@@ -501,7 +504,6 @@ struct ExecutionResults {
     // SIMD instructions.
     instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
     instance.instantiate();
-    interface.setModuleRunner(&instance);
   }
 
   void callExports(Module& wasm, ModuleRunner& instance) {

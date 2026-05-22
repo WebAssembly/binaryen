@@ -73,6 +73,7 @@
 //      from the IR before splitting.
 //
 #include "ir/module-splitting.h"
+#include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -788,6 +789,16 @@ void ModuleSplitter::shareImportableItems() {
   }
   if (tableManager.activeBase.global) {
     primaryUsed.globals.insert(tableManager.activeBase.global);
+  }
+
+  // Trapping globals should stay in the primary module to preserve the trapping
+  // behavior upon instantiation.
+  for (auto& global : primary.globals) {
+    if (global->init &&
+        EffectAnalyzer(config.passOptions, primary, global->init)
+          .hasUnremovableSideEffects()) {
+      primaryUsed.globals.insert(global->name);
+    }
   }
 
   // Compute the transitive closure of globals referenced in other globals'

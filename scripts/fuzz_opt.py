@@ -1710,9 +1710,9 @@ class Split(TestCaseHandler):
 
         # prepare the list of exports to call. the format is
         #
-        #  exports:A,B,C
+        #  exports:["A","B","C"]
         #
-        exports_to_call = 'exports:' + ','.join(exports)
+        exports_to_call = 'exports:' + json.dumps(exports)
 
         # get the output from the split modules, linking them using JS
         # TODO run liftoff/turboshaft/etc.
@@ -2249,9 +2249,16 @@ class PreserveImportsExportsJS(TestCaseHandler):
         pre_vm = random.choice(vms)
         pre = self.do_run(pre_vm, js_file, pre_wasm)
 
+        # We are about to optimize, and do not trust the given wasm file to
+        # have marked all js-called methods properly. In particular, it could
+        # have a configureAll that is not in the start function.
+        full_opts = [
+            '--mark-js-called',
+        ] + opts
+
         # Optimize.
         post_wasm = abspath('post.wasm')
-        cmd = [in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + opts + FEATURE_OPTS
+        cmd = [in_bin('wasm-opt'), pre_wasm, '-o', post_wasm] + full_opts + FEATURE_OPTS
         print(' '.join(cmd))
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode:

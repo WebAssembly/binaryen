@@ -229,6 +229,7 @@ void writePlaceholderMap(
 
 void setCommonSplitConfigs(ModuleSplitting::Config& config,
                            const WasmSplitOptions& options) {
+  config.passOptions = options.passOptions;
   config.usePlaceholders = options.usePlaceholders;
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
   if (options.importNamespace) {
