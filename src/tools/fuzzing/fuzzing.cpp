@@ -1688,7 +1688,6 @@ void TranslateToFuzzReader::processFunctions() {
       // Remove it.
       wasm.start = Name();
   }
-  fixStart();
 
   // At the very end, add hang limit checks (so no modding can override them).
   if (fuzzParams->HANG_LIMIT > 0) {
@@ -6734,10 +6733,6 @@ Name TranslateToFuzzReader::pickStart() {
   // Any none-none function is an option.
   std::vector<Name> options;
   for (auto& func : wasm.functions) {
-    // Avoid imports, see fixStart().
-    if (func->imported()) {
-      continue;
-    }
     if (func->getParams() == Type::none && func->getResults() == Type::none) {
       options.push_back(func->name);
     }

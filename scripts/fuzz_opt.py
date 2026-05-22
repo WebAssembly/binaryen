@@ -3089,3 +3089,7 @@ After reduction, the reduced file will be in {working_wasm}
         else:
             print(f'(finished running seed {given_seed}, see error above)')
             sys.exit(given_seed_error)
+
+'''
+azakai@azakai:~/Dev/2-binaryen$ merge: it end sup reordering output, as the escond module's start runs with the first, before even first's exports...
+'''
