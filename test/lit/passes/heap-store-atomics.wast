@@ -5,11 +5,19 @@
   ;; CHECK:      (type $struct (shared (struct (field (mut i32)) (field (mut i32)))))
   (type $struct (shared (struct (field (mut i32)) (field (mut i32)))))
 
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $described (shared (descriptor $desc) (struct (field (mut i32)) (field (mut i32)))))
+    (type $described (shared (descriptor $desc) (struct (field (mut i32)))))
+    ;; CHECK:       (type $desc (shared (describes $described) (struct)))
+    (type $desc (shared (describes $described) (struct)))
+  )
+
   ;; CHECK:      (memory $mem 1 1 shared)
   (memory $mem 1 1 shared)
 
   ;; Test 1: Disallowed reordering (GC read NOT moved before Wasm acquire load)
-  ;; CHECK:      (func $disallowed (type $1) (param $x (ref $struct)) (param $other (ref $struct))
+  ;; CHECK:      (func $disallowed (type $3) (param $x (ref $struct)) (param $other (ref $struct))
   ;; CHECK-NEXT:  (local $ref (ref $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -51,7 +59,7 @@
   )
 
   ;; Test 2: Allowed reordering (GC read moved before Wasm release store)
-  ;; CHECK:      (func $allowed (type $1) (param $x (ref $struct)) (param $other (ref $struct))
+  ;; CHECK:      (func $allowed (type $3) (param $x (ref $struct)) (param $other (ref $struct))
   ;; CHECK-NEXT:  (local $ref (ref $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -88,7 +96,7 @@
     )
   )
   ;; Test 3: Swap allowed (GC read in struct.new swapped with subsequent acquire load)
-  ;; CHECK:      (func $swap_allowed (type $2) (param $other (ref $struct))
+  ;; CHECK:      (func $swap_allowed (type $4) (param $other (ref $struct))
   ;; CHECK-NEXT:  (local $ref (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.atomic.load acqrel
@@ -119,7 +127,7 @@
   )
 
   ;; Test 4: Swap disallowed (struct.new with acquire load NOT swapped with subsequent GC read)
-  ;; CHECK:      (func $swap_disallowed (type $2) (param $other (ref $struct))
+  ;; CHECK:      (func $swap_disallowed (type $4) (param $other (ref $struct))
   ;; CHECK-NEXT:  (local $ref (ref $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -159,6 +167,152 @@
     (struct.set $struct 0
       (local.get $ref)
       (i32.const 42)
+    )
+  )
+  ;; Test 5: GC read in struct.set value CAN move before release store in descriptor
+  ;; CHECK:      (func $desc_allowed (type $5) (param $other (ref $described)) (param $d (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $ref (ref $described))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_desc $described
+  ;; CHECK-NEXT:    (struct.get $described 1
+  ;; CHECK-NEXT:     (local.get $other)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:     (i32.atomic.store acqrel
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $d)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $desc_allowed (param $other (ref $strct)) (param $d (ref (exact $desc)))
+    (local $ref (ref $described))
+    (local.set $ref
+      (struct.new_desc $described
+        (i32.const 0)
+        (block (result (ref (exact $desc)))
+          (i32.atomic.store acqrel (i32.const 0) (i32.const 42))
+          (local.get $d)
+        )
+      )
+    )
+    (struct.set $described 0
+      (local.get $ref)
+      (struct.get $struct 1 (local.get $other))
+    )
+  )
+
+  ;; Test 6: GC read in struct.set value CANNOT move before acquire load in descriptor
+  ;; CHECK:      (func $desc_disallowed (type $5) (param $other (ref $described)) (param $d (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $ref (ref $described))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_desc $described
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.atomic.load acqrel
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $d)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $described 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (struct.get $described 1
+  ;; CHECK-NEXT:    (local.get $other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $desc_disallowed (param $other (ref $struct)) (param $d (ref (exact $desc)))
+    (local $ref (ref $described))
+    (local.set $ref
+      (struct.new_desc $described
+        (i32.const 0)
+        (i32.const 0)
+        (block (result (ref (exact $desc)))
+          (drop (i32.atomic.load acqrel (i32.const 0)))
+          (local.get $d)
+        )
+      )
+    )
+    (struct.set $described 0
+      (local.get $ref)
+      (struct.get $struct 1 (local.get $other))
+    )
+  )
+
+  ;; Test 7: Memory load in struct.set value CAN move before shallow trap (nullable desc) of struct.new
+  ;; CHECK:      (func $shallow_allowed (type $6) (param $d (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $ref (ref $described))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_desc $described
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $shallow_allowed (param $d (ref (exact $desc)))
+    (local $ref (ref $described))
+    (local.set $ref
+      (struct.new_desc $described
+        (i32.const 0)
+        (i32.const 0)
+        (ref.null $desc)
+      )
+    )
+    (struct.set $described 0
+      (local.get $ref)
+      (i32.load (i32.const 0))
+    )
+  )
+
+  ;; Test 8: Memory store in struct.set value CANNOT move before shallow trap (nullable desc) of struct.new
+  ;; CHECK:      (func $shallow_disallowed (type $6) (param $d (ref (exact $desc)))
+  ;; CHECK-NEXT:  (local $ref (ref $described))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_desc $described
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $described 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (i32.store
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $shallow_disallowed (param $d (ref (exact $desc)))
+    (local $ref (ref $described))
+    (local.set $ref
+      (struct.new_desc $described
+        (i32.const 0)
+        (i32.const 0)
+        (ref.null $desc)
+      )
+    )
+    (struct.set $described 0
+      (local.get $ref)
+      (block (result i32)
+        (i32.store (i32.const 0) (i32.const 42))
+        (i32.const 1337)
+      )
     )
   )
 )
