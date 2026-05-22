@@ -1946,6 +1946,9 @@ class Two(TestCaseHandler):
         # Most of the time, use the first wasm as an import to the second.
         if random.random() < 0.8:
             args += ['--fuzz-import=' + wasm]
+        # Always remove the second module's start function, see comment before
+        # in Merge.
+        args += ['--remove-start']
 
         given = os.environ.get('BINARYEN_SECOND_WASM')
         if not given:
