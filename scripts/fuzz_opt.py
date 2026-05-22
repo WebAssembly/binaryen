@@ -585,7 +585,7 @@ def fix_output(out):
             # developer can see it.
             print(line)
             lines[i] = None
-        elif 'V8 is running with experimental features enabled. Stability and security will suffer.':
+        elif 'V8 is running with experimental features enabled. Stability and security will suffer.' in line:
             # Ignore some boilerplate from VMs
             lines[i] = None
         elif EXCEPTION_PREFIX in line:
