@@ -53,8 +53,9 @@ if(EMSCRIPTEN)
 endif()
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
-if(MSVC)
+if(MSVC OR EMSCRIPTEN)
   # We don't have dllexport declarations set up for Windows yet.
+  # With emscripten we require a static library to create binaryen_js correctly.
   set(BUILD_STATIC_LIB ON)
 endif()
 
