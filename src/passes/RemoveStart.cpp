@@ -24,9 +24,7 @@
 namespace wasm {
 
 struct RemoveStart : public Pass {
-  void run(Module* module) override {
-    module->start = Name();
-  }
+  void run(Module* module) override { module->start = Name(); }
 };
 
 Pass* createRemoveStartPass() { return new RemoveStart(); }
