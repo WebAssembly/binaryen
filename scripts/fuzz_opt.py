@@ -1551,12 +1551,25 @@ class Merge(TestCaseHandler):
             # second.wasm, but that is ok.
             filter_exports(second_wasm, second_wasm, filtered, keep_defaults=False)
 
-        # sometimes also optimize the second module
+        # Sometimes also optimize the second module
+        second_opts = []
         if random.random() < 0.5:
-            opts = get_random_opts()
-            run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + opts)
+            second_opts = get_random_opts()
 
-        # merge the wasm files. note that we must pass -all, as even if the two
+        # Always remove the second module's start function. Before merge, we
+        # have this:
+        #
+        #  * call first's start
+        #  * call first's exports
+        #  * call second's start
+        #  * call second's exports
+        #
+        # After merge, the middle two lines are swapped, since the starts are
+        # merged, changing the behavior
+        second_opts += ['--remove-start']
+        run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + second_opts)
+
+        # Merge the wasm files. note that we must pass -all, as even if the two
         # inputs are MVP, the output may have multiple tables and multiple
         # memories (and we must also do that in the commands later down).
         #
