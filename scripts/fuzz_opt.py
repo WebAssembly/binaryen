@@ -1102,7 +1102,15 @@ class Wasm2JS(TestCaseHandler):
         # later make sense (if we don't do this, the wasm may have i64 exports).
         # after applying other necessary fixes, we'll recreate the after wasm
         # from scratch.
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-and-prune-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
+        run([
+            in_bin('wasm-opt'),
+            before_wasm,
+            '--legalize-and-prune-js-interface',
+            '-o', before_wasm_temp,
+            # Remove the start function for now, as this can lead to traps
+            # during start which this fuzzer doesn't handle yet. TODO
+            '--remove-start',
+        ] + FEATURE_OPTS)
         compare_before_to_after = random.random() < 0.5
         compare_to_interpreter = compare_before_to_after and random.random() < 0.5
         if compare_before_to_after:
