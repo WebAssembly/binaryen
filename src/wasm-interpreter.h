@@ -1877,8 +1877,15 @@ public:
     return flow;
   }
   Flow visitNop(Nop* curr) { return Flow(); }
+
+  // Tracking whether we are in the start function is important for error
+  // logging in the fuzzer, see visitUnreachable.
+  bool inStart = false;
+
   Flow visitUnreachable(Unreachable* curr) {
-    trap("unreachable");
+    // Trapping during the start function requires special logging for the
+    // fuzzer.
+    trap(inStart ? "exception thrown: failed to instantiate module (unreachable)" : "unreachable");
     WASM_UNREACHABLE("unreachable");
   }
 
@@ -3429,6 +3436,16 @@ public:
     self()->continuationStore = shared;
   }
 
+  struct InStartContext {
+    SubType& parent;
+    InStartContext(SubType& parent) : parent(parent) {
+      parent.inStart = true;
+    }
+    ~InStartContext() {
+      parent.inStart = false;
+    }
+  };
+
   // Start up this instance. This must be called before doing anything else.
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
@@ -3448,6 +3465,7 @@ public:
 
     // run start, if present
     if (wasm.start.is()) {
+      InStartContext context(*self());
       Literals arguments;
       callFunction(wasm.start, arguments);
     }

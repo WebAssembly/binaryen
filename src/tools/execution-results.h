@@ -486,6 +486,8 @@ struct ExecutionResults {
         std::cout << "[fuzz-exec] running second module\n";
         callExports(*second, *secondInstance);
       }
+    } catch (const TrapException&) {
+      // May throw in instance creation (init of offsets).
     } catch (const HostLimitException&) {
       // May throw in instance creation (e.g. array.new of huge size).
       // This should be ignored and not compared with, as optimizations can
@@ -493,10 +495,6 @@ struct ExecutionResults {
       ignore = true;
     } catch (const WasmException&) {
       std::cout << "[exception thrown: failed to instantiate module]\n";
-    } catch (const TrapException&) {
-      // Emit the same text as an exception, which is what the fuzzer harness
-      // detects.
-      std::cout << "[trap: exception thrown: failed to instantiate module]\n";
     }
   }
 
