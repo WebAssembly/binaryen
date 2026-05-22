@@ -1555,7 +1555,7 @@ class Merge(TestCaseHandler):
             in_bin('wasm-opt'),
             second_input,
             '-ttf',
-            '-o', second_wasm
+            '-o', second_wasm,
             '--remove-start',
         ]
         run(second_args + GEN_ARGS + FEATURE_OPTS)
