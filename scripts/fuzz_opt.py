@@ -669,7 +669,7 @@ def run_vm(cmd, checked=True):
         # (we can see that all VMs have the same behavior), but we do need to
         # not raise an error here.
         if INSTANTIATE_ERROR in raw:
-            return INSTANTIATE_ERROR
+            return filtered
 
         # Otherwise, raise an error.
         raise
