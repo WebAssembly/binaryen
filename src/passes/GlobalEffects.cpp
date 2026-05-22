@@ -24,17 +24,16 @@
 #include "pass.h"
 #include "support/graph_traversal.h"
 #include "support/strongly_connected_components.h"
+#include "support/utilities.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace {
 
-constexpr auto UnknownEffects = std::nullopt;
-
 struct FuncInfo {
-  // Effects in this function. nullopt / UnknownEffects means that we don't know
-  // what effects this function has, so we conservatively assume all effects.
+  // Effects in this function. nullopt means that we don't know what effects
+  // this function has, so we conservatively assume all effects.
   // Nullopt cases won't be copied to Function::effects.
   std::optional<EffectAnalyzer> effects;
 
@@ -97,14 +96,14 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
                 type = callIndirect->heapType;
               } else {
-                funcInfo.effects = UnknownEffects;
+                funcInfo.effects = std::nullopt;
                 return;
               }
 
               funcInfo.indirectCalledTypes.insert(type);
             } else if (effects.calls) {
               assert(options.worldMode == WorldMode::Open);
-              funcInfo.effects = UnknownEffects;
+              funcInfo.effects = std::nullopt;
             } else {
               // No call here, but update throwing if we see it. (Only do so,
               // however, if we have effects; if we cleared it - see before -
@@ -204,12 +203,17 @@ CallGraph buildCallGraph(const Module& module,
   return callGraph;
 }
 
-void mergeMaybeEffects(std::optional<EffectAnalyzer>& dest,
-                       const std::optional<EffectAnalyzer>& src) {
+constexpr auto UnknownEffects = nullptr;
+
+// Merges effects from another connected component (const EffectAnalyzer*) or a
+// function (std::optional<EffectAnalyzer>&).
+template<typename EffectAnalyzerPtr>
+void mergeMaybeEffects(std::shared_ptr<EffectAnalyzer>& dest,
+                       const EffectAnalyzerPtr& src) {
   if (dest == UnknownEffects) {
     return;
   }
-  if (src == UnknownEffects) {
+  if (!src) {
     dest = UnknownEffects;
     return;
   }
@@ -226,10 +230,13 @@ void mergeMaybeEffects(std::optional<EffectAnalyzer>& dest,
 // - Merge all of the effects of functions within the CC
 // - Also merge the (already computed) effects of each callee CC
 // - Add trap effects for potentially recursive call chains
-void propagateEffects(const Module& module,
-                      const PassOptions& passOptions,
-                      std::map<Function*, FuncInfo>& funcInfos,
-                      const CallGraph& callGraph) {
+void propagateEffects(
+  const Module& module,
+  const PassOptions& passOptions,
+  std::map<Function*, FuncInfo>& funcInfos,
+  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>&
+    typeEffects,
+  const CallGraph& callGraph) {
   // We only care about Functions that are roots, not types.
   // A type would be a root if a function exists with that type, but no-one
   // indirect calls the type.
@@ -263,13 +270,13 @@ void propagateEffects(const Module& module,
   };
   CallGraphSCCs sccs(funcNodes, funcInfos, callGraph, module);
 
-  std::vector<std::optional<EffectAnalyzer>> componentEffects;
+  std::vector<std::shared_ptr<EffectAnalyzer>> componentEffects;
   // Points to an index in componentEffects
   std::unordered_map<CallGraphNode, Index> nodeComponents;
 
   for (auto ccIterator : sccs) {
-    std::optional<EffectAnalyzer>& ccEffects =
-      componentEffects.emplace_back(std::in_place, passOptions, module);
+    auto& ccEffects = componentEffects.emplace_back(
+      std::make_shared<EffectAnalyzer>(passOptions, module));
     std::vector<CallGraphNode> cc(ccIterator.begin(), ccIterator.end());
 
     std::vector<Function*> ccFuncs;
@@ -290,7 +297,7 @@ void propagateEffects(const Module& module,
     // Merge in effects from callees
     for (int calleeScc : calleeSccs) {
       const auto& calleeComponentEffects = componentEffects.at(calleeScc);
-      mergeMaybeEffects(ccEffects, calleeComponentEffects);
+      mergeMaybeEffects(ccEffects, calleeComponentEffects.get());
     }
 
     // Add trap effects for potential cycles.
@@ -307,6 +314,14 @@ void propagateEffects(const Module& module,
           ccEffects->trap = true;
         }
       }
+    } else if (ccFuncs.empty() && calleeSccs.empty()) {
+      // This node came from an indirect call to an uninhabited type.
+      // This CC must consist of exactly one type, because an uninhabited type
+      // can't make any indirect calls to other types.
+      //
+      // Since the type is uninhabited, this call must trap.
+      assert(cc.size() == 1);
+      ccEffects->trap = true;
     }
 
     // Aggregate effects within this CC
@@ -318,24 +333,15 @@ void propagateEffects(const Module& module,
     }
 
     // Assign each function's effects to its CC effects.
-    for (Function* f : ccFuncs) {
-      if (!ccEffects) {
-        funcInfos.at(f).effects = UnknownEffects;
-      } else {
-        funcInfos.at(f).effects.emplace(*ccEffects);
-      }
+    for (auto node : cc) {
+      std::visit(overloaded{[&](HeapType type) {
+                              if (ccEffects != UnknownEffects) {
+                                typeEffects[type] = ccEffects;
+                              }
+                            },
+                            [&](Function* f) { f->effects = ccEffects; }},
+                 node);
     }
-  }
-}
-
-void copyEffectsToFunctions(const std::map<Function*, FuncInfo>& funcInfos) {
-  for (auto& [func, info] : funcInfos) {
-    func->effects.reset();
-    if (!info.effects) {
-      continue;
-    }
-
-    func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
   }
 }
 
@@ -347,9 +353,11 @@ struct GenerateGlobalEffects : public Pass {
     auto callGraph =
       buildCallGraph(*module, funcInfos, getPassOptions().worldMode);
 
-    propagateEffects(*module, getPassOptions(), funcInfos, callGraph);
-
-    copyEffectsToFunctions(funcInfos);
+    propagateEffects(*module,
+                     getPassOptions(),
+                     funcInfos,
+                     module->indirectCallEffects,
+                     callGraph);
   }
 };
 

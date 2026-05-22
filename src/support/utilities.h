@@ -94,6 +94,19 @@ public:
 #define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
 #endif
 
+// Helper to create an invocable with an overloaded operator(), for use with
+// std::visit e.g.
+// std::visit(
+//   overloaded{
+//     [](const A& a) { ... },
+//     [](const B& b) { ... }},
+//   variant)
+template<typename... Ts> struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+
+template<typename... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
 } // namespace wasm
 
 #endif // wasm_support_utilities_h
