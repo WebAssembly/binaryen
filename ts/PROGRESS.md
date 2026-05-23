@@ -97,9 +97,9 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 ### class `Module` — Module Operations
 | Name                       | JS Loc    | TS Loc            | Code | API Overview | Tests |
 | -------------------------- | --------- | ----------------- | ---- | ------------ | ----- |
-| `addFunction`              | line 2616 | Function.ts       | [x] | [x] | [ ] |
-| `getFunction`              |           | Function.ts       | [x] | [x] | [ ] |
-| `removeFunction`           |           | Function.ts       | [x] | [x] | [ ] |
+| `addFunction`              | line 2616 | Function.ts       | [x] | [x] | [x] |
+| `getFunction`              |           | Function.ts       | [x] | [x] | [x] |
+| `removeFunction`           |           | Function.ts       | [x] | [x] | [x] |
 | `addGlobal`                |           | Global.ts         | [x] | [x] | [x] |
 | `getGlobal`                |           | Global.ts         | [x] | [x] | [x] |
 | `addTable`                 |           | Table.ts          | [x] | [x] | [x] |
@@ -141,7 +141,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `getExport`                |           | Export.ts         | [x] | [x] | [ ] |
 | `getNumExports`            |           | Export.ts         | [x] | [x] | [ ] |
 | `getExportByIndex`         |           | Export.ts         | [x] | [x] | [ ] |
-| `getNumFunctions`          |           | Function.ts       | [x] | [x] | [ ] |
+| `getNumFunctions`          |           | Function.ts       | [x] | [x] | [x] |
 | `getFunctionByIndex`       |           | Function.ts       | [x] | [x] | [ ] |
 | `getNumGlobals`            |           | Global.ts         | [x] | [x] | [x] |
 | `getNumTables`             |           | Table.ts          | [x] | [x] | [x] |
@@ -162,7 +162,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `updateMaps`           |           | Module.ts  | [x] | [x] | [ ] |
 | `optimizeFunction`     |           | Module.ts  | [x] | [x] | [ ] |
 | `runPasses`            |           | Module.ts  | [x] | [x] | [ ] |
-| `runPassesOnFunction`  |           | Module.ts  | [x] | [x] | [ ] |
+| `runPassesOnFunction`  |           | Module.ts  | [x] | [x] | [x] |
 | `dispose`              |           | Module.ts  | [x] | [x] | [ ] |
 | `emitBinary`           |           | Module.ts  | [x] | [x] | [ ] |
 | `interpret`            |           | Module.ts  | [x] | [x] | [ ] |
@@ -328,7 +328,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 ### Component Wrappers
 | Name        | JS Loc    | TS Loc      | Code | API Overview | Tests |
 | ----------- | --------- | ----------- | ---- | ------------ | ----- |
-| `Function`  | line 5388 | Function.ts | [x] | [x] | [ ] |
+| `Function`  | line 5388 | Function.ts | [x] | [x] | [x] |
 | `Table`     | line 5445 | Table.ts    | [x] | [x] | [x] |
 
 
@@ -346,3 +346,4 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 	- `/test/binaryen.js/global.js`      &rarr; `/ts/test/module/Global.test.ts`
 	- `/test/binaryen.js/memory-info.js` &rarr; `/ts/test/module/Memory.test.ts`
 	- `/test/binaryen.js/tables.js`      &rarr; `/ts/test/module/Table.test.ts`
+	- `/test/binaryen.js/functions.js`   &rarr; `/ts/test/module/Function.test.ts`
