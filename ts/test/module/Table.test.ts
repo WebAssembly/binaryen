@@ -1,7 +1,6 @@
 import * as assert from "node:assert";
 import {
-	after,
-	before,
+	beforeEach,
 	suite,
 	test,
 } from "node:test";
@@ -14,17 +13,22 @@ suite("Table", () => {
 	let tableRef: binaryen.TableRef;
 	let tableInfo: binaryen.Module.Table;
 
-	before(() => {
+	beforeEach(() => {
 		mod = new binaryen.Module();
 		tableRef = mod.tables.add("a-table", 5, 15);
+		tableInfo = new binaryen.Module.Table(tableRef);
 	});
 
 	test(".constructor", () => {
-		tableInfo = new binaryen.Module.Table(tableRef);
 		assert.partialDeepStrictEqual(tableInfo, {
 			module: "",
 			base: "",
 		});
+		// getter methods are not enumerable; testing them individually
+		assert.strictEqual(tableInfo.name, "a-table");
+		assert.strictEqual(tableInfo.initial, 5);
+		assert.strictEqual(tableInfo.max, 15);
+		assert.strictEqual(tableInfo.type, binaryen.funcref);
 	});
 
 	test("`Module#tables.get` returns the ref returned by `Module#tables.add`.", () => {
@@ -85,12 +89,7 @@ suite("Table", () => {
 		tableInfo.type = binaryen.funcref;
 	});
 
-	after(() => {
-		assert.strictEqual(tableInfo.name, "a-table");
-		assert.strictEqual(tableInfo.initial, 5);
-		assert.strictEqual(tableInfo.max, 15);
-		assert.strictEqual(tableInfo.type, binaryen.funcref);
-
+	test("module is valid.", () => {
 		assert.ok(mod.validate());
 		assert.strictEqual(mod.emitText(), `(module
  (table $a-table 5 15 funcref)

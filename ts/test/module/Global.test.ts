@@ -20,10 +20,10 @@ suite("Global", () => {
 			binaryen.Feature.MutableGlobals
 		);
 		globalRef = mod.globals.add("a-global", binaryen.i32, false, mod.wasm.i32.const(1));
+		globalInfo = new binaryen.Module.Global(globalRef);
 	});
 
 	test(".constructor", () => {
-		globalInfo = new binaryen.Module.Global(globalRef);
 		assert.partialDeepStrictEqual(globalInfo, {
 			name: "a-global",
 			module: "",
