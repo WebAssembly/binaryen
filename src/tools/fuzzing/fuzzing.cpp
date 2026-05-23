@@ -2419,7 +2419,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     std::vector<Call*> callImports;
   };
 
-  using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
+  using NameInfoMap = std::map<Name, FunctionInfo>;
 
   struct FunctionInfoScanner
     : public WalkerPass<PostWalker<FunctionInfoScanner>> {
@@ -2535,7 +2535,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
   // First, refine params sent to imports. Gather the LUB sent to each import,
   // and then refine.
-  std::unordered_map<Name, LUBFinder> paramLUBs;
+  std::map<Name, LUBFinder> paramLUBs;
   for (auto& [_, info] : map) {
     for (auto* call : info.callImports) {
       auto declaredParams = wasm.getFunction(call->target)->getParams();
