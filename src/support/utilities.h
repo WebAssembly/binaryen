@@ -107,6 +107,14 @@ template<typename... Ts> struct overloaded : Ts... {
 
 template<typename... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
+// Lookup a value from `map` and return a pointer to the underlying value
+// or nullptr if not present. Returns a const pointer if `map` is const and
+// non-const otherwise
+auto* find_or_null(auto& map, const auto& key) {
+  auto it = map.find(key);
+  return it != map.end() ? &it->second : nullptr;
+}
+
 } // namespace wasm
 
 #endif // wasm_support_utilities_h
