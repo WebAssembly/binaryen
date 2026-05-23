@@ -237,16 +237,16 @@ struct EarlyCastFinder
 
   void visitExpression(Expression* curr) {
     // A new one is instantiated for each expression to determine
-    // if a cast can be moved past it.
+    // if a cast can be moved backward past it.
     ShallowEffectAnalyzer currAnalyzer(options, *getModule(), curr);
 
-    if (testRefCast.invalidates(currAnalyzer)) {
+    if (currAnalyzer.orderedBefore(testRefCast)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefCastResult(i, *getModule());
       }
     }
 
-    if (testRefAs.invalidates(currAnalyzer)) {
+    if (currAnalyzer.orderedBefore(testRefAs)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefAsResult(i, *getModule());
       }
