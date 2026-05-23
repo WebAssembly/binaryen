@@ -82,7 +82,7 @@ export class SIMDShuffle extends Expression {
 			for (let i = 0; i < 16; ++i) {
 				BinaryenObj.HEAPU8[tempBuffer + i] = mask[i];
 			}
-			BinaryenObj["_BinaryenSIMDShuffleSetMask"](this._ptr, tempBuffer);
+			return BinaryenObj["_BinaryenSIMDShuffleSetMask"](this._ptr, tempBuffer);
 		});
 	}
 }

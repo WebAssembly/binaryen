@@ -78,9 +78,7 @@ class BinaryenFunction {
 	}
 
 	setLocalName(index: number, name: string): void {
-		preserveStack(() => {
-			BinaryenObj["_BinaryenFunctionSetLocalName"](this.#ptr, index, strToStack(name));
-		});
+		preserveStack(() => BinaryenObj["_BinaryenFunctionSetLocalName"](this.#ptr, index, strToStack(name)));
 	}
 }
 export {BinaryenFunction as Function};

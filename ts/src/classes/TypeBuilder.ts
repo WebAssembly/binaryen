@@ -78,7 +78,7 @@ export class TypeBuilder {
 				packedTypes[i] = packedType;
 				mutables[i] = +mutable;
 			}
-			BinaryenObj["_TypeBuilderSetStructType"](
+			return BinaryenObj["_TypeBuilderSetStructType"](
 				this.#ptr,
 				index,
 				i32sToStack(types),

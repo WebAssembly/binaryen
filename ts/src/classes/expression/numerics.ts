@@ -68,7 +68,7 @@ export class Const extends Expression {
 			for (let i = 0; i < 16; ++i) {
 				BinaryenObj.HEAPU8[tempBuffer + i] = value[i];
 			}
-			BinaryenObj["_BinaryenConstSetValueV128"](this._ptr, tempBuffer);
+			return BinaryenObj["_BinaryenConstSetValueV128"](this._ptr, tempBuffer);
 		});
 	}
 }
