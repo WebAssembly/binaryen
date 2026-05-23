@@ -791,13 +791,16 @@ void ModuleSplitter::shareImportableItems() {
     primaryUsed.globals.insert(tableManager.activeBase.global);
   }
 
-  // Trapping globals should stay in the primary module to preserve the trapping
-  // behavior upon instantiation.
-  for (auto& global : primary.globals) {
-    if (global->init &&
-        EffectAnalyzer(config.passOptions, primary, global->init)
-          .hasUnremovableSideEffects()) {
-      primaryUsed.globals.insert(global->name);
+  // If custom-descirptors is enabled, global initializers can trap. Trapping
+  // globals should stay in the primary module to preserve the trapping behavior
+  // upon instantiation.
+  if (primary.features.hasCustomDescriptors()) {
+    for (auto& global : primary.globals) {
+      if (global->init &&
+          EffectAnalyzer(config.passOptions, primary, global->init)
+            .hasUnremovableSideEffects()) {
+        primaryUsed.globals.insert(global->name);
+      }
     }
   }
 
