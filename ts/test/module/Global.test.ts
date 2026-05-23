@@ -28,6 +28,7 @@ suite("Global", () => {
 			name: "a-global",
 			module: "",
 			base: "",
+			type: binaryen.i32,
 			mutable: false,
 		});
 	});
@@ -38,7 +39,13 @@ suite("Global", () => {
 
 	test("initial value.", () => {
 		globalInfo = new binaryen.Module.Global(globalRef);
-		assert.partialDeepStrictEqual(binaryen.getExpressionInfo(globalInfo.init).toJson(), {id: binaryen.ExpressionId.Const, value: 1});
+		const exprInfo: binaryen.expressions.Expression = binaryen.getExpressionInfo(globalInfo.init);
+		assert.ok(exprInfo instanceof binaryen.expressions.Const);
+		assert.partialDeepStrictEqual(exprInfo.toJson(), {
+			id: binaryen.ExpressionId.Const,
+			type: binaryen.i32,
+			value: 1,
+		});
 		assert.strictEqual(binaryen.emitText(globalInfo.init), "(i32.const 1)");
 	});
 
