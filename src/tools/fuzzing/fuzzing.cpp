@@ -82,24 +82,26 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     // the process creation overhead of all the things we run from python), and
     // the defaults are tuned to that. This corresponds to INPUT_SIZE_MEAN in
     // scripts/fuzz_opt.py
-    const double MEAN_SIZE = 40 * 1024;
+    const uint64_t MEAN_SIZE = 40 * 1024;
 
     // As we have not read anything from the input, the remaining size is its
     // size.
-    double size = random.remaining();
-    auto ratio = size / MEAN_SIZE;
+    uint64_t size = random.remaining();
 
     auto bits = random.get();
     if (bits & 1) {
-      fuzzParams->MAX_NEW_GC_TYPES *= ratio;
+      fuzzParams->MAX_NEW_GC_TYPES =
+        (uint64_t(fuzzParams->MAX_NEW_GC_TYPES) * size) / MEAN_SIZE;
     }
     if (bits & 2) {
-      fuzzParams->MAX_GLOBALS *= ratio;
+      fuzzParams->MAX_GLOBALS =
+        (uint64_t(fuzzParams->MAX_GLOBALS) * size) / MEAN_SIZE;
     }
     if (bits & 4) {
       // Only adjust the limit if there is one.
       if (fuzzParams->HANG_LIMIT) {
-        fuzzParams->HANG_LIMIT *= ratio;
+        fuzzParams->HANG_LIMIT =
+          (uint64_t(fuzzParams->HANG_LIMIT) * size) / MEAN_SIZE;
         // There is a limit, so keep it non-zero to actually prevent hangs.
         fuzzParams->HANG_LIMIT = std::max(fuzzParams->HANG_LIMIT, 1);
       }
@@ -107,12 +109,13 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     if (bits & 8) {
       // Only increase the number of tries. Trying fewer times does not help
       // find more interesting patterns.
-      if (ratio > 1) {
-        fuzzParams->TRIES *= ratio;
+      if (size > MEAN_SIZE) {
+        fuzzParams->TRIES = (uint64_t(fuzzParams->TRIES) * size) / MEAN_SIZE;
       }
     }
     if (bits & 16) {
-      fuzzParams->MAX_ARRAY_SIZE *= ratio;
+      fuzzParams->MAX_ARRAY_SIZE =
+        (uint64_t(fuzzParams->MAX_ARRAY_SIZE) * size) / MEAN_SIZE;
     }
   }
 
@@ -1972,10 +1975,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
   //   \integral_0^1 t^9 dx = 0.1 * t^10 |_0^1 = 0.1
   // As a result, we get a value in the range of 0-100%. (Note that 100% is ok
   // since we can't replace everything anyhow, see below.)
-  double t = r;
-  t = t / 100;
-  t = pow(t, 9);
-  Index percentChance = t * 100;
+  uint64_t r3 = uint64_t(r) * r * r;
+  uint64_t r9 = r3 * r3 * r3;
+  Index percentChance = r9 / 10000000000000000ULL;
   // Adjust almost-zero frequencies to at least a few %, just so we have some
   // reasonable chance of making some changes.
   percentChance = std::max(percentChance, Index(3));
@@ -2419,7 +2421,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     std::vector<Call*> callImports;
   };
 
-  using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
+  using NameInfoMap = std::map<Name, FunctionInfo>;
 
   struct FunctionInfoScanner
     : public WalkerPass<PostWalker<FunctionInfoScanner>> {
@@ -2535,9 +2537,9 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
   // First, refine params sent to imports. Gather the LUB sent to each import,
   // and then refine.
-  std::unordered_map<Name, LUBFinder> paramLUBs;
-  for (auto& [_, info] : map) {
-    for (auto* call : info.callImports) {
+  std::map<Name, LUBFinder> paramLUBs;
+  for (const auto& [_, info] : map) {
+    for (const auto* call : info.callImports) {
       auto declaredParams = wasm.getFunction(call->target)->getParams();
       std::vector<Type> sent;
       for (Index i = 0; i < call->operands.size(); i++) {
