@@ -173,7 +173,7 @@ export function array(mod: Module) {
 			offset: ExpressionRef,
 			size: ExpressionRef,
 		): ExpressionRef => (
-			BinaryenObj["_BinaryenArrayInitData"](mod[PTR], strToStack(name), ref, index, offset, size)
+			preserveStack(() => BinaryenObj["_BinaryenArrayInitData"](mod[PTR], strToStack(name), ref, index, offset, size))
 		),
 
 		/** Copies elements to a specified slice of an array from a given element segment. */
