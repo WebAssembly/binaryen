@@ -64,7 +64,7 @@ export function f64(mod: Module) {
 		convert_i32_u: unaryFn(mod, Operation.ConvertUInt32ToFloat64),
 		convert_i64_s: unaryFn(mod, Operation.ConvertSInt64ToFloat64),
 		convert_i64_u: unaryFn(mod, Operation.ConvertUInt64ToFloat64),
-		reinterpret_f64: unaryFn(mod, Operation.ReinterpretInt64),
+		reinterpret_i64: unaryFn(mod, Operation.ReinterpretInt64),
 
 		promote_f32: unaryFn(mod, Operation.PromoteFloat32),
 
