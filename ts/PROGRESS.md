@@ -143,8 +143,8 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `getExportByIndex`         |           | Export.ts         | [x] | [x] | [ ] |
 | `getNumFunctions`          |           | Function.ts       | [x] | [x] | [ ] |
 | `getFunctionByIndex`       |           | Function.ts       | [x] | [x] | [ ] |
-| `getNumGlobals`            |           | Global.ts         | [x] | [x] | [ ] |
-| `getNumTables`             |           | Table.ts          | [x] | [x] | [ ] |
+| `getNumGlobals`            |           | Global.ts         | [x] | [x] | [x] |
+| `getNumTables`             |           | Table.ts          | [x] | [x] | [x] |
 | `getNumElementSegments`    |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getGlobalByIndex`         |           | Global.ts         | [x] | [x] | [ ] |
 | `getTableByIndex`          |           | Table.ts          | [x] | [x] | [ ] |

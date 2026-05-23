@@ -20,6 +20,7 @@ suite("Global", () => {
 			binaryen.Feature.MutableGlobals
 		);
 		globalRef = mod.globals.add("a-global", binaryen.i32, false, mod.wasm.i32.const(1));
+		assert.strictEqual(mod.globals.count(), 1);
 		globalInfo = new binaryen.Module.Global(globalRef);
 	});
 

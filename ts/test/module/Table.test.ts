@@ -16,6 +16,7 @@ suite("Table", () => {
 	beforeEach(() => {
 		mod = new binaryen.Module();
 		tableRef = mod.tables.add("a-table", 5, 15);
+		assert.strictEqual(mod.tables.count(), 1);
 		tableInfo = new binaryen.Module.Table(tableRef);
 	});
 
