@@ -11,6 +11,7 @@ import {
 import {
 	ExpressionId,
 	type ExpressionRef,
+	type Operation,
 	type Type,
 } from "../../constants.ts";
 import {
@@ -111,8 +112,8 @@ export class BrOn extends Expression {
 		super(ExpressionId.BrOn, expr);
 	}
 
-	get op(): number { return BinaryenObj["_BinaryenBrOnGetOp"](this._ptr); }
-	set op(op: number) { BinaryenObj["_BinaryenBrOnSetOp"](this._ptr, op); }
+	get op(): Operation { return BinaryenObj["_BinaryenBrOnGetOp"](this._ptr); }
+	set op(op: Operation) { BinaryenObj["_BinaryenBrOnSetOp"](this._ptr, op); }
 
 	get name(): string { return UTF8ToString(BinaryenObj["_BinaryenBrOnGetName"](this._ptr)); }
 	set name(name: string) { preserveStack(() => BinaryenObj["_BinaryenBrOnSetName"](this._ptr, strToStack(name))); }

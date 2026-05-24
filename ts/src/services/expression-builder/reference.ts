@@ -21,8 +21,8 @@ import {
 export function ref(mod: Module) {
 	return {
 		/** Produces a reference to a given function. */
-		func: (name: string, type: Type) => (
-			preserveStack(() => BinaryenObj["_BinaryenRefFunc"](mod[PTR], strToStack(name), type))
+		func: (name: string, type: Type): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenRefFunc"](mod[PTR], strToStack(name), type) as ExpressionRef)
 		),
 
 		/** Produces a null reference. */

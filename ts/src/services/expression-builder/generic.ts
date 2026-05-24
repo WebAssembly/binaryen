@@ -17,9 +17,6 @@ import {
 	none,
 	unreachable,
 } from "../../constants.ts";
-import {
-	expressionBuilder,
-} from "./expressionBuilder.ts";
 
 
 
@@ -70,7 +67,7 @@ export function blocks(mod: Module) {
 		),
 
 		/** Creates an ‘if’ or ‘if/else’ combination. */
-		if: (condition: ExpressionRef, ifTrue: ExpressionRef, ifFalse: ExpressionRef = expressionBuilder(mod).nop()): ExpressionRef => (
+		if: (condition: ExpressionRef, ifTrue: ExpressionRef, ifFalse: ExpressionRef = parametrics(mod).nop()): ExpressionRef => (
 			BinaryenObj["_BinaryenIf"](mod[PTR], condition, ifTrue, ifFalse)
 		),
 	} as const;
