@@ -1,5 +1,5 @@
 ;; When reference types is disabled, we reuse the existing i64 table
-;; RUN: wasm-split %s --no-validation -g -o1 %t.1.wasm -o2 %t.2.wasm --export-prefix='%' --keep-funcs=foo --enable-memory64 -v 2>&1 | filecheck %s --check-prefix CHECK
+;; RUN: wasm-split %s -g -o1 %t.1.wasm -o2 %t.2.wasm --export-prefix='%' --keep-funcs=foo --enable-memory64 -v 2>&1 | filecheck %s --check-prefix CHECK
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY-NOREF
 ;; RUN: wasm-dis %t.2.wasm | filecheck %s --check-prefix SECONDARY-NOREF
 ;; Check whether the split files conform to memory64
@@ -7,7 +7,7 @@
 ;; RUN: wasm-opt --enable-memory64 %t.2.wasm
 
 ;; When reference types is enabled, we create a new table
-;; RUN: wasm-split %s --no-validation -g -o1 %t.1.wasm -o2 %t.2.wasm --export-prefix='%' --keep-funcs=foo --enable-memory64 --enable-reference-types -v 2>&1 | filecheck %s --check-prefix CHECK
+;; RUN: wasm-split %s -g -o1 %t.1.wasm -o2 %t.2.wasm --export-prefix='%' --keep-funcs=foo --enable-memory64 --enable-reference-types -v 2>&1 | filecheck %s --check-prefix CHECK
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY-REF
 ;; RUN: wasm-dis %t.2.wasm | filecheck %s --check-prefix SECONDARY-REF
 ;; Check whether the split files conform to memory64

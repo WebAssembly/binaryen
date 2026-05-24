@@ -102,8 +102,13 @@ void writeModule(Module& wasm,
     runner.run();
   }
 
+  // We currently cannot enable validation for outputs when custom-descriptors
+  // is not enabled. See the description of
+  // https://github.com/WebAssembly/binaryen/pull/8043.
+  // TODO Fix this and enable validation for all cases.
   if (options.passOptions.validate &&
-      !WasmValidator().validate(wasm, options.passOptions)) {
+      !WasmValidator().validate(wasm, options.passOptions) &&
+      wasm.features.hasCustomDescriptors()) {
     Fatal() << "error validating output module";
   }
 
