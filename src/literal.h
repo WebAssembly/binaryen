@@ -43,28 +43,18 @@ class Literal {
     // Note: i31 is stored in the |i32| field, with the lower 31 bits containing
     // the value if there is one, and the highest bit containing whether there
     // is a value. Thus, a null is |i32 === 0|.
-    //
-    // Externref payloads, which serve to differentiate different external
-    // references but are otherwise meaningless, are also stored in the i32
-    // field, with their low bit set to differentiate an externref with a
-    // payload from an externalized internal reference, which uses the gcData
-    // field instead. This scheme supports 31 bits of payload for externrefs,
-    // which should be sufficient for spec test and fuzzing purposes, but if we
-    // need more bits we can use the i64 field instead. This scheme also depends
-    // on the low bit of a shared_ptr not being used.
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
     // A reference to Function data.
     std::shared_ptr<FuncData> funcData;
-    // A reference to GC data, either a Struct or an Array. For both of those we
-    // store the referred data as a Literals object (which is natural for an
-    // Array, and for a Struct, is just the fields in order). The type is used
-    // to indicate whether this is a Struct or an Array, and of what type. We
-    // also use this to store String data, as it is similarly stored on the
-    // heap. For externalized or internalized references (including strings),
-    // gcData holds a single value, which is the wrapped internal or external
-    // reference.
+    // A reference to GC data, used for structs, arrays, strings, externrefs,
+    // and internalized externrefs. The GCData contains the struct or array
+    // fields, or the characters in the string. Externrefs are either
+    // externalized internal references, in which case the GCData will contain
+    // the internal reference, or a host reference, in which case the GCData
+    // will contain an i32 payload. Internalized references contain the wrapped
+    // externref in the GCData.
     std::shared_ptr<GCData> gcData;
     // A reference to Exn data.
     std::shared_ptr<ExnData> exnData;
