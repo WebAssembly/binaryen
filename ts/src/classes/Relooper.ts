@@ -47,11 +47,11 @@ export class Relooper {
 	 * on the branch (useful for phis).
 	 * @param from source block
 	 * @param to destination block
-	 * @param condition contition to evaluate: if true, jumps to the given block; else does nothing
-	 * @param code code to evaluate in between block jumps
+	 * @param condition contition to evaluate: if true, jumps to the given block; else does nothing; for unconditional branches, omit or pass `null`/`undefined`
+	 * @param code code (if any) to evaluate in between block jumps
 	 */
-	addBranch(from: RelooperBlockRef, to: RelooperBlockRef, condition: ExpressionRef, code: ExpressionRef): void {
-		BinaryenObj["_RelooperAddBranch"](from, to, condition, code);
+	addBranch(from: RelooperBlockRef, to: RelooperBlockRef, condition?: ExpressionRef | null, code?: ExpressionRef): void {
+		BinaryenObj["_RelooperAddBranch"](from, to, condition ?? 0, code ?? 0);
 	}
 
 	/**
