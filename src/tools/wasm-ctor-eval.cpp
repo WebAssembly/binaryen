@@ -545,8 +545,8 @@ public:
     // them).
     clearStartBlock();
   }
-private:
 
+private:
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
