@@ -15,9 +15,9 @@
  (export "test" (func $0))
 
  (func $0
-  (local $5 (ref null $0))
+  (local $temp (ref null $0))
   ;; wasm-ctor-eval evals away the get of $global, since it sees all the data.
-  (local.set $5
+  (local.set $temp
    (global.get $global)
   )
   ;; It stops at the read of the imported global, since that value depends on
@@ -32,7 +32,7 @@
   (drop
    (ref.as_non_null
     (struct.get $0 1
-     (local.get $5)
+     (local.get $temp)
     )
    )
   )
