@@ -14,7 +14,7 @@
 
   ;; CHECK:      (func $disallowed (type $1) (param $x (ref $struct))
   ;; CHECK-NEXT:  (call $foo
-  ;; CHECK-NEXT:   (block $label1 (result i32)
+  ;; CHECK-NEXT:   (block $block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.atomic.load acqrel
   ;; CHECK-NEXT:      (i32.const 0)
@@ -55,7 +55,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $foo
-  ;; CHECK-NEXT:   (block $label2 (result i32)
+  ;; CHECK-NEXT:   (block $block (result i32)
   ;; CHECK-NEXT:    (i32.atomic.store acqrel
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (i32.const 42)
