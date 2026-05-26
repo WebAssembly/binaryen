@@ -28,6 +28,9 @@
   ;; We should leave the module in a valid state: globals appear, and a start
   ;; function which applies one to the other. It should apply to the same global
   ;; that is then read from the remaining code in the export.
+  ;;
+  ;; Note that this get of the import vanishes in the final output, not because
+  ;; we eval it, but because we run vacuum after.
   (drop
    (global.get $gimport)
   )
