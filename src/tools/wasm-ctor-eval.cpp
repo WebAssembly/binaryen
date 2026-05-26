@@ -288,6 +288,9 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 // that there are not arguments passed to main, etc.
 static bool ignoreExternalInput = false;
 
+// Whether to emit informative logging to stdout about the eval process.
+static bool quiet = false;
+
 struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   Module* wasm;
   EvallingModuleRunner* instance;
@@ -327,8 +330,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       wasm->start = Name();
       firstApplication = false;
     }
-
-    clearApplyState();
 
     // If nothing was ever written to memories then there is nothing to update.
     if (!memories.empty()) {
@@ -529,8 +530,10 @@ private:
     return Bits::readLE<T>(getMemory(address, memoryName, sizeof(T)));
   }
 
+public:
   // Clear the state of the operation of applying the interpreter's runtime
-  // information into the module.
+  // information into the module. This must be done before we start to serialize
+  // content. After this, seriqli
   //
   // This happens each time we apply contents to the module, which is basically
   // once per ctor function, but can be more fine-grained also if we execute a
@@ -545,6 +548,7 @@ private:
     // them).
     clearStartBlock();
   }
+private:
 
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
@@ -1062,9 +1066,6 @@ public:
   }
 };
 
-// Whether to emit informative logging to stdout about the eval process.
-static bool quiet = false;
-
 // The outcome of evalling a ctor is one of three states:
 //
 // 1. We failed to eval it completely (but perhaps we succeeded partially). In
@@ -1211,6 +1212,7 @@ start_eval:
 
         // Serialize the arguments for the new function and save the module
         // state in case we fail to eval the new function.
+        interface.clearApplyState();
         localExprs.clear();
         for (auto& param : params) {
           auto* serialized = interface.getSerialization(param);
@@ -1241,6 +1243,7 @@ start_eval:
       // of them, and leave it to the optimizer to remove redundant or
       // unnecessary operations. We just recompute the entire local
       // serialization sets from scratch each time here, for all locals.
+      interface.clearApplyState();
       localExprs.clear();
       for (Index i = 0; i < func->getNumLocals(); i++) {
         auto* serialized = interface.getSerialization(scope.locals[i]);
